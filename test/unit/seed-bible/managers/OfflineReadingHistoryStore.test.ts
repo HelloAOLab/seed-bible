@@ -12,19 +12,29 @@ const HALF_HOUR = 30 * 60;
 /** 2026-06-15T12:00:00Z, comfortably inside one UTC year. */
 const NOON = Math.floor(Date.UTC(2026, 5, 15, 12, 0, 0) / 1000);
 
-function tick(overrides: {
+/**
+ * One stretch of reading. `atSeconds` is shorthand for a stretch that begins and
+ * ends at the same moment, which is what the reader's very first tick on a
+ * chapter looks like.
+ */
+function span(overrides: {
   userId?: string;
   bookId?: string;
   chapter?: number;
-  atSeconds: number;
-  recencyThresholdSeconds?: number;
+  atSeconds?: number;
+  startSeconds?: number;
+  endSeconds?: number;
+  joinThresholdSeconds?: number;
 }) {
+  const { atSeconds, ...rest } = overrides;
   return {
     userId: "user-1",
     bookId: "GEN",
     chapter: 1,
-    recencyThresholdSeconds: HALF_HOUR,
-    ...overrides,
+    joinThresholdSeconds: HALF_HOUR,
+    startSeconds: atSeconds ?? 0,
+    endSeconds: atSeconds ?? 0,
+    ...rest,
   };
 }
 
@@ -35,9 +45,9 @@ describe("OfflineReadingHistoryStore", () => {
     store = createInMemoryReadingHistoryStore();
   });
 
-  describe("recordReading", () => {
+  describe("recordReadingSpan", () => {
     it("records a tick as a pending event that starts and ends now", async () => {
-      const row = await store.recordReading(tick({ atSeconds: NOON }));
+      const row = await store.recordReadingSpan(span({ atSeconds: NOON }));
 
       expect(row).toEqual({
         key: `user-1/2026/GEN/1/${NOON}`,
@@ -52,8 +62,8 @@ describe("OfflineReadingHistoryStore", () => {
     });
 
     it("extends the same event while reading continues", async () => {
-      await store.recordReading(tick({ atSeconds: NOON }));
-      const row = await store.recordReading(tick({ atSeconds: NOON + 5 }));
+      await store.recordReadingSpan(span({ atSeconds: NOON }));
+      const row = await store.recordReadingSpan(span({ atSeconds: NOON + 5 }));
 
       expect(row.start).toBe(NOON);
       expect(row.end).toBe(NOON + 5);
@@ -63,9 +73,9 @@ describe("OfflineReadingHistoryStore", () => {
     });
 
     it("starts a new event once the recency window has passed", async () => {
-      await store.recordReading(tick({ atSeconds: NOON }));
+      await store.recordReadingSpan(span({ atSeconds: NOON }));
       const later = NOON + HALF_HOUR + 1;
-      const row = await store.recordReading(tick({ atSeconds: later }));
+      const row = await store.recordReadingSpan(span({ atSeconds: later }));
 
       expect(row.start).toBe(later);
       const rows = await store.listForWindow("user-1", NOON - 1, later + 1);
@@ -73,30 +83,32 @@ describe("OfflineReadingHistoryStore", () => {
     });
 
     it("keeps each chapter's reading separate", async () => {
-      await store.recordReading(tick({ atSeconds: NOON, chapter: 1 }));
-      await store.recordReading(tick({ atSeconds: NOON + 5, chapter: 2 }));
+      await store.recordReadingSpan(span({ atSeconds: NOON, chapter: 1 }));
+      await store.recordReadingSpan(span({ atSeconds: NOON + 5, chapter: 2 }));
 
       const rows = await store.listForWindow("user-1", NOON - 1, NOON + 100);
       expect(rows.map((r) => r.chapter)).toEqual([1, 2]);
     });
 
     it("does not re-queue a synced event when the tick moves nothing", async () => {
-      const row = await store.recordReading(tick({ atSeconds: NOON }));
+      const row = await store.recordReadingSpan(span({ atSeconds: NOON }));
       await store.markSynced([{ key: row.key, end: row.end }]);
 
       // A tick at the same second: the event's `end` is already there, so there
       // is nothing new for the server and the row should stay out of the queue.
-      const again = await store.recordReading(tick({ atSeconds: NOON }));
+      const again = await store.recordReadingSpan(span({ atSeconds: NOON }));
 
       expect(again.pendingOp).toBeNull();
       expect(await store.listPending("user-1")).toEqual([]);
     });
 
     it("re-queues a synced event when reading resumes inside the window", async () => {
-      const row = await store.recordReading(tick({ atSeconds: NOON }));
+      const row = await store.recordReadingSpan(span({ atSeconds: NOON }));
       await store.markSynced([{ key: row.key, end: row.end }]);
 
-      const again = await store.recordReading(tick({ atSeconds: NOON + 5 }));
+      const again = await store.recordReadingSpan(
+        span({ atSeconds: NOON + 5 })
+      );
 
       expect(again.pendingOp).toBe("append");
       expect((await store.listPending("user-1")).map((r) => r.end)).toEqual([
@@ -105,11 +117,72 @@ describe("OfflineReadingHistoryStore", () => {
     });
   });
 
+  describe("recordReadingSpan with a measured stretch", () => {
+    it("stores the whole stretch, not just the moment it was reported", async () => {
+      const row = await store.recordReadingSpan(
+        span({ startSeconds: NOON, endSeconds: NOON + 45 * 60 })
+      );
+
+      expect(row.start).toBe(NOON);
+      expect(row.end).toBe(NOON + 45 * 60);
+    });
+
+    it("joins the sitting it continues, judged from its own start", async () => {
+      // What a long listen leaves behind: the event was opened when the chapter
+      // was first shown, so by the time the listening is written it is older
+      // than a window measured from the clock would allow.
+      const opened = await store.recordReadingSpan(span({ atSeconds: NOON }));
+
+      const row = await store.recordReadingSpan(
+        span({
+          startSeconds: NOON,
+          endSeconds: NOON + 45 * 60,
+          joinThresholdSeconds: 30,
+        })
+      );
+
+      expect(row.key).toBe(opened.key);
+      expect(row.start).toBe(NOON);
+      expect(row.end).toBe(NOON + 45 * 60);
+    });
+
+    it("opens a new sitting for a stretch that starts after the gap", async () => {
+      await store.recordReadingSpan(span({ atSeconds: NOON }));
+      const resumed = NOON + 20 * 60;
+
+      const row = await store.recordReadingSpan(
+        span({
+          startSeconds: resumed,
+          endSeconds: resumed + 5,
+          joinThresholdSeconds: 30,
+        })
+      );
+
+      expect(row.start).toBe(resumed);
+      const rows = await store.listForWindow("user-1", 0, resumed + 10);
+      expect(rows.map((r) => r.end)).toEqual([NOON, resumed + 5]);
+    });
+
+    it("never shortens a sitting another writer has already extended", async () => {
+      const listened = await store.recordReadingSpan(
+        span({ startSeconds: NOON, endSeconds: NOON + 600 })
+      );
+
+      // A reader tick that was in flight while the listen was written.
+      const row = await store.recordReadingSpan(
+        span({ startSeconds: NOON + 100, endSeconds: NOON + 120 })
+      );
+
+      expect(row.key).toBe(listened.key);
+      expect(row.end).toBe(NOON + 600);
+    });
+  });
+
   describe("listForWindow", () => {
     it("keeps events whose start is in the window, excluding the end bound", async () => {
-      await store.recordReading(tick({ atSeconds: NOON }));
-      await store.recordReading(
-        tick({ atSeconds: NOON + HALF_HOUR + 1, chapter: 2 })
+      await store.recordReadingSpan(span({ atSeconds: NOON }));
+      await store.recordReadingSpan(
+        span({ atSeconds: NOON + HALF_HOUR + 1, chapter: 2 })
       );
 
       const rows = await store.listForWindow(
@@ -122,7 +195,7 @@ describe("OfflineReadingHistoryStore", () => {
     });
 
     it("returns nothing for another user", async () => {
-      await store.recordReading(tick({ atSeconds: NOON }));
+      await store.recordReadingSpan(span({ atSeconds: NOON }));
 
       expect(await store.listForWindow("user-2", 0, NOON + 100)).toEqual([]);
     });
@@ -130,9 +203,9 @@ describe("OfflineReadingHistoryStore", () => {
 
   describe("listPending", () => {
     it("returns only unsynced events, oldest first", async () => {
-      const first = await store.recordReading(tick({ atSeconds: NOON }));
-      const second = await store.recordReading(
-        tick({ atSeconds: NOON + HALF_HOUR + 1, chapter: 2 })
+      const first = await store.recordReadingSpan(span({ atSeconds: NOON }));
+      const second = await store.recordReadingSpan(
+        span({ atSeconds: NOON + HALF_HOUR + 1, chapter: 2 })
       );
       await store.markSynced([{ key: second.key, end: second.end }]);
 
@@ -144,9 +217,9 @@ describe("OfflineReadingHistoryStore", () => {
 
   describe("markSynced", () => {
     it("leaves the event queued when it grew while the push was in flight", async () => {
-      const pushed = await store.recordReading(tick({ atSeconds: NOON }));
+      const pushed = await store.recordReadingSpan(span({ atSeconds: NOON }));
       // Five seconds more reading landed before the push came back.
-      await store.recordReading(tick({ atSeconds: NOON + 5 }));
+      await store.recordReadingSpan(span({ atSeconds: NOON + 5 }));
 
       await store.markSynced([{ key: pushed.key, end: pushed.end }]);
 
@@ -163,9 +236,9 @@ describe("OfflineReadingHistoryStore", () => {
 
   describe("prune", () => {
     it("drops synced events that ended before the cutoff", async () => {
-      const old = await store.recordReading(tick({ atSeconds: NOON }));
-      const recent = await store.recordReading(
-        tick({ atSeconds: NOON + HALF_HOUR + 1, chapter: 2 })
+      const old = await store.recordReadingSpan(span({ atSeconds: NOON }));
+      const recent = await store.recordReadingSpan(
+        span({ atSeconds: NOON + HALF_HOUR + 1, chapter: 2 })
       );
       await store.markSynced([
         { key: old.key, end: old.end },
@@ -179,7 +252,7 @@ describe("OfflineReadingHistoryStore", () => {
     });
 
     it("never drops an event the server hasn't got", async () => {
-      const row = await store.recordReading(tick({ atSeconds: NOON }));
+      const row = await store.recordReadingSpan(span({ atSeconds: NOON }));
 
       await store.prune("user-1", NOON + 10_000);
 
@@ -191,10 +264,10 @@ describe("OfflineReadingHistoryStore", () => {
 
   describe("clearSynced", () => {
     it("keeps unsynced events and drops the rest", async () => {
-      const synced = await store.recordReading(tick({ atSeconds: NOON }));
+      const synced = await store.recordReadingSpan(span({ atSeconds: NOON }));
       await store.markSynced([{ key: synced.key, end: synced.end }]);
-      const pending = await store.recordReading(
-        tick({ atSeconds: NOON + HALF_HOUR + 1, chapter: 2 })
+      const pending = await store.recordReadingSpan(
+        span({ atSeconds: NOON + HALF_HOUR + 1, chapter: 2 })
       );
 
       await store.clearSynced("user-1");
@@ -204,8 +277,8 @@ describe("OfflineReadingHistoryStore", () => {
     });
 
     it("leaves another user's events alone", async () => {
-      const other = await store.recordReading(
-        tick({ atSeconds: NOON, userId: "user-2" })
+      const other = await store.recordReadingSpan(
+        span({ atSeconds: NOON, userId: "user-2" })
       );
       await store.markSynced([{ key: other.key, end: other.end }]);
 
@@ -284,7 +357,7 @@ describe("OfflineReadingHistoryStore", () => {
 
       const { row, changed } = extendOrCreateReadingRow(
         rows,
-        tick({ atSeconds: NOON })
+        span({ atSeconds: NOON })
       );
 
       expect(changed).toBe(true);

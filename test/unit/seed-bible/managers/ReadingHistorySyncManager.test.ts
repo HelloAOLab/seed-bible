@@ -104,13 +104,14 @@ describe("ReadingHistorySyncManager", () => {
     return { manager, setUserId };
   };
 
-  const record = (atSeconds: number, chapter = 1, userId = "user-1") =>
-    store.recordReading({
+  const record = (endSeconds: number, chapter = 1, userId = "user-1") =>
+    store.recordReadingSpan({
       userId,
       bookId: "GEN",
       chapter,
-      atSeconds,
-      recencyThresholdSeconds: HALF_HOUR,
+      startSeconds: endSeconds,
+      endSeconds,
+      joinThresholdSeconds: HALF_HOUR,
     });
 
   it("replays events recorded before this load, grouped by year", async () => {

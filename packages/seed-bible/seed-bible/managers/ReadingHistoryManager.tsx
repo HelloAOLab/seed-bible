@@ -15,6 +15,7 @@ import {
   readingEventYear,
   toReadingEvent,
   type OfflineReadingHistoryStore,
+  type RecordReadingSpanInput,
   type StoredReadingEvent,
 } from "./OfflineReadingHistoryStore";
 import {
@@ -164,7 +165,7 @@ export async function writeReadingEventsToDocument(
   }
 
   // Newest first, and stops as soon as everything has been matched. Extending
-  // the event currently being read is by far the most common call — five
+  // the sitting currently being read is by far the most common call — five
   // seconds apart, all day — and that event is the newest one in the document,
   // so this normally settles on the first comparison rather than walking a
   // year's worth of events every time.
@@ -202,8 +203,8 @@ export async function writeReadingEventsToDocument(
 /** Options for {@link saveReadingHistory}. */
 export interface SaveReadingHistoryOptions {
   /**
-   * How far back a tick may reach to extend an event rather than start a new
-   * one. Defaults to 30 minutes.
+   * How far back this moment may reach to extend a sitting rather than start a
+   * new one. Defaults to 30 minutes.
    */
   recencyThresholdSeconds?: number;
 
@@ -229,47 +230,10 @@ export interface SaveReadingHistoryOptions {
 }
 
 /**
- * Records the event on this device, or null when it can't be.
+ * Saves a reading history event ending at the current moment.
  *
- * `createIndexedDbReadingHistoryStore` only knows that IndexedDB *exists*; a
- * browser can still refuse to open the database (a private window in some
- * browsers, a sandboxed frame, a user who has blocked site data). That is not a
- * reason to stop recording reading history altogether, so a store failure falls
- * through to writing straight to the year document — what the app did before
- * this store existed, durability aside.
- */
-async function recordReadingLocally(
-  store: OfflineReadingHistoryStore,
-  input: {
-    userId: string;
-    bookId: string;
-    chapter: number;
-    atSeconds: number;
-    recencyThresholdSeconds: number;
-  }
-): Promise<StoredReadingEvent | null> {
-  try {
-    return await store.recordReading(input);
-  } catch (error) {
-    console.warn(
-      "Could not record reading history on this device. Writing straight to the document instead.",
-      error
-    );
-    return null;
-  }
-}
-
-/**
- * Records that a chapter is being read, and pushes it to the server.
- *
- * The event lands in the local store first, so it survives the tab closing even
- * if the push never goes out. Only then is the year document written, and a
- * failure there leaves the row queued for `ReadingHistorySyncManager` to replay
- * — so the caller can treat this rejecting as "not yet", not as "lost".
- *
- * Reading the same chapter again within `recencyThresholdSeconds` extends that
- * event's `end` instead of starting a new one, so a chapter read for half an
- * hour is one event rather than 360 of them.
+ * If the user has already read the chapter within the last 30 minutes, then the
+ * end time of that event is moved up instead of a new event being created.
  *
  * @param userId The ID of the user that the event is for.
  * @param bookId The ID of the book that the event is for.
@@ -287,24 +251,121 @@ export async function saveReadingHistory(
     recencyThresholdSeconds = 30 * 60,
     marker,
     name,
+    store,
     nowSeconds,
   } = options;
-  const store = resolveStore(options.store);
   const currentTimeSeconds = nowSeconds ?? Math.floor(Date.now() / 1000);
-  const currentYear = readingEventYear(currentTimeSeconds);
+
+  await saveReadingHistorySpan(
+    os,
+    recordName,
+    userId,
+    bookId,
+    chapter,
+    currentTimeSeconds,
+    currentTimeSeconds,
+    { joinThresholdSeconds: recencyThresholdSeconds, marker, name, store }
+  );
+}
+
+/** Options for {@link saveReadingHistorySpan}. */
+export interface SaveReadingHistorySpanOptions {
+  /**
+   * How long a gap may sit between an existing event and this span's start for
+   * the two to count as one sitting. Defaults to 30 minutes.
+   */
+  joinThresholdSeconds?: number;
+
+  /** See {@link SaveReadingHistoryOptions.marker}. */
+  marker?: string;
+
+  /** The name of the shared document. Defaults to `reading_history`. */
+  name?: string;
+
+  /**
+   * Where the span is recorded before it is pushed. Defaults to the shared
+   * store; pass null to write straight to the document.
+   */
+  store?: OfflineReadingHistoryStore | null;
+}
+
+/**
+ * Records the stretch on this device, or null when it can't be.
+ *
+ * `createIndexedDbReadingHistoryStore` only knows that IndexedDB *exists*; a
+ * browser can still refuse to open the database (a private window in some
+ * browsers, a sandboxed frame, a user who has blocked site data). That is not a
+ * reason to stop recording reading history altogether, so a store failure falls
+ * through to writing straight to the year document — what the app did before
+ * this store existed, durability aside.
+ */
+async function recordReadingLocally(
+  store: OfflineReadingHistoryStore,
+  input: RecordReadingSpanInput
+): Promise<StoredReadingEvent | null> {
+  try {
+    return await store.recordReadingSpan(input);
+  } catch (error) {
+    console.warn(
+      "Could not record reading history on this device. Writing straight to the document instead.",
+      error
+    );
+    return null;
+  }
+}
+
+/**
+ * Records a stretch of time already spent on a chapter, running from
+ * `startTimeSeconds` to `endTimeSeconds`, and pushes it to the server.
+ *
+ * Recording a stretch rather than a moment is what lets the two writers report
+ * what they actually measured. The reader credits the five seconds since its
+ * last tick, so time the app slept through is never back-filled. Audio playback
+ * can only report listening after the fact, from how far the audio element's own
+ * clock advanced, because a locked phone freezes the page and no timer of ours
+ * runs.
+ *
+ * The stretch lands in the local store first, so it survives the tab closing
+ * even if the push never goes out. Only then is the year document written, and a
+ * failure there leaves the row queued for `ReadingHistorySyncManager` to replay
+ * — so the caller can treat this rejecting as "not yet", not as "lost".
+ *
+ * An existing event for the same chapter is extended when this span continues
+ * it. Whether it does is judged from the span's *start*, not from the clock, so
+ * a listen that ran longer than `joinThresholdSeconds` still lands on the event
+ * it began rather than opening a second one. `end` never moves backwards, so a
+ * late-arriving span can't shorten what another writer already recorded.
+ *
+ * @param startTimeSeconds The unix time in seconds when the span began.
+ * @param endTimeSeconds The unix time in seconds when the span ended.
+ */
+export async function saveReadingHistorySpan(
+  os: CasualOSManager,
+  recordName: string,
+  userId: string,
+  bookId: string,
+  chapter: number,
+  startTimeSeconds: number,
+  endTimeSeconds: number,
+  options: SaveReadingHistorySpanOptions = {}
+): Promise<void> {
+  const { joinThresholdSeconds = 30 * 60, marker, name } = options;
+  const store = resolveStore(options.store);
+  const year = readingEventYear(endTimeSeconds);
 
   const row = store
     ? await recordReadingLocally(store, {
         userId,
         bookId,
         chapter,
-        atSeconds: currentTimeSeconds,
-        recencyThresholdSeconds,
+        startSeconds: startTimeSeconds,
+        endSeconds: endTimeSeconds,
+        joinThresholdSeconds,
       })
     : null;
 
   if (row && store) {
-    // The event is now safe on this device, so the push is allowed to fail.
+    // The stretch is now safe on this device, so the push is allowed to fail.
     await writeReadingEventsToDocument(
       os,
       recordName,
@@ -323,16 +384,15 @@ export async function saveReadingHistory(
     return;
   }
 
-  // No local store: the document is the only place the event can go, so which
-  // event this tick belongs to has to be worked out from what is already in it.
+  // No local store: the document is the only place the span can go, so which
+  // event it belongs to has to be worked out from what is already in it.
   const doc = await getReadingHistoryDocument(
     os,
     recordName,
-    currentYear,
+    year,
     marker,
     name
   );
-  const recencyThreshold = currentTimeSeconds - recencyThresholdSeconds;
   const array = doc.getArray("events");
   const event = findMostRecentReadingEvent(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -340,17 +400,19 @@ export async function saveReadingHistory(
     userId,
     bookId,
     chapter,
-    recencyThreshold
+    startTimeSeconds - joinThresholdSeconds
   );
   if (event) {
-    event.set("end", currentTimeSeconds);
+    if (event.get("end") < endTimeSeconds) {
+      event.set("end", endTimeSeconds);
+    }
   } else {
     const newEvent = doc.createMap();
     newEvent.set("userId", userId);
     newEvent.set("bookId", bookId);
     newEvent.set("chapter", chapter);
-    newEvent.set("start", currentTimeSeconds);
-    newEvent.set("end", currentTimeSeconds);
+    newEvent.set("start", startTimeSeconds);
+    newEvent.set("end", endTimeSeconds);
     array.push(newEvent);
   }
 }
@@ -979,11 +1041,43 @@ export async function loadDailyReadingHistory(options: {
   };
 }
 
+/**
+ * How long a gap may sit between an existing sitting and a stretch of measured
+ * time before the two count as separate sittings. Deliberately far shorter than
+ * the window `saveReadingHistory` merges across: a measured stretch says exactly
+ * when it happened, so anything that does not follow on directly is time
+ * nothing was watching, and crediting it would be inventing reading.
+ */
+const SPAN_JOIN_THRESHOLD_SECONDS = 30;
+
 export interface ReadingHistoryManager {
+  /**
+   * Marks a chapter as being read right now, stretching the end of the sitting
+   * it belongs to up to the present. Anything measuring time the app might not
+   * have been watching for wants `saveReadingSpan` instead, since the stretch
+   * this covers reaches back however long it has been since the last call.
+   */
   saveReadingHistory: (
     bookId: string,
     chapter: number,
     recencyThresholdSeconds?: number
+  ) => void;
+  /**
+   * Credits a chapter with a stretch of time that has already passed, rather
+   * than with the moment of the call. Audio playback uses this to record
+   * listening the app could not record as it happened, because the page was
+   * frozen behind a locked screen for all of it; the reader uses it to credit
+   * one tick at a time.
+   *
+   * A stretch only ever joins a sitting it arrives hard on the heels of, so
+   * time nothing was watching through opens a new event rather than being
+   * swallowed by the one before it.
+   */
+  saveReadingSpan: (
+    bookId: string,
+    chapter: number,
+    startTimeSeconds: number,
+    endTimeSeconds: number
   ) => void;
   getReadingEvents: (
     startTime: number,
@@ -1019,6 +1113,59 @@ export function createReadingHistoryManager(
       writeReadingEventsToDocument(os, recordName, year, events),
   });
 
+  /**
+   * Records one stretch for the signed-in user and pushes it, tolerating a push
+   * that can't go out.
+   *
+   * Both entry points below funnel through here so a failure means the same
+   * thing for either: the stretch is in the local store, so this is "not pushed
+   * yet" rather than "lost", and the replay will carry it across.
+   */
+  const recordSpanForCurrentUser = async (
+    bookId: string,
+    chapter: number,
+    startTimeSeconds: number,
+    endTimeSeconds: number,
+    options: SaveReadingHistorySpanOptions
+  ): Promise<void> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      // User is not logged in, so we can't save reading history
+      return;
+    }
+
+    try {
+      await saveReadingHistorySpan(
+        os,
+        userId,
+        userId,
+        bookId,
+        chapter,
+        startTimeSeconds,
+        endTimeSeconds,
+        { ...options, store }
+      );
+    } catch (error) {
+      // Swallowed because both callers discard this promise, and an unhandled
+      // rejection every five seconds was the whole reason the failure went
+      // unnoticed before there was anywhere for the stretch to wait.
+      console.warn(
+        `Could not push reading history for ${bookId} ${chapter} yet.`,
+        error
+      );
+      void sync.refreshPendingCount();
+      return;
+    }
+
+    // The push getting through proves the year document is reachable, which is
+    // the moment a backlog is worth retrying. Waiting for the `online` event
+    // would miss a websocket that reconnected without `navigator.onLine` ever
+    // changing.
+    if (sync.pendingCount.value > 0) {
+      void sync.sync();
+    }
+  };
+
   const saveReadingHistoryForCurrentUser = debounce(
     async (
       bookId: string,
@@ -1027,40 +1174,12 @@ export function createReadingHistoryManager(
       marker?: string,
       name?: string
     ) => {
-      if (!login.userId.value) {
-        // User is not logged in, so we can't save reading history
-        return;
-      }
-
-      try {
-        await saveReadingHistory(
-          os,
-          login.userId.value,
-          login.userId.value,
-          bookId,
-          chapter,
-          { recencyThresholdSeconds, marker, name, store }
-        );
-      } catch (error) {
-        // The event is in the local store either way, so this is "not pushed
-        // yet" rather than "lost". Swallowed because the five-second tick
-        // discards this promise, and an unhandled rejection every five seconds
-        // was the whole reason the failure went unnoticed.
-        console.warn(
-          `Could not push reading history for ${bookId} ${chapter} yet.`,
-          error
-        );
-        void sync.refreshPendingCount();
-        return;
-      }
-
-      // The push getting through proves the year document is reachable, which is
-      // the moment a backlog is worth retrying. Waiting for the `online` event
-      // would miss a websocket that reconnected without `navigator.onLine` ever
-      // changing.
-      if (sync.pendingCount.value > 0) {
-        void sync.sync();
-      }
+      const now = Math.floor(Date.now() / 1000);
+      await recordSpanForCurrentUser(bookId, chapter, now, now, {
+        joinThresholdSeconds: recencyThresholdSeconds,
+        marker,
+        name,
+      });
     },
     300
   );
@@ -1078,8 +1197,28 @@ export function createReadingHistoryManager(
     });
   };
 
+  const saveReadingSpanForCurrentUser = (
+    bookId: string,
+    chapter: number,
+    startTimeSeconds: number,
+    endTimeSeconds: number
+  ): void => {
+    // Deliberately not debounced, unlike the call above: these arrive at
+    // moments the page may not survive (going into the background, playback
+    // ending), and each one carries timestamps of its own, so a trailing
+    // debounce could drop the very save that records the listening.
+    void recordSpanForCurrentUser(
+      bookId,
+      chapter,
+      startTimeSeconds,
+      endTimeSeconds,
+      { joinThresholdSeconds: SPAN_JOIN_THRESHOLD_SECONDS }
+    );
+  };
+
   return {
     saveReadingHistory: saveReadingHistoryForCurrentUser,
+    saveReadingSpan: saveReadingSpanForCurrentUser,
     getReadingEvents: getReadingEventsForCurrentUser,
     sync,
     dispose: () => sync.dispose(),

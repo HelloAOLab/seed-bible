@@ -109,8 +109,14 @@ export function createReadingHistorySyncManager(
   let running: Promise<void> | null = null;
 
   const refreshPendingCount = async (): Promise<void> => {
+    // `store` is checked before the login signal is touched, so a device with
+    // nowhere to queue never depends on the shape of what it was handed.
+    if (!store) {
+      pendingRows.value = [];
+      return;
+    }
     const userId = login.userId.peek();
-    if (!store || !userId) {
+    if (!userId) {
       pendingRows.value = [];
       return;
     }
@@ -174,8 +180,11 @@ export function createReadingHistorySyncManager(
       return running;
     }
 
+    if (!store) {
+      return Promise.resolve();
+    }
     const userId = login.userId.peek();
-    if (!store || !userId || !isOnline.peek()) {
+    if (!userId || !isOnline.peek()) {
       return Promise.resolve();
     }
 

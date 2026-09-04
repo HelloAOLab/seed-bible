@@ -15,6 +15,11 @@
  * recorded, and pushing it to the year document becomes a retry-until-it-lands
  * job rather than the only chance to save it.
  *
+ * Rows are written a *stretch* at a time — "this chapter held the screen from
+ * here to here" — which is the shape both writers already produce: the reader's
+ * five-second tick credits the stretch since the last one, and audio playback
+ * reports listening after the fact from how far its own clock advanced.
+ *
  * ## The shape of a row
  *
  * One row per reading event, keyed by
@@ -86,21 +91,27 @@ export interface StoredReadingEvent {
   pendingOp: ReadingHistoryPendingOp | null;
 }
 
-/** A tick of "this chapter is on screen right now". */
-export interface RecordReadingInput {
+/** A stretch of time spent on one chapter. */
+export interface RecordReadingSpanInput {
   userId: string;
   bookId: string;
   chapter: number;
 
-  /** Unix seconds of this tick. */
-  atSeconds: number;
+  /** Unix seconds when the stretch began. */
+  startSeconds: number;
+
+  /** Unix seconds when the stretch ended. */
+  endSeconds: number;
 
   /**
-   * How far back a tick may reach to extend an event rather than start a new
-   * one. Keeping the same rule the year document uses means a break for supper
-   * shows up as two reading sessions in both places.
+   * How long a gap may sit between an existing event and this stretch's start
+   * for the two to count as one sitting.
+   *
+   * Judged from the stretch's *start*, not from the clock, so a long listen
+   * still lands on the event it began. Keeping the same rule the year document
+   * uses means a break for supper shows up as two sittings in both places.
    */
-  recencyThresholdSeconds: number;
+  joinThresholdSeconds: number;
 }
 
 /** Which pushed event a row is being marked synced against. */
@@ -120,13 +131,13 @@ export interface SyncedReadingEvent {
 
 export interface OfflineReadingHistoryStore {
   /**
-   * Records that a chapter is on screen right now, extending the event the
-   * reader is already in when there is one.
+   * Records a stretch of time spent on a chapter, extending the sitting it
+   * continues when there is one.
    *
    * Returns the row as it now stands, so the caller can push exactly what was
    * stored.
    */
-  recordReading(input: RecordReadingInput): Promise<StoredReadingEvent>;
+  recordReadingSpan(input: RecordReadingSpanInput): Promise<StoredReadingEvent>;
 
   /** Every row for a user whose `start` falls in `[startTime, endTime)`. */
   listForWindow(
@@ -198,20 +209,29 @@ export function toReadingEvent(row: StoredReadingEvent): ReadingEvent {
 }
 
 /**
- * Works out what a tick does to a chapter's rows: extend the event the reader
- * is in, or start a new one.
+ * Works out what a stretch of reading does to a chapter's rows: extend the
+ * sitting it continues, or open a new one.
  *
  * Split out from the transaction so both store implementations share one
- * definition. Reports `changed: false` when the tick moved nothing, so a row the
- * document already has is never re-queued for a push it does not need.
+ * definition. Reports `changed: false` when the stretch moved nothing, so a row
+ * the document already has is never re-queued for a push it does not need —
+ * which is also why `end` is only ever raised, never lowered: a late-arriving
+ * stretch must not shorten what another writer already recorded.
  */
 export function extendOrCreateReadingRow(
   existing: readonly StoredReadingEvent[],
-  input: RecordReadingInput
+  input: RecordReadingSpanInput
 ): { row: StoredReadingEvent; changed: boolean } {
-  const { userId, bookId, chapter, atSeconds, recencyThresholdSeconds } = input;
-  const year = readingEventYear(atSeconds);
-  const oldestEnd = atSeconds - recencyThresholdSeconds;
+  const {
+    userId,
+    bookId,
+    chapter,
+    startSeconds,
+    endSeconds,
+    joinThresholdSeconds,
+  } = input;
+  const year = readingEventYear(endSeconds);
+  const oldestEnd = startSeconds - joinThresholdSeconds;
 
   let recent: StoredReadingEvent | null = null;
   for (const row of existing) {
@@ -224,7 +244,7 @@ export function extendOrCreateReadingRow(
   }
 
   if (recent) {
-    const end = Math.max(recent.end, atSeconds);
+    const end = Math.max(recent.end, endSeconds);
     if (end === recent.end) {
       return { row: recent, changed: false };
     }
@@ -237,14 +257,14 @@ export function extendOrCreateReadingRow(
       year,
       bookId,
       chapter,
-      start: atSeconds,
+      start: startSeconds,
     }),
     userId,
     year,
     bookId,
     chapter,
-    start: atSeconds,
-    end: atSeconds,
+    start: startSeconds,
+    end: endSeconds,
     pendingOp: "append",
   };
   return { row, changed: true };
@@ -337,23 +357,24 @@ export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore
     return databasePromise;
   };
 
-  const recordReading = async (
-    input: RecordReadingInput
+  const recordReadingSpan = async (
+    input: RecordReadingSpanInput
   ): Promise<StoredReadingEvent> => {
     const database = await openDatabase();
     const transaction = database.transaction(EVENTS_STORE, "readwrite");
     const store = transaction.objectStore(EVENTS_STORE);
 
-    // Read inside the same read-write transaction as the write, so a second tick
-    // cannot land between the two and start a duplicate event for the same
-    // chapter. A transaction stays alive across the await of its own request.
+    // Read inside the same read-write transaction as the write, so a second
+    // stretch cannot land between the two and open a duplicate event for the
+    // same chapter. A transaction stays alive across the await of its own
+    // request.
     const existing = (await requestToPromise(
       store
         .index(CHAPTER_INDEX)
         .getAll(
           IDBKeyRange.only([
             input.userId,
-            readingEventYear(input.atSeconds),
+            readingEventYear(input.endSeconds),
             input.bookId,
             input.chapter,
           ])
@@ -466,7 +487,7 @@ export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore
   };
 
   return {
-    recordReading,
+    recordReadingSpan,
     listForWindow,
     listPending,
     markSynced,
@@ -485,11 +506,12 @@ export function createInMemoryReadingHistoryStore(): OfflineReadingHistoryStore 
   const rows = new Map<string, StoredReadingEvent>();
 
   /**
-   * Synchronous so {@link recordReading} can read and write without yielding.
+   * Synchronous so {@link OfflineReadingHistoryStore.recordReadingSpan} can read
+   * and write without yielding.
    *
    * This store stands in for the IndexedDB one in tests, so it has to share its
    * atomicity: awaiting between the read and the write would reintroduce the gap
-   * a second tick could fall into and start a duplicate event in.
+   * a second stretch could fall into and open a duplicate event in.
    */
   const rowsForChapter = (
     userId: string,
@@ -506,10 +528,10 @@ export function createInMemoryReadingHistoryStore(): OfflineReadingHistoryStore 
     );
 
   return {
-    async recordReading(input) {
+    async recordReadingSpan(input) {
       const existing = rowsForChapter(
         input.userId,
-        readingEventYear(input.atSeconds),
+        readingEventYear(input.endSeconds),
         input.bookId,
         input.chapter
       );
