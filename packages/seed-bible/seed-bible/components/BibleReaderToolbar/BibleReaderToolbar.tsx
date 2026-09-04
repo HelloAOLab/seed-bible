@@ -2883,7 +2883,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         });
                       }}
                       aria-label={saveLabel}
-                      aria-pressed={isSelectionSaved}
                       title={saveLabel}
                     >
                       <span className="sb-verse-toolbar-action-icon">

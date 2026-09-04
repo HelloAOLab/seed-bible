@@ -1468,6 +1468,39 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     });
   }
 
+  const saveTrigger = () =>
+    container.querySelector<HTMLButtonElement>(
+      ".sb-verse-toolbar-save-trigger"
+    );
+
+  it("never announces the save action as a toggle", async () => {
+    await renderSheet();
+
+    // Pressing it always opens the folder picker; it never removes a save. An
+    // aria-pressed state would announce a toggle that isn't there, and would
+    // disagree with the reader star and the tab-row button, which both dropped
+    // it for the same reason.
+    expect(saveTrigger()).not.toBeNull();
+    expect(saveTrigger()!.getAttribute("aria-pressed")).toBeNull();
+    expect(saveTrigger()!.getAttribute("aria-label")).toBe("Save");
+  });
+
+  it("says the verses are already saved in its label, not a pressed state", async () => {
+    vi.spyOn(state.saves, "getSaveForLocation").mockReturnValue({
+      id: "save-1",
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      createdAt: 1,
+      categories: ["My Saves"],
+    });
+
+    await renderSheet();
+
+    expect(saveTrigger()!.getAttribute("aria-label")).toBe("Edit save");
+    expect(saveTrigger()!.getAttribute("aria-pressed")).toBeNull();
+  });
+
   it("starts collapsed, with the swipe hint in place of a More button", async () => {
     await renderSheet();
 
