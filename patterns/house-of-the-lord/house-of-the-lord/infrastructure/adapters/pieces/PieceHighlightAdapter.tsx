@@ -141,26 +141,32 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
       }
     }
 
-    // Camera focus
-    os.focusOn(bot, {
-      duration: 1,
-      easing,
-      rotation: {
-        x: this.#highlightConfigProvider.getCameraPolar(),
-        y: this.#highlightConfigProvider.getCameraInitialAzimuth(),
-      },
-      zoom:
-        this.#highlightConfigProvider.getPieceCustomZoom(experience, key) ??
-        this.#highlightConfigProvider.getDefaultCameraZoom(),
-    }).then(() => {
-      this.#rotateAround({
-        bot,
-        interactionId,
-        isFirstCall: true,
-        experience,
-        key,
+    // Camera focus. Hiding a piece drops its dimension tag, so one coming back
+    // from HIDDEN only rejoins the portal once the tag written above reaches
+    // the view; focusing in the same batch would find nothing to focus on.
+    os.sleep(1)
+      .then(() =>
+        os.focusOn(bot, {
+          duration: 1,
+          easing,
+          rotation: {
+            x: this.#highlightConfigProvider.getCameraPolar(),
+            y: this.#highlightConfigProvider.getCameraInitialAzimuth(),
+          },
+          zoom:
+            this.#highlightConfigProvider.getPieceCustomZoom(experience, key) ??
+            this.#highlightConfigProvider.getDefaultCameraZoom(),
+        })
+      )
+      .then(() => {
+        this.#rotateAround({
+          bot,
+          interactionId,
+          isFirstCall: true,
+          experience,
+          key,
+        });
       });
-    });
 
     // Color blink: white → cyan → white
     this.#colorLerper
