@@ -357,6 +357,39 @@ describe("OfflineReadingHistoryStore", () => {
       });
     });
 
+    it("joins a sitting whose gap is exactly the threshold, but not a second past it", () => {
+      const gap = 600;
+      const previous: StoredReadingEvent = {
+        key: "previous",
+        userId: "user-1",
+        year: 2026,
+        bookId: "GEN",
+        chapter: 1,
+        start: NOON - 30,
+        end: NOON,
+        pendingOp: null,
+      };
+
+      // `end >= start - joinThreshold`, so a gap of exactly the threshold is
+      // still one sitting. Only tested at threshold + 1 before, which left the
+      // comparison free to be > instead of >=.
+      const onTheLine = extendOrCreateReadingRow([previous], {
+        ...span({ joinThresholdSeconds: gap }),
+        startSeconds: NOON + gap,
+        endSeconds: NOON + gap + 5,
+      });
+      expect(onTheLine.row.key).toBe("previous");
+      expect(onTheLine.row.end).toBe(NOON + gap + 5);
+
+      const oneSecondLate = extendOrCreateReadingRow([previous], {
+        ...span({ joinThresholdSeconds: gap }),
+        startSeconds: NOON + gap + 1,
+        endSeconds: NOON + gap + 6,
+      });
+      expect(oneSecondLate.row.key).not.toBe("previous");
+      expect(oneSecondLate.row.start).toBe(NOON + gap + 1);
+    });
+
     it("extends the most recently started event, not the first one it finds", () => {
       const rows: StoredReadingEvent[] = [
         {
