@@ -37,8 +37,27 @@ function recordingWriter() {
     [];
   let failWith: Error | null = null;
   const failuresByYear = new Map<number, Error>();
+  let gate: Promise<void> | null = null;
+  let openGate: (() => void) | null = null;
   return {
     writes,
+
+    /**
+     * Holds every write open until {@link release} is called, so a second
+     * `sync()` can be made to arrive while the first pass is still in flight
+     * rather than relying on timing to overlap them.
+     */
+    block: () => {
+      gate = new Promise<void>((resolve) => {
+        openGate = resolve;
+      });
+    },
+
+    release: () => {
+      openGate?.();
+      gate = null;
+      openGate = null;
+    },
 
     /** Fails every year's write. */
     failWith: (error: Error | null) => {
@@ -67,7 +86,12 @@ function recordingWriter() {
       if (failure) {
         throw failure;
       }
+      // Recorded before the wait, so a test can see the write has been reached
+      // while it is still being held open.
       writes.push({ recordName, year, events: [...events] });
+      if (gate) {
+        await gate;
+      }
     },
   };
 }
@@ -206,6 +230,23 @@ describe("ReadingHistorySyncManager", () => {
 
     setUserId("user-1");
     await waitForCondition(() => writer.writes.length > 0);
+
+    expect(writer.writes).toHaveLength(1);
+    expect(await store.listPending("user-1")).toEqual([]);
+  });
+
+  it("joins the pass already running instead of pushing the batch twice", async () => {
+    await record(IN_2026);
+    const { manager: sync } = create("user-1");
+
+    // The manager calls `sync()` opportunistically after every successful push,
+    // so a second call landing mid-pass is the normal case, not a rare race.
+    writer.block();
+    const first = sync.sync();
+    await waitForCondition(() => writer.writes.length > 0);
+    const second = sync.sync();
+    writer.release();
+    await Promise.all([first, second]);
 
     expect(writer.writes).toHaveLength(1);
     expect(await store.listPending("user-1")).toEqual([]);
