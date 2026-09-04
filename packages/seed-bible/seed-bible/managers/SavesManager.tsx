@@ -270,20 +270,44 @@ function renameLegacyDefaultCategory(name: string): string {
   return name === LEGACY_DEFAULT_SAVE_CATEGORY ? DEFAULT_SAVE_CATEGORY : name;
 }
 
-function parseRecord<T>(
+/**
+ * What a read of a record actually established.
+ *
+ * `absent` is a fact about the record: the server answered, and there is
+ * nothing at that address. `error` means we never found out — the request
+ * failed, or what came back wasn't a saves payload. Keeping them apart is what
+ * stops a transient read failure from looking like a brand-new user.
+ */
+type RecordRead<T> =
+  | { status: "found"; value: T }
+  | { status: "absent" }
+  | { status: "error" };
+
+function readRecord<T>(
   result: RecordResult | undefined,
   schema: z.ZodType<T>,
   label: string
-): T | null {
-  if (!result || !result.success || !result.data) {
-    return null;
+): RecordRead<T> {
+  if (!result) {
+    return { status: "error" };
+  }
+  if (!result.success) {
+    // `data_not_found` is the only failure that means "there is no record
+    // here". A server error, a rate limit, or an expired token all leave the
+    // question open, so they are errors rather than absences.
+    return result.errorCode === "data_not_found"
+      ? { status: "absent" }
+      : { status: "error" };
+  }
+  if (result.data === undefined || result.data === null) {
+    return { status: "absent" };
   }
   const parsed = schema.safeParse(result.data);
   if (!parsed.success) {
     console.warn(`Failed to parse ${label} payload:`, parsed.error);
-    return null;
+    return { status: "error" };
   }
-  return parsed.data;
+  return { status: "found", value: parsed.data };
 }
 
 export interface SavesManager {
@@ -498,32 +522,56 @@ export function createSavesManager(
       loadedUserId.value = userId;
     };
 
-    const legacy = parseRecord(
+    const legacy = readRecord(
       legacyData,
       legacySavesPayloadSchema,
       "legacy saves"
     );
-    const current = parseRecord(
+    const current = readRecord(
       currentData,
       persistedSavesPayloadSchema,
       "saves"
     );
 
-    if (current) {
-      const normalized = normalizeSaves(current.saves, current.categories);
+    if (current.status === "found") {
+      const normalized = normalizeSaves(
+        current.value.saves,
+        current.value.categories
+      );
       apply(normalized);
-      reportLegacyDivergence(normalized.saves, legacy);
+      reportLegacyDivergence(
+        normalized.saves,
+        legacy.status === "found" ? legacy.value : null
+      );
       return;
     }
 
-    if (legacy) {
+    if (current.status === "error" || legacy.status === "error") {
+      // A read that failed is not a record that is absent, and the difference
+      // is the whole migration. Copying the legacy record forward here would
+      // write a pre-migration snapshot over a `saves` record that is very
+      // likely still there — every migrated user keeps a readable legacy
+      // record until #1659, so one hiccup on the `saves` read would cost them
+      // every save made since they migrated. Applying an empty list is no
+      // better: it shows the user nothing and lets the next save overwrite a
+      // record we never managed to read.
+      //
+      // So: change nothing, leave the user unloaded, and let the next load
+      // (a refresh, or signing back in) try again.
+      console.warn(
+        "Could not read the saves records; leaving saves untouched until the next load."
+      );
+      return;
+    }
+
+    if (legacy.status === "found") {
       // A pure copy-forward of the legacy payload — nothing from memory folds
       // in. That is what makes it safe for two tabs to migrate the same user at
       // once: identical input, identical output, so whichever write lands last
       // is the same bytes as the other.
       const normalized = normalizeSaves(
-        legacy.bookmarks,
-        legacy.categories,
+        legacy.value.bookmarks,
+        legacy.value.categories,
         renameLegacyDefaultCategory
       );
       apply(normalized);
@@ -551,6 +599,16 @@ export function createSavesManager(
     const userId = login.userId.value;
     if (!userId) {
       console.warn("Cannot persist saves: user is not authenticated.");
+      return;
+    }
+    if (loadedUserId.value !== userId) {
+      // The stored record never loaded (see the error branch in `loadSaves`),
+      // so what is in memory is not this user's list. Writing it would replace
+      // a record we could not read with a nearly empty one. Dropping the
+      // change is the recoverable failure; the write is not.
+      console.warn(
+        "Cannot persist saves: the stored record has not loaded for this user."
+      );
       return;
     }
     await writeSaves(userId, nextSaves, nextCategories);

@@ -350,6 +350,100 @@ describe("SavesManager", () => {
       expect(recordDataMock).not.toHaveBeenCalled();
     });
 
+    /**
+     * Answers each address from a fixture, where a fixture may be a failure
+     * result rather than a payload — the case `setRecords` can't express.
+     */
+    const setReadResults = (results: {
+      saves?: unknown;
+      bookmarks?: unknown;
+    }): void => {
+      getDataMock.mockImplementation(
+        async (_userId: string, address: string) => {
+          const entry = results[address as keyof typeof results];
+          if (entry === undefined) {
+            return {
+              success: false,
+              errorCode: "data_not_found",
+              errorMessage: "Data not found",
+            };
+          }
+          if (
+            entry &&
+            typeof entry === "object" &&
+            (entry as { success?: unknown }).success === false
+          ) {
+            return entry;
+          }
+          return { success: true, data: entry };
+        }
+      );
+    };
+
+    const readFailure = {
+      success: false,
+      errorCode: "server_error",
+      errorMessage: "A server error occurred.",
+    };
+
+    it("does not migrate over a saves record it merely failed to read", async () => {
+      // The dangerous case: an already-migrated user whose `saves` read
+      // hiccups while the legacy read succeeds. Treating that as "no saves
+      // record yet" would write their pre-migration snapshot over the real
+      // one, losing every save made since they migrated.
+      setReadResults({ saves: readFailure, bookmarks: legacyRecord });
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(captureMock).not.toHaveBeenCalledWith(
+        "saves_migrated_from_legacy_bookmarks",
+        expect.anything()
+      );
+      expect(manager.saves.value).toEqual([]);
+    });
+
+    it("does not write a save made after a failed load", async () => {
+      // In-memory state after a failed read is empty because nothing loaded,
+      // not because the user has nothing. Persisting it would replace the
+      // record the read never reached.
+      setReadResults({ saves: readFailure, bookmarks: legacyRecord });
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+
+      await manager.addSave("BSB", "JHN", 3);
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("waits rather than starting fresh when the legacy read fails", async () => {
+      // Neither address answered usefully, so whether there is a legacy record
+      // to copy forward is still unknown. Applying an empty list here would
+      // let the next save write a `saves` record and strand the migration.
+      setReadResults({ bookmarks: readFailure });
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+
+      await manager.addSave("BSB", "JHN", 3);
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("still migrates when the legacy record is the only one there", async () => {
+      // The other side of the guard: `data_not_found` on `saves` is an answer,
+      // not a failure, so the copy-forward runs exactly as before.
+      setReadResults({ bookmarks: legacyRecord });
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+
+      expect(manager.saves.value).toEqual(migratedSaves);
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+    });
+
     it("neither rewrites nor duplicates on the load after a migration", async () => {
       setRecords({ bookmarks: legacyRecord });
 
