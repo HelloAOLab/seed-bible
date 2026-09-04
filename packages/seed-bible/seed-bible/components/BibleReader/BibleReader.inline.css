@@ -991,9 +991,22 @@
 }
 
 .sb-chapter-decoration-diminish {
-  .sb-verse,
+  /* Excluding the decorated verses here (rather than relying on the
+     `.sb-verse:has(.sb-verse-decoration-diminish)` override above to win)
+     matters because both selectors have equal specificity (two classes) —
+     a tie the later-declared rule would otherwise win regardless of which
+     one is meant to take precedence, silently dimming the very verses this
+     decoration exists to keep bright. */
+  .sb-verse:not(:has(.sb-verse-decoration-diminish)),
   .sb-chapter-heading {
     animation: diminish-in-out 3s ease-in-out;
+  }
+
+  /* Nested so this beats `.sb-chapter-decoration-diminish .sb-verse` above
+     (equal specificity would otherwise let the dim animation win). */
+  .sb-verse:has(.sb-verse-decoration-diminish) {
+    animation: none;
+    opacity: 1;
   }
 }
 

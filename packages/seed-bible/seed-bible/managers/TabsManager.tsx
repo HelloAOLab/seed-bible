@@ -175,12 +175,11 @@ function getUrlReadingLanguage(url: URL, basePath: string): string | null {
  *
  * Same test as the server: rebuild the path from what the URL resolved to and
  * rewrite only if it differs. That covers a typo ("senesis"), an alias
- * ("gen"), other casings ("Genesis"), the junk `getBookId`'s prefix fallback
- * accepts ("luke-skywalker" → Luke), and — since the canonical form always
- * includes the language segment — a 3-segment URL missing it entirely. A
- * no-op for a URL that is already canonical, a book that resolves to nothing
- * (the reader shows its own not-found state), or a legacy/non-reading-path
- * URL.
+ * ("gen"), other casings ("Genesis"), close typos that fuzzy-match a book
+ * slug, and — since the canonical form always includes the language segment —
+ * a 3-segment URL missing it entirely. A no-op for a URL that is already
+ * canonical, a book that resolves to nothing (the reader shows its own
+ * not-found state), or a legacy/non-reading-path URL.
  */
 function selfHealNonCanonicalPath(navigation: NavigationManager): void {
   const url = navigation.currentUrl.peek();

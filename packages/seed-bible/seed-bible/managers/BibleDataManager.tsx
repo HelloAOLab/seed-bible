@@ -14,6 +14,7 @@ import {
 } from "../managers/OfflineTranslationsManager";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
+import { isVerseReferenceInBounds } from "./verseReferenceBounds";
 
 /**
  * Opaque cache for `getTranslations()`'s network result, keyed by normalized
@@ -279,11 +280,11 @@ export interface VerseRefMatch {
  * single-string refs in chat / footnotes.
  *
  * When `books` is provided, only an exact match on localized common name, name,
- * or id is tried (e.g. spa_onbv "Esdras" → EZR). Deliberate prefix abbreviations
- * are intentionally not used here — short ordinary words like "Is" / "So" would
- * otherwise become false-positive Isaiah / Song of Solomon links. Falls back to
- * the English name / USFM id map via {@link getBookId}, which is already
- * conservative about prefixes.
+ * or id is tried (e.g. spa_onbv "Esdras" → EZR). Unique-prefix expansion of
+ * short tokens (e.g. "Is" → Isaiah) is intentionally not used here — that
+ * belongs in the deliberate single-reference parser. Falls back to the English
+ * name / USFM id map via {@link getBookId}, which only accepts the typed text
+ * as a prefix of a known key (so "Isaac" does not become Isaiah).
  */
 function resolveBookId(book: string, books?: TranslationBook[]): BookId | null {
   if (books?.length) {
@@ -362,8 +363,23 @@ export function parseVerseReference(
       ? text.substring(reference.length).trim() || undefined
       : undefined;
 
+  const bookId = resolveBookId(book, books);
+  if (
+    bookId &&
+    !isVerseReferenceInBounds(
+      bookId,
+      chapter,
+      verse,
+      endChapter,
+      endVerse,
+      books
+    )
+  ) {
+    return null;
+  }
+
   return {
-    book: (resolveBookId(book, books) ?? book) as BookId,
+    book: (bookId ?? book) as BookId,
     chapter,
     verse,
     content,
@@ -373,15 +389,21 @@ export function parseVerseReference(
 }
 
 /**
- * Finds and parses all verse references in the given text, returning each
- * with its character offsets (start inclusive, end exclusive).
+ * Finds and parses all verse references in free prose, returning each with its
+ * character offsets (start inclusive, end exclusive).
+ *
+ * Distinct from {@link parseSingleVerseReference} /
+ * {@link parseVerseReferenceCandidates} in `parseVerseReference.ts`, which
+ * parse one deliberate typed reference (search box) with ambiguous-prefix
+ * expansion.
  *
  * @param books Optional current-translation books; searched before English
  * names / book ids so localized labels resolve correctly. Matching is exact
  * (plus conservative English ids via {@link getBookId}); free-text scanning
- * does not apply unique-prefix expansion of short tokens.
+ * does not apply unique-prefix expansion of short tokens. Chapter/verse
+ * numbers must exist for the book ({@link isVerseReferenceInBounds}).
  */
-export function parseVerseReferences(
+export function scanVerseReferencesInText(
   text: string,
   books?: TranslationBook[]
 ): VerseRefMatch[] {
@@ -449,6 +471,20 @@ export function parseVerseReferences(
       }
     }
 
+    if (
+      !isVerseReferenceInBounds(
+        bookId,
+        chapter,
+        verse,
+        endChapter,
+        endVerse,
+        books
+      )
+    ) {
+      retryFromNextChar();
+      continue;
+    }
+
     results.push({
       ref: {
         book: bookId as BookId,
@@ -465,6 +501,9 @@ export function parseVerseReferences(
   return results;
 }
 
+/** @deprecated Use {@link scanVerseReferencesInText}. */
+export const parseVerseReferences = scanVerseReferencesInText;
+
 /**
  * Defines a map that maps the book ID to the USFM Book identifier.
  */
@@ -474,7 +513,8 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["exo", "EXO"],
   ["exodus", "EXO"],
   ["lev", "LEV"],
-  ["lev", "LEV"],
+  ["leviticus", "LEV"],
+  // Typo alias retained for tolerance; correct spelling is above.
   ["laviticus", "LEV"],
   ["num", "NUM"],
   ["numbers", "NUM"],
@@ -507,6 +547,8 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["neh", "NEH"],
   ["nehemiah", "NEH"],
   ["est", "EST"],
+  ["esther", "EST"],
+  // Typo alias retained for tolerance; correct spelling is above.
   ["ester", "EST"],
   ["job", "JOB"],
   ["ps", "PSA"],
@@ -552,6 +594,8 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["hab", "HAB"],
   ["habakkuk", "HAB"],
   ["zep", "ZEP"],
+  ["zephaniah", "ZEP"],
+  // Typo alias retained for tolerance; correct spelling is above.
   ["zepaniah", "ZEP"],
   ["hag", "HAG"],
   ["haggai", "HAG"],
@@ -660,25 +704,37 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
 /**
  * Gets the ID of the given book.
  * Returns null if the ID could not be found.
- * @param book The name/ID of the book. Whitespace and hyphens are ignored, so
- * both "Song of Solomon" and the URL slug "song-of-solomon" resolve.
+ * @param book The name/ID of the book. Whitespace, hyphens, and trailing
+ * punctuation are ignored, so "Song of Solomon", "song-of-solomon", and
+ * "Gen." all resolve.
  */
 export function getBookId(book: string): BookId | null {
   const hadSpaces = /\s/.test(book.trim());
-  const bookLower = book.toLowerCase().replaceAll(/[\s-]+/g, "");
+  // Strip whitespace/hyphens, then trailing punctuation (e.g. "Gen." → "gen").
+  const bookLower = book
+    .toLowerCase()
+    .replaceAll(/[\s-]+/g, "")
+    .replace(/[^\p{L}\p{N}]+$/u, "");
+
+  if (!bookLower) {
+    return null;
+  }
 
   const id = BOOK_ID_MAP.get(bookLower);
   if (id) {
     return id;
   }
 
-  // Loose prefix fallback is for single-token inputs (e.g. "Leviticus" → lev)
-  // and numbered-book abbreviations (e.g. "1 chron" → 1ch). Multi-word phrases
-  // that aren't numbered — like "Song of Moses" — must match a book name
-  // exactly, or not at all.
-  if (!hadSpaces || /^\d/.test(bookLower)) {
+  // Abbreviation fallback: the typed text must be a prefix of a known key
+  // (e.g. "Genes" → "genesis", "1 chron" → "1chronicles"), and at least three
+  // characters so two-letter ordinary words ("Is", "So", "Jo") never match.
+  // The opposite direction — key is a prefix of the typed text — would link
+  // ordinary words like "Isaac" / "Judah" / "Jerusalem" to Isaiah / Jude /
+  // Jeremiah. Multi-word phrases that aren't numbered — like "Song of Moses"
+  // — must match a book name exactly, or not at all.
+  if (bookLower.length >= 3 && (!hadSpaces || /^\d/.test(bookLower))) {
     for (const [key, mappedId] of BOOK_ID_MAP) {
-      if (bookLower.startsWith(key)) {
+      if (key.startsWith(bookLower)) {
         return mappedId;
       }
     }

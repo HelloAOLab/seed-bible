@@ -389,6 +389,8 @@ export interface SeedBibleState {
    * Playlist manager for creating, editing, and syncing user playlists.
    */
   playlists: PlaylistManager;
+  /** Saved photos the user has uploaded, for reuse as covers and later features. */
+  gallery: UserGalleryManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -430,6 +432,10 @@ import {
   type PlaylistManager,
   type PlaylistItemData,
 } from "./PlaylistManager";
+import {
+  createUserGalleryManager,
+  type UserGalleryManager,
+} from "./UserGalleryManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
@@ -676,6 +682,7 @@ export function createSeedBibleState(
     },
   });
   const readingPlans = createReadingPlansManager(os, login);
+  const gallery = createUserGalleryManager(os, login);
 
   // Theme is the source of truth for text colors. When the user switches
   // theme presets, drop any per-section color override from the text editor
@@ -1385,11 +1392,26 @@ export function createSeedBibleState(
     sidebar.closeSidebar();
   };
 
+  /**
+   * Dismisses the sidebar and runs a navigation as a single history entry.
+   * Both halves write the URL — the sidebar drops `?sidebar=open`, the reader
+   * writes the new position — and each write on its own would cost a history
+   * entry, so pressing back afterwards would land on a stale duplicate of the
+   * destination instead of where the user actually came from.
+   */
+  const navigateFromSidebar = (navigate: () => void) => {
+    navigation.batchWrites(() => {
+      closeSidebarAndSettings();
+      navigate();
+    });
+  };
+
   const handleSelectTab = (tabId: string) => {
-    closeSidebarAndSettings();
-    tabs.selectTab(tabId);
-    tabsLayout.setSelectedSlotTab(tabId);
-    panes.closeFullscreenPanes();
+    navigateFromSidebar(() => {
+      tabs.selectTab(tabId);
+      tabsLayout.setSelectedSlotTab(tabId);
+      panes.closeFullscreenPanes();
+    });
   };
 
   const handleAddTab = () => {
@@ -1403,27 +1425,30 @@ export function createSeedBibleState(
   };
 
   const handleOpenInNewSlot = (tabId: string) => {
-    closeSidebarAndSettings();
-    const slot = tabsLayout.openTabInNewSlot(tabId);
-    if (slot?.tab) {
-      tabs.selectTab(slot.tab.id);
-    }
+    navigateFromSidebar(() => {
+      const slot = tabsLayout.openTabInNewSlot(tabId);
+      if (slot?.tab) {
+        tabs.selectTab(slot.tab.id);
+      }
+    });
   };
 
   const handleSelectSlot = (slotId: string) => {
-    closeSidebarAndSettings();
-    tabsLayout.selectSlot(slotId);
+    navigateFromSidebar(() => {
+      tabsLayout.selectSlot(slotId);
 
-    const selectedSlot =
-      tabsLayout.slots.value.find((slot) => slot.id === slotId) ?? null;
-    if (selectedSlot?.tab) {
-      tabs.selectTab(selectedSlot.tab.id);
-    }
+      const selectedSlot =
+        tabsLayout.slots.value.find((slot) => slot.id === slotId) ?? null;
+      if (selectedSlot?.tab) {
+        tabs.selectTab(selectedSlot.tab.id);
+      }
+    });
   };
 
   const handleSelectPane = (paneId: string) => {
-    closeSidebarAndSettings();
-    panes.selectPane(paneId);
+    navigateFromSidebar(() => {
+      panes.selectPane(paneId);
+    });
   };
 
   // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
@@ -2093,6 +2118,7 @@ export function createSeedBibleState(
     extensions,
     readingPlans,
     playlists,
+    gallery,
     tutorial,
     onboarding,
     isTermsOpen,
@@ -2168,6 +2194,7 @@ export function createSeedBibleState(
             tabs={tabs}
             chats={chats}
             openChatPanel={sidebar.openChatPanel}
+            modals={modals}
           />
         ),
         header: () => (

@@ -61,6 +61,7 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
             pathname: location.pathname,
             search: location.search,
             container,
+            clientCommit: __GIT_COMMIT__,
           });
 
     const app = <Main initialState={state} config={config} />;

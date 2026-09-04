@@ -235,6 +235,7 @@ function createMockChatSession(
     removeParticipant: vi.fn(),
     getMessageAuthors: vi.fn().mockReturnValue([]),
     context: signal({}),
+    unsentDraft: signal(""),
     ...overrides,
   };
 }
@@ -249,6 +250,7 @@ function createMockChatListState(
     chats: {
       providers: signal(overrides.providers ?? []),
       selectChat: overrides.selectChat ?? vi.fn(),
+      composerDraft: signal(""),
     },
   } as unknown as SeedBibleState;
 }
@@ -568,6 +570,7 @@ function createMockFloatingChatPanelState(
       selectChat,
       providers: signal(opts.providers ?? []),
       activeContexts: signal(opts.activeContexts ?? []),
+      composerDraft: signal(""),
     },
   } as unknown as SeedBibleState;
   return { state, closeChatPanel, selectChat };
@@ -731,6 +734,10 @@ describe("FloatingChatPanel", () => {
       render(<FloatingChatPanel state={state} />, container);
     });
 
+    act(() => {
+      vi.runAllTimers();
+    });
+
     const outsideEl = document.createElement("div");
     document.body.appendChild(outsideEl);
     act(() => {
@@ -739,6 +746,54 @@ describe("FloatingChatPanel", () => {
     outsideEl.remove();
 
     expect(closeChatPanel).toHaveBeenCalled();
+  });
+
+  it("ignores a pointerdown on the verse toolbar so Ask AI can open without immediately closing", () => {
+    const { state, closeChatPanel } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    const verseToolbar = document.createElement("div");
+    verseToolbar.className = "sb-verse-toolbar";
+    const askAiButton = document.createElement("button");
+    verseToolbar.appendChild(askAiButton);
+    document.body.appendChild(verseToolbar);
+
+    act(() => {
+      askAiButton.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true })
+      );
+    });
+    verseToolbar.remove();
+
+    expect(closeChatPanel).not.toHaveBeenCalled();
+  });
+
+  it("does not close on an outside pointerdown that arrives before the dismiss listener attaches", () => {
+    const { state, closeChatPanel } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const outsideEl = document.createElement("div");
+    document.body.appendChild(outsideEl);
+    act(() => {
+      outsideEl.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    });
+    outsideEl.remove();
+
+    expect(closeChatPanel).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.runAllTimers();
+    });
   });
 
   it("pressing Escape calls closeChatPanel", () => {
