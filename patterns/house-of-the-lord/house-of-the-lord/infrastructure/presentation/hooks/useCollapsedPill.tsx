@@ -12,7 +12,7 @@ export const useCollapsedPill: UseCollapsedPill = () => {
   }, [controller]);
 
   const text = "Explore";
-  const icon = "▤";
+  const icon = "explore";
 
   return {
     handleClick,

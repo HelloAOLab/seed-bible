@@ -30,27 +30,29 @@
   outline-offset: 2px;
 }
 
-.hotl-pill {
+.hotl-nav .hotl-pill {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   height: 2.75rem;
   padding: 0 1.125rem;
-  border: var(--sb-reader-toolbar-border, 1px solid #00000024);
+  border: 1px solid
+    color-mix(in srgb, var(--sb-menu-font-color, #333), transparent 80%);
   border-radius: var(--sb-reader-toolbar-border-radius, 1.25rem);
-  background: var(--sb-reader-toolbar-background, #fff);
-  box-shadow: var(
-    --sb-reader-toolbar-box-shadow,
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08)
-  );
-  color: var(--sb-reader-toolbar-font-color, #333);
+  background: var(--sb-menu-background, #fff);
+  box-shadow: 0 10px 30px var(--sb-shadow-color, rgba(0, 0, 0, 0.08));
+  color: var(--sb-menu-font-color, #333);
   font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
 
-.hotl-pill:hover {
+.hotl-nav .material-icons {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.hotl-nav .hotl-pill:hover {
   background: var(--sb-secondary-color, #faddd1);
   border-color: var(--sb-primary-color, #e07b4c);
 }

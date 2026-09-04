@@ -34,6 +34,10 @@ export const NavMenuContainer = ({
     <>
       {themeCss ? <style>{themeCss}</style> : null}
       <style>{styles}</style>
+      <link
+        href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        rel="stylesheet"
+      />
       <div
         className="hotl-nav"
         onPointerEnter={handlePointerEnter}

@@ -54,6 +54,7 @@ import { BaseEventManager } from "../../application/services/BaseEventManager";
 import {
   MESSAGE_TO_EVENT_MAP,
   type InfrastructureEventMap,
+  type InfrastructureEventPort,
 } from "../models/events";
 import { HitboxMapper } from "../mappers/HitboxMapper";
 import { EXPERIENCE_KEYS } from "../../domain/models/experience";
@@ -81,6 +82,27 @@ import { BookNameConfigProvider } from "../config/bookName/BookNameConfigProvide
 import { SeedBibleController } from "../controllers/seedBible/SeedBibleController";
 
 let initialized = false;
+
+// A safety net, not a timing assumption: the theme lands long before the scene
+// finishes deploying. It only matters when nothing answers — an older reader,
+// or the pattern opened outside one — where the menu falls back to the
+// stylesheet's own colors instead of never rendering.
+const THEME_WAIT_TIMEOUT_MS = 2000;
+
+const waitForEvent = (
+  eventBus: InfrastructureEventPort,
+  eventName: keyof InfrastructureEventMap,
+  timeoutMs: number
+) =>
+  new Promise<void>((resolve) => {
+    const finish = () => {
+      clearTimeout(timeout);
+      unsubscribe();
+      resolve();
+    };
+    const timeout = setTimeout(finish, timeoutMs);
+    const unsubscribe = eventBus.subscribe(eventName, finish);
+  });
 
 const mainPieces: {
   [K in PieceKey]: PieceBot<K>;
@@ -409,16 +431,12 @@ export const bootstrapExtension = async () => {
     );
   });
 
-  // 6. Disposers
+  // Announced here rather than at the end: it tells the reader the bridge is
+  // listening, not that the experience finished deploying. The reader answers
+  // with the current theme and reading, which arrive while the scene builds.
+  hostNotifierAdapter.notifyReady();
 
-  await navMenuRendererAdapter
-    .render()
-    .catch((reason) =>
-      console.error(
-        "house-of-the-lord pattern bootstrap: Failed to display navigation menu",
-        { reason }
-      )
-    );
+  // 6. Disposers
 
   const displayed = await experienceService
     .tryDisplayExperience()
@@ -435,9 +453,20 @@ export const bootstrapExtension = async () => {
     return;
   }
 
+  if (!themeStateAdapter.getCss()) {
+    await waitForEvent(eventManager, "OnThemeChanged", THEME_WAIT_TIMEOUT_MS);
+  }
+
+  await navMenuRendererAdapter
+    .render()
+    .catch((reason) =>
+      console.error(
+        "house-of-the-lord pattern bootstrap: Failed to display navigation menu",
+        { reason }
+      )
+    );
+
   if (HIGHLIGHTED_PIECE) {
     pieceFocusService.focus(HIGHLIGHTED_PIECE);
   }
-
-  hostNotifierAdapter.notifyReady();
 };

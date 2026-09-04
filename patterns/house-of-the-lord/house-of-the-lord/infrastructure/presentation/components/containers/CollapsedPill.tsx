@@ -11,7 +11,9 @@ export const CollapsedPill = () => {
 
   return (
     <button type="button" className="hotl-pill" onClick={handleClick}>
-      <span aria-hidden="true">{icon}</span>
+      <span className="material-icons" aria-hidden="true">
+        {icon}
+      </span>
       <span>{text}</span>
     </button>
   );
