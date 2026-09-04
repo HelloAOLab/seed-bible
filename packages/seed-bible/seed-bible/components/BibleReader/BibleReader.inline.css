@@ -1016,6 +1016,13 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .sb-verse,
+  .sb-chapter-heading {
+    transition: none;
+  }
+}
+
 .sb-highlight-preview-pill {
   display: inline-block;
   padding: 0.25rem 0.625rem;
