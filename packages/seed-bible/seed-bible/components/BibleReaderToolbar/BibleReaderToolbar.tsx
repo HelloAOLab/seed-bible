@@ -610,7 +610,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     settings,
     bookmarks,
     login,
-    navigation,
   } = props.state;
   const selectedTab = useComputed(
     () =>
