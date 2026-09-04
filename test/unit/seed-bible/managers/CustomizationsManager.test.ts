@@ -891,6 +891,70 @@ describe("CustomizationsManager", () => {
     expect(theme.customOverrides.value).toEqual({});
   });
 
+  it("updateEditingDefaultTranslationId() sets the draft's default translation without persisting, then persists it on save", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    expect(created.defaultTranslationId).toBeUndefined();
+    manager.startEditing(created.id);
+
+    manager.updateEditingDefaultTranslationId("NIV");
+
+    expect(manager.editingCustomization.value?.defaultTranslationId).toBe(
+      "NIV"
+    );
+    expect(
+      manager.customizations.value[0]?.defaultTranslationId
+    ).toBeUndefined();
+
+    await manager.saveEditingCustomization();
+
+    expect(manager.customizations.value[0]?.defaultTranslationId).toBe("NIV");
+  });
+
+  it("updateEditingDefaultTranslationId(null) clears a previously-set default translation", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.updateEditingDefaultTranslationId("NIV");
+    await manager.saveEditingCustomization();
+    expect(manager.customizations.value[0]?.defaultTranslationId).toBe("NIV");
+
+    manager.updateEditingDefaultTranslationId(null);
+    await manager.saveEditingCustomization();
+
+    expect(
+      manager.customizations.value[0]?.defaultTranslationId
+    ).toBeUndefined();
+  });
+
+  it("updateEditingDefaultTranslationId() no-ops when there is no open draft", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+
+    manager.updateEditingDefaultTranslationId("NIV");
+
+    expect(manager.customizations.value[0]?.defaultTranslationId).toBe(
+      created.defaultTranslationId
+    );
+  });
+
+  it("load() accepts a persisted record that already carries a defaultTranslationId", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.updateEditingDefaultTranslationId("ESV");
+    await manager.saveEditingCustomization();
+    const persisted = manager.customizations.value[0]!;
+
+    listAllDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [{ address: persisted.id, data: persisted }],
+    });
+    await manager.load();
+
+    expect(manager.customizations.value[0]?.defaultTranslationId).toBe("ESV");
+  });
+
   it("setEditingExtensionAvailability() sets an id's availability on the draft without persisting", async () => {
     const { manager } = createManager();
     const created = await manager.create();

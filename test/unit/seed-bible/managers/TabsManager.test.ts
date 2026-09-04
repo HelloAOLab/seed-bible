@@ -23,7 +23,7 @@ import {
   makeExampleUrl,
   translations,
 } from "./testUtils/mockBibleApiData";
-import { signal } from "@preact/signals";
+import { signal, type ReadonlySignal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
@@ -168,9 +168,11 @@ describe("parseVerseSelection", () => {
 function createTabsManager({
   dataManager: data,
   i18nManager: i18n,
+  activeCustomizationDefaultTranslationId,
 }: {
   dataManager?: ReturnType<typeof createDataManager>;
   i18nManager?: ReturnType<typeof createI18nManager>;
+  activeCustomizationDefaultTranslationId?: ReadonlySignal<string | undefined>;
 } = {}) {
   const navigation = createNavigationManager();
   const dataManager = data || createDataManager();
@@ -183,7 +185,13 @@ function createTabsManager({
     highlightsManager,
     {} as any,
     i18nManager,
-    login
+    login,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    activeCustomizationDefaultTranslationId
   );
 
   return {
@@ -1174,6 +1182,77 @@ describe("createTabs", () => {
     // The profile-apply effect runs synchronously off the profile signal; a
     // differing saved value must not override an explicit URL translation.
     expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("applies the active customization's default translation once it becomes known, overriding Seed Bible's own default", async () => {
+    // No `?translation=` in the URL and no signed-in profile, so this
+    // mirrors following a `?customization=...` share link: the customization
+    // resolves over the network well after the initial (default) tab exists.
+    setWebResponses(createExampleManagerResponseMap());
+    const activeCustomizationDefaultTranslationId = signal<string | undefined>(
+      undefined
+    );
+
+    const { tabs: manager } = createTabsManager({
+      activeCustomizationDefaultTranslationId,
+    });
+    const firstTab = manager.tabs.value[0]!;
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    activeCustomizationDefaultTranslationId.value = "NIV";
+
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("does not let a customization's default translation override an explicit URL translation", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "?translation=NIV&book=MAT&chapter=1"
+    );
+    setWebResponses(createExampleManagerResponseMap());
+    const activeCustomizationDefaultTranslationId = signal<string | undefined>(
+      undefined
+    );
+
+    const { tabs: manager } = createTabsManager({
+      activeCustomizationDefaultTranslationId,
+    });
+    await waitForTabsToLoad(manager.tabs.value);
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+
+    activeCustomizationDefaultTranslationId.value = "AAB";
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("prefers a signed-in reader's own saved translation over the active customization's default", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const activeCustomizationDefaultTranslationId = signal<string | undefined>(
+      "NIV"
+    );
+
+    const { tabs: manager, login } = createTabsManager({
+      activeCustomizationDefaultTranslationId,
+    });
+    const firstTab = manager.tabs.value[0]!;
+    await waitForInitialLoad(firstTab.readingState);
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "AAB" } };
+
+    // Give the customization-default effect a chance to run; the saved
+    // profile translation (already AAB, matching the boot default) must win,
+    // so the customization's NIV default must never apply.
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await waitForInitialLoad(firstTab.readingState);
+
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
   });
 
   it("falls back to the saved translation's first book when it doesn't contain the current book", async () => {

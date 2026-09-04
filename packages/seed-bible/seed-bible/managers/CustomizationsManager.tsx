@@ -302,6 +302,14 @@ const customizationSchema = z
     variants: z.array(customizationVariantSchema).min(1),
     defaultVariantId: z.string().min(1),
     logoUrl: z.url().max(1024).optional().nullable(),
+    /**
+     * The translation viewers of this customization should start reading in,
+     * overriding Seed Bible's own per-language default (see
+     * `DEFAULT_TRANSLATIONS_BY_LANGUAGE` in `BibleReadingManager`) the same
+     * way `BrandingConfig.defaultTranslationId` does for a whole deployment.
+     * Absent means "no override — use Seed Bible's normal default."
+     */
+    defaultTranslationId: z.string().min(1).optional(),
     createdAt: z.number(),
     updatedAt: z.number(),
     /**
@@ -351,6 +359,12 @@ export interface SeedBibleCustomization {
   /** The variant id shown to a viewer who hasn't picked one for this customization yet. Always references an entry in `variants`. */
   defaultVariantId: string;
   logoUrl?: string | null;
+  /**
+   * The translation viewers should start reading in while this
+   * customization is active, overriding Seed Bible's per-language default.
+   * Absent means no override.
+   */
+  defaultTranslationId?: string;
   createdAt: number;
   updatedAt: number;
   /** Per-extension availability while this customization is active. An id with no entry defaults to "available". */
@@ -670,6 +684,8 @@ export interface CustomizationsManager {
   // Synchronous, draft-only mutators. Each no-ops if `editingCustomization` is
   // null, and otherwise queues a debounced auto-save of the draft.
   updateEditingName: (name: string) => void;
+  /** Sets (or clears, given `null`) the draft's default translation. No-op with no open draft. */
+  updateEditingDefaultTranslationId: (translationId: string | null) => void;
   /** Clears the draft's logo and immediately persists it (unlike every other draft field, which auto-saves only after a short debounce). No-op with no open draft. */
   removeEditingLogo: () => Promise<void>;
   /** Adds a new variant to the draft, based on the viewer's current preset (no overrides of its own yet). */
@@ -1111,6 +1127,21 @@ export function createCustomizationsManager(
     scheduleAutoSave();
   };
 
+  const updateEditingDefaultTranslationId = (
+    translationId: string | null
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      defaultTranslationId: translationId ?? undefined,
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
   const addEditingVariant = (): CustomizationThemeVariant | null => {
     const current = editingCustomization.value;
     if (!current) {
@@ -1543,6 +1574,7 @@ export function createCustomizationsManager(
     uploadLogo,
     getShareLink,
     updateEditingName,
+    updateEditingDefaultTranslationId,
     removeEditingLogo,
     addEditingVariant,
     applyPresetToEditingVariant,
