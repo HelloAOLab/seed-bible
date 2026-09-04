@@ -161,6 +161,60 @@ describe("PlayPlaylistView", () => {
     ).toBe("true");
   });
 
+  it("shows a cover banner when the playing playlist has a hero image", () => {
+    const playlist = createPlaylist({
+      heroImageUrl: "https://example.com/cover.jpg",
+      items: [verseItem()],
+    });
+    const playing = createPlayingState([playlist]);
+    const { playlists } = createMockPlaylists(playing);
+    const tabs = createMockTabs();
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const banner = container.querySelector(
+      ".sb-hero-banner img"
+    ) as HTMLImageElement;
+    expect(banner).not.toBeNull();
+    expect(banner.src).toBe("https://example.com/cover.jpg");
+    expect(banner.alt).toBe("My Playlist");
+    expect(container.querySelector(".sb-hero-banner--empty")).toBeNull();
+  });
+
+  it("shows a No image placeholder when the playlist has no cover", () => {
+    const playlist = createPlaylist({ items: [verseItem()] });
+    const playing = createPlayingState([playlist]);
+    const { playlists } = createMockPlaylists(playing);
+    const tabs = createMockTabs();
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const placeholder = container.querySelector(".sb-hero-banner--empty");
+    expect(placeholder).not.toBeNull();
+    expect(placeholder?.textContent).toContain("No image");
+    expect(container.querySelector(".sb-hero-banner img")).toBeNull();
+  });
+
   it("resolves bible-verse item labels using the selected tab's translation books", () => {
     const playlist = createPlaylist({
       items: [verseItem({ ref: { bookId: "GEN", chapter: 1, verse: 1 } })],

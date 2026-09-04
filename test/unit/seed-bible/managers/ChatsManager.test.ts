@@ -393,6 +393,27 @@ describe("createChatsManager", () => {
     expect(firstChat).not.toBe(secondChat);
   });
 
+  it("exposes an empty composerDraft for prefilling the compose field", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    expect(chats.composerDraft.value).toBe("");
+    chats.composerDraft.value = "In the beginning. (Genesis 1:1 NIV)\n\n";
+    expect(chats.composerDraft.value).toBe(
+      "In the beginning. (Genesis 1:1 NIV)\n\n"
+    );
+  });
+
+  it("createLocalSession() exposes an empty unsentDraft for the compose field", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    expect(session.unsentDraft.value).toBe("");
+    session.unsentDraft.value = "how does this connect to";
+    expect(session.unsentDraft.value).toBe("how does this connect to");
+  });
+
   it("createLocalSession() exposes lastMessageRead and markAsRead()", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-1";

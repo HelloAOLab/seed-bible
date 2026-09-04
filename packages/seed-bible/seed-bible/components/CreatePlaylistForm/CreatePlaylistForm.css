@@ -36,3 +36,24 @@
   resize: vertical;
   line-height: 1.4;
 }
+
+/* Unsaved-changes modal: same primary/secondary pair as other app dialogs
+ * (photo crop, profile picture). Secondary is filled so it isn't a ghost
+ * button; primary uses the theme color, never the red "end session" style. */
+.sb-unsaved-changes-actions
+  .sb-photo-modal-button:not(.sb-photo-modal-button-primary) {
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  border-color: var(--sb-secondary-color);
+}
+
+.sb-unsaved-changes-actions
+  .sb-photo-modal-button:not(.sb-photo-modal-button-primary):hover:not(
+    :disabled
+  ) {
+  background: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    var(--sb-primary-color) 16%
+  );
+}

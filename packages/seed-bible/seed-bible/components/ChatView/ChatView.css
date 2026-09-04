@@ -432,8 +432,8 @@ img.sb-chat-view-message-avatar {
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  /* Cap at 5 lines: 5 × font-size × line-height + vertical padding. */
-  max-height: calc(0.875rem * 1.2 * 5 + 1.25rem);
+  /* Cap at 8 lines: 8 × font-size × line-height + vertical padding. */
+  max-height: calc(0.875rem * 1.2 * 8 + 1.25rem);
 }
 
 .sb-chat-view-input::-webkit-scrollbar {
