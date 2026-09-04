@@ -872,6 +872,38 @@ describe("createSeedBibleState", () => {
     expect(state.selector.isOpen.value).toBe(false);
   });
 
+  it("selecting a side pane on desktop leaves the Settings sidebar open, so the Customization Center's list stays visible behind its editor pane", async () => {
+    const state = await createState();
+    state.sidebar.openSettings();
+    const pane = state.panes.openPane({
+      placement: "side",
+      title: "Test Pane",
+      component: () => null,
+    });
+
+    state.app.selectPane(pane.id);
+
+    expect(state.sidebar.isSettingsOpen.value).toBe(true);
+  });
+
+  it("selecting a pane on mobile closes the sidebar drawer, since every pane renders fullscreen there", async () => {
+    const state = await createState();
+    (state.app.viewportWidth as unknown as { value: number }).value =
+      MOBILE_BREAKPOINT;
+    state.sidebar.openSidebar();
+    state.sidebar.openSettings();
+    const pane = state.panes.openPane({
+      placement: "side",
+      title: "Test Pane",
+      component: () => null,
+    });
+
+    state.app.selectPane(pane.id);
+
+    expect(state.sidebar.isMobileOpen.value).toBe(false);
+    expect(state.sidebar.isSettingsOpen.value).toBe(false);
+  });
+
   it("closes a fullscreen pane when navigating to a new chapter", async () => {
     jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
     const state = await createState();
@@ -1623,6 +1655,117 @@ describe("createSeedBibleState", () => {
 
       expect(state.app.title.value).toBe(
         `${RTLE_CHAR}Genesis 1 - AAB | الكتاب المقدس للبذور`
+      );
+    });
+
+    it("uses the active customization's name in place of the app name", async () => {
+      const state = await createState();
+      setSelectedTabChapter(state, "genesis", "Genesis", 7, "ESV");
+      expect(state.app.title.value).toBe("Genesis 7 - ESV | Seed Bible");
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            baseTheme: "light",
+            themes: {},
+            highlightColors: {},
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: null,
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+      };
+
+      expect(state.app.title.value).toBe("Genesis 7 - ESV | Grandma's Bible");
+
+      state.customizations.editingCustomization.value = null;
+
+      expect(state.app.title.value).toBe("Genesis 7 - ESV | Seed Bible");
+    });
+  });
+
+  describe("siteName tag", () => {
+    it("defaults to the app name", async () => {
+      const state = await createState();
+
+      expect(state.app.siteName.value).toBe("Seed Bible");
+    });
+
+    it("uses the active customization's name in place of the app name", async () => {
+      const state = await createState();
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            baseTheme: "light",
+            themes: {},
+            highlightColors: {},
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: null,
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+      };
+
+      expect(state.app.siteName.value).toBe("Grandma's Bible");
+    });
+  });
+
+  describe("customization highlight-color overrides", () => {
+    it("layers the active customization variant's highlight overrides onto the rendered theme, leaving untouched ids alone", async () => {
+      const state = await createState();
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            baseTheme: "light",
+            themes: {},
+            highlightColors: { yellow: { color: "#123456" } },
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: null,
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+      };
+
+      expect(state.theme.themeCssVariables.value).toContain(
+        "--sb-highlight-yellow-color: #123456;"
+      );
+      // An id the customization's variant doesn't override still shows the
+      // base theme's own value — the merge is per-id, not a wholesale
+      // replace of every highlight color.
+      expect(state.theme.themeCssVariables.value).toContain(
+        "--sb-highlight-green-color: #a5d6a7;"
+      );
+
+      state.customizations.editingCustomization.value = null;
+
+      expect(state.theme.themeCssVariables.value).not.toContain(
+        "--sb-highlight-yellow-color: #123456;"
       );
     });
   });

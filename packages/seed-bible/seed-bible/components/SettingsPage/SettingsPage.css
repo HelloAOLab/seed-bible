@@ -282,6 +282,17 @@
   padding: 0.25rem 0.25rem;
 }
 
+.sb-settings-field-row-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sb-settings-field-row-controls > *:not(.sb-theme-color-reset) {
+  flex: 1;
+  min-width: 0;
+}
+
 .sb-settings-field-label {
   font-size: 0.8125rem;
   font-weight: 500;
@@ -629,6 +640,10 @@
 
 .sb-settings-actions {
   margin-top: 0.875rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
 }
 
 .sb-settings-save-button {
@@ -1227,10 +1242,24 @@
   flex: 1;
 }
 
+.sb-theme-color-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  min-width: 0;
+}
+
 .sb-theme-color-label {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--sb-font-color);
+}
+
+.sb-theme-contrast-warning {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--sb-error-color, #d64545);
+  cursor: help;
 }
 
 .sb-theme-color-value {
@@ -1523,4 +1552,70 @@
   .hide-on-mobile {
     display: none;
   }
+}
+
+/* Customizations list rows */
+.sb-customization-row {
+  gap: 0.625rem;
+}
+
+.sb-customization-swatches {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.sb-customization-swatch {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, black, transparent 80%);
+  margin-left: -0.375rem;
+}
+
+.sb-customization-swatch:first-child {
+  margin-left: 0;
+}
+
+.sb-customization-active-badge {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 1rem;
+  color: var(--sb-primary-font-color);
+  background: var(--sb-primary-color);
+}
+
+/* Customization logo upload (editor page) */
+.sb-customization-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.sb-customization-logo-preview,
+.sb-customization-logo-placeholder {
+  width: 3.875rem;
+  height: 3.875rem !important;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+}
+
+.sb-customization-logo-preview {
+  object-fit: cover;
+  border: 2px solid color-mix(in srgb, var(--sb-primary-color), transparent 60%);
+}
+
+.sb-customization-logo-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--sb-primary-color), #000 26%);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-customization-logo-placeholder .material-symbols-outlined {
+  font-size: 1.875rem;
 }
