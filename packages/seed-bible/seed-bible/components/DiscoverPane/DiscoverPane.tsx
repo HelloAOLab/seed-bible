@@ -23,12 +23,16 @@ import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
-import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
+import {
+  CreatePlaylistForm,
+  requestCancelPlaylistEditor,
+} from "../CreatePlaylistForm/CreatePlaylistForm";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   CrossReferencesSection,
@@ -104,6 +108,7 @@ export function DiscoverPaneTitle(props: {
   tabs: TabsManager;
   chats: ChatsManager;
   openChatPanel: () => void;
+  modals?: ModalManager;
 }) {
   const { playlists, annotations, tabs, chats, openChatPanel } = props;
   const { t } = useI18n();
@@ -206,7 +211,13 @@ export function DiscoverPaneTitle(props: {
           type="button"
           className="sb-reading-plans-back"
           aria-label={t("back", { defaultValue: "Back" })}
-          onClick={() => playlists.cancelEditingPlaylist()}
+          onClick={() => {
+            if (props.modals) {
+              requestCancelPlaylistEditor(playlists, props.modals);
+              return;
+            }
+            playlists.cancelEditingPlaylist();
+          }}
         >
           <MaterialIcon>arrow_back</MaterialIcon>
         </button>
@@ -282,7 +293,14 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   if (actualView.value === "create_playlist") {
     return (
-      <CreatePlaylistForm playlists={playlists} tabs={tabs} modals={modals} />
+      <CreatePlaylistForm
+        playlists={playlists}
+        tabs={tabs}
+        modals={modals}
+        os={props.state.os}
+        login={props.state.login}
+        gallery={props.state.gallery}
+      />
     );
   }
 
@@ -318,6 +336,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
       <PlaylistHistorySection
         history={playlistHistory}
+        userPlaylists={userPlaylists}
         playlists={playlists}
         tabs={tabs}
         toast={props.toast}
@@ -371,6 +390,7 @@ function PlaylistSection({
               dir="auto"
               onClick={() => playlists.startPlaying(playlist)}
             >
+              <HeroImageThumb url={playlist.heroImageUrl} />
               <div className="sb-discover-item-main">
                 <span className="sb-discover-item-title">
                   {playlist.title ??
@@ -536,11 +556,13 @@ function playFromHistory(
 
 function PlaylistHistorySection({
   history,
+  userPlaylists,
   playlists,
   tabs,
   toast,
 }: {
   history: PlaylistPlayHistory[];
+  userPlaylists: Playlist[];
   playlists: PlaylistManager;
   tabs: TabsManager;
   toast: SeedBibleState["app"]["toast"];
@@ -600,6 +622,14 @@ function PlaylistHistorySection({
                       percent,
                     });
 
+                const live = userPlaylists.find(
+                  (p) =>
+                    p.id === entry.playlistId &&
+                    p.recordName === entry.playlistRecordName
+                );
+                const heroUrl =
+                  live?.heroImageUrl ?? entry.playlistHeroImageUrl ?? null;
+
                 return (
                   <li
                     key={entry.id}
@@ -607,6 +637,7 @@ function PlaylistHistorySection({
                     dir="auto"
                     onClick={() => playFromHistory(playlists, entry, toast, t)}
                   >
+                    <HeroImageThumb url={heroUrl} />
                     <div className="sb-discover-item-main">
                       <span className="sb-discover-item-title">
                         {playlistTitle(entry, t)}
