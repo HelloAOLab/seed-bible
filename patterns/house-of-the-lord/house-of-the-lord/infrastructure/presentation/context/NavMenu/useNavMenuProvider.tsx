@@ -4,7 +4,7 @@ import type {
   NavMenuContextType,
 } from "../../../models/navigation";
 
-const { useState, useEffect } = os.appHooks;
+const { useState, useEffect, useCallback } = os.appHooks;
 
 type UseNavMenuProvider = (
   config: Pick<
@@ -30,6 +30,14 @@ export const useNavMenuProvider: UseNavMenuProvider = (config) => {
 
   const [menuState, setMenuState] = useState<NavigationState>(getState());
 
+  const [foldedGroups, setFoldedGroups] = useState<Record<string, boolean>>({});
+
+  const toggleGroup = useCallback(
+    (id: string) =>
+      setFoldedGroups((folded) => ({ ...folded, [id]: !folded[id] })),
+    []
+  );
+
   useEffect(() => {
     const unsubscribe = eventBus.subscribe(
       "OnNavigationStateChanged",
@@ -38,9 +46,6 @@ export const useNavMenuProvider: UseNavMenuProvider = (config) => {
       }
     );
 
-    // Subscribing first and reading after leaves no gap: anything emitted
-    // between the first render and this effect is picked up here instead of
-    // sitting unseen until the next unrelated change.
     setMenuState(getState());
 
     return () => unsubscribe();
@@ -52,5 +57,7 @@ export const useNavMenuProvider: UseNavMenuProvider = (config) => {
     catalog,
     verseReferences,
     bookNames,
+    foldedGroups,
+    toggleGroup,
   };
 };

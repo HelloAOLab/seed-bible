@@ -79,6 +79,7 @@ export interface HitboxBotTags {
   transformer: string;
   pieceId: Piece["id"];
   pieceKey: PieceKey;
+  isPieceHitbox: true;
 }
 
 export type HitboxBot = TypedBot<HitboxBotTags>;

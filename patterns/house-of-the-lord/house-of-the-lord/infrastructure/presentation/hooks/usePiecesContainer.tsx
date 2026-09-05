@@ -4,27 +4,17 @@ import type {
 } from "../components/containers/PiecesContainer";
 import { useNavMenuContext } from "../context/NavMenu/NavMenuContext";
 
-const { useState, useMemo, useCallback } = os.appHooks;
+const { useMemo, useCallback } = os.appHooks;
 
 type UsePiecesContainer = () => UsePiecesContainerType;
 
 export const usePiecesContainer: UsePiecesContainer = () => {
-  const { menuState, catalog, controller } = useNavMenuContext();
+  const { menuState, catalog, controller, foldedGroups, toggleGroup } =
+    useNavMenuContext();
 
   const groups = useMemo(
     () => catalog.getGroups(menuState.experience),
     [catalog, menuState.experience]
-  );
-
-  const [foldedGroups, setFoldedGroups] = useState<Record<string, boolean>>(
-    () =>
-      Object.fromEntries(groups.map((group) => [group.id, group.startsFolded]))
-  );
-
-  const toggleGroup = useCallback(
-    (id: string) =>
-      setFoldedGroups((folded) => ({ ...folded, [id]: !folded[id] })),
-    []
   );
 
   const piecesGroups = useMemo<PiecesGroupData[]>(
@@ -32,7 +22,7 @@ export const usePiecesContainer: UsePiecesContainer = () => {
       groups.map((group) => ({
         key: group.id,
         group,
-        isFolded: foldedGroups[group.id] ?? false,
+        isFolded: foldedGroups[group.id] ?? group.startsFolded,
         onToggle: () => toggleGroup(group.id),
       })),
     [groups, foldedGroups, toggleGroup]

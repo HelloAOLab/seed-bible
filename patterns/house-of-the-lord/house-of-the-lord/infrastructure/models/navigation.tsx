@@ -25,4 +25,6 @@ export interface NavMenuContextType {
   catalog: PieceCatalogPort;
   verseReferences: VerseReferenceConfigProviderPort;
   bookNames: BookNameConfigProviderPort;
+  foldedGroups: Record<string, boolean>;
+  toggleGroup: (id: string) => void;
 }

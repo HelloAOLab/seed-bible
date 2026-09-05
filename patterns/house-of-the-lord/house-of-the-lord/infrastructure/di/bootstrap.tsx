@@ -84,10 +84,6 @@ import { PieceHighlightConfigProvider } from "../config/pieceHighlight/PieceHigh
 
 let initialized = false;
 
-// A safety net, not a timing assumption: the theme lands long before the scene
-// finishes deploying. It only matters when nothing answers — an older reader,
-// or the pattern opened outside one — where the menu falls back to the
-// stylesheet's own colors instead of never rendering.
 const THEME_WAIT_TIMEOUT_MS = 2000;
 
 const waitForEvent = (
@@ -434,9 +430,6 @@ export const bootstrapExtension = async () => {
     );
   });
 
-  // Announced here rather than at the end: it tells the reader the bridge is
-  // listening, not that the experience finished deploying. The reader answers
-  // with the current theme and reading, which arrive while the scene builds.
   hostNotifierAdapter.notifyReady();
 
   // 6. Disposers
@@ -460,8 +453,6 @@ export const bootstrapExtension = async () => {
     await waitForEvent(eventManager, "OnThemeChanged", THEME_WAIT_TIMEOUT_MS);
   }
 
-  // Before rendering, so the menu's first paint already reflects the focused
-  // piece: it reads the state once on mount and only then starts listening.
   if (HIGHLIGHTED_PIECE) {
     pieceFocusService.focus(HIGHLIGHTED_PIECE);
   }

@@ -50,6 +50,7 @@ export class HitboxLifecycleAdapter implements HitboxSpawnerPort {
       transformer: piece.id,
       pieceId: piece.id,
       pieceKey: piece.key,
+      isPieceHitbox: true,
     };
     const hitboxBot = create(mod) as HitboxBot;
 
