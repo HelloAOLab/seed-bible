@@ -1,4 +1,4 @@
-import type { ExperienceKey } from "../../domain/models/experience";
+// import type { ExperienceKey } from "../../domain/models/experience";
 import type { PieceKey } from "../../domain/models/piece";
 import type { PieceFocusPort } from "../ports/in/PieceFocus";
 import type { ScriptureInteractionPort } from "../ports/in/scriptureInteraction";
@@ -18,5 +18,5 @@ export class ScriptureInteractionService implements ScriptureInteractionPort {
     this.#pieceFocusPort.focus(key);
   }
 
-  handleExperienceShowRequest(experience: ExperienceKey): void {}
+  handleExperienceShowRequest(): void {}
 }

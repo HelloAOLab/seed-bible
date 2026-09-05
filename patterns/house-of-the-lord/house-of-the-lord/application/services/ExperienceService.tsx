@@ -1,12 +1,13 @@
 import type { ExperienceDisplayerPort } from "../ports/in/experience";
-import type { LoggerPort, PiecesSequencePort } from "../ports/out/experience";
+import type { PiecesSequencePort } from "../ports/out/experience";
 import type { PiecesSetUpPort } from "../ports/in/piecesSetUp";
 import type { EnvironmentSetUpPort } from "../ports/in/environmentSetUp";
 import type { ExperienceKey } from "../../domain/models/experience";
+import type { LoggerAdapterPort } from "../ports/out/LoggerAdapter";
 
 interface ServiceParams {
   piecesSequencePort: PiecesSequencePort;
-  logger: LoggerPort;
+  logger: LoggerAdapterPort;
   piecesSetUpPort: PiecesSetUpPort;
   environmentSetUpPort: EnvironmentSetUpPort;
   getExperienceKey: () => ExperienceKey;

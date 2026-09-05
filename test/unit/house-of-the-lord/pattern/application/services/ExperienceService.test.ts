@@ -8,23 +8,21 @@ import {
   type Mock,
 } from "vitest";
 import { ExperienceService } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/services/ExperienceService";
-import type {
-  LoggerPort,
-  PiecesSequencePort,
-} from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/experience";
+import type { PiecesSequencePort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/experience";
 import type { PiecesSetUpPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/in/piecesSetUp";
 import type { EnvironmentSetUpPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/in/environmentSetUp";
 import {
   EXPERIENCE_KEYS,
   type ExperienceKey,
 } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/experience";
+import type { LoggerAdapterPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/LoggerAdapter";
 
 describe("application.services.ExperienceService", () => {
   let experienceService: ExperienceService;
   let piecesSequencePort: Mocked<PiecesSequencePort>;
   let piecesSetUpPort: Mocked<PiecesSetUpPort>;
   let environmentSetUpPort: Mocked<EnvironmentSetUpPort>;
-  let logger: Mocked<LoggerPort>;
+  let logger: Mocked<LoggerAdapterPort>;
   let getExperienceKey: Mock<() => ExperienceKey>;
   const testKey = EXPERIENCE_KEYS.TABERNACLE;
 

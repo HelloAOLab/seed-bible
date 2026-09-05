@@ -1,6 +1,6 @@
-import type { LoggerPort } from "../../../application/ports/out/experience";
+import type { LoggerAdapterPort } from "../../../application/ports/out/LoggerAdapter";
 
-export class LoggerAdapter implements LoggerPort {
+export class LoggerAdapter implements LoggerAdapterPort {
   log(message: string): void {
     console.log(`[house-of-the-lord] ${message}`);
   }

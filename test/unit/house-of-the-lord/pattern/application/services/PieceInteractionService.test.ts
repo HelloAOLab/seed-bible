@@ -1,108 +1,103 @@
-import { describe, expect, it, vi, type Mocked, beforeEach } from "vitest";
+import {
+  describe,
+  expect,
+  it,
+  vi,
+  type Mock,
+  type Mocked,
+  beforeEach,
+} from "vitest";
 import { PieceInteractionService } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/services/PieceInteractionService";
 import {
   EXPERIENCE_KEYS,
   type ExperienceKey,
 } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/experience";
-import type { ReadingStatePort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/in/readingState";
-import type {
-  VerseReferenceConfigProviderPort,
-  ContextMenuRendererPort,
-  PieceHighlightPort,
-} from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/PieceInteraction";
+import {
+  PIECE_VISIBILITY_STATES,
+  type Piece,
+  type TabernaclePieceKey,
+} from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/piece";
+import type { PieceFocusPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/in/PieceFocus";
+import type { PiecesProviderAdapterPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/PiecesProviderAdapter";
+import type { PieceAdapterPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/PieceAdapter";
+import type { LoggerAdapterPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/LoggerAdapter";
 
 describe("application.services.PieceInteractionService", () => {
-  let pieceHighlight: Mocked<PieceHighlightPort>;
-  let contextMenu: Mocked<ContextMenuRendererPort>;
-  let verseReferenceConfigProviderPort: Mocked<VerseReferenceConfigProviderPort>;
-  let readingState: Mocked<ReadingStatePort>;
-  let getExperienceKey: Mocked<() => ExperienceKey>;
+  let pieceFocusPort: Mocked<PieceFocusPort>;
+  let piecesProvider: Mocked<PiecesProviderAdapterPort>;
+  let pieceAdapterPort: Mocked<PieceAdapterPort>;
+  let loggerPort: Mocked<LoggerAdapterPort>;
+  let getExperience: Mocked<() => ExperienceKey>;
+  let getPiece: Mock;
   let service: PieceInteractionService;
+
   const experienceKey = EXPERIENCE_KEYS.TABERNACLE;
+  const pieceKey: TabernaclePieceKey = "bars";
+  const piece: Piece<TabernaclePieceKey> = { key: pieceKey, id: "bars-id" };
 
   beforeEach(() => {
-    pieceHighlight = {
-      highlightPiece: vi.fn(),
+    getPiece = vi.fn(() => piece);
+    pieceFocusPort = {
+      focus: vi.fn(),
+      clearFocus: vi.fn(),
     };
-    contextMenu = {
-      toggleContextMenu: vi.fn(),
+    piecesProvider = {
+      getPieces: vi.fn(() => [piece]),
+      getPiece,
     };
-    verseReferenceConfigProviderPort = {
-      getVersesForPiece: vi.fn(),
+    pieceAdapterPort = {
+      setPosition: vi.fn(),
+      getCurrentState: vi.fn(() => PIECE_VISIBILITY_STATES.SHOWN),
     };
-    readingState = {
-      setCurrentReading: vi.fn(),
-      getCurrentReading: vi.fn(),
+    loggerPort = {
+      log: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
     };
-    getExperienceKey = vi.fn(() => experienceKey);
+    getExperience = vi.fn(() => experienceKey);
     service = new PieceInteractionService({
-      pieceHighlight,
-      contextMenu,
-      verseReferenceConfigProviderPort,
-      readingState,
-      getExperienceKey,
+      pieceFocusPort,
+      piecesProvider,
+      pieceAdapterPort,
+      loggerPort,
+      getExperience,
     });
   });
 
-  it("handles piece selection, forwarding the right values", () => {
-    const pieceKey = "bars";
-    const reading = {
-      bookId: "GEN",
-      chapterNumber: 10,
-    };
-    const inChapter = [
-      {
-        bookId: "EXO",
-        chapter: 10,
-        verse: 1,
-      },
-    ];
-    const inOtherChapters = [
-      {
-        bookId: "LEV",
-        chapter: 20,
-        verse: 30,
-      },
-    ];
-    readingState.getCurrentReading.mockImplementation(() => reading);
-    verseReferenceConfigProviderPort.getVersesForPiece.mockImplementation(
-      () => ({
-        inChapter,
-        inOtherChapters,
-      })
-    );
+  it("focuses the piece when it is shown", () => {
     service.handlePieceSelection(pieceKey);
-    expect(
-      verseReferenceConfigProviderPort.getVersesForPiece
-    ).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({
-        experienceKey: experienceKey,
-        pieceKey: pieceKey,
-        currentBookId: reading.bookId,
-        currentChapter: reading.chapterNumber,
-      })
-    );
-    expect(pieceHighlight.highlightPiece).toHaveBeenCalledExactlyOnceWith(
-      experienceKey,
-      pieceKey
-    );
-    expect(contextMenu.toggleContextMenu).toHaveBeenCalledExactlyOnceWith(
-      experienceKey,
-      pieceKey,
-      inChapter,
-      inOtherChapters
-    );
+
+    expect(getPiece).toHaveBeenCalledExactlyOnceWith(experienceKey, pieceKey);
+    expect(pieceFocusPort.focus).toHaveBeenCalledExactlyOnceWith(pieceKey);
   });
 
-  it("it passes empty inChapter and inOtherChapters to toggleContextMenu if no reading found", () => {
-    const pieceKey = "bars";
-    readingState.getCurrentReading.mockImplementation(() => null);
-    service.handlePieceSelection(pieceKey);
-    expect(contextMenu.toggleContextMenu).toHaveBeenCalledExactlyOnceWith(
-      experienceKey,
-      pieceKey,
-      [],
-      []
+  it("does not focus a translucent piece", () => {
+    pieceAdapterPort.getCurrentState.mockImplementation(
+      () => PIECE_VISIBILITY_STATES.TRANSLUCENT
     );
+
+    service.handlePieceSelection(pieceKey);
+
+    expect(pieceFocusPort.focus).not.toHaveBeenCalled();
+  });
+
+  it("does not focus a hidden piece", () => {
+    pieceAdapterPort.getCurrentState.mockImplementation(
+      () => PIECE_VISIBILITY_STATES.HIDDEN
+    );
+
+    service.handlePieceSelection(pieceKey);
+
+    expect(pieceFocusPort.focus).not.toHaveBeenCalled();
+  });
+
+  it("reports an error and focuses nothing when the piece is unknown", () => {
+    getPiece.mockReturnValue(undefined);
+
+    service.handlePieceSelection(pieceKey);
+
+    expect(loggerPort.error).toHaveBeenCalledOnce();
+    expect(pieceAdapterPort.getCurrentState).not.toHaveBeenCalled();
+    expect(pieceFocusPort.focus).not.toHaveBeenCalled();
   });
 });
