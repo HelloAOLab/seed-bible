@@ -24,6 +24,8 @@ import {
 } from "../../managers/ThemeManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
+import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
+import type { ExtensionListEntry } from "../../managers/ExtensionManager";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import { toHexInputValue } from "../../app/utils";
 import {
@@ -617,6 +619,45 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
     (entry) => entry.extension !== null
   );
 
+  const handleConfigureDefaults = (entry: ExtensionListEntry) => {
+    const settings = entry.extension?.meta.settings ?? {};
+    state.modals.openModal({
+      title: {
+        key: "extension-settings-defaults-title",
+        defaultValue: "{{name}} defaults",
+        options: {
+          name:
+            // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+            t("title", { ns: entry.id, defaultValue: entry.id }),
+        },
+      },
+      content: () => (
+        <ExtensionSettingsForm
+          extensionId={entry.id}
+          settings={settings}
+          getValue={(key) =>
+            customizations.getActiveExtensionSettingDefault(entry.id, key)
+          }
+          onChange={(key, value) =>
+            customizations.setEditingExtensionSettingDefault(
+              entry.id,
+              key,
+              value
+            )
+          }
+          resetting={{
+            hasOwnValue: (key) =>
+              customizations.getActiveExtensionSettingDefault(entry.id, key) !==
+              undefined,
+            onReset: (key) =>
+              customizations.clearEditingExtensionSettingDefault(entry.id, key),
+          }}
+          t={t}
+        />
+      ),
+    });
+  };
+
   return (
     <div className="sb-settings-page">
       <section className="sb-settings-section">
@@ -674,6 +715,22 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
                   })}
                 </option>
               </select>
+              {entry.extension?.meta.settings &&
+                Object.keys(entry.extension.meta.settings).length > 0 && (
+                  <button
+                    type="button"
+                    className="sb-extension-row-action-button"
+                    onClick={() => handleConfigureDefaults(entry)}
+                    aria-label={t("configure-extension-defaults", {
+                      defaultValue: "Configure defaults",
+                    })}
+                    title={t("configure-extension-defaults", {
+                      defaultValue: "Configure defaults",
+                    })}
+                  >
+                    <span className="material-symbols-outlined">tune</span>
+                  </button>
+                )}
             </div>
           ))
         )}

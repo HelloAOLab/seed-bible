@@ -22,6 +22,7 @@ import {
 } from "../../managers/ThemeManager";
 import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
 import { openCustomizationEditPane } from "../CustomizationEditPane/CustomizationEditPane";
+import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { download, toHexInputValue, translateTitle } from "../../app/utils";
 // The picture editor pulls in `react-avatar-editor`, and it is only reachable
 // through the "Update picture" button — so it is fetched on that click rather
@@ -1190,7 +1191,7 @@ type ExtensionsTab = "installed" | "available";
 
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { extensions, customizations } = state;
+  const { extensions, customizations, extensionSettings } = state;
   const extensionsList = extensions.extensions.value;
   const installingIds = useSignal<Set<string>>(new Set());
   const isDownloadingSet = useSignal(false);
@@ -1236,6 +1237,43 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       return;
     }
     extensions.unloadExtension(extensionId);
+  };
+
+  const handleConfigureExtension = (extensionEntry: ExtensionListEntry) => {
+    const settings = extensionEntry.extension?.meta.settings ?? {};
+    state.modals.openModal({
+      title: {
+        key: "extension-settings-title",
+        defaultValue: "{{name}} settings",
+        options: {
+          name:
+            // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+            t("title", {
+              ns: extensionEntry.id,
+              defaultValue: extensionEntry.id,
+            }),
+        },
+      },
+      content: () => (
+        <ExtensionSettingsForm
+          extensionId={extensionEntry.id}
+          settings={settings}
+          getValue={(key) => extensionSettings.getValue(extensionEntry.id, key)}
+          onChange={(key, value) =>
+            void extensionSettings.setValue(extensionEntry.id, key, value)
+          }
+          resetting={{
+            hasOwnValue: (key) =>
+              extensionSettings.valuesByExtensionId.value[extensionEntry.id]?.[
+                key
+              ] !== undefined,
+            onReset: (key) =>
+              void extensionSettings.clearValue(extensionEntry.id, key),
+          }}
+          t={t}
+        />
+      ),
+    });
   };
 
   const handleDownloadExtensions = async () => {
@@ -1360,6 +1398,24 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             </span>
           </div>
           <div className="sb-extension-row-actions">
+            {installState === "installed" &&
+              extensionEntry.extension?.meta.settings &&
+              Object.keys(extensionEntry.extension.meta.settings).length >
+                0 && (
+                <button
+                  type="button"
+                  className="sb-extension-row-action-button"
+                  onClick={() => handleConfigureExtension(extensionEntry)}
+                  aria-label={t("configure-extension", {
+                    defaultValue: "Configure",
+                  })}
+                  title={t("configure-extension", {
+                    defaultValue: "Configure",
+                  })}
+                >
+                  <span className="material-symbols-outlined">tune</span>
+                </button>
+              )}
             {installState === "none" && (
               <button
                 type="button"

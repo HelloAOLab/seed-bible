@@ -40,6 +40,25 @@ export interface ExtensionTranslation {
   [key: string]: string;
 }
 
+/**
+ * The types a single extension setting can declare. Modeled on VSCode's
+ * `contributes.configuration` (https://code.visualstudio.com/api/references/contribution-points#contributes.configuration),
+ * trimmed to what this app supports today.
+ */
+export type ExtensionSettingType = "string" | "boolean" | "number";
+
+/** The value a user (or a Customization's defaults) can set for one extension setting. */
+export type ExtensionSettingValue = string | boolean | number;
+
+export interface ExtensionSettingDefinition {
+  type: ExtensionSettingType;
+  /**
+   * Used when nothing else applies: no value the user set themselves, and no
+   * default from the active Customization (see `ExtensionSettingsManager`).
+   */
+  default?: ExtensionSettingValue;
+}
+
 export interface ExtensionMeta {
   /**
    * The identifier of this extension, which should be unique across all extensions.
@@ -64,6 +83,13 @@ export interface ExtensionMeta {
    * Defaults to false.
    */
   autoinstall?: boolean;
+
+  /**
+   * The settings this extension supports, keyed by setting name. A setting's
+   * label/description come from the extension's own translations (`t("setting-<key>-title", { ns: id })` /
+   * `t("setting-<key>-description", { ns: id })`), not from this object.
+   */
+  settings?: Record<string, ExtensionSettingDefinition>;
 }
 
 export type Extension = UploadedExtension | ImportExtension;

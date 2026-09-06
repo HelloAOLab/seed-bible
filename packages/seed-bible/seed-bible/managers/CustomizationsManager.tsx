@@ -11,6 +11,7 @@ import type { LoginManager } from "./LoginManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
+import type { ExtensionSettingValue } from "./ExtensionManager";
 import {
   applyHighlightOverrides,
   filterValidColorOverrides,
@@ -315,6 +316,20 @@ const customizationSchema = z
     extensionSettings: z
       .record(z.string(), extensionAvailabilitySchema)
       .default({}),
+    /**
+     * Default values this customization sets for extension settings
+     * (`ExtensionMeta.settings`), keyed by extension id then setting name.
+     * A viewer's own value (see `ExtensionSettingsManager`) always wins over
+     * this; this only fills in for a viewer who hasn't set one themselves.
+     * Only ever written from the extension settings editor in
+     * `CustomizationEditExtensionsView`.
+     */
+    extensionSettingDefaults: z
+      .record(
+        z.string(),
+        z.record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
+      )
+      .default({}),
   })
   .refine((r) => r.variants.some((v) => v.id === r.defaultVariantId), {
     message: "defaultVariantId must reference an existing variant",
@@ -355,6 +370,11 @@ export interface SeedBibleCustomization {
   updatedAt: number;
   /** Per-extension availability while this customization is active. An id with no entry defaults to "available". */
   extensionSettings: Record<string, ExtensionAvailability>;
+  /** Per-extension setting defaults while this customization is active. An extension/key with no entry has no default here. */
+  extensionSettingDefaults: Record<
+    string,
+    Record<string, ExtensionSettingValue>
+  >;
 }
 
 /** Resolves an extension's effective availability for a customization, defaulting to "available" when unset. */
@@ -363,6 +383,15 @@ export function getExtensionAvailability(
   extensionId: string
 ): ExtensionAvailability {
   return customization?.extensionSettings[extensionId] ?? "available";
+}
+
+/** Resolves a customization's default for one extension setting, or undefined if it doesn't set one. */
+export function getExtensionSettingDefault(
+  customization: SeedBibleCustomization | null,
+  extensionId: string,
+  key: string
+): ExtensionSettingValue | undefined {
+  return customization?.extensionSettingDefaults[extensionId]?.[key];
 }
 
 function buildCustomizationLocator(recordName: string, id: string): string {
@@ -713,6 +742,22 @@ export interface CustomizationsManager {
   getActiveExtensionAvailability: (
     extensionId: string
   ) => ExtensionAvailability;
+  /** Sets an extension setting's default value on the draft. No-op with no open draft. */
+  setEditingExtensionSettingDefault: (
+    extensionId: string,
+    key: string,
+    value: ExtensionSettingValue
+  ) => void;
+  /** Removes an extension setting's default value from the draft. No-op with no open draft. */
+  clearEditingExtensionSettingDefault: (
+    extensionId: string,
+    key: string
+  ) => void;
+  /** The active customization's default for an extension setting, or undefined if nothing is active or it sets no default there. */
+  getActiveExtensionSettingDefault: (
+    extensionId: string,
+    key: string
+  ) => ExtensionSettingValue | undefined;
   /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active or the extension's availability there isn't "available". */
   addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
   /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
@@ -946,6 +991,7 @@ export function createCustomizationsManager(
       createdAt: now,
       updatedAt: now,
       extensionSettings: {},
+      extensionSettingDefaults: {},
     };
 
     await persist(userId, record);
@@ -1426,6 +1472,58 @@ export function createCustomizationsManager(
   ): ExtensionAvailability =>
     getExtensionAvailability(activeCustomization.value, extensionId);
 
+  const setEditingExtensionSettingDefault = (
+    extensionId: string,
+    key: string,
+    value: ExtensionSettingValue
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      extensionSettingDefaults: {
+        ...current.extensionSettingDefaults,
+        [extensionId]: {
+          ...current.extensionSettingDefaults[extensionId],
+          [key]: value,
+        },
+      },
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
+  const clearEditingExtensionSettingDefault = (
+    extensionId: string,
+    key: string
+  ): void => {
+    const current = editingCustomization.value;
+    const currentExtensionDefaults =
+      current?.extensionSettingDefaults[extensionId];
+    if (!current || !currentExtensionDefaults) {
+      return;
+    }
+    const nextExtensionDefaults = { ...currentExtensionDefaults };
+    delete nextExtensionDefaults[key];
+    editingCustomization.value = {
+      ...current,
+      extensionSettingDefaults: {
+        ...current.extensionSettingDefaults,
+        [extensionId]: nextExtensionDefaults,
+      },
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
+  const getActiveExtensionSettingDefault = (
+    extensionId: string,
+    key: string
+  ): ExtensionSettingValue | undefined =>
+    getExtensionSettingDefault(activeCustomization.value, extensionId, key);
+
   const addExtensionToActiveCustomization = async (
     extensionId: string
   ): Promise<void> => {
@@ -1503,6 +1601,9 @@ export function createCustomizationsManager(
     selectActiveVariant,
     setEditingExtensionAvailability,
     getActiveExtensionAvailability,
+    setEditingExtensionSettingDefault,
+    clearEditingExtensionSettingDefault,
+    getActiveExtensionSettingDefault,
     addExtensionToActiveCustomization,
     removeExtensionFromActiveCustomization,
   };

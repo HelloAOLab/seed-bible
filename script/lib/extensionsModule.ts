@@ -11,11 +11,20 @@ export interface ExtensionTranslationFile {
   [key: string]: string;
 }
 
+export type ExtensionSettingTypeFile = "string" | "boolean" | "number";
+export type ExtensionSettingValueFile = string | boolean | number;
+
+export interface ExtensionSettingDefinitionFile {
+  type: ExtensionSettingTypeFile;
+  default?: ExtensionSettingValueFile;
+}
+
 export interface ExtensionMetaFile {
   id: string;
   translations: Record<string, ExtensionTranslationFile>;
   dependencies?: string[];
   autoinstall?: boolean;
+  settings?: Record<string, ExtensionSettingDefinitionFile>;
 }
 
 /** An extension package discovered under `packages/`, with its parsed meta. */
@@ -113,7 +122,10 @@ export const FALLBACK_LANGUAGE = "en";
  * about 1.8 KB; it was all 77 of them that cost 138 KB.
  *
  * Every other language lives in the per-language modules above, and every key
- * beyond `title`/`description` is behind `loadFullTranslations`.
+ * beyond `title`/`description` is behind `loadFullTranslations`. `settings` is
+ * kept inline unconditionally, alongside `dependencies`/`autoinstall`: unlike
+ * translations it isn't per-locale text, and it's needed up front to know
+ * whether to show a "Configure" action and to build its form.
  */
 export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
   const english = meta.translations?.[FALLBACK_LANGUAGE];
@@ -131,6 +143,7 @@ export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
     ...(meta.autoinstall !== undefined
       ? { autoinstall: meta.autoinstall }
       : {}),
+    ...(meta.settings ? { settings: meta.settings } : {}),
   };
 }
 
