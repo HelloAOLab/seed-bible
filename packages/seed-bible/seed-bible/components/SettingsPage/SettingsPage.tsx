@@ -20,7 +20,9 @@ import {
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
-import { download, translateTitle } from "../../app/utils";
+import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
+import { openCustomizationEditPane } from "../CustomizationEditPane/CustomizationEditPane";
+import { download, toHexInputValue, translateTitle } from "../../app/utils";
 // The picture editor pulls in `react-avatar-editor`, and it is only reachable
 // through the "Update picture" button — so it is fetched on that click rather
 // than at boot, the same way TextItemInput defers TipTap.
@@ -56,9 +58,13 @@ import {
 } from "../../app/keyboardNav";
 import { ColorPicker } from "../ColorPicker/ColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
-import { useRef } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { lazy, Suspense } from "preact/compat";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
+import {
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "../ContextMenu/ContextMenu";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -643,6 +649,76 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
   );
 }
 
+function CustomizationVariantGallery(props: {
+  state: SeedBibleState;
+  customization: SeedBibleCustomization;
+}) {
+  const { state, customization } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+
+  return (
+    <section className="sb-settings-section">
+      <h3 className="sb-settings-subheading">
+        {t("variants", { defaultValue: "Themes" })}
+      </h3>
+      <div
+        className="sb-theme-ready-gallery"
+        role="radiogroup"
+        onKeyDown={(event) => {
+          handleGridKeyNav(event, event.currentTarget);
+        }}
+      >
+        {customization.variants.map((variant) => {
+          const isSelected =
+            variant.id === customizations.activeVariant.value?.id;
+          return (
+            <button
+              key={variant.id}
+              type="button"
+              className={`sb-theme-ready-card${
+                isSelected ? " sb-theme-ready-card-selected" : ""
+              }`}
+              onClick={() =>
+                void customizations.selectActiveVariant(variant.id)
+              }
+            >
+              <div
+                className="sb-theme-ready-preview"
+                style={{ background: variant.themes.tertiaryColor }}
+              >
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
+                  style={{ background: variant.themes.primaryColor }}
+                />
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
+                  style={{ background: variant.themes.secondaryColor }}
+                />
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
+                  style={{ background: variant.themes.fontColor }}
+                />
+              </div>
+              <div className="sb-theme-ready-label">
+                <span>{variant.name}</span>
+                {isSelected && (
+                  <span
+                    className="material-symbols-outlined sb-theme-ready-check"
+                    aria-label={t("selected", { defaultValue: "Selected" })}
+                  >
+                    check_circle
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const settings = state.settings;
@@ -719,7 +795,14 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         })}
       />
 
-      <ThemesGallerySection state={state} />
+      {state.customizations.activeCustomization.value ? (
+        <CustomizationVariantGallery
+          state={state}
+          customization={state.customizations.activeCustomization.value}
+        />
+      ) : (
+        <ThemesGallerySection state={state} />
+      )}
 
       <section className="sb-settings-section">
         <h3 className="sb-settings-subheading">
@@ -1109,11 +1192,18 @@ type ExtensionsTab = "installed" | "available";
 
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { extensions } = state;
+  const { extensions, customizations } = state;
   const extensionsList = extensions.extensions.value;
   const installingIds = useSignal<Set<string>>(new Set());
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
+  const activeCustomization = customizations.activeCustomization.value;
+  // Extensions the active customization has marked "hidden" don't appear in
+  // this list at all — not installable, not shown as installed, nothing.
+  const visibleExtensionsList = extensionsList.filter(
+    (entry) =>
+      customizations.getActiveExtensionAvailability(entry.id) !== "hidden"
+  );
   const activeTab = useSignal<ExtensionsTab>("installed");
 
   const onBack = () => {
@@ -1121,6 +1211,15 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleInstall = async (extensionId: string) => {
+    // While a customization is active, installs are customization-scoped:
+    // the actual install happens automatically via the reconcile effect in
+    // SeedBibleStateManager reacting to activeExtensionIds, not as a direct
+    // result of this click.
+    if (activeCustomization) {
+      await customizations.addExtensionToActiveCustomization(extensionId);
+      return;
+    }
+
     const extensionData = extensionsList.find(
       (e) => e.extension?.meta.id === extensionId
     );
@@ -1134,6 +1233,10 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleUninstall = (extensionId: string) => {
+    if (activeCustomization) {
+      void customizations.removeExtensionFromActiveCustomization(extensionId);
+      return;
+    }
     extensions.unloadExtension(extensionId);
   };
 
@@ -1202,6 +1305,8 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
     const { id, installed, pendingInstallation } = extensionEntry;
+    const isBaseExtension =
+      customizations.getActiveExtensionAvailability(id) === "auto-installed";
     const isRegistered =
       ExtensionInitalizer.getInstance().isExtensionRegistered(id);
     const installState = getExtensionInstallState(
@@ -1243,14 +1348,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
                 t("title", { ns: id, defaultValue: id }),
                 t,
-                branding
+                branding,
+                customizations.activeCustomization.value?.name
               )}
             </span>
             <span className="sb-extension-description">
               {getBrandedAppText(
                 t("description", { ns: id, defaultValue: "" }),
                 t,
-                branding
+                branding,
+                customizations.activeCustomization.value?.name
               )}
             </span>
           </div>
@@ -1266,28 +1373,28 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 <span className="material-symbols-outlined">download</span>
               </button>
             )}
-            {(installState === "installed" ||
-              installState === "downloaded") && (
-              <button
-                type="button"
-                className="sb-extension-row-action-button"
-                onClick={() => handleUninstall(id)}
-                aria-label={t("uninstall", {
-                  defaultValue: "Uninstall",
-                })}
-                title={t("uninstall", { defaultValue: "Uninstall" })}
-              >
-                <span className="material-symbols-outlined">delete</span>
-              </button>
-            )}
+            {(installState === "installed" || installState === "downloaded") &&
+              !isBaseExtension && (
+                <button
+                  type="button"
+                  className="sb-extension-row-action-button"
+                  onClick={() => handleUninstall(id)}
+                  aria-label={t("uninstall", {
+                    defaultValue: "Uninstall",
+                  })}
+                  title={t("uninstall", { defaultValue: "Uninstall" })}
+                >
+                  <span className="material-symbols-outlined">delete</span>
+                </button>
+              )}
           </div>
         </div>
       </li>
     );
   };
 
-  const installedExtensions = extensionsList.filter((e) => e.installed);
-  const availableExtensions = extensionsList.filter((e) => !e.installed);
+  const installedExtensions = visibleExtensionsList.filter((e) => e.installed);
+  const availableExtensions = visibleExtensionsList.filter((e) => !e.installed);
   const activeExtensions =
     activeTab.value === "installed" ? installedExtensions : availableExtensions;
   const activeEmptyMessage =
@@ -1309,7 +1416,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
         ]}
       />
       <section className="sb-settings-section">
-        {extensionsList.length === 0 ? (
+        {activeCustomization && (
+          <p className="sb-settings-field-description">
+            {t("extensions-for-active-customization", {
+              defaultValue:
+                "Showing extensions for {{name}}. Extensions this customization includes can't be removed here.",
+              name: activeCustomization.name,
+            })}
+          </p>
+        )}
+        {visibleExtensionsList.length === 0 ? (
           <div className="sb-settings-empty-state">
             <p>
               {t("no-extensions-available", {
@@ -2021,7 +2137,31 @@ function AllSettingsView(props: { state: SeedBibleState }) {
         })}
       />
       <TextSettingsContent state={state} />
-      <ThemeCustomColorsContent state={state} />
+      {state.customizations.activeCustomization.value ? (
+        <section className="sb-settings-section">
+          <div className="sb-settings-empty-state">
+            <p>
+              {t("colors-controlled-by-customization", {
+                defaultValue:
+                  "Colors are controlled by the active Customization. Change which theme you're using from Display & Theme.",
+              })}
+            </p>
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              onClick={() => {
+                state.sidebar.requestedSettingsView.value = "display-and-theme";
+              }}
+            >
+              {t("go-to-display-and-theme", {
+                defaultValue: "Go to Display & Theme",
+              })}
+            </button>
+          </div>
+        </section>
+      ) : (
+        <ThemeCustomColorsContent state={state} />
+      )}
       <div className="sb-extension-footer-actions">
         <button
           className="sb-settings-action-button"
@@ -2098,9 +2238,147 @@ function SettingsVersionFooter() {
   );
 }
 
+function CustomizationsSettingsView(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+
+  useEffect(() => {
+    void customizations.load();
+  }, []);
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = "main";
+  };
+
+  const openCustomization = (id: string) => {
+    openCustomizationEditPane(state, id);
+  };
+
+  const handleCreate = async () => {
+    const created = await customizations.create();
+    openCustomizationEditPane(state, created.id);
+  };
+
+  const list = customizations.customizations.value;
+  const isEmpty = list.length === 0;
+
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("customize", { defaultValue: "Customize" }),
+        ]}
+      />
+      <section className="sb-settings-section">
+        {isEmpty ? (
+          <div className="sb-settings-empty-state">
+            <p>
+              {customizations.isLoading.value
+                ? t("loading", { defaultValue: "Loading…" })
+                : t("no-customizations", {
+                    defaultValue:
+                      "You don't have any customizations yet. Create one to get started.",
+                  })}
+            </p>
+          </div>
+        ) : (
+          <ul className="sb-settings-list">
+            {list.map((customization) => {
+              const previewVariant =
+                customization.variants.find(
+                  (v) => v.id === customization.defaultVariantId
+                ) ?? customization.variants[0];
+              return (
+                <li
+                  key={customization.id}
+                  className="sb-settings-nav-item sb-customization-row"
+                  onClick={() => openCustomization(customization.id)}
+                >
+                  <span
+                    className="sb-customization-swatches"
+                    aria-hidden="true"
+                  >
+                    <span
+                      className="sb-customization-swatch"
+                      style={{
+                        background: previewVariant?.themes.primaryColor,
+                      }}
+                    />
+                    <span
+                      className="sb-customization-swatch"
+                      style={{
+                        background: previewVariant?.themes.secondaryColor,
+                      }}
+                    />
+                    <span
+                      className="sb-customization-swatch"
+                      style={{
+                        background: previewVariant?.themes.tertiaryColor,
+                      }}
+                    />
+                  </span>
+                  <span className="sb-settings-nav-label">
+                    {customization.name}
+                  </span>
+                  <ContextMenuWithButton
+                    buttonClassName="sb-extension-row-action-button"
+                    aria-label={t("customization-options", {
+                      defaultValue: "Customization options",
+                    })}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ContextMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(
+                          customizations.getShareLink(customization)
+                        );
+                        state.app.toast(
+                          t("customization-link-copied", {
+                            defaultValue:
+                              "Customization link copied to clipboard",
+                          })
+                        );
+                      }}
+                    >
+                      <MaterialIcon className="sb-context-menu-item-icon">
+                        share
+                      </MaterialIcon>
+                      <span>{t("share", { defaultValue: "Share" })}</span>
+                    </ContextMenuItem>
+                  </ContextMenuWithButton>
+                  <span className="material-symbols-outlined rtl-mirror">
+                    chevron_right
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <div className="sb-settings-actions">
+          <button
+            type="button"
+            className="sb-settings-save-button"
+            onClick={() => void handleCreate()}
+          >
+            {t("create-customization", {
+              defaultValue: "Create Customization",
+            })}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t, language, availableLanguages, setLanguage } = useI18n();
+  const isLoggedIn = useComputed(() => state.login.userId.value !== null);
   const isLanguageMenuOpen = useSignal(false);
   const languageSearchQuery = useSignal("");
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -2239,6 +2517,24 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
             </button>
           </li>
+          {isLoggedIn.value && (
+            <li>
+              <button
+                className="sb-settings-nav-item"
+                onClick={() => onNavigate("customizations")}
+              >
+                <span className="sb-settings-nav-icon">
+                  <MaterialIcon>palette</MaterialIcon>
+                </span>
+                <span className="sb-settings-nav-label">
+                  {t("customize", { defaultValue: "Customize" })}
+                </span>
+                <span className="material-symbols-outlined rtl-mirror">
+                  chevron_right
+                </span>
+              </button>
+            </li>
+          )}
           <li>
             <div className="sb-settings-field-row">
               <span className="sb-settings-field-label">
@@ -2446,6 +2742,10 @@ export function SettingsPage(props: { state: SeedBibleState }) {
 
   if (currentView.value === "extensions") {
     return <ExtensionsSettingsView state={state} />;
+  }
+
+  if (currentView.value === "customizations") {
+    return <CustomizationsSettingsView state={state} />;
   }
 
   return <SettingsMainView state={state} />;

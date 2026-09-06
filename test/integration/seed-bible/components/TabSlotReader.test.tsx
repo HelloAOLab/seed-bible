@@ -80,10 +80,13 @@ function createFixture(): ReaderFixture {
     },
     thisChapterLink: "/api/BSB/GEN/1.json",
     thisChapterAudioLinks: {},
+    thisChapterAudioTimings: {},
     nextChapterApiLink: "/api/BSB/GEN/2.json",
     nextChapterAudioLinks: {},
+    nextChapterAudioTimings: {},
     previousChapterApiLink: null,
     previousChapterAudioLinks: null,
+    previousChapterAudioTimings: null,
     numberOfVerses: 2,
     chapter: {
       number: 1,
@@ -180,6 +183,7 @@ function createFixture(): ReaderFixture {
 
   const selectorState = {
     setOpen,
+    selectingTranslation: signal(false),
   } as any as BibleSelectorState;
 
   const slot: TabSlot = {

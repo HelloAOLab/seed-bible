@@ -34,6 +34,12 @@
   .sb-sidebar-top-row {
     justify-content: center;
   }
+
+  /* Stack the logo below the hamburger button instead of beside it — side
+     by side doesn't fit the narrow collapsed rail. */
+  .sb-sidebar-top-start {
+    flex-direction: column;
+  }
 }
 
 /* Compact desktop (just above the mobile breakpoint): the row is too narrow
@@ -84,6 +90,18 @@
   justify-content: space-between;
   min-height: 1.75rem;
   padding-bottom: 0.375rem;
+}
+
+.sb-sidebar-top-start {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sb-sidebar-logo {
+  width: 3rem;
+  height: 3rem;
+  border-width: 1px;
 }
 
 .sb-sidebar-top-actions {
@@ -639,6 +657,15 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  /* The tiles are slightly wider than this list's padded content box, and
+     overflow-y: auto forces overflow-x to clip too — without this, that
+     clips the tiles' rounded left/right edges. */
+  margin-inline: -0.10625rem;
 }
 
 .sb-sidebar-settings-view {
@@ -1150,6 +1177,7 @@
   &.sb-collapsed-tab-add-button {
     width: 3.3125rem;
     height: 3.3125rem;
+    flex-shrink: 0;
   }
 }
 

@@ -1,5 +1,18 @@
 import type { TranslatableTitle } from "../managers/BibleToolsManager";
 
+const HEX_6 = /^#[0-9a-fA-F]{6}$/;
+const HEX_3 = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/;
+
+/** Normalize an arbitrary color string to #RRGGBB for `<input type="color">`. */
+export function toHexInputValue(value: string | null | undefined): string {
+  if (!value) return "#000000";
+  const trimmed = value.trim();
+  if (HEX_6.test(trimmed)) return trimmed.toLowerCase();
+  const m = trimmed.match(HEX_3);
+  if (m) return `#${m[1]}${m[1]}${m[2]}${m[2]}${m[3]}${m[3]}`.toLowerCase();
+  return "#000000";
+}
+
 /**
  * Translates a TranslatableTitle using the provided translation function.
  * @param t The translation function.

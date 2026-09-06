@@ -763,8 +763,9 @@ export function TabsHeader(props: TabsHeaderProps) {
     closeLayoutMenu,
     setLayout,
   } = props;
-  const { sidebar, settings } = state;
+  const { sidebar, settings, customizations } = state;
   const isAwake = settings.settings.value.keepScreenAwake;
+  const activeLogoUrl = customizations.activeCustomization.value?.logoUrl;
   const { t } = useI18n();
   const layoutAnchorRef = useRef<HTMLDivElement | null>(null);
 
@@ -785,18 +786,28 @@ export function TabsHeader(props: TabsHeaderProps) {
 
   return (
     <div className="sb-sidebar-top-row">
-      <button
-        onClick={sidebar.toggleSidebarCollapsed}
-        className="sb-sidebar-collapse-button"
-        aria-label={
-          effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
-        }
-        title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        <span className="material-symbols-outlined">
-          {effectivelyCollapsed ? "menu" : "menu_open"}
-        </span>
-      </button>
+      <div className="sb-sidebar-top-start">
+        <button
+          onClick={sidebar.toggleSidebarCollapsed}
+          className="sb-sidebar-collapse-button"
+          aria-label={
+            effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
+          }
+          title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <span className="material-symbols-outlined">
+            {effectivelyCollapsed ? "menu" : "menu_open"}
+          </span>
+        </button>
+
+        {activeLogoUrl && (
+          <span
+            className="sb-sidebar-logo sb-tab-user-icon sb-tab-user-icon-has-image"
+            style={{ backgroundImage: `url(${activeLogoUrl})` }}
+            aria-hidden="true"
+          />
+        )}
+      </div>
 
       <div className="sb-sidebar-top-actions">
         {panelsEnabled && !effectivelyCollapsed && (
@@ -2581,7 +2592,16 @@ export function Sidebar(props: SidebarProps) {
   // an overlay (see Tabs.css). When it does, we render a scrim behind it so
   // that (a) input to the reader below is blocked while the overlay is up and
   // (b) clicking anywhere outside the sidebar collapses it back to the rail.
-  const isOverlay = app.isCompactDesktop.value && !effectivelyCollapsed;
+  //
+  // Neither is wanted while the Customization Center is open: previewing a
+  // customization means clicking around and selecting verses in the reader
+  // with the editor still open, so the scrim itself is skipped there rather
+  // than just no-op'ing its onClick — a still-present scrim would keep
+  // blocking those clicks from ever reaching the reader.
+  const isOverlay =
+    app.isCompactDesktop.value &&
+    !effectivelyCollapsed &&
+    !sidebar.isCustomizationViewOpen.value;
 
   // The guided tour opens the pane-layout menu while its step is active so the
   // layout options are visible behind the coachmark.

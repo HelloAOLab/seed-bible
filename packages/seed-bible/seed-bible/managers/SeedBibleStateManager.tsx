@@ -51,8 +51,23 @@ import {
   writeStoredTabsState,
   type PersistedTab,
 } from "../managers/TabsPersistence";
-import { createTheme } from "../managers/ThemeManager";
-import type { ThemeManager } from "../managers/ThemeManager";
+import {
+  generateThemeCssVariables,
+  createTheme,
+  generateThemeCssClasses,
+} from "../managers/ThemeManager";
+import type {
+  ThemeManager,
+  ThemeFontFamilyKey,
+} from "../managers/ThemeManager";
+import {
+  createCustomizationsManager,
+  CUSTOMIZATION_FONT_FIELDS,
+  CUSTOMIZATION_FONT_PRESETS,
+} from "../managers/CustomizationsManager";
+import type { CustomizationsManager } from "../managers/CustomizationsManager";
+import { createCustomizationVariantSelectionsManager } from "../managers/CustomizationVariantSelectionsManager";
+import { createCustomizationExtensionPreferencesManager } from "../managers/CustomizationExtensionPreferencesManager";
 import {
   batch,
   computed,
@@ -328,8 +343,21 @@ export interface SeedBibleState {
 
   /** Bible API and translation/chapter data orchestration. */
   bibleData: BibleDataManager;
-  /** Theme manager. Writes its own CSS to `document.head` — see `ThemeManager.tsx`. */
-  theme: ThemeManager;
+  /**
+   * Theme manager plus derived CSS variables/classes for rendering the
+   * Customization-blended theme (see `theme` below). `ThemeManager` itself
+   * still writes the unblended preset+settings theme straight to
+   * `document.head` — see `ThemeManager.tsx` — these extra fields are what
+   * layers the active Customization on top of that in the component tree.
+   */
+  theme: ThemeManager & {
+    themeCssVariables: ReadonlySignal<string>;
+    themeCssClasses: ReadonlySignal<string>;
+    /** Google Font family names an active customization's variant needs that aren't already statically loaded. */
+    googleFontFamiliesToLoad: ReadonlySignal<string[]>;
+  };
+  /** Saved, named "look and feel" color profiles the user can create/activate. */
+  customizations: CustomizationsManager;
   /** Sidebar/settings visibility manager. */
   sidebar: SidebarManager;
   /** Reader tab lifecycle manager. */
@@ -542,6 +570,18 @@ export function createSeedBibleState(
 
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
   const themeManager = createTheme(settings);
+  const customizationVariantSelections =
+    createCustomizationVariantSelectionsManager(os, login);
+  const customizationExtensionPreferences =
+    createCustomizationExtensionPreferencesManager(os, login);
+  const customizations = createCustomizationsManager(
+    os,
+    login,
+    themeManager,
+    navigation,
+    customizationVariantSelections,
+    customizationExtensionPreferences
+  );
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
     undefined
@@ -599,6 +639,31 @@ export function createSeedBibleState(
   );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
+  });
+  // Swaps the live installed-extension set over to whichever customization is
+  // active (its own extensionIds plus anything the viewer added for it), and
+  // back to the viewer's real default profile when none is active. Guarded
+  // so it stays a no-op until a customization has genuinely gone active at
+  // least once this session — effect() runs synchronously on registration,
+  // and without the guard this would fire on every page load and race
+  // app/main.tsx's own initial `loadDefaultExtensions()` call.
+  let previousExtensionTargetKey: string | null = null;
+  let hasEnteredCustomizationExtensionMode = false;
+  effect(() => {
+    const active = customizations.activeCustomization.value;
+    const targetIds = active ? customizations.activeExtensionIds.value : null;
+    if (targetIds === null && !hasEnteredCustomizationExtensionMode) {
+      return;
+    }
+    const key = targetIds === null ? " default" : [...targetIds].sort().join("");
+    if (key === previousExtensionTargetKey) {
+      return;
+    }
+    previousExtensionTargetKey = key;
+    if (targetIds !== null) {
+      hasEnteredCustomizationExtensionMode = true;
+    }
+    void extensions.reconcileInstalledExtensions(targetIds);
   });
   const modals = createModalManager();
   const search = createSearchManager();
@@ -683,6 +748,46 @@ export function createSeedBibleState(
   });
   const readingPlans = createReadingPlansManager(os, login);
   const gallery = createUserGalleryManager(os, login);
+
+  const { currentTheme } = themeManager;
+  // While a Customization is active, its variant is rendered against its
+  // own `baseTheme` preset (via `activeResolvedTheme` — see
+  // `buildBibleThemeFromCustomizationTheme`), not against the viewer's own
+  // theme — session-only, since that resolution is derived from in-memory
+  // customization data, never written to `SettingsManager`.
+  // `themeManager.currentTheme` itself (exposed as `state.theme.currentTheme`)
+  // stays unblended so Display & Theme settings keep showing/editing the
+  // user's actual theme, decoupled from whichever Customization is active.
+  const theme = computed(
+    () => customizations.activeResolvedTheme.value ?? currentTheme.value
+  );
+  const themeCssVariables = computed(() =>
+    generateThemeCssVariables(theme.value)
+  );
+  const themeCssClasses = computed(() => generateThemeCssClasses(theme.value));
+
+  // Presets (statically loaded in app/main.tsx's ExternalResourceDependencies)
+  // plus the built-in themes' own defaults never need a dynamic <link> —
+  // only a manually-typed custom font name does.
+  const ALWAYS_LOADED_FONT_NAMES = new Set([
+    ...CUSTOMIZATION_FONT_PRESETS.map((preset) => preset.name),
+    "Plus Jakarta Sans", // default bookTitle/chapterHeading/verse font in the built-in themes
+  ]);
+  const FONT_FAMILY_KEYS: ThemeFontFamilyKey[] = CUSTOMIZATION_FONT_FIELDS.map(
+    (field) => field.key
+  );
+  const googleFontFamiliesToLoad = computed<string[]>(() => {
+    const vars = theme.value.variables;
+    const names = new Set<string>();
+    for (const key of FONT_FAMILY_KEYS) {
+      const value = vars[key];
+      const name = value?.split(",")[0]?.trim();
+      if (name && !ALWAYS_LOADED_FONT_NAMES.has(name)) {
+        names.add(name);
+      }
+    }
+    return [...names];
+  });
 
   // Theme is the source of truth for text colors. When the user switches
   // theme presets, drop any per-section color override from the text editor
@@ -1151,7 +1256,8 @@ export function createSeedBibleState(
     const seedBibleTitle = getBrandedAppText(
       t("seed-bible", { defaultValue: "Seed Bible" }),
       t,
-      branding
+      branding,
+      customizations.activeCustomization.value?.name
     );
 
     const getTitle = () => {
@@ -1231,7 +1337,8 @@ export function createSeedBibleState(
     return getBrandedAppText(
       t("seed-bible", { defaultValue: "Seed Bible" }),
       t,
-      branding
+      branding,
+      customizations.activeCustomization.value?.name
     );
   });
 
@@ -1321,6 +1428,14 @@ export function createSeedBibleState(
     return `${navigation.basePath}${readingPath}`;
   });
 
+  /** How often time spent on the chapter in view is written to history. */
+  const READING_TICK_MS = 5000;
+  /**
+   * The most one tick may credit. A page can be frozen without ever reporting
+   * itself hidden, and its next tick then arrives with the whole sleep behind
+   * it; this caps what that tick can claim to have watched.
+   */
+  const READING_MAX_TICK_CREDIT_MS = READING_TICK_MS * 2;
   effect(() => {
     if (!selectedTab.value) {
       return;
@@ -1336,12 +1451,66 @@ export function createSeedBibleState(
     // that's what the "used for a day" download offer is judged against.
     data.offline.noteTranslationInUse(chapter.translation.id);
 
-    const readingHistoryTimeoutId = setInterval(() => {
-      readingHistory.saveReadingHistory(
-        chapter.book.id,
-        chapter.chapter.number
+    // Reading time accrues only while the chapter is actually on screen. Each
+    // tick credits just the stretch since the last one rather than stretching
+    // the event's end to the present, so time the app slept through — a locked
+    // phone, a backgrounded tab — opens a fresh event on return instead of
+    // being back-filled as though it had been read. Time spent listening with
+    // the screen off is recorded separately, by whatever is playing the audio.
+    let creditedThroughMs = Date.now();
+    let readingTicker: ReturnType<typeof setInterval> | null = null;
+
+    const creditTimeOnScreen = () => {
+      const now = Date.now();
+      const from = Math.max(
+        creditedThroughMs,
+        now - READING_MAX_TICK_CREDIT_MS
       );
-    }, 5000);
+      creditedThroughMs = now;
+      readingHistory.saveReadingSpan(
+        chapter.book.id,
+        chapter.chapter.number,
+        Math.floor(from / 1000),
+        Math.floor(now / 1000)
+      );
+    };
+
+    const startCrediting = () => {
+      if (readingTicker !== null) {
+        return;
+      }
+      creditedThroughMs = Date.now();
+      readingTicker = setInterval(creditTimeOnScreen, READING_TICK_MS);
+    };
+
+    const stopCrediting = () => {
+      if (readingTicker === null) {
+        return;
+      }
+      clearInterval(readingTicker);
+      readingTicker = null;
+      // The part-tick since the last one goes uncredited on purpose: a chapter
+      // has always had to hold the screen for a whole tick before it counts as
+      // read at all, and crediting stragglers here would let one flicked past
+      // on the way somewhere else earn a place in history.
+    };
+
+    const canWatchVisibility =
+      typeof document !== "undefined" && !import.meta.env.SSR;
+    const handleReadingVisibility = () => {
+      if (document.visibilityState === "visible") {
+        startCrediting();
+      } else {
+        stopCrediting();
+      }
+    };
+
+    if (canWatchVisibility) {
+      document.addEventListener("visibilitychange", handleReadingVisibility);
+    }
+    if (!canWatchVisibility || document.visibilityState === "visible") {
+      startCrediting();
+    }
 
     const posthogTimeoutId = setTimeout(() => {
       captureEvent("user_chapter_read", {
@@ -1352,7 +1521,13 @@ export function createSeedBibleState(
     }, 30_000);
 
     return () => {
-      clearInterval(readingHistoryTimeoutId);
+      if (canWatchVisibility) {
+        document.removeEventListener(
+          "visibilitychange",
+          handleReadingVisibility
+        );
+      }
+      stopCrediting();
       clearTimeout(posthogTimeoutId);
     };
   });
@@ -1446,9 +1621,22 @@ export function createSeedBibleState(
   };
 
   const handleSelectPane = (paneId: string) => {
-    navigateFromSidebar(() => {
+    // Side and fullscreen panes render docked beside the sidebar on desktop
+    // (see PaneLayout's SidePane/FullscreenPane) rather than covering it, so
+    // interacting with one shouldn't close it there — the Customization
+    // Center's editor pane in particular depends on the Settings list
+    // staying open behind it. On mobile every pane is forced to fullscreen
+    // (see `effectivePanes`) and the sidebar is a full-screen drawer, so it
+    // still needs to close to reveal the pane — batched with the pane
+    // selection via `navigateFromSidebar` so the sidebar/settings URL writes
+    // don't cost the back button a stale extra history entry.
+    if (isMobile.value) {
+      navigateFromSidebar(() => {
+        panes.selectPane(paneId);
+      });
+    } else {
       panes.selectPane(paneId);
-    });
+    }
   };
 
   // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
@@ -2092,7 +2280,13 @@ export function createSeedBibleState(
   const state: SeedBibleState = {
     os,
     bibleData: data,
-    theme: themeManager,
+    theme: {
+      ...themeManager,
+      themeCssVariables,
+      themeCssClasses,
+      googleFontFamiliesToLoad,
+    },
+    customizations,
     sidebar,
     tabs,
     tabsLayout,

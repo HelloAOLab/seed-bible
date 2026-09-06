@@ -85,10 +85,13 @@ function createFixture(): ReaderFixture {
     },
     thisChapterLink: "/api/BSB/GEN/1.json",
     thisChapterAudioLinks: {},
+    thisChapterAudioTimings: {},
     nextChapterApiLink: "/api/BSB/GEN/2.json",
     nextChapterAudioLinks: {},
+    nextChapterAudioTimings: {},
     previousChapterApiLink: null,
     previousChapterAudioLinks: null,
+    previousChapterAudioTimings: null,
     numberOfVerses: 2,
     chapter: {
       number: 1,
@@ -208,6 +211,7 @@ function createFixture(): ReaderFixture {
 
   const selectorState = {
     setOpen,
+    selectingTranslation: signal(false),
   } as any as BibleSelectorState;
 
   const slot: TabSlot = {
@@ -231,8 +235,13 @@ function createFixture(): ReaderFixture {
   };
 }
 
-function createMobileState(): SeedBibleState {
+/**
+ * @param selectorState Wired in as `state.selector` for the mobile chrome's own
+ *   entry points into the Bible selector (the header's translation chip).
+ */
+function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
   return {
+    selector: selectorState,
     app: {
       isMobile: signal(true),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
@@ -369,6 +378,59 @@ describe("BibleReader", () => {
     });
 
     expect(setOpen).toHaveBeenCalledWith(true, slot);
+  });
+
+  it("opens the selector on the book list when the title is clicked, even after the translation picker was left open", () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+    selectorState.selectingTranslation.value = true;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-bible-reader-title")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(false);
+  });
+
+  it("opens the translation picker from the header's translation button", async () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const button = container.querySelector<HTMLButtonElement>(
+      "button.sb-bible-reader-translation"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe("BSB");
+
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(true);
   });
 
   it("shows a not-found state and lets the user jump to the translation's first book when the requested book isn't in the book list", () => {
@@ -2772,6 +2834,32 @@ describe("BibleReader", () => {
       accountButton?.querySelector(".sb-tab-user-icon-generic")
     ).not.toBeNull();
     expect(accountButton?.textContent).toContain("account_circle");
+  });
+
+  it("opens the translation picker from the mobile header's translation button", async () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+    const state = createMobileState(selectorState);
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const button = container.querySelector<HTMLButtonElement>(
+      "button.sb-bible-reader-mobile-header-translation"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe("BSB");
+    expect(button?.getAttribute("aria-label")).toBe(
+      "Change translation (Berean Standard Bible)"
+    );
+
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ id: "slot-1" })
+    );
+    expect(selectorState.selectingTranslation.value).toBe(true);
   });
 
   it("updates readingState.scrollPosition when the chapter scroller scrolls", () => {
