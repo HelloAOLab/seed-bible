@@ -931,6 +931,9 @@ describe("BibleReaderToolbar — clearing highlights", () => {
   async function openCustomColorPicker() {
     await openPicker();
     await click(".sb-verse-toolbar-plus-inline, .sb-verse-toolbar-plus");
+    await waitFor(
+      () => document.body.querySelector(".sb-color-picker-dialog") !== null
+    );
   }
 
   async function confirmCustomColor() {
@@ -975,7 +978,7 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     ).not.toBeNull();
   });
 
-  it("adds the custom color to the selector without highlighting or clearing the selection on Confirm", async () => {
+  it("applies the custom color, saves it to the palette, and clears the selection on Confirm", async () => {
     const { readingState } = await selectFirstVerse();
     await renderToolbar();
     await openCustomColorPicker();
@@ -987,24 +990,23 @@ describe("BibleReaderToolbar — clearing highlights", () => {
       state.navigation.currentUrl.value.searchParams.get("verse");
     await confirmCustomColor();
 
-    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
+    expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+      "#334455"
+    );
     expect(state.settings.settings.value.customHighlightColors).toEqual([
       "#334455",
     ]);
-    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
     expect(state.navigation.currentUrl.value.searchParams.get("verse")).toBe(
       verseBefore
     );
     expect(document.body.querySelector(".sb-color-picker-dialog")).toBeNull();
     expect(document.body.querySelector(".sb-color-picker-layer")).toBeNull();
     expect(document.getElementById("sb-color-picker-host")).toBeNull();
-    expect(
-      container.querySelector('[aria-label="Highlight #334455"]')
-    ).not.toBeNull();
-    expect(container.querySelector(".sb-verse-toolbar-picker")).not.toBeNull();
   });
 
-  it("applies a custom color when its swatch in the selector is pressed", async () => {
+  it("applies a saved custom swatch when it is pressed", async () => {
     const { readingState } = await selectFirstVerse();
     await renderToolbar();
     await openCustomColorPicker();
@@ -1013,6 +1015,8 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     });
     await confirmCustomColor();
 
+    await selectFirstVerse();
+    await openPicker();
     await click('[aria-label="Highlight #334455"]');
 
     expect(readingState.highlights.value.highlights).toHaveLength(1);
@@ -1027,6 +1031,9 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await renderToolbar();
 
     for (const hex of ["111111", "222222", "333333", "444444", "555555"]) {
+      if (readingState.selectedVerses.value.length === 0) {
+        await selectFirstVerse();
+      }
       await openCustomColorPicker();
       await act(async () => {
         typeCustomHex(hex);
@@ -1039,6 +1046,9 @@ describe("BibleReaderToolbar — clearing highlights", () => {
       "#555555",
       "#333333",
     ]);
+
+    await selectFirstVerse();
+    await openPicker();
     expect(
       container.querySelector('[aria-label="Highlight #111111"]')
     ).toBeNull();
@@ -1054,7 +1064,6 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     expect(
       container.querySelector('[aria-label="Highlight #333333"]')
     ).not.toBeNull();
-    expect(readingState.selectedVerses.value).toHaveLength(1);
   });
 
   it("leaves the selection untouched when the color picker is cancelled", async () => {

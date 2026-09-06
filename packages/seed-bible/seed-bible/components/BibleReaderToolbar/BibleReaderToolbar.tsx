@@ -50,7 +50,10 @@ import type { VerseRef } from "../../managers/BibleDataManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import { DEFAULT_HIGHLIGHT_IDS } from "../../managers/ThemeManager";
-import { ColorPicker } from "../ColorPicker/ColorPicker";
+import {
+  LazyColorPicker,
+  preloadColorPicker,
+} from "../ColorPicker/LazyColorPicker";
 
 /** Shared always-true visibility for Chat when `?chatFirst=true`. */
 const CHAT_FIRST_VISIBLE = signal(true);
@@ -610,6 +613,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     settings,
     bookmarks,
     login,
+    navigation,
   } = props.state;
   const selectedTab = useComputed(
     () =>
@@ -1286,11 +1290,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const selectionUI = useComputed(() => settings.settings.value.selectionUI);
 
   const applyCustomColor = (color: string) => {
-    // Add only puts the colour in the highlighter selector. Applying it to
-    // the verses is a tap on the new swatch — Confirm used to highlight and
-    // clear the selection, which unmounted the selector before the swatch
-    // could show.
     settings.addCustomHighlightColor(color);
+    const rs = readingState.value;
+    if (!rs) return;
+
+    // Confirming a colour is not navigation. Applying the highlight still
+    // dismisses the selection (so the toolbar closes), but `?verse=` is
+    // bound to that selection — put it back so Confirm doesn't rewrite the
+    // address bar.
+    const verseParam = navigation.currentUrl.peek().searchParams.get("verse");
+    applyHighlightWithSession(
+      rs,
+      sessionState.value,
+      {
+        colorId: "yellow",
+        customColor: color,
+        customFontColor: getContrastTextColor(color),
+      },
+      !!login.userId.value
+    );
+    if (verseParam) {
+      navigation.updateQueryParams({ verse: verseParam }, true);
+    }
   };
 
   // Clear removes a saved highlight *and* the session's broadcast copy, so it
@@ -2548,6 +2569,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           key={`custom-slot-${slot}`}
                           type="button"
                           className="sb-verse-toolbar-color-button"
+                          onPointerEnter={preloadColorPicker}
+                          onFocus={preloadColorPicker}
                           onClick={() => {
                             customColorPickerOpen.value = true;
                           }}
@@ -2602,6 +2625,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     ref={customColorAnchorRef}
                     type="button"
                     className="sb-verse-toolbar-plus sb-verse-toolbar-plus-inline"
+                    onPointerEnter={preloadColorPicker}
+                    onFocus={preloadColorPicker}
                     onClick={() => {
                       customColorPickerOpen.value = true;
                     }}
@@ -2623,6 +2648,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     ref={customColorAnchorRef}
                     type="button"
                     className="sb-verse-toolbar-plus"
+                    onPointerEnter={preloadColorPicker}
+                    onFocus={preloadColorPicker}
                     onClick={() => {
                       customColorPickerOpen.value = true;
                     }}
@@ -2639,7 +2666,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     </span>
                   </button>
                 )}
-                <ColorPicker
+                <LazyColorPicker
                   value="#ffeb3a"
                   showTrigger={false}
                   open={customColorPickerOpen.value}

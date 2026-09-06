@@ -56,7 +56,7 @@ import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
-import { ColorPicker } from "../ColorPicker/ColorPicker";
+import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
 import { useEffect, useRef } from "preact/hooks";
 import { lazy, Suspense } from "preact/compat";
@@ -1756,7 +1756,7 @@ function TextFormattingToolbar(props: {
             ))}
             <div className="sb-text-format-palette-custom">
               <span>{t("custom", { defaultValue: "Custom" })}</span>
-              <ColorPicker
+              <LazyColorPicker
                 value={normalizeHex(section.color)}
                 className="sb-text-format-palette-custom-swatch"
                 ariaLabel={t("custom", { defaultValue: "Custom" })}
@@ -1936,7 +1936,7 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                     </span>
                   </div>
                   <div className="sb-theme-color-row-controls">
-                    <ColorPicker
+                    <LazyColorPicker
                       value={hexValue}
                       className="sb-theme-color-input"
                       ariaLabel={field.label}
@@ -1991,7 +1991,7 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                 <span className="sb-theme-color-value">{bg || "—"}</span>
               </div>
               <div className="sb-theme-color-row-controls">
-                <ColorPicker
+                <LazyColorPicker
                   value={normalizeHex(bg)}
                   className="sb-theme-color-input"
                   ariaLabel={t("id_highlight-background-color", { id })}
@@ -1999,7 +1999,7 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                     theme.setHighlightColor(id, { color });
                   }}
                 />
-                <ColorPicker
+                <LazyColorPicker
                   value={normalizeHex(fg)}
                   className="sb-theme-color-input"
                   ariaLabel={t("id_highlight-text-color", { id })}
