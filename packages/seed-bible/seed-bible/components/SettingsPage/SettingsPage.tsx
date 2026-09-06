@@ -22,7 +22,7 @@ import {
 } from "../../managers/ThemeManager";
 import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
 import { openCustomizationEditPane } from "../CustomizationEditPane/CustomizationEditPane";
-import { download, toHexInputValue, translateTitle } from "../../app/utils";
+import { download, translateTitle } from "../../app/utils";
 // The picture editor pulls in `react-avatar-editor`, and it is only reachable
 // through the "Update picture" button — so it is fetched on that click rather
 // than at boot, the same way TextItemInput defers TipTap.
@@ -879,7 +879,9 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
                     if (Number.isFinite(parsed)) setScriptureWidth(parsed);
                   }}
                 />
-                <span className="sb-scripture-margins-unit">ch</span>
+                <span className="sb-scripture-margins-unit">
+                  {t("scripture-width-unit", { defaultValue: "ch" })}
+                </span>
               </div>
               <button
                 type="button"

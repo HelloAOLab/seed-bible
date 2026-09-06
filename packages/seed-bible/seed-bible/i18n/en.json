@@ -811,6 +811,7 @@
   "greeting-night-named": "Good night, {{name}}!",
   "read-book-chapter-button": "Read {{bookName}} {{chapterNumber}}",
   "scripture-width": "Scripture Width",
+  "scripture-width-unit": "ch",
   "decrease-scripture-width": "Decrease scripture width",
   "increase-scripture-width": "Increase scripture width",
   "discover-content-panel": "Discover content",
