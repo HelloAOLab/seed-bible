@@ -38,7 +38,13 @@ export interface DiscoverContentResult {
   title: string;
   description: string;
   reference: DiscoverReference;
-  content: JSX.Element | VNode;
+  content?: JSX.Element | VNode;
+  /** The person or organization that created the content, e.g. "Bible Project". Results without one are grouped under a generic "Content" section. */
+  author?: string;
+  /** A preview image URL, shown above the item's title. */
+  image?: string;
+  /** Called when the item's card is clicked. */
+  onClick?: () => void;
 }
 
 export interface DiscoverCrossReferenceResult {

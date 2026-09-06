@@ -112,6 +112,7 @@
 
 .sb-discover-content-panel .sb-discover-content-panel-scroll {
   overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: none;
 }
 
