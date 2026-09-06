@@ -214,6 +214,16 @@ export interface TranslationBook {
 
 export interface TranslationBookChapter {
   /**
+   * The SHA-256 hash of this chapter's content.
+   *
+   * Comparing a previously fetched chapter's hash against this one is how we
+   * detect that the chapter's content changed since it was last fetched.
+   *
+   * Null or undefined if the API did not report a hash.
+   */
+  sha256?: string;
+
+  /**
    * The translation information for the book chapter.
    */
   translation: Translation;

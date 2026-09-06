@@ -45,6 +45,7 @@ import {
   type BookChapters,
   type SitemapIndexEntry,
 } from "./lib/sitemap";
+import { mapWithConcurrency } from "./lib/concurrency";
 
 const DEFAULT_ORIGIN = "https://seedbible.org";
 const DEFAULT_OUT_DIR = path.join("standalone", "dist", "client");
@@ -145,32 +146,6 @@ function skipReason(): string | null {
 interface TranslationSitemap {
   translationId: string;
   urls: string[];
-}
-
-/** Runs `worker` over `items` with at most `limit` in flight at once. */
-async function mapWithConcurrency<T, R>(
-  items: readonly T[],
-  limit: number,
-  worker: (item: T, index: number) => Promise<R>
-): Promise<R[]> {
-  const results = new Array<R>(items.length);
-  let cursor = 0;
-
-  async function run(): Promise<void> {
-    while (true) {
-      const index = cursor++;
-      if (index >= items.length) {
-        return;
-      }
-      results[index] = await worker(items[index]!, index);
-    }
-  }
-
-  const workers = Array.from({ length: Math.min(limit, items.length) }, () =>
-    run()
-  );
-  await Promise.all(workers);
-  return results;
 }
 
 async function buildTranslationSitemap(
@@ -332,6 +307,17 @@ async function generate(options: Options): Promise<void> {
     renderRobots(origin),
     "utf-8"
   );
+
+  // Ships the IndexNow key-verification file (see script/index-sitemap-urls.ts)
+  // at the site root alongside robots.txt/sitemap.xml, riding the same S3-sync
+  // deploy path. A missing INDEXNOW_KEY just skips this — existing deploys are
+  // unaffected.
+  const indexNowKey = process.env.INDEXNOW_KEY?.trim();
+  if (indexNowKey) {
+    const keyFileName = `${indexNowKey}.txt`;
+    await writeFile(path.join(outDir, keyFileName), indexNowKey, "utf-8");
+    console.log(`  ${path.join(outDir, keyFileName)} (IndexNow key file)`);
+  }
 
   console.log("");
   console.log(
