@@ -3,17 +3,16 @@ import type {
   ExperienceKey,
   ExperienceKeyMap,
 } from "../../../domain/models/experience";
-import { CUSTOM_ZOOM_MAP } from "./customZoomMap";
+import { CAMERA_FRAMING_MAP } from "./cameraFramingMap";
 
 const BLINK_DURATION = 1;
 const DEFAULT_CAMERA_ZOOM = 40;
 const CAMERA_POLAR = 1.01229;
 const CAMERA_INITIAL_AZIMUTH = 0.5;
-const CAMERA_ORBIT_DURATION = 70;
+const CAMERA_ORBIT_DURATION = 85;
 const CAMERA_ORBIT_EASE_IN_ARC = Math.PI / 2;
 const CAMERA_ORBIT_EASE_IN_DURATION =
   (CAMERA_ORBIT_EASE_IN_ARC * CAMERA_ORBIT_DURATION) / 4;
-const CAMERA_ORBIT_AZIMUTH = CAMERA_INITIAL_AZIMUTH + CAMERA_ORBIT_EASE_IN_ARC;
 const BLINK_INITIAL_COLOR = "#ffffff";
 const BLINK_TARGET_COLOR = "#8df5f3";
 const CONE_BLINK_TARGET_OPACITY = 0.75;
@@ -27,30 +26,22 @@ const ORBIT_REGULAR_EASING: Easing = {
   type: "linear",
 };
 
+export interface CameraFraming {
+  zoom: number;
+  polar: number;
+  initialAzimuth: number;
+  orbitAzimuth: number;
+}
+
 export class PieceHighlightConfigProvider {
   getBlinkDuration(): number {
     return BLINK_DURATION;
   }
-  getDefaultCameraZoom(): number {
-    return DEFAULT_CAMERA_ZOOM;
-  }
-  getCameraPolar(): number {
-    return CAMERA_POLAR;
-  }
-  getCameraInitialAzimuth(): number {
-    return CAMERA_INITIAL_AZIMUTH;
-  }
   getCameraOrbitDuration(): number {
     return CAMERA_ORBIT_DURATION;
   }
-  getCameraOrbitEaseInArc(): number {
-    return CAMERA_ORBIT_EASE_IN_ARC;
-  }
   getCameraOrbitEaseInDuration(): number {
     return CAMERA_ORBIT_EASE_IN_DURATION;
-  }
-  getCameraOrbitAzimuth(): number {
-    return CAMERA_ORBIT_AZIMUTH;
   }
   getBlinkInitialColor(): string {
     return BLINK_INITIAL_COLOR;
@@ -70,10 +61,19 @@ export class PieceHighlightConfigProvider {
   getCameraOrbitRegularEasing(): Easing {
     return ORBIT_REGULAR_EASING;
   }
-  getPieceCustomZoom<E extends ExperienceKey>(
+  getCameraFraming<E extends ExperienceKey>(
     experience: E,
     key: ExperienceKeyMap[E]
-  ): number | undefined {
-    return CUSTOM_ZOOM_MAP[experience][key];
+  ): CameraFraming {
+    const override = CAMERA_FRAMING_MAP[experience][key];
+    const initialAzimuth =
+      override?.rotation?.azimuth ?? CAMERA_INITIAL_AZIMUTH;
+
+    return {
+      zoom: override?.zoom ?? DEFAULT_CAMERA_ZOOM,
+      polar: override?.rotation?.polar ?? CAMERA_POLAR,
+      initialAzimuth,
+      orbitAzimuth: initialAzimuth + CAMERA_ORBIT_EASE_IN_ARC,
+    };
   }
 }

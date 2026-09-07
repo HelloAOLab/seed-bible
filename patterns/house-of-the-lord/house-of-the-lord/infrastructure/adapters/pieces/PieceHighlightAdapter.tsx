@@ -142,16 +142,18 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     }
 
     // Camera focus
+    const framing = this.#highlightConfigProvider.getCameraFraming(
+      experience,
+      key
+    );
     os.focusOn(bot, {
       duration: 1,
       easing,
       rotation: {
-        x: this.#highlightConfigProvider.getCameraPolar(),
-        y: this.#highlightConfigProvider.getCameraInitialAzimuth(),
+        x: framing.polar,
+        y: framing.initialAzimuth,
       },
-      zoom:
-        this.#highlightConfigProvider.getPieceCustomZoom(experience, key) ??
-        this.#highlightConfigProvider.getDefaultCameraZoom(),
+      zoom: framing.zoom,
     }).then(() => {
       this.#rotateAround({
         bot,
@@ -248,6 +250,11 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
   }): Promise<void> {
     if (this.#rotationId !== interactionId) return;
 
+    const framing = this.#highlightConfigProvider.getCameraFraming(
+      experience,
+      key
+    );
+
     await os.focusOn(bot, {
       duration: isFirstCall
         ? this.#highlightConfigProvider.getCameraOrbitEaseInDuration()
@@ -256,15 +263,13 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
         ? this.#highlightConfigProvider.getCameraOrbitInitialEasing()
         : this.#highlightConfigProvider.getCameraOrbitRegularEasing(),
       rotation: {
-        x: this.#highlightConfigProvider.getCameraPolar(),
+        x: framing.polar,
         y: isFirstCall
-          ? this.#highlightConfigProvider.getCameraOrbitAzimuth()
-          : this.#highlightConfigProvider.getCameraOrbitAzimuth() + 2 * Math.PI,
+          ? framing.orbitAzimuth
+          : framing.orbitAzimuth + 2 * Math.PI,
         normalize: false,
       },
-      zoom:
-        this.#highlightConfigProvider.getPieceCustomZoom(experience, key) ??
-        this.#highlightConfigProvider.getDefaultCameraZoom(),
+      zoom: framing.zoom,
     });
 
     this.#rotateAround({
