@@ -439,13 +439,18 @@ export function createNavigationManager(
   };
 
   /**
-   * Like `linkToQuery`, but drops every existing query parameter first —
-   * for links that should carry only the parameters passed in (e.g. a
+   * Like `linkToQuery`, but drops the current URL entirely first, keeping
+   * only the origin and the deployment root (`basePath`, or "/") — for
+   * links that should carry only the parameters passed in (e.g. a
    * customization share link), not whatever the current page happens to
-   * have in its URL (language, translation, book, chapter, ...).
+   * have. The reading position (language, translation, book, chapter) lives
+   * in the URL *path* now, not the query string — see `ReadingUrlPath.ts` —
+   * so a link that must not leak the sharer's current reading position has
+   * to drop the path too, not just the query.
    */
-  const linkToBareQuery = (query: Record<string, string | null>) => {
+  const linkToBareRoot = (query: Record<string, string | null>) => {
     const url = new URL(currentUrl.value);
+    url.pathname = basePath || "/";
     url.search = "";
     for (const [key, value] of Object.entries(query)) {
       if (value !== null) {
@@ -468,7 +473,7 @@ export function createNavigationManager(
     updatePathAndQueryParams,
     syncSignalsToUrl,
     linkToQuery,
-    linkToBareQuery,
+    linkToBareRoot,
     dispose,
   };
 }
