@@ -463,8 +463,6 @@ describe("parseVerseReference()", () => {
 
     ["Gen 1", { book: "GEN", chapter: 1 }] as const,
     ["Gen.1", { book: "GEN", chapter: 1 }] as const,
-    ["Gen:1", { book: "GEN", chapter: 1 }] as const,
-    ["gen:1", { book: "GEN", chapter: 1 }] as const,
     ["Gen 1.1", { book: "GEN", chapter: 1, verse: 1 }] as const,
     ["Gen.1.1", { book: "GEN", chapter: 1, verse: 1 }] as const,
     ["Gen. 1:1", { book: "GEN", chapter: 1, verse: 1 }] as const,
@@ -592,8 +590,6 @@ describe("scanVerseReferencesInText()", () => {
 
     ["Gen 1", { ref: { book: "GEN", chapter: 1 } }] as const,
     ["Gen.1", { ref: { book: "GEN", chapter: 1 } }] as const,
-    ["Gen:1", { ref: { book: "GEN", chapter: 1 } }] as const,
-    ["gen:1", { ref: { book: "GEN", chapter: 1 } }] as const,
     ["Gen 1.1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
     ["Gen.1.1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
     ["Gen. 1:1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
@@ -662,6 +658,16 @@ describe("scanVerseReferencesInText()", () => {
       { ref: { book: "GEN", chapter: 1, verse: 1 }, start: 4, end: 11 },
       { ref: { book: "GEN", chapter: 1, verse: 1 }, start: 16, end: 23 },
     ]);
+  });
+
+  it("does not treat a colon after a book name as a chapter joiner", () => {
+    // "Mark: 3 things" is a list header, not Mark chapter 3. Colon joins
+    // chapter to verse ("Mark 3:16"), not book to chapter, in free prose.
+    expect(scanVerseReferencesInText("Mark: 3 things to remember")).toEqual([]);
+    expect(scanVerseReferencesInText("James: 5 steps here")).toEqual([]);
+    expect(scanVerseReferencesInText("Luke: 2 reasons")).toEqual([]);
+    expect(parseVerseReference("Mark: 3 things")).toBeNull();
+    expect(parseVerseReference("Gen:1")).toBeNull();
   });
 
   it("should find multiple chapter-only references", () => {

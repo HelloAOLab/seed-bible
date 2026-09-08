@@ -4215,6 +4215,22 @@ describe("createChatsManager", () => {
       });
     });
 
+    it("does not treat a book name used as a list header as a verse reference", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Mark: 3 things stood out",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Mark: 3 things stood out"],
+      });
+    });
+
     it("parses multiple verse references in one message", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";

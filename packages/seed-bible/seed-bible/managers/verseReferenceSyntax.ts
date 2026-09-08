@@ -10,10 +10,21 @@ export type ReferenceTail = {
 };
 
 /**
- * Joins the book name to the chapter number: a space ("Gen 1"), a period
- * ("Gen.1"), a colon ("Gen:1"), or a mix ("Gen. 1:1").
+ * Joins the book name to the chapter number in a deliberately typed reference
+ * (playlist / reading-plan input): a space ("Gen 1"), a period ("Gen.1"), a
+ * colon ("Gen:1"), or a mix ("Gen. 1:1").
+ *
+ * Do not use this in free-prose scanners. A colon after a book name is often
+ * a list header ("Mark: 3 things stood out"), not a chapter number.
  */
 export const BOOK_CHAPTER_JOIN_PATTERN = "[\\s.:]+";
+
+/**
+ * Joins the book name to the chapter number in free prose (chat, footnotes,
+ * annotation bodies). Space or period only — the colon stays a chapter–verse
+ * separator ("Mark 3:16"), never a book–chapter joiner.
+ */
+export const PROSE_BOOK_CHAPTER_JOIN_PATTERN = "[\\s.]+";
 
 /**
  * Chapter, optional verse, optional range. `:` and `.` are interchangeable, so

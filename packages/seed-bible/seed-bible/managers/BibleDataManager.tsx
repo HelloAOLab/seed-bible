@@ -16,7 +16,7 @@ import type { OfflineTranslationStore } from "../managers/OfflineTranslationStor
 import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
 import { isVerseReferenceInBounds } from "./verseReferenceBounds";
 import {
-  BOOK_CHAPTER_JOIN_PATTERN,
+  PROSE_BOOK_CHAPTER_JOIN_PATTERN,
   REFERENCE_NUMBERS_PATTERN,
   buildTail,
 } from "./verseReferenceSyntax";
@@ -325,7 +325,7 @@ export function parseVerseReference(
   // Book names may include non-ASCII letters (e.g. Spanish "Génesis").
   const match = text.match(
     new RegExp(
-      `^\\s*((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+\\p{L}[\\p{L}\\p{N}]*)*)${BOOK_CHAPTER_JOIN_PATTERN}${REFERENCE_NUMBERS_PATTERN}`,
+      `^\\s*((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+\\p{L}[\\p{L}\\p{N}]*)*)${PROSE_BOOK_CHAPTER_JOIN_PATTERN}${REFERENCE_NUMBERS_PATTERN}`,
       "u"
     )
   );
@@ -409,9 +409,11 @@ export function scanVerseReferencesInText(
   //   (?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)? — optional "of …" for "Song of Solomon"
   // Word boundary: not preceded by a letter/digit (ASCII \b alone fails for non-ASCII).
   // Numeric tail (chapter/verse/range, colon or period) is shared with the
-  // typed-reference parser via {@link REFERENCE_NUMBERS_PATTERN}.
+  // typed-reference parser via {@link REFERENCE_NUMBERS_PATTERN}. The book→
+  // chapter joiner is {@link PROSE_BOOK_CHAPTER_JOIN_PATTERN} (no colon), so a
+  // list header like "Mark: 3 things" is not treated as Mark chapter 3.
   const pattern = new RegExp(
-    `(?<![\\p{L}\\p{N}])((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+[Oo][Ff]\\s+\\p{L}[\\p{L}\\p{N}]*)?)${BOOK_CHAPTER_JOIN_PATTERN}${REFERENCE_NUMBERS_PATTERN}`,
+    `(?<![\\p{L}\\p{N}])((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+[Oo][Ff]\\s+\\p{L}[\\p{L}\\p{N}]*)?)${PROSE_BOOK_CHAPTER_JOIN_PATTERN}${REFERENCE_NUMBERS_PATTERN}`,
     "gu"
   );
 

@@ -97,4 +97,12 @@ describe("VerseReferenceMark", () => {
       expect(link.getAttribute("href")).toBeTruthy();
     }
   });
+
+  it("does not link a book name used as a list header", () => {
+    editor = createEditor();
+
+    editor.commands.insertContent("Mark: 3 things stood out");
+
+    expect(getReferenceLinks(editor.getHTML())).toHaveLength(0);
+  });
 });
