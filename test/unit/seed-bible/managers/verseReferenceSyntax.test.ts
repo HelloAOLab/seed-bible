@@ -1,0 +1,118 @@
+import {
+  buildTail,
+  splitTypedVerseReference,
+} from "@packages/seed-bible/seed-bible/managers/verseReferenceSyntax";
+
+const genesis11 = {
+  bookQuery: "Gen",
+  chapterStr: "1",
+  verseStr: "1",
+};
+
+describe("splitTypedVerseReference", () => {
+  it("accepts colon, European period, and compact period forms", () => {
+    expect(splitTypedVerseReference("Gen 1:1")).toMatchObject(genesis11);
+    expect(splitTypedVerseReference("Gen 1.1")).toMatchObject(genesis11);
+    expect(splitTypedVerseReference("Gen.1.1")).toMatchObject(genesis11);
+  });
+
+  it("accepts an abbreviation period before the numbers", () => {
+    expect(splitTypedVerseReference("Gen. 1:1")).toMatchObject(genesis11);
+    expect(splitTypedVerseReference("Gen. 1.1")).toMatchObject(genesis11);
+    expect(splitTypedVerseReference("Gen.1:1")).toMatchObject({
+      bookQuery: "Gen",
+      chapterStr: "1",
+      verseStr: "1",
+    });
+  });
+
+  it("is case-insensitive on the book query and trims surrounding space", () => {
+    expect(splitTypedVerseReference("  gen 1.1  ")).toMatchObject({
+      bookQuery: "gen",
+      chapterStr: "1",
+      verseStr: "1",
+    });
+    expect(splitTypedVerseReference("GEN.1.1")).toMatchObject({
+      bookQuery: "GEN",
+      chapterStr: "1",
+      verseStr: "1",
+    });
+  });
+
+  it("parses verse ranges and cross-chapter ranges with either separator", () => {
+    expect(splitTypedVerseReference("John 3.16-18")).toMatchObject({
+      bookQuery: "John",
+      chapterStr: "3",
+      verseStr: "16",
+      endVerseStr: "18",
+    });
+    expect(splitTypedVerseReference("Gen.1.1-2.3")).toMatchObject({
+      bookQuery: "Gen",
+      chapterStr: "1",
+      verseStr: "1",
+      endChapterStr: "2",
+      endVerseStr: "3",
+    });
+    expect(splitTypedVerseReference("Gen 1.1-2:3")).toMatchObject({
+      bookQuery: "Gen",
+      chapterStr: "1",
+      verseStr: "1",
+      endChapterStr: "2",
+      endVerseStr: "3",
+    });
+  });
+
+  it("parses numbered books in compact and spaced forms", () => {
+    expect(splitTypedVerseReference("1 John 1.1")).toMatchObject({
+      bookQuery: "1 John",
+      chapterStr: "1",
+      verseStr: "1",
+    });
+    expect(splitTypedVerseReference("1Jn.1.1")).toMatchObject({
+      bookQuery: "1Jn",
+      chapterStr: "1",
+      verseStr: "1",
+    });
+    expect(splitTypedVerseReference("1 Cor. 13.4")).toMatchObject({
+      bookQuery: "1 Cor",
+      chapterStr: "13",
+      verseStr: "4",
+    });
+  });
+
+  it("keeps a book-only query so suggestions can still match", () => {
+    expect(splitTypedVerseReference("Phil")).toEqual({ bookQuery: "Phil" });
+    // Trailing abbreviation period is not part of the name.
+    expect(splitTypedVerseReference("Gen.")).toEqual({ bookQuery: "Gen" });
+  });
+
+  it("returns null for empty input or a number with no book letters", () => {
+    expect(splitTypedVerseReference("")).toBeNull();
+    expect(splitTypedVerseReference("   ")).toBeNull();
+    expect(splitTypedVerseReference("1.1")).toBeNull();
+    expect(splitTypedVerseReference(".")).toBeNull();
+  });
+});
+
+describe("buildTail", () => {
+  it("builds a verse, a verse range, and a cross-chapter range", () => {
+    expect(buildTail("16", undefined, undefined)).toEqual({ verse: 16 });
+    expect(buildTail("16", undefined, "18")).toEqual({
+      verse: 16,
+      endVerse: 18,
+    });
+    expect(buildTail("1", "2", "3")).toEqual({
+      verse: 1,
+      endChapter: 2,
+      endVerse: 3,
+    });
+  });
+
+  it("treats a bare end number as an end chapter", () => {
+    expect(buildTail(undefined, undefined, "3")).toEqual({ endChapter: 3 });
+  });
+
+  it("rejects a chapter start mixed with a verse end", () => {
+    expect(buildTail(undefined, "2", "3")).toBeNull();
+  });
+});

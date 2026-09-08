@@ -4186,6 +4186,35 @@ describe("createChatsManager", () => {
       });
     });
 
+    it("parses European period and compact period verse references", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Compare Gen 1.1 and Gen.1.1",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Compare ",
+          {
+            type: "verse_reference",
+            text: "Gen 1.1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+          " and ",
+          {
+            type: "verse_reference",
+            text: "Gen.1.1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
     it("parses multiple verse references in one message", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";

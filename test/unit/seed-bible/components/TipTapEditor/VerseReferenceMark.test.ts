@@ -81,4 +81,20 @@ describe("VerseReferenceMark", () => {
 
     expect(getReferenceLinks(editor.getHTML())).toHaveLength(0);
   });
+
+  it("links colon, European period, and compact period references", () => {
+    editor = createEditor();
+
+    editor.commands.insertContent("See Gen 1:1, Gen 1.1, and Gen.1.1");
+
+    const links = getReferenceLinks(editor.getHTML());
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Gen 1:1",
+      "Gen 1.1",
+      "Gen.1.1",
+    ]);
+    for (const link of links) {
+      expect(link.getAttribute("href")).toBeTruthy();
+    }
+  });
 });

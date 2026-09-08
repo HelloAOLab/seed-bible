@@ -15,6 +15,11 @@ import {
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
 import { isVerseReferenceInBounds } from "./verseReferenceBounds";
+import {
+  BOOK_CHAPTER_JOIN_PATTERN,
+  REFERENCE_NUMBERS_PATTERN,
+  buildTail,
+} from "./verseReferenceSyntax";
 
 /**
  * Opaque cache for `getTranslations()`'s network result, keyed by normalized
@@ -309,22 +314,27 @@ export function parseVerseReference(
   text: string,
   books?: TranslationBook[]
 ): VerseRef | null {
-  // Formats supported:
+  // Formats supported (`:` and `.` are interchangeable):
   //   GEN 1          – chapter only
   //   GEN 1:1        – chapter + verse
+  //   GEN 1.1        – same, European period
+  //   GEN.1.1        – compact period form
   //   GEN 5-7        – chapter range (hyphen, en dash, or em dash)
   //   GEN 5:16-19    – verse range within one chapter
   //   GEN 1:1-2:10   – cross-chapter verse range
   // Book names may include non-ASCII letters (e.g. Spanish "Génesis").
   const match = text.match(
-    /^\s*((?:\d+\s?)?\p{L}[\p{L}\p{N}]*(?:\s+\p{L}[\p{L}\p{N}]*)*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/u
+    new RegExp(
+      `^\\s*((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+\\p{L}[\\p{L}\\p{N}]*)*)${BOOK_CHAPTER_JOIN_PATTERN}${REFERENCE_NUMBERS_PATTERN}`,
+      "u"
+    )
   );
 
   if (!match) {
     return null;
   }
 
-  const [reference, book, chapterStr, verseStr, rangeStartStr, rangeEndStr] =
+  const [reference, book, chapterStr, verseStr, endChapterStr, endVerseStr] =
     match;
 
   if (!book || !chapterStr) {
@@ -336,27 +346,12 @@ export function parseVerseReference(
     return null;
   }
 
-  const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
-  if (verse !== undefined && isNaN(verse)) {
+  const tail = buildTail(verseStr, endChapterStr, endVerseStr);
+  if (tail === null) {
     return null;
   }
 
-  let endChapter: number | undefined;
-  let endVerse: number | undefined;
-
-  if (rangeStartStr) {
-    if (verse === undefined) {
-      // No verse → range is chapter-based: "GEN 5-7"
-      endChapter = parseInt(rangeStartStr);
-    } else if (rangeEndStr) {
-      // Both sides have a colon separator: "GEN 1:1-2:10"
-      endChapter = parseInt(rangeStartStr);
-      endVerse = parseInt(rangeEndStr);
-    } else {
-      // Verse present, no colon on range end: "GEN 5:16-19"
-      endVerse = parseInt(rangeStartStr);
-    }
-  }
+  const { verse, endChapter, endVerse } = tail;
 
   const content =
     reference.length !== text.length
@@ -413,8 +408,12 @@ export function scanVerseReferencesInText(
   //   \p{L}[\p{L}\p{N}]* — word starting with a letter in any script
   //   (?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)? — optional "of …" for "Song of Solomon"
   // Word boundary: not preceded by a letter/digit (ASCII \b alone fails for non-ASCII).
-  const pattern =
-    /(?<![\p{L}\p{N}])((?:\d+\s?)?\p{L}[\p{L}\p{N}]*(?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)?)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/gu;
+  // Numeric tail (chapter/verse/range, colon or period) is shared with the
+  // typed-reference parser via {@link REFERENCE_NUMBERS_PATTERN}.
+  const pattern = new RegExp(
+    `(?<![\\p{L}\\p{N}])((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+[Oo][Ff]\\s+\\p{L}[\\p{L}\\p{N}]*)?)${BOOK_CHAPTER_JOIN_PATTERN}${REFERENCE_NUMBERS_PATTERN}`,
+    "gu"
+  );
 
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
@@ -423,8 +422,8 @@ export function scanVerseReferencesInText(
       bookStr,
       chapterStr,
       verseStr,
-      rangeStartStr,
-      rangeEndStr,
+      endChapterStr,
+      endVerseStr,
     ] = match;
 
     // Rejected candidates must retry one character later. Otherwise a false
@@ -451,25 +450,13 @@ export function scanVerseReferencesInText(
       continue;
     }
 
-    const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
-    if (verse !== undefined && isNaN(verse)) {
+    const tail = buildTail(verseStr, endChapterStr, endVerseStr);
+    if (tail === null) {
       retryFromNextChar();
       continue;
     }
 
-    let endChapter: number | undefined;
-    let endVerse: number | undefined;
-
-    if (rangeStartStr) {
-      if (verse === undefined) {
-        endChapter = parseInt(rangeStartStr);
-      } else if (rangeEndStr) {
-        endChapter = parseInt(rangeStartStr);
-        endVerse = parseInt(rangeEndStr);
-      } else {
-        endVerse = parseInt(rangeStartStr);
-      }
-    }
+    const { verse, endChapter, endVerse } = tail;
 
     if (
       !isVerseReferenceInBounds(

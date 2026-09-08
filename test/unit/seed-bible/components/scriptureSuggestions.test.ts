@@ -81,6 +81,27 @@ describe("computeSuggestions", () => {
     ]);
   });
 
+  it("resolves colon, European period, and compact period verse forms", () => {
+    const genesis11 = {
+      id: "GEN",
+      labels: ["1:1"],
+    };
+    expect(shape("Gen 1:1")).toEqual([genesis11]);
+    expect(shape("Gen 1.1")).toEqual([genesis11]);
+    expect(shape("Gen.1.1")).toEqual([genesis11]);
+    expect(shape("Gen. 1.1")).toEqual([genesis11]);
+    expect(shape("gen.1:1")).toEqual([genesis11]);
+  });
+
+  it("keeps matching a book after a trailing abbreviation period", () => {
+    expect(shape("Gen.")).toEqual([
+      {
+        id: "GEN",
+        labels: Array.from({ length: 50 }, (_, i) => String(i + 1)),
+      },
+    ]);
+  });
+
   it("applies single-chapter verse shorthand", () => {
     // Philemon has one chapter, so "Philemon 2" means verse 2 (labelled 1:2).
     expect(computeSuggestions("Philemon 2", BOOKS)).toEqual([

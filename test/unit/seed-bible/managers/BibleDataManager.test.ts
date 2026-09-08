@@ -461,6 +461,15 @@ describe("parseVerseReference()", () => {
       { book: "1KI", chapter: 1, verse: 31, endVerse: 32 },
     ] as const,
 
+    ["Gen 1.1", { book: "GEN", chapter: 1, verse: 1 }] as const,
+    ["Gen.1.1", { book: "GEN", chapter: 1, verse: 1 }] as const,
+    ["Gen. 1:1", { book: "GEN", chapter: 1, verse: 1 }] as const,
+    ["gen 1.1", { book: "GEN", chapter: 1, verse: 1 }] as const,
+    [
+      "Gen 1.1-2.3",
+      { book: "GEN", chapter: 1, verse: 1, endChapter: 2, endVerse: 3 },
+    ] as const,
+
     // verse-optional formats
     ["GEN 1", { book: "GEN", chapter: 1 }] as const,
     ["GEN 5-7", { book: "GEN", chapter: 5, endChapter: 7 }] as const,
@@ -577,6 +586,17 @@ describe("scanVerseReferencesInText()", () => {
       { ref: { book: "1KI", chapter: 1, verse: 31, endVerse: 32 } },
     ] as const,
 
+    ["Gen 1.1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
+    ["Gen.1.1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
+    ["Gen. 1:1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
+    ["gen 1.1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
+    [
+      "Gen 1.1-2.3",
+      {
+        ref: { book: "GEN", chapter: 1, verse: 1, endChapter: 2, endVerse: 3 },
+      },
+    ] as const,
+
     // verse-optional formats
     ["GEN 1", { ref: { book: "GEN", chapter: 1 } }] as const,
     ["GEN 5-7", { ref: { book: "GEN", chapter: 5, endChapter: 7 } }] as const,
@@ -626,6 +646,13 @@ describe("scanVerseReferencesInText()", () => {
   it("should find a single reference", () => {
     expect(scanVerseReferencesInText("This is GEN 1:1.")).toEqual([
       { ref: { book: "GEN", chapter: 1, verse: 1 }, start: 8, end: 15 },
+    ]);
+  });
+
+  it("should find European period and compact period references in prose", () => {
+    expect(scanVerseReferencesInText("See Gen 1.1 and Gen.1.1 today")).toEqual([
+      { ref: { book: "GEN", chapter: 1, verse: 1 }, start: 4, end: 11 },
+      { ref: { book: "GEN", chapter: 1, verse: 1 }, start: 16, end: 23 },
     ]);
   });
 

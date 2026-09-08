@@ -215,12 +215,46 @@ describe("parseSingleVerseReference", () => {
   it("returns null for a chapter start with a verse end", () => {
     // "John 1-2:3" mixes a whole-chapter start with a verse end (ambiguous).
     expect(parseSingleVerseReference("John 1-2:3", BOOKS)).toBeNull();
+    expect(parseSingleVerseReference("John 1-2.3", BOOKS)).toBeNull();
   });
 
   it("returns null for empty or malformed input", () => {
     expect(parseSingleVerseReference("", BOOKS)).toBeNull();
     expect(parseSingleVerseReference("   ", BOOKS)).toBeNull();
     expect(parseSingleVerseReference("John", BOOKS)).toBeNull();
+  });
+
+  it("parses colon, European period, and compact period verse forms", () => {
+    const genesis11 = { bookId: "GEN", chapter: 1, verse: 1 };
+    expect(parseSingleVerseReference("Gen 1:1", BOOKS)).toEqual(genesis11);
+    expect(parseSingleVerseReference("Gen 1.1", BOOKS)).toEqual(genesis11);
+    expect(parseSingleVerseReference("Gen.1.1", BOOKS)).toEqual(genesis11);
+    expect(parseSingleVerseReference("Gen. 1:1", BOOKS)).toEqual(genesis11);
+    expect(parseSingleVerseReference("Gen.1:1", BOOKS)).toEqual(genesis11);
+    expect(parseSingleVerseReference("gen 1.1", BOOKS)).toEqual(genesis11);
+  });
+
+  it("parses verse and cross-chapter ranges with period separators", () => {
+    expect(parseSingleVerseReference("John 3.16-18", BOOKS)).toEqual({
+      bookId: "JHN",
+      chapter: 3,
+      verse: 16,
+      endVerse: 18,
+    });
+    expect(parseSingleVerseReference("Genesis 1.1-2.3", BOOKS)).toEqual({
+      bookId: "GEN",
+      chapter: 1,
+      verse: 1,
+      endChapter: 2,
+      endVerse: 3,
+    });
+    expect(parseSingleVerseReference("Gen.1.1-2.3", BOOKS)).toEqual({
+      bookId: "GEN",
+      chapter: 1,
+      verse: 1,
+      endChapter: 2,
+      endVerse: 3,
+    });
   });
 });
 

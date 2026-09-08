@@ -7,50 +7,20 @@ import {
 import type { TranslationBook } from "./FreeUseBibleAPI";
 import type { VerseRef } from "./PlaylistManager";
 import { bookHasChapter } from "./verseReferenceBounds";
+import { buildTail, splitTypedVerseReference } from "./verseReferenceSyntax";
 
 export { bookHasChapter } from "./verseReferenceBounds";
+export {
+  buildTail,
+  splitTypedVerseReference,
+  type ReferenceTail,
+} from "./verseReferenceSyntax";
 
 /**
- * The trailing verse/range portion of a reference, shared by every candidate
- * book. `verse`/`endVerse`/`endChapter` mirror the fields on {@link VerseRef}.
- */
-export type ReferenceTail = Pick<VerseRef, "verse" | "endVerse" | "endChapter">;
-
-/**
- * Builds the verse/range portion of a reference from the parsed number groups,
- * or returns `null` when the format is invalid (a whole-chapter start mixed
- * with a verse end, e.g. "John 1-2:3").
- */
-export function buildTail(
-  verseStr: string | undefined,
-  endChapterStr: string | undefined,
-  endVerseStr: string | undefined
-): ReferenceTail | null {
-  const tail: ReferenceTail = {};
-  if (verseStr) {
-    // Verse-based reference: "John 3:16", "John 3:16-18", "Genesis 1:1-2:3".
-    tail.verse = Number(verseStr);
-    if (endVerseStr) {
-      tail.endVerse = Number(endVerseStr);
-    }
-    if (endChapterStr) {
-      tail.endChapter = Number(endChapterStr);
-    }
-  } else if (endVerseStr) {
-    // Whole-chapter range: "John 1-3". Without a start verse the trailing number
-    // is an end chapter, not an end verse. A colon there (e.g. "John 1-2:3")
-    // would mix a chapter start with a verse end, so reject that ambiguity.
-    if (endChapterStr) {
-      return null;
-    }
-    tail.endChapter = Number(endVerseStr);
-  }
-  return tail;
-}
-
-/**
- * Parses a human-typed scripture reference (e.g. "John 3:16", "1 John 2:1-3",
- * "Genesis 1:1-2:3") into every {@link VerseRef} it could plausibly mean.
+ * Parses a human-typed scripture reference (e.g. "John 3:16", "John 3.16",
+ * "Gen.1.1", "1 John 2:1-3", "Genesis 1:1-2:3") into every {@link VerseRef} it
+ * could plausibly mean. Colon and period are interchangeable chapter-verse
+ * separators; the book may be joined to the chapter by a space or a period.
  *
  * Distinct from {@link scanVerseReferencesInText} in BibleDataManager, which
  * finds every reference embedded in free prose (chat, footnotes).
@@ -86,22 +56,18 @@ export function parseVerseReferenceCandidates(
   input: string,
   books?: TranslationBook[]
 ): VerseRef[] {
-  const trimmed = input.trim();
-  if (!trimmed) {
+  const split = splitTypedVerseReference(input);
+  if (!split) {
     return [];
   }
 
-  // Split into the leading book-name portion and the trailing numeric portion.
-  // The book name runs up to the first chapter number (the first digit that is
-  // followed by more numeric/reference characters to the end of the string).
-  const match = trimmed.match(
-    /^(.+?)\s+(\d+)(?::(\d+))?(?:\s*-\s*(?:(\d+):)?(\d+))?$/
-  );
-  if (!match) {
-    return [];
-  }
-
-  const [, bookName, chapterStr, verseStr, endChapterStr, endVerseStr] = match;
+  const {
+    bookQuery: bookName,
+    chapterStr,
+    verseStr,
+    endChapterStr,
+    endVerseStr,
+  } = split;
 
   // A book name and chapter are always required.
   if (!bookName || !chapterStr) {
