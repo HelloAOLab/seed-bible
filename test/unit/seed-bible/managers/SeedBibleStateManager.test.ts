@@ -1917,6 +1917,60 @@ describe("createSeedBibleState", () => {
       expect(pane?.placement).toBe("fullscreen");
     });
 
+    // Regression: opening "/en/about" as a returning visitor. Everything the
+    // app restores just after mount — the saved tabs, their slot layout, the
+    // saved translation, Today's auto-open — has to leave the static page
+    // alone. Previously the stored tab won and Today opened on top of it.
+    it("stays on the About page for a returning visitor with saved tabs", async () => {
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        "sb-tabs-state",
+        JSON.stringify({
+          version: 1,
+          tabs: [
+            {
+              id: "tab-1",
+              translationId: "AAB",
+              bookId: "GEN",
+              chapterNumber: 1,
+            },
+            {
+              id: "tab-2",
+              translationId: "NIV",
+              bookId: "MAT",
+              chapterNumber: 1,
+            },
+          ],
+          selectedTabId: "tab-2",
+          layout: "split-2v",
+          slotTabIds: ["tab-1", "tab-2"],
+          selectedSlotIndex: 1,
+        })
+      );
+      jsdom.reconfigure({
+        url: "https://example.com/en/about?useFreeBibleAPI=true",
+      });
+
+      // `todayOpen: "fromUrl"` because this is precisely about what the real
+      // app does with this URL; the helper otherwise pins `?today=closed`.
+      const state = await createTestSeedBibleState({ todayOpen: "fromUrl" });
+
+      // Let anything the restores queued run, rather than only asserting on
+      // the synchronous outcome. Zero-delay turns, not a fixed wait.
+      for (let i = 0; i < 5; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+
+      expect(new URL(window.location.href).pathname).toBe("/en/about");
+      expect(state.app.isAboutPage.value).toBe(true);
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === ABOUT_PANE_ID)
+      ).toBe(true);
+      expect(state.today.isOpen.value).toBe(false);
+
+      window.localStorage.clear();
+    });
+
     it("selecting a different tab closes the About pane and leaves the page, per the same rule as any fullscreen pane", async () => {
       window.localStorage.clear();
       window.history.replaceState(null, "", "/en/about");
