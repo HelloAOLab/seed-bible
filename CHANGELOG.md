@@ -4,12 +4,21 @@
 
 ### ✨ Added
 
+- Make the previous/next chapter controls real links instead of buttons only wired to JavaScript, so search engine crawlers can follow them from chapter to chapter instead of relying solely on the sitemap; clicking still navigates in-app, and middle-click or ctrl-click opens the target chapter in a new tab. ([#1618](https://github.com/HelloAOLab/seed-bible/pull/1618))
+- Add an About page (`/{lang}/about`), reachable from a new icon in the sidebar and a Settings entry, with its own SEO meta tags and sitemap entries. It opens as a fullscreen pane alongside the sidebar and toolbar instead of replacing the whole app shell, and closes automatically when you select another tab. ([#1654](https://github.com/HelloAOLab/seed-bible/pull/1654))
+
 ### 🔧 Changed
+
+- Change the playlist cover image's remove button from a trash-can icon labeled "Delete" to an X icon labeled "Remove cover image". ([#1771](https://github.com/HelloAOLab/seed-bible/pull/1771))
+- Hide the "Customize" entry in Settings when signed out, instead of showing a link to a feature that requires an account. ([#1761](https://github.com/HelloAOLab/seed-bible/pull/1761))
 
 ### 🐛 Fixed
 
 - Stop reading time from accruing while the app is in the background. A phone locked in a pocket with the reader open could rack up half an hour of reading nobody did; reading now pauses when the app backgrounds and resumes as a new sitting when it comes back. ([#1738](https://github.com/HelloAOLab/seed-bible/pull/1738))
 - Count Audio Reader listening time even when the phone is locked. Listening was tracked with a timer that stops once the screen turns off, so an hour of narration during chores could log as a few seconds; it's now tracked by audio playback position instead. ([#1738](https://github.com/HelloAOLab/seed-bible/pull/1738))
+- Fix a short book's chapter list in the Bible Selector always aligning to the left regardless of which grid column its book falls in; it now aligns to match that column (left in the first column, right in the last, centered in a middle column). ([#1595](https://github.com/HelloAOLab/seed-bible/pull/1595))
+- Fix picking a theme variant on someone else's customization doing nothing while signed out, and persist that choice across a refresh, carrying it into your profile if you sign up afterward, instead of losing it. ([#1760](https://github.com/HelloAOLab/seed-bible/pull/1760))
+- Fix the collapsed sidebar's tab list overflowing instead of scrolling once there are more tabs than fit. ([#1758](https://github.com/HelloAOLab/seed-bible/pull/1758))
 
 ### 🗑️ Removed
 
