@@ -20,12 +20,29 @@ export type ReferenceTail = {
 export const BOOK_CHAPTER_JOIN_PATTERN = "[\\s.]+";
 
 /**
- * Chapter, optional verse, optional range. `:` and `.` are interchangeable, so
- * "3:16", "3.16", "3:16-18", "3.16-18", "1:1-2:3", and "1.1-2.3" all parse.
- * Hyphen, en dash, and em dash are accepted as the range mark.
+ * Chapter, optional verse, optional range, with `rangeMark` between the two
+ * ends of a range. `:` and `.` are interchangeable, so "3:16", "3.16",
+ * "3:16-18", "3.16-18", "1:1-2:3", and "1.1-2.3" all parse.
  */
-export const REFERENCE_NUMBERS_PATTERN =
-  "(\\d+)(?:[:.](\\d+))?(?:\\s*[-–—]\\s*(?:(\\d+)[:.])?(\\d+))?";
+function referenceNumbers(rangeMark: string): string {
+  return `(\\d+)(?:[:.](\\d+))?(?:${rangeMark}(?:(\\d+)[:.])?(\\d+))?`;
+}
+
+/**
+ * Chapter/verse/range for a deliberately typed reference (playlist /
+ * reading-plan input). Space around the range mark is tolerated, since a
+ * spaced "Gen 1 - 3" typed into a reference field is unambiguously a range.
+ * Hyphen, en dash, and em dash are all accepted as the mark.
+ */
+export const REFERENCE_NUMBERS_PATTERN = referenceNumbers("\\s*[-–—]\\s*");
+
+/**
+ * Chapter/verse/range in free prose (chat, footnotes, annotation bodies). The
+ * range mark must be tight — "Luke 1-2", never "Luke 1 - 2" — because in prose
+ * a spaced dash is usually punctuation, not a range: "Mark 4 - 3 things stood
+ * out" is a sentence, not Mark 4 through 3.
+ */
+export const PROSE_REFERENCE_NUMBERS_PATTERN = referenceNumbers("[-–—]");
 
 const TYPED_REFERENCE = new RegExp(
   `^(.+?)(?:${BOOK_CHAPTER_JOIN_PATTERN}${REFERENCE_NUMBERS_PATTERN})?$`

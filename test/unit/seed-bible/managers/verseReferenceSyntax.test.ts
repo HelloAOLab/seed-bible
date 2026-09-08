@@ -90,6 +90,18 @@ describe("splitTypedVerseReference", () => {
     });
   });
 
+  it("tolerates space around the range mark in typed input", () => {
+    // A spaced range typed into a reference field is unambiguous, unlike the
+    // same text in prose. Kept deliberately looser than the prose scanner.
+    const genesis1to3 = {
+      bookQuery: "Gen",
+      chapterStr: "1",
+      endVerseStr: "3",
+    };
+    expect(splitTypedVerseReference("Gen 1-3")).toMatchObject(genesis1to3);
+    expect(splitTypedVerseReference("Gen 1 - 3")).toMatchObject(genesis1to3);
+  });
+
   it("does not join the book to the chapter with a colon", () => {
     // The colon separates chapter from verse ("Gen 1:1"); between book and
     // chapter it is not part of the syntax at all.

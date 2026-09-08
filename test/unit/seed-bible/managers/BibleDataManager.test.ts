@@ -660,6 +660,28 @@ describe("scanVerseReferencesInText()", () => {
     ]);
   });
 
+  it("requires a tight range mark in prose", () => {
+    // "Luke 1-2" is a range; "Luke 1 - 2" is a sentence with a dash in it, so
+    // only the opening chapter is a reference.
+    expect(scanVerseReferencesInText("Read Luke 1-2 tonight")).toEqual([
+      { ref: { book: "LUK", chapter: 1, endChapter: 2 }, start: 5, end: 13 },
+    ]);
+    expect(scanVerseReferencesInText("Read Luke 1 - 2 reasons why")).toEqual([
+      { ref: { book: "LUK", chapter: 1 }, start: 5, end: 11 },
+    ]);
+    expect(scanVerseReferencesInText("Mark 4 - 3 things stood out")).toEqual([
+      { ref: { book: "MRK", chapter: 4 }, start: 0, end: 6 },
+    ]);
+    // The en dash and em dash are ranges too, when tight.
+    expect(scanVerseReferencesInText("Luke 1–2")).toEqual([
+      { ref: { book: "LUK", chapter: 1, endChapter: 2 }, start: 0, end: 8 },
+    ]);
+    // Verse ranges follow the same rule.
+    expect(scanVerseReferencesInText("Mark 3:16 - 18 of them")).toEqual([
+      { ref: { book: "MRK", chapter: 3, verse: 16 }, start: 0, end: 9 },
+    ]);
+  });
+
   it("does not treat a colon after a book name as a chapter joiner", () => {
     // "Mark: 3 things" is a list header, not Mark chapter 3. Colon joins
     // chapter to verse ("Mark 3:16"), not book to chapter, in free prose.
