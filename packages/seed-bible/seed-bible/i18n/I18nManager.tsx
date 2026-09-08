@@ -263,7 +263,13 @@ export function createI18nManager(
             new Error(`No locale file for language: ${language}`)
           );
         }
-        return loader().then((mod) => mod.default);
+        // Return the module namespace object as-is: `resourcesToBackend`
+        // already unwraps `.default` itself (`(data && data.default) || data`
+        // in its `read()`). Unwrapping it here too double-unwraps any locale
+        // whose JSON has a top-level key literally named "default" (e.g.
+        // ar.json's `"default": "تقصير"`) — its own `.default` re-unwrap then
+        // grabs that string instead of falling through to the whole object.
+        return loader();
       })
     );
 
