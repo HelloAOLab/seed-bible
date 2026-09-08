@@ -466,18 +466,12 @@ export function createSavesManager(
   const legacyMigratedThrough = signal<number | null>(null);
 
   /**
-   * The initial load for the current user, while it is still in flight.
-   * Mutators wait on it before touching state: a save added during the round
-   * trip would otherwise be overwritten when the load applies, and on a
-   * migrating user that also costs the copy-forward.
+   * The load for the current user, while it is still in flight. Mutators wait
+   * on it through {@link ensureLoaded} before touching state: a save added
+   * during the round trip would otherwise be overwritten when the load
+   * applies, and on a migrating user that also costs the copy-forward.
    */
   let loadPromise: Promise<void> | null = null;
-  const whenLoaded = async (): Promise<void> => {
-    const pending = loadPromise;
-    if (pending) {
-      await pending;
-    }
-  };
 
   const readSaves: ReadonlySignal<Save[]> = computed(() => saves.value);
   const readCategories: ReadonlySignal<SaveCategory[]> = computed(
@@ -500,9 +494,18 @@ export function createSavesManager(
         ? { legacyMigratedThrough: migratedThrough }
         : {}),
     });
-    await os.recordData(userId, STORAGE_ADDRESS, payload, {
+    const result = await os.recordData(userId, STORAGE_ADDRESS, payload, {
       marker: "publicRead",
     });
+    // The records client reports a rejected write by *resolving* with
+    // `success: false` (`data_too_large`, `not_authorized`, an expired token,
+    // a server error), so a write that never landed looks exactly like one
+    // that did unless the result is checked. Throwing turns it back into the
+    // failure it is, which is what stops the migration reporting success on a
+    // copy-forward that was refused.
+    if (result && result.success === false) {
+      throw new Error(`Failed to write saves: ${result.errorCode}`);
+    }
   };
 
   /**
@@ -661,6 +664,48 @@ export function createSavesManager(
     await writeSaves(userId, nextSaves, nextCategories);
   };
 
+  /**
+   * What every mutator waits on before it touches state: the in-flight load,
+   * and then a straight answer about whether this user's record is actually
+   * loaded.
+   *
+   * Both halves matter. Waiting alone is what keeps a save made during the
+   * initial round trip from being overwritten when the load applies. But a
+   * load that *failed* leaves the user unloaded on purpose (see the error
+   * branch in `loadSaves`), and in that state `persist` refuses to write —
+   * so mutating anyway would fill the star and show a row in the saves panel
+   * for something that was never stored, and is gone on the next reload.
+   *
+   * A failed read is usually transient, and the user's next action is the
+   * natural moment to recover from one, so retry the load here rather than
+   * making them refresh. Only when that retry still hasn't loaded the record
+   * does the caller stand down and leave state untouched.
+   */
+  const ensureLoaded = async (): Promise<boolean> => {
+    const pending = loadPromise;
+    if (pending) {
+      await pending;
+    }
+    const userId = login.userId.value;
+    if (!userId) {
+      return false;
+    }
+    if (loadedUserId.value === userId) {
+      return true;
+    }
+    // Reuse a retry another caller already started rather than firing a third
+    // read; the copy-forward is idempotent either way, this just avoids the
+    // duplicate request.
+    if (loadPromise === pending) {
+      loadPromise = loadSaves(userId);
+    }
+    const retry = loadPromise;
+    if (retry) {
+      await retry;
+    }
+    return loadedUserId.value === userId;
+  };
+
   effect(() => {
     const userId = login.userId.value;
     if (!userId) {
@@ -725,7 +770,7 @@ export function createSavesManager(
     if (!login.userId.value) {
       return;
     }
-    await whenLoaded();
+    if (!(await ensureLoaded())) return;
     const verse = options?.verse;
     if (isLocationSaved(translationId, bookId, chapterNumber, verse)) {
       return;
@@ -758,7 +803,7 @@ export function createSavesManager(
   };
 
   const removeSave: SavesManager["removeSave"] = async (id) => {
-    await whenLoaded();
+    if (!(await ensureLoaded())) return;
     const next = saves.value.filter((save) => save.id !== id);
     if (next.length === saves.value.length) {
       return;
@@ -771,7 +816,7 @@ export function createSavesManager(
     id,
     categoryName
   ) => {
-    await whenLoaded();
+    if (!(await ensureLoaded())) return;
     const existing = saves.value.find((save) => save.id === id);
     if (!existing) return;
     if (!existing.categories.includes(categoryName)) return;
@@ -796,7 +841,7 @@ export function createSavesManager(
     // An empty list is a no-op rather than a delete: a save with no folder has
     // nowhere to live, and callers that mean "delete" have `removeSave`.
     if (nextCategoryNames.length === 0) return;
-    await whenLoaded();
+    if (!(await ensureLoaded())) return;
     const nextNames = normalizeSaveCategories(nextCategoryNames);
 
     const existing = saves.value.find((save) => save.id === id);
@@ -850,7 +895,7 @@ export function createSavesManager(
   const createCategory: SavesManager["createCategory"] = async (name) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    await whenLoaded();
+    if (!(await ensureLoaded())) return;
     if (categories.value.some((c) => c.name === trimmed)) {
       return;
     }
@@ -868,7 +913,7 @@ export function createSavesManager(
   ) => {
     const trimmed = newName.trim();
     if (!trimmed || trimmed === oldName) return;
-    await whenLoaded();
+    if (!(await ensureLoaded())) return;
     if (!categories.value.some((c) => c.name === oldName)) return;
     if (categories.value.some((c) => c.name === trimmed)) {
       // Target name collides with an existing category — skip to keep names
@@ -906,7 +951,7 @@ export function createSavesManager(
       // elsewhere.
       return;
     }
-    await whenLoaded();
+    if (!(await ensureLoaded())) return;
     if (!categories.value.some((c) => c.name === name)) return;
     const nextCategories = categories.value.filter((c) => c.name !== name);
     const nextSaves: Save[] = [];

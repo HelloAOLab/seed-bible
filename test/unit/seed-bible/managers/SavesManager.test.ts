@@ -426,6 +426,57 @@ describe("SavesManager", () => {
       await manager.addSave("BSB", "JHN", 3);
 
       expect(recordDataMock).not.toHaveBeenCalled();
+      // And it is not shown as saved either. Keeping it in memory would fill
+      // the star and put a row in the saves panel for something that was
+      // never stored, which then disappears on the next reload.
+      expect(manager.saves.value).toEqual([]);
+      expect(manager.isLocationSaved("BSB", "JHN", 3)).toBe(false);
+    });
+
+    it("retries the failed load when the user next saves something", async () => {
+      // A failed read is usually transient, and the user's next action is the
+      // natural moment to recover from one — otherwise a single blip leaves
+      // saves unwritable until a refresh.
+      let attempt = 0;
+      getDataMock.mockImplementation(
+        async (_userId: string, address: string) => {
+          if (address !== "saves") {
+            return {
+              success: false,
+              errorCode: "data_not_found",
+              errorMessage: "Data not found",
+            };
+          }
+          attempt += 1;
+          if (attempt === 1) {
+            return readFailure;
+          }
+          return {
+            success: true,
+            data: {
+              saves: [createSave({ id: "already-filed" })],
+              categories: [{ name: DEFAULT_SAVE_CATEGORY }],
+            },
+          };
+        }
+      );
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+
+      // Nothing loaded on the first attempt.
+      expect(manager.saves.value).toEqual([]);
+
+      await manager.addSave("BSB", "JHN", 3);
+
+      // The retry brought the real record in, so the new save lands on top of
+      // it rather than replacing it.
+      expect(manager.saves.value.map((save) => save.id)).toEqual([
+        "already-filed",
+        manager.saves.value[1]!.id,
+      ]);
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(recordDataMock.mock.calls[0]![2].saves).toHaveLength(2);
     });
 
     it("waits rather than starting fresh when the legacy read fails", async () => {
@@ -638,6 +689,30 @@ describe("SavesManager", () => {
     it("keeps the migrated saves in memory when the copy-forward write fails", async () => {
       setRecords({ bookmarks: legacyRecord });
       recordDataMock.mockRejectedValue(new Error("offline"));
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+
+      expect(manager.saves.value).toEqual(migratedSaves);
+      expect(captureMock).not.toHaveBeenCalledWith(
+        "saves_migrated_from_legacy_bookmarks",
+        expect.anything()
+      );
+    });
+
+    it("does not report a migration the records server refused", async () => {
+      // The other half of the case above: the client reports a rejected write
+      // by *resolving* with `success: false`, not by throwing. An unchecked
+      // result made a refused copy-forward indistinguishable from one that
+      // landed — and #1659 reads this event to decide when the legacy record
+      // is safe to delete, so over-counting it errs toward deleting data that
+      // never made it across.
+      setRecords({ bookmarks: legacyRecord });
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_too_large",
+        errorMessage: "Data too large.",
+      } as never);
 
       const manager = createSavesManager(os, login);
       await flushPromises();
