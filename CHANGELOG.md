@@ -4,7 +4,12 @@
 
 ### ✨ Added
 
+- Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1" and "Gen. 1:1" resolve the same as "Gen 1:1". Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+
 ### 🔧 Changed
+
+- Require the tight form for scripture ranges written in prose: "Luke 1-2" links as a range, while "Luke 1 - 2 reasons why" now links only Luke 1, since a spaced dash in a sentence is usually punctuation. Playlist and reading-plan entries still accept "Gen 1 - 3". ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+- Stop reading a colon as the separator between a book and a chapter. "Gen 1:1" and "Mark 3:16" are unchanged, but "Gen:1" is no longer a reference anywhere. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
 
 ### 🐛 Fixed
 

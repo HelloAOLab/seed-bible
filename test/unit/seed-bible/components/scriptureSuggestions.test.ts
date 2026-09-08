@@ -90,6 +90,26 @@ describe("computeSuggestions", () => {
     expect(shape("gen.1")).toEqual(genesisChapter1);
   });
 
+  it("suggests numbered books while only their leading digit is typed", () => {
+    // "1" is not yet a reference, but it is a real prefix of "1 John" and
+    // "1 Corinthians", so the dropdown must not go empty part-way through.
+    const numbered = [
+      book("1JN", "1 John", "1 John", 5, 105),
+      book("1CO", "1 Corinthians", "1 Corinthians", 16, 437),
+      book("2JN", "2 John", "2 John", 1, 13),
+    ];
+    const ids = (input: string) =>
+      computeSuggestions(input, numbered).map((s) => s.book.id);
+
+    expect(ids("1")).toEqual(["1JN", "1CO"]);
+    expect(ids("1 ")).toEqual(["1JN", "1CO"]);
+    expect(ids("2")).toEqual(["2JN"]);
+    expect(ids("1 John 2")).toEqual(["1JN"]);
+    // A bare number with a chapter split off it is still not a book.
+    expect(ids("1.1")).toEqual([]);
+    expect(ids("1:1")).toEqual([]);
+  });
+
   it("offers nothing for a colon between the book and the chapter", () => {
     // "Gen:1" is not our syntax, so it matches no book name at all.
     expect(shape("Gen:1")).toEqual([]);

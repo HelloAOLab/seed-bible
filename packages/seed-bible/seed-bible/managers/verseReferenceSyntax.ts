@@ -71,9 +71,13 @@ export type SplitTypedReference = {
 
 /**
  * Splits a human-typed scripture reference into the book portion and the
- * numeric groups. Returns `null` when the string is empty, has no letters in
- * the book portion (so a bare "1.1" is not treated as a numbered book), or
- * uses a colon between the book and the chapter ("Gen:1").
+ * numeric groups. Returns `null` when the string is empty, uses a colon
+ * between the book and the chapter ("Gen:1"), or splits a chapter off a book
+ * portion that has no letters (so "1.1" is not read as book "1", chapter 1).
+ *
+ * A letterless book portion with no chapter is kept: a bare "1" is someone
+ * part-way through typing a numbered book like "1 John", and the editors need
+ * it to keep offering suggestions.
  *
  * When no chapter has been typed yet, a trailing abbreviation period is
  * stripped so "Gen." still matches Genesis.
@@ -93,7 +97,14 @@ export function splitTypedVerseReference(
 
   const chapterStr = match[2];
   const bookQuery = chapterStr ? match[1] : match[1].replace(/[.\s]+$/u, "");
-  if (!bookQuery || !/\p{L}/u.test(bookQuery)) {
+  if (!bookQuery) {
+    return null;
+  }
+
+  // Only reject a letterless book portion once a chapter has been split off
+  // it. "1.1" splitting into book "1" is a bare number, not a reference — but
+  // "1" on its own is a numbered book still being typed ("1 John").
+  if (chapterStr && !/\p{L}/u.test(bookQuery)) {
     return null;
   }
 

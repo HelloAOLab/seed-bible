@@ -127,6 +127,22 @@ describe("splitTypedVerseReference", () => {
     expect(splitTypedVerseReference("1:1")).toBeNull();
     expect(splitTypedVerseReference(".")).toBeNull();
   });
+
+  it("keeps a bare number as a book query for numbered books", () => {
+    // Someone typing "1 John" passes through "1" and "1 ", and the editors
+    // must keep suggesting while they do. Only "1.1" — where a chapter splits
+    // off a letterless book — is rejected.
+    expect(splitTypedVerseReference("1")).toEqual({ bookQuery: "1" });
+    expect(splitTypedVerseReference("1 ")).toEqual({ bookQuery: "1" });
+    expect(splitTypedVerseReference("2")).toEqual({ bookQuery: "2" });
+    expect(splitTypedVerseReference("1 John")).toEqual({
+      bookQuery: "1 John",
+    });
+    expect(splitTypedVerseReference("1 John 2")).toEqual({
+      bookQuery: "1 John",
+      chapterStr: "2",
+    });
+  });
 });
 
 describe("buildTail", () => {
