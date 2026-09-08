@@ -10,10 +10,10 @@ export type ReferenceTail = {
 };
 
 /**
- * Joins the book name to the chapter number: a space ("Gen 1:1"), a period
- * ("Gen.1.1"), or both ("Gen. 1:1").
+ * Joins the book name to the chapter number: a space ("Gen 1"), a period
+ * ("Gen.1"), a colon ("Gen:1"), or a mix ("Gen. 1:1").
  */
-export const BOOK_CHAPTER_JOIN_PATTERN = "[\\s.]+";
+export const BOOK_CHAPTER_JOIN_PATTERN = "[\\s.:]+";
 
 /**
  * Chapter, optional verse, optional range. `:` and `.` are interchangeable, so
@@ -32,12 +32,13 @@ const TYPED_REFERENCE = new RegExp(
  * chapter/verse/range groups. Used by the playlist / reading-plan editors
  * (where the chapter may still be missing while the user types).
  *
- * Supported shapes (all equivalent to Genesis 1:1):
+ * Supported shapes (all equivalent to Genesis 1:1 unless noted):
  *   "Gen 1:1"   space + colon
  *   "Gen 1.1"   space + period (European)
  *   "Gen.1.1"   period after the book + period
  *   "Gen. 1:1"  abbreviation period, then a normal reference
  *   "Gen.1:1"   period after the book + colon
+ * Chapter-only: "Gen 1", "Gen.1", "Gen:1"
  */
 export type SplitTypedReference = {
   bookQuery: string;
@@ -52,8 +53,8 @@ export type SplitTypedReference = {
  * numeric groups. Returns `null` when the string is empty or has no letters
  * in the book portion (so a bare "1.1" is not treated as a numbered book).
  *
- * When no chapter has been typed yet, a trailing period is stripped so an
- * abbreviation like "Gen." still matches Genesis.
+ * When no chapter has been typed yet, trailing punctuation is stripped so an
+ * abbreviation like "Gen." or "Gen:" still matches Genesis.
  */
 export function splitTypedVerseReference(
   input: string
@@ -69,7 +70,7 @@ export function splitTypedVerseReference(
   }
 
   const chapterStr = match[2];
-  const bookQuery = chapterStr ? match[1] : match[1].replace(/[.\s]+$/u, "");
+  const bookQuery = chapterStr ? match[1] : match[1].replace(/[.:\s]+$/u, "");
   if (!bookQuery || !/\p{L}/u.test(bookQuery)) {
     return null;
   }

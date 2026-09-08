@@ -198,10 +198,13 @@ describe("parseSingleVerseReference", () => {
   });
 
   it("parses a whole-chapter reference (verse omitted)", () => {
-    expect(parseSingleVerseReference("Genesis 1", BOOKS)).toEqual({
-      bookId: "GEN",
-      chapter: 1,
-    });
+    const genesis1 = { bookId: "GEN", chapter: 1 };
+    expect(parseSingleVerseReference("Genesis 1", BOOKS)).toEqual(genesis1);
+    expect(parseSingleVerseReference("Gen 1", BOOKS)).toEqual(genesis1);
+    expect(parseSingleVerseReference("Gen.1", BOOKS)).toEqual(genesis1);
+    expect(parseSingleVerseReference("Gen:1", BOOKS)).toEqual(genesis1);
+    expect(parseSingleVerseReference("gen.1", BOOKS)).toEqual(genesis1);
+    expect(parseSingleVerseReference("gen:1", BOOKS)).toEqual(genesis1);
   });
 
   it("parses a whole-chapter range (verses omitted)", () => {

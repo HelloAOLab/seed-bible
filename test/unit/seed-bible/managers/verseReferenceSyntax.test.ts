@@ -80,16 +80,33 @@ describe("splitTypedVerseReference", () => {
     });
   });
 
+  it("parses chapter-only references with space, period, or colon", () => {
+    const genesis1 = { bookQuery: "Gen", chapterStr: "1" };
+    expect(splitTypedVerseReference("Gen 1")).toEqual(genesis1);
+    expect(splitTypedVerseReference("Gen.1")).toEqual(genesis1);
+    expect(splitTypedVerseReference("Gen:1")).toEqual(genesis1);
+    expect(splitTypedVerseReference("gen.1")).toEqual({
+      bookQuery: "gen",
+      chapterStr: "1",
+    });
+    expect(splitTypedVerseReference("gen:1")).toEqual({
+      bookQuery: "gen",
+      chapterStr: "1",
+    });
+  });
+
   it("keeps a book-only query so suggestions can still match", () => {
     expect(splitTypedVerseReference("Phil")).toEqual({ bookQuery: "Phil" });
-    // Trailing abbreviation period is not part of the name.
+    // Trailing abbreviation punctuation is not part of the name.
     expect(splitTypedVerseReference("Gen.")).toEqual({ bookQuery: "Gen" });
+    expect(splitTypedVerseReference("Gen:")).toEqual({ bookQuery: "Gen" });
   });
 
   it("returns null for empty input or a number with no book letters", () => {
     expect(splitTypedVerseReference("")).toBeNull();
     expect(splitTypedVerseReference("   ")).toBeNull();
     expect(splitTypedVerseReference("1.1")).toBeNull();
+    expect(splitTypedVerseReference("1:1")).toBeNull();
     expect(splitTypedVerseReference(".")).toBeNull();
   });
 });

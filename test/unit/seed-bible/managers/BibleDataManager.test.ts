@@ -461,6 +461,10 @@ describe("parseVerseReference()", () => {
       { book: "1KI", chapter: 1, verse: 31, endVerse: 32 },
     ] as const,
 
+    ["Gen 1", { book: "GEN", chapter: 1 }] as const,
+    ["Gen.1", { book: "GEN", chapter: 1 }] as const,
+    ["Gen:1", { book: "GEN", chapter: 1 }] as const,
+    ["gen:1", { book: "GEN", chapter: 1 }] as const,
     ["Gen 1.1", { book: "GEN", chapter: 1, verse: 1 }] as const,
     ["Gen.1.1", { book: "GEN", chapter: 1, verse: 1 }] as const,
     ["Gen. 1:1", { book: "GEN", chapter: 1, verse: 1 }] as const,
@@ -586,6 +590,10 @@ describe("scanVerseReferencesInText()", () => {
       { ref: { book: "1KI", chapter: 1, verse: 31, endVerse: 32 } },
     ] as const,
 
+    ["Gen 1", { ref: { book: "GEN", chapter: 1 } }] as const,
+    ["Gen.1", { ref: { book: "GEN", chapter: 1 } }] as const,
+    ["Gen:1", { ref: { book: "GEN", chapter: 1 } }] as const,
+    ["gen:1", { ref: { book: "GEN", chapter: 1 } }] as const,
     ["Gen 1.1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
     ["Gen.1.1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
     ["Gen. 1:1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
