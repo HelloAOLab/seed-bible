@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Save an annotation with Cmd+Enter on Mac or Ctrl+Enter on Windows and Linux while typing, and keep Enter inserting a new line.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

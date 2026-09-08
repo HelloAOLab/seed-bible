@@ -18,14 +18,20 @@ import { sanitize } from "../../managers/Sanitization";
 // actually opens the annotation composer.
 const TipTapEditor = lazy(() => import("../TipTapEditor/TipTapEditor"));
 
+/** TipTap's `Mod` key: Cmd on Apple, Ctrl on Windows/Linux. */
+function isApplePlatform(): boolean {
+  return typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
+}
+
 interface CreateAnnotationFormProps {
   annotations: AnnotationsManager;
   tabs: TabsManager;
+  toast: (message: string) => void;
 }
 
 /** Create/edit-annotation screen shown inside the discover pane. */
 export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
-  const { annotations, tabs } = props;
+  const { annotations, tabs, toast } = props;
   const { t } = useI18n();
   const editorRef = useRef<Editor | null>(null);
   const editing = annotations.editingAnnotation.value;
@@ -58,8 +64,14 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
     : null;
 
   const doSave = async () => {
+    if (saving || editorEmpty) {
+      return;
+    }
     const editor = editorRef.current;
-    const html = editor ? await sanitize(editor.getHTML()) : "";
+    if (!editor || editor.isEmpty) {
+      return;
+    }
+    const html = await sanitize(editor.getHTML());
     annotations.editingAnnotation.value = {
       ...editing,
       data: { ...editing.data, html },
@@ -68,6 +80,11 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
     setError(null);
     try {
       await annotations.saveEditingAnnotation();
+      toast(
+        t("annotation-saved", {
+          defaultValue: "Annotation saved",
+        })
+      );
     } catch (err) {
       console.error("Failed to save annotation:", err);
       setError(
@@ -107,6 +124,9 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
             editorRef.current = editor;
           }}
           onEmptyChange={setEditorEmpty}
+          onModEnter={() => {
+            void doSave();
+          }}
         />
       </Suspense>
 
@@ -125,6 +145,16 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
           className="sb-settings-save-button"
           onClick={() => void doSave()}
           disabled={saving || editorEmpty}
+          title={
+            isApplePlatform()
+              ? t("save-annotation-shortcut-mac", {
+                  defaultValue: "Save (⌘Enter)",
+                })
+              : t("save-annotation-shortcut", {
+                  defaultValue: "Save (Ctrl+Enter)",
+                })
+          }
+          aria-keyshortcuts={isApplePlatform() ? "Meta+Enter" : "Control+Enter"}
         >
           {saving
             ? t("saving", { defaultValue: "Saving…" })
