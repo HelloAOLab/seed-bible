@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- See your notes at a glance while reading on a phone. Every verse a note starts on now gets a small note icon beside the text, lined up with its verse number; tapping it selects the verse and opens the note. Previously the only sign a verse had a note was a box around its number, and there was no way to read the note without hunting for it. ([#1691](https://github.com/HelloAOLab/seed-bible/issues/1691))
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

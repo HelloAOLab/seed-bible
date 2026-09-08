@@ -796,6 +796,7 @@
   "resume-reading-loading": "Loading your reading history…",
   "selected-year": "Year: {{year}}",
   "this-month": "This month",
+  "notes-for-verse": "Notes for verse {{verse}}",
   "this-week": "This week",
   "unread-mention": "Unread mention",
   "unread-messages": "Unread messages: {{count}}",

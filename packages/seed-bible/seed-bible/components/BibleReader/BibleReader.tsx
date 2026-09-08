@@ -1310,6 +1310,15 @@ const CHAPTER_SKELETON_PARAGRAPHS = [
   ["95%", "96%", "98%", "89%", "68%"],
 ] as const;
 
+/** A note marker in the mobile gutter, placed against a measured line box. */
+interface NoteMarker {
+  verseNumber: number;
+  /** Offset from the top of the chapter content box, in px. */
+  top: number;
+  /** Height of the verse's first line box, so the icon centres on it. */
+  height: number;
+}
+
 interface ChapterContentProps {
   chapterData: Signal<TranslationBookChapter | null>;
   chapterDataPromise: Promise<void>;
@@ -1337,6 +1346,11 @@ interface ChapterContentProps {
    * the chapter they navigated to arrives.
    */
   isStale?: boolean;
+  /**
+   * Mobile has no Discover panel to read notes alongside the text, so the
+   * note markers move out into a gutter beside the scripture there (#1691).
+   */
+  isMobile?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1354,8 +1368,10 @@ function ChapterContent(props: ChapterContentProps) {
     justConvertedSelectionRef,
     scriptureElements,
     onAnnotationVerseClick,
+    isMobile = false,
   } = props;
 
+  const { t } = useI18n();
   const currentChapter = chapterData.value;
   const chapterAnnotations =
     currentChapter && annotations
@@ -1570,14 +1586,72 @@ function ChapterContent(props: ChapterContentProps) {
     setRibbons(result);
   };
 
+  // The verse each note starts at, deduplicated: two notes on the same verse
+  // get one marker, and a note spanning 3-6 marks verse 3 only.
+  const noteVerseNumbers = Array.from(
+    new Set(
+      chapterAnnotations
+        .map((annotation) => {
+          const verses = annotationVerseNumbers(annotation);
+          return verses.length > 0 ? Math.min(...verses) : null;
+        })
+        .filter((verseNumber): verseNumber is number => verseNumber !== null)
+    )
+  ).sort((a, b) => a - b);
+  const showNoteGutter = isMobile && noteVerseNumbers.length > 0;
+
+  const [noteMarkers, setNoteMarkers] = useState<NoteMarker[]>([]);
+  // Signature of the last markers written to state, so the measure -> setState
+  // -> re-render -> measure cycle settles instead of looping.
+  const noteMarkerSignatureRef = useRef("");
+
+  // Where each note marker sits vertically. Markers live in a gutter beside
+  // the text rather than in the flow, so their position has to be measured:
+  // it is the top of the verse's *first* line box, which is the line carrying
+  // the verse number.
+  const measureNoteMarkers = () => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const next: NoteMarker[] = [];
+    if (showNoteGutter) {
+      const box = content.getBoundingClientRect();
+      for (const verseNumber of noteVerseNumbers) {
+        const verseEl = content.querySelector<HTMLElement>(
+          `.sb-verse[data-verse-number="${verseNumber}"]`
+        );
+        const rect = verseEl?.getClientRects()[0];
+        if (!rect) continue;
+        next.push({
+          verseNumber,
+          top: rect.top - box.top,
+          height: rect.height,
+        });
+      }
+    }
+
+    const signature = next
+      .map(
+        (m) => `${m.verseNumber}:${Math.round(m.top)}:${Math.round(m.height)}`
+      )
+      .join("|");
+    if (signature === noteMarkerSignatureRef.current) return;
+    noteMarkerSignatureRef.current = signature;
+    setNoteMarkers(next);
+  };
+
   useLayoutEffect(() => {
     measureRibbons();
+    measureNoteMarkers();
   });
 
   useLayoutEffect(() => {
     const content = contentRef.current;
     if (!content || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => measureRibbons());
+    const observer = new ResizeObserver(() => {
+      measureRibbons();
+      measureNoteMarkers();
+    });
     observer.observe(content);
     return () => observer.disconnect();
   }, []);
@@ -1611,12 +1685,26 @@ function ChapterContent(props: ChapterContentProps) {
     .map((d) => d.containerClassName)
     .join(" ");
 
+  // verse number -> full ChapterVerse, so a gutter marker can select its verse
+  // the same way tapping the verse itself does.
+  const verseByNumber = new Map<number, ChapterVerse>();
+  for (const entry of chapterData.value.chapter.content) {
+    if (
+      entry &&
+      typeof entry === "object" &&
+      entry.type === "verse" &&
+      typeof entry.number === "number"
+    ) {
+      verseByNumber.set(entry.number, entry as ChapterVerse);
+    }
+  }
+
   return (
     <div
       ref={contentRef}
       className={`sb-chapter-content${
         props.isStale ? " sb-chapter-content-stale" : ""
-      } ${containerClasses}`}
+      }${showNoteGutter ? " sb-chapter-content-noted" : ""} ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
       }}
@@ -1644,6 +1732,38 @@ function ChapterContent(props: ChapterContentProps) {
           />
         ))}
       </svg>
+      {showNoteGutter && (
+        <div className="sb-note-gutter" aria-hidden={noteMarkers.length === 0}>
+          {noteMarkers.map((marker) => (
+            <button
+              key={marker.verseNumber}
+              type="button"
+              className="sb-note-gutter-marker"
+              style={{ top: `${marker.top}px`, height: `${marker.height}px` }}
+              aria-label={t("notes-for-verse", {
+                verse: marker.verseNumber,
+                defaultValue: "Notes for verse {{verse}}",
+              })}
+              onClick={(event: MouseEvent) => {
+                const value = verseByNumber.get(marker.verseNumber);
+                if (!value || !chapterData.value) return;
+                onAnnotationVerseClick(
+                  {
+                    bookId: chapterData.value.book.id,
+                    chapterNumber: chapterData.value.chapter.number,
+                    verse: value,
+                    translationId: chapterData.value.translation.id,
+                  },
+                  marker.verseNumber,
+                  event
+                );
+              }}
+            >
+              <span className="material-symbols-outlined">sticky_note_2</span>
+            </button>
+          ))}
+        </div>
+      )}
       {renderChapterContent(
         chapterData.value,
         (verse, event) => {
@@ -2074,6 +2194,7 @@ export function BibleReader(props: BibleReaderProps) {
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
               onAnnotationVerseClick={handleAnnotationVerseClick}
+              isMobile={isMobile}
             />
           </Suspense>
         ))}

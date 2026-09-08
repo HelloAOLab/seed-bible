@@ -698,6 +698,57 @@
   cursor: pointer;
 }
 
+/* ------------------------------------------------------------ note gutter */
+
+/*
+ * Mobile note markers (#1691). Desktop reads its notes in the Discover panel
+ * beside the text; mobile has no such panel, so the markers move into a gutter
+ * at the end edge of the reader. The gutter only appears when the chapter
+ * actually has notes, so an unannotated chapter keeps its full text width.
+ */
+.sb-chapter-content.sb-chapter-content-noted {
+  --sb-note-gutter-width: 1.75rem;
+
+  padding-inline-end: calc(var(--sb-note-gutter-width) + 0.25rem);
+}
+
+/* With a marker in the gutter, the inline one (shown when verse numbers are
+   turned off) would be the same note flagged twice on the same line. */
+.sb-chapter-content-noted .sb-verse-annotation-icon {
+  display: none;
+}
+
+.sb-note-gutter {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: var(--sb-note-gutter-width);
+  pointer-events: none;
+}
+
+/*
+ * Placed against a measured line box: `top` and `height` come from the first
+ * line rect of the verse the note starts at, which is the line carrying the
+ * verse number — so the icon lines up with it however the text wraps.
+ */
+.sb-note-gutter-marker {
+  position: absolute;
+  inset-inline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sb-primary-color);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.sb-note-gutter-marker .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
 .sb-verse-number .material-symbols-outlined {
   font-size: 1em;
 }

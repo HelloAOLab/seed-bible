@@ -2398,6 +2398,156 @@ describe("BibleReader", () => {
     expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
   });
 
+  // #1691: mobile has no Discover panel, so notes are flagged in a gutter
+  // beside the text. jsdom does no layout, so the line boxes the markers are
+  // placed against are stubbed here.
+  describe("note gutter", () => {
+    let clientRectsSpy: { mockRestore: () => void } | null = null;
+
+    afterEach(() => {
+      clientRectsSpy?.mockRestore();
+      clientRectsSpy = null;
+    });
+
+    function stubLineBoxes(tops: Record<number, number>) {
+      clientRectsSpy = vi
+        .spyOn(Element.prototype, "getClientRects")
+        .mockImplementation(function (this: Element) {
+          const verseNumber = Number(
+            (this as HTMLElement).dataset?.verseNumber ?? NaN
+          );
+          const top = tops[verseNumber];
+          if (top === undefined) {
+            return [] as unknown as DOMRectList;
+          }
+          const rect = {
+            top,
+            bottom: top + 24,
+            left: 0,
+            right: 100,
+            width: 100,
+            height: 24,
+            x: 0,
+            y: top,
+            toJSON() {},
+          } as DOMRect;
+          return [rect] as unknown as DOMRectList;
+        });
+    }
+
+    /** A state whose chapter carries the given annotations. */
+    function annotatedState(
+      annotations: Array<Record<string, unknown>>,
+      isMobile = true
+    ): SeedBibleState {
+      const chapterAnnotations = signal(annotations);
+      const state = createMobileState();
+      return {
+        ...state,
+        app: { ...state.app, isMobile: signal(isMobile) },
+        annotations: {
+          getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+        },
+      } as any as SeedBibleState;
+    }
+
+    function renderReader(state: SeedBibleState, fixture: ReaderFixture) {
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+    }
+
+    const note = (extra: Record<string, unknown> = {}) => ({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+      data: { type: "comment", html: "<p>Note</p>" },
+      ...extra,
+    });
+
+    it("marks an annotated verse in the gutter, level with its first line", () => {
+      stubLineBoxes({ 1: 40 });
+      const fixture = createFixture();
+      renderReader(annotatedState([note()]), fixture);
+
+      const markers = container.querySelectorAll(".sb-note-gutter-marker");
+      expect(markers).toHaveLength(1);
+      expect((markers[0] as HTMLElement).style.top).toBe("40px");
+      expect(markers[0]?.textContent).toBe("sticky_note_2");
+    });
+
+    it("marks only the first verse of a note that spans several", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(annotatedState([note({ endVerseNumber: 2 })]), fixture);
+
+      const markers = container.querySelectorAll(".sb-note-gutter-marker");
+      expect(markers).toHaveLength(1);
+      expect((markers[0] as HTMLElement).style.top).toBe("40px");
+    });
+
+    it("shows one marker when a verse carries several notes", () => {
+      stubLineBoxes({ 1: 40 });
+      const fixture = createFixture();
+      renderReader(annotatedState([note(), note({ id: "a2" })]), fixture);
+
+      expect(container.querySelectorAll(".sb-note-gutter-marker")).toHaveLength(
+        1
+      );
+    });
+
+    it("leaves the gutter out of a chapter with no notes", () => {
+      stubLineBoxes({ 1: 40 });
+      const fixture = createFixture();
+      renderReader(annotatedState([]), fixture);
+
+      expect(container.querySelector(".sb-note-gutter")).toBeNull();
+      expect(
+        container
+          .querySelector(".sb-chapter-content")
+          ?.classList.contains("sb-chapter-content-noted")
+      ).toBe(false);
+    });
+
+    // Desktop reads its notes in the Discover panel beside the text, so a
+    // second column of markers there would be the same information twice.
+    it("leaves the gutter out on desktop", () => {
+      stubLineBoxes({ 1: 40 });
+      const fixture = createFixture();
+      renderReader(annotatedState([note()], false), fixture);
+
+      expect(container.querySelector(".sb-note-gutter")).toBeNull();
+    });
+
+    it("selects the verse and asks the toolbar to scroll to the note", () => {
+      stubLineBoxes({ 1: 40 });
+      const fixture = createFixture();
+      renderReader(annotatedState([note()]), fixture);
+
+      act(() => {
+        (
+          container.querySelector(".sb-note-gutter-marker") as HTMLButtonElement
+        ).click();
+      });
+
+      expect(fixture.selectVerse).toHaveBeenCalledTimes(1);
+      expect(fixture.selectVerse.mock.calls[0]?.[0]).toMatchObject({
+        bookId: "GEN",
+        chapterNumber: 1,
+      });
+      expect(fixture.readingState.pendingAnnotationScrollVerse.value).toBe(1);
+    });
+  });
+
   it("separates adjacent verses with a space when verse numbers are hidden", () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
 
