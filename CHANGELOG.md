@@ -17,6 +17,7 @@
 - Stop reading time from accruing while the app is in the background. A phone locked in a pocket with the reader open could rack up half an hour of reading nobody did; reading now pauses when the app backgrounds and resumes as a new sitting when it comes back. ([#1738](https://github.com/HelloAOLab/seed-bible/pull/1738))
 - Count Audio Reader listening time even when the phone is locked. Listening was tracked with a timer that stops once the screen turns off, so an hour of narration during chores could log as a few seconds; it's now tracked by audio playback position instead. ([#1738](https://github.com/HelloAOLab/seed-bible/pull/1738))
 - Fix the mobile tab drawer's "Add new tab" button being cut off by the bottom toolbar. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+- Fix the reader's save and share buttons appearing in opposite orders on desktop and mobile. Save now comes before share on both, instead of after it on desktop only. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
 
 ### 🗑️ Removed
 

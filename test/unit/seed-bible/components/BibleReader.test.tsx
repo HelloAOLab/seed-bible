@@ -2871,6 +2871,29 @@ describe("BibleReader", () => {
       expect(saveButton()).not.toBeNull();
       expect(bookmarkButton()).toBeNull();
     });
+
+    // The two header clusters are built separately, and they had drifted:
+    // desktop rendered the extension quick tools first, so Save sat to the
+    // right of Share there and to the left of it on mobile. Asserting the
+    // chapter actions lead in both keeps them from parting again — and holds
+    // whether or not any quick tool is currently visible.
+    it.each([
+      ["desktop", false, ".sb-bible-reader-actions"],
+      ["mobile", true, ".sb-bible-reader-mobile-header-actions"],
+    ] as const)(
+      "puts the save button ahead of the quick tools on %s",
+      (_label, isMobile, clusterSelector) => {
+        const base = createMobileState();
+        renderHeader({
+          ...base,
+          app: { ...base.app, isMobile: signal(isMobile) },
+        } as any as SeedBibleState);
+
+        const cluster = container.querySelector(clusterSelector);
+        expect(cluster).not.toBeNull();
+        expect(cluster!.firstElementChild).toBe(saveButton());
+      }
+    );
   });
 
   it("shows translation license notice and website when licenseNotice is present", () => {

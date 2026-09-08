@@ -2346,18 +2346,9 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
             {state && (
               <div className="sb-bible-reader-actions">
-                <QuickToolbar
-                  toolsManager={state.tools}
-                  readingState={readingState}
-                  playlists={state.playlists}
-                  annotations={state.annotations}
-                  features={state.features}
-                  sharedSession={sharedSession ?? null}
-                  toast={state.app.toast}
-                  modals={state.modals}
-                  app={state.app}
-                  className="sb-quick-toolbar-reader"
-                />
+                {/* Chapter actions lead, extension quick tools follow — the
+                    same order as the mobile header cluster below, so Save
+                    doesn't swap sides with Share between breakpoints. */}
                 {!state.playlists.playing.value && (
                   <>
                     <ReaderSaveButton
@@ -2376,6 +2367,18 @@ export function BibleReader(props: BibleReaderProps) {
                     )}
                   </>
                 )}
+                <QuickToolbar
+                  toolsManager={state.tools}
+                  readingState={readingState}
+                  playlists={state.playlists}
+                  annotations={state.annotations}
+                  features={state.features}
+                  sharedSession={sharedSession ?? null}
+                  toast={state.app.toast}
+                  modals={state.modals}
+                  app={state.app}
+                  className="sb-quick-toolbar-reader"
+                />
               </div>
             )}
           </div>

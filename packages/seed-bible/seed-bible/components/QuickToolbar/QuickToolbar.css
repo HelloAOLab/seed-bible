@@ -8,9 +8,9 @@
   transition: opacity 0.25s ease;
 }
 
-/* Desktop: sits in the header's action cluster, just left of the save
-   button. Flow layout (not absolute) so it pushes the title instead of
-   overlapping it. */
+/* Desktop: sits in the header's action cluster, just after the save and
+   bookmark buttons, matching the mobile order below. Flow layout (not
+   absolute) so it pushes the title instead of overlapping it. */
 .sb-quick-toolbar-reader {
   flex-shrink: 0;
 }
