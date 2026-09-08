@@ -33,13 +33,13 @@ export class HitboxLifecycleService implements PiecesHitboxSpawnerPort {
     const pieces = this.#piecesProviderPort.getPieces(experience);
 
     for (const piece of pieces) {
-      const data = this.#hitboxProviderPort.getHitboxData(
+      const dataList = this.#hitboxProviderPort.getHitboxData(
         experience,
         piece.key
       );
-      if (!data) continue;
-      const hitbox = this.#hitboxSpawnerPort.spawn({ data, piece });
-      hitboxes.push(hitbox);
+      for (const data of dataList) {
+        hitboxes.push(this.#hitboxSpawnerPort.spawn({ data, piece }));
+      }
     }
 
     return hitboxes;

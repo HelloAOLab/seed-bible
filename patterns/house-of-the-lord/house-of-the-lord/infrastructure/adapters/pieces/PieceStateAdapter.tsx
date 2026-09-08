@@ -68,7 +68,7 @@ export class PieceStateAdapter implements PieceStatePort {
 
     if (state === PIECE_VISIBILITY_STATES.HIDDEN) {
       SetStrictTag(bot, "pointable", false);
-      this.#setHitboxPointable(bot.id, false);
+      this.#setHitboxEnabled({ pieceId: bot.id, dimension, enabled: false });
       if (fromState !== PIECE_VISIBILITY_STATES.HIDDEN) {
         animations.push(
           AnimateStrictTag(bot, "formOpacity", {
@@ -83,7 +83,7 @@ export class PieceStateAdapter implements PieceStatePort {
       SetStrictTag(bot, "pointable", bot.tags.pointableDefault ?? true);
       SetStrictTag(bot, "color", VISIBLE_COLOR);
       SetStrictTag(bot, dimension as keyof PieceBotTags, true);
-      this.#setHitboxPointable(bot.id, true);
+      this.#setHitboxEnabled({ pieceId: bot.id, dimension, enabled: true });
       if (fromState !== PIECE_VISIBILITY_STATES.SHOWN) {
         if (fromState === PIECE_VISIBILITY_STATES.TRANSLUCENT) {
           animations.push(
@@ -117,7 +117,7 @@ export class PieceStateAdapter implements PieceStatePort {
       SetStrictTag(bot, dimension as keyof PieceBotTags, true);
       SetStrictTag(bot, "pointable", false);
       SetStrictTag(bot, "color", VISIBLE_COLOR);
-      this.#setHitboxPointable(bot.id, false);
+      this.#setHitboxEnabled({ pieceId: bot.id, dimension, enabled: false });
       if (fromState !== PIECE_VISIBILITY_STATES.TRANSLUCENT) {
         const targetOpacity = 0.025;
         if (fromState === PIECE_VISIBILITY_STATES.SHOWN) {
@@ -155,13 +155,21 @@ export class PieceStateAdapter implements PieceStatePort {
     await Promise.allSettled(animations);
   }
 
-  #setHitboxPointable(pieceId: string, pointable: boolean): void {
-    const hitbox = getBot(
+  #setHitboxEnabled({
+    pieceId,
+    dimension,
+    enabled,
+  }: {
+    pieceId: string;
+    dimension: string;
+    enabled: boolean;
+  }): void {
+    const hitboxes = getBots(
       byTag("isPieceHitbox", true),
       byTag("pieceId", pieceId)
-    ) as HitboxBot | null;
-    if (!hitbox) return;
+    ) as HitboxBot[];
 
-    SetStrictTag(hitbox, "pointable", pointable);
+    setTag(hitboxes, dimension, enabled);
+    SetStrictTag(hitboxes, "pointable", enabled);
   }
 }

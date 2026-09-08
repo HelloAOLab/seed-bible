@@ -126,7 +126,7 @@ const mainPieces: {
 };
 
 export const bootstrapExtension = async () => {
-  if (initialized) return;
+  if (initialized || configBot.tags.systemPortal) return;
 
   initialized = true;
 

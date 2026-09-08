@@ -15,7 +15,7 @@ export interface HitboxProviderPort {
   getHitboxData<E extends ExperienceKey>(
     experienceKey: E,
     pieceKey: ExperienceKeyMap[E]
-  ): HitboxData | null;
+  ): HitboxData[];
   getAnchorPoint(): string;
   isDraggable(): boolean;
   getColor(): string;

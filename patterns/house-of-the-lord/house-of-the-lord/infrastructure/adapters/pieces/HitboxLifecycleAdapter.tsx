@@ -36,7 +36,7 @@ export class HitboxLifecycleAdapter implements HitboxSpawnerPort {
 
   spawn({ data, piece }: { data: HitboxData; piece: Piece }): Hitbox {
     const dimension = this.#getDimension();
-    const { position, ...rest } = data;
+    const { position, rotation, ...rest } = data;
     const mod: Partial<HitboxBotTags> = {
       anchorPoint: this.#hitboxProvider.getAnchorPoint(),
       draggable: this.#hitboxProvider.isDraggable(),
@@ -47,6 +47,9 @@ export class HitboxLifecycleAdapter implements HitboxSpawnerPort {
       [`${dimension}X` as keyof HitboxBotTags]: position.x,
       [`${dimension}Y` as keyof HitboxBotTags]: position.y,
       [`${dimension}Z` as keyof HitboxBotTags]: position.z,
+      [`${dimension}RotationX` as keyof HitboxBotTags]: rotation?.x ?? 0,
+      [`${dimension}RotationY` as keyof HitboxBotTags]: rotation?.y ?? 0,
+      [`${dimension}RotationZ` as keyof HitboxBotTags]: rotation?.z ?? 0,
       transformer: piece.id,
       pieceId: piece.id,
       pieceKey: piece.key,

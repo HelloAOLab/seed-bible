@@ -30,7 +30,14 @@ export const useNavMenuProvider: UseNavMenuProvider = (config) => {
 
   const [menuState, setMenuState] = useState<NavigationState>(getState());
 
-  const [foldedGroups, setFoldedGroups] = useState<Record<string, boolean>>({});
+  const [foldedGroups, setFoldedGroups] = useState<Record<string, boolean>>(
+    () =>
+      Object.fromEntries(
+        catalog
+          .getGroups(getState().experience)
+          .map((group) => [group.id, group.startsFolded])
+      )
+  );
 
   const toggleGroup = useCallback(
     (id: string) =>
