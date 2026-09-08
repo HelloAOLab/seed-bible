@@ -18,6 +18,7 @@ import {
 } from "../../components/ContextMenu/ContextMenu";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { MaterialIcon, SettingsIcon, StarIcon } from "../../components/icons";
+import { buildStaticPagePath } from "../../managers/StaticPagePath";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
@@ -2651,17 +2652,38 @@ export function Sidebar(props: SidebarProps) {
             effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
           }`}
         >
-          <button
-            onClick={sidebar.toggleSettings}
-            data-tutorial="settings"
-            className={`sb-sidebar-icon-button${
-              isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
-            }`}
-            aria-label={t("open-settings", { defaultValue: "Open settings" })}
-            title={t("settings", { defaultValue: "Settings" })}
-          >
-            <SettingsIcon />
-          </button>
+          <div className="sb-sidebar-icon-stack">
+            <button
+              onClick={() => {
+                state.navigation.push(
+                  buildStaticPagePath({
+                    language: state.i18n.language.value,
+                    page: "about",
+                  })
+                );
+              }}
+              className="sb-sidebar-icon-button"
+              aria-label={t("about-title", {
+                defaultValue: "About Seed Bible",
+              })}
+              title={t("about-title", { defaultValue: "About Seed Bible" })}
+            >
+              <MaterialIcon>info</MaterialIcon>
+            </button>
+            <button
+              onClick={sidebar.toggleSettings}
+              data-tutorial="settings"
+              className={`sb-sidebar-icon-button${
+                isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+              }`}
+              aria-label={t("open-settings", {
+                defaultValue: "Open settings",
+              })}
+              title={t("settings", { defaultValue: "Settings" })}
+            >
+              <SettingsIcon />
+            </button>
+          </div>
           <SelfAvatarButton state={state} />
         </div>
       </aside>
