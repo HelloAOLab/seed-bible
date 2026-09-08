@@ -23,7 +23,6 @@
   "create-new-tab": "ახალი ჩანართის შექმნა",
   "tab-options": "ჩანართის პარამეტრები",
   "open-tab-menu": "ჩანართების მენიუს გახსნა",
-  "session-id_x": "სესიის ID: {{sessionId}}",
   "search-verses": "ლექსების ძიება",
   "clear-search": "ძიების გასუფთავება",
   "searching": "ძიება...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "მონიშნეთ",
   "end-session": "სესიის დასრულება",
   "panels": "პანელები",
-
   "open-in-new-panel": "ახალ პანელში გახსნა",
   "close-sidebar": "გვერდითი ზოლის დახურვა",
   "select-pane-layout": "პანელის განლაგების არჩევა",
@@ -253,7 +251,6 @@
   "create-reading-plan": "კითხვის გეგმის შექმნა",
   "reading-plans-empty": "ჯერ არ გაქვთ კითხვის გეგმები. შექმენით ერთი დასაწყებად.",
   "untitled-reading-plan": "უსათაურო გეგმა",
-
   "reading-plan-description_placeholder": "რაზეა ეს გეგმა?",
   "anonymous": "ანონიმური",
   "no-chat-messages": "შეტყობინებები ჯერ არ არის",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "ხელმისაწვდომია გიდის თანხლებით ტური, რათა გაიგოთ „სეედ ბიბლიის“ ყველა დეტალი.",
   "tutorial.promptDecline": "არა, გმადლობთ",
   "tutorial.promptAccept": "გაიარეთ ტური",
-  "session-id": "სესიის ID",
   "session-settings-section-navigation": "ნავიგაცია",
   "session-settings-section-sharing": "გაზიარება",
   "session-settings-section-participants": "მონაწილეები",
@@ -335,7 +331,6 @@
   "dont-show-again": "ეს აღარ აჩვენო",
   "discover": "აღმოაჩინეთ",
   "playlists": "დასაკრავი სიები",
-
   "cross-references": "ჯვარედინი მითითებები",
   "study-notes": "კვლევის ჩანაწერები",
   "content": "კონტენტი",
@@ -404,7 +399,6 @@
   "add-and-save": "დამატება და შენახვა",
   "loading-profile": "თქვენი პროფილი იტვირთება…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "გაზიარება",
   "share-sheet-title": "გაზიარება",
   "share-link": "ბმულის გაზიარება",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "ახალი გეგმის შექმნა",
   "edit-reading-plan": "გეგმის რედაქტირება",
   "reading-plan-step-name-title": "დაასახელეთ თქვენი გეგმა და დაასახელეთ სახელი.",
-
   "reading-plan-name-placeholder": "მაგ. ჩემი ფსალმუნების მოგზაურობა",
   "reading-plan-description-label": "აღწერა (არასავალდებულო)",
   "reading-plan-step-scripture-title": "აირჩიეთ მაჩვენებლები",
   "reading-plan-step-cadences-title": "კითხვის კადენციები",
   "reading-plan-step-cadences-hint": "აირჩიეთ კითხვის ტემპი, რომლის შეთავაზებაც გსურთ. მკითხველს ყოველთვის შეუძლია აირჩიოს საკუთარი ტემპით კითხვის ტემპი.",
-
   "reading-plan-cadence-length": "დასრულდება {{count}} დღეში",
   "reading-plan-cadence-length_one": "მთავრდება {{count}} დღეში",
   "reading-plan-cadence-length_other": "დასრულდება {{count}} დღეში",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "შენახვა…",
   "reading-plan-draft-saved": "მონახაზი შენახულია",
   "reading-plan-draft-save-failed": "მონახაზის შენახვა ვერ მოხერხდა",
-
   "reading-plan-scripture-remove": "წაკითხვის წაშლა",
   "reading-plan-create-submit": "გეგმის შექმნა",
   "reading-plan-save-changes": "ცვლილებების შენახვა",
@@ -498,11 +489,8 @@
   "loading": "იტვირთება…",
   "reading-plan-not-started": "არ დაწყებულა",
   "reading-plan-start": "გეგმის დაწყება",
-
   "reading-plan-streak": "{{count}} დღიანი სერია",
-
   "reading-plan-mark-complete": "დასრულებულად მონიშვნა",
-
   "reading-plan-empty-sessions": "ამ გეგმას ჯერ არანაირი წაკითხვის საშუალება არ აქვს.",
   "reading-plan-celebration-title": "დღე {{day}} დასრულდა!",
   "reading-plan-complete-title": "გეგმა დასრულებულია!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "წაკითხვის დასრულებულად მონიშვნა",
   "reading-plan-link-video": "ვიდეო",
   "reading-belongs-to": "ეს წასაკითხი ეკუთვნის",
-
   "reading-plan-mark-passage-complete": "მონიშნეთ {{passage}} , როგორც წაკითხული",
   "reading-plan-read-nudge-title": "სასიამოვნო საკითხავია!",
   "reading-plan-read-nudge-toast": "{{passage}} დასრულებულად მონიშნოთ?",
@@ -553,7 +540,6 @@
   "last-48-hours": "ბოლო 48 საათი",
   "open-bible": "ღია ბიბლია",
   "personal-greeting": "კეთილი იყოს თქვენი მობრძანება, {{name}} !",
-  "read-first-chapter": "წაიკითხეთ პირველი თავი",
   "resume-reading": "გააგრძელეთ იქიდან, საიდანაც წახვედით",
   "resume-reading-loading": "თქვენი კითხვის ისტორიის ჩატვირთვა…",
   "selected-year": "წელი: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "რაზეა ეს დასაკრავი სია?",
   "read-more": "დაწვრილებით",
   "read-less": "ნაკლები წაკითხვა",
-
   "ask-to-switch-ui-language": "ენის შეცვლის შეთავაზება თარგმანით",
   "ai": "ხელოვნური ინტელექტი",
   "ai-edit-playlist": "დასაკრავი სიის რედაქტირება ხელოვნური ინტელექტით.",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} მა გამოიყენა {{count}} ინსტრუმენტი",
   "chat-tool-used_one": "{{name}} მა გამოიყენა ინსტრუმენტი",
   "chat-tool-used_other": "{{name}} მა გამოიყენა {{count}} ინსტრუმენტი",
-
   "ai-context-button-label": "აქტიური ხელოვნური ინტელექტის კონტექსტი",
   "ai-context-tool-count": "{{count}} ხელსაწყოები",
   "annotation-conflict-title": "ეს შენიშვნა ორ ადგილას შეიცვალა",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "კონტენტი არ არის.",
   "annotation-conflict-confirm": "დადასტურება",
   "annotation-conflict-resolve-failed": "ამ არჩევანის გამოყენება ვერ მოხერხდა. ხელახლა ვცდით.",
-
   "annotation-sync-failed": "ჩანაწერის თქვენს ანგარიშში შენახვა ვერ მოხერხდა. ის ჯერ კიდევ ამ მოწყობილობაზეა.",
   "create-menu": "შექმნა",
   "create-annotation-menu-item": "ანოტაცია",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "ანოტაციის შენახვა ვერ მოხერხდა.",
   "annotation-group-expand": "ჯგუფის გაფართოება",
   "annotation-group-collapse": "ჯგუფის ჩაკეცვა",
-
   "notes": "შენიშვნები",
   "note": "შენიშვნა",
   "show-more-verse-actions": "მეტი მოქმედების ჩვენება",
@@ -667,7 +649,6 @@
   "create-folder": "საქაღალდის შექმნა",
   "edit-bookmark": "სანიშნეს რედაქტირება",
   "remove-bookmark-from-all-folders": "ყველა საქაღალდიდან წაშლა",
-
   "greeting-afternoon": "შუადღე მშვიდობისა!",
   "greeting-afternoon-named": "შუადღე მშვიდობისა, {{name}} !",
   "greeting-evening": "საღამო მშვიდობისა!",
@@ -677,5 +658,28 @@
   "greeting-night": "ღამე მშვიდობისა!",
   "greeting-night-named": "ღამე მშვიდობისა, {{name}} !",
   "annotation-override-banner": "ჩანაწერები ინახება და იტვირთება თქვენი გუნდის ანგარიშიდან.",
-  "annotation-override-save-to-my-account": "შენახვა ჩემს ანგარიშზე"
+  "annotation-override-save-to-my-account": "შენახვა ჩემს ანგარიშზე",
+  "read-book-chapter-button": "წაიკითხეთ {{bookName}} {{chapterNumber}}",
+  "session-url": "სესიის URL",
+  "ask-ai": "ჰკითხეთ ხელოვნურ ინტელექტს",
+  "unread-mention": "წაუკითხავი ხსენება",
+  "unread-messages": "წაუკითხავი შეტყობინებები: {{count}}",
+  "annotations-pending-sync": "{{count}} ცვლილება სინქრონიზაციის მოლოდინშია",
+  "annotations-pending-sync-plural": "{{count}} ცვლილება სინქრონიზაციის მოლოდინშია",
+  "scripture-width": "წმინდა წერილის სიგანე",
+  "decrease-scripture-width": "წმინდა წერილის სიგანის შემცირება",
+  "increase-scripture-width": "გაზარდეთ წმინდა წერილის სიგანე",
+  "annotations": "ანოტაციები",
+  "discover-content-panel": "აღმოაჩინეთ კონტენტი",
+  "discover-book-title": "აღმოაჩინეთ {{book}}",
+  "show-all": "ყველას ჩვენება",
+  "annotation-comment-updated": "განახლებულია {{date}}",
+  "switch-language-title": "ენის შეცვლა?",
+  "switch-language-body": "გსურთ თქვენი ენის {{nativeLanguageName}} -ზე გადართვა?",
+  "switch-language-confirm": "გადამრთველი",
+  "switch-language-dismiss": "არ გადართოთ",
+  "switch-language-never": "აღარასდროს მკითხო",
+  "chat-ai-error": "ბოდიშს გიხდით, პასუხის გენერირებისას რაღაც შეცდომა მოხდა ( {{error}} ).",
+  "playlist-editor": "დასაკრავი სიის რედაქტორი",
+  "add-bookmark-modal": "სანიშნეს დამატება"
 }

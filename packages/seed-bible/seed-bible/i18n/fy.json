@@ -23,7 +23,6 @@
   "create-new-tab": "Nije ljepper oanmeitsje",
   "tab-options": "Tab-opsjes",
   "open-tab-menu": "Tabmenu iepenje",
-  "session-id_x": "Sesje-ID: {{sessionId}}",
   "search-verses": "Sykje fersen",
   "clear-search": "Sykje wiskje",
   "searching": "Sykje...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Markearje foar",
   "end-session": "Sesje einigje",
   "panels": "Panielen",
-
   "open-in-new-panel": "Iepenje yn in nij paniel",
   "close-sidebar": "Slút sydbalke",
   "select-pane-layout": "Selektearje panielyndieling",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Lêsplan meitsje",
   "reading-plans-empty": "Jo hawwe noch gjin lêsplannen. Meitsje ien oan om te begjinnen.",
   "untitled-reading-plan": "Plan sûnder titel",
-
   "reading-plan-description_placeholder": "Wêr giet dit plan oer?",
   "anonymous": "Anonym",
   "no-chat-messages": "Noch gjin berjochten",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "In rûnlieding is beskikber om jo te helpen de yns en outs fan Seed Bible te learen.",
   "tutorial.promptDecline": "Nee, tank",
   "tutorial.promptAccept": "Nim de toer",
-  "session-id": "Sesje-ID",
   "session-settings-section-navigation": "Navigaasje",
   "session-settings-section-sharing": "Dielen",
   "session-settings-section-participants": "Dielnimmers",
@@ -335,7 +331,6 @@
   "dont-show-again": "Dit net wer sjen litte",
   "discover": "Ûntdekke",
   "playlists": "Ofspiellisten",
-
   "cross-references": "Krúsferwizings",
   "study-notes": "Stúdzjenotysjes",
   "content": "Ynhâld",
@@ -404,7 +399,6 @@
   "add-and-save": "Taheakje en bewarje",
   "loading-profile": "Dyn profyl oan it laden…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Diele",
   "share-sheet-title": "Diele",
   "share-link": "Diel in keppeling",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Nij plan oanmeitsje",
   "edit-reading-plan": "Plan bewurkje",
   "reading-plan-step-name-title": "Jou dyn plan in namme",
-
   "reading-plan-name-placeholder": "bygelyks Myn Psalmen Reis",
   "reading-plan-description-label": "Beskriuwing (opsjoneel)",
   "reading-plan-step-scripture-title": "Selektearje lêzingen",
   "reading-plan-step-cadences-title": "Kadensen lêze",
   "reading-plan-step-cadences-hint": "Kies de lêstempo's dy't jo oanbiede wolle. Lêzers kinne der altyd foar kieze om yn har eigen tempo te gean.",
-
   "reading-plan-cadence-length": "Klear yn {{count}} dagen",
   "reading-plan-cadence-length_one": "Eindiget yn {{count}} dei",
   "reading-plan-cadence-length_other": "Klear yn {{count}} dagen",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Bewarje…",
   "reading-plan-draft-saved": "Konsept bewarre",
   "reading-plan-draft-save-failed": "Koe konsept net bewarje",
-
   "reading-plan-scripture-remove": "Lês fuortsmite",
   "reading-plan-create-submit": "Plan oanmeitsje",
   "reading-plan-save-changes": "Bewarje wizigingen",
@@ -498,11 +489,8 @@
   "loading": "Ynladen…",
   "reading-plan-not-started": "Net begûn",
   "reading-plan-start": "Begjinplan",
-
   "reading-plan-streak": "{{count}} -dei streak",
-
   "reading-plan-mark-complete": "Markearje as foltôge",
-
   "reading-plan-empty-sessions": "Dit plan hat noch gjin lêzingen.",
   "reading-plan-celebration-title": "Dei {{day}} foltôge!",
   "reading-plan-complete-title": "Plan klear!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Markearje lêzen foltôge",
   "reading-plan-link-video": "Fideo",
   "reading-belongs-to": "Dizze lêzing heart ta",
-
   "reading-plan-mark-passage-complete": "Markearje {{passage}} as lêzen",
   "reading-plan-read-nudge-title": "Moai lêzen!",
   "reading-plan-read-nudge-toast": "Markearje {{passage}} as foltôge?",
@@ -553,7 +540,6 @@
   "last-48-hours": "Lêste 48 oeren",
   "open-bible": "Iepen Bibel",
   "personal-greeting": "Wolkom, {{name}} !",
-  "read-first-chapter": "Lês it earste haadstik",
   "resume-reading": "GEAN TROCH WAAR JO BLIJF BINNE",
   "resume-reading-loading": "Dyn lêshistoarje oan it laden…",
   "selected-year": "Jier: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "Wêr giet dizze playlist oer?",
   "read-more": "Lês mear",
   "read-less": "Lês minder",
-
   "ask-to-switch-ui-language": "Oanbod om taal te wikseljen mei oersetting",
   "ai": "KI",
   "ai-edit-playlist": "Bewurkje de playlist mei AI",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} brûkte {{count}} ark",
   "chat-tool-used_one": "{{name}} brûkte in ark",
   "chat-tool-used_other": "{{name}} brûkte {{count}} ark",
-
   "ai-context-button-label": "Aktive AI-kontekst",
   "ai-context-tool-count": "{{count}} ark",
   "annotation-conflict-title": "Dizze notysje is op twa plakken feroare",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Gjin ynhâld.",
   "annotation-conflict-confirm": "Befêstigje",
   "annotation-conflict-resolve-failed": "Koe dy kar net tapasse. It sil opnij besocht wurde.",
-
   "annotation-sync-failed": "Koe gjin notysje yn jo akkount bewarje. It stiet noch op dit apparaat.",
   "create-menu": "Meitsje",
   "create-annotation-menu-item": "Annotaasje",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "Koe de annotaasje net bewarje.",
   "annotation-group-expand": "Groep útwreidzje",
   "annotation-group-collapse": "Groep ynklappe",
-
   "notes": "Notysjes",
   "note": "Noat",
   "show-more-verse-actions": "Mear aksjes sjen litte",
@@ -667,7 +649,6 @@
   "create-folder": "Map oanmeitsje",
   "edit-bookmark": "Blêdwizer bewurkje",
   "remove-bookmark-from-all-folders": "Fuortsmite út alle mappen",
-
   "greeting-afternoon": "Goeiemiddei!",
   "greeting-afternoon-named": "Goeiemiddei, {{name}} !",
   "greeting-evening": "Goejûn!",
@@ -677,5 +658,28 @@
   "greeting-night": "Goeienacht!",
   "greeting-night-named": "Goeie nacht, {{name}} !",
   "annotation-override-banner": "Notysjes wurde bewarre en laden fan it akkount fan jo team.",
-  "annotation-override-save-to-my-account": "Bewarje yn myn akkount"
+  "annotation-override-save-to-my-account": "Bewarje yn myn akkount",
+  "read-book-chapter-button": "Lês {{bookName}} {{chapterNumber}}",
+  "session-url": "Sesje-URL",
+  "ask-ai": "Freegje AI",
+  "unread-mention": "Net lêzen fermelding",
+  "unread-messages": "Net lêzen berjochten: {{count}}",
+  "annotations-pending-sync": "{{count}} feroaring wachtet op syngronisaasje",
+  "annotations-pending-sync-plural": "{{count}} feroarings wachtsje op syngronisaasje",
+  "scripture-width": "Skriftbreedte",
+  "decrease-scripture-width": "Ferminderje de breedte fan 'e skrift",
+  "increase-scripture-width": "Fergrutsje de breedte fan 'e Skrift",
+  "annotations": "Annotaasjes",
+  "discover-content-panel": "Ynhâld ûntdekke",
+  "discover-book-title": "Untdek {{book}}",
+  "show-all": "Alles sjen litte",
+  "annotation-comment-updated": "Bywurke {{date}}",
+  "switch-language-title": "Taal wikselje?",
+  "switch-language-body": "Wolle jo jo taal wikselje nei {{nativeLanguageName}} ?",
+  "switch-language-confirm": "Omskeakelje",
+  "switch-language-dismiss": "Net wikselje",
+  "switch-language-never": "Freegje noait wer",
+  "chat-ai-error": "Sorry, der gie wat mis by it generearjen fan in antwurd ( {{error}} ).",
+  "playlist-editor": "Playlist-bewurker",
+  "add-bookmark-modal": "Blêdwizer tafoegje"
 }

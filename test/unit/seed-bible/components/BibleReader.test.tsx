@@ -1,7 +1,10 @@
 import { render } from "preact";
 import { act, setupRerender, teardown } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
-import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader/BibleReader";
+import {
+  BibleReader,
+  resetLastVersePointerTypeForTests,
+} from "@packages/seed-bible/seed-bible/components/BibleReader/BibleReader";
 import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   type BibleReadingState,
@@ -82,10 +85,13 @@ function createFixture(): ReaderFixture {
     },
     thisChapterLink: "/api/BSB/GEN/1.json",
     thisChapterAudioLinks: {},
+    thisChapterAudioTimings: {},
     nextChapterApiLink: "/api/BSB/GEN/2.json",
     nextChapterAudioLinks: {},
+    nextChapterAudioTimings: {},
     previousChapterApiLink: null,
     previousChapterAudioLinks: null,
+    previousChapterAudioTimings: null,
     numberOfVerses: 2,
     chapter: {
       number: 1,
@@ -189,6 +195,7 @@ function createFixture(): ReaderFixture {
     discoveredContent: signal([]),
     discoveredCrossReferences: signal([]),
     discoveredStudyNotes: signal([]),
+    discoverContentPanelInline: signal(true),
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
     isShared: signal(false),
@@ -207,6 +214,7 @@ function createFixture(): ReaderFixture {
 
   const selectorState = {
     setOpen,
+    selectingTranslation: signal(false),
   } as any as BibleSelectorState;
 
   const slot: TabSlot = {
@@ -230,10 +238,18 @@ function createFixture(): ReaderFixture {
   };
 }
 
-function createMobileState(): SeedBibleState {
+/**
+ * @param selectorState Wired in as `state.selector` for the mobile chrome's own
+ *   entry points into the Bible selector (the header's translation chip).
+ */
+function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
   return {
+    selector: selectorState,
     app: {
       isMobile: signal(true),
+      effectiveSlots: signal([{ id: "slot-1", tab: null }]),
+      effectivePanes: signal([]),
+      openDiscover: vi.fn(),
     },
     bibleData: {
       getPreviousChapter: vi.fn(async () => null),
@@ -251,11 +267,16 @@ function createMobileState(): SeedBibleState {
     login: {
       userId: signal<string | null>(null),
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
+      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
     },
     os: {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(testBranding),
+    tabs: {} as any,
+    panes: {} as any,
+    modals: { openModal: vi.fn(), closeModal: vi.fn() },
+    discover: { scrollToVerse: signal(null) },
     playlists: {
       playing: signal(null),
     },
@@ -264,6 +285,10 @@ function createMobileState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      sync: {
+        pendingCount: signal(0),
+        pendingCountForChapter: vi.fn(() => 0),
+      },
     },
   } as any as SeedBibleState;
 }
@@ -306,6 +331,7 @@ function renderMobileReader(
 
 beforeEach(() => {
   setupRerender();
+  resetLastVersePointerTypeForTests();
 });
 
 afterEach(() => {
@@ -355,6 +381,59 @@ describe("BibleReader", () => {
     });
 
     expect(setOpen).toHaveBeenCalledWith(true, slot);
+  });
+
+  it("opens the selector on the book list when the title is clicked, even after the translation picker was left open", () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+    selectorState.selectingTranslation.value = true;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-bible-reader-title")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(false);
+  });
+
+  it("opens the translation picker from the header's translation button", async () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const button = container.querySelector<HTMLButtonElement>(
+      "button.sb-bible-reader-translation"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe("BSB");
+
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(true);
   });
 
   it("shows a not-found state and lets the user jump to the translation's first book when the requested book isn't in the book list", () => {
@@ -765,6 +844,120 @@ describe("BibleReader", () => {
       }),
       12,
       34
+    );
+  });
+
+  it("clicking a poetry verse's blank space with a mouse (not its rendered text) does not select it", () => {
+    // A poetry verse's outer span is `display: block` (`.sb-verse-poetry` in
+    // BibleReader.inline.css), so it spans the full content width even when
+    // its text — wrapped in the nested `.sb-verse-decorator` — is much
+    // narrower. Dispatching directly on the outer span (rather than a child)
+    // stands in for a mouse click that lands in that blank margin — no
+    // preceding `pointerdown` is dispatched, matching a real mouse click's
+    // default (non-"touch") pointer type.
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const poetryVerse = container.querySelector(
+      ".sb-verse-poetry"
+    ) as HTMLElement | null;
+    expect(poetryVerse).not.toBeNull();
+
+    act(() => {
+      poetryVerse?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("tapping a poetry verse's blank space with a touch still selects it", () => {
+    // Same blank-space scenario as the mouse case above, but a finger is far
+    // less precise than a mouse pointer — there's no "blank space" inside a
+    // verse's box a touch could deliberately miss the text into the way a
+    // mouse click could. The verse's own click guard should therefore keep
+    // the original, forgiving whole-block behavior for a touch.
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const poetryVerse = container.querySelector(
+      ".sb-verse-poetry"
+    ) as HTMLElement | null;
+    expect(poetryVerse).not.toBeNull();
+
+    act(() => {
+      poetryVerse?.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          pointerType: "touch",
+        })
+      );
+      poetryVerse?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+    expect(selectVerse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: expect.objectContaining({ number: 2 }),
+      }),
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
+  it("clicking a poetry verse's actual text still selects it", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const decorator = container.querySelector(
+      ".sb-verse-poetry .sb-verse-decorator"
+    ) as HTMLElement | null;
+    expect(decorator).not.toBeNull();
+
+    act(() => {
+      decorator?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+    expect(selectVerse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: expect.objectContaining({ number: 2 }),
+      }),
+      expect.anything(),
+      expect.anything()
     );
   });
 
@@ -1948,7 +2141,8 @@ describe("BibleReader", () => {
   function createStateWithAnnotatedVerse(
     bookId: string,
     chapterNumber: number,
-    verseNumber: number
+    verseNumber: number,
+    isMobile = true
   ): SeedBibleState {
     const chapterAnnotations = signal([
       {
@@ -1959,8 +2153,10 @@ describe("BibleReader", () => {
         data: { type: "comment", html: "<p>Note</p>" },
       },
     ]);
+    const state = createMobileState();
     return {
-      ...createMobileState(),
+      ...state,
+      app: { ...state.app, isMobile: signal(isMobile) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
       },
@@ -2030,6 +2226,179 @@ describe("BibleReader", () => {
       )
     ).toBeNull();
     expect(container.querySelectorAll(".sb-verse-number")).toHaveLength(1);
+  });
+
+  it("clicking an annotated verse number on desktop forces the compact discover panel inline and targets its note, without selecting the verse", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    readingState.discoverContentPanelInline.value = false;
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerseNumber = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number-annotated'
+    ) as HTMLElement;
+
+    act(() => {
+      annotatedVerseNumber.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(readingState.discoverContentPanelInline.value).toBe(true);
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+    });
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("clicking an annotated verse number on mobile leaves the compact discover panel placement alone and selects the verse", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    readingState.discoverContentPanelInline.value = false;
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, true);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerseNumber = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number-annotated'
+    ) as HTMLElement;
+
+    act(() => {
+      annotatedVerseNumber.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(readingState.discoverContentPanelInline.value).toBe(false);
+    expect(state.discover.scrollToVerse.value).toBeNull();
+    expect(readingState.pendingAnnotationScrollVerse.value).toBe(1);
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+  });
+
+  it("moves the compact discover panel below the content when the placement toggle is off, and keeps it inline when on", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const content = () => container.querySelector(".sb-bible-reader-content");
+    expect(
+      content()?.classList.contains("sb-bible-reader-content--discover-below")
+    ).toBe(false);
+
+    act(() => {
+      readingState.discoverContentPanelInline.value = false;
+    });
+
+    expect(
+      content()?.classList.contains("sb-bible-reader-content--discover-below")
+    ).toBe(true);
+  });
+
+  it("clicking the mobile header notes button targets the earliest annotated verse in the compact discover panel", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const notesButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-notes"
+    ) as HTMLElement;
+    expect(notesButton).not.toBeNull();
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+    });
+    expect(state.app.openDiscover).not.toHaveBeenCalled();
+  });
+
+  it("falls back to opening the full Discover pane when no annotation targets a specific verse", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    // Whole-chapter annotation: no verseNumber, so there's nothing for the
+    // compact panel to scroll to.
+    (state.annotations.getAnnotationsForChapter as any) = vi.fn(() =>
+      signal([
+        {
+          id: "a1",
+          bookId: "GEN",
+          chapterNumber: 1,
+          data: { type: "comment", html: "<p>Note</p>" },
+        },
+      ])
+    );
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const notesButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-notes"
+    ) as HTMLElement;
+    expect(notesButton).not.toBeNull();
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.scrollToVerse.value).toBeNull();
+    expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
   });
 
   it("separates adjacent verses with a space when verse numbers are hidden", () => {
@@ -2363,6 +2732,9 @@ describe("BibleReader", () => {
       bookmarks: {
         isLocationBookmarked: vi.fn(() => false),
       },
+      annotations: {
+        getAnnotationsForChapter: vi.fn(() => signal([])),
+      },
     } as any as SeedBibleState;
 
     selectedFootnote.value = {
@@ -2465,6 +2837,32 @@ describe("BibleReader", () => {
       accountButton?.querySelector(".sb-tab-user-icon-generic")
     ).not.toBeNull();
     expect(accountButton?.textContent).toContain("account_circle");
+  });
+
+  it("opens the translation picker from the mobile header's translation button", async () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+    const state = createMobileState(selectorState);
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const button = container.querySelector<HTMLButtonElement>(
+      "button.sb-bible-reader-mobile-header-translation"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe("BSB");
+    expect(button?.getAttribute("aria-label")).toBe(
+      "Change translation (Berean Standard Bible)"
+    );
+
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ id: "slot-1" })
+    );
+    expect(selectorState.selectingTranslation.value).toBe(true);
   });
 
   it("updates readingState.scrollPosition when the chapter scroller scrolls", () => {

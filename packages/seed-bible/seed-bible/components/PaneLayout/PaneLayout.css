@@ -303,9 +303,22 @@
   grid-row: 2;
 }
 
+/* Flex row wrapping `.sb-pane-reader` in every slot. Always has just the one
+   child; the discover content panel floats inside `.sb-bible-reader` itself
+   (see `.sb-discover-content-panel--side` and `BibleReader.tsx`). */
+.sb-pane-reader-outer {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
 .sb-pane-reader {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
   height: 100%;
   overflow: auto;
   scrollbar-width: none;

@@ -29,6 +29,7 @@ import type { HighlightsManager } from "../managers/HighlightsManager";
 import type { LoginManager } from "../managers/LoginManager";
 import type { AnnotationsManager } from "../managers/AnnotationsManager";
 import { getProfileConfigValue } from "../managers/ProfileConfigSync";
+import type { SettingsManager } from "../managers/SettingsManager";
 
 export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
@@ -174,12 +175,11 @@ function getUrlReadingLanguage(url: URL, basePath: string): string | null {
  *
  * Same test as the server: rebuild the path from what the URL resolved to and
  * rewrite only if it differs. That covers a typo ("senesis"), an alias
- * ("gen"), other casings ("Genesis"), the junk `getBookId`'s prefix fallback
- * accepts ("luke-skywalker" → Luke), and — since the canonical form always
- * includes the language segment — a 3-segment URL missing it entirely. A
- * no-op for a URL that is already canonical, a book that resolves to nothing
- * (the reader shows its own not-found state), or a legacy/non-reading-path
- * URL.
+ * ("gen"), other casings ("Genesis"), close typos that fuzzy-match a book
+ * slug, and — since the canonical form always includes the language segment —
+ * a 3-segment URL missing it entirely. A no-op for a URL that is already
+ * canonical, a book that resolves to nothing (the reader shows its own
+ * not-found state), or a legacy/non-reading-path URL.
  */
 function selfHealNonCanonicalPath(navigation: NavigationManager): void {
   const url = navigation.currentUrl.peek();
@@ -254,7 +254,9 @@ export function createInitialTabs(
   options: InitialTabsOptions,
   discoverManager?: DiscoverManager,
   readingExtensionManager?: BibleReadingExtensionManager,
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  /** Passed through to `createBibleReadingState` — see its parameter of the same name. */
+  settingsManager?: SettingsManager
 ): ReaderTab[] {
   const { translationId, bookId, chapter, highlightedVerses = [] } = options;
 
@@ -273,7 +275,8 @@ export function createInitialTabs(
       },
       discoverManager,
       readingExtensionManager,
-      getAnnotationsManager
+      getAnnotationsManager,
+      settingsManager
     ),
     sharedSession: null,
     sharedChat: null,
@@ -377,6 +380,20 @@ export interface TabsManager {
    * re-render instead. Idempotent.
    */
   hydrateStoredTabs: () => void;
+
+  /**
+   * Whether the profile's saved translation is being written to the URL at this
+   * instant. Consumers that watch the URL for "the reader moved" must treat that
+   * write as a restore rather than a navigation — it can change the book or
+   * chapter (see `applySavedTranslation`) without the reader having gone
+   * anywhere.
+   *
+   * Deliberately a getter rather than a signal: it is only meaningful read
+   * synchronously from inside the URL-change effect it exists to inform, and
+   * making it reactive would invite subscribers that then re-run on a value
+   * guaranteed to be `false` again by the time they saw it.
+   */
+  isRestoringProfileTranslation: () => boolean;
 }
 
 /**
@@ -405,7 +422,9 @@ export function createTabs(
    * getter that resolves once its own `AnnotationsManager` does.
    */
   getAnnotationsManager?: () => AnnotationsManager | undefined,
-  branding?: BrandingConfig
+  branding?: BrandingConfig,
+  /** Passed through to `createBibleReadingState` — see its parameter of the same name. */
+  settingsManager?: SettingsManager
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -458,7 +477,8 @@ export function createTabs(
       },
       discoverManager,
       readingExtensionManager,
-      getAnnotationsManager
+      getAnnotationsManager,
+      settingsManager
     );
 
     if (isSelected && highlightedVerses.length > 0 && descriptor.bookId) {
@@ -518,7 +538,8 @@ export function createTabs(
     },
     discoverManager,
     readingExtensionManager,
-    getAnnotationsManager
+    getAnnotationsManager,
+    settingsManager
   );
 
   const tabs = signal<ReaderTab[]>(initialTabs);
@@ -815,6 +836,17 @@ export function createTabs(
       });
     });
 
+  // True only while `applySavedTranslation` below writes the restored position
+  // to the URL. That write can move the book or chapter — a saved translation
+  // that lacks the book you're on falls back to its first book, and an
+  // out-of-range chapter is clamped — which looks exactly like a navigation to
+  // the fullscreen-pane effect in `SeedBibleStateManager`, even though the
+  // reader hasn't gone anywhere. Without this, a signed-in reader arriving on
+  // Today with a partial saved translation watched it open and then immediately
+  // close again. Read synchronously, never subscribed to, so a plain boolean
+  // rather than a signal.
+  let restoringProfileTranslation = false;
+
   // Restores the profile's saved translation on the given reading state.
   // `selectTranslationAndChapter` clamps an out-of-range chapter but throws
   // if the current book isn't in the target translation at all (a partial/
@@ -907,7 +939,15 @@ export function createTabs(
     // recomputes the desired translation from the URL, finds none, and
     // reverts this restore straight back to the default.
     if (selectedTab.peek()?.readingState === readingState) {
-      commitSelectedTabToUrl({ replace: true });
+      // Marked as a restore for the duration of the write: `commitSelectedTabToUrl`
+      // updates the URL synchronously and everything watching it runs before this
+      // returns, so the flag doesn't need to span the awaits above.
+      restoringProfileTranslation = true;
+      try {
+        commitSelectedTabToUrl({ replace: true });
+      } finally {
+        restoringProfileTranslation = false;
+      }
     }
   };
 
@@ -1004,7 +1044,8 @@ export function createTabs(
           initialReadingOptions,
           discoverManager,
           readingExtensionManager,
-          getAnnotationsManager
+          getAnnotationsManager,
+          settingsManager
         ),
       sharedSession,
       sharedChat,
@@ -1049,5 +1090,6 @@ export function createTabs(
     removeTab,
     selectTab,
     hydrateStoredTabs,
+    isRestoringProfileTranslation: () => restoringProfileTranslation,
   };
 }

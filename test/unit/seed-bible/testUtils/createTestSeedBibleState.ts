@@ -54,6 +54,21 @@ export interface CreateTestSeedBibleStateOptions {
    * heuristic, since an explicit `?today=` short-circuits it.
    */
   todayOpen?: boolean | "fromUrl";
+  /**
+   * Whether the mobile toolbar promotes Chat to the fourth tab via
+   * `?chatFirst=true`. Applied through the real URL param before the state is
+   * built, since `BibleReaderToolbar` reads it from `initialUrl` at boot.
+   * Pass a string to set a non-canonical value (e.g. `"1"`) for edge-case tests.
+   */
+  chatFirst?: boolean | string;
+  /**
+   * Skips the internal `state.today.hydrateAutoOpen()` call below, leaving
+   * `today.isOpen` at its pre-hydrate seed (`false`) instead of the URL's
+   * real open/closed state. For a test asserting the seed-then-correct
+   * invariant itself; every other test wants the fully-loaded-app behavior
+   * this helper otherwise mirrors, so this defaults to `false`.
+   */
+  skipHydrateAutoOpen?: boolean;
 }
 
 export async function waitFor(
@@ -228,12 +243,28 @@ export async function createTestSeedBibleState(
   installFreeUseBibleApiMock(globalThis as TestGlobalScope, responses);
   await ensureI18nInitialized();
 
-  // Pin Today's initial state before the state is built: `TodayManager` latches
-  // it from `initialUrl` at construction, so it cannot be set afterwards. Keeps
-  // whatever path the caller already navigated to.
+  // `TodayManager` reads `initialUrl` (captured from `window.location` at
+  // construction) when `hydrateAutoOpen` runs below, so the URL has to be
+  // pinned before the state is built. Keeps whatever path the caller already
+  // navigated to.
   if (typeof window !== "undefined" && options.todayOpen !== "fromUrl") {
     const url = new URL(window.location.href);
     url.searchParams.set("today", options.todayOpen ? "open" : "closed");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }
+
+  // Same boot-latch pattern for chat-first: the toolbar reads `chatFirst` from
+  // `initialUrl`, so the param has to be on the URL before the state is built.
+  if (typeof window !== "undefined" && options.chatFirst !== undefined) {
+    const url = new URL(window.location.href);
+    if (options.chatFirst === false) {
+      url.searchParams.delete("chatFirst");
+    } else {
+      url.searchParams.set(
+        "chatFirst",
+        options.chatFirst === true ? "true" : options.chatFirst
+      );
+    }
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
   }
 
@@ -258,6 +289,13 @@ export async function createTestSeedBibleState(
   // to match SSR and only become real once this runs. Without it, anything
   // gated behind `tutorial.armAutoStart()` (called from here) never arms.
   state.app.hydrateFromStorage();
+  // Mirrors the same post-mount sequence's third one-time correction:
+  // `today.isOpen` seeds `false` to match SSR (which always renders Today
+  // closed), and only reflects the URL's real open/closed state once this
+  // runs.
+  if (!options.skipHydrateAutoOpen) {
+    state.today.hydrateAutoOpen();
+  }
   // Tabs first: awaiting anything else here would let asynchronously-created
   // tabs (e.g. an auto-joined shared session) appear before this runs, and those
   // tabs' reading states are mocked without a `loading` signal.

@@ -550,9 +550,8 @@ describe("createTabs", () => {
   });
 
   // The client-side counterpart of `legacyReadingUrlRedirect`. It has to
-  // correct the same set the server does, not just typos: `getBookId` also
-  // accepts aliases, other casings, and — through its `startsWith` fallback —
-  // anything merely starting with a book name.
+  // correct the same set the server does: aliases, other casings, and close
+  // typos via fuzzy match — not junk prefixes that no longer resolve.
   // The fixture translation only carries GEN/EXO/MAT, so every case here
   // corrects to one of those — otherwise the reader can't follow the
   // correction and the URL is rewritten back to where it actually is.
@@ -560,8 +559,6 @@ describe("createTabs", () => {
     // Only resolves through the fuzzy fallback: "senesis" shares none of
     // getBookId's "gen"/"genesis" prefixes (see ReadingUrlPath.test.ts).
     ["/AAB/senesis/1", "/en/AAB/genesis/1", "GEN"],
-    ["/AAB/genocide/1", "/en/AAB/genesis/1", "GEN"],
-    ["/AAB/matthew-effect/1", "/en/AAB/matthew/1", "MAT"],
     ["/AAB/gen/1", "/en/AAB/genesis/1", "GEN"],
     ["/AAB/Genesis/1", "/en/AAB/genesis/1", "GEN"],
   ])(
@@ -581,7 +578,6 @@ describe("createTabs", () => {
 
   it.each([
     ["/AAB/senesis/1", "/en/AAB/genesis/1", "GEN"],
-    ["/AAB/matthew-effect/1", "/en/AAB/matthew/1", "MAT"],
     ["/AAB/Genesis/1", "/en/AAB/genesis/1", "GEN"],
   ])(
     "self-heals %s to %s on external navigation",
@@ -609,20 +605,20 @@ describe("createTabs", () => {
     const { tabs: manager, navigation } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
-    navigation.push("/AAB/matthew-effect/1");
+    navigation.push("/AAB/senesis/1");
     await waitFor(
-      () => new URL(window.location.href).pathname === "/en/AAB/matthew/1"
+      () => new URL(window.location.href).pathname === "/en/AAB/genesis/1"
     );
 
     // Navigate to the corrected URL itself: it must be left exactly as-is.
     const pushSpy = vi.spyOn(window.history, "pushState");
     const replaceSpy = vi.spyOn(window.history, "replaceState");
-    navigation.push("/en/AAB/matthew/1");
+    navigation.push("/en/AAB/genesis/1");
     await waitFor(
-      () => manager.tabs.value[0]!.readingState.bookId.value === "MAT"
+      () => manager.tabs.value[0]!.readingState.bookId.value === "GEN"
     );
 
-    expect(new URL(window.location.href).pathname).toBe("/en/AAB/matthew/1");
+    expect(new URL(window.location.href).pathname).toBe("/en/AAB/genesis/1");
     // The only history write should be the `push` above — no correcting
     // `replace` on top of it.
     expect(pushSpy).toHaveBeenCalledTimes(1);
