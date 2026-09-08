@@ -1579,6 +1579,37 @@ const BookmarkIcon = (props: any) => {
   );
 };
 
+/**
+ * Star glyph for Saves, drawn as an outline by default. Like `BookmarkIcon`,
+ * `fill`, `stroke` and `stroke-width` sit on the `<svg>` so a caller can pass
+ * its own and have them inherit down to the path — that is what lets one glyph
+ * serve both the unsaved outline and the filled "already saved" state.
+ *
+ * Drawn rather than taken from Material Symbols because that font only fills a
+ * star through its variable `FILL` axis, and the app requests the font with
+ * that axis pinned (see the Google Fonts link in `app/main.tsx`), so a filled
+ * variant is not available without shipping a much larger font file.
+ */
+const StarIcon = (props: any) => {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M12 2.5L15.09 8.76L22 9.77L17 14.64L18.18 21.52L12 18.27L5.82 21.52L7 14.64L2 9.77L8.91 8.76L12 2.5Z"
+        stroke-linejoin="round"
+      />
+    </svg>
+  );
+};
+
 const SbTabsIcon = (props: any) => {
   return (
     <svg
@@ -1744,6 +1775,7 @@ export {
   AddIcon,
   MinusIcon,
   BookmarkIcon,
+  StarIcon,
   SbTabsIcon,
   BookOutlineIcon,
   AddTab,

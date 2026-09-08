@@ -2,9 +2,11 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
-import { BookmarksSection } from "@packages/seed-bible/seed-bible/components/TodayPane/BookmarksSection";
+import {
+  BookmarksSection,
+  type BookmarkStripItem,
+} from "@packages/seed-bible/seed-bible/components/TodayPane/BookmarksSection";
 import type { TranslationBooks } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import { todayStub } from "../../testUtils/todayStubs";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -16,15 +18,16 @@ function books(entries: { id: string; name: string }[]): TranslationBooks {
   return { books: entries } as unknown as TranslationBooks;
 }
 
-function bookmark(overrides: Partial<Bookmark> = {}): Bookmark {
+function bookmark(
+  overrides: Partial<BookmarkStripItem> = {}
+): BookmarkStripItem {
   return {
     id: "b1",
     bookId: "GEN",
     chapterNumber: 3,
     translationId: "T1",
-    category: "Favorites",
     ...overrides,
-  } as unknown as Bookmark;
+  };
 }
 
 class MockResizeObserver {
@@ -87,8 +90,9 @@ describe("BookmarksSection", () => {
     vi.clearAllMocks();
   });
 
-  function setup(options: { bookmarks?: Signal<Bookmark[]> } = {}) {
-    const bookmarks = options.bookmarks ?? signal<Bookmark[]>([bookmark()]);
+  function setup(options: { bookmarks?: Signal<BookmarkStripItem[]> } = {}) {
+    const bookmarks =
+      options.bookmarks ?? signal<BookmarkStripItem[]>([bookmark()]);
     act(() =>
       render(
         <BookmarksSection
@@ -118,16 +122,9 @@ describe("BookmarksSection", () => {
     container.querySelector<HTMLButtonElement>(
       ".sb-today-titled-section-header > button"
     );
-  const categoryLabels = () =>
-    Array.from(
-      container.querySelectorAll(".sb-today-bookmarks-section-label")
-    ).map((el) => el.textContent);
-  const chipTexts = (categoryIndex = 0) => {
-    const strips = container.querySelectorAll(
-      ".sb-today-bookmarks-section-container"
-    );
-    const chips = strips[categoryIndex]!.querySelectorAll(
-      ".sb-today-bookmarks-section-bookmark"
+  const chipTexts = () => {
+    const chips = container.querySelectorAll(
+      ".sb-today-bookmarks-section-container .sb-today-bookmarks-section-bookmark"
     );
     return Array.from(chips).map((el) => el.textContent);
   };
@@ -161,36 +158,22 @@ describe("BookmarksSection", () => {
     });
   });
 
-  describe("categories", () => {
-    it("groups bookmarks by their category, in first-appearance order", () => {
+  describe("the strip", () => {
+    it("renders one chip per bookmark, in order", () => {
       setup({
         bookmarks: signal([
-          bookmark({ id: "b1", category: "Favorites" }),
-          bookmark({ id: "b2", category: "Favorites" }),
-          bookmark({ id: "b3", category: "To Read" }),
+          bookmark({ id: "b1", bookId: "GEN", chapterNumber: 3 }),
+          bookmark({ id: "b2", bookId: "EXO", chapterNumber: 2 }),
+          bookmark({ id: "b3", bookId: "MAT", chapterNumber: 5 }),
         ]),
       });
 
-      expect(categoryLabels()).toEqual(["Favorites:", "To Read:"]);
-      expect(chipTexts(0)).toHaveLength(2);
-      expect(chipTexts(1)).toHaveLength(1);
+      expect(chipTexts()).toEqual(["GEN 3", "EXO 2", "MAT 5"]);
     });
 
-    it("preserves first-appearance order for numeric-looking category names", () => {
-      setup({
-        bookmarks: signal([
-          bookmark({ id: "b1", category: "Favorites" }),
-          bookmark({ id: "b2", category: "2024" }),
-        ]),
-      });
-
-      // A plain object would hoist the integer-like "2024" to the front.
-      expect(categoryLabels()).toEqual(["Favorites:", "2024:"]);
-    });
-
-    it("renders no categories when there are no bookmarks", () => {
+    it("renders no chips when there are no bookmarks", () => {
       setup({ bookmarks: signal([]) });
-      expect(categoryLabels()).toEqual([]);
+      expect(chipTexts()).toEqual([]);
     });
   });
 
@@ -243,12 +226,7 @@ describe("BookmarksSection", () => {
         bookmarks: signal([
           bookmark({ id: "b1", bookId: "GEN", translationId: "T1" }),
           bookmark({ id: "b2", bookId: "EXO", translationId: "T1" }),
-          bookmark({
-            id: "b3",
-            bookId: "MAT",
-            translationId: "T2",
-            category: "To Read",
-          }),
+          bookmark({ id: "b3", bookId: "MAT", translationId: "T2" }),
         ]),
       });
 
@@ -281,7 +259,7 @@ describe("BookmarksSection", () => {
     const twoChips = () =>
       signal([bookmark({ id: "b1" }), bookmark({ id: "b2" })]);
 
-    it("is absent when no category strip wraps to a new line", () => {
+    it("is absent when the strip does not wrap to a new line", () => {
       setup({ bookmarks: twoChips() });
       expect(moreButton()).toBeNull();
     });
@@ -305,7 +283,7 @@ describe("BookmarksSection", () => {
 
     // On mobile the strips scroll horizontally instead, so there is nothing
     // hidden for a "view more" to reveal.
-    it("stays hidden on mobile even when a strip wraps", () => {
+    it("stays hidden on mobile even when the strip wraps", () => {
       wrapChips = true;
       isMobile.value = true;
       setup({ bookmarks: twoChips() });

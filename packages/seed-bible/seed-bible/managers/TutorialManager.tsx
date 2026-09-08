@@ -108,9 +108,9 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     id: "tabs",
     target: ".sb-sidebar-tabs-header",
     titleKey: "tutorial.tabsTitle",
-    titleDefault: "Tabs and bookmarks",
+    titleDefault: "Tabs and saves",
     bodyKey: "tutorial.tabsBody",
-    bodyDefault: "Your open passages and bookmarks live here.",
+    bodyDefault: "Your open passages and saves live here.",
     placement: "right",
   },
   {

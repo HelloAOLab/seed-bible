@@ -285,7 +285,7 @@ describe("createNavigationManager nested batchWrites", () => {
     navigation.updatePathAndQueryParams("/genesis/1", { sidebar: "open" });
     const historyLengthBefore = window.history.length;
 
-    // Actions compose: opening a bookmark batches its own writes and calls
+    // Actions compose: opening a save batches its own writes and calls
     // into `selectTab`, which batches too.
     navigation.batchWrites(() => {
       navigation.updatePathAndQueryParams("/exodus/2", {}, true);

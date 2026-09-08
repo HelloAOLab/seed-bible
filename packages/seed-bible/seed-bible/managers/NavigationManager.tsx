@@ -208,7 +208,7 @@ export function createNavigationManager(
    * any write inside it asked to push, and replaces otherwise.
    *
    * One user action often changes two things that both mirror to the URL: for
-   * example tapping a bookmark in the mobile sidebar moves the reader (a
+   * example tapping a save in the mobile sidebar moves the reader (a
    * `replace`, since it's a tab switch) *and* dismisses the sidebar (a `push`,
    * removing `?sidebar=open`). Left unbatched those are two history writes:
    * the reader's `replace` overwrites the entry that opened the sidebar — so

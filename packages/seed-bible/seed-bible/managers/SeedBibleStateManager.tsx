@@ -93,9 +93,9 @@ import {
   type HighlightsManager,
 } from "../managers/HighlightsManager";
 import {
-  createBookmarksManager,
-  type BookmarksManager,
-} from "../managers/BookmarksManager";
+  createSavesManager,
+  type SavesManager,
+} from "../managers/SavesManager";
 import {
   createChatsManager,
   type ChatSession,
@@ -386,8 +386,8 @@ export interface SeedBibleState {
   readingHistory: ReadingHistoryManager;
   /** Verse highlight manager. */
   highlights: HighlightsManager;
-  /** Per-tab/location bookmarks manager. */
-  bookmarks: BookmarksManager;
+  /** Archival saves manager: categorized references to chapters and verses. */
+  saves: SavesManager;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Chat session manager for in-app chat state. */
@@ -563,7 +563,7 @@ export function createSeedBibleState(
   const os = CasualOSManager();
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);
-  const bookmarks = createBookmarksManager(os, login);
+  const saves = createSavesManager(os, login);
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
@@ -620,7 +620,7 @@ export function createSeedBibleState(
     tabsLayout,
     settings,
     sidebar,
-    bookmarks,
+    saves,
     navigation,
     login,
     i18n
@@ -2086,7 +2086,7 @@ export function createSeedBibleState(
   // Tell the user when we signed them out for them. `login.sessionEnded` only fires
   // when a forced sign-out actually happened, so this can't toast for a request that
   // merely failed, nor for a sign-out the user asked for. Without a message they
-  // would just watch their highlights and bookmarks vanish with no explanation.
+  // would just watch their highlights and saves vanish with no explanation.
   effect(() => {
     const ended = login.sessionEnded.value;
     if (!ended || typeof window === "undefined") {
@@ -2354,7 +2354,7 @@ export function createSeedBibleState(
     login,
     readingHistory,
     highlights,
-    bookmarks,
+    saves,
     annotations,
     chats,
     sessions,
@@ -2509,20 +2509,14 @@ export function createSeedBibleState(
       selector.setOpen(true, slot);
     }
   };
-  const showTodayBookmarksList = () => {
-    sidebar.isSidebarCollapsed.value = false;
-    bookmarks.isFilterActive.value = true;
-  };
   const renderTodayPane = () => (
     <TodayPane
       today={today}
       login={login}
-      bookmarks={bookmarks.bookmarks}
       theme={themeManager.currentTheme}
       isMobile={isMobile}
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
-      onShowBookmarksList={showTodayBookmarksList}
     />
   );
   const renderTodayPaneTitle = () => <TodayPaneTitle />;

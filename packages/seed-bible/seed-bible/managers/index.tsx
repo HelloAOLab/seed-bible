@@ -4,7 +4,7 @@ export * from "./BibleReadingManager";
 export * from "./BibleReadingExtensionManager";
 export * from "./BibleSelectorManager";
 export * from "./BibleToolsManager";
-export * from "./BookmarksManager";
+export * from "./SavesManager";
 export * from "./ChapterText";
 export * from "./ExtensionManager";
 export * from "./FreeUseBibleAPI";

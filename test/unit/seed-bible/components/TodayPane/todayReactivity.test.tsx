@@ -3,7 +3,6 @@ import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { TodayPane } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
 import type { ReadingHistoryState } from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
-import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { todayStub, loginStub } from "../../testUtils/todayStubs";
@@ -72,7 +71,6 @@ describe("Today screen reactivity", () => {
   let readingHistory: Signal<ReadingHistoryState>;
   let bookNames: Signal<Map<string, string>>;
   let profile: Signal<UserProfile | null>;
-  let bookmarks: Signal<Bookmark[]>;
   let theme: Signal<BibleTheme>;
   let isMobile: Signal<boolean>;
 
@@ -94,7 +92,6 @@ describe("Today screen reactivity", () => {
     } as ReadingHistoryState);
     bookNames = signal(new Map([["GEN", "Genesis"]]));
     profile = signal({ name: "Alice" } as UserProfile);
-    bookmarks = signal<Bookmark[]>([]);
     theme = signal(themeWith({ secondaryFontColor: "rgb(1, 2, 3)" }));
     isMobile = signal(false);
   });
@@ -130,12 +127,10 @@ describe("Today screen reactivity", () => {
         <TodayPane
           today={today}
           login={login}
-          bookmarks={bookmarks}
           theme={theme}
           isMobile={isMobile}
           onOpenPassage={vi.fn()}
           onOpenBookSelector={vi.fn()}
-          onShowBookmarksList={vi.fn()}
         />,
         container
       )
@@ -144,16 +139,6 @@ describe("Today screen reactivity", () => {
 
   const q = (sel: string) => container.querySelector(sel);
   const text = (sel: string) => q(sel)?.textContent ?? null;
-
-  const aBookmark = () =>
-    ({
-      id: "b1",
-      translationId: "KJV",
-      bookId: "GEN",
-      chapterNumber: 3,
-      createdAt: 0,
-      category: "Favorites",
-    }) as Bookmark;
 
   it("swaps Welcome for the personalized layout when history arrives", () => {
     readingHistory.value = { status: "empty" };
@@ -195,17 +180,6 @@ describe("Today screen reactivity", () => {
     expect(text(".sb-today-resume-card h1")).toContain("Génesis");
   });
 
-  it("reveals the bookmarks strip once a bookmark exists", () => {
-    setup();
-    expect(q(".sb-today-bookmarks-section")).toBeNull();
-
-    act(() => {
-      bookmarks.value = [aBookmark()];
-    });
-
-    expect(q(".sb-today-bookmarks-section")).not.toBeNull();
-  });
-
   // The regression that prompted this suite: a theme switch has to repaint
   // immediately, without waiting for an unrelated re-render to carry it.
   it("restyles on a theme switch", () => {
@@ -237,7 +211,6 @@ describe("Today screen reactivity", () => {
   // the old config bag both of these signals were read in the pane's root
   // render function, so either change re-rendered every card on the screen.
   it("re-renders only the header when the signed-in profile changes", () => {
-    bookmarks.value = [aBookmark()];
     setup();
 
     const counts = renderCounts(() => {
@@ -250,12 +223,10 @@ describe("Today screen reactivity", () => {
     expect(counts.get("TodayContainer") ?? 0).toBe(0);
     expect(counts.get("TodayContent") ?? 0).toBe(0);
     expect(counts.get("ResumeReadingSection") ?? 0).toBe(0);
-    expect(counts.get("BookmarksSection") ?? 0).toBe(0);
     expect(counts.get("SearchSection") ?? 0).toBe(0);
   });
 
   it("leaves the cards that don't read the theme alone on a theme switch", () => {
-    bookmarks.value = [aBookmark()];
     setup();
 
     const counts = renderCounts(() => {
@@ -271,6 +242,5 @@ describe("Today screen reactivity", () => {
     expect(counts.get("TodayContent") ?? 0).toBe(0);
     expect(counts.get("Header") ?? 0).toBe(0);
     expect(counts.get("ResumeReadingSection") ?? 0).toBe(0);
-    expect(counts.get("BookmarksSection") ?? 0).toBe(0);
   });
 });

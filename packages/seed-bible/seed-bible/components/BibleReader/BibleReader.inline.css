@@ -10,7 +10,8 @@
   flex: 1;
 }
 
-.sb-bible-reader-bookmark-button {
+.sb-bible-reader-bookmark-button,
+.sb-bible-reader-save-button {
   position: relative;
   width: 2.25rem;
   height: 2.25rem;
@@ -28,24 +29,29 @@
   z-index: 1;
 }
 
-.sb-bible-reader-bookmark-button:hover {
+.sb-bible-reader-bookmark-button:hover,
+.sb-bible-reader-save-button:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
 }
 
-.sb-bible-reader-bookmark-button-active,
-.sb-bible-reader-bookmark-button-active:hover {
-  color: var(--sb-primary-color);
-}
-
-.sb-bible-reader-bookmark-button:disabled {
+.sb-bible-reader-bookmark-button:disabled,
+.sb-bible-reader-save-button:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.sb-bible-reader-bookmark-button svg {
+.sb-bible-reader-bookmark-button svg,
+.sb-bible-reader-save-button svg {
   width: 1.375rem; /* 22px */
   height: 1.375rem;
+}
+
+/* A filled star already reads as "saved"; the tint is what keeps it legible
+ * against the outlined bookmark sitting next to it. */
+.sb-bible-reader-save-button-saved,
+.sb-bible-reader-save-button-saved:hover {
+  color: var(--sb-primary-color);
 }
 
 /* Force a tight 1% reader margin in mobile view, regardless of the
@@ -60,8 +66,8 @@
 }
 
 /* Reader header: lays the chapter title and the right-hand action cluster
-   (quick toolbar + bookmark button) in a flex row so the buttons can never
-   overlap the title, regardless of how many quick tools are registered. */
+   (quick toolbar + save and bookmark buttons) in a flex row so the buttons can
+   never overlap the title, regardless of how many quick tools are registered. */
 .sb-bible-reader-header {
   display: flex;
   align-items: flex-start;
@@ -299,9 +305,9 @@
   margin-inline-start: 0.125rem;
 }
 
-/* The chapter-bookmark toggle joins the header's right-hand icon cluster on
- * mobile. The cluster wrapper consumes the free space so bookmark, share,
- * account, and settings stay together on the right even when bookmark is
+/* The chapter save and bookmark buttons join the header's right-hand icon
+ * cluster on mobile. The cluster wrapper consumes the free space so they,
+ * share, account, and settings stay together on the right even when the pair is
  * hidden during playlist playback. */
 .sb-bible-reader-mobile-header-actions {
   display: flex;
@@ -311,7 +317,8 @@
   margin-inline-start: auto;
 }
 
-.sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button {
+.sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button,
+.sb-bible-reader-mobile-header .sb-bible-reader-save-button {
   position: static;
   flex-shrink: 0;
   width: 2rem;
@@ -319,7 +326,7 @@
   border-radius: 50%;
 }
 
-/* Match the 2rem circular header buttons (bookmark, account, settings)
+/* Match the 2rem circular header buttons (save, bookmark, account, settings)
  * rather than the desktop quick-toolbar's 2.25rem size. */
 .sb-bible-reader-mobile-header .sb-quick-toolbar-button {
   width: 2rem;
@@ -1018,12 +1025,12 @@
  * (matches the design spec). The modal frame itself is reused, but the
  * outer overlay aligns it to the bottom and stretches it to full width. */
 @media (max-width: 480px) {
-  .sb-footnote-modal-overlay:has(.sb-bookmark-picker) {
+  .sb-footnote-modal-overlay:has(.sb-save-picker) {
     align-items: flex-end;
     padding: 0;
   }
 
-  .sb-footnote-modal:has(.sb-bookmark-picker) {
+  .sb-footnote-modal:has(.sb-save-picker) {
     width: 100%;
     max-width: 100%;
     border-radius: 1rem 1rem 0 0;
