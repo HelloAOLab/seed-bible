@@ -11,7 +11,7 @@ import {
   annotationPlainText,
   type ContentFilter,
 } from "../../managers/YourContentManager";
-import { AnnotationPreview } from "../DiscoverPane/DiscoverPane";
+import { AnnotationPreview } from "../DiscoverPane/AnnotationsSection";
 import {
   ContextMenuItem,
   ContextMenuWithButton,

@@ -95,12 +95,16 @@ async function createManagers(
     extraTabs?: number;
     panelsEnabled?: ReadonlySignal<boolean>;
     /**
-     * Seeds `localStorage["sb-tabs-state"]` before the managers read it, so the
-     * restore path runs instead of the default single-tab path. Deliberately
-     * untyped: these tests also feed it corrupt blobs that `PersistedTabsState`
-     * would reject.
+     * Seeds `localStorage["sb-tabs-state"]`, then runs the deferred restore so
+     * these tests see the restored arrangement. Deliberately untyped: these
+     * tests also feed it corrupt blobs that `PersistedTabsState` would reject.
      */
     storedTabsState?: unknown;
+    /**
+     * Skips the deferred restore even though `storedTabsState` is set, to assert
+     * what construction alone produces (which has to match SSR).
+     */
+    skipStorageHydration?: boolean;
     /** URL to open the app with, e.g. "/?translation=NIV&book=MAT&chapter=1". */
     url?: string;
   } = {}
@@ -136,6 +140,17 @@ async function createManagers(
   }
   const panelsEnabled = options.panelsEnabled ?? signal(true);
   const tabsLayout = createTabsLayout(tabsManager, panelsEnabled);
+
+  // Both managers seed from the URL alone so the client's first render matches
+  // the SSR HTML; the stored tabs and slot arrangement are applied afterwards.
+  // `app.hydrateFromStorage` sequences these two in exactly this order — slots
+  // are bound to tab objects by id, so the tabs have to land first.
+  if (options.storedTabsState !== undefined && !options.skipStorageHydration) {
+    tabsManager.hydrateStoredTabs();
+    tabsLayout.hydrateStoredLayout();
+    await waitForTabsToLoad(tabsManager.tabs.value);
+  }
+
   return { tabsManager, tabsLayout };
 }
 
@@ -171,6 +186,57 @@ describe("createTabsLayout", () => {
       bookId: "MAT",
       chapterNumber: 1,
     };
+
+    it("starts from a single slot at construction, ignoring a stored split", async () => {
+      const { tabsLayout } = await createManagers({
+        skipStorageHydration: true,
+        storedTabsState: {
+          version: 1,
+          tabs: [
+            { id: "tab-1", ...GEN_1 },
+            { id: "tab-2", ...EXO_2 },
+          ],
+          selectedTabId: "tab-1",
+          layout: "split-2v",
+          slotTabIds: ["tab-1", "tab-2"],
+          selectedSlotIndex: 0,
+        },
+      });
+
+      // A restored split would mount a second pane the SSR HTML never had, which
+      // is the one hydration divergence Preact reports instead of patching.
+      expect(tabsLayout.layout.value).toBe("single");
+      expect(tabsLayout.slots.value).toHaveLength(1);
+    });
+
+    it("keeps the selected slot's id across hydrateStoredLayout", async () => {
+      const { tabsManager, tabsLayout } = await createManagers({
+        skipStorageHydration: true,
+        storedTabsState: {
+          version: 1,
+          tabs: [
+            { id: "tab-1", ...GEN_1 },
+            { id: "tab-2", ...EXO_2 },
+          ],
+          selectedTabId: "tab-1",
+          layout: "split-2v",
+          slotTabIds: ["tab-1", "tab-2"],
+          selectedSlotIndex: 0,
+        },
+      });
+      const bootSlotId = tabsLayout.slots.value[0]!.id;
+
+      tabsManager.hydrateStoredTabs();
+      tabsLayout.hydrateStoredLayout();
+      await waitForTabsToLoad(tabsManager.tabs.value);
+
+      // `TabsLayout` keys each pane on `slot.id`. Handing the selected slot a new
+      // id would unmount and remount that pane, discarding the scripture that
+      // just hydrated into it.
+      expect(tabsLayout.slots.value).toHaveLength(2);
+      expect(tabsLayout.slots.value[0]!.id).toBe(bootSlotId);
+      expect(tabsLayout.selectedSlotId.value).toBe(bootSlotId);
+    });
 
     it("rebuilds the stored slots, layout preset, and selected slot", async () => {
       const { tabsManager, tabsLayout } = await createManagers({

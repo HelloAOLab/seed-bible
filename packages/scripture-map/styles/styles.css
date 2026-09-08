@@ -3,7 +3,6 @@
   display: grid;
   grid-template-columns: 100%;
   grid-template-rows: auto 1fr auto;
-  background-color: white;
   pointer-events: all;
   overflow: hidden;
   gap: 0.5rem;
@@ -247,10 +246,6 @@
   width: 1px;
   height: 1.25rem;
   background-color: #d2d2d2;
-}
-
-.scripture-map-wrapper .scripture-map-controls {
-  width: 100%;
 }
 
 .reading-history-user-selector {

@@ -13,6 +13,7 @@ import {
 import { CasualOSManager } from "./OsManager";
 import { v4 as uuid } from "uuid";
 import { captureEvent } from "./Utils";
+import { savePhotoToGallery } from "./UserGalleryManager";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -103,6 +104,11 @@ export const ReadingPlanMetadataSchema = z.object({
   locale: z.string(),
   title: z.string().nullable(),
   description: z.string().nullable(),
+  /**
+   * Public URL of a 4:3 cover image. Optional so plans saved before this field
+   * existed still parse.
+   */
+  heroImageUrl: z.url().max(2048).nullable().optional(),
   // Every pace the author offers for reading this plan. A plan has no single
   // duration — how long it takes follows from whichever cadence the reader
   // picks (see `cadenceDurationDays`).
@@ -315,6 +321,7 @@ export function createReadingPlan(
     locale?: string;
     title?: string | null;
     description?: string | null;
+    heroImageUrl?: string | null;
     cadenceOptions?: CadenceOption[];
     defaultCadenceId?: string | null;
     status?: ReadingPlanStatus;
@@ -332,6 +339,7 @@ export function createReadingPlan(
     locale: options.locale ?? "en",
     title: options.title ?? null,
     description: options.description ?? null,
+    heroImageUrl: options.heroImageUrl ?? null,
     cadenceOptions,
     defaultCadenceId: options.defaultCadenceId ?? cadenceOptions[0]?.id ?? null,
     status: options.status ?? "complete",
@@ -1899,10 +1907,8 @@ export function createReadingPlansManager(
           : [...userReadingPlans.value, metadata];
       });
       editingReadingPlanSaveError.value = false;
-      // Editing an already-published plan (`isNew: false`) autosaves the same
-      // way but isn't a "draft" in the lifecycle sense — it keeps its
-      // `"complete"` status throughout and reports via
-      // reading_plan_updated on finish, not here.
+      // Published-plan edits are not written here — they wait for
+      // `finishEditingReadingPlan` so Cancel/back can walk away cleanly.
       if (draft.isNew) {
         captureEvent(
           draft.persisted
@@ -1942,7 +1948,9 @@ export function createReadingPlansManager(
       draftSaveTimer = null;
     }
     const draft = editingReadingPlan.peek();
-    if (!draft) {
+    // New drafts autosave so the author can leave and resume. Edits to an
+    // already-published plan stay in memory until Save changes.
+    if (!draft || !draft.isNew) {
       editingReadingPlanSaving.value = false;
       return;
     }
@@ -1971,7 +1979,9 @@ export function createReadingPlansManager(
       ...patch,
       plan: { ...update(current.plan), updatedAtMs: Date.now() },
     };
-    scheduleDraftSave();
+    if (current.isNew) {
+      scheduleDraftSave();
+    }
   };
 
   /**
@@ -2012,9 +2022,10 @@ export function createReadingPlansManager(
 
   /**
    * Opens an already-published plan in the same editor used to create one, so
-   * there is one screen for both. Edits autosave exactly as a draft's do, and
-   * the plan keeps its `"complete"` status throughout so it never drops out of
-   * the reader's list mid-edit.
+   * there is one screen for both. Edits stay in memory until Save changes —
+   * backing out (Cancel/back) drops them and leaves the published plan as it
+   * was. The plan keeps its `"complete"` status throughout so it never drops
+   * out of the reader's list mid-edit.
    */
   const editExistingReadingPlan = (plan: ReadingPlan) => {
     editingReadingPlan.value = {
@@ -2030,26 +2041,46 @@ export function createReadingPlansManager(
   };
 
   /**
-   * Steps out of the wizard, flushing any pending change first. The draft
-   * itself is kept — that is the whole point of drafts — and stays in the
-   * plans list to be resumed or discarded.
+   * Steps out of the wizard. A new draft flushes any pending change first and
+   * is kept — that is the whole point of drafts — so it stays in the plans
+   * list to be resumed or discarded. An edit of a published plan is dropped
+   * without writing, so Cancel/back does not commit the cover image (or
+   * anything else) the author never saved.
    */
   const cancelEditingReadingPlan = () => {
     const draft = editingReadingPlan.peek();
-    if (draft && (draft.persisted || draftSaveTimer !== null)) {
+    if (draft?.isNew && (draft.persisted || draftSaveTimer !== null)) {
       void flushDraftSave().then(() => {
         editingReadingPlan.value = null;
       });
       return;
     }
+    if (draftSaveTimer !== null) {
+      clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+    }
+    editingReadingPlanSaving.value = false;
     editingReadingPlan.value = null;
   };
 
-  /** Merges a title/description change into the draft. */
+  /** Merges a title/description/cover-image change into the draft. */
   const updateEditingReadingPlan = (
-    patch: Partial<Pick<ReadingPlan, "title" | "description">>
+    patch: Partial<Pick<ReadingPlan, "title" | "description" | "heroImageUrl">>
   ) => {
     mutateDraft((plan) => ({ ...plan, ...patch }));
+  };
+
+  /**
+   * Uploads a cover image to the current user's record and returns its public
+   * URL. The caller attaches that URL via `updateEditingReadingPlan`. Throws
+   * when signed out.
+   */
+  const uploadHeroImage = async (file: File): Promise<string> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Cannot upload a cover image while signed out.");
+    }
+    return (await savePhotoToGallery(os, userId, file)).url;
   };
 
   /** Points new readings at a session of the draft. */
@@ -2354,6 +2385,7 @@ export function createReadingPlansManager(
     cancelEditingReadingPlan,
     discardEditingReadingPlan,
     updateEditingReadingPlan,
+    uploadHeroImage,
     selectEditingPlanSession,
     setEditingPlanCadenceOptions,
     addSessionToEditingPlan,

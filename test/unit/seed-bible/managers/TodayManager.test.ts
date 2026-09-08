@@ -132,6 +132,30 @@ describe("Today pane wiring", () => {
     expect(paneIsOpen(state)).toBe(false);
   });
 
+  // The fix's core invariant: `isOpen` must stay `false` -- matching what SSR
+  // always renders -- until `hydrateAutoOpen` runs, even on a boot URL that
+  // will end up auto-opening Today. `skipHydrateAutoOpen` holds the fixture
+  // in that pre-hydrate window so this can be asserted directly, rather than
+  // only observing the already-corrected value every other test sees. Fails
+  // on the old construction-time seeding, which computed the real value
+  // immediately with no pre-hydrate window to observe.
+  it("seeds isOpen closed regardless of the URL, until hydrateAutoOpen runs", async () => {
+    window.history.replaceState(null, "", "/");
+
+    const state = await createTestSeedBibleState({
+      todayOpen: "fromUrl",
+      skipHydrateAutoOpen: true,
+    });
+
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIsOpen(state)).toBe(false);
+
+    state.today.hydrateAutoOpen();
+
+    expect(state.today.isOpen.value).toBe(true);
+    await waitFor(() => paneIsOpen(state));
+  });
+
   // Reopening must reuse the same component thunk: a fresh one would remount
   // the whole Today tree and throw away its loaded reading history.
   it("keeps a stable component identity across reopens", async () => {

@@ -42,7 +42,6 @@
 
 .sb-tab-user-role-cohost,
 .sb-tab-user-role-host {
-  background: color-mix(in srgb, #f59e0b, transparent 82%);
   color: var(--sb-tab-font-color);
   /* backdrop-filter: invert(1) brightness(1.2); */
   background: var(--sb-reader-background);

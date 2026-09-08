@@ -393,6 +393,27 @@ describe("createChatsManager", () => {
     expect(firstChat).not.toBe(secondChat);
   });
 
+  it("exposes an empty composerDraft for prefilling the compose field", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    expect(chats.composerDraft.value).toBe("");
+    chats.composerDraft.value = "In the beginning. (Genesis 1:1 NIV)\n\n";
+    expect(chats.composerDraft.value).toBe(
+      "In the beginning. (Genesis 1:1 NIV)\n\n"
+    );
+  });
+
+  it("createLocalSession() exposes an empty unsentDraft for the compose field", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    expect(session.unsentDraft.value).toBe("");
+    session.unsentDraft.value = "how does this connect to";
+    expect(session.unsentDraft.value).toBe("how does this connect to");
+  });
+
   it("createLocalSession() exposes lastMessageRead and markAsRead()", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-1";
@@ -4372,6 +4393,35 @@ describe("createChatsManager", () => {
 
       expect(session.parsedMessages.value[0]).toMatchObject({
         parts: ["Hello world"],
+      });
+    });
+
+    it("does not link Bible-domain names that only share a book abbreviation prefix", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Isaac 24 and Judah 4 and Jerusalem 70 AD",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Isaac 24 and Judah 4 and Jerusalem 70 AD"],
+      });
+    });
+
+    it("does not link out-of-range chapter references in chat", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "See Genesis 999" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["See Genesis 999"],
       });
     });
 

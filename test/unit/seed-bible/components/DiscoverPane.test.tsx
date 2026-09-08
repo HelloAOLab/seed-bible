@@ -179,14 +179,20 @@ function createMockPlaylists(
     continueFromHistory,
     replayFromHistory,
     removePlayHistory,
+    isEditingPlaylistDirty: vi.fn(() => false),
     saveEditingPlaylist: vi.fn().mockResolvedValue(undefined),
     updateEditingPlaylistMetadata: vi.fn(
-      (updates: Partial<Pick<Playlist, "title" | "description">>) => {
+      (
+        updates: Partial<
+          Pick<Playlist, "title" | "description" | "heroImageUrl">
+        >
+      ) => {
         const current = editingPlaylist.value;
         if (!current) return;
         editingPlaylist.value = { ...current, ...updates };
       }
     ),
+    uploadHeroImage: vi.fn().mockResolvedValue("https://example.com/hero.jpg"),
     addEditingPlaylistItem: vi.fn(),
     updateEditingPlaylistItem: vi.fn(),
     removeEditingPlaylistItem: vi.fn(),
@@ -302,6 +308,7 @@ function createMockChats(
     createLocalSession,
     selectChat,
     providers: providersSignal,
+    composerDraft: signal(""),
   } as unknown as import("@packages/seed-bible/seed-bible/managers/ChatsManager").ChatsManager;
   return {
     chats,
@@ -374,6 +381,12 @@ function createMockState(
       userId: signal(null),
       getUserProfile:
         overrides.getUserProfile ?? vi.fn().mockResolvedValue({ name: "" }),
+    },
+    os: {
+      recordFile: vi.fn().mockResolvedValue({
+        success: true,
+        url: "https://example.com/hero.jpg",
+      }),
     },
     discover: {
       scrollToVerse: signal(null),
@@ -521,6 +534,49 @@ describe("DiscoverPane", () => {
     expect(
       items[1]?.querySelector(".sb-discover-item-title")?.textContent
     ).toBe("Untitled playlist");
+    expect(
+      items[0]?.querySelector(".sb-hero-thumb--empty")?.textContent
+    ).toContain("No image");
+    expect(
+      items[1]?.querySelector(".sb-hero-thumb--empty")?.textContent
+    ).toContain("No image");
+    expect(items[0]?.querySelector(".sb-hero-thumb img")).toBeNull();
+    expect(items[1]?.querySelector(".sb-hero-thumb img")).toBeNull();
+  });
+
+  it("shows a cover thumbnail when a playlist has a hero image", () => {
+    const { playlists } = createMockPlaylists({
+      userPlaylists: [
+        createPlaylist({
+          heroImageUrl: "https://example.com/cover.jpg",
+        }),
+      ],
+    });
+    const { annotations } = createMockAnnotations();
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const thumb = container.querySelector(
+      ".sb-playlist-item .sb-hero-thumb"
+    ) as HTMLImageElement;
+    expect(thumb).not.toBeNull();
+    expect(thumb.src).toBe("https://example.com/cover.jpg");
+    expect(container.querySelector(".sb-hero-thumb--empty")).toBeNull();
   });
 
   it("clicking a playlist row or its play button starts playing exactly once", () => {
@@ -1437,6 +1493,90 @@ describe("DiscoverPane", () => {
     expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(1);
   });
 
+  it("scrolls to and briefly highlights the group targeted by discover.scrollToVerse, then clears it", () => {
+    const { playlists } = createMockPlaylists();
+    const verse3 = createAnnotation({ id: "verse-3", verseNumber: 3 });
+    const verse7 = createAnnotation({ id: "verse-7", verseNumber: 7 });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [verse3, verse7],
+    });
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoViewSpy = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewSpy,
+    });
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        callback(0);
+        return 0;
+      });
+
+    vi.useFakeTimers();
+
+    try {
+      act(() => {
+        render(
+          <DiscoverPane
+            tabs={tabs}
+            playlists={playlists}
+            annotations={annotations}
+            modals={modals}
+            state={state}
+            toast={state.app.toast}
+          />,
+          container
+        );
+      });
+
+      act(() => {
+        state.discover.scrollToVerse.value = {
+          bookId: "GEN",
+          chapterNumber: 1,
+          verseNumber: 7,
+        };
+      });
+
+      // Consumed once, immediately.
+      expect(state.discover.scrollToVerse.value).toBeNull();
+      expect(scrollIntoViewSpy).toHaveBeenCalledWith({ block: "center" });
+
+      const groups = container.querySelectorAll(".sb-annotation-group");
+      expect(
+        groups[0]?.classList.contains("sb-annotation-group--highlighted")
+      ).toBe(false);
+      expect(
+        groups[1]?.classList.contains("sb-annotation-group--highlighted")
+      ).toBe(true);
+
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      expect(
+        groups[1]?.classList.contains("sb-annotation-group--highlighted")
+      ).toBe(false);
+    } finally {
+      vi.useRealTimers();
+      rafSpy.mockRestore();
+      Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+        configurable: true,
+        value: originalScrollIntoView,
+      });
+    }
+  });
+
   it("shows the comment's author name resolved from their profile and a formatted updated time", async () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({
@@ -2329,6 +2469,42 @@ describe("DiscoverPaneTitle", () => {
     expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
   });
 
+  it("asks before leaving the editor from Back when the playlist is dirty", () => {
+    const { playlists, cancelEditingPlaylist } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Draft" }),
+    });
+    playlists.isEditingPlaylistDirty = vi.fn(() => true);
+    const { annotations } = createMockAnnotations();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      (
+        container.querySelector(".sb-reading-plans-back") as HTMLButtonElement
+      ).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(cancelEditingPlaylist).not.toHaveBeenCalled();
+    expect(modals.modals.value[0]!.title).toEqual({
+      key: "unsaved-changes",
+      defaultValue: "Unsaved changes",
+    });
+  });
+
   it("with no AI providers, the AI button starts a local chat seeded with a prompt message and no participant", () => {
     const { playlists } = createMockPlaylists({
       view: "create_playlist",
@@ -2626,6 +2802,9 @@ describe("DiscoverPaneTitle", () => {
     expect(item).not.toBeNull();
     expect(item.querySelector(".sb-discover-item-title")?.textContent).toBe(
       "Shared Study"
+    );
+    expect(item.querySelector(".sb-hero-thumb--empty")?.textContent).toContain(
+      "No image"
     );
     expect(
       item.querySelector(".sb-discover-item-description")?.textContent

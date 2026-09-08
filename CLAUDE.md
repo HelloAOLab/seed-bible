@@ -29,7 +29,7 @@ This project requires **pnpm v10+**. Do not use npm or yarn.
 pnpm dev               # Run the SSR dev server (Express + Vite, HMR)
 pnpm test              # Run Vitest test suite
 pnpm test:watch        # Vitest in watch mode
-pnpm lint              # ESLint (includes i18n translation key validation)
+pnpm lint              # ESLint (includes i18n translation key validation) + stylelint (duplicate selectors/declarations)
 pnpm lint:fix          # Auto-fix linting issues
 pnpm check:ts          # TypeScript type check — client + patterns (non-emit)
 pnpm build             # Production build (client + SSR + server bundles)
