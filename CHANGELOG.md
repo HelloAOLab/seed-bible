@@ -4,7 +4,12 @@
 
 ### ✨ Added
 
+- Edit your profile from the profile screen. The pencil in the corner of the profile card — or tapping your name — opens an Edit profile screen with your name, location and description. Your email address, location and description now show on the profile screen itself. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+
 ### 🔧 Changed
+
+- Tapping your profile picture now opens the picture cropper directly instead of taking you to account settings first, and the badge on it is a pencil once you have a picture rather than always a "+". ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- "Your content" and "Edit profile" now have a back button that returns you to your profile, instead of only a close button that dropped you back at the reader. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 
 ### 🐛 Fixed
 
