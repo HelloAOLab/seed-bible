@@ -1,4 +1,10 @@
-import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "@preact/signals";
 import type { LoginManager } from "../managers/LoginManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import type { PanesManager } from "../managers/PanesManager";
@@ -363,6 +369,24 @@ export interface TutorialManager {
    * as seen (still replayable from Settings).
    */
   dismissPrompt: () => void;
+
+  /**
+   * Applies the device's real "seen" / "opted out" / per-feature flags from
+   * `localStorage`. They seed to their SSR values (false / false / empty), so
+   * call this once from a post-mount effect — via `AppState.hydrateFromStorage`
+   * — rather than reading at construction, where it would make a returning
+   * visitor's first render disagree with the served HTML.
+   */
+  hydrateStoredFlags: () => void;
+
+  /**
+   * Starts watching for the moment the first-run offer card should appear.
+   * Deliberately separate from construction: the condition it waits on is
+   * already true before the client's first render, so arming it eagerly would
+   * put the card in the client tree but not in the SSR HTML. Call once from a
+   * post-mount effect (via `AppState.hydrateFromStorage`). Idempotent.
+   */
+  armAutoStart: () => void;
 }
 
 /**
@@ -401,11 +425,26 @@ export function createTutorialManager(
     "selector-search",
   ]);
 
-  const seenLocally = signal<boolean>(readFlag(TUTORIAL_SEEN_KEY));
-  const optedOutLocally = signal<boolean>(readFlag(TUTORIAL_OPTED_OUT_KEY));
-  const featuresSeenLocal = signal<Record<string, boolean>>(
-    readFeaturesFlag(TUTORIAL_FEATURES_KEY)
-  );
+  // Seeded to the values SSR sees (it has no `localStorage`) rather than read
+  // eagerly, so the client's first render matches the served HTML.
+  // `hydrateStoredFlags` applies the device's real flags after the first commit
+  // — see `AppState.hydrateFromStorage`.
+  const seenLocally = signal<boolean>(false);
+  const optedOutLocally = signal<boolean>(false);
+  const featuresSeenLocal = signal<Record<string, boolean>>({});
+
+  const hydrateStoredFlags = () => {
+    batch(() => {
+      seenLocally.value = readFlag(TUTORIAL_SEEN_KEY);
+      optedOutLocally.value = readFlag(TUTORIAL_OPTED_OUT_KEY);
+      // Merged UNDER the current value so a flag set in the brief window before
+      // this runs isn't clobbered by the now-stale disk snapshot.
+      featuresSeenLocal.value = {
+        ...readFeaturesFlag(TUTORIAL_FEATURES_KEY),
+        ...featuresSeenLocal.value,
+      };
+    });
+  };
 
   const completed = computed<boolean>(() => {
     if (seenLocally.value) {
@@ -661,28 +700,45 @@ export function createTutorialManager(
   // could see the offer flash before their recorded completion arrives.
   // Rather than launching the tour unannounced we surface the offer card;
   // accepting it starts the tour. One-shot via `autoStartChecked`.
+  //
+  // Deliberately NOT armed at construction. `readerVisible` derives from the
+  // chapter data, which the client entry (`app/init.tsx`) already awaits before
+  // it calls `hydrate()` — so an eager effect flips `promptVisible` true during
+  // the client's *first* render while the SSR pass captured it as false
+  // (`renderToStringAsync` only re-renders the subtree that threw, and the offer
+  // card renders before it). That puts an element in the client tree that the
+  // served HTML doesn't have, which is exactly the divergence `hydrate()`
+  // reports. `armAutoStart` is called from `AppState.hydrateFromStorage` after
+  // the first commit, so the card appears a moment later instead.
   let autoStartChecked = false;
-  effect(() => {
-    if (autoStartChecked || running.value) {
+  let autoStartArmed = false;
+  const armAutoStart = () => {
+    if (autoStartArmed) {
       return;
     }
-    // Opened via a shared-session invite link: don't auto-launch the onboarding
-    // tour over the join. We don't record completion, so the tour still
-    // auto-starts on a later visit that isn't a session link.
-    if (joinedViaSessionLink) {
-      return;
-    }
-    if (!readerVisible.value) {
-      return;
-    }
-    if (login.userId.value && login.profile.value === null) {
-      return;
-    }
-    autoStartChecked = true;
-    if (!completed.value && !optedOut.value) {
-      promptVisible.value = true;
-    }
-  });
+    autoStartArmed = true;
+    effect(() => {
+      if (autoStartChecked || running.value) {
+        return;
+      }
+      // Opened via a shared-session invite link: don't auto-launch the onboarding
+      // tour over the join. We don't record completion, so the tour still
+      // auto-starts on a later visit that isn't a session link.
+      if (joinedViaSessionLink) {
+        return;
+      }
+      if (!readerVisible.value) {
+        return;
+      }
+      if (login.userId.value && login.profile.value === null) {
+        return;
+      }
+      autoStartChecked = true;
+      if (!completed.value && !optedOut.value) {
+        promptVisible.value = true;
+      }
+    });
+  };
 
   return {
     get steps() {
@@ -705,5 +761,7 @@ export function createTutorialManager(
     optOut,
     acceptPrompt,
     dismissPrompt,
+    hydrateStoredFlags,
+    armAutoStart,
   };
 }

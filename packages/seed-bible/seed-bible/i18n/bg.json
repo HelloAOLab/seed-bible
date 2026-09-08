@@ -23,7 +23,6 @@
   "create-new-tab": "Създаване на нов раздел",
   "tab-options": "Опции за раздели",
   "open-tab-menu": "Отваряне на менюто с раздели",
-  "session-id_x": "Идентификатор на сесия: {{sessionId}}",
   "search-verses": "Търсене на стихове",
   "clear-search": "Изчистване на търсенето",
   "searching": "Търсене...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Маркирайте за",
   "end-session": "Край на сесията",
   "panels": "Панели",
-
   "open-in-new-panel": "Отваряне в нов панел",
   "close-sidebar": "Затвори страничната лента",
   "select-pane-layout": "Изберете оформление на панела",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Създайте план за четене",
   "reading-plans-empty": "Все още нямате планове за четене. Създайте си, за да започнете.",
   "untitled-reading-plan": "Неозаглавен план",
-
   "reading-plan-description_placeholder": "За какво е този план?",
   "anonymous": "Анонимен",
   "no-chat-messages": "Все още няма съобщения",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Предлага се обиколка с екскурзовод, която ще ви помогне да научите тънкостите на Библията на семената.",
   "tutorial.promptDecline": "Не, благодаря",
   "tutorial.promptAccept": "Направете обиколката",
-  "session-id": "Идентификатор на сесия",
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Споделяне",
   "session-settings-section-participants": "Участници",
@@ -335,7 +331,6 @@
   "dont-show-again": "Не показвай това отново",
   "discover": "Открийте",
   "playlists": "Плейлисти",
-
   "cross-references": "Кръстосани препратки",
   "study-notes": "Бележки за учене",
   "content": "Съдържание",
@@ -404,7 +399,6 @@
   "add-and-save": "Добави и запази",
   "loading-profile": "Зареждане на профила ви…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Споделяне",
   "share-sheet-title": "Споделяне",
   "share-link": "Споделяне на линк",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Създаване на нов план",
   "edit-reading-plan": "Редактиране на план",
   "reading-plan-step-name-title": "Назовете плана си",
-
   "reading-plan-name-placeholder": "напр. Моето пътешествие с псалмите",
   "reading-plan-description-label": "Описание (по избор)",
   "reading-plan-step-scripture-title": "Изберете показания",
   "reading-plan-step-cadences-title": "Четене на каденци",
   "reading-plan-step-cadences-hint": "Изберете темпото на четене, което искате да предложите. Читателите винаги могат да изберат да четат със собствено темпо.",
-
   "reading-plan-cadence-length": "Приключва след {{count}} дни",
   "reading-plan-cadence-length_one": "Приключва след {{count}} ден",
   "reading-plan-cadence-length_other": "Приключва след {{count}} дни",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Запазване…",
   "reading-plan-draft-saved": "Черновата е запазена",
   "reading-plan-draft-save-failed": "Черновата не можа да бъде запазена",
-
   "reading-plan-scripture-remove": "Премахване на четенето",
   "reading-plan-create-submit": "Създаване на план",
   "reading-plan-save-changes": "Запазване на промените",
@@ -498,11 +489,8 @@
   "loading": "Зареждане…",
   "reading-plan-not-started": "Не е започнато",
   "reading-plan-start": "Стартов план",
-
   "reading-plan-streak": "{{count}} -дневна серия",
-
   "reading-plan-mark-complete": "Маркирай като завършено",
-
   "reading-plan-empty-sessions": "Този план все още няма показания.",
   "reading-plan-celebration-title": "Ден {{day}} завършен!",
   "reading-plan-complete-title": "Планът е завършен!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Маркиране на четенето като завършено",
   "reading-plan-link-video": "Видео",
   "reading-belongs-to": "Това четиво принадлежи на",
-
   "reading-plan-mark-passage-complete": "Маркирай {{passage}} като прочетено",
   "reading-plan-read-nudge-title": "Приятно четиво!",
   "reading-plan-read-nudge-toast": "Да се ​​отбележи ли {{passage}} като завършен?",
@@ -553,7 +540,6 @@
   "last-48-hours": "Последните 48 часа",
   "open-bible": "Отворена Библия",
   "personal-greeting": "Добре дошъл/дошла, {{name}} !",
-  "read-first-chapter": "Прочетете първата глава",
   "resume-reading": "ПРОДЪЛЖЕТЕ ОТКЪДЕТО СТЕ СПРИЧАЛИ",
   "resume-reading-loading": "Зареждане на историята ви на четене…",
   "selected-year": "Година: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "За какво е този плейлист?",
   "read-more": "Прочетете още",
   "read-less": "Прочетете по-малко",
-
   "ask-to-switch-ui-language": "Предложение за смяна на езика с превод",
   "ai": "Изкуствен интелект",
   "ai-edit-playlist": "Редактиране на плейлист с изкуствен интелект",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} използва {{count}} инструмента",
   "chat-tool-used_one": "{{name}} използва инструмент",
   "chat-tool-used_other": "{{name}} използва {{count}} инструмента",
-
   "ai-context-button-label": "Активен контекст на изкуствен интелект",
   "ai-context-tool-count": "{{count}} инструмента",
   "annotation-conflict-title": "Тази бележка се промени на две места",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Няма съдържание.",
   "annotation-conflict-confirm": "Потвърди",
   "annotation-conflict-resolve-failed": "Не можах да приложа този избор. Ще опитам отново.",
-
   "annotation-sync-failed": "Не можах да запазя бележката в профила ви. Тя все още е на това устройство.",
   "create-menu": "Създаване",
   "create-annotation-menu-item": "Анотация",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "Анотацията не можа да се запази.",
   "annotation-group-expand": "Разгъване на групата",
   "annotation-group-collapse": "Свиване на групата",
-
   "notes": "Бележки",
   "note": "Забележка",
   "show-more-verse-actions": "Показване на още действия",
@@ -667,7 +649,6 @@
   "create-folder": "Създаване на папка",
   "edit-bookmark": "Редактиране на отметка",
   "remove-bookmark-from-all-folders": "Премахване от всички папки",
-
   "greeting-afternoon": "Добър ден!",
   "greeting-afternoon-named": "Добър ден, {{name}} !",
   "greeting-evening": "Добър вечер!",
@@ -677,5 +658,28 @@
   "greeting-night": "Лека нощ!",
   "greeting-night-named": "Лека нощ, {{name}} !",
   "annotation-override-banner": "Бележките се запазват и зареждат от акаунта на вашия екип.",
-  "annotation-override-save-to-my-account": "Запазване в моя акаунт"
+  "annotation-override-save-to-my-account": "Запазване в моя акаунт",
+  "read-book-chapter-button": "Прочетете {{bookName}} {{chapterNumber}}",
+  "session-url": "URL адрес на сесията",
+  "ask-ai": "Попитайте ИИ",
+  "unread-mention": "Непрочетено споменаване",
+  "unread-messages": "Непрочетени съобщения: {{count}}",
+  "annotations-pending-sync": "{{count}} промяна чака за синхронизиране",
+  "annotations-pending-sync-plural": "{{count}} промени чакат за синхронизиране",
+  "scripture-width": "Ширина на Писанието",
+  "decrease-scripture-width": "Намаляване на ширината на писанията",
+  "increase-scripture-width": "Увеличете ширината на писанията",
+  "annotations": "Анотации",
+  "discover-content-panel": "Открийте съдържание",
+  "discover-book-title": "Открийте {{book}}",
+  "show-all": "Покажи всички",
+  "annotation-comment-updated": "Актуализирано {{date}}",
+  "switch-language-title": "Смяна на езика?",
+  "switch-language-body": "Искате ли да превключите езика си на {{nativeLanguageName}} ?",
+  "switch-language-confirm": "Превключвател",
+  "switch-language-dismiss": "Не превключвайте",
+  "switch-language-never": "Никога повече не питай",
+  "chat-ai-error": "За съжаление, нещо се обърка при генерирането на отговор ( {{error}} ).",
+  "playlist-editor": "Редактор на плейлисти",
+  "add-bookmark-modal": "Добавяне на отметка"
 }

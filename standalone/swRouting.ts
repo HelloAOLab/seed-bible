@@ -45,6 +45,13 @@ export function isAppShellNavigation(input: AppShellNavigationInput): boolean {
   return true;
 }
 
+/** Synthetic path every navigation's cached HTML is stored/read under, regardless of the actual path requested. */
+export const APP_SHELL_CACHE_PATH = "/__app-shell";
+
+export function getAppShellCacheKey(origin: string): string {
+  return new URL(APP_SHELL_CACHE_PATH, origin).href;
+}
+
 export interface CacheableStaticAssetInput {
   /** The requested URL. */
   url: URL;

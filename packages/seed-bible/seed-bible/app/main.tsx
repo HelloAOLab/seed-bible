@@ -30,8 +30,8 @@ import { isWebKit } from "./ssrEnv";
 // Foundation stylesheets — must load before any component's co-located CSS.
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
-import "./styles/base.css";
-import "./styles/utilities.css";
+import "./styles/base.inline.css";
+import "./styles/utilities.inline.css";
 import {
   OnboardingModals,
   LanguageUnavailableModal,
@@ -42,28 +42,72 @@ import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 
 /**
- * A collection of link/script's providing expected resources from external sources.
- * @returns
+ * Font `<link>`s, plus the CSS for the active Customization layered on top
+ * of the real theme (see `SeedBibleStateManager`'s `theme`/`themeCssVariables`/
+ * `themeCssClasses`). The unblended preset+settings theme writes directly to
+ * `document.head` from a `ThemeManager` effect instead (see `ThemeManager.tsx`'s
+ * `createTheme`) — that target is never diffed by Preact, so it carries no
+ * hydration-mismatch risk the way an in-tree `<style>` would; this one still
+ * needs to be in-tree so a shared `?customization=` link's colors are part of
+ * the SSR'd HTML. `dangerouslySetInnerHTML` (rather than a plain text child)
+ * is what keeps it safe: raw CSS can contain `&` (e.g. the highlight classes'
+ * `&.sb-words-of-jesus`), which a plain JSX text child would HTML-escape on
+ * the server but not on the client, causing a hydration mismatch; Preact also
+ * never diffs `dangerouslySetInnerHTML` during hydration, so this stays
+ * inert even if the two sides' CSS text does legitimately differ.
+ *
+ * The SSR suspend below is deliberately scoped to just this component rather
+ * than gating `MainContent` as a whole: `_renderToString`'s array-of-children
+ * traversal doesn't block later siblings on an earlier one suspending, so
+ * gating only here keeps everything else's first-render timing (most notably
+ * `BibleReader`'s own chapter-load suspend) exactly as it is without a
+ * `?customization=` link in play.
  */
 export function ExternalResourceDependencies({
   themeCssVariables,
   themeCssClasses,
+  googleFontFamilies,
+  initialCustomizationLoadPromise,
+  initialCustomizationLoadSettled,
 }: {
   themeCssVariables: ReadonlySignal<string>;
   themeCssClasses: ReadonlySignal<string>;
+  googleFontFamilies: ReadonlySignal<string[]>;
+  initialCustomizationLoadPromise: Promise<void>;
+  initialCustomizationLoadSettled: ReadonlySignal<boolean>;
 }) {
+  if (import.meta.env.SSR && !initialCustomizationLoadSettled.value) {
+    throw initialCustomizationLoadPromise;
+  }
+
   return (
     <>
       <link
-        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Roboto&family=Open+Sans&family=Playfair+Display&family=Cormorant+Garamond&display=swap"
         rel="stylesheet"
       />
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
-      <style>{`body {\n${themeCssVariables}\n}`}</style>
-      <style>{themeCssClasses}</style>
+      {googleFontFamilies.value.length > 0 && (
+        // A customization variant can name any Google Font by typing its
+        // exact name — this loads whatever isn't already covered by the
+        // static presets above. See CustomizationsManager.buildCustomFontValue
+        // for why the name is already restricted to safe characters.
+        <link
+          rel="stylesheet"
+          href={`https://fonts.googleapis.com/css2?${googleFontFamilies.value
+            .map((name) => `family=${name.replace(/ /g, "+")}`)
+            .join("&")}&display=swap`}
+        />
+      )}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `body {\n${themeCssVariables.value}\n}`,
+        }}
+      />
+      <style dangerouslySetInnerHTML={{ __html: themeCssClasses.value }} />
     </>
   );
 }
@@ -135,6 +179,46 @@ function MainBody({
     state.extensions.loadDefaultExtensions();
   }, []);
 
+  // One-time correction: the viewport signals seed to match the server's
+  // UA-based guess so the first hydrate pass can't mismatch, but that guess
+  // rarely matches the device's real size. Apply the real dimensions once,
+  // right after Preact's first commit — a normal diffed re-render, not a
+  // hydration mismatch.
+  useEffect(() => {
+    state.app.applyViewport();
+  }, []);
+
+  // Deferred real read: `login.localConfig` seeds empty to match SSR, so the
+  // first hydrate pass can't disagree with the server over font size, UI
+  // size, toolbar customization, disablePanels, theme, etc. Apply the
+  // device's real saved config once, right after mount —
+  // `SettingsManager`'s own effect() already re-derives `settings` whenever
+  // `login.localConfig` changes, so no change is needed there.
+  useEffect(() => {
+    state.login.hydrateLocalConfig();
+  }, []);
+
+  // Deferred real read, same reason as the two above: saved tabs and their slot
+  // layout, the cached translation catalog, the selector view mode, and the
+  // tutorial/onboarding flags all seed to what the server rendered so the first
+  // hydrate pass can't disagree with it, then get corrected here. Unlike the
+  // others this one is load-bearing for correctness rather than polish — a
+  // returning visitor's extra tabs would mount `TabRow`s and panes the served
+  // HTML never had, which is the one divergence `hydrate()` reports instead of
+  // silently patching.
+  useEffect(() => {
+    state.app.hydrateFromStorage();
+  }, []);
+
+  // Deferred real read, same reason as the three above: `isOpen` seeds
+  // `false` to match SSR (which always renders Today closed, for crawler
+  // SEO — see `TodayManager`), so the first hydrate pass can't disagree with
+  // it. Apply the URL's real open/closed state, and start the live URL sync,
+  // once right after mount.
+  useEffect(() => {
+    state.today.hydrateAutoOpen();
+  }, []);
+
   if (typeof document !== "undefined") {
     useSignalEffect(() => {
       document.title = state.app.title.value;
@@ -186,6 +270,13 @@ function MainContent(props: {
         <ExternalResourceDependencies
           themeCssVariables={theme.themeCssVariables}
           themeCssClasses={theme.themeCssClasses}
+          googleFontFamilies={theme.googleFontFamiliesToLoad}
+          initialCustomizationLoadPromise={
+            state.customizations.initialCustomizationLoadPromise
+          }
+          initialCustomizationLoadSettled={
+            state.customizations.initialCustomizationLoadSettled
+          }
         />
         <Sidebar state={state} />
 
@@ -247,11 +338,17 @@ function MainContent(props: {
           os={state.os}
           toast={state.app.toast}
           className={`${webkitClass}`}
+          customizationName={
+            state.customizations.activeCustomization.value?.name
+          }
         />
 
         <TutorialPrompt
           tutorial={state.tutorial}
           className={`${webkitClass}`}
+          customizationName={
+            state.customizations.activeCustomization.value?.name
+          }
         />
 
         <OfflineDownloadPrompt

@@ -30,6 +30,7 @@ import type { HighlightsManager } from "../managers/HighlightsManager";
 import type { LoginManager } from "../managers/LoginManager";
 import type { AnnotationsManager } from "../managers/AnnotationsManager";
 import { getProfileConfigValue } from "../managers/ProfileConfigSync";
+import type { SettingsManager } from "../managers/SettingsManager";
 
 export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
@@ -175,12 +176,11 @@ function getUrlReadingLanguage(url: URL, basePath: string): string | null {
  *
  * Same test as the server: rebuild the path from what the URL resolved to and
  * rewrite only if it differs. That covers a typo ("senesis"), an alias
- * ("gen"), other casings ("Genesis"), the junk `getBookId`'s prefix fallback
- * accepts ("luke-skywalker" → Luke), and — since the canonical form always
- * includes the language segment — a 3-segment URL missing it entirely. A
- * no-op for a URL that is already canonical, a book that resolves to nothing
- * (the reader shows its own not-found state), or a legacy/non-reading-path
- * URL.
+ * ("gen"), other casings ("Genesis"), close typos that fuzzy-match a book
+ * slug, and — since the canonical form always includes the language segment —
+ * a 3-segment URL missing it entirely. A no-op for a URL that is already
+ * canonical, a book that resolves to nothing (the reader shows its own
+ * not-found state), or a legacy/non-reading-path URL.
  */
 function selfHealNonCanonicalPath(navigation: NavigationManager): void {
   const url = navigation.currentUrl.peek();
@@ -255,7 +255,9 @@ export function createInitialTabs(
   options: InitialTabsOptions,
   discoverManager?: DiscoverManager,
   readingExtensionManager?: BibleReadingExtensionManager,
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  /** Passed through to `createBibleReadingState` — see its parameter of the same name. */
+  settingsManager?: SettingsManager
 ): ReaderTab[] {
   const { translationId, bookId, chapter, highlightedVerses = [] } = options;
 
@@ -274,7 +276,8 @@ export function createInitialTabs(
       },
       discoverManager,
       readingExtensionManager,
-      getAnnotationsManager
+      getAnnotationsManager,
+      settingsManager
     ),
     sharedSession: null,
     sharedChat: null,
@@ -372,6 +375,35 @@ export interface TabsManager {
    * closing).
    */
   leaveStaticPage: () => void;
+
+  /**
+   * Applies the tabs saved in `localStorage` by a previous visit, reconciled
+   * against the URL the page was opened with.
+   *
+   * Construction deliberately builds only the single URL-derived tab, which is
+   * exactly what SSR renders (`readStoredTabsState` returns null server-side).
+   * A returning visitor's saved tabs would otherwise mount extra `TabRow`s and
+   * panes that aren't in the served HTML — the one hydration divergence Preact
+   * actually reports, since it runs out of DOM nodes to match against. Call
+   * this once from a post-mount effect (see `MainBody` in `app/main.tsx`, via
+   * `app.hydrateFromStorage`) so the saved tabs arrive as a normal diffed
+   * re-render instead. Idempotent.
+   */
+  hydrateStoredTabs: () => void;
+
+  /**
+   * Whether the profile's saved translation is being written to the URL at this
+   * instant. Consumers that watch the URL for "the reader moved" must treat that
+   * write as a restore rather than a navigation — it can change the book or
+   * chapter (see `applySavedTranslation`) without the reader having gone
+   * anywhere.
+   *
+   * Deliberately a getter rather than a signal: it is only meaningful read
+   * synchronously from inside the URL-change effect it exists to inform, and
+   * making it reactive would invite subscribers that then re-run on a value
+   * guaranteed to be `false` again by the time they saw it.
+   */
+  isRestoringProfileTranslation: () => boolean;
 }
 
 /**
@@ -400,7 +432,9 @@ export function createTabs(
    * getter that resolves once its own `AnnotationsManager` does.
    */
   getAnnotationsManager?: () => AnnotationsManager | undefined,
-  branding?: BrandingConfig
+  branding?: BrandingConfig,
+  /** Passed through to `createBibleReadingState` — see its parameter of the same name. */
+  settingsManager?: SettingsManager
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -453,7 +487,8 @@ export function createTabs(
       },
       discoverManager,
       readingExtensionManager,
-      getAnnotationsManager
+      getAnnotationsManager,
+      settingsManager
     );
 
     if (isSelected && highlightedVerses.length > 0 && descriptor.bookId) {
@@ -479,69 +514,131 @@ export function createTabs(
     };
   };
 
-  const storedState = normalizeStoredTabsState(readStoredTabsState());
+  // Always seed the single URL-derived tab, even when `localStorage` holds a
+  // whole session's worth of tabs. This is precisely what SSR produces
+  // (`readStoredTabsState` returns null with no `window`), and the client's
+  // first render has to match it for `hydrate()` to succeed — extra sibling
+  // elements are the one divergence Preact reports rather than silently
+  // patching. `hydrateStoredTabs` below applies the saved tabs immediately
+  // after the first commit.
+  const initialTranslationId = getInitialTranslationId(
+    navigation.initialUrl,
+    navigation.basePath,
+    i18nManager.defaultLanguage,
+    branding?.defaultTranslationId
+  );
+  const initialBookId = getInitialFirstTabBookId(
+    navigation.initialUrl,
+    navigation.basePath
+  );
+  const initialChapter = getInitialFirstTabChapter(
+    navigation.initialUrl,
+    navigation.basePath
+  );
 
-  let initialTabs: ReaderTab[];
-  let initialSelectedTabId: string;
+  const initialTabs = createInitialTabs(
+    dataManager,
+    highlightsManager,
+    i18nManager,
+    {
+      translationId: initialTranslationId,
+      bookId: initialBookId,
+      chapter: initialChapter,
+      highlightedVerses,
+    },
+    discoverManager,
+    readingExtensionManager,
+    getAnnotationsManager,
+    settingsManager
+  );
 
-  if (!storedState || storedState.tabs.length === 0) {
-    // No stored state (SSR or first-ever visit): seed a single tab from the URL
-    // reading params, or the defaults — the original behavior.
-    const initialTranslationId = getInitialTranslationId(
-      navigation.initialUrl,
-      navigation.basePath,
-      i18nManager.defaultLanguage,
-      branding?.defaultTranslationId
-    );
-    const initialBookId = getInitialFirstTabBookId(
-      navigation.initialUrl,
-      navigation.basePath
-    );
-    const initialChapter = getInitialFirstTabChapter(
-      navigation.initialUrl,
-      navigation.basePath
-    );
+  const tabs = signal<ReaderTab[]>(initialTabs);
+  const selectedTabId = signal<string>(initialTabs[0]?.id ?? "");
+  const selectedTab = computed(
+    () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
+  );
 
-    initialTabs = createInitialTabs(
-      dataManager,
-      highlightsManager,
-      i18nManager,
-      {
-        translationId: initialTranslationId,
-        bookId: initialBookId,
-        chapter: initialChapter,
-        highlightedVerses,
-      },
-      discoverManager,
-      readingExtensionManager,
-      getAnnotationsManager
-    );
-    initialSelectedTabId = initialTabs[0]?.id ?? "";
-  } else {
-    // Restore the stored tabs, reconciled against the URL reading params — from
-    // the same frozen snapshot as the reads above, so we compare against what the
-    // user actually linked with, not a position the reader may have written back.
+  let storedTabsHydrated = false;
+
+  // True while `hydrateStoredTabs` is swapping the saved tabs in. That swap
+  // changes the selected tab, which is indistinguishable to the tab-focus
+  // effect below from the user picking a different tab — and would therefore
+  // knock a returning visitor off a static page like "/en/about" (see the
+  // guard in `commitSelectedTabToUrl`) purely because they had tabs saved.
+  //
+  // Cleared in a microtask rather than a `finally`: the effect flushes either
+  // during the writes below (unbatched) or when the surrounding `batch()` in
+  // `AppState.hydrateFromStorage` ends, which is after this function returns.
+  let restoringStoredTabs = false;
+
+  const hydrateStoredTabs = () => {
+    if (storedTabsHydrated) {
+      return;
+    }
+    storedTabsHydrated = true;
+
+    const storedState = normalizeStoredTabsState(readStoredTabsState());
+    if (!storedState || storedState.tabs.length === 0) {
+      return;
+    }
+
+    // Reconciled against `initialUrl`, the frozen arrival snapshot, rather than
+    // the live `currentUrl`: by the time this runs the reader has echoed its own
+    // position into the address bar in canonical form, which would make "the
+    // visitor linked here" indistinguishable from "the app wrote this itself".
     const query = readInitialReadingParams(
       navigation.initialUrl,
       navigation.basePath
     );
-    const { tabs: descriptors, selectedTabId } = reconcileStoredTabs(
-      storedState,
-      query,
-      defaultTranslation.id
+    const { tabs: descriptors, selectedTabId: restoredSelectedTabId } =
+      reconcileStoredTabs(storedState, query, defaultTranslation.id);
+
+    const bootTab = tabs.value[0] ?? null;
+
+    // `reconcileStoredTabs` retargets whichever stored tab it matched to the
+    // URL's position, so the selected descriptor names the chapter the boot tab
+    // has already loaded (and the server already rendered). Handing that
+    // descriptor the boot tab's existing reading state instead of a fresh one is
+    // what keeps the reader pane mounted — a new state object would remount
+    // `BibleReader` and flash the scripture that just hydrated.
+    const reusableDescriptor =
+      (bootTab &&
+        descriptors.find(
+          (descriptor) =>
+            descriptor.id === restoredSelectedTabId &&
+            !descriptor.slotOnly &&
+            descriptor.translationId ===
+              bootTab.readingState.translationId.value &&
+            descriptor.bookId === bootTab.readingState.bookId.value &&
+            descriptor.chapterNumber ===
+              bootTab.readingState.chapterNumber.value
+        )) ??
+      null;
+
+    const nextTabs = descriptors.map((descriptor, index) =>
+      bootTab && descriptor === reusableDescriptor
+        ? {
+            ...bootTab,
+            id: descriptor.id,
+            title: `Tab ${index + 1}`,
+            slotOnly: descriptor.slotOnly ?? false,
+          }
+        : buildRestoredTab(descriptor, index, restoredSelectedTabId)
     );
 
-    initialTabs = descriptors.map((descriptor, index) =>
-      buildRestoredTab(descriptor, index, selectedTabId)
-    );
-    initialSelectedTabId = selectedTabId;
-  }
+    // No descriptor adopted the boot tab, so its reading state is now
+    // unreachable — release it the way `removeTab` would.
+    if (bootTab && !reusableDescriptor) {
+      bootTab.readingState.dispose();
+    }
 
-  const tabs = signal<ReaderTab[]>(initialTabs);
-  const selectedTabId = signal<string>(initialSelectedTabId);
-  const selectedTab = computed(
-    () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
-  );
+    restoringStoredTabs = true;
+    queueMicrotask(() => {
+      restoringStoredTabs = false;
+    });
+    tabs.value = nextTabs;
+    selectedTabId.value = restoredSelectedTabId;
+  };
 
   const syncSelectedTabFromUrl = async () => {
     const selectedTab =
@@ -760,7 +857,9 @@ export function createTabs(
     // its content) actually changed after that — the user picked a different
     // tab, or navigated via search — so it should leave a static page for the
     // position now being shown instead of leaving it stuck behind the URL.
-    const leaveStaticPage = hasFocusedTabBefore;
+    // Restoring the saved tabs is the exception: it is the tail end of mount,
+    // not a navigation, so it must not count as a focus change either.
+    const leaveStaticPage = hasFocusedTabBefore && !restoringStoredTabs;
 
     const dispose = readingState.onNavigate((options) =>
       commitSelectedTabToUrl({ ...options, leaveStaticPage })
@@ -796,6 +895,17 @@ export function createTabs(
         }
       });
     });
+
+  // True only while `applySavedTranslation` below writes the restored position
+  // to the URL. That write can move the book or chapter — a saved translation
+  // that lacks the book you're on falls back to its first book, and an
+  // out-of-range chapter is clamped — which looks exactly like a navigation to
+  // the fullscreen-pane effect in `SeedBibleStateManager`, even though the
+  // reader hasn't gone anywhere. Without this, a signed-in reader arriving on
+  // Today with a partial saved translation watched it open and then immediately
+  // close again. Read synchronously, never subscribed to, so a plain boolean
+  // rather than a signal.
+  let restoringProfileTranslation = false;
 
   // Restores the profile's saved translation on the given reading state.
   // `selectTranslationAndChapter` clamps an out-of-range chapter but throws
@@ -889,7 +999,15 @@ export function createTabs(
     // recomputes the desired translation from the URL, finds none, and
     // reverts this restore straight back to the default.
     if (selectedTab.peek()?.readingState === readingState) {
-      commitSelectedTabToUrl({ replace: true });
+      // Marked as a restore for the duration of the write: `commitSelectedTabToUrl`
+      // updates the URL synchronously and everything watching it runs before this
+      // returns, so the flag doesn't need to span the awaits above.
+      restoringProfileTranslation = true;
+      try {
+        commitSelectedTabToUrl({ replace: true });
+      } finally {
+        restoringProfileTranslation = false;
+      }
     }
   };
 
@@ -986,7 +1104,8 @@ export function createTabs(
           initialReadingOptions,
           discoverManager,
           readingExtensionManager,
-          getAnnotationsManager
+          getAnnotationsManager,
+          settingsManager
         ),
       sharedSession,
       sharedChat,
@@ -1042,5 +1161,7 @@ export function createTabs(
     removeTab,
     selectTab,
     leaveStaticPage,
+    hydrateStoredTabs,
+    isRestoringProfileTranslation: () => restoringProfileTranslation,
   };
 }

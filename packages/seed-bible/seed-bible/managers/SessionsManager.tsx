@@ -623,6 +623,23 @@ export interface BibleReadingSession {
   userCanDecorate: (sessionId: string) => boolean;
 }
 
+/**
+ * Builds the canonical URL for joining the given shared session — the
+ * current page's URL with `sessionId` set and everything else stripped
+ * (aside from `pattern`, which stays if present so a pattern-embedded
+ * reader keeps working after a join).
+ */
+export function getSessionUrl(session: BibleReadingSession): URL {
+  const url = new URL(window.location.href);
+  const pattern = url.searchParams.get("pattern");
+  url.search = "";
+  url.searchParams.set("sessionId", session.id);
+  if (pattern) {
+    url.searchParams.set("pattern", pattern);
+  }
+  return url;
+}
+
 function createSessionId(): string {
   return `session-${uuid()}`;
 }

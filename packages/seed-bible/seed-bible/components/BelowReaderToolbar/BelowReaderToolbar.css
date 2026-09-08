@@ -8,6 +8,8 @@
   flex-shrink: 0;
   flex-wrap: wrap;
   padding-bottom: var(--sb-reader-bottom-inset);
+  opacity: 1;
+  transition: opacity 0.25s ease;
 }
 
 .sb-below-reader-toolbar::before {

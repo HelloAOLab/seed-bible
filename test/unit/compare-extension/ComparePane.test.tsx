@@ -57,6 +57,7 @@ function createTestLogin(localConfig: Record<string, unknown> = {}) {
     userId: signal<string | null>(null),
     profile: signal(null),
     localConfig: signal(localConfig),
+    hydrateLocalConfig: vi.fn(),
     profilePromise: null,
     updateProfile: () => undefined,
   } as unknown as LoginManager;

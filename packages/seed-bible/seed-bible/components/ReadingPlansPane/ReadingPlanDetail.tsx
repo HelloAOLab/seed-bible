@@ -34,6 +34,7 @@ import {
   readingItemIcon,
   readingPreviewText,
 } from "./readingPreview";
+import { HeroImageBanner } from "../HeroImageField/HeroImageField";
 
 interface ReadingPlanDetailProps {
   readingPlans: ReadingPlansManager;
@@ -196,6 +197,14 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
 
     return (
       <div className="sb-rpd">
+        <HeroImageBanner
+          url={plan.heroImageUrl}
+          alt={
+            plan.title ??
+            t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+          }
+          className="sb-hero-banner--bleed"
+        />
         <div className="sb-rpd-body">
           {plan.description ? (
             <p className="sb-rpd-subtitle" dir="auto">
@@ -460,6 +469,14 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
 
   return (
     <div className="sb-rpd">
+      <HeroImageBanner
+        url={plan.heroImageUrl}
+        alt={
+          plan.title ??
+          t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+        }
+        className="sb-hero-banner--bleed"
+      />
       <header className="sb-rpd-hero-header">
         <p className="sb-rpd-subtitle">
           {selfPaced

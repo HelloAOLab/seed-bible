@@ -30,6 +30,7 @@ function makeChapterEntry(book: string, chapter: number): StoredChapterEntry {
     data: {
       numberOfVerses: 1,
       thisChapterAudioLinks: {},
+      thisChapterAudioTimings: {},
       chapter: {
         number: chapter,
         content: [

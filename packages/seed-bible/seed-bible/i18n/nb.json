@@ -23,7 +23,6 @@
   "create-new-tab": "Opprett ny fane",
   "tab-options": "Fanealternativer",
   "open-tab-menu": "Åpne fanemenyen",
-  "session-id_x": "Økt-ID: {{sessionId}}",
   "search-verses": "Søk i vers",
   "clear-search": "Tøm søk",
   "searching": "Søker...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Uthev for",
   "end-session": "Avslutt økt",
   "panels": "Paneler",
-
   "open-in-new-panel": "Åpne i nytt panel",
   "close-sidebar": "Lukk sidefeltet",
   "select-pane-layout": "Velg ruteoppsett",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Lag leseplan",
   "reading-plans-empty": "Du har ingen leseplaner ennå. Opprett en for å komme i gang.",
   "untitled-reading-plan": "Unavngitt plan",
-
   "reading-plan-description_placeholder": "Hva handler denne planen om?",
   "anonymous": "Anonym",
   "no-chat-messages": "Ingen meldinger ennå",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "En guidet omvisning er tilgjengelig for å hjelpe deg med å lære alt om Seed Bible.",
   "tutorial.promptDecline": "Nei, takk",
   "tutorial.promptAccept": "Ta turen",
-  "session-id": "Økt-ID",
   "session-settings-section-navigation": "Navigasjon",
   "session-settings-section-sharing": "Deling",
   "session-settings-section-participants": "Deltakerne",
@@ -335,7 +331,6 @@
   "dont-show-again": "Ikke vis dette igjen",
   "discover": "Oppdage",
   "playlists": "Spillelister",
-
   "cross-references": "Kryssreferanser",
   "study-notes": "Studienotater",
   "content": "Innhold",
@@ -404,7 +399,6 @@
   "add-and-save": "Legg til og lagre",
   "loading-profile": "Laster inn profilen din …",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Dele",
   "share-sheet-title": "Dele",
   "share-link": "Del en lenke",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Opprett ny plan",
   "edit-reading-plan": "Rediger plan",
   "reading-plan-step-name-title": "Gi planen din et navn",
-
   "reading-plan-name-placeholder": "f.eks. Min Salmers Reise",
   "reading-plan-description-label": "Beskrivelse (valgfritt)",
   "reading-plan-step-scripture-title": "Velg avlesninger",
   "reading-plan-step-cadences-title": "Lesekadenser",
   "reading-plan-step-cadences-hint": "Velg lesetempoene du ønsker å tilby. Leserne kan alltid velge å gå i sitt eget tempo i stedet.",
-
   "reading-plan-cadence-length": "Ferdig om {{count}} dager",
   "reading-plan-cadence-length_one": "Ferdig om {{count}} dag",
   "reading-plan-cadence-length_other": "Ferdig om {{count}} dager",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Lagrer…",
   "reading-plan-draft-saved": "Utkast lagret",
   "reading-plan-draft-save-failed": "Kunne ikke lagre utkastet",
-
   "reading-plan-scripture-remove": "Fjern lesing",
   "reading-plan-create-submit": "Opprett plan",
   "reading-plan-save-changes": "Lagre endringer",
@@ -498,11 +489,8 @@
   "loading": "Laster inn…",
   "reading-plan-not-started": "Ikke startet",
   "reading-plan-start": "Startplan",
-
   "reading-plan-streak": "{{count}} dagers rekke",
-
   "reading-plan-mark-complete": "Merk som fullført",
-
   "reading-plan-empty-sessions": "Denne planen har ingen avlesninger ennå.",
   "reading-plan-celebration-title": "Dag {{day}} fullført!",
   "reading-plan-complete-title": "Planen er ferdig!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Marker lesing fullført",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Denne lesningen tilhører",
-
   "reading-plan-mark-passage-complete": "Merk {{passage}} som lest",
   "reading-plan-read-nudge-title": "Fin lesning!",
   "reading-plan-read-nudge-toast": "Marker {{passage}} som fullført?",
@@ -553,7 +540,6 @@
   "last-48-hours": "Siste 48 timer",
   "open-bible": "Åpne Bibelen",
   "personal-greeting": "Velkommen, {{name}} !",
-  "read-first-chapter": "Les det første kapittelet",
   "resume-reading": "FORTSETT DER DU SLUTTE",
   "resume-reading-loading": "Laster inn leseloggen din …",
   "selected-year": "År: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "Hva handler denne spillelisten om?",
   "read-more": "Les mer",
   "read-less": "Les mindre",
-
   "ask-to-switch-ui-language": "Tilby å bytte språk med oversettelse",
   "ai": "AI",
   "ai-edit-playlist": "Rediger spilleliste med AI",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} brukte {{count}} verktøy",
   "chat-tool-used_one": "{{name}} brukte et verktøy",
   "chat-tool-used_other": "{{name}} brukte {{count}} verktøy",
-
   "ai-context-button-label": "Aktiv AI-kontekst",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Dette notatet ble endret på to steder",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Ikke noe innhold.",
   "annotation-conflict-confirm": "Bekrefte",
   "annotation-conflict-resolve-failed": "Kunne ikke bruke det valget. Det blir prøvd på nytt.",
-
   "annotation-sync-failed": "Kunne ikke lagre et notat på kontoen din. Det er fortsatt på denne enheten.",
   "create-menu": "Skape",
   "create-annotation-menu-item": "Annotering",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "Kunne ikke lagre annoteringen.",
   "annotation-group-expand": "Utvid gruppen",
   "annotation-group-collapse": "Skjul gruppen",
-
   "notes": "Notater",
   "note": "Note",
   "show-more-verse-actions": "Vis flere handlinger",
@@ -667,7 +649,6 @@
   "create-folder": "Opprett mappe",
   "edit-bookmark": "Rediger bokmerke",
   "remove-bookmark-from-all-folders": "Fjern fra alle mapper",
-
   "greeting-afternoon": "God ettermiddag!",
   "greeting-afternoon-named": "God ettermiddag, {{name}} !",
   "greeting-evening": "God kveld!",
@@ -677,5 +658,28 @@
   "greeting-night": "God natt!",
   "greeting-night-named": "God natt, {{name}} !",
   "annotation-override-banner": "Notater lagres og lastes inn fra teamets konto.",
-  "annotation-override-save-to-my-account": "Lagre på kontoen min"
+  "annotation-override-save-to-my-account": "Lagre på kontoen min",
+  "read-book-chapter-button": "Les {{bookName}} {{chapterNumber}}",
+  "session-url": "URL-adresse for økt",
+  "ask-ai": "Spør AI",
+  "unread-mention": "Ulest omtale",
+  "unread-messages": "Uleste meldinger: {{count}}",
+  "annotations-pending-sync": "{{count}} endring venter på synkronisering",
+  "annotations-pending-sync-plural": "{{count}} endringer venter på synkronisering",
+  "scripture-width": "Skriftbredde",
+  "decrease-scripture-width": "Reduser bredden på skriftstedet",
+  "increase-scripture-width": "Øk bredden på skriftstedet",
+  "annotations": "Annoteringer",
+  "discover-content-panel": "Oppdag innhold",
+  "discover-book-title": "Oppdag {{book}}",
+  "show-all": "Vis alle",
+  "annotation-comment-updated": "Oppdatert {{date}}",
+  "switch-language-title": "Bytt språk?",
+  "switch-language-body": "Vil du bytte språk til {{nativeLanguageName}} ?",
+  "switch-language-confirm": "Bryter",
+  "switch-language-dismiss": "Ikke bytt",
+  "switch-language-never": "Aldri spør igjen",
+  "chat-ai-error": "Beklager, noe gikk galt under generering av et svar ( {{error}} ).",
+  "playlist-editor": "Spillelisteredigerer",
+  "add-bookmark-modal": "Legg til bokmerke"
 }

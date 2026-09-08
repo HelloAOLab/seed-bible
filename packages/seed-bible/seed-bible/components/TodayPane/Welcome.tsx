@@ -19,8 +19,13 @@ export const Welcome = (props: {
   onOpenBookSelector: () => void;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) => {
-  const { bookNames, getVerseText, lastTranslationId, getDefaultTranslation } =
-    props.today;
+  const {
+    bookNames,
+    lastTranslationBooks,
+    getVerseText,
+    lastTranslationId,
+    getDefaultTranslation,
+  } = props.today;
   const username = props.login.profile.value?.name;
   const { t } = useI18n();
   // Read here in the render body, which is a reactive scope, so a theme switch
@@ -29,29 +34,52 @@ export const Welcome = (props: {
 
   const welcomeVerse = useSignal("");
 
+  const johnBookName = bookNames.value.get("JHN");
+  const firstBook = lastTranslationBooks.value?.books[0];
+  // John is the usual welcome passage; translations that lack it (an Old
+  // Testament-only translation, say) fall back to the translation's own
+  // first book (typically Genesis). Both stay `undefined` until book data
+  // loads, rather than guessing, so nothing below renders the wrong book.
+  const welcomeBookId = johnBookName !== undefined ? "JHN" : firstBook?.id;
+  const welcomeBookName = johnBookName ?? firstBook?.name;
+  // Gates the fade-in below: true only once the book is known *and* its
+  // opening verse has come back, so the heading and quote reveal together
+  // instead of the heading beating the async verse fetch.
+  const passageReady =
+    welcomeBookName !== undefined && welcomeVerse.value.length > 0;
+
   useEffect(() => {
+    if (welcomeBookId === undefined) {
+      return;
+    }
+
     let isActive = true;
 
     const translationId =
       lastTranslationId.value ?? getDefaultTranslation() ?? "";
-    const mappedVerse = WELCOME_VERSE_MAP[translationId];
+    // The table only covers John 1:1 -- once the target has fallen back to a
+    // different book, it no longer applies.
+    const mappedVerse =
+      welcomeBookId === "JHN" ? WELCOME_VERSE_MAP[translationId] : undefined;
 
     // The table is the common case and needs no network round trip; the API
     // is only a fallback for a translation the table has not been given yet.
     if (mappedVerse !== undefined) {
       welcomeVerse.value = `"${mappedVerse}"`;
     } else {
-      void getVerseText(translationId, "JHN", 1, 1).then((rawVerseText) => {
-        if (isActive) {
-          welcomeVerse.value = `"${rawVerseText ?? ""}"`;
+      void getVerseText(translationId, welcomeBookId, 1, 1).then(
+        (rawVerseText) => {
+          if (isActive) {
+            welcomeVerse.value = `"${rawVerseText ?? ""}"`;
+          }
         }
-      });
+      );
     }
 
     return () => {
       isActive = false;
     };
-  }, [lastTranslationId.value]);
+  }, [lastTranslationId.value, welcomeBookId]);
 
   return (
     <div className={"sb-today-welcome-screen"}>
@@ -63,8 +91,12 @@ export const Welcome = (props: {
             })
           : t("anonymous-greeting", { defaultValue: "Welcome!" })}
       </h1>
-      <span className={"sb-today-welcome-screen-book"}>
-        {`${bookNames.value.get("JHN")?.toUpperCase()} 1:1`}
+      <span
+        className={`sb-today-welcome-screen-book${passageReady ? " sb-today-welcome-screen-passage-visible" : ""}`}
+      >
+        <span className="sb-today-welcome-screen-reveal">
+          {welcomeBookName ? `${welcomeBookName.toUpperCase()} 1:1` : ""}
+        </span>
       </span>
       {/*
         Real nodes rather than `dangerouslySetInnerHTML`. The `<hl>` markers are
@@ -72,19 +104,23 @@ export const Welcome = (props: {
         unmapped fallback path renders text straight from the Bible API through
         this same element, and as raw HTML that text was never escaped.
       */}
-      <div className="sb-today-welcome-screen-verse">
-        {welcomeVerse.value.split(HIGHLIGHT_MARKERS).map((part, index) =>
-          index % 2 === 1 ? (
-            <span
-              className="sb-today-welcome-screen-verse-highlight"
-              key={index}
-            >
-              {part}
-            </span>
-          ) : (
-            part
-          )
-        )}
+      <div
+        className={`sb-today-welcome-screen-verse${passageReady ? " sb-today-welcome-screen-passage-visible" : ""}`}
+      >
+        <div className="sb-today-welcome-screen-reveal">
+          {welcomeVerse.value.split(HIGHLIGHT_MARKERS).map((part, index) =>
+            index % 2 === 1 ? (
+              <span
+                className="sb-today-welcome-screen-verse-highlight"
+                key={index}
+              >
+                {part}
+              </span>
+            ) : (
+              part
+            )
+          )}
+        </div>
       </div>
       <div className={"sb-today-welcome-screen-navigation"}>
         <button
@@ -104,19 +140,29 @@ export const Welcome = (props: {
         </button>
         <button
           className={"sb-today-welcome-screen-start-button sb-today-clickable"}
-          onClick={() =>
+          disabled={welcomeBookId === undefined}
+          onClick={() => {
+            if (welcomeBookId === undefined) {
+              return;
+            }
             // `onOpenPassage` falls back to the default translation when unset.
             props.onOpenPassage({
-              bookId: "GEN",
+              bookId: welcomeBookId,
               chapter: 1,
               translationId: lastTranslationId.value,
-            })
-          }
+            });
+          }}
         >
-          {t("read-first-chapter", {
-            defaultValue: "Read the first chapter",
-          })}
-          <MaterialIcon>arrow_right_alt</MaterialIcon>
+          <span className="sb-today-welcome-screen-reveal">
+            {welcomeBookId !== undefined
+              ? t("read-book-chapter-button", {
+                  defaultValue: "Read {{bookName}} {{chapterNumber}}",
+                  bookName: welcomeBookName,
+                  chapterNumber: 1,
+                })
+              : t("read-the-bible", { defaultValue: "Read the Bible" })}
+            <MaterialIcon>arrow_right_alt</MaterialIcon>
+          </span>
         </button>
       </div>
     </div>
