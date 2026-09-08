@@ -42,6 +42,60 @@ describe("getVerseReferenceLinkHref", () => {
     );
   });
 
+  // Regression: annotating John 3:9 puts `?verse=9` on the URL. A note that
+  // mentions "Jonah 2" is naming a whole chapter, not verse 9 of Jonah 2.
+  it("does not copy the page's current verse onto a chapter-only reference", () => {
+    jsdom.reconfigure({ url: "https://example.test/en/AAB/john/3?verse=9" });
+
+    expect(getVerseReferenceLinkHref(ref({ book: "JON", chapter: 2 }))).toBe(
+      "https://example.test/en/AAB/jonah/2"
+    );
+  });
+
+  it("does not copy the page's verse onto a chapter range", () => {
+    jsdom.reconfigure({ url: "https://example.test/en/AAB/john/3?verse=9" });
+
+    const url = new URL(
+      getVerseReferenceLinkHref(ref({ book: "JON", chapter: 2, endChapter: 3 }))
+    );
+    expect(url.pathname).toBe("/en/AAB/jonah/2");
+    expect(url.searchParams.get("verse")).toBeNull();
+  });
+
+  it("drops the page's verse when the chapter-only reference is the chapter already open", () => {
+    jsdom.reconfigure({ url: "https://example.test/en/AAB/john/3?verse=9" });
+
+    expect(getVerseReferenceLinkHref(ref())).toBe(
+      "https://example.test/en/AAB/john/3"
+    );
+  });
+
+  it.each(["9-11", "1,3", ""])(
+    "drops the page's ?verse=%s from a chapter-only reference",
+    (verse) => {
+      jsdom.reconfigure({
+        url: `https://example.test/en/AAB/john/3?verse=${verse}`,
+      });
+
+      const url = new URL(
+        getVerseReferenceLinkHref(ref({ book: "JON", chapter: 2 }))
+      );
+      expect(url.pathname).toBe("/en/AAB/jonah/2");
+      expect(url.searchParams.get("verse")).toBeNull();
+    }
+  );
+
+  it("replaces the page's current verse with the referenced verse", () => {
+    jsdom.reconfigure({ url: "https://example.test/en/AAB/john/3?verse=9" });
+
+    expect(getVerseReferenceLinkHref(ref({ verse: 16 }))).toBe(
+      "https://example.test/en/AAB/john/3?verse=16"
+    );
+    expect(getVerseReferenceLinkHref(ref({ verse: 16, endVerse: 18 }))).toBe(
+      "https://example.test/en/AAB/john/3?verse=16-18"
+    );
+  });
+
   it("leaves unrelated query params alone", () => {
     jsdom.reconfigure({
       url: "https://example.test/en/AAB/genesis/1?sessionId=abc",
@@ -49,6 +103,19 @@ describe("getVerseReferenceLinkHref", () => {
 
     const url = new URL(getVerseReferenceLinkHref(ref()));
     expect(url.pathname).toBe("/en/AAB/john/3");
+    expect(url.searchParams.get("sessionId")).toBe("abc");
+  });
+
+  it("keeps unrelated query params while dropping the page's verse", () => {
+    jsdom.reconfigure({
+      url: "https://example.test/en/AAB/john/3?verse=9&sessionId=abc",
+    });
+
+    const url = new URL(
+      getVerseReferenceLinkHref(ref({ book: "JON", chapter: 2 }))
+    );
+    expect(url.pathname).toBe("/en/AAB/jonah/2");
+    expect(url.searchParams.get("verse")).toBeNull();
     expect(url.searchParams.get("sessionId")).toBe("abc");
   });
 
@@ -62,5 +129,17 @@ describe("getVerseReferenceLinkHref", () => {
     expect(url.searchParams.get("book")).toBe("JHN");
     expect(url.searchParams.get("chapter")).toBe("3");
     expect(url.searchParams.get("verse")).toBe("16");
+  });
+
+  it("drops the page's current verse on a chapter-only reference without a reading path", () => {
+    jsdom.reconfigure({
+      url: "https://example.test/?verse=9&sessionId=abc",
+    });
+
+    const url = new URL(getVerseReferenceLinkHref(ref()));
+    expect(url.searchParams.get("book")).toBe("JHN");
+    expect(url.searchParams.get("chapter")).toBe("3");
+    expect(url.searchParams.get("verse")).toBeNull();
+    expect(url.searchParams.get("sessionId")).toBe("abc");
   });
 });

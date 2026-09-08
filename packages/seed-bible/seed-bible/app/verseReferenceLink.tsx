@@ -43,6 +43,11 @@ export function getVerseReferenceLinkHref(ref: VerseRef) {
       "verse",
       ref.endVerse ? `${ref.verse}-${ref.endVerse}` : String(ref.verse)
     );
+  } else {
+    // `buildReadingUrl` keeps the page's `?verse=` for share links that still
+    // want it. A chapter-only reference (e.g. "Jonah 2") names the whole
+    // chapter, so the verse the reader had selected must not travel with it.
+    next.searchParams.delete("verse");
   }
 
   return next.toString();
