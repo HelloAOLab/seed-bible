@@ -2533,6 +2533,104 @@ describe("BibleReader", () => {
       ).toBe("Mary");
     });
 
+    // Two people on the same verses used to be drawn in the same 2px column,
+    // so only whoever was painted last could be seen.
+    it("puts participants reading the same verses in side-by-side lanes", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+          ],
+          {
+            mary: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 1,
+              lastVerse: 2,
+            },
+            john: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 1,
+              lastVerse: 2,
+            },
+          }
+        ),
+        fixture
+      );
+
+      const lanes = [...container.querySelectorAll(".sb-presence-marker")].map(
+        (marker) => ({
+          who: marker.querySelector(".sb-tab-user-icon")?.getAttribute("title"),
+          lane: (marker as HTMLElement).style.getPropertyValue(
+            "--sb-presence-marker-lane"
+          ),
+        })
+      );
+
+      // Both are on the same verses, so neither may be drawn over the other.
+      expect(lanes.map((entry) => entry.who).sort()).toEqual(["John", "Mary"]);
+      expect(new Set(lanes.map((entry) => entry.lane))).toEqual(
+        new Set(["0", "1"])
+      );
+      // And the text steps aside far enough for both columns.
+      expect(
+        (
+          container.querySelector(".sb-chapter-content-presence") as HTMLElement
+        ).style.getPropertyValue("--sb-presence-lanes")
+      ).toBe("2");
+    });
+
+    // Bars that never overlap share the one lane, so a session spread through a
+    // chapter doesn't push the text aside for columns nobody is standing in.
+    it("keeps participants in separate parts of the chapter in one lane", () => {
+      // Verse 1 ends at 64, verse 2 starts at 70: the two bars never meet.
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+          ],
+          {
+            mary: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 1,
+              lastVerse: 1,
+            },
+            john: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 2,
+              lastVerse: 2,
+            },
+          }
+        ),
+        fixture
+      );
+
+      const lanes = [...container.querySelectorAll(".sb-presence-marker")].map(
+        (marker) =>
+          (marker as HTMLElement).style.getPropertyValue(
+            "--sb-presence-marker-lane"
+          )
+      );
+
+      expect(lanes).toEqual(["0", "0"]);
+      expect(
+        (
+          container.querySelector(".sb-chapter-content-presence") as HTMLElement
+        ).style.getPropertyValue("--sb-presence-lanes")
+      ).toBe("1");
+    });
+
     it("never draws the reader's own position", () => {
       stubLineBoxes({ 1: 40, 2: 70 });
       const fixture = createFixture();
@@ -2595,6 +2693,42 @@ describe("BibleReader", () => {
       });
 
       expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+    });
+
+    // Joining a session hands the already-mounted reader a session it didn't
+    // have: the tab it is rendered in keeps its slot, so the same component
+    // instance goes from no session to one full of people.
+    it("draws the gutter when a reader that started outside a session is given one", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(null, fixture);
+
+      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "peer", name: "Mary" },
+          ],
+          {
+            peer: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 1,
+              lastVerse: 2,
+            },
+          }
+        ),
+        fixture
+      );
+
+      const markers = container.querySelectorAll(".sb-presence-marker");
+      expect(markers).toHaveLength(1);
+      const marker = markers[0] as HTMLElement;
+      expect(
+        marker.querySelector(".sb-tab-user-icon")?.getAttribute("title")
+      ).toBe("Mary");
     });
 
     it("reports the verses on screen so peers can be shown where it is", () => {

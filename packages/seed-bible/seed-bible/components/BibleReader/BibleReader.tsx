@@ -17,12 +17,7 @@ import {
   useLayoutEffect,
   useState,
 } from "preact/compat";
-import {
-  computed,
-  useComputed,
-  type ReadonlySignal,
-  type Signal,
-} from "@preact/signals";
+import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
 import {
   adjacentInlineRect,
   buildRibbonPath,
@@ -1344,6 +1339,13 @@ interface PresenceMarker {
   /** Offset from the top of the chapter content box, in px. */
   top: number;
   height: number;
+  /**
+   * Which column of the gutter this bar sits in. People reading the same
+   * verses would otherwise be drawn on top of each other, hiding everyone but
+   * whoever was painted last, so bars whose spans overlap are dealt out into
+   * side-by-side lanes. Zero whenever nobody overlaps.
+   */
+  lane: number;
 }
 
 interface ChapterContentProps {
@@ -1670,6 +1672,10 @@ function ChapterContent(props: ChapterContentProps) {
   // Signature of the last markers written to state, so the measure -> setState
   // -> re-render -> measure cycle settles instead of looping.
   const presenceSignatureRef = useRef("");
+  const presenceLaneCount = presenceMarkers.reduce(
+    (widest, marker) => Math.max(widest, marker.lane + 1),
+    1
+  );
 
   // A participant's bar spans from the top of the first verse they can see to
   // the bottom of the last, measured from the live line boxes so it follows
@@ -1703,14 +1709,34 @@ function ChapterContent(props: ChapterContentProps) {
           visual: participant.visual,
           top,
           height: bottom - top,
+          lane: 0,
         });
       }
+    }
+
+    // Deal the bars into lanes so people reading the same verses stand beside
+    // each other instead of hiding one another. Taking them top-down and
+    // putting each in the first lane whose previous occupant has already ended
+    // uses no more columns than there are people genuinely overlapping at once,
+    // so the common case of a session spread through a chapter still draws a
+    // single-column gutter. Ties break on connection id to keep a lane from
+    // changing hands between two bars that start on the same line.
+    next.sort(
+      (a, b) => a.top - b.top || a.connectionId.localeCompare(b.connectionId)
+    );
+    const laneBottoms: number[] = [];
+    for (const marker of next) {
+      const bottom = marker.top + marker.height;
+      const free = laneBottoms.findIndex((end) => marker.top >= end);
+      const lane = free === -1 ? laneBottoms.length : free;
+      laneBottoms[lane] = Math.max(laneBottoms[lane] ?? 0, bottom);
+      marker.lane = lane;
     }
 
     const signature = next
       .map(
         (m) =>
-          `${m.connectionId}:${Math.round(m.top)}:${Math.round(m.height)}:${m.imageUrl ?? ""}`
+          `${m.connectionId}:${Math.round(m.top)}:${Math.round(m.height)}:${m.lane}:${m.imageUrl ?? ""}`
       )
       .join("|");
     if (signature === presenceSignatureRef.current) return;
@@ -1775,6 +1801,10 @@ function ChapterContent(props: ChapterContentProps) {
         justConvertedSelectionRef.current = false;
       }}
       onPointerUp={selectVersesFromTextSelection}
+      // How many lanes of bars the gutter has to hold. The stylesheet turns it
+      // into both the gutter's width and the indent that keeps the scripture
+      // clear of it, so the text only gives up the room actually in use.
+      style={{ "--sb-presence-lanes": presenceLaneCount }}
     >
       <svg className="sb-highlight-layer" aria-hidden="true">
         {ribbons.map((ribbon) => (
@@ -1802,9 +1832,19 @@ function ChapterContent(props: ChapterContentProps) {
         <div className="sb-presence-gutter" aria-hidden="true">
           {presenceMarkers.map((marker) => (
             <div
-              key={marker.connectionId}
+              // Keyed by chapter as well as owner so a navigation gives every
+              // marker a fresh element. Its bar glides between positions within
+              // a chapter (see the transition in the stylesheet), and the whole
+              // page's text is replaced on a navigation — a bar left to travel
+              // from its old verses to its new ones would be gliding across
+              // scripture it was never measured against.
+              key={`${chapterKey}:${marker.connectionId}`}
               className="sb-presence-marker"
-              style={{ top: `${marker.top}px`, height: `${marker.height}px` }}
+              style={{
+                top: `${marker.top}px`,
+                height: `${marker.height}px`,
+                "--sb-presence-marker-lane": marker.lane,
+              }}
             >
               <span
                 className="sb-presence-range"
@@ -1920,30 +1960,33 @@ export function BibleReader(props: BibleReaderProps) {
   // reading the same chapter can be placed against verses on this page, and
   // this reader is never its own marker. Outside a session the list is empty
   // and no gutter is drawn at all.
-  const presence = useComputed<ParticipantPresence[]>(() => {
-    if (!sharedSession) {
-      return [];
-    }
+  //
+  // Built in the render body rather than in a `useComputed`: the session
+  // arrives as a prop, and a memoised computed that returns early on a null one
+  // subscribes to no signal at all, which leaves it permanently un-dirtied. A
+  // reader that first rendered outside a session and was then handed one (a
+  // session tab replacing a plain tab in the same slot reuses the component)
+  // would keep answering "nobody" for the rest of its life. Reading the signals
+  // here subscribes this component to them directly, which survives that prop
+  // change.
+  const presence: ParticipantPresence[] = [];
+  const presenceBookId = bookId.value;
+  const presenceChapterNumber = chapterNumber.value;
+  if (sharedSession && presenceBookId && presenceChapterNumber > 0) {
     const positions = sharedSession.participantPositions.value;
-    const currentBookId = bookId.value;
-    const currentChapterNumber = chapterNumber.value;
-    if (!currentBookId || currentChapterNumber <= 0) {
-      return [];
-    }
-    const markers: ParticipantPresence[] = [];
     for (const user of sharedSession.connectedUsers.value) {
       if (user.isSelf) continue;
       const position = positions.get(user.connectionId);
       if (
         !position ||
-        position.bookId !== currentBookId ||
-        position.chapterNumber !== currentChapterNumber ||
+        position.bookId !== presenceBookId ||
+        position.chapterNumber !== presenceChapterNumber ||
         position.firstVerse === undefined ||
         position.lastVerse === undefined
       ) {
         continue;
       }
-      markers.push({
+      presence.push({
         connectionId: user.connectionId,
         displayName: getUserDisplayName(user),
         imageUrl: user.profile?.pictureUrl ?? null,
@@ -1952,8 +1995,7 @@ export function BibleReader(props: BibleReaderProps) {
         lastVerse: position.lastVerse,
       });
     }
-    return markers;
-  }).value;
+  }
 
   // Stable identity so the observer in ChapterContent isn't torn down and
   // rebuilt on every render of the reader.

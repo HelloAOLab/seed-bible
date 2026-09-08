@@ -498,8 +498,13 @@
   font-size: 1em;
 
   /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
-     Short enough to read as immediate rather than as an animation. */
-  transition: opacity 0.1s ease;
+     Short enough to read as immediate rather than as an animation. The indent
+     is here too: it opens for the session presence gutter and widens as people
+     gather on the same verses (see `.sb-chapter-content-presence`), and the
+     text should move with them rather than reflow in a jump. */
+  transition:
+    opacity 0.1s ease,
+    padding-inline-start 0.35s ease;
 
   /* Positioning context + own stacking context so the highlight ribbon layer
      can sit behind the scripture text (z-index: -1) without slipping behind the
@@ -707,7 +712,14 @@
  * this chapter, so a solo reader keeps the full text width.
  */
 .sb-chapter-content.sb-chapter-content-presence {
-  --sb-presence-gutter-width: 1.5rem;
+  --sb-presence-lane-width: 1.5rem;
+
+  /* One lane per bar that has to stand beside another (`--sb-presence-lanes`
+     comes from the measured markers); a session reading in different places
+     needs only the one. */
+  --sb-presence-gutter-width: calc(
+    var(--sb-presence-lanes, 1) * var(--sb-presence-lane-width)
+  );
 
   padding-inline-start: calc(var(--sb-presence-gutter-width) + 0.25rem);
 }
@@ -721,13 +733,47 @@
 }
 
 /* Placed against measured line boxes: from the top of the first verse the
-   participant can see to the bottom of the last. */
+   participant can see to the bottom of the last.
+
+   A peer's whole scroll arrives as a single update once they come to rest, so
+   without a transition the bar teleports down the page. Gliding to the new
+   verses reads as somebody moving instead. A marker that has just appeared has
+   no previous position to travel from and none is invented: it fades in where
+   its owner is (`@starting-style` below), and the same fade covers the remount
+   on a chapter change, which the key in BibleReader.tsx forces so a bar can't
+   glide across a page whose text was replaced under it. */
 .sb-presence-marker {
   position: absolute;
-  inset-inline: 0;
+  inset-inline-start: calc(
+    var(--sb-presence-marker-lane, 0) * var(--sb-presence-lane-width)
+  );
+  width: var(--sb-presence-lane-width);
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 1;
+  transition:
+    top 0.35s ease,
+    height 0.35s ease,
+    inset-inline-start 0.35s ease,
+    opacity 0.25s ease;
+}
+
+@starting-style {
+  .sb-presence-marker {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-presence-marker {
+    transition: none;
+  }
+
+  /* Keep the stale-content fade, drop the gutter's reflow. */
+  .sb-chapter-content {
+    transition: opacity 0.1s ease;
+  }
 }
 
 .sb-presence-range {
