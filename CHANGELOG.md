@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.8.0 — 2026-09-08
+
+### ✨ Added
+
 - Make the previous/next chapter controls real links instead of buttons only wired to JavaScript, so search engine crawlers can follow them from chapter to chapter instead of relying solely on the sitemap; clicking still navigates in-app, and middle-click or ctrl-click opens the target chapter in a new tab. ([#1618](https://github.com/HelloAOLab/seed-bible/pull/1618))
 - Add an About page (`/{lang}/about`), reachable from a new icon in the sidebar and a Settings entry, with its own SEO meta tags and sitemap entries. It opens as a fullscreen pane alongside the sidebar and toolbar instead of replacing the whole app shell, and closes automatically when you select another tab. ([#1654](https://github.com/HelloAOLab/seed-bible/pull/1654))
 - Add a Customization Center for building your own color-theme presets (colors, fonts, highlight colors) from Settings, with a live preview, autosave, and a share link so others can view your theme. ([#1686](https://github.com/HelloAOLab/seed-bible/pull/1686))
@@ -28,8 +38,6 @@
 - Fix dismissing the sign-in prompt throwing an error out of whatever action opened it instead of letting that action handle the cancellation, which kept the annotation editor from opening, left the bookmark modal stuck open, and crashed the transcript view. ([#1736](https://github.com/HelloAOLab/seed-bible/pull/1736))
 - Fix a shared `?customization=` link's colors only appearing after the page loaded and briefly flashing the default theme; the server now waits for the customization to load before rendering the page. ([#1739](https://github.com/HelloAOLab/seed-bible/pull/1739))
 - Fix a chapter's dimmed verses re-brightening early when a second dim effect started before the first one's fixed-length animation finished, instead of holding dimmed for as long as any dim effect is active. ([#1755](https://github.com/HelloAOLab/seed-bible/pull/1755))
-
-### 🗑️ Removed
 
 ## v1.7.1 — 2026-09-02
 
