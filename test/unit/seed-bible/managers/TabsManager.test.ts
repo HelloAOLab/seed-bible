@@ -1231,10 +1231,16 @@ describe("createTabs", () => {
     expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
-  it("prefers a signed-in reader's own saved translation over the active customization's default", async () => {
+  it("does not let a customization default override an already-loaded profile translation", async () => {
+    // Ordering matters here: the profile must already be loaded and applied
+    // *before* the customization default resolves — the realistic case of a
+    // signed-in reader opening a `?customization=...` link — so this
+    // actually exercises the customization effect's own profile guard
+    // (`if (savedTranslationId) return;`), rather than merely relying on the
+    // profile-restore effect running again afterward and winning regardless.
     setWebResponses(createExampleManagerResponseMap());
     const activeCustomizationDefaultTranslationId = signal<string | undefined>(
-      "NIV"
+      undefined
     );
 
     const { tabs: manager, login } = createTabsManager({
@@ -1243,16 +1249,18 @@ describe("createTabs", () => {
     const firstTab = manager.tabs.value[0]!;
     await waitForInitialLoad(firstTab.readingState);
 
+    // Signed-in reader whose saved translation is NIV, loaded BEFORE the
+    // customization default resolves.
     login.userId.value = "user-1";
-    login.profile.value = { name: "", config: { translationId: "AAB" } };
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
 
-    // Give the customization-default effect a chance to run; the saved
-    // profile translation (already AAB, matching the boot default) must win,
-    // so the customization's NIV default must never apply.
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    // Customization default (AAB, different) now resolves over the network.
+    activeCustomizationDefaultTranslationId.value = "AAB";
+    await new Promise((resolve) => setTimeout(resolve, 20));
     await waitForInitialLoad(firstTab.readingState);
 
-    expect(firstTab.readingState.translationId.value).toBe("AAB");
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
   it("falls back to the saved translation's first book when it doesn't contain the current book", async () => {

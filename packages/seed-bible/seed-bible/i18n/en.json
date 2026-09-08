@@ -129,6 +129,7 @@
   "customization-name": "Name",
   "customization-default-translation": "Default translation",
   "customization-default-translation-none": "Seed Bible's default",
+  "customization-default-translation-unavailable": "{{id}} (unavailable)",
   "customization-default-translation-description": "The translation viewers of this customization start reading in, instead of Seed Bible's own default for their language.",
   "customization-primaryColor": "Primary",
   "customization-primaryFontColor": "Primary text",

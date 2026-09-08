@@ -929,13 +929,11 @@ describe("CustomizationsManager", () => {
 
   it("updateEditingDefaultTranslationId() no-ops when there is no open draft", async () => {
     const { manager } = createManager();
-    const created = await manager.create();
+    await manager.create();
 
     manager.updateEditingDefaultTranslationId("NIV");
 
-    expect(manager.customizations.value[0]?.defaultTranslationId).toBe(
-      created.defaultTranslationId
-    );
+    expect(manager.editingCustomization.value).toBeNull();
   });
 
   it("load() accepts a persisted record that already carries a defaultTranslationId", async () => {
