@@ -3,6 +3,7 @@ import {
   effect,
   signal,
   untracked,
+  type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
 import type { BibleDataManager, BookId } from "./BibleDataManager";
@@ -424,7 +425,18 @@ export function createTabs(
   getAnnotationsManager?: () => AnnotationsManager | undefined,
   branding?: BrandingConfig,
   /** Passed through to `createBibleReadingState` — see its parameter of the same name. */
-  settingsManager?: SettingsManager
+  settingsManager?: SettingsManager,
+  /**
+   * The active Customization's chosen default translation (`CustomizationsManager.
+   * activeCustomization.value?.defaultTranslationId`), if any — the same override
+   * `branding?.defaultTranslationId` provides for a whole deployment, but scoped to
+   * whichever Customization is currently active and, unlike branding, only known
+   * asynchronously (a `?customization=...` link resolves over the network, and an
+   * editor draft can change at any time). Passed as a signal, not a plain value,
+   * so the effect below can apply it the moment it becomes available rather than
+   * only at tab-creation time, when it is essentially always still unset.
+   */
+  activeCustomizationDefaultTranslationId?: ReadonlySignal<string | undefined>
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -985,6 +997,54 @@ export function createTabs(
       }
 
       void applySavedTranslation(readingState, savedTranslationId);
+    });
+  });
+
+  // Applies the active Customization's chosen default translation to the
+  // selected tab once it becomes known — a share link resolves it over the
+  // network, and an editor draft can set/change it at any time. Lower
+  // priority than a signed-in reader's own saved translation (the profile
+  // effect above always wins when present) and never fights an explicit
+  // deep link, matching how `branding?.defaultTranslationId` only ever
+  // stands in for Seed Bible's own per-language default.
+  // `appliedCustomizationDefaultTranslationId` guards against re-applying the
+  // same id after an unrelated draft edit (e.g. renaming the customization)
+  // changes `activeCustomization`'s identity without actually changing this
+  // field — which would otherwise clobber a translation the previewer picked
+  // manually in the meantime.
+  let appliedCustomizationDefaultTranslationId: string | null = null;
+  effect(() => {
+    const targetTranslationId = activeCustomizationDefaultTranslationId?.value;
+    if (!targetTranslationId) {
+      return;
+    }
+
+    untracked(() => {
+      if (hadExplicitInitialUrlTranslation) {
+        return;
+      }
+      if (appliedCustomizationDefaultTranslationId === targetTranslationId) {
+        return;
+      }
+
+      const savedTranslationId = getProfileConfigValue(
+        login.profile.value,
+        PROFILE_TRANSLATION_ID
+      );
+      if (typeof savedTranslationId === "string" && savedTranslationId) {
+        return;
+      }
+
+      const readingState = selectedTab.peek()?.readingState;
+      if (!readingState) {
+        return;
+      }
+      appliedCustomizationDefaultTranslationId = targetTranslationId;
+      if (readingState.translationId.peek() === targetTranslationId) {
+        return;
+      }
+
+      void applySavedTranslation(readingState, targetTranslationId);
     });
   });
 

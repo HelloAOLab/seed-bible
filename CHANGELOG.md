@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active (a `?customization=...` link, or previewing it in the editor).
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

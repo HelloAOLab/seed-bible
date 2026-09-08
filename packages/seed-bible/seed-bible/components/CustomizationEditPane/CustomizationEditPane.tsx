@@ -307,7 +307,7 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
 
 function CustomizationEditMainView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { customizations } = state;
+  const { customizations, bibleData } = state;
   const { t } = useI18n();
   const confirmingDelete = useSignal(false);
   const isUploadingLogo = useSignal(false);
@@ -388,6 +388,18 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
     );
   }
 
+  const sortedTranslations = [...bibleData.availableTranslations.value].sort(
+    (a, b) => a.name.localeCompare(b.name)
+  );
+  // The saved id can be absent from the catalog — a translation later removed,
+  // or simply the brief window before `availableTranslations` has loaded.
+  // Without an option for it, the `<select>` would match nothing and the
+  // browser would silently fall back to showing "Seed Bible's default",
+  // misrepresenting the actual (unchanged) saved setting.
+  const savedTranslationMissingFromCatalog =
+    !!record.defaultTranslationId &&
+    !sortedTranslations.some((t) => t.id === record.defaultTranslationId);
+
   return (
     <div className="sb-settings-page">
       <section className="sb-settings-section">
@@ -404,6 +416,53 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
               customizations.updateEditingName(target.value);
             }}
           />
+        </div>
+
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-customization-default-translation"
+          >
+            {t("customization-default-translation", {
+              defaultValue: "Default translation",
+            })}
+          </label>
+          <select
+            id="sb-customization-default-translation"
+            className="sb-settings-language-select"
+            value={record.defaultTranslationId ?? ""}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+              customizations.updateEditingDefaultTranslationId(
+                target.value || null
+              );
+            }}
+          >
+            <option value="">
+              {t("customization-default-translation-none", {
+                defaultValue: "Seed Bible's default",
+              })}
+            </option>
+            {savedTranslationMissingFromCatalog && (
+              <option value={record.defaultTranslationId} disabled>
+                {t("customization-default-translation-unavailable", {
+                  id: record.defaultTranslationId,
+                  defaultValue: "{{id}} (unavailable)",
+                })}
+              </option>
+            )}
+            {sortedTranslations.map((translation) => (
+              <option key={translation.id} value={translation.id}>
+                {`${translation.name} (${translation.shortName})`}
+              </option>
+            ))}
+          </select>
+          <p className="sb-settings-field-description">
+            {t("customization-default-translation-description", {
+              defaultValue:
+                "The translation viewers of this customization start reading in, instead of Seed Bible's own default for their language.",
+            })}
+          </p>
         </div>
 
         <div className="sb-settings-field-row">
