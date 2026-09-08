@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- See where everyone else is reading in a shared session. Each other participant gets a slim coloured bar beside the text spanning the verses on their screen, with their avatar on it, so you can tell at a glance whether they are with you or still a few verses back. Before this, the only clue was watching their highlights appear. ([#1692](https://github.com/HelloAOLab/seed-bible/issues/1692))
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

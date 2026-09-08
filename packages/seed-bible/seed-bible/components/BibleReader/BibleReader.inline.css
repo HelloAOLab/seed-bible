@@ -698,6 +698,60 @@
   cursor: pointer;
 }
 
+/* -------------------------------------------------------- session presence */
+
+/*
+ * Where the other people in a shared session are reading (#1692). Each one
+ * gets a thin bar down the start edge of the reader spanning the verses they
+ * can see, with their avatar on it. Only drawn when there is somebody else in
+ * this chapter, so a solo reader keeps the full text width.
+ */
+.sb-chapter-content.sb-chapter-content-presence {
+  --sb-presence-gutter-width: 1.5rem;
+
+  padding-inline-start: calc(var(--sb-presence-gutter-width) + 0.25rem);
+}
+
+.sb-presence-gutter {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--sb-presence-gutter-width);
+  pointer-events: none;
+}
+
+/* Placed against measured line boxes: from the top of the first verse the
+   participant can see to the bottom of the last. */
+.sb-presence-marker {
+  position: absolute;
+  inset-inline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-presence-range {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  width: 2px;
+  border-radius: 1px;
+  transform: translateX(-50%);
+  /* Softer than the avatar so several overlapping ranges stay readable. */
+  opacity: 0.55;
+}
+
+.sb-presence-avatar {
+  position: relative;
+  display: flex;
+  font-size: 0.625rem;
+}
+
+.sb-presence-avatar .sb-tab-user-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 .sb-verse-number .material-symbols-outlined {
   font-size: 1em;
 }

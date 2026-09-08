@@ -8,6 +8,7 @@ import {
 import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   type BibleReadingState,
+  type VisibleVerseRange,
   type SelectedFootnote,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -207,6 +208,7 @@ function createFixture(): ReaderFixture {
     title: signal<string>("title"),
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
+    visibleVerseRange: signal<VisibleVerseRange | null>(null),
   } as BibleReadingState;
 
   const selectorState = {
@@ -2396,6 +2398,265 @@ describe("BibleReader", () => {
 
     expect(state.discover.scrollToVerse.value).toBeNull();
     expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
+  });
+
+  // #1692: in a shared session, each other participant gets a bar down the
+  // side of the reader spanning the verses they can see. jsdom does no layout,
+  // so the line boxes those bars are measured against are stubbed here.
+  describe("session presence", () => {
+    let clientRectsSpy: { mockRestore: () => void } | null = null;
+
+    afterEach(() => {
+      clientRectsSpy?.mockRestore();
+      clientRectsSpy = null;
+      vi.unstubAllGlobals();
+    });
+
+    /** One 24px line box per verse, at the given offsets. */
+    function stubLineBoxes(tops: Record<number, number>) {
+      clientRectsSpy = vi
+        .spyOn(Element.prototype, "getClientRects")
+        .mockImplementation(function (this: Element) {
+          const verseNumber = Number(
+            (this as HTMLElement).dataset?.verseNumber ?? NaN
+          );
+          const top = tops[verseNumber];
+          if (top === undefined) {
+            return [] as unknown as DOMRectList;
+          }
+          const rect = {
+            top,
+            bottom: top + 24,
+            left: 0,
+            right: 100,
+            width: 100,
+            height: 24,
+            x: 0,
+            y: top,
+            toJSON() {},
+          } as DOMRect;
+          return [rect] as unknown as DOMRectList;
+        });
+    }
+
+    const visual = {
+      defaultIcon: "pets",
+      color: "rgb(10, 20, 30)",
+      colorName: "blue",
+    };
+
+    function createSession(
+      users: Array<{
+        connectionId: string;
+        isSelf?: boolean;
+        name?: string;
+        pictureUrl?: string | null;
+      }>,
+      positions: Record<
+        string,
+        {
+          bookId: string;
+          chapterNumber: number;
+          firstVerse?: number;
+          lastVerse?: number;
+        }
+      >
+    ) {
+      return {
+        connectedUsers: signal(
+          users.map((user) => ({
+            connectionId: user.connectionId,
+            userId: user.connectionId,
+            isSelf: user.isSelf ?? false,
+            isActive: true,
+            joinedAtMs: 0,
+            profile: {
+              name: user.name ?? user.connectionId,
+              pictureUrl: user.pictureUrl ?? null,
+            },
+            visual,
+          }))
+        ),
+        participantPositions: signal(new Map(Object.entries(positions))),
+        options: signal({ hostUserId: null, allowedNavigators: [] }),
+      } as any;
+    }
+
+    function renderReader(session: unknown, fixture: ReaderFixture) {
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={createMobileState()}
+            sharedSession={session as any}
+          />,
+          container
+        );
+      });
+    }
+
+    it("draws a bar spanning the verses another participant can see", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "peer", name: "Mary" },
+          ],
+          {
+            peer: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 1,
+              lastVerse: 2,
+            },
+          }
+        ),
+        fixture
+      );
+
+      const markers = container.querySelectorAll(".sb-presence-marker");
+      expect(markers).toHaveLength(1);
+      const marker = markers[0] as HTMLElement;
+      // From the top of verse 1's first line to the bottom of verse 2's last.
+      expect(marker.style.top).toBe("40px");
+      expect(marker.style.height).toBe("54px");
+      expect(
+        (marker.querySelector(".sb-presence-range") as HTMLElement).style
+          .background
+      ).toBe("rgb(10, 20, 30)");
+      expect(
+        marker.querySelector(".sb-tab-user-icon")?.getAttribute("title")
+      ).toBe("Mary");
+    });
+
+    it("never draws the reader's own position", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession([{ connectionId: "me", isSelf: true }], {
+          me: { bookId: "GEN", chapterNumber: 1, firstVerse: 1, lastVerse: 2 },
+        }),
+        fixture
+      );
+
+      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+    });
+
+    // A peer in another chapter has no verses on this page to point at.
+    it("leaves out a participant reading a different chapter", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession([{ connectionId: "peer", name: "Mary" }], {
+          peer: {
+            bookId: "GEN",
+            chapterNumber: 2,
+            firstVerse: 1,
+            lastVerse: 2,
+          },
+        }),
+        fixture
+      );
+
+      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+    });
+
+    // Positions written before verse ranges existed carry the chapter only.
+    it("leaves out a participant who has not reported a verse range", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession([{ connectionId: "peer", name: "Mary" }], {
+          peer: { bookId: "GEN", chapterNumber: 1 },
+        }),
+        fixture
+      );
+
+      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+    });
+
+    it("draws no gutter outside a shared session", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={createMobileState()}
+          />,
+          container
+        );
+      });
+
+      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+    });
+
+    it("reports the verses on screen so peers can be shown where it is", () => {
+      const observed: Element[] = [];
+      let fire: ((entries: unknown[]) => void) | null = null;
+      vi.stubGlobal(
+        "IntersectionObserver",
+        class {
+          constructor(callback: IntersectionObserverCallback) {
+            fire = (entries) =>
+              callback(
+                entries as IntersectionObserverEntry[],
+                this as unknown as IntersectionObserver
+              );
+          }
+          observe(el: Element) {
+            observed.push(el);
+          }
+          unobserve() {}
+          disconnect() {}
+          takeRecords() {
+            return [];
+          }
+        }
+      );
+
+      const fixture = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={createMobileState()}
+          />,
+          container
+        );
+      });
+
+      expect(observed.length).toBeGreaterThan(0);
+      act(() => {
+        fire?.([
+          { target: observed[0], isIntersecting: true },
+          { target: observed[1], isIntersecting: true },
+        ]);
+      });
+
+      expect(fixture.readingState.visibleVerseRange.value).toEqual({
+        first: 1,
+        last: 2,
+      });
+
+      // Scrolling verse 1 off the top narrows the range rather than keeping a
+      // verse nobody can see any more.
+      act(() => {
+        fire?.([{ target: observed[0], isIntersecting: false }]);
+      });
+      expect(fixture.readingState.visibleVerseRange.value).toEqual({
+        first: 2,
+        last: 2,
+      });
+    });
   });
 
   it("separates adjacent verses with a space when verse numbers are hidden", () => {
