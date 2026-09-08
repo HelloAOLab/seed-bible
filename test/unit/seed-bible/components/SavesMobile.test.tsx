@@ -2,6 +2,7 @@ import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
+import type { ModalRegistration } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
@@ -63,6 +64,8 @@ describe("mobile saves screen", () => {
   let container: HTMLDivElement;
   let state: SeedBibleState;
   let originalInnerWidth: number;
+  /** Extra roots created by `renderModalContent`, torn down in afterEach. */
+  let modalContainers: HTMLDivElement[];
 
   beforeEach(async () => {
     originalInnerWidth = window.innerWidth;
@@ -72,6 +75,7 @@ describe("mobile saves screen", () => {
 
     container = document.createElement("div");
     document.body.appendChild(container);
+    modalContainers = [];
 
     state = await createTestSeedBibleState();
 
@@ -96,6 +100,10 @@ describe("mobile saves screen", () => {
   });
 
   afterEach(() => {
+    for (const modalContainer of modalContainers) {
+      render(null, modalContainer);
+      modalContainer.remove();
+    }
     render(null, container);
     container.remove();
     window.innerWidth = originalInnerWidth;
@@ -122,6 +130,31 @@ describe("mobile saves screen", () => {
         container
       );
     });
+  }
+
+  /**
+   * Renders what a modal handed to `openModal` would show, so a test can
+   * click through the real picker instead of calling the manager directly.
+   * `content` may be a render function or plain children, the same two forms
+   * `ModalManager` accepts. The modal host lives outside the Sidebar tree, so
+   * this gets its own container; `afterEach` tears it down.
+   */
+  function renderModalContent(modal: ModalRegistration): HTMLDivElement {
+    const content =
+      typeof modal.content === "function"
+        ? modal.content({
+            t: (key: string, options?: Record<string, unknown>) =>
+              (options?.defaultValue as string | undefined) ?? key,
+          })
+        : modal.content;
+
+    const modalContainer = document.createElement("div");
+    document.body.appendChild(modalContainer);
+    modalContainers.push(modalContainer);
+    act(() => {
+      render(<TestHost state={state}>{content}</TestHost>, modalContainer);
+    });
+    return modalContainer;
   }
 
   /** The regular tab list, rather than the saves screen the tests below use. */
@@ -182,19 +215,49 @@ describe("mobile saves screen", () => {
     });
 
     it("refiles the existing save rather than dropping the change", async () => {
-      // The whole point of edit mode: the folders the user picks actually
-      // land, where the add path discarded them.
+      // The whole point of edit mode, driven through the picker the user
+      // actually sees: pick a different folder, press Save, and the change
+      // lands. On the add path this silently did nothing, because addSave
+      // ignores a location it already holds.
       await act(async () => {
+        await state.saves.createCategory("Sermon prep");
         await state.saves.addSave("AAB", "GEN", 1);
       });
       const saveId = state.saves.saves.value[0]!.id;
+      expect(state.saves.saves.value[0]!.categories).toEqual(["My Saves"]);
+
+      const openModal = vi.spyOn(state.modals, "openModal");
+      await openTabsList();
 
       await act(async () => {
-        await state.saves.setSaveCategories(saveId, ["Sermon prep"]);
+        rowSaveButton()!.click();
+      });
+
+      const picker = renderModalContent(openModal.mock.calls[0]![0]);
+      const folderButton = (name: string) =>
+        Array.from(
+          picker.querySelectorAll<HTMLButtonElement>(".sb-save-picker-category")
+        ).find(
+          (button) =>
+            button.querySelector(".sb-save-picker-category-name")
+              ?.textContent === name
+        );
+
+      await act(async () => {
+        folderButton("Sermon prep")!.click();
+      });
+      await act(async () => {
+        folderButton("My Saves")!.click();
+      });
+      await act(async () => {
+        picker
+          .querySelector<HTMLButtonElement>(".sb-save-picker-save")!
+          .click();
       });
 
       expect(state.saves.saves.value[0]!.categories).toEqual(["Sermon prep"]);
       expect(state.saves.saves.value).toHaveLength(1);
+      expect(state.saves.saves.value[0]!.id).toBe(saveId);
     });
 
     /** The star renders as an SVG, so "filled" is its fill, not a font axis. */
@@ -216,8 +279,9 @@ describe("mobile saves screen", () => {
 
       expect(starFill()).toBe("currentColor");
       expect(rowSaveButton()!.className).toContain("sb-tab-save-button-saved");
-      // Filled is an indicator, not a pressed toggle — pressing still files
-      // another copy, so aria-pressed would mislead.
+      // Filled is an indicator, not a pressed toggle: pressing a filled star
+      // opens the existing save's folders for editing rather than unfiling it,
+      // so aria-pressed would announce a toggle the button does not have.
       expect(rowSaveButton()!.getAttribute("aria-pressed")).toBeNull();
     });
 
