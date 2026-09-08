@@ -7,6 +7,7 @@ import {
 } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import type {
   BibleReadingState,
+  VisibleVerseRange,
   SelectedFootnote,
   VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -179,6 +180,7 @@ function createFixture(): ReaderFixture {
     title: signal<string>(""),
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
+    visibleVerseRange: signal<VisibleVerseRange | null>(null),
   } as BibleReadingState;
 
   const selectorState = {

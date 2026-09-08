@@ -202,6 +202,12 @@ export interface VerseDecorationInput {
  * Consumers should observe `loading`/`error` and read `chapterData`/`translationBooks`
  * signals to know when content is ready.
  */
+/** A span of verses on screen, lowest to highest. */
+export interface VisibleVerseRange {
+  first: number;
+  last: number;
+}
+
 export interface BibleReadingState {
   /** The default translation for the current language. */
   defaultTranslation: TranslationWithLanguage;
@@ -302,6 +308,14 @@ export interface BibleReadingState {
    * expand and scroll to it, then cleared.
    */
   pendingAnnotationScrollVerse: Signal<number | null>;
+
+  /**
+   * The span of verses currently on screen in this reader, lowest to highest,
+   * or null before anything has been measured. Written by the reader as it
+   * scrolls and read by SessionsManager, which broadcasts it so peers can see
+   * whereabouts in the chapter this reader is (#1692).
+   */
+  visibleVerseRange: Signal<VisibleVerseRange | null>;
 
   /**
    * Toggles a verse in the current selection.
@@ -1344,6 +1358,7 @@ export function createBibleReadingState(
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
   const pendingAnnotationScrollVerse = signal<number | null>(null);
+  const visibleVerseRange = signal<VisibleVerseRange | null>(null);
 
   // Reading-extension enablement (per reading state). Extensions are registered
   // globally on the BibleReadingExtensionManager but never enabled by default;
@@ -3233,6 +3248,7 @@ export function createBibleReadingState(
     selectedVerses,
     selectionAnnotations,
     pendingAnnotationScrollVerse,
+    visibleVerseRange,
     selectedFootnote,
     loading,
     error,
