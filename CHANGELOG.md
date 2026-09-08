@@ -4,14 +4,24 @@
 
 ### ✨ Added
 
+- Add a save button to the reader's quick actions that files the whole current chapter into one or more folders in a single action, on both desktop and mobile. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+
 ### 🔧 Changed
+
+- Rename bookmarks to saves throughout the app, including the default folder, which becomes "My Saves" instead of "My Bookmarks". Existing bookmarks carry over as saves with their folders intact. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+- Show a star on the save actions, outlined until a passage is filed and filled once it is, instead of a bookmark icon. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+- Open a saved passage's folders for editing when you press save on it again, instead of removing the save. Saves accumulate and come off only from the saves panel, so the save buttons no longer act as toggles. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
 
 ### 🐛 Fixed
 
 - Stop reading time from accruing while the app is in the background. A phone locked in a pocket with the reader open could rack up half an hour of reading nobody did; reading now pauses when the app backgrounds and resumes as a new sitting when it comes back. ([#1738](https://github.com/HelloAOLab/seed-bible/pull/1738))
 - Count Audio Reader listening time even when the phone is locked. Listening was tracked with a timer that stops once the screen turns off, so an hour of narration during chores could log as a few seconds; it's now tracked by audio playback position instead. ([#1738](https://github.com/HelloAOLab/seed-bible/pull/1738))
+- Fix the mobile tab drawer's "Add new tab" button being cut off by the bottom toolbar. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
 
 ### 🗑️ Removed
+
+- Remove the saves strip from the Today screen. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+- Remove the reader's bookmark button until the redesigned bookmarks arrive. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
 
 ## v1.7.1 — 2026-09-02
 
