@@ -21,14 +21,7 @@ import {
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
 import { download, translateTitle } from "../../app/utils";
-// The picture editor pulls in `react-avatar-editor`, and it is only reachable
-// through the "Update picture" button — so it is fetched on that click rather
-// than at boot, the same way TextItemInput defers TipTap.
-const ProfilePictureModalContent = lazy(() =>
-  import("../../components/ProfilePictureModal/ProfilePictureModal").then(
-    (m) => ({ default: m.ProfilePictureModalContent })
-  )
-);
+import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
 import {
   Skeleton,
   SkeletonContainer,
@@ -55,7 +48,6 @@ import {
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
 import { useRef } from "preact/hooks";
-import { lazy, Suspense } from "preact/compat";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
@@ -273,36 +265,13 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleUploadPicture = () => {
-    const modalId = state.modals.openModal({
-      title: { key: "update-picture", defaultValue: "Update picture" },
-      content: () => (
-        <Suspense
-          fallback={
-            <SkeletonContainer
-              label={t("loading-picture-editor", {
-                defaultValue: "Loading the picture editor…",
-              })}
-            >
-              <Skeleton width="100%" height="16rem" radius="0.625rem" />
-            </SkeletonContainer>
-          }
-        >
-          <ProfilePictureModalContent
-            onClose={() => state.modals.closeModal(modalId)}
-            onUpload={async (file) => {
-              isUploadingPicture.value = true;
-              try {
-                await login.uploadProfilePicture(file);
-              } catch (error) {
-                console.error("Failed to upload profile picture.", error);
-                throw error;
-              } finally {
-                isUploadingPicture.value = false;
-              }
-            }}
-          />
-        </Suspense>
-      ),
+    openProfilePictureModal({
+      modals: state.modals,
+      login,
+      t,
+      onUploadingChange: (uploading) => {
+        isUploadingPicture.value = uploading;
+      },
     });
   };
 

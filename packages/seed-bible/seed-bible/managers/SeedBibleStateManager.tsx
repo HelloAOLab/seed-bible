@@ -22,9 +22,16 @@ import {
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import {
   PROFILE_PANE_ID,
+  ProfileBackButton,
   ProfilePane,
   ProfilePaneTitle,
 } from "../components/ProfilePane/ProfilePane";
+import {
+  EDIT_PROFILE_PANE_ID,
+  EditProfilePane,
+  EditProfilePaneTitle,
+} from "../components/ProfilePane/EditProfilePane";
+import { openProfilePictureModal } from "../components/ProfilePictureModal/openProfilePictureModal";
 import {
   YOUR_CONTENT_PANE_ID,
   YourContentPane,
@@ -420,6 +427,13 @@ export interface SeedBibleState {
   /** Closes the Profile screen (clears `profile` from the URL). */
   closeProfile: () => void;
 
+  /** True when the "Edit profile" screen is showing. */
+  isEditProfileOpen: ReadonlySignal<boolean>;
+  /** Opens "Edit profile" (reflected in the URL as `?edit-profile=open`). */
+  openEditProfile: () => void;
+  /** Closes "Edit profile" (clears `edit-profile` from the URL). */
+  closeEditProfile: () => void;
+
   /** True when the Terms of Service modal is open. */
   isTermsOpen: ReadonlySignal<boolean>;
   /** Opens the Terms of Service modal (reflected in the URL as `?terms=open`). */
@@ -701,6 +715,21 @@ export function createSeedBibleState(
     profileOpen.value = false;
   };
 
+  // "Edit profile", reached from the Profile screen. Kept out of SSR for the
+  // same reason as Profile above: it renders the signed-in account.
+  const editProfileOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("edit-profile") === "open"
+  );
+  const isEditProfileOpen = computed(() => editProfileOpen.value);
+  const openEditProfile = () => {
+    editProfileOpen.value = true;
+  };
+  const closeEditProfile = () => {
+    editProfileOpen.value = false;
+  };
+
   navigation.syncSignalsToUrl({
     profile: {
       get value() {
@@ -716,6 +745,14 @@ export function createSeedBibleState(
       },
       set value(newValue) {
         contentOpen.value = newValue === "open";
+      },
+    },
+    "edit-profile": {
+      get value() {
+        return editProfileOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        editProfileOpen.value = newValue === "open";
       },
     },
     terms: {
@@ -2118,6 +2155,9 @@ export function createSeedBibleState(
     isProfileOpen,
     openProfile,
     closeProfile,
+    isEditProfileOpen,
+    openEditProfile,
+    closeEditProfile,
     isTermsOpen,
     openTerms,
     closeTerms,
@@ -2293,10 +2333,23 @@ export function createSeedBibleState(
   // The Profile screen, wired the same way as Today above: a fullscreen pane
   // mirrored from `isProfileOpen`, with the thunks hoisted so their identity
   // stays stable across reopens.
-  const openAccountSettingsFromProfile = () => {
-    closeProfile();
-    sidebar.openSidebar();
-    sidebar.openSettingsToView("account");
+  //
+  // Opening any fullscreen pane closes the others, so the screens reached from
+  // Profile ("Edit profile", "Your content") each carry a back button that
+  // reopens it rather than relying on a pane stack.
+  const backToProfile = () => {
+    closeEditProfile();
+    closeYourContent();
+    openProfile();
+  };
+  const renderProfileBackButton = () => (
+    <ProfileBackButton onBack={backToProfile} />
+  );
+  const editProfilePicture = () => {
+    // Destructured for the same reason as the toast below: the translation
+    // lint rules only recognise calls made through a bare `t`.
+    const { t } = i18n;
+    openProfilePictureModal({ modals, login, t });
   };
   const openReadingPlansFromProfile = () => {
     const readingState = selectedTab.peek()?.readingState;
@@ -2318,7 +2371,8 @@ export function createSeedBibleState(
   const renderProfilePane = () => (
     <ProfilePane
       state={state}
-      onOpenAccountSettings={openAccountSettingsFromProfile}
+      onEditProfile={openEditProfile}
+      onEditPicture={editProfilePicture}
       onOpenReadingPlans={openReadingPlansFromProfile}
       onOpenYourContent={openYourContent}
     />
@@ -2344,6 +2398,36 @@ export function createSeedBibleState(
     );
     if (!paneOpen && isProfileOpen.peek()) {
       closeProfile();
+    }
+  });
+
+  // "Edit profile", reached from the pencil on the profile card or from the
+  // name itself.
+  const renderEditProfilePane = () => (
+    <EditProfilePane state={state} onEditPicture={editProfilePicture} />
+  );
+  const renderEditProfilePaneTitle = () => <EditProfilePaneTitle />;
+
+  effect(() => {
+    if (isEditProfileOpen.value) {
+      panes.openPane({
+        id: EDIT_PROFILE_PANE_ID,
+        placement: "fullscreen",
+        title: renderEditProfilePaneTitle,
+        leading: renderProfileBackButton,
+        component: renderEditProfilePane,
+      });
+    } else {
+      panes.closePane(EDIT_PROFILE_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === EDIT_PROFILE_PANE_ID
+    );
+    if (!paneOpen && isEditProfileOpen.peek()) {
+      closeEditProfile();
     }
   });
 
@@ -2383,6 +2467,7 @@ export function createSeedBibleState(
         id: YOUR_CONTENT_PANE_ID,
         placement: "fullscreen",
         title: renderYourContentPaneTitle,
+        leading: renderProfileBackButton,
         component: renderYourContentPane,
       });
     } else {

@@ -19,6 +19,9 @@ interface StateOptions {
   userId?: string | null;
   name?: string | null;
   pictureUrl?: string | null;
+  email?: string | null;
+  location?: string | null;
+  description?: string | null;
   plansEnabled?: boolean;
   /** Plan metadata, full plans and progress, as the manager would hold them. */
   plans?: {
@@ -116,6 +119,9 @@ function createState(options: StateOptions = {}) {
     userId = "user-1",
     name = "Craig Anders",
     pictureUrl = null,
+    email = "craig@example.org",
+    location = null,
+    description = null,
     plansEnabled = true,
   } = options;
 
@@ -126,8 +132,11 @@ function createState(options: StateOptions = {}) {
     login: {
       userId: signal(userId) as Signal<string | null>,
       profile: signal(
-        name == null && pictureUrl == null ? null : { name, pictureUrl }
+        name == null && pictureUrl == null
+          ? null
+          : { name, pictureUrl, location, description }
       ),
+      userInfo: signal(email == null ? null : { id: userId, email }),
       logout,
       login,
     },
@@ -148,14 +157,16 @@ function createState(options: StateOptions = {}) {
 
 describe("ProfilePane", () => {
   let container: HTMLDivElement;
-  let onOpenAccountSettings: Mock<() => void>;
+  let onEditProfile: Mock<() => void>;
+  let onEditPicture: Mock<() => void>;
   let onOpenReadingPlans: Mock<() => void>;
   let onOpenYourContent: Mock<() => void>;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    onOpenAccountSettings = vi.fn(() => {});
+    onEditProfile = vi.fn(() => {});
+    onEditPicture = vi.fn(() => {});
     onOpenReadingPlans = vi.fn(() => {});
     onOpenYourContent = vi.fn(() => {});
   });
@@ -170,7 +181,8 @@ describe("ProfilePane", () => {
       render(
         <ProfilePane
           state={state}
-          onOpenAccountSettings={onOpenAccountSettings}
+          onEditProfile={onEditProfile}
+          onEditPicture={onEditPicture}
           onOpenReadingPlans={onOpenReadingPlans}
           onOpenYourContent={onOpenYourContent}
         />,
@@ -186,6 +198,54 @@ describe("ProfilePane", () => {
     expect(container.querySelector(".sb-profile-name")?.textContent).toBe(
       "Craig Anders"
     );
+  });
+
+  it("shows the user's email above their name", () => {
+    const { state } = createState({ email: "craig@example.org" });
+    renderPane(state);
+
+    expect(container.querySelector(".sb-profile-email")?.textContent).toBe(
+      "craig@example.org"
+    );
+    // Order matters: the email is small print introducing the name below it.
+    const contact = container.querySelector(".sb-profile-contact")!;
+    const name = container.querySelector(".sb-profile-name")!;
+    expect(
+      contact.compareDocumentPosition(name) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("shows the location beside the email when the user has set one", () => {
+    const { state } = createState({ location: "Austin, TX" });
+    renderPane(state);
+
+    const location = container.querySelector(".sb-profile-location");
+    expect(location?.textContent).toContain("Austin, TX");
+    // The pin icon marks it as a location rather than more of the email.
+    expect(location?.textContent).toContain("location_on");
+  });
+
+  it("leaves out the location line when the user has not set one", () => {
+    const { state } = createState({ location: null });
+    renderPane(state);
+
+    expect(container.querySelector(".sb-profile-location")).toBeNull();
+    expect(container.querySelector(".sb-profile-email")).not.toBeNull();
+  });
+
+  it("shows the description below the name", () => {
+    const { state } = createState({ description: "Reading through Psalms." });
+    renderPane(state);
+
+    const description = container.querySelector(".sb-profile-description");
+    expect(description?.textContent).toContain("Reading through Psalms.");
+  });
+
+  it("leaves out the description when the user has not set one", () => {
+    const { state } = createState({ description: null });
+    renderPane(state);
+
+    expect(container.querySelector(".sb-profile-description")).toBeNull();
   });
 
   it("falls back to initials when the user has no profile picture", () => {
@@ -217,33 +277,86 @@ describe("ProfilePane", () => {
     );
   });
 
-  it("routes the account settings button to the caller", () => {
-    const { state } = createState();
+  // The badge says what tapping the avatar will do: add a first picture, or
+  // change the one that is already there.
+  it("badges the avatar with a plus when there is no picture yet", () => {
+    const { state } = createState({ pictureUrl: null });
     renderPane(state);
 
-    const button = container.querySelector(
-      ".sb-profile-account-button"
-    ) as HTMLButtonElement;
-    expect(button.textContent).toContain("Account settings");
-    act(() => {
-      button.click();
-    });
-
-    expect(onOpenAccountSettings).toHaveBeenCalledTimes(1);
+    expect(
+      container.querySelector(".sb-profile-avatar-edit")?.textContent
+    ).toBe("add");
   });
 
-  // The picture editor lives in account settings, so "+" goes there too.
-  it("routes the avatar edit badge to account settings", () => {
+  it("badges the avatar with a pencil once a picture is set", () => {
+    const { state } = createState({ pictureUrl: "https://example.org/me.png" });
+    renderPane(state);
+
+    expect(
+      container.querySelector(".sb-profile-avatar-edit")?.textContent
+    ).toBe("edit");
+  });
+
+  it("opens the picture cropper straight from the avatar", () => {
     const { state } = createState();
     renderPane(state);
 
     act(() => {
       (
-        container.querySelector(".sb-profile-avatar-edit") as HTMLButtonElement
+        container.querySelector(
+          ".sb-profile-avatar-button"
+        ) as HTMLButtonElement
       ).click();
     });
 
-    expect(onOpenAccountSettings).toHaveBeenCalledTimes(1);
+    expect(onEditPicture).toHaveBeenCalledTimes(1);
+    // No detour through another screen on the way to the cropper.
+    expect(onEditProfile).not.toHaveBeenCalled();
+  });
+
+  it("opens the edit screen from the pencil on the profile card", () => {
+    const { state } = createState();
+    renderPane(state);
+
+    act(() => {
+      (
+        container.querySelector(".sb-profile-card-edit") as HTMLButtonElement
+      ).click();
+    });
+
+    expect(onEditProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens the edit screen from the name too", () => {
+    const { state } = createState();
+    renderPane(state);
+
+    act(() => {
+      (
+        container.querySelector(".sb-profile-name-button") as HTMLButtonElement
+      ).click();
+    });
+
+    expect(onEditProfile).toHaveBeenCalledTimes(1);
+  });
+
+  // The labelled button was replaced by the pencil above.
+  it("no longer offers an account settings button", () => {
+    const { state } = createState();
+    renderPane(state);
+
+    expect(container.querySelector(".sb-profile-account-button")).toBeNull();
+  });
+
+  it("opens the your content screen from its row", () => {
+    const { state } = createState();
+    renderPane(state);
+
+    act(() => {
+      (container.querySelector(".sb-profile-row") as HTMLButtonElement).click();
+    });
+
+    expect(onOpenYourContent).toHaveBeenCalledTimes(1);
   });
 
   it("signs the user out from the log out button", () => {
@@ -262,11 +375,15 @@ describe("ProfilePane", () => {
   });
 
   it("prompts a signed-out visitor to log in instead of showing a profile", () => {
-    const { state, login } = createState({ userId: null, name: null });
+    const { state, login } = createState({
+      userId: null,
+      name: null,
+      email: null,
+    });
     renderPane(state);
 
     expect(container.querySelector(".sb-profile-logout")).toBeNull();
-    expect(container.querySelector(".sb-profile-account-button")).toBeNull();
+    expect(container.querySelector(".sb-profile-card-edit")).toBeNull();
 
     const button = container.querySelector(
       ".sb-profile-signin"

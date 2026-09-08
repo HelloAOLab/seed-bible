@@ -779,7 +779,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
 
   const isTodayOpen = useComputed(() => props.state.today.isOpen.value);
-  const isProfileOpen = useComputed(() => props.state.isProfileOpen.value);
+  // The Profile screen and the two screens reached from it all count as "You".
+  const isProfileOpen = useComputed(
+    () =>
+      props.state.isProfileOpen.value ||
+      props.state.isEditProfileOpen.value ||
+      props.state.isYourContentOpen.value
+  );
   const activeMobileTab = useComputed<
     | "today"
     | "you"
@@ -793,9 +799,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     if (isMoreMenuOpen.value) return "more";
     if (sidebar.isSearchPanelOpen.value) return "search";
     if (isProfileOpen.value) return "you";
-    // Account settings is reached from the Profile screen, so keep "You" lit
-    // while it is open rather than dropping the highlight mid-journey.
-    if (sidebar.isSettingsOpen.value) return "you";
+    if (sidebar.isSettingsOpen.value) return "none";
     if (isBookmarksViewOpen.value) {
       // Bookmarks is always a top-level tab, so highlight it whenever its
       // view is open.

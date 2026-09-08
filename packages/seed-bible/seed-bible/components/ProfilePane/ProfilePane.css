@@ -68,6 +68,8 @@
  * narrower than the rows, which is what centres the avatar in the screen.
  */
 .sb-profile-identity {
+  /* Positioned so the edit pencil can sit in its corner. */
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -76,11 +78,6 @@
   padding: 24px;
   border-radius: 24px;
   background: var(--sb-profile-surface);
-}
-
-.sb-profile-avatar-wrapper {
-  position: relative;
-  display: inline-flex;
 }
 
 .sb-profile-avatar {
@@ -102,10 +99,10 @@
   user-select: none;
 }
 
-/* The "+" affordance that opens the picture picker. */
+/* The badge on the avatar: a pencil when a picture is set, "+" when not. */
 .sb-profile-avatar-edit {
   position: absolute;
-  right: -2px;
+  inset-inline-end: -2px;
   bottom: 0;
   display: flex;
   align-items: center;
@@ -131,29 +128,6 @@
   line-height: 1.2;
   text-align: center;
   overflow-wrap: anywhere;
-}
-
-.sb-profile-account-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: 1px solid var(--sb-profile-border);
-  border-radius: 999px;
-  background: var(--sb-reader-background);
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.sb-profile-account-button:hover {
-  background: var(--sb-profile-surface);
-}
-
-.sb-profile-account-button .material-symbols-outlined {
-  font-size: 20px;
 }
 
 /* -------------------------------------------------------------- plans card */
@@ -346,4 +320,149 @@
   color: var(--sb-profile-muted);
   font-size: 0.875rem;
   text-align: center;
+}
+
+/*
+ * Logical inset: top-right under LTR, top-left under RTL, without a separate
+ * rule for each direction.
+ */
+.sb-profile-card-edit {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sb-profile-muted);
+  cursor: pointer;
+}
+
+.sb-profile-card-edit:hover {
+  background: var(--sb-profile-border);
+  color: var(--sb-font-color);
+}
+
+.sb-profile-card-edit .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-profile-avatar-button {
+  position: relative;
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* Email, and the location beside it when one is set. */
+.sb-profile-contact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0;
+  color: var(--sb-profile-muted);
+  font-size: 0.8125rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.sb-profile-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sb-profile-location .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* The name doubles as a way in to the edit screen, so it is a button. */
+.sb-profile-name-button {
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.sb-profile-description {
+  color: var(--sb-profile-muted);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------ edit profile */
+
+.sb-profile-pane-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-profile-field-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-profile-field-optional {
+  color: var(--sb-profile-muted);
+  font-weight: 400;
+}
+
+.sb-profile-field-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--sb-profile-border);
+  border-radius: 12px;
+  background: var(--sb-reader-background);
+  box-sizing: border-box;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.sb-profile-field-textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.sb-profile-save {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--sb-profile-accent);
+  color: var(--sb-primary-font-color);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-profile-save:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
