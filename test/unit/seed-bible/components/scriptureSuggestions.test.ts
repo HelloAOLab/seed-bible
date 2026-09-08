@@ -81,15 +81,20 @@ describe("computeSuggestions", () => {
     ]);
   });
 
-  it("resolves chapter-only input with space, period, or colon", () => {
+  it("resolves chapter-only input with a space or a period", () => {
     // A bare "1" prefix-matches every Genesis chapter that starts with 1.
     const genesisChapter1 = shape("Gen 1");
     expect(genesisChapter1[0]?.id).toBe("GEN");
     expect(genesisChapter1[0]?.labels).toContain("1");
     expect(shape("Gen.1")).toEqual(genesisChapter1);
-    expect(shape("Gen:1")).toEqual(genesisChapter1);
     expect(shape("gen.1")).toEqual(genesisChapter1);
-    expect(shape("gen:1")).toEqual(genesisChapter1);
+  });
+
+  it("offers nothing for a colon between the book and the chapter", () => {
+    // "Gen:1" is not our syntax, so it matches no book name at all.
+    expect(shape("Gen:1")).toEqual([]);
+    expect(shape("gen:1")).toEqual([]);
+    expect(shape("Gen: 1")).toEqual([]);
   });
 
   it("resolves colon, European period, and compact period verse forms", () => {

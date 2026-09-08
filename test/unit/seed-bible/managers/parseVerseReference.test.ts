@@ -202,9 +202,17 @@ describe("parseSingleVerseReference", () => {
     expect(parseSingleVerseReference("Genesis 1", BOOKS)).toEqual(genesis1);
     expect(parseSingleVerseReference("Gen 1", BOOKS)).toEqual(genesis1);
     expect(parseSingleVerseReference("Gen.1", BOOKS)).toEqual(genesis1);
-    expect(parseSingleVerseReference("Gen:1", BOOKS)).toEqual(genesis1);
     expect(parseSingleVerseReference("gen.1", BOOKS)).toEqual(genesis1);
-    expect(parseSingleVerseReference("gen:1", BOOKS)).toEqual(genesis1);
+  });
+
+  it("does not accept a colon between the book and the chapter", () => {
+    expect(parseSingleVerseReference("Gen:1", BOOKS)).toBeNull();
+    expect(parseSingleVerseReference("gen:1", BOOKS)).toBeNull();
+    expect(parseSingleVerseReference("Gen:1:1", BOOKS)).toBeNull();
+    // getBookId() strips trailing punctuation so "Gen." resolves; the colon
+    // must not sneak a book name through that same path.
+    expect(parseSingleVerseReference("Gen: 1", BOOKS)).toBeNull();
+    expect(parseSingleVerseReference("Mark: 4", BOOKS)).toBeNull();
   });
 
   it("parses a whole-chapter range (verses omitted)", () => {

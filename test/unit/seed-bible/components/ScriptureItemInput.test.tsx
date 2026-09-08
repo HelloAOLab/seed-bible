@@ -173,7 +173,7 @@ describe("ScriptureItemInput", () => {
     expect(container.querySelector(".sb-scripture-suggestions")).toBeNull();
   });
 
-  it.each(["Gen 1", "Gen.1", "Gen:1"])(
+  it.each(["Gen 1", "Gen.1", "Gen. 1"])(
     "submits %s as Genesis chapter 1",
     (value) => {
       const onAdd = vi.fn();

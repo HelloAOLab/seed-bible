@@ -10,7 +10,7 @@ const genesis11 = {
 };
 
 describe("splitTypedVerseReference", () => {
-  it("accepts colon, European period, and compact period forms", () => {
+  it("accepts the colon and period chapter-verse separators", () => {
     expect(splitTypedVerseReference("Gen 1:1")).toMatchObject(genesis11);
     expect(splitTypedVerseReference("Gen 1.1")).toMatchObject(genesis11);
     expect(splitTypedVerseReference("Gen.1.1")).toMatchObject(genesis11);
@@ -80,26 +80,32 @@ describe("splitTypedVerseReference", () => {
     });
   });
 
-  it("parses chapter-only references with space, period, or colon", () => {
+  it("parses chapter-only references with a space or a period", () => {
     const genesis1 = { bookQuery: "Gen", chapterStr: "1" };
     expect(splitTypedVerseReference("Gen 1")).toEqual(genesis1);
     expect(splitTypedVerseReference("Gen.1")).toEqual(genesis1);
-    expect(splitTypedVerseReference("Gen:1")).toEqual(genesis1);
     expect(splitTypedVerseReference("gen.1")).toEqual({
-      bookQuery: "gen",
-      chapterStr: "1",
-    });
-    expect(splitTypedVerseReference("gen:1")).toEqual({
       bookQuery: "gen",
       chapterStr: "1",
     });
   });
 
+  it("does not join the book to the chapter with a colon", () => {
+    // The colon separates chapter from verse ("Gen 1:1"); between book and
+    // chapter it is not part of the syntax at all.
+    expect(splitTypedVerseReference("Gen:1")).toBeNull();
+    expect(splitTypedVerseReference("gen:1")).toBeNull();
+    expect(splitTypedVerseReference("Gen: 1")).toBeNull();
+    expect(splitTypedVerseReference("Gen:1:1")).toBeNull();
+    expect(splitTypedVerseReference("Mark: 3 things")).toBeNull();
+  });
+
   it("keeps a book-only query so suggestions can still match", () => {
     expect(splitTypedVerseReference("Phil")).toEqual({ bookQuery: "Phil" });
-    // Trailing abbreviation punctuation is not part of the name.
+    // A trailing abbreviation period is not part of the name. A colon is not
+    // abbreviation punctuation, so "Gen:" is rejected outright.
     expect(splitTypedVerseReference("Gen.")).toEqual({ bookQuery: "Gen" });
-    expect(splitTypedVerseReference("Gen:")).toEqual({ bookQuery: "Gen" });
+    expect(splitTypedVerseReference("Gen:")).toBeNull();
   });
 
   it("returns null for empty input or a number with no book letters", () => {

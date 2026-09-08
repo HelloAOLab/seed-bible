@@ -10,21 +10,14 @@ export type ReferenceTail = {
 };
 
 /**
- * Joins the book name to the chapter number in a deliberately typed reference
- * (playlist / reading-plan input): a space ("Gen 1"), a period ("Gen.1"), a
- * colon ("Gen:1"), or a mix ("Gen. 1:1").
+ * Joins the book name to the chapter number: a space ("Gen 1"), a period
+ * ("Gen.1"), or a mix ("Gen. 1").
  *
- * Do not use this in free-prose scanners. A colon after a book name is often
- * a list header ("Mark: 3 things stood out"), not a chapter number.
+ * The colon is deliberately absent. It joins chapter to verse ("Mark 3:16"),
+ * never book to chapter, so a list header like "Mark: 3 things stood out" is
+ * not read as Mark chapter 3.
  */
-export const BOOK_CHAPTER_JOIN_PATTERN = "[\\s.:]+";
-
-/**
- * Joins the book name to the chapter number in free prose (chat, footnotes,
- * annotation bodies). Space or period only — the colon stays a chapter–verse
- * separator ("Mark 3:16"), never a book–chapter joiner.
- */
-export const PROSE_BOOK_CHAPTER_JOIN_PATTERN = "[\\s.]+";
+export const BOOK_CHAPTER_JOIN_PATTERN = "[\\s.]+";
 
 /**
  * Chapter, optional verse, optional range. `:` and `.` are interchangeable, so
@@ -49,7 +42,7 @@ const TYPED_REFERENCE = new RegExp(
  *   "Gen.1.1"   period after the book + period
  *   "Gen. 1:1"  abbreviation period, then a normal reference
  *   "Gen.1:1"   period after the book + colon
- * Chapter-only: "Gen 1", "Gen.1", "Gen:1"
+ * Chapter-only: "Gen 1", "Gen.1"
  */
 export type SplitTypedReference = {
   bookQuery: string;
@@ -61,11 +54,12 @@ export type SplitTypedReference = {
 
 /**
  * Splits a human-typed scripture reference into the book portion and the
- * numeric groups. Returns `null` when the string is empty or has no letters
- * in the book portion (so a bare "1.1" is not treated as a numbered book).
+ * numeric groups. Returns `null` when the string is empty, has no letters in
+ * the book portion (so a bare "1.1" is not treated as a numbered book), or
+ * uses a colon between the book and the chapter ("Gen:1").
  *
- * When no chapter has been typed yet, trailing punctuation is stripped so an
- * abbreviation like "Gen." or "Gen:" still matches Genesis.
+ * When no chapter has been typed yet, a trailing abbreviation period is
+ * stripped so "Gen." still matches Genesis.
  */
 export function splitTypedVerseReference(
   input: string
@@ -81,8 +75,17 @@ export function splitTypedVerseReference(
   }
 
   const chapterStr = match[2];
-  const bookQuery = chapterStr ? match[1] : match[1].replace(/[.:\s]+$/u, "");
+  const bookQuery = chapterStr ? match[1] : match[1].replace(/[.\s]+$/u, "");
   if (!bookQuery || !/\p{L}/u.test(bookQuery)) {
+    return null;
+  }
+
+  // No book name contains a colon, so one left in the book portion means the
+  // colon was being used to join book to chapter ("Gen:1", "Mark: 3 things").
+  // That is not the syntax. Without this the English-name fallback in
+  // getBookId() — which strips trailing punctuation so "Gen." resolves — would
+  // quietly accept "Gen:" and "Mark:" as book names.
+  if (bookQuery.includes(":")) {
     return null;
   }
 
