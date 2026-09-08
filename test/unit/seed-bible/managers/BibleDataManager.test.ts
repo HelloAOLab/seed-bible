@@ -20,6 +20,7 @@ import {
   EXAMPLE_API_ENDPOINT,
   bsbBooks,
   createResponse,
+  makeAudioTimings,
   makeChapter,
   nivBooks,
   translations,
@@ -236,6 +237,33 @@ describe("createBibleDataManager", () => {
     );
     expect(webGetMock).toHaveBeenCalledWith(
       makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/1.json"),
+      expect.anything()
+    );
+  });
+
+  it("getAudioTimings() resolves the link against the translation's endpoint", async () => {
+    const altNiv = createAltNivTranslation();
+    const timingsPayload = makeAudioTimings("NIV", "MAT", 1, "david");
+
+    const responses: WebResponseMap = {
+      [makeEndpointUrl(ALT_ENDPOINT, "api/available_translations.json")]:
+        createResponse({ translations: [altNiv] }),
+      [makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/1.david.audioTimings.json")]:
+        createResponse(timingsPayload),
+    };
+
+    setWebResponses(responses);
+    const manager = createManager();
+    await manager.getTranslations(ALT_ENDPOINT);
+
+    const result = await manager.getAudioTimings(
+      "NIV",
+      "/api/NIV/MAT/1.david.audioTimings.json"
+    );
+
+    expect(result).toEqual(timingsPayload);
+    expect(webGetMock).toHaveBeenCalledWith(
+      makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/1.david.audioTimings.json"),
       expect.anything()
     );
   });
@@ -606,6 +634,14 @@ describe("scanVerseReferencesInText()", () => {
     [
       "Hab.3.8—15",
       { ref: { book: "HAB", chapter: 3, verse: 8, endVerse: 15 } },
+    ] as const,
+    [
+      "Luke 23:50-56",
+      { ref: { book: "LUK", chapter: 23, verse: 50, endVerse: 56 } },
+    ] as const,
+    [
+      "Mark 15:42–47",
+      { ref: { book: "MRK", chapter: 15, verse: 42, endVerse: 47 } },
     ] as const,
   ];
 
