@@ -248,27 +248,37 @@ describe("ProfilePane", () => {
     expect(container.querySelector(".sb-profile-description")).toBeNull();
   });
 
-  it("offers no Read more for a description that fits", () => {
+  it("offers no Read more for a description that fits on its line", () => {
     const { state } = createState({ description: "Reading through Psalms." });
     renderPane(state);
 
     expect(container.querySelector(".sb-expandable-text-toggle")).toBeNull();
   });
 
-  it("offers Read more only once the description runs long", () => {
-    const description =
-      "Reading through the Psalms with my house church this year, a psalm each morning before work and one together on Sunday evenings, plus whatever the kids are memorising that week.";
-    const { state } = createState({ description });
+  it("collapses a description written as several lines to its first", () => {
+    // Whether a single line is too wide is a measurement, and jsdom has no
+    // layout to measure (see ExpandableText.test.tsx). A description with
+    // real line breaks needs no measurement, so it is what exercises the
+    // wiring here.
+    const { state } = createState({
+      description: "Reading through Psalms.\nOne a morning before work.",
+    });
     renderPane(state);
 
-    const toggle = container.querySelector(".sb-expandable-text-toggle");
-    expect(toggle).not.toBeNull();
+    const description = container.querySelector(".sb-profile-description");
+    expect(description?.textContent).toContain("Reading through Psalms.");
+    expect(description?.textContent).not.toContain("before work");
 
-    const shown = container.querySelector(
-      ".sb-expandable-text-body"
-    )?.textContent;
-    expect(shown!.length).toBeLessThan(description.length);
-    expect(description.startsWith(shown!)).toBe(true);
+    const toggle = container.querySelector(
+      ".sb-expandable-text-toggle"
+    ) as HTMLButtonElement;
+    expect(toggle.textContent).toBe("Read more");
+
+    act(() => {
+      toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(description?.textContent).toContain("before work");
   });
 
   it("falls back to initials when the user has no profile picture", () => {

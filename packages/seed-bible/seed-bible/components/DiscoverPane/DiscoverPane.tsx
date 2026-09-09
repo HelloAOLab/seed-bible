@@ -401,11 +401,6 @@ function PlaylistSection({
                 {playlist.description ? (
                   <ExpandableText
                     className="sb-discover-item-description"
-                    // Tighter than the shared default: these are list rows
-                    // next to a thumbnail and a play button, so a description
-                    // that wraps past a couple of lines pushes the rest of
-                    // the list off screen.
-                    maxLength={80}
                     readMoreLabel={t("read-more", {
                       defaultValue: "Read more",
                     })}

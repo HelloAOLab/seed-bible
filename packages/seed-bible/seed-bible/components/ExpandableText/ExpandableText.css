@@ -3,21 +3,44 @@
   width: 100%;
 }
 
+/*
+ * Inline-level, so the surrounding `text-align` positions the whole
+ * `text... Read more` group — centred in the profile card, start-aligned in a
+ * Discover row — in the collapsed state as well as the expanded one. Expanded
+ * it stays plain inline content, so the text wraps and "Read less" flows in
+ * after the last word.
+ */
+.sb-expandable-text--clamped .sb-expandable-text-line {
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .sb-expandable-text-body {
+  min-width: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 /*
- * Collapsed and expanded both lay out as ordinary inline text: the text is
- * cut to length in the component, so nothing here has to clip it. That is
- * what keeps the surrounding `text-align` working in both states — the
- * collapsed row used to be a flex container, whose `justify-content` default
- * silently overrode a centred `text-align` and pinned the text and its
- * "Read more" to the start edge.
+ * The clip that the overflow measurement reads: the line is held to one row
+ * and allowed to shrink, so `scrollWidth` exceeds `clientWidth` by exactly
+ * the amount that does not fit.
  */
+.sb-expandable-text--clamped .sb-expandable-text-body {
+  flex: 0 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sb-expandable-text-ellipsis {
+  flex: 0 0 auto;
+}
+
 .sb-expandable-text-toggle {
   all: unset;
+  flex: 0 0 auto;
   margin-inline-start: 0.25em;
   color: var(--sb-primary-color);
   font: inherit;
