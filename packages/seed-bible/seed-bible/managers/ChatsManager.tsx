@@ -23,22 +23,26 @@ import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import { type i18n } from "i18next";
 import type { AIProviderFunctionTool } from "./AIManager";
-import {
-  getProfileConfigValue,
-  saveProfileConfigValue,
-} from "./ProfileConfigSync";
+import { saveProfileConfigValue } from "./ProfileConfigSync";
 
 /** Profile / localConfig key for the optional AI-default Bible translation. */
 export const PROFILE_AI_BIBLE_TRANSLATION_ID = "aiBibleTranslationId";
 
 function readAiBibleTranslationId(login: LoginManager): string | null {
-  const fromProfile = getProfileConfigValue(
-    login.profile.value,
-    PROFILE_AI_BIBLE_TRANSLATION_ID
-  );
+  const profileConfig = login.profile.value?.config as
+    | Record<string, unknown>
+    | undefined;
+  // When signed in with a loaded profile, the profile is authoritative —
+  // an explicit clear (null) must not fall back to a stale device-local value
+  // left from pinning while signed out.
+  if (login.userId.value && profileConfig) {
+    const value = profileConfig[PROFILE_AI_BIBLE_TRANSLATION_ID];
+    return typeof value === "string" && value.length > 0 ? value : null;
+  }
   const fromLocal = login.localConfig?.value?.[PROFILE_AI_BIBLE_TRANSLATION_ID];
-  const value = fromProfile ?? fromLocal;
-  return typeof value === "string" && value.length > 0 ? value : null;
+  return typeof fromLocal === "string" && fromLocal.length > 0
+    ? fromLocal
+    : null;
 }
 
 export const chatMessageBaseSchema = z.object({

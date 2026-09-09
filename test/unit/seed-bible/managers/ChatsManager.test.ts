@@ -464,6 +464,28 @@ describe("createChatsManager", () => {
     );
   });
 
+  it("clears the AI default while signed in even when localConfig still holds a stale id", () => {
+    const { loginManager, userId, profile, localConfig } =
+      createLoginManagerMock();
+    userId.value = "user-1";
+    // Pinned while signed out, then signed in with a profile override.
+    localConfig.value = { aiBibleTranslationId: "eng_web" };
+    profile.value = {
+      name: "Alice",
+      config: { aiBibleTranslationId: "eng_esv" },
+    };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    expect(chats.aiBibleTranslationId.value).toBe("eng_esv");
+
+    // "Follow active tab instead" — profile clear must not fall through to
+    // the stale device-local value via `??`.
+    chats.setAiBibleTranslationId(null);
+    expect(chats.aiBibleTranslationId.value).toBeNull();
+    expect(chats.getEffectiveAiBibleTranslationId("eng_kjv")).toBe("eng_kjv");
+    expect(localConfig.value.aiBibleTranslationId).toBe("eng_web");
+  });
+
   it("createLocalSession() exposes an empty unsentDraft for the compose field", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager, mockI18nManager);
