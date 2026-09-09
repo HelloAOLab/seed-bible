@@ -11,6 +11,7 @@
 
 - Tapping your profile picture now opens the picture cropper directly instead of taking you to account settings first, and the badge on it is a pencil once you have a picture rather than always a "+". ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 - "Your content" and "Edit profile" now have a back button that returns you to your profile, instead of only a close button that dropped you back at the reader. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Keep the mobile bottom bar at five tabs — Today, You, Bible, Search, More — now that the profile screen's "You" tab has joined it. Bookmarks was pushed to a sixth tab; it moves into the More menu alongside Tabs, where Chat already lived. `?chatFirst=true` no longer swaps a bottom tab: it keeps Chat in the More menu on mobile, and still keeps it in the labeled toolbar on desktop. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 
 ### 🐛 Fixed
 

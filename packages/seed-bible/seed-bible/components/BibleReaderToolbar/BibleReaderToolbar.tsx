@@ -657,8 +657,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const viewportHeight = props.state.app.viewportHeight;
 
   // Boot-only integration flag — latched from `initialUrl` so later navigation
-  // cannot flip the layout mid-session. Affects mobile bottom tabs and the
-  // desktop/laptop labeled toolbar.
+  // cannot flip the layout mid-session.
+  //
+  // It no longer changes the mobile bottom tabs, which are fixed at five:
+  // Today, You, Bible, Search, More. All it does on mobile now is keep chat
+  // reachable: `applyChatFirstDesktopTools` forces the chat tool visible, so
+  // it appears in the More menu even where chat's own `isVisible` would hide
+  // it for having no providers and no chats. It does not reorder that menu —
+  // the tools there are priority-ordered and chat keeps its own slot. On
+  // desktop/laptop it keeps chat in the labeled toolbar.
   const isChatFirst = readChatFirstFlag(props.state.navigation.initialUrl);
 
   const tools = useComputed(() => {
@@ -720,9 +727,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
-  const hiddenToolIds = new Set(
-    isChatFirst ? ["open-search", "open-chat"] : ["open-search"]
-  );
+  // Search has its own bottom tab, so it is not repeated in the More menu.
+  // Chat is not hidden even under chat-first: the mobile bar is fixed at five
+  // tabs, so the More menu is chat's only home there.
+  const hiddenToolIds = new Set(["open-search"]);
 
   const moreTools = useComputed(() =>
     tools.value.filter(
@@ -731,19 +739,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
-  // Chat-first always shows More so demoted Bookmarks (and Tabs) have a home,
-  // even when no controllable extension tools remain after hiding open-chat.
-  const showMoreMenu = useComputed(
-    () => moreTools.value.length > 0 || isChatFirst
-  );
-
-  // Whether the chat tool is tucked inside the mobile More menu. When it is, its
-  // unread badge is hidden until the menu is opened, so the More tab itself
-  // needs to carry the indicator. When chat is a bottom tab, the tab itself
-  // carries the badge instead.
-  const chatInMoreMenu = useComputed(
-    () =>
-      !isChatFirst && moreTools.value.some((tool) => tool.id === "open-chat")
+  // Whether the chat tool is inside the mobile More menu, which it now always
+  // is when it exists at all. Its unread badge is hidden until the menu is
+  // opened, so the More tab itself has to carry the indicator.
+  const chatInMoreMenu = useComputed(() =>
+    moreTools.value.some((tool) => tool.id === "open-chat")
   );
 
   const verseToolbarTools = useComputed(() => {
@@ -900,37 +900,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       props.state.isYourContentOpen.value
   );
   const activeMobileTab = useComputed<
-    | "today"
-    | "you"
-    | "bible"
-    | "search"
-    | "tabs"
-    | "bookmarks"
-    | "chat"
-    | "more"
-    | "none"
+    "today" | "you" | "bible" | "search" | "more" | "none"
   >(() => {
     if (isMoreMenuOpen.value) return "more";
     if (sidebar.isSearchPanelOpen.value) return "search";
     if (isProfileOpen.value) return "you";
     if (sidebar.isSettingsOpen.value) return "none";
-    if (isChatFirst && sidebar.isChatPanelOpen.value) {
-      return "chat";
-    }
-    if (isBookmarksViewOpen.value) {
-      // Bookmarks is a top-level tab unless chat-first demoted it into More;
-      // highlight it whenever its view is open either way so the user can tell
-      // the drawer is still the bookmarks list.
-      return isChatFirst ? "more" : "bookmarks";
-    }
+    // Chat and Bookmarks are both reached from More, so More stays lit while
+    // either is showing — otherwise nothing in the bar would tell the user
+    // where the panel covering the reader came from.
+    if (sidebar.isChatPanelOpen.value) return "more";
+    if (isBookmarksViewOpen.value) return "more";
     if (isTodayOpen.value) return "today";
     // Some other extension pane is covering the reader (opened from More).
     if (isFullscreenPaneVisible.value) return "more";
     if (sidebar.isMobileOpen.value) {
-      // Tabs is a top-level tab only when there's no overflow. When it lives
-      // inside the More menu, keep nothing highlighted — unless chat-first is
-      // forcing More open for Bookmarks, in which case the same rule applies.
-      return showMoreMenu.value ? "none" : "tabs";
+      // The tabs drawer. Tabs lives in the More menu, and unlike the panels
+      // above this one replaces the reader rather than covering it, so no tab
+      // is a truthful "you are here".
+      return "none";
     }
     return "bible";
   });
@@ -1816,21 +1804,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   };
 
-  // Opens (or closes) the floating chat panel. Used by the Chat bottom tab when
-  // `?chatFirst=true` promotes it off the More menu.
-  const openChatView = () => {
-    isMoreMenuOpen.value = false;
-    if (sidebar.isChatPanelOpen.value) {
-      sidebar.closeChatPanel();
-      return;
-    }
-    panes.closeAll();
-    sidebar.closeSearchPanel();
-    sidebar.closeSettings();
-    sidebar.closeSidebar();
-    sidebar.openChatPanel();
-  };
-
   const bookmarksTabIcon = (filled: boolean) => (
     <svg
       width="24"
@@ -2097,23 +2070,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 />
 
                 <MobileBottomTab
-                  iconName="search"
-                  label={t("search", { defaultValue: "Search" })}
-                  active={activeMobileTab.value === "search"}
-                  onClick={() => {
-                    isMoreMenuOpen.value = false;
-                    panes.closeAll();
-                    // Dismiss the tabs/bookmarks drawer if it's open.
-                    sidebar.closeSidebar();
-                    if (sidebar.isSearchPanelOpen.value) {
-                      sidebar.closeSearchPanel();
-                    } else {
-                      sidebar.openSearchPanel();
-                    }
-                  }}
-                />
-
-                <MobileBottomTab
                   iconNode={
                     <SeedBibleIcon
                       size={24}
@@ -2140,28 +2096,61 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   }}
                 />
 
-                {isChatFirst ? (
-                  <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab">
-                    <button
-                      type="button"
-                      onClick={openChatView}
-                      className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
-                        activeMobileTab.value === "chat"
-                          ? " sb-reader-toolbar-mobile-tab-button-active"
-                          : ""
-                      }`}
-                      aria-label={t("chat", { defaultValue: "Chat" })}
+                <MobileBottomTab
+                  iconName="search"
+                  label={t("search", { defaultValue: "Search" })}
+                  active={activeMobileTab.value === "search"}
+                  onClick={() => {
+                    isMoreMenuOpen.value = false;
+                    panes.closeAll();
+                    // Dismiss the tabs/bookmarks drawer if it's open.
+                    sidebar.closeSidebar();
+                    if (sidebar.isSearchPanelOpen.value) {
+                      sidebar.closeSearchPanel();
+                    } else {
+                      sidebar.openSearchPanel();
+                    }
+                  }}
+                />
+
+                <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
+                  <button
+                    type="button"
+                    ref={moreButtonRef}
+                    onClick={() => {
+                      // Opening the More menu should dismiss whatever else is
+                      // covering the reader — the search bar, the chat panel,
+                      // the settings view, or the tabs/bookmarks drawer — the
+                      // same way the other bottom tabs do. Extension panes are
+                      // left alone, since those are opened *from* this menu.
+                      if (!isMoreMenuOpen.value) {
+                        sidebar.closeSearchPanel();
+                        sidebar.closeChatPanel();
+                        sidebar.closeSettings();
+                        sidebar.closeSidebar();
+                      }
+                      isMoreMenuOpen.value = !isMoreMenuOpen.value;
+                    }}
+                    className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
+                      activeMobileTab.value === "more"
+                        ? " sb-reader-toolbar-mobile-tab-button-active"
+                        : ""
+                    }`}
+                    aria-label={t("more", { defaultValue: "More" })}
+                    aria-expanded={isMoreMenuOpen.value}
+                  >
+                    <span
+                      className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
+                      aria-hidden="true"
                     >
-                      <span
-                        className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
-                        aria-hidden="true"
-                      >
-                        chat_bubble_outline
-                      </span>
-                      <span className="sb-reader-toolbar-mobile-tab-label">
-                        {t("chat", { defaultValue: "Chat" })}
-                      </span>
-                      {unreadChatIndicator.value && (
+                      menu
+                    </span>
+                    <span className="sb-reader-toolbar-mobile-tab-label">
+                      {t("more", { defaultValue: "More" })}
+                    </span>
+                    {chatInMoreMenu.value &&
+                      !isMoreMenuOpen.value &&
+                      unreadChatIndicator.value && (
                         <span
                           className="sb-reader-toolbar-unread-indicator"
                           aria-label={
@@ -2178,7 +2167,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           {unreadChatIndicator.value}
                         </span>
                       )}
-                      {hasTypingInChats.value && (
+                    {chatInMoreMenu.value &&
+                      !isMoreMenuOpen.value &&
+                      hasTypingInChats.value && (
                         <span
                           className="sb-reader-toolbar-typing-indicator"
                           aria-label={t("someone-is-typing", {
@@ -2186,128 +2177,38 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           })}
                         />
                       )}
-                    </button>
-                  </div>
-                ) : (
-                  <MobileBottomTab
-                    iconNode={bookmarksTabIcon(
-                      activeMobileTab.value === "bookmarks"
-                    )}
-                    label={t("bookmarks", { defaultValue: "Bookmarks" })}
-                    active={activeMobileTab.value === "bookmarks"}
-                    onClick={openBookmarksView}
-                  />
-                )}
+                  </button>
 
-                {showMoreMenu.value ? (
-                  <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
-                    <button
-                      type="button"
-                      ref={moreButtonRef}
-                      onClick={() => {
-                        // Opening the More menu should dismiss whatever else is
-                        // covering the reader — the search bar, the chat panel,
-                        // the settings view, or the tabs/bookmarks drawer — the
-                        // same way the other bottom tabs do. Extension panes are
-                        // left alone, since those are opened *from* this menu.
-                        if (!isMoreMenuOpen.value) {
-                          sidebar.closeSearchPanel();
-                          sidebar.closeChatPanel();
-                          sidebar.closeSettings();
-                          sidebar.closeSidebar();
-                        }
-                        isMoreMenuOpen.value = !isMoreMenuOpen.value;
+                  {isMoreMenuOpen.value && (
+                    <MobileMoreMenu
+                      tools={moreTools.value}
+                      unreadChatIndicator={unreadChatIndicator.value}
+                      chatWasMentioned={chats.wasMentioned.value}
+                      hasTypingInChats={hasTypingInChats.value}
+                      pinnedItems={[
+                        {
+                          id: "bookmarks",
+                          label: t("bookmarks", {
+                            defaultValue: "Bookmarks",
+                          }),
+                          iconNode: bookmarksTabIcon(false),
+                          onClick: openBookmarksView,
+                        },
+                        {
+                          id: "tabs",
+                          label: t("tabs", {
+                            defaultValue: "Tabs",
+                          }),
+                          iconNode: <SbTabsIcon />,
+                          onClick: openTabsView,
+                        },
+                      ]}
+                      onClose={() => {
+                        isMoreMenuOpen.value = false;
                       }}
-                      className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
-                        activeMobileTab.value === "more"
-                          ? " sb-reader-toolbar-mobile-tab-button-active"
-                          : ""
-                      }`}
-                      aria-label={t("more", { defaultValue: "More" })}
-                      aria-expanded={isMoreMenuOpen.value}
-                    >
-                      <span
-                        className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
-                        aria-hidden="true"
-                      >
-                        menu
-                      </span>
-                      <span className="sb-reader-toolbar-mobile-tab-label">
-                        {t("more", { defaultValue: "More" })}
-                      </span>
-                      {chatInMoreMenu.value &&
-                        !isMoreMenuOpen.value &&
-                        unreadChatIndicator.value && (
-                          <span
-                            className="sb-reader-toolbar-unread-indicator"
-                            aria-label={
-                              chats.wasMentioned.value
-                                ? t("unread-mention", {
-                                    defaultValue: "Unread mention",
-                                  })
-                                : t("unread-messages", {
-                                    defaultValue: "Unread messages: {{count}}",
-                                    count: unreadChatIndicator.value,
-                                  })
-                            }
-                          >
-                            {unreadChatIndicator.value}
-                          </span>
-                        )}
-                      {chatInMoreMenu.value &&
-                        !isMoreMenuOpen.value &&
-                        hasTypingInChats.value && (
-                          <span
-                            className="sb-reader-toolbar-typing-indicator"
-                            aria-label={t("someone-is-typing", {
-                              defaultValue: "Someone is typing...",
-                            })}
-                          />
-                        )}
-                    </button>
-
-                    {isMoreMenuOpen.value && (
-                      <MobileMoreMenu
-                        tools={moreTools.value}
-                        unreadChatIndicator={unreadChatIndicator.value}
-                        chatWasMentioned={chats.wasMentioned.value}
-                        hasTypingInChats={hasTypingInChats.value}
-                        pinnedItems={[
-                          ...(isChatFirst
-                            ? [
-                                {
-                                  id: "bookmarks",
-                                  label: t("bookmarks", {
-                                    defaultValue: "Bookmarks",
-                                  }),
-                                  iconNode: bookmarksTabIcon(false),
-                                  onClick: openBookmarksView,
-                                },
-                              ]
-                            : []),
-                          {
-                            id: "tabs",
-                            label: t("tabs", {
-                              defaultValue: "Tabs",
-                            }),
-                            iconNode: <SbTabsIcon />,
-                            onClick: openTabsView,
-                          },
-                        ]}
-                        onClose={() => {
-                          isMoreMenuOpen.value = false;
-                        }}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <MobileBottomTab
-                    iconNode={<SbTabsIcon />}
-                    label={t("tabs", { defaultValue: "Tabs" })}
-                    active={activeMobileTab.value === "tabs"}
-                    onClick={openTabsView}
-                  />
-                )}
+                    />
+                  )}
+                </div>
               </>
             ) : (
               tools.value.flatMap((tool) => {
