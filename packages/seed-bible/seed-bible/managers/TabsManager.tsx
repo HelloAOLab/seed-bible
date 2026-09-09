@@ -12,6 +12,7 @@ import {
   parseReadingPath,
   stripBasePath,
 } from "./ReadingUrlPath";
+import { parseStaticPagePath } from "./StaticPagePath";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
@@ -367,6 +368,15 @@ export interface TabsManager {
   selectTab: (tabId: string) => void;
 
   /**
+   * Writes the currently selected tab's reading position to the URL even
+   * while sitting on a static page like "/en/about" — the escape hatch the
+   * tab-focus effect itself uses internally, exposed for anything else that
+   * needs to explicitly leave a static page (e.g. an About-page pane
+   * closing).
+   */
+  leaveStaticPage: () => void;
+
+  /**
    * Applies the tabs saved in `localStorage` by a previous visit, reconciled
    * against the URL the page was opened with.
    *
@@ -550,6 +560,17 @@ export function createTabs(
 
   let storedTabsHydrated = false;
 
+  // True while `hydrateStoredTabs` is swapping the saved tabs in. That swap
+  // changes the selected tab, which is indistinguishable to the tab-focus
+  // effect below from the user picking a different tab — and would therefore
+  // knock a returning visitor off a static page like "/en/about" (see the
+  // guard in `commitSelectedTabToUrl`) purely because they had tabs saved.
+  //
+  // Cleared in a microtask rather than a `finally`: the effect flushes either
+  // during the writes below (unbatched) or when the surrounding `batch()` in
+  // `AppState.hydrateFromStorage` ends, which is after this function returns.
+  let restoringStoredTabs = false;
+
   const hydrateStoredTabs = () => {
     if (storedTabsHydrated) {
       return;
@@ -611,6 +632,10 @@ export function createTabs(
       bootTab.readingState.dispose();
     }
 
+    restoringStoredTabs = true;
+    queueMicrotask(() => {
+      restoringStoredTabs = false;
+    });
     tabs.value = nextTabs;
     selectedTabId.value = restoredSelectedTabId;
   };
@@ -725,13 +750,36 @@ export function createTabs(
    * and on tab switch / mount (replace) — never reactively off the underlying
    * position signals, so one navigation produces exactly one history entry.
    */
-  const commitSelectedTabToUrl = (options: { replace?: boolean } = {}) => {
+  const commitSelectedTabToUrl = (
+    options: { replace?: boolean; leaveStaticPage?: boolean } = {}
+  ) => {
     // Read all signals untracked: `getUrlQueryParams` touches bookId/chapter/
     // translation/extension signals, and this runs inside a signals effect. If
     // those reads were tracked, the effect would re-run on every position
     // change and re-commit, defeating the prescriptive (one-write-per-nav)
     // design.
     untracked(() => {
+      // Never overwrite a static page's own URL (e.g. "/en/about") with the
+      // reading position. This runs unconditionally on mount and on every
+      // UI-language change (see the effects below); without this guard, the
+      // very first hydration of a static page — and any later language
+      // switch while on it — would immediately replace the address bar with
+      // a reading URL, since a reading tab always exists underneath.
+      //
+      // `leaveStaticPage` is the escape hatch: a genuine tab-focus change (the
+      // user picked a different tab, or navigated via search) should win over
+      // this guard and take the user back to the reader — see the tab-focus
+      // effect below, the only caller that ever passes it.
+      if (
+        !options.leaveStaticPage &&
+        parseStaticPagePath(
+          navigation.currentUrl.peek().pathname,
+          navigation.basePath
+        )
+      ) {
+        return;
+      }
+
       const tab = selectedTab.peek();
       const nextQueryParams: Record<string, string | null> =
         tab?.readingState.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
@@ -796,16 +844,28 @@ export function createTabs(
   // a `replace` so the URL reflects the newly-focused tab without adding a
   // history entry. Real navigations within the tab arrive via `onNavigate` and
   // push a single entry each.
+  let hasFocusedTabBefore = false;
   effect(() => {
     const readingState = selectedTab.value?.readingState;
     if (!readingState) {
       return undefined;
     }
 
+    // The first run is the initial mount — must not clobber a freshly loaded
+    // static page's own URL (e.g. "/en/about"), per the guard in
+    // `commitSelectedTabToUrl`. Every later run means the selected tab (or
+    // its content) actually changed after that — the user picked a different
+    // tab, or navigated via search — so it should leave a static page for the
+    // position now being shown instead of leaving it stuck behind the URL.
+    // Restoring the saved tabs is the exception: it is the tail end of mount,
+    // not a navigation, so it must not count as a focus change either.
+    const leaveStaticPage = hasFocusedTabBefore && !restoringStoredTabs;
+
     const dispose = readingState.onNavigate((options) =>
-      commitSelectedTabToUrl(options)
+      commitSelectedTabToUrl({ ...options, leaveStaticPage })
     );
-    commitSelectedTabToUrl({ replace: true });
+    commitSelectedTabToUrl({ replace: true, leaveStaticPage });
+    hasFocusedTabBefore = true;
     return dispose;
   });
 
@@ -1082,6 +1142,17 @@ export function createTabs(
     selectedTabId.value = tabId;
   };
 
+  /**
+   * Writes the currently selected tab's reading position to the URL even
+   * while sitting on a static page like "/en/about" — the escape hatch the
+   * tab-focus effect itself uses internally, exposed for anything else that
+   * needs to explicitly leave a static page (e.g. an About-page pane
+   * closing).
+   */
+  const leaveStaticPage = () => {
+    commitSelectedTabToUrl({ replace: true, leaveStaticPage: true });
+  };
+
   return {
     defaultTranslation,
     tabs,
@@ -1089,6 +1160,7 @@ export function createTabs(
     addTab,
     removeTab,
     selectTab,
+    leaveStaticPage,
     hydrateStoredTabs,
     isRestoringProfileTranslation: () => restoringProfileTranslation,
   };

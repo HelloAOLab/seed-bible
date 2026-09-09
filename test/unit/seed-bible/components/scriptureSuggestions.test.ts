@@ -81,6 +81,63 @@ describe("computeSuggestions", () => {
     ]);
   });
 
+  it("resolves chapter-only input with a space or a period", () => {
+    // A bare "1" prefix-matches every Genesis chapter that starts with 1.
+    const genesisChapter1 = shape("Gen 1");
+    expect(genesisChapter1[0]?.id).toBe("GEN");
+    expect(genesisChapter1[0]?.labels).toContain("1");
+    expect(shape("Gen.1")).toEqual(genesisChapter1);
+    expect(shape("gen.1")).toEqual(genesisChapter1);
+  });
+
+  it("suggests numbered books while only their leading digit is typed", () => {
+    // "1" is not yet a reference, but it is a real prefix of "1 John" and
+    // "1 Corinthians", so the dropdown must not go empty part-way through.
+    const numbered = [
+      book("1JN", "1 John", "1 John", 5, 105),
+      book("1CO", "1 Corinthians", "1 Corinthians", 16, 437),
+      book("2JN", "2 John", "2 John", 1, 13),
+    ];
+    const ids = (input: string) =>
+      computeSuggestions(input, numbered).map((s) => s.book.id);
+
+    expect(ids("1")).toEqual(["1JN", "1CO"]);
+    expect(ids("1 ")).toEqual(["1JN", "1CO"]);
+    expect(ids("2")).toEqual(["2JN"]);
+    expect(ids("1 John 2")).toEqual(["1JN"]);
+    // A bare number with a chapter split off it is still not a book.
+    expect(ids("1.1")).toEqual([]);
+    expect(ids("1:1")).toEqual([]);
+  });
+
+  it("offers nothing for a colon between the book and the chapter", () => {
+    // "Gen:1" is not our syntax, so it matches no book name at all.
+    expect(shape("Gen:1")).toEqual([]);
+    expect(shape("gen:1")).toEqual([]);
+    expect(shape("Gen: 1")).toEqual([]);
+  });
+
+  it("resolves colon, European period, and compact period verse forms", () => {
+    const genesis11 = {
+      id: "GEN",
+      labels: ["1:1"],
+    };
+    expect(shape("Gen 1:1")).toEqual([genesis11]);
+    expect(shape("Gen 1.1")).toEqual([genesis11]);
+    expect(shape("Gen.1.1")).toEqual([genesis11]);
+    expect(shape("Gen. 1.1")).toEqual([genesis11]);
+    expect(shape("gen.1:1")).toEqual([genesis11]);
+  });
+
+  it("keeps matching a book after a trailing abbreviation period", () => {
+    expect(shape("Gen.")).toEqual([
+      {
+        id: "GEN",
+        labels: Array.from({ length: 50 }, (_, i) => String(i + 1)),
+      },
+    ]);
+  });
+
   it("applies single-chapter verse shorthand", () => {
     // Philemon has one chapter, so "Philemon 2" means verse 2 (labelled 1:2).
     expect(computeSuggestions("Philemon 2", BOOKS)).toEqual([

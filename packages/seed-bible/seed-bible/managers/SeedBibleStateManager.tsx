@@ -8,8 +8,7 @@ import {
   type VerseRef,
 } from "../managers/BibleDataManager";
 import {
-  bibleLanguageToUiLocale,
-  uiLocaleForDefaultTranslation,
+  resolveTranslationUiLanguage,
   type BibleReadingState,
 } from "../managers/BibleReadingManager";
 import { buildReadingPath, parseReadingPath } from "../managers/ReadingUrlPath";
@@ -21,6 +20,11 @@ import {
   type TodayPassageTarget,
 } from "../managers/TodayManager";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
+import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
+import {
+  buildStaticPagePath,
+  parseStaticPagePath,
+} from "../managers/StaticPagePath";
 import {
   PROFILE_PANE_ID,
   ProfileBackButton,
@@ -211,6 +215,9 @@ export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
 const APP_META_DESCRIPTION =
   "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans.";
 
+/** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
+export const ABOUT_PANE_ID = "about-page-pane";
+
 /**
  * Derived app-level state and high-level actions used by UI components.
  *
@@ -330,6 +337,9 @@ export interface AppState {
 
   /** The name of the site (used for Open Graph and other social media metadata). */
   siteName: ReadonlySignal<string>;
+
+  /** Whether the current URL is the static "/{lang}/about" page. */
+  isAboutPage: ReadonlySignal<boolean>;
 
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<{ id: number; message: string } | null>;
@@ -1345,6 +1355,21 @@ export function createSeedBibleState(
   }
 
   /**
+   * Whether the current URL is a static, non-reading page (currently just
+   * "/{lang}/about"). Drives the About fullscreen-pane's open/close effect
+   * below and the meta-signal branches further down — a single source of
+   * truth so the rendered content and its title/description/canonical
+   * always agree.
+   */
+  const isAboutPage = computed(
+    () =>
+      parseStaticPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )?.page === "about"
+  );
+
+  /**
    * One-time correction of every `localStorage`-derived value that feeds the
    * first render. See `AppState.hydrateFromStorage`.
    */
@@ -1389,6 +1414,10 @@ export function createSeedBibleState(
     );
 
     const getTitle = () => {
+      if (isAboutPage.value) {
+        return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
+      }
+
       if (!selectedTab.value) {
         return seedBibleTitle;
       }
@@ -1402,6 +1431,16 @@ export function createSeedBibleState(
   const description = computed(() => {
     void i18n.language.value;
     const { t } = i18n;
+
+    if (isAboutPage.value) {
+      return truncateForMeta(
+        t("about-meta-description", {
+          defaultValue:
+            "Seed Bible is a free Bible app with dozens of translations, reading plans, notes, highlights, and study tools.",
+        }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
@@ -1490,6 +1529,10 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
+    if (isAboutPage.value) {
+      return t("about-title", { defaultValue: "About the Seed Bible" });
+    }
+
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
       return t("read-the-bible", {
@@ -1531,6 +1574,16 @@ export function createSeedBibleState(
    * would point every canonical at a URL that redirects.
    */
   const canonicalUrl = computed(() => {
+    if (isAboutPage.value) {
+      // Uses the *resolved* i18n language, not the raw URL segment, so a
+      // garbage/unsupported language in the URL still canonicalizes to a
+      // real page instead of echoing back something that doesn't exist.
+      return `${navigation.basePath}${buildStaticPagePath({
+        language: i18n.language.value,
+        page: "about",
+      })}`;
+    }
+
     const readingState = selectedTab.value?.readingState;
     const bookId = readingState?.bookId.value;
 
@@ -1541,10 +1594,15 @@ export function createSeedBibleState(
     const translationId = data.buildTranslationId(
       readingState.translationId.value
     );
-    const language =
-      bibleLanguageToUiLocale(readingState.translation.value?.language) ??
-      uiLocaleForDefaultTranslation(translationId) ??
-      i18n.language.value;
+    // Falls back to the current UI language, unlike the chapter tool links'
+    // version of this chain (see `resolveTranslationUiLanguage`) — this is
+    // the page actually being rendered right now, so it has a real "current
+    // visitor" to derive one from.
+    const language = resolveTranslationUiLanguage({
+      translationLanguage: readingState.translation.value?.language,
+      translationId,
+      fallback: i18n.language.value,
+    });
 
     const readingPath = buildReadingPath({
       language,
@@ -2492,6 +2550,7 @@ export function createSeedBibleState(
       siteName,
       canonicalUrl,
       socialTitle,
+      isAboutPage,
       currentToast,
       toast,
       isDiscoverOpen: playlists.isDiscoverOpen,
@@ -2782,6 +2841,38 @@ export function createSeedBibleState(
     );
     if (!paneOpen && isYourContentOpen.peek()) {
       closeYourContent();
+    }
+  });
+
+  const renderAboutPane = () => <AboutPage state={state} />;
+  const renderAboutPaneTitle = () => <AboutPaneTitle />;
+
+  effect(() => {
+    if (isAboutPage.value) {
+      panes.openPane({
+        id: ABOUT_PANE_ID,
+        placement: "fullscreen",
+        title: renderAboutPaneTitle,
+        component: renderAboutPane,
+      });
+    } else {
+      panes.closePane(ABOUT_PANE_ID); // no-op when already closed
+    }
+  });
+
+  // Unlike Today's `isOpen` (a plain writable boolean), `isAboutPage` is a
+  // read-only computed derived from the URL — closing the pane can't just
+  // flip a signal back. Instead, leave "/about" for the current tab's
+  // reading position, mirroring how a genuine tab-focus change already does
+  // (see TabsManager.leaveStaticPage). This fires whether the pane was
+  // closed via its header's close button, `closeFullscreenPanes()` (e.g.
+  // selecting a tab), or displacement by another fullscreen pane.
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === ABOUT_PANE_ID
+    );
+    if (!paneOpen && isAboutPage.peek()) {
+      tabs.leaveStaticPage();
     }
   });
 

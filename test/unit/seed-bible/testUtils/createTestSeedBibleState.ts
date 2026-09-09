@@ -179,7 +179,10 @@ async function ensureI18nInitialized(): Promise<void> {
           new Error(`No locale file for language: ${language}`)
         );
       }
-      return loader().then((mod) => mod.default);
+      // Let `resourcesToBackend` do the `.default` unwrap itself (see
+      // I18nManager's matching backend) — unwrapping here too double-unwraps
+      // any locale whose JSON has a top-level "default" key.
+      return loader();
     })
   );
 
