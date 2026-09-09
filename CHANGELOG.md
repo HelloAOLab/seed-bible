@@ -4,11 +4,44 @@
 
 ### ✨ Added
 
+- Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1", "Gen.1" and "Gen. 1:1" resolve the same as "Gen 1:1", and a trailing abbreviation period ("Gen.") keeps offering suggestions. Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
 
+- Stop linking an ambiguous chapter-to-verse range in prose. "John 1-2:3" mixes a whole-chapter start with a verse end, and used to link as John 1–2 with the ":3" silently dropped; it now links nothing rather than a reference the reader did not write. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+
 ### 🗑️ Removed
+
+## v1.8.0 — 2026-09-08
+
+### ✨ Added
+
+- Make the previous/next chapter controls real links instead of buttons only wired to JavaScript, so search engine crawlers can follow them from chapter to chapter instead of relying solely on the sitemap; clicking still navigates in-app, and middle-click or ctrl-click opens the target chapter in a new tab. ([#1618](https://github.com/HelloAOLab/seed-bible/pull/1618))
+- Add an About page (`/{lang}/about`), reachable from a new icon in the sidebar and a Settings entry, with its own SEO meta tags and sitemap entries. It opens as a fullscreen pane alongside the sidebar and toolbar instead of replacing the whole app shell, and closes automatically when you select another tab. ([#1654](https://github.com/HelloAOLab/seed-bible/pull/1654))
+- Add a Customization Center for building your own color-theme presets (colors, fonts, highlight colors) from Settings, with a live preview, autosave, and a share link so others can view your theme. ([#1686](https://github.com/HelloAOLab/seed-bible/pull/1686))
+- Add a cover image picker for playlists and reading plans: upload and crop your own photo, or choose one from a gallery of your previously uploaded images. ([#1720](https://github.com/HelloAOLab/seed-bible/pull/1720))
+- Highlight the verse currently being read in the Audio Reader, timed to the audio's own playback position so the highlight pauses and resumes along with the audio. ([#1751](https://github.com/HelloAOLab/seed-bible/pull/1751))
+
+### 🔧 Changed
+
+- Change the playlist cover image's remove button from a trash-can icon labeled "Delete" to an X icon labeled "Remove cover image". ([#1771](https://github.com/HelloAOLab/seed-bible/pull/1771))
+- Hide the "Customize" entry in Settings when signed out, instead of showing a link to a feature that requires an account. ([#1761](https://github.com/HelloAOLab/seed-bible/pull/1761))
+- Show the desktop reader header's translation name as a real, keyboard-reachable pill button matching mobile, instead of plain text after the chapter title, and open the translation picker directly instead of the book list. ([#1741](https://github.com/HelloAOLab/seed-bible/pull/1741))
+- Set the server-rendered page's `<html lang>` attribute to the detected page language, instead of relying only on a `content-language` meta tag that browsers, search engines, and screen readers no longer honor. ([#1746](https://github.com/HelloAOLab/seed-bible/pull/1746))
+
+### 🐛 Fixed
+
+- Stop reading time from accruing while the app is in the background. A phone locked in a pocket with the reader open could rack up half an hour of reading nobody did; reading now pauses when the app backgrounds and resumes as a new sitting when it comes back. ([#1738](https://github.com/HelloAOLab/seed-bible/pull/1738))
+- Count Audio Reader listening time even when the phone is locked. Listening was tracked with a timer that stops once the screen turns off, so an hour of narration during chores could log as a few seconds; it's now tracked by audio playback position instead. ([#1738](https://github.com/HelloAOLab/seed-bible/pull/1738))
+- Fix a short book's chapter list in the Bible Selector always aligning to the left regardless of which grid column its book falls in; it now aligns to match that column (left in the first column, right in the last, centered in a middle column). ([#1595](https://github.com/HelloAOLab/seed-bible/pull/1595))
+- Fix picking a theme variant on someone else's customization doing nothing while signed out, and persist that choice across a refresh, carrying it into your profile if you sign up afterward, instead of losing it. ([#1760](https://github.com/HelloAOLab/seed-bible/pull/1760))
+- Fix the collapsed sidebar's tab list overflowing instead of scrolling once there are more tabs than fit. ([#1758](https://github.com/HelloAOLab/seed-bible/pull/1758))
+- Fix chapter verse counts (used to find a chapter's last verse) being AI-estimated numbers that could be wrong for chapters that skip verse numbers; they're now generated from the actual Bible API data. ([#1753](https://github.com/HelloAOLab/seed-bible/pull/1753))
+- Fix dismissing the sign-in prompt throwing an error out of whatever action opened it instead of letting that action handle the cancellation, which kept the annotation editor from opening, left the bookmark modal stuck open, and crashed the transcript view. ([#1736](https://github.com/HelloAOLab/seed-bible/pull/1736))
+- Fix a shared `?customization=` link's colors only appearing after the page loaded and briefly flashing the default theme; the server now waits for the customization to load before rendering the page. ([#1739](https://github.com/HelloAOLab/seed-bible/pull/1739))
+- Fix a chapter's dimmed verses re-brightening early when a second dim effect started before the first one's fixed-length animation finished, instead of holding dimmed for as long as any dim effect is active. ([#1755](https://github.com/HelloAOLab/seed-bible/pull/1755))
 
 ## v1.7.1 — 2026-09-02
 
