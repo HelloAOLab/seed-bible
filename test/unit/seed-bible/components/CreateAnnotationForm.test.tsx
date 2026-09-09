@@ -411,6 +411,40 @@ describe("CreateAnnotationForm", () => {
     expect(toast).not.toHaveBeenCalled();
   });
 
+  it("Cmd/Ctrl+Enter saves only once when invoked twice before the first save settles", async () => {
+    const { annotations, saveEditingAnnotation } =
+      createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager();
+    const toast = vi.fn();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          annotations={annotations}
+          tabs={tabs}
+          toast={toast}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    act(() => {
+      typeIntoEditor();
+    });
+
+    await act(async () => {
+      // Two Mod+Enter events in the same turn — second lands during the
+      // await sanitize(...) window, before React can re-render from setSaving.
+      latestOnModEnter?.();
+      latestOnModEnter?.();
+      await flushSave();
+    });
+
+    expect(saveEditingAnnotation).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenCalledTimes(1);
+  });
+
   it("shows an error and does not toast when save fails", async () => {
     const { annotations, saveEditingAnnotation } =
       createMockAnnotationsManager(createAnnotation());

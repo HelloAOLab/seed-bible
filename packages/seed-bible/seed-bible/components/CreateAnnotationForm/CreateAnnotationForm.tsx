@@ -34,6 +34,10 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
   const { annotations, tabs, toast } = props;
   const { t } = useI18n();
   const editorRef = useRef<Editor | null>(null);
+  // Sync re-entry gate: React `saving` state is too late for Mod+Enter
+  // (disabled only blocks the button; a second key event can land before
+  // setSaving re-renders). Flip this before the first await.
+  const savingRef = useRef(false);
   const editing = annotations.editingAnnotation.value;
   // Seeded content counts as non-empty so the submit button starts enabled.
   const [editorEmpty, setEditorEmpty] = useState(!editing?.data.html);
@@ -64,27 +68,30 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
     : null;
 
   const doSave = async () => {
-    if (saving || editorEmpty) {
+    if (savingRef.current || editorEmpty) {
       return;
     }
     const editor = editorRef.current;
     if (!editor || editor.isEmpty) {
       return;
     }
-    const html = await sanitize(editor.getHTML());
-    annotations.editingAnnotation.value = {
-      ...editing,
-      data: { ...editing.data, html },
-    };
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
+      const html = await sanitize(editor.getHTML());
+      annotations.editingAnnotation.value = {
+        ...editing,
+        data: { ...editing.data, html },
+      };
       await annotations.saveEditingAnnotation();
       toast(
         t("annotation-saved", {
           defaultValue: "Annotation saved",
         })
       );
+      // Leave savingRef true on success — the form unmounts when editing
+      // clears. Resetting here would reopen a Mod+Enter race before unmount.
     } catch (err) {
       console.error("Failed to save annotation:", err);
       setError(
@@ -93,6 +100,7 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
         })
       );
       setSaving(false);
+      savingRef.current = false;
     }
   };
 
