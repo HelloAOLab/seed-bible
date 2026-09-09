@@ -1,4 +1,3 @@
-import type { ExperienceKey } from "../../domain/models/experience";
 import {
   PIECE_VISIBILITY_STATES,
   type PieceKey,
@@ -7,11 +6,12 @@ import type { PieceFocusPort } from "../ports/in/PieceFocus";
 import type { LoggerAdapterPort } from "../ports/out/LoggerAdapter";
 import type { PieceAdapterPort } from "../ports/out/PieceAdapter";
 import type { PiecesProviderAdapterPort } from "../ports/out/PiecesProviderAdapter";
+import type { ExperienceServicePort } from "../ports/in/experience";
 
 interface ServiceParams {
   pieceFocusPort: PieceFocusPort;
   piecesProvider: PiecesProviderAdapterPort;
-  getExperience: () => ExperienceKey;
+  experienceService: ExperienceServicePort;
   loggerPort: LoggerAdapterPort;
   pieceAdapterPort: PieceAdapterPort;
 }
@@ -19,26 +19,27 @@ interface ServiceParams {
 export class PieceInteractionService {
   #pieceFocusPort: ServiceParams["pieceFocusPort"];
   #piecesProvider: ServiceParams["piecesProvider"];
-  #getExperience: ServiceParams["getExperience"];
+  #experienceService: ServiceParams["experienceService"];
   #loggerPort: ServiceParams["loggerPort"];
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
 
   constructor({
     pieceFocusPort,
     piecesProvider,
-    getExperience,
+    experienceService,
     loggerPort,
     pieceAdapterPort,
   }: ServiceParams) {
     this.#pieceFocusPort = pieceFocusPort;
     this.#piecesProvider = piecesProvider;
-    this.#getExperience = getExperience;
+    this.#experienceService = experienceService;
     this.#loggerPort = loggerPort;
     this.#pieceAdapterPort = pieceAdapterPort;
   }
 
   handlePieceSelection(key: PieceKey): void {
-    const experience = this.#getExperience();
+    const experience = this.#experienceService.experience;
+    if (!experience) return;
     const piece = this.#piecesProvider.getPiece(experience, key);
     if (!piece) {
       this.#loggerPort.error(

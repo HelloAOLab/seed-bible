@@ -99,7 +99,11 @@ export const bootstrapExtension = () => {
               onSelect: () => {
                 const inst = uuid();
                 if (portalRef) {
-                  portalRef.sendMessage({ type: "highlight-piece", key });
+                  portalRef.sendMessage({
+                    type: "highlight-piece",
+                    key,
+                    experience,
+                  });
                 } else {
                   context.panes.openPane({
                     placement: "floating",

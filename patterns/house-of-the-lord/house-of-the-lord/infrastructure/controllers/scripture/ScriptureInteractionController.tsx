@@ -1,40 +1,58 @@
+import type { ExperienceServicePort } from "../../../application/ports/in/experience";
 import type { ReadingStatePort } from "../../../application/ports/in/readingState";
 import type { ScriptureInteractionPort } from "../../../application/ports/in/scriptureInteraction";
-import { ToPieceKeyOf } from "../../../domain/functions/keys";
+import { ToExperienceKey, ToPieceKeyOf } from "../../../domain/functions/keys";
 import type { ExperienceKey } from "../../../domain/models/experience";
 
 interface ControllerParams {
   scriptureInteractionPort: ScriptureInteractionPort;
   readingStatePort: ReadingStatePort;
-  getExperienceKey: () => ExperienceKey;
+  experienceServicePort: ExperienceServicePort;
 }
 
 export class ScriptureInteractionController {
   #scriptureInteractionPort: ControllerParams["scriptureInteractionPort"];
   #readingStatePort: ControllerParams["readingStatePort"];
-  #getExperienceKey: ControllerParams["getExperienceKey"];
+  #experienceServicePort: ControllerParams["experienceServicePort"];
 
   constructor({
     scriptureInteractionPort,
     readingStatePort,
-    getExperienceKey,
+    experienceServicePort,
   }: ControllerParams) {
     this.#scriptureInteractionPort = scriptureInteractionPort;
     this.#readingStatePort = readingStatePort;
-    this.#getExperienceKey = getExperienceKey;
+    this.#experienceServicePort = experienceServicePort;
   }
 
-  handlePieceFocusRequest(key: string) {
-    const pieceKey = ToPieceKeyOf(this.#getExperienceKey(), key);
-    if (!pieceKey) {
+  handlePieceFocusRequest(experience: ExperienceKey, key: string) {
+    const currExperience = this.#experienceServicePort.experience;
+    const experienceKey = ToExperienceKey(experience);
+
+    if (!experienceKey) {
       console.warn(
-        "house-of-the-lord ScriptureInteractionController: key is not a piece of the experience on stage",
-        { key }
+        "house-of-the-lord ScriptureInteractionController: experienceKey is not a valid experience key",
+        { experienceKey }
       );
       return;
     }
 
-    this.#scriptureInteractionPort.handlePieceFocusRequest(pieceKey);
+    const isSameExperience = experienceKey === currExperience;
+
+    if (isSameExperience) {
+      const pieceKey = ToPieceKeyOf(currExperience, key);
+      if (!pieceKey) {
+        console.warn(
+          "house-of-the-lord ScriptureInteractionController: key is not a piece of the experience on stage",
+          { key }
+        );
+        return;
+      }
+
+      this.#scriptureInteractionPort.handlePieceFocusRequest(pieceKey);
+    } else {
+      this.#experienceServicePort.tryDisplayExperience(experienceKey);
+    }
   }
 
   handleReadingChanged(bookId: string, chapterNumber: number) {

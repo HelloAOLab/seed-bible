@@ -155,6 +155,28 @@ export class PieceStateAdapter implements PieceStatePort {
     await Promise.allSettled(animations);
   }
 
+  clearMeshStateAnimations<E extends ExperienceKey>({
+    experience,
+    key,
+  }: {
+    experience: E;
+    key: ExperienceKeyMap[E];
+  }): void {
+    const piece = this.#piecesProvider.getPiece(experience, key);
+    if (!piece) {
+      return;
+    }
+    const bot = this.#pieceMapper.toInfrastructure(piece);
+    if (!bot) {
+      return;
+    }
+
+    const dimension = this.#getDimension();
+    const zTag = `${dimension}Z` as keyof PieceBotTags;
+    clearAnimations(bot, "formOpacity");
+    clearAnimations(bot, zTag);
+  }
+
   #setHitboxEnabled({
     pieceId,
     dimension,

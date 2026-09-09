@@ -24,6 +24,7 @@ export interface HitboxProviderPort {
 
 export interface HitboxSpawnerPort {
   spawn(params: { data: HitboxData; piece: Piece }): Hitbox;
+  despawn(piece: Piece): void;
 }
 
 export interface DimensionProvider {

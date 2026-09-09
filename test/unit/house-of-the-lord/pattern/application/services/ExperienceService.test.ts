@@ -1,21 +1,12 @@
-import {
-  describe,
-  expect,
-  it,
-  vi,
-  type Mocked,
-  beforeEach,
-  type Mock,
-} from "vitest";
+import { describe, expect, it, vi, type Mocked, beforeEach } from "vitest";
 import { ExperienceService } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/services/ExperienceService";
 import type { PiecesSequencePort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/experience";
 import type { PiecesSetUpPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/in/piecesSetUp";
 import type { EnvironmentSetUpPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/in/environmentSetUp";
-import {
-  EXPERIENCE_KEYS,
-  type ExperienceKey,
-} from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/experience";
+import { EXPERIENCE_KEYS } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/experience";
 import type { LoggerAdapterPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/LoggerAdapter";
+import { BaseEventManager } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/services/BaseEventManager";
+import type { DomainEventMap } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/events";
 
 describe("application.services.ExperienceService", () => {
   let experienceService: ExperienceService;
@@ -23,15 +14,18 @@ describe("application.services.ExperienceService", () => {
   let piecesSetUpPort: Mocked<PiecesSetUpPort>;
   let environmentSetUpPort: Mocked<EnvironmentSetUpPort>;
   let logger: Mocked<LoggerAdapterPort>;
-  let getExperienceKey: Mock<() => ExperienceKey>;
+  let eventBus: BaseEventManager<DomainEventMap>;
   const testKey = EXPERIENCE_KEYS.TABERNACLE;
 
   beforeEach(() => {
     piecesSequencePort = {
       displayDropSequence: vi.fn(),
+      displayClearSequence: vi.fn(),
+      tryAbortCurrentDropSequence: vi.fn(),
     };
     piecesSetUpPort = {
       setUpPieces: vi.fn(),
+      clearPieces: vi.fn(),
     };
     environmentSetUpPort = {
       setUp: vi.fn(),
@@ -41,14 +35,14 @@ describe("application.services.ExperienceService", () => {
       warn: vi.fn(),
       error: vi.fn(),
     };
-    getExperienceKey = vi.fn(() => testKey);
+    eventBus = new BaseEventManager<DomainEventMap>();
 
     experienceService = new ExperienceService({
       piecesSequencePort,
       piecesSetUpPort,
       environmentSetUpPort,
       logger,
-      getExperienceKey,
+      eventBus,
     });
   });
 
@@ -57,7 +51,7 @@ describe("application.services.ExperienceService", () => {
     expect(environmentSetUpPort.setUp).not.toHaveBeenCalled();
     expect(piecesSequencePort.displayDropSequence).not.toHaveBeenCalled();
 
-    await experienceService.tryDisplayExperience();
+    await experienceService.tryDisplayExperience(testKey);
 
     expect(piecesSetUpPort.setUpPieces).toHaveBeenCalledOnce();
     expect(environmentSetUpPort.setUp).toHaveBeenCalledOnce();
@@ -65,8 +59,8 @@ describe("application.services.ExperienceService", () => {
   });
 
   it("no-op if there is an experience already displayed", async () => {
-    await experienceService.tryDisplayExperience();
-    await experienceService.tryDisplayExperience();
+    await experienceService.tryDisplayExperience(testKey);
+    await experienceService.tryDisplayExperience(testKey);
 
     expect(piecesSetUpPort.setUpPieces).toHaveBeenCalledOnce();
     expect(environmentSetUpPort.setUp).toHaveBeenCalledOnce();
@@ -77,8 +71,8 @@ describe("application.services.ExperienceService", () => {
     piecesSequencePort.displayDropSequence.mockImplementation(() => {
       return new Promise(() => {});
     });
-    experienceService.tryDisplayExperience();
-    experienceService.tryDisplayExperience();
+    experienceService.tryDisplayExperience(testKey);
+    experienceService.tryDisplayExperience(testKey);
 
     expect(piecesSetUpPort.setUpPieces).toHaveBeenCalledOnce();
     expect(environmentSetUpPort.setUp).toHaveBeenCalledOnce();
@@ -86,7 +80,7 @@ describe("application.services.ExperienceService", () => {
   });
 
   it("displays the experience with the correct key", async () => {
-    await experienceService.tryDisplayExperience();
+    await experienceService.tryDisplayExperience(testKey);
 
     expect(piecesSetUpPort.setUpPieces).toHaveBeenCalledWith(testKey);
     expect(environmentSetUpPort.setUp).toHaveBeenCalledWith(testKey);
@@ -96,7 +90,7 @@ describe("application.services.ExperienceService", () => {
   });
 
   it("returns true if the experience correctly displays", async () => {
-    const result = await experienceService.tryDisplayExperience();
+    const result = await experienceService.tryDisplayExperience(testKey);
 
     expect(result).toBe(true);
   });
@@ -105,7 +99,7 @@ describe("application.services.ExperienceService", () => {
     piecesSequencePort.displayDropSequence.mockImplementation(() => {
       return Promise.reject();
     });
-    const result = await experienceService.tryDisplayExperience();
+    const result = await experienceService.tryDisplayExperience(testKey);
 
     expect(result).toBe(false);
   });
@@ -115,8 +109,8 @@ describe("application.services.ExperienceService", () => {
       new Error("piecesSequencePort.displayDropSequence failed")
     );
 
-    await experienceService.tryDisplayExperience();
-    const result = await experienceService.tryDisplayExperience();
+    await experienceService.tryDisplayExperience(testKey);
+    const result = await experienceService.tryDisplayExperience(testKey);
 
     expect(result).toBe(true);
     expect(piecesSetUpPort.setUpPieces).toHaveBeenCalledTimes(2);

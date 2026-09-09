@@ -112,6 +112,7 @@ export interface PieceBotTypeMap {
 export interface HighlightPieceMessage {
   type?: "highlight-piece";
   key?: string;
+  experience?: string;
 }
 
 export interface ReadingChangedMessage {

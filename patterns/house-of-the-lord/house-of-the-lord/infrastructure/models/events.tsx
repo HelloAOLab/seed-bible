@@ -1,10 +1,11 @@
 import type { PieceKey } from "../../domain/models/piece";
 import type { BaseEventManager } from "../../application/services/BaseEventManager";
+import type { ExperienceKey } from "../../domain/models/experience";
 
 export interface InfrastructureEventMap {
   OnHitboxClicked: PieceKey;
   OnThemeChanged: { css: string };
-  OnHighlightPieceMessage: { key: string };
+  OnHighlightPieceMessage: { key: string; experience: ExperienceKey };
   OnThemeChangedMessage: { css: string };
   OnReadingChangedMessage: { bookId: string; chapterNumber: number };
 }

@@ -8,10 +8,8 @@ import {
   beforeEach,
 } from "vitest";
 import { PieceInteractionService } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/services/PieceInteractionService";
-import {
-  EXPERIENCE_KEYS,
-  type ExperienceKey,
-} from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/experience";
+import { EXPERIENCE_KEYS } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/experience";
+import type { ExperienceServicePort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/in/experience";
 import {
   PIECE_VISIBILITY_STATES,
   type Piece,
@@ -27,7 +25,7 @@ describe("application.services.PieceInteractionService", () => {
   let piecesProvider: Mocked<PiecesProviderAdapterPort>;
   let pieceAdapterPort: Mocked<PieceAdapterPort>;
   let loggerPort: Mocked<LoggerAdapterPort>;
-  let getExperience: Mocked<() => ExperienceKey>;
+  let experienceService: Mocked<ExperienceServicePort>;
   let getPiece: Mock;
   let service: PieceInteractionService;
 
@@ -54,13 +52,16 @@ describe("application.services.PieceInteractionService", () => {
       warn: vi.fn(),
       error: vi.fn(),
     };
-    getExperience = vi.fn(() => experienceKey);
+    experienceService = {
+      experience: experienceKey,
+      tryDisplayExperience: vi.fn(),
+    };
     service = new PieceInteractionService({
       pieceFocusPort,
       piecesProvider,
       pieceAdapterPort,
       loggerPort,
-      getExperience,
+      experienceService,
     });
   });
 

@@ -44,4 +44,11 @@ export class HitboxLifecycleService implements PiecesHitboxSpawnerPort {
 
     return hitboxes;
   }
+
+  despawnPiecesHitbox(experience: ExperienceKey): void {
+    const pieces = this.#piecesProviderPort.getPieces(experience);
+    for (const piece of pieces) {
+      this.#hitboxSpawnerPort.despawn(piece);
+    }
+  }
 }

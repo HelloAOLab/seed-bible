@@ -147,7 +147,6 @@ export const bootstrapExtension = async () => {
       `house-of-the-lord bootstrap: unknown experience in configBot tags: "${configBot.tags.experience}"`
     );
   }
-  const getExperienceKey = () => EXPERIENCE;
 
   // An unusable highlight is not fatal the way a missing experience is — the
   // portal still opens, just without anything focused.
@@ -245,6 +244,7 @@ export const bootstrapExtension = async () => {
   const piecesSequenceAdapter = new PiecesSequenceAdapter({
     pieceState: pieceStateAdapter,
     layerProvider: layerConfigProvider,
+    piecesProvider,
   });
   const piecesRenderOrderAdapter = new PiecesRenderOrderAdapter({
     layerConfigProvider,
@@ -268,44 +268,6 @@ export const bootstrapExtension = async () => {
     hitboxProviderPort: hitboxConfigProvider,
     hitboxSpawnerPort: hitboxLifecycleAdapter,
   });
-  const pieceStateService = new PieceStateService({
-    pieceState: pieceStateAdapter,
-    pieceStateConfigProviderPort: pieceStateConfigProvider,
-    readingState: readingStateService,
-    getExperienceKey,
-  });
-  const navMenuStateService = new NavMenuStateService({
-    eventBus: domainEventBus,
-    initialState: {
-      isOpen: false,
-      level: NAV_MENU_LEVELS.PIECES,
-      selectedPiece: HIGHLIGHTED_PIECE ?? null,
-      occludedBy: HIGHLIGHTED_PIECE ?? null,
-      experience: EXPERIENCE,
-      reading: readingStateService.getCurrentReading(),
-    },
-  });
-
-  const pieceHighlightService = new PieceHighlightService({
-    getExperienceKey,
-    pieceHighlight: pieceHighlightAdapter,
-  });
-  const pieceFocusService = new PieceFocusService({
-    pieceHighlightPort: pieceHighlightService,
-    navMenuStatePort: navMenuStateService,
-    pieceStatePort: pieceStateService,
-  });
-  const pieceInteractionService = new PieceInteractionService({
-    pieceFocusPort: pieceFocusService,
-    piecesProvider: piecesProvider,
-    pieceAdapterPort: pieceAdapter,
-    getExperience: getExperienceKey,
-    loggerPort: loggerAdapter,
-  });
-  const environmentInteractionService = new EnvironmentInteractionService({
-    pieceHighlight: pieceHighlightService,
-    navMenuStatePort: navMenuStateService,
-  });
   const piecePositionService = new PiecePositionService({
     piecesProviderPort: piecesProvider,
     piecePositionUpdaterPort: pieceAdapter,
@@ -328,7 +290,45 @@ export const bootstrapExtension = async () => {
     logger: loggerAdapter,
     piecesSetUpPort: piecesSetUpService,
     environmentSetUpPort: environmentSetUpService,
-    getExperienceKey,
+    eventBus: domainEventBus,
+  });
+  const pieceStateService = new PieceStateService({
+    pieceState: pieceStateAdapter,
+    pieceStateConfigProviderPort: pieceStateConfigProvider,
+    readingState: readingStateService,
+    experienceService,
+  });
+  const navMenuStateService = new NavMenuStateService({
+    eventBus: domainEventBus,
+    initialState: {
+      isOpen: false,
+      level: NAV_MENU_LEVELS.PIECES,
+      selectedPiece: HIGHLIGHTED_PIECE ?? null,
+      occludedBy: HIGHLIGHTED_PIECE ?? null,
+      experience: EXPERIENCE,
+      reading: readingStateService.getCurrentReading(),
+    },
+  });
+
+  const pieceHighlightService = new PieceHighlightService({
+    experienceService,
+    pieceHighlight: pieceHighlightAdapter,
+  });
+  const pieceFocusService = new PieceFocusService({
+    pieceHighlightPort: pieceHighlightService,
+    navMenuStatePort: navMenuStateService,
+    pieceStatePort: pieceStateService,
+  });
+  const pieceInteractionService = new PieceInteractionService({
+    pieceFocusPort: pieceFocusService,
+    piecesProvider: piecesProvider,
+    pieceAdapterPort: pieceAdapter,
+    experienceService,
+    loggerPort: loggerAdapter,
+  });
+  const environmentInteractionService = new EnvironmentInteractionService({
+    pieceHighlight: pieceHighlightService,
+    navMenuStatePort: navMenuStateService,
   });
   const scriptureNavigationService = new ScriptureNavigationService({
     scriptureNavigationAdapterPort: scriptureNavigationAdapter,
@@ -348,7 +348,7 @@ export const bootstrapExtension = async () => {
   const scriptureInteractionController = new ScriptureInteractionController({
     scriptureInteractionPort: scriptureInteractionService,
     readingStatePort: readingStateService,
-    getExperienceKey,
+    experienceServicePort: experienceService,
   });
   const seedBibleController = new SeedBibleController({
     themeStateAdapter,
@@ -395,8 +395,25 @@ export const bootstrapExtension = async () => {
     environmentInteractionController.handleGridClick();
   });
 
+  os.addBotListener(
+    entrypointBot,
+    "onInstLeave",
+    experienceService.clearExperience
+  );
+  os.addBotListener(
+    entrypointBot,
+    "onDestroy",
+    experienceService.clearExperience
+  );
+
   domainEventBus.subscribe("OnReadingStateChanged", ({ reading }) => {
     navMenuStateService.setReading(reading);
+  });
+
+  domainEventBus.subscribe("OnExperienceChanged", ({ experience }) => {
+    if (experience) {
+      navMenuStateService.setExperience(experience);
+    }
   });
 
   os.addBotListener(
@@ -416,7 +433,10 @@ export const bootstrapExtension = async () => {
   );
 
   eventManager.subscribe("OnHighlightPieceMessage", (message) => {
-    scriptureInteractionController.handlePieceFocusRequest(message.key);
+    scriptureInteractionController.handlePieceFocusRequest(
+      message.experience,
+      message.key
+    );
   });
 
   eventManager.subscribe("OnThemeChangedMessage", (message) => {
@@ -435,7 +455,7 @@ export const bootstrapExtension = async () => {
   // 6. Disposers
 
   const displayed = await experienceService
-    .tryDisplayExperience()
+    .tryDisplayExperience(EXPERIENCE)
     .catch((reason) =>
       console.error(
         "house-of-the-lord pattern bootstrap: Failed to display experience",

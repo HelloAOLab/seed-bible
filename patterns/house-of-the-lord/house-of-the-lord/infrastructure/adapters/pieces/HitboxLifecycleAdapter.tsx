@@ -63,4 +63,12 @@ export class HitboxLifecycleAdapter implements HitboxSpawnerPort {
 
     return this.#hitboxMapper.toDomain(hitboxBot);
   }
+
+  despawn(piece: Piece): void {
+    const hitboxes = getBots(
+      byTag("isPieceHitbox", true),
+      byTag("pieceId", piece.id)
+    );
+    destroy(hitboxes);
+  }
 }
