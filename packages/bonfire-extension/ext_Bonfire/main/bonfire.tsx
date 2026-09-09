@@ -225,8 +225,8 @@ export function* registerBonfireChatProvider(
         "unknown";
       const translationShort =
         translation?.shortName ?? seedBibleId ?? "unknown";
-      const responseLanguage =
-        i18n.language.trim().split(/[-_]/)[0]?.toLowerCase() || "en";
+      // Keep the full UI locale in free-text instructions (zh-TW vs zh, pt-BR vs pt).
+      const responseLanguage = i18n.language.trim().replace(/_/g, "-") || "en";
 
       const response = await fetch(
         "https://bonfire.seedbible.io/api/v1/session/chat",

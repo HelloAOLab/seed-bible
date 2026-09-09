@@ -11,6 +11,7 @@ import {
   resolveApologistLanguage,
   shouldWarnApologistBibleFallback,
   SHOW_APOLOGIST_BIBLE_FALLBACK_WARNING,
+  stripLanguagePrefixFromTranslationId,
 } from "@packages/apologist-extension/ext_Apologist/main/apologistBible";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
@@ -45,11 +46,40 @@ describe("apologistBible", () => {
     localStorage.removeItem(FALLBACK_DISMISS_STORAGE_KEY);
   });
 
+  describe("stripLanguagePrefixFromTranslationId", () => {
+    it("strips a leading language code from Free Use ids", () => {
+      expect(stripLanguagePrefixFromTranslationId("eng_kjv")).toBe("kjv");
+      expect(stripLanguagePrefixFromTranslationId("eng_nasb95")).toBe("nasb95");
+      expect(stripLanguagePrefixFromTranslationId("hin_cvb")).toBe("cvb");
+    });
+
+    it("leaves bare codes unchanged", () => {
+      expect(stripLanguagePrefixFromTranslationId("BSB")).toBe("BSB");
+      expect(stripLanguagePrefixFromTranslationId("KJAV")).toBe("KJAV");
+    });
+  });
+
   describe("mapSeedTranslationToApologist", () => {
-    it("maps known Seed ids to Apologist codes", () => {
+    it("maps known bare Seed ids to Apologist codes", () => {
       expect(mapSeedTranslationToApologist("BSB")).toBe("bsb");
       expect(mapSeedTranslationToApologist("KJAV")).toBe("kjv");
       expect(mapSeedTranslationToApologist("bsb")).toBe("bsb");
+    });
+
+    it("maps Free Use lang_code ids by stripping the language prefix", () => {
+      expect(mapSeedTranslationToApologist("eng_kjv")).toBe("kjv");
+      expect(mapSeedTranslationToApologist("eng_esv")).toBe("esv");
+      expect(mapSeedTranslationToApologist("eng_web")).toBe("webu");
+      expect(mapSeedTranslationToApologist("eng_bsb")).toBe("bsb");
+    });
+
+    it("prefers shortName when the raw id alone would not map", () => {
+      expect(mapSeedTranslationToApologist("eng_nasb95", "NASB95")).toBe(
+        "nasb1995"
+      );
+      expect(mapSeedTranslationToApologist("custom_src_kjv", "KJV")).toBe(
+        "kjv"
+      );
     });
 
     it("treats empty, blank, and null ids as unsupported", () => {
@@ -67,15 +97,77 @@ describe("apologistBible", () => {
     it("returns null for Seed ids with no Apologist mapping", () => {
       expect(mapSeedTranslationToApologist("AAB")).toBeNull();
       expect(mapSeedTranslationToApologist("hin_cvb")).toBeNull();
+      expect(mapSeedTranslationToApologist("guj_irv", "IRV")).toBeNull();
     });
   });
 
   describe("resolveApologistBible", () => {
-    it("uses a direct mapping without fallback", () => {
+    it("uses a direct mapping without fallback for bare ids", () => {
       const result = resolveApologistBible({ seedTranslationId: "BSB" });
       expect(result).toEqual({
         bible: "bsb",
         requestedSeedId: "BSB",
+        usedFallback: false,
+        reason: "mapped",
+      });
+    });
+
+    it("maps real Free Use eng_* ids without treating them as unavailable", () => {
+      const catalog = [
+        translation({ id: "eng_kjv", language: "eng", shortName: "KJV" }),
+        translation({ id: "eng_esv", language: "eng", shortName: "ESV" }),
+        translation({
+          id: "eng_nasb95",
+          language: "eng",
+          shortName: "NASB95",
+        }),
+        translation({ id: "eng_web", language: "eng", shortName: "WEB" }),
+      ];
+
+      expect(
+        resolveApologistBible({
+          seedTranslationId: "eng_kjv",
+          catalog,
+        })
+      ).toEqual({
+        bible: "kjv",
+        requestedSeedId: "eng_kjv",
+        usedFallback: false,
+        reason: "mapped",
+      });
+
+      expect(
+        resolveApologistBible({
+          seedTranslationId: "eng_esv",
+          catalog,
+        })
+      ).toMatchObject({ bible: "esv", usedFallback: false, reason: "mapped" });
+
+      expect(
+        resolveApologistBible({
+          seedTranslationId: "eng_nasb95",
+          catalog,
+        })
+      ).toMatchObject({
+        bible: "nasb1995",
+        usedFallback: false,
+        reason: "mapped",
+      });
+
+      expect(
+        resolveApologistBible({
+          seedTranslationId: "eng_web",
+          catalog,
+        })
+      ).toMatchObject({ bible: "webu", usedFallback: false, reason: "mapped" });
+    });
+
+    it("maps eng_kjv even when the catalog is missing (prefix strip)", () => {
+      expect(
+        resolveApologistBible({ seedTranslationId: "eng_kjv", catalog: null })
+      ).toEqual({
+        bible: "kjv",
+        requestedSeedId: "eng_kjv",
         usedFallback: false,
         reason: "mapped",
       });
@@ -93,7 +185,7 @@ describe("apologistBible", () => {
     it("falls back to nearest same-language supported translation", () => {
       const catalog = [
         translation({ id: "AAB", language: "eng", shortName: "AAB" }),
-        translation({ id: "BSB", language: "eng", shortName: "BSB" }),
+        translation({ id: "eng_bsb", language: "eng", shortName: "BSB" }),
       ];
       const result = resolveApologistBible({
         seedTranslationId: "AAB",
@@ -126,6 +218,22 @@ describe("apologistBible", () => {
         catalog,
       });
       expect(result).toMatchObject({
+        bible: APOLOGIST_DEFAULT_BIBLE,
+        usedFallback: true,
+        reason: "default-english",
+      });
+    });
+
+    it("falls back to English BSB for Gujarati IRV (unsupported)", () => {
+      const catalog = [
+        translation({ id: "guj_irv", language: "guj", shortName: "IRV" }),
+      ];
+      expect(
+        resolveApologistBible({
+          seedTranslationId: "guj_irv",
+          catalog,
+        })
+      ).toMatchObject({
         bible: APOLOGIST_DEFAULT_BIBLE,
         usedFallback: true,
         reason: "default-english",
@@ -171,7 +279,7 @@ describe("apologistBible", () => {
     it("does not pick a supported translation from a different language", () => {
       const catalog = [
         translation({ id: "hin_cvb", language: "hin", shortName: "HCVB" }),
-        translation({ id: "BSB", language: "eng", shortName: "BSB" }),
+        translation({ id: "eng_bsb", language: "eng", shortName: "BSB" }),
       ];
       const result = resolveApologistBible({
         seedTranslationId: "hin_cvb",
@@ -217,8 +325,11 @@ describe("apologistBible", () => {
     });
 
     it("does not warn when the mapping was direct", () => {
-      const resolution = resolveApologistBible({ seedTranslationId: "BSB" });
-      expect(shouldWarnApologistBibleFallback(resolution)).toBe(false);
+      expect(
+        shouldWarnApologistBibleFallback(
+          resolveApologistBible({ seedTranslationId: "eng_kjv" })
+        )
+      ).toBe(false);
     });
 
     it("does not warn after a permanent dismiss", () => {
@@ -234,11 +345,12 @@ describe("apologistBible", () => {
   });
 
   describe("resolveApologistLanguage", () => {
-    it("uses the primary subtag of the UI locale", () => {
+    it("keeps regional BCP-47 tags Apologist documents", () => {
       expect(resolveApologistLanguage("gu")).toBe("gu");
       expect(resolveApologistLanguage("hi")).toBe("hi");
-      expect(resolveApologistLanguage("zh-TW")).toBe("zh");
-      expect(resolveApologistLanguage("en_US")).toBe("en");
+      expect(resolveApologistLanguage("zh-TW")).toBe("zh-TW");
+      expect(resolveApologistLanguage("pt-BR")).toBe("pt-BR");
+      expect(resolveApologistLanguage("en_US")).toBe("en-US");
     });
 
     it("falls back to English for blank values", () => {

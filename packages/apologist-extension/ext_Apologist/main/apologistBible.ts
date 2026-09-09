@@ -21,7 +21,8 @@ export const APOLOGIST_BIBLE_FALLBACK_MODAL_ID =
 /**
  * Common English codes from Apologist's chat-completion docs. Agent-specific
  * catalogs can differ; keep this list aligned with what Seed's Apologist
- * agent actually exposes.
+ * agent actually exposes. Prefer verifying against the live agent when that
+ * surface is available rather than treating this as authoritative forever.
  *
  * @see https://apologistproject.org/documentation/apologist-fusion/chat-completion#6-toc-title
  */
@@ -45,8 +46,10 @@ export const APOLOGIST_SUPPORTED_BIBLES = new Set([
 ]);
 
 /**
- * Seed FreeUse translation IDs → Apologist `metadata.bible` codes.
- * Keys are matched case-insensitively.
+ * Seed shortNames / bare codes → Apologist `metadata.bible` codes.
+ * Keys are matched case-insensitively. Prefer shortName over raw `id` —
+ * Free Use API ids vary by source (`BSB` vs `eng_kjv`) while shortName is the
+ * stable abbreviation (see compareState / sitemap).
  */
 export const SEED_TO_APOLOGIST_BIBLE: Readonly<Record<string, string>> = {
   BSB: "bsb",
@@ -63,6 +66,8 @@ export const SEED_TO_APOLOGIST_BIBLE: Readonly<Record<string, string>> = {
   NLT: "nlt",
   CSB: "csb",
   NASB: "nasb",
+  /** Catalog shortName for NASB 1995 (compareState curated list). */
+  NASB95: "nasb1995",
   NASB1995: "nasb1995",
   LSB: "lsb",
   TLV: "tlv",
@@ -91,29 +96,77 @@ function normalizeSeedId(seedId: string | null | undefined): string | null {
 }
 
 /**
- * Maps a Seed translation id to an Apologist bible code when we know it is
- * supported. Returns null when the Seed id has no supported mapping.
+ * Strips a leading ISO-ish language prefix from Free Use ids (`eng_kjv` →
+ * `kjv`, `spa_rv` → `rv`). Leaves bare codes and other shapes unchanged.
  */
-export function mapSeedTranslationToApologist(
-  seedId: string | null | undefined
-): string | null {
-  const normalized = normalizeSeedId(seedId);
-  if (!normalized) {
-    return null;
-  }
+export function stripLanguagePrefixFromTranslationId(id: string): string {
+  return id.replace(/^[a-z]{2,3}_/i, "");
+}
 
+function tryMapToken(token: string): string | null {
   const mapped =
-    SEED_TO_APOLOGIST_BIBLE[normalized] ??
-    SEED_TO_APOLOGIST_BIBLE[normalized.toUpperCase()];
+    SEED_TO_APOLOGIST_BIBLE[token] ??
+    SEED_TO_APOLOGIST_BIBLE[token.toUpperCase()];
   if (mapped && APOLOGIST_SUPPORTED_BIBLES.has(mapped)) {
     return mapped;
   }
 
-  const asCode = normalized.toLowerCase();
+  const asCode = token.toLowerCase();
   if (APOLOGIST_SUPPORTED_BIBLES.has(asCode)) {
     return asCode;
   }
 
+  return null;
+}
+
+/**
+ * Candidate tokens for a Seed translation, in preference order:
+ * shortName (stable abbreviation) → raw id → id with `lang_` prefix stripped.
+ */
+function* mappingCandidates(
+  seedId: string | null | undefined,
+  shortName?: string | null
+): Generator<string> {
+  const seen = new Set<string>();
+  const yieldUnique = function* (value: string | null | undefined) {
+    const trimmed = value?.trim();
+    if (!trimmed || seen.has(trimmed.toLowerCase())) {
+      return;
+    }
+    seen.add(trimmed.toLowerCase());
+    yield trimmed;
+  };
+
+  yield* yieldUnique(shortName);
+
+  const normalizedId = normalizeSeedId(seedId);
+  if (!normalizedId) {
+    return;
+  }
+
+  yield* yieldUnique(normalizedId);
+
+  const stripped = stripLanguagePrefixFromTranslationId(normalizedId);
+  if (stripped !== normalizedId) {
+    yield* yieldUnique(stripped);
+  }
+}
+
+/**
+ * Maps a Seed translation to an Apologist bible code when we know it is
+ * supported. Prefer passing `shortName` from the catalog; `id` alone still
+ * works for bare codes (`BSB`) and prefixed forms (`eng_kjv`).
+ */
+export function mapSeedTranslationToApologist(
+  seedId: string | null | undefined,
+  shortName?: string | null
+): string | null {
+  for (const candidate of mappingCandidates(seedId, shortName)) {
+    const mapped = tryMapToken(candidate);
+    if (mapped) {
+      return mapped;
+    }
+  }
   return null;
 }
 
@@ -130,7 +183,10 @@ function findNearestSupportedInLanguage(
     if (translation.language.toLowerCase() !== lang) {
       continue;
     }
-    const mapped = mapSeedTranslationToApologist(translation.id);
+    const mapped = mapSeedTranslationToApologist(
+      translation.id,
+      translation.shortName
+    );
     if (mapped) {
       return mapped;
     }
@@ -145,7 +201,7 @@ function findNearestSupportedInLanguage(
  *
  * Preference order for the *Seed* id is owned by the caller (AI override →
  * active tab). This function only maps / falls back for Apologist support:
- * 1. Direct Seed → Apologist mapping when supported
+ * 1. Direct mapping via shortName / id / stripped id when supported
  * 2. Another catalog translation in the same Bible language that maps
  * 3. English default (`bsb`)
  */
@@ -164,7 +220,14 @@ export function resolveApologistBible(options: {
     };
   }
 
-  const direct = mapSeedTranslationToApologist(requestedSeedId);
+  const requested = options.catalog?.find(
+    (t) => t.id.toLowerCase() === requestedSeedId.toLowerCase()
+  );
+
+  const direct = mapSeedTranslationToApologist(
+    requestedSeedId,
+    requested?.shortName
+  );
   if (direct) {
     return {
       bible: direct,
@@ -174,9 +237,6 @@ export function resolveApologistBible(options: {
     };
   }
 
-  const requested = options.catalog?.find(
-    (t) => t.id.toLowerCase() === requestedSeedId.toLowerCase()
-  );
   if (requested) {
     const nearest = findNearestSupportedInLanguage(
       requested.language,
@@ -292,8 +352,9 @@ export function pauseChatWhileModalOpen(options: {
 }
 
 /**
- * Normalizes a Seed UI locale (e.g. `gu`, `zh-TW`) to an Apologist
- * `metadata.language` code.
+ * Normalizes a Seed UI locale for Apologist `metadata.language`.
+ * Keeps regional tags Apologist documents (`zh-TW`, `pt-BR`); only normalizes
+ * underscore separators to hyphens.
  */
 export function resolveApologistLanguage(
   uiLanguage: string | null | undefined
@@ -301,8 +362,11 @@ export function resolveApologistLanguage(
   if (!uiLanguage) {
     return "en";
   }
-  const primary = uiLanguage.trim().split(/[-_]/)[0]?.toLowerCase();
-  return primary && primary.length > 0 ? primary : "en";
+  const trimmed = uiLanguage.trim();
+  if (!trimmed) {
+    return "en";
+  }
+  return trimmed.replace(/_/g, "-");
 }
 
 /** Test helper: clear the in-memory once-per-session warn set. */

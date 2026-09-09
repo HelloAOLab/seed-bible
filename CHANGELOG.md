@@ -4,8 +4,9 @@
 
 ### ✨ Added
 
+- Let AI chat (Apologist and Bonfire) follow the active tab's Bible translation, with an optional pinned AI default and a fallback warning when Apologist cannot use that translation. ([#1265](https://github.com/HelloAOLab/seed-bible/issues/1265))
 - Save an annotation with Cmd+Enter on Mac or Ctrl+Enter on Windows and Linux while typing, and keep Enter inserting a new line.
-- Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1", "Gen.1" and "Gen. 1:1" resolve the same as "Gen 1:1", and a trailing abbreviation period ("Gen.") keeps offering suggestions. Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+- Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1", "Gen.1" and "Gen. 1:1" resolve the same as "Gen 1:1", and a trailing abbreviation period ("Gen.") keeps offering suggestions. Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773)).
 
 ### 🔧 Changed
 
