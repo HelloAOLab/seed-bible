@@ -241,6 +241,66 @@ describe("ReadingHistoryManager", () => {
     });
   });
 
+  /**
+   * A stand-in for the Yjs document that actually stores events, rather than
+   * a spy over its methods — these tests are about what ends up in it after a
+   * push, a failed push and a replay, which a call-count assertion can't see.
+   */
+  function createFakeSharedDocument() {
+    const maps: {
+      get: (key: string) => any;
+      set: (key: string, value: any) => void;
+    }[] = [];
+
+    const createMap = () => {
+      const values = new Map<string, any>();
+      return {
+        get: (key: string) => values.get(key),
+        set: (key: string, value: any) => {
+          values.set(key, value);
+        },
+      };
+    };
+
+    const array = {
+      get length() {
+        return maps.length;
+      },
+      push: (map: (typeof maps)[number]) => {
+        maps.push(map);
+      },
+      type: {
+        get length() {
+          return maps.length;
+        },
+        get: (index: number) => maps[index],
+      },
+    };
+
+    return {
+      doc: {
+        getArray: () => array,
+        createMap,
+      } as unknown as SharedDocument,
+      /** Puts an event in the document without going through a save. */
+      seed: (event: ReadingEvent) => {
+        const map = createMap();
+        for (const [key, value] of Object.entries(event)) {
+          map.set(key, value);
+        }
+        maps.push(map);
+      },
+      events: (): ReadingEvent[] =>
+        maps.map((map) => ({
+          userId: map.get("userId"),
+          bookId: map.get("bookId"),
+          chapter: map.get("chapter"),
+          start: map.get("start"),
+          end: map.get("end"),
+        })),
+    };
+  }
+
   describe("createReadingHistoryManager", () => {
     let loginManager: any;
     let os: CasualOSManager;
@@ -682,66 +742,6 @@ describe("ReadingHistoryManager", () => {
   });
 
   describe("durability of recorded reading", () => {
-    /**
-     * A stand-in for the Yjs document that actually stores events, rather than
-     * a spy over its methods — these tests are about what ends up in it after a
-     * push, a failed push and a replay, which a call-count assertion can't see.
-     */
-    function createFakeSharedDocument() {
-      const maps: {
-        get: (key: string) => any;
-        set: (key: string, value: any) => void;
-      }[] = [];
-
-      const createMap = () => {
-        const values = new Map<string, any>();
-        return {
-          get: (key: string) => values.get(key),
-          set: (key: string, value: any) => {
-            values.set(key, value);
-          },
-        };
-      };
-
-      const array = {
-        get length() {
-          return maps.length;
-        },
-        push: (map: (typeof maps)[number]) => {
-          maps.push(map);
-        },
-        type: {
-          get length() {
-            return maps.length;
-          },
-          get: (index: number) => maps[index],
-        },
-      };
-
-      return {
-        doc: {
-          getArray: () => array,
-          createMap,
-        } as unknown as SharedDocument,
-        /** Puts an event in the document without going through a save. */
-        seed: (event: ReadingEvent) => {
-          const map = createMap();
-          for (const [key, value] of Object.entries(event)) {
-            map.set(key, value);
-          }
-          maps.push(map);
-        },
-        events: (): ReadingEvent[] =>
-          maps.map((map) => ({
-            userId: map.get("userId"),
-            bookId: map.get("bookId"),
-            chapter: map.get("chapter"),
-            start: map.get("start"),
-            end: map.get("end"),
-          })),
-      };
-    }
-
     /** 2026-06-15T12:00:00Z. */
     const NOON = Math.floor(Date.UTC(2026, 5, 15, 12) / 1000);
     const WINDOW_START = Math.floor(Date.UTC(2026, 5, 15) / 1000);
@@ -1243,6 +1243,31 @@ describe("ReadingHistoryManager", () => {
       await vi.advanceTimersByTimeAsync(0);
 
       expect(await store.listPending("user-1")).toHaveLength(1);
+      expect(manager.sync.pendingCount.value).toBe(1);
+
+      manager.dispose();
+    });
+
+    it("notices a row left queued when the push landed but the note didn't", async () => {
+      const fake = createFakeSharedDocument();
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fake.doc);
+      const flaky: OfflineReadingHistoryStore = {
+        ...store,
+        recordReadingSpan: (input) => store.recordReadingSpan(input),
+        markSynced: () => Promise.reject(new Error("storage blocked")),
+      };
+      const manager = createReadingHistoryManager(os, login, { store: flaky });
+
+      manager.saveReadingHistory("GEN", 1);
+      await vi.advanceTimersByTimeAsync(300);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // The push reached the document, so nothing here failed from the caller's
+      // side — but the row is still marked pending, and the count has to say so.
+      // Believing the stale zero is what used to leave the straggler sitting
+      // until the next sign-in or `online` event.
+      expect(fake.events()).toHaveLength(1);
+      expect(await flaky.listPending("user-1")).toHaveLength(1);
       expect(manager.sync.pendingCount.value).toBe(1);
 
       manager.dispose();

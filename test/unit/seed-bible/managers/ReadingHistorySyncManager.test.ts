@@ -115,14 +115,13 @@ async function waitForCondition(
  *
  * Used where the expectation is that *nothing* happens, which has no condition
  * to poll for. Every await in a pass over the in-memory store resolves as a
- * microtask, so draining the queue is what "the pass would have finished by
- * now" means here — a fixed sleep would only be a guess about how long that
- * takes on the machine running it.
+ * microtask, and the queue is drained to exhaustion — including whatever those
+ * microtasks queue in turn — before a timer callback runs. So yielding once to
+ * the macrotask queue means "the pass would have finished by now" without
+ * guessing at a duration, or at how many turns it takes.
  */
 async function flushMicrotasks(): Promise<void> {
-  for (let i = 0; i < 50; i++) {
-    await Promise.resolve();
-  }
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 describe("ReadingHistorySyncManager", () => {
@@ -368,6 +367,11 @@ describe("ReadingHistorySyncManager", () => {
 
     expect(writer.writes).toHaveLength(1);
     expect((await store.listPending("user-1")).length).toBe(1);
+
+    // Nor by asking directly. A disposed manager reports into signals nothing is
+    // watching any more, so it does no work at all rather than some of it.
+    await sync.sync();
+    expect(writer.writes).toHaveLength(1);
   });
 
   it("prunes long-synced events after a complete pass", async () => {

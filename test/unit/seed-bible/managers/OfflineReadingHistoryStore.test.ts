@@ -62,7 +62,15 @@ describe("OfflineReadingHistoryStore", () => {
       const row = await store.recordReadingSpan(span({ atSeconds: NOON }));
 
       expect(row).toEqual({
-        key: `user-1/2026/GEN/1/${NOON}`,
+        // Built rather than spelled out: what this test is about is the row's
+        // contents, and the key's exact shape is pinned by its own test below.
+        key: storedReadingEventKey({
+          userId: "user-1",
+          year: 2026,
+          bookId: "GEN",
+          chapter: 1,
+          start: NOON,
+        }),
         userId: "user-1",
         year: 2026,
         bookId: "GEN",
@@ -326,7 +334,27 @@ describe("OfflineReadingHistoryStore", () => {
           chapter: 3,
           start: 42,
         })
-      ).toBe("user-1/2026/GEN/3/42");
+      ).toBe("user-1/2026/GEN/3/000000000042");
+    });
+
+    it("orders a chapter's keys the way their start times order", () => {
+      // The IndexedDB store walks a chapter's rows newest-first by *key* to
+      // avoid loading every row it has ever had on each five-second tick, so a
+      // span joins the wrong sitting if string order and time order disagree.
+      // These straddle 2001-09-09, where a unix second grows from nine digits
+      // to ten and unpadded keys start sorting backwards.
+      const starts = [999_999_998, 999_999_999, 1_000_000_000, 1_000_000_001];
+      const keys = starts.map((start) =>
+        storedReadingEventKey({
+          userId: "user-1",
+          year: 2001,
+          bookId: "GEN",
+          chapter: 3,
+          start,
+        })
+      );
+
+      expect([...keys].sort()).toEqual(keys);
     });
 
     it("buckets an event into its UTC year", () => {

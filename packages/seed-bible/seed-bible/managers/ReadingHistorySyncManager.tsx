@@ -132,6 +132,7 @@ export function createReadingHistorySyncManager(
   );
 
   let running: Promise<void> | null = null;
+  let disposed = false;
 
   const refreshPendingCount = async (): Promise<void> => {
     // `store` is checked before the login signal is touched, so a device with
@@ -213,7 +214,7 @@ export function createReadingHistorySyncManager(
       return running;
     }
 
-    if (!store) {
+    if (!store || disposed) {
       return Promise.resolve();
     }
     const userId = login.userId.peek();
@@ -250,7 +251,12 @@ export function createReadingHistorySyncManager(
         console.warn("Reading history sync pass failed.", error);
       } finally {
         isSyncing.value = false;
-        await refreshPendingCount();
+        // A pass outlives a `dispose()` that lands mid-flight — there is no way
+        // to recall a write already on its way — but it stops reporting into
+        // signals nobody is watching any more.
+        if (!disposed) {
+          await refreshPendingCount();
+        }
         // Cleared last. A `sync()` arriving while the count is still being
         // re-read has to join this pass; clearing it any earlier lets a second
         // pass start and push the same rows again.
@@ -309,6 +315,7 @@ export function createReadingHistorySyncManager(
   });
 
   const dispose = () => {
+    disposed = true;
     if (typeof window !== "undefined") {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);

@@ -342,6 +342,20 @@ async function recordReadingLocally(
   }
 }
 
+/** What became of a span once {@link saveReadingHistorySpan} was done with it. */
+export interface SaveReadingHistorySpanResult {
+  /**
+   * True when the push landed but this device could not record that it had, so
+   * the row is still queued and the replay will push it again.
+   *
+   * The caller is the only thing that knows this happened — the failure is
+   * deliberately not thrown, because the reading did reach the server — and the
+   * sync manager's pending count is now stale by one. Saying so is what lets it
+   * be re-read rather than believed.
+   */
+  awaitingReplay: boolean;
+}
+
 /**
  * Records a stretch of time already spent on a chapter, running from
  * `startTimeSeconds` to `endTimeSeconds`, and pushes it to the server.
@@ -376,7 +390,7 @@ export async function saveReadingHistorySpan(
   startTimeSeconds: number,
   endTimeSeconds: number,
   options: SaveReadingHistorySpanOptions = {}
-): Promise<void> {
+): Promise<SaveReadingHistorySpanResult> {
   const { joinThresholdSeconds = 30 * 60, marker, name } = options;
   // A stored row carries no document name, and the replay pushes every row it
   // finds into the default document. So a span headed anywhere else skips the
@@ -415,8 +429,9 @@ export async function saveReadingHistorySpan(
       // caller. The row simply stays queued and the replay pushes it again,
       // which extends the event it already wrote rather than duplicating it.
       console.warn("Could not mark a reading event as pushed.", error);
+      return { awaitingReplay: true };
     }
-    return;
+    return { awaitingReplay: false };
   }
 
   // Nothing was recorded locally — either this device has no store, or it has
@@ -452,6 +467,10 @@ export async function saveReadingHistorySpan(
     newEvent.set("end", endTimeSeconds);
     array.push(newEvent);
   }
+
+  // Nothing was queued on this device, so there is nothing for a replay to
+  // carry across later.
+  return { awaitingReplay: false };
 }
 
 /**
@@ -1171,8 +1190,9 @@ export function createReadingHistoryManager(
       return;
     }
 
+    let result: SaveReadingHistorySpanResult;
     try {
-      await saveReadingHistorySpan(
+      result = await saveReadingHistorySpan(
         os,
         userId,
         userId,
@@ -1192,6 +1212,14 @@ export function createReadingHistoryManager(
       );
       void sync.refreshPendingCount();
       return;
+    }
+
+    // The push landed but this device couldn't write down that it had, so the
+    // row is still queued and the count below is stale by one. Without this the
+    // straggler waits for a sign-in or an `online` event, because every later
+    // push reads the same stale zero and concludes there is nothing to drain.
+    if (result.awaitingReplay) {
+      await sync.refreshPendingCount();
     }
 
     // The push getting through proves the year document is reachable, which is

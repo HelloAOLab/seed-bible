@@ -194,7 +194,26 @@ export function storedReadingEventKey(row: {
   chapter: number;
   start: number;
 }): string {
-  return `${row.userId}/${row.year}/${row.bookId}/${row.chapter}/${row.start}`;
+  return `${row.userId}/${row.year}/${row.bookId}/${row.chapter}/${paddedStart(
+    row.start
+  )}`;
+}
+
+/**
+ * How many digits a `start` takes up in a row's key.
+ *
+ * Keys are strings and IndexedDB orders them by code unit, so `findRowToExtend`
+ * only walks a chapter's rows newest-first if every `start` under it is the same
+ * width. Ten digits happens to hold every unix second between 2001 and 2286, but
+ * "happens to" is the problem: on either side of that the order silently
+ * reverses and a span joins the wrong sitting. Padding makes the order hold for
+ * any positive time rather than a lucky range of them.
+ */
+const START_KEY_DIGITS = 12;
+
+/** A `start` written so that string order and numeric order agree. */
+function paddedStart(startSeconds: number): string {
+  return String(startSeconds).padStart(START_KEY_DIGITS, "0");
 }
 
 /** Strips the sync bookkeeping off a row. */
@@ -284,20 +303,6 @@ function shouldMarkSynced(
 }
 
 /**
- * Creates the IndexedDB-backed store.
- *
- * Returns null when IndexedDB is unavailable — during server-side rendering, and
- * in browsers that block storage. Callers treat null as "this device can't hold
- * reading events locally" and fall back to writing straight to the year
- * document, which is the behaviour that existed before this store.
- *
- * Uses its own database rather than adding a store to `seed-bible-offline`, for
- * the reason spelled out in {@link ./OfflineAnnotationStore}: bumping that
- * database's version makes a tab still holding the old connection fire
- * `onblocked`, which its open path rejects on, breaking offline translations in
- * that tab.
- */
-/**
  * The one stored row a span could continue, or none.
  *
  * Walks the chapter's rows newest-first and stops at the first that is recent
@@ -314,7 +319,7 @@ function shouldMarkSynced(
 async function findRowToExtend(
   store: IDBObjectStore,
   input: RecordReadingSpanInput
-): Promise<StoredReadingEvent[]> {
+): Promise<StoredReadingEvent | null> {
   const oldestEnd = input.startSeconds - input.joinThresholdSeconds;
   const request = store
     .index(CHAPTER_INDEX)
@@ -332,14 +337,28 @@ async function findRowToExtend(
   while (cursor) {
     const row = cursor.value as StoredReadingEvent;
     if (row.end >= oldestEnd) {
-      return [row];
+      return row;
     }
     cursor.continue();
     cursor = await requestToPromise(request);
   }
-  return [];
+  return null;
 }
 
+/**
+ * Creates the IndexedDB-backed store.
+ *
+ * Returns null when IndexedDB is unavailable — during server-side rendering, and
+ * in browsers that block storage. Callers treat null as "this device can't hold
+ * reading events locally" and fall back to writing straight to the year
+ * document, which is the behaviour that existed before this store.
+ *
+ * Uses its own database rather than adding a store to `seed-bible-offline`, for
+ * the reason spelled out in {@link ./OfflineAnnotationStore}: bumping that
+ * database's version makes a tab still holding the old connection fire
+ * `onblocked`, which its open path rejects on, breaking offline translations in
+ * that tab.
+ */
 export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore | null {
   if (typeof indexedDB === "undefined") {
     return null;
@@ -413,7 +432,10 @@ export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore
     // request.
     const existing = await findRowToExtend(store, input);
 
-    const { row, changed } = extendOrCreateReadingRow(existing, input);
+    const { row, changed } = extendOrCreateReadingRow(
+      existing ? [existing] : [],
+      input
+    );
     if (changed) {
       store.put(row);
     }
