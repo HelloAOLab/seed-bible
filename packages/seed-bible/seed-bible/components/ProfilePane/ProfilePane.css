@@ -284,17 +284,27 @@
 
 /* ------------------------------------------------------------------ logout */
 
+/*
+ * Matches the account settings page's own sign-out button
+ * (`.sb-account-signout-button`) so the two entry points to the same action
+ * read as the same control. `--sb-profile-danger` is the #db1c1c that button
+ * hardcodes. Only the top margin differs: the settings page separates it with
+ * a rule above, which this card does not have.
+ */
 .sb-profile-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
   width: 100%;
   margin-top: 20px;
-  padding: 15px;
-  border: 1px solid var(--sb-profile-danger);
-  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--sb-profile-danger);
+  border-radius: 0.375rem;
   background: transparent;
   color: var(--sb-profile-danger);
   font-family: inherit;
-  font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 

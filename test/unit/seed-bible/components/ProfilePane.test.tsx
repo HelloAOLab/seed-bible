@@ -392,14 +392,16 @@ describe("ProfilePane", () => {
     expect(onOpenYourContent).toHaveBeenCalledTimes(1);
   });
 
-  it("signs the user out from the log out button", () => {
+  it("signs the user out from the sign out button", () => {
     const { state, logout } = createState();
     renderPane(state);
 
     const button = container.querySelector(
       ".sb-profile-logout"
     ) as HTMLButtonElement;
-    expect(button.textContent).toBe("Log out");
+    // Named and iconed to match the account settings page's own button, so
+    // read the label span past the icon's ligature text.
+    expect(button.textContent).toBe("logoutSign out");
     act(() => {
       button.click();
     });

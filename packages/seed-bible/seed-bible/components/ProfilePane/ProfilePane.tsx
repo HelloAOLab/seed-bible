@@ -402,7 +402,8 @@ export function ProfilePane(props: ProfileScreenProps) {
           className="sb-profile-logout"
           onClick={() => void login.logout()}
         >
-          {t("log-out", { defaultValue: "Log out" })}
+          <span className="material-symbols-outlined">logout</span>
+          {t("sign-out", { defaultValue: "Sign out" })}
         </button>
       </div>
     </div>
