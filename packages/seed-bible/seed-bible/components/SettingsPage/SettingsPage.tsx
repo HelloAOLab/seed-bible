@@ -1944,6 +1944,12 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                       onChange={(color) => {
                         theme.setCustomColor(field.key, color);
                       }}
+                      onPreview={(color) => {
+                        theme.previewCustomColor(field.key, color);
+                      }}
+                      onCancel={() => {
+                        theme.clearPreviewCustomColor(field.key);
+                      }}
                     />
                     {isOverridden && (
                       <button
@@ -1999,6 +2005,12 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                   onChange={(color) => {
                     theme.setHighlightColor(id, { color });
                   }}
+                  onPreview={(color) => {
+                    theme.previewHighlightColor(id, { color });
+                  }}
+                  onCancel={() => {
+                    theme.clearPreviewHighlightField(id, "color");
+                  }}
                 />
                 <LazyColorPicker
                   value={normalizeHex(fg)}
@@ -2006,6 +2018,12 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                   ariaLabel={t("id_highlight-text-color", { id })}
                   onChange={(color) => {
                     theme.setHighlightColor(id, { fontColor: color });
+                  }}
+                  onPreview={(color) => {
+                    theme.previewHighlightColor(id, { fontColor: color });
+                  }}
+                  onCancel={() => {
+                    theme.clearPreviewHighlightField(id, "fontColor");
                   }}
                 />
                 {isOverridden && (
