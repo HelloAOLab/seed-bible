@@ -996,11 +996,16 @@ describe("ReadingHistoryManager", () => {
           NOON + 5,
           { store }
         );
+        // Watched before the clock moves, not after. Advancing the timers is
+        // what rejects the push, and a rejected promise nothing is holding is
+        // an unhandled rejection — which fails the whole run even though every
+        // test passes.
+        const settled = expect(push).rejects.toThrow();
         await vi.advanceTimersByTimeAsync(10_000);
 
         // The push has to end for the row to be retried at all; a push still
         // waiting is a sync manager that can never run another pass.
-        await expect(push).rejects.toThrow();
+        await settled;
         expect(
           (await store.listPending("user-1")).map((row) => row.start)
         ).toEqual([NOON]);
