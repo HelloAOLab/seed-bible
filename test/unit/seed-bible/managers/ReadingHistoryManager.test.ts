@@ -434,6 +434,7 @@ describe("ReadingHistoryManager", () => {
         "1970",
         {
           markers: ["publicRead:reading_history/1970"],
+          timeoutMs: 10_000,
         }
       );
     });
@@ -539,6 +540,7 @@ describe("ReadingHistoryManager", () => {
         "2024",
         {
           markers: ["publicRead:reading_history/2024"],
+          timeoutMs: 10_000,
         }
       );
       expect(getSharedDocumentMock).toHaveBeenCalledWith(
@@ -547,6 +549,7 @@ describe("ReadingHistoryManager", () => {
         "2025",
         {
           markers: ["publicRead:reading_history/2025"],
+          timeoutMs: 10_000,
         }
       );
     });
@@ -939,14 +942,37 @@ describe("ReadingHistoryManager", () => {
       expect(events).toEqual([stored]);
     });
 
+    /**
+     * Stands in for a year document that can never be reached.
+     *
+     * `getSharedDocument` gives up after the `timeoutMs` it is handed and rejects
+     * — that is what `awaitDocumentSync` guarantees, and `OsManager.test.ts` is
+     * what pins it. Honouring the deadline here rather than ignoring it is what
+     * makes these tests fail if the manager ever stops asking for one, which would
+     * put every caller back to waiting on a document that never answers.
+     */
+    function neverSyncs() {
+      return vi.spyOn(os, "getSharedDocument").mockImplementation(
+        (_record, _inst, _doc, options) =>
+          new Promise<SharedDocument>((_, reject) => {
+            if (options?.timeoutMs === undefined) {
+              return;
+            }
+            setTimeout(
+              () =>
+                reject(
+                  new Error("The document did not sync before the deadline.")
+                ),
+              options.timeoutMs
+            );
+          })
+      );
+    }
+
     it("answers from this device when a year's document never syncs", async () => {
       vi.useFakeTimers();
       try {
-        // The ordinary offline failure: the document neither syncs nor errors,
-        // so a caller that only handles rejection waits forever.
-        vi.spyOn(os, "getSharedDocument").mockReturnValue(
-          new Promise<SharedDocument>(() => {})
-        );
+        neverSyncs();
         await store.recordReadingSpan({
           userId: "user-1",
           bookId: "GEN",
@@ -982,9 +1008,7 @@ describe("ReadingHistoryManager", () => {
     it("gives up on a document that never syncs and leaves the span queued", async () => {
       vi.useFakeTimers();
       try {
-        vi.spyOn(os, "getSharedDocument").mockReturnValue(
-          new Promise<SharedDocument>(() => {})
-        );
+        neverSyncs();
 
         const push = saveReadingHistorySpan(
           os,

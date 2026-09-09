@@ -93,6 +93,20 @@ function resolveStore(
 const DEFAULT_READING_HISTORY_DOCUMENT = "reading_history";
 
 /**
+ * How long to wait for a year's document before treating it as unreachable.
+ *
+ * Long enough that an ordinary sync on a slow connection still wins, short
+ * enough that the Today screen isn't left blank while it waits.
+ *
+ * Every caller here is written to carry on when a year can't be reached — fall
+ * back to what this device recorded, leave the row queued for the next pass —
+ * and none of that can happen while they are still waiting. `getSharedDocument`
+ * only settles on a sync that reports itself, so without a deadline the ordinary
+ * offline failures never settle at all and those fallbacks never run.
+ */
+const DOCUMENT_TIMEOUT_MS = 10_000;
+
+/**
  * Gets the reading history document for the given record name and year.
  * @param recordName The name of the record that the reading history is stored in.
  * @param year The year to get the reading history for.
@@ -118,74 +132,19 @@ function getReadingHistoryDocument(
   // left here poisoned the key for the rest of the page load: one expired
   // session key or dropped connection meant every later read and write of that
   // year failed too, with nothing to retry it.
-  const docPromise: Promise<SharedDocument> = failIfUnreachable(
-    os.getSharedDocument(recordName, name, `${year}`, {
+  const docPromise: Promise<SharedDocument> = os
+    .getSharedDocument(recordName, name, `${year}`, {
       markers,
+      timeoutMs: DOCUMENT_TIMEOUT_MS,
     })
-  ).catch((error: unknown) => {
-    if (readingHistoryDocs[key] === docPromise) {
-      delete readingHistoryDocs[key];
-    }
-    throw error;
-  });
+    .catch((error: unknown) => {
+      if (readingHistoryDocs[key] === docPromise) {
+        delete readingHistoryDocs[key];
+      }
+      throw error;
+    });
   readingHistoryDocs[key] = docPromise;
   return docPromise;
-}
-
-/**
- * How long to wait for a year's document before treating it as unreachable.
- *
- * Long enough that an ordinary sync on a slow connection still wins, short
- * enough that the Today screen isn't left blank while it waits.
- */
-const DOCUMENT_TIMEOUT_MS = 10_000;
-
-/**
- * Rejects a document fetch that never answers.
- *
- * `getSharedDocument` resolves when the branch reports itself synced, and the
- * ordinary failures never report anything at all: an expired session or a
- * refused record turns the document's status to `authorization: false`, and a
- * dropped connection turns it to `sync: false`. Neither errors, so the promise
- * simply never settles.
- *
- * Every caller here is written to carry on when a year can't be reached — fall
- * back to what this device recorded, leave the row queued for the next pass —
- * and none of that can happen while they are still waiting. Turning silence
- * into a failure is what lets those fallbacks run.
- */
-async function failIfUnreachable(
-  pending: Promise<SharedDocument>
-): Promise<SharedDocument> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let timedOut = false;
-  try {
-    return await Promise.race([
-      pending,
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => {
-          timedOut = true;
-          reject(
-            new Error(
-              `The reading history document did not sync within ${DOCUMENT_TIMEOUT_MS}ms.`
-            )
-          );
-        }, DOCUMENT_TIMEOUT_MS);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timer);
-    // A document that syncs after the wait was given up on is nobody's: let go
-    // of its branch watch rather than leaving it open for the page's lifetime.
-    void pending.then(
-      (doc) => {
-        if (timedOut) {
-          doc.unsubscribe();
-        }
-      },
-      () => {}
-    );
-  }
 }
 
 /**
