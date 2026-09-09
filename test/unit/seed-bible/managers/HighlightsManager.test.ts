@@ -27,13 +27,10 @@ describe("HighlightsManager", () => {
 
   const createManager = () => createHighlightsManager(os, login, { store });
 
-  // The local store sits in front of the server, so a load is several awaits
-  // deep; flushing a handful of times covers the whole chain.
-  const flushPromises = async () => {
-    for (let i = 0; i < 10; i += 1) {
-      await Promise.resolve();
-    }
-  };
+  // A zero-delay timer runs only once the whole microtask queue has drained,
+  // however many awaits deep the store-then-server load chain is.
+  const flushPromises = () =>
+    new Promise<void>((resolve) => setTimeout(resolve, 0));
 
   const createDeferred = <T>() => {
     let resolve!: (value: T) => void;
@@ -1012,13 +1009,11 @@ describe("HighlightsManager", () => {
       const first = createManager();
       first.getChapterHighlights("BSB", "GEN", 1);
       await flushPromises();
-      await flushPromises();
 
       window.dispatchEvent(new Event("offline"));
       getDataMock.mockRejectedValue(new Error("offline"));
       const second = createManager();
       const view = second.getChapterHighlights("BSB", "GEN", 1);
-      await flushPromises();
       await flushPromises();
 
       expect(view.value).toEqual({
@@ -1069,7 +1064,6 @@ describe("HighlightsManager", () => {
       const manager = createManager();
       manager.getChapterHighlights("BSB", "GEN", 1);
       await flushPromises();
-      await flushPromises();
 
       login.userId.value = null;
       await manager.highlightVerse("BSB", "GEN", 1, {
@@ -1105,7 +1099,7 @@ describe("HighlightsManager", () => {
       );
     });
 
-    it("keeps the server's highlights when a signed-out chapter is adopted over an unsent account row", async () => {
+    it("adopting a signed-out chapter over an unsent account row keeps both edits and the server's", async () => {
       login.userId.value = null;
       // An edit the account made before signing out and never pushed. Sign-out
       // keeps it, so signing back in adopts the signed-out chapter on top of it.
@@ -1141,9 +1135,20 @@ describe("HighlightsManager", () => {
       await flushPromises();
       await manager.sync.sync();
 
-      const pushed = recordDataMock.mock.calls.at(-1)?.[2] as ChapterHighlights;
-      expect(pushed.highlights).toContainEqual({ colorId: "c1", verse: 3 });
-      expect(pushed.highlights).toContainEqual({ colorId: "c1", verse: 9 });
+      // Verse 3 is the server's and untouched; verse 5 is the account's own
+      // unsent edit; verse 9 was added signed out. All three reach the server.
+      expect(recordDataMock).toHaveBeenLastCalledWith(
+        "user-1",
+        "highlights:BSB/GEN/1",
+        {
+          highlights: [
+            { colorId: "c1", verse: 3 },
+            { colorId: "c1", verse: 5 },
+            { colorId: "c1", verse: 9 },
+          ],
+        },
+        { marker: "publicRead:highlights/BSB" }
+      );
     });
   });
 });

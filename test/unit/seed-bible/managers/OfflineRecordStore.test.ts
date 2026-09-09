@@ -438,6 +438,45 @@ describe("createInMemoryRecordStore<Annotation>()", () => {
       );
     });
 
+    it("folds a signed-out row into the account's unsent one and keeps that row's base", async () => {
+      const store = createInMemoryRecordStore<Annotation>();
+      const server = makeAnnotation("ann-1");
+      const edited = (html: string) =>
+        makeAnnotation("ann-1", { data: { ...server.data, html } });
+      await store.put(
+        pendingRow("user-1", edited("<p>account</p>"), {
+          base: server,
+          updatedAtMs: 1_000,
+        })
+      );
+      await store.put(
+        pendingRow(LOCAL_OWNER, edited("<p>local</p>"), { updatedAtMs: 2_000 })
+      );
+
+      const [adopted] = await store.adoptLocalRows(
+        "user-1",
+        (account, local) =>
+          account && local
+            ? {
+                ...local,
+                data: {
+                  ...local.data,
+                  html: account.data.html + local.data.html,
+                },
+              }
+            : local
+      );
+
+      expect(adopted?.payload?.data.html).toBe("<p>account</p><p>local</p>");
+      // The push is judged against what the account row was built on.
+      expect(adopted?.base).toEqual(server);
+      expect(adopted?.updatedAtMs).toBe(2_000);
+      expect(await store.get(LOCAL_OWNER, "ann-1")).toBeNull();
+      expect((await store.get("user-1", "ann-1"))?.payload?.data.html).toBe(
+        "<p>account</p><p>local</p>"
+      );
+    });
+
     it("discards a signed-out tombstone, which refers to nothing on any server", async () => {
       const store = createInMemoryRecordStore<Annotation>();
       await store.put(tombstone(LOCAL_OWNER, "never-sent"));

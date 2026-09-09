@@ -60,8 +60,8 @@ function makeConflict(
     kind: "edited_elsewhere",
     owner: "user-1",
     local: makeAnnotation("<p>mine</p>"),
-    // The modal reads the server's time off the payload itself, not a
-    // separate field — so this is what fixes the "theirs" version's timestamp.
+    // The modal reads the server's time off the payload itself, not off a
+    // separate field of the conflict.
     server: makeAnnotation("<p>theirs</p>", 5_000),
     localUpdatedAtMs: 9_000,
     ...overrides,

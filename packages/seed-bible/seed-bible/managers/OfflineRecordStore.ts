@@ -193,8 +193,16 @@ export interface OfflineRecordStore<T> {
    * account signing in on the same (possibly shared) device would inherit
    * them, which is the leak `LoginManager` already guards against for
    * anonymous settings.
+   *
+   * When the account already holds a row at the same address, `combine` folds
+   * the two payloads into one and the account row's base is kept, so neither
+   * side's unsent writing is lost. Without it the signed-out row replaces the
+   * account's.
    */
-  adoptLocalRows(owner: string): Promise<StoredRecord<T>[]>;
+  adoptLocalRows(
+    owner: string,
+    combine?: (account: T | null, local: T | null) => T | null
+  ): Promise<StoredRecord<T>[]>;
 
   /**
    * Deletes every {@link LOCAL_OWNER} row without adopting it.
@@ -246,6 +254,43 @@ export function syncedRow<T>(
     deleted: false,
     updatedAtMs: 0,
     pendingOp: null,
+    attempts: 0,
+  };
+}
+
+/**
+ * Builds the row for a local edit that still has to reach the server.
+ *
+ * `base` is the server version the edit was built on — the previous row's
+ * base, or null for something never pushed — so a second offline edit is still
+ * judged against what the server actually holds, not against the device's own
+ * earlier unsent edit. A null payload is a tombstone.
+ */
+export function pendingRow<T>({
+  owner,
+  address,
+  collection,
+  payload,
+  base,
+  updatedAtMs = Date.now(),
+}: {
+  owner: string;
+  address: string;
+  collection: string;
+  payload: T | null;
+  base: T | null;
+  updatedAtMs?: number;
+}): StoredRecord<T> {
+  return {
+    key: recordKey(owner, address),
+    owner,
+    address,
+    collection,
+    payload,
+    base,
+    deleted: payload === null,
+    updatedAtMs,
+    pendingOp: payload === null ? "delete" : "upsert",
     attempts: 0,
   };
 }
@@ -321,7 +366,7 @@ export function migrateV1Row(
     key: row.key,
     owner: row.owner,
     address: row.annotationId,
-    collection: `${row.bookId}/${row.chapterNumber}`,
+    collection: v1Collection(row),
     payload: row.annotation ?? null,
     base: hadServerCopy ? baseFromV1Row(row) : null,
     deleted: row.deleted,
@@ -354,8 +399,13 @@ function baseFromV1Row(row: LegacyStoredAnnotation): unknown {
   };
 }
 
+/** The v2 collection a v1 chapter maps to; `annotationCollection` owns the format. */
+function v1Collection(row: { bookId: string; chapterNumber: number }): string {
+  return `${row.bookId}/${row.chapterNumber}`;
+}
+
 export function migrateV1Listed(row: LegacyStoredChapter): StoredCollection {
-  const collection = `${row.bookId}/${row.chapterNumber}`;
+  const collection = v1Collection(row);
   return {
     key: collectionKey(row.owner, collection),
     owner: row.owner,
@@ -541,14 +591,20 @@ export function createIndexedDbRecordStore<T>(
     await transactionToPromise(transaction);
   };
 
-  const adoptLocalRows = async (owner: string): Promise<StoredRecord<T>[]> => {
+  const adoptLocalRows = async (
+    owner: string,
+    combine?: (account: T | null, local: T | null) => T | null
+  ): Promise<StoredRecord<T>[]> => {
     const database = await openDatabase();
     const transaction = database.transaction(RECORDS_STORE, "readwrite");
     const store = transaction.objectStore(RECORDS_STORE);
     const rows = (await requestToPromise(store.getAll())) as StoredRecord<T>[];
     const { adopt, discard } = partitionLocalRows(rows);
+    const byKey = new Map(rows.map((row) => [row.key, row]));
 
-    const adopted = adopt.map((row) => adoptRow(row, owner));
+    const adopted = adopt.map((row) =>
+      adoptRow(row, owner, byKey.get(recordKey(owner, row.address)), combine)
+    );
     for (const row of discard) {
       store.delete(row.key);
     }
@@ -648,20 +704,39 @@ function sortPending<T>(rows: StoredRecord<T>[]): StoredRecord<T>[] {
 /**
  * Moves a signed-out row onto a real account.
  *
- * The base is always null: this content was written with no account, so it has
- * never been reconciled against any server copy, whatever the account itself
- * happens to have stored for the same address. A null base makes the push a
- * create for a domain with no merge, and a union merge for one that has it —
- * either way the server's version is looked at before anything overwrites it.
+ * With nothing of the account's at that address, the base is null: this
+ * content was written with no account and has never been reconciled against
+ * any server copy. A null base makes the push a create for a domain with no
+ * merge, and a union merge for one that has it — either way the server's
+ * version is looked at before anything overwrites it.
+ *
+ * When the account does hold a row there — sign-out keeps unsent edits, so
+ * signing back in can land on one — the two payloads are folded together and
+ * the account row's base kept, so the push is a real three-way merge and the
+ * account's own unsent edit survives.
  */
-function adoptRow<T>(row: StoredRecord<T>, owner: string): StoredRecord<T> {
-  return {
+function adoptRow<T>(
+  row: StoredRecord<T>,
+  owner: string,
+  existing: StoredRecord<T> | undefined,
+  combine: ((account: T | null, local: T | null) => T | null) | undefined
+): StoredRecord<T> {
+  const adopted: StoredRecord<T> = {
     ...row,
     key: recordKey(owner, row.address),
     owner,
     base: null,
     pendingOp: "upsert",
     attempts: 0,
+  };
+  if (!existing || !combine) {
+    return adopted;
+  }
+  return {
+    ...adopted,
+    payload: combine(existing.deleted ? null : existing.payload, row.payload),
+    base: existing.base,
+    updatedAtMs: Math.max(existing.updatedAtMs, row.updatedAtMs),
   };
 }
 
@@ -794,10 +869,12 @@ export function createInMemoryRecordStore<T>(): OfflineRecordStore<T> {
       });
     },
 
-    async adoptLocalRows(owner) {
+    async adoptLocalRows(owner, combine) {
       const all = [...rows.values()];
       const { adopt, discard } = partitionLocalRows(all);
-      const adopted = adopt.map((row) => adoptRow(row, owner));
+      const adopted = adopt.map((row) =>
+        adoptRow(row, owner, rows.get(recordKey(owner, row.address)), combine)
+      );
       for (const row of discard) {
         rows.delete(row.key);
       }

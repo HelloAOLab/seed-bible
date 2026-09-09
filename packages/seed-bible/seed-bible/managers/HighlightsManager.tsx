@@ -12,7 +12,7 @@ import {
   canonicalize,
   createIndexedDbRecordStore,
   LOCAL_OWNER,
-  recordKey,
+  pendingRow,
   type OfflineRecordStore,
   type SyncDomain,
 } from "./OfflineRecordStore";
@@ -433,6 +433,8 @@ export function createHighlightsManager(
 
   /** The bucket rows belong to: the signed-in account, or the signed-out one. */
   const currentOwner = (): string => login.userId.value ?? LOCAL_OWNER;
+  /** Same bucket, read without subscribing the caller to account changes. */
+  const peekOwner = (): string => login.userId.peek() ?? LOCAL_OWNER;
 
   const getOrCreateEntry = (
     owner: string,
@@ -614,7 +616,7 @@ export function createHighlightsManager(
     // Kick the load eagerly so callers see fresh data as soon as possible,
     // without subscribing this call site to account changes (the view
     // itself carries that dependency for whoever reads it).
-    const owner = login.userId.peek() ?? LOCAL_OWNER;
+    const owner = peekOwner();
     void ensureLoaded(owner, address, getOrCreateEntry(owner, address));
 
     return view;
@@ -658,20 +660,15 @@ export function createHighlightsManager(
     }
 
     const existing = await store.get(entry.owner, address);
-    await store.put({
-      key: recordKey(entry.owner, address),
-      owner: entry.owner,
-      address,
-      collection: address,
-      payload,
-      // Keep the server version this edit was built on, so a second offline
-      // edit is still judged against what the server actually holds.
-      base: existing?.base ?? null,
-      deleted: false,
-      updatedAtMs: Date.now(),
-      pendingOp: "upsert",
-      attempts: 0,
-    });
+    await store.put(
+      pendingRow({
+        owner: entry.owner,
+        address,
+        collection: address,
+        payload,
+        base: existing?.base ?? null,
+      })
+    );
     sync.notifyLocalChange();
   };
 
@@ -705,7 +702,7 @@ export function createHighlightsManager(
   const resolveEntryToMutate = async (
     address: string
   ): Promise<ChapterHighlightsEntry> => {
-    const owner = login.userId.peek() ?? LOCAL_OWNER;
+    const owner = peekOwner();
     const entry = getOrCreateEntry(owner, address);
     await ensureLoaded(owner, address, entry);
     return entry;

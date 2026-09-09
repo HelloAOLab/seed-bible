@@ -861,7 +861,13 @@ export function createRecordSyncManager<T>(
           return;
         }
         if (choice === "add") {
-          await store.adoptLocalRows(owner);
+          // With no base, the domain's merge is a union in which the
+          // signed-out edit wins over the account's unsent one per item.
+          const { merge } = domain;
+          await store.adoptLocalRows(
+            owner,
+            merge ? (account, local) => merge(null, local, account) : undefined
+          );
         } else if (choice === "discard") {
           await store.discardLocalRows();
         }

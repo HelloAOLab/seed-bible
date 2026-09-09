@@ -97,9 +97,9 @@ function createMockState(
       ),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
       hasRecordOverride: false,
+      pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
-        pendingCountForCollection: vi.fn(() => 0),
       },
     },
     features: { isFeatureEnabled: vi.fn().mockReturnValue(false) },

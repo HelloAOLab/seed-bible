@@ -9,7 +9,6 @@ import type { DiscoverManager } from "../../managers/DiscoverManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import {
-  annotationCollection,
   annotationVerseNumbers,
   annotationListHasOtherAuthors,
   formatAnnotationVerseNumbers,
@@ -548,9 +547,7 @@ export function AnnotationsSection(props: {
     chapterAnnotations,
     login.userId.value
   );
-  const pending = annotations.sync.pendingCountForCollection(
-    annotationCollection(bookId, chapterNumber)
-  );
+  const pending = annotations.pendingCountForChapter(bookId, chapterNumber);
 
   return (
     <DiscoverSection title={title}>

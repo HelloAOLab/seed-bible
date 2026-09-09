@@ -21,7 +21,7 @@ import {
   canonicalize,
   createIndexedDbRecordStore,
   LOCAL_OWNER,
-  recordKey,
+  pendingRow,
   type OfflineRecordStore,
   type StoredRecord,
   type SyncDomain,
@@ -118,6 +118,9 @@ export interface AnnotationsManager {
    * a decision when a note changed in two places at once.
    */
   sync: RecordSyncManager<Annotation>;
+
+  /** How many of a chapter's notes are still waiting to reach the server. */
+  pendingCountForChapter(bookId: string, chapterNumber: number): number;
 }
 
 export const commentAnnotationSchema = z.object({
@@ -604,21 +607,16 @@ export function createAnnotationsManager(
     const owner = localOwner();
     try {
       const existing = await store.get(owner, parsed.id);
-      await store.put({
-        key: recordKey(owner, parsed.id),
-        owner,
-        address: parsed.id,
-        collection: annotationCollection(parsed.bookId, parsed.chapterNumber),
-        payload: parsed,
-        // Keep whichever server version this edit was built on. A second offline
-        // edit must still be judged against the copy the server actually holds,
-        // not against our own previous unsent edit.
-        base: existing?.base ?? null,
-        deleted: false,
-        updatedAtMs: now,
-        pendingOp: "upsert",
-        attempts: 0,
-      });
+      await store.put(
+        pendingRow({
+          owner,
+          address: parsed.id,
+          collection: annotationCollection(parsed.bookId, parsed.chapterNumber),
+          payload: parsed,
+          base: existing?.base ?? null,
+          updatedAtMs: now,
+        })
+      );
     } catch (error) {
       // The local database can become unusable for the rest of this tab's life
       // — another tab upgrading it closes this connection and every reopen at
@@ -657,18 +655,15 @@ export function createAnnotationsManager(
         return;
       }
 
-      await store.put({
-        key: recordKey(owner, annotationId),
-        owner,
-        address: annotationId,
-        collection: existing?.collection ?? "",
-        payload: null,
-        base: existing?.base ?? null,
-        deleted: true,
-        updatedAtMs: Date.now(),
-        pendingOp: "delete",
-        attempts: 0,
-      });
+      await store.put(
+        pendingRow({
+          owner,
+          address: annotationId,
+          collection: existing?.collection ?? "",
+          payload: null,
+          base: existing?.base ?? null,
+        })
+      );
     } catch (error) {
       // See `saveAnnotation`: a dead local database must not stop a deletion
       // the server can carry out perfectly well.
@@ -1240,5 +1235,9 @@ export function createAnnotationsManager(
     deleteAnnotationAndRefresh,
     hasRecordOverride: !!recordOverride,
     sync,
+    pendingCountForChapter: (bookId, chapterNumber) =>
+      sync.pendingCountForCollection(
+        annotationCollection(bookId, chapterNumber)
+      ),
   };
 }
