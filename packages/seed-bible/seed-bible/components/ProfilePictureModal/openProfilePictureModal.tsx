@@ -35,7 +35,10 @@ export function openProfilePictureModal(
   const { modals, login, t, onUploadingChange } = options;
 
   const modalId = modals.openModal({
-    title: { key: "update-picture", defaultValue: "Update picture" },
+    title: {
+      key: "change-profile-picture",
+      defaultValue: "Change profile picture",
+    },
     content: () => (
       <Suspense
         fallback={
