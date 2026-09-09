@@ -108,6 +108,9 @@
   "uninstall": "Uninstall",
   "reset-toolbar": "Reset toolbar",
   "custom": "Custom",
+  "color-hue": "Hue",
+  "color-saturation": "Saturation and brightness",
+  "hex-color": "Hex color",
   "text-section-bookTitle": "Book Title Text",
   "text-section-heading": "Heading Text",
   "text-section-verse": "Verse Text",
@@ -160,8 +163,6 @@
   "text_color": "Text color",
   "follow_theme": "Follow theme",
   "reset-to-default": "Reset to default",
-  "highlight-text-color": "Highlight text color",
-  "highlight-background-color": "Highlight background",
   "id_highlight-text-color": "{{id}} highlight text color",
   "id_highlight-background-color": "{{id}} highlight background color",
   "all-settings-description": "Fine-tune every text section and customize each theme color.",
@@ -792,5 +793,13 @@
   "unread-mention": "Unread mention",
   "unread-messages": "Unread messages: {{count}}",
   "ask-ai": "Ask AI",
-  "read-book-chapter-button": "Read {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Read {{bookName}} {{chapterNumber}}",
+  "scripture-width": "Scripture Width",
+  "scripture-width-unit": "ch",
+  "decrease-scripture-width": "Decrease scripture width",
+  "increase-scripture-width": "Increase scripture width",
+  "discover-content-panel": "Discover content",
+  "discover-book-title": "Discover {{book}}",
+  "show-all": "Show All",
+  "session-url": "Session URL"
 }

@@ -8,7 +8,6 @@ import {
   CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_FONT_FIELDS,
   MIN_READABLE_CONTRAST_RATIO,
-  buildBibleThemeFromCustomizationTheme,
   buildCustomFontValue,
   getContrastRatio,
   getExtensionAvailability,
@@ -25,7 +24,8 @@ import {
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
-import { toHexInputValue } from "../../app/utils";
+import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
+import { normalizeHex } from "../ColorPicker/color";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
@@ -718,10 +718,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
 
   const isDefault = variant.id === record.defaultVariantId;
   const canDelete = record.variants.length > 1;
-  const resolvedTheme = buildBibleThemeFromCustomizationTheme(
-    variant,
-    customizations.resolveVariantBaseTheme(variant)
-  );
+  const resolvedTheme = customizations.resolveEditingVariantTheme(variant);
 
   return (
     <div className="sb-settings-page">
@@ -813,18 +810,28 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                       </span>
                     </div>
                     <div className="sb-theme-color-row-controls">
-                      <input
-                        type="color"
+                      <LazyColorPicker
+                        value={normalizeHex(value)}
                         className="sb-theme-color-input"
-                        value={toHexInputValue(value)}
-                        aria-label={label}
-                        onInput={(event: Event) => {
-                          const target =
-                            event.currentTarget as HTMLInputElement;
+                        ariaLabel={label}
+                        onChange={(color) => {
                           customizations.setEditingVariantColor(
                             variant.id,
                             field.key,
-                            target.value
+                            color
+                          );
+                        }}
+                        onPreview={(color) => {
+                          customizations.previewEditingVariantColor(
+                            variant.id,
+                            field.key,
+                            color
+                          );
+                        }}
+                        onCancel={() => {
+                          customizations.clearPreviewEditingVariantColor(
+                            variant.id,
+                            field.key
                           );
                         }}
                       />
@@ -914,37 +921,55 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                     <span className="sb-theme-color-value">{bg || "—"}</span>
                   </div>
                   <div className="sb-theme-color-row-controls">
-                    <input
-                      type="color"
+                    <LazyColorPicker
+                      value={normalizeHex(bg)}
                       className="sb-theme-color-input"
-                      value={toHexInputValue(bg)}
-                      aria-label={t("id_highlight-background-color", { id })}
-                      title={t("highlight-background-color", {
-                        defaultValue: "Highlight background color",
-                      })}
-                      onInput={(event: Event) => {
-                        const target = event.currentTarget as HTMLInputElement;
+                      ariaLabel={t("id_highlight-background-color", { id })}
+                      onChange={(color) => {
                         customizations.setEditingVariantHighlightColor(
                           variant.id,
                           id,
-                          { color: target.value }
+                          { color }
+                        );
+                      }}
+                      onPreview={(color) => {
+                        customizations.previewEditingVariantHighlightColor(
+                          variant.id,
+                          id,
+                          { color }
+                        );
+                      }}
+                      onCancel={() => {
+                        customizations.clearPreviewEditingVariantHighlightField(
+                          variant.id,
+                          id,
+                          "color"
                         );
                       }}
                     />
-                    <input
-                      type="color"
+                    <LazyColorPicker
+                      value={normalizeHex(fg)}
                       className="sb-theme-color-input"
-                      value={toHexInputValue(fg)}
-                      aria-label={t("id_highlight-text-color", { id })}
-                      title={t("highlight-text-color", {
-                        defaultValue: "Highlight text color",
-                      })}
-                      onInput={(event: Event) => {
-                        const target = event.currentTarget as HTMLInputElement;
+                      ariaLabel={t("id_highlight-text-color", { id })}
+                      onChange={(color) => {
                         customizations.setEditingVariantHighlightColor(
                           variant.id,
                           id,
-                          { fontColor: target.value }
+                          { fontColor: color }
+                        );
+                      }}
+                      onPreview={(color) => {
+                        customizations.previewEditingVariantHighlightColor(
+                          variant.id,
+                          id,
+                          { fontColor: color }
+                        );
+                      }}
+                      onCancel={() => {
+                        customizations.clearPreviewEditingVariantHighlightField(
+                          variant.id,
+                          id,
+                          "fontColor"
                         );
                       }}
                     />

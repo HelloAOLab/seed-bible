@@ -598,6 +598,132 @@ describe("CustomizationsManager", () => {
     );
   });
 
+  it("previewEditingVariantColor updates activeResolvedTheme live without persisting or auto-saving", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+
+    manager.previewEditingVariantColor(variantId, "primaryColor", "#abcdef");
+
+    expect(manager.activeResolvedTheme.value?.variables.primaryColor).toBe(
+      "#abcdef"
+    );
+    expect(
+      manager.editingCustomization.value?.variants[0]?.themes.primaryColor
+    ).toBeUndefined();
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("clearPreviewEditingVariantColor discards the preview and restores the real resolved value", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+    const original = manager.activeResolvedTheme.value?.variables.primaryColor;
+
+    manager.previewEditingVariantColor(variantId, "primaryColor", "#abcdef");
+    manager.clearPreviewEditingVariantColor(variantId, "primaryColor");
+
+    expect(manager.activeResolvedTheme.value?.variables.primaryColor).toBe(
+      original
+    );
+  });
+
+  it("setEditingVariantColor clears any pending preview, so the just-saved color actually shows", async () => {
+    // Without clearing the preview, resolveEditingVariantTheme would keep
+    // layering it on top of the fresh commit and the swatch would still
+    // show the old drag value instead of the color that was just confirmed.
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    manager.previewEditingVariantColor(
+      variantId,
+      "readerBackground",
+      "#abcdef"
+    );
+    manager.setEditingVariantColor(variantId, "readerBackground", "#123456");
+
+    expect(manager.activeResolvedTheme.value?.variables.readerBackground).toBe(
+      "#123456"
+    );
+  });
+
+  it("previewEditingVariantHighlightColor updates only the previewed field, leaving the other field's real value alone", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+    const originalFontColor =
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.fontColor;
+
+    manager.previewEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#ff00ff",
+    });
+
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.color
+    ).toBe("#ff00ff");
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.fontColor
+    ).toBe(originalFontColor);
+    expect(
+      manager.editingCustomization.value?.variants[0]?.highlightColors.yellow
+    ).toBeUndefined();
+  });
+
+  it("clearPreviewEditingVariantHighlightField discards only the named field, leaving a preview on the other field intact", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    manager.previewEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#ff00ff",
+      fontColor: "#00ff00",
+    });
+    manager.clearPreviewEditingVariantHighlightField(
+      variantId,
+      "yellow",
+      "color"
+    );
+
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.color
+    ).not.toBe("#ff00ff");
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.fontColor
+    ).toBe("#00ff00");
+  });
+
+  it("setEditingVariantHighlightColor clears only the committed field's preview, so an in-progress drag on the other field survives", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    manager.previewEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#ff00ff",
+    });
+    manager.previewEditingVariantHighlightColor(variantId, "yellow", {
+      fontColor: "#00ff00",
+    });
+
+    manager.setEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#123456",
+    });
+
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.color
+    ).toBe("#123456");
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.fontColor
+    ).toBe("#00ff00");
+  });
+
   it("buildCustomFontValue() builds a font-family CSS value with a sans-serif fallback", () => {
     expect(buildCustomFontValue("Lora")).toBe("Lora, sans-serif");
     expect(buildCustomFontValue("IBM Plex Sans")).toBe(
