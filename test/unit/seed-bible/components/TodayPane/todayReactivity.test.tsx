@@ -111,6 +111,9 @@ describe("Today screen reactivity", () => {
     const today = todayStub({
       readingHistory,
       bookNames,
+      lastTranslationBooks: signal({
+        books: [{ id: "GEN", name: "Genesis", numberOfChapters: 50 }],
+      }),
       lastTranslationId: signal<string | undefined>("KJV"),
       translationBooksMap: signal(new Map()),
       getDefaultTranslation: () => "KJV",

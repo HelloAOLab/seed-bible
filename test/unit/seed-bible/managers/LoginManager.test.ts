@@ -237,7 +237,7 @@ describe("createLoginManager", () => {
 
       await manager.cancelLogin();
 
-      await expect(loginPromise).rejects.toThrow("Login cancelled");
+      await expect(loginPromise).resolves.toBeNull();
       await waitFor(() => manager.isLoginOpen.value === false);
       expect(getUserInfoMock).not.toHaveBeenCalled();
     });
