@@ -1,20 +1,39 @@
 import "./ProfilePictureModal.css";
 import { useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
-import AvatarEditor, { useAvatarEditor } from "react-avatar-editor";
 import { useI18n } from "../../i18n/I18nManager";
+import { PhotoCropModalContent } from "../PhotoCropModal/PhotoCropModal";
+import type { PhotoCropTarget } from "../PhotoCropModal/photoCrop";
 
-const EDITOR_SIZE = 256;
-const EDITOR_BORDER_RADIUS = EDITOR_SIZE / 2;
+/**
+ * A square avatar, stored lossless because it is small and re-encoding a face
+ * at low quality shows. The circular mask is the editor's only; the stored
+ * file is square, and the round avatar comes from CSS.
+ */
+const PROFILE_PICTURE_TARGET: PhotoCropTarget = {
+  width: 256,
+  height: 256,
+  previewWidth: 256,
+  previewHeight: 256,
+  borderRadius: 128,
+  mimeType: "image/png",
+  fileName: "profile-picture.png",
+};
 
 /**
  * Content for the "Update picture" modal, rendered inside the shared
  * {@link ModalHost} chrome. Lets the user take a photo, choose one from their
- * gallery, or upload a file, then crop/zoom it before it is uploaded.
+ * device, or upload a file, then crop/zoom it before it is uploaded.
  *
  * "Take a photo" relies on the `capture` attribute: it opens the camera on
- * mobile and falls back to a normal file picker on desktop. The cropped result
- * is handed to `onUpload`, which wraps `login.uploadProfilePicture`.
+ * mobile and falls back to a normal file picker on desktop. Note that these
+ * are the device's own pickers — unlike playlist and reading-plan covers,
+ * profile pictures deliberately stay out of the shared Recent uploads
+ * gallery, so there is nothing in-app to choose from.
+ *
+ * The crop step itself is {@link PhotoCropModalContent}, shared with covers.
+ * The cropped result is handed to `onUpload`, which wraps
+ * `login.uploadProfilePicture`.
  */
 export function ProfilePictureModalContent(props: {
   onUpload: (file: File) => Promise<void>;
@@ -25,10 +44,6 @@ export function ProfilePictureModalContent(props: {
 
   const step = useSignal<"choose" | "crop">("choose");
   const selectedFile = useSignal<File | null>(null);
-  const zoom = useSignal(1.2);
-  const isUploading = useSignal(false);
-
-  const editor = useAvatarEditor();
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -43,7 +58,6 @@ export function ProfilePictureModalContent(props: {
       return;
     }
     selectedFile.value = file;
-    zoom.value = 1.2;
     step.value = "crop";
   };
 
@@ -52,158 +66,75 @@ export function ProfilePictureModalContent(props: {
     step.value = "choose";
   };
 
-  const handleConfirm = () => {
-    if (isUploading.value) {
-      return;
-    }
-    const canvas = editor.getImageScaledToCanvas();
-    if (!canvas) {
-      return;
-    }
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        return;
-      }
-      const file = new File([blob], "profile-picture.png", {
-        type: "image/png",
-      });
-      isUploading.value = true;
-      void onUpload(file)
-        .then(() => {
-          onClose();
-        })
-        .catch((error) => {
-          console.error("Failed to upload profile picture.", error);
-        })
-        .finally(() => {
-          isUploading.value = false;
-        });
-    }, "image/png");
-  };
+  if (step.value === "crop" && selectedFile.value) {
+    return (
+      <PhotoCropModalContent
+        image={selectedFile.value}
+        target={PROFILE_PICTURE_TARGET}
+        title={t("crop-your-photo", { defaultValue: "Crop your photo" })}
+        confirmLabel={t("set-picture", { defaultValue: "Set picture" })}
+        onUpload={onUpload}
+        onClose={onClose}
+        onBack={backToChoose}
+      />
+    );
+  }
 
   return (
     <div className="sb-photo-modal">
-      {step.value === "choose" ? (
-        <div className="sb-photo-choice-list">
-          <button
-            type="button"
-            className="sb-photo-choice-button"
-            onClick={() => cameraInputRef.current?.click()}
-          >
-            <span className="material-symbols-outlined">photo_camera</span>
-            <span>{t("take-photo", { defaultValue: "Take a photo" })}</span>
-          </button>
-          <button
-            type="button"
-            className="sb-photo-choice-button"
-            onClick={() => galleryInputRef.current?.click()}
-          >
-            <span className="material-symbols-outlined">photo_library</span>
-            <span>
-              {t("choose-from-gallery", {
-                defaultValue: "Choose from gallery",
-              })}
-            </span>
-          </button>
-          <button
-            type="button"
-            className="sb-photo-choice-button"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <span className="material-symbols-outlined">upload_file</span>
-            <span>{t("upload-a-file", { defaultValue: "Upload a file" })}</span>
-          </button>
+      <div className="sb-photo-choice-list">
+        <button
+          type="button"
+          className="sb-photo-choice-button"
+          onClick={() => cameraInputRef.current?.click()}
+        >
+          <span className="material-symbols-outlined">photo_camera</span>
+          <span>{t("take-photo", { defaultValue: "Take a photo" })}</span>
+        </button>
+        <button
+          type="button"
+          className="sb-photo-choice-button"
+          onClick={() => galleryInputRef.current?.click()}
+        >
+          <span className="material-symbols-outlined">photo_library</span>
+          <span>
+            {t("choose-from-gallery", {
+              defaultValue: "Choose from gallery",
+            })}
+          </span>
+        </button>
+        <button
+          type="button"
+          className="sb-photo-choice-button"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <span className="material-symbols-outlined">upload_file</span>
+          <span>{t("upload-a-file", { defaultValue: "Upload a file" })}</span>
+        </button>
 
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            hidden
-            onChange={handleFileSelected}
-          />
-          <input
-            ref={galleryInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={handleFileSelected}
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={handleFileSelected}
-          />
-        </div>
-      ) : (
-        <div className="sb-photo-crop">
-          <h4 className="sb-photo-crop-title">
-            {t("crop-your-photo", { defaultValue: "Crop your photo" })}
-          </h4>
-          {selectedFile.value && (
-            <AvatarEditor
-              ref={editor.ref}
-              className="sb-photo-crop-canvas"
-              image={selectedFile.value}
-              width={EDITOR_SIZE}
-              height={EDITOR_SIZE}
-              border={24}
-              borderRadius={EDITOR_BORDER_RADIUS}
-              color={[0, 0, 0, 0.5]}
-              scale={zoom.value}
-              rotate={0}
-            />
-          )}
-          <label className="sb-photo-crop-zoom">
-            <span className="material-symbols-outlined">zoom_out</span>
-            <input
-              type="range"
-              min={0.25}
-              max={3}
-              step={0.01}
-              value={zoom.value}
-              aria-label={t("zoom", { defaultValue: "Zoom" })}
-              onInput={(event: Event) => {
-                zoom.value = Number(
-                  (event.currentTarget as HTMLInputElement).value
-                );
-              }}
-            />
-            <span className="material-symbols-outlined">zoom_in</span>
-          </label>
-
-          <div className="sb-photo-modal-actions">
-            <button
-              type="button"
-              className="sb-photo-modal-button"
-              onClick={backToChoose}
-              disabled={isUploading.value}
-            >
-              {t("back", { defaultValue: "Back" })}
-            </button>
-            <button
-              type="button"
-              className="sb-photo-modal-button"
-              onClick={onClose}
-              disabled={isUploading.value}
-            >
-              {t("cancel", { defaultValue: "Cancel" })}
-            </button>
-            <button
-              type="button"
-              className="sb-photo-modal-button sb-photo-modal-button-primary"
-              onClick={handleConfirm}
-              disabled={isUploading.value}
-            >
-              {isUploading.value
-                ? t("uploading", { defaultValue: "Uploading..." })
-                : t("set-picture", { defaultValue: "Set picture" })}
-            </button>
-          </div>
-        </div>
-      )}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={handleFileSelected}
+        />
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={handleFileSelected}
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={handleFileSelected}
+        />
+      </div>
     </div>
   );
 }
