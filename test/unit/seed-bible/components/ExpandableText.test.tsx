@@ -1,33 +1,37 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { ExpandableText } from "@packages/seed-bible/seed-bible/components/ExpandableText/ExpandableText";
+import {
+  DEFAULT_MAX_LENGTH,
+  ExpandableText,
+} from "@packages/seed-bible/seed-bible/components/ExpandableText/ExpandableText";
 
-/**
- * jsdom does no layout, so every element measures 0 and the clamp would
- * never look like it overflows. The hidden probe holds the full pre-wrap
- * text; report it as taller than one line so "Read more" can appear.
- */
-function mockClampedOverflow() {
-  const originalScrollHeight = Object.getOwnPropertyDescriptor(
-    HTMLElement.prototype,
-    "scrollHeight"
-  );
-  Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
-    configurable: true,
-    get(this: HTMLElement) {
-      return this.classList.contains("sb-expandable-text-probe") ? 40 : 0;
-    },
+function renderText(
+  container: HTMLElement,
+  text: string,
+  props: { maxLength?: number; maxLines?: number; className?: string } = {}
+) {
+  act(() => {
+    render(
+      <ExpandableText
+        readMoreLabel="Read more"
+        readLessLabel="Read less"
+        {...props}
+      >
+        {text}
+      </ExpandableText>,
+      container
+    );
   });
-  return () => {
-    if (originalScrollHeight) {
-      Object.defineProperty(
-        HTMLElement.prototype,
-        "scrollHeight",
-        originalScrollHeight
-      );
-    }
-  };
 }
+
+const body = (container: HTMLElement) =>
+  container.querySelector(".sb-expandable-text-body")?.textContent;
+const toggle = (container: HTMLElement) =>
+  container.querySelector(
+    ".sb-expandable-text-toggle"
+  ) as HTMLButtonElement | null;
+const ellipsis = (container: HTMLElement) =>
+  container.querySelector(".sb-expandable-text-ellipsis");
 
 describe("ExpandableText", () => {
   let container: HTMLDivElement;
@@ -42,181 +46,172 @@ describe("ExpandableText", () => {
     container.remove();
   });
 
-  it("renders the full text and no toggle when it fits the clamp", () => {
-    act(() => {
-      render(
-        <ExpandableText readMoreLabel="Read more" readLessLabel="Read less">
-          A short evening study
-        </ExpandableText>,
-        container
-      );
-    });
+  it("renders the full text and no toggle when it is within the limit", () => {
+    renderText(container, "A short evening study");
 
-    expect(
-      container.querySelector(".sb-expandable-text-body")?.textContent
-    ).toBe("A short evening study");
-    expect(container.querySelector(".sb-expandable-text-toggle")).toBeNull();
+    expect(body(container)).toBe("A short evening study");
+    expect(toggle(container)).toBeNull();
+    expect(ellipsis(container)).toBeNull();
+  });
+
+  it("shows no toggle for a description of any length up to the limit", () => {
+    // The point of the character limit: a description that fits is never
+    // given a "Read more" that would expand to reveal nothing.
+    renderText(container, "x".repeat(DEFAULT_MAX_LENGTH));
+
+    expect(body(container)?.length).toBe(DEFAULT_MAX_LENGTH);
+    expect(toggle(container)).toBeNull();
+  });
+
+  it("shows a toggle once the text passes the limit by one character", () => {
+    renderText(container, "x".repeat(DEFAULT_MAX_LENGTH + 1));
+
+    expect(toggle(container)?.textContent).toBe("Read more");
   });
 
   it("renders nothing for empty text", () => {
-    act(() => {
-      render(
-        <ExpandableText readMoreLabel="Read more" readLessLabel="Read less">
-          {""}
-        </ExpandableText>,
-        container
-      );
-    });
+    renderText(container, "");
 
     expect(container.querySelector(".sb-expandable-text")).toBeNull();
   });
 
+  it("truncates to the limit while collapsed, then shows all of it", () => {
+    const text =
+      "Reading through the Psalms with my house church this year, a psalm each morning before work and one together on Sunday evenings after dinner.";
+    renderText(container, text, { maxLength: 40 });
+
+    const collapsed = body(container)!;
+    expect(collapsed.length).toBeLessThanOrEqual(40);
+    expect(text.startsWith(collapsed)).toBe(true);
+    expect(ellipsis(container)?.textContent).toBe("...");
+
+    act(() => {
+      toggle(container)!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(body(container)).toBe(text);
+    expect(ellipsis(container)).toBeNull();
+  });
+
+  it("cuts at a word boundary rather than mid-word", () => {
+    renderText(container, "Reading through the Psalms every single morning", {
+      maxLength: 20,
+    });
+
+    // "Reading through the " would be the raw 20-character cut; backing off to
+    // the boundary drops the partial word and the trailing space with it.
+    expect(body(container)).toBe("Reading through the");
+  });
+
+  it("hard-cuts a single word longer than the limit", () => {
+    renderText(container, "Supercalifragilisticexpialidocious", {
+      maxLength: 10,
+    });
+
+    expect(body(container)).toBe("Supercalif");
+    expect(toggle(container)).not.toBeNull();
+  });
+
+  it("counts and cuts by code point so an emoji is never split", () => {
+    renderText(container, "📖📖📖📖📖", { maxLength: 3 });
+
+    expect(body(container)).toBe("📖📖📖");
+  });
+
   it("keeps newlines in the body so a multi-line string displays as written", () => {
+    renderText(container, "Line one\nLine two", { maxLines: 2 });
+
+    expect(body(container)).toBe("Line one\nLine two");
+    expect(toggle(container)).toBeNull();
+  });
+
+  it("shows the first line while collapsed, then every line after Read more", () => {
+    renderText(container, "Line one\nLine two");
+
+    expect(body(container)).toBe("Line one");
+    expect(ellipsis(container)?.textContent).toBe("...");
+
+    act(() => {
+      toggle(container)!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(body(container)).toBe("Line one\nLine two");
+    expect(ellipsis(container)).toBeNull();
+  });
+
+  it("toggles the label and aria-expanded, and collapses again", () => {
+    renderText(container, "A much longer description than the limit allows", {
+      maxLength: 20,
+      className: "my-extra-class",
+    });
+
+    const root = container.querySelector(".sb-expandable-text")!;
+    expect(root.classList.contains("my-extra-class")).toBe(true);
+
+    const button = toggle(container)!;
+    expect(button.textContent).toBe("Read more");
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+
+    act(() => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(button.textContent).toBe("Read less");
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+
+    act(() => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(button.textContent).toBe("Read more");
+    expect(ellipsis(container)?.textContent).toBe("...");
+  });
+
+  it("re-collapses when the text changes, so a new profile starts collapsed", () => {
+    const long = "A much longer description than the limit allows";
+    renderText(container, long, { maxLength: 20 });
+
+    act(() => {
+      toggle(container)!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    expect(body(container)).toBe(long);
+
+    const other = "Another description well past the limit as well";
+    renderText(container, other, { maxLength: 20 });
+
+    expect(body(container)?.length).toBeLessThanOrEqual(20);
+    expect(toggle(container)?.textContent).toBe("Read more");
+  });
+
+  it("does not let the toggle click bubble to a parent click handler", () => {
+    const onParentClick = vi.fn();
     act(() => {
       render(
-        <ExpandableText readMoreLabel="Read more" readLessLabel="Read less">
-          {"Line one\nLine two"}
-        </ExpandableText>,
+        <div onClick={onParentClick}>
+          <ExpandableText
+            maxLength={10}
+            readMoreLabel="Read more"
+            readLessLabel="Read less"
+          >
+            Overflowing description
+          </ExpandableText>
+        </div>,
         container
       );
     });
 
-    expect(
-      container.querySelector(".sb-expandable-text-body")?.textContent
-    ).toBe("Line one\nLine two");
-    expect(
-      container
-        .querySelector(".sb-expandable-text-body")
-        ?.classList.contains("sb-expandable-text-body--clamped")
-    ).toBe(false);
-  });
+    act(() => {
+      toggle(container)!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
 
-  it("shows the first line while collapsed, then every line after Read more", () => {
-    const restore = mockClampedOverflow();
-    try {
-      act(() => {
-        render(
-          <ExpandableText readMoreLabel="Read more" readLessLabel="Read less">
-            {"Line one\nLine two"}
-          </ExpandableText>,
-          container
-        );
-      });
-
-      expect(
-        container.querySelector(".sb-expandable-text-body")?.textContent
-      ).toBe("Line one");
-      expect(
-        container.querySelector(".sb-expandable-text-ellipsis")?.textContent
-      ).toBe("...");
-
-      const toggle = container.querySelector(
-        ".sb-expandable-text-toggle"
-      ) as HTMLButtonElement;
-      act(() => {
-        toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      });
-
-      expect(
-        container.querySelector(".sb-expandable-text-body")?.textContent
-      ).toBe("Line one\nLine two");
-      expect(
-        container.querySelector(".sb-expandable-text-ellipsis")
-      ).toBeNull();
-    } finally {
-      restore();
-    }
-  });
-
-  it("shows Read more when the clamped text overflows, then Read less once expanded", () => {
-    const restore = mockClampedOverflow();
-    try {
-      act(() => {
-        render(
-          <ExpandableText
-            className="my-extra-class"
-            readMoreLabel="Read more"
-            readLessLabel="Read less"
-          >
-            A much longer description that does not fit on one line
-          </ExpandableText>,
-          container
-        );
-      });
-
-      const root = container.querySelector(".sb-expandable-text")!;
-      expect(root.classList.contains("my-extra-class")).toBe(true);
-
-      const toggle = container.querySelector(
-        ".sb-expandable-text-toggle"
-      ) as HTMLButtonElement;
-      expect(toggle).not.toBeNull();
-      expect(toggle.textContent).toBe("Read more");
-      expect(toggle.getAttribute("aria-expanded")).toBe("false");
-      expect(
-        container.querySelector(".sb-expandable-text-ellipsis")?.textContent
-      ).toBe("...");
-      expect(
-        container
-          .querySelector(".sb-expandable-text-body")
-          ?.classList.contains("sb-expandable-text-body--clamped")
-      ).toBe(true);
-
-      act(() => {
-        toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      });
-
-      expect(toggle.textContent).toBe("Read less");
-      expect(toggle.getAttribute("aria-expanded")).toBe("true");
-      expect(
-        container.querySelector(".sb-expandable-text-ellipsis")
-      ).toBeNull();
-      expect(
-        container
-          .querySelector(".sb-expandable-text-body")
-          ?.classList.contains("sb-expandable-text-body--clamped")
-      ).toBe(false);
-
-      act(() => {
-        toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      });
-
-      expect(toggle.textContent).toBe("Read more");
-      expect(
-        container
-          .querySelector(".sb-expandable-text-body")
-          ?.classList.contains("sb-expandable-text-body--clamped")
-      ).toBe(true);
-    } finally {
-      restore();
-    }
-  });
-
-  it("does not let the toggle click bubble to a parent click handler", () => {
-    const restore = mockClampedOverflow();
-    const onParentClick = vi.fn();
-    try {
-      act(() => {
-        render(
-          <div onClick={onParentClick}>
-            <ExpandableText readMoreLabel="Read more" readLessLabel="Read less">
-              Overflowing description
-            </ExpandableText>
-          </div>,
-          container
-        );
-      });
-
-      const toggle = container.querySelector(
-        ".sb-expandable-text-toggle"
-      ) as HTMLButtonElement;
-      act(() => {
-        toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      });
-
-      expect(onParentClick).not.toHaveBeenCalled();
-    } finally {
-      restore();
-    }
+    expect(onParentClick).not.toHaveBeenCalled();
   });
 });

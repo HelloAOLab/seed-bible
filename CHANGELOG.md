@@ -15,6 +15,8 @@
 ### 🐛 Fixed
 
 - Stop linking an ambiguous chapter-to-verse range in prose. "John 1-2:3" mixes a whole-chapter start with a verse end, and used to link as John 1–2 with the ":3" silently dropped; it now links nothing rather than a reference the reader did not write. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+- Fix "Read more" appearing on every profile description, however short. It was shown based on a measurement of the rendered text against a guessed line height, which over-reported, so a three-word description got a "Read more" that expanded to nothing; it now appears only when the description is actually longer than a set limit (140 characters, or more than one line). ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Keep a profile description centred while it is collapsed. The collapsed text and its "Read more" used to sit against the left edge and jump to the centre when expanded. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 
 ### 🗑️ Removed
 

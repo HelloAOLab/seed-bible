@@ -1,5 +1,4 @@
 .sb-expandable-text {
-  position: relative;
   min-width: 0;
   width: 100%;
 }
@@ -10,46 +9,15 @@
 }
 
 /*
- * Hidden copy used to measure the full pre-wrap height, so a description
- * with line breaks is treated as overflowing even when each line is short.
+ * Collapsed and expanded both lay out as ordinary inline text: the text is
+ * cut to length in the component, so nothing here has to clip it. That is
+ * what keeps the surrounding `text-align` working in both states — the
+ * collapsed row used to be a flex container, whose `justify-content` default
+ * silently overrode a centred `text-align` and pinned the text and its
+ * "Read more" to the start edge.
  */
-.sb-expandable-text-probe {
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  visibility: hidden;
-  pointer-events: none;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-/*
- * Collapsed overflow: `text... Read more` on one baseline. The body can
- * shrink and clip; the ellipsis is a real character so it always shows,
- * even when the first line itself fits.
- */
-.sb-expandable-text--clamped {
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: baseline;
-  min-width: 0;
-  width: 100%;
-}
-
-.sb-expandable-text-body--clamped {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.sb-expandable-text-ellipsis {
-  flex: 0 0 auto;
-}
-
 .sb-expandable-text-toggle {
   all: unset;
-  flex: 0 0 auto;
   margin-inline-start: 0.25em;
   color: var(--sb-primary-color);
   font: inherit;

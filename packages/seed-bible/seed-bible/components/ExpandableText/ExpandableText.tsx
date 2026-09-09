@@ -1,27 +1,80 @@
 import "./ExpandableText.css";
-import { useLayoutEffect, useRef, useState } from "preact/hooks";
+import { useLayoutEffect, useState } from "preact/hooks";
 
-function lineHeightPx(el: HTMLElement): number {
-  const style = getComputedStyle(el);
-  const parsed = parseFloat(style.lineHeight);
-  if (Number.isFinite(parsed) && parsed > 0) {
-    return parsed;
+/**
+ * Characters to show before "Read more" appears. Long enough that an ordinary
+ * one-sentence bio is never truncated, short enough that the collapsed text
+ * stays something you glance at rather than read.
+ */
+export const DEFAULT_MAX_LENGTH = 140;
+
+/**
+ * Cuts `chars` down to `maxLength`, backing off to the last word boundary in
+ * the final quarter of the budget so the text doesn't end mid-word. A single
+ * word longer than that quarter is hard-cut instead — backing off further
+ * would leave almost nothing on screen.
+ */
+function truncate(chars: string[], maxLength: number): string {
+  if (chars.length <= maxLength) {
+    return chars.join("");
   }
-  return (parseFloat(style.fontSize) || 16) * 1.2;
+
+  const kept = chars.slice(0, maxLength);
+  let end = kept.length;
+  for (let i = kept.length - 1; i >= Math.floor(maxLength * 0.75); i--) {
+    if (/\s/.test(kept[i] ?? "")) {
+      end = i;
+      break;
+    }
+  }
+
+  return kept.slice(0, end).join("").replace(/\s+$/, "");
 }
 
 /**
- * Shows text inline with a "Read more" / "Read less" control when it
- * overflows the clamp. Collapsed, it reads as one line of prose —
- * `text... Read more` — with a real ellipsis on the same baseline as the
- * text. Expanded (and when the text already fits), line breaks are
- * preserved. Labels are passed in already-translated so this stays
- * i18n-agnostic (same pattern as `SkeletonContainer`).
+ * The collapsed rendering of `text`, or null when it already fits and so
+ * needs no toggle at all.
+ *
+ * `Array.from` counts code points rather than UTF-16 units, so the limit
+ * counts an emoji or accented character as one and a cut never splits one in
+ * half.
+ */
+function collapseText(
+  text: string,
+  maxLines: number,
+  maxLength: number
+): string | null {
+  const lines = text.split(/\r?\n/);
+  const head = Array.from(lines.slice(0, maxLines).join("\n"));
+
+  if (lines.length <= maxLines && head.length <= maxLength) {
+    return null;
+  }
+
+  return truncate(head, maxLength);
+}
+
+/**
+ * Shows text with a "Read more" / "Read less" control when it is longer than
+ * the limit. Collapsed, it reads as `text... Read more`; expanded (and when
+ * the text already fits), line breaks are preserved.
+ *
+ * The limit is a real character count, checked against the text itself, so a
+ * short description never gets a "Read more" that expands to nothing. An
+ * earlier version measured rendered height against a guessed line height
+ * instead, which over-reported overflow and showed the control on text of any
+ * length. Labels are passed in already-translated so this stays i18n-agnostic
+ * (same pattern as `SkeletonContainer`).
  */
 export function ExpandableText(props: {
   children: string;
-  /** How many lines to show before clamping. Defaults to 1. */
+  /**
+   * How many hard line breaks to show before collapsing. Defaults to 1, so a
+   * description written as several lines collapses to its first.
+   */
   maxLines?: number;
+  /** Characters to show before collapsing. Defaults to {@link DEFAULT_MAX_LENGTH}. */
+  maxLength?: number;
   /** Already-translated "Read more" label. */
   readMoreLabel: string;
   /** Already-translated "Read less" label. */
@@ -31,46 +84,23 @@ export function ExpandableText(props: {
   const {
     children: text,
     maxLines = 1,
+    maxLength = DEFAULT_MAX_LENGTH,
     readMoreLabel,
     readLessLabel,
     className,
   } = props;
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const probeRef = useRef<HTMLSpanElement>(null);
   const [expanded, setExpanded] = useState(false);
-  const [overflowing, setOverflowing] = useState(false);
 
   useLayoutEffect(() => {
     setExpanded(false);
-  }, [text, maxLines]);
-
-  useLayoutEffect(() => {
-    const probe = probeRef.current;
-    if (!probe || expanded) {
-      return;
-    }
-    const measure = () => {
-      const maxHeight = lineHeightPx(probe) * maxLines + 1;
-      setOverflowing(probe.scrollHeight > maxHeight);
-    };
-    measure();
-    if (typeof ResizeObserver === "undefined") {
-      return;
-    }
-    const observer = new ResizeObserver(measure);
-    observer.observe(probe);
-    if (wrapRef.current) {
-      observer.observe(wrapRef.current);
-    }
-    return () => observer.disconnect();
-  }, [text, maxLines, expanded]);
+  }, [text, maxLines, maxLength]);
 
   if (!text) {
     return null;
   }
 
-  const clamped = overflowing && !expanded;
-  const displayText = clamped ? (text.split(/\r?\n/, 1)[0] ?? text) : text;
+  const collapsed = collapseText(text, maxLines, maxLength);
+  const clamped = collapsed !== null && !expanded;
 
   const classes = [
     "sb-expandable-text",
@@ -81,28 +111,16 @@ export function ExpandableText(props: {
     .join(" ");
 
   return (
-    <div ref={wrapRef} className={classes} dir="auto">
-      <span
-        ref={probeRef}
-        className="sb-expandable-text-probe"
-        aria-hidden="true"
-      >
-        {text}
-      </span>
-      <span
-        className={
-          "sb-expandable-text-body" +
-          (clamped ? " sb-expandable-text-body--clamped" : "")
-        }
-      >
-        {displayText}
+    <div className={classes} dir="auto">
+      <span className="sb-expandable-text-body">
+        {clamped ? collapsed : text}
       </span>
       {clamped ? (
         <span className="sb-expandable-text-ellipsis" aria-hidden="true">
           ...
         </span>
       ) : null}
-      {overflowing ? (
+      {collapsed !== null ? (
         <button
           type="button"
           className="sb-expandable-text-toggle"

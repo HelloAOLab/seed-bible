@@ -248,6 +248,29 @@ describe("ProfilePane", () => {
     expect(container.querySelector(".sb-profile-description")).toBeNull();
   });
 
+  it("offers no Read more for a description that fits", () => {
+    const { state } = createState({ description: "Reading through Psalms." });
+    renderPane(state);
+
+    expect(container.querySelector(".sb-expandable-text-toggle")).toBeNull();
+  });
+
+  it("offers Read more only once the description runs long", () => {
+    const description =
+      "Reading through the Psalms with my house church this year, a psalm each morning before work and one together on Sunday evenings, plus whatever the kids are memorising that week.";
+    const { state } = createState({ description });
+    renderPane(state);
+
+    const toggle = container.querySelector(".sb-expandable-text-toggle");
+    expect(toggle).not.toBeNull();
+
+    const shown = container.querySelector(
+      ".sb-expandable-text-body"
+    )?.textContent;
+    expect(shown!.length).toBeLessThan(description.length);
+    expect(description.startsWith(shown!)).toBe(true);
+  });
+
   it("falls back to initials when the user has no profile picture", () => {
     const { state } = createState({ name: "Craig Anders" });
     renderPane(state);
