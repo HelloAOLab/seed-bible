@@ -1,7 +1,7 @@
 import "./PaneLayout.inline.css";
 import "./PaneLayout.css";
 import { PaneHeader } from "../PaneHeader/PaneHeader";
-import type { Pane } from "../../managers/PanesManager";
+import type { Pane, PanesManager } from "../../managers/PanesManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { UI_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
 import { useEffect, useRef } from "preact/hooks";
@@ -29,6 +29,18 @@ interface DragState {
   originY?: number;
   scaleX?: number;
   scaleY?: number;
+}
+
+/**
+ * Closes a pane via its header's close (X) button, honoring `confirmClose`
+ * if the pane declared one — e.g. to warn about unsaved changes and let the
+ * pane close itself once the user confirms. See `Pane.confirmClose`.
+ */
+function closePaneFromHeader(panesManager: PanesManager, pane: Pane) {
+  if (pane.confirmClose && !pane.confirmClose()) {
+    return;
+  }
+  panesManager.closePane(pane.id, "user");
 }
 
 function usePaneDrag(state: SeedBibleState) {
@@ -203,7 +215,7 @@ export function PaneLayout(props: PaneLayoutProps) {
             icon={pane.icon}
             leading={pane.leading}
             header={pane.header}
-            onClose={() => panesManager.closePane(pane.id, "user")}
+            onClose={() => closePaneFromHeader(panesManager, pane)}
             onPointerDown={(event: PointerEvent) => startMove(pane, event)}
           />
           <div className="sb-pane-detached-body">
@@ -273,7 +285,7 @@ export function FullscreenPane(props: FullscreenPaneProps) {
         icon={pane.icon}
         leading={pane.leading}
         header={pane.header}
-        onClose={() => panesManager.closePane(pane.id, "user")}
+        onClose={() => closePaneFromHeader(panesManager, pane)}
       />
       <div className="sb-pane-detached-body">
         <div className="sb-pane-component">
@@ -314,7 +326,7 @@ export function SidePane(props: SidePaneProps) {
         icon={pane.icon}
         leading={pane.leading}
         header={pane.header}
-        onClose={() => panesManager.closePane(pane.id, "user")}
+        onClose={() => closePaneFromHeader(panesManager, pane)}
       />
       <div className="sb-pane-detached-body">
         <div className="sb-pane-component">
