@@ -3,6 +3,7 @@ import { effect, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { safeLocalStorage } from "@packages/seed-bible/seed-bible/app/ssrEnv";
+import "./apologistBible.css";
 
 /**
  * PostHog / FeaturesManager gate for the Apologist unsupported-bible warning.
@@ -381,9 +382,10 @@ function ApologistBibleFallbackWarningContent(props: {
   t: (key: string, options?: Record<string, unknown>) => string;
   requestedLabel: string | null;
   fallbackCode: string;
-  onClose: () => void;
+  onDismiss: () => void;
+  onContinue: () => void;
 }): ComponentChildren {
-  const { t, requestedLabel, fallbackCode, onClose } = props;
+  const { t, requestedLabel, fallbackCode, onDismiss, onContinue } = props;
   const dontAskAgain = useSignal(false);
 
   return (
@@ -414,15 +416,22 @@ function ApologistBibleFallbackWarningContent(props: {
       <div className="sb-apologist-bible-fallback-actions">
         <button
           type="button"
-          className="sb-apologist-bible-fallback-ok"
+          className="sb-apologist-bible-fallback-dismiss"
+          onClick={onDismiss}
+        >
+          {t("dismiss", { defaultValue: "Dismiss" })}
+        </button>
+        <button
+          type="button"
+          className="sb-apologist-bible-fallback-continue"
           onClick={() => {
             if (dontAskAgain.value) {
               dismissApologistBibleFallbackWarning();
             }
-            onClose();
+            onContinue();
           }}
         >
-          {t("dismiss", { defaultValue: "Dismiss" })}
+          {t("continue", { defaultValue: "Continue" })}
         </button>
       </div>
     </div>
@@ -433,24 +442,28 @@ function ApologistBibleFallbackWarningContent(props: {
  * When the resolved bible used a fallback, optionally shows a one-time warning
  * (feature-gated + localStorage don't-ask-again), pausing chat while the modal
  * is open so the stream doesn't start underneath it.
+ *
+ * @returns `true` if the caller should proceed (no warning, or user continued).
+ *   `false` if the user dismissed / closed the modal (go back — do not call AI).
  */
 export async function warnIfApologistBibleFallback(
   context: SeedBibleState,
   resolution: ApologistBibleResolution
-): Promise<void> {
+): Promise<boolean> {
   if (!resolution.usedFallback) {
-    return;
+    return true;
   }
   if (
     !context.features.isFeatureEnabled(SHOW_APOLOGIST_BIBLE_FALLBACK_WARNING)
       .value
   ) {
-    return;
+    return true;
   }
   if (isApologistBibleFallbackDismissed()) {
-    return;
+    return true;
   }
 
+  let continued = false;
   await pauseChatWhileModalOpen(context, () =>
     context.modals.openModal({
       id: APOLOGIST_BIBLE_FALLBACK_MODAL_ID,
@@ -464,13 +477,18 @@ export async function warnIfApologistBibleFallback(
           t={t}
           requestedLabel={resolution.requestedLabel}
           fallbackCode={resolution.code}
-          onClose={() =>
+          onDismiss={() =>
             context.modals.closeModal(APOLOGIST_BIBLE_FALLBACK_MODAL_ID)
           }
+          onContinue={() => {
+            continued = true;
+            context.modals.closeModal(APOLOGIST_BIBLE_FALLBACK_MODAL_ID);
+          }}
         />
       ),
     })
   );
+  return continued;
 }
 
 /**

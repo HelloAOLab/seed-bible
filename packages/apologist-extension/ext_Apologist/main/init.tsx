@@ -222,7 +222,14 @@ export default function initApologistExtension() {
             availableTranslations:
               context.bibleData.availableTranslations.value,
           });
-          await warnIfApologistBibleFallback(context, bibleResolution);
+          const shouldContinue = await warnIfApologistBibleFallback(
+            context,
+            bibleResolution
+          );
+          if (!shouldContinue) {
+            // User dismissed the fallback warning (go back) — do not call AI.
+            return;
+          }
 
           const uiLanguage = uiLocaleForApologist(i18n.language);
           const readingInstructions =

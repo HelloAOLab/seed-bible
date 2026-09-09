@@ -317,6 +317,7 @@
   "ai-bible-follow-active-tab": "Follow active tab instead",
   "apologist-bible-fallback-warning-title": "Bible translation unavailable",
   "apologist-bible-fallback-warning-body": "Apologist doesn't support {{requested}} yet, so quotes will use {{fallback}} instead.",
+  "continue": "Continue",
   "someone-is-typing": "Someone is typing...",
   "x-and-x-are-typing": "{{first}} and {{second}} are typing...",
   "x-is-typing": "{{name}} is typing...",

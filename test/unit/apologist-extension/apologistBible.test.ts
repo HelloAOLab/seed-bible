@@ -254,15 +254,90 @@ describe("warnIfApologistBibleFallback", () => {
     });
     expect(resolution.usedFallback).toBe(true);
 
-    const firstWarn = warnIfApologistBibleFallback(context, resolution);
+    const firstWarnPromise = warnIfApologistBibleFallback(context, resolution);
     expect(openModal).toHaveBeenCalledTimes(1);
+
+    // Persist "don't show again", then close the modal (go back). The next call
+    // should skip the warning because of localStorage.
     dismissApologistBibleFallbackWarning();
     context.modals.closeModal("apologist-bible-fallback-warning");
-    await firstWarn;
+    await firstWarnPromise;
 
     openModal.mockClear();
-    await warnIfApologistBibleFallback(context, resolution);
+    const second = await warnIfApologistBibleFallback(context, resolution);
+    expect(second).toBe(true);
     expect(openModal).not.toHaveBeenCalled();
+  });
+
+  it("returns false when the user dismisses, true when they continue", async () => {
+    const isChatPanelOpen = signal(true);
+    const modals = signal<{ id: string }[]>([]);
+    type ContentFn = (props: {
+      t: (key: string, options?: Record<string, unknown>) => string;
+    }) => unknown;
+    let contentFn: ContentFn | null = null;
+
+    const context = {
+      features: {
+        isFeatureEnabled: (key: string) =>
+          signal(key === SHOW_APOLOGIST_BIBLE_FALLBACK_WARNING),
+      },
+      sidebar: {
+        isChatPanelOpen,
+        closeChatPanel: vi.fn(() => {
+          isChatPanelOpen.value = false;
+        }),
+        openChatPanel: vi.fn(() => {
+          isChatPanelOpen.value = true;
+        }),
+      },
+      modals: {
+        modals,
+        openModal: vi.fn(
+          (registration: { id?: string; content: ContentFn | unknown }) => {
+            const id = registration.id ?? "modal";
+            contentFn =
+              typeof registration.content === "function"
+                ? (registration.content as ContentFn)
+                : null;
+            modals.value = [...modals.value, { id }];
+            return id;
+          }
+        ),
+        closeModal: (id: string) => {
+          modals.value = modals.value.filter((modal) => modal.id !== id);
+        },
+      },
+    } as unknown as SeedBibleState;
+
+    const resolution = resolveApologistBible({
+      translation: translation({
+        id: "guj_irv",
+        shortName: "IRV",
+        language: "guj",
+        name: "Gujarati IRV",
+      }),
+    });
+
+    const t = (key: string) => key;
+
+    const dismissedPromise = warnIfApologistBibleFallback(context, resolution);
+    context.modals.closeModal("apologist-bible-fallback-warning");
+    expect(await dismissedPromise).toBe(false);
+
+    safeLocalStorage.removeItem(
+      "sb-apologist-bible-fallback-warning-dismissed"
+    );
+    modals.value = [];
+    contentFn = null;
+
+    const continuePromise = warnIfApologistBibleFallback(context, resolution);
+    const vnode = contentFn!({ t }) as {
+      props: { onContinue: () => void };
+    };
+    expect(vnode.props.onContinue).toEqual(expect.any(Function));
+    vnode.props.onContinue();
+    expect(await continuePromise).toBe(true);
   });
 });
 
