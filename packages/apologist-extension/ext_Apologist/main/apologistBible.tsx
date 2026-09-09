@@ -3,7 +3,6 @@ import { effect, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { safeLocalStorage } from "@packages/seed-bible/seed-bible/app/ssrEnv";
-import "./apologistBible.css";
 
 /**
  * PostHog / FeaturesManager gate for the Apologist unsupported-bible warning.
@@ -389,8 +388,8 @@ function ApologistBibleFallbackWarningContent(props: {
   const dontAskAgain = useSignal(false);
 
   return (
-    <div className="sb-apologist-bible-fallback-warning">
-      <p>
+    <div className="sb-session-close-confirm">
+      <p className="sb-session-close-confirm-message">
         {t("apologist-bible-fallback-warning-body", {
           defaultValue: requestedLabel
             ? `Apologist doesn't support {{requested}} yet, so quotes will use {{fallback}} instead.`
@@ -399,7 +398,7 @@ function ApologistBibleFallbackWarningContent(props: {
           fallback: fallbackCode.toUpperCase(),
         })}
       </p>
-      <label className="sb-apologist-bible-fallback-dont-ask">
+      <label className="sb-session-close-confirm-dontshow">
         <input
           type="checkbox"
           checked={dontAskAgain.value}
@@ -413,17 +412,17 @@ function ApologistBibleFallbackWarningContent(props: {
           {t("dont-show-again", { defaultValue: "Don't show this again" })}
         </span>
       </label>
-      <div className="sb-apologist-bible-fallback-actions">
+      <div className="sb-session-close-confirm-actions">
         <button
           type="button"
-          className="sb-apologist-bible-fallback-dismiss"
+          className="sb-session-settings-cancel"
           onClick={onDismiss}
         >
           {t("dismiss", { defaultValue: "Dismiss" })}
         </button>
         <button
           type="button"
-          className="sb-apologist-bible-fallback-continue"
+          className="sb-annotation-conflict-confirm"
           onClick={() => {
             if (dontAskAgain.value) {
               dismissApologistBibleFallbackWarning();
