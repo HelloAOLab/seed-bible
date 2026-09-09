@@ -168,6 +168,9 @@ export interface RecordSyncManager<T> {
   dispose: () => void;
 }
 
+/** What to do with records written while signed out, once someone signs in. */
+export type AdoptionChoice = "add" | "discard" | "keep";
+
 export interface CreateRecordSyncManagerOptions<T> {
   os: CasualOSManager;
   login: LoginManager;
@@ -178,6 +181,13 @@ export interface CreateRecordSyncManagerOptions<T> {
   onSynced?: (address: string, payload: T, owner: string) => void;
   /** Called when a resolution removes a record, so caches can drop it. */
   onRemoved?: (address: string, owner: string) => void;
+  /**
+   * Asked before signed-out records are moved onto the account that just
+   * signed in, and only when there are some. Absent, they are adopted without
+   * asking. `keep` leaves them where they are; they are asked about again on
+   * the next sign-in.
+   */
+  confirmAdoption?: (owner: string) => Promise<AdoptionChoice>;
 }
 
 /** What the server currently holds for one record. */
@@ -195,7 +205,8 @@ type PushOutcome<T> =
 export function createRecordSyncManager<T>(
   options: CreateRecordSyncManagerOptions<T>
 ): RecordSyncManager<T> {
-  const { os, login, store, domain, onSynced, onRemoved } = options;
+  const { os, login, store, domain, onSynced, onRemoved, confirmAdoption } =
+    options;
 
   const isOnline = signal<boolean>(
     typeof navigator === "undefined" ? true : navigator.onLine !== false
@@ -244,7 +255,13 @@ export function createRecordSyncManager<T>(
       return;
     }
     try {
-      pendingRows.value = await store.listPending(owner);
+      const rows = await store.listPending(owner);
+      // Signing out mid-read already emptied the list; a stale result would
+      // put the old account's rows back.
+      if (currentOwner() !== owner) {
+        return;
+      }
+      pendingRows.value = rows;
     } catch (error) {
       console.warn("Failed to read pending record changes.", error);
     }
@@ -791,6 +808,21 @@ export function createRecordSyncManager<T>(
     window.addEventListener("offline", handleOffline);
   }
 
+  /**
+   * Silent when there is no prompt or nothing to prompt about. Deleted rows
+   * are excluded from the count because adoption drops them anyway.
+   */
+  const decideAdoption = async (owner: string): Promise<AdoptionChoice> => {
+    if (!confirmAdoption || !store) {
+      return "add";
+    }
+    const local = await store.listPending(LOCAL_OWNER);
+    if (!local.some((row) => !row.deleted)) {
+      return "add";
+    }
+    return confirmAdoption(owner);
+  };
+
   // Adopt anything written while signed out, then sync. Runs on the first
   // resolution of `userId` (app start with a stored session) and on every later
   // sign-in.
@@ -823,7 +855,16 @@ export function createRecordSyncManager<T>(
 
     void (async () => {
       try {
-        await store.adoptLocalRows(owner);
+        const choice = await decideAdoption(owner);
+        // The prompt can outlive the session that opened it.
+        if (login.userId.peek() !== owner) {
+          return;
+        }
+        if (choice === "add") {
+          await store.adoptLocalRows(owner);
+        } else if (choice === "discard") {
+          await store.discardLocalRows();
+        }
       } catch (error) {
         console.warn("Failed to adopt locally-saved records.", error);
       }

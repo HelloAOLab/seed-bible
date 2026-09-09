@@ -18,6 +18,7 @@ import {
 } from "./OfflineRecordStore";
 import {
   createRecordSyncManager,
+  type CreateRecordSyncManagerOptions,
   type RecordSyncManager,
 } from "./RecordSyncManager";
 
@@ -362,6 +363,8 @@ export interface CreateHighlightsManagerOptions {
    * to the server and signed-out writes are dropped with a warning.
    */
   store?: OfflineRecordStore<ChapterHighlights> | null;
+  /** See {@link CreateRecordSyncManagerOptions.confirmAdoption}. */
+  confirmAdoption?: CreateRecordSyncManagerOptions<ChapterHighlights>["confirmAdoption"];
 }
 
 function createChapterHighlightsAddress(
@@ -717,6 +720,7 @@ export function createHighlightsManager(
       applyPayload(getOrCreateEntry(owner, address), payload),
     onRemoved: (address, owner) =>
       applyPayload(getOrCreateEntry(owner, address), null),
+    confirmAdoption: options.confirmAdoption,
   });
 
   const highlightVerse = async (

@@ -14,6 +14,7 @@ import type { ReaderTab, TabsManager } from "./TabsManager";
 import type { TranslationBookChapter } from "./FreeUseBibleAPI";
 import {
   createRecordSyncManager,
+  type CreateRecordSyncManagerOptions,
   type RecordSyncManager,
 } from "./RecordSyncManager";
 import {
@@ -474,6 +475,8 @@ export interface CreateAnnotationsManagerOptions {
    * factory returns null there.
    */
   store?: OfflineRecordStore<Annotation> | null;
+  /** See {@link CreateRecordSyncManagerOptions.confirmAdoption}. */
+  confirmAdoption?: CreateRecordSyncManagerOptions<Annotation>["confirmAdoption"];
 }
 
 /**
@@ -1037,6 +1040,7 @@ export function createAnnotationsManager(
     onSynced: (_address, annotation, owner) =>
       upsertIntoCache(annotation, owner),
     onRemoved: (address, owner) => removeFromCacheById(address, owner),
+    confirmAdoption: options.confirmAdoption,
   });
 
   // A chapter whose load failed is retried once there's a connection — the

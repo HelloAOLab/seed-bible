@@ -197,6 +197,15 @@ export interface OfflineRecordStore<T> {
   adoptLocalRows(owner: string): Promise<StoredRecord<T>[]>;
 
   /**
+   * Deletes every {@link LOCAL_OWNER} row without adopting it.
+   *
+   * The "don't add" answer to the sign-in prompt. Anything left under the
+   * local owner would be offered to the next account that signs in on this
+   * device, which is the leak the prompt exists to close.
+   */
+  discardLocalRows(): Promise<void>;
+
+  /**
    * Drops an owner's fully-synced rows, keeping anything still pending.
    *
    * Called on sign-out. Synced records can be fetched again, and leaving
@@ -551,6 +560,19 @@ export function createIndexedDbRecordStore<T>(
     return adopted;
   };
 
+  const discardLocalRows = async (): Promise<void> => {
+    const database = await openDatabase();
+    const transaction = database.transaction(RECORDS_STORE, "readwrite");
+    const store = transaction.objectStore(RECORDS_STORE);
+    const rows = (await requestToPromise(store.getAll())) as StoredRecord<T>[];
+    for (const row of rows) {
+      if (row.owner === LOCAL_OWNER) {
+        store.delete(row.key);
+      }
+    }
+    await transactionToPromise(transaction);
+  };
+
   const clearSynced = async (owner: string): Promise<void> => {
     const database = await openDatabase();
     const transaction = database.transaction(RECORDS_STORE, "readwrite");
@@ -573,6 +595,7 @@ export function createIndexedDbRecordStore<T>(
     getListed,
     reconcileCollection,
     adoptLocalRows,
+    discardLocalRows,
     clearSynced,
   };
 }
@@ -782,6 +805,14 @@ export function createInMemoryRecordStore<T>(): OfflineRecordStore<T> {
         rows.set(row.key, row);
       }
       return adopted;
+    },
+
+    async discardLocalRows() {
+      for (const row of [...rows.values()]) {
+        if (row.owner === LOCAL_OWNER) {
+          rows.delete(row.key);
+        }
+      }
     },
 
     async clearSynced(owner) {

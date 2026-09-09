@@ -389,7 +389,7 @@ describe("createInMemoryRecordStore<Annotation>()", () => {
     });
   });
 
-  describe("adoptLocalRows()", () => {
+  describe("adoptLocalRows() and discardLocalRows()", () => {
     it("re-keys signed-out rows onto the account and empties the local bucket", async () => {
       const store = createInMemoryRecordStore<Annotation>();
       await store.put(pendingRow(LOCAL_OWNER, makeAnnotation("draft")));
@@ -468,6 +468,17 @@ describe("createInMemoryRecordStore<Annotation>()", () => {
       await store.adoptLocalRows("user-1");
 
       expect(await store.get("user-2", "theirs")).not.toBeNull();
+    });
+
+    it("discardLocalRows() removes signed-out rows and leaves the account's alone", async () => {
+      const store = createInMemoryRecordStore<Annotation>();
+      await store.put(pendingRow(LOCAL_OWNER, makeAnnotation("draft")));
+      await store.put(synced("user-1", makeAnnotation("mine")));
+
+      await store.discardLocalRows();
+
+      expect(await store.get(LOCAL_OWNER, "draft")).toBeNull();
+      expect(await store.get("user-1", "mine")).not.toBeNull();
     });
   });
 

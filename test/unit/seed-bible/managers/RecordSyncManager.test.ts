@@ -15,6 +15,7 @@ import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsMana
 import {
   conflictResolutions,
   createRecordSyncManager,
+  type AdoptionChoice,
   type CreateRecordSyncManagerOptions,
   type RecordSyncManager,
 } from "@packages/seed-bible/seed-bible/managers/RecordSyncManager";
@@ -1054,7 +1055,7 @@ describe("RecordSyncManager", () => {
   });
 
   describe("adoption on sign-in", () => {
-    it("adopts signed-out drafts and pushes them once the user signs in", async () => {
+    async function putSignedOutDraft() {
       await store.put({
         ...syncedRow(LOCAL_OWNER, "draft", COLLECTION, makeAnnotation("draft")),
         owner: LOCAL_OWNER,
@@ -1062,16 +1063,28 @@ describe("RecordSyncManager", () => {
         pendingOp: "upsert",
         base: null,
       });
+    }
+
+    function signInWith(
+      confirmAdoption?: (owner: string) => Promise<AdoptionChoice>
+    ) {
       const signedOut = createLoginMock(null);
       const sync = createRecordSyncManager<Annotation>({
         os,
         login: signedOut,
         store,
         domain: testDomain,
+        confirmAdoption,
       });
       managers.push(sync);
-
       signedOut.userId.value = OWNER;
+      return sync;
+    }
+
+    it("adopts signed-out drafts and pushes them once the user signs in", async () => {
+      await putSignedOutDraft();
+
+      signInWith();
       // Let the adoption effect's async work settle.
       await vi.waitFor(() => expect(recordDataMock).toHaveBeenCalled());
 
@@ -1082,6 +1095,79 @@ describe("RecordSyncManager", () => {
         expect.anything()
       );
       expect(await store.get(LOCAL_OWNER, "draft")).toBeNull();
+    });
+
+    it("asks before adopting and adopts on 'add'", async () => {
+      await putSignedOutDraft();
+      const confirmAdoption = vi.fn().mockResolvedValue("add" as const);
+
+      signInWith(confirmAdoption);
+      await vi.waitFor(() => expect(recordDataMock).toHaveBeenCalled());
+
+      expect(confirmAdoption).toHaveBeenCalledWith(OWNER);
+      expect(await store.get(LOCAL_OWNER, "draft")).toBeNull();
+      expect(await store.get(OWNER, "draft")).not.toBeNull();
+    });
+
+    it("deletes signed-out rows on 'discard' without pushing them", async () => {
+      await putSignedOutDraft();
+
+      signInWith(vi.fn().mockResolvedValue("discard" as const));
+      await vi.waitFor(async () =>
+        expect(await store.get(LOCAL_OWNER, "draft")).toBeNull()
+      );
+
+      expect(await store.get(OWNER, "draft")).toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("leaves signed-out rows in place on 'keep'", async () => {
+      await putSignedOutDraft();
+      const confirmAdoption = vi.fn().mockResolvedValue("keep" as const);
+
+      const sync = signInWith(confirmAdoption);
+      await vi.waitFor(() => expect(confirmAdoption).toHaveBeenCalled());
+      await sync.sync();
+
+      expect(await store.get(LOCAL_OWNER, "draft")).not.toBeNull();
+      expect(await store.get(OWNER, "draft")).toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("does not ask when nothing was written signed out", async () => {
+      const confirmAdoption = vi.fn().mockResolvedValue("add" as const);
+
+      const sync = signInWith(confirmAdoption);
+      await sync.sync();
+
+      expect(confirmAdoption).not.toHaveBeenCalled();
+    });
+
+    it("does nothing with the answer if the user signed out while the prompt was open", async () => {
+      await putSignedOutDraft();
+      let answer: ((choice: AdoptionChoice) => void) | undefined;
+      const confirmAdoption = vi.fn(
+        () => new Promise<AdoptionChoice>((resolve) => (answer = resolve))
+      );
+
+      const signedOut = createLoginMock(null);
+      const sync = createRecordSyncManager<Annotation>({
+        os,
+        login: signedOut,
+        store,
+        domain: testDomain,
+        confirmAdoption,
+      });
+      managers.push(sync);
+      signedOut.userId.value = OWNER;
+      await vi.waitFor(() => expect(answer).toBeDefined());
+      signedOut.userId.value = null;
+      answer?.("add");
+      await sync.sync();
+
+      expect(await store.get(LOCAL_OWNER, "draft")).not.toBeNull();
+      expect(await store.get(OWNER, "draft")).toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
     });
 
     it("drops synced rows on sign-out but keeps unsent writing", async () => {
