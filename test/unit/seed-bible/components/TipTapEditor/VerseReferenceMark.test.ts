@@ -87,7 +87,9 @@ describe("VerseReferenceMark", () => {
   // page URL already has `?verse=9`, which used to be copied onto the
   // chapter-only link.
   it("does not copy the current page's verse onto a chapter-only reference", () => {
-    jsdom.reconfigure({ url: "https://example.test/en/AAB/john/3?verse=9" });
+    jsdom.reconfigure({
+      url: "https://example.test/en/AAB/john/3?verse=9&sessionId=abc",
+    });
     editor = createEditor();
 
     editor.commands.insertContent("Jonah 2");
@@ -115,7 +117,9 @@ describe("VerseReferenceMark", () => {
   });
 
   it("keeps each reference's own verse when a chapter-only and a verse sit in the same note", () => {
-    jsdom.reconfigure({ url: "https://example.test/en/AAB/john/3?verse=9" });
+    jsdom.reconfigure({
+      url: "https://example.test/en/AAB/john/3?verse=9&sessionId=abc",
+    });
     editor = createEditor();
 
     editor.commands.insertContent("Jonah 2 and John 3:16");

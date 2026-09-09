@@ -96,39 +96,42 @@ describe("getVerseReferenceLinkHref", () => {
     );
   });
 
-  it("leaves unrelated query params alone", () => {
+  // A saved note must not hardcode the page's session (or any other param a
+  // future screen might add). Asserting the key list — not just sessionId —
+  // is what keeps that from quietly coming back.
+  it("keeps only the reference's own verse query param", () => {
     jsdom.reconfigure({
-      url: "https://example.test/en/AAB/genesis/1?sessionId=abc",
+      url: "https://example.test/en/AAB/john/3?verse=9&sessionId=abc&chatFirst=true&utm_source=x",
     });
 
-    const url = new URL(getVerseReferenceLinkHref(ref()));
-    expect(url.pathname).toBe("/en/AAB/john/3");
-    expect(url.searchParams.get("sessionId")).toBe("abc");
-  });
-
-  it("keeps unrelated query params while dropping the page's verse", () => {
-    jsdom.reconfigure({
-      url: "https://example.test/en/AAB/john/3?verse=9&sessionId=abc",
-    });
-
-    const url = new URL(
+    const chapterOnly = new URL(
       getVerseReferenceLinkHref(ref({ book: "JON", chapter: 2 }))
     );
-    expect(url.pathname).toBe("/en/AAB/jonah/2");
-    expect(url.searchParams.get("verse")).toBeNull();
-    expect(url.searchParams.get("sessionId")).toBe("abc");
+    expect(chapterOnly.pathname).toBe("/en/AAB/jonah/2");
+    expect([...chapterOnly.searchParams.keys()]).toEqual([]);
+
+    const withVerse = new URL(getVerseReferenceLinkHref(ref({ verse: 16 })));
+    expect(withVerse.pathname).toBe("/en/AAB/john/3");
+    expect([...withVerse.searchParams.keys()]).toEqual(["verse"]);
+    expect(withVerse.searchParams.get("verse")).toBe("16");
   });
 
   it("falls back to the legacy params when the page isn't on a reading path", () => {
     // Nothing in the URL names a translation, so there is no path to build.
     // The legacy form still works — the server redirects it to the canonical
-    // one — which beats emitting a link to the wrong place.
-    jsdom.reconfigure({ url: "https://example.test/" });
+    // one — which beats emitting a link to the wrong place. Page params such
+    // as sessionId still must not come along.
+    jsdom.reconfigure({ url: "https://example.test/?sessionId=abc" });
 
     const url = new URL(getVerseReferenceLinkHref(ref({ verse: 16 })));
     expect(url.searchParams.get("book")).toBe("JHN");
     expect(url.searchParams.get("chapter")).toBe("3");
     expect(url.searchParams.get("verse")).toBe("16");
+    expect([...url.searchParams.keys()].sort()).toEqual([
+      "book",
+      "chapter",
+      "verse",
+    ]);
   });
 
   it("drops the page's current verse on a chapter-only reference without a reading path", () => {
@@ -140,6 +143,6 @@ describe("getVerseReferenceLinkHref", () => {
     expect(url.searchParams.get("book")).toBe("JHN");
     expect(url.searchParams.get("chapter")).toBe("3");
     expect(url.searchParams.get("verse")).toBeNull();
-    expect(url.searchParams.get("sessionId")).toBe("abc");
+    expect([...url.searchParams.keys()].sort()).toEqual(["book", "chapter"]);
   });
 });
