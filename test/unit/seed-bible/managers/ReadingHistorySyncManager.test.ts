@@ -263,7 +263,40 @@ describe("ReadingHistorySyncManager", () => {
       row.key,
     ]);
     expect(sync.pendingCount.value).toBe(1);
-    expect(sync.lastError.value).toBe("no connection");
+    expect(sync.lastError.value).toBe("2026: no connection");
+  });
+
+  it("names every year a pass couldn't reach, not just the last one", async () => {
+    await record(IN_2025);
+    await record(IN_2026, 2);
+    writer.failYear(2025, new Error("session expired"));
+    writer.failYear(2026, new Error("no connection"));
+
+    const { manager: sync } = create("user-1");
+    await sync.sync();
+
+    // Two years can fail one pass for two different reasons, and being told
+    // only about the second one hides the first.
+    expect(sync.lastError.value).toContain("2025: session expired");
+    expect(sync.lastError.value).toContain("2026: no connection");
+    expect(sync.pendingCount.value).toBe(2);
+  });
+
+  it("pushes the years together rather than one after another", async () => {
+    await record(IN_2025);
+    await record(IN_2026, 2);
+
+    const { manager: sync } = create("user-1");
+    writer.block();
+    const pass = sync.sync();
+    // Both documents are reached while the first write is still open. A year
+    // that waited for the one before it would leave the second unstarted here,
+    // making a backlog take one round trip per year to drain.
+    await waitForCondition(() => writer.writes.length === 2);
+    writer.release();
+    await pass;
+
+    expect(await store.listPending("user-1")).toEqual([]);
   });
 
   it("replays a failed event once it can reach the document again", async () => {
@@ -332,16 +365,54 @@ describe("ReadingHistorySyncManager", () => {
     expect(rows.map((r) => r.key)).not.toContain(stale.key);
   });
 
-  it("does not prune while anything is still queued", async () => {
+  it("never prunes an event the server still doesn't have", async () => {
     const stale = await record(IN_2026 - 500 * 24 * 60 * 60);
     writer.failWith(new Error("no connection"));
 
     const { manager: sync } = create("user-1");
     await sync.sync();
 
+    // Old enough to prune, but it has never been pushed, so this device holds
+    // the only copy of it.
     expect(
       (await store.listForWindow("user-1", 0, IN_2026 + 1)).map((r) => r.key)
     ).toEqual([stale.key]);
+  });
+
+  it("prunes the years that landed even while one stays unreachable", async () => {
+    const stale = await record(IN_2026 - 500 * 24 * 60 * 60);
+    await store.markSynced([{ key: stale.key, end: stale.end }]);
+    const stranded = await record(IN_2026, 2);
+    writer.failYear(2026, new Error("no connection"));
+
+    const { manager: sync } = create("user-1");
+    await sync.sync();
+
+    expect((await store.listPending("user-1")).map((r) => r.key)).toEqual([
+      stranded.key,
+    ]);
+    // A year that can never be reached again must not switch pruning off for
+    // every other year, or the store grows forever.
+    expect(
+      (await store.listForWindow("user-1", 0, IN_2026 + 1)).map((r) => r.key)
+    ).toEqual([stranded.key]);
+  });
+
+  it("doesn't report a failed prune as a failed sync", async () => {
+    await record(IN_2026);
+    const storeThatCantPrune: OfflineReadingHistoryStore = {
+      ...store,
+      prune: () => Promise.reject(new Error("storage full")),
+    };
+
+    const { manager: sync } = create("user-1", { store: storeThatCantPrune });
+    await sync.sync();
+
+    // The event reached the server; only the local housekeeping afterwards
+    // failed, and saying "sync failed" for that is simply wrong.
+    expect(writer.writes).toHaveLength(1);
+    expect(await storeThatCantPrune.listPending("user-1")).toEqual([]);
+    expect(sync.lastError.value).toBeNull();
   });
 
   it("keeps unsynced events on sign-out and drops the synced ones", async () => {

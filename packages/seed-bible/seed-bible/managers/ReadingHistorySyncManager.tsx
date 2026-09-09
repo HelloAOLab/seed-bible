@@ -44,7 +44,13 @@ export interface ReadingHistorySyncManager {
   /** How many recorded events the server still doesn't have. */
   pendingCount: ReadonlySignal<number>;
 
-  /** Why the last pass couldn't finish, or null when it did. */
+  /**
+   * Why the last pass couldn't finish, or null when it did.
+   *
+   * Names every year that couldn't be reached, not just the last one to come
+   * back: a pass can fail two years for two different reasons, and reporting
+   * one of them hides the other.
+   */
   lastError: ReadonlySignal<string | null>;
 
   /** Runs a pass, or joins the one already running. */
@@ -84,6 +90,16 @@ export interface CreateReadingHistorySyncManagerOptions {
 
   /** Injected in tests. Defaults to the wall clock. */
   nowSeconds?: () => number;
+}
+
+/** A year whose document a pass couldn't reach, and what it said. */
+interface YearFailure {
+  year: number;
+  message: string;
+}
+
+function describeError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 export function createReadingHistorySyncManager(
@@ -130,17 +146,17 @@ export function createReadingHistorySyncManager(
   /**
    * Pushes everything pending for one user.
    *
-   * Returns false when a year's document couldn't be reached. Its rows keep
-   * their `pendingOp`, so nothing is lost and the next pass tries again.
+   * Returns the years whose document couldn't be reached. Their rows keep their
+   * `pendingOp`, so nothing is lost and the next pass tries again.
    */
-  const runPass = async (userId: string): Promise<boolean> => {
+  const runPass = async (userId: string): Promise<YearFailure[]> => {
     if (!store) {
-      return true;
+      return [];
     }
 
     const pending = await store.listPending(userId);
     if (pending.length === 0) {
-      return true;
+      return [];
     }
 
     const byYear = new Map<number, StoredReadingEvent[]>();
@@ -153,25 +169,29 @@ export function createReadingHistorySyncManager(
       }
     }
 
-    let completed = true;
-    for (const [year, rows] of byYear) {
-      try {
-        await writeEvents(userId, year, rows.map(toReadingEvent));
-        await store.markSynced(
-          rows.map((row) => ({ key: row.key, end: row.end }))
-        );
-      } catch (error) {
-        lastError.value =
-          error instanceof Error ? error.message : String(error);
-        console.warn(
-          `Failed to replay reading history for ${year}. It stays queued.`,
-          error
-        );
-        completed = false;
-      }
-    }
+    // Each year is a separate document with nothing to say to the others, so
+    // they go out together rather than one after another: a backlog spanning
+    // three years drains in one round trip instead of three, which matters
+    // because the tab can close again part-way through the drain.
+    const outcomes = await Promise.all(
+      [...byYear].map(async ([year, rows]): Promise<YearFailure | null> => {
+        try {
+          await writeEvents(userId, year, rows.map(toReadingEvent));
+          await store.markSynced(
+            rows.map((row) => ({ key: row.key, end: row.end }))
+          );
+          return null;
+        } catch (error) {
+          console.warn(
+            `Failed to replay reading history for ${year}. It stays queued.`,
+            error
+          );
+          return { year, message: describeError(error) };
+        }
+      })
+    );
 
-    return completed;
+    return outcomes.filter((outcome): outcome is YearFailure => !!outcome);
   };
 
   const sync = (): Promise<void> => {
@@ -191,17 +211,29 @@ export function createReadingHistorySyncManager(
     isSyncing.value = true;
     running = (async () => {
       try {
-        const completed = await runPass(userId);
+        const failures = await runPass(userId);
+        lastError.value =
+          failures.length === 0
+            ? null
+            : failures
+                .map((failure) => `${failure.year}: ${failure.message}`)
+                .join("; ");
 
-        if (completed) {
-          lastError.value = null;
-          // Only once everything has landed, so pruning can never remove the
-          // local copy of an event the server still doesn't have.
+        // Pruning runs whether or not every year got through. It only ever
+        // deletes rows the server already has — anything still queued is left
+        // alone — so a year that can never be reached again must not be able to
+        // switch pruning off: that would let every *other* year's synced rows
+        // pile up forever, which is the one job pruning exists to do.
+        try {
           await store.prune(userId, nowSeconds() - retentionSeconds);
+        } catch (error) {
+          // Local housekeeping, not a failed push. Reporting it through
+          // `lastError` would claim reading history hadn't reached the server
+          // when it had.
+          console.warn("Failed to prune synced reading events.", error);
         }
       } catch (error) {
-        lastError.value =
-          error instanceof Error ? error.message : String(error);
+        lastError.value = describeError(error);
         console.warn("Reading history sync pass failed.", error);
       } finally {
         running = null;
