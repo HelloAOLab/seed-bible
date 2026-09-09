@@ -185,12 +185,14 @@ export function HeroImageField(props: {
           </button>
           <button
             type="button"
-            className="sb-hero-field-delete"
+            className="sb-hero-field-clear"
             onClick={onRemove}
             disabled={busy}
-            aria-label={t("delete", { defaultValue: "Delete" })}
+            aria-label={t("remove-hero-image", {
+              defaultValue: "Remove cover image",
+            })}
           >
-            <MaterialIcon>delete</MaterialIcon>
+            <MaterialIcon>close</MaterialIcon>
           </button>
         </div>
       ) : (

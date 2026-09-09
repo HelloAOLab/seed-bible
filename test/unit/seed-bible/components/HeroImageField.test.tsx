@@ -103,7 +103,7 @@ describe("HeroImageField", () => {
     vi.restoreAllMocks();
   });
 
-  it("puts a delete button on the top left of the cover preview", () => {
+  it("puts a clear button on the top left of the cover preview", () => {
     const onRemove = vi.fn();
     const modals = createModalManager();
 
@@ -122,10 +122,11 @@ describe("HeroImageField", () => {
     const wrap = container.querySelector(".sb-hero-field-preview-wrap");
     expect(wrap).not.toBeNull();
     const remove = wrap?.querySelector(
-      ".sb-hero-field-delete"
+      ".sb-hero-field-clear"
     ) as HTMLButtonElement;
     expect(remove).not.toBeNull();
-    expect(remove.getAttribute("aria-label")).toBe("Delete");
+    expect(remove.getAttribute("aria-label")).toBe("Remove cover image");
+    expect(remove.textContent).toContain("close");
     expect(
       Array.from(container.querySelectorAll("button")).some(
         (button) => button.textContent === "Remove cover image"
