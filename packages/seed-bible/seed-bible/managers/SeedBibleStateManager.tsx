@@ -2804,6 +2804,14 @@ export function createSeedBibleState(
     closeProfile();
     playlists.startPlaying(playlist, 0);
   };
+  const editPlaylistFromContent = (playlist: Playlist) => {
+    closeYourContent();
+    closeProfile();
+    // `editPlaylist` only sets the Discover pane's view, and that pane docks
+    // beside the reader — so the fullscreen screens above it have to close
+    // first, or the editor opens behind them.
+    playlists.editPlaylist(playlist);
+  };
   const editAnnotationFromContent = (annotation: Annotation) => {
     closeYourContent();
     closeProfile();
@@ -2816,6 +2824,7 @@ export function createSeedBibleState(
       state={state}
       onOpenPassage={openPassageFromContent}
       onPlayPlaylist={playPlaylistFromContent}
+      onEditPlaylist={editPlaylistFromContent}
       onEditAnnotation={editAnnotationFromContent}
     />
   );

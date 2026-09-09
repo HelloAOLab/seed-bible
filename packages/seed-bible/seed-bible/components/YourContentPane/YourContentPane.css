@@ -338,66 +338,6 @@
   font-size: 0.75rem;
 }
 
-/* --------------------------------------------------------------- playlists */
-
-.sb-content-playlists {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.sb-content-playlists::-webkit-scrollbar {
-  display: none;
-}
-
-.sb-content-playlist {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-  width: 130px;
-  padding: 12px;
-  border: none;
-  border-radius: var(--sb-content-radius);
-  background: var(--sb-content-surface);
-  box-sizing: border-box;
-  text-align: start;
-  font-family: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-
-.sb-content-playlist:hover {
-  background: var(--sb-content-surface-strong);
-}
-
-.sb-content-playlist-play {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--sb-reader-background);
-  color: var(--sb-font-color);
-}
-
-.sb-content-playlist-play .material-symbols-outlined {
-  font-size: 18px;
-}
-
-.sb-content-playlist-title {
-  font-size: 0.875rem;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.sb-content-playlist-meta {
-  color: var(--sb-content-muted);
-  font-size: 0.75rem;
-}
-
 /* --------------------------------------------------------- load / failure */
 
 .sb-content-status {

@@ -94,7 +94,15 @@ function createState(options: StateOptions = {}) {
       resetFilters: vi.fn(() => {}),
     },
     bookmarks: { bookmarks: signal(options.bookmarks ?? []) },
-    playlists: { userPlaylists: signal(options.playlists ?? []) },
+    playlists: {
+      userPlaylists: signal(options.playlists ?? []),
+      startPlaying: vi.fn(),
+      editPlaylist: vi.fn(),
+      getPlaylistUrl: vi.fn(() => "https://example.com/playlist"),
+      deletePlaylist: vi.fn(async () => {}),
+    },
+    modals: { openModal: vi.fn(), closeModal: vi.fn() },
+    app: { toast: vi.fn() },
     annotations: { deleteAnnotationAndRefresh },
     today: {
       bookNames: signal(
@@ -126,6 +134,7 @@ describe("YourContentPane", () => {
   let container: HTMLDivElement;
   let onOpenPassage: Mock<(target: unknown) => void>;
   let onPlayPlaylist: Mock<(playlist: unknown) => void>;
+  let onEditPlaylist: Mock<(playlist: unknown) => void>;
   let onEditAnnotation: Mock<(annotation: unknown) => void>;
 
   beforeEach(() => {
@@ -133,6 +142,7 @@ describe("YourContentPane", () => {
     document.body.appendChild(container);
     onOpenPassage = vi.fn((_target: unknown) => {});
     onPlayPlaylist = vi.fn((_playlist: unknown) => {});
+    onEditPlaylist = vi.fn((_playlist: unknown) => {});
     onEditAnnotation = vi.fn((_annotation: unknown) => {});
   });
 
@@ -148,6 +158,7 @@ describe("YourContentPane", () => {
           state={state}
           onOpenPassage={onOpenPassage}
           onPlayPlaylist={onPlayPlaylist}
+          onEditPlaylist={onEditPlaylist}
           onEditAnnotation={onEditAnnotation}
         />,
         container
@@ -370,32 +381,83 @@ describe("YourContentPane", () => {
     ).toBe("John 1:1");
   });
 
-  it("plays a playlist from its tile", () => {
+  it("plays a playlist from its play button", () => {
     const list = playlist("p1", "Morning devotions");
     const { state } = createState({ playlists: [list] });
     renderPane(state);
 
     act(() => {
-      (
-        container.querySelector(".sb-content-playlist") as HTMLButtonElement
-      ).click();
+      container
+        .querySelector<HTMLButtonElement>(".sb-discover-item-play")!
+        .click();
     });
 
     expect(onPlayPlaylist).toHaveBeenCalledWith(list);
   });
 
-  it("shows a playlist's title and item count", () => {
+  // The menu renders through a portal into `document.body`, not inside the
+  // pane, so it is looked up there.
+  const openPlaylistMenu = () => {
+    const trigger = container.querySelector<HTMLButtonElement>(
+      ".sb-discover-item-menu"
+    );
+    if (!trigger)
+      throw new Error("The playlist options button did not render.");
+    act(() => {
+      trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  const menuItems = () =>
+    Array.from(
+      document.body.querySelectorAll<HTMLElement>(".sb-context-menu-item")
+    );
+
+  it("edits a playlist from its options menu", () => {
+    const list = playlist("p1", "Morning devotions");
+    const { state } = createState({ playlists: [list] });
+    renderPane(state);
+    openPlaylistMenu();
+
+    const edit = menuItems().find((item) =>
+      item.textContent?.includes("Edit playlist")
+    );
+    if (!edit) throw new Error("Edit playlist was not in the options menu.");
+    act(() => {
+      edit.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(onEditPlaylist).toHaveBeenCalledWith(list);
+    // Editing must not also start playback, which the row's own click does.
+    expect(onPlayPlaylist).not.toHaveBeenCalled();
+  });
+
+  it("offers share, edit and delete, the same as the Discover list", () => {
+    const { state } = createState({
+      playlists: [playlist("p1", "Morning devotions")],
+    });
+    renderPane(state);
+    openPlaylistMenu();
+
+    // Each label is preceded by its icon's ligature text.
+    expect(menuItems().map((item) => item.textContent)).toEqual([
+      "shareShare playlist",
+      "editEdit playlist",
+      "deleteDelete",
+    ]);
+  });
+
+  it("renders a playlist as a Discover row, with its title", () => {
     const { state } = createState({
       playlists: [playlist("p1", "Morning devotions", 12)],
     });
     renderPane(state);
 
-    expect(
-      container.querySelector(".sb-content-playlist-title")?.textContent
-    ).toBe("Morning devotions");
-    expect(
-      container.querySelector(".sb-content-playlist-meta")?.textContent
-    ).toContain("12 items");
+    const row = container.querySelector(".sb-playlist-item");
+    expect(row).not.toBeNull();
+    expect(row?.querySelector(".sb-discover-item-title")?.textContent).toBe(
+      "Morning devotions"
+    );
   });
 
   it("opens the passage an annotation is about", () => {

@@ -12,6 +12,7 @@ import {
   type ContentFilter,
 } from "../../managers/YourContentManager";
 import { AnnotationPreview } from "../DiscoverPane/AnnotationsSection";
+import { PlaylistRow } from "../DiscoverPane/PlaylistRow";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
@@ -31,6 +32,8 @@ export interface YourContentScreenProps {
   onOpenPassage: (target: TodayPassageTarget) => void;
   /** Starts a playlist and leaves this screen. */
   onPlayPlaylist: (playlist: Playlist) => void;
+  /** Opens a playlist in the editor and leaves this screen. */
+  onEditPlaylist: (playlist: Playlist) => void;
   /** Opens an annotation in the editor and leaves this screen. */
   onEditAnnotation: (annotation: Annotation) => void;
 }
@@ -351,38 +354,6 @@ function BookmarkPill(props: {
   );
 }
 
-function PlaylistTile(props: {
-  playlist: Playlist;
-  onPlay: (playlist: Playlist) => void;
-}) {
-  const { playlist } = props;
-  const { t, language } = useI18n();
-
-  return (
-    <button
-      type="button"
-      className="sb-content-playlist"
-      onClick={() => props.onPlay(playlist)}
-    >
-      <span className="sb-content-playlist-play" aria-hidden="true">
-        <MaterialIcon>play_arrow</MaterialIcon>
-      </span>
-      <span className="sb-content-playlist-title">
-        {playlist.title ??
-          t("untitled-playlist", { defaultValue: "Untitled playlist" })}
-      </span>
-      <span className="sb-content-playlist-meta">
-        {t("playlist-item-count", {
-          defaultValue: "{{count}} items",
-          count: playlist.items.length,
-        })}
-        {" · "}
-        {formatDate(playlist.updatedAtMs, language, "short")}
-      </span>
-    </button>
-  );
-}
-
 /* ------------------------------------------------------------------ screen */
 
 /**
@@ -655,15 +626,19 @@ export function YourContentPane(props: YourContentScreenProps) {
               title={t("playlists", { defaultValue: "Playlists" })}
               onSeeAll={seeAll("playlists", visiblePlaylists)}
             />
-            <div className="sb-content-playlists">
+            <ul className="sb-discover-list">
               {visiblePlaylists.slice(0, limit(visiblePlaylists)).map((p) => (
-                <PlaylistTile
+                <PlaylistRow
                   key={p.id}
                   playlist={p}
+                  playlists={playlists}
+                  modals={state.modals}
+                  toast={state.app.toast}
                   onPlay={props.onPlayPlaylist}
+                  onEdit={props.onEditPlaylist}
                 />
               ))}
-            </div>
+            </ul>
           </section>
         ) : null}
       </div>
