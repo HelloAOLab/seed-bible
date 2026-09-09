@@ -2678,11 +2678,20 @@ export function createSeedBibleState(
     }
   });
 
+  // Today is the fullscreen home screen, so anything else opening replaces it,
+  // and this is where that is enforced. Two ways it can happen:
+  //
+  // - Today's own pane went away, because another fullscreen pane displaced it
+  //   or its close button was used.
+  // - Another pane is open alongside Today's. `PanesManager` only clears the
+  //   other panes for a pane that fills the screen; a "side" pane replaces
+  //   just the previous side pane, so Discover and Reading plans used to open
+  //   underneath Today with nothing to tell the user they were there.
   effect(() => {
-    const paneOpen = panes.panes.value.some(
-      (pane) => pane.id === TODAY_PANE_ID
-    );
-    if (!paneOpen && today.isOpen.peek()) {
+    const openPanes = panes.panes.value;
+    const todayPaneOpen = openPanes.some((pane) => pane.id === TODAY_PANE_ID);
+    const anotherPaneOpen = openPanes.some((pane) => pane.id !== TODAY_PANE_ID);
+    if (today.isOpen.peek() && (!todayPaneOpen || anotherPaneOpen)) {
       today.close();
     }
   });
