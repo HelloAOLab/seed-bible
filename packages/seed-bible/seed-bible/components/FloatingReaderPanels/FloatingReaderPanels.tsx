@@ -758,6 +758,10 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       // though they're part of this panel's UI. Ignore taps inside them so
       // picking a provider doesn't close the panel out from under the click.
       if (target.closest(".sb-context-menu")) return;
+      // Managed modals (AI bible fallback, confirms, etc.) render as overlays
+      // outside the chat panel. Ignore them so dismissing/confirming a modal
+      // does not also close the chat out from under the click.
+      if (target.closest(".sb-footnote-modal-overlay")) return;
       sidebar.closeChatPanel();
     };
 

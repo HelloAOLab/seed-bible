@@ -146,16 +146,22 @@ class MockSharedMap<T> {
 
 function createLoginManagerMock() {
   const userId = signal<string | null>(null);
-  const profile = signal<{ name: string } | null>(null);
+  const profile = signal<{
+    name: string;
+    config?: Record<string, unknown>;
+  } | null>(null);
+  const localConfig = signal<Record<string, unknown>>({});
 
   const loginManager = {
     userId,
     profile,
+    localConfig,
   } as LoginManager;
 
   return {
     userId,
     profile,
+    localConfig,
     loginManager,
   };
 }
@@ -363,6 +369,23 @@ describe("createChatsManager", () => {
         joinTimeMs: 1_717_000_000_000,
       },
     ]);
+  });
+
+  it("follows the tab translation until an AI bible override is set", () => {
+    const { loginManager, localConfig } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    expect(chats.aiBibleTranslationId.value).toBeNull();
+    expect(chats.getEffectiveAiBibleTranslationId("BSB")).toBe("BSB");
+
+    chats.setAiBibleTranslationId("KJAV");
+    expect(localConfig.value.aiBibleTranslationId).toBe("KJAV");
+    expect(chats.aiBibleTranslationId.value).toBe("KJAV");
+    expect(chats.getEffectiveAiBibleTranslationId("BSB")).toBe("KJAV");
+
+    chats.setAiBibleTranslationId(null);
+    expect(localConfig.value.aiBibleTranslationId).toBeNull();
+    expect(chats.getEffectiveAiBibleTranslationId("BSB")).toBe("BSB");
   });
 
   it("tracks created chats in creation order", () => {

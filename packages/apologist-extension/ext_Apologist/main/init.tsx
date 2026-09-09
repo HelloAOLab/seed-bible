@@ -7,6 +7,15 @@ import {
   resolveMessageAuthors,
   type ChatProviderMessageOptions,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import {
+  APOLOGIST_BIBLE_FALLBACK_MODAL_ID,
+  APOLOGIST_DEFAULT_BIBLE,
+  dismissApologistBibleFallbackWarning,
+  pauseChatWhileModalOpen,
+  resolveApologistBible,
+  resolveApologistLanguage,
+  shouldWarnApologistBibleFallback,
+} from "./apologistBible";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -213,9 +222,109 @@ export default function initApologistExtension() {
             chatContext.instructions ??
             `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`;
 
+          const seedBibleId = context.chats.getEffectiveAiBibleTranslationId(
+            context.app.selectedTab.value?.readingState.translationId.value
+          );
+          const catalog =
+            context.app.selectedTab.value?.readingState.availableTranslations
+              .value?.translations ?? null;
+          const bibleResolution = resolveApologistBible({
+            seedTranslationId: seedBibleId,
+            catalog,
+          });
+          const responseLanguage = resolveApologistLanguage(i18n.language);
+
+          if (shouldWarnApologistBibleFallback(bibleResolution)) {
+            const requestedMeta = catalog?.find(
+              (t) =>
+                t.id.toLowerCase() ===
+                (bibleResolution.requestedSeedId ?? "").toLowerCase()
+            );
+            const requestedLabel =
+              requestedMeta?.shortName ??
+              bibleResolution.requestedSeedId ??
+              seedBibleId ??
+              "—";
+            const fallbackLabel =
+              bibleResolution.bible.toUpperCase() ===
+              APOLOGIST_DEFAULT_BIBLE.toUpperCase()
+                ? "BSB"
+                : bibleResolution.bible.toUpperCase();
+
+            // Close chat before the modal mounts so a pointerdown on the modal
+            // overlay (outside `.sb-floating-chat-panel`) cannot race the
+            // panel's outside-dismiss listener. Wait until the user dismisses
+            // the modal before calling Apologist — otherwise the English/BSB
+            // reply can stream while the warning is easy to miss.
+            const wasChatOpen = context.sidebar.isChatPanelOpen.peek();
+            if (wasChatOpen) {
+              context.sidebar.closeChatPanel();
+            }
+            context.modals.openModal({
+              id: APOLOGIST_BIBLE_FALLBACK_MODAL_ID,
+              useCasualOSApp: false,
+              title: {
+                key: "ai-bible-fallback-title",
+                defaultValue: "Translation not available for AI",
+              },
+              content: ({ t }) => (
+                <div className="sb-confirm-delete">
+                  <p className="sb-confirm-delete-message">
+                    {t("ai-bible-fallback-body", {
+                      defaultValue:
+                        "{{requested}} isn't available for this AI assistant, so scripture quotes will use {{fallback}}. Replies still follow your app language.",
+                      requested: requestedLabel,
+                      fallback: fallbackLabel,
+                    })}
+                  </p>
+                  <div className="sb-confirm-delete-actions">
+                    <button
+                      type="button"
+                      className="sb-photo-modal-button sb-photo-modal-button-primary"
+                      onClick={() =>
+                        context.modals.closeModal(
+                          APOLOGIST_BIBLE_FALLBACK_MODAL_ID
+                        )
+                      }
+                    >
+                      {t("ai-bible-fallback-continue", {
+                        defaultValue: "Continue",
+                      })}
+                    </button>
+                    <button
+                      type="button"
+                      className="sb-photo-modal-button"
+                      onClick={() => {
+                        dismissApologistBibleFallbackWarning();
+                        context.modals.closeModal(
+                          APOLOGIST_BIBLE_FALLBACK_MODAL_ID
+                        );
+                      }}
+                    >
+                      {t("ai-bible-fallback-dont-ask", {
+                        defaultValue: "Don't ask again",
+                      })}
+                    </button>
+                  </div>
+                </div>
+              ),
+            });
+            await pauseChatWhileModalOpen({
+              wasChatOpen,
+              closeChat: () => context.sidebar.closeChatPanel(),
+              openChat: () => context.sidebar.openChatPanel(),
+              isModalOpen: () =>
+                context.modals.modals.value.some(
+                  (modal) => modal.id === APOLOGIST_BIBLE_FALLBACK_MODAL_ID
+                ),
+            });
+          }
+
           const contextMessage: ChatMessage = {
             role: "developer",
-            content: instructions,
+            content: `${instructions}
+
+Always respond in the user's interface language (BCP-47 language code: "${responseLanguage}"). When quoting scripture, prefer the "${bibleResolution.bible}" Bible translation.`,
           };
 
           const tools = chatContext.tools?.map((t) => ({
@@ -264,8 +373,8 @@ export default function initApologistExtension() {
                   model: apologistModel,
                   stream: true,
                   metadata: {
-                    bible: "bsb",
-                    language: i18n.language,
+                    bible: bibleResolution.bible,
+                    language: responseLanguage,
                   },
                   messages: messages,
                   tools,

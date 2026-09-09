@@ -23,6 +23,13 @@ import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import { type i18n } from "i18next";
 import type { AIProviderFunctionTool } from "./AIManager";
+import {
+  getProfileConfigValue,
+  saveProfileConfigValue,
+} from "./ProfileConfigSync";
+
+/** Profile / localConfig key for the optional AI bible translation override. */
+export const PROFILE_AI_BIBLE_TRANSLATION_ID = "aiBibleTranslationId";
 
 export const chatMessageBaseSchema = z.object({
   /**
@@ -497,6 +504,26 @@ export interface ChatsManager {
    * AI tool can prefill a question without owning the compose UI.
    */
   composerDraft: Signal<string>;
+
+  /**
+   * Optional Seed translation id that overrides the active tab's translation
+   * for AI chat providers. `null` means "follow the selected tab".
+   */
+  aiBibleTranslationId: ReadonlySignal<string | null>;
+
+  /**
+   * Pins (or clears) the AI bible translation override and persists it to the
+   * user's profile / local config.
+   */
+  setAiBibleTranslationId: (translationId: string | null) => void;
+
+  /**
+   * Seed translation id AI providers should prefer: the override when set,
+   * otherwise the given tab translation id (typically the selected tab).
+   */
+  getEffectiveAiBibleTranslationId: (
+    tabTranslationId: string | null | undefined
+  ) => string | null;
 }
 
 const DEFAULT_LOCAL_PARTICIPANT_ID = "local-user";
@@ -2287,6 +2314,48 @@ export function createChatsManager(
     chats.value.some((chat) => chat.wasMentioned.value)
   );
 
+  // Profile (when logged in) wins over device-local config. Empty / missing
+  // means follow the selected reader tab.
+  const aiBibleTranslationId = computed<string | null>(() => {
+    const fromProfile = getProfileConfigValue(
+      loginManager.profile.value,
+      PROFILE_AI_BIBLE_TRANSLATION_ID
+    );
+    const fromLocal =
+      loginManager.localConfig.value[PROFILE_AI_BIBLE_TRANSLATION_ID];
+    const raw = fromProfile ?? fromLocal;
+    if (typeof raw !== "string") {
+      return null;
+    }
+    const trimmed = raw.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  });
+
+  const setAiBibleTranslationId = (translationId: string | null) => {
+    const next =
+      typeof translationId === "string" && translationId.trim().length > 0
+        ? translationId.trim()
+        : null;
+    void saveProfileConfigValue(
+      loginManager,
+      PROFILE_AI_BIBLE_TRANSLATION_ID,
+      next
+    );
+  };
+
+  const getEffectiveAiBibleTranslationId = (
+    tabTranslationId: string | null | undefined
+  ): string | null => {
+    const override = aiBibleTranslationId.value;
+    if (override) {
+      return override;
+    }
+    if (typeof tabTranslationId === "string" && tabTranslationId.trim()) {
+      return tabTranslationId.trim();
+    }
+    return null;
+  };
+
   const registerProvider = (provider: ChatProvider) => {
     chatProviders.value = [
       ...chatProviders.value.filter((p) => p.id !== provider.id),
@@ -2359,5 +2428,8 @@ export function createChatsManager(
     addContext,
     removeContext,
     composerDraft,
+    aiBibleTranslationId,
+    setAiBibleTranslationId,
+    getEffectiveAiBibleTranslationId,
   };
 }

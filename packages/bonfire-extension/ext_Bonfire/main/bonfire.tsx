@@ -1,4 +1,5 @@
 import { type SeedBibleState } from "seed-bible";
+import { i18n } from "seed-bible/i18n";
 import { z } from "zod";
 
 const bonfireSessionStartResponseSchema = z.object({
@@ -207,6 +208,26 @@ export function* registerBonfireChatProvider(
       console.log("[Bonfire] Generating response for message:", lastMessage);
 
       const readingState = context.app.selectedTab.value?.readingState;
+      const seedBibleId = context.chats.getEffectiveAiBibleTranslationId(
+        readingState?.translationId.value
+      );
+      const translation =
+        readingState?.translation.value ??
+        readingState?.availableTranslations.value?.translations.find(
+          (entry) => entry.id === seedBibleId
+        ) ??
+        null;
+      const translationLabel =
+        translation?.englishName ??
+        translation?.name ??
+        translation?.shortName ??
+        seedBibleId ??
+        "unknown";
+      const translationShort =
+        translation?.shortName ?? seedBibleId ?? "unknown";
+      const responseLanguage =
+        i18n.language.trim().split(/[-_]/)[0]?.toLowerCase() || "en";
+
       const response = await fetch(
         "https://bonfire.seedbible.io/api/v1/session/chat",
         {
@@ -219,7 +240,7 @@ export function* registerBonfireChatProvider(
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
             },
-            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}`,
+            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}. Prefer quoting and referring to the ${translationLabel} (${translationShort}) translation when citing scripture. Always respond in the user's interface language (BCP-47 language code: "${responseLanguage}").`,
           }),
           headers,
         }

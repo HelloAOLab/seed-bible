@@ -748,6 +748,33 @@ describe("FloatingChatPanel", () => {
     expect(closeChatPanel).toHaveBeenCalled();
   });
 
+  it("ignores a pointerdown on a managed modal overlay so confirm actions do not close chat", () => {
+    const { state, closeChatPanel } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    const overlay = document.createElement("div");
+    overlay.className = "sb-footnote-modal-overlay";
+    const confirmButton = document.createElement("button");
+    overlay.appendChild(confirmButton);
+    document.body.appendChild(overlay);
+
+    act(() => {
+      confirmButton.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true })
+      );
+    });
+    overlay.remove();
+
+    expect(closeChatPanel).not.toHaveBeenCalled();
+  });
+
   it("ignores a pointerdown on the verse toolbar so Ask AI can open without immediately closing", () => {
     const { state, closeChatPanel } = createMockFloatingChatPanelState();
 

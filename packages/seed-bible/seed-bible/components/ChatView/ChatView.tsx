@@ -1078,6 +1078,8 @@ export function ChatView(props: ChatViewProps) {
       </div>
 
       <div className="sb-chat-view-compose-shell">
+        <ChatAiBibleControl state={state} />
+
         {typingParticipants.length > 0 && (
           <div
             className="sb-chat-view-typing-indicator"
@@ -1270,6 +1272,129 @@ export function ChatView(props: ChatViewProps) {
         <p className="sb-chat-view-error" role="alert">
           {submitError.value}
         </p>
+      )}
+    </div>
+  );
+}
+
+function ChatAiBibleControl({
+  state,
+}: {
+  state: SeedBibleState;
+}): import("preact").JSX.Element | null {
+  const { t } = useI18n();
+  const menuOpen = useSignal(false);
+  const chats = state.chats;
+  if (!chats) {
+    return null;
+  }
+
+  const tabTranslationId =
+    state.app.selectedTab.value?.readingState.translationId.value ?? null;
+  const tabTranslation =
+    state.app.selectedTab.value?.readingState.translation.value ?? null;
+  const overrideId = chats.aiBibleTranslationId.value;
+  const effectiveId = chats.getEffectiveAiBibleTranslationId(tabTranslationId);
+  const catalog =
+    state.app.selectedTab.value?.readingState.availableTranslations.value
+      ?.translations ?? [];
+  const effectiveMeta =
+    catalog.find((tr) => tr.id === effectiveId) ??
+    (tabTranslation?.id === effectiveId ? tabTranslation : null);
+  const label =
+    effectiveMeta?.shortName ??
+    effectiveId ??
+    t("ai-bible-unknown", {
+      defaultValue: "Bible",
+    });
+  const isOverride = !!overrideId;
+
+  const openTranslationPicker = async () => {
+    menuOpen.value = false;
+    const selectedSlotId = state.tabsLayout.selectedSlotId.value;
+    const slot =
+      state.tabsLayout.slots.value.find((s) => s.id === selectedSlotId) ??
+      state.tabsLayout.slots.value[0];
+    await state.selector.setOpen(true, slot);
+    state.selector.selectingTranslation.value = true;
+  };
+
+  const pinAsDefault = () => {
+    if (effectiveId) {
+      chats.setAiBibleTranslationId(effectiveId);
+    }
+    menuOpen.value = false;
+  };
+
+  const followTab = () => {
+    chats.setAiBibleTranslationId(null);
+    menuOpen.value = false;
+  };
+
+  return (
+    <div className="sb-chat-view-ai-bible">
+      <button
+        type="button"
+        className="sb-chat-view-ai-bible-trigger"
+        aria-expanded={menuOpen.value}
+        aria-haspopup="menu"
+        onClick={() => {
+          menuOpen.value = !menuOpen.value;
+        }}
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          menu_book
+        </span>
+        <span className="sb-chat-view-ai-bible-label">{label}</span>
+        <span className="sb-chat-view-ai-bible-mode">
+          {isOverride
+            ? t("ai-bible-default", { defaultValue: "AI default" })
+            : t("ai-bible-following-tab", { defaultValue: "Following tab" })}
+        </span>
+        <span className="material-symbols-outlined" aria-hidden="true">
+          expand_more
+        </span>
+      </button>
+      {menuOpen.value && (
+        <div className="sb-chat-view-ai-bible-menu" role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            className="sb-chat-view-ai-bible-menu-item"
+            onClick={() => {
+              void openTranslationPicker();
+            }}
+          >
+            {t("ai-bible-change-tab", {
+              defaultValue: "Change active tab translation…",
+            })}
+          </button>
+          {effectiveId && !isOverride && (
+            <button
+              type="button"
+              role="menuitem"
+              className="sb-chat-view-ai-bible-menu-item"
+              onClick={pinAsDefault}
+            >
+              {t("ai-bible-use-as-default", {
+                defaultValue: "Use {{translation}} as AI default",
+                translation: label,
+              })}
+            </button>
+          )}
+          {isOverride && (
+            <button
+              type="button"
+              role="menuitem"
+              className="sb-chat-view-ai-bible-menu-item"
+              onClick={followTab}
+            >
+              {t("ai-bible-follow-tab", {
+                defaultValue: "Follow active tab instead",
+              })}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
