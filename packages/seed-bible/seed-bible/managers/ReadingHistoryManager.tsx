@@ -89,6 +89,9 @@ function resolveStore(
   return store === undefined ? getSharedReadingHistoryStore() : store;
 }
 
+/** The shared document reading events live in unless a caller names another. */
+const DEFAULT_READING_HISTORY_DOCUMENT = "reading_history";
+
 /**
  * Gets the reading history document for the given record name and year.
  * @param recordName The name of the record that the reading history is stored in.
@@ -102,7 +105,7 @@ function getReadingHistoryDocument(
   recordName: string,
   year: number,
   marker: string = "publicRead",
-  name: string = "reading_history"
+  name: string = DEFAULT_READING_HISTORY_DOCUMENT
 ): Promise<SharedDocument> {
   const key = `${recordName}-${name}-${year}`;
   const cached = readingHistoryDocs[key];
@@ -115,18 +118,74 @@ function getReadingHistoryDocument(
   // left here poisoned the key for the rest of the page load: one expired
   // session key or dropped connection meant every later read and write of that
   // year failed too, with nothing to retry it.
-  const docPromise: Promise<SharedDocument> = os
-    .getSharedDocument(recordName, name, `${year}`, {
+  const docPromise: Promise<SharedDocument> = failIfUnreachable(
+    os.getSharedDocument(recordName, name, `${year}`, {
       markers,
     })
-    .catch((error: unknown) => {
-      if (readingHistoryDocs[key] === docPromise) {
-        delete readingHistoryDocs[key];
-      }
-      throw error;
-    });
+  ).catch((error: unknown) => {
+    if (readingHistoryDocs[key] === docPromise) {
+      delete readingHistoryDocs[key];
+    }
+    throw error;
+  });
   readingHistoryDocs[key] = docPromise;
   return docPromise;
+}
+
+/**
+ * How long to wait for a year's document before treating it as unreachable.
+ *
+ * Long enough that an ordinary sync on a slow connection still wins, short
+ * enough that the Today screen isn't left blank while it waits.
+ */
+const DOCUMENT_TIMEOUT_MS = 10_000;
+
+/**
+ * Rejects a document fetch that never answers.
+ *
+ * `getSharedDocument` resolves when the branch reports itself synced, and the
+ * ordinary failures never report anything at all: an expired session or a
+ * refused record turns the document's status to `authorization: false`, and a
+ * dropped connection turns it to `sync: false`. Neither errors, so the promise
+ * simply never settles.
+ *
+ * Every caller here is written to carry on when a year can't be reached — fall
+ * back to what this device recorded, leave the row queued for the next pass —
+ * and none of that can happen while they are still waiting. Turning silence
+ * into a failure is what lets those fallbacks run.
+ */
+async function failIfUnreachable(
+  pending: Promise<SharedDocument>
+): Promise<SharedDocument> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
+  try {
+    return await Promise.race([
+      pending,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          timedOut = true;
+          reject(
+            new Error(
+              `The reading history document did not sync within ${DOCUMENT_TIMEOUT_MS}ms.`
+            )
+          );
+        }, DOCUMENT_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    // A document that syncs after the wait was given up on is nobody's: let go
+    // of its branch watch rather than leaving it open for the page's lifetime.
+    void pending.then(
+      (doc) => {
+        if (timedOut) {
+          doc.unsubscribe();
+        }
+      },
+      () => {}
+    );
+  }
 }
 
 /**
@@ -163,6 +222,7 @@ export async function writeReadingEventsToDocument(
   for (const event of events) {
     unmatched.set(readingEventIdentity(event), event);
   }
+  const wantedStarts = new Set(events.map((event) => event.start));
 
   // Newest first, and stops as soon as everything has been matched. Extending
   // the sitting currently being read is by far the most common call — five
@@ -172,11 +232,20 @@ export async function writeReadingEventsToDocument(
   for (let i = array.length - 1; i >= 0 && unmatched.size > 0; i--) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const map: SharedMap<any> = array.type.get(i);
+    // An event the document has never seen matches nothing, so this walk can't
+    // stop early — it has to look at every entry before it can conclude the
+    // event is new. `start` alone rules out all but a handful of them, and
+    // reading one field rather than four is what keeps that affordable on a
+    // year holding thousands.
+    const start = map.get("start");
+    if (!wantedStarts.has(start)) {
+      continue;
+    }
     const identity = readingEventIdentity({
       userId: map.get("userId"),
       bookId: map.get("bookId"),
       chapter: map.get("chapter"),
-      start: map.get("start"),
+      start,
     });
     const event = unmatched.get(identity);
     if (!event) {
@@ -350,7 +419,14 @@ export async function saveReadingHistorySpan(
   options: SaveReadingHistorySpanOptions = {}
 ): Promise<void> {
   const { joinThresholdSeconds = 30 * 60, marker, name } = options;
-  const store = resolveStore(options.store);
+  // A stored row carries no document name, and the replay pushes every row it
+  // finds into the default document. So a span headed anywhere else skips the
+  // store and writes to its own document directly, which is the arrangement
+  // `OfflineReadingHistoryStore` describes.
+  const store =
+    name === undefined || name === DEFAULT_READING_HISTORY_DOCUMENT
+      ? resolveStore(options.store)
+      : null;
   const year = readingEventYear(endTimeSeconds);
 
   const row = store

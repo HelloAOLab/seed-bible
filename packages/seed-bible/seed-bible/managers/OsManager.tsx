@@ -238,9 +238,18 @@ export function CasualOSManager(
 
     doc.connect();
 
-    await firstValueFrom(
-      doc.onStatusUpdated.pipe(first((s) => s.type === "sync" && s.synced))
-    );
+    try {
+      await firstValueFrom(
+        doc.onStatusUpdated.pipe(first((s) => s.type === "sync" && s.synced))
+      );
+    } catch (error) {
+      // The document is already connected and watching its branch, and nobody
+      // is going to be handed this one. Without this it keeps that watch for
+      // the rest of the page load, and a caller that retries the same document
+      // leaves another one behind on every attempt.
+      doc.unsubscribe();
+      throw error;
+    }
 
     return doc;
   }

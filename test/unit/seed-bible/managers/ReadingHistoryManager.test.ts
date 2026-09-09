@@ -939,6 +939,76 @@ describe("ReadingHistoryManager", () => {
       expect(events).toEqual([stored]);
     });
 
+    it("answers from this device when a year's document never syncs", async () => {
+      vi.useFakeTimers();
+      try {
+        // The ordinary offline failure: the document neither syncs nor errors,
+        // so a caller that only handles rejection waits forever.
+        vi.spyOn(os, "getSharedDocument").mockReturnValue(
+          new Promise<SharedDocument>(() => {})
+        );
+        await store.recordReadingSpan({
+          userId: "user-1",
+          bookId: "GEN",
+          chapter: 1,
+          startSeconds: NOON,
+          endSeconds: NOON + 5,
+          joinThresholdSeconds: 30 * 60,
+        });
+
+        const pending = getReadingHistoryEvents(
+          os,
+          "user-1",
+          WINDOW_START,
+          WINDOW_END,
+          { store }
+        );
+        await vi.advanceTimersByTimeAsync(10_000);
+
+        expect(Array.from(await pending)).toEqual([
+          {
+            userId: "user-1",
+            bookId: "GEN",
+            chapter: 1,
+            start: NOON,
+            end: NOON + 5,
+          },
+        ]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("gives up on a document that never syncs and leaves the span queued", async () => {
+      vi.useFakeTimers();
+      try {
+        vi.spyOn(os, "getSharedDocument").mockReturnValue(
+          new Promise<SharedDocument>(() => {})
+        );
+
+        const push = saveReadingHistorySpan(
+          os,
+          "user-1",
+          "user-1",
+          "GEN",
+          1,
+          NOON,
+          NOON + 5,
+          { store }
+        );
+        await vi.advanceTimersByTimeAsync(10_000);
+
+        // The push has to end for the row to be retried at all; a push still
+        // waiting is a sync manager that can never run another pass.
+        await expect(push).rejects.toThrow();
+        expect(
+          (await store.listPending("user-1")).map((row) => row.start)
+        ).toEqual([NOON]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it("still records reading when this device can't keep a local store", async () => {
       vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
       const broken: OfflineReadingHistoryStore = {

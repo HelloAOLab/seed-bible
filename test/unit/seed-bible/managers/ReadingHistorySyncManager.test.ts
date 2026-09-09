@@ -111,11 +111,18 @@ async function waitForCondition(
 }
 
 /**
- * Lets the queued work settle when the expectation is that *nothing* happens,
- * so there is no condition to poll for.
+ * Drains the microtask queue so anything a dispatched event set going has run.
+ *
+ * Used where the expectation is that *nothing* happens, which has no condition
+ * to poll for. Every await in a pass over the in-memory store resolves as a
+ * microtask, so draining the queue is what "the pass would have finished by
+ * now" means here — a fixed sleep would only be a guess about how long that
+ * takes on the machine running it.
  */
-async function settle(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 20));
+async function flushMicrotasks(): Promise<void> {
+  for (let i = 0; i < 50; i++) {
+    await Promise.resolve();
+  }
 }
 
 describe("ReadingHistorySyncManager", () => {
@@ -344,13 +351,23 @@ describe("ReadingHistorySyncManager", () => {
     await record(IN_2026);
     const { manager: sync } = create("user-1");
     window.dispatchEvent(new Event("offline"));
+
+    // Coming back online drives a pass while the listener is attached, so the
+    // assertion after disposing is about the disposing and not about the event
+    // having been inert all along.
+    window.dispatchEvent(new Event("online"));
+    await waitForCondition(() => writer.writes.length === 1);
+
+    window.dispatchEvent(new Event("offline"));
     sync.dispose();
     manager = null;
+    await record(IN_2026, 2);
 
     window.dispatchEvent(new Event("online"));
-    await settle();
+    await flushMicrotasks();
 
-    expect(writer.writes).toHaveLength(0);
+    expect(writer.writes).toHaveLength(1);
+    expect((await store.listPending("user-1")).length).toBe(1);
   });
 
   it("prunes long-synced events after a complete pass", async () => {
@@ -396,6 +413,21 @@ describe("ReadingHistorySyncManager", () => {
     expect(
       (await store.listForWindow("user-1", 0, IN_2026 + 1)).map((r) => r.key)
     ).toEqual([stranded.key]);
+  });
+
+  it("doesn't report a queue it couldn't read as an empty one", async () => {
+    await record(IN_2026);
+    const unreadable: OfflineReadingHistoryStore = {
+      ...store,
+      listPending: () => Promise.reject(new Error("storage blocked")),
+    };
+
+    const { manager: sync } = create("user-1", { store: unreadable });
+    await sync.refreshPendingCount();
+
+    // The drain after a successful push is gated on this count, so answering
+    // zero for a read that simply failed strands the backlog.
+    expect(sync.pendingCount.value).toBeGreaterThan(0);
   });
 
   it("doesn't report a failed prune as a failed sync", async () => {

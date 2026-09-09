@@ -119,8 +119,17 @@ export function createReadingHistorySyncManager(
   const isSyncing = signal(false);
   const pendingRows = signal<StoredReadingEvent[]>([]);
   const lastError = signal<string | null>(null);
+  const pendingCountKnown = signal(true);
 
-  const pendingCount = computed(() => pendingRows.value.length);
+  // A queue that couldn't be read counts as at least one row rather than none.
+  // The drain after a successful push is gated on this count, so answering zero
+  // for a read that simply failed would leave a backlog waiting for an `online`
+  // event that may never come.
+  const pendingCount = computed(() =>
+    pendingCountKnown.value
+      ? pendingRows.value.length
+      : Math.max(pendingRows.value.length, 1)
+  );
 
   let running: Promise<void> | null = null;
 
@@ -129,16 +138,20 @@ export function createReadingHistorySyncManager(
     // nowhere to queue never depends on the shape of what it was handed.
     if (!store) {
       pendingRows.value = [];
+      pendingCountKnown.value = true;
       return;
     }
     const userId = login.userId.peek();
     if (!userId) {
       pendingRows.value = [];
+      pendingCountKnown.value = true;
       return;
     }
     try {
       pendingRows.value = await store.listPending(userId);
+      pendingCountKnown.value = true;
     } catch (error) {
+      pendingCountKnown.value = false;
       console.warn("Failed to read pending reading events.", error);
     }
   };
@@ -236,9 +249,12 @@ export function createReadingHistorySyncManager(
         lastError.value = describeError(error);
         console.warn("Reading history sync pass failed.", error);
       } finally {
-        running = null;
         isSyncing.value = false;
         await refreshPendingCount();
+        // Cleared last. A `sync()` arriving while the count is still being
+        // re-read has to join this pass; clearing it any earlier lets a second
+        // pass start and push the same rows again.
+        running = null;
       }
     })();
 
@@ -282,6 +298,7 @@ export function createReadingHistorySyncManager(
         });
       }
       pendingRows.value = [];
+      pendingCountKnown.value = true;
       return;
     }
 

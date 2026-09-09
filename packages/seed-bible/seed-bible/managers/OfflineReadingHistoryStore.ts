@@ -297,6 +297,49 @@ function shouldMarkSynced(
  * `onblocked`, which its open path rejects on, breaking offline translations in
  * that tab.
  */
+/**
+ * The one stored row a span could continue, or none.
+ *
+ * Walks the chapter's rows newest-first and stops at the first that is recent
+ * enough to join, which is the same row {@link extendOrCreateReadingRow} would
+ * pick out of the whole set — it takes the latest-starting row still inside the
+ * join threshold. Reading them one at a time matters because the alternative
+ * loads every row the chapter has ever had on each five-second tick, and a
+ * chapter read daily keeps a row per day for as long as they are retained.
+ *
+ * Rows under one chapter share an index key, so the cursor walks them in
+ * primary-key order — `.../${start}`, with `start` a ten-digit unix time, so
+ * that order is the order of `start` itself.
+ */
+async function findRowToExtend(
+  store: IDBObjectStore,
+  input: RecordReadingSpanInput
+): Promise<StoredReadingEvent[]> {
+  const oldestEnd = input.startSeconds - input.joinThresholdSeconds;
+  const request = store
+    .index(CHAPTER_INDEX)
+    .openCursor(
+      IDBKeyRange.only([
+        input.userId,
+        readingEventYear(input.endSeconds),
+        input.bookId,
+        input.chapter,
+      ]),
+      "prev"
+    );
+
+  let cursor = await requestToPromise(request);
+  while (cursor) {
+    const row = cursor.value as StoredReadingEvent;
+    if (row.end >= oldestEnd) {
+      return [row];
+    }
+    cursor.continue();
+    cursor = await requestToPromise(request);
+  }
+  return [];
+}
+
 export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore | null {
   if (typeof indexedDB === "undefined") {
     return null;
@@ -368,18 +411,7 @@ export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore
     // stretch cannot land between the two and open a duplicate event for the
     // same chapter. A transaction stays alive across the await of its own
     // request.
-    const existing = (await requestToPromise(
-      store
-        .index(CHAPTER_INDEX)
-        .getAll(
-          IDBKeyRange.only([
-            input.userId,
-            readingEventYear(input.endSeconds),
-            input.bookId,
-            input.chapter,
-          ])
-        )
-    )) as StoredReadingEvent[];
+    const existing = await findRowToExtend(store, input);
 
     const { row, changed } = extendOrCreateReadingRow(existing, input);
     if (changed) {
