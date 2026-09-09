@@ -13,6 +13,7 @@
 - "Your content" and "Edit profile" now have a back button that returns you to your profile, instead of only a close button that dropped you back at the reader. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 - Replace Bookmarks in the mobile bottom bar with "You", the profile entry point, and put Bible ahead of Search, so the five tabs read Today, You, Bible, Search, More. Bookmarks moves into the More menu next to Tabs, where Chat already lived. `?chatFirst=true` no longer replaces a bottom tab either: Chat stays in the More menu on mobile, and still sits in the labeled toolbar on desktop. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 - Title the profile picture editor "Change profile picture" instead of "Update picture", so it names what it changes. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Trim the profile picture editor's list of sources. "Choose from gallery" and "Upload a file" opened the identical file dialog, so they are now one entry, "Upload from device" — named so it does not read as the in-app Recent uploads gallery that playlist and reading-plan covers use. "Take a photo" is offered only where the browser will actually open a camera, instead of promising a camera on desktop and showing a file dialog. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 
 ### 🐛 Fixed
 

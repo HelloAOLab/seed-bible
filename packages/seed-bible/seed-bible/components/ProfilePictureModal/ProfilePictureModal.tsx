@@ -21,15 +21,40 @@ const PROFILE_PICTURE_TARGET: PhotoCropTarget = {
 };
 
 /**
- * Content for the "Update picture" modal, rendered inside the shared
- * {@link ModalHost} chrome. Lets the user take a photo, choose one from their
- * device, or upload a file, then crop/zoom it before it is uploaded.
+ * Whether this browser wires a file input's `capture` attribute to a camera.
  *
- * "Take a photo" relies on the `capture` attribute: it opens the camera on
- * mobile and falls back to a normal file picker on desktop. Note that these
- * are the device's own pickers — unlike playlist and reading-plan covers,
- * profile pictures deliberately stay out of the shared Recent uploads
- * gallery, so there is nothing in-app to choose from.
+ * `capture` is a hint the spec lets a user agent ignore, and desktop engines
+ * do ignore it: measured in desktop Chromium, `capture` is absent from
+ * `HTMLInputElement.prototype` and such an input opens an ordinary file
+ * dialog. Camera hardware makes no difference — the same probe reports it
+ * absent with a fake camera attached — because the attribute is
+ * unimplemented rather than unsatisfiable. So a laptop webcam being
+ * user-facing rather than environment-facing does not change the answer, and
+ * neither does having no camera at all.
+ *
+ * On an engine that implements the attribute but still ignores it, this
+ * returns true and "Take a photo" falls back to a file dialog, which is what
+ * every platform did before this check existed.
+ */
+function supportsCameraCapture(): boolean {
+  return (
+    typeof HTMLInputElement !== "undefined" &&
+    "capture" in HTMLInputElement.prototype
+  );
+}
+
+/**
+ * Content for the "Change profile picture" modal, rendered inside the shared
+ * {@link ModalHost} chrome. Lets the user take a photo or pick a file from
+ * their device, then crop/zoom it before it is uploaded.
+ *
+ * "Take a photo" is offered only where the camera will actually open (see
+ * {@link supportsCameraCapture}); elsewhere it would be a button promising a
+ * camera and showing a file dialog. What is left is the device's own file
+ * picker — unlike playlist and reading-plan covers, profile pictures
+ * deliberately stay out of the shared Recent uploads gallery, so there is
+ * nothing in-app to choose from. It is labelled "Upload from device" rather
+ * than "gallery" so it does not read as that in-app gallery.
  *
  * The crop step itself is {@link PhotoCropModalContent}, shared with covers.
  * The cropped result is handed to `onUpload`, which wraps
@@ -46,8 +71,8 @@ export function ProfilePictureModalContent(props: {
   const selectedFile = useSignal<File | null>(null);
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canTakePhoto = supportsCameraCapture();
 
   const handleFileSelected = (event: Event) => {
     const input = event.currentTarget as HTMLInputElement;
@@ -83,50 +108,37 @@ export function ProfilePictureModalContent(props: {
   return (
     <div className="sb-photo-modal">
       <div className="sb-photo-choice-list">
-        <button
-          type="button"
-          className="sb-photo-choice-button"
-          onClick={() => cameraInputRef.current?.click()}
-        >
-          <span className="material-symbols-outlined">photo_camera</span>
-          <span>{t("take-photo", { defaultValue: "Take a photo" })}</span>
-        </button>
-        <button
-          type="button"
-          className="sb-photo-choice-button"
-          onClick={() => galleryInputRef.current?.click()}
-        >
-          <span className="material-symbols-outlined">photo_library</span>
-          <span>
-            {t("choose-from-gallery", {
-              defaultValue: "Choose from gallery",
-            })}
-          </span>
-        </button>
+        {canTakePhoto ? (
+          <button
+            type="button"
+            className="sb-photo-choice-button"
+            onClick={() => cameraInputRef.current?.click()}
+          >
+            <span className="material-symbols-outlined">photo_camera</span>
+            <span>{t("take-photo", { defaultValue: "Take a photo" })}</span>
+          </button>
+        ) : null}
         <button
           type="button"
           className="sb-photo-choice-button"
           onClick={() => fileInputRef.current?.click()}
         >
           <span className="material-symbols-outlined">upload_file</span>
-          <span>{t("upload-a-file", { defaultValue: "Upload a file" })}</span>
+          <span>
+            {t("upload-from-device", { defaultValue: "Upload from device" })}
+          </span>
         </button>
 
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          hidden
-          onChange={handleFileSelected}
-        />
-        <input
-          ref={galleryInputRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={handleFileSelected}
-        />
+        {canTakePhoto ? (
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={handleFileSelected}
+          />
+        ) : null}
         <input
           ref={fileInputRef}
           type="file"
