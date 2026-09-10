@@ -298,21 +298,49 @@
   gap: 8px;
 }
 
+/*
+ * The surface moved up to the row so the pill and its options button share
+ * one rounded background and highlight together, rather than looking like
+ * two separate controls that happen to sit side by side.
+ */
+.sb-content-bookmark-row {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  background: var(--sb-content-surface);
+}
+
+.sb-content-bookmark-row:hover {
+  background: var(--sb-content-surface-strong);
+}
+
 .sb-content-bookmark {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 9px 12px;
   border: none;
-  border-radius: 8px;
-  background: var(--sb-content-surface);
+  border-radius: 8px 0 0 8px;
+  background: transparent;
   font-family: inherit;
   color: inherit;
   cursor: pointer;
 }
 
-.sb-content-bookmark:hover {
-  background: var(--sb-content-surface-strong);
+.sb-content-bookmark-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 8px 9px 0;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  background: transparent;
+  color: var(--sb-content-muted);
+  cursor: pointer;
+}
+
+.sb-content-bookmark-menu:hover {
+  color: inherit;
 }
 
 .sb-content-bookmark-name {

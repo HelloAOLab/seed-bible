@@ -73,6 +73,7 @@ function createState(options: StateOptions = {}) {
   const load = vi.fn(async () => {});
   const removeAnnotation = vi.fn(() => {});
   const restoreAnnotation = vi.fn(() => {});
+  const removeBookmark = vi.fn(async (_id: string) => {});
   const deleteAnnotationAndRefresh = vi.fn(async () => {
     if (options.deleteError) {
       throw options.deleteError;
@@ -93,7 +94,12 @@ function createState(options: StateOptions = {}) {
       restoreAnnotation,
       resetFilters: vi.fn(() => {}),
     },
-    bookmarks: { bookmarks: signal(options.bookmarks ?? []) },
+    bookmarks: {
+      bookmarks: signal(options.bookmarks ?? []),
+      categories: signal([{ name: "My Bookmarks" }]),
+      expandedCategories: signal([]),
+      removeBookmark: removeBookmark,
+    },
     playlists: {
       userPlaylists: signal(options.playlists ?? []),
       startPlaying: vi.fn(),
@@ -121,6 +127,7 @@ function createState(options: StateOptions = {}) {
 
   return {
     state,
+    removeBookmark,
     load,
     removeAnnotation,
     restoreAnnotation,
@@ -591,5 +598,115 @@ describe("YourContentPane", () => {
     });
 
     expect(onEditAnnotation).toHaveBeenCalledWith(target);
+  });
+});
+
+/**
+ * The pills carry the same options menu the bookmarks sidebar gives each
+ * bookmark. Remove is not folder-scoped here as it is there: this list is
+ * flat, so there is no folder to remove from, and it removes the bookmark
+ * outright — the same thing the edit modal's "Remove from all folders" does.
+ */
+describe("YourContentPane bookmark options", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    document.body.innerHTML = "";
+  });
+
+  const renderWithBookmark = () => {
+    const created = createState({ bookmarks: [bookmark("b1")] });
+    act(() => {
+      render(
+        <YourContentPane
+          state={created.state}
+          onOpenPassage={vi.fn()}
+          onPlayPlaylist={vi.fn()}
+          onEditPlaylist={vi.fn()}
+          onEditAnnotation={vi.fn()}
+        />,
+        container
+      );
+    });
+    return created;
+  };
+
+  // The menu portals into `document.body`, not the pane.
+  const openMenu = () => {
+    const trigger = container.querySelector<HTMLButtonElement>(
+      ".sb-content-bookmark-menu"
+    );
+    if (!trigger)
+      throw new Error("The bookmark options button did not render.");
+    act(() => {
+      trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  const menuItems = () =>
+    Array.from(
+      document.body.querySelectorAll<HTMLElement>(".sb-context-menu-item")
+    );
+
+  it("gives every bookmark an options button", () => {
+    renderWithBookmark();
+
+    expect(
+      container.querySelectorAll(".sb-content-bookmark-menu")
+    ).toHaveLength(1);
+  });
+
+  it("offers edit and remove, like the bookmarks sidebar", () => {
+    renderWithBookmark();
+    openMenu();
+
+    expect(menuItems().map((item) => item.textContent)).toEqual([
+      "Edit bookmark",
+      "Remove bookmark",
+    ]);
+  });
+
+  it("removes the bookmark from the remove entry", () => {
+    const { removeBookmark } = renderWithBookmark();
+    openMenu();
+
+    const remove = menuItems().find(
+      (item) => item.textContent === "Remove bookmark"
+    );
+    if (!remove) throw new Error("Remove bookmark was not in the menu.");
+    act(() => {
+      remove.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(removeBookmark).toHaveBeenCalledWith("b1");
+  });
+
+  it("does not open the passage when the options button is used", () => {
+    // The pill and the menu are siblings, so the menu must not fall through
+    // to the pill's own click.
+    const onOpenPassage = vi.fn();
+    const created = createState({ bookmarks: [bookmark("b1")] });
+    act(() => {
+      render(
+        <YourContentPane
+          state={created.state}
+          onOpenPassage={onOpenPassage}
+          onPlayPlaylist={vi.fn()}
+          onEditPlaylist={vi.fn()}
+          onEditAnnotation={vi.fn()}
+        />,
+        container
+      );
+    });
+    openMenu();
+
+    expect(onOpenPassage).not.toHaveBeenCalled();
   });
 });

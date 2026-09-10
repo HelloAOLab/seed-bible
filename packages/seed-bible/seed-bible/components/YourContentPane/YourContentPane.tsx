@@ -13,6 +13,7 @@ import {
 } from "../../managers/YourContentManager";
 import { AnnotationPreview } from "../DiscoverPane/AnnotationsSection";
 import { PlaylistRow } from "../DiscoverPane/PlaylistRow";
+import { openBookmarkCategoryModal } from "../Tabs/Tabs";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
@@ -322,35 +323,72 @@ function BookmarkPill(props: {
   const verse = verseNumbersOf(bookmark.verse)[0];
   const book = bookNames.get(bookmark.bookId) ?? bookmark.bookId;
 
+  const location = {
+    translationId: bookmark.translationId,
+    bookId: bookmark.bookId,
+    chapterNumber: bookmark.chapterNumber,
+    ...(bookmark.verse !== undefined ? { verse: bookmark.verse } : {}),
+  };
+
   return (
-    <button
-      type="button"
-      className="sb-content-bookmark"
-      onClick={() =>
-        props.onOpenPassage({
-          bookId: bookmark.bookId,
-          chapter: bookmark.chapterNumber,
-          verse,
-          translationId: bookmark.translationId,
-        })
-      }
-    >
-      <span className="sb-content-bookmark-name">
-        {`${book} ${bookmark.chapterNumber}${verse ? `:${verse}` : ""}`}
-      </span>
-      <span
-        className={`sb-content-bookmark-kind${
-          verse ? " sb-content-bookmark-kind-verse" : ""
-        }`}
+    // The pill and its menu are siblings inside the surface, because a
+    // <button> cannot nest inside another one.
+    <div className="sb-content-bookmark-row">
+      <button
+        type="button"
+        className="sb-content-bookmark"
+        onClick={() =>
+          props.onOpenPassage({
+            bookId: bookmark.bookId,
+            chapter: bookmark.chapterNumber,
+            verse,
+            translationId: bookmark.translationId,
+          })
+        }
       >
-        {verse
-          ? t("verse", { defaultValue: "Verse" })
-          : t("chapter", { defaultValue: "Chapter" })}
-      </span>
-      <span className="sb-content-bookmark-date">
-        {formatDate(bookmark.createdAt, language, "short")}
-      </span>
-    </button>
+        <span className="sb-content-bookmark-name">
+          {`${book} ${bookmark.chapterNumber}${verse ? `:${verse}` : ""}`}
+        </span>
+        <span
+          className={`sb-content-bookmark-kind${
+            verse ? " sb-content-bookmark-kind-verse" : ""
+          }`}
+        >
+          {verse
+            ? t("verse", { defaultValue: "Verse" })
+            : t("chapter", { defaultValue: "Chapter" })}
+        </span>
+        <span className="sb-content-bookmark-date">
+          {formatDate(bookmark.createdAt, language, "short")}
+        </span>
+      </button>
+      <ContextMenuWithButton
+        buttonClassName="sb-content-bookmark-menu"
+        aria-label={t("bookmark-options", { defaultValue: "Bookmark options" })}
+        title={t("bookmark-options", { defaultValue: "Bookmark options" })}
+      >
+        <ContextMenuItem
+          onClick={() =>
+            openBookmarkCategoryModal(state, location, {
+              mode: "edit",
+              bookmarkId: bookmark.id,
+            })
+          }
+        >
+          {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => {
+            // Removes the bookmark outright, not from one folder: this list is
+            // flat, so there is no folder to remove it from. That is what the
+            // edit modal's own "Remove from all folders" does.
+            void state.bookmarks.removeBookmark(bookmark.id);
+          }}
+        >
+          {t("remove-bookmark", { defaultValue: "Remove bookmark" })}
+        </ContextMenuItem>
+      </ContextMenuWithButton>
+    </div>
   );
 }
 
