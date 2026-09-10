@@ -164,8 +164,6 @@
   "text_color": "Text color",
   "follow_theme": "Follow theme",
   "reset-to-default": "Reset to default",
-  "highlight-text-color": "Highlight text color",
-  "highlight-background-color": "Highlight background",
   "id_highlight-text-color": "{{id}} highlight text color",
   "id_highlight-background-color": "{{id}} highlight background color",
   "all-settings-description": "Fine-tune every text section and customize each theme color.",
@@ -813,5 +811,9 @@
   "about-team": "The AO Lab Team",
   "about-action-open-passage": "Open a passage",
   "about-action-donate": "Donate",
-  "about-action-discord": "Join Discord"
+  "about-action-discord": "Join Discord",
+  "color-hue": "Hue",
+  "color-saturation": "Saturation and brightness",
+  "hex-color": "Hex color",
+  "scripture-width-unit": "ch"
 }

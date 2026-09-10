@@ -1,6 +1,7 @@
 import * as z from "zod/v4";
 import { v4 as uuid } from "uuid";
 import {
+  batch,
   computed,
   signal,
   type ReadonlySignal,
@@ -601,6 +602,16 @@ export interface CustomizationsManager {
   /** Resolves a variant's `baseTheme` id to the actual preset, falling back to the viewer's current preset if the id is unrecognized (e.g. a preset was removed). */
   resolveVariantBaseTheme: (variant: CustomizationThemeVariant) => BibleTheme;
   /**
+   * `variant`'s resolved theme (base preset + its own overrides), with any
+   * pending `previewEditingVariant*` override layered on top. This is what
+   * `activeResolvedTheme` uses, and what `CustomizationEditPane` should use
+   * to render a variant it's editing, so a `ColorPicker` drag previews live
+   * without touching the draft until the picker commits.
+   */
+  resolveEditingVariantTheme: (
+    variant: CustomizationThemeVariant
+  ) => BibleTheme;
+  /**
    * The extension ids that should be installed while the active
    * customization is in effect: its own `auto-installed` extensions,
    * unioned with any `available` extras the viewer added for it via
@@ -711,6 +722,36 @@ export interface CustomizationsManager {
     variantId: string,
     highlightId: string
   ) => void;
+  /**
+   * Live, non-committing preview of one color field on a draft variant —
+   * reflected in `resolveEditingVariantTheme` immediately, but never
+   * written into `editingCustomization` or auto-saved. Meant to be called
+   * on a `ColorPicker`'s `onPreview` while the user drags;
+   * `setEditingVariantColor` clears any pending preview for the same
+   * variant/key once the color is actually committed.
+   */
+  previewEditingVariantColor: (
+    variantId: string,
+    key: ThemeColorKey,
+    value: string
+  ) => void;
+  /** Discards a pending `previewEditingVariantColor`, e.g. on the picker's `onCancel`. */
+  clearPreviewEditingVariantColor: (
+    variantId: string,
+    key: ThemeColorKey
+  ) => void;
+  /** Same as `previewEditingVariantColor`, for one field of a highlight color. */
+  previewEditingVariantHighlightColor: (
+    variantId: string,
+    highlightId: string,
+    patch: Partial<ThemeHighlightColor>
+  ) => void;
+  /** Discards a pending `previewEditingVariantHighlightColor` field, e.g. on `onCancel`. */
+  clearPreviewEditingVariantHighlightField: (
+    variantId: string,
+    highlightId: string,
+    field: keyof ThemeHighlightColor
+  ) => void;
   setEditingDefaultVariant: (variantId: string) => void;
   /** Removes a variant from the draft. No-op if it's the only remaining variant. */
   removeEditingVariant: (variantId: string) => void;
@@ -745,6 +786,19 @@ export function createCustomizationsManager(
   const isLoading = signal(false);
   const editingCustomization = signal<SeedBibleCustomization | null>(null);
   const editingVariantId = signal<string | null>(null);
+  /**
+   * In-memory-only color overrides from an open `ColorPicker`'s live drag on
+   * a variant being edited, keyed by variant id. Never written into
+   * `editingCustomization` or auto-saved — `resolveEditingVariantTheme`
+   * layers these on top of the draft so a drag previews live (everywhere
+   * the variant renders, including the whole app while it's also the
+   * active one), and a cancel simply clears the entry.
+   */
+  const previewVariantOverrides = signal<Record<string, ThemeOverrides>>({});
+  /** Same as `previewVariantOverrides`, for highlight colors. */
+  const previewVariantHighlightOverrides = signal<
+    Record<string, HighlightOverrides>
+  >({});
   const linkedCustomization = signal<SeedBibleCustomization | null>(null);
   const linkedCustomizationLocator = signal<string | null>(null);
 
@@ -911,15 +965,40 @@ export function createCustomizationsManager(
     theme.themes.value.find((t) => t.id === variant.baseTheme) ??
     theme.basePresetTheme.value;
 
+  /**
+   * `variant`'s resolved theme, with any pending live-drag preview for it
+   * layered on top — same merge style `buildBibleThemeFromCustomizationTheme`
+   * itself uses (a plain `variables` spread, `applyHighlightOverrides` for
+   * highlights), just sourced from `previewVariantOverrides` instead of the
+   * variant's own persisted fields.
+   */
+  const resolveEditingVariantTheme = (
+    variant: CustomizationThemeVariant
+  ): BibleTheme => {
+    const resolved = buildBibleThemeFromCustomizationTheme(
+      variant,
+      resolveVariantBaseTheme(variant)
+    );
+    const colorPreview = previewVariantOverrides.value[variant.id];
+    const withColorPreview =
+      !colorPreview || Object.keys(colorPreview).length === 0
+        ? resolved
+        : {
+            ...resolved,
+            variables: { ...resolved.variables, ...colorPreview },
+          };
+    const highlightPreview = previewVariantHighlightOverrides.value[variant.id];
+    return highlightPreview
+      ? applyHighlightOverrides(withColorPreview, highlightPreview)
+      : withColorPreview;
+  };
+
   const activeResolvedTheme = computed<BibleTheme | null>(() => {
     const variant = activeVariant.value;
     if (!variant) {
       return null;
     }
-    return buildBibleThemeFromCustomizationTheme(
-      variant,
-      resolveVariantBaseTheme(variant)
-    );
+    return resolveEditingVariantTheme(variant);
   });
 
   /**
@@ -1183,6 +1262,37 @@ export function createCustomizationsManager(
     scheduleAutoSave();
   };
 
+  const previewEditingVariantColor = (
+    variantId: string,
+    key: ThemeColorKey,
+    value: string
+  ): void => {
+    previewVariantOverrides.value = {
+      ...previewVariantOverrides.value,
+      [variantId]: {
+        ...previewVariantOverrides.value[variantId],
+        [key]: value,
+      },
+    };
+  };
+
+  const clearPreviewEditingVariantColor = (
+    variantId: string,
+    key: ThemeColorKey
+  ): void => {
+    const existing = previewVariantOverrides.value[variantId];
+    if (!existing || !(key in existing)) return;
+    const next = { ...existing };
+    delete next[key];
+    const nextAll = { ...previewVariantOverrides.value };
+    if (Object.keys(next).length === 0) {
+      delete nextAll[variantId];
+    } else {
+      nextAll[variantId] = next;
+    }
+    previewVariantOverrides.value = nextAll;
+  };
+
   const setEditingVariantColor = (
     variantId: string,
     key: ThemeColorKey,
@@ -1192,58 +1302,61 @@ export function createCustomizationsManager(
     if (!current) {
       return;
     }
-    editingCustomization.value = {
-      ...current,
-      variants: current.variants.map((variant) => {
-        if (variant.id !== variantId) {
-          return variant;
-        }
-        if (key !== "primaryColor") {
-          return {
-            ...variant,
-            themes: { ...variant.themes, [key]: value },
-            updatedAt: Date.now(),
+    batch(() => {
+      editingCustomization.value = {
+        ...current,
+        variants: current.variants.map((variant) => {
+          if (variant.id !== variantId) {
+            return variant;
+          }
+          if (key !== "primaryColor") {
+            return {
+              ...variant,
+              themes: { ...variant.themes, [key]: value },
+              updatedAt: Date.now(),
+            };
+          }
+
+          // Secondary/tertiary follow the primary color as long as they still
+          // match its lightened derivation — including "never touched at
+          // all" (inherited from the base preset), which counts as following
+          // too. The moment a user manually picks one, it stops matching and
+          // is left alone on future primary edits.
+          const previousPrimary =
+            variant.themes.primaryColor ??
+            resolveVariantBaseTheme(variant).variables.primaryColor;
+          const nextThemes: ThemeOverrides = {
+            ...variant.themes,
+            primaryColor: value,
           };
-        }
+          if (
+            variant.themes.secondaryColor === undefined ||
+            variant.themes.secondaryColor ===
+              lightenColor(previousPrimary, SECONDARY_LIGHTEN_AMOUNT)
+          ) {
+            nextThemes.secondaryColor = lightenColor(
+              value,
+              SECONDARY_LIGHTEN_AMOUNT
+            );
+          }
+          if (
+            variant.themes.tertiaryColor === undefined ||
+            variant.themes.tertiaryColor ===
+              lightenColor(previousPrimary, TERTIARY_LIGHTEN_AMOUNT)
+          ) {
+            nextThemes.tertiaryColor = lightenColor(
+              value,
+              TERTIARY_LIGHTEN_AMOUNT
+            );
+          }
 
-        // Secondary/tertiary follow the primary color as long as they still
-        // match its lightened derivation — including "never touched at
-        // all" (inherited from the base preset), which counts as following
-        // too. The moment a user manually picks one, it stops matching and
-        // is left alone on future primary edits.
-        const previousPrimary =
-          variant.themes.primaryColor ??
-          resolveVariantBaseTheme(variant).variables.primaryColor;
-        const nextThemes: ThemeOverrides = {
-          ...variant.themes,
-          primaryColor: value,
-        };
-        if (
-          variant.themes.secondaryColor === undefined ||
-          variant.themes.secondaryColor ===
-            lightenColor(previousPrimary, SECONDARY_LIGHTEN_AMOUNT)
-        ) {
-          nextThemes.secondaryColor = lightenColor(
-            value,
-            SECONDARY_LIGHTEN_AMOUNT
-          );
-        }
-        if (
-          variant.themes.tertiaryColor === undefined ||
-          variant.themes.tertiaryColor ===
-            lightenColor(previousPrimary, TERTIARY_LIGHTEN_AMOUNT)
-        ) {
-          nextThemes.tertiaryColor = lightenColor(
-            value,
-            TERTIARY_LIGHTEN_AMOUNT
-          );
-        }
-
-        return { ...variant, themes: nextThemes, updatedAt: Date.now() };
-      }),
-      updatedAt: Date.now(),
-    };
-    scheduleAutoSave();
+          return { ...variant, themes: nextThemes, updatedAt: Date.now() };
+        }),
+        updatedAt: Date.now(),
+      };
+      clearPreviewEditingVariantColor(variantId, key);
+      scheduleAutoSave();
+    });
   };
 
   const setEditingVariantFont = (
@@ -1271,6 +1384,49 @@ export function createCustomizationsManager(
     scheduleAutoSave();
   };
 
+  const previewEditingVariantHighlightColor = (
+    variantId: string,
+    highlightId: string,
+    patch: Partial<ThemeHighlightColor>
+  ): void => {
+    const existingForVariant =
+      previewVariantHighlightOverrides.value[variantId] ?? {};
+    const existingForId = existingForVariant[highlightId] ?? {};
+    previewVariantHighlightOverrides.value = {
+      ...previewVariantHighlightOverrides.value,
+      [variantId]: {
+        ...existingForVariant,
+        [highlightId]: { ...existingForId, ...patch },
+      },
+    };
+  };
+
+  const clearPreviewEditingVariantHighlightField = (
+    variantId: string,
+    highlightId: string,
+    field: keyof ThemeHighlightColor
+  ): void => {
+    const existingForVariant =
+      previewVariantHighlightOverrides.value[variantId];
+    const existingForId = existingForVariant?.[highlightId];
+    if (!existingForId || !(field in existingForId)) return;
+    const nextForId = { ...existingForId };
+    delete nextForId[field];
+    const nextForVariant = { ...existingForVariant };
+    if (Object.keys(nextForId).length === 0) {
+      delete nextForVariant[highlightId];
+    } else {
+      nextForVariant[highlightId] = nextForId;
+    }
+    const nextAll = { ...previewVariantHighlightOverrides.value };
+    if (Object.keys(nextForVariant).length === 0) {
+      delete nextAll[variantId];
+    } else {
+      nextAll[variantId] = nextForVariant;
+    }
+    previewVariantHighlightOverrides.value = nextAll;
+  };
+
   const setEditingVariantHighlightColor = (
     variantId: string,
     highlightId: string,
@@ -1280,25 +1436,30 @@ export function createCustomizationsManager(
     if (!current) {
       return;
     }
-    editingCustomization.value = {
-      ...current,
-      variants: current.variants.map((variant) => {
-        if (variant.id !== variantId) {
-          return variant;
-        }
-        const existing = variant.highlightColors[highlightId] ?? {};
-        return {
-          ...variant,
-          highlightColors: {
-            ...variant.highlightColors,
-            [highlightId]: { ...existing, ...patch },
-          },
-          updatedAt: Date.now(),
-        };
-      }),
-      updatedAt: Date.now(),
-    };
-    scheduleAutoSave();
+    batch(() => {
+      editingCustomization.value = {
+        ...current,
+        variants: current.variants.map((variant) => {
+          if (variant.id !== variantId) {
+            return variant;
+          }
+          const existing = variant.highlightColors[highlightId] ?? {};
+          return {
+            ...variant,
+            highlightColors: {
+              ...variant.highlightColors,
+              [highlightId]: { ...existing, ...patch },
+            },
+            updatedAt: Date.now(),
+          };
+        }),
+        updatedAt: Date.now(),
+      };
+      for (const field of Object.keys(patch) as (keyof ThemeHighlightColor)[]) {
+        clearPreviewEditingVariantHighlightField(variantId, highlightId, field);
+      }
+      scheduleAutoSave();
+    });
   };
 
   /** Removes one field's override, reverting it to inherit from the variant's `baseTheme`. No-op with no open draft. */
@@ -1525,6 +1686,7 @@ export function createCustomizationsManager(
     activeHighlightOverrides,
     activeResolvedTheme,
     resolveVariantBaseTheme,
+    resolveEditingVariantTheme,
     activeExtensionIds,
     linkedCustomization,
     initialCustomizationLoadPromise,
@@ -1552,6 +1714,10 @@ export function createCustomizationsManager(
     setEditingVariantHighlightColor,
     resetEditingVariantField,
     resetEditingVariantHighlightColor,
+    previewEditingVariantColor,
+    clearPreviewEditingVariantColor,
+    previewEditingVariantHighlightColor,
+    clearPreviewEditingVariantHighlightField,
     setEditingDefaultVariant,
     removeEditingVariant,
     selectActiveVariant,

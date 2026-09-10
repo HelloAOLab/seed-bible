@@ -1,4 +1,5 @@
 import {
+  batch,
   computed,
   effect,
   signal,
@@ -440,17 +441,25 @@ function toKebabCase(value: string): string {
   return value.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
 }
 
+/** Keep a value from closing the `body { }` theme rule and wiping every `--sb-*` color. */
+function sanitizeCssValue(value: string): string {
+  return value.replace(/[{}<;]/g, "");
+}
+
 export function generateThemeCssVariables(variables: BibleTheme): string {
   const cssVariables = Object.entries(variables.variables)
     .filter(([, value]) => value !== undefined && value !== null)
-    .map(([key, value]) => `--sb-${toKebabCase(key)}: ${value};`)
+    .map(
+      ([key, value]) =>
+        `--sb-${toKebabCase(key)}: ${sanitizeCssValue(String(value))};`
+    )
     .join("\n");
 
   const highlightColorVariables = Object.entries(variables.highlightColors)
     .flatMap(([key, value]) => [
-      `--sb-highlight-${key}-color: ${value.color};`,
-      `--sb-highlight-${key}-font-color: ${value.fontColor};`,
-      `--sb-highlight-${key}-words-of-jesus-font-color: ${value.wordsOfJesusFontColor};`,
+      `--sb-highlight-${key}-color: ${sanitizeCssValue(String(value.color))};`,
+      `--sb-highlight-${key}-font-color: ${sanitizeCssValue(String(value.fontColor))};`,
+      `--sb-highlight-${key}-words-of-jesus-font-color: ${sanitizeCssValue(String(value.wordsOfJesusFontColor))};`,
     ])
     .join("\n");
 
@@ -461,15 +470,20 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
   // Highlighted text keeps a readable font color; the highlight *background* is
   // drawn behind the text by the ribbon layer (from `--sb-highlight-<id>-color`),
   // not as a `background-color` here.
+  //
+  // Un-nested selectors: this string is assigned to a <style> tag's
+  // `textContent` on every theme change. Nested `&` is valid in a stylesheet
+  // file, but assigning it through the CSSOM can make the engine throw out
+  // the whole tag — every `--sb-*` color on `body` included.
   return Object.entries(theme.highlightColors)
     .map(([colorId]) => {
       return [
         `.sb-highlight-${colorId} {`,
         `color: var(--sb-highlight-${colorId}-font-color);`,
-        `&.sb-words-of-jesus { `,
+        `}`,
+        `.sb-highlight-${colorId}.sb-words-of-jesus {`,
         `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,
         `}`,
-        ` }`,
       ].join("\n");
     })
     .join("\n");
@@ -1143,6 +1157,26 @@ export interface ThemeManager {
   ) => void;
   resetHighlightColor: (colorId: string) => void;
   resetAllHighlightColors: () => void;
+  /**
+   * Live, non-committing preview of a theme color — reflected in
+   * `currentTheme` (and the injected `--sb-*` CSS) immediately, but never
+   * written to `settings`. Meant to be called on a `ColorPicker`'s
+   * `onPreview` while the user drags; `setCustomColor` clears any pending
+   * preview for the same key once the color is actually committed.
+   */
+  previewCustomColor: (key: ThemeColorKey, value: string) => void;
+  /** Discards a pending `previewCustomColor`, e.g. on the picker's `onCancel`. */
+  clearPreviewCustomColor: (key: ThemeColorKey) => void;
+  /** Same as `previewCustomColor`, for one field of a highlight color. */
+  previewHighlightColor: (
+    colorId: string,
+    patch: Partial<ThemeHighlightColor>
+  ) => void;
+  /** Discards a pending `previewHighlightColor` field, e.g. on `onCancel`. */
+  clearPreviewHighlightField: (
+    colorId: string,
+    field: keyof ThemeHighlightColor
+  ) => void;
 }
 
 export function createTheme(settings: SettingsManager): ThemeManager {
@@ -1156,6 +1190,16 @@ export function createTheme(settings: SettingsManager): ThemeManager {
     () => settings.settings.value.customHighlights
   );
 
+  /**
+   * In-memory-only overrides from an open `ColorPicker`'s live drag. Never
+   * read from or written to `settings`, so there is nothing to undo on
+   * reload — a picker's `onCancel` (or the next commit for the same key)
+   * simply clears the entry and `currentTheme` falls back to
+   * `customOverrides`/`customHighlightOverrides`.
+   */
+  const previewOverrides = signal<ThemeOverrides>({});
+  const previewHighlightOverrides = signal<HighlightOverrides>({});
+
   const basePresetTheme = computed<BibleTheme>(
     () =>
       themes.value.find((theme) => theme.id === selectedThemeId.value) ??
@@ -1163,12 +1207,19 @@ export function createTheme(settings: SettingsManager): ThemeManager {
       LIGHT_THEME
   );
 
-  const currentTheme = computed<BibleTheme>(() =>
-    applyHighlightOverrides(
+  const currentTheme = computed<BibleTheme>(() => {
+    const withColorOverrides = applyOverrides(
       applyOverrides(basePresetTheme.value, customOverrides.value),
-      customHighlightOverrides.value
-    )
-  );
+      previewOverrides.value
+    );
+    return applyHighlightOverrides(
+      applyHighlightOverrides(
+        withColorOverrides,
+        customHighlightOverrides.value
+      ),
+      previewHighlightOverrides.value
+    );
+  });
 
   const themeStyleText = computed(() =>
     composeThemeStyleText(currentTheme.value)
@@ -1207,6 +1258,13 @@ export function createTheme(settings: SettingsManager): ThemeManager {
         skipWrite = false;
         return;
       }
+      // A broken compose (empty, or a value that closed `body {` early) would
+      // replace the live theme tag and strip every `--sb-*` color until
+      // refresh. Keep whatever is already on the page if this text isn't a
+      // real theme.
+      if (!text.includes("--sb-background:")) {
+        return;
+      }
       let tag = document.getElementById(
         "sb-theme-styles"
       ) as HTMLStyleElement | null;
@@ -1229,8 +1287,22 @@ export function createTheme(settings: SettingsManager): ThemeManager {
     settings.setCustomTheme(next);
   };
 
+  const previewCustomColor = (key: ThemeColorKey, value: string) => {
+    previewOverrides.value = { ...previewOverrides.value, [key]: value };
+  };
+
+  const clearPreviewCustomColor = (key: ThemeColorKey) => {
+    if (!(key in previewOverrides.value)) return;
+    const next = { ...previewOverrides.value };
+    delete next[key];
+    previewOverrides.value = next;
+  };
+
   const setCustomColor = (key: ThemeColorKey, value: string) => {
-    writeOverrides({ ...customOverrides.value, [key]: value });
+    batch(() => {
+      writeOverrides({ ...customOverrides.value, [key]: value });
+      clearPreviewCustomColor(key);
+    });
   };
 
   const resetCustomColor = (key: ThemeColorKey) => {
@@ -1247,15 +1319,47 @@ export function createTheme(settings: SettingsManager): ThemeManager {
     settings.setCustomHighlights(next);
   };
 
+  const previewHighlightColor = (
+    colorId: string,
+    patch: Partial<ThemeHighlightColor>
+  ) => {
+    const existing = previewHighlightOverrides.value[colorId] ?? {};
+    previewHighlightOverrides.value = {
+      ...previewHighlightOverrides.value,
+      [colorId]: { ...existing, ...patch },
+    };
+  };
+
+  const clearPreviewHighlightField = (
+    colorId: string,
+    field: keyof ThemeHighlightColor
+  ) => {
+    const existing = previewHighlightOverrides.value[colorId];
+    if (!existing || !(field in existing)) return;
+    const next = { ...previewHighlightOverrides.value };
+    const { [field]: _removed, ...rest } = existing;
+    if (Object.keys(rest).length === 0) {
+      delete next[colorId];
+    } else {
+      next[colorId] = rest;
+    }
+    previewHighlightOverrides.value = next;
+  };
+
   const setHighlightColor = (
     colorId: string,
     patch: Partial<ThemeHighlightColor>
   ) => {
-    const current = customHighlightOverrides.value;
-    const existing = current[colorId] ?? {};
-    writeHighlightOverrides({
-      ...current,
-      [colorId]: { ...existing, ...patch },
+    batch(() => {
+      const current = customHighlightOverrides.value;
+      const existing = current[colorId] ?? {};
+      writeHighlightOverrides({
+        ...current,
+        [colorId]: { ...existing, ...patch },
+      });
+      for (const field of Object.keys(patch) as (keyof ThemeHighlightColor)[]) {
+        clearPreviewHighlightField(colorId, field);
+      }
     });
   };
 
@@ -1283,5 +1387,9 @@ export function createTheme(settings: SettingsManager): ThemeManager {
     setHighlightColor,
     resetHighlightColor,
     resetAllHighlightColors,
+    previewCustomColor,
+    clearPreviewCustomColor,
+    previewHighlightColor,
+    clearPreviewHighlightField,
   };
 }

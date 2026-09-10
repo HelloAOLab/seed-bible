@@ -22,7 +22,7 @@ import {
 } from "../../managers/ThemeManager";
 import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
 import { openCustomizationEditPane } from "../CustomizationEditPane/CustomizationEditPane";
-import { download, toHexInputValue, translateTitle } from "../../app/utils";
+import { download, translateTitle } from "../../app/utils";
 import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
 import {
   Skeleton,
@@ -49,6 +49,8 @@ import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
+import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
+import { normalizeHex } from "../ColorPicker/color";
 import { buildStaticPagePath } from "../../managers/StaticPagePath";
 import { useEffect, useRef } from "preact/hooks";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
@@ -847,7 +849,9 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
                     if (Number.isFinite(parsed)) setScriptureWidth(parsed);
                   }}
                 />
-                <span className="sb-scripture-margins-unit">ch</span>
+                <span className="sb-scripture-margins-unit">
+                  {t("scripture-width-unit", { defaultValue: "ch" })}
+                </span>
               </div>
               <button
                 type="button"
@@ -1720,17 +1724,18 @@ function TextFormattingToolbar(props: {
                 }}
               />
             ))}
-            <label className="sb-text-format-palette-custom">
+            <div className="sb-text-format-palette-custom">
               <span>{t("custom", { defaultValue: "Custom" })}</span>
-              <input
-                type="color"
-                value={toHexInputValue(section.color)}
-                onInput={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  onChange({ color: target.value });
+              <LazyColorPicker
+                value={normalizeHex(section.color)}
+                className="sb-text-format-palette-custom-swatch"
+                ariaLabel={t("custom", { defaultValue: "Custom" })}
+                onChange={(color) => {
+                  onChange({ color });
+                  paletteOpen.value = false;
                 }}
               />
-            </label>
+            </div>
           </div>
         )}
       </div>
@@ -1884,7 +1889,7 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
             {group.fields.map((field) => {
               const currentValue =
                 effectiveTheme.value.variables[field.key] ?? "";
-              const hexValue = toHexInputValue(
+              const hexValue = normalizeHex(
                 typeof currentValue === "string" ? currentValue : ""
               );
               const isOverridden =
@@ -1901,14 +1906,18 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                     </span>
                   </div>
                   <div className="sb-theme-color-row-controls">
-                    <input
-                      type="color"
-                      className="sb-theme-color-input"
+                    <LazyColorPicker
                       value={hexValue}
-                      aria-label={field.label}
-                      onInput={(event: Event) => {
-                        const target = event.currentTarget as HTMLInputElement;
-                        theme.setCustomColor(field.key, target.value);
+                      className="sb-theme-color-input"
+                      ariaLabel={field.label}
+                      onChange={(color) => {
+                        theme.setCustomColor(field.key, color);
+                      }}
+                      onPreview={(color) => {
+                        theme.previewCustomColor(field.key, color);
+                      }}
+                      onCancel={() => {
+                        theme.clearPreviewCustomColor(field.key);
                       }}
                     />
                     {isOverridden && (
@@ -1958,30 +1967,32 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                 <span className="sb-theme-color-value">{bg || "—"}</span>
               </div>
               <div className="sb-theme-color-row-controls">
-                <input
-                  type="color"
+                <LazyColorPicker
+                  value={normalizeHex(bg)}
                   className="sb-theme-color-input"
-                  value={toHexInputValue(bg)}
-                  aria-label={t("id_highlight-background-color", { id })}
-                  title={t("highlight-background-color", {
-                    defaultValue: "Highlight background color",
-                  })}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    theme.setHighlightColor(id, { color: target.value });
+                  ariaLabel={t("id_highlight-background-color", { id })}
+                  onChange={(color) => {
+                    theme.setHighlightColor(id, { color });
+                  }}
+                  onPreview={(color) => {
+                    theme.previewHighlightColor(id, { color });
+                  }}
+                  onCancel={() => {
+                    theme.clearPreviewHighlightField(id, "color");
                   }}
                 />
-                <input
-                  type="color"
+                <LazyColorPicker
+                  value={normalizeHex(fg)}
                   className="sb-theme-color-input"
-                  value={toHexInputValue(fg)}
-                  aria-label={t("id_highlight-text-color", { id })}
-                  title={t("highlight-text-color", {
-                    defaultValue: "Highlight text color",
-                  })}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    theme.setHighlightColor(id, { fontColor: target.value });
+                  ariaLabel={t("id_highlight-text-color", { id })}
+                  onChange={(color) => {
+                    theme.setHighlightColor(id, { fontColor: color });
+                  }}
+                  onPreview={(color) => {
+                    theme.previewHighlightColor(id, { fontColor: color });
+                  }}
+                  onCancel={() => {
+                    theme.clearPreviewHighlightField(id, "fontColor");
                   }}
                 />
                 {isOverridden && (
