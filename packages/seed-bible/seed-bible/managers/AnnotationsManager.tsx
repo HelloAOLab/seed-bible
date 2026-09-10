@@ -51,6 +51,13 @@ export interface AnnotationsManager {
   ) => Promise<Annotation[]>;
 
   /**
+   * Every annotation in the effective record, across the whole Bible, for the
+   * "Your content" screen. Unsorted — callers order it themselves. Empty when
+   * the user is signed out and no record override is in play.
+   */
+  listAllAnnotations: () => Promise<Annotation[]>;
+
+  /**
    * Reactive view of one chapter's annotations, sorted the same way
    * `listAnnotationsForChapter` sorts: from the record override when one was
    * passed to `createAnnotationsManager`, otherwise from the signed-in
@@ -641,6 +648,34 @@ export function createAnnotationsManager(
     return sortAnnotations(annotations);
   };
 
+  /**
+   * Every annotation the user has, across the whole Bible.
+   *
+   * Annotations are marked per chapter, so there is no marker that means "all
+   * of mine" — collecting them by marker would take one request per chapter.
+   * This sweeps the record instead and keeps the items that parse as an
+   * annotation; anything else stored there (highlights, bookmarks, playlists)
+   * simply fails the schema and is skipped.
+   *
+   * Returns an empty list for a signed-out user, who has no record to read.
+   */
+  const listAllAnnotations = async (): Promise<Annotation[]> => {
+    const recordName = resolveRecordName();
+    if (!recordName) {
+      return [];
+    }
+
+    const result = await os.listAllData(recordName);
+    const annotations: Annotation[] = [];
+    for (const item of result.items) {
+      const parsed = annotationSchema.safeParse(item.data);
+      if (parsed.success) {
+        annotations.push(parsed.data);
+      }
+    }
+    return annotations;
+  };
+
   /** The annotations a chapter's local rows represent, tombstones removed. */
   const readLocalChapter = async (
     owner: string,
@@ -1149,6 +1184,7 @@ export function createAnnotationsManager(
     saveAnnotation,
     deleteAnnotation,
     listAnnotationsForChapter,
+    listAllAnnotations,
     getAnnotationsForChapter,
     editingAnnotation,
     createNewAnnotation,
