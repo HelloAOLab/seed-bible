@@ -2417,12 +2417,13 @@ describe("BibleReaderToolbar — the mobile Today tab", () => {
 });
 
 /**
- * `?chatFirst=true` promotes Chat to the fourth mobile tab (replacing
- * Bookmarks) so an embedding integration can surface chat without asking the
- * user to dig through More. Bookmarks move into More instead. On desktop/laptop
- * the labeled toolbar keeps Chat visible and parks it after the reading nav.
+ * The mobile bottom bar is fixed at five tabs — Today, You, Bible, Search,
+ * More — and everything else (Bookmarks, Chat, Tabs, extension tools) is
+ * reached from the More menu. `?chatFirst=true` does not change that set; on
+ * mobile it only lifts Chat to the top of the More menu, and on desktop/laptop
+ * it keeps Chat in the labeled toolbar (covered by the desktop suite below).
  */
-describe("BibleReaderToolbar — chat-first mobile tab", () => {
+describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
   let container: HTMLDivElement;
   let originalInnerWidth: number;
 
@@ -2471,149 +2472,31 @@ describe("BibleReaderToolbar — chat-first mobile tab", () => {
       container.querySelectorAll(".sb-reader-toolbar-mobile-tab-label")
     ).map((el) => el.textContent);
 
-  it("keeps Bookmarks as the fourth tab when chatFirst is not set", async () => {
-    await renderToolbar();
+  const isActive = (label: string) =>
+    tabButton(label)!.classList.contains(
+      "sb-reader-toolbar-mobile-tab-button-active"
+    );
 
-    expect(tabButton("Bookmarks")).not.toBeNull();
-    expect(tabButton("Chat")).toBeNull();
-    expect(mobileTabLabels().slice(0, 4)).toEqual([
-      "Today",
-      "Search",
-      "Bible",
-      "Bookmarks",
-    ]);
-  });
+  const openMore = async () => {
+    const moreButton = tabButton("More");
+    if (!moreButton) throw new Error("The More button did not render.");
+    await tap(moreButton);
+  };
 
-  it.each(["1", "yes", "false", "TRUE ", ""])(
-    "ignores non-canonical chatFirst=%j on mobile",
-    async (value) => {
-      await renderToolbar({ chatFirst: value });
+  const moreMenuLabels = () =>
+    Array.from(container.querySelectorAll(".sb-mobile-more-menu-label")).map(
+      (el) => el.textContent
+    );
 
-      expect(tabButton("Bookmarks")).not.toBeNull();
-      expect(tabButton("Chat")).toBeNull();
-    }
-  );
+  const moreMenuItem = (text: string) => {
+    const item = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
+    ).find((candidate) => candidate.textContent?.includes(text));
+    if (!item) throw new Error(`"${text}" was not in the More menu.`);
+    return item;
+  };
 
-  it("accepts case-insensitive chatFirst=TRUE", async () => {
-    await renderToolbar({ chatFirst: "TRUE" });
-
-    expect(tabButton("Chat")).not.toBeNull();
-    expect(tabButton("Bookmarks")).toBeNull();
-  });
-
-  it("replaces Bookmarks with Chat when chatFirst=true", async () => {
-    await renderToolbar({ chatFirst: true });
-
-    expect(tabButton("Chat")).not.toBeNull();
-    expect(tabButton("Bookmarks")).toBeNull();
-    expect(mobileTabLabels().slice(0, 4)).toEqual([
-      "Today",
-      "Search",
-      "Bible",
-      "Chat",
-    ]);
-  });
-
-  it("opens the chat panel when the Chat tab is tapped", async () => {
-    const { state } = await renderToolbar({ chatFirst: true });
-    const chatTab = tabButton("Chat");
-    if (!chatTab) throw new Error("The Chat bottom tab did not render.");
-
-    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
-
-    await tap(chatTab);
-
-    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
-  });
-
-  it("highlights the Chat tab while the chat panel is open", async () => {
-    const { state } = await renderToolbar({ chatFirst: true });
-    const chatTab = tabButton("Chat");
-    if (!chatTab) throw new Error("The Chat bottom tab did not render.");
-
-    const isActive = () =>
-      tabButton("Chat")!.classList.contains(
-        "sb-reader-toolbar-mobile-tab-button-active"
-      );
-    expect(isActive()).toBe(false);
-
-    await tap(chatTab);
-    expect(isActive()).toBe(true);
-
-    await act(async () => {
-      state.sidebar.closeChatPanel();
-    });
-    expect(isActive()).toBe(false);
-  });
-
-  it("closes the chat panel when the Chat tab is tapped again", async () => {
-    const { state } = await renderToolbar({ chatFirst: true });
-    const chatTab = tabButton("Chat");
-    if (!chatTab) throw new Error("The Chat bottom tab did not render.");
-
-    await tap(chatTab);
-    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
-
-    await tap(chatTab);
-    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
-  });
-
-  it("closes search, sidebar, and panes when opening Chat", async () => {
-    const { state } = await renderToolbar({ chatFirst: true });
-    const chatTab = tabButton("Chat");
-    if (!chatTab) throw new Error("The Chat bottom tab did not render.");
-
-    await act(async () => {
-      state.sidebar.openSearchPanel();
-      state.sidebar.openSidebar();
-      state.today.open();
-    });
-    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
-    expect(state.sidebar.isMobileOpen.value).toBe(true);
-    expect(state.today.isOpen.value).toBe(true);
-
-    await tap(chatTab);
-
-    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
-    expect(state.sidebar.isSearchPanelOpen.value).toBe(false);
-    expect(state.sidebar.isMobileOpen.value).toBe(false);
-    expect(state.today.isOpen.value).toBe(false);
-  });
-
-  it("closes Chat when opening Search, Today, or Bible", async () => {
-    const { state } = await renderToolbar({ chatFirst: true });
-    const chatTab = tabButton("Chat");
-    const searchTab = tabButton("Search");
-    const todayTab = tabButton("Today");
-    const bibleTab = tabButton("Bible");
-    if (!chatTab || !searchTab || !todayTab || !bibleTab) {
-      throw new Error("Expected chat-first bottom tabs to render.");
-    }
-
-    await tap(chatTab);
-    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
-
-    await tap(searchTab);
-    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
-    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
-
-    await tap(chatTab);
-    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
-
-    await tap(todayTab);
-    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
-    expect(state.today.isOpen.value).toBe(true);
-
-    await tap(chatTab);
-    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
-
-    await tap(bibleTab);
-    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
-  });
-
-  it("moves Bookmarks into the More menu and omits Chat from it", async () => {
-    const { state } = await renderToolbar({ chatFirst: true });
-
+  const registerExtensionTool = async (state: SeedBibleState) => {
     await act(async () => {
       state.tools.registerToolbarTool({
         id: "test-extension-tool",
@@ -2624,107 +2507,203 @@ describe("BibleReaderToolbar — chat-first mobile tab", () => {
         onSelect: vi.fn(),
       });
     });
+  };
 
-    const moreButton = tabButton("More");
-    if (!moreButton) throw new Error("The More button did not render.");
+  it.each([
+    ["without chatFirst", undefined],
+    ["with chatFirst=true", true],
+  ])("shows exactly the five tabs %s", async (_label, chatFirst) => {
+    await renderToolbar({ chatFirst });
 
-    await tap(moreButton);
+    expect(mobileTabLabels()).toEqual([
+      "Today",
+      "You",
+      "Bible",
+      "Search",
+      "More",
+    ]);
+  });
 
-    const labels = Array.from(
-      container.querySelectorAll(".sb-mobile-more-menu-label")
-    ).map((el) => el.textContent);
+  it.each([
+    ["without chatFirst", undefined],
+    ["with chatFirst=true", true],
+  ])(
+    "keeps Bookmarks, Chat and Tabs out of the bar %s",
+    async (_label, chatFirst) => {
+      await renderToolbar({ chatFirst });
 
-    expect(labels).toContain("Bookmarks");
-    expect(labels).toContain("Tabs");
-    expect(labels).toContain("Extension Tool");
-    expect(labels).not.toContain("Chat");
-    // Same menu order as default: extension tools first, then pinned app items.
+      expect(tabButton("Bookmarks")).toBeNull();
+      expect(tabButton("Chat")).toBeNull();
+      expect(tabButton("Tabs")).toBeNull();
+      expect(tabButton("More")).not.toBeNull();
+    }
+  );
+
+  it("puts Bookmarks and Tabs in the More menu without chatFirst", async () => {
+    await renderToolbar();
+    await openMore();
+
+    expect(moreMenuLabels()).toContain("Bookmarks");
+    expect(moreMenuLabels()).toContain("Tabs");
+  });
+
+  it("puts Bookmarks and Tabs in the More menu with chatFirst too", async () => {
+    await renderToolbar({ chatFirst: true });
+    await openMore();
+
+    expect(moreMenuLabels()).toContain("Bookmarks");
+    expect(moreMenuLabels()).toContain("Tabs");
+  });
+
+  it("keeps Chat reachable from the More menu under chatFirst", async () => {
+    // Chat-first used to hide Chat from this menu because it had a bottom tab
+    // of its own. Now that it does not, hiding it would strand chat with no
+    // way in at all on mobile.
+    await renderToolbar({ chatFirst: true });
+    await openMore();
+
+    expect(moreMenuLabels()).toContain("Chat");
+  });
+
+  it("keeps Chat in its own place in the More menu under chatFirst", async () => {
+    // Chat-first forces chat *visible*; it does not reorder the menu. The
+    // tools are priority-ordered and chat keeps its own slot among them,
+    // ahead of the pinned app items at the bottom.
+    const { state } = await renderToolbar({ chatFirst: true });
+    await registerExtensionTool(state);
+    await openMore();
+
+    const labels = moreMenuLabels();
+    expect(labels).toContain("Chat");
+    expect(labels.indexOf("Chat")).toBeLessThan(labels.indexOf("Bookmarks"));
     expect(labels.indexOf("Extension Tool")).toBeLessThan(
       labels.indexOf("Bookmarks")
     );
     expect(labels.indexOf("Bookmarks")).toBeLessThan(labels.indexOf("Tabs"));
   });
 
-  it("always shows More under chat-first so demoted Bookmarks have a home", async () => {
-    await renderToolbar({ chatFirst: true });
+  it("keeps extension tools above the pinned app items without chatFirst", async () => {
+    const { state } = await renderToolbar();
+    await registerExtensionTool(state);
+    await openMore();
 
-    expect(tabButton("More")).not.toBeNull();
-    expect(tabButton("Tabs")).toBeNull();
+    const labels = moreMenuLabels();
+    expect(labels.indexOf("Extension Tool")).toBeLessThan(
+      labels.indexOf("Bookmarks")
+    );
+    expect(labels.indexOf("Bookmarks")).toBeLessThan(labels.indexOf("Tabs"));
   });
 
-  it("highlights More while Bookmarks is open after being demoted", async () => {
+  it("opens the chat panel from the More menu", async () => {
+    // Chat-first, because chat's own `isVisible` wants a provider or an
+    // existing chat and this state has neither (see the desktop suite).
     const { state } = await renderToolbar({ chatFirst: true });
+    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
 
-    const moreButton = tabButton("More");
-    if (!moreButton) throw new Error("The More button did not render.");
+    await openMore();
+    await tap(moreMenuItem("Chat"));
 
-    await tap(moreButton);
-    const bookmarksItem = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
-    ).find((item) => item.textContent?.includes("Bookmarks"));
-    if (!bookmarksItem) {
-      throw new Error("Bookmarks was not in the More menu.");
-    }
-    await tap(bookmarksItem);
-
-    expect(state.bookmarks.isFilterActive.value).toBe(true);
-    expect(
-      tabButton("More")!.classList.contains(
-        "sb-reader-toolbar-mobile-tab-button-active"
-      )
-    ).toBe(true);
-    expect(
-      tabButton("Chat")!.classList.contains(
-        "sb-reader-toolbar-mobile-tab-button-active"
-      )
-    ).toBe(false);
+    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
+    expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
   });
 
-  it("opens Bookmarks from the More menu when chat-first demoted it", async () => {
-    const { state } = await renderToolbar({ chatFirst: true });
+  it("highlights More while the chat panel is open", async () => {
+    // Chat is reached from More, so More is the only tab that can honestly
+    // say where the panel covering the reader came from.
+    const { state } = await renderToolbar();
+    expect(isActive("More")).toBe(false);
 
-    const moreButton = tabButton("More");
-    if (!moreButton) throw new Error("The More button did not render.");
+    await act(async () => {
+      state.sidebar.openChatPanel();
+    });
+    expect(isActive("More")).toBe(true);
 
-    await tap(moreButton);
+    await act(async () => {
+      state.sidebar.closeChatPanel();
+    });
+    expect(isActive("More")).toBe(false);
+  });
 
-    const bookmarksItem = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
-    ).find((item) => item.textContent?.includes("Bookmarks"));
-    if (!bookmarksItem) {
-      throw new Error("Bookmarks was not in the More menu.");
-    }
+  it("opens Bookmarks from the More menu", async () => {
+    const { state } = await renderToolbar();
 
-    await tap(bookmarksItem);
+    await openMore();
+    await tap(moreMenuItem("Bookmarks"));
 
     expect(state.sidebar.isMobileOpen.value).toBe(true);
     expect(state.bookmarks.isFilterActive.value).toBe(true);
     expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
   });
 
+  it("highlights More while Bookmarks is open", async () => {
+    const { state } = await renderToolbar();
+
+    await openMore();
+    await tap(moreMenuItem("Bookmarks"));
+
+    expect(state.bookmarks.isFilterActive.value).toBe(true);
+    expect(isActive("More")).toBe(true);
+    expect(isActive("Bible")).toBe(false);
+  });
+
   it("closes Chat when opening Bookmarks from More", async () => {
     const { state } = await renderToolbar({ chatFirst: true });
-    const chatTab = tabButton("Chat");
-    const moreButton = tabButton("More");
-    if (!chatTab || !moreButton) {
-      throw new Error("Expected chat-first tabs to render.");
-    }
 
-    await tap(chatTab);
+    await openMore();
+    await tap(moreMenuItem("Chat"));
     expect(state.sidebar.isChatPanelOpen.value).toBe(true);
 
-    await tap(moreButton);
-    const bookmarksItem = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
-    ).find((item) => item.textContent?.includes("Bookmarks"));
-    if (!bookmarksItem) {
-      throw new Error("Bookmarks was not in the More menu.");
-    }
-    await tap(bookmarksItem);
+    await openMore();
+    await tap(moreMenuItem("Bookmarks"));
 
     expect(state.sidebar.isChatPanelOpen.value).toBe(false);
     expect(state.bookmarks.isFilterActive.value).toBe(true);
   });
+
+  it("closes Chat when opening Search, Today, or Bible", async () => {
+    const { state } = await renderToolbar({ chatFirst: true });
+    const searchTab = tabButton("Search");
+    const todayTab = tabButton("Today");
+    const bibleTab = tabButton("Bible");
+    if (!searchTab || !todayTab || !bibleTab) {
+      throw new Error("Expected the mobile bottom tabs to render.");
+    }
+
+    const openChatFromMore = async () => {
+      await openMore();
+      await tap(moreMenuItem("Chat"));
+      expect(state.sidebar.isChatPanelOpen.value).toBe(true);
+    };
+
+    await openChatFromMore();
+    await tap(searchTab);
+    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
+
+    await openChatFromMore();
+    await tap(todayTab);
+    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
+    expect(state.today.isOpen.value).toBe(true);
+
+    await openChatFromMore();
+    await tap(bibleTab);
+    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
+  });
+
+  it.each([["1"], ["yes"], ["false"], ["TRUE "], [""], ["TRUE"]])(
+    "shows the same five tabs whatever chatFirst=%j says",
+    async (value) => {
+      await renderToolbar({ chatFirst: value });
+
+      expect(mobileTabLabels()).toEqual([
+        "Today",
+        "You",
+        "Bible",
+        "Search",
+        "More",
+      ]);
+    }
+  );
 });
 
 describe("BibleReaderToolbar — chat-first desktop / laptop toolbar", () => {
@@ -2893,14 +2872,33 @@ describe("BibleReaderToolbar — chat-first viewport resize", () => {
     });
   }
 
-  it("switches from the Chat bottom tab to the labeled Chat button when growing to desktop", async () => {
+  const openChatFromMoreMenu = async () => {
+    const moreButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="More"]'
+    );
+    if (!moreButton) throw new Error("The More button did not render.");
+    await act(async () => {
+      moreButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    const chatItem = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
+    ).find((item) => item.textContent?.includes("Chat"));
+    if (!chatItem) throw new Error("Chat was not in the More menu.");
+    await act(async () => {
+      chatItem.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  it("moves Chat from the More menu into the labeled toolbar when growing to desktop", async () => {
     const state = await mountAtWidth(MOBILE_VIEWPORT_WIDTH);
     expect(state.app.isMobile.value).toBe(true);
+    // Mobile keeps its five tabs whatever chat-first says, so Chat is in the
+    // More menu rather than the bar.
     expect(
       container.querySelector(
         '.sb-reader-toolbar-mobile-layout button[aria-label="Chat"]'
       )
-    ).not.toBeNull();
+    ).toBeNull();
 
     await resizeTo(1200);
     expect(state.app.isMobile.value).toBe(false);
@@ -2914,7 +2912,7 @@ describe("BibleReaderToolbar — chat-first viewport resize", () => {
     ).not.toBeNull();
   });
 
-  it("switches from the labeled Chat button to the Chat bottom tab when shrinking to mobile", async () => {
+  it("falls back to the five mobile tabs when shrinking from desktop", async () => {
     const state = await mountAtWidth(1200);
     expect(state.app.isMobile.value).toBe(false);
     expect(
@@ -2926,27 +2924,16 @@ describe("BibleReaderToolbar — chat-first viewport resize", () => {
     await resizeTo(MOBILE_VIEWPORT_WIDTH);
     expect(state.app.isMobile.value).toBe(true);
     expect(
-      container.querySelector(
-        '.sb-reader-toolbar-mobile-layout button[aria-label="Chat"]'
-      )
-    ).not.toBeNull();
-    expect(
-      container.querySelector(
-        '.sb-reader-toolbar-mobile-layout button[aria-label="Bookmarks"]'
-      )
-    ).toBeNull();
+      Array.from(
+        container.querySelectorAll(".sb-reader-toolbar-mobile-tab-label")
+      ).map((el) => el.textContent)
+    ).toEqual(["Today", "You", "Bible", "Search", "More"]);
   });
 
   it("keeps the chat panel open across a mobile ↔ desktop resize under chat-first", async () => {
     const state = await mountAtWidth(MOBILE_VIEWPORT_WIDTH);
-    const chatTab = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Chat"]'
-    );
-    if (!chatTab) throw new Error("Chat tab missing on mobile.");
 
-    await act(async () => {
-      chatTab.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
+    await openChatFromMoreMenu();
     expect(state.sidebar.isChatPanelOpen.value).toBe(true);
 
     await resizeTo(1200);
