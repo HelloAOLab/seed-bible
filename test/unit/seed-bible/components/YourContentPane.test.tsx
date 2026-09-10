@@ -213,11 +213,15 @@ describe("YourContentPane", () => {
       (el) => el.textContent
     );
 
-  it("asks for the content when it opens", () => {
+  // Forced, not just asked for: a verse highlighted or annotated in the
+  // reader after the first visit would otherwise never appear here, because
+  // an already-loaded manager skips an unforced load.
+  it("refreshes the content when it opens", () => {
     const { state, load } = createState();
     renderPane(state);
 
     expect(load).toHaveBeenCalledTimes(1);
+    expect(load).toHaveBeenCalledWith({ force: true });
   });
 
   it("shows every section that has something in it", () => {

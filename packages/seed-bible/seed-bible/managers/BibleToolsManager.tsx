@@ -37,7 +37,10 @@ import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
 import type { AppState } from "./SeedBibleStateManager";
-import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
+import type {
+  ReadingPlan,
+  ReadingPlansManager,
+} from "../managers/ReadingPlansManager";
 import {
   ReadingPlansPane,
   ReadingPlansPaneActions,
@@ -47,7 +50,9 @@ import {
 } from "../components/ReadingPlansPane/ReadingPlansPane";
 import {
   groupVersesIntoPlaylistItems,
+  type PlaylistItemData,
   type PlaylistManager,
+  type SimplePlaylist,
 } from "./PlaylistManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
 import type { CasualOSManager } from "./OsManager";
@@ -912,6 +917,26 @@ function getDefaultQuickToolbarTools(
   );
 }
 
+/**
+ * The ad-hoc playlist a reading plan's day is played through. It carries the
+ * plan's own presentation — including the hero image, which the player renders
+ * as the cover art (`PlayPlaylistView`), so a plan with an image doesn't play
+ * with a blank cover. Deliberately no `recordName`: this isn't a playlist
+ * record, so play history can't offer to resume it (see `isRecordedPlaylist`).
+ */
+export function readingPlanDayPlaylist(
+  plan: Pick<ReadingPlan, "address" | "title" | "description" | "heroImageUrl">,
+  items: PlaylistItemData[]
+): SimplePlaylist {
+  return {
+    id: plan.address,
+    title: plan.title,
+    description: plan.description,
+    heroImageUrl: plan.heroImageUrl,
+    items,
+  };
+}
+
 export interface OpenReadingPlansPaneOptions {
   readingPlans: ReadingPlansManager;
   readingState: BibleReadingState;
@@ -984,17 +1009,10 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
         // A day of a plan is a run of readings, which is exactly what the
         // playlist queue already steps through — so it is handed straight
         // to `startPlaying` rather than growing a second set of next/back
-        // controls here. The synthetic playlist borrows the plan's own
-        // record name and address so playback is identifiable; it isn't a
-        // real playlist record, so a shared/reloaded URL won't resume it.
+        // controls here.
         onPlayReadings={(plan, items, startIndex) => {
           playlists?.startPlaying(
-            {
-              id: plan.address,
-              title: plan.title,
-              description: plan.description,
-              items,
-            },
+            readingPlanDayPlaylist(plan, items),
             startIndex,
             // Reading plans reuse the playlist player but keep their own
             // progress records — don't also write playlist play history.

@@ -49,6 +49,12 @@ export interface YourContentManager {
    * Loads annotations and highlights. Safe to call on every open: an
    * in-flight load is shared, and a completed one is reused unless `force`
    * asks for a refresh (after an edit or delete, say).
+   *
+   * A forced refresh over content that is already loaded is quiet — the
+   * lists stay on screen and `status` stays `ready` while it runs, so
+   * reopening the screen doesn't flash a spinner over what the user was
+   * just reading. A quiet refresh that fails leaves the old lists up
+   * rather than replacing them with an error.
    */
   load: (options?: { force?: boolean }) => Promise<void>;
   /** Drops a deleted annotation from the list without a server round-trip. */
@@ -137,8 +143,10 @@ export function createYourContentManager(
 
   let inFlight: Promise<void> | null = null;
 
-  const runLoad = async (): Promise<void> => {
-    status.value = "loading";
+  const runLoad = async (quiet: boolean): Promise<void> => {
+    if (!quiet) {
+      status.value = "loading";
+    }
     try {
       // Both sweep the same record, so they're issued together rather than
       // one after the other — the screen is blank until the slower one lands.
@@ -152,7 +160,9 @@ export function createYourContentManager(
       status.value = "ready";
     } catch (error) {
       console.error("Error loading your content:", error);
-      status.value = "error";
+      if (!quiet) {
+        status.value = "error";
+      }
     }
   };
 
@@ -160,10 +170,11 @@ export function createYourContentManager(
     if (inFlight) {
       return inFlight;
     }
-    if (status.peek() === "ready" && !loadOptions?.force) {
+    const alreadyLoaded = status.peek() === "ready";
+    if (alreadyLoaded && !loadOptions?.force) {
       return Promise.resolve();
     }
-    inFlight = runLoad().finally(() => {
+    inFlight = runLoad(alreadyLoaded).finally(() => {
       inFlight = null;
     });
     return inFlight;

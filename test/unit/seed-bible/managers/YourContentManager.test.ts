@@ -111,6 +111,45 @@ function createManager(
   };
 }
 
+/**
+ * A manager whose annotation fetch can be held open, so a refresh can be
+ * looked at while it is still in flight — which is where the difference
+ * between a loud and a quiet reload shows up.
+ */
+function createHoldableManager() {
+  const pending: Array<{
+    resolve: (annotations: Annotation[]) => void;
+    reject: (error: Error) => void;
+  }> = [];
+  const listAllAnnotations = vi.fn(
+    () =>
+      new Promise<Annotation[]>((resolve, reject) => {
+        pending.push({ resolve, reject });
+      })
+  );
+  const listAllHighlights = vi.fn(async () => [] as StoredHighlight[]);
+
+  const manager = createYourContentManager({
+    bibleData: {
+      getTranslationBookChapter: vi.fn(),
+      getCachedTranslationBookChapter: vi.fn(() => null),
+    } as unknown as CreateYourContentManagerOptions["bibleData"],
+    annotations: { listAllAnnotations } as unknown as AnnotationsManager,
+    highlights: { listAllHighlights } as unknown as HighlightsManager,
+  });
+
+  /** The nth load's controls, once that load has actually been issued. */
+  const settle = (index: number) => {
+    const controls = pending[index];
+    if (!controls) {
+      throw new Error(`No load in flight at index ${index}`);
+    }
+    return controls;
+  };
+
+  return { manager, listAllAnnotations, settle };
+}
+
 describe("createYourContentManager", () => {
   it("starts idle and empty, before anything is asked of it", () => {
     const { manager, listAllAnnotations } = createManager();
@@ -417,6 +456,72 @@ describe("createYourContentManager", () => {
       expect(manager.highlightVerseText.value.size).toBe(0);
       expect(manager.isReadingHighlightVerseText.value).toBe(false);
       expect(consoleError).toHaveBeenCalled();
+    });
+  });
+
+  // Reopening the screen re-reads the record, so a verse highlighted or
+  // annotated in the reader since the last visit turns up. What must not
+  // happen is the lists the user was reading blanking to a spinner while
+  // that runs.
+  describe("refreshing content that is already loaded", () => {
+    it("leaves the lists and the ready status up while the refresh runs", async () => {
+      const { manager, settle } = createHoldableManager();
+
+      const first = manager.load();
+      expect(manager.status.value).toBe("loading");
+      settle(0).resolve([annotation("a")]);
+      await first;
+      expect(manager.status.value).toBe("ready");
+
+      const refresh = manager.load({ force: true });
+
+      expect(manager.status.value).toBe("ready");
+      expect(manager.annotations.value.map((a) => a.id)).toEqual(["a"]);
+
+      settle(1).resolve([annotation("a"), annotation("b")]);
+      await refresh;
+
+      expect([...manager.annotations.value.map((a) => a.id)].sort()).toEqual([
+        "a",
+        "b",
+      ]);
+    });
+
+    it("keeps the loaded lists when the refresh fails", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const { manager, settle } = createHoldableManager();
+
+      const first = manager.load();
+      settle(0).resolve([annotation("a")]);
+      await first;
+
+      const refresh = manager.load({ force: true });
+      settle(1).reject(new Error("network down"));
+      await refresh;
+
+      // A slightly stale list beats an error page over content that loaded.
+      expect(manager.status.value).toBe("ready");
+      expect(manager.annotations.value.map((a) => a.id)).toEqual(["a"]);
+      consoleError.mockRestore();
+    });
+
+    it("still shows loading for a retry after a failed first load", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const { manager, settle } = createHoldableManager();
+
+      const first = manager.load();
+      settle(0).reject(new Error("network down"));
+      await first;
+      expect(manager.status.value).toBe("error");
+
+      // Nothing is on screen to protect, so the retry is allowed to say so.
+      void manager.load({ force: true });
+      expect(manager.status.value).toBe("loading");
+      consoleError.mockRestore();
     });
   });
 

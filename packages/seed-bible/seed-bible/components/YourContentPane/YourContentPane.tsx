@@ -2,6 +2,7 @@ import { useEffect } from "preact/hooks";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { Annotation } from "../../managers/AnnotationsManager";
+import { annotationVerseNumbers } from "../../managers/AnnotationsManager";
 import type { StoredHighlight } from "../../managers/HighlightsManager";
 import type { Bookmark } from "../../managers/BookmarksManager";
 import type { Playlist } from "../../managers/PlaylistManager";
@@ -47,22 +48,6 @@ export function YourContentPaneTitle() {
 }
 
 /* ----------------------------------------------------------------- helpers */
-
-/** The verses an annotation targets, however it happens to record them. */
-function annotationVerses(annotation: Annotation): number[] {
-  if (annotation.verseNumbers?.length) {
-    return annotation.verseNumbers;
-  }
-  const start = annotation.verseNumber;
-  if (start == null) {
-    return [];
-  }
-  const end = annotation.endVerseNumber;
-  if (end == null || end <= start) {
-    return [start];
-  }
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-}
 
 /** "Genesis 1:1", "Genesis 1:1-3", or "Genesis 1" with no verses. */
 function formatReference(
@@ -200,7 +185,7 @@ function AnnotationCard(props: {
   const { state, annotation } = props;
   const { t, language } = useI18n();
   const bookNames = state.today.bookNames.value;
-  const verses = annotationVerses(annotation);
+  const verses = annotationVerseNumbers(annotation);
   const verseText = useVerseText(
     state,
     undefined,
@@ -427,8 +412,11 @@ export function YourContentPane(props: YourContentScreenProps) {
   const { yourContent, bookmarks, playlists, annotations } = state;
   const { t } = useI18n();
 
+  // Every open refreshes, so a verse highlighted or annotated in the reader
+  // since the last visit shows up. It's quiet when content is already
+  // loaded: the lists stay put instead of blanking to a spinner.
   useEffect(() => {
-    void yourContent.load();
+    void yourContent.load({ force: true });
   }, []);
 
   // Highlights carry no words of their own, so searching them means reading
@@ -477,7 +465,7 @@ export function YourContentPane(props: YourContentScreenProps) {
   const visibleAnnotations = yourContent.annotations.value.filter((a) =>
     matches(
       annotationPlainText(a),
-      ...referenceFields(a.bookId, a.chapterNumber, annotationVerses(a))
+      ...referenceFields(a.bookId, a.chapterNumber, annotationVerseNumbers(a))
     )
   );
   const verseTextByHighlight = yourContent.highlightVerseText.value;
