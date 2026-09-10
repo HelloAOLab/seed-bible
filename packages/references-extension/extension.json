@@ -1,0 +1,30 @@
+{
+  "id": "ext_references",
+  "translations": {
+    "en": {
+      "title": "References",
+      "description": "An extension that shows references in bible verses.",
+      "loading-references": "Loading verse text",
+      "text-unavailable": "Verse text unavailable.",
+      "no-references": "No cross references for this verse.",
+      "show-more": "Show more references",
+      "open-in-new-pane": "Show this verse's own references",
+      "loading-list": "Loading references",
+      "show-verse-references": "Verse {{verse}} references",
+      "references-unavailable": "Could not load the references for this verse.",
+      "download-title": "Save cross-references for offline use?",
+      "download-body": "Keep every cross-reference on your device so they still open when you have no connection. The download carries on in the background.",
+      "download-body-with-translation": "Keep every cross-reference on your device, along with {{name}}, so they still open when you have no connection. The download carries on in the background.",
+      "download-size": "About {{references}} of cross-references.",
+      "download-size-with-translation": "About {{references}} of cross-references, plus {{translation}} for {{name}}.",
+      "download-confirm": "Download",
+      "download-not-now": "Not now",
+      "download-started": "Downloading in the background…",
+      "download-done": "Cross-references are now available offline",
+      "download-done-with-translation": "Cross-references and {{name}} are now available offline",
+      "download-partial": "Saved {{downloaded}} of {{total}} chapters. {{failed}} couldn't be downloaded.",
+      "download-translation-failed": "Saved the cross-references, but {{name}} couldn't be downloaded.",
+      "download-failed": "Couldn't download the cross-references. Check your connection and try again."
+    }
+  }
+}

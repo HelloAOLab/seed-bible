@@ -1107,6 +1107,10 @@
   visibility: hidden;
 }
 
+.sb-verse-toolbar-cards .sb-verse-toolbar-overflow-unclipped {
+  overflow: visible;
+}
+
 .sb-verse-toolbar-overflow-row {
   display: flex;
   flex-wrap: wrap;
