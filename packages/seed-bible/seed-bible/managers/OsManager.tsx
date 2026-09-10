@@ -15,7 +15,7 @@ import {
   generateV1ConnectionToken,
 } from "@casual-simulation/aux-common";
 import { sha256 } from "hash.js";
-import { first, firstValueFrom } from "rxjs";
+import { first, firstValueFrom, timeout } from "rxjs";
 import { guardRecordsClient } from "./SessionGuard";
 import type { SessionInvalidatedEvent } from "./SessionGuard";
 
@@ -61,6 +61,42 @@ const UNSAFE_HEADERS = new Set([
   "connection",
   "host",
 ]);
+
+/**
+ * Waits for a freshly-connected shared document to report itself synced, and
+ * lets go of it if that never happens.
+ *
+ * The ordinary failures never report anything at all: an expired session or a
+ * refused record turns the status to `authorization: false`, and a dropped
+ * connection turns it to `sync: false`. Neither errors and neither completes the
+ * stream, so with no deadline this waits for the rest of the page load — and so
+ * does whoever asked for the document. A caller that can carry on without it
+ * passes `timeoutMs` to turn that silence into a failure it can handle.
+ *
+ * Either way the document is already connected and watching its branch by the
+ * time this runs, and a document nobody is going to be handed has to be
+ * released: otherwise it keeps that watch for the rest of the page load, and a
+ * caller that retries leaves another one behind on every attempt.
+ */
+export async function awaitDocumentSync(
+  doc: Pick<SharedDocument, "onStatusUpdated" | "unsubscribe">,
+  timeoutMs?: number
+): Promise<void> {
+  const synced = doc.onStatusUpdated.pipe(
+    first((s) => s.type === "sync" && s.synced)
+  );
+
+  try {
+    await firstValueFrom(
+      timeoutMs === undefined
+        ? synced
+        : synced.pipe(timeout({ first: timeoutMs }))
+    );
+  } catch (error) {
+    doc.unsubscribe();
+    throw error;
+  }
+}
 
 export function CasualOSManager(
   endpoint: string = "https://auth.seedbible.org"
@@ -225,7 +261,7 @@ export function CasualOSManager(
     recordName: string | null,
     inst: string,
     docName: string,
-    options?: { markers?: string[] }
+    options?: { markers?: string[]; timeoutMs?: number }
   ): Promise<SharedDocument> {
     const client = getInstClient();
     const authSource = getAuthSource();
@@ -244,9 +280,7 @@ export function CasualOSManager(
 
     doc.connect();
 
-    await firstValueFrom(
-      doc.onStatusUpdated.pipe(first((s) => s.type === "sync" && s.synced))
-    );
+    await awaitDocumentSync(doc, options?.timeoutMs);
 
     return doc;
   }
