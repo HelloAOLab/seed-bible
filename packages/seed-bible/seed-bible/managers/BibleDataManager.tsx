@@ -3,6 +3,7 @@ import { safeLocalStorage } from "../app/ssrEnv";
 import {
   FreeUseBibleAPI,
   type ApiRequestOptions,
+  type AudioTimings,
   type Translation,
   type TranslationBook,
   type TranslationBookChapter,
@@ -14,6 +15,12 @@ import {
 } from "../managers/OfflineTranslationsManager";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
+import { isVerseReferenceInBounds } from "./verseReferenceBounds";
+import {
+  BOOK_CHAPTER_JOIN_PATTERN,
+  PROSE_REFERENCE_NUMBERS_PATTERN,
+  buildTail,
+} from "./verseReferenceSyntax";
 
 /**
  * Opaque cache for `getTranslations()`'s network result, keyed by normalized
@@ -102,6 +109,19 @@ export interface BibleDataManager {
     chapter: number | string,
     options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter>;
+  /**
+   * A chapter already fetched this session, read synchronously, or null.
+   *
+   * Only the API's response cache is consulted — the offline store is an
+   * async read, so a downloaded chapter that has not also been requested this
+   * session reads as null here. Callers should treat this as a fast path over
+   * {@link getTranslationBookChapter}, never as proof a chapter is absent.
+   */
+  getCachedTranslationBookChapter: (
+    translationId: string,
+    book: string,
+    chapter: number | string
+  ) => TranslationBookChapter | null;
   getNextChapter: (
     chapter: TranslationBookChapter,
     options?: ApiRequestOptions
@@ -110,6 +130,20 @@ export interface BibleDataManager {
     chapter: TranslationBookChapter,
     options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter | null>;
+
+  /**
+   * Loads a single reader's per-verse audio timings for a chapter.
+   *
+   * @param translationId The translation the chapter belongs to, used to
+   * resolve which API endpoint to read the link from.
+   * @param link A URL from that chapter's `thisChapterAudioTimings` (or
+   * `nextChapterAudioTimings`/`previousChapterAudioTimings`) map.
+   */
+  getAudioTimings: (
+    translationId: string,
+    link: string,
+    options?: ApiRequestOptions
+  ) => Promise<AudioTimings>;
 
   /**
    * Gets the API endpoint associated with a given translation. If the translation is not associated with a specific endpoint, it returns the default endpoint.
@@ -279,11 +313,11 @@ export interface VerseRefMatch {
  * single-string refs in chat / footnotes.
  *
  * When `books` is provided, only an exact match on localized common name, name,
- * or id is tried (e.g. spa_onbv "Esdras" → EZR). Deliberate prefix abbreviations
- * are intentionally not used here — short ordinary words like "Is" / "So" would
- * otherwise become false-positive Isaiah / Song of Solomon links. Falls back to
- * the English name / USFM id map via {@link getBookId}, which is already
- * conservative about prefixes.
+ * or id is tried (e.g. spa_onbv "Esdras" → EZR). Unique-prefix expansion of
+ * short tokens (e.g. "Is" → Isaiah) is intentionally not used here — that
+ * belongs in the deliberate single-reference parser. Falls back to the English
+ * name / USFM id map via {@link getBookId}, which only accepts the typed text
+ * as a prefix of a known key (so "Isaac" does not become Isaiah).
  */
 function resolveBookId(book: string, books?: TranslationBook[]): BookId | null {
   if (books?.length) {
@@ -308,22 +342,27 @@ export function parseVerseReference(
   text: string,
   books?: TranslationBook[]
 ): VerseRef | null {
-  // Formats supported:
+  // Formats supported (`:` and `.` are interchangeable):
   //   GEN 1          – chapter only
   //   GEN 1:1        – chapter + verse
+  //   GEN 1.1        – same, European period
+  //   GEN.1.1        – compact period form
   //   GEN 5-7        – chapter range (hyphen, en dash, or em dash)
   //   GEN 5:16-19    – verse range within one chapter
   //   GEN 1:1-2:10   – cross-chapter verse range
   // Book names may include non-ASCII letters (e.g. Spanish "Génesis").
   const match = text.match(
-    /^\s*((?:\d+\s?)?\p{L}[\p{L}\p{N}]*(?:\s+\p{L}[\p{L}\p{N}]*)*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/u
+    new RegExp(
+      `^\\s*((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+\\p{L}[\\p{L}\\p{N}]*)*)${BOOK_CHAPTER_JOIN_PATTERN}${PROSE_REFERENCE_NUMBERS_PATTERN}`,
+      "u"
+    )
   );
 
   if (!match) {
     return null;
   }
 
-  const [reference, book, chapterStr, verseStr, rangeStartStr, rangeEndStr] =
+  const [reference, book, chapterStr, verseStr, endChapterStr, endVerseStr] =
     match;
 
   if (!book || !chapterStr) {
@@ -335,35 +374,35 @@ export function parseVerseReference(
     return null;
   }
 
-  const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
-  if (verse !== undefined && isNaN(verse)) {
+  const tail = buildTail(verseStr, endChapterStr, endVerseStr);
+  if (tail === null) {
     return null;
   }
 
-  let endChapter: number | undefined;
-  let endVerse: number | undefined;
-
-  if (rangeStartStr) {
-    if (verse === undefined) {
-      // No verse → range is chapter-based: "GEN 5-7"
-      endChapter = parseInt(rangeStartStr);
-    } else if (rangeEndStr) {
-      // Both sides have a colon separator: "GEN 1:1-2:10"
-      endChapter = parseInt(rangeStartStr);
-      endVerse = parseInt(rangeEndStr);
-    } else {
-      // Verse present, no colon on range end: "GEN 5:16-19"
-      endVerse = parseInt(rangeStartStr);
-    }
-  }
+  const { verse, endChapter, endVerse } = tail;
 
   const content =
     reference.length !== text.length
       ? text.substring(reference.length).trim() || undefined
       : undefined;
 
+  const bookId = resolveBookId(book, books);
+  if (
+    bookId &&
+    !isVerseReferenceInBounds(
+      bookId,
+      chapter,
+      verse,
+      endChapter,
+      endVerse,
+      books
+    )
+  ) {
+    return null;
+  }
+
   return {
-    book: (resolveBookId(book, books) ?? book) as BookId,
+    book: (bookId ?? book) as BookId,
     chapter,
     verse,
     content,
@@ -373,15 +412,21 @@ export function parseVerseReference(
 }
 
 /**
- * Finds and parses all verse references in the given text, returning each
- * with its character offsets (start inclusive, end exclusive).
+ * Finds and parses all verse references in free prose, returning each with its
+ * character offsets (start inclusive, end exclusive).
+ *
+ * Distinct from {@link parseSingleVerseReference} /
+ * {@link parseVerseReferenceCandidates} in `parseVerseReference.ts`, which
+ * parse one deliberate typed reference (search box) with ambiguous-prefix
+ * expansion.
  *
  * @param books Optional current-translation books; searched before English
  * names / book ids so localized labels resolve correctly. Matching is exact
  * (plus conservative English ids via {@link getBookId}); free-text scanning
- * does not apply unique-prefix expansion of short tokens.
+ * does not apply unique-prefix expansion of short tokens. Chapter/verse
+ * numbers must exist for the book ({@link isVerseReferenceInBounds}).
  */
-export function parseVerseReferences(
+export function scanVerseReferencesInText(
   text: string,
   books?: TranslationBook[]
 ): VerseRefMatch[] {
@@ -391,8 +436,14 @@ export function parseVerseReferences(
   //   \p{L}[\p{L}\p{N}]* — word starting with a letter in any script
   //   (?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)? — optional "of …" for "Song of Solomon"
   // Word boundary: not preceded by a letter/digit (ASCII \b alone fails for non-ASCII).
-  const pattern =
-    /(?<![\p{L}\p{N}])((?:\d+\s?)?\p{L}[\p{L}\p{N}]*(?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)?)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/gu;
+  // Numeric tail is {@link PROSE_REFERENCE_NUMBERS_PATTERN}, which requires a
+  // tight range mark ("Luke 1-2", not "Luke 1 - 2"). The book→chapter joiner is
+  // {@link BOOK_CHAPTER_JOIN_PATTERN}, which excludes the colon, so a list
+  // header like "Mark: 3 things" is not Mark chapter 3.
+  const pattern = new RegExp(
+    `(?<![\\p{L}\\p{N}])((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+[Oo][Ff]\\s+\\p{L}[\\p{L}\\p{N}]*)?)${BOOK_CHAPTER_JOIN_PATTERN}${PROSE_REFERENCE_NUMBERS_PATTERN}`,
+    "gu"
+  );
 
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
@@ -401,8 +452,8 @@ export function parseVerseReferences(
       bookStr,
       chapterStr,
       verseStr,
-      rangeStartStr,
-      rangeEndStr,
+      endChapterStr,
+      endVerseStr,
     ] = match;
 
     // Rejected candidates must retry one character later. Otherwise a false
@@ -429,24 +480,26 @@ export function parseVerseReferences(
       continue;
     }
 
-    const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
-    if (verse !== undefined && isNaN(verse)) {
+    const tail = buildTail(verseStr, endChapterStr, endVerseStr);
+    if (tail === null) {
       retryFromNextChar();
       continue;
     }
 
-    let endChapter: number | undefined;
-    let endVerse: number | undefined;
+    const { verse, endChapter, endVerse } = tail;
 
-    if (rangeStartStr) {
-      if (verse === undefined) {
-        endChapter = parseInt(rangeStartStr);
-      } else if (rangeEndStr) {
-        endChapter = parseInt(rangeStartStr);
-        endVerse = parseInt(rangeEndStr);
-      } else {
-        endVerse = parseInt(rangeStartStr);
-      }
+    if (
+      !isVerseReferenceInBounds(
+        bookId,
+        chapter,
+        verse,
+        endChapter,
+        endVerse,
+        books
+      )
+    ) {
+      retryFromNextChar();
+      continue;
     }
 
     results.push({
@@ -465,6 +518,9 @@ export function parseVerseReferences(
   return results;
 }
 
+/** @deprecated Use {@link scanVerseReferencesInText}. */
+export const parseVerseReferences = scanVerseReferencesInText;
+
 /**
  * Defines a map that maps the book ID to the USFM Book identifier.
  */
@@ -474,7 +530,8 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["exo", "EXO"],
   ["exodus", "EXO"],
   ["lev", "LEV"],
-  ["lev", "LEV"],
+  ["leviticus", "LEV"],
+  // Typo alias retained for tolerance; correct spelling is above.
   ["laviticus", "LEV"],
   ["num", "NUM"],
   ["numbers", "NUM"],
@@ -507,6 +564,8 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["neh", "NEH"],
   ["nehemiah", "NEH"],
   ["est", "EST"],
+  ["esther", "EST"],
+  // Typo alias retained for tolerance; correct spelling is above.
   ["ester", "EST"],
   ["job", "JOB"],
   ["ps", "PSA"],
@@ -552,6 +611,8 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["hab", "HAB"],
   ["habakkuk", "HAB"],
   ["zep", "ZEP"],
+  ["zephaniah", "ZEP"],
+  // Typo alias retained for tolerance; correct spelling is above.
   ["zepaniah", "ZEP"],
   ["hag", "HAG"],
   ["haggai", "HAG"],
@@ -660,25 +721,37 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
 /**
  * Gets the ID of the given book.
  * Returns null if the ID could not be found.
- * @param book The name/ID of the book. Whitespace and hyphens are ignored, so
- * both "Song of Solomon" and the URL slug "song-of-solomon" resolve.
+ * @param book The name/ID of the book. Whitespace, hyphens, and trailing
+ * punctuation are ignored, so "Song of Solomon", "song-of-solomon", and
+ * "Gen." all resolve.
  */
 export function getBookId(book: string): BookId | null {
   const hadSpaces = /\s/.test(book.trim());
-  const bookLower = book.toLowerCase().replaceAll(/[\s-]+/g, "");
+  // Strip whitespace/hyphens, then trailing punctuation (e.g. "Gen." → "gen").
+  const bookLower = book
+    .toLowerCase()
+    .replaceAll(/[\s-]+/g, "")
+    .replace(/[^\p{L}\p{N}]+$/u, "");
+
+  if (!bookLower) {
+    return null;
+  }
 
   const id = BOOK_ID_MAP.get(bookLower);
   if (id) {
     return id;
   }
 
-  // Loose prefix fallback is for single-token inputs (e.g. "Leviticus" → lev)
-  // and numbered-book abbreviations (e.g. "1 chron" → 1ch). Multi-word phrases
-  // that aren't numbered — like "Song of Moses" — must match a book name
-  // exactly, or not at all.
-  if (!hadSpaces || /^\d/.test(bookLower)) {
+  // Abbreviation fallback: the typed text must be a prefix of a known key
+  // (e.g. "Genes" → "genesis", "1 chron" → "1chronicles"), and at least three
+  // characters so two-letter ordinary words ("Is", "So", "Jo") never match.
+  // The opposite direction — key is a prefix of the typed text — would link
+  // ordinary words like "Isaac" / "Judah" / "Jerusalem" to Isaiah / Jude /
+  // Jeremiah. Multi-word phrases that aren't numbered — like "Song of Moses"
+  // — must match a book name exactly, or not at all.
+  if (bookLower.length >= 3 && (!hadSpaces || /^\d/.test(bookLower))) {
     for (const [key, mappedId] of BOOK_ID_MAP) {
-      if (bookLower.startsWith(key)) {
+      if (key.startsWith(bookLower)) {
         return mappedId;
       }
     }
@@ -1080,6 +1153,21 @@ export function createBibleDataManager(
     );
   };
 
+  const getCachedTranslationBookChapter = (
+    translationId: string,
+    book: string,
+    chapter: number | string
+  ): TranslationBookChapter | null => {
+    return (
+      api.getCachedTranslationBookChapter(
+        translationId,
+        book,
+        chapter,
+        getEndpointForTranslation(translationId)
+      ) ?? null
+    );
+  };
+
   const getNextChapter = async (
     chapter: TranslationBookChapter,
     options?: ApiRequestOptions
@@ -1115,6 +1203,23 @@ export function createBibleDataManager(
     // resolves to null locally.
     const endpoint = getEndpointForTranslation(chapter.translation.id);
     return await api.getPreviousChapter(chapter, endpoint, options);
+  };
+
+  const getAudioTimings = async (
+    translationId: string,
+    link: string,
+    options?: ApiRequestOptions
+  ): Promise<AudioTimings> => {
+    // A chapter read from a download hands out offline links here instead of
+    // real API links (see `OfflineTranslationsManager`), since there's no
+    // per-chapter file to fetch — resolve those locally before ever touching
+    // the network.
+    const offlineTimings = await offline.getAudioTimings(link);
+    if (offlineTimings) {
+      return offlineTimings;
+    }
+    const endpoint = getEndpointForTranslation(translationId);
+    return await api.getAudioTimings(link, endpoint, options);
   };
 
   const buildTranslationId = (translationId: string) => {
@@ -1204,8 +1309,10 @@ export function createBibleDataManager(
     getTranslationBooks,
     getCachedTranslationBooks,
     getTranslationBookChapter,
+    getCachedTranslationBookChapter,
     getNextChapter,
     getPreviousChapter,
+    getAudioTimings,
     getTranslationEndpointInfo,
     buildTranslationId,
     hydrateCachedCatalog,

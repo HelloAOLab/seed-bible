@@ -153,8 +153,10 @@ export default defineConfig(({ isSsrBuild }) => ({
             registerType: "autoUpdate",
             // A hand-written worker (`standalone/sw.ts`) rather than a
             // generated one: the offline behaviour this deployment needs —
-            // network-first HTML keyed so every URL shares one cached copy,
-            // and asset caching scoped to this build's own chunks — can't be
+            // StaleWhileRevalidate HTML keyed to a single shared shell entry
+            // (so a controlled navigation loads instantly with no network
+            // round-trip, refreshed in the background for next time), and
+            // asset caching scoped to this build's own chunks — can't be
             // expressed in `generateSW`'s declarative config.
             strategies: "injectManifest",
             srcDir: "standalone",

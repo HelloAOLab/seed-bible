@@ -333,6 +333,7 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     settings.setThemeId("dark");
     settings.setCustomTheme({ primaryColor: "#000000" });
     settings.setCustomHighlights({ yellow: { color: "#ffff00" } });
+    settings.setDiscoverContentPanelInline(false);
 
     settings.resetToDefaults();
 
@@ -342,6 +343,34 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.themeId).toBe("light");
     expect(settings.settings.value.customTheme).toEqual({});
     expect(settings.settings.value.customHighlights).toEqual({});
+    expect(settings.settings.value.discoverContentPanelInline).toBe(true);
+  });
+
+  it("setDiscoverContentPanelInline persists to login.localConfig when anonymous and defaults to true", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    expect(settings.settings.value.discoverContentPanelInline).toBe(true);
+
+    settings.setDiscoverContentPanelInline(false);
+
+    expect(settings.settings.value.discoverContentPanelInline).toBe(false);
+    expect(login.localConfig.value.discoverContentPanelInline).toBe(false);
+  });
+
+  it("setDiscoverContentPanelInline persists to the user's profile when logged in", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: {},
+    } as unknown as UserProfile);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setDiscoverContentPanelInline(false);
+
+    expect(settings.settings.value.discoverContentPanelInline).toBe(false);
+    expect(
+      (login.profile.value as any)?.config?.discoverContentPanelInline
+    ).toBe(false);
   });
 });
 
@@ -488,5 +517,55 @@ describe("anonymous settings survive a simulated page refresh", () => {
     const settings2 = createSettings(os, login2, nav);
 
     expect(settings2.settings.value.bookOrientation).toBe("tanakh");
+  });
+});
+
+describe("custom highlight colors", () => {
+  it("fills 3 slots then replaces the 1st, then the 2nd", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    settings.addCustomHighlightColor("#111111");
+    settings.addCustomHighlightColor("#222222");
+    settings.addCustomHighlightColor("#333333");
+    expect(settings.settings.value.customHighlightColors).toEqual([
+      "#111111",
+      "#222222",
+      "#333333",
+    ]);
+
+    settings.addCustomHighlightColor("#444444");
+    expect(settings.settings.value.customHighlightColors).toEqual([
+      "#444444",
+      "#222222",
+      "#333333",
+    ]);
+
+    settings.addCustomHighlightColor("#555555");
+    expect(settings.settings.value.customHighlightColors).toEqual([
+      "#444444",
+      "#555555",
+      "#333333",
+    ]);
+  });
+
+  it("ignores a color that is already in the selector", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    settings.addCustomHighlightColor("#111111");
+    settings.addCustomHighlightColor("#222222");
+    settings.addCustomHighlightColor("#111111");
+
+    expect(settings.settings.value.customHighlightColors).toEqual([
+      "#111111",
+      "#222222",
+    ]);
   });
 });

@@ -28,6 +28,7 @@ type ReaderFixture = {
   decorations: Signal<VerseDecoration[]>;
   selectedVerses: BibleReadingState["selectedVerses"];
   selectedFootnote: Signal<SelectedFootnote | null>;
+  discoveredCrossReferences: Signal<unknown[]>;
   selectVerse: Mock;
   selectFootnote: Mock;
   setOpen: Mock;
@@ -79,10 +80,13 @@ function createFixture(): ReaderFixture {
     },
     thisChapterLink: "/api/BSB/GEN/1.json",
     thisChapterAudioLinks: {},
+    thisChapterAudioTimings: {},
     nextChapterApiLink: "/api/BSB/GEN/2.json",
     nextChapterAudioLinks: {},
+    nextChapterAudioTimings: {},
     previousChapterApiLink: null,
     previousChapterAudioLinks: null,
+    previousChapterAudioTimings: null,
     numberOfVerses: 2,
     chapter: {
       number: 1,
@@ -105,6 +109,7 @@ function createFixture(): ReaderFixture {
   });
   const decorations = signal<VerseDecoration[]>([]);
   const selectedFootnote = signal<SelectedFootnote | null>(null);
+  const discoveredCrossReferences = signal<unknown[]>([]);
   const selectVerse = vi.fn();
   const selectFootnote = vi.fn();
   const setOpen = vi.fn(async () => undefined);
@@ -148,17 +153,21 @@ function createFixture(): ReaderFixture {
     loadNextChapter: vi.fn(async () => undefined),
     hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
     hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
+    nextChapterPosition: computed(() => null),
+    previousChapterPosition: computed(() => null),
     getAdjacentChapter: vi.fn(async () => null),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     defaultTranslation: { id: "BSB", language: "en" },
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialLoadSettled: computed(() => true),
     initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(() => chapterData.value === null),
     discoveredContent: signal([]),
-    discoveredCrossReferences: signal([]),
+    discoveredCrossReferences,
     discoveredStudyNotes: signal([]),
+    discoverContentPanelInline: signal(true),
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
     isShared: signal(false),
@@ -177,6 +186,7 @@ function createFixture(): ReaderFixture {
 
   const selectorState = {
     setOpen,
+    selectingTranslation: signal(false),
   } as any as BibleSelectorState;
 
   const slot: TabSlot = {
@@ -193,6 +203,7 @@ function createFixture(): ReaderFixture {
     decorations,
     selectedVerses,
     selectedFootnote,
+    discoveredCrossReferences,
     selectVerse,
     selectFootnote,
     setOpen,
@@ -210,6 +221,8 @@ function createMobileState(): SeedBibleState {
   return {
     app: {
       isMobile: signal(true),
+      effectiveSlots: signal([{ id: "slot-1", tab: null }]),
+      effectivePanes: signal([]),
     },
     selector: {
       selectingTranslation: signal(false),
@@ -227,6 +240,7 @@ function createMobileState(): SeedBibleState {
     login: {
       userId: signal<string | null>(null),
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
+      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
     },
     os: {
       connectionId: "test-connection",
@@ -235,6 +249,8 @@ function createMobileState(): SeedBibleState {
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
+    modals: { openModal: vi.fn(), closeModal: vi.fn() },
+    discover: { scrollToVerse: signal(null) },
     playlists: {
       playing: signal(null),
     },
@@ -243,6 +259,10 @@ function createMobileState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      sync: {
+        pendingCount: signal(0),
+        pendingCountForChapter: vi.fn(() => 0),
+      },
     },
   } as any as SeedBibleState;
 }
@@ -251,6 +271,8 @@ function createDesktopState(): SeedBibleState {
   return {
     app: {
       isMobile: signal(false),
+      effectiveSlots: signal([{ id: "slot-1", tab: null }]),
+      effectivePanes: signal([]),
     },
     selector: {
       selectingTranslation: signal(false),
@@ -264,10 +286,17 @@ function createDesktopState(): SeedBibleState {
       openSettings: vi.fn(),
       openSidebar: vi.fn(),
     },
+    login: {
+      userId: signal<string | null>(null),
+      profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
+      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
+    },
     tools: createBibleToolsManager(testBranding),
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
+    modals: { openModal: vi.fn(), closeModal: vi.fn() },
+    discover: { scrollToVerse: signal(null) },
     playlists: {
       playing: signal(null),
     },
@@ -276,6 +305,10 @@ function createDesktopState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      sync: {
+        pendingCount: signal(0),
+        pendingCountForChapter: vi.fn(() => 0),
+      },
     },
   } as any as SeedBibleState;
 }
@@ -286,21 +319,19 @@ function renderTabSlotReader(
   state: SeedBibleState,
   container: HTMLDivElement
 ) {
+  // Mirrors production (TabsLayout renders `<TabSlotReader tab={slot.tab} />`)
+  // so components that read `currentSlot.tab` (e.g. DiscoverContentPanel via
+  // BibleReader) see the same tab object the test configured.
+  const tab = {
+    id: "tab-1",
+    title: "Tab 1",
+    readingState,
+    sharedSession: null,
+    sharedChat: null,
+  };
+  slot.tab = tab;
   act(() => {
-    render(
-      <TabSlotReader
-        tab={{
-          id: "tab-1",
-          title: "Tab 1",
-          readingState,
-          sharedSession: null,
-          sharedChat: null,
-        }}
-        state={state}
-        slot={slot}
-      />,
-      container
-    );
+    render(<TabSlotReader tab={tab} state={state} slot={slot} />, container);
   });
 }
 
@@ -1322,5 +1353,154 @@ describe("TabSlotReader integration", () => {
     // The finger never moved more than 14px from where it started, so nothing
     // near the stale sample's 163px should ever reach the track.
     expect(offsets.every((offset) => Math.abs(offset) <= 14)).toBe(true);
+  });
+
+  describe("discover content panel placement", () => {
+    const crossReferenceFixture = [
+      {
+        providerId: "p1",
+        results: [
+          {
+            type: "cross-reference",
+            reference: { chapter: 1, bookData: { name: "Genesis" } },
+            crossReference: {
+              chapter: 5,
+              verse: 3,
+              bookData: { commonName: "Exodus", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ];
+
+    it("renders the panel inside the reader's own scroll on desktop", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const panel = container.querySelector(".sb-discover-content-panel");
+      expect(panel).not.toBeNull();
+      expect(panel?.closest(".sb-pane-reader")).not.toBeNull();
+    });
+
+    it("renders the panel inside the mobile swipe panel's own scroll", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createMobileState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const scroller = container.querySelector(
+        ".sb-reader-swipe-panel-current"
+      );
+      const panel = scroller?.querySelector(".sb-discover-content-panel");
+      expect(panel).not.toBeNull();
+    });
+
+    it("renders nothing when there is nothing discovered for the chapter", () => {
+      const { slot, readingState } = createFixture();
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+    });
+
+    it("lets a touch gesture starting inside the panel scroll it instead of swiping the chapter", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createMobileState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const panel = container.querySelector(
+        ".sb-discover-content-panel"
+      ) as HTMLDivElement;
+      const track = container.querySelector(
+        ".sb-reader-swipe-track"
+      ) as HTMLDivElement;
+      expect(panel).not.toBeNull();
+
+      act(() => {
+        dispatchTouch(panel, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(panel, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(panel, "touchend", []);
+      });
+
+      // The track never picks up the gesture, so it's left free for the
+      // panel's own scrolling instead of being dragged toward a neighbouring
+      // chapter.
+      expect(track.style.transform).toBe("");
+      expect(readingState.loadNextChapter).not.toHaveBeenCalled();
+      expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("discover-content-panel quick tool placement", () => {
+    const crossReferenceFixture = [
+      {
+        providerId: "p1",
+        results: [
+          {
+            type: "cross-reference",
+            reference: { chapter: 1, bookData: { name: "Genesis" } },
+            crossReference: {
+              chapter: 5,
+              verse: 3,
+              bookData: { commonName: "Exodus", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ];
+
+    it("keeps the panel beside the scripture text by default (tool on)", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const content = container.querySelector(".sb-bible-reader-content");
+      expect(content).not.toBeNull();
+      expect(
+        content?.classList.contains("sb-bible-reader-content--discover-below")
+      ).toBe(false);
+      expect(
+        container.querySelector(".sb-discover-content-panel")
+      ).not.toBeNull();
+    });
+
+    it("forces the panel below the scripture text, after the license notice, when the tool is off", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      (readingState.translation.value as any).licenseNotice =
+        "Used by permission.";
+      readingState.discoverContentPanelInline.value = false;
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const content = container.querySelector(".sb-bible-reader-content");
+      expect(
+        content?.classList.contains("sb-bible-reader-content--discover-below")
+      ).toBe(true);
+
+      // The panel still renders — the tool no longer hides it, only moves it.
+      const panel = container.querySelector(".sb-discover-content-panel");
+      expect(panel).not.toBeNull();
+
+      // Placed after the license notice in document order.
+      const license = container.querySelector(".sb-translation-license-notice");
+      expect(license).not.toBeNull();
+      expect(
+        !!(
+          license!.compareDocumentPosition(panel!) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+        )
+      ).toBe(true);
+    });
   });
 });

@@ -8,6 +8,7 @@ import {
   createReadingHistoryManager,
   getReadingHistoryEvents,
   getReadingHistorySummary,
+  saveReadingHistorySpan,
   filter,
   flat,
   type ReadingEvent,
@@ -665,6 +666,228 @@ describe("ReadingHistoryManager", () => {
 
       expect(summary.startTime).toBe(1500);
       expect(summary.endTime).toBe(2500);
+    });
+  });
+
+  describe("saveReadingHistorySpan", () => {
+    let os: CasualOSManager;
+    let storedEvents: ReturnType<typeof makeStoredEvent>[];
+    let eventsArray: any;
+    let createdEvent: { set: Mock };
+
+    /** A stand-in for one event map inside the shared document. */
+    function makeStoredEvent(fields: Record<string, unknown>) {
+      const data = { ...fields };
+      return {
+        data,
+        get: (key: string) => data[key],
+        set: vi.fn((key: string, value: unknown) => {
+          data[key] = value;
+        }),
+      };
+    }
+
+    beforeEach(() => {
+      clearReadingHistoryDocs();
+      os = CasualOSManager();
+      storedEvents = [];
+      createdEvent = { set: vi.fn() };
+      eventsArray = {
+        get length() {
+          return storedEvents.length;
+        },
+        type: {
+          get: (i: number) => storedEvents[i],
+        },
+        push: vi.fn(),
+      };
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue({
+        getArray: vi.fn().mockReturnValue(eventsArray),
+        createMap: vi.fn().mockReturnValue(createdEvent),
+      } as unknown as SharedDocument);
+    });
+
+    afterEach(() => {
+      vi.clearAllMocks();
+      clearReadingHistoryDocs();
+    });
+
+    it("records the whole span as a new event when there is nothing to join", async () => {
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "psalms",
+        23,
+        1_700_000_000,
+        1_700_000_360
+      );
+
+      expect(eventsArray.push).toHaveBeenCalledTimes(1);
+      expect(createdEvent.set).toHaveBeenCalledWith("start", 1_700_000_000);
+      expect(createdEvent.set).toHaveBeenCalledWith("end", 1_700_000_360);
+    });
+
+    it("extends an event the span continues, even one older than the join threshold", async () => {
+      // A listen that ran for 45 minutes: the event was opened when the chapter
+      // was first shown, so by the time the listening is written it sits well
+      // outside a window measured from the clock rather than from the span.
+      const start = 1_700_000_000;
+      const existing = makeStoredEvent({
+        userId: "user-1",
+        bookId: "psalms",
+        chapter: 23,
+        start,
+        end: start + 5,
+      });
+      storedEvents.push(existing);
+
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "psalms",
+        23,
+        start,
+        start + 45 * 60
+      );
+
+      expect(eventsArray.push).not.toHaveBeenCalled();
+      expect(existing.set).toHaveBeenCalledWith("end", start + 45 * 60);
+      expect(existing.data.end).toBe(start + 45 * 60);
+    });
+
+    it("opens a separate event for a span that starts long after the last one ended", async () => {
+      const start = 1_700_000_000;
+      storedEvents.push(
+        makeStoredEvent({
+          userId: "user-1",
+          bookId: "psalms",
+          chapter: 23,
+          start,
+          end: start + 60,
+        })
+      );
+
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "psalms",
+        23,
+        start + 5 * 60 * 60,
+        start + 5 * 60 * 60 + 120
+      );
+
+      expect(eventsArray.push).toHaveBeenCalledTimes(1);
+      expect(createdEvent.set).toHaveBeenCalledWith(
+        "start",
+        start + 5 * 60 * 60
+      );
+    });
+
+    it("never moves an event's end backwards", async () => {
+      const start = 1_700_000_000;
+      const existing = makeStoredEvent({
+        userId: "user-1",
+        bookId: "psalms",
+        chapter: 23,
+        start,
+        end: start + 600,
+      });
+      storedEvents.push(existing);
+
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "psalms",
+        23,
+        start,
+        start + 120
+      );
+
+      expect(existing.data.end).toBe(start + 600);
+      expect(eventsArray.push).not.toHaveBeenCalled();
+    });
+
+    it("leaves another chapter's event alone", async () => {
+      const start = 1_700_000_000;
+      const other = makeStoredEvent({
+        userId: "user-1",
+        bookId: "psalms",
+        chapter: 22,
+        start,
+        end: start + 5,
+      });
+      storedEvents.push(other);
+
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "psalms",
+        23,
+        start,
+        start + 300
+      );
+
+      expect(other.set).not.toHaveBeenCalled();
+      expect(eventsArray.push).toHaveBeenCalledTimes(1);
+    });
+
+    it("saveReadingSpan does nothing when the user is signed out", async () => {
+      const manager = createReadingHistoryManager(os, {
+        userId: { value: null },
+      } as any);
+
+      manager.saveReadingSpan("psalms", 23, 1_700_000_000, 1_700_000_360);
+      await Promise.resolve();
+
+      expect(os.getSharedDocument).not.toHaveBeenCalled();
+    });
+
+    it("saveReadingSpan starts a new event rather than swallowing the gap before it", async () => {
+      // What a locked phone leaves behind: a sitting that stopped being watched
+      // twenty minutes ago, and measured time that only starts now.
+      const start = 1_700_000_000;
+      const abandoned = makeStoredEvent({
+        userId: "user-1",
+        bookId: "psalms",
+        chapter: 23,
+        start,
+        end: start + 60,
+      });
+      storedEvents.push(abandoned);
+
+      const manager = createReadingHistoryManager(os, {
+        userId: { value: "user-1" },
+      } as any);
+
+      manager.saveReadingSpan(
+        "psalms",
+        23,
+        start + 20 * 60,
+        start + 20 * 60 + 5
+      );
+      await vi.waitFor(() => expect(eventsArray.push).toHaveBeenCalled());
+
+      expect(abandoned.data.end).toBe(start + 60);
+      expect(createdEvent.set).toHaveBeenCalledWith("start", start + 20 * 60);
+    });
+
+    it("saveReadingSpan writes the span for the signed-in user", async () => {
+      const manager = createReadingHistoryManager(os, {
+        userId: { value: "user-1" },
+      } as any);
+
+      manager.saveReadingSpan("psalms", 23, 1_700_000_000, 1_700_000_360);
+      await vi.waitFor(() => expect(eventsArray.push).toHaveBeenCalled());
+
+      expect(createdEvent.set).toHaveBeenCalledWith("bookId", "psalms");
+      expect(createdEvent.set).toHaveBeenCalledWith("chapter", 23);
+      expect(createdEvent.set).toHaveBeenCalledWith("start", 1_700_000_000);
+      expect(createdEvent.set).toHaveBeenCalledWith("end", 1_700_000_360);
     });
   });
 });

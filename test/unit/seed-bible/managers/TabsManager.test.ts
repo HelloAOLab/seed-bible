@@ -550,9 +550,8 @@ describe("createTabs", () => {
   });
 
   // The client-side counterpart of `legacyReadingUrlRedirect`. It has to
-  // correct the same set the server does, not just typos: `getBookId` also
-  // accepts aliases, other casings, and — through its `startsWith` fallback —
-  // anything merely starting with a book name.
+  // correct the same set the server does: aliases, other casings, and close
+  // typos via fuzzy match — not junk prefixes that no longer resolve.
   // The fixture translation only carries GEN/EXO/MAT, so every case here
   // corrects to one of those — otherwise the reader can't follow the
   // correction and the URL is rewritten back to where it actually is.
@@ -560,8 +559,6 @@ describe("createTabs", () => {
     // Only resolves through the fuzzy fallback: "senesis" shares none of
     // getBookId's "gen"/"genesis" prefixes (see ReadingUrlPath.test.ts).
     ["/AAB/senesis/1", "/en/AAB/genesis/1", "GEN"],
-    ["/AAB/genocide/1", "/en/AAB/genesis/1", "GEN"],
-    ["/AAB/matthew-effect/1", "/en/AAB/matthew/1", "MAT"],
     ["/AAB/gen/1", "/en/AAB/genesis/1", "GEN"],
     ["/AAB/Genesis/1", "/en/AAB/genesis/1", "GEN"],
   ])(
@@ -581,7 +578,6 @@ describe("createTabs", () => {
 
   it.each([
     ["/AAB/senesis/1", "/en/AAB/genesis/1", "GEN"],
-    ["/AAB/matthew-effect/1", "/en/AAB/matthew/1", "MAT"],
     ["/AAB/Genesis/1", "/en/AAB/genesis/1", "GEN"],
   ])(
     "self-heals %s to %s on external navigation",
@@ -609,20 +605,20 @@ describe("createTabs", () => {
     const { tabs: manager, navigation } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
-    navigation.push("/AAB/matthew-effect/1");
+    navigation.push("/AAB/senesis/1");
     await waitFor(
-      () => new URL(window.location.href).pathname === "/en/AAB/matthew/1"
+      () => new URL(window.location.href).pathname === "/en/AAB/genesis/1"
     );
 
     // Navigate to the corrected URL itself: it must be left exactly as-is.
     const pushSpy = vi.spyOn(window.history, "pushState");
     const replaceSpy = vi.spyOn(window.history, "replaceState");
-    navigation.push("/en/AAB/matthew/1");
+    navigation.push("/en/AAB/genesis/1");
     await waitFor(
-      () => manager.tabs.value[0]!.readingState.bookId.value === "MAT"
+      () => manager.tabs.value[0]!.readingState.bookId.value === "GEN"
     );
 
-    expect(new URL(window.location.href).pathname).toBe("/en/AAB/matthew/1");
+    expect(new URL(window.location.href).pathname).toBe("/en/AAB/genesis/1");
     // The only history write should be the `push` above — no correcting
     // `replace` on top of it.
     expect(pushSpy).toHaveBeenCalledTimes(1);
@@ -1518,5 +1514,88 @@ describe("createTabs", () => {
     } finally {
       createBibleReadingStateSpy.mockRestore();
     }
+  });
+
+  // Regression: a static page's URL (e.g. "/en/about") has no reading
+  // position of its own, but a reading tab is still created underneath it
+  // with default content. Without an explicit guard in
+  // `commitSelectedTabToUrl`, the effect that runs on mount would
+  // unconditionally rewrite the address bar to that default reading path,
+  // clobbering the static page's own URL the instant the app hydrates.
+  it("does not overwrite a static page's URL with the reading position on mount", async () => {
+    window.history.replaceState(null, "", "/en/about");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+  });
+
+  // Regression: the guard above must not block a genuine tab-focus change.
+  // Selecting a different (pre-existing) tab while viewing a static page is
+  // an explicit "go look at this tab" action — like a sidebar tab click —
+  // and should leave the static page for the position now being shown,
+  // rather than leaving the URL stuck on "/en/about" underneath it.
+  it("leaves a static page's URL when the user selects a different tab", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/en/about");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    manager.hydrateStoredTabs();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    // Mount alone must still respect the guard.
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+
+    manager.selectTab("tab-2");
+
+    await waitFor(() => new URL(window.location.href).pathname !== "/en/about");
+    expect(new URL(window.location.href).pathname).toBe("/en/NIV/matthew/1");
+  });
+
+  // `leaveStaticPage()` is the public escape hatch for callers outside the
+  // tab-focus effect itself (e.g. the About page's pane closing) that need
+  // to force the same "leave a static page" commit on demand, rather than
+  // waiting for the selected tab to actually change.
+  it("leaveStaticPage() writes the selected tab's position even with no tab-selection change", async () => {
+    window.history.replaceState(null, "", "/en/about");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+
+    manager.leaveStaticPage();
+
+    expect(new URL(window.location.href).pathname).toBe("/en/AAB/genesis/1");
   });
 });
