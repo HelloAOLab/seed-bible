@@ -6,6 +6,8 @@ import {
 } from "@preact/signals";
 import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
 import type { HighlightsManager, StoredHighlight } from "./HighlightsManager";
+import type { BibleDataManager } from "./BibleDataManager";
+import { extractContentText } from "./ChapterText";
 
 /**
  * Which kind of content the screen is showing. "all" is the default and shows
@@ -64,6 +66,27 @@ export interface YourContentManager {
    * held in record order and carry no timestamp to restore a position from.
    */
   restoreHighlight: (highlight: StoredHighlight) => void;
+  /**
+   * The wording of each highlighted verse that has been read back, keyed the
+   * same way {@link removeHighlight} identifies a highlight. Empty until
+   * {@link readHighlightVerseText} has run; a highlight whose chapter could
+   * not be read simply has no entry.
+   */
+  highlightVerseText: ReadonlySignal<ReadonlyMap<string, string>>;
+  /**
+   * Reads back the wording of every highlighted verse, so search can match
+   * the words a highlight is *of* and not only its reference.
+   *
+   * Nothing stores that wording, so it comes from the chapters themselves —
+   * one read per distinct chapter, deduplicated, and already-fetched chapters
+   * are taken from cache without a request. Results land as each batch
+   * arrives rather than all at the end, so a search sharpens as it goes.
+   * Idempotent: a second call while the first is running joins it, and a
+   * completed run is not repeated.
+   */
+  readHighlightVerseText: () => Promise<void>;
+  /** True while {@link readHighlightVerseText} is still working. */
+  isReadingHighlightVerseText: ReadonlySignal<boolean>;
   /** Clears the search box and returns the chips to "all". */
   resetFilters: () => void;
 }
@@ -71,7 +94,22 @@ export interface YourContentManager {
 export interface CreateYourContentManagerOptions {
   annotations: AnnotationsManager;
   highlights: HighlightsManager;
+  /**
+   * Reads the chapters that highlighted verses live in. Only the two chapter
+   * accessors are used, so tests can pass a narrower object.
+   */
+  bibleData: Pick<
+    BibleDataManager,
+    "getTranslationBookChapter" | "getCachedTranslationBookChapter"
+  >;
 }
+
+/**
+ * How many chapters to read at once. Enough to stay quick for someone with
+ * highlights across a few dozen chapters, small enough that a heavy
+ * highlighter does not open a hundred parallel requests at once.
+ */
+const CHAPTER_READ_BATCH = 6;
 
 /**
  * Backs the "Your content" screen (issue #1553): the user's annotations and
@@ -85,8 +123,11 @@ export interface CreateYourContentManagerOptions {
 export function createYourContentManager(
   options: CreateYourContentManagerOptions
 ): YourContentManager {
-  const { annotations: annotationsManager, highlights: highlightsManager } =
-    options;
+  const {
+    annotations: annotationsManager,
+    highlights: highlightsManager,
+    bibleData,
+  } = options;
 
   const query = signal("");
   const filter = signal<ContentFilter>("all");
@@ -144,6 +185,120 @@ export function createYourContentManager(
     ]);
   };
 
+  const verseText = signal<ReadonlyMap<string, string>>(new Map());
+  const isReadingVerseText = signal(false);
+  let verseTextRun: Promise<void> | null = null;
+  let verseTextDone = false;
+
+  /**
+   * The verse numbers a highlight covers. A range is stored as its ends, and
+   * every verse between them is part of the highlight, so all of them count
+   * as its words.
+   */
+  const highlightVerseNumbers = (stored: StoredHighlight): number[] => {
+    const { verse } = stored.highlight;
+    if (typeof verse === "number") {
+      return [verse];
+    }
+    const [start, end] = verse;
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  };
+
+  const readChapterVerseText = async (
+    group: readonly StoredHighlight[]
+  ): Promise<Map<string, string>> => {
+    const first = group[0]!;
+    const chapter =
+      bibleData.getCachedTranslationBookChapter(
+        first.translationId,
+        first.bookId,
+        first.chapterNumber
+      ) ??
+      (await bibleData.getTranslationBookChapter(
+        first.translationId,
+        first.bookId,
+        first.chapterNumber
+      ));
+
+    const byVerse = new Map<number, string>();
+    for (const item of chapter.chapter.content) {
+      if (item.type === "verse" && typeof item.number === "number") {
+        byVerse.set(item.number, extractContentText(item.content));
+      }
+    }
+
+    const texts = new Map<string, string>();
+    for (const stored of group) {
+      const text = highlightVerseNumbers(stored)
+        .map((number) => byVerse.get(number) ?? "")
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      if (text) {
+        texts.set(highlightKey(stored), text);
+      }
+    }
+    return texts;
+  };
+
+  const runVerseTextRead = async (): Promise<void> => {
+    // One entry per distinct chapter: several highlights in one chapter cost
+    // one read between them.
+    const groups = new Map<string, StoredHighlight[]>();
+    for (const stored of highlights.value) {
+      const key = `${stored.translationId}/${stored.bookId}/${stored.chapterNumber}`;
+      const group = groups.get(key);
+      if (group) {
+        group.push(stored);
+      } else {
+        groups.set(key, [stored]);
+      }
+    }
+
+    const pending = [...groups.values()];
+    for (let i = 0; i < pending.length; i += CHAPTER_READ_BATCH) {
+      const batch = pending.slice(i, i + CHAPTER_READ_BATCH);
+      const results = await Promise.all(
+        batch.map((group) =>
+          readChapterVerseText(group).catch((error) => {
+            // A chapter that will not load leaves its highlights searchable
+            // by reference alone, which is what they were before this.
+            console.error("Could not read a highlighted chapter:", error);
+            return new Map<string, string>();
+          })
+        )
+      );
+      const merged = new Map(verseText.value);
+      for (const result of results) {
+        for (const [key, text] of result) {
+          merged.set(key, text);
+        }
+      }
+      // Published per batch, so a long read sharpens the search as it goes
+      // instead of doing nothing until the very end.
+      verseText.value = merged;
+    }
+  };
+
+  const readHighlightVerseText = (): Promise<void> => {
+    if (verseTextDone) {
+      return Promise.resolve();
+    }
+    if (verseTextRun) {
+      return verseTextRun;
+    }
+    isReadingVerseText.value = true;
+    verseTextRun = runVerseTextRead()
+      .then(() => {
+        verseTextDone = true;
+      })
+      .finally(() => {
+        verseTextRun = null;
+        isReadingVerseText.value = false;
+      });
+    return verseTextRun;
+  };
+
   const removeHighlight = (highlight: StoredHighlight) => {
     const key = highlightKey(highlight);
     highlights.value = highlights.value.filter(
@@ -175,6 +330,9 @@ export function createYourContentManager(
     restoreAnnotation,
     removeHighlight,
     restoreHighlight,
+    highlightVerseText: computed(() => verseText.value),
+    readHighlightVerseText,
+    isReadingHighlightVerseText: computed(() => isReadingVerseText.value),
     resetFilters,
   };
 }
@@ -185,7 +343,7 @@ export function createYourContentManager(
  * chapter and verse target together. A range and a single verse serialize
  * differently, so a verse and a range starting at it are not confused.
  */
-function highlightKey(stored: StoredHighlight): string {
+export function highlightKey(stored: StoredHighlight): string {
   const { verse } = stored.highlight;
   const target = Array.isArray(verse) ? `${verse[0]}-${verse[1]}` : `${verse}`;
   return [

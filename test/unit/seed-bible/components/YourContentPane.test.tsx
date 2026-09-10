@@ -3,6 +3,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { YourContentPane } from "@packages/seed-bible/seed-bible/components/YourContentPane/YourContentPane";
+import { highlightKey } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { StoredHighlight } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
@@ -70,6 +71,9 @@ interface StateOptions {
   bookmarks?: Bookmark[];
   playlists?: Playlist[];
   unhighlightError?: Error;
+  /** Verse wording per highlight key, as the manager would have read it back. */
+  highlightVerseText?: Record<string, string>;
+  isReadingHighlightVerseText?: boolean;
   status?: ContentLoadStatus;
   /** Makes the server delete fail, so the optimistic removal has to roll back. */
   deleteError?: Error;
@@ -81,6 +85,13 @@ function createState(options: StateOptions = {}) {
   const restoreAnnotation = vi.fn(() => {});
   const removeBookmark = vi.fn(async (_id: string) => {});
   const removeHighlight = vi.fn((_highlight: StoredHighlight) => {});
+  const highlightVerseText = signal<ReadonlyMap<string, string>>(
+    new Map(Object.entries(options.highlightVerseText ?? {}))
+  );
+  const isReadingHighlightVerseText = signal(
+    options.isReadingHighlightVerseText ?? false
+  );
+  const readHighlightVerseText = vi.fn(async () => {});
   const restoreHighlight = vi.fn((_highlight: StoredHighlight) => {});
   const unhighlightVerse = vi.fn(async () => {
     if (options.unhighlightError) {
@@ -108,6 +119,9 @@ function createState(options: StateOptions = {}) {
       resetFilters: vi.fn(() => {}),
       removeHighlight,
       restoreHighlight,
+      highlightVerseText,
+      isReadingHighlightVerseText,
+      readHighlightVerseText,
     },
     highlights: { unhighlightVerse },
     bookmarks: {
@@ -144,6 +158,8 @@ function createState(options: StateOptions = {}) {
   return {
     state,
     removeBookmark,
+    readHighlightVerseText,
+    highlightVerseText,
     removeHighlight,
     restoreHighlight,
     unhighlightVerse,
@@ -414,6 +430,61 @@ describe("YourContentPane", () => {
       search(state, query, "Genesis 1");
 
       expect(sectionTitles()).toEqual(["Annotations"]);
+    });
+
+    it("finds a highlight by the words of the verse itself", () => {
+      // The row quotes the verse, so the words on screen have to be typable.
+      const stored = highlight("JHN", "green", 3, 16);
+      const { state, query } = createState({
+        highlights: [stored],
+        highlightVerseText: {
+          [highlightKey(stored)]: "For God so loved the world",
+        },
+      });
+      search(state, query, "so loved");
+
+      expect(highlightRows()).toBe(1);
+    });
+
+    it("asks for the verse text on the first search, not on open", () => {
+      const { state, query, readHighlightVerseText } = createState({
+        highlights: [highlight("JHN", "green", 3, 16)],
+      });
+      renderPane(state);
+
+      expect(readHighlightVerseText).not.toHaveBeenCalled();
+
+      act(() => {
+        query.value = "loved";
+      });
+
+      expect(readHighlightVerseText).toHaveBeenCalled();
+    });
+
+    it("does not claim nothing matches while the verses are still being read", () => {
+      // Otherwise a search shows "Nothing matches that search." and then
+      // sprouts results a moment later.
+      const { state, query } = createState({
+        highlights: [highlight("JHN", "green", 3, 16)],
+        isReadingHighlightVerseText: true,
+      });
+      search(state, query, "so loved");
+
+      expect(
+        container.querySelector(".sb-content-status")?.textContent
+      ).not.toContain("Nothing matches");
+    });
+
+    it("says nothing matches once the read has finished", () => {
+      const { state, query } = createState({
+        highlights: [highlight("JHN", "green", 3, 16)],
+        isReadingHighlightVerseText: false,
+      });
+      search(state, query, "nothing like this");
+
+      expect(
+        container.querySelector(".sb-content-status")?.textContent
+      ).toContain("Nothing matches");
     });
 
     it("matches as a substring, so Psalm 2 also reaches Psalm 23", () => {

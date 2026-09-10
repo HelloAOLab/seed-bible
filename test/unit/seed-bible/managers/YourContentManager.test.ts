@@ -10,6 +10,7 @@ import {
   annotationPlainText,
   createYourContentManager,
   sortAnnotationsByRecency,
+  type CreateYourContentManagerOptions,
 } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
 
 function annotation(
@@ -49,6 +50,11 @@ function createManager(
     annotations?: Annotation[];
     highlights?: StoredHighlight[];
     annotationsError?: Error;
+    /** Verse text by "book/chapter/verse", for planting a searchable word. */
+    verseWords?: Record<string, string>;
+    /** Answer every chapter from the synchronous cache instead of a fetch. */
+    cachedChapters?: boolean;
+    chapterError?: Error;
   } = {}
 ) {
   const listAllAnnotations = vi.fn(async () => {
@@ -59,12 +65,50 @@ function createManager(
   });
   const listAllHighlights = vi.fn(async () => options.highlights ?? []);
 
+  // A stand-in chapter reader. Every verse reads "verse N of BOOK CHAPTER"
+  // unless `verseWords` plants something searchable in one of them.
+  const chapterFor = (book: string, chapter: number) => ({
+    chapter: {
+      content: [1, 2, 3, 4].map((number) => ({
+        type: "verse" as const,
+        number,
+        content: [
+          options.verseWords?.[`${book}/${chapter}/${number}`] ??
+            `verse ${number} of ${book} ${chapter}`,
+        ],
+      })),
+    },
+  });
+
+  const getTranslationBookChapter = vi.fn(
+    async (_translationId: string, book: string, chapter: number | string) => {
+      if (options.chapterError) {
+        throw options.chapterError;
+      }
+      return chapterFor(book, Number(chapter));
+    }
+  );
+  const getCachedTranslationBookChapter = vi.fn(
+    (_translationId: string, book: string, chapter: number | string) =>
+      options.cachedChapters ? chapterFor(book, Number(chapter)) : null
+  );
+
   const manager = createYourContentManager({
+    bibleData: {
+      getTranslationBookChapter,
+      getCachedTranslationBookChapter,
+    } as unknown as CreateYourContentManagerOptions["bibleData"],
     annotations: { listAllAnnotations } as unknown as AnnotationsManager,
     highlights: { listAllHighlights } as unknown as HighlightsManager,
   });
 
-  return { manager, listAllAnnotations, listAllHighlights };
+  return {
+    manager,
+    listAllAnnotations,
+    listAllHighlights,
+    getTranslationBookChapter,
+    getCachedTranslationBookChapter,
+  };
 }
 
 describe("createYourContentManager", () => {
@@ -263,6 +307,117 @@ describe("createYourContentManager", () => {
     manager.restoreHighlight(manager.highlights.value[0]!);
 
     expect(manager.highlights.value.map((h) => h.bookId)).toEqual(["GEN"]);
+  });
+
+  // Nothing stores the wording of a highlighted verse, so search has to read
+  // it back out of the chapter.
+  describe("reading highlighted verse text", () => {
+    it("reads each highlight's verse so search can match its words", async () => {
+      const { manager } = createManager({
+        highlights: [highlight("JHN", 3)],
+        verseWords: { "JHN/1/3": "For God so loved the world" },
+      });
+
+      await manager.load();
+      await manager.readHighlightVerseText();
+
+      expect([...manager.highlightVerseText.value.values()]).toEqual([
+        "For God so loved the world",
+      ]);
+    });
+
+    it("joins every verse of a range, not just the one the row quotes", async () => {
+      const { manager } = createManager({
+        highlights: [highlight("JHN", [2, 3])],
+        verseWords: {
+          "JHN/1/2": "the second verse",
+          "JHN/1/3": "the third verse",
+        },
+      });
+
+      await manager.load();
+      await manager.readHighlightVerseText();
+
+      expect([...manager.highlightVerseText.value.values()]).toEqual([
+        "the second verse the third verse",
+      ]);
+    });
+
+    it("reads a chapter once however many highlights are in it", async () => {
+      const { manager, getTranslationBookChapter } = createManager({
+        highlights: [highlight("JHN", 1), highlight("JHN", 2)],
+      });
+
+      await manager.load();
+      await manager.readHighlightVerseText();
+
+      expect(getTranslationBookChapter).toHaveBeenCalledTimes(1);
+      expect(manager.highlightVerseText.value.size).toBe(2);
+    });
+
+    it("takes an already-fetched chapter from cache without a request", async () => {
+      const {
+        manager,
+        getTranslationBookChapter,
+        getCachedTranslationBookChapter,
+      } = createManager({
+        highlights: [highlight("JHN", 1)],
+        cachedChapters: true,
+      });
+
+      await manager.load();
+      await manager.readHighlightVerseText();
+
+      expect(getCachedTranslationBookChapter).toHaveBeenCalled();
+      expect(getTranslationBookChapter).not.toHaveBeenCalled();
+      expect(manager.highlightVerseText.value.size).toBe(1);
+    });
+
+    it("does not read twice, and shares a run in progress", async () => {
+      const { manager, getTranslationBookChapter } = createManager({
+        highlights: [highlight("JHN", 1)],
+      });
+
+      await manager.load();
+      await Promise.all([
+        manager.readHighlightVerseText(),
+        manager.readHighlightVerseText(),
+      ]);
+      await manager.readHighlightVerseText();
+
+      expect(getTranslationBookChapter).toHaveBeenCalledTimes(1);
+    });
+
+    it("reports while it is working and once it is done", async () => {
+      const { manager } = createManager({ highlights: [highlight("JHN", 1)] });
+      await manager.load();
+
+      expect(manager.isReadingHighlightVerseText.value).toBe(false);
+      const run = manager.readHighlightVerseText();
+      expect(manager.isReadingHighlightVerseText.value).toBe(true);
+
+      await run;
+      expect(manager.isReadingHighlightVerseText.value).toBe(false);
+    });
+
+    it("leaves a highlight searchable by reference when its chapter will not load", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      const { manager } = createManager({
+        highlights: [highlight("JHN", 1)],
+        chapterError: new Error("offline"),
+      });
+
+      await manager.load();
+      await manager.readHighlightVerseText();
+
+      // No entry rather than a rejected promise: the row is still there and
+      // still findable by its reference.
+      expect(manager.highlightVerseText.value.size).toBe(0);
+      expect(manager.isReadingHighlightVerseText.value).toBe(false);
+      expect(consoleError).toHaveBeenCalled();
+    });
   });
 
   it("clears the search box and chips together", () => {

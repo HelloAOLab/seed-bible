@@ -9,6 +9,7 @@ import type { TodayPassageTarget } from "../../managers/TodayManager";
 import {
   CONTENT_FILTERS,
   annotationPlainText,
+  highlightKey,
   type ContentFilter,
 } from "../../managers/YourContentManager";
 import { AnnotationPreview } from "../DiscoverPane/AnnotationsSection";
@@ -430,6 +431,15 @@ export function YourContentPane(props: YourContentScreenProps) {
     void yourContent.load();
   }, []);
 
+  // Highlights carry no words of their own, so searching them means reading
+  // their chapters back. Kicked off on the first search rather than on open:
+  // someone who never types costs nothing, and someone who does pays once.
+  useEffect(() => {
+    if (yourContent.query.value.trim().length > 0) {
+      void yourContent.readHighlightVerseText();
+    }
+  }, [yourContent.query.value.trim().length > 0]);
+
   const filter = yourContent.filter.value;
   const status = yourContent.status.value;
   const rawQuery = yourContent.query.value;
@@ -470,13 +480,18 @@ export function YourContentPane(props: YourContentScreenProps) {
       ...referenceFields(a.bookId, a.chapterNumber, annotationVerses(a))
     )
   );
+  const verseTextByHighlight = yourContent.highlightVerseText.value;
   const visibleHighlights = yourContent.highlights.value.filter((h) =>
     matches(
       ...referenceFields(
         h.bookId,
         h.chapterNumber,
         verseNumbersOf(h.highlight.verse)
-      )
+      ),
+      // The words the highlight is of, once they have been read back. A
+      // range matches on any of its verses, which is what the highlight
+      // covers even though the row quotes only the first.
+      verseTextByHighlight.get(highlightKey(h))
     )
   );
   const visibleBookmarks = bookmarks.bookmarks.value.filter((b) =>
@@ -527,8 +542,12 @@ export function YourContentPane(props: YourContentScreenProps) {
    * instead would leave a chosen-but-empty section as a blank screen, because
    * the sections it isn't showing still had content.
    */
+  const stillSearching =
+    needle.length > 0 && yourContent.isReadingHighlightVerseText.value;
+
   const nothingToShow =
     status === "ready" &&
+    !stillSearching &&
     (filter === "all"
       ? Object.values(sectionCounts).every((count) => count === 0)
       : sectionCounts[filter] === 0);
@@ -603,7 +622,7 @@ export function YourContentPane(props: YourContentScreenProps) {
           ))}
         </div>
 
-        {status === "loading" ? (
+        {status === "loading" || stillSearching ? (
           <p className="sb-content-status">
             {t("loading-your-content", {
               defaultValue: "Gathering your content…",

@@ -109,6 +109,19 @@ export interface BibleDataManager {
     chapter: number | string,
     options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter>;
+  /**
+   * A chapter already fetched this session, read synchronously, or null.
+   *
+   * Only the API's response cache is consulted — the offline store is an
+   * async read, so a downloaded chapter that has not also been requested this
+   * session reads as null here. Callers should treat this as a fast path over
+   * {@link getTranslationBookChapter}, never as proof a chapter is absent.
+   */
+  getCachedTranslationBookChapter: (
+    translationId: string,
+    book: string,
+    chapter: number | string
+  ) => TranslationBookChapter | null;
   getNextChapter: (
     chapter: TranslationBookChapter,
     options?: ApiRequestOptions
@@ -1140,6 +1153,21 @@ export function createBibleDataManager(
     );
   };
 
+  const getCachedTranslationBookChapter = (
+    translationId: string,
+    book: string,
+    chapter: number | string
+  ): TranslationBookChapter | null => {
+    return (
+      api.getCachedTranslationBookChapter(
+        translationId,
+        book,
+        chapter,
+        getEndpointForTranslation(translationId)
+      ) ?? null
+    );
+  };
+
   const getNextChapter = async (
     chapter: TranslationBookChapter,
     options?: ApiRequestOptions
@@ -1281,6 +1309,7 @@ export function createBibleDataManager(
     getTranslationBooks,
     getCachedTranslationBooks,
     getTranslationBookChapter,
+    getCachedTranslationBookChapter,
     getNextChapter,
     getPreviousChapter,
     getAudioTimings,
