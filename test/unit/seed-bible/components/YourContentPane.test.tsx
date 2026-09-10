@@ -64,6 +64,7 @@ interface StateOptions {
   highlights?: StoredHighlight[];
   bookmarks?: Bookmark[];
   playlists?: Playlist[];
+  unhighlightError?: Error;
   status?: ContentLoadStatus;
   /** Makes the server delete fail, so the optimistic removal has to roll back. */
   deleteError?: Error;
@@ -74,6 +75,13 @@ function createState(options: StateOptions = {}) {
   const removeAnnotation = vi.fn(() => {});
   const restoreAnnotation = vi.fn(() => {});
   const removeBookmark = vi.fn(async (_id: string) => {});
+  const removeHighlight = vi.fn((_highlight: StoredHighlight) => {});
+  const restoreHighlight = vi.fn((_highlight: StoredHighlight) => {});
+  const unhighlightVerse = vi.fn(async () => {
+    if (options.unhighlightError) {
+      throw options.unhighlightError;
+    }
+  });
   const deleteAnnotationAndRefresh = vi.fn(async () => {
     if (options.deleteError) {
       throw options.deleteError;
@@ -93,7 +101,10 @@ function createState(options: StateOptions = {}) {
       removeAnnotation,
       restoreAnnotation,
       resetFilters: vi.fn(() => {}),
+      removeHighlight,
+      restoreHighlight,
     },
+    highlights: { unhighlightVerse },
     bookmarks: {
       bookmarks: signal(options.bookmarks ?? []),
       categories: signal([{ name: "My Bookmarks" }]),
@@ -128,6 +139,9 @@ function createState(options: StateOptions = {}) {
   return {
     state,
     removeBookmark,
+    removeHighlight,
+    restoreHighlight,
+    unhighlightVerse,
     load,
     removeAnnotation,
     restoreAnnotation,
@@ -693,6 +707,121 @@ describe("YourContentPane bookmark options", () => {
     // to the pill's own click.
     const onOpenPassage = vi.fn();
     const created = createState({ bookmarks: [bookmark("b1")] });
+    act(() => {
+      render(
+        <YourContentPane
+          state={created.state}
+          onOpenPassage={onOpenPassage}
+          onPlayPlaylist={vi.fn()}
+          onEditPlaylist={vi.fn()}
+          onEditAnnotation={vi.fn()}
+        />,
+        container
+      );
+    });
+    openMenu();
+
+    expect(onOpenPassage).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Clearing a highlight follows the same optimistic pattern as deleting an
+ * annotation on this screen: drop it from the list at once, then put it back
+ * if the server call fails.
+ */
+describe("YourContentPane clearing a highlight", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    document.body.innerHTML = "";
+  });
+
+  const renderWithHighlight = (options: StateOptions = {}) => {
+    const created = createState({ highlights: [highlight("JHN")], ...options });
+    act(() => {
+      render(
+        <YourContentPane
+          state={created.state}
+          onOpenPassage={vi.fn()}
+          onPlayPlaylist={vi.fn()}
+          onEditPlaylist={vi.fn()}
+          onEditAnnotation={vi.fn()}
+        />,
+        container
+      );
+    });
+    return created;
+  };
+
+  const openMenu = () => {
+    const trigger = container.querySelector<HTMLButtonElement>(
+      ".sb-content-highlight-row .sb-content-kebab"
+    );
+    if (!trigger)
+      throw new Error("The highlight's menu button did not render.");
+    act(() => {
+      trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  const clearItem = () => {
+    const item = Array.from(
+      document.body.querySelectorAll<HTMLElement>(".sb-context-menu-item")
+    ).find((candidate) => candidate.textContent?.includes("Clear highlight"));
+    if (!item) throw new Error("Clear highlight was not in the menu.");
+    return item;
+  };
+
+  it("gives every highlight a menu offering Clear highlight", () => {
+    renderWithHighlight();
+    openMenu();
+
+    expect(clearItem()).not.toBeUndefined();
+  });
+
+  it("clears the highlight from the list and on the server", async () => {
+    const { removeHighlight, unhighlightVerse, restoreHighlight } =
+      renderWithHighlight();
+    openMenu();
+
+    await act(async () => {
+      clearItem().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(removeHighlight).toHaveBeenCalledWith(highlight("JHN"));
+    expect(unhighlightVerse).toHaveBeenCalledWith("BSB", "JHN", 1, 1);
+    expect(restoreHighlight).not.toHaveBeenCalled();
+  });
+
+  it("puts the highlight back when the server call fails", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const { removeHighlight, restoreHighlight } = renderWithHighlight({
+      unhighlightError: new Error("offline"),
+    });
+    openMenu();
+
+    await act(async () => {
+      clearItem().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(removeHighlight).toHaveBeenCalled();
+    expect(restoreHighlight).toHaveBeenCalledWith(highlight("JHN"));
+    expect(consoleError).toHaveBeenCalled();
+  });
+
+  it("does not open the passage when the menu is used", () => {
+    const onOpenPassage = vi.fn();
+    const created = createState({ highlights: [highlight("JHN")] });
     act(() => {
       render(
         <YourContentPane

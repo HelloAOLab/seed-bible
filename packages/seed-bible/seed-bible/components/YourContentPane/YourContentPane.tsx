@@ -265,8 +265,10 @@ function HighlightRow(props: {
   state: SeedBibleState;
   stored: StoredHighlight;
   onOpenPassage: (target: TodayPassageTarget) => void;
+  onClear: () => void;
 }) {
   const { state, stored } = props;
+  const { t } = useI18n();
   const bookNames = state.today.bookNames.value;
   const verses = verseNumbersOf(stored.highlight.verse);
   const verseText = useVerseText(
@@ -284,31 +286,48 @@ function HighlightRow(props: {
     `var(--sb-highlight-${stored.highlight.colorId}-color, var(--sb-primary-color))`;
 
   return (
-    <button
-      type="button"
-      className="sb-content-highlight"
-      style={{ borderInlineStartColor: color }}
-      onClick={() =>
-        props.onOpenPassage({
-          bookId: stored.bookId,
-          chapter: stored.chapterNumber,
-          verse: verses[0],
-          translationId: stored.translationId,
-        })
-      }
-    >
-      {verseText ? (
-        <span className="sb-content-highlight-text">{verseText}</span>
-      ) : null}
-      <span className="sb-content-highlight-ref">
-        {formatReference(
-          bookNames,
-          stored.bookId,
-          stored.chapterNumber,
-          verses
-        )}
-      </span>
-    </button>
+    // The menu is a sibling of the quote, as on the annotation card above: a
+    // <button> cannot nest inside another one.
+    <div className="sb-content-highlight-row">
+      <button
+        type="button"
+        className="sb-content-highlight"
+        style={{ borderInlineStartColor: color }}
+        onClick={() =>
+          props.onOpenPassage({
+            bookId: stored.bookId,
+            chapter: stored.chapterNumber,
+            verse: verses[0],
+            translationId: stored.translationId,
+          })
+        }
+      >
+        {verseText ? (
+          <span className="sb-content-highlight-text">{verseText}</span>
+        ) : null}
+        <span className="sb-content-highlight-ref">
+          {formatReference(
+            bookNames,
+            stored.bookId,
+            stored.chapterNumber,
+            verses
+          )}
+        </span>
+      </button>
+      <ContextMenuWithButton
+        icon="more_horiz"
+        buttonClassName="sb-content-kebab"
+        aria-label={t("more-options", { defaultValue: "More options" })}
+      >
+        <ContextMenuItem
+          className="sb-content-menu-delete"
+          onClick={props.onClear}
+        >
+          <MaterialIcon>delete</MaterialIcon>
+          {t("clear-highlight", { defaultValue: "Clear highlight" })}
+        </ContextMenuItem>
+      </ContextMenuWithButton>
+    </div>
   );
 }
 
@@ -629,6 +648,24 @@ export function YourContentPane(props: YourContentScreenProps) {
                 .slice(0, limit(visibleHighlights))
                 .map((stored, index) => (
                   <HighlightRow
+                    onClear={() => {
+                      // Same optimistic pattern as deleting an annotation
+                      // above: drop it now so a cleared highlight does not sit
+                      // on screen waiting for the server, and put it back if
+                      // the call fails.
+                      yourContent.removeHighlight(stored);
+                      void state.highlights
+                        .unhighlightVerse(
+                          stored.translationId,
+                          stored.bookId,
+                          stored.chapterNumber,
+                          stored.highlight.verse
+                        )
+                        .catch((error) => {
+                          console.error("Error clearing highlight:", error);
+                          yourContent.restoreHighlight(stored);
+                        });
+                    }}
                     key={`${stored.translationId}/${stored.bookId}/${stored.chapterNumber}/${index}`}
                     state={state}
                     stored={stored}

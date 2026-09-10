@@ -263,9 +263,17 @@
   gap: 16px;
 }
 
+/* The quote takes the room, the kebab sits beside it at the top. */
+.sb-content-highlight-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .sb-content-highlight {
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 2px 0 2px 12px;
   border-inline-start: 4px solid var(--sb-content-accent);
   border-block: none;

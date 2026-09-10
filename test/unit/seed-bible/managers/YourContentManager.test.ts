@@ -30,12 +30,17 @@ function annotation(
   } as unknown as Annotation;
 }
 
-function highlight(bookId: string): StoredHighlight {
+function highlight(
+  bookId: string,
+  verse: number | [number, number] = 1,
+  overrides: Partial<Omit<StoredHighlight, "bookId" | "highlight">> = {}
+): StoredHighlight {
   return {
     translationId: "BSB",
-    bookId,
     chapterNumber: 1,
-    highlight: { colorId: "yellow", verse: 1 },
+    ...overrides,
+    bookId,
+    highlight: { colorId: "yellow", verse },
   };
 }
 
@@ -186,6 +191,78 @@ describe("createYourContentManager", () => {
     manager.restoreAnnotation(manager.annotations.value[0]!);
 
     expect(manager.annotations.value.map((x) => x.id)).toEqual(["a"]);
+  });
+
+  // Highlights have no id: where a highlight is *is* its identity, so these
+  // pin down what counts as the same highlight.
+  it("drops a cleared highlight from the list", async () => {
+    const { manager } = createManager({
+      highlights: [highlight("GEN"), highlight("JHN")],
+    });
+
+    await manager.load();
+    manager.removeHighlight(manager.highlights.value[0]!);
+
+    expect(manager.highlights.value.map((h) => h.bookId)).toEqual(["JHN"]);
+  });
+
+  it("leaves the same verse in another chapter, book or translation alone", async () => {
+    const { manager } = createManager({
+      highlights: [
+        highlight("GEN"),
+        highlight("GEN", 1, { chapterNumber: 2 }),
+        highlight("GEN", 1, { translationId: "ESV" }),
+        highlight("JHN"),
+      ],
+    });
+
+    await manager.load();
+    manager.removeHighlight(manager.highlights.value[0]!);
+
+    expect(
+      manager.highlights.value.map(
+        (h) => `${h.translationId}/${h.bookId}/${h.chapterNumber}`
+      )
+    ).toEqual(["BSB/GEN/2", "ESV/GEN/1", "BSB/JHN/1"]);
+  });
+
+  it("tells a single verse apart from a range starting at it", async () => {
+    const { manager } = createManager({
+      highlights: [highlight("GEN", 1), highlight("GEN", [1, 3])],
+    });
+
+    await manager.load();
+    manager.removeHighlight(manager.highlights.value[0]!);
+
+    expect(manager.highlights.value.map((h) => h.highlight.verse)).toEqual([
+      [1, 3],
+    ]);
+  });
+
+  it("puts a highlight back when clearing it turned out to fail", async () => {
+    const { manager } = createManager({
+      highlights: [highlight("GEN"), highlight("JHN")],
+    });
+
+    await manager.load();
+    const removed = manager.highlights.value[0]!;
+    manager.removeHighlight(removed);
+    manager.restoreHighlight(removed);
+
+    // On the end: the list is in record order, with no timestamp to sort by.
+    expect(manager.highlights.value.map((h) => h.bookId)).toEqual([
+      "JHN",
+      "GEN",
+    ]);
+  });
+
+  it("doesn't duplicate a highlight that is already in the list", async () => {
+    const { manager } = createManager({ highlights: [highlight("GEN")] });
+
+    await manager.load();
+    manager.restoreHighlight(manager.highlights.value[0]!);
+
+    expect(manager.highlights.value.map((h) => h.bookId)).toEqual(["GEN"]);
   });
 
   it("clears the search box and chips together", () => {

@@ -56,6 +56,14 @@ export interface YourContentManager {
    * `removeAnnotation` ran ahead of turns out to have failed.
    */
   restoreAnnotation: (annotation: Annotation) => void;
+  /** Drops a cleared highlight from the list without a server round-trip. */
+  removeHighlight: (highlight: StoredHighlight) => void;
+  /**
+   * Puts a highlight back, for when the server call that `removeHighlight`
+   * ran ahead of turns out to have failed. It goes on the end: highlights are
+   * held in record order and carry no timestamp to restore a position from.
+   */
+  restoreHighlight: (highlight: StoredHighlight) => void;
   /** Clears the search box and returns the chips to "all". */
   resetFilters: () => void;
 }
@@ -136,6 +144,21 @@ export function createYourContentManager(
     ]);
   };
 
+  const removeHighlight = (highlight: StoredHighlight) => {
+    const key = highlightKey(highlight);
+    highlights.value = highlights.value.filter(
+      (existing) => highlightKey(existing) !== key
+    );
+  };
+
+  const restoreHighlight = (highlight: StoredHighlight) => {
+    const key = highlightKey(highlight);
+    if (highlights.value.some((existing) => highlightKey(existing) === key)) {
+      return;
+    }
+    highlights.value = [...highlights.value, highlight];
+  };
+
   const resetFilters = () => {
     query.value = "";
     filter.value = "all";
@@ -150,8 +173,27 @@ export function createYourContentManager(
     load,
     removeAnnotation,
     restoreAnnotation,
+    removeHighlight,
+    restoreHighlight,
     resetFilters,
   };
+}
+
+/**
+ * Identifies a highlight for list edits. Highlights carry no id of their own —
+ * where the highlight is *is* its identity — so this is the translation, book,
+ * chapter and verse target together. A range and a single verse serialize
+ * differently, so a verse and a range starting at it are not confused.
+ */
+function highlightKey(stored: StoredHighlight): string {
+  const { verse } = stored.highlight;
+  const target = Array.isArray(verse) ? `${verse[0]}-${verse[1]}` : `${verse}`;
+  return [
+    stored.translationId,
+    stored.bookId,
+    stored.chapterNumber,
+    target,
+  ].join("/");
 }
 
 /**
