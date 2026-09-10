@@ -17,6 +17,4 @@ export class ScriptureInteractionService implements ScriptureInteractionPort {
   handlePieceFocusRequest(key: PieceKey): void {
     this.#pieceFocusPort.focus(key);
   }
-
-  handleExperienceShowRequest(): void {}
 }

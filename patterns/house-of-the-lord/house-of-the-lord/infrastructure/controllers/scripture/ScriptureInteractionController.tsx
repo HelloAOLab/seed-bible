@@ -66,8 +66,4 @@ export class ScriptureInteractionController {
 
     this.#readingStatePort.setCurrentReading(bookId, chapterNumber);
   }
-
-  handleExperienceShowRequest(experience: ExperienceKey) {
-    this.#scriptureInteractionPort.handleExperienceShowRequest(experience);
-  }
 }

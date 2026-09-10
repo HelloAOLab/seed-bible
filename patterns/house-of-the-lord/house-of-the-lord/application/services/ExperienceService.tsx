@@ -21,8 +21,8 @@ export class ExperienceService implements ExperienceServicePort {
   #environmentSetUpPort: ServiceParams["environmentSetUpPort"];
   #logger: ServiceParams["logger"];
   #experience: ExperienceKey | null = null;
-  #isDisplayingExperience = false;
   #queuedExperience: ExperienceKey | null = null;
+  #processing: Promise<boolean> | null = null;
   #eventBus: ServiceParams["eventBus"];
 
   constructor({
@@ -46,21 +46,36 @@ export class ExperienceService implements ExperienceServicePort {
   }
 
   async tryDisplayExperience(experience: ExperienceKey): Promise<boolean> {
-    if (experience === this.#experience) {
-      return true;
-    }
-    const isQueued = !!this.#queuedExperience;
     this.#queuedExperience = experience;
-    if (this.#isDisplayingExperience) {
-      if (isQueued) {
-        return true;
-      }
-      await this.clearExperience();
-    }
-    this.#setExperience(this.#queuedExperience);
-    this.#queuedExperience = null;
 
-    return this.#displayExperience();
+    if (this.#processing) {
+      if (experience !== this.#experience) {
+        this.#piecesSequencePort.tryAbortCurrentDropSequence();
+      }
+      return this.#processing;
+    }
+
+    this.#processing = this.#drainQueuedExperiences();
+    try {
+      return await this.#processing;
+    } finally {
+      this.#processing = null;
+    }
+  }
+
+  async #drainQueuedExperiences(): Promise<boolean> {
+    let displayed = true;
+    while (this.#queuedExperience) {
+      const next = this.#queuedExperience;
+      this.#queuedExperience = null;
+      if (next === this.#experience) continue;
+      if (this.#experience) {
+        await this.#hideExperience(this.#experience);
+      }
+      this.#setExperience(next);
+      displayed = await this.#displayExperience();
+    }
+    return displayed;
   }
 
   async #displayExperience(): Promise<boolean> {
@@ -70,7 +85,6 @@ export class ExperienceService implements ExperienceServicePort {
       );
       return false;
     }
-    this.#isDisplayingExperience = true;
     this.#environmentSetUpPort.setUp(this.#experience);
     this.#piecesSetUpPort.setUpPieces(this.#experience);
     try {
@@ -84,8 +98,6 @@ export class ExperienceService implements ExperienceServicePort {
       );
       this.#setExperience(null);
       return false;
-    } finally {
-      this.#isDisplayingExperience = false;
     }
   }
 
@@ -98,6 +110,10 @@ export class ExperienceService implements ExperienceServicePort {
       return;
     }
     this.#piecesSequencePort.tryAbortCurrentDropSequence();
+    await this.#hideExperience(experience);
+  }
+
+  async #hideExperience(experience: ExperienceKey): Promise<void> {
     try {
       await this.#piecesSequencePort.displayClearSequence(experience);
     } catch (error) {

@@ -395,15 +395,11 @@ export const bootstrapExtension = async () => {
     environmentInteractionController.handleGridClick();
   });
 
-  os.addBotListener(
-    entrypointBot,
-    "onInstLeave",
-    experienceService.clearExperience
+  os.addBotListener(entrypointBot, "onInstLeave", () =>
+    experienceService.clearExperience()
   );
-  os.addBotListener(
-    entrypointBot,
-    "onDestroy",
-    experienceService.clearExperience
+  os.addBotListener(entrypointBot, "onDestroy", () =>
+    experienceService.clearExperience()
   );
 
   domainEventBus.subscribe("OnReadingStateChanged", ({ reading }) => {

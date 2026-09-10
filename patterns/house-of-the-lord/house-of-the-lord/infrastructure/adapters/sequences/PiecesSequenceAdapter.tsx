@@ -24,6 +24,7 @@ export class PiecesSequenceAdapter implements PiecesSequencePort {
   #currentDrop: {
     experience: ExperienceKey;
     keys: ExperienceKeyMap[ExperienceKey][];
+    abort: () => void;
   } | null = null;
 
   constructor({ pieceState, layerProvider, piecesProvider }: AdapterParams) {
@@ -36,7 +37,11 @@ export class PiecesSequenceAdapter implements PiecesSequencePort {
     const sequenceId = ++this.#dropSequenceId;
     const orderedKeys = this.#layerProvider.getAllLayers(experience).flat();
     const launched: ExperienceKeyMap[ExperienceKey][] = [];
-    this.#currentDrop = { experience, keys: launched };
+    let abort: () => void = () => {};
+    const aborted = new Promise<void>((resolve) => {
+      abort = resolve;
+    });
+    this.#currentDrop = { experience, keys: launched, abort };
 
     const animations: Promise<void>[] = [];
     for (const key of orderedKeys) {
@@ -49,7 +54,7 @@ export class PiecesSequenceAdapter implements PiecesSequencePort {
           state: PIECE_VISIBILITY_STATES.SHOWN,
         })
       );
-      await os.sleep(STAGGER_MS);
+      await Promise.race([os.sleep(STAGGER_MS), aborted]);
     }
 
     await Promise.allSettled(animations);
@@ -79,6 +84,7 @@ export class PiecesSequenceAdapter implements PiecesSequencePort {
     if (!drop) {
       return;
     }
+    drop.abort();
     for (const key of drop.keys) {
       this.#pieceState.clearMeshStateAnimations({
         experience: drop.experience,
