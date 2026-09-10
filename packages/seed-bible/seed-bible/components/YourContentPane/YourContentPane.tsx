@@ -443,16 +443,46 @@ export function YourContentPane(props: YourContentScreenProps) {
     fields.some((field) => field?.toLowerCase().includes(needle));
 
   const bookNames = state.today.bookNames.value;
-  const bookName = (bookId: string) => bookNames.get(bookId) ?? bookId;
+
+  /**
+   * What a reference is searchable by: the reference exactly as its own row
+   * prints it, so anything you can read on screen you can type — "John",
+   * "John 3" and "John 3:16" all reach a highlight of John 3:16. Plus the raw
+   * book id, which is both what a row falls back to before book names have
+   * loaded and what someone typing "JHN" means.
+   *
+   * Matching is substring, as everywhere in this box, so "Psalm 3" also
+   * reaches Psalm 30. Narrowing that would mean parsing the query as a
+   * reference rather than searching text.
+   */
+  const referenceFields = (
+    bookId: string,
+    chapterNumber: number,
+    verses: number[]
+  ): string[] => [
+    formatReference(bookNames, bookId, chapterNumber, verses),
+    bookId,
+  ];
 
   const visibleAnnotations = yourContent.annotations.value.filter((a) =>
-    matches(annotationPlainText(a), bookName(a.bookId))
+    matches(
+      annotationPlainText(a),
+      ...referenceFields(a.bookId, a.chapterNumber, annotationVerses(a))
+    )
   );
   const visibleHighlights = yourContent.highlights.value.filter((h) =>
-    matches(bookName(h.bookId))
+    matches(
+      ...referenceFields(
+        h.bookId,
+        h.chapterNumber,
+        verseNumbersOf(h.highlight.verse)
+      )
+    )
   );
   const visibleBookmarks = bookmarks.bookmarks.value.filter((b) =>
-    matches(bookName(b.bookId))
+    matches(
+      ...referenceFields(b.bookId, b.chapterNumber, verseNumbersOf(b.verse))
+    )
   );
   const visiblePlaylists = playlists.userPlaylists.value.filter((p) =>
     matches(p.title, p.description)

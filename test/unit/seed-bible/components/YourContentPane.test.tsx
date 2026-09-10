@@ -1,7 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { signal } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
 import { YourContentPane } from "@packages/seed-bible/seed-bible/components/YourContentPane/YourContentPane";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
@@ -25,12 +25,17 @@ function annotation(id: string, html: string, verse = 1): Annotation {
   } as unknown as Annotation;
 }
 
-function highlight(bookId: string, colorId = "green"): StoredHighlight {
+function highlight(
+  bookId: string,
+  colorId = "green",
+  chapterNumber = 1,
+  verse: number | [number, number] = 1
+): StoredHighlight {
   return {
     translationId: "BSB",
     bookId,
-    chapterNumber: 1,
-    highlight: { colorId, verse: 1 },
+    chapterNumber,
+    highlight: { colorId, verse },
   };
 }
 
@@ -331,6 +336,96 @@ describe("YourContentPane", () => {
     expect(
       container.querySelector(".sb-content-status")?.textContent
     ).toContain("Nothing matches");
+  });
+
+  /**
+   * Highlights and bookmarks carry no text of their own, so their reference is
+   * all there is to search. It used to be matched as the bare book name, which
+   * meant the reference printed on the row — "John 3:16" — found nothing when
+   * typed back in.
+   */
+  describe("searching by reference", () => {
+    const highlightRows = () =>
+      container.querySelectorAll(".sb-content-highlight-row").length;
+
+    const search = (
+      state: SeedBibleState,
+      query: Signal<string>,
+      text: string
+    ) => {
+      renderPane(state);
+      act(() => {
+        query.value = text;
+      });
+    };
+
+    const johnThree = () =>
+      createState({ highlights: [highlight("JHN", "green", 3, 16)] });
+
+    it.each([
+      ["the book name alone", "John"],
+      ["the book and chapter", "John 3"],
+      ["the whole reference", "John 3:16"],
+      ["a lowercase reference", "john 3:16"],
+      ["the book id, as a row shows before names load", "JHN"],
+    ])("finds a highlight by %s", (_label, text) => {
+      const { state, query } = johnThree();
+      search(state, query, text);
+
+      expect(highlightRows()).toBe(1);
+    });
+
+    it("does not match a different chapter of the same book", () => {
+      const { state, query } = johnThree();
+      search(state, query, "John 4");
+
+      expect(highlightRows()).toBe(0);
+    });
+
+    it("does not match a different book", () => {
+      const { state, query } = johnThree();
+      search(state, query, "Genesis");
+
+      expect(highlightRows()).toBe(0);
+    });
+
+    it("matches a verse range by either end", () => {
+      const { state, query } = createState({
+        highlights: [highlight("JHN", "green", 3, [16, 18])],
+      });
+      search(state, query, "John 3:16-18");
+
+      expect(highlightRows()).toBe(1);
+    });
+
+    it("finds a bookmark by its reference", () => {
+      const { state, query } = createState({ bookmarks: [bookmark("b1", 1)] });
+      search(state, query, "Psalm 23:1");
+
+      expect(
+        container.querySelectorAll(".sb-content-bookmark-row")
+      ).toHaveLength(1);
+    });
+
+    it("finds an annotation by its reference, not only its text", () => {
+      const { state, query } = createState({
+        annotations: [annotation("a", "<p>a note about light</p>")],
+      });
+      search(state, query, "Genesis 1");
+
+      expect(sectionTitles()).toEqual(["Annotations"]);
+    });
+
+    it("matches as a substring, so Psalm 2 also reaches Psalm 23", () => {
+      // Pinned deliberately: this box searches text, it does not parse the
+      // query as a reference.
+      const { state, query } = createState({ bookmarks: [bookmark("b1", 1)] });
+      search(state, query, "Psalm 2");
+
+      expect(
+        container.querySelectorAll(".sb-content-bookmark-row")
+      ).toHaveLength(1);
+    });
   });
 
   it("labels a verse bookmark and a chapter bookmark differently", () => {
