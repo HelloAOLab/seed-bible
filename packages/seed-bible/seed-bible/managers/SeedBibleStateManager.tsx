@@ -8,8 +8,7 @@ import {
   type VerseRef,
 } from "../managers/BibleDataManager";
 import {
-  bibleLanguageToUiLocale,
-  uiLocaleForDefaultTranslation,
+  resolveTranslationUiLanguage,
   type BibleReadingState,
 } from "../managers/BibleReadingManager";
 import { buildReadingPath, parseReadingPath } from "../managers/ReadingUrlPath";
@@ -18,8 +17,35 @@ import {
   createTodayManager,
   openTodayPassage,
   type TodayManager,
+  type TodayPassageTarget,
 } from "../managers/TodayManager";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
+import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
+import {
+  buildStaticPagePath,
+  parseStaticPagePath,
+} from "../managers/StaticPagePath";
+import {
+  PROFILE_PANE_ID,
+  ProfileBackButton,
+  ProfilePane,
+  ProfilePaneTitle,
+} from "../components/ProfilePane/ProfilePane";
+import {
+  EDIT_PROFILE_PANE_ID,
+  EditProfilePane,
+  EditProfilePaneTitle,
+} from "../components/ProfilePane/EditProfilePane";
+import { openProfilePictureModal } from "../components/ProfilePictureModal/openProfilePictureModal";
+import {
+  YOUR_CONTENT_PANE_ID,
+  YourContentPane,
+  YourContentPaneTitle,
+} from "../components/YourContentPane/YourContentPane";
+import {
+  createYourContentManager,
+  type YourContentManager,
+} from "../managers/YourContentManager";
 import {
   META_DESCRIPTION_MAX_GRAPHEMES,
   buildChapterExcerpt,
@@ -27,7 +53,10 @@ import {
   truncateForMeta,
 } from "../managers/ChapterText";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
-import { createBibleToolsManager } from "../managers/BibleToolsManager";
+import {
+  createBibleToolsManager,
+  openReadingPlansPane,
+} from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
   FreeUseBibleAPI,
@@ -109,6 +138,7 @@ import {
 } from "../managers/SessionsManager";
 import {
   createAnnotationsManager,
+  type Annotation,
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
 import { syncAnnotationConflictModal } from "../components/AnnotationConflictModal/AnnotationConflictModal";
@@ -187,6 +217,9 @@ export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
  */
 const APP_META_DESCRIPTION =
   "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans.";
+
+/** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
+export const ABOUT_PANE_ID = "about-page-pane";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -317,6 +350,9 @@ export interface AppState {
    */
   customizationLogoUrl: ReadonlySignal<string | null>;
 
+  /** Whether the current URL is the static "/{lang}/about" page. */
+  isAboutPage: ReadonlySignal<boolean>;
+
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<{ id: number; message: string } | null>;
   /**
@@ -441,6 +477,30 @@ export interface SeedBibleState {
    */
   features: FeaturesManager;
 
+  /** Backs the "Your content" screen: the user's own annotations/highlights. */
+  yourContent: YourContentManager;
+
+  /** True when the "Your content" screen is showing. */
+  isYourContentOpen: ReadonlySignal<boolean>;
+  /** Opens "Your content" (reflected in the URL as `?content=open`). */
+  openYourContent: () => void;
+  /** Closes "Your content" (clears `content` from the URL). */
+  closeYourContent: () => void;
+
+  /** True when the Profile screen is showing. */
+  isProfileOpen: ReadonlySignal<boolean>;
+  /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
+  openProfile: () => void;
+  /** Closes the Profile screen (clears `profile` from the URL). */
+  closeProfile: () => void;
+
+  /** True when the "Edit profile" screen is showing. */
+  isEditProfileOpen: ReadonlySignal<boolean>;
+  /** Opens "Edit profile" (reflected in the URL as `?edit-profile=open`). */
+  openEditProfile: () => void;
+  /** Closes "Edit profile" (clears `edit-profile` from the URL). */
+  closeEditProfile: () => void;
+
   /** True when the Terms of Service modal is open. */
   isTermsOpen: ReadonlySignal<boolean>;
   /** Opens the Terms of Service modal (reflected in the URL as `?terms=open`). */
@@ -471,6 +531,7 @@ import {
   createPlaylistManager,
   type PlaylistManager,
   type PlaylistItemData,
+  type Playlist,
 } from "./PlaylistManager";
 import {
   createUserGalleryManager,
@@ -650,6 +711,11 @@ export function createSeedBibleState(
     discover,
     annotationRecordKey
   );
+  const yourContent = createYourContentManager({
+    annotations,
+    highlights,
+    bibleData: data,
+  });
   const sessions = createSessionsManager(
     os,
     data,
@@ -742,7 +808,80 @@ export function createSeedBibleState(
     codeOfConductOpen.value = false;
   };
 
+  // The "Your content" screen, reached from Profile. Bound to `?content=open`
+  // on the same terms as the Profile screen below.
+  const contentOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("content") === "open"
+  );
+  const isYourContentOpen = computed(() => contentOpen.value);
+  const openYourContent = () => {
+    contentOpen.value = true;
+  };
+  const closeYourContent = () => {
+    contentOpen.value = false;
+  };
+
+  // The Profile screen. Two-way bound to `?profile=open` so it can be
+  // deep-linked and so the browser's back button leaves it, mirroring Today.
+  //
+  // Never open during SSR: `effectivePanes` renders fullscreen panes
+  // unconditionally, so a crawled `/?profile=open` would otherwise serialize
+  // the signed-in profile into the response HTML.
+  const profileOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("profile") === "open"
+  );
+  const isProfileOpen = computed(() => profileOpen.value);
+  const openProfile = () => {
+    profileOpen.value = true;
+  };
+  const closeProfile = () => {
+    profileOpen.value = false;
+  };
+
+  // "Edit profile", reached from the Profile screen. Kept out of SSR for the
+  // same reason as Profile above: it renders the signed-in account.
+  const editProfileOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("edit-profile") === "open"
+  );
+  const isEditProfileOpen = computed(() => editProfileOpen.value);
+  const openEditProfile = () => {
+    editProfileOpen.value = true;
+  };
+  const closeEditProfile = () => {
+    editProfileOpen.value = false;
+  };
+
   navigation.syncSignalsToUrl({
+    profile: {
+      get value() {
+        return profileOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        profileOpen.value = newValue === "open";
+      },
+    },
+    content: {
+      get value() {
+        return contentOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        contentOpen.value = newValue === "open";
+      },
+    },
+    "edit-profile": {
+      get value() {
+        return editProfileOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        editProfileOpen.value = newValue === "open";
+      },
+    },
     terms: {
       get value() {
         return termsOpen.value ? "open" : null;
@@ -1239,6 +1378,21 @@ export function createSeedBibleState(
   }
 
   /**
+   * Whether the current URL is a static, non-reading page (currently just
+   * "/{lang}/about"). Drives the About fullscreen-pane's open/close effect
+   * below and the meta-signal branches further down — a single source of
+   * truth so the rendered content and its title/description/canonical
+   * always agree.
+   */
+  const isAboutPage = computed(
+    () =>
+      parseStaticPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )?.page === "about"
+  );
+
+  /**
    * One-time correction of every `localStorage`-derived value that feeds the
    * first render. See `AppState.hydrateFromStorage`.
    */
@@ -1283,6 +1437,10 @@ export function createSeedBibleState(
     );
 
     const getTitle = () => {
+      if (isAboutPage.value) {
+        return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
+      }
+
       if (!selectedTab.value) {
         return seedBibleTitle;
       }
@@ -1296,6 +1454,16 @@ export function createSeedBibleState(
   const description = computed(() => {
     void i18n.language.value;
     const { t } = i18n;
+
+    if (isAboutPage.value) {
+      return truncateForMeta(
+        t("about-meta-description", {
+          defaultValue:
+            "Seed Bible is a free Bible app with dozens of translations, reading plans, notes, highlights, and study tools.",
+        }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
@@ -1388,6 +1556,10 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
+    if (isAboutPage.value) {
+      return t("about-title", { defaultValue: "About the Seed Bible" });
+    }
+
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
       return t("read-the-bible", {
@@ -1429,6 +1601,16 @@ export function createSeedBibleState(
    * would point every canonical at a URL that redirects.
    */
   const canonicalUrl = computed(() => {
+    if (isAboutPage.value) {
+      // Uses the *resolved* i18n language, not the raw URL segment, so a
+      // garbage/unsupported language in the URL still canonicalizes to a
+      // real page instead of echoing back something that doesn't exist.
+      return `${navigation.basePath}${buildStaticPagePath({
+        language: i18n.language.value,
+        page: "about",
+      })}`;
+    }
+
     const readingState = selectedTab.value?.readingState;
     const bookId = readingState?.bookId.value;
 
@@ -1439,10 +1621,15 @@ export function createSeedBibleState(
     const translationId = data.buildTranslationId(
       readingState.translationId.value
     );
-    const language =
-      bibleLanguageToUiLocale(readingState.translation.value?.language) ??
-      uiLocaleForDefaultTranslation(translationId) ??
-      i18n.language.value;
+    // Falls back to the current UI language, unlike the chapter tool links'
+    // version of this chain (see `resolveTranslationUiLanguage`) — this is
+    // the page actually being rendered right now, so it has a real "current
+    // visitor" to derive one from.
+    const language = resolveTranslationUiLanguage({
+      translationLanguage: readingState.translation.value?.language,
+      translationId,
+      fallback: i18n.language.value,
+    });
 
     const readingPath = buildReadingPath({
       language,
@@ -1454,6 +1641,14 @@ export function createSeedBibleState(
     return `${navigation.basePath}${readingPath}`;
   });
 
+  /** How often time spent on the chapter in view is written to history. */
+  const READING_TICK_MS = 5000;
+  /**
+   * The most one tick may credit. A page can be frozen without ever reporting
+   * itself hidden, and its next tick then arrives with the whole sleep behind
+   * it; this caps what that tick can claim to have watched.
+   */
+  const READING_MAX_TICK_CREDIT_MS = READING_TICK_MS * 2;
   effect(() => {
     if (!selectedTab.value) {
       return;
@@ -1469,12 +1664,66 @@ export function createSeedBibleState(
     // that's what the "used for a day" download offer is judged against.
     data.offline.noteTranslationInUse(chapter.translation.id);
 
-    const readingHistoryTimeoutId = setInterval(() => {
-      readingHistory.saveReadingHistory(
-        chapter.book.id,
-        chapter.chapter.number
+    // Reading time accrues only while the chapter is actually on screen. Each
+    // tick credits just the stretch since the last one rather than stretching
+    // the event's end to the present, so time the app slept through — a locked
+    // phone, a backgrounded tab — opens a fresh event on return instead of
+    // being back-filled as though it had been read. Time spent listening with
+    // the screen off is recorded separately, by whatever is playing the audio.
+    let creditedThroughMs = Date.now();
+    let readingTicker: ReturnType<typeof setInterval> | null = null;
+
+    const creditTimeOnScreen = () => {
+      const now = Date.now();
+      const from = Math.max(
+        creditedThroughMs,
+        now - READING_MAX_TICK_CREDIT_MS
       );
-    }, 5000);
+      creditedThroughMs = now;
+      readingHistory.saveReadingSpan(
+        chapter.book.id,
+        chapter.chapter.number,
+        Math.floor(from / 1000),
+        Math.floor(now / 1000)
+      );
+    };
+
+    const startCrediting = () => {
+      if (readingTicker !== null) {
+        return;
+      }
+      creditedThroughMs = Date.now();
+      readingTicker = setInterval(creditTimeOnScreen, READING_TICK_MS);
+    };
+
+    const stopCrediting = () => {
+      if (readingTicker === null) {
+        return;
+      }
+      clearInterval(readingTicker);
+      readingTicker = null;
+      // The part-tick since the last one goes uncredited on purpose: a chapter
+      // has always had to hold the screen for a whole tick before it counts as
+      // read at all, and crediting stragglers here would let one flicked past
+      // on the way somewhere else earn a place in history.
+    };
+
+    const canWatchVisibility =
+      typeof document !== "undefined" && !import.meta.env.SSR;
+    const handleReadingVisibility = () => {
+      if (document.visibilityState === "visible") {
+        startCrediting();
+      } else {
+        stopCrediting();
+      }
+    };
+
+    if (canWatchVisibility) {
+      document.addEventListener("visibilitychange", handleReadingVisibility);
+    }
+    if (!canWatchVisibility || document.visibilityState === "visible") {
+      startCrediting();
+    }
 
     const posthogTimeoutId = setTimeout(() => {
       captureEvent("user_chapter_read", {
@@ -1485,7 +1734,13 @@ export function createSeedBibleState(
     }, 30_000);
 
     return () => {
-      clearInterval(readingHistoryTimeoutId);
+      if (canWatchVisibility) {
+        document.removeEventListener(
+          "visibilitychange",
+          handleReadingVisibility
+        );
+      }
+      stopCrediting();
       clearTimeout(posthogTimeoutId);
     };
   });
@@ -2273,6 +2528,16 @@ export function createSeedBibleState(
     gallery,
     tutorial,
     onboarding,
+    yourContent,
+    isYourContentOpen,
+    openYourContent,
+    closeYourContent,
+    isProfileOpen,
+    openProfile,
+    closeProfile,
+    isEditProfileOpen,
+    openEditProfile,
+    closeEditProfile,
     isTermsOpen,
     openTerms,
     closeTerms,
@@ -2313,6 +2578,7 @@ export function createSeedBibleState(
       customizationLogoUrl,
       canonicalUrl,
       socialTitle,
+      isAboutPage,
       currentToast,
       toast,
       isDiscoverOpen: playlists.isDiscoverOpen,
@@ -2440,12 +2706,219 @@ export function createSeedBibleState(
     }
   });
 
+  // Today is the fullscreen home screen, so anything else opening replaces it,
+  // and this is where that is enforced. Two ways it can happen:
+  //
+  // - Today's own pane went away, because another fullscreen pane displaced it
+  //   or its close button was used.
+  // - Another pane is open alongside Today's. `PanesManager` only clears the
+  //   other panes for a pane that fills the screen; a "side" pane replaces
+  //   just the previous side pane, so Discover and Reading plans used to open
+  //   underneath Today with nothing to tell the user they were there.
+  effect(() => {
+    const openPanes = panes.panes.value;
+    const todayPaneOpen = openPanes.some((pane) => pane.id === TODAY_PANE_ID);
+    const anotherPaneOpen = openPanes.some((pane) => pane.id !== TODAY_PANE_ID);
+    if (today.isOpen.peek() && (!todayPaneOpen || anotherPaneOpen)) {
+      today.close();
+    }
+  });
+
+  // The Profile screen, wired the same way as Today above: a fullscreen pane
+  // mirrored from `isProfileOpen`, with the thunks hoisted so their identity
+  // stays stable across reopens.
+  //
+  // Opening any fullscreen pane closes the others, so the screens reached from
+  // Profile ("Edit profile", "Your content") each carry a back button that
+  // reopens it rather than relying on a pane stack.
+  const backToProfile = () => {
+    closeEditProfile();
+    closeYourContent();
+    openProfile();
+  };
+  const renderProfileBackButton = () => (
+    <ProfileBackButton onBack={backToProfile} />
+  );
+  const editProfilePicture = () => {
+    // Destructured for the same reason as the toast below: the translation
+    // lint rules only recognise calls made through a bare `t`.
+    const { t } = i18n;
+    openProfilePictureModal({ modals, login, t });
+  };
+  const openReadingPlansFromProfile = () => {
+    const readingState = selectedTab.peek()?.readingState;
+    if (!readingState) {
+      return;
+    }
+    closeProfile();
+    // Fullscreen rather than the toolbar's docked "side": the user came from a
+    // fullscreen screen, so a side panel would leave them looking at the reader.
+    openReadingPlansPane({
+      readingPlans,
+      readingState,
+      panesManager: panes,
+      modals,
+      playlists,
+      os,
+      login,
+      gallery,
+      placement: "fullscreen",
+    });
+  };
+  const renderProfilePane = () => (
+    <ProfilePane
+      state={state}
+      onEditProfile={openEditProfile}
+      onEditPicture={editProfilePicture}
+      onOpenReadingPlans={openReadingPlansFromProfile}
+      onOpenYourContent={openYourContent}
+    />
+  );
+  const renderProfilePaneTitle = () => <ProfilePaneTitle />;
+
+  effect(() => {
+    if (isProfileOpen.value) {
+      panes.openPane({
+        id: PROFILE_PANE_ID,
+        placement: "fullscreen",
+        title: renderProfilePaneTitle,
+        component: renderProfilePane,
+      });
+    } else {
+      panes.closePane(PROFILE_PANE_ID); // no-op when already closed
+    }
+  });
+
   effect(() => {
     const paneOpen = panes.panes.value.some(
-      (pane) => pane.id === TODAY_PANE_ID
+      (pane) => pane.id === PROFILE_PANE_ID
     );
-    if (!paneOpen && today.isOpen.peek()) {
-      today.close();
+    if (!paneOpen && isProfileOpen.peek()) {
+      closeProfile();
+    }
+  });
+
+  // "Edit profile", reached from the pencil on the profile card or from the
+  // name itself.
+  const renderEditProfilePane = () => (
+    <EditProfilePane state={state} onEditPicture={editProfilePicture} />
+  );
+  const renderEditProfilePaneTitle = () => <EditProfilePaneTitle />;
+
+  effect(() => {
+    if (isEditProfileOpen.value) {
+      panes.openPane({
+        id: EDIT_PROFILE_PANE_ID,
+        placement: "fullscreen",
+        title: renderEditProfilePaneTitle,
+        leading: renderProfileBackButton,
+        component: renderEditProfilePane,
+      });
+    } else {
+      panes.closePane(EDIT_PROFILE_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === EDIT_PROFILE_PANE_ID
+    );
+    if (!paneOpen && isEditProfileOpen.peek()) {
+      closeEditProfile();
+    }
+  });
+
+  // "Your content", the third fullscreen screen, wired like the two above.
+  // Each handler closes the screen first: all three destinations (reader,
+  // playlist player, annotation editor) sit behind it.
+  const openPassageFromContent = (target: TodayPassageTarget) => {
+    closeYourContent();
+    closeProfile();
+    openTodayPassage(state, today, target);
+  };
+  const playPlaylistFromContent = (playlist: Playlist) => {
+    closeYourContent();
+    closeProfile();
+    playlists.startPlaying(playlist, 0);
+  };
+  const editPlaylistFromContent = (playlist: Playlist) => {
+    closeYourContent();
+    closeProfile();
+    // `editPlaylist` only sets the Discover pane's view, and that pane docks
+    // beside the reader — so the fullscreen screens above it have to close
+    // first, or the editor opens behind them.
+    playlists.editPlaylist(playlist);
+  };
+  const editAnnotationFromContent = (annotation: Annotation) => {
+    closeYourContent();
+    closeProfile();
+    // Opens the Discover pane's annotation editor, the same one the reader
+    // uses — rather than growing a second editor on this screen.
+    annotations.editAnnotation(annotation);
+  };
+  const renderYourContentPane = () => (
+    <YourContentPane
+      state={state}
+      onOpenPassage={openPassageFromContent}
+      onPlayPlaylist={playPlaylistFromContent}
+      onEditPlaylist={editPlaylistFromContent}
+      onEditAnnotation={editAnnotationFromContent}
+    />
+  );
+  const renderYourContentPaneTitle = () => <YourContentPaneTitle />;
+
+  effect(() => {
+    if (isYourContentOpen.value) {
+      panes.openPane({
+        id: YOUR_CONTENT_PANE_ID,
+        placement: "fullscreen",
+        title: renderYourContentPaneTitle,
+        leading: renderProfileBackButton,
+        component: renderYourContentPane,
+      });
+    } else {
+      panes.closePane(YOUR_CONTENT_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === YOUR_CONTENT_PANE_ID
+    );
+    if (!paneOpen && isYourContentOpen.peek()) {
+      closeYourContent();
+    }
+  });
+
+  const renderAboutPane = () => <AboutPage state={state} />;
+  const renderAboutPaneTitle = () => <AboutPaneTitle />;
+
+  effect(() => {
+    if (isAboutPage.value) {
+      panes.openPane({
+        id: ABOUT_PANE_ID,
+        placement: "fullscreen",
+        title: renderAboutPaneTitle,
+        component: renderAboutPane,
+      });
+    } else {
+      panes.closePane(ABOUT_PANE_ID); // no-op when already closed
+    }
+  });
+
+  // Unlike Today's `isOpen` (a plain writable boolean), `isAboutPage` is a
+  // read-only computed derived from the URL — closing the pane can't just
+  // flip a signal back. Instead, leave "/about" for the current tab's
+  // reading position, mirroring how a genuine tab-focus change already does
+  // (see TabsManager.leaveStaticPage). This fires whether the pane was
+  // closed via its header's close button, `closeFullscreenPanes()` (e.g.
+  // selecting a tab), or displacement by another fullscreen pane.
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === ABOUT_PANE_ID
+    );
+    if (!paneOpen && isAboutPage.peek()) {
+      tabs.leaveStaticPage();
     }
   });
 
