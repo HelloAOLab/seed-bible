@@ -334,6 +334,51 @@ export interface HighlightsManager {
     chapterNumber: number,
     verseNumbers: number[]
   ) => Promise<void>;
+
+  /**
+   * Every highlight the signed-in account has, across every translation and
+   * chapter, flattened one entry per highlight. For the "Your content" screen.
+   * Empty when signed out.
+   */
+  listAllHighlights: () => Promise<StoredHighlight[]>;
+}
+
+/** One highlight, with the chapter it was found in. */
+export interface StoredHighlight {
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+  highlight: ChapterHighlight;
+}
+
+const HIGHLIGHTS_ADDRESS_PREFIX = "highlights:";
+
+/**
+ * Pulls the translation, book and chapter back out of a highlights address.
+ * Returns null for an address that isn't one, so a record holding other kinds
+ * of data can be swept without tripping over them.
+ */
+export function parseChapterHighlightsAddress(
+  address: string
+): { translationId: string; bookId: string; chapterNumber: number } | null {
+  if (!address.startsWith(HIGHLIGHTS_ADDRESS_PREFIX)) {
+    return null;
+  }
+  const parts = address.slice(HIGHLIGHTS_ADDRESS_PREFIX.length).split("/");
+  if (parts.length !== 3) {
+    return null;
+  }
+  const [translationId, bookId, chapter] = parts;
+  const chapterNumber = Number(chapter);
+  if (
+    !translationId ||
+    !bookId ||
+    !Number.isInteger(chapterNumber) ||
+    chapterNumber <= 0
+  ) {
+    return null;
+  }
+  return { translationId, bookId, chapterNumber };
 }
 
 function createChapterHighlightsAddress(
@@ -341,7 +386,7 @@ function createChapterHighlightsAddress(
   bookId: string,
   chapterNumber: number
 ): string {
-  return `highlights:${translationId}/${bookId}/${chapterNumber}`;
+  return `${HIGHLIGHTS_ADDRESS_PREFIX}${translationId}/${bookId}/${chapterNumber}`;
 }
 
 const emptyChapterHighlights: ChapterHighlights = {
@@ -755,6 +800,39 @@ export function createHighlightsManager(
     );
   };
 
+  /**
+   * Sweeps the account's record for every chapter's highlights.
+   *
+   * Highlights are marked per translation, so listing them by marker would
+   * need to know which translations the user has ever highlighted in. Walking
+   * the record by address avoids that guess: highlight payloads are the ones
+   * whose address parses as `highlights:{translation}/{book}/{chapter}`.
+   */
+  const listAllHighlights = async (): Promise<StoredHighlight[]> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      return [];
+    }
+
+    const result = await os.listAllData(userId);
+    const stored: StoredHighlight[] = [];
+    for (const item of result.items) {
+      const location = parseChapterHighlightsAddress(item.address);
+      if (!location) {
+        continue;
+      }
+      const parsed = chapterHighlightsSchema.safeParse(item.data);
+      if (!parsed.success) {
+        console.warn("Skipping invalid highlights record:", parsed.error);
+        continue;
+      }
+      for (const highlight of parsed.data.highlights) {
+        stored.push({ ...location, highlight });
+      }
+    }
+    return stored;
+  };
+
   return {
     getChapterHighlights,
     saveChapterHighlights,
@@ -762,5 +840,6 @@ export function createHighlightsManager(
     highlightVerses,
     unhighlightVerse,
     unhighlightVerses,
+    listAllHighlights,
   };
 }

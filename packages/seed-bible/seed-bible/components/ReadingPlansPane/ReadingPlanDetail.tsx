@@ -197,70 +197,72 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
 
     return (
       <div className="sb-rpd">
-        <HeroImageBanner
-          url={plan.heroImageUrl}
-          alt={
-            plan.title ??
-            t("untitled-reading-plan", { defaultValue: "Untitled plan" })
-          }
-          className="sb-hero-banner--bleed"
-        />
-        <div className="sb-rpd-body">
-          {plan.description ? (
-            <p className="sb-rpd-subtitle" dir="auto">
-              {plan.description}
+        <div className="sb-rpd-scroll">
+          <HeroImageBanner
+            url={plan.heroImageUrl}
+            alt={
+              plan.title ??
+              t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+            }
+            className="sb-hero-banner--bleed"
+          />
+          <div className="sb-rpd-body">
+            {plan.description ? (
+              <p className="sb-rpd-subtitle" dir="auto">
+                {plan.description}
+              </p>
+            ) : null}
+            <p className="sb-rpd-hero-summary">
+              {t("reading-plan-session-count-sessions", {
+                defaultValue: "{{count}} sessions",
+                count: plan.sessions.length,
+              })}
             </p>
-          ) : null}
-          <p className="sb-rpd-hero-summary">
-            {t("reading-plan-session-count-sessions", {
-              defaultValue: "{{count}} sessions",
-              count: plan.sessions.length,
-            })}
-          </p>
 
-          {/* How the reader wants to take the plan. A plan has no duration of
-              its own — each cadence implies its own, and "at my own pace" has
-              none at all. */}
-          <h3 className="sb-rpd-section-title">
-            {t("reading-plan-choose-pace", {
-              defaultValue: "How do you want to read it?",
-            })}
-          </h3>
-          <div className="sb-rp-choices">
-            {plan.cadenceOptions.map((option) => {
-              const days = cadenceDurationDays(
-                option.cadence,
-                plan.sessions.length
-              );
-              return (
-                <PaceChoice
-                  key={option.id}
-                  selected={chosen === option.id}
-                  title={cadenceOptionLabel(option, t)}
-                  description={
-                    days > 0
-                      ? t("reading-plan-cadence-length", {
-                          defaultValue: "Finishes in {{count}} days",
-                          count: days,
-                        })
-                      : ""
-                  }
-                  onSelect={() => setPace(option.id)}
-                />
-              );
-            })}
-            <PaceChoice
-              selected={selfPaced}
-              title={t("reading-plan-pace-self", {
-                defaultValue: "At my own pace",
+            {/* How the reader wants to take the plan. A plan has no duration
+                of its own — each cadence implies its own, and "at my own
+                pace" has none at all. */}
+            <h3 className="sb-rpd-section-title">
+              {t("reading-plan-choose-pace", {
+                defaultValue: "How do you want to read it?",
               })}
-              description={t("reading-plan-pace-self-description", {
-                defaultValue: "Read one session at a time, with no schedule",
+            </h3>
+            <div className="sb-rp-choices">
+              {plan.cadenceOptions.map((option) => {
+                const days = cadenceDurationDays(
+                  option.cadence,
+                  plan.sessions.length
+                );
+                return (
+                  <PaceChoice
+                    key={option.id}
+                    selected={chosen === option.id}
+                    title={cadenceOptionLabel(option, t)}
+                    description={
+                      days > 0
+                        ? t("reading-plan-cadence-length", {
+                            defaultValue: "Finishes in {{count}} days",
+                            count: days,
+                          })
+                        : ""
+                    }
+                    onSelect={() => setPace(option.id)}
+                  />
+                );
               })}
-              onSelect={() => setPace(SELF_PACED_CHOICE)}
-            />
+              <PaceChoice
+                selected={selfPaced}
+                title={t("reading-plan-pace-self", {
+                  defaultValue: "At my own pace",
+                })}
+                description={t("reading-plan-pace-self-description", {
+                  defaultValue: "Read one session at a time, with no schedule",
+                })}
+                onSelect={() => setPace(SELF_PACED_CHOICE)}
+              />
+            </div>
+            {planActions}
           </div>
-          {planActions}
         </div>
         <footer className="sb-rpd-footer">
           <button
@@ -469,201 +471,207 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
 
   return (
     <div className="sb-rpd">
-      <HeroImageBanner
-        url={plan.heroImageUrl}
-        alt={
-          plan.title ??
-          t("untitled-reading-plan", { defaultValue: "Untitled plan" })
-        }
-        className="sb-hero-banner--bleed"
-      />
-      <header className="sb-rpd-hero-header">
-        <p className="sb-rpd-subtitle">
-          {selfPaced
-            ? t("reading-plan-session-count-sessions", {
-                defaultValue: "{{count}} sessions",
-                count: totalDays,
-              })
-            : t("reading-plan-duration-days", {
-                defaultValue: "{{count}} days",
-                count: totalDays,
-              })}
-          {" · "}
-          {t("reading-plan-started-on", {
-            defaultValue: "started {{date}}",
-            date: formatShortDate(progress.startedAtMs),
-          })}
-          {!selfPaced && endsMs != null
-            ? ` · ${t("reading-plan-ends-on", {
-                defaultValue: "ends {{date}}",
-                date: formatShortDate(endsMs),
-              })}`
-            : ""}
-        </p>
-
-        <div className="sb-rpd-hero-progress">
-          <div className="sb-rpd-progress-bar sb-rpd-progress-bar-onhero">
-            <div
-              className="sb-rpd-progress-bar-fill"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-          <span className="sb-rpd-progress-count">
+      <div className="sb-rpd-scroll">
+        <HeroImageBanner
+          url={plan.heroImageUrl}
+          alt={
+            plan.title ??
+            t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+          }
+          className="sb-hero-banner--bleed"
+        />
+        <header className="sb-rpd-hero-header">
+          <p className="sb-rpd-subtitle">
             {selfPaced
-              ? t("reading-plan-progress-sessions", {
-                  defaultValue: "{{done}}/{{total}} sessions",
-                  done: doneDays,
-                  total: totalDays,
+              ? t("reading-plan-session-count-sessions", {
+                  defaultValue: "{{count}} sessions",
+                  count: totalDays,
                 })
-              : t("reading-plan-progress-days", {
-                  defaultValue: "{{done}}/{{total}} days",
-                  done: doneDays,
-                  total: totalDays,
+              : t("reading-plan-duration-days", {
+                  defaultValue: "{{count}} days",
+                  count: totalDays,
                 })}
-          </span>
-        </div>
+            {" · "}
+            {t("reading-plan-started-on", {
+              defaultValue: "started {{date}}",
+              date: formatShortDate(progress.startedAtMs),
+            })}
+            {!selfPaced && endsMs != null
+              ? ` · ${t("reading-plan-ends-on", {
+                  defaultValue: "ends {{date}}",
+                  date: formatShortDate(endsMs),
+                })}`
+              : ""}
+          </p>
 
-        <div className="sb-rpd-chips">
-          {/* A streak counts consecutive days you kept to the schedule, so it
-              means nothing when there is no schedule to keep to. */}
-          {!selfPaced && streak > 0 ? (
-            <span className="sb-rpd-chip">
-              🔥{" "}
-              {t("reading-plan-streak", {
-                defaultValue: "{{count}}-day streak",
-                count: streak,
-              })}
-            </span>
-          ) : null}
-          {avgMinutes > 0 ? (
-            <span className="sb-rpd-chip">
+          <div className="sb-rpd-hero-progress">
+            <div className="sb-rpd-progress-bar sb-rpd-progress-bar-onhero">
+              <div
+                className="sb-rpd-progress-bar-fill"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+            <span className="sb-rpd-progress-count">
               {selfPaced
-                ? t("reading-plan-min-per-session", {
-                    defaultValue: "~{{count}} min/session",
-                    count: avgMinutes,
+                ? t("reading-plan-progress-sessions", {
+                    defaultValue: "{{done}}/{{total}} sessions",
+                    done: doneDays,
+                    total: totalDays,
                   })
-                : t("reading-plan-min-per-day", {
-                    defaultValue: "~{{count}} min/day",
-                    count: avgMinutes,
+                : t("reading-plan-progress-days", {
+                    defaultValue: "{{done}}/{{total}} days",
+                    done: doneDays,
+                    total: totalDays,
                   })}
             </span>
-          ) : null}
-        </div>
+          </div>
 
-        {planActions}
-      </header>
-
-      <div className="sb-rpd-body">
-        {readingDays.length === 0 ? (
-          <p className="sb-rpd-empty">
-            {t("reading-plan-empty-sessions", {
-              defaultValue: "This plan doesn't have any readings yet.",
-            })}
-          </p>
-        ) : (
-          <>
-            <div className="sb-rpd-day-tabs" role="tablist">
-              {readingDays.map((day, index) => {
-                const isDone = day.completedAtMs != null;
-                const isActive = index === activeIndex;
-                const isToday = !selfPaced && day.containsNow;
-                return (
-                  <button
-                    key={day.dayOffset}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    className={`sb-rpd-day-tab${
-                      isActive ? " sb-rpd-day-tab-active" : ""
-                    }${isToday ? " sb-rpd-day-tab-today" : ""}`}
-                    onClick={() => setSelectedDay(index)}
-                  >
-                    <span className="sb-rpd-day-tab-label">
-                      {selfPaced
-                        ? t("reading-plan-session-short", {
-                            defaultValue: "Session",
-                          })
-                        : t("reading-plan-day-short", {
-                            defaultValue: "Day",
-                          })}
-                    </span>
-                    <span className="sb-rpd-day-tab-num">{index + 1}</span>
-                    {isDone ? (
-                      <MaterialIcon className="sb-rpd-day-tab-check">
-                        check
-                      </MaterialIcon>
-                    ) : isToday ? (
-                      <span className="sb-rpd-day-tab-dot" aria-hidden="true" />
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-
-            {activeDay ? (
-              <>
-                <ul className="sb-rpd-reading-cards">
-                  {activeDayReadings.map(({ session, reading }) => (
-                    <ReadingRow
-                      key={reading.id}
-                      session={session}
-                      reading={reading}
-                      sessionProgress={sessionProgressFor(session.id)}
-                      expanded={expandedReadingId === reading.id}
-                      canPreview={
-                        !!modals && canPreviewPlaylistItem(reading.item)
-                      }
-                      canNavigate={
-                        !!onOpenScripture && reading.item.type === "bible-verse"
-                      }
-                      resolveBookName={resolveBookName}
-                      resolveBookLength={resolveBookLength}
-                      onToggleExpanded={() =>
-                        setExpandedReadingId((current) =>
-                          current === reading.id ? null : reading.id
-                        )
-                      }
-                      onToggle={(done) =>
-                        void toggleReading(session, reading.id, done)
-                      }
-                      onToggleChapter={(chapter, done) =>
-                        void toggleReadingChapter(
-                          session,
-                          reading.id,
-                          chapter,
-                          done
-                        )
-                      }
-                      onOpen={() => {
-                        if (reading.item.type === "bible-verse") {
-                          openScripture(session, reading);
-                        } else if (modals) {
-                          openPlaylistItemPreview(
-                            modals,
-                            reading.item,
-                            PLAN_READING_PREVIEW_MODAL_ID,
-                            t
-                          );
-                        }
-                      }}
-                      t={t}
-                    />
-                  ))}
-                </ul>
-
-                {activeDayNote ? (
-                  <div className="sb-rpd-reflect">
-                    <div className="sb-rpd-reflect-head">
-                      <MaterialIcon>lightbulb</MaterialIcon>
-                      {t("reading-plan-reflect", { defaultValue: "Reflect" })}
-                    </div>
-                    <p className="sb-rpd-reflect-text">{activeDayNote}</p>
-                  </div>
-                ) : null}
-              </>
+          <div className="sb-rpd-chips">
+            {/* A streak counts consecutive days you kept to the schedule, so it
+              means nothing when there is no schedule to keep to. */}
+            {!selfPaced && streak > 0 ? (
+              <span className="sb-rpd-chip">
+                🔥{" "}
+                {t("reading-plan-streak", {
+                  defaultValue: "{{count}}-day streak",
+                  count: streak,
+                })}
+              </span>
             ) : null}
-          </>
-        )}
+            {avgMinutes > 0 ? (
+              <span className="sb-rpd-chip">
+                {selfPaced
+                  ? t("reading-plan-min-per-session", {
+                      defaultValue: "~{{count}} min/session",
+                      count: avgMinutes,
+                    })
+                  : t("reading-plan-min-per-day", {
+                      defaultValue: "~{{count}} min/day",
+                      count: avgMinutes,
+                    })}
+              </span>
+            ) : null}
+          </div>
+
+          {planActions}
+        </header>
+
+        <div className="sb-rpd-body">
+          {readingDays.length === 0 ? (
+            <p className="sb-rpd-empty">
+              {t("reading-plan-empty-sessions", {
+                defaultValue: "This plan doesn't have any readings yet.",
+              })}
+            </p>
+          ) : (
+            <>
+              <div className="sb-rpd-day-tabs" role="tablist">
+                {readingDays.map((day, index) => {
+                  const isDone = day.completedAtMs != null;
+                  const isActive = index === activeIndex;
+                  const isToday = !selfPaced && day.containsNow;
+                  return (
+                    <button
+                      key={day.dayOffset}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      className={`sb-rpd-day-tab${
+                        isActive ? " sb-rpd-day-tab-active" : ""
+                      }${isToday ? " sb-rpd-day-tab-today" : ""}`}
+                      onClick={() => setSelectedDay(index)}
+                    >
+                      <span className="sb-rpd-day-tab-label">
+                        {selfPaced
+                          ? t("reading-plan-session-short", {
+                              defaultValue: "Session",
+                            })
+                          : t("reading-plan-day-short", {
+                              defaultValue: "Day",
+                            })}
+                      </span>
+                      <span className="sb-rpd-day-tab-num">{index + 1}</span>
+                      {isDone ? (
+                        <MaterialIcon className="sb-rpd-day-tab-check">
+                          check
+                        </MaterialIcon>
+                      ) : isToday ? (
+                        <span
+                          className="sb-rpd-day-tab-dot"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {activeDay ? (
+                <>
+                  <ul className="sb-rpd-reading-cards">
+                    {activeDayReadings.map(({ session, reading }) => (
+                      <ReadingRow
+                        key={reading.id}
+                        session={session}
+                        reading={reading}
+                        sessionProgress={sessionProgressFor(session.id)}
+                        expanded={expandedReadingId === reading.id}
+                        canPreview={
+                          !!modals && canPreviewPlaylistItem(reading.item)
+                        }
+                        canNavigate={
+                          !!onOpenScripture &&
+                          reading.item.type === "bible-verse"
+                        }
+                        resolveBookName={resolveBookName}
+                        resolveBookLength={resolveBookLength}
+                        onToggleExpanded={() =>
+                          setExpandedReadingId((current) =>
+                            current === reading.id ? null : reading.id
+                          )
+                        }
+                        onToggle={(done) =>
+                          void toggleReading(session, reading.id, done)
+                        }
+                        onToggleChapter={(chapter, done) =>
+                          void toggleReadingChapter(
+                            session,
+                            reading.id,
+                            chapter,
+                            done
+                          )
+                        }
+                        onOpen={() => {
+                          if (reading.item.type === "bible-verse") {
+                            openScripture(session, reading);
+                          } else if (modals) {
+                            openPlaylistItemPreview(
+                              modals,
+                              reading.item,
+                              PLAN_READING_PREVIEW_MODAL_ID,
+                              t
+                            );
+                          }
+                        }}
+                        t={t}
+                      />
+                    ))}
+                  </ul>
+
+                  {activeDayNote ? (
+                    <div className="sb-rpd-reflect">
+                      <div className="sb-rpd-reflect-head">
+                        <MaterialIcon>lightbulb</MaterialIcon>
+                        {t("reading-plan-reflect", { defaultValue: "Reflect" })}
+                      </div>
+                      <p className="sb-rpd-reflect-text">{activeDayNote}</p>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
+            </>
+          )}
+        </div>
       </div>
 
       {activeDay ? (

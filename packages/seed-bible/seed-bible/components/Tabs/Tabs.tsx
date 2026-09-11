@@ -23,6 +23,7 @@ import {
   MaterialIcon,
   SettingsIcon,
 } from "../../components/icons";
+import { buildStaticPagePath } from "../../managers/StaticPagePath";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
@@ -2552,22 +2553,22 @@ export function getSelfDisplayName(
 
 /**
  * Button at the bottom-right of the sidebar showing the current user's
- * avatar. Opens account settings when clicked (matches the bottom-of-sidebar
- * avatar slot in develop).
+ * avatar. Opens the Profile screen — the desktop entry point for it (#1554).
+ * Account settings now hangs off Profile rather than being reached directly.
  */
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { sidebar } = state;
   const { t } = useI18n();
   const displayName = getSelfDisplayName(state, t);
+  const label = t("open-profile", { defaultValue: "Open profile" });
 
   return (
     <button
       className="sb-sidebar-self-avatar"
       onClick={() => {
-        sidebar.openSettingsToView("account");
+        state.openProfile();
       }}
-      aria-label={`Open account settings (${displayName})`}
+      aria-label={`${label} (${displayName})`}
       title={displayName}
     >
       <SelfAvatarVisual state={state} />
@@ -2666,17 +2667,38 @@ export function Sidebar(props: SidebarProps) {
             effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
           }`}
         >
-          <button
-            onClick={sidebar.toggleSettings}
-            data-tutorial="settings"
-            className={`sb-sidebar-icon-button${
-              isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
-            }`}
-            aria-label={t("open-settings", { defaultValue: "Open settings" })}
-            title={t("settings", { defaultValue: "Settings" })}
-          >
-            <SettingsIcon />
-          </button>
+          <div className="sb-sidebar-icon-stack">
+            <button
+              onClick={() => {
+                state.navigation.push(
+                  buildStaticPagePath({
+                    language: state.i18n.language.value,
+                    page: "about",
+                  })
+                );
+              }}
+              className="sb-sidebar-icon-button"
+              aria-label={t("about-title", {
+                defaultValue: "About Seed Bible",
+              })}
+              title={t("about-title", { defaultValue: "About Seed Bible" })}
+            >
+              <MaterialIcon>info</MaterialIcon>
+            </button>
+            <button
+              onClick={sidebar.toggleSettings}
+              data-tutorial="settings"
+              className={`sb-sidebar-icon-button${
+                isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+              }`}
+              aria-label={t("open-settings", {
+                defaultValue: "Open settings",
+              })}
+              title={t("settings", { defaultValue: "Settings" })}
+            >
+              <SettingsIcon />
+            </button>
+          </div>
           <SelfAvatarButton state={state} />
         </div>
       </aside>
