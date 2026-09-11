@@ -193,6 +193,7 @@ export interface ExtensionListEntry {
   registration: ExtensionRegistration | null;
   installed: boolean;
   pendingInstallation: boolean;
+  enabled: boolean;
 }
 
 export class ExtensionInitalizer {
@@ -773,6 +774,48 @@ export function createExtensionManager(
   };
 
   /**
+   * The localStorage key for extension IDs the user has turned off without
+   * uninstalling. Kept local-only rather than mirrored to the profile config
+   * like the installed-ID ledger — a toggle disagreeing across two open tabs
+   * on the same device is the realistic case, not two devices, so the
+   * cross-device merge machinery `mergeInstalledExtensionIds` exists for isn't
+   * needed here.
+   * ponytail: localStorage-only; mirror to profile config the same way
+   * `persistInstalledExtensionId` does if cross-device disable state is
+   * ever requested.
+   */
+  const DISABLED_EXTENSIONS_STORAGE_KEY = "sb-disabled-extensions";
+
+  const readPersistedDisabledExtensionIds = (): Set<string> => {
+    try {
+      const raw = safeLocalStorage.getItem(DISABLED_EXTENSIONS_STORAGE_KEY);
+      if (!raw) {
+        return new Set();
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return new Set(parsed.filter((id) => typeof id === "string"));
+      }
+    } catch (err) {
+      console.error("Failed to read persisted disabled extensions:", err);
+    }
+    return new Set();
+  };
+
+  const writePersistedDisabledExtensionIds = (ids: Set<string>) => {
+    try {
+      safeLocalStorage.setItem(
+        DISABLED_EXTENSIONS_STORAGE_KEY,
+        JSON.stringify([...ids])
+      );
+    } catch (err) {
+      console.error("Failed to persist disabled extensions:", err);
+    }
+  };
+
+  const disabledExtensionIds = readPersistedDisabledExtensionIds();
+
+  /**
    * The key under which the "autoinstall handled" ID set is mirrored into the
    * user's profile config, so a returning user doesn't have an `autoinstall`
    * extension they uninstalled on one device reinstalled on another.
@@ -913,10 +956,17 @@ export function createExtensionManager(
       extension: knownExtensionPackages.get(id) ?? null,
       extensionSet: knownExtensionsSetsByExtensionId.get(id) ?? null,
       registration: registeredExtensions.find((ext) => ext.id === id) ?? null,
+      // A disabled id is folded into `installed` too: disabling clears
+      // `installedExtensionIds`/unregisters the extension (see
+      // `setExtensionEnabled`) precisely so it stops satisfying
+      // `isSatisfiedDependency`, which would otherwise make this field go
+      // false while merely paused rather than uninstalled.
       installed:
         installedExtensionIds.has(id) ||
-        ExtensionInitalizer.getInstance().isExtensionRegistered(id),
+        ExtensionInitalizer.getInstance().isExtensionRegistered(id) ||
+        disabledExtensionIds.has(id),
       pendingInstallation: pendingInstallations.has(id),
+      enabled: !disabledExtensionIds.has(id),
     }));
   };
 
@@ -1250,6 +1300,9 @@ export function createExtensionManager(
 
     const promises: Promise<boolean>[] = [];
     for (const id of savedIds) {
+      if (disabledExtensionIds.has(id)) {
+        continue;
+      }
       if (isSatisfiedDependency(id)) {
         continue;
       }
@@ -1309,7 +1362,9 @@ export function createExtensionManager(
     const isUrlOverride = (ext: Extension) =>
       url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true";
     const isEligibleForAutoinstall = (ext: Extension) =>
-      Boolean(ext.meta.autoinstall) && !alreadyHandledIds.has(ext.meta.id);
+      Boolean(ext.meta.autoinstall) &&
+      !alreadyHandledIds.has(ext.meta.id) &&
+      !disabledExtensionIds.has(ext.meta.id);
 
     const results = await loadExtensionSet(
       defaultExtensions,
@@ -1348,6 +1403,44 @@ export function createExtensionManager(
     // is what records their uninstall, so they aren't dragged back in the
     // next time their dependent gets (re)installed.
     void persistHandledExtensionId(id);
+    refreshExtensionsSignal();
+  };
+
+  /**
+   * Turns an installed extension on or off without uninstalling it: disabling
+   * unregisters it (its cleanup functions run, same as `unloadExtension`) but
+   * leaves it in the installed-extensions ledger, so it stays in the
+   * "Installed" tab and re-enabling re-runs its `init()` from scratch.
+   *
+   * `installedExtensionIds` is cleared for the id on disable (harmless for
+   * bundled/`import`-based extensions, which never populate it) so that
+   * `isSatisfiedDependency()` doesn't short-circuit the re-registration
+   * `loadExtension()` call below for `url`-based extensions, which do
+   * populate it in `loadExtensionFromUrl`.
+   */
+  const setExtensionEnabled = async (
+    id: string,
+    enabled: boolean
+  ): Promise<void> => {
+    if (enabled) {
+      disabledExtensionIds.delete(id);
+      writePersistedDisabledExtensionIds(disabledExtensionIds);
+      refreshExtensionsSignal();
+
+      const extension = knownExtensionsById.get(id);
+      if (
+        extension &&
+        !ExtensionInitalizer.getInstance().isExtensionRegistered(id)
+      ) {
+        await loadExtension(extension);
+      }
+      return;
+    }
+
+    disabledExtensionIds.add(id);
+    writePersistedDisabledExtensionIds(disabledExtensionIds);
+    unregisterExtension(id);
+    installedExtensionIds.delete(id);
     refreshExtensionsSignal();
   };
 
@@ -1415,6 +1508,7 @@ export function createExtensionManager(
     loadExtensionSet,
     loadExtension,
     unloadExtension,
+    setExtensionEnabled,
 
     extensions: extensionsSignal,
     getExtensions,

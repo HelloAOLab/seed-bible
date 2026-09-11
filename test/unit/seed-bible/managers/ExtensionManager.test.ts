@@ -37,6 +37,7 @@ import {
   ExtensionInitalizer,
   mergeInstalledExtensionIds,
   registerExtension,
+  type ExtensionMeta,
   type ExtensionSet,
   type InstalledExtensionsMeta,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
@@ -1040,6 +1041,7 @@ describe("createExtensionManager", () => {
         registration: null,
         installed: false,
         pendingInstallation: false,
+        enabled: true,
       },
     ]);
 
@@ -1074,6 +1076,7 @@ describe("createExtensionManager", () => {
         installed: true,
         pendingInstallation: false,
         registration: null,
+        enabled: true,
       },
     ]);
   });
@@ -1116,6 +1119,7 @@ describe("createExtensionManager", () => {
         installed: false,
         pendingInstallation: true,
         registration: null,
+        enabled: true,
       },
     ]);
 
@@ -1131,6 +1135,7 @@ describe("createExtensionManager", () => {
         installed: true,
         pendingInstallation: false,
         registration: null,
+        enabled: true,
       },
     ]);
   });
@@ -1185,6 +1190,7 @@ describe("createExtensionManager", () => {
         registration: null,
         installed: false,
         pendingInstallation: false,
+        enabled: true,
       });
       expect(registeredOnly).toEqual(
         expect.objectContaining({
@@ -1363,6 +1369,92 @@ describe("createExtensionManager", () => {
         "ext.import-reinstall"
       )
     ).toBe(true);
+  });
+
+  it("setExtensionEnabled(id, false) unregisters the extension without uninstalling it", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://toggle-ext");
+
+    await manager.loadExtension({
+      url: "pkg://toggle-ext",
+      meta: {
+        id: "ext.toggle",
+        translations: {
+          en: { title: "Toggle", description: "Toggle extension" },
+        },
+      },
+    });
+
+    expect(
+      manager.extensions.value.find((e) => e.id === "ext.toggle")?.enabled
+    ).toBe(true);
+
+    await manager.setExtensionEnabled("ext.toggle", false);
+
+    const entry = manager.extensions.value.find((e) => e.id === "ext.toggle");
+    expect(entry?.enabled).toBe(false);
+    expect(entry?.installed).toBe(true);
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered("ext.toggle")
+    ).toBe(false);
+  });
+
+  it("setExtensionEnabled(id, true) re-registers a previously disabled extension", async () => {
+    const manager = createExtensionManager(login);
+    // Same pattern as the "re-invokes a url-based module's default export"
+    // test above: a dynamic `import()` of the same specifier is only
+    // evaluated once, so re-enabling won't push a second `loadedModules`
+    // entry -- what proves re-registration actually re-ran is the module's
+    // cached default export being invoked again.
+    const defaultFn = vi.fn(() => {
+      registerExtension({ id: "ext.reenable", init: () => ({}) });
+    });
+    mockExtensionModule("pkg://reenable-ext", () => ({ default: defaultFn }));
+
+    await manager.loadExtension({
+      url: "pkg://reenable-ext",
+      meta: {
+        id: "ext.reenable",
+        translations: {
+          en: { title: "Reenable", description: "Reenable extension" },
+        },
+      },
+    });
+    expect(defaultFn).toHaveBeenCalledTimes(1);
+
+    await manager.setExtensionEnabled("ext.reenable", false);
+    await manager.setExtensionEnabled("ext.reenable", true);
+
+    expect(defaultFn).toHaveBeenCalledTimes(2);
+    const entry = manager.extensions.value.find((e) => e.id === "ext.reenable");
+    expect(entry?.enabled).toBe(true);
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered("ext.reenable")
+    ).toBe(true);
+  });
+
+  it("a disabled extension stays disabled across loadSavedExtensions()", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://survives-reload");
+    const meta: ExtensionMeta = {
+      id: "ext.survives-reload",
+      translations: {
+        en: { title: "Survives Reload", description: "..." },
+      },
+    };
+
+    await manager.loadExtension({ url: "pkg://survives-reload", meta });
+    await manager.setExtensionEnabled("ext.survives-reload", false);
+    loadedModules.length = 0;
+
+    await manager.loadSavedExtensions();
+
+    expect(loadedModules).toEqual([]);
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered(
+        "ext.survives-reload"
+      )
+    ).toBe(false);
   });
 
   it("loadExtension() fails and logs when a url-based module has no default export function", async () => {

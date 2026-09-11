@@ -33,6 +33,7 @@ function makeEntry(
     registration: null,
     installed,
     pendingInstallation,
+    enabled: true,
   };
 }
 
