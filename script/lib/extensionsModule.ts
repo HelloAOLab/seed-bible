@@ -16,6 +16,12 @@ export interface ExtensionMetaFile {
   translations: Record<string, ExtensionTranslationFile>;
   dependencies?: string[];
   autoinstall?: boolean;
+  /** Material Symbols icon name shown for this extension in the manager UI. */
+  icon?: string;
+  /** Static version string shown in the extension's details pane. */
+  version?: string;
+  /** URL to the extension's homepage, linked from its details pane. */
+  homepage?: string;
 }
 
 /** An extension package discovered under `packages/`, with its parsed meta. */
@@ -131,6 +137,9 @@ export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
     ...(meta.autoinstall !== undefined
       ? { autoinstall: meta.autoinstall }
       : {}),
+    ...(meta.icon ? { icon: meta.icon } : {}),
+    ...(meta.version ? { version: meta.version } : {}),
+    ...(meta.homepage ? { homepage: meta.homepage } : {}),
   };
 }
 
