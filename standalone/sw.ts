@@ -24,7 +24,7 @@
  *  | What                                   | Strategy                        |
  *  |----------------------------------------|---------------------------------|
  *  | Core assets (entry JS, vendor, CSS, …) | Precache (install time)         |
- *  | Page HTML (any non-`/b/` navigation)   | StaleWhileRevalidate, one shared shell entry |
+ *  | Page HTML (any non-`/b/` navigation)   | StaleWhileRevalidate, one shared entry (per customization link, else the plain shell) |
  *  | Other assets of *this* build           | CacheFirst                      |
  *  | Google Fonts / Fontshare stylesheets   | StaleWhileRevalidate            |
  *  | Google Fonts / Fontshare font files    | CacheFirst                      |
@@ -63,6 +63,11 @@ declare const __ASSET_BASE_URL__: string;
 const DAY_SECONDS = 60 * 60 * 24;
 
 const HTML_CACHE = "seed-bible-html";
+/**
+ * One entry for the plain shell, plus one per distinct customization locator
+ * a visitor has opened — see the `ExpirationPlugin` on the HTML route below.
+ */
+const MAX_HTML_CACHE_ENTRIES = 25;
 const ASSET_CACHE = "seed-bible-assets";
 const FONT_STYLESHEET_CACHE = "seed-bible-font-stylesheets";
 const FONT_FILE_CACHE = "seed-bible-font-files";
@@ -71,19 +76,16 @@ const FONT_FILE_CACHE = "seed-bible-font-files";
 const ASSET_BASE_HREF = new URL(__ASSET_BASE_URL__, self.location.href).href;
 
 /**
- * Fixed cache key every navigation's HTML is stored/read under, regardless of
- * which path was actually requested. See the comment above the HTML route
- * below for why one shared entry — not one per path — is the goal now.
- */
-const APP_SHELL_URL = getAppShellCacheKey(self.location.origin);
-
-/**
- * Rewrites this route's cache reads/writes to the single `APP_SHELL_URL` key
+ * Rewrites this route's cache reads/writes to `getAppShellCacheKey`'s result
  * instead of Workbox's default (the request URL), so every navigation shares
- * one cache entry.
+ * a cache entry with every other navigation carrying the same
+ * `?customization=...` locator (or, with none, the plain shell) — see the
+ * comment above the HTML route below for why one shared entry per
+ * customization, not one per path, is the goal.
  */
 const appShellCacheKeyPlugin = {
-  cacheKeyWillBeUsed: async () => APP_SHELL_URL,
+  cacheKeyWillBeUsed: async ({ request }: { request: Request }) =>
+    getAppShellCacheKey(self.location.origin, new URL(request.url)),
 };
 
 /**
@@ -113,30 +115,35 @@ cleanupOutdatedCaches();
 // ─── The app shell (HTML) ────────────────────────────────────────────────────
 
 /**
- * All navigations share a single cached HTML entry (`APP_SHELL_URL`), not one
- * per path — see `appShellCacheKeyPlugin` above. The goal changed from "serve
- * the exact page requested" to "load instantly, without touching the network,
- * once *anything* is cached": this worker's main audience is returning
- * visitors on slow or unreliable connections, some of whom already have an
- * entire translation downloaded locally and don't need the HTML request at
- * all to keep reading.
+ * All navigations share a cached HTML entry keyed by `getAppShellCacheKey`,
+ * not one per path — see `appShellCacheKeyPlugin` above. Ordinary navigations
+ * all pool into the one plain-shell entry; a `?customization=...` link pools
+ * instead into that locator's own entry, so a customization's branded HTML
+ * (theme, favicon) can't leak onto — or get overwritten by — the plain shell
+ * or a different customization. The goal changed from "serve the exact page
+ * requested" to "load instantly, without touching the network, once
+ * *anything* for this key is cached": this worker's main audience is
+ * returning visitors on slow or unreliable connections, some of whom already
+ * have an entire translation downloaded locally and don't need the HTML
+ * request at all to keep reading.
  *
  * The cost: the client calls Preact's `hydrate()` when the served HTML
  * happens to match the requested path exactly, and `render()` otherwise (see
- * `app/hydrationGate.ts`). With one shared shell, that match now only happens
- * for requests this worker never intercepts in the first place — i.e. before
- * a service worker controls the page at all, when the browser always gets a
- * fresh, exact per-path SSR response — or by coincidence, when the cached
- * shell happens to be the same page being reopened. Every other navigation
- * gets the (mismatched) cached shell and falls back to `render()`, the same
- * already-tested path a cache miss took before. That's an accepted trade-off
- * here: instant, network-free loads vs. a brief client-side re-render on most
- * navigations.
+ * `app/hydrationGate.ts`). With one shared entry per key, that match now only
+ * happens for requests this worker never intercepts in the first place — i.e.
+ * before a service worker controls the page at all, when the browser always
+ * gets a fresh, exact per-path SSR response — or by coincidence, when the
+ * cached entry happens to be the same page being reopened. Every other
+ * navigation gets the (mismatched) cached entry and falls back to `render()`,
+ * the same already-tested path a cache miss took before. That's an accepted
+ * trade-off here: instant, network-free loads vs. a brief client-side
+ * re-render on most navigations.
  *
- * `StaleWhileRevalidate` is what keeps the shell current over time: every use
+ * `StaleWhileRevalidate` is what keeps each entry current over time: every use
  * serves the cached copy immediately, then fetches the real path in the
- * background and overwrites the one shared entry with it, so the *next* load
- * — of any path — reflects whatever just shipped.
+ * background and overwrites that one shared entry with it, so the *next* load
+ * sharing its key — of any path, for the same customization link or lack of
+ * one — reflects whatever just shipped.
  */
 
 /**
@@ -156,9 +163,12 @@ cleanupOutdatedCaches();
  *
  * Warms from the URL of the page that's actually registering this worker
  * (falling back to `/` if that can't be determined), since that's the only
- * real content available to seed the shell with — but stores it under the
- * shared `APP_SHELL_URL` key like every other write to this cache, not under
- * its own URL.
+ * real content available to seed the shell with — but stores it under
+ * `getAppShellCacheKey`'s key for that URL, like every other write to this
+ * cache, not under its own URL. A registering page carrying a
+ * `?customization=...` link warms that customization's own entry, not the
+ * plain shell — consistent with the route below, which would do the same on
+ * this page's first real navigation.
  */
 async function warmAppShellCache(): Promise<boolean> {
   try {
@@ -195,9 +205,13 @@ async function warmAppShellCache(): Promise<boolean> {
     // also flagged `redirected`. Serving such a response to a navigation
     // (whose redirect mode is "manual") is a hard browser error, so caching
     // one would turn every offline launch into a failure instead of the
-    // shell. Stored under the shared `APP_SHELL_URL` key, same as the route
-    // below.
-    await cache.put(APP_SHELL_URL, new Response(response.body, response));
+    // shell. Stored under the same key the route below would use, same as
+    // every other write to this cache.
+    const cacheKey = getAppShellCacheKey(
+      self.location.origin,
+      new URL(url, self.location.origin)
+    );
+    await cache.put(cacheKey, new Response(response.body, response));
     return true;
   } catch {
     // Offline (or otherwise unreachable) at install time.
@@ -234,9 +248,9 @@ registerRoute(
   new StaleWhileRevalidate({
     cacheName: HTML_CACHE,
     plugins: [
-      // Rewrites both the read and the write to the one shared
-      // `APP_SHELL_URL` key. Placed first so `ExpirationPlugin` below — whose
-      // bookkeeping keys off the effective request — sees that same
+      // Rewrites both the read and the write to `getAppShellCacheKey`'s
+      // result for the request. Placed first so `ExpirationPlugin` below —
+      // whose bookkeeping keys off the effective request — sees that same
       // rewritten key; `CacheableResponsePlugin` only looks at response
       // status, so ordering doesn't affect it.
       appShellCacheKeyPlugin,
@@ -251,12 +265,17 @@ registerRoute(
       // follows the redirect itself and we see a fresh fetch event for the
       // destination, whose 200 is what gets stored.
       new CacheableResponsePlugin({ statuses: [200] }),
-      // Only one entry ever exists now (the shared shell), so `maxEntries`
-      // just guards the invariant rather than bounding growth; no
-      // `maxAgeSeconds` is needed since `StaleWhileRevalidate` refreshes this
-      // entry from the network on every single use.
+      // One entry for the plain shell, plus one per distinct customization
+      // locator a visitor has actually opened — no `maxAgeSeconds` is needed
+      // since `StaleWhileRevalidate` refreshes whichever entry was just used
+      // from the network on every single hit. `maxEntries` bounds this so a
+      // device that has opened many different customization links over time
+      // doesn't grow the cache without limit; least-recently-used entries are
+      // evicted first once the cap is hit, and the plain shell is refreshed
+      // far more often than any single customization in practice, so it's
+      // the one least likely to be the one evicted.
       new ExpirationPlugin({
-        maxEntries: 1,
+        maxEntries: MAX_HTML_CACHE_ENTRIES,
         purgeOnQuotaError: true,
       }),
     ],

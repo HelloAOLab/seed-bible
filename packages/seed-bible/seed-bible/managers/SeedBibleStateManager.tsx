@@ -94,7 +94,10 @@ import {
   CUSTOMIZATION_FONT_FIELDS,
   CUSTOMIZATION_FONT_PRESETS,
 } from "../managers/CustomizationsManager";
-import type { CustomizationsManager } from "../managers/CustomizationsManager";
+import type {
+  CustomizationsManager,
+  InitialCustomizationSeed,
+} from "../managers/CustomizationsManager";
 import { createCustomizationVariantSelectionsManager } from "../managers/CustomizationVariantSelectionsManager";
 import { createCustomizationExtensionPreferencesManager } from "../managers/CustomizationExtensionPreferencesManager";
 import {
@@ -338,6 +341,15 @@ export interface AppState {
   /** The name of the site (used for Open Graph and other social media metadata). */
   siteName: ReadonlySignal<string>;
 
+  /**
+   * The active customization's uploaded logo, used as this page's favicon and
+   * its `og:image`/`og:image:alt` social-preview image (see entry-ssr.tsx's
+   * `<link rel="icon">` and meta block). Null when no customization is active
+   * or the active one hasn't uploaded a logo — either way, the page keeps the
+   * defaults already in index.html.
+   */
+  customizationLogoUrl: ReadonlySignal<string | null>;
+
   /** Whether the current URL is the static "/{lang}/about" page. */
   isAboutPage: ReadonlySignal<boolean>;
 
@@ -572,6 +584,15 @@ export interface CreateSeedBibleStateOptions {
    * `readInjectedApiResponseSnapshot` in `app/apiResponseSeed.ts`.
    */
   apiResponseSnapshot?: Record<string, unknown>;
+
+  /**
+   * A prior SSR render's completed `?customization=...` load, so the new
+   * `CustomizationsManager` doesn't re-fetch a record the server already
+   * resolved. The client uses this to seed its own load with whatever the
+   * server already fetched for the SSR render — see
+   * `readInjectedCustomizationSeed` in `app/customizationSeed.ts`.
+   */
+  initialCustomizationSeed?: InitialCustomizationSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -641,7 +662,8 @@ export function createSeedBibleState(
     themeManager,
     navigation,
     customizationVariantSelections,
-    customizationExtensionPreferences
+    customizationExtensionPreferences,
+    options.initialCustomizationSeed
   );
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
@@ -1509,6 +1531,10 @@ export function createSeedBibleState(
       customizations.activeCustomization.value?.name
     );
   });
+
+  const customizationLogoUrl = computed<string | null>(
+    () => customizations.activeCustomization.value?.logoUrl ?? null
+  );
 
   /**
    * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
@@ -2549,6 +2575,7 @@ export function createSeedBibleState(
       title,
       description,
       siteName,
+      customizationLogoUrl,
       canonicalUrl,
       socialTitle,
       isAboutPage,

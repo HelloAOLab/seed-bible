@@ -52,6 +52,9 @@ export interface RenderOptions {
    * - `<!--SEED_JSON-->` where the JSON-serialized API response snapshot
    *   should be injected, so the client can seed its own API cache with data
    *   the server already fetched instead of re-fetching it.
+   * - `<!--CUSTOMIZATION_JSON-->` where the JSON-serialized
+   *   `?customization=...` load result should be injected, so the client can
+   *   skip re-fetching a customization record the server already resolved.
    * - `<!--THEME_STYLE_TAG-->` where the active theme's composed CSS text
    *   should be injected, inside a `<style id="sb-theme-styles">` tag.
    * - `<!--THEME_PRESETS_JSON-->` where the built-in theme presets' composed
@@ -124,6 +127,53 @@ function replacePlaceholder(
   value: string
 ): string {
   return source.split(placeholder).join(value);
+}
+
+/** Matches one `<meta ...>` tag; `[^>]*` spans newlines since some of these tags (see index.html) have their attributes on separate lines. */
+const META_TAG_RE = /<meta\b[^>]*>/gi;
+
+/** Whether a `<meta>` tag's `property` attribute is one of the `og:image` family. */
+function isOgImageMetaTag(tag: string): boolean {
+  return /\bproperty\s*=\s*"og:image(?::type|:width|:height|:alt)?"/i.test(tag);
+}
+
+/**
+ * Removes index.html's default `og:image`/`:type`/`:width`/`:height`/`:alt`
+ * meta tags. Called only when a customization's own logo is about to replace
+ * them (see the meta block in `render()`) — a crawler can't be relied on to
+ * prefer the *last* of two conflicting `og:image` tags (many just take the
+ * first, or treat multiple as a gallery), so the default has to be removed
+ * rather than merely followed by an override. See `stripDefaultFaviconLinks`
+ * below for the same problem, one level down the page, for the tab icon.
+ */
+export function stripDefaultOgImageMeta(html: string): string {
+  return html.replace(META_TAG_RE, (tag) => (isOgImageMetaTag(tag) ? "" : tag));
+}
+
+/** Matches one `<link ...>` tag. */
+const LINK_TAG_RE = /<link\b[^>]*>/gi;
+
+/** Whether a `<link>` tag's `rel` attribute is the favicon or the apple-touch-icon. */
+function isFaviconLinkTag(tag: string): boolean {
+  return /\brel\s*=\s*"(?:icon|apple-touch-icon)"/i.test(tag);
+}
+
+/**
+ * Removes index.html's default `<link rel="icon">`/
+ * `<link rel="apple-touch-icon">` tags. Called only when a customization's
+ * own logo is about to replace them (see the meta block in `render()`).
+ * Browsers do not reliably prefer the *last* declared icon link when there
+ * are two of the same `rel` — some use whichever they fetch or parse first,
+ * or pick by `type`/`sizes` rather than document order — so, exactly like
+ * `stripDefaultOgImageMeta` above, the default has to be removed rather than
+ * merely followed by a second tag. That also means the client never has two
+ * to choose from either: `useCustomizationLinkOverrides`
+ * (`app/customizationLinkOverrides.ts`) finds the one tag by its `rel` and
+ * changes its `href` in place, the same invariant this function establishes
+ * for the initial SSR response.
+ */
+export function stripDefaultFaviconLinks(html: string): string {
+  return html.replace(LINK_TAG_RE, (tag) => (isFaviconLinkTag(tag) ? "" : tag));
 }
 
 /**
@@ -505,6 +555,11 @@ export async function render(
     ),
   ]);
 
+  // Read once — used both in the meta block below and to decide whether
+  // `options.html`'s default `og:image` tags need stripping first (see
+  // `stripDefaultOgImageMeta`).
+  const customizationLogoUrl = state.app.customizationLogoUrl.value;
+
   const metaHtml = await renderToStringAsync(
     <>
       <meta
@@ -528,13 +583,43 @@ export async function render(
       <meta property="og:description" content={state.app.description.value} />
       <meta property="og:url" content={state.app.canonicalUrl.value} />
       <meta property="og:site_name" content={state.app.siteName.value} />
+      {/* Only emitted when a customization with an uploaded logo is active.
+          `stripDefaultOgImageMeta` has already removed index.html's own
+          `og:image`/`:type`/`:width`/`:height`/`:alt` from `baseHtml` below in
+          that case, so there is exactly one set of these tags either way —
+          unlike the favicon `<link>`, a crawler can't be relied on to prefer
+          the *last* of two conflicting `og:image` tags (many just take the
+          first, or treat multiple as a gallery), so an override here has to
+          replace the default rather than merely follow it. No explicit
+          `:type`/`:width`/`:height`: those described the default JPG's fixed
+          1200x630 crop and would misdescribe an arbitrary uploaded logo. */}
+      {customizationLogoUrl && (
+        <>
+          <meta property="og:image" content={customizationLogoUrl} />
+          <meta property="og:image:alt" content={state.app.siteName.value} />
+        </>
+      )}
       {/* `twitter:*` really is `name=`, unlike `og:*`. No `twitter:image`: it
-          would fall back to `og:image`, which is root-relative in index.html
-          and so unresolvable by most scrapers either way. */}
+          would fall back to `og:image`, which is root-relative in
+          index.html's default (unresolvable by most scrapers either way) but
+          always a proper absolute URL when a customization's logo replaces
+          it above. */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={state.app.socialTitle.value} />
       <meta name="twitter:description" content={state.app.description.value} />
       <link rel="canonical" href={state.app.canonicalUrl.value} />
+      {/* Only emitted when a customization with an uploaded logo is active.
+          `stripDefaultFaviconLinks` has already removed index.html's own
+          `<link rel="icon">`/`<link rel="apple-touch-icon">` from `baseHtml`
+          below in that case, so there is exactly one tag of each `rel`
+          either way — see that function for why an override can't just be
+          appended after the default. */}
+      {customizationLogoUrl && (
+        <>
+          <link rel="icon" href={customizationLogoUrl} />
+          <link rel="apple-touch-icon" href={customizationLogoUrl} />
+        </>
+      )}
       <title>{state.app.title.value}</title>
     </>
   );
@@ -577,6 +662,14 @@ export async function render(
       )
     )
   );
+  // Null whenever there was no `?customization=` link, or its load hadn't
+  // actually completed by now (the SSR-only timeout backstop fired first) —
+  // see `getInitialCustomizationSeed`. Either way `JSON.stringify(null)` is a
+  // harmless "nothing to seed" the client's `readInjectedCustomizationSeed`
+  // already treats as absent.
+  const customizationSeedJson = escapeForScript(
+    JSON.stringify(state.customizations.getInitialCustomizationSeed())
+  );
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
@@ -588,14 +681,19 @@ export async function render(
     ["<!-- THEME_PRESETS_JSON -->", themePresetsJson],
     ["<!-- CONFIG_JSON -->", configJson],
     ["<!-- SEED_JSON -->", seedJson],
+    ["<!-- CUSTOMIZATION_JSON -->", customizationSeedJson],
     ["<!-- APP_HTML -->", appHtml],
   ];
+
+  const baseHtml = customizationLogoUrl
+    ? stripDefaultFaviconLinks(stripDefaultOgImageMeta(options.html))
+    : options.html;
 
   return {
     html: substitutions.reduce(
       (html, [placeholder, value]) =>
         replacePlaceholder(html, placeholder, value),
-      options.html
+      baseHtml
     ),
     ...(notFound ? { notFound: true as const } : {}),
   };

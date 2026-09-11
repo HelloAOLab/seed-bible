@@ -139,17 +139,43 @@ describe("isCacheableStaticAsset()", () => {
 });
 
 describe("getAppShellCacheKey()", () => {
-  it("keys the shell under a fixed synthetic path, scoped to the origin", () => {
+  function keyFor(href: string): string {
+    return getAppShellCacheKey(ORIGIN, new URL(href));
+  }
+
+  it("keys an ordinary navigation under a fixed synthetic path, scoped to the origin", () => {
     // The literal is intentionally hardcoded rather than built from
     // `APP_SHELL_CACHE_PATH` — this needs to fail if that constant's value
     // ever changes, not just mirror it.
-    expect(getAppShellCacheKey(ORIGIN)).toBe(`${ORIGIN}/__app-shell`);
+    expect(keyFor(`${ORIGIN}/`)).toBe(`${ORIGIN}/__app-shell`);
+    expect(keyFor(`${ORIGIN}/en/AAB/genesis/1`)).toBe(`${ORIGIN}/__app-shell`);
   });
 
   it("scopes the key to the given origin", () => {
-    expect(getAppShellCacheKey(ORIGIN)).toContain(ORIGIN);
-    expect(getAppShellCacheKey(ORIGIN)).not.toBe(
-      getAppShellCacheKey("https://alpha.seedbible.org")
+    expect(keyFor(`${ORIGIN}/`)).toContain(ORIGIN);
+    expect(keyFor(`${ORIGIN}/`)).not.toBe(
+      getAppShellCacheKey("https://alpha.seedbible.org", new URL(`${ORIGIN}/`))
+    );
+  });
+
+  it("keys a customization link separately from the plain shell", () => {
+    const key = keyFor(
+      `${ORIGIN}/en/AAB/genesis/1?customization=owner.customization_a`
+    );
+    expect(key).not.toBe(`${ORIGIN}/__app-shell`);
+  });
+
+  it("shares one key across every path carrying the same customization locator", () => {
+    expect(
+      keyFor(`${ORIGIN}/en/AAB/genesis/1?customization=owner.customization_a`)
+    ).toBe(
+      keyFor(`${ORIGIN}/es/spa_onbv/john/3?customization=owner.customization_a`)
+    );
+  });
+
+  it("keys two different customization locators apart from each other", () => {
+    expect(keyFor(`${ORIGIN}/?customization=owner.customization_a`)).not.toBe(
+      keyFor(`${ORIGIN}/?customization=owner.customization_b`)
     );
   });
 });
