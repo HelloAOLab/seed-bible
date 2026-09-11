@@ -13,7 +13,7 @@ const ICON_BY_TYPE: Record<string, string> = {
   person: "person",
   place: "place",
   event: "event",
-  visualization: "hub",
+  visualization: "graph_3",
 };
 
 const SKELETON_ROW_STYLE = `
@@ -154,7 +154,7 @@ export default function initBibleAtlasExtension() {
           catalog.value.map((viz) => ({
             id: `bible-atlas-catalog-${viz.id}`,
             title: viz.title,
-            icon: () => <MaterialIcon>hub</MaterialIcon>,
+            icon: () => <MaterialIcon>graph_3</MaterialIcon>,
             onSelect: () => openAtlasPane(viz.title, viz.embed),
           })),
       });
