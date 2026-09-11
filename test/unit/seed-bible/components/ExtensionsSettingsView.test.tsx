@@ -46,6 +46,7 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       extensions: signal<ExtensionListEntry[]>(entries),
       loadExtension: vi.fn().mockResolvedValue(undefined),
       unloadExtension: vi.fn(),
+      setExtensionEnabled: vi.fn().mockResolvedValue(undefined),
       getAllExtensionsAsSet: vi.fn().mockReturnValue(null),
     },
   } as unknown as SeedBibleState;
@@ -152,5 +153,59 @@ describe("ExtensionsSettingsView", () => {
 
     expect(container.querySelector(".sb-extensions-tabs")).toBeNull();
     expect(container.textContent).toContain("No extensions available.");
+  });
+
+  const viewDetailsButtons = () =>
+    Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        'button[aria-label="View details"]'
+      )
+    );
+  const click = (el: Element) => {
+    act(() => {
+      el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  it("opens the details pane from a real button so it is reachable by keyboard", () => {
+    renderExtensions([makeEntry("installed-one", true)]);
+
+    const [detailsButton] = viewDetailsButtons();
+    expect(detailsButton).toBeDefined();
+    expect(detailsButton!.tagName).toBe("BUTTON");
+    expect(detailsButton!.type).toBe("button");
+
+    click(detailsButton!);
+
+    expect(container.querySelector(".sb-extension-details")).not.toBeNull();
+  });
+
+  it("offers enable/disable and uninstall in the details pane for an installed extension", () => {
+    renderExtensions([makeEntry("installed-one", true)]);
+
+    click(viewDetailsButtons()[0]!);
+
+    expect(container.querySelector(".sb-extension-toggle")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-settings-danger-button")
+    ).not.toBeNull();
+  });
+
+  it("does not offer enable/disable or uninstall in the details pane for a never-installed extension", () => {
+    const state = renderExtensions([makeEntry("available-one", false)]);
+
+    act(() => {
+      availableTab().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    click(viewDetailsButtons()[0]!);
+
+    // The details pane opened, but nothing there can write install state for
+    // an extension the user never installed — disabling one used to persist a
+    // disabled flag, which made it report as installed (a phantom install).
+    expect(container.querySelector(".sb-extension-details")).not.toBeNull();
+    expect(container.querySelector(".sb-extension-toggle")).toBeNull();
+    expect(container.querySelector(".sb-settings-danger-button")).toBeNull();
+    expect(state.extensions.setExtensionEnabled).not.toHaveBeenCalled();
+    expect(state.extensions.unloadExtension).not.toHaveBeenCalled();
   });
 });

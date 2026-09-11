@@ -1124,9 +1124,14 @@ function ExtensionDetailsView(props: {
   onBack: () => void;
   onToggleEnabled: (id: string, enabled: boolean) => void;
   onUninstall: (id: string) => void;
-  canUninstall: boolean;
+  installState: ExtensionInstallState;
 }) {
-  const { entry, onBack, onToggleEnabled, onUninstall, canUninstall } = props;
+  const { entry, onBack, onToggleEnabled, onUninstall, installState } = props;
+  // Enabling/disabling and uninstalling only mean anything for an extension
+  // the user actually has — offering them for a never-installed one would
+  // write a disabled flag for it and make it report as installed.
+  const canManage =
+    installState === "installed" || installState === "downloaded";
   const { t } = useI18n();
   const { branding } = useAppConfig();
   const meta = entry.extension?.meta;
@@ -1210,33 +1215,35 @@ function ExtensionDetailsView(props: {
         </dl>
 
         <div className="sb-extension-details-actions">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={entry.enabled}
-            className={`sb-extension-toggle${entry.enabled ? " sb-extension-toggle-on" : ""}`}
-            onClick={() => onToggleEnabled(entry.id, !entry.enabled)}
-            aria-label={
-              entry.enabled
-                ? t("extension-disable", { defaultValue: "Disable" })
-                : t("extension-enable", { defaultValue: "Enable" })
-            }
-          >
-            <span className="sb-extension-toggle-thumb" />
-          </button>
-          <span>
-            {entry.enabled
-              ? t("extension-disable", { defaultValue: "Disable" })
-              : t("extension-enable", { defaultValue: "Enable" })}
-          </span>
-          {canUninstall && (
-            <button
-              type="button"
-              className="sb-settings-danger-button"
-              onClick={() => onUninstall(entry.id)}
-            >
-              {t("uninstall", { defaultValue: "Uninstall" })}
-            </button>
+          {canManage && (
+            <>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={entry.enabled}
+                className={`sb-extension-toggle${entry.enabled ? " sb-extension-toggle-on" : ""}`}
+                onClick={() => onToggleEnabled(entry.id, !entry.enabled)}
+                aria-label={
+                  entry.enabled
+                    ? t("extension-disable", { defaultValue: "Disable" })
+                    : t("extension-enable", { defaultValue: "Enable" })
+                }
+              >
+                <span className="sb-extension-toggle-thumb" />
+              </button>
+              <span>
+                {entry.enabled
+                  ? t("extension-disable", { defaultValue: "Disable" })
+                  : t("extension-enable", { defaultValue: "Enable" })}
+              </span>
+              <button
+                type="button"
+                className="sb-settings-danger-button"
+                onClick={() => onUninstall(entry.id)}
+              >
+                {t("uninstall", { defaultValue: "Uninstall" })}
+              </button>
+            </>
           )}
         </div>
       </section>
@@ -1457,6 +1464,23 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 <span className="material-symbols-outlined">delete</span>
               </button>
             )}
+            <button
+              type="button"
+              className="sb-extension-row-action-button"
+              onClick={() => {
+                selectedExtensionId.value = id;
+              }}
+              aria-label={t("extension-view-details", {
+                defaultValue: "View details",
+              })}
+              title={t("extension-view-details", {
+                defaultValue: "View details",
+              })}
+            >
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
+            </button>
           </div>
         </div>
       </li>
@@ -1492,16 +1516,18 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             handleUninstall(id);
             selectedExtensionId.value = null;
           }}
-          // No "base extension"/auto-installed concept on this branch (no
-          // CustomizationsManager) — every installed extension can be
-          // uninstalled, same as the row's own unconditional Uninstall button.
-          canUninstall={true}
+          installState={getExtensionInstallState(
+            entry.installed,
+            entry.pendingInstallation,
+            ExtensionInitalizer.getInstance().isExtensionRegistered(entry.id)
+          )}
         />
       );
     }
     // The selected extension disappeared (e.g. uninstalled from another tab) —
-    // fall through to the list rather than rendering a dead details pane.
-    selectedExtensionId.value = null;
+    // fall through to the list below. The stale id is left in the signal
+    // deliberately: it is only ever read by the lookup above, so it can't be
+    // observed once the lookup misses.
   }
 
   return (
