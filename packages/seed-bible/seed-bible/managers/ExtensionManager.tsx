@@ -1396,6 +1396,15 @@ export function createExtensionManager(
   const unloadExtension = (id: string) => {
     unregisterExtension(id);
     installedExtensionIds.delete(id);
+    // A clean uninstall shouldn't leave residue in the disabled-ids ledger:
+    // otherwise `computeExtensions()`'s `installed` (which folds in
+    // `disabledExtensionIds` so a merely-disabled extension keeps reading as
+    // installed, see `setExtensionEnabled`) would keep reporting this id as
+    // installed-but-disabled forever, since `knownExtensionsById` is never
+    // pruned once an extension has been loaded.
+    if (disabledExtensionIds.delete(id)) {
+      writePersistedDisabledExtensionIds(disabledExtensionIds);
+    }
     void forgetInstalledExtensionId(id);
     // Extensions that are only ever force-installed as a dependency (e.g.
     // `seed-bible-utils`) never carry `autoinstall: true` themselves, so

@@ -1457,6 +1457,37 @@ describe("createExtensionManager", () => {
     ).toBe(false);
   });
 
+  it("unloadExtension() clears a disabled flag so uninstalling doesn't leave a phantom 'installed but disabled' entry", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://disable-then-uninstall");
+
+    await manager.loadExtension({
+      url: "pkg://disable-then-uninstall",
+      meta: {
+        id: "ext.disable-then-uninstall",
+        translations: {
+          en: {
+            title: "Disable then uninstall",
+            description: "Disable then uninstall extension",
+          },
+        },
+      },
+    });
+
+    await manager.setExtensionEnabled("ext.disable-then-uninstall", false);
+    manager.unloadExtension("ext.disable-then-uninstall");
+
+    const entry = manager.extensions.value.find(
+      (e) => e.id === "ext.disable-then-uninstall"
+    );
+    // The extension stays "known" forever once loaded (loadExtension always
+    // repopulates knownExtensionsById), so it never disappears from the
+    // list entirely -- but it must no longer read as a disabled, installed
+    // extension once it's been uninstalled.
+    expect(entry?.installed).toBe(false);
+    expect(entry?.enabled).toBe(true);
+  });
+
   it("loadExtension() fails and logs when a url-based module has no default export function", async () => {
     const manager = createExtensionManager(login);
     mockExtensionModule("pkg://no-default", () => ({}));
