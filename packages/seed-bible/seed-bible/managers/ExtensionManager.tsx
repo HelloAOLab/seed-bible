@@ -430,6 +430,29 @@ function isExtensionModule(value: unknown): value is ExtensionModule {
   );
 }
 
+export type ExtensionSourceLabel = "bundled" | "url" | "unknown";
+
+/**
+ * Whether an extension shipped in this build ("bundled", an `import`-based
+ * `Extension`) or was loaded from a URL at runtime ("url" — an uploaded
+ * extension set or `loadExtensionFromUrl`). Purely derived from the shape of
+ * the `Extension` union; nothing is persisted for this.
+ */
+export function getExtensionSourceLabel(
+  extension: Extension | null
+): ExtensionSourceLabel {
+  if (!extension) {
+    return "unknown";
+  }
+  if ("url" in extension && extension.url) {
+    return "url";
+  }
+  if ("import" in extension && extension.import) {
+    return "bundled";
+  }
+  return "unknown";
+}
+
 /**
  * Per-store metadata for the installed-extensions ID list: when each
  * currently-installed extension was installed, and when this store's ID list

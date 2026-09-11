@@ -35,13 +35,43 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", () => ({
 import {
   createExtensionManager,
   ExtensionInitalizer,
+  getExtensionSourceLabel,
   mergeInstalledExtensionIds,
   registerExtension,
+  type Extension,
   type ExtensionMeta,
   type ExtensionSet,
   type InstalledExtensionsMeta,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { Mock } from "vitest";
+
+describe("getExtensionSourceLabel()", () => {
+  it("returns 'bundled' for an import-based extension", () => {
+    const extension: Extension = {
+      import: () => Promise.resolve({ default: () => undefined }),
+      meta: {
+        id: "ext.bundled",
+        translations: { en: { title: "Bundled", description: "..." } },
+      },
+    };
+    expect(getExtensionSourceLabel(extension)).toBe("bundled");
+  });
+
+  it("returns 'url' for a url-based extension", () => {
+    const extension: Extension = {
+      url: "https://example.com/ext.js",
+      meta: {
+        id: "ext.url",
+        translations: { en: { title: "URL", description: "..." } },
+      },
+    };
+    expect(getExtensionSourceLabel(extension)).toBe("url");
+  });
+
+  it("returns 'unknown' for null", () => {
+    expect(getExtensionSourceLabel(null)).toBe("unknown");
+  });
+});
 
 /**
  * Builds a minimal LoginManager stub backed by signals, exposing just the
