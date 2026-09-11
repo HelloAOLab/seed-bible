@@ -447,7 +447,7 @@ export function getExtensionSourceLabel(
   if ("url" in extension && extension.url) {
     return "url";
   }
-  if ("import" in extension && extension.import) {
+  if ("import" in extension) {
     return "bundled";
   }
   return "unknown";
