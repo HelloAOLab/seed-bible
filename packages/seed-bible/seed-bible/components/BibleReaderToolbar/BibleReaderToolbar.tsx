@@ -901,6 +901,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         : 0
   );
 
+  const isVerseSheetOverflowUnclipped = useComputed(
+    () => selectedVerseToolId.value !== null && !isVerseSheetDragging.value
+  );
+
   // True when the sidebar drawer is open showing the tabs/bookmarks view
   // (not the settings view) with the bookmark filter active.
   const isBookmarksViewOpen = useComputed(
@@ -2971,6 +2975,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         className={`sb-verse-toolbar-overflow${
                           verseSheetRevealHeight.value === 0
                             ? " sb-verse-toolbar-overflow-closed"
+                            : ""
+                        }${
+                          isVerseSheetOverflowUnclipped.value
+                            ? " sb-verse-toolbar-overflow-unclipped"
                             : ""
                         }`}
                         style={{
