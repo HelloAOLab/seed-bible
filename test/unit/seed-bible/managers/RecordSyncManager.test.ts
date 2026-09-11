@@ -1,24 +1,29 @@
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
-import {
-  conflictResolutions,
-  createAnnotationSyncManager,
-  type AnnotationSyncManager,
-} from "@packages/seed-bible/seed-bible/managers/AnnotationSyncManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import {
-  annotationFingerprint,
-  createInMemoryAnnotationStore,
+  canonicalize,
+  createInMemoryRecordStore,
   LOCAL_OWNER,
   MAX_SYNC_ATTEMPTS,
+  migrateV1Row,
   syncedRow,
-  type OfflineAnnotationStore,
-  type StoredAnnotation,
-} from "@packages/seed-bible/seed-bible/managers/OfflineAnnotationStore";
+  type OfflineRecordStore,
+  type StoredRecord,
+  type SyncDomain,
+} from "@packages/seed-bible/seed-bible/managers/OfflineRecordStore";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import {
+  conflictResolutions,
+  createRecordSyncManager,
+  type AdoptionChoice,
+  type CreateRecordSyncManagerOptions,
+  type RecordSyncManager,
+} from "@packages/seed-bible/seed-bible/managers/RecordSyncManager";
 import { signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 
 const OWNER = "user-1";
+const COLLECTION = "GEN/1";
 
 function makeAnnotation(
   id: string,
@@ -39,39 +44,53 @@ function makeAnnotation(
   };
 }
 
+const testDomain: SyncDomain<Annotation> = {
+  dbName: "test",
+  parse: (value) => value as Annotation,
+  sameVersion: (a, b) =>
+    a.data.updatedAtMs != null && b.data.updatedAtMs != null
+      ? a.data.updatedAtMs === b.data.updatedAtMs
+      : canonicalize({ ...a, data: { ...a.data, updatedAtMs: undefined } }) ===
+        canonicalize({ ...b, data: { ...b.data, updatedAtMs: undefined } }),
+  collection: () => COLLECTION,
+  marker: (_address, a) =>
+    `publicRead:annotations/${a.bookId}/${a.chapterNumber}`,
+  duplicate: (a) => ({
+    address: `${a.id}-copy`,
+    payload: { ...a, id: `${a.id}-copy` },
+  }),
+};
+
 /** A row holding an unsent edit, based on the given server version. */
 function pendingUpsert(
   annotation: Annotation,
   base: Annotation | null,
-  overrides: Partial<StoredAnnotation> = {}
-): StoredAnnotation {
+  overrides: Partial<StoredRecord<Annotation>> = {}
+): StoredRecord<Annotation> {
   return {
-    ...syncedRow(OWNER, annotation),
+    ...syncedRow(OWNER, annotation.id, COLLECTION, annotation),
     updatedAtMs: 9_000,
     pendingOp: "upsert",
-    baseUpdatedAtMs: base ? (base.data.updatedAtMs ?? null) : null,
-    baseFingerprint: base ? annotationFingerprint(base) : null,
+    base,
     ...overrides,
   };
 }
 
 /** A row holding an unsent deletion of the given server version. */
 function pendingDelete(
-  annotationId: string,
+  address: string,
   base: Annotation | null,
-  overrides: Partial<StoredAnnotation> = {}
-): StoredAnnotation {
+  overrides: Partial<StoredRecord<Annotation>> = {}
+): StoredRecord<Annotation> {
   return {
-    key: `${OWNER}/${annotationId}`,
+    key: `${OWNER}/${address}`,
     owner: OWNER,
-    annotationId,
-    bookId: "GEN",
-    chapterNumber: 1,
-    annotation: null,
+    address,
+    collection: COLLECTION,
+    payload: null,
+    base,
     deleted: true,
     updatedAtMs: 9_000,
-    baseUpdatedAtMs: base ? (base.data.updatedAtMs ?? null) : null,
-    baseFingerprint: base ? annotationFingerprint(base) : null,
     pendingOp: "delete",
     attempts: 0,
     ...overrides,
@@ -108,14 +127,14 @@ function createLoginMock(userId: string | null): Mocked<LoginManager> {
   } as unknown as Mocked<LoginManager>;
 }
 
-describe("AnnotationSyncManager", () => {
+describe("RecordSyncManager", () => {
   let os: CasualOSManager;
   let getDataMock: Mock;
   let recordDataMock: Mock;
   let eraseDataMock: Mock;
   let login: Mocked<LoginManager>;
-  let store: OfflineAnnotationStore;
-  let managers: AnnotationSyncManager[];
+  let store: OfflineRecordStore<Annotation>;
+  let managers: RecordSyncManager<Annotation>[];
 
   beforeEach(() => {
     os = CasualOSManager();
@@ -132,7 +151,7 @@ describe("AnnotationSyncManager", () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
 
     login = createLoginMock(OWNER);
-    store = createInMemoryAnnotationStore();
+    store = createInMemoryRecordStore<Annotation>();
     managers = [];
   });
 
@@ -144,15 +163,13 @@ describe("AnnotationSyncManager", () => {
   });
 
   function createSync(
-    overrides: Partial<Parameters<typeof createAnnotationSyncManager>[0]> = {}
-  ): AnnotationSyncManager {
-    const manager = createAnnotationSyncManager({
+    overrides: Partial<CreateRecordSyncManagerOptions<Annotation>> = {}
+  ): RecordSyncManager<Annotation> {
+    const manager = createRecordSyncManager<Annotation>({
       os,
       login,
       store,
-      parseAnnotation: (value) => value as Annotation,
-      getMarker: (bookId, chapterNumber) =>
-        `publicRead:annotations/${bookId}/${chapterNumber}`,
+      domain: testDomain,
       ...overrides,
     });
     managers.push(manager);
@@ -219,6 +236,8 @@ describe("AnnotationSyncManager", () => {
       expect(sync.conflicts.value[0]?.kind).toBe("edited_elsewhere");
       expect(sync.conflicts.value[0]?.local?.data.html).toBe("<p>mine</p>");
       expect(sync.conflicts.value[0]?.server?.data.html).toBe("<p>theirs</p>");
+      // The row's own change stamp, not the payload's `data.updatedAtMs`.
+      expect(sync.conflicts.value[0]?.localUpdatedAtMs).toBe(9_000);
     });
 
     it("asks the user when the note was deleted elsewhere", async () => {
@@ -353,7 +372,7 @@ describe("AnnotationSyncManager", () => {
 
   describe("resolveConflict()", () => {
     async function raiseEditConflict(): Promise<{
-      sync: AnnotationSyncManager;
+      sync: RecordSyncManager<Annotation>;
       conflictId: string;
       mine: Annotation;
       theirs: Annotation;
@@ -397,11 +416,11 @@ describe("AnnotationSyncManager", () => {
       expect(recordDataMock).not.toHaveBeenCalled();
       const row = await store.get(OWNER, "ann-1");
       expect(row?.pendingOp).toBeNull();
-      expect(row?.annotation?.data.html).toBe(theirs.data.html);
+      expect(row?.payload?.data.html).toBe(theirs.data.html);
       expect(sync.conflicts.value).toEqual([]);
     });
 
-    it("keep_both writes ours under a new id and leaves theirs untouched", async () => {
+    it("keep_both writes ours under a new address and leaves theirs untouched", async () => {
       const { sync, conflictId, theirs } = await raiseEditConflict();
       recordDataMock.mockClear();
       // The copy is a fresh create, so the pre-write read finds nothing.
@@ -411,19 +430,18 @@ describe("AnnotationSyncManager", () => {
 
       const written = recordDataMock.mock.calls.map((call) => call[1]);
       expect(written).toHaveLength(1);
-      expect(written[0]).not.toBe("ann-1");
-      expect(written[0]).toMatch(/^annotation_/);
+      expect(written[0]).toBe("ann-1-copy");
       expect(recordDataMock.mock.calls[0]?.[2]).toMatchObject({
         data: { html: "<p>mine</p>" },
       });
 
-      // Theirs survives as the synced copy of the original id. Asserted without
-      // a `??` fallback on purpose: `original?.x ?? theirs.x` passes even when
-      // the row has been deleted, which is exactly how a bug that wiped it here
-      // went unnoticed.
+      // Theirs survives as the synced copy of the original address. Asserted
+      // without a `??` fallback on purpose: `original?.x ?? theirs.x` passes
+      // even when the row has been deleted, which is exactly how a bug that
+      // wiped it here went unnoticed.
       const original = await store.get(OWNER, "ann-1");
       expect(original).not.toBeNull();
-      expect(original?.annotation?.data.html).toBe(theirs.data.html);
+      expect(original?.payload?.data.html).toBe(theirs.data.html);
       expect(original?.pendingOp).toBeNull();
     });
 
@@ -433,9 +451,9 @@ describe("AnnotationSyncManager", () => {
 
       await sync.resolveConflict(conflictId, "keep_both");
 
-      const rows = await store.listForChapter(OWNER, "GEN", 1);
+      const rows = await store.listForCollection(OWNER, COLLECTION);
       const bodies = rows
-        .map((row) => row.annotation?.data.html)
+        .map((row) => row.payload?.data.html)
         .sort((a, b) => (a ?? "").localeCompare(b ?? ""));
 
       expect(bodies).toEqual(["<p>mine</p>", theirs.data.html]);
@@ -465,7 +483,7 @@ describe("AnnotationSyncManager", () => {
 
       // Reporting it as removed would strip it from the open chapter's view.
       expect(onRemoved).not.toHaveBeenCalledWith("ann-1", OWNER);
-      expect(onSynced).toHaveBeenCalledWith(theirs, OWNER);
+      expect(onSynced).toHaveBeenCalledWith("ann-1", theirs, OWNER);
     });
 
     it("keep_both reports the new copy immediately, without waiting for it to sync", async () => {
@@ -497,6 +515,7 @@ describe("AnnotationSyncManager", () => {
 
       expect(recordDataMock).not.toHaveBeenCalled();
       expect(onSynced).toHaveBeenCalledWith(
+        "ann-1-copy",
         expect.objectContaining({
           data: expect.objectContaining({ html: "<p>mine</p>" }),
         }),
@@ -716,9 +735,10 @@ describe("AnnotationSyncManager", () => {
 
       await createSync().sync();
 
-      expect(
-        (await store.listPending(OWNER)).map((r) => r.annotationId)
-      ).toEqual(["ann-1", "ann-2"]);
+      expect((await store.listPending(OWNER)).map((r) => r.address)).toEqual([
+        "ann-1",
+        "ann-2",
+      ]);
     });
 
     it("does not revert a newer edit when a failed push records its attempt", async () => {
@@ -729,7 +749,7 @@ describe("AnnotationSyncManager", () => {
         // The user saves again while the failing request is in the air.
         await store.put({
           ...started,
-          annotation: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
+          payload: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
           updatedAtMs: started.updatedAtMs + 1,
         });
         return {
@@ -744,7 +764,7 @@ describe("AnnotationSyncManager", () => {
       // The bookkeeping write is a blind overwrite by key, so spreading the
       // pre-push snapshot would have reverted "v2" back to the older content.
       const row = await store.get(OWNER, "ann-1");
-      expect(row?.annotation?.data.html).toBe("<p>v2</p>");
+      expect(row?.payload?.data.html).toBe("<p>v2</p>");
       expect(row?.pendingOp).toBe("upsert");
     });
   });
@@ -762,7 +782,7 @@ describe("AnnotationSyncManager", () => {
         // path: the second save lands while the first push is still in flight.
         await store.put({
           ...started,
-          annotation: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
+          payload: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
           updatedAtMs: started.updatedAtMs + 1,
         });
         return { success: true };
@@ -771,7 +791,7 @@ describe("AnnotationSyncManager", () => {
       await createSync().sync();
 
       const row = await store.get(OWNER, "ann-1");
-      expect(row?.annotation?.data.html).toBe("<p>v2</p>");
+      expect(row?.payload?.data.html).toBe("<p>v2</p>");
     });
 
     it("keeps the newer edit queued so it still reaches the server", async () => {
@@ -787,7 +807,7 @@ describe("AnnotationSyncManager", () => {
           injected = true;
           await store.put({
             ...started,
-            annotation: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
+            payload: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
             updatedAtMs: started.updatedAtMs + 1,
           });
         }
@@ -810,7 +830,7 @@ describe("AnnotationSyncManager", () => {
       recordDataMock.mockImplementationOnce(async () => {
         await store.put({
           ...started,
-          annotation: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
+          payload: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
           updatedAtMs: started.updatedAtMs + 1,
         });
         return { success: true };
@@ -821,8 +841,7 @@ describe("AnnotationSyncManager", () => {
       // Leaving the stale base in place would make the next pass read our own
       // push back and report it as somebody else's edit.
       const row = await store.get(OWNER, "ann-1");
-      expect(row?.baseUpdatedAtMs).toBe(7_000);
-      expect(row?.baseFingerprint).toBe(annotationFingerprint(pushed));
+      expect(row?.base).toEqual(pushed);
     });
 
     it("does not leave a readable synced row behind when the account signs out mid-push", async () => {
@@ -849,7 +868,7 @@ describe("AnnotationSyncManager", () => {
       recordDataMock.mockImplementation(async () => {
         await store.put({
           ...started,
-          annotation: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
+          payload: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
           updatedAtMs: started.updatedAtMs + 1,
         });
         login.userId.value = null;
@@ -860,30 +879,28 @@ describe("AnnotationSyncManager", () => {
 
       // Sign-out keeps unsent writing; only synced rows are dropped.
       const row = await store.get(OWNER, "ann-1");
-      expect(row?.annotation?.data.html).toBe("<p>v2</p>");
+      expect(row?.payload?.data.html).toBe("<p>v2</p>");
       expect(row?.pendingOp).toBe("upsert");
     });
   });
 
   describe("scoping and scheduling", () => {
-    it("never pushes notes written while signed out", async () => {
-      const store2 = createInMemoryAnnotationStore();
+    it("never pushes records written while signed out", async () => {
+      const store2 = createInMemoryRecordStore<Annotation>();
       await store2.put({
-        ...syncedRow(LOCAL_OWNER, makeAnnotation("draft")),
+        ...syncedRow(LOCAL_OWNER, "draft", COLLECTION, makeAnnotation("draft")),
         owner: LOCAL_OWNER,
         key: `${LOCAL_OWNER}/draft`,
         pendingOp: "upsert",
-        baseUpdatedAtMs: null,
-        baseFingerprint: null,
+        base: null,
       });
       const signedOut = createLoginMock(null);
 
-      const sync = createAnnotationSyncManager({
+      const sync = createRecordSyncManager<Annotation>({
         os,
         login: signedOut,
         store: store2,
-        parseAnnotation: (value) => value as Annotation,
-        getMarker: () => "marker",
+        domain: testDomain,
       });
       managers.push(sync);
       await sync.sync();
@@ -961,23 +978,20 @@ describe("AnnotationSyncManager", () => {
       expect(sync.pendingCount.value).toBe(0);
     });
 
-    it("scopes the pending count to one chapter", async () => {
+    it("scopes the pending count to one collection", async () => {
       await store.put(pendingUpsert(makeAnnotation("ann-1"), null));
       await store.put(
-        pendingUpsert(
-          { ...makeAnnotation("ann-2"), bookId: "EXO", chapterNumber: 3 },
-          null
-        )
+        pendingUpsert(makeAnnotation("ann-2"), null, { collection: "EXO/3" })
       );
       const sync = createSync();
 
       await sync.refreshPendingCount();
 
-      // Account-wide, both count - but a chapter should only see its own.
+      // Account-wide, both count - but a collection should only see its own.
       expect(sync.pendingCount.value).toBe(2);
-      expect(sync.pendingCountForChapter("GEN", 1)).toBe(1);
-      expect(sync.pendingCountForChapter("EXO", 3)).toBe(1);
-      expect(sync.pendingCountForChapter("GEN", 2)).toBe(0);
+      expect(sync.pendingCountForCollection("GEN/1")).toBe(1);
+      expect(sync.pendingCountForCollection("EXO/3")).toBe(1);
+      expect(sync.pendingCountForCollection("GEN/2")).toBe(0);
     });
 
     it("stops listening after dispose", async () => {
@@ -990,12 +1004,11 @@ describe("AnnotationSyncManager", () => {
     });
 
     it("does nothing at all when there is no local store", async () => {
-      const sync = createAnnotationSyncManager({
+      const sync = createRecordSyncManager<Annotation>({
         os,
         login,
         store: null,
-        parseAnnotation: (value) => value as Annotation,
-        getMarker: () => "marker",
+        domain: testDomain,
       });
       managers.push(sync);
 
@@ -1006,28 +1019,72 @@ describe("AnnotationSyncManager", () => {
     });
   });
 
+  describe("rows migrated from the version-1 schema", () => {
+    it("pushes a pending note the server still holds unchanged", async () => {
+      const mine = makeAnnotation("ann-1", {
+        html: "<p>mine</p>",
+        updatedAtMs: 9_000,
+      });
+      const onServer = makeAnnotation("ann-1", { updatedAtMs: 4_000 });
+      await store.put(
+        migrateV1Row({
+          key: `${OWNER}/ann-1`,
+          owner: OWNER,
+          annotationId: "ann-1",
+          bookId: "GEN",
+          chapterNumber: 1,
+          annotation: mine,
+          deleted: false,
+          updatedAtMs: 9_000,
+          baseUpdatedAtMs: 4_000,
+          baseFingerprint: null,
+          pendingOp: "upsert",
+          attempts: 0,
+        }) as StoredRecord<Annotation>
+      );
+      serverHas(onServer);
+
+      const sync = createSync();
+      await sync.sync();
+
+      expect(recordDataMock).toHaveBeenCalledWith(OWNER, "ann-1", mine, {
+        marker: "publicRead:annotations/GEN/1",
+      });
+      expect(sync.conflicts.value).toEqual([]);
+    });
+  });
+
   describe("adoption on sign-in", () => {
-    it("adopts signed-out drafts and pushes them once the user signs in", async () => {
+    async function putSignedOutDraft() {
       await store.put({
-        ...syncedRow(LOCAL_OWNER, makeAnnotation("draft")),
+        ...syncedRow(LOCAL_OWNER, "draft", COLLECTION, makeAnnotation("draft")),
         owner: LOCAL_OWNER,
         key: `${LOCAL_OWNER}/draft`,
         pendingOp: "upsert",
-        baseUpdatedAtMs: null,
-        baseFingerprint: null,
+        base: null,
       });
+    }
+
+    function signInWith(
+      confirmAdoption?: (owner: string) => Promise<AdoptionChoice>
+    ) {
       const signedOut = createLoginMock(null);
-      const sync = createAnnotationSyncManager({
+      const sync = createRecordSyncManager<Annotation>({
         os,
         login: signedOut,
         store,
-        parseAnnotation: (value) => value as Annotation,
-        getMarker: (bookId, chapterNumber) =>
-          `publicRead:annotations/${bookId}/${chapterNumber}`,
+        domain: testDomain,
+        confirmAdoption,
       });
       managers.push(sync);
-
       signedOut.userId.value = OWNER;
+      return sync;
+    }
+
+    it("adopts signed-out drafts and pushes them once the user signs in", async () => {
+      await putSignedOutDraft();
+
+      signInWith();
       // Let the adoption effect's async work settle.
       await vi.waitFor(() => expect(recordDataMock).toHaveBeenCalled());
 
@@ -1040,8 +1097,83 @@ describe("AnnotationSyncManager", () => {
       expect(await store.get(LOCAL_OWNER, "draft")).toBeNull();
     });
 
+    it("asks before adopting and adopts on 'add'", async () => {
+      await putSignedOutDraft();
+      const confirmAdoption = vi.fn().mockResolvedValue("add" as const);
+
+      signInWith(confirmAdoption);
+      await vi.waitFor(() => expect(recordDataMock).toHaveBeenCalled());
+
+      expect(confirmAdoption).toHaveBeenCalledWith(OWNER);
+      expect(await store.get(LOCAL_OWNER, "draft")).toBeNull();
+      expect(await store.get(OWNER, "draft")).not.toBeNull();
+    });
+
+    it("deletes signed-out rows on 'discard' without pushing them", async () => {
+      await putSignedOutDraft();
+
+      signInWith(vi.fn().mockResolvedValue("discard" as const));
+      await vi.waitFor(async () =>
+        expect(await store.get(LOCAL_OWNER, "draft")).toBeNull()
+      );
+
+      expect(await store.get(OWNER, "draft")).toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("leaves signed-out rows in place on 'keep'", async () => {
+      await putSignedOutDraft();
+      const confirmAdoption = vi.fn().mockResolvedValue("keep" as const);
+
+      const sync = signInWith(confirmAdoption);
+      await vi.waitFor(() => expect(confirmAdoption).toHaveBeenCalled());
+      await sync.sync();
+
+      expect(await store.get(LOCAL_OWNER, "draft")).not.toBeNull();
+      expect(await store.get(OWNER, "draft")).toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("does not ask when nothing was written signed out", async () => {
+      const confirmAdoption = vi.fn().mockResolvedValue("add" as const);
+
+      const sync = signInWith(confirmAdoption);
+      await sync.sync();
+
+      expect(confirmAdoption).not.toHaveBeenCalled();
+    });
+
+    it("does nothing with the answer if the user signed out while the prompt was open", async () => {
+      await putSignedOutDraft();
+      let answer: ((choice: AdoptionChoice) => void) | undefined;
+      const confirmAdoption = vi.fn(
+        () => new Promise<AdoptionChoice>((resolve) => (answer = resolve))
+      );
+
+      const signedOut = createLoginMock(null);
+      const sync = createRecordSyncManager<Annotation>({
+        os,
+        login: signedOut,
+        store,
+        domain: testDomain,
+        confirmAdoption,
+      });
+      managers.push(sync);
+      signedOut.userId.value = OWNER;
+      await vi.waitFor(() => expect(answer).toBeDefined());
+      signedOut.userId.value = null;
+      answer?.("add");
+      await sync.sync();
+
+      expect(await store.get(LOCAL_OWNER, "draft")).not.toBeNull();
+      expect(await store.get(OWNER, "draft")).toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
     it("drops synced rows on sign-out but keeps unsent writing", async () => {
-      await store.put(syncedRow(OWNER, makeAnnotation("synced")));
+      await store.put(
+        syncedRow(OWNER, "synced", COLLECTION, makeAnnotation("synced"))
+      );
       await store.put(pendingUpsert(makeAnnotation("unsent"), null));
       const sync = createSync();
       await sync.refreshPendingCount();
@@ -1053,6 +1185,71 @@ describe("AnnotationSyncManager", () => {
 
       expect(await store.get(OWNER, "unsent")).not.toBeNull();
       expect(sync.pendingCount.value).toBe(0);
+    });
+  });
+
+  describe("domain.merge", () => {
+    it("merges instead of raising a conflict when the domain can", async () => {
+      const base = makeAnnotation("ann-1");
+      const theirs = makeAnnotation("ann-1", {
+        html: "<p>theirs</p>",
+        updatedAtMs: 5_000,
+      });
+      const mine = makeAnnotation("ann-1", {
+        html: "<p>mine</p>",
+        updatedAtMs: 9_000,
+      });
+      await store.put(pendingUpsert(mine, base));
+      serverHas(theirs);
+      const merge = vi.fn(() =>
+        makeAnnotation("ann-1", { html: "<p>merged</p>", updatedAtMs: 9_000 })
+      );
+
+      const sync = createSync({ domain: { ...testDomain, merge } });
+      await sync.sync();
+
+      expect(merge).toHaveBeenCalledWith(base, mine, theirs);
+      expect(recordDataMock).toHaveBeenCalledWith(
+        OWNER,
+        "ann-1",
+        expect.objectContaining({
+          data: expect.objectContaining({ html: "<p>merged</p>" }),
+        }),
+        expect.anything()
+      );
+      expect(sync.conflicts.value).toEqual([]);
+      expect((await store.get(OWNER, "ann-1"))?.pendingOp).toBeNull();
+    });
+
+    it("erases the record when merge returns null", async () => {
+      const base = makeAnnotation("ann-1");
+      await store.put(
+        pendingUpsert(makeAnnotation("ann-1", { html: "<p>mine</p>" }), base)
+      );
+      serverHas(
+        makeAnnotation("ann-1", { html: "<p>theirs</p>", updatedAtMs: 5_000 })
+      );
+
+      await createSync({ domain: { ...testDomain, merge: () => null } }).sync();
+
+      expect(eraseDataMock).toHaveBeenCalledWith(OWNER, "ann-1");
+      expect(await store.get(OWNER, "ann-1")).toBeNull();
+    });
+
+    it("still raises a conflict when the domain has no merge", async () => {
+      const base = makeAnnotation("ann-1");
+      await store.put(
+        pendingUpsert(makeAnnotation("ann-1", { html: "<p>mine</p>" }), base)
+      );
+      serverHas(
+        makeAnnotation("ann-1", { html: "<p>theirs</p>", updatedAtMs: 5_000 })
+      );
+
+      const sync = createSync();
+      await sync.sync();
+
+      expect(sync.conflicts.value).toHaveLength(1);
+      expect(recordDataMock).not.toHaveBeenCalled();
     });
   });
 });

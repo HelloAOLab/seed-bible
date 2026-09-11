@@ -179,11 +179,14 @@ function createFixture(): ReaderFixture {
     loadNextChapter: vi.fn(async () => undefined),
     hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
     hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
+    nextChapterPosition: computed(() => null),
+    previousChapterPosition: computed(() => null),
     getAdjacentChapter: vi.fn(async () => null),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialLoadSettled: computed(() => true),
     initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(
       () => contentStale.value ?? chapterData.value === null
@@ -282,9 +285,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
-        pendingCountForChapter: vi.fn(() => 0),
       },
     },
   } as any as SeedBibleState;
@@ -2820,20 +2823,17 @@ describe("BibleReader", () => {
     );
   });
 
-  it("shows a generic account icon in the mobile header when the user is alone", () => {
+  // The account avatar moved out of the reader header and back into the
+  // bottom bar as the "You" tab (#1554), so the header must not show one.
+  it("does not show an account button in the mobile header", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createMobileState();
 
     renderMobileReader({ slot, selectorState, readingState }, state, container);
 
-    const accountButton = container.querySelector(
-      ".sb-bible-reader-mobile-header-account"
-    );
-    expect(accountButton).not.toBeNull();
     expect(
-      accountButton?.querySelector(".sb-tab-user-icon-generic")
-    ).not.toBeNull();
-    expect(accountButton?.textContent).toContain("account_circle");
+      container.querySelector(".sb-bible-reader-mobile-header-account")
+    ).toBeNull();
   });
 
   it("opens the translation picker from the mobile header's translation button", async () => {
