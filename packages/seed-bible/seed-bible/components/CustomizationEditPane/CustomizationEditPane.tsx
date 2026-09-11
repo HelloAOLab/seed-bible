@@ -1,6 +1,11 @@
 import "../SettingsPage/SettingsPage.css";
+// `.searchbar`/`.search-icon`/`.filters-icon` are defined here rather than in
+// a shared stylesheet — imported explicitly rather than relying on
+// `BibleSelector.tsx` happening to already be in the bundle.
+import "../BibleSelector/BibleSelector.css";
 import { signal, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
+import { useMemo } from "preact/hooks";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import {
@@ -22,14 +27,22 @@ import {
   type ThemeColorKey,
   type ThemeFontFamilyKey,
 } from "../../managers/ThemeManager";
+import {
+  groupTranslationsByLanguage,
+  filterTranslationGroups,
+  type TranslationViewMode,
+} from "../../managers/translationGrouping";
+import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { useI18n } from "../../i18n/I18nManager";
-import { MaterialIcon } from "../icons";
+import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import { toHexInputValue } from "../../app/utils";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
+import { TranslationList } from "../TranslationList/TranslationList";
+import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
 
 // The picture editor pulls in `react-avatar-editor`, so it's only fetched on
 // the "Upload logo" click rather than at boot, same as SettingsPage does.
@@ -41,7 +54,11 @@ const LogoCropModalContent = lazy(() =>
 
 export const CUSTOMIZATION_EDIT_PANE_ID = "customization-edit-pane";
 
-type CustomizationEditView = "edit" | "edit-variant" | "edit-extensions";
+type CustomizationEditView =
+  | "edit"
+  | "edit-variant"
+  | "edit-extensions"
+  | "edit-default-translation";
 
 /**
  * Whether `foregroundKey` (e.g. `primaryFontColor`) has a known reading
@@ -123,6 +140,15 @@ export function CustomizationEditPaneTitle(props: {
   }
   if (view === "edit-extensions") {
     return <>{t("customization-extensions", { defaultValue: "Extensions" })}</>;
+  }
+  if (view === "edit-default-translation") {
+    return (
+      <>
+        {t("customization-default-translation", {
+          defaultValue: "Default translation",
+        })}
+      </>
+    );
   }
   if (view === "edit-variant") {
     const variant = record.variants.find(
@@ -299,6 +325,9 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
   if (view === "edit-extensions") {
     return <CustomizationEditExtensionsView state={state} />;
   }
+  if (view === "edit-default-translation") {
+    return <CustomizationEditDefaultTranslationView state={state} />;
+  }
   if (view === "edit-variant") {
     return <CustomizationEditVariantView state={state} />;
   }
@@ -388,17 +417,26 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
     );
   }
 
-  const sortedTranslations = [...bibleData.availableTranslations.value].sort(
-    (a, b) => a.name.localeCompare(b.name)
-  );
-  // The saved id can be absent from the catalog — a translation later removed,
-  // or simply the brief window before `availableTranslations` has loaded.
-  // Without an option for it, the `<select>` would match nothing and the
-  // browser would silently fall back to showing "Seed Bible's default",
-  // misrepresenting the actual (unchanged) saved setting.
-  const savedTranslationMissingFromCatalog =
-    !!record.defaultTranslationId &&
-    !sortedTranslations.some((t) => t.id === record.defaultTranslationId);
+  // The saved id can be absent from the catalog — a translation later
+  // removed, or simply the brief window before `availableTranslations` has
+  // loaded — in which case there's nothing to name it by except the raw id.
+  const defaultTranslationLabel = (() => {
+    if (!record.defaultTranslationId) {
+      return t("customization-default-translation-none", {
+        defaultValue: "Seed Bible's default",
+      });
+    }
+    const translation = bibleData.availableTranslations.value.find(
+      (t) => t.id === record.defaultTranslationId
+    );
+    if (translation) {
+      return `${translation.name} (${translation.shortName})`;
+    }
+    return t("customization-default-translation-unavailable", {
+      id: record.defaultTranslationId,
+      defaultValue: "{{id}} (unavailable)",
+    });
+  })();
 
   return (
     <div className="sb-settings-page">
@@ -418,52 +456,25 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           />
         </div>
 
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-customization-default-translation"
-          >
+        <button
+          type="button"
+          className="sb-settings-nav-item"
+          onClick={() => {
+            customizationEditView.value = "edit-default-translation";
+          }}
+        >
+          <span className="sb-settings-nav-label">
             {t("customization-default-translation", {
               defaultValue: "Default translation",
             })}
-          </label>
-          <select
-            id="sb-customization-default-translation"
-            className="sb-settings-language-select"
-            value={record.defaultTranslationId ?? ""}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              customizations.updateEditingDefaultTranslationId(
-                target.value || null
-              );
-            }}
-          >
-            <option value="">
-              {t("customization-default-translation-none", {
-                defaultValue: "Seed Bible's default",
-              })}
-            </option>
-            {savedTranslationMissingFromCatalog && (
-              <option value={record.defaultTranslationId} disabled>
-                {t("customization-default-translation-unavailable", {
-                  id: record.defaultTranslationId,
-                  defaultValue: "{{id}} (unavailable)",
-                })}
-              </option>
-            )}
-            {sortedTranslations.map((translation) => (
-              <option key={translation.id} value={translation.id}>
-                {`${translation.name} (${translation.shortName})`}
-              </option>
-            ))}
-          </select>
-          <p className="sb-settings-field-description">
-            {t("customization-default-translation-description", {
-              defaultValue:
-                "The translation viewers of this customization start reading in, instead of Seed Bible's own default for their language.",
-            })}
-          </p>
-        </div>
+          </span>
+          <span className="sb-settings-nav-value">
+            {defaultTranslationLabel}
+          </span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
+        </button>
 
         <div className="sb-settings-field-row">
           <label className="sb-settings-field-label">
@@ -736,6 +747,182 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
             </div>
           ))
         )}
+      </section>
+    </div>
+  );
+}
+
+/** How many more language groups each "load more" reveals. */
+const TRANSLATION_PAGE_SIZE = 50;
+
+/**
+ * Full-screen picker for a customization's default translation — reuses the
+ * same searchable, grouped-by-language `TranslationList` the reader's own
+ * translation modal and the Compare pane use, so translations are searched
+ * and grouped identically everywhere. Local-only search/view-mode/page-size
+ * state, deliberately not shared with the reader's own picker: this pane has
+ * no "current reader" preference to speak for, just this one customization's
+ * setting. Single-select — picking a translation (or "Seed Bible's default")
+ * applies it immediately and returns to the main editor, unlike the Compare
+ * pane's multi-select picker which needs an explicit "Done".
+ */
+function CustomizationEditDefaultTranslationView(props: {
+  state: SeedBibleState;
+}) {
+  const { state } = props;
+  const { customizations, bibleData } = state;
+  const { t } = useI18n();
+  const query = useSignal("");
+  const viewMode = useSignal<TranslationViewMode>("complete");
+  const limit = useSignal(TRANSLATION_PAGE_SIZE);
+  const showFilters = useSignal(false);
+
+  const record = customizations.editingCustomization.value;
+  const translations = bibleData.availableTranslations.value;
+  const selectedTranslation = record?.defaultTranslationId
+    ? (translations.find((tr) => tr.id === record.defaultTranslationId) ?? null)
+    : null;
+
+  // Memoized so a keystroke in search (or an unrelated re-render) doesn't
+  // redo the grouping/filtering pass over the whole catalog every time.
+  const allGroups = useMemo(
+    () => groupTranslationsByLanguage(translations),
+    [translations]
+  );
+  const { groups, totalMatching } = useMemo(
+    () =>
+      filterTranslationGroups({
+        groups: allGroups,
+        query: query.value,
+        viewMode: viewMode.value,
+        limit: limit.value,
+        selectedTranslation,
+      }),
+    [allGroups, query.value, viewMode.value, limit.value, selectedTranslation]
+  );
+
+  if (!record) {
+    return (
+      <div className="sb-settings-page">
+        <section className="sb-settings-section">
+          <div className="sb-settings-empty-state">
+            <p>
+              {t("customization-not-found", {
+                defaultValue: "This customization could not be found.",
+              })}
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  const pick = (translation: Translation | null) => {
+    customizations.updateEditingDefaultTranslationId(translation?.id ?? null);
+    customizationEditView.value = "edit";
+  };
+
+  return (
+    <div className="sb-settings-page sb-customization-translation-picker">
+      <section className="sb-settings-section">
+        <p className="sb-settings-field-description">
+          {t("customization-default-translation-description", {
+            defaultValue:
+              "The translation viewers of this customization start reading in, instead of Seed Bible's own default for their language.",
+          })}
+        </p>
+
+        <div
+          className="translation-option flex-between-center-gap-md"
+          onClick={() => pick(null)}
+        >
+          <span className="translation-title inline-flex-start-center-gap-sm">
+            {record.defaultTranslationId ? (
+              <span className="emptyCircle" aria-hidden="true" />
+            ) : (
+              <TickIcon height={15} width={15} />
+            )}
+            <span className="translation-description">
+              {t("customization-default-translation-none", {
+                defaultValue: "Seed Bible's default",
+              })}
+            </span>
+          </span>
+        </div>
+
+        <div className="searchbar flex-align-center">
+          <span className="material-symbols-outlined search-icon">search</span>
+          <input
+            type="search"
+            className="flex-1"
+            value={query.value}
+            dir="auto"
+            placeholder={t("search-translation", {
+              defaultValue: "Search translations...",
+            })}
+            aria-label={t("search-translation", {
+              defaultValue: "Search translations...",
+            })}
+            onInput={(event: Event) => {
+              query.value = (event.currentTarget as HTMLInputElement).value;
+            }}
+          />
+          <button
+            type="button"
+            className="filters-icon"
+            // `.filters-icon` (BibleSelector.css) styles a bare `<span>` in
+            // the reader's own picker, so it doesn't reset a real button's
+            // native border — do that here instead of copying the `<span>`
+            // (which would lose keyboard/focus semantics `<button>` gets for
+            // free).
+            style={{ border: "none" }}
+            aria-label={t("filter-translations", {
+              defaultValue: "Filter translations",
+            })}
+            title={t("filter-translations", {
+              defaultValue: "Filter translations",
+            })}
+            aria-expanded={showFilters.value}
+            onClick={() => {
+              showFilters.value = !showFilters.value;
+            }}
+          >
+            <FiltersIcon />
+          </button>
+        </div>
+        {showFilters.value && (
+          <TranslationViewModeMenu
+            viewMode={viewMode.value}
+            onChange={(mode) => {
+              viewMode.value = mode;
+              showFilters.value = false;
+              // A narrower or wider catalog is a different list; start it
+              // from the first page rather than mid-way through the old one.
+              limit.value = TRANSLATION_PAGE_SIZE;
+            }}
+          />
+        )}
+
+        <TranslationList
+          groups={groups}
+          query={query.value}
+          viewMode={viewMode.value}
+          selectedTranslationIds={
+            record.defaultTranslationId ? [record.defaultTranslationId] : []
+          }
+          expandedLanguage={
+            selectedTranslation?.language?.toLowerCase() ?? null
+          }
+          onPick={pick}
+          onShowAllTranslations={() => {
+            viewMode.value = "all";
+          }}
+          canLoadMore={limit.value < totalMatching}
+          totalGroupCount={totalMatching}
+          onLoadMore={() => {
+            limit.value += TRANSLATION_PAGE_SIZE;
+          }}
+        />
       </section>
     </div>
   );
