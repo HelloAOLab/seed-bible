@@ -35,6 +35,7 @@ import {
 } from "../../components/Skeleton/Skeleton";
 import {
   ExtensionInitalizer,
+  getExtensionSourceLabel,
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
 import {
@@ -1118,6 +1119,131 @@ function getExtensionInstallState(
 
 type ExtensionsTab = "installed" | "available";
 
+function ExtensionDetailsView(props: {
+  entry: ExtensionListEntry;
+  onBack: () => void;
+  onToggleEnabled: (id: string, enabled: boolean) => void;
+  onUninstall: (id: string) => void;
+  canUninstall: boolean;
+}) {
+  const { entry, onBack, onToggleEnabled, onUninstall, canUninstall } = props;
+  const { t } = useI18n();
+  const { branding } = useAppConfig();
+  const meta = entry.extension?.meta;
+  const sourceLabel = getExtensionSourceLabel(entry.extension);
+
+  const title = getBrandedAppText(
+    // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+    t("title", { ns: entry.id, defaultValue: entry.id }),
+    t,
+    branding
+  );
+  const description = getBrandedAppText(
+    t("description", { ns: entry.id, defaultValue: "" }),
+    t,
+    branding
+  );
+
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("extensions", { defaultValue: "Extensions" }),
+          title,
+        ]}
+      />
+      <section className="sb-settings-section sb-extension-details">
+        <div className="sb-extension-details-header">
+          <span
+            className="sb-extension-icon-avatar sb-extension-icon-avatar-large"
+            aria-hidden="true"
+          >
+            <span className="material-symbols-outlined">
+              {meta?.icon ?? "extension"}
+            </span>
+          </span>
+          <div>
+            <h2 className="sb-extension-details-title">{title}</h2>
+            {description && (
+              <p className="sb-extension-details-description">{description}</p>
+            )}
+          </div>
+        </div>
+
+        <dl className="sb-extension-details-list">
+          {meta?.version && (
+            <div className="sb-extension-details-row">
+              <dt>{t("extension-version", { defaultValue: "Version" })}</dt>
+              <dd>{meta.version}</dd>
+            </div>
+          )}
+          <div className="sb-extension-details-row">
+            <dt>{t("extension-source", { defaultValue: "Source" })}</dt>
+            <dd>
+              {sourceLabel === "bundled"
+                ? t("extension-source-bundled", { defaultValue: "Built-in" })
+                : sourceLabel === "url"
+                  ? t("extension-source-url", {
+                      defaultValue: "Loaded extension",
+                    })
+                  : "—"}
+            </dd>
+          </div>
+          {meta?.homepage && (
+            <div className="sb-extension-details-row">
+              <dt>
+                {t("extension-homepage", { defaultValue: "Visit website" })}
+              </dt>
+              <dd>
+                <a
+                  href={meta.homepage}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {meta.homepage}
+                </a>
+              </dd>
+            </div>
+          )}
+        </dl>
+
+        <div className="sb-extension-details-actions">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={entry.enabled}
+            className={`sb-extension-toggle${entry.enabled ? " sb-extension-toggle-on" : ""}`}
+            onClick={() => onToggleEnabled(entry.id, !entry.enabled)}
+            aria-label={
+              entry.enabled
+                ? t("extension-disable", { defaultValue: "Disable" })
+                : t("extension-enable", { defaultValue: "Enable" })
+            }
+          >
+            <span className="sb-extension-toggle-thumb" />
+          </button>
+          <span>
+            {entry.enabled
+              ? t("extension-disable", { defaultValue: "Disable" })
+              : t("extension-enable", { defaultValue: "Enable" })}
+          </span>
+          {canUninstall && (
+            <button
+              type="button"
+              className="sb-settings-danger-button"
+              onClick={() => onUninstall(entry.id)}
+            >
+              {t("uninstall", { defaultValue: "Uninstall" })}
+            </button>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { extensions } = state;
@@ -1126,6 +1252,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
   const activeTab = useSignal<ExtensionsTab>("installed");
+  const selectedExtensionId = useSignal<string | null>(null);
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "main";
@@ -1245,7 +1372,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
     return (
       <li key={id} className="sb-extension-row">
-        <div className="sb-extension-row-body">
+        <div
+          className="sb-extension-row-body"
+          onClick={() => {
+            selectedExtensionId.value = id;
+          }}
+        >
           <span className="sb-extension-icon-avatar" aria-hidden="true">
             <span className="material-symbols-outlined">
               {extensionEntry.extension?.meta.icon ?? "extension"}
@@ -1274,7 +1406,10 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
               )}
             </span>
           </div>
-          <div className="sb-extension-row-actions">
+          <div
+            className="sb-extension-row-actions"
+            onClick={(e) => e.stopPropagation()}
+          >
             {(installState === "installed" ||
               installState === "downloaded") && (
               <button
@@ -1340,6 +1475,34 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       : t("no-available-extensions", {
           defaultValue: "There are no more extensions available to install.",
         });
+
+  if (selectedExtensionId.value) {
+    const entry = extensionsList.find(
+      (e) => e.id === selectedExtensionId.value
+    );
+    if (entry) {
+      return (
+        <ExtensionDetailsView
+          entry={entry}
+          onBack={() => {
+            selectedExtensionId.value = null;
+          }}
+          onToggleEnabled={handleToggleEnabled}
+          onUninstall={(id) => {
+            handleUninstall(id);
+            selectedExtensionId.value = null;
+          }}
+          // No "base extension"/auto-installed concept on this branch (no
+          // CustomizationsManager) — every installed extension can be
+          // uninstalled, same as the row's own unconditional Uninstall button.
+          canUninstall={true}
+        />
+      );
+    }
+    // The selected extension disappeared (e.g. uninstalled from another tab) —
+    // fall through to the list rather than rendering a dead details pane.
+    selectedExtensionId.value = null;
+  }
 
   return (
     <div className="sb-settings-page">
