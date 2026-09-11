@@ -22,18 +22,17 @@ import { thisTypedBot as redCurtainBot } from "../prefabs/pieces/main/red-curtai
 import { thisTypedBot as ringsBot } from "../prefabs/pieces/main/rings/botAdapter";
 import { thisTypedBot as tableOfShowbreadBot } from "../prefabs/pieces/main/table-of-showbread/botAdapter";
 import { thisTypedBot as wallsBot } from "../prefabs/pieces/main/walls/botAdapter";
-// import { PieceStateService } from "../../application/services/PieceStateService";
+import { PieceStateService } from "../../application/services/PieceStateService";
 import { PieceInteractionService } from "../../application/services/PieceInteractionService";
 import { EnvironmentInteractionService } from "../../application/services/EnvironmentInteractionService";
 import { VerseReferenceConfigProvider } from "../config/verseReference/VerseReferenceConfigProvider";
 import { ReadingStateService } from "../../application/services/ReadingStateService";
 import { PieceStateAdapter } from "../adapters/pieces/PieceStateAdapter";
 import { PieceHighlightAdapter } from "../adapters/pieces/PieceHighlightAdapter";
-import { ContextMenuRendererAdapter } from "../adapters/pieces/ContextMenuRendererAdapter";
 import { PiecesInteractionController } from "../controllers/pieces/PiecesInteractionController";
 import { EnvironmentInteractionController } from "../controllers/environment/EnvironmentInteractionController";
-// import { ScriptureInteractionService } from "../../application/services/ScriptureInteractionService";
-// import { ScriptureInteractionController } from "../controllers/scripture/ScriptureInteractionController";
+import { ScriptureInteractionService } from "../../application/services/ScriptureInteractionService";
+import { ScriptureInteractionController } from "../controllers/scripture/ScriptureInteractionController";
 import { ExperienceService } from "../../application/services/ExperienceService";
 import { PiecesSetUpService } from "../../application/services/PiecesSetUpService";
 import { EnvironmentSetUpService } from "../../application/services/EnvironmentSetUpService";
@@ -52,21 +51,55 @@ import { HitboxConfigProvider } from "../config/hitboxes/HitboxConfigProvider";
 import { HitboxLifecycleService } from "../../application/services/HitboxLifecycleService";
 import { HitboxLifecycleAdapter } from "../adapters/pieces/HitboxLifecycleAdapter";
 import { BaseEventManager } from "../../application/services/BaseEventManager";
-import type { InfrastructureEventMap } from "../models/events";
-import { HitboxMapper } from "../mappers/HitboxMapper";
 import {
-  EXPERIENCE_KEYS,
-  type ExperienceKey,
-} from "../../domain/models/experience";
-// import { PieceStateConfigProvider } from "../config/pieceState/PieceStateConfigProvider";
+  MESSAGE_TO_EVENT_MAP,
+  type InfrastructureEventMap,
+  type InfrastructureEventPort,
+} from "../models/events";
+import { HitboxMapper } from "../mappers/HitboxMapper";
+import { EXPERIENCE_KEYS } from "../../domain/models/experience";
+import { PieceStateConfigProvider } from "../config/pieceState/PieceStateConfigProvider";
 import { VFXBotFactory } from "../adapters/vfx/VFXBotFactory";
 import { thisTypedBot as coneBot } from "../prefabs/pieces/vfx/cone/botAdapter";
 import { thisTypedBot as glowBot } from "../prefabs/pieces/vfx/glow/botAdapter";
 import { ColorLerper } from "../adapters/casualos/ColorLerper";
-import type { PieceBot } from "../models/casualos";
+import type { Message, PieceBot } from "../models/casualos";
+import { ToExperienceKey, ToPieceKeyOf } from "../../domain/functions/keys";
 import { thisTypedBot as entrypointBot } from "../entrypoints/casualos/botAdapter";
+import { PieceFocusService } from "../../application/services/PieceFocusService";
+import { PieceHighlightService } from "../../application/services/PieceHighlightService";
+import { NavMenuStateService } from "../../application/services/NavMenuStateService";
+import { ThemeStateAdapter } from "../adapters/theme/ThemeStateAdapter";
+import type { DomainEventMap } from "../../domain/models/events";
+import { NAV_MENU_LEVELS } from "../../domain/models/navigation";
+import { NavMenuRendererAdapter } from "../adapters/navigation/NavMenuRendererAdapter";
+import { HostNotifierAdapter } from "../adapters/seed-bible/HostNotifierAdapter";
+import { ScriptureNavigationAdapter } from "../adapters/seed-bible/ScriptureNavigationAdapter";
+import { ScriptureNavigationService } from "../../application/services/ScriptureNavigationService";
+import { NavMenuController } from "../controllers/navMenu/NavMenuController";
+import { PieceCatalogConfigProvider } from "../config/pieceCatalog/PieceCatalogConfigProvider";
+import { BookNameConfigProvider } from "../config/bookName/BookNameConfigProvider";
+import { SeedBibleController } from "../controllers/seedBible/SeedBibleController";
+import { PieceHighlightConfigProvider } from "../config/pieceHighlight/PieceHighlightConfigProvider";
 
 let initialized = false;
+
+const THEME_WAIT_TIMEOUT_MS = 2000;
+
+const waitForEvent = (
+  eventBus: InfrastructureEventPort,
+  eventName: keyof InfrastructureEventMap,
+  timeoutMs: number
+) =>
+  new Promise<void>((resolve) => {
+    const finish = () => {
+      clearTimeout(timeout);
+      unsubscribe();
+      resolve();
+    };
+    const timeout = setTimeout(finish, timeoutMs);
+    const unsubscribe = eventBus.subscribe(eventName, finish);
+  });
 
 const mainPieces: {
   [K in PieceKey]: PieceBot<K>;
@@ -92,8 +125,8 @@ const mainPieces: {
   walls: wallsBot,
 };
 
-export const bootstrapExtension = () => {
-  if (initialized) return;
+export const bootstrapExtension = async () => {
+  if (initialized || configBot.tags.systemPortal) return;
 
   initialized = true;
 
@@ -105,16 +138,27 @@ export const bootstrapExtension = () => {
   }
   const getDimension = () => DIMENSION;
 
-  const EXPERIENCE = configBot.tags.experience as ExperienceKey;
+  // Both tags come from the query the reader builds the iframe URL with, so they
+  // are narrowed here rather than asserted. The experience goes first: which
+  // piece keys are valid depends on it.
+  const EXPERIENCE = ToExperienceKey(configBot.tags.experience);
   if (!EXPERIENCE) {
     throw new Error(
-      "house-of-the-lord bootstrap: experience not provided in configBot tags"
+      `house-of-the-lord bootstrap: unknown experience in configBot tags: "${configBot.tags.experience}"`
     );
   }
-  const getExperienceKey = () => EXPERIENCE;
-  const HIGHLIGHTED_PIECE = configBot.tags.highlightedPiece as
-    | PieceKey
-    | undefined;
+
+  // An unusable highlight is not fatal the way a missing experience is — the
+  // portal still opens, just without anything focused.
+  const HIGHLIGHTED_PIECE = ToPieceKeyOf(
+    EXPERIENCE,
+    configBot.tags.highlightedPiece
+  );
+  if (configBot.tags.highlightedPiece && !HIGHLIGHTED_PIECE) {
+    console.warn(
+      `house-of-the-lord bootstrap: ignored highlightedPiece "${configBot.tags.highlightedPiece}", not a piece of "${EXPERIENCE}"`
+    );
+  }
 
   // 1. Adapters / config providers
   const colorLerper = new ColorLerper();
@@ -124,10 +168,17 @@ export const bootstrapExtension = () => {
       glow: glowBot,
     },
   });
-  const readingStateService = new ReadingStateService();
+  const domainEventBus = new BaseEventManager<DomainEventMap>();
+  const readingStateService = new ReadingStateService({
+    eventBus: domainEventBus,
+  });
   const verseReferenceConfigProvider = new VerseReferenceConfigProvider();
-  // const pieceStateConfigProvider = new PieceStateConfigProvider();
+  const pieceStateConfigProvider = new PieceStateConfigProvider();
   const loggerAdapter = new LoggerAdapter();
+  const pieceCatalogConfigProvider = new PieceCatalogConfigProvider();
+  const bookNameConfigProvider = new BookNameConfigProvider();
+  const hostNotifierAdapter = new HostNotifierAdapter();
+  const scriptureNavigationAdapter = new ScriptureNavigationAdapter();
   const pieceMapper = new PieceMapper();
   const piecesProvider = new PiecesProvider({
     piecesMap: {
@@ -167,7 +218,7 @@ export const bootstrapExtension = () => {
       },
     },
   });
-  const piecePositionAdapter = new PieceAdapter({
+  const pieceAdapter = new PieceAdapter({
     getDimension,
     pieceMapper,
   });
@@ -179,6 +230,7 @@ export const bootstrapExtension = () => {
     pieceMapper,
   });
   const layerConfigProvider = new LayerConfigProvider();
+  const pieceHighlightConfigProvider = new PieceHighlightConfigProvider();
   const pieceHighlightAdapter = new PieceHighlightAdapter({
     getDimension,
     piecesProvider,
@@ -187,15 +239,12 @@ export const bootstrapExtension = () => {
     colorLerper,
     pieceState: pieceStateAdapter,
     layerProvider: layerConfigProvider,
-  });
-  const contextMenuRendererAdapter = new ContextMenuRendererAdapter({
-    getDimension,
-    piecesProvider,
-    pieceMapper,
+    highlightConfigProvider: pieceHighlightConfigProvider,
   });
   const piecesSequenceAdapter = new PiecesSequenceAdapter({
     pieceState: pieceStateAdapter,
     layerProvider: layerConfigProvider,
+    piecesProvider,
   });
   const piecesRenderOrderAdapter = new PiecesRenderOrderAdapter({
     layerConfigProvider,
@@ -204,39 +253,24 @@ export const bootstrapExtension = () => {
   });
   const hitboxMapper = new HitboxMapper();
   const eventManager = new BaseEventManager<InfrastructureEventMap>();
+  const themeStateAdapter = new ThemeStateAdapter({
+    eventBus: eventManager,
+  });
   const hitboxLifecycleAdapter = new HitboxLifecycleAdapter({
     getDimension,
     hitboxMapperPort: hitboxMapper,
     hitboxProviderPort: hitboxConfigProvider,
     eventManager,
   });
-
   // 2. Application service
   const hitboxLifecycleService = new HitboxLifecycleService({
     piecesProviderPort: piecesProvider,
     hitboxProviderPort: hitboxConfigProvider,
     hitboxSpawnerPort: hitboxLifecycleAdapter,
   });
-  // const pieceStateService = new PieceStateService({
-  //   pieceState: pieceStateAdapter,
-  //   pieceStateConfigProviderPort: pieceStateConfigProvider,
-  //   readingState: readingStateService,
-  //   getExperienceKey,
-  // });
-  const pieceInteractionService = new PieceInteractionService({
-    pieceHighlight: pieceHighlightAdapter,
-    contextMenu: contextMenuRendererAdapter,
-    verseReferenceConfigProviderPort: verseReferenceConfigProvider,
-    readingState: readingStateService,
-    getExperienceKey,
-  });
-  const environmentInteractionService = new EnvironmentInteractionService({
-    pieceHighlight: pieceHighlightAdapter,
-    contextMenu: contextMenuRendererAdapter,
-  });
   const piecePositionService = new PiecePositionService({
     piecesProviderPort: piecesProvider,
-    piecePositionUpdaterPort: piecePositionAdapter,
+    piecePositionUpdaterPort: pieceAdapter,
     piecePositionProviderPort: piecePositionConfigProvider,
   });
   const piecesSetUpService = new PiecesSetUpService({
@@ -256,12 +290,52 @@ export const bootstrapExtension = () => {
     logger: loggerAdapter,
     piecesSetUpPort: piecesSetUpService,
     environmentSetUpPort: environmentSetUpService,
-    getExperienceKey,
+    eventBus: domainEventBus,
   });
-  // const scriptureInteractionService = new ScriptureInteractionService({
-  //   experienceDisplayerPort: experienceService,
-  // });
+  const pieceStateService = new PieceStateService({
+    pieceState: pieceStateAdapter,
+    pieceStateConfigProviderPort: pieceStateConfigProvider,
+    readingState: readingStateService,
+    experienceService,
+  });
+  const navMenuStateService = new NavMenuStateService({
+    eventBus: domainEventBus,
+    initialState: {
+      isOpen: false,
+      level: NAV_MENU_LEVELS.PIECES,
+      selectedPiece: HIGHLIGHTED_PIECE ?? null,
+      occludedBy: HIGHLIGHTED_PIECE ?? null,
+      experience: EXPERIENCE,
+      reading: readingStateService.getCurrentReading(),
+    },
+  });
 
+  const pieceHighlightService = new PieceHighlightService({
+    experienceService,
+    pieceHighlight: pieceHighlightAdapter,
+  });
+  const pieceFocusService = new PieceFocusService({
+    pieceHighlightPort: pieceHighlightService,
+    navMenuStatePort: navMenuStateService,
+    pieceStatePort: pieceStateService,
+  });
+  const pieceInteractionService = new PieceInteractionService({
+    pieceFocusPort: pieceFocusService,
+    piecesProvider: piecesProvider,
+    pieceAdapterPort: pieceAdapter,
+    experienceService,
+    loggerPort: loggerAdapter,
+  });
+  const environmentInteractionService = new EnvironmentInteractionService({
+    pieceHighlight: pieceHighlightService,
+    navMenuStatePort: navMenuStateService,
+  });
+  const scriptureNavigationService = new ScriptureNavigationService({
+    scriptureNavigationAdapterPort: scriptureNavigationAdapter,
+  });
+  const scriptureInteractionService = new ScriptureInteractionService({
+    pieceFocusPort: pieceFocusService,
+  });
   // 3. Controller
   const piecesInteractionController = new PiecesInteractionController({
     pieceInteractionService,
@@ -271,11 +345,31 @@ export const bootstrapExtension = () => {
       environmentInteractionService,
     }
   );
-  // const scriptureInteractionController = new ScriptureInteractionController(
-  //   {
-  //     verseMenuClickHandlerPort: scriptureInteractionService,
-  //   }
-  // );
+  const scriptureInteractionController = new ScriptureInteractionController({
+    scriptureInteractionPort: scriptureInteractionService,
+    readingStatePort: readingStateService,
+    experienceServicePort: experienceService,
+  });
+  const seedBibleController = new SeedBibleController({
+    themeStateAdapter,
+  });
+  const navMenuController = new NavMenuController({
+    navMenuStatePort: navMenuStateService,
+    pieceFocusPort: pieceFocusService,
+    scriptureNavigationPort: scriptureNavigationService,
+  });
+
+  const navMenuRendererAdapter = new NavMenuRendererAdapter({
+    eventBus: domainEventBus,
+    navMenuStateService,
+    themeStateAdapter,
+    themeEventBus: eventManager,
+    catalog: pieceCatalogConfigProvider,
+    verseReferences: verseReferenceConfigProvider,
+    bookNames: bookNameConfigProvider,
+    controller: navMenuController,
+    environment: environmentAdapter,
+  });
 
   // 4. React to reading state changes
   // const unsubscribeReadingState = effect(() => {
@@ -301,11 +395,90 @@ export const bootstrapExtension = () => {
     environmentInteractionController.handleGridClick();
   });
 
-  // 6. Disposers
+  os.addBotListener(entrypointBot, "onInstLeave", () =>
+    experienceService.clearExperience()
+  );
+  os.addBotListener(entrypointBot, "onDestroy", () =>
+    experienceService.clearExperience()
+  );
 
-  experienceService.tryDisplayExperience().then((displayed) => {
-    if (displayed && HIGHLIGHTED_PIECE) {
-      pieceHighlightAdapter.highlightPiece(EXPERIENCE, HIGHLIGHTED_PIECE);
+  domainEventBus.subscribe("OnReadingStateChanged", ({ reading }) => {
+    navMenuStateService.setReading(reading);
+  });
+
+  domainEventBus.subscribe("OnExperienceChanged", ({ experience }) => {
+    if (experience) {
+      navMenuStateService.setExperience(experience);
     }
   });
+
+  os.addBotListener(
+    entrypointBot,
+    "onEmbedMessage",
+    ({ message }: { message: Message }) => {
+      if (!message?.type) return;
+
+      const eventName = MESSAGE_TO_EVENT_MAP[message.type];
+      if (!eventName) return;
+
+      eventManager.emit(
+        eventName,
+        message as InfrastructureEventMap[typeof eventName]
+      );
+    }
+  );
+
+  eventManager.subscribe("OnHighlightPieceMessage", (message) => {
+    scriptureInteractionController.handlePieceFocusRequest(
+      message.experience,
+      message.key
+    );
+  });
+
+  eventManager.subscribe("OnThemeChangedMessage", (message) => {
+    seedBibleController.handleThemeChanged(message.css);
+  });
+
+  eventManager.subscribe("OnReadingChangedMessage", (message) => {
+    scriptureInteractionController.handleReadingChanged(
+      message.bookId,
+      message.chapterNumber
+    );
+  });
+
+  hostNotifierAdapter.notifyReady();
+
+  // 6. Disposers
+
+  const displayed = await experienceService
+    .tryDisplayExperience(EXPERIENCE)
+    .catch((reason) =>
+      console.error(
+        "house-of-the-lord pattern bootstrap: Failed to display experience",
+        { reason }
+      )
+    );
+  if (!displayed) {
+    console.error(
+      "house-of-the-lord pattern bootstrap: couldn't display experience"
+    );
+    return;
+  }
+
+  if (!themeStateAdapter.getCss()) {
+    await waitForEvent(eventManager, "OnThemeChanged", THEME_WAIT_TIMEOUT_MS);
+  }
+
+  if (HIGHLIGHTED_PIECE) {
+    pieceFocusService.focus(HIGHLIGHTED_PIECE);
+  }
+
+  await navMenuRendererAdapter
+    .render()
+    .catch((reason) =>
+      console.error(
+        "house-of-the-lord pattern bootstrap: Failed to display navigation menu",
+        { reason }
+      )
+    );
 };

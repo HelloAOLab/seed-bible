@@ -4,7 +4,7 @@ import type {
   ExperienceKeyMap,
 } from "../../../domain/models/experience";
 import { VERSE_REFERENCE_MAP } from "./referenceMap";
-import type { VerseReferenceConfigProviderPort } from "../../../application/ports/out/PieceInteraction";
+import type { VerseReferenceConfigProviderPort } from "../../../application/ports/out/VerseReferenceConfigProvider";
 
 export class VerseReferenceConfigProvider implements VerseReferenceConfigProviderPort {
   getPiecesForVerse<E extends ExperienceKey>({
@@ -24,16 +24,11 @@ export class VerseReferenceConfigProvider implements VerseReferenceConfigProvide
   getVersesForPiece<E extends ExperienceKey>({
     experienceKey,
     pieceKey,
-    currentBookId,
-    currentChapter,
   }: {
     experienceKey: E;
     pieceKey: ExperienceKeyMap[E];
-    currentBookId: string;
-    currentChapter: number;
-  }): { inChapter: VerseReference[]; inOtherChapters: VerseReference[] } {
-    const inChapter: VerseReference[] = [];
-    const inOtherChapters: VerseReference[] = [];
+  }): VerseReference[] {
+    const references: VerseReference[] = [];
 
     for (const [bookId, chapters] of Object.entries(
       VERSE_REFERENCE_MAP[experienceKey]
@@ -42,17 +37,11 @@ export class VerseReferenceConfigProvider implements VerseReferenceConfigProvide
         const chapter = Number(chapterStr);
         for (const [verseStr, keys] of Object.entries(verses)) {
           if (!keys.includes(pieceKey)) continue;
-          const verse = Number(verseStr);
-          const ref: VerseReference = { bookId, chapter, verse };
-          if (bookId === currentBookId && chapter === currentChapter) {
-            inChapter.push(ref);
-          } else {
-            inOtherChapters.push(ref);
-          }
+          references.push({ bookId, chapter, verse: Number(verseStr) });
         }
       }
     }
 
-    return { inChapter, inOtherChapters };
+    return references;
   }
 }
