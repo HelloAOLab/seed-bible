@@ -349,8 +349,13 @@ export interface TutorialManager {
   /**
    * Starts a contextual single-feature tour, if not already seen and the user
    * hasn't opted out. Safe to call from event handlers without pre-checking.
+   *
+   * `steps` overrides the `CONTEXTUAL_TUTORIALS[featureId]` lookup — for a
+   * tour whose steps need instance state (e.g. the id of the record a step's
+   * `onEnter` should open) that isn't available at module load. The "seen"
+   * flag is still tracked under `featureId` either way.
    */
-  startContextual: (featureId: string) => void;
+  startContextual: (featureId: string, steps?: TutorialStep[]) => void;
   /** Advances to the next step, finishing after the last one. */
   next: () => void;
   /** Goes back one step (no-op on the first). */
@@ -613,7 +618,7 @@ export function createTutorialManager(
     running.value = true;
   };
 
-  const startContextual = (featureId: string) => {
+  const startContextual = (featureId: string, steps?: TutorialStep[]) => {
     if (running.value) {
       return;
     }
@@ -628,13 +633,13 @@ export function createTutorialManager(
     if (featuresSeen.value[featureId]) {
       return;
     }
-    const steps = CONTEXTUAL_TUTORIALS[featureId];
-    if (!steps || steps.length === 0) {
+    const resolvedSteps = steps ?? CONTEXTUAL_TUTORIALS[featureId];
+    if (!resolvedSteps || resolvedSteps.length === 0) {
       return;
     }
     mode.value = "contextual";
     activeFeatureId.value = featureId;
-    activeSteps.value = steps;
+    activeSteps.value = resolvedSteps;
     index.value = 0;
     running.value = true;
   };
