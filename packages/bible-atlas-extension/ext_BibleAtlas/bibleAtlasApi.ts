@@ -133,8 +133,7 @@ interface VisualizationCatalogResponse {
   };
 }
 
-/** Fetches the full visualization catalog, uncached. */
-async function fetchVisualizationCatalogUncached(): Promise<
+async function fetchVisualizationCatalogFromApi(): Promise<
   AtlasVisualization[]
 > {
   const url = new URL("/api/v1/visualizations", BIBLE_ATLAS_ORIGIN);
@@ -164,7 +163,7 @@ export async function fetchVisualizationCatalog(): Promise<
   AtlasVisualization[]
 > {
   if (!catalogCache) {
-    catalogCache = fetchVisualizationCatalogUncached();
+    catalogCache = fetchVisualizationCatalogFromApi();
     catalogCache.catch(() => {
       catalogCache = null;
     });
