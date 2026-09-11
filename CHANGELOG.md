@@ -5,13 +5,22 @@
 ### ✨ Added
 
 - Save an annotation with Cmd+Enter on Mac or Ctrl+Enter on Windows and Linux while typing, and keep Enter inserting a new line.
+- Edit your profile from the profile screen. The pencil in the corner of the profile card — or tapping your name — opens an Edit profile screen with your name, location and description. Your email address, location and description now show on the profile screen itself. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 - Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1", "Gen.1" and "Gen. 1:1" resolve the same as "Gen 1:1", and a trailing abbreviation period ("Gen.") keeps offering suggestions. Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
 
 ### 🔧 Changed
 
+- Tapping your profile picture now opens the picture cropper directly instead of taking you to account settings first, and the badge on it is a pencil once you have a picture rather than always a "+". ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- "Your content" and "Edit profile" now have a back button that returns you to your profile, instead of only a close button that dropped you back at the reader. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Replace Bookmarks in the mobile bottom bar with "You", the profile entry point, and put Bible ahead of Search, so the five tabs read Today, You, Bible, Search, More. Bookmarks moves into the More menu next to Tabs, where Chat already lived. `?chatFirst=true` no longer replaces a bottom tab either: Chat stays in the More menu on mobile, and still sits in the labeled toolbar on desktop. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Title the profile picture editor "Change profile picture" instead of "Update picture", so it names what it changes. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Trim the profile picture editor's list of sources. "Choose from gallery" and "Upload a file" opened the identical file dialog, so they are now one entry, "Upload from device" — named so it does not read as the in-app Recent uploads gallery that playlist and reading-plan covers use. "Take a photo" is offered only where the browser will actually open a camera, instead of promising a camera on desktop and showing a file dialog. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+
 ### 🐛 Fixed
 
+- Close the Today screen when another screen opens over it. Opening Discover or Reading plans while Today was up left them behind it, with nothing on screen to say they had opened — Today fills the reader area, and only a pane that fills it too would displace one. Today now steps aside for anything else that opens. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 - Stop linking an ambiguous chapter-to-verse range in prose. "John 1-2:3" mixes a whole-chapter start with a verse end, and used to link as John 1–2 with the ":3" silently dropped; it now links nothing rather than a reference the reader did not write. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+- Fix "Read more" appearing on a playlist's description in the Discover panel however short the description is, for some fonts. Whether it fitted on one line was worked out from a guessed line height (1.2 times the font size) rather than a real one, and whether that guess came out too small depended on the font in use — with the default font it behaved correctly, but with a taller one, such as the fallbacks used for Chinese and Thai text, even a three-word description got a "Read more" that expanded to nothing. It now compares the line's real width against the space it has, which does not depend on the font. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 
 ### 🗑️ Removed
 
