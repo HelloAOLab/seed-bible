@@ -1,7 +1,7 @@
 {
   "name": "@seed-bible/bible-atlas-extension",
   "version": "1.0.0",
-  "description": "Shows Bible Atlas people, places and events for the selected verses.",
+  "description": "Visualize the bible through interactive maps, genealogies, timelines and many other charts",
   "type": "module",
   "exports": {
     ".": {
