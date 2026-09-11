@@ -146,16 +146,33 @@ class MockSharedMap<T> {
 
 function createLoginManagerMock() {
   const userId = signal<string | null>(null);
-  const profile = signal<{ name: string } | null>(null);
+  const profile = signal<{
+    name: string;
+    config?: Record<string, unknown>;
+  } | null>(null);
+  const localConfig = signal<Record<string, unknown>>({});
 
   const loginManager = {
     userId,
     profile,
-  } as LoginManager;
+    localConfig,
+    updateProfile: (patch: { config?: Record<string, unknown> }) => {
+      profile.value = {
+        name: profile.value?.name ?? "",
+        ...profile.value,
+        ...patch,
+        config: {
+          ...(profile.value?.config ?? {}),
+          ...(patch.config ?? {}),
+        },
+      };
+    },
+  } as unknown as LoginManager;
 
   return {
     userId,
     profile,
+    localConfig,
     loginManager,
   };
 }
@@ -402,6 +419,71 @@ describe("createChatsManager", () => {
     expect(chats.composerDraft.value).toBe(
       "In the beginning. (Genesis 1:1 NIV)\n\n"
     );
+  });
+
+  it("uses the active tab translation until an AI default override is pinned", () => {
+    const { loginManager, localConfig } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    expect(chats.aiBibleTranslationId.value).toBeNull();
+    expect(chats.getEffectiveAiBibleTranslationId("eng_kjv")).toBe("eng_kjv");
+    expect(chats.getEffectiveAiBibleTranslationId(null)).toBeNull();
+
+    chats.setAiBibleTranslationId("eng_esv");
+    expect(chats.aiBibleTranslationId.value).toBe("eng_esv");
+    expect(chats.getEffectiveAiBibleTranslationId("eng_kjv")).toBe("eng_esv");
+    expect(localConfig.value.aiBibleTranslationId).toBe("eng_esv");
+
+    chats.setAiBibleTranslationId(null);
+    expect(chats.aiBibleTranslationId.value).toBeNull();
+    expect(chats.getEffectiveAiBibleTranslationId("eng_kjv")).toBe("eng_kjv");
+  });
+
+  it("prefers profile.config aiBibleTranslationId over localConfig when signed in", () => {
+    const { loginManager, userId, profile, localConfig } =
+      createLoginManagerMock();
+    userId.value = "user-1";
+    localConfig.value = { aiBibleTranslationId: "eng_web" };
+    profile.value = {
+      name: "Alice",
+      config: { aiBibleTranslationId: "eng_esv" },
+    };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    expect(chats.aiBibleTranslationId.value).toBe("eng_esv");
+    expect(chats.getEffectiveAiBibleTranslationId("eng_kjv")).toBe("eng_esv");
+
+    chats.setAiBibleTranslationId("eng_nasb95");
+    expect(chats.aiBibleTranslationId.value).toBe("eng_nasb95");
+    expect(profile.value?.config?.aiBibleTranslationId).toBe("eng_nasb95");
+    // Signed-in writes go to profile, not the device-local store.
+    expect(localConfig.value.aiBibleTranslationId).toBe("eng_web");
+    expect(chats.getEffectiveAiBibleTranslationId("eng_kjv")).toBe(
+      "eng_nasb95"
+    );
+  });
+
+  it("clears the AI default while signed in even when localConfig still holds a stale id", () => {
+    const { loginManager, userId, profile, localConfig } =
+      createLoginManagerMock();
+    userId.value = "user-1";
+    // Pinned while signed out, then signed in with a profile override.
+    localConfig.value = { aiBibleTranslationId: "eng_web" };
+    profile.value = {
+      name: "Alice",
+      config: { aiBibleTranslationId: "eng_esv" },
+    };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    expect(chats.aiBibleTranslationId.value).toBe("eng_esv");
+
+    // "Follow active tab instead" — profile clear must not fall through to
+    // the stale device-local value via `??`.
+    chats.setAiBibleTranslationId(null);
+    expect(chats.aiBibleTranslationId.value).toBeNull();
+    expect(chats.getEffectiveAiBibleTranslationId("eng_kjv")).toBe("eng_kjv");
+    expect(localConfig.value.aiBibleTranslationId).toBe("eng_web");
   });
 
   it("createLocalSession() exposes an empty unsentDraft for the compose field", () => {

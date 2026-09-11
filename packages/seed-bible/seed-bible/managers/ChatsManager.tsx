@@ -23,6 +23,27 @@ import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import { type i18n } from "i18next";
 import type { AIProviderFunctionTool } from "./AIManager";
+import { saveProfileConfigValue } from "./ProfileConfigSync";
+
+/** Profile / localConfig key for the optional AI-default Bible translation. */
+export const PROFILE_AI_BIBLE_TRANSLATION_ID = "aiBibleTranslationId";
+
+function readAiBibleTranslationId(login: LoginManager): string | null {
+  const profileConfig = login.profile.value?.config as
+    | Record<string, unknown>
+    | undefined;
+  // When signed in with a loaded profile, the profile is authoritative —
+  // an explicit clear (null) must not fall back to a stale device-local value
+  // left from pinning while signed out.
+  if (login.userId.value && profileConfig) {
+    const value = profileConfig[PROFILE_AI_BIBLE_TRANSLATION_ID];
+    return typeof value === "string" && value.length > 0 ? value : null;
+  }
+  const fromLocal = login.localConfig?.value?.[PROFILE_AI_BIBLE_TRANSLATION_ID];
+  return typeof fromLocal === "string" && fromLocal.length > 0
+    ? fromLocal
+    : null;
+}
 
 export const chatMessageBaseSchema = z.object({
   /**
@@ -497,6 +518,28 @@ export interface ChatsManager {
    * AI tool can prefill a question without owning the compose UI.
    */
   composerDraft: Signal<string>;
+
+  /**
+   * Optional AI-default Seed Bible translation id. When set, AI chat providers
+   * use this instead of the active reader tab's translation. Persisted via
+   * profile / localConfig as {@link PROFILE_AI_BIBLE_TRANSLATION_ID}.
+   */
+  aiBibleTranslationId: ReadonlySignal<string | null>;
+
+  /**
+   * Pins or clears the AI-default translation override and persists it.
+   * Pass `null` to follow the active tab again.
+   */
+  setAiBibleTranslationId: (translationId: string | null) => void;
+
+  /**
+   * Returns the translation id AI chat should use: the pinned AI default if
+   * set, otherwise the given tab translation id (`tabId` here means the
+   * active tab's Seed translation id, not a reader-tab UUID).
+   */
+  getEffectiveAiBibleTranslationId: (
+    tabId: string | null | undefined
+  ) => string | null;
 }
 
 const DEFAULT_LOCAL_PARTICIPANT_ID = "local-user";
@@ -2272,6 +2315,27 @@ export function createChatsManager(
       .filter((c) => c.id !== id);
   };
   const composerDraft = signal("");
+  const aiBibleTranslationId = signal<string | null>(
+    readAiBibleTranslationId(loginManager)
+  );
+  // Keep the in-memory preference aligned with profile / localConfig (login,
+  // anonymous edits on another surface, or adopting localConfig after sign-in).
+  effect(() => {
+    aiBibleTranslationId.value = readAiBibleTranslationId(loginManager);
+  });
+  const setAiBibleTranslationId = (translationId: string | null) => {
+    aiBibleTranslationId.value = translationId;
+    void saveProfileConfigValue(
+      loginManager,
+      PROFILE_AI_BIBLE_TRANSLATION_ID,
+      translationId
+    );
+  };
+  const getEffectiveAiBibleTranslationId = (
+    tabId: string | null | undefined
+  ): string | null => {
+    return aiBibleTranslationId.value ?? tabId ?? null;
+  };
   const selectedChatId = signal<string | null>(null);
   const selectedChat = computed(
     () => chats.value.find((chat) => chat.id === selectedChatId.value) ?? null
@@ -2359,5 +2423,8 @@ export function createChatsManager(
     addContext,
     removeContext,
     composerDraft,
+    aiBibleTranslationId,
+    setAiBibleTranslationId,
+    getEffectiveAiBibleTranslationId,
   };
 }

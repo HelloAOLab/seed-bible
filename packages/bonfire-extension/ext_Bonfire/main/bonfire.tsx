@@ -207,6 +207,27 @@ export function* registerBonfireChatProvider(
       console.log("[Bonfire] Generating response for message:", lastMessage);
 
       const readingState = context.app.selectedTab.value?.readingState;
+      const tabTranslationId = readingState?.translationId.value ?? null;
+      const effectiveTranslationId =
+        context.chats.getEffectiveAiBibleTranslationId(tabTranslationId);
+      const effectiveTranslation =
+        (effectiveTranslationId &&
+          context.bibleData.availableTranslations.value.find(
+            (t) => t.id === effectiveTranslationId
+          )) ||
+        (readingState?.translation.value?.id === effectiveTranslationId
+          ? readingState.translation.value
+          : null) ||
+        readingState?.translation.value ||
+        null;
+      const translationLabel =
+        effectiveTranslation?.name ??
+        effectiveTranslation?.englishName ??
+        effectiveTranslationId ??
+        "unknown";
+      const translationShortName =
+        effectiveTranslation?.shortName ?? effectiveTranslationId ?? "";
+      const uiLanguage = context.i18n.language.value.replace(/_/g, "-");
       const response = await fetch(
         "https://bonfire.seedbible.io/api/v1/session/chat",
         {
@@ -219,7 +240,7 @@ export function* registerBonfireChatProvider(
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
             },
-            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}`,
+            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId.value} ${readingState?.chapterNumber.value}. Prefer the Bible translation ${translationLabel} (${translationShortName}). Reply in ${uiLanguage}.`,
           }),
           headers,
         }
