@@ -177,6 +177,17 @@ export interface IdentifiedLocalChatContext extends LocalChatContext {
    * The label for the context, which can be used to display a description of the context to the user.
    */
   label: TranslatableTitle;
+
+  /**
+   * An optional action shown alongside this context's row in the "Active AI
+   * context" menu (e.g. a settings gear) — lets a context-contributing
+   * extension also offer a way to configure itself, with no core knowledge
+   * of that extension.
+   */
+  settingsAction?: {
+    label: TranslatableTitle;
+    onClick: () => void;
+  };
 }
 
 export interface ChatContext {
