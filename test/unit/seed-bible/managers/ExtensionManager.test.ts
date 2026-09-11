@@ -1518,6 +1518,72 @@ describe("createExtensionManager", () => {
     expect(entry?.enabled).toBe(true);
   });
 
+  it("setExtensionEnabled(id, false) on a never-installed extension leaves it uninstalled", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://never-installed");
+    const meta: ExtensionMeta = {
+      id: "ext.never-installed",
+      translations: { en: { title: "Never installed", description: "..." } },
+    };
+    // `() => false` makes the set known without installing anything, the same
+    // state an extension sitting in the Settings "Available" tab is in.
+    await manager.loadExtensionSet(
+      {
+        id: "set.never-installed",
+        extensions: [{ url: "pkg://never-installed", meta }],
+      },
+      () => false
+    );
+
+    await manager.setExtensionEnabled("ext.never-installed", false);
+
+    const entry = manager.extensions.value.find(
+      (e) => e.id === "ext.never-installed"
+    );
+    expect(entry?.installed).toBe(false);
+    expect(entry?.enabled).toBe(true);
+    expect(localStorage.getItem("sb-disabled-extensions")).toBeNull();
+  });
+
+  it("re-enables a disabled extension that gets force-installed as another extension's dependency", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://dep-resurrect");
+    mockExtensionModule("pkg://dependent-resurrect");
+
+    await manager.loadExtension({
+      url: "pkg://dep-resurrect",
+      meta: {
+        id: "ext.dep-resurrect",
+        translations: { en: { title: "Dependency", description: "..." } },
+      },
+    });
+    await manager.setExtensionEnabled("ext.dep-resurrect", false);
+    expect(
+      manager.extensions.value.find((e) => e.id === "ext.dep-resurrect")
+        ?.enabled
+    ).toBe(false);
+
+    await manager.loadExtension({
+      url: "pkg://dependent-resurrect",
+      meta: {
+        id: "ext.dependent-resurrect",
+        dependencies: ["ext.dep-resurrect"],
+        translations: { en: { title: "Dependent", description: "..." } },
+      },
+    });
+
+    // The dependency was force-installed, so the toggle must say it's on
+    // rather than claim it's off while it runs.
+    const dependency = manager.extensions.value.find(
+      (e) => e.id === "ext.dep-resurrect"
+    );
+    expect(dependency?.installed).toBe(true);
+    expect(dependency?.enabled).toBe(true);
+    expect(
+      JSON.parse(localStorage.getItem("sb-disabled-extensions") ?? "[]")
+    ).not.toContain("ext.dep-resurrect");
+  });
+
   it("loadExtension() fails and logs when a url-based module has no default export function", async () => {
     const manager = createExtensionManager(login);
     mockExtensionModule("pkg://no-default", () => ({}));

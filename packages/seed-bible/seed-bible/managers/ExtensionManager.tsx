@@ -839,6 +839,17 @@ export function createExtensionManager(
   const disabledExtensionIds = readPersistedDisabledExtensionIds();
 
   /**
+   * Whether the user actually has this extension, in the sense the Settings
+   * list means by "Installed". A disabled id counts: disabling unregisters the
+   * extension and clears `installedExtensionIds` (see `setExtensionEnabled`),
+   * so those two checks alone would read a merely-paused extension as gone.
+   */
+  const isInstalledExtension = (id: string): boolean =>
+    installedExtensionIds.has(id) ||
+    ExtensionInitalizer.getInstance().isExtensionRegistered(id) ||
+    disabledExtensionIds.has(id);
+
+  /**
    * The key under which the "autoinstall handled" ID set is mirrored into the
    * user's profile config, so a returning user doesn't have an `autoinstall`
    * extension they uninstalled on one device reinstalled on another.
@@ -979,15 +990,7 @@ export function createExtensionManager(
       extension: knownExtensionPackages.get(id) ?? null,
       extensionSet: knownExtensionsSetsByExtensionId.get(id) ?? null,
       registration: registeredExtensions.find((ext) => ext.id === id) ?? null,
-      // A disabled id is folded into `installed` too: disabling clears
-      // `installedExtensionIds`/unregisters the extension (see
-      // `setExtensionEnabled`) precisely so it stops satisfying
-      // `isSatisfiedDependency`, which would otherwise make this field go
-      // false while merely paused rather than uninstalled.
-      installed:
-        installedExtensionIds.has(id) ||
-        ExtensionInitalizer.getInstance().isExtensionRegistered(id) ||
-        disabledExtensionIds.has(id),
+      installed: isInstalledExtension(id),
       pendingInstallation: pendingInstallations.has(id),
       enabled: !disabledExtensionIds.has(id),
     }));
@@ -1185,6 +1188,16 @@ export function createExtensionManager(
             `Failed to install extension '${extensionId}': dependency '${dependencyId}' is not registered and was not found in loaded extension sets.`
           );
           return false;
+        }
+
+        // Installing a dependent force-installs its dependencies, so a
+        // dependency the user had turned off is about to start running again
+        // — clear its disabled flag rather than let the toggle claim it's off
+        // while it runs. Deliberately one-directional: disabling an extension
+        // still does not cascade to its dependents.
+        if (disabledExtensionIds.delete(dependencyId)) {
+          writePersistedDisabledExtensionIds(disabledExtensionIds);
+          refreshExtensionsSignal();
         }
 
         const loadedDependency = await loadExtension(dependency, installStack);
@@ -1466,6 +1479,14 @@ export function createExtensionManager(
       ) {
         await loadExtension(extension);
       }
+      return;
+    }
+
+    // Disabling something the user never installed would record a disabled
+    // flag for it, which `installed` folds in — moving a never-installed
+    // extension into the "Installed" tab as a phantom entry. Nothing to pause
+    // here, so do nothing.
+    if (!isInstalledExtension(id)) {
       return;
     }
 
