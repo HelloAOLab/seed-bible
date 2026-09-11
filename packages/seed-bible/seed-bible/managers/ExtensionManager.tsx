@@ -64,6 +64,21 @@ export interface ExtensionMeta {
    * Defaults to false.
    */
   autoinstall?: boolean;
+
+  /**
+   * Material Symbols icon name shown for this extension in the manager UI.
+   */
+  icon?: string;
+
+  /**
+   * Static version string shown in the extension's details pane.
+   */
+  version?: string;
+
+  /**
+   * URL to the extension's homepage, linked from its details pane.
+   */
+  homepage?: string;
 }
 
 export type Extension = UploadedExtension | ImportExtension;
