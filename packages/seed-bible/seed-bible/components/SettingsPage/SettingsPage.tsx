@@ -1148,6 +1148,10 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
     extensions.unloadExtension(extensionId);
   };
 
+  const handleToggleEnabled = (extensionId: string, enabled: boolean) => {
+    void extensions.setExtensionEnabled(extensionId, enabled);
+  };
+
   const handleDownloadExtensions = async () => {
     if (isDownloadingSet.value) {
       return;
@@ -1212,7 +1216,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { branding } = useAppConfig();
 
   const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
-    const { id, installed, pendingInstallation } = extensionEntry;
+    const { id, installed, pendingInstallation, enabled } = extensionEntry;
     const isRegistered =
       ExtensionInitalizer.getInstance().isExtensionRegistered(id);
     const installState = getExtensionInstallState(
@@ -1242,6 +1246,11 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
     return (
       <li key={id} className="sb-extension-row">
         <div className="sb-extension-row-body">
+          <span className="sb-extension-icon-avatar" aria-hidden="true">
+            <span className="material-symbols-outlined">
+              {extensionEntry.extension?.meta.icon ?? "extension"}
+            </span>
+          </span>
           <span
             className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
             title={stateLabel}
@@ -1266,6 +1275,28 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             </span>
           </div>
           <div className="sb-extension-row-actions">
+            {(installState === "installed" ||
+              installState === "downloaded") && (
+              <button
+                type="button"
+                role="switch"
+                aria-checked={enabled}
+                className={`sb-extension-toggle${enabled ? " sb-extension-toggle-on" : ""}`}
+                onClick={() => handleToggleEnabled(id, !enabled)}
+                aria-label={
+                  enabled
+                    ? t("extension-disable", { defaultValue: "Disable" })
+                    : t("extension-enable", { defaultValue: "Enable" })
+                }
+                title={
+                  enabled
+                    ? t("extension-disable", { defaultValue: "Disable" })
+                    : t("extension-enable", { defaultValue: "Enable" })
+                }
+              >
+                <span className="sb-extension-toggle-thumb" />
+              </button>
+            )}
             {installState === "none" && (
               <button
                 type="button"
