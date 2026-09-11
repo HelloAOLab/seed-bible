@@ -139,6 +139,7 @@ import {
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
 import { syncAnnotationConflictModal } from "../components/AnnotationConflictModal/AnnotationConflictModal";
+import { createAdoptionPrompt } from "../components/AdoptDeviceContentModal/AdoptDeviceContentModal";
 import {
   createModalManager,
   type ModalManager,
@@ -613,7 +614,13 @@ export function createSeedBibleState(
   });
   const os = CasualOSManager();
   const login = createLoginManager({ os });
-  const highlights = createHighlightsManager(os, login);
+  const modals = createModalManager();
+  // Both managers ask through the same prompt, so one sign-in raises one
+  // dialog even when the device holds highlights and notes.
+  const askToAdopt = createAdoptionPrompt(modals);
+  const highlights = createHighlightsManager(os, login, {
+    confirmAdoption: (owner) => askToAdopt(owner, "highlights"),
+  });
   const bookmarks = createBookmarksManager(os, login);
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
@@ -687,7 +694,8 @@ export function createSeedBibleState(
     login,
     tabs,
     discover,
-    annotationRecordKey
+    annotationRecordKey,
+    { confirmAdoption: (owner) => askToAdopt(owner, "notes") }
   );
   const yourContent = createYourContentManager({
     annotations,
@@ -731,7 +739,6 @@ export function createSeedBibleState(
     }
     void extensions.reconcileInstalledExtensions(targetIds);
   });
-  const modals = createModalManager();
   const search = createSearchManager();
 
   // When the app is opened via a content link — a shared-session invite

@@ -1453,6 +1453,48 @@ describe("CustomizationsManager", () => {
     expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
   });
 
+  it("getShareLink() strips legacy reading-position query params (language, translation, book, chapter, ...) from the current URL, keeping only customization", async () => {
+    const nav = createNavigationManager({
+      initialHref:
+        "http://localhost/?language=en&translation=BSB&book=GEN&chapter=1&foo=bar",
+    });
+    const { manager } = createManager(nav);
+    const created = await manager.create();
+
+    const link = manager.getShareLink(created);
+
+    expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
+  });
+
+  it("getShareLink() drops the sharer's reading position from the URL path too, keeping only customization", async () => {
+    // The reading position (language, translation, book, chapter) lives in
+    // the path now, not the query string — see ReadingUrlPath.ts.
+    const nav = createNavigationManager({
+      initialHref: "http://localhost/en/BSB/genesis/1?foo=bar",
+    });
+    const { manager } = createManager(nav);
+    const created = await manager.create();
+
+    const link = manager.getShareLink(created);
+
+    expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
+  });
+
+  it("getShareLink() keeps the deployment's basePath prefix while dropping the reading position", async () => {
+    const nav = createNavigationManager({
+      initialHref: "http://localhost/b/some-branch/en/BSB/genesis/1",
+      basePath: "/b/some-branch",
+    });
+    const { manager } = createManager(nav);
+    const created = await manager.create();
+
+    const link = manager.getShareLink(created);
+
+    expect(link).toBe(
+      `http://localhost/b/some-branch?customization=user-1.${created.id}`
+    );
+  });
+
   it("addEditingVariant() appends a new variant to the draft, based on the viewer's current preset with no overrides of its own", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();

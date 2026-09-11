@@ -285,9 +285,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
-        pendingCountForChapter: vi.fn(() => 0),
       },
     },
   } as any as SeedBibleState;
