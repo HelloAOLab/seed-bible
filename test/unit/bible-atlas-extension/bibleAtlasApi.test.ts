@@ -22,8 +22,9 @@ function entity(id: string, overrides: Partial<FakeEntity> = {}): FakeEntity {
   };
 }
 
-function crossReferencesViz(ref: string) {
+function crossReferencesViz(id: string, ref: string) {
   return {
+    id,
     type: "crossReferences",
     label: "Cross references",
     href: `/visualizations/cross-references?ref=${ref}`,
@@ -59,21 +60,6 @@ function okResponse(
   );
 }
 
-/** Routes each verse-context request by its `verse` query param. */
-function fetchByVerse(
-  handlers: Record<number, () => Promise<Response> | Response>
-) {
-  return vi.fn(async (input: RequestInfo | URL) => {
-    const url = new URL(String(input));
-    const verse = Number(url.searchParams.get("verse"));
-    const handler = handlers[verse];
-    if (!handler) {
-      throw new Error(`Unexpected request for verse ${verse}: ${url}`);
-    }
-    return handler();
-  });
-}
-
 describe("fetchEntities", () => {
   const originalFetch = globalThis.fetch;
 
@@ -85,26 +71,26 @@ describe("fetchEntities", () => {
     globalThis.fetch = originalFetch;
   });
 
-  it("requests verse-context with usfm, chapter and verse", async () => {
-    const fetchMock = fetchByVerse({
-      6: () => okResponse([entity("abraham")]),
-    });
+  it("requests verse-context with usfm, chapter and comma-joined verses", async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) =>
+      okResponse([entity("abraham")])
+    );
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-    await fetchEntities("GEN", 12, [6]);
+    await fetchEntities("GEN", 12, [6, 7]);
 
     const url = new URL(String(fetchMock.mock.calls[0]![0]));
     expect(url.origin).toBe("https://bible-atlas.com");
     expect(url.pathname).toBe("/api/v1/verse-context");
     expect(url.searchParams.get("usfm")).toBe("GEN");
     expect(url.searchParams.get("chapter")).toBe("12");
-    expect(url.searchParams.get("verse")).toBe("6");
+    expect(url.searchParams.get("verses")).toBe("6,7");
   });
 
   it("does not force-bypass the CDN cache", async () => {
-    const fetchMock = fetchByVerse({
-      6: () => okResponse([entity("abraham")]),
-    });
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) =>
+      okResponse([entity("abraham")])
+    );
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     await fetchEntities("GEN", 12, [6]);
@@ -113,141 +99,102 @@ describe("fetchEntities", () => {
     expect(url.searchParams.has("_")).toBe(false);
   });
 
-  it("merges entities across verses in verse order, dropping duplicates", async () => {
-    globalThis.fetch = fetchByVerse({
-      1: () => okResponse([entity("abraham"), entity("god")]),
-      2: () => okResponse([entity("sarah"), entity("abraham")]),
-    }) as unknown as typeof fetch;
-
-    const result = await fetchEntities("GEN", 12, [1, 2]);
-
-    expect(result.map((e) => e.id)).toEqual(["abraham", "god", "sarah"]);
-  });
-
-  it("lists the first verse's visualization after every entity, once per type", async () => {
-    globalThis.fetch = fetchByVerse({
-      1: () =>
-        okResponse([entity("abraham")], [crossReferencesViz("Gen.12.1")]),
-      2: () => okResponse([entity("sarah")], [crossReferencesViz("Gen.12.2")]),
-    }) as unknown as typeof fetch;
+  it("returns entities followed by visualizations, in the order the server sent them", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      okResponse(
+        [entity("abraham"), entity("sarah")],
+        [crossReferencesViz("crossReferences", "Gen.12.1-Gen.12.2")]
+      )
+    ) as unknown as typeof fetch;
 
     const result = await fetchEntities("GEN", 12, [1, 2]);
 
     expect(result.map((e) => [e.id, e.type, e.name])).toEqual([
       ["abraham", "person", "abraham"],
       ["sarah", "person", "sarah"],
-      [
-        "viz:crossReferences:Cross references",
-        "visualization",
-        "Cross references",
-      ],
-    ]);
-    expect(result[2]!.embed.path).toBe(
-      "/embed/viz/cross-references?ref=Gen.12.1"
-    );
-  });
-
-  it("keeps two distinct visualizations of the same type from one verse", async () => {
-    // Acts 15:8 links to both Paul's and Peter's journey maps, both typed
-    // "journey" — the type alone isn't enough to identify them.
-    globalThis.fetch = fetchByVerse({
-      8: () =>
-        okResponse(
-          [],
-          [
-            {
-              type: "journey",
-              label: "Paul's Missionary Journeys",
-              href: "",
-              embed: {
-                path: "/embed/journey/pauls-journey?journey=first-missionary-journey&stop=22",
-                title: "Paul's Missionary Journeys",
-              },
-              image: { light: "", dark: "" },
-            },
-            {
-              type: "journey",
-              label: "Peter's Ministry Map",
-              href: "",
-              embed: {
-                path: "/embed/journey/peters-journey?journey=peters-ministry&stop=26",
-                title: "Peter's Ministry",
-              },
-              image: { light: "", dark: "" },
-            },
-          ]
-        ),
-    }) as unknown as typeof fetch;
-
-    const result = await fetchEntities("ACT", 15, [8]);
-
-    expect(result.map((e) => e.name)).toEqual([
-      "Paul's Missionary Journeys",
-      "Peter's Ministry Map",
+      ["crossReferences", "visualization", "Cross references"],
     ]);
   });
 
-  it("returns the other verses' entities when one request throws", async () => {
+  it("uses the visualization's own stable id, unmodified", async () => {
+    // The API assigns each CTA a stable id — its slug, plus :subject when
+    // the hit picks one subject within that chart — since the server (not
+    // the client) now owns dedupe.
+    globalThis.fetch = vi.fn(async () =>
+      okResponse(
+        [],
+        [crossReferencesViz("wars-of-the-bible:battle-of-michmash", "1Sa.14.1")]
+      )
+    ) as unknown as typeof fetch;
+
+    const result = await fetchEntities("1SA", 14, [1]);
+
+    expect(result[0]!.id).toBe("wars-of-the-bible:battle-of-michmash");
+  });
+
+  it("returns an empty list when the request throws", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    globalThis.fetch = fetchByVerse({
-      1: () => Promise.reject(new Error("network down")),
-      2: () => okResponse([entity("sarah")]),
+    globalThis.fetch = vi.fn(async () => {
+      throw new Error("network down");
     }) as unknown as typeof fetch;
 
-    const result = await fetchEntities("GEN", 12, [1, 2]);
-
-    expect(result.map((e) => e.id)).toEqual(["sarah"]);
+    await expect(fetchEntities("GEN", 12, [1, 2])).resolves.toEqual([]);
   });
 
   it("treats a success:false body as no entities", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    globalThis.fetch = fetchByVerse({
-      1: () =>
+    globalThis.fetch = vi.fn(
+      async () =>
         new Response(
           JSON.stringify({
             success: false,
             errors: [{ message: "Bad request" }],
           }),
           { status: 400 }
-        ),
-    }) as unknown as typeof fetch;
+        )
+    ) as unknown as typeof fetch;
 
     await expect(fetchEntities("XYZ", 1, [1])).resolves.toEqual([]);
   });
 
   it("drops entities that have nothing to embed", async () => {
-    globalThis.fetch = fetchByVerse({
-      1: () =>
-        okResponse([entity("abraham"), entity("no-page", { embed: null })]),
-    }) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn(async () =>
+      okResponse([entity("abraham"), entity("no-page", { embed: null })])
+    ) as unknown as typeof fetch;
 
     const result = await fetchEntities("GEN", 12, [1]);
 
     expect(result.map((e) => e.id)).toEqual(["abraham"]);
   });
 
-  it("fetches each verse once across calls", async () => {
-    const fetchMock = fetchByVerse({
-      1: () => okResponse([entity("abraham")]),
-    });
+  it("fetches the same selection once across calls", async () => {
+    const fetchMock = vi.fn(async () => okResponse([entity("abraham")]));
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-    await fetchEntities("GEN", 12, [1]);
-    await fetchEntities("GEN", 12, [1]);
+    await fetchEntities("GEN", 12, [1, 2]);
+    await fetchEntities("GEN", 12, [1, 2]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("retries a verse whose earlier request failed", async () => {
+  it("refetches when the verse selection changes", async () => {
+    const fetchMock = vi.fn(async () => okResponse([entity("abraham")]));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await fetchEntities("GEN", 12, [1]);
+    await fetchEntities("GEN", 12, [1, 2]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries a selection whose earlier request failed", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     let calls = 0;
-    const fetchMock = fetchByVerse({
-      1: () => {
-        calls++;
-        return calls === 1
-          ? Promise.reject(new Error("network down"))
-          : okResponse([entity("abraham")]);
-      },
+    const fetchMock = vi.fn(async () => {
+      calls++;
+      return calls === 1
+        ? Promise.reject(new Error("network down"))
+        : okResponse([entity("abraham")]);
     });
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 

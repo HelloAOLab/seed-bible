@@ -21,6 +21,7 @@ interface VerseContextResponse {
       embed: { path: string; title: string } | null;
     }>;
     visualizations: Array<{
+      id: string;
       type: string;
       label: string;
       embed: { path: string; title: string };
@@ -28,7 +29,7 @@ interface VerseContextResponse {
   };
 }
 
-// Cached by promise so overlapping requests for the same verse share one fetch.
+// Cached by promise so overlapping requests for the same selection share one fetch.
 const cache = new Map<string, Promise<AtlasEntity[]>>();
 
 let catalogCache: Promise<AtlasVisualization[]> | null = null;
@@ -39,33 +40,34 @@ export function clearEntityCache() {
   catalogCache = null;
 }
 
-/** Fetches the entities and visualizations Bible Atlas links to one verse. */
-async function fetchVerse(
+/**
+ * Fetches the entities and visualization CTAs Bible Atlas links to a
+ * selection of verses within one chapter. The server dedupes and orders the
+ * result, and caps the selection at its first 20 verses.
+ */
+async function fetchVerseContext(
   book: string,
   chapter: number,
-  verse: number
+  verses: number[]
 ): Promise<AtlasEntity[]> {
   const url = new URL("/api/v1/verse-context", BIBLE_ATLAS_ORIGIN);
   url.searchParams.set("usfm", book);
   url.searchParams.set("chapter", String(chapter));
-  url.searchParams.set("verse", String(verse));
+  url.searchParams.set("verses", verses.join(","));
 
   const response = await fetch(url);
   const body = (await response.json()) as VerseContextResponse;
   if (!response.ok || !body.success || !body.data) {
     throw new Error(
-      `Bible Atlas returned ${response.status} for ${book} ${chapter}:${verse}`
+      `Bible Atlas returned ${response.status} for ${book} ${chapter}:${verses.join(",")}`
     );
   }
 
   const entities = body.data.entities.flatMap((e) =>
     e.embed ? [{ id: e.id, type: e.type, name: e.name, embed: e.embed }] : []
   );
-  // Keyed by type + label, not type alone: a verse can link two
-  // visualizations of the same type (e.g. Paul's and Peter's journey maps
-  // are both "journey").
   const visualizations = body.data.visualizations.map((v) => ({
-    id: `viz:${v.type}:${v.label}`,
+    id: v.id,
     type: "visualization",
     name: v.label,
     embed: v.embed,
@@ -74,46 +76,30 @@ async function fetchVerse(
 }
 
 /**
- * Fetches and merges entities for several verses, deduped by id. A verse
- * whose request fails contributes nothing rather than failing the whole call.
+ * Fetches the entities and visualizations Bible Atlas links to a verse
+ * selection. A failed request returns an empty list rather than throwing.
  */
 export async function fetchEntities(
   book: string,
   chapter: number,
   verses: number[]
 ): Promise<AtlasEntity[]> {
-  const results = await Promise.allSettled(
-    verses.map((verse) => {
-      const key = `${book}.${chapter}.${verse}`;
-      let pending = cache.get(key);
-      if (!pending) {
-        pending = fetchVerse(book, chapter, verse);
-        cache.set(key, pending);
-        pending.catch(() => cache.delete(key));
-      }
-      return pending;
-    })
-  );
-
-  const seen = new Set<string>();
-  const merged: AtlasEntity[] = [];
-  results.forEach((result, i) => {
-    if (result.status === "rejected") {
-      console.warn(
-        `Bible Atlas lookup failed for ${book} ${chapter}:${verses[i]}`,
-        result.reason
-      );
-      return;
-    }
-    for (const entity of result.value) {
-      if (!seen.has(entity.id)) {
-        seen.add(entity.id);
-        merged.push(entity);
-      }
-    }
-  });
-  const isViz = (e: AtlasEntity) => e.type === "visualization";
-  return [...merged.filter((e) => !isViz(e)), ...merged.filter(isViz)];
+  const key = `${book}.${chapter}.${verses.join(",")}`;
+  let pending = cache.get(key);
+  if (!pending) {
+    pending = fetchVerseContext(book, chapter, verses);
+    cache.set(key, pending);
+    pending.catch(() => cache.delete(key));
+  }
+  try {
+    return await pending;
+  } catch (err) {
+    console.warn(
+      `Bible Atlas lookup failed for ${book} ${chapter}:${verses.join(",")}`,
+      err
+    );
+    return [];
+  }
 }
 
 export interface AtlasVisualization {
