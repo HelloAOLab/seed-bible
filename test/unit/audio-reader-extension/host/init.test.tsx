@@ -1,6 +1,7 @@
 import { signal } from "@preact/signals";
 import {
   attachListeningRecorder,
+  chapterSpeechLanguages,
   chapterVerseNumbers,
   isAudioPlayToolVisible,
   type ListeningTarget,
@@ -14,17 +15,27 @@ function createContext(overrides: {
   surface: QuickToolContext["surface"];
   isMobile: boolean;
   hasAudio?: boolean;
+  hasVerses?: boolean;
+  /** The translation's ISO 639-3 code, as the Bible API reports it. */
+  language?: string;
   playing?: unknown;
 }): QuickToolContext {
+  const content =
+    overrides.hasVerses === false
+      ? [{ type: "heading", content: ["A heading, and nothing to read"] }]
+      : [{ type: "verse", number: 1, content: ["In the beginning"] }];
   return {
     readingState: {
-      chapterData: signal(
+      chapterData: signal({
         // An audio-less chapter carries an empty map, not null — the API type
         // makes `thisChapterAudioLinks` non-nullable.
-        overrides.hasAudio === false
-          ? { thisChapterAudioLinks: {} }
-          : { thisChapterAudioLinks: { reader: "https://example.com/a.mp3" } }
-      ),
+        thisChapterAudioLinks:
+          overrides.hasAudio === false
+            ? {}
+            : { reader: "https://example.com/a.mp3" },
+        translation: { language: overrides.language ?? "eng" },
+        chapter: { number: 1, content },
+      }),
     } as any,
     playlists: {
       playing: signal(overrides.playing ?? null),
@@ -36,10 +47,17 @@ function createContext(overrides: {
   };
 }
 
+/** Stands in for a browser with voices installed for `langs` and no others. */
+function voicesFor(...langs: string[]) {
+  return (lang: string | null) => !!lang && langs.includes(lang);
+}
+
+const NO_VOICES = voicesFor();
+
 describe("isAudioPlayToolVisible (#1607)", () => {
   it("is hidden on the quick-toolbar surface on mobile", () => {
     const ctx = createContext({ surface: "quick-toolbar", isMobile: true });
-    expect(isAudioPlayToolVisible(ctx)).toBe(false);
+    expect(isAudioPlayToolVisible(ctx, NO_VOICES)).toBe(false);
   });
 
   it("is visible on the mobile-navigation-bar surface on mobile", () => {
@@ -47,21 +65,21 @@ describe("isAudioPlayToolVisible (#1607)", () => {
       surface: "mobile-navigation-bar",
       isMobile: true,
     });
-    expect(isAudioPlayToolVisible(ctx)).toBe(true);
+    expect(isAudioPlayToolVisible(ctx, NO_VOICES)).toBe(true);
   });
 
   it("is visible on the quick-toolbar surface on desktop", () => {
     const ctx = createContext({ surface: "quick-toolbar", isMobile: false });
-    expect(isAudioPlayToolVisible(ctx)).toBe(true);
+    expect(isAudioPlayToolVisible(ctx, NO_VOICES)).toBe(true);
   });
 
-  it("is hidden when the chapter has no audio", () => {
+  it("is hidden when the chapter has no audio and the browser cannot speak", () => {
     const ctx = createContext({
       surface: "mobile-navigation-bar",
       isMobile: true,
       hasAudio: false,
     });
-    expect(isAudioPlayToolVisible(ctx)).toBe(false);
+    expect(isAudioPlayToolVisible(ctx, NO_VOICES)).toBe(false);
   });
 
   it("is hidden while a playlist is playing, regardless of surface", () => {
@@ -70,7 +88,182 @@ describe("isAudioPlayToolVisible (#1607)", () => {
       isMobile: false,
       playing: { id: "playing" },
     });
-    expect(isAudioPlayToolVisible(ctx)).toBe(false);
+    expect(isAudioPlayToolVisible(ctx, NO_VOICES)).toBe(false);
+  });
+});
+
+describe("isAudioPlayToolVisible speech fallback (#1769)", () => {
+  it("is visible without recorded audio when the browser can speak", () => {
+    const ctx = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+    });
+    expect(isAudioPlayToolVisible(ctx, voicesFor("en"))).toBe(true);
+  });
+
+  it("stays hidden without recorded audio when there is nothing to read", () => {
+    const ctx = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      hasVerses: false,
+    });
+    expect(isAudioPlayToolVisible(ctx, voicesFor("en"))).toBe(false);
+  });
+
+  it("stays hidden on the quick toolbar on mobile, speech or not", () => {
+    const ctx = createContext({
+      surface: "quick-toolbar",
+      isMobile: true,
+      hasAudio: false,
+    });
+    expect(isAudioPlayToolVisible(ctx, voicesFor("en"))).toBe(false);
+  });
+
+  it("stays hidden while a playlist is playing, speech or not", () => {
+    const ctx = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: false,
+      hasAudio: false,
+      playing: { id: "playing" },
+    });
+    expect(isAudioPlayToolVisible(ctx, voicesFor("en"))).toBe(false);
+  });
+
+  it("stays hidden when no installed voice can read the translation's language", () => {
+    // A Greek translation on a machine that only has English voices: speaking
+    // it would be an English voice sounding out Greek letters.
+    const ctx = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      language: "ell",
+    });
+    expect(isAudioPlayToolVisible(ctx, voicesFor("en"))).toBe(false);
+    expect(isAudioPlayToolVisible(ctx, voicesFor("el"))).toBe(true);
+  });
+
+  it("asks about the translation's language, not the reader's", () => {
+    // "spa" is what the Bible API reports; "es" is what voices are labelled
+    // with, so the ISO 639-3 code must be mapped before anything is asked.
+    const ctx = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      language: "spa",
+    });
+    expect(isAudioPlayToolVisible(ctx, voicesFor("es"))).toBe(true);
+    expect(isAudioPlayToolVisible(ctx, voicesFor("fr"))).toBe(false);
+  });
+
+  it("reaches languages the UI ships no locale for", () => {
+    // Hausa is outside `UI_TO_BIBLE_LANGUAGE_CODES` entirely, but CLDR knows
+    // "hau" is the language voices label "ha".
+    const ctx = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      language: "hau",
+    });
+    expect(isAudioPlayToolVisible(ctx, voicesFor("ha"))).toBe(true);
+    expect(isAudioPlayToolVisible(ctx, voicesFor("en"))).toBe(false);
+  });
+
+  it("keeps a language that has no two-letter form as it is", () => {
+    // "haw" is already the tag a Hawaiian voice carries; there's nothing to
+    // shorten it to, and inventing something would match nothing.
+    const ctx = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      language: "haw",
+    });
+    expect(isAudioPlayToolVisible(ctx, voicesFor("haw"))).toBe(true);
+    expect(isAudioPlayToolVisible(ctx, voicesFor("en"))).toBe(false);
+  });
+
+  it("lets a related language stand in only when the script matches", () => {
+    // Marathi and Hindi are both Devanagari, so a Hindi voice can at least
+    // sound the letters out. `LANG_META` already pairs them.
+    const marathi = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      language: "mar",
+    });
+    expect(isAudioPlayToolVisible(marathi, voicesFor("hi"))).toBe(true);
+
+    // Gujarati is paired with Hindi too, but writes in a different script —
+    // a Hindi voice has no glyphs for it, so the button stays hidden.
+    const gujarati = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      language: "guj",
+    });
+    expect(isAudioPlayToolVisible(gujarati, voicesFor("hi"))).toBe(false);
+    expect(isAudioPlayToolVisible(gujarati, voicesFor("gu"))).toBe(true);
+  });
+
+  it("prefers the real language over its stand-in when both have voices", () => {
+    const marathi = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      language: "mar",
+    });
+    // Every way of naming Marathi comes before the Hindi stand-in, so a
+    // Marathi voice is always taken over borrowing one.
+    expect(
+      chapterSpeechLanguages(marathi.readingState.chapterData.value!)
+    ).toEqual(["mr", "mar", "hi"]);
+  });
+
+  it("admits same-script pairs that only look alike (a known limitation)", () => {
+    // German falls back to English and both are Latin, so an English voice is
+    // offered for a German chapter. It reads badly — but this tier only fires
+    // when the machine has no German voice at all, so the alternative is no
+    // Listen button rather than a better one.
+    const german = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      language: "deu",
+    });
+    expect(isAudioPlayToolVisible(german, voicesFor("en"))).toBe(true);
+    expect(isAudioPlayToolVisible(german, voicesFor("de"))).toBe(true);
+  });
+
+  it("accepts whichever tag has a voice when the two sources disagree", () => {
+    // Indonesian: the curated map leaves "ind" alone (it's the UI locale key),
+    // while voices say "id" — CLDR is the one that's right here.
+    const indonesian = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      language: "ind",
+    });
+    expect(isAudioPlayToolVisible(indonesian, voicesFor("id"))).toBe(true);
+
+    // Malay: the reverse — CLDR leaves "zlm" alone, while the curated map
+    // knows Malay voices are labelled "ms".
+    const malay = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      hasAudio: false,
+      language: "zlm",
+    });
+    expect(isAudioPlayToolVisible(malay, voicesFor("ms"))).toBe(true);
+  });
+
+  it("still shows recorded audio when no voice can read the language", () => {
+    const ctx = createContext({
+      surface: "mobile-navigation-bar",
+      isMobile: true,
+      language: "ell",
+    });
+    expect(isAudioPlayToolVisible(ctx, NO_VOICES)).toBe(true);
   });
 });
 

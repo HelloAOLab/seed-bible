@@ -105,8 +105,15 @@ describe("audio-reader verse highlight sync", () => {
   afterEach(() => {
     unregisterExtension("ext_audioReader");
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
+  /**
+   * The Listen control debounces presses, so a press does nothing until the
+   * delay has run out. Fake timers are swapped in just long enough to run the
+   * clock past it, leaving the rest of the test on the real ones so the
+   * `vi.waitFor` calls that await fetches behave normally.
+   */
   function pressPlay() {
     const readingState = getReadingState(state);
     const ctx: QuickToolContext = {
@@ -119,7 +126,10 @@ describe("audio-reader verse highlight sync", () => {
     const tool = state.tools
       .getQuickTools(ctx)
       .find((t) => t.id === "ext_audioReader-play");
+    vi.useFakeTimers();
     tool!.onSelect();
+    vi.advanceTimersByTime(400);
+    vi.useRealTimers();
   }
 
   function playAt(currentTime: number) {
