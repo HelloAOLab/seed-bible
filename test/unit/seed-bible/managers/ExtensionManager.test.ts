@@ -35,12 +35,43 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", () => ({
 import {
   createExtensionManager,
   ExtensionInitalizer,
+  getExtensionSourceLabel,
   mergeInstalledExtensionIds,
   registerExtension,
+  type Extension,
+  type ExtensionMeta,
   type ExtensionSet,
   type InstalledExtensionsMeta,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { Mock } from "vitest";
+
+describe("getExtensionSourceLabel()", () => {
+  it("returns 'bundled' for an import-based extension", () => {
+    const extension: Extension = {
+      import: () => Promise.resolve({ default: () => undefined }),
+      meta: {
+        id: "ext.bundled",
+        translations: { en: { title: "Bundled", description: "..." } },
+      },
+    };
+    expect(getExtensionSourceLabel(extension)).toBe("bundled");
+  });
+
+  it("returns 'url' for a url-based extension", () => {
+    const extension: Extension = {
+      url: "https://example.com/ext.js",
+      meta: {
+        id: "ext.url",
+        translations: { en: { title: "URL", description: "..." } },
+      },
+    };
+    expect(getExtensionSourceLabel(extension)).toBe("url");
+  });
+
+  it("returns 'unknown' for null", () => {
+    expect(getExtensionSourceLabel(null)).toBe("unknown");
+  });
+});
 
 /**
  * Builds a minimal LoginManager stub backed by signals, exposing just the
@@ -1040,6 +1071,7 @@ describe("createExtensionManager", () => {
         registration: null,
         installed: false,
         pendingInstallation: false,
+        enabled: true,
       },
     ]);
 
@@ -1074,6 +1106,7 @@ describe("createExtensionManager", () => {
         installed: true,
         pendingInstallation: false,
         registration: null,
+        enabled: true,
       },
     ]);
   });
@@ -1116,6 +1149,7 @@ describe("createExtensionManager", () => {
         installed: false,
         pendingInstallation: true,
         registration: null,
+        enabled: true,
       },
     ]);
 
@@ -1131,6 +1165,7 @@ describe("createExtensionManager", () => {
         installed: true,
         pendingInstallation: false,
         registration: null,
+        enabled: true,
       },
     ]);
   });
@@ -1185,6 +1220,7 @@ describe("createExtensionManager", () => {
         registration: null,
         installed: false,
         pendingInstallation: false,
+        enabled: true,
       });
       expect(registeredOnly).toEqual(
         expect.objectContaining({
@@ -1363,6 +1399,189 @@ describe("createExtensionManager", () => {
         "ext.import-reinstall"
       )
     ).toBe(true);
+  });
+
+  it("setExtensionEnabled(id, false) unregisters the extension without uninstalling it", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://toggle-ext");
+
+    await manager.loadExtension({
+      url: "pkg://toggle-ext",
+      meta: {
+        id: "ext.toggle",
+        translations: {
+          en: { title: "Toggle", description: "Toggle extension" },
+        },
+      },
+    });
+
+    expect(
+      manager.extensions.value.find((e) => e.id === "ext.toggle")?.enabled
+    ).toBe(true);
+
+    await manager.setExtensionEnabled("ext.toggle", false);
+
+    const entry = manager.extensions.value.find((e) => e.id === "ext.toggle");
+    expect(entry?.enabled).toBe(false);
+    expect(entry?.installed).toBe(true);
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered("ext.toggle")
+    ).toBe(false);
+  });
+
+  it("setExtensionEnabled(id, true) re-registers a previously disabled extension", async () => {
+    const manager = createExtensionManager(login);
+    // Same pattern as the "re-invokes a url-based module's default export"
+    // test above: a dynamic `import()` of the same specifier is only
+    // evaluated once, so re-enabling won't push a second `loadedModules`
+    // entry -- what proves re-registration actually re-ran is the module's
+    // cached default export being invoked again.
+    const defaultFn = vi.fn(() => {
+      registerExtension({ id: "ext.reenable", init: () => ({}) });
+    });
+    mockExtensionModule("pkg://reenable-ext", () => ({ default: defaultFn }));
+
+    await manager.loadExtension({
+      url: "pkg://reenable-ext",
+      meta: {
+        id: "ext.reenable",
+        translations: {
+          en: { title: "Reenable", description: "Reenable extension" },
+        },
+      },
+    });
+    expect(defaultFn).toHaveBeenCalledTimes(1);
+
+    await manager.setExtensionEnabled("ext.reenable", false);
+    await manager.setExtensionEnabled("ext.reenable", true);
+
+    expect(defaultFn).toHaveBeenCalledTimes(2);
+    const entry = manager.extensions.value.find((e) => e.id === "ext.reenable");
+    expect(entry?.enabled).toBe(true);
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered("ext.reenable")
+    ).toBe(true);
+  });
+
+  it("a disabled extension stays disabled across loadSavedExtensions()", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://survives-reload");
+    const meta: ExtensionMeta = {
+      id: "ext.survives-reload",
+      translations: {
+        en: { title: "Survives Reload", description: "..." },
+      },
+    };
+
+    await manager.loadExtension({ url: "pkg://survives-reload", meta });
+    await manager.setExtensionEnabled("ext.survives-reload", false);
+    loadedModules.length = 0;
+
+    await manager.loadSavedExtensions();
+
+    expect(loadedModules).toEqual([]);
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered(
+        "ext.survives-reload"
+      )
+    ).toBe(false);
+  });
+
+  it("unloadExtension() clears a disabled flag so uninstalling doesn't leave a phantom 'installed but disabled' entry", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://disable-then-uninstall");
+
+    await manager.loadExtension({
+      url: "pkg://disable-then-uninstall",
+      meta: {
+        id: "ext.disable-then-uninstall",
+        translations: {
+          en: {
+            title: "Disable then uninstall",
+            description: "Disable then uninstall extension",
+          },
+        },
+      },
+    });
+
+    await manager.setExtensionEnabled("ext.disable-then-uninstall", false);
+    manager.unloadExtension("ext.disable-then-uninstall");
+
+    const entry = manager.extensions.value.find(
+      (e) => e.id === "ext.disable-then-uninstall"
+    );
+    // The extension stays "known" forever once loaded (loadExtension always
+    // repopulates knownExtensionsById), so it never disappears from the
+    // list entirely -- but it must no longer read as a disabled, installed
+    // extension once it's been uninstalled.
+    expect(entry?.installed).toBe(false);
+    expect(entry?.enabled).toBe(true);
+  });
+
+  it("setExtensionEnabled(id, false) on a never-installed extension leaves it uninstalled", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://never-installed");
+    const meta: ExtensionMeta = {
+      id: "ext.never-installed",
+      translations: { en: { title: "Never installed", description: "..." } },
+    };
+    // `() => false` makes the set known without installing anything, the same
+    // state an extension sitting in the Settings "Available" tab is in.
+    await manager.loadExtensionSet(
+      {
+        id: "set.never-installed",
+        extensions: [{ url: "pkg://never-installed", meta }],
+      },
+      () => false
+    );
+
+    await manager.setExtensionEnabled("ext.never-installed", false);
+
+    const entry = manager.extensions.value.find(
+      (e) => e.id === "ext.never-installed"
+    );
+    expect(entry?.installed).toBe(false);
+    expect(entry?.enabled).toBe(true);
+    expect(localStorage.getItem("sb-disabled-extensions")).toBeNull();
+  });
+
+  it("re-enables a disabled extension that gets force-installed as another extension's dependency", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://dep-resurrect");
+    mockExtensionModule("pkg://dependent-resurrect");
+
+    await manager.loadExtension({
+      url: "pkg://dep-resurrect",
+      meta: {
+        id: "ext.dep-resurrect",
+        translations: { en: { title: "Dependency", description: "..." } },
+      },
+    });
+    await manager.setExtensionEnabled("ext.dep-resurrect", false);
+    expect(
+      manager.extensions.value.find((e) => e.id === "ext.dep-resurrect")
+        ?.enabled
+    ).toBe(false);
+
+    await manager.loadExtension({
+      url: "pkg://dependent-resurrect",
+      meta: {
+        id: "ext.dependent-resurrect",
+        dependencies: ["ext.dep-resurrect"],
+        translations: { en: { title: "Dependent", description: "..." } },
+      },
+    });
+
+    // The dependency was force-installed, so the toggle must say it's on
+    // rather than claim it's off while it runs.
+    const dependency = manager.extensions.value.find(
+      (e) => e.id === "ext.dep-resurrect"
+    );
+    expect(dependency?.installed).toBe(true);
+    expect(dependency?.enabled).toBe(true);
+    expect(
+      JSON.parse(localStorage.getItem("sb-disabled-extensions") ?? "[]")
+    ).not.toContain("ext.dep-resurrect");
   });
 
   it("loadExtension() fails and logs when a url-based module has no default export function", async () => {
