@@ -23,6 +23,7 @@ import {
   MaterialIcon,
   SettingsIcon,
 } from "../../components/icons";
+import { buildStaticPagePath } from "../../managers/StaticPagePath";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
@@ -763,8 +764,9 @@ export function TabsHeader(props: TabsHeaderProps) {
     closeLayoutMenu,
     setLayout,
   } = props;
-  const { sidebar, settings } = state;
+  const { sidebar, settings, customizations } = state;
   const isAwake = settings.settings.value.keepScreenAwake;
+  const activeLogoUrl = customizations.activeCustomization.value?.logoUrl;
   const { t } = useI18n();
   const layoutAnchorRef = useRef<HTMLDivElement | null>(null);
 
@@ -785,18 +787,28 @@ export function TabsHeader(props: TabsHeaderProps) {
 
   return (
     <div className="sb-sidebar-top-row">
-      <button
-        onClick={sidebar.toggleSidebarCollapsed}
-        className="sb-sidebar-collapse-button"
-        aria-label={
-          effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
-        }
-        title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        <span className="material-symbols-outlined">
-          {effectivelyCollapsed ? "menu" : "menu_open"}
-        </span>
-      </button>
+      <div className="sb-sidebar-top-start">
+        <button
+          onClick={sidebar.toggleSidebarCollapsed}
+          className="sb-sidebar-collapse-button"
+          aria-label={
+            effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
+          }
+          title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <span className="material-symbols-outlined">
+            {effectivelyCollapsed ? "menu" : "menu_open"}
+          </span>
+        </button>
+
+        {activeLogoUrl && (
+          <span
+            className="sb-sidebar-logo sb-tab-user-icon sb-tab-user-icon-has-image"
+            style={{ backgroundImage: `url(${activeLogoUrl})` }}
+            aria-hidden="true"
+          />
+        )}
+      </div>
 
       <div className="sb-sidebar-top-actions">
         {panelsEnabled && !effectivelyCollapsed && (
@@ -1677,46 +1689,55 @@ function BookmarksSection(props: BookmarksSectionProps) {
     chapterNumber: number,
     verse?: number | [number, number]
   ) => {
-    closeContextMenus();
-    closeLayoutMenu();
-    const scrollVerse = Array.isArray(verse) ? verse[0] : verse;
-    const existing = tabsManager.tabs.value.find(
-      (tab) =>
-        tab.readingState.translationId.value === translationId &&
-        tab.readingState.bookId.value === bookId &&
-        tab.readingState.chapterNumber.value === chapterNumber
-    );
-    if (existing) {
-      app.selectTab(existing.id);
-      if (scrollVerse !== undefined) {
-        void existing.readingState.selectTranslationAndChapter(
-          translationId,
-          bookId,
-          chapterNumber,
-          { scrollToVerse: scrollVerse }
-        );
+    // Everything below changes some piece of state that mirrors to the URL:
+    // the reading position of the tab the bookmark opens, and — on mobile —
+    // the dismissal of the sidebar it was tapped in. Batched, they cost one
+    // history entry for the bookmark; unbatched, the position write lands on
+    // the entry that opened the sidebar and the dismissal adds a second entry
+    // for the same destination, which leaves the back button looking dead.
+    state.navigation.batchWrites(() => {
+      closeContextMenus();
+      closeLayoutMenu();
+      const scrollVerse = Array.isArray(verse) ? verse[0] : verse;
+      const existing = tabsManager.tabs.value.find(
+        (tab) =>
+          tab.readingState.translationId.value === translationId &&
+          tab.readingState.bookId.value === bookId &&
+          tab.readingState.chapterNumber.value === chapterNumber
+      );
+      if (existing) {
+        app.selectTab(existing.id);
+        if (scrollVerse !== undefined) {
+          void existing.readingState.selectTranslationAndChapter(
+            translationId,
+            bookId,
+            chapterNumber,
+            { scrollToVerse: scrollVerse }
+          );
+        }
+        return;
       }
-      return;
-    }
-    // Pass the bookmark location as the new tab's initial reading state so
-    // `loadInitialData()` lands directly on it. Calling `addTab()` and then
-    // `selectTranslationAndChapter()` would race the default GEN 1 load and
-    // sometimes lose, leaving the user on Genesis 1 instead of the bookmark.
-    const newTab = tabsManager.addTab(undefined, {
-      initialTranslationId: translationId,
-      initialBookId: bookId,
-      initialChapterNumber: chapterNumber,
+      // Pass the bookmark location as the new tab's initial reading state so
+      // `loadInitialData()` lands directly on it. Calling `addTab()` and then
+      // `selectTranslationAndChapter()` would race the default GEN 1 load and
+      // sometimes lose, leaving the user on Genesis 1 instead of the bookmark.
+      const newTab = tabsManager.addTab(undefined, {
+        initialTranslationId: translationId,
+        initialBookId: bookId,
+        initialChapterNumber: chapterNumber,
+      });
+      if (scrollVerse !== undefined) {
+        // Queue the scroll-to-verse against the freshly created tab so when
+        // initial chapter data lands the reader scrolls to the bookmarked verse.
+        newTab.readingState.scrollToVerse.value = scrollVerse;
+      }
+      // `addTab()` only marks the tab selected inside TabsManager — it doesn't
+      // place it in a layout slot or dismiss the sidebar. Without this the mobile
+      // bookmarks screen stays on top of the reader, and the bookmark's location
+      // is written over the history entry that opened the sidebar instead of
+      // getting an entry of its own.
+      app.selectTab(newTab.id);
     });
-    if (scrollVerse !== undefined) {
-      // Queue the scroll-to-verse against the freshly created tab so when
-      // initial chapter data lands the reader scrolls to the bookmarked verse.
-      newTab.readingState.scrollToVerse.value = scrollVerse;
-    }
-    // `addTab()` only marks the tab selected inside TabsManager — it doesn't
-    // place it in a layout slot or dismiss the sidebar. Without this the mobile
-    // bookmarks screen stays on top of the reader, so the bookmark looks
-    // unopened until a second tap takes the `existing` branch above.
-    app.selectTab(newTab.id);
   };
 
   const formatVerseRef = (
@@ -2532,22 +2553,22 @@ export function getSelfDisplayName(
 
 /**
  * Button at the bottom-right of the sidebar showing the current user's
- * avatar. Opens account settings when clicked (matches the bottom-of-sidebar
- * avatar slot in develop).
+ * avatar. Opens the Profile screen — the desktop entry point for it (#1554).
+ * Account settings now hangs off Profile rather than being reached directly.
  */
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { sidebar } = state;
   const { t } = useI18n();
   const displayName = getSelfDisplayName(state, t);
+  const label = t("open-profile", { defaultValue: "Open profile" });
 
   return (
     <button
       className="sb-sidebar-self-avatar"
       onClick={() => {
-        sidebar.openSettingsToView("account");
+        state.openProfile();
       }}
-      aria-label={`Open account settings (${displayName})`}
+      aria-label={`${label} (${displayName})`}
       title={displayName}
     >
       <SelfAvatarVisual state={state} />
@@ -2572,7 +2593,16 @@ export function Sidebar(props: SidebarProps) {
   // an overlay (see Tabs.css). When it does, we render a scrim behind it so
   // that (a) input to the reader below is blocked while the overlay is up and
   // (b) clicking anywhere outside the sidebar collapses it back to the rail.
-  const isOverlay = app.isCompactDesktop.value && !effectivelyCollapsed;
+  //
+  // Neither is wanted while the Customization Center is open: previewing a
+  // customization means clicking around and selecting verses in the reader
+  // with the editor still open, so the scrim itself is skipped there rather
+  // than just no-op'ing its onClick — a still-present scrim would keep
+  // blocking those clicks from ever reaching the reader.
+  const isOverlay =
+    app.isCompactDesktop.value &&
+    !effectivelyCollapsed &&
+    !sidebar.isCustomizationViewOpen.value;
 
   // The guided tour opens the pane-layout menu while its step is active so the
   // layout options are visible behind the coachmark.
@@ -2637,17 +2667,38 @@ export function Sidebar(props: SidebarProps) {
             effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
           }`}
         >
-          <button
-            onClick={sidebar.toggleSettings}
-            data-tutorial="settings"
-            className={`sb-sidebar-icon-button${
-              isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
-            }`}
-            aria-label={t("open-settings", { defaultValue: "Open settings" })}
-            title={t("settings", { defaultValue: "Settings" })}
-          >
-            <SettingsIcon />
-          </button>
+          <div className="sb-sidebar-icon-stack">
+            <button
+              onClick={() => {
+                state.navigation.push(
+                  buildStaticPagePath({
+                    language: state.i18n.language.value,
+                    page: "about",
+                  })
+                );
+              }}
+              className="sb-sidebar-icon-button"
+              aria-label={t("about-title", {
+                defaultValue: "About Seed Bible",
+              })}
+              title={t("about-title", { defaultValue: "About Seed Bible" })}
+            >
+              <MaterialIcon>info</MaterialIcon>
+            </button>
+            <button
+              onClick={sidebar.toggleSettings}
+              data-tutorial="settings"
+              className={`sb-sidebar-icon-button${
+                isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+              }`}
+              aria-label={t("open-settings", {
+                defaultValue: "Open settings",
+              })}
+              title={t("settings", { defaultValue: "Settings" })}
+            >
+              <SettingsIcon />
+            </button>
+          </div>
           <SelfAvatarButton state={state} />
         </div>
       </aside>

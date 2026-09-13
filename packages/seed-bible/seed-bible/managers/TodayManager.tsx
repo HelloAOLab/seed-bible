@@ -18,6 +18,7 @@ import {
 } from "./ReadingHistoryManager";
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 import { hasReadingUrlPosition } from "./ReadingUrlPath";
+import { parseStaticPagePath } from "./StaticPagePath";
 import type { TranslationBooks } from "./FreeUseBibleAPI";
 import {
   createReadingHistoryState,
@@ -57,8 +58,8 @@ type TranslationBookSummary = {
 /**
  * Whether Today should auto-open over the reader for this boot URL: an explicit
  * `?today=` param always wins, and otherwise it opens unless the URL already
- * points somewhere specific — a canonical reading path or a shared-session
- * invite.
+ * points somewhere specific — a canonical reading path, a static page such as
+ * "/en/about", or a shared-session invite.
  *
  * Must be given `initialUrl` (the URL as first loaded), never the live
  * `currentUrl`: `TabsManager` echoes the reader's book/chapter back into the URL
@@ -78,6 +79,12 @@ export function todayWillAutoOpenForUrl(
   }
   return !(
     hasReadingUrlPosition(initialUrl, basePath) ||
+    // A static page is a destination the visitor asked for just as much as a
+    // chapter is. It carries no reading position, so without this it reads as
+    // "nowhere in particular" and Today opens over it — and because Today's
+    // pane is fullscreen, it displaces the static page's own pane, which in
+    // turn sends the reader back to the selected tab's chapter.
+    parseStaticPagePath(initialUrl.pathname, basePath) !== null ||
     initialUrl.searchParams.has("sessionId")
   );
 }
@@ -121,6 +128,18 @@ export interface TodayManager {
   getTranslationBooks: (translation: string) => Promise<TranslationBooks>;
   open: () => void;
   close: () => void;
+  /**
+   * Applies the URL's real open/closed state and starts the live URL <->
+   * `isOpen` sync.
+   *
+   * `isOpen` seeds to `false` unconditionally, on the client as well as
+   * during SSR, so the first hydrate pass can't disagree with the server
+   * over whether Today is showing. Call this once from a post-mount effect
+   * (see `MainBody` in `app/main.tsx`) so the real value -- and the two-way
+   * URL sync -- arrive as a normal diffed re-render instead, the same
+   * pattern `TabsManager.hydrateStoredTabs` uses for saved tabs. Idempotent.
+   */
+  hydrateAutoOpen: () => void;
   /** Tears down the internal effects. The app never calls this; tests do. */
   dispose: () => void;
 }
@@ -274,26 +293,41 @@ export function createTodayManager(options: {
       .trim();
   };
 
-  // Never open during SSR: `effectivePanes` renders fullscreen panes
-  // unconditionally (app/main.tsx), so a cold `/` request would otherwise
-  // serialize the whole Today screen into the crawled HTML. Safe because the
-  // client entry calls `render`, not `hydrate`, so there is no mismatch.
-  const isOpen: Signal<boolean> = signal(
-    import.meta.env.SSR
-      ? false
-      : todayWillAutoOpenForUrl(navigation.initialUrl, navigation.basePath)
-  );
+  // `effectivePanes` renders fullscreen panes unconditionally (app/main.tsx),
+  // so a cold `/` request would otherwise serialize the whole Today screen
+  // into the crawled HTML -- SSR always renders this closed. Seeding `false`
+  // here too, unconditionally, means the client's first hydrate pass matches
+  // that exactly rather than disagreeing over whether Today is open; the URL
+  // sync below (which would otherwise immediately overwrite this with the
+  // real value, before the first render) is deferred to `hydrateAutoOpen`
+  // for the same reason.
+  const isOpen: Signal<boolean> = signal(false);
 
-  const disposeUrlSync = navigation.syncSignalsToUrl({
-    today: {
-      get value() {
-        return isOpen.value ? "open" : null;
+  let autoOpenHydrated = false;
+  let disposeUrlSync = () => {};
+
+  const hydrateAutoOpen = () => {
+    if (autoOpenHydrated) {
+      return;
+    }
+    autoOpenHydrated = true;
+
+    isOpen.value = todayWillAutoOpenForUrl(
+      navigation.initialUrl,
+      navigation.basePath
+    );
+
+    disposeUrlSync = navigation.syncSignalsToUrl({
+      today: {
+        get value() {
+          return isOpen.value ? "open" : null;
+        },
+        set value(newValue) {
+          isOpen.value = newValue === "open";
+        },
       },
-      set value(newValue) {
-        isOpen.value = newValue === "open";
-      },
-    },
-  });
+    });
+  };
 
   // Unconditional writes on purpose: `syncSignalsToUrl`'s inbound effect reads
   // `currentUrl` and then calls this setter, so an `isOpen.value` guard here
@@ -322,6 +356,7 @@ export function createTodayManager(options: {
       bibleData.getTranslationBooks(translation),
     open,
     close,
+    hydrateAutoOpen,
     dispose: () => {
       disposeReadingHistory();
       disposeTranslationBooks();

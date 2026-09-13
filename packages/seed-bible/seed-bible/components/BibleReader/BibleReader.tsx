@@ -50,11 +50,7 @@ import { MobileSessionParticipants } from "../../components/SessionParticipants/
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
-import {
-  SelfAvatarVisual,
-  getSelfDisplayName,
-  openBookmarkCategoryModal,
-} from "../Tabs/Tabs";
+import { openBookmarkCategoryModal } from "../Tabs/Tabs";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
@@ -1830,6 +1826,15 @@ export function BibleReader(props: BibleReaderProps) {
     selectorState.selectingTranslation.value = true;
   };
 
+  // The translation chip, in both the desktop and the mobile header: the short
+  // name to read, the full name to announce.
+  const translationLabel =
+    translation.value?.shortName ?? translationId.value ?? "";
+  const changeTranslationLabel = t("change-translation", {
+    defaultValue: "Change translation ({{name}})",
+    name: translation.value?.name ?? translationLabel,
+  });
+
   // True for the click that trails a drag-to-select gesture, so the verse's
   // own onClick doesn't toggle the verse back off after we've just selected
   // it from the text selection. Reset at the start of every new gesture.
@@ -2134,15 +2139,17 @@ export function BibleReader(props: BibleReaderProps) {
                   {currentBookName.value ?? bookId.value ?? ""}{" "}
                   {chapterNumber.value}
                 </span>
-                <span
+                <button
+                  type="button"
                   className="sb-bible-reader-mobile-header-translation"
+                  aria-label={changeTranslationLabel}
                   onClick={(e: MouseEvent) => {
                     e.stopPropagation();
-                    openTranslationSelector();
+                    void openTranslationSelector();
                   }}
                 >
-                  {translation.value?.shortName ?? translationId.value ?? ""}
-                </span>
+                  {translationLabel}
+                </button>
               </h1>
             </div>
             <ChapterNotesButton
@@ -2171,32 +2178,17 @@ export function BibleReader(props: BibleReaderProps) {
                 app={state.app}
                 className="sb-quick-toolbar-mobile-header"
               />
+              {/*
+               * No account avatar here: "You" is a bottom-bar tab again
+               * (#1554), and two avatars on one screen made it unclear which
+               * one was the way to your profile.
+               */}
               {sharedSession ? (
                 <MobileSessionParticipants
                   state={state}
                   session={sharedSession}
                 />
-              ) : (
-                <button
-                  type="button"
-                  className="sb-bible-reader-mobile-header-account"
-                  aria-label={`Open account settings (${getSelfDisplayName(
-                    state,
-                    t
-                  )})`}
-                  // The reader pane wrapper selects the pane on pointerdown/click
-                  // (which runs closeSidebarAndSettings). Stop the tap here so it
-                  // doesn't immediately dismiss the account view we're opening.
-                  onPointerDown={(e: PointerEvent) => e.stopPropagation()}
-                  onClick={(e: MouseEvent) => {
-                    e.stopPropagation();
-                    state.sidebar.openSidebar();
-                    state.sidebar.openSettingsToView("account");
-                  }}
-                >
-                  <SelfAvatarVisual state={state} />
-                </button>
-              )}
+              ) : null}
               <button
                 type="button"
                 className="sb-bible-reader-mobile-header-settings"
@@ -2270,28 +2262,32 @@ export function BibleReader(props: BibleReaderProps) {
       ) : (
         <>
           <div className="sb-bible-reader-header">
-            <h2
-              {...flingSafeTapHandlers(() => {
-                void selectorState.setOpen(true, currentSlot);
-              })}
-              className="sb-bible-reader-title"
-            >
-              <span className="sb-bible-reader-book">
-                {currentBookName.value ?? bookId.value ?? "Select a book"}
-              </span>
-              <span className="sb-bible-reader-title-sep" aria-hidden="true">
-                {" "}
-              </span>
-              <span className="sb-bible-reader-chapter">
-                {chapterNumber.value}
-              </span>
-              <span className="sb-bible-reader-translation">
-                <span aria-hidden="true">{" / "}</span>
-                <span aria-label={translation.value?.name ?? ""}>
-                  {translationId.value ?? ""}
+            <div className="sb-bible-reader-heading">
+              <h2
+                {...flingSafeTapHandlers(openBookSelector)}
+                className="sb-bible-reader-title"
+              >
+                <span className="sb-bible-reader-book">
+                  {currentBookName.value ?? bookId.value ?? "Select a book"}
                 </span>
-              </span>
-            </h2>
+                <span className="sb-bible-reader-title-sep" aria-hidden="true">
+                  {" "}
+                </span>
+                <span className="sb-bible-reader-chapter">
+                  {chapterNumber.value}
+                </span>
+              </h2>
+              <button
+                type="button"
+                className="sb-bible-reader-translation"
+                aria-label={changeTranslationLabel}
+                onClick={() => {
+                  void openTranslationSelector();
+                }}
+              >
+                {translationLabel}
+              </button>
+            </div>
             {state && (
               <div className="sb-bible-reader-actions">
                 <QuickToolbar

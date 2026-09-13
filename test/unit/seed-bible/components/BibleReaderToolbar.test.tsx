@@ -801,7 +801,7 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     expect(prompt).not.toHaveBeenCalled();
   });
 
-  it("does not apply a highlight a signed-out user declines to log in for", async () => {
+  it("does not apply a signed-out highlight this device has nowhere to keep", async () => {
     signIn(null);
     const prompt = watchLoginPrompt();
     // Restricted participant: saving is the only thing highlighting can mean.
@@ -810,9 +810,13 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await renderToolbar();
     await openPickerAndHighlight();
 
-    expect(prompt).toHaveBeenCalled();
-    // The highlight used to appear behind the modal and then never save.
+    // A signed-out highlight normally lands in the device's local store, but
+    // there is no IndexedDB here — and a highlight that appears without being
+    // saved anywhere is gone on the next load.
     expect(readingState.highlights.value.highlights).toHaveLength(0);
+    // Nothing about this is worth a login modal: the highlight is either kept
+    // on the device or not made at all.
+    expect(prompt).not.toHaveBeenCalled();
   });
 
   it("saves a personal highlight instead, when not allowed to broadcast", async () => {
@@ -913,128 +917,205 @@ describe("BibleReaderToolbar — clearing highlights", () => {
   });
 
   /**
-   * Fires the native colour input's `input` event, as the OS colour dialog
-   * would while the user drags. (Preact rewrites this input's `onChange` to
-   * also listen for the native `input` event rather than `change` — see
-   * `preact/compat`'s `onChangeInputType` — so both of the component's
-   * `onChange`/`onInput` handlers respond to this, same as a real browser.)
+   * Fires an `input` on the custom colour picker's hex field, as typing a
+   * value would. The OS-native colour dialog is gone: draft changes stay
+   * local until Confirm.
    */
-  function dragCustomColor(value: string) {
-    const input = container.querySelector<HTMLInputElement>(
-      ".sb-verse-toolbar-color-input"
+  function typeCustomHex(value: string) {
+    const input = document.body.querySelector<HTMLInputElement>(
+      ".sb-color-picker-hex"
     );
     if (!input) {
-      throw new Error("No element matched .sb-verse-toolbar-color-input");
+      throw new Error("No element matched .sb-color-picker-hex");
     }
     input.value = value;
     input.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
-  /**
-   * Blurs the colour input, as closing the native colour dialog would.
-   * (Preact rewrites `onBlur` to listen for the native `focusout` event.)
-   */
-  function closeCustomColorDialog() {
-    const input = container.querySelector<HTMLInputElement>(
-      ".sb-verse-toolbar-color-input"
+  async function openCustomColorPicker() {
+    await openPicker();
+    await click(".sb-verse-toolbar-plus-inline, .sb-verse-toolbar-plus");
+    await waitFor(
+      () => document.body.querySelector(".sb-color-picker-dialog") !== null
     );
-    if (!input) {
-      throw new Error("No element matched .sb-verse-toolbar-color-input");
-    }
-    input.dispatchEvent(new Event("focusout", { bubbles: true }));
   }
 
-  it("applies a live-dragged custom color without clearing the selection, clearing only once the dialog closes", async () => {
-    const { readingState } = await selectFirstVerse();
-    await renderToolbar();
-    await openPicker();
-
-    // Fake timers only start now — `click()` (used by `openPicker()`) awaits
-    // a real `setTimeout`, which would never resolve once timers are faked.
-    vi.useFakeTimers();
-    try {
-      // The OS colour dialog fires `input` continuously while dragging.
-      await act(async () => {
-        dragCustomColor("#112233");
-        await vi.advanceTimersByTimeAsync(300);
-      });
-
-      // The debounced live-drag commit applies the color, but the selection
-      // (and picker) stays open so the user can keep adjusting the shade —
-      // clearing here would silently drop any further tweaking (#1725).
-      expect(readingState.highlights.value.highlights).toHaveLength(1);
-      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
-        "#112233"
-      );
-      expect(readingState.selectedVerses.value).toHaveLength(1);
-      expect(
-        container.querySelector(".sb-verse-toolbar-color-input")
-      ).not.toBeNull();
-
-      // Still dragging — another live commit updates the color and still
-      // doesn't clear the selection.
-      await act(async () => {
-        dragCustomColor("#334455");
-        await vi.advanceTimersByTimeAsync(300);
-      });
-
-      expect(readingState.highlights.value.highlights).toHaveLength(1);
-      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
-        "#334455"
-      );
-      expect(readingState.selectedVerses.value).toHaveLength(1);
-
-      // The dialog closes: the color already settled 300ms ago, so this just
-      // clears the selection, same as any other highlight action.
-      await act(async () => {
-        closeCustomColorDialog();
-      });
-
-      expect(readingState.highlights.value.highlights).toHaveLength(1);
-      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
-        "#334455"
-      );
-      expect(readingState.selectedVerses.value).toHaveLength(0);
-    } finally {
-      vi.useRealTimers();
+  async function confirmCustomColor() {
+    const button = document.body.querySelector<HTMLButtonElement>(
+      ".sb-color-picker-confirm"
+    );
+    if (!button) {
+      throw new Error("No element matched .sb-color-picker-confirm");
     }
-  });
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  }
 
-  it("flushes a still-pending custom color immediately when the dialog closes before the debounce settles", async () => {
-    const { readingState } = await selectFirstVerse();
-    await renderToolbar();
-    await openPicker();
-
-    vi.useFakeTimers();
-    try {
-      // Pick a color and close the dialog right away, well inside the 300ms
-      // debounce window — the pending pick shouldn't be lost to the delay.
-      await act(async () => {
-        dragCustomColor("#112233");
-        closeCustomColorDialog();
-      });
-
-      expect(readingState.highlights.value.highlights).toHaveLength(1);
-      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
-        "#112233"
-      );
-      expect(readingState.selectedVerses.value).toHaveLength(0);
-    } finally {
-      vi.useRealTimers();
+  async function cancelCustomColor() {
+    const button = document.body.querySelector<HTMLButtonElement>(
+      ".sb-color-picker-cancel"
+    );
+    if (!button) {
+      throw new Error("No element matched .sb-color-picker-cancel");
     }
-  });
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
 
-  it("leaves the selection untouched when the color dialog closes without picking a color", async () => {
+  it("does not apply a custom color until Confirm is pressed", async () => {
     const { readingState } = await selectFirstVerse();
     await renderToolbar();
-    await openPicker();
+    await openCustomColorPicker();
 
     await act(async () => {
-      closeCustomColorDialog();
+      typeCustomHex("112233");
     });
 
     expect(readingState.highlights.value.highlights).toHaveLength(0);
     expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(state.settings.settings.value.customHighlightColors).toEqual([]);
+    expect(
+      document.body.querySelector(".sb-color-picker-dialog")
+    ).not.toBeNull();
+  });
+
+  it("applies the custom color, saves it to the palette, and clears the selection on Confirm", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openCustomColorPicker();
+
+    await act(async () => {
+      typeCustomHex("334455");
+    });
+    const verseBefore =
+      state.navigation.currentUrl.value.searchParams.get("verse");
+    await confirmCustomColor();
+
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
+    expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+      "#334455"
+    );
+    expect(state.settings.settings.value.customHighlightColors).toEqual([
+      "#334455",
+    ]);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(state.navigation.currentUrl.value.searchParams.get("verse")).toBe(
+      verseBefore
+    );
+    expect(document.body.querySelector(".sb-color-picker-dialog")).toBeNull();
+    expect(document.body.querySelector(".sb-color-picker-layer")).toBeNull();
+    expect(document.getElementById("sb-color-picker-host")).toBeNull();
+  });
+
+  it("applies a saved custom swatch when it is pressed", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openCustomColorPicker();
+    await act(async () => {
+      typeCustomHex("334455");
+    });
+    await confirmCustomColor();
+
+    await selectFirstVerse();
+    await openPicker();
+    await click('[aria-label="Highlight #334455"]');
+
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
+    expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+      "#334455"
+    );
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+  });
+
+  it("keeps only the last 3 custom colors, replacing the 1st then the 2nd", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    for (const hex of ["111111", "222222", "333333", "444444", "555555"]) {
+      if (readingState.selectedVerses.value.length === 0) {
+        await selectFirstVerse();
+      }
+      await openCustomColorPicker();
+      await act(async () => {
+        typeCustomHex(hex);
+      });
+      await confirmCustomColor();
+    }
+
+    expect(state.settings.settings.value.customHighlightColors).toEqual([
+      "#444444",
+      "#555555",
+      "#333333",
+    ]);
+
+    await selectFirstVerse();
+    await openPicker();
+    expect(
+      container.querySelector('[aria-label="Highlight #111111"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('[aria-label="Highlight #222222"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('[aria-label="Highlight #444444"]')
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[aria-label="Highlight #555555"]')
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[aria-label="Highlight #333333"]')
+    ).not.toBeNull();
+  });
+
+  it("leaves the selection untouched when the color picker is cancelled", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openCustomColorPicker();
+
+    await act(async () => {
+      typeCustomHex("112233");
+    });
+    await cancelCustomColor();
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(state.settings.settings.value.customHighlightColors).toEqual([]);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(document.body.querySelector(".sb-color-picker-dialog")).toBeNull();
+  });
+
+  it("leaves the selection untouched when the color picker closes without confirming", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openCustomColorPicker();
+
+    await act(async () => {
+      document.body
+        .querySelector(".sb-color-picker-backdrop")!
+        .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    });
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+  });
+
+  it("does not clear the selection when dragging a color in the custom picker", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openCustomColorPicker();
+
+    await act(async () => {
+      document.body
+        .querySelector(".sb-color-picker-sv")!
+        .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    });
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(
+      document.body.querySelector(".sb-color-picker-dialog")
+    ).not.toBeNull();
   });
 });
 
@@ -1184,6 +1265,33 @@ describe("BibleReaderToolbar mobile More menu", () => {
     ).map((el) => el.textContent);
 
     expect(labels).not.toContain("Share");
+  });
+
+  it("keeps extension tools above Tabs in the default (non-chat-first) More menu", async () => {
+    const { state, moreButton } = await renderToolbar();
+
+    await act(async () => {
+      state.tools.registerToolbarTool({
+        id: "test-extension-tool",
+        priority: 50,
+        title: "Extension Tool",
+        icon: () => <span>ext</span>,
+        isVisible: () => true,
+        onSelect: vi.fn(),
+      });
+    });
+
+    await openMenu(moreButton);
+
+    const labels = Array.from(
+      container.querySelectorAll(".sb-mobile-more-menu-label")
+    ).map((el) => el.textContent);
+
+    const extensionIndex = labels.indexOf("Extension Tool");
+    const tabsIndex = labels.indexOf("Tabs");
+    expect(extensionIndex).toBeGreaterThanOrEqual(0);
+    expect(tabsIndex).toBeGreaterThanOrEqual(0);
+    expect(extensionIndex).toBeLessThan(tabsIndex);
   });
 
   it("stops listening once the menu is closed", async () => {
@@ -2305,5 +2413,701 @@ describe("BibleReaderToolbar — the mobile Today tab", () => {
     const ids = state.panes.panes.value.map((pane) => pane.id);
     expect(ids).toContain(TODAY_PANE_ID);
     expect(ids).toHaveLength(1);
+  });
+});
+
+/**
+ * The mobile bottom bar is fixed at five tabs — Today, You, Bible, Search,
+ * More — and everything else (Bookmarks, Chat, Tabs, extension tools) is
+ * reached from the More menu. `?chatFirst=true` does not change that set; on
+ * mobile it only lifts Chat to the top of the More menu, and on desktop/laptop
+ * it keeps Chat in the labeled toolbar (covered by the desktop suite below).
+ */
+describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function renderToolbar(options: { chatFirst?: boolean | string } = {}) {
+    const state = await createTestSeedBibleState({
+      chatFirst: options.chatFirst,
+    });
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    return { state };
+  }
+
+  const tabButton = (label: string) =>
+    container.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
+
+  const tap = async (button: HTMLButtonElement) => {
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  const mobileTabLabels = () =>
+    Array.from(
+      container.querySelectorAll(".sb-reader-toolbar-mobile-tab-label")
+    ).map((el) => el.textContent);
+
+  const isActive = (label: string) =>
+    tabButton(label)!.classList.contains(
+      "sb-reader-toolbar-mobile-tab-button-active"
+    );
+
+  const openMore = async () => {
+    const moreButton = tabButton("More");
+    if (!moreButton) throw new Error("The More button did not render.");
+    await tap(moreButton);
+  };
+
+  const moreMenuLabels = () =>
+    Array.from(container.querySelectorAll(".sb-mobile-more-menu-label")).map(
+      (el) => el.textContent
+    );
+
+  const moreMenuItem = (text: string) => {
+    const item = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
+    ).find((candidate) => candidate.textContent?.includes(text));
+    if (!item) throw new Error(`"${text}" was not in the More menu.`);
+    return item;
+  };
+
+  const registerExtensionTool = async (state: SeedBibleState) => {
+    await act(async () => {
+      state.tools.registerToolbarTool({
+        id: "test-extension-tool",
+        priority: 50,
+        title: "Extension Tool",
+        icon: () => <span>ext</span>,
+        isVisible: () => true,
+        onSelect: vi.fn(),
+      });
+    });
+  };
+
+  it.each([
+    ["without chatFirst", undefined],
+    ["with chatFirst=true", true],
+  ])("shows exactly the five tabs %s", async (_label, chatFirst) => {
+    await renderToolbar({ chatFirst });
+
+    expect(mobileTabLabels()).toEqual([
+      "Today",
+      "You",
+      "Bible",
+      "Search",
+      "More",
+    ]);
+  });
+
+  it.each([
+    ["without chatFirst", undefined],
+    ["with chatFirst=true", true],
+  ])(
+    "keeps Bookmarks, Chat and Tabs out of the bar %s",
+    async (_label, chatFirst) => {
+      await renderToolbar({ chatFirst });
+
+      expect(tabButton("Bookmarks")).toBeNull();
+      expect(tabButton("Chat")).toBeNull();
+      expect(tabButton("Tabs")).toBeNull();
+      expect(tabButton("More")).not.toBeNull();
+    }
+  );
+
+  it("puts Bookmarks and Tabs in the More menu without chatFirst", async () => {
+    await renderToolbar();
+    await openMore();
+
+    expect(moreMenuLabels()).toContain("Bookmarks");
+    expect(moreMenuLabels()).toContain("Tabs");
+  });
+
+  it("puts Bookmarks and Tabs in the More menu with chatFirst too", async () => {
+    await renderToolbar({ chatFirst: true });
+    await openMore();
+
+    expect(moreMenuLabels()).toContain("Bookmarks");
+    expect(moreMenuLabels()).toContain("Tabs");
+  });
+
+  it("keeps Chat reachable from the More menu under chatFirst", async () => {
+    // Chat-first used to hide Chat from this menu because it had a bottom tab
+    // of its own. Now that it does not, hiding it would strand chat with no
+    // way in at all on mobile.
+    await renderToolbar({ chatFirst: true });
+    await openMore();
+
+    expect(moreMenuLabels()).toContain("Chat");
+  });
+
+  it("keeps Chat in its own place in the More menu under chatFirst", async () => {
+    // Chat-first forces chat *visible*; it does not reorder the menu. The
+    // tools are priority-ordered and chat keeps its own slot among them,
+    // ahead of the pinned app items at the bottom.
+    const { state } = await renderToolbar({ chatFirst: true });
+    await registerExtensionTool(state);
+    await openMore();
+
+    const labels = moreMenuLabels();
+    expect(labels).toContain("Chat");
+    expect(labels.indexOf("Chat")).toBeLessThan(labels.indexOf("Bookmarks"));
+    expect(labels.indexOf("Extension Tool")).toBeLessThan(
+      labels.indexOf("Bookmarks")
+    );
+    expect(labels.indexOf("Bookmarks")).toBeLessThan(labels.indexOf("Tabs"));
+  });
+
+  it("keeps extension tools above the pinned app items without chatFirst", async () => {
+    const { state } = await renderToolbar();
+    await registerExtensionTool(state);
+    await openMore();
+
+    const labels = moreMenuLabels();
+    expect(labels.indexOf("Extension Tool")).toBeLessThan(
+      labels.indexOf("Bookmarks")
+    );
+    expect(labels.indexOf("Bookmarks")).toBeLessThan(labels.indexOf("Tabs"));
+  });
+
+  it("opens the chat panel from the More menu", async () => {
+    // Chat-first, because chat's own `isVisible` wants a provider or an
+    // existing chat and this state has neither (see the desktop suite).
+    const { state } = await renderToolbar({ chatFirst: true });
+    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
+
+    await openMore();
+    await tap(moreMenuItem("Chat"));
+
+    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
+    expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
+  });
+
+  it("highlights More while the chat panel is open", async () => {
+    // Chat is reached from More, so More is the only tab that can honestly
+    // say where the panel covering the reader came from.
+    const { state } = await renderToolbar();
+    expect(isActive("More")).toBe(false);
+
+    await act(async () => {
+      state.sidebar.openChatPanel();
+    });
+    expect(isActive("More")).toBe(true);
+
+    await act(async () => {
+      state.sidebar.closeChatPanel();
+    });
+    expect(isActive("More")).toBe(false);
+  });
+
+  it("opens Bookmarks from the More menu", async () => {
+    const { state } = await renderToolbar();
+
+    await openMore();
+    await tap(moreMenuItem("Bookmarks"));
+
+    expect(state.sidebar.isMobileOpen.value).toBe(true);
+    expect(state.bookmarks.isFilterActive.value).toBe(true);
+    expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
+  });
+
+  it("highlights More while Bookmarks is open", async () => {
+    const { state } = await renderToolbar();
+
+    await openMore();
+    await tap(moreMenuItem("Bookmarks"));
+
+    expect(state.bookmarks.isFilterActive.value).toBe(true);
+    expect(isActive("More")).toBe(true);
+    expect(isActive("Bible")).toBe(false);
+  });
+
+  it("closes Chat when opening Bookmarks from More", async () => {
+    const { state } = await renderToolbar({ chatFirst: true });
+
+    await openMore();
+    await tap(moreMenuItem("Chat"));
+    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
+
+    await openMore();
+    await tap(moreMenuItem("Bookmarks"));
+
+    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
+    expect(state.bookmarks.isFilterActive.value).toBe(true);
+  });
+
+  it("closes Chat when opening Search, Today, or Bible", async () => {
+    const { state } = await renderToolbar({ chatFirst: true });
+    const searchTab = tabButton("Search");
+    const todayTab = tabButton("Today");
+    const bibleTab = tabButton("Bible");
+    if (!searchTab || !todayTab || !bibleTab) {
+      throw new Error("Expected the mobile bottom tabs to render.");
+    }
+
+    const openChatFromMore = async () => {
+      await openMore();
+      await tap(moreMenuItem("Chat"));
+      expect(state.sidebar.isChatPanelOpen.value).toBe(true);
+    };
+
+    await openChatFromMore();
+    await tap(searchTab);
+    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
+
+    await openChatFromMore();
+    await tap(todayTab);
+    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
+    expect(state.today.isOpen.value).toBe(true);
+
+    await openChatFromMore();
+    await tap(bibleTab);
+    expect(state.sidebar.isChatPanelOpen.value).toBe(false);
+  });
+
+  it.each([["1"], ["yes"], ["false"], ["TRUE "], [""], ["TRUE"]])(
+    "shows the same five tabs whatever chatFirst=%j says",
+    async (value) => {
+      await renderToolbar({ chatFirst: value });
+
+      expect(mobileTabLabels()).toEqual([
+        "Today",
+        "You",
+        "Bible",
+        "Search",
+        "More",
+      ]);
+    }
+  );
+});
+
+describe("BibleReaderToolbar — chat-first desktop / laptop toolbar", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+  let originalInnerHeight: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    originalInnerHeight = window.innerHeight;
+    window.innerWidth = 1200;
+    window.innerHeight = 900;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+    window.innerHeight = originalInnerHeight;
+  });
+
+  async function renderToolbar(options: { chatFirst?: boolean | string } = {}) {
+    const state = await createTestSeedBibleState({
+      chatFirst: options.chatFirst,
+    });
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(state.app.isMobile.value).toBe(false);
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    return { state };
+  }
+
+  const toolbarButton = (label: string) =>
+    container.querySelector<HTMLButtonElement>(
+      `.sb-reader-toolbar-labeled button[aria-label="${label}"]`
+    );
+
+  const labeledLabels = () =>
+    Array.from(
+      container.querySelectorAll(
+        ".sb-reader-toolbar-labeled .sb-reader-toolbar-button-label"
+      )
+    ).map((el) => el.textContent);
+
+  it("does not render the mobile bottom tab bar", async () => {
+    await renderToolbar({ chatFirst: true });
+
+    expect(
+      container.querySelector(".sb-reader-toolbar-mobile-layout")
+    ).toBeNull();
+    expect(
+      container.querySelector(".sb-reader-toolbar-mobile-tab-label")
+    ).toBeNull();
+  });
+
+  it("keeps Chat available and prominent in the labeled toolbar when chatFirst=true", async () => {
+    await renderToolbar({ chatFirst: true });
+
+    expect(toolbarButton("Chat")).not.toBeNull();
+    // Chat sits ahead of other controllable tools like Search.
+    const labels = labeledLabels();
+    const chatIndex = labels.indexOf("Chat");
+    const searchIndex = labels.indexOf("Search");
+    expect(chatIndex).toBeGreaterThanOrEqual(0);
+    if (searchIndex >= 0) {
+      expect(chatIndex).toBeLessThan(searchIndex);
+    }
+  });
+
+  it("shows Chat even when there are no providers or chats under chat-first", async () => {
+    const { state } = await renderToolbar({ chatFirst: true });
+
+    expect(state.chats.providers.value).toHaveLength(0);
+    expect(state.chats.chats.value).toHaveLength(0);
+    expect(toolbarButton("Chat")).not.toBeNull();
+  });
+
+  it("hides Chat on desktop without chatFirst when there are no providers or chats", async () => {
+    const { state } = await renderToolbar();
+
+    expect(state.chats.providers.value).toHaveLength(0);
+    expect(state.chats.chats.value).toHaveLength(0);
+    expect(toolbarButton("Chat")).toBeNull();
+  });
+
+  it("opens the chat panel from the desktop Chat button under chat-first", async () => {
+    const { state } = await renderToolbar({ chatFirst: true });
+    const chatButton = toolbarButton("Chat");
+    if (!chatButton) throw new Error("Desktop Chat button did not render.");
+
+    await act(async () => {
+      chatButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
+  });
+
+  it("does not add a Bookmarks bottom tab on desktop under chat-first", async () => {
+    await renderToolbar({ chatFirst: true });
+
+    expect(
+      container.querySelector('button[aria-label="Bookmarks"]')
+    ).toBeNull();
+  });
+
+  it("ignores non-canonical chatFirst values on desktop", async () => {
+    await renderToolbar({ chatFirst: "1" });
+
+    expect(toolbarButton("Chat")).toBeNull();
+  });
+});
+
+describe("BibleReaderToolbar — chat-first viewport resize", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+  let originalInnerHeight: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    originalInnerHeight = window.innerHeight;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+    window.innerHeight = originalInnerHeight;
+  });
+
+  async function mountAtWidth(width: number, chatFirst = true) {
+    window.innerWidth = width;
+    window.innerHeight = width <= 480 ? 800 : 900;
+    const state = await createTestSeedBibleState({ chatFirst });
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    return state;
+  }
+
+  async function resizeTo(width: number) {
+    window.innerWidth = width;
+    window.innerHeight = width <= 480 ? 800 : 900;
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+  }
+
+  const openChatFromMoreMenu = async () => {
+    const moreButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="More"]'
+    );
+    if (!moreButton) throw new Error("The More button did not render.");
+    await act(async () => {
+      moreButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    const chatItem = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
+    ).find((item) => item.textContent?.includes("Chat"));
+    if (!chatItem) throw new Error("Chat was not in the More menu.");
+    await act(async () => {
+      chatItem.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  it("moves Chat from the More menu into the labeled toolbar when growing to desktop", async () => {
+    const state = await mountAtWidth(MOBILE_VIEWPORT_WIDTH);
+    expect(state.app.isMobile.value).toBe(true);
+    // Mobile keeps its five tabs whatever chat-first says, so Chat is in the
+    // More menu rather than the bar.
+    expect(
+      container.querySelector(
+        '.sb-reader-toolbar-mobile-layout button[aria-label="Chat"]'
+      )
+    ).toBeNull();
+
+    await resizeTo(1200);
+    expect(state.app.isMobile.value).toBe(false);
+    expect(
+      container.querySelector(".sb-reader-toolbar-mobile-layout")
+    ).toBeNull();
+    expect(
+      container.querySelector(
+        '.sb-reader-toolbar-labeled button[aria-label="Chat"]'
+      )
+    ).not.toBeNull();
+  });
+
+  it("falls back to the five mobile tabs when shrinking from desktop", async () => {
+    const state = await mountAtWidth(1200);
+    expect(state.app.isMobile.value).toBe(false);
+    expect(
+      container.querySelector(
+        '.sb-reader-toolbar-labeled button[aria-label="Chat"]'
+      )
+    ).not.toBeNull();
+
+    await resizeTo(MOBILE_VIEWPORT_WIDTH);
+    expect(state.app.isMobile.value).toBe(true);
+    expect(
+      Array.from(
+        container.querySelectorAll(".sb-reader-toolbar-mobile-tab-label")
+      ).map((el) => el.textContent)
+    ).toEqual(["Today", "You", "Bible", "Search", "More"]);
+  });
+
+  it("keeps the chat panel open across a mobile ↔ desktop resize under chat-first", async () => {
+    const state = await mountAtWidth(MOBILE_VIEWPORT_WIDTH);
+
+    await openChatFromMoreMenu();
+    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
+
+    await resizeTo(1200);
+    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
+
+    await resizeTo(MOBILE_VIEWPORT_WIDTH);
+    expect(state.sidebar.isChatPanelOpen.value).toBe(true);
+  });
+});
+
+describe("BibleReaderToolbar chapter navigation links", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    // Desktop viewport, so the labelled toolbar renders rather than the mobile
+    // floating nav.
+    window.innerWidth = 1200;
+    window.innerHeight = 900;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function chapterLinks(root: ParentNode) {
+    return Array.from(root.querySelectorAll("a")).map((a) =>
+      a.getAttribute("href")
+    );
+  }
+
+  it("renders the chapter controls as real links", async () => {
+    const state = await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const next = container.querySelector(
+      'a[aria-label="Next Chapter"]'
+    ) as HTMLAnchorElement | null;
+
+    expect(next).not.toBeNull();
+    expect(next?.getAttribute("href")).toBe("/en/AAB/genesis/2");
+
+    // Genesis 1 is the start of the catalog, so "previous" has nowhere to go
+    // and stays a disabled button rather than becoming a link to nothing.
+    expect(
+      container.querySelector('a[aria-label="Previous Chapter"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('button[aria-label="Previous Chapter"]')
+    ).not.toBeNull();
+  });
+
+  /**
+   * Server-renders the toolbar against a state built here rather than by
+   * `createTestSeedBibleState`, which awaits the initial load and would settle
+   * the very race these tests are about.
+   *
+   * `holdCatalog` delays the book catalog until after the chapter has landed.
+   * That is the ordering the SSR guard has to survive: the two are independent
+   * un-awaited requests, and the catalog is only *usually* the faster one.
+   */
+  async function renderToolbarOnServer({ holdCatalog = false } = {}) {
+    const { renderToStringAsync } = await import("preact-render-to-string");
+    const { Suspense } = await import("preact/compat");
+    const { createSeedBibleState } =
+      await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");
+
+    // Installs the fetch mock and initializes i18n. Its own state is discarded:
+    // the data manager — and so the catalog cache — is built per state, so
+    // nothing it fetched can warm the one under test.
+    await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+
+    const responses = createPrivateEndpointResponses();
+    const booksUrl = makeUrl("/api/AAB/books.json", PRIVATE_API_ENDPOINT);
+    const previousFetch = globalThis.fetch;
+
+    let state: SeedBibleState | null = null;
+    let renderStarted = false;
+    const chapterHasSettled = () =>
+      !!state?.tabs.tabs.value[0]?.readingState.initialChapterLoadSettled.value;
+
+    globalThis.fetch = (async (url: string) => {
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      // Held across the whole first render pass, so the guard has to decide
+      // while the catalog is genuinely still in flight.
+      if (holdCatalog && url === booksUrl) {
+        await waitFor(() => renderStarted, 2000);
+      }
+      return response;
+    }) as typeof globalThis.fetch;
+
+    // Set before the state is built: the catalog latch is armed at
+    // construction, and the toolbar's suspend is server-only.
+    import.meta.env.SSR = true;
+
+    // Same origin as jsdom's document: `TabsManager` echoes the reading
+    // position back into the URL on mount, and jsdom rejects a cross-origin
+    // `replaceState`. A real server render has no `window` at all, so that
+    // write is a no-op there.
+    state = createSeedBibleState({
+      initialHref: `${window.location.origin}/en/AAB/genesis/1`,
+    });
+
+    try {
+      await state.i18n.ready;
+
+      // Let the chapter finish first. That is the ordering the SSR guard has to
+      // survive, and it is not the default here — the mocked chapter response
+      // otherwise lands well after the render has already begun, so the guard
+      // would suspend for the right reason by accident and prove nothing.
+      if (holdCatalog) {
+        await waitFor(chapterHasSettled, 2000);
+      }
+      renderStarted = true;
+
+      const html = await renderToStringAsync(
+        <TestHost state={state}>
+          <Suspense fallback={null}>
+            <BibleReaderToolbar state={state} />
+          </Suspense>
+        </TestHost>
+      );
+      return new DOMParser().parseFromString(html, "text/html");
+    } finally {
+      delete import.meta.env.SSR;
+      globalThis.fetch = previousFetch;
+      for (const tab of state.tabs.tabs.value) {
+        tab.readingState.dispose();
+      }
+      state.navigation.dispose();
+    }
+  }
+
+  it("puts the chapter links in the server-rendered HTML", async () => {
+    // The point of the whole feature: a crawler fetching a chapter page has to
+    // find a followable link to the next chapter in the markup it is served.
+    //
+    // The toolbar sits outside the reader's Suspense boundary, so without the
+    // SSR suspend it renders in the first synchronous pass — before the book
+    // catalog names where "next" leads — and the arrows serialize as disabled
+    // buttons with no links out of the page.
+    const parsed = await renderToolbarOnServer();
+
+    expect(chapterLinks(parsed)).toContain("/en/AAB/genesis/2");
+  });
+
+  it("still server-renders the links when the catalog arrives after the chapter", async () => {
+    // The catalog and the chapter are separate, un-awaited requests, so the
+    // chapter can win. When it does, the first latch flips while the catalog is
+    // still in flight — and a guard watching only that latch stops suspending
+    // and serializes a page with no way out of it.
+    const parsed = await renderToolbarOnServer({ holdCatalog: true });
+
+    expect(chapterLinks(parsed)).toContain("/en/AAB/genesis/2");
   });
 });

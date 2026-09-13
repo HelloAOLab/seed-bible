@@ -1,19 +1,31 @@
-import { MaterialIcon, SeedBibleIcon, StopIcon } from "../components/icons";
+import {
+  AskIcon,
+  MaterialIcon,
+  SeedBibleIcon,
+  StopIcon,
+} from "../components/icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
+  resolveTranslationUiLanguage,
   uiLocaleForDefaultTranslation,
   hasAnyDiscoverResults,
   type BibleReadingState,
   type BibleSelectedVerse,
+  type ReadingPosition,
 } from "../managers/BibleReadingManager";
-import { buildReadingUrl } from "../managers/ReadingUrlPath";
+import {
+  buildReadingPath,
+  buildReadingUrl,
+  DEFAULT_UI_LANGUAGE,
+} from "../managers/ReadingUrlPath";
 import { extractContentText } from "../managers/ChapterText";
-import type { BookId } from "../managers/BibleDataManager";
+import type { NavigationManager } from "../managers/NavigationManager";
+import type { BibleDataManager, BookId } from "../managers/BibleDataManager";
 import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
-import type { PanesManager } from "../managers/PanesManager";
+import type { PanePlacement, PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
   formatVerseSelection,
@@ -25,7 +37,10 @@ import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
 import type { AppState } from "./SeedBibleStateManager";
-import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
+import type {
+  ReadingPlan,
+  ReadingPlansManager,
+} from "../managers/ReadingPlansManager";
 import {
   ReadingPlansPane,
   ReadingPlansPaneActions,
@@ -33,8 +48,16 @@ import {
   ReadingPlansPaneLeading,
   ReadingPlansPaneTitle,
 } from "../components/ReadingPlansPane/ReadingPlansPane";
-import type { PlaylistManager } from "./PlaylistManager";
+import {
+  groupVersesIntoPlaylistItems,
+  type PlaylistItemData,
+  type PlaylistManager,
+  type SimplePlaylist,
+} from "./PlaylistManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
+import type { CasualOSManager } from "./OsManager";
+import type { LoginManager } from "./LoginManager";
+import type { UserGalleryManager } from "./UserGalleryManager";
 import { i18n, useI18n } from "../i18n";
 import {
   FEATURE_KEY_READING_PLANS,
@@ -47,6 +70,8 @@ type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
 type ToolPredicateResult = boolean | ReadonlySignal<boolean>;
 type ToolPredicate<TContext> = (context: TContext) => ToolPredicateResult;
+type ToolHrefResult = string | null | ReadonlySignal<string | null>;
+type ToolHref<TContext> = (context: TContext) => ToolHrefResult;
 type ToolPriority<TContext> = number | ((context: TContext) => number);
 export type TranslatableTitle =
   | string
@@ -174,6 +199,10 @@ export interface BibleToolContext {
   /** Playlist manager */
   playlists?: PlaylistManager;
 
+  os?: Pick<CasualOSManager, "recordFile" | "recordData">;
+  login?: Pick<LoginManager, "userId">;
+  gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
+
   /** Annotations manager, for creating/editing notes on selected verses. */
   annotations?: AnnotationsManager;
 
@@ -188,6 +217,21 @@ export interface BibleToolContext {
    * shared-session actions (create/share the live session) should guard on it.
    */
   app?: AppState;
+
+  /**
+   * Navigation manager, for tools that build their own links. Only
+   * `basePath` is needed today, and unlike `readInjectedConfig()` it is
+   * correct during SSR (that one returns defaults when there is no document),
+   * which is exactly when the chapter links have to be right.
+   */
+  navigation?: NavigationManager;
+
+  /**
+   * Bible data manager, for tools that build their own links. Needed for
+   * `buildTranslationId`, which is what turns a custom translation's short id
+   * into the full URL its address actually uses.
+   */
+  data?: BibleDataManager;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -199,6 +243,15 @@ export interface BibleReaderToolbarTool extends ResolvedBibleTool {
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the tool. */
   onSelect: () => void;
+
+  /**
+   * The address this tool leads to, when it has one, so it can render as a
+   * real link rather than a button. Null for tools that only act.
+   *
+   * Activation still goes through `onSelect` — see `ToolActionElement`.
+   */
+  href: ReadonlySignal<string | null>;
+
   /** Optional context-menu items for this tool. */
   getItems?: () => ResolvedBibleToolItem[];
 
@@ -224,6 +277,16 @@ export interface ManagedBibleToolbarTool extends BibleTool<BibleToolContext> {
   onSelect?: (context: BibleToolContext) => void;
   /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
   getItems?: (context: BibleToolContext) => ManagedBibleToolbarToolItem[];
+
+  /**
+   * Optional address this tool navigates to (string, signal, or null).
+   *
+   * Supplying it makes the tool render as a real `<a href>` rather than a
+   * `<button>`, which is what lets a crawler follow it and a reader
+   * middle-click it. Clicking still runs `onSelect`, so a tool with a href
+   * must behave identically whether activated by click or by keyboard.
+   */
+  getHref?: ToolHref<BibleToolContext>;
 
   /**
    * Whether the label for this tool should be hidden.
@@ -480,6 +543,34 @@ function resolveToolPredicate<TContext>(
   return result;
 }
 
+/**
+ * Shared stand-in for "this tool has no address". Constant, so every tool
+ * without a `getHref` can point at the same signal instead of allocating an
+ * identical one on each resolve.
+ */
+const NO_HREF: ReadonlySignal<string | null> = computed(() => null);
+
+/**
+ * Resolves a tool's optional `getHref` to a signal. Null — the default —
+ * means the tool has no address and renders as a plain button.
+ */
+function resolveToolHref<TContext>(
+  href: ToolHref<TContext> | undefined,
+  context: TContext
+): ReadonlySignal<string | null> {
+  const result = href?.(context);
+
+  if (typeof result === "undefined" || result === null) {
+    return NO_HREF;
+  }
+
+  if (typeof result === "string") {
+    return computed(() => result);
+  }
+
+  return result;
+}
+
 function resolveToolPriority<TContext>(
   priority: ToolPriority<TContext>,
   context: TContext
@@ -489,6 +580,72 @@ function resolveToolPriority<TContext>(
   }
 
   return priority(context);
+}
+
+/**
+ * The address of a chapter, for the prev/next chapter links.
+ *
+ * Built like `canonicalUrl` in `SeedBibleStateManager` — same translation-id
+ * handling, four-segment path, no query string — so every link points
+ * straight at the target's canonical URL. Two things fall out of that: a
+ * crawler never follows a link only to be told by `<link rel="canonical">`
+ * that the real address is elsewhere, and `?verse=`, which describes the
+ * chapter being left rather than the one being opened, is dropped. So is
+ * `?sessionId=` (see the check below).
+ *
+ * Language derivation matches `canonicalUrl` for the first two steps, but
+ * intentionally not the last: see the `fallback` passed to
+ * {@link resolveTranslationUiLanguage} below.
+ */
+function chapterToolHref(
+  context: BibleToolContext,
+  position: ReadingPosition | null
+): string | null {
+  if (!position) {
+    return null;
+  }
+
+  // Dropping `?sessionId=` above is the right call for a crawler, but it's
+  // exactly the param that keeps a reader in a shared session — so the same
+  // omission would silently drop a middle-clicked "Next Chapter" out of the
+  // session it was clicked from, or hand out a "Copy link" address that
+  // doesn't rejoin it. A session is never being crawled, so there's nothing
+  // to lose by falling back to a plain button here, same as an unnamed
+  // position.
+  if (context.sharedSession) {
+    return null;
+  }
+
+  // A custom translation's address carries its full endpoint URL, not the short
+  // id the reading position holds. `canonicalUrl` resolves it the same way, and
+  // these links have to agree with it — otherwise a custom translation's
+  // "next chapter" link would point somewhere the canonical tag disowns.
+  const translationId =
+    context.data?.buildTranslationId(position.translationId) ??
+    position.translationId;
+
+  const language = resolveTranslationUiLanguage({
+    translationLanguage: context.readingState.translation.value?.language,
+    translationId,
+    // Not `i18n.language.value` like `canonicalUrl`'s version of this
+    // fallback: this href names an address you might never actually be
+    // looking at — a crawler, or a chapter opened in a background tab — so
+    // unlike the page you're currently rendering, it shouldn't vary by the
+    // current visitor's UI language. `DEFAULT_UI_LANGUAGE` is also what
+    // `script/lib/sitemap.ts` falls back to for the same reason, so a
+    // translation this can't place stays consistent with what the sitemap
+    // already publishes for it.
+    fallback: DEFAULT_UI_LANGUAGE,
+  });
+
+  const path = buildReadingPath({
+    language,
+    translationId,
+    bookId: position.bookId as BookId,
+    chapter: position.chapterNumber,
+  });
+
+  return `${context.navigation?.basePath ?? ""}${path}`;
 }
 
 function MenuIcon() {
@@ -525,6 +682,84 @@ function ShareVerseIcon() {
 
 function ClearSelectionIcon() {
   return <MaterialIcon>clear</MaterialIcon>;
+}
+
+function AskAiIcon() {
+  return <AskIcon />;
+}
+
+/**
+ * Most recent local (non-shared) chat that already includes this AI provider.
+ * Shared/remote chats are skipped so asking about verses stays a personal
+ * conversation. Returns null when none exists so the caller can create one.
+ */
+function findLocalChatForProvider(chats: ChatsManager, providerId: string) {
+  const sessions = chats.chats?.value ?? [];
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    const chat = sessions[i];
+    if (!chat) {
+      continue;
+    }
+    const participants = chat.participants?.value;
+    if (
+      !participants ||
+      participants.some((participant) => participant.isRemote)
+    ) {
+      continue;
+    }
+    if (
+      participants.some(
+        (participant) =>
+          participant.isAI && participant.providerId === providerId
+      )
+    ) {
+      return chat;
+    }
+  }
+  return null;
+}
+
+/**
+ * Opens (or reuses) a local chat with `providerId`, prefills the compose field
+ * with the selected verses plus two trailing newlines, then dismisses the
+ * verse selection. Reuses an existing thread with that agent when possible so
+ * follow-up questions keep conversation context. No-ops when there is nothing
+ * to ask about, the provider is gone, or a chat cannot be created.
+ */
+function openAskAiForSelectedVerses(
+  context: BibleToolContext,
+  providerId: string
+) {
+  if (context.readingState.selectedVerses.value.length === 0) {
+    return;
+  }
+
+  const provider = context.chats.providers.value.find(
+    (entry) => entry.id === providerId
+  );
+  if (!provider) {
+    return;
+  }
+
+  const verseText = formatSelectedVerses(context.readingState);
+  if (context.chats.composerDraft) {
+    context.chats.composerDraft.value = verseText ? `${verseText}\n\n` : "";
+  }
+
+  const existingChat = findLocalChatForProvider(context.chats, providerId);
+  const chat = existingChat ?? context.chats.createLocalSession?.();
+  if (!chat) {
+    return;
+  }
+  chat.addParticipant(providerId);
+  context.chats.selectChat(chat.id);
+  context.openChat?.();
+  // Clearing the selection unmounts the mobile verse sheet under the finger.
+  // Defer so a retargeted pointerdown after that unmount cannot land "outside"
+  // the chat panel and dismiss the panel we just opened.
+  queueMicrotask(() => {
+    context.readingState.clearSelectedVerses();
+  });
 }
 
 function OpenInSelectorIcon() {
@@ -682,6 +917,113 @@ function getDefaultQuickToolbarTools(
   );
 }
 
+/**
+ * The ad-hoc playlist a reading plan's day is played through. It carries the
+ * plan's own presentation — including the hero image, which the player renders
+ * as the cover art (`PlayPlaylistView`), so a plan with an image doesn't play
+ * with a blank cover. Deliberately no `recordName`: this isn't a playlist
+ * record, so play history can't offer to resume it (see `isRecordedPlaylist`).
+ */
+export function readingPlanDayPlaylist(
+  plan: Pick<ReadingPlan, "address" | "title" | "description" | "heroImageUrl">,
+  items: PlaylistItemData[]
+): SimplePlaylist {
+  return {
+    id: plan.address,
+    title: plan.title,
+    description: plan.description,
+    heroImageUrl: plan.heroImageUrl,
+    items,
+  };
+}
+
+export interface OpenReadingPlansPaneOptions {
+  readingPlans: ReadingPlansManager;
+  readingState: BibleReadingState;
+  panesManager: PanesManager;
+  modals?: ModalManager;
+  playlists?: PlaylistManager;
+  /**
+   * Passed straight through to the pane: the plan editor uses them to record
+   * and reuse a plan's hero image. Optional there too, so a caller without
+   * them still gets a working pane, just without the image picker.
+   */
+  os?: Pick<CasualOSManager, "recordFile" | "recordData">;
+  login?: Pick<LoginManager, "userId">;
+  gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
+  /**
+   * Where the pane opens. Defaults to "side" — docked beside the reader, which
+   * is what the toolbar's Plans tool wants. The Profile screen passes
+   * "fullscreen" so tapping "All plans" replaces it rather than opening a
+   * panel behind it.
+   */
+  placement?: PanePlacement;
+}
+
+/**
+ * Opens the reading plans pane. Shared by the reader toolbar's Plans tool and
+ * the Profile screen's plans card so the two land on the same pane, with the
+ * same chrome and the same scripture/playback wiring.
+ */
+export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
+  const {
+    readingPlans,
+    readingState,
+    panesManager,
+    modals,
+    playlists,
+    os,
+    login,
+    gallery,
+  } = options;
+
+  panesManager.openPane({
+    id: "reading-plans-pane",
+    placement: options.placement ?? "side",
+
+    // The pane's own header carries the plans chrome: a back button when
+    // the user has drilled into a plan or the create wizard, the plan's
+    // name as the title, and the new-plan button.
+    title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
+    icon: () => <ReadingPlansPaneIcon />,
+    leading: () => <ReadingPlansPaneLeading readingPlans={readingPlans} />,
+    header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
+    component: () => (
+      <ReadingPlansPane
+        readingPlans={readingPlans}
+        books={readingState.translationBooks.value?.books ?? []}
+        modals={modals}
+        os={os}
+        login={login}
+        gallery={gallery}
+        // Tapping a scripture reading takes the user to it. Without this
+        // a plan can only be ticked off, never actually read from.
+        onOpenScripture={async (ref, translationId) => {
+          await readingState.selectTranslationAndChapter(
+            translationId ?? readingState.translationId.peek(),
+            ref.bookId,
+            ref.chapter,
+            { scrollToVerse: ref.verse }
+          );
+        }}
+        // A day of a plan is a run of readings, which is exactly what the
+        // playlist queue already steps through — so it is handed straight
+        // to `startPlaying` rather than growing a second set of next/back
+        // controls here.
+        onPlayReadings={(plan, items, startIndex) => {
+          playlists?.startPlaying(
+            readingPlanDayPlaylist(plan, items),
+            startIndex,
+            // Reading plans reuse the playlist player but keep their own
+            // progress records — don't also write playlist play history.
+            { history: false }
+          );
+        }}
+      />
+    ),
+  });
+}
+
 function getDefaultToolbarTools(
   branding?: BrandingConfig
 ): ManagedBibleToolbarTool[] {
@@ -713,6 +1055,13 @@ function getDefaultToolbarTools(
       // text request, so pressing again mid-load is exactly what should work.
       isDisabled: (context) => !context.readingState.hasPrevious.value,
       isVisible: (context) => !context.playlists?.playing?.value,
+      getHref: (context) =>
+        computed(() =>
+          chapterToolHref(
+            context,
+            context.readingState.previousChapterPosition.value
+          )
+        ),
       onSelect: (context) => {
         context.readingState.loadPreviousChapter();
       },
@@ -801,65 +1150,18 @@ function getDefaultToolbarTools(
         !!context.readingPlans &&
         context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
       onSelect: (context) => {
-        const readingPlans = context.readingPlans;
-        if (!readingPlans) {
+        if (!context.readingPlans) {
           return;
         }
-        const readingState = context.readingState;
-        context.panesManager.openPane({
-          id: "reading-plans-pane",
-          placement: "side",
-
-          // The pane's own header carries the plans chrome: a back button when
-          // the user has drilled into a plan or the create wizard, the plan's
-          // name as the title, and the new-plan button.
-          title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
-          icon: () => <ReadingPlansPaneIcon />,
-          leading: () => (
-            <ReadingPlansPaneLeading readingPlans={readingPlans} />
-          ),
-          header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
-          component: () => (
-            <ReadingPlansPane
-              readingPlans={readingPlans}
-              books={readingState.translationBooks.value?.books ?? []}
-              modals={context.modals}
-              // Tapping a scripture reading takes the user to it. Without this
-              // a plan can only be ticked off, never actually read from.
-              onOpenScripture={async (ref, translationId) => {
-                await readingState.selectTranslationAndChapter(
-                  translationId ?? readingState.translationId.peek(),
-                  ref.bookId,
-                  ref.chapter,
-                  { scrollToVerse: ref.verse }
-                );
-              }}
-              // A day of a plan is a run of readings, which is exactly what the
-              // playlist queue already steps through — so it is handed straight
-              // to `startPlaying` rather than growing a second set of next/back
-              // controls here. The synthetic playlist borrows the plan's own
-              // record name and address so playback is identifiable; it isn't a
-              // real playlist record, so a shared/reloaded URL won't resume it.
-              onPlayReadings={(plan, items, startIndex) => {
-                context.playlists?.startPlaying(
-                  {
-                    id: plan.address,
-                    // recordName: plan.recordName,
-                    // authorUserId: plan.authorUserId,
-                    title: plan.title,
-                    description: plan.description,
-                    items,
-                    // createdAtMs: plan.createdAtMs,
-                    // updatedAtMs: plan.updatedAtMs,
-                  },
-                  startIndex,
-                  // Reading plans reuse the playlist player but keep their own
-                  // progress records — don't also write playlist play history.
-                  { history: false }
-                );
-              }}
-            />
-          ),
+        openReadingPlansPane({
+          readingPlans: context.readingPlans,
+          readingState: context.readingState,
+          panesManager: context.panesManager,
+          modals: context.modals,
+          playlists: context.playlists,
+          os: context.os,
+          login: context.login,
+          gallery: context.gallery,
         });
       },
     },
@@ -890,6 +1192,13 @@ function getDefaultToolbarTools(
       // See `previous-chapter`: in-flight text must not block moving on.
       isDisabled: (context) => !context.readingState.hasNext.value,
       isVisible: (context) => !context.playlists?.playing?.value,
+      getHref: (context) =>
+        computed(() =>
+          chapterToolHref(
+            context,
+            context.readingState.nextChapterPosition.value
+          )
+        ),
       onSelect: (context) => {
         context.readingState.loadNextChapter();
       },
@@ -932,18 +1241,23 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         const playlist = context.playlists?.editingPlaylist.value;
         if (!playlist) return;
 
+        const chapterData = context.readingState.chapterData.value;
         context.playlists!.editingPlaylist.value = {
           ...playlist,
           items: [
             ...playlist.items,
-            ...context.readingState.selectedVerses.value.map((verse) => ({
-              type: "bible-verse" as const,
-              ref: {
+            ...groupVersesIntoPlaylistItems(
+              context.readingState.selectedVerses.value.map((verse) => ({
                 bookId: verse.bookId,
                 chapter: verse.chapterNumber,
                 verse: verse.verse.number,
-              },
-            })),
+              })),
+              (bookId, chapter) =>
+                chapterData?.book.id === bookId &&
+                chapterData.chapter.number === chapter
+                  ? chapterData.numberOfVerses
+                  : undefined
+            ),
           ],
         };
 
@@ -1021,6 +1335,42 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       onSelect: async (context) => {
         if (!context.annotations) return;
         await context.annotations.createNewAnnotation();
+      },
+    },
+    {
+      id: "ask-ai",
+      priority: 80,
+      title: { key: "ask-ai", defaultValue: "Ask AI" },
+      icon: AskAiIcon,
+      isVisible: (context) =>
+        context.chats.providers.value.length > 0 &&
+        context.readingState.selectedVerses.value.length > 0,
+      // Single provider: getItems is empty so the verse toolbar calls onSelect
+      // and opens that agent immediately. Multiple providers: getItems fills
+      // the picker. Default tools are not run through validateToolActions,
+      // which otherwise forbids defining both.
+      getItems: (context) => {
+        const providers = context.chats.providers.value;
+        if (providers.length <= 1) {
+          return [];
+        }
+        return providers.map((provider) => ({
+          id: `ask-ai-${provider.id}`,
+          title: provider.name,
+          icon: AskAiIcon,
+          onSelect: () => openAskAiForSelectedVerses(context, provider.id),
+        }));
+      },
+      onSelect: (context) => {
+        const providers = context.chats.providers.value;
+        if (providers.length !== 1) {
+          return;
+        }
+        const provider = providers[0];
+        if (!provider) {
+          return;
+        }
+        openAskAiForSelectedVerses(context, provider.id);
       },
     },
     {
@@ -1380,6 +1730,7 @@ export function createBibleToolsManager(
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
       visible: resolveToolPredicate(tool.isVisible, context, true),
+      href: resolveToolHref(tool.getHref, context),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
       isControllable: tool.isControllable ?? true,

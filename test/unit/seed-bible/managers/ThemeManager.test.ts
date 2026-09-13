@@ -1,5 +1,7 @@
 import {
+  applyHighlightOverrides,
   createTheme as createThemeManager,
+  filterValidFontFamilyOverrides,
   composeThemeStyleText,
   THEME_PRESET_STYLE_TEXT,
   generateThemeCssClasses,
@@ -92,6 +94,20 @@ describe("ThemeManager CSS helpers", () => {
         "--sb-highlight-mint-words-of-jesus-font-color: #166534;"
       );
     });
+
+    it("strips braces from a custom override so it cannot close the body rule", () => {
+      const css = generateThemeCssVariables(
+        createTheme({
+          variables: {
+            ...createTheme().variables,
+            primaryColor: "#ff0000; } html { visibility: hidden",
+          },
+        })
+      );
+
+      expect(css).not.toContain("html {");
+      expect(css).toContain("--sb-background: #fafafa;");
+    });
   });
 
   describe("generateThemeCssClasses", () => {
@@ -110,7 +126,7 @@ describe("ThemeManager CSS helpers", () => {
       // background-color on the text.
       expect(css).not.toContain("background-color");
       expect(css).toContain("color: var(--sb-highlight-yellow-font-color);");
-      expect(css).toContain("&.sb-words-of-jesus {");
+      expect(css).toContain(".sb-highlight-yellow.sb-words-of-jesus {");
       expect(css).toContain(
         "color: var(--sb-highlight-yellow-words-of-jesus-font-color);"
       );
@@ -141,6 +157,93 @@ describe("ThemeManager CSS helpers", () => {
 
       expect(css).not.toContain("<");
     });
+  });
+});
+
+describe("filterValidFontFamilyOverrides", () => {
+  it("keeps only known font-family keys and drops everything else", () => {
+    const overrides = filterValidFontFamilyOverrides({
+      fontFamily: "Roboto, sans-serif",
+      bookTitleFontFamily: "Newsreader, serif",
+      chapterHeadingFontFamily: "",
+      verseFontFamily: "Lora, sans-serif",
+      hebrewSubtitleFontFamily: "Newsreader, serif",
+      primaryColor: "#111111",
+      someUnknownKey: "whatever",
+    });
+
+    expect(overrides).toEqual({
+      fontFamily: "Roboto, sans-serif",
+      bookTitleFontFamily: "Newsreader, serif",
+      verseFontFamily: "Lora, sans-serif",
+      hebrewSubtitleFontFamily: "Newsreader, serif",
+    });
+  });
+
+  it("returns an empty object when nothing matches", () => {
+    expect(filterValidFontFamilyOverrides({ primaryColor: "#111111" })).toEqual(
+      {}
+    );
+  });
+});
+
+describe("applyHighlightOverrides", () => {
+  function highlightTheme(): BibleTheme {
+    return {
+      id: "test-theme",
+      name: "Test Theme",
+      variables: {} as BibleTheme["variables"],
+      highlightColors: {
+        yellow: {
+          color: "#fff59d",
+          fontColor: "#333333",
+          wordsOfJesusFontColor: "#b45309",
+        },
+        mint: {
+          color: "#86efac",
+          fontColor: "#14532d",
+          wordsOfJesusFontColor: "#166534",
+        },
+      },
+    } as unknown as BibleTheme;
+  }
+
+  it("returns the theme unchanged when there are no overrides", () => {
+    const theme = highlightTheme();
+
+    expect(applyHighlightOverrides(theme, {})).toBe(theme);
+  });
+
+  it("merges a partial override onto the theme's own value for that id, leaving omitted fields as they were", () => {
+    const merged = applyHighlightOverrides(highlightTheme(), {
+      yellow: { color: "#ff0000" },
+    });
+
+    expect(merged.highlightColors.yellow).toEqual({
+      color: "#ff0000",
+      fontColor: "#333333",
+      wordsOfJesusFontColor: "#b45309",
+    });
+  });
+
+  it("leaves a highlight id with no override in the set completely untouched", () => {
+    const merged = applyHighlightOverrides(highlightTheme(), {
+      yellow: { color: "#ff0000" },
+    });
+
+    expect(merged.highlightColors.mint).toEqual({
+      color: "#86efac",
+      fontColor: "#14532d",
+      wordsOfJesusFontColor: "#166534",
+    });
+  });
+
+  it("does not mutate the original theme object", () => {
+    const theme = highlightTheme();
+
+    applyHighlightOverrides(theme, { yellow: { color: "#ff0000" } });
+
+    expect(theme.highlightColors.yellow?.color).toBe("#fff59d");
   });
 });
 
@@ -322,6 +425,21 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(theme.customOverrides.value.primaryColor).toBeUndefined();
   });
 
+  it("keeps the rest of the theme CSS when a custom color is saved", () => {
+    document.getElementById("sb-theme-styles")?.remove();
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.setCustomColor("primaryColor", "#123456");
+
+    const css = document.getElementById("sb-theme-styles")?.textContent ?? "";
+    expect(css).toContain("--sb-primary-color: #123456;");
+    expect(css).toContain("--sb-background:");
+    expect(css).toContain("--sb-font-color:");
+    expect(css).toContain("body {");
+  });
+
   it("setHighlightColor / resetHighlightColor read back correctly through settings", () => {
     const login = makeFakeLogin(null);
     const settings = makeSettings(login);
@@ -332,5 +450,98 @@ describe("ThemeManager storage (via SettingsManager)", () => {
 
     theme.resetHighlightColor("yellow");
     expect(theme.customHighlightOverrides.value.yellow).toBeUndefined();
+  });
+
+  it("previewCustomColor updates currentTheme live without persisting anything", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.previewCustomColor("primaryColor", "#abcdef");
+
+    expect(theme.currentTheme.value.variables.primaryColor).toBe("#abcdef");
+    expect(theme.customOverrides.value.primaryColor).toBeUndefined();
+    expect(login.localConfig.value.customTheme).toBeUndefined();
+  });
+
+  it("clearPreviewCustomColor discards the preview and restores the persisted value", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+    const original = theme.currentTheme.value.variables.primaryColor;
+
+    theme.previewCustomColor("primaryColor", "#abcdef");
+    theme.clearPreviewCustomColor("primaryColor");
+
+    expect(theme.currentTheme.value.variables.primaryColor).toBe(original);
+  });
+
+  it("setCustomColor clears any pending preview, so the just-saved color actually shows", () => {
+    // Without clearing the preview, applyOverrides would keep layering it on
+    // top of the fresh commit and the swatch would still show the old drag
+    // value instead of the color that was just confirmed.
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.previewCustomColor("primaryColor", "#abcdef");
+    theme.setCustomColor("primaryColor", "#123456");
+
+    expect(theme.currentTheme.value.variables.primaryColor).toBe("#123456");
+  });
+
+  it("previewHighlightColor updates only the previewed field, leaving the other field's real value alone", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+    const originalFontColor =
+      theme.currentTheme.value.highlightColors.yellow.fontColor;
+
+    theme.previewHighlightColor("yellow", { color: "#ff00ff" });
+
+    expect(theme.currentTheme.value.highlightColors.yellow.color).toBe(
+      "#ff00ff"
+    );
+    expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
+      originalFontColor
+    );
+    expect(theme.customHighlightOverrides.value.yellow).toBeUndefined();
+  });
+
+  it("clearPreviewHighlightField discards only the named field, leaving a preview on the other field intact", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.previewHighlightColor("yellow", {
+      color: "#ff00ff",
+      fontColor: "#00ff00",
+    });
+    theme.clearPreviewHighlightField("yellow", "color");
+
+    expect(theme.currentTheme.value.highlightColors.yellow.color).not.toBe(
+      "#ff00ff"
+    );
+    expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
+      "#00ff00"
+    );
+  });
+
+  it("setHighlightColor clears only the committed field's preview, so an in-progress drag on the other field survives", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.previewHighlightColor("yellow", { color: "#ff00ff" });
+    theme.previewHighlightColor("yellow", { fontColor: "#00ff00" });
+
+    theme.setHighlightColor("yellow", { color: "#123456" });
+
+    expect(theme.currentTheme.value.highlightColors.yellow.color).toBe(
+      "#123456"
+    );
+    expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
+      "#00ff00"
+    );
   });
 });

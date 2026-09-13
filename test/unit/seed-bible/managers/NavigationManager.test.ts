@@ -1,6 +1,30 @@
-import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import {
+  createNavigationManager as createUntrackedNavigationManager,
+  type NavigationManager,
+  type NavigationManagerOptions,
+} from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+
+const liveManagers: NavigationManager[] = [];
+
+/**
+ * Every manager patches the shared `window.history` and listens for
+ * `popstate`, so one left alive keeps reacting to the navigations of every
+ * test that follows. Creating them through here disposes them afterwards.
+ */
+function createNavigationManager(
+  options?: NavigationManagerOptions
+): NavigationManager {
+  const navigation = createUntrackedNavigationManager(options);
+  liveManagers.push(navigation);
+  return navigation;
+}
 
 afterEach(() => {
+  // Newest first: each manager's teardown only unwinds its own `history`
+  // patch while it is still the outermost one.
+  for (const navigation of liveManagers.splice(0).reverse()) {
+    navigation.dispose();
+  }
   window.history.replaceState(null, "", window.location.pathname);
 });
 
@@ -146,5 +170,209 @@ describe("createNavigationManager dispose", () => {
 
     navigation.dispose();
     expect(() => navigation.dispose()).not.toThrow();
+  });
+});
+
+describe("createNavigationManager batchWrites", () => {
+  it("folds several URL writes into one history entry", () => {
+    const navigation = createNavigationManager();
+    navigation.updatePathAndQueryParams("/genesis/1", { sidebar: "open" });
+    const historyLengthBefore = window.history.length;
+
+    // One user action, two things that mirror to the URL: the reader moves and
+    // the sidebar that launched it closes.
+    navigation.batchWrites(() => {
+      navigation.updatePathAndQueryParams("/exodus/2", {}, true);
+      navigation.updateQueryParams({ sidebar: null });
+    });
+
+    expect(window.history.length).toBe(historyLengthBefore + 1);
+    expect(window.location.pathname).toBe("/exodus/2");
+    expect(window.location.search).toBe("");
+  });
+
+  it("replaces when every write in the batch replaces, pushes when any pushes", () => {
+    const navigation = createNavigationManager();
+    navigation.updatePathAndQueryParams("/genesis/1", {});
+    const historyLengthBefore = window.history.length;
+
+    navigation.batchWrites(() => {
+      navigation.replace("/exodus/2");
+      navigation.replace("/exodus/3");
+    });
+    expect(window.history.length).toBe(historyLengthBefore);
+    expect(window.location.pathname).toBe("/exodus/3");
+
+    navigation.batchWrites(() => {
+      navigation.replace("/leviticus/1");
+      navigation.push("/leviticus/2");
+    });
+    expect(window.history.length).toBe(historyLengthBefore + 1);
+    expect(window.location.pathname).toBe("/leviticus/2");
+  });
+
+  it("publishes each batched write to currentUrl right away", () => {
+    const navigation = createNavigationManager();
+    const seen: string[] = [];
+
+    navigation.batchWrites(() => {
+      navigation.updatePathAndQueryParams("/genesis/1", { sidebar: "open" });
+      // State bound to the URL reads `currentUrl`, not `window.location`, and
+      // has to see the pending write — otherwise it reverts the change that is
+      // still being batched.
+      seen.push(navigation.currentUrl.value.search);
+      navigation.updateQueryParams({ sidebar: null });
+      seen.push(navigation.currentUrl.value.search);
+    });
+
+    expect(seen).toEqual(["?sidebar=open", ""]);
+  });
+
+  it("writes nothing when the batch changes nothing", () => {
+    const navigation = createNavigationManager();
+    navigation.updatePathAndQueryParams("/genesis/1", { book: "GEN" });
+    const hrefBefore = window.location.href;
+    const historyLengthBefore = window.history.length;
+
+    navigation.batchWrites(() => {
+      navigation.updateQueryParams({ book: "GEN" });
+    });
+
+    expect(window.location.href).toBe(hrefBefore);
+    expect(window.history.length).toBe(historyLengthBefore);
+  });
+
+  it("writes nothing when the batch ends back where it started", () => {
+    const navigation = createNavigationManager();
+    navigation.updatePathAndQueryParams("/genesis/1", { sidebar: "open" });
+    const hrefBefore = window.location.href;
+    const historyLengthBefore = window.history.length;
+
+    // Each write is measured against the live, mid-batch URL, so both halves
+    // of a round trip look like real changes. Only the batch as a whole can
+    // tell that the URL never actually moved.
+    navigation.batchWrites(() => {
+      navigation.updateQueryParams({ sidebar: null });
+      navigation.updateQueryParams({ sidebar: "open" });
+    });
+
+    expect(window.location.href).toBe(hrefBefore);
+    expect(window.history.length).toBe(historyLengthBefore);
+  });
+
+  it("returns the callback's value and flushes even when it throws", () => {
+    const navigation = createNavigationManager();
+    navigation.updatePathAndQueryParams("/genesis/1", {});
+
+    expect(navigation.batchWrites(() => "done")).toBe("done");
+
+    expect(() =>
+      navigation.batchWrites(() => {
+        navigation.push("/exodus/2");
+        throw new Error("boom");
+      })
+    ).toThrow("boom");
+    // The write already happened as far as the rest of the app is concerned —
+    // leaving it unflushed would leave `currentUrl` describing a URL the
+    // browser never got.
+    expect(window.location.pathname).toBe("/exodus/2");
+  });
+});
+
+describe("createNavigationManager linkToBareRoot", () => {
+  it("resets the path to root and drops query params, keeping only the given ones", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/en/BSB/genesis/1?foo=bar",
+    });
+
+    const link = navigation.linkToBareRoot({ customization: "user-1.abc" });
+
+    expect(link).toBe("http://localhost/?customization=user-1.abc");
+  });
+
+  it('resets the path to basePath, not "/", when a deployment prefix is set', () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/b/some-branch/en/BSB/genesis/1",
+      basePath: "/b/some-branch",
+    });
+
+    const link = navigation.linkToBareRoot({ customization: "user-1.abc" });
+
+    expect(link).toBe(
+      "http://localhost/b/some-branch?customization=user-1.abc"
+    );
+  });
+
+  it("resets the path even when the current URL is already at root", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/?language=en&translation=BSB",
+    });
+
+    const link = navigation.linkToBareRoot({ customization: "user-1.abc" });
+
+    expect(link).toBe("http://localhost/?customization=user-1.abc");
+  });
+
+  it("sets multiple params when given multiple keys", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/en/BSB/genesis/1",
+    });
+
+    const link = navigation.linkToBareRoot({ a: "1", b: "2" });
+
+    expect(link).toBe("http://localhost/?a=1&b=2");
+  });
+
+  it("omits keys whose value is null", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/en/BSB/genesis/1",
+    });
+
+    const link = navigation.linkToBareRoot({ a: "1", b: null });
+
+    expect(link).toBe("http://localhost/?a=1");
+  });
+
+  it("produces a bare origin+root link when every given value is null", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/en/BSB/genesis/1?stale=1",
+    });
+
+    const link = navigation.linkToBareRoot({ a: null });
+
+    expect(link).toBe("http://localhost/");
+  });
+
+  it("does not mutate currentUrl", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/en/BSB/genesis/1",
+    });
+    const hrefBefore = navigation.currentUrl.value.href;
+
+    navigation.linkToBareRoot({ customization: "user-1.abc" });
+
+    expect(navigation.currentUrl.value.href).toBe(hrefBefore);
+  });
+});
+
+describe("createNavigationManager nested batchWrites", () => {
+  it("flushes once, when the outermost batch ends", () => {
+    const navigation = createNavigationManager();
+    navigation.updatePathAndQueryParams("/genesis/1", { sidebar: "open" });
+    const historyLengthBefore = window.history.length;
+
+    // Actions compose: opening a bookmark batches its own writes and calls
+    // into `selectTab`, which batches too.
+    navigation.batchWrites(() => {
+      navigation.updatePathAndQueryParams("/exodus/2", {}, true);
+      navigation.batchWrites(() => {
+        navigation.updateQueryParams({ sidebar: null });
+      });
+      expect(window.location.pathname).toBe("/genesis/1");
+    });
+
+    expect(window.history.length).toBe(historyLengthBefore + 1);
+    expect(window.location.pathname).toBe("/exodus/2");
+    expect(window.location.search).toBe("");
   });
 });
