@@ -133,6 +133,13 @@ export interface PaneOpenOptions {
    * this ID exists, a new pane with this ID is created.
    */
   id?: string;
+  /**
+   * Optional starting size in pixels, defaulting to 480x320. Side panes use
+   * only the width — their height is the height of the reader area. Applied
+   * when the pane is first created: reopening a pane by `id` keeps whatever
+   * size the user dragged it to.
+   */
+  size?: { width: number; height: number };
 }
 
 export interface PanesManager {
@@ -195,35 +202,18 @@ export interface PanesManager {
 function createPaneFactory() {
   let nextPaneId = 1;
 
-  return (
-    title: PaneTitle,
-    component: () => ComponentChild,
-    placement: PanePlacement,
-    customId?: string,
-    header?: () => ComponentChild,
-    icon?: () => ComponentChild,
-    leading?: () => ComponentChild,
-    onClose?: (reason: PaneCloseReason) => void,
-    confirmClose?: () => boolean
-  ): Pane => {
+  return ({ size, ...options }: PaneOpenOptions): Pane => {
     const paneId = nextPaneId;
     nextPaneId += 1;
     const offset = (paneId - 1) * 24;
 
     return {
-      id: customId ?? `pane-${paneId}`,
-      title,
-      component,
-      icon,
-      leading,
-      header,
-      onClose,
-      confirmClose,
-      placement,
+      ...options,
+      id: options.id ?? `pane-${paneId}`,
       x: 48 + offset,
       y: 48 + offset,
-      width: 480,
-      height: 320,
+      width: size?.width ?? 480,
+      height: size?.height ?? 320,
     };
   };
 }
@@ -334,17 +324,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
         ? panes.peek().filter((pane) => pane.placement !== "side")
         : panes.peek();
 
-    const nextPane = createPane(
-      options.title,
-      options.component,
-      options.placement,
-      options.id,
-      options.header,
-      options.icon,
-      options.leading,
-      options.onClose,
-      options.confirmClose
-    );
+    const nextPane = createPane(options);
     syncPaneState([...basePanes, nextPane], nextPane.id, "displaced");
     return nextPane;
   };
