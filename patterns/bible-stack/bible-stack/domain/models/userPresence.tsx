@@ -38,6 +38,15 @@ export interface UserData extends UserIds {
   color: HexString;
 }
 
+export interface ConnectionSessionUserVisual {
+  defaultIcon: string;
+  color: string;
+  colorName: string;
+}
+
 export interface ConnectedUserData extends UserIds {
   profile: UserProfile | undefined;
+  visual: ConnectionSessionUserVisual;
 }
+
+export type UserIdentityMap = Map<string, ConnectedUserData>;

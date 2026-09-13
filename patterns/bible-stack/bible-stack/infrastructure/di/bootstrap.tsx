@@ -113,7 +113,11 @@ import { BooksStaticInfoRepository } from "../adapters/arrangement/BooksStaticIn
 import { BookNamesProvider } from "../adapters/arrangement/BookNamesProvider";
 import { ScriptureConfigProvider } from "../config/scripture/ScriptureConfigProvider";
 import { ArrangementConfigProvider } from "../config/arrangement/ArrangementConfigProvider";
-import { SetStrictTag, GetBotScales } from "../functions/casualos";
+import {
+  SetStrictTag,
+  GetBotScales,
+  SendEmbedMessage,
+} from "../functions/casualos";
 import { PieceHierarchyService } from "../../application/services/PieceHierarchyService";
 import { ViewportService } from "../../application/services/ViewportService";
 import { TourGuideService } from "../../application/services/TourGuideService";
@@ -181,12 +185,13 @@ import { VerseInteractionController } from "../controllers/stack/VerseInteractio
 import { VersesBundleInteractionController } from "../controllers/stack/VersesBundleInteractionController";
 import { RelocationEventMapper } from "../mappers/RelocationEventMapper";
 import { BotStateController } from "../controllers/stack/BotStateController";
+import { PieceActivityController } from "../controllers/stack/PieceActivityController";
 import { CrossLineInteractionController } from "../controllers/stack/CrossLineInteractionController";
 import { createPieceStateMap } from "../controllers/stack/pieceStateMap";
 import { createBotStateChangeStrategyFactory } from "../controllers/stack/botStateChangeStrategy";
 import { makeLabelPropertiesStrategies } from "../config/labels/makeLabelPropertiesStrategies";
 import { PieceStateService } from "../../application/services/PieceStateService";
-import type { BotListenerParametersMap } from "../models/casualos";
+import type { BotListenerParametersMap, Message } from "../models/casualos";
 import { ObjectPoolerConfigProvider } from "../config/objectPool/ObjectPoolConfigProvider";
 import { PaintService } from "../../application/services/PaintService";
 import { PaintAdapter } from "../adapters/stacks/PaintAdapter";
@@ -199,12 +204,15 @@ import { BibleModeSequenceAdapter } from "../adapters/sequences/BibleModeSequenc
 import { LabelInteractionController } from "../controllers/stack/LabelInteractionController";
 import { LabelInteractionService } from "../../application/services/InteractionLabelService";
 import { SectionShadowInteractionService } from "../../application/services/SectionShadowInteractionService";
-import type { BibleStackInfrastructureEvents } from "../models/events";
+import {
+  MESSAGE_TO_EVENT_MAP,
+  type BibleStackInfrastructureEvents,
+} from "../models/events";
 import { UpperCoverOpacityAdapter } from "../adapters/stacks/UpperCoverOpacityAdapter";
 import { ChapterNavigationService } from "../../application/services/ChapterNavigationService";
 import { ReaderNavigationAdapter } from "../adapters/seed-bible/ReaderNavigationAdapter";
+import { UserIdentityStore } from "../adapters/userPresence/UserIdentityStore";
 import { UserPresenceController } from "../controllers/seed-bible/ReadingStateController";
-import type { UserPresence } from "../../domain/models/userPresence";
 
 let initialized = false;
 
@@ -260,7 +268,7 @@ export const bootstrapExtension = () => {
   const activityIndicatorMapper = new ActivityIndicatorMapper();
   const activityNotificationMapper = new ActivityNotificationMapper();
 
-  // // 2. Instantiating config providers
+  // 2. Instantiating config providers
 
   const layoutConfigProvider = new LayoutConfigProvider();
   const bookInteractionConfigProvider = new BookInteractionConfigProvider();
@@ -286,7 +294,7 @@ export const bootstrapExtension = () => {
     new TestamentSelectionConfigProvider();
   const versesBundleConfigProvider = new VersesBundleConfigProvider();
 
-  // // 3. Instantiating adapters
+  // 3. Instantiating adapters
 
   const scripturePiecesStateService = new ScripturePiecesStateService();
 
@@ -384,7 +392,7 @@ export const bootstrapExtension = () => {
       [BiblePieces.ActivityIndicator]: makePoolData(
         BiblePieces.ActivityIndicator,
         activityIndicatorPrefab,
-        8
+        16
       ),
       [BiblePieces.ActivityNotification]: makePoolData(
         BiblePieces.ActivityNotification,
@@ -767,6 +775,9 @@ export const bootstrapExtension = () => {
       getArrangements: () => [],
     },
   });
+  const userIdentityStore = new UserIdentityStore({
+    eventBus: infrastructureEventManager,
+  });
   const pieceActivityService = new PieceActivityService({
     dataRegistryPort: pieceDataRepository,
     arrangementServicePort: arrangementService,
@@ -775,13 +786,12 @@ export const bootstrapExtension = () => {
     activityIndicatorsAdapterPort: activityIndicatorsAdapter,
     activityIndicatorLifecyclePort: stackPieceLifecycleAdapter,
     activityNotificationAdapterPort: activityNotificationAdapter,
-    userColorStorePort: {
-      getUserColor: () => undefined,
-    },
+    userIdentityStorePort: userIdentityStore,
     idGeneratorPort: {
       getId: () => uuid(),
     },
     loggerPort: loggerAdapter,
+    eventBus: bibleStackEventManager,
   });
   const pieceLabelService = new PieceLabelService({
     labelAdapterPort: labelAdapter,
@@ -1107,6 +1117,7 @@ export const bootstrapExtension = () => {
     pieceAdapterPort: pieceAdapter,
     pieceDataRepositoryPort: pieceDataRepository,
     sequenceStateServicePort: sequenceStateService,
+    eventBus: bibleStackEventManager,
     chapterSelectionServicePort: chapterSelectionService,
     pieceHierarchyServicePort: pieceHierarchyService,
     bibleSequenceServicePort: bibleSequenceService,
@@ -1162,6 +1173,7 @@ export const bootstrapExtension = () => {
     awaiterPort: {
       sleep: (ms) => os.sleep(ms),
     },
+    pieceActivityServicePort: pieceActivityService,
   });
   const pieceStateService = new PieceStateService({
     labelPositionUpdaterPort: pieceLabelService,
@@ -1205,6 +1217,7 @@ export const bootstrapExtension = () => {
     viewportPort: viewportService,
     renderOrderAdapter,
     upperCoverOpacityAdapter,
+    pieceActivityService,
   });
   const canvasInteractionController = new CanvasInteractionController({
     spatialNavigationPort: spatialNavigationService,
@@ -1265,6 +1278,9 @@ export const bootstrapExtension = () => {
     });
   const readingInstanceController = new UserPresenceController({
     userPresenceService,
+  });
+  const pieceActivityController = new PieceActivityController({
+    pieceActivityService,
   });
 
   const pieceStateMap = createPieceStateMap(DIMENSION);
@@ -1346,7 +1362,8 @@ export const bootstrapExtension = () => {
   );
 
   bibleStackEventManager.subscribe("OnUserPresenceUpdated", () => {
-    stackPresenceNavigationService.update();
+    pieceActivityService.updateAllIndicators();
+    pieceActivityService.updateAllNotifications();
   });
 
   listenTagEventBus.subscribe("onBotChanged", ({ bot, params }) => {
@@ -1600,25 +1617,36 @@ export const bootstrapExtension = () => {
   os.addBotListener(
     entrypointBot,
     "onEmbedMessage",
-    ({
-      message,
-    }: {
-      message: { type: "OnUserPresenceChanged"; presence: UserPresence };
-    }) => {
-      console.log(
-        `[Debug] bible-stack pattern bootstrap onEmbedMessage listener`,
-        {
-          message,
-        }
-      );
+    ({ message }: { message: Message }) => {
+      if (!message?.type) return;
 
-      switch (message.type) {
-        case "OnUserPresenceChanged": {
-          readingInstanceController.handleUserPresenceChanged(message.presence);
-        }
-      }
+      const eventName = MESSAGE_TO_EVENT_MAP[message.type];
+      if (!eventName) return;
+
+      infrastructureEventManager.emit(
+        eventName,
+        message as BibleStackInfrastructureEvents[typeof eventName]
+      );
     }
   );
+
+  infrastructureEventManager.subscribe(
+    "OnUserPresenceChangedMessage",
+    (message) => {
+      readingInstanceController.handleUserPresenceChanged(message.presence);
+    }
+  );
+
+  infrastructureEventManager.subscribe(
+    "OnUserIdentityChangedMessage",
+    (payload) => {
+      userIdentityStore.tryUpdate(payload.identity);
+    }
+  );
+
+  infrastructureEventManager.subscribe("OnUserIdentityChanged", () => {
+    pieceActivityController.handleIdentityChanged();
+  });
 
   infrastructureEventManager.subscribe("OnPieceBotReleased", ({ pieceBot }) => {
     switch (pieceBot.tags.type) {
@@ -1645,15 +1673,11 @@ export const bootstrapExtension = () => {
     }
   });
 
-  // TODO: Add an onBotChanged event listener to the configBot to listen to camera rotation changes.
-  // call to an environment or camera controller to update all the activity notifications.
+  SendEmbedMessage({ id: "ready" });
 
   // 7. Disposers
 
   audioAdapter.bufferSounds();
 
   experienceService.displayExperience();
-
-  // @ts-expect-error CasualOS typings misplace sendEmbedMessage under appHooks; it's on os at runtime
-  os.sendEmbedMessage({ id: "ready" });
 };

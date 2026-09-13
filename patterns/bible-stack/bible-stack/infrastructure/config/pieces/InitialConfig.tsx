@@ -79,6 +79,8 @@ export const INITIAL_CONFIG_MAP: {
     scaleZ: 1,
     system: undefined,
     cursor: "pointer",
+    labelFontAddress:
+      "https://cdn.jsdelivr.net/npm/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff",
   },
   [BiblePieces.StackSectionShadow]: {
     draggable: false,
@@ -161,8 +163,33 @@ export const INITIAL_CONFIG_MAP: {
     scaleX: 6,
     scaleY: 6,
   },
-  [BiblePieces.ActivityIndicator]: {},
-  [BiblePieces.ActivityNotification]: {},
+  [BiblePieces.ActivityIndicator]: {
+    formAddress: undefined,
+    color: undefined,
+    labelFontSize: 0.7,
+    labelFontAddress:
+      "https://cdn.jsdelivr.net/npm/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff",
+    label: undefined,
+    labelAlignment: "center",
+    labelColor: "#000000",
+    labelWordWrapMode: "none",
+  },
+  [BiblePieces.ActivityNotification]: {
+    color: "#e07b4c",
+    label: "",
+    ownerDataId: undefined,
+    ownerBotId: undefined,
+    formOpacity: 1,
+    direction: undefined,
+    offset: undefined,
+    scaleX: 0.2,
+    scaleY: 0.2,
+    form: "circle",
+    orientationMode: "billboard",
+    labelFontSize: 0.4,
+    labelFontAddress:
+      "https://cdn.jsdelivr.net/npm/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff",
+  },
   [BiblePieces.InfoLabelDate]: {
     color: "white",
     draggable: false,
@@ -196,6 +223,9 @@ export const INITIAL_CONFIG_MAP: {
     scale: 1,
     labelOpacity: 0,
     pointable: false,
+    labelFontAddress:
+      "https://cdn.jsdelivr.net/npm/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff",
+    labelFontSize: 1.3,
   },
   [BiblePieces.InfoLabelTransformer]: {
     color: "clear",

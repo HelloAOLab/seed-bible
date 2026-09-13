@@ -4,6 +4,8 @@ import {
   type PortalComponentHandle,
 } from "@packages/seed-bible/seed-bible/components";
 import {
+  getConnectedUserVisualKey,
+  getUserAnimalVisual,
   registerExtension,
   type SeedBibleState,
 } from "@packages/seed-bible/seed-bible/managers";
@@ -12,7 +14,11 @@ import type { UtilsAPI } from "@packages/seed-bible-utils/infrastructure/models/
 import { v4 as uuid } from "uuid";
 import bibleStackPattern from "virtual:@pattern/bible-stack";
 import { useComputed, useSignal, useSignalEffect } from "@preact/signals";
-import type { ReadingInstance, UserPresence } from "./models/userPresence";
+import type {
+  ReadingInstance,
+  UserPresence,
+  UserIdentityMap,
+} from "./models/userPresence";
 import { useRef } from "preact/hooks";
 
 const Icon = () => {
@@ -101,6 +107,38 @@ export const bootstrapExtension = () => {
                 }
                 return presence;
               });
+              const userIdentityMap = useComputed(() => {
+                const identity: UserIdentityMap = new Map();
+                for (const tab of context.tabs.tabs.value) {
+                  const sharedSession = tab.sharedSession;
+                  if (!sharedSession) continue;
+                  for (const user of sharedSession.connectedUsers.value) {
+                    if (identity.has(user.connectionId)) continue;
+                    identity.set(user.connectionId, {
+                      connectionId: user.connectionId,
+                      userId: user.userId ?? undefined,
+                      profile: user.profile ?? undefined,
+                      visual: user.visual,
+                    });
+                  }
+                }
+                const selfConnectionId = context.login.connectionId;
+                if (!identity.has(selfConnectionId)) {
+                  const selfUserId = context.login.userId.value;
+                  identity.set(selfConnectionId, {
+                    connectionId: selfConnectionId,
+                    userId: selfUserId ?? undefined,
+                    profile: context.login.profile.value ?? undefined,
+                    visual: getUserAnimalVisual(
+                      getConnectedUserVisualKey({
+                        userId: selfUserId,
+                        connectionId: selfConnectionId,
+                      })
+                    ),
+                  });
+                }
+                return identity;
+              });
               const isReady = useSignal(false);
               useSignalEffect(() => {
                 if (!isReady.value) return;
@@ -109,13 +147,21 @@ export const bootstrapExtension = () => {
                   presence: userPresence.value,
                 });
               });
+              useSignalEffect(() => {
+                if (!isReady.value) return;
+                portalRef.current?.sendMessage({
+                  type: "OnUserIdentityChanged",
+                  identity: userIdentityMap.value,
+                });
+              });
               return (
                 <PortalComponent
                   ref={portalRef}
-                  onMessage={(message: {
-                    id: string;
-                    data: { bookId: string; chapter?: number };
-                  }) => {
+                  onMessage={(inbound: unknown) => {
+                    const message = inbound as {
+                      id: string;
+                      data: { bookId: string; chapter?: number };
+                    };
                     switch (message.id) {
                       case "reader-navigation":
                         {

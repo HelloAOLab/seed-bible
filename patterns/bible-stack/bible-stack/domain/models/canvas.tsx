@@ -48,10 +48,7 @@ export interface SectionShadow extends Piece<"StackSectionShadow"> {
   sectionDataId: string;
 }
 
-export type ActivityIndicatorType =
-  | "regular"
-  | "extraContent"
-  | "extraBackground";
+export type ActivityIndicatorType = "regular" | "extraContent";
 
 export type ActivityContainerPieceType =
   | typeof BiblePieces.StackChapter

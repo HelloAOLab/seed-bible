@@ -1,8 +1,7 @@
 import type { InfoLabelData } from "../../../domain/entities/InfoLabelData";
 import type { SubsetBookInfo } from "../../../domain/models/arrangement";
-import type { UserIds } from "../../../domain/models/userPresence";
 
-import type { HexString, Point2D } from "../../../domain/models/commonTypes";
+import type { HexString } from "../../../domain/models/commonTypes";
 import type { SubsetBookChapter } from "../../../domain/models/arrangement";
 import {
   type Piece,
@@ -88,19 +87,17 @@ export interface ShowRegularIndicatorCommand extends BaseShowIndicatorCommand<"r
   isSelected: boolean;
   isOwnUser: boolean;
   color: HexString;
+  pictureUrl?: string | null | undefined;
+  icon: string;
 }
 
 export interface ShowExtraContentIndicatorCommand extends BaseShowIndicatorCommand<"extraContent"> {
   extraUsers: number;
 }
 
-export type ShowExtraBackgroundIndicatorCommand =
-  BaseShowIndicatorCommand<"extraBackground">;
-
 export type AnyShowIndicatorCommand =
   | ShowRegularIndicatorCommand
-  | ShowExtraContentIndicatorCommand
-  | ShowExtraBackgroundIndicatorCommand;
+  | ShowExtraContentIndicatorCommand;
 
 export interface ShowIndicatorsCommand {
   container: ActivityContainer;
@@ -126,7 +123,6 @@ export interface ShowNotificationCommand {
   isOwnUserInPiece: boolean;
   activityCount: number;
   color: HexString;
-  direction: Point2D;
   notification?: ActivityNotification | undefined;
   container: NotifiableContainer;
   offset?: number;
@@ -138,8 +134,4 @@ export interface ActivityNotificationAdapterPort {
   showNotification: (command: ShowNotificationCommand) => ActivityNotification;
   updateNotificationPosition: (container: NotifiableContainer) => void;
   updateNotificationDirection: (container: NotifiableContainer) => void;
-}
-
-export interface UserColorStorePort {
-  getUserColor: (params: UserIds) => string | undefined;
 }

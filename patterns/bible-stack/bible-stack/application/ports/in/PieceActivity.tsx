@@ -5,10 +5,10 @@ import type {
 import type { ActivityIndicatorData } from "../../../domain/entities/ActivityIndicatorData";
 import type { ActivityContainer } from "../../../domain/models/activity";
 import type { StackChapterData } from "../../../domain/entities/StackChapterData";
-import type { UserReadingInstance } from "../../../domain/models/reading";
+import type { ReadingInstance } from "../../../domain/models/userPresence";
 
 export interface PieceActivityServicePort {
-  getPieceActivity(params: { piece: Piece }): UserReadingInstance[];
+  getPieceActivity(params: { piece: Piece }): ReadingInstance[];
 
   getActivityIndicatorsForPiece(piece: Piece): ActivityIndicatorData[];
   getActivityIndicatorByType(
@@ -17,7 +17,6 @@ export interface PieceActivityServicePort {
   ): ActivityIndicatorData | undefined;
   getExtraActivityIndicatorsForPiece(piece: Piece): {
     extraIndicatorContent: ActivityIndicatorData | undefined;
-    extraIndicatorBackground: ActivityIndicatorData | undefined;
   };
   getPieceIndicatorByActivityIndex(
     piece: Piece,
@@ -30,7 +29,6 @@ export interface PieceActivityServicePort {
   ): ActivityIndicatorData | undefined;
   getDataExtraActivityIndicators(data: ActivityContainer): {
     extraIndicatorContent: ActivityIndicatorData | undefined;
-    extraIndicatorBackground: ActivityIndicatorData | undefined;
   };
   getDataIndicatorByActivityIndex(
     data: ActivityContainer,
@@ -44,4 +42,5 @@ export interface PieceActivityServicePort {
   tryHideNotification(container: StackChapterData): boolean;
   updateNotification(container: StackChapterData): void;
   updateAllNotifications(): void;
+  updateAllNotificationsDirection(): void;
 }

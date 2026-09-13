@@ -33,6 +33,8 @@ import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type { LoggerPort } from "../ports/in/Logger";
 import type { UserPresencePort } from "../ports/in/UserPresence";
+import type { BaseEventManager } from "./BaseEventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
   loggerPort: LoggerPort;
@@ -44,6 +46,7 @@ interface ServiceParams {
     "getAllChapters" | "getAllBooks" | "getAllSectionBooks"
   >;
   sequenceStateServicePort: SequenceStateServicePort;
+  eventBus: BaseEventManager<BibleStackEvents>;
   chapterSelectionServicePort: ChapterSelectionPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   scriptureServicePort: ScripturePort;
@@ -69,6 +72,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
+  #eventBus: ServiceParams["eventBus"];
   #chapterSelectionServicePort: ServiceParams["chapterSelectionServicePort"];
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #scriptureServicePort: ServiceParams["scriptureServicePort"];
@@ -89,6 +93,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     pieceAdapterPort,
     pieceDataRepositoryPort,
     sequenceStateServicePort,
+    eventBus,
     chapterSelectionServicePort,
     pieceHierarchyServicePort,
     scriptureServicePort,
@@ -106,6 +111,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#sequenceStateServicePort = sequenceStateServicePort;
+    this.#eventBus = eventBus;
     this.#chapterSelectionServicePort = chapterSelectionServicePort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#scriptureServicePort = scriptureServicePort;
@@ -116,6 +122,10 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     this.#sectionSelectionServicePort = sectionSelectionServicePort;
     this.#explodedViewServicePort = explodedViewServicePort;
     this.#arrangementServicePort = arrangementServicePort;
+
+    this.#eventBus.subscribe("OnUserPresenceUpdated", () => {
+      this.#sequenceStateServicePort.executeAsSequence(() => this.update());
+    });
   }
 
   handleSectionExploded(payload: { sectionData: StackSectionData }): void {
@@ -138,9 +148,8 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     const selectedInstance =
       this.#userPresencePort.getOwnUserSelectedInstance();
 
-    const shouldQueue =
-      this.#sequenceStateServicePort.isThereAnOngoingSequence() ||
-      this.#isThereAnOngoingUpdate;
+    const shouldQueue = this.#isThereAnOngoingUpdate;
+
     if (
       this.#bibleDataRepositoryPort.getAllBiblesData().length === 0 ||
       !selectedInstance ||
@@ -368,6 +377,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
           data: sectionData,
           pacing,
           source: PieceSelectionSources.StackPresenceNavigation,
+          makeTourGuide: false,
         });
       } else {
         await this.#awaiterPort.sleep(1);

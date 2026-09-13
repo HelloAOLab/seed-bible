@@ -9,7 +9,6 @@ import type { ActivityIndicatorData } from "./ActivityIndicatorData";
 import type { ChapterInfo } from "../models/arrangement";
 import type { HexString } from "../models/commonTypes";
 import type { Piece } from "../models/canvas";
-import type { Point2D } from "../models/commonTypes";
 import type { VersesBundleData } from "./VersesBundleData";
 import { SelectionEvents, SelectionStates } from "../models/selection";
 
@@ -24,7 +23,6 @@ interface DataParams {
   isActive?: boolean;
   isHidden?: boolean;
   creationParams: ChapterCreationParams;
-  isExpanded?: boolean;
   activityIndicators?: ActivityIndicatorData[];
   activityNotification?: ActivityNotification;
   childrenData?: VersesBundleData[];
@@ -44,7 +42,6 @@ export class StackChapterData extends StackPieceData<
 > {
   #highlightsInfo: HighlightInfo[] = [];
   #isInsideBook: DataParams["isInsideBook"];
-  #isExpanded: NonNullable<boolean>;
   #activityIndicators: NonNullable<DataParams["activityIndicators"]>;
   #activityNotification: DataParams["activityNotification"];
 
@@ -58,7 +55,6 @@ export class StackChapterData extends StackPieceData<
     isInsideBook = true,
     isHidden = false,
     creationParams,
-    isExpanded = false,
     activityIndicators = [],
     activityNotification,
     childrenData,
@@ -79,7 +75,6 @@ export class StackChapterData extends StackPieceData<
     if (isSelected) {
       this.changeSelectionState(SelectionEvents.RequestSelect);
     }
-    this.#isExpanded = isExpanded;
     this.#activityIndicators = activityIndicators;
     this.#activityNotification = activityNotification;
   }
@@ -104,11 +99,15 @@ export class StackChapterData extends StackPieceData<
   }
 
   getIsSelectedForNotification(): boolean {
-    return this.#isExpanded;
+    return (
+      this.selectionState === SelectionStates.Selected && this.isOnTheGround
+    );
   }
 
-  getNotificationDirection(): Point2D {
-    return new Vector2(1, -1);
+  shouldShowActivityIndicators() {
+    return (
+      this.selectionState === SelectionStates.Selected && this.isOnTheGround
+    );
   }
 
   get isInsideBook() {

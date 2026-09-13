@@ -17,7 +17,6 @@ import type {
   ActivityContainer,
   AnyShowIndicatorCommand,
   ActivityContainerType,
-  UserColorStorePort,
   IdGeneratorPort,
   NotifiableContainer,
 } from "../ports/out/PieceActivity";
@@ -28,6 +27,9 @@ import type { PieceTypeMap } from "../../domain/models/pieces";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
 import type { UserPresencePort } from "../ports/in/UserPresence";
 import type { ReadingInstance } from "../../domain/models/userPresence";
+import type { UserIdentityPort } from "../ports/out/UserIdentity";
+import type { BaseEventManager } from "./BaseEventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
   dataRegistryPort: DataRegistryPort;
@@ -39,9 +41,10 @@ interface ServiceParams {
   activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
   activityIndicatorLifecyclePort: ActivityIndicatorLifecyclePort;
   activityNotificationAdapterPort: ActivityNotificationAdapterPort;
-  userColorStorePort: UserColorStorePort;
+  userIdentityStorePort: UserIdentityPort;
   idGeneratorPort: IdGeneratorPort;
   loggerPort: LoggerPort;
+  eventBus: BaseEventManager<BibleStackEvents>;
 }
 
 type ActivityStrategyType<T extends BiblePiece = BiblePiece> = (
@@ -201,9 +204,10 @@ export class PieceActivityService implements PieceActivityServicePort {
   #activityIndicatorsAdapterPort: ServiceParams["activityIndicatorsAdapterPort"];
   #activityIndicatorLifecyclePort: ServiceParams["activityIndicatorLifecyclePort"];
   #activityNotificationAdapterPort: ServiceParams["activityNotificationAdapterPort"];
-  #userColorStorePort: ServiceParams["userColorStorePort"];
+  #userColorStorePort: ServiceParams["userIdentityStorePort"];
   #idGeneratorPort: ServiceParams["idGeneratorPort"];
   #loggerPort: LoggerPort;
+  #eventBus: ServiceParams["eventBus"];
 
   constructor({
     dataRegistryPort,
@@ -214,9 +218,10 @@ export class PieceActivityService implements PieceActivityServicePort {
     activityIndicatorsAdapterPort,
     activityIndicatorLifecyclePort,
     activityNotificationAdapterPort,
-    userColorStorePort,
+    userIdentityStorePort,
     idGeneratorPort,
     loggerPort,
+    eventBus,
   }: ServiceParams) {
     this.#dataRegistryPort = dataRegistryPort;
     this.#arrangementServicePort = arrangementServicePort;
@@ -226,9 +231,15 @@ export class PieceActivityService implements PieceActivityServicePort {
     this.#activityIndicatorsAdapterPort = activityIndicatorsAdapterPort;
     this.#activityIndicatorLifecyclePort = activityIndicatorLifecyclePort;
     this.#activityNotificationAdapterPort = activityNotificationAdapterPort;
-    this.#userColorStorePort = userColorStorePort;
+    this.#userColorStorePort = userIdentityStorePort;
     this.#idGeneratorPort = idGeneratorPort;
     this.#loggerPort = loggerPort;
+    this.#eventBus = eventBus;
+
+    this.#eventBus.subscribe("OnUserPresenceUpdated", () => {
+      this.updateAllIndicators();
+      this.updateAllNotifications();
+    });
   }
 
   getPieceActivity({ piece }: { piece: Piece }) {
@@ -346,7 +357,16 @@ export class PieceActivityService implements PieceActivityServicePort {
       });
     });
 
-    return activity;
+    const dedupedActivity: Map<string, ReadingInstance> = new Map();
+
+    for (const entry of activity) {
+      const existent = dedupedActivity.get(entry.connectionId);
+      if (!existent || (!existent.selected && entry.selected)) {
+        dedupedActivity.set(entry.connectionId, entry);
+      }
+    }
+
+    return [...dedupedActivity.values()];
   }
 
   getActivityIndicatorsForPiece(piece: Piece): ActivityIndicatorData[] {
@@ -380,18 +400,13 @@ export class PieceActivityService implements PieceActivityServicePort {
 
   getExtraActivityIndicatorsForPiece(piece: Piece): {
     extraIndicatorContent: ActivityIndicatorData | undefined;
-    extraIndicatorBackground: ActivityIndicatorData | undefined;
   } {
     const extraIndicatorContent = this.getActivityIndicatorByType(
       piece,
       "extraContent"
     );
-    const extraIndicatorBackground = this.getActivityIndicatorByType(
-      piece,
-      "extraBackground"
-    );
 
-    return { extraIndicatorContent, extraIndicatorBackground };
+    return { extraIndicatorContent };
   }
 
   getPieceIndicatorByActivityIndex(
@@ -414,18 +429,13 @@ export class PieceActivityService implements PieceActivityServicePort {
 
   getDataExtraActivityIndicators(data: ActivityContainer): {
     extraIndicatorContent: ActivityIndicatorData | undefined;
-    extraIndicatorBackground: ActivityIndicatorData | undefined;
   } {
     const extraIndicatorContent = this.getDataActivityIndicatorByType(
       data,
       "extraContent"
     );
-    const extraIndicatorBackground = this.getDataActivityIndicatorByType(
-      data,
-      "extraBackground"
-    );
 
-    return { extraIndicatorContent, extraIndicatorBackground };
+    return { extraIndicatorContent };
   }
 
   getDataIndicatorByActivityIndex(
@@ -473,12 +483,18 @@ export class PieceActivityService implements PieceActivityServicePort {
     const dataId = this.#idGeneratorPort.getId();
     const piece =
       this.#activityIndicatorLifecyclePort.spawnActivityIndicatorDomain(dataId);
+    const backgroundDataId = this.#idGeneratorPort.getId();
+    const background =
+      this.#activityIndicatorLifecyclePort.spawnActivityIndicatorDomain(
+        backgroundDataId
+      );
     const anchor = this.#getContainerAnchor(container);
     const data = new ActivityIndicatorData({
       id: dataId,
       index,
       indicatorType,
       piece,
+      background,
       containerPieceId: anchor.pieceId,
       containerDataId: container.id,
       containerType: anchor.type,
@@ -491,10 +507,12 @@ export class PieceActivityService implements PieceActivityServicePort {
     (container) => {
       let activityPiece: Piece | undefined;
       let containerType: ActivityContainerType | undefined = undefined;
+      let shouldShowIndicators = true;
       if (container instanceof InfoLabelData) {
         activityPiece = container.owner;
         containerType = "label";
       } else if (container.piece) {
+        shouldShowIndicators = container.shouldShowActivityIndicators();
         activityPiece = container.piece;
         containerType = "piece";
       }
@@ -507,7 +525,7 @@ export class PieceActivityService implements PieceActivityServicePort {
         piece: activityPiece,
       });
 
-      if (pieceActivity.length === 0) {
+      if (pieceActivity.length === 0 || !shouldShowIndicators) {
         this.tryHideIndicators(container);
         return [];
       }
@@ -524,19 +542,13 @@ export class PieceActivityService implements PieceActivityServicePort {
       currIndicators = container.activityIndicators;
 
       if (pieceActivity.length <= this.#maxIndicators) {
-        const { extraIndicatorContent, extraIndicatorBackground } =
+        const { extraIndicatorContent } =
           this.getDataExtraActivityIndicators(container);
         if (extraIndicatorContent) {
           this.#activityIndicatorsAdapterPort.hideIndicator(
             extraIndicatorContent
           );
           container.removeActivityIndicator(extraIndicatorContent.id);
-        }
-        if (extraIndicatorBackground) {
-          this.#activityIndicatorsAdapterPort.hideIndicator(
-            extraIndicatorBackground
-          );
-          container.removeActivityIndicator(extraIndicatorBackground.id);
         }
       }
 
@@ -556,7 +568,7 @@ export class PieceActivityService implements PieceActivityServicePort {
         }
         if (activityIndex >= this.#maxIndicators) {
           const extraCount = pieceActivity.length - this.#maxIndicators;
-          const { extraIndicatorContent, extraIndicatorBackground } =
+          const { extraIndicatorContent } =
             this.getDataExtraActivityIndicators(container);
 
           const contentIndicator =
@@ -564,25 +576,11 @@ export class PieceActivityService implements PieceActivityServicePort {
             this.#createIndicatorData(container, activityIndex, "extraContent");
           contentIndicator.index = activityIndex;
 
-          const backgroundIndicator =
-            extraIndicatorBackground ??
-            this.#createIndicatorData(
-              container,
-              activityIndex,
-              "extraBackground"
-            );
-          backgroundIndicator.index = activityIndex;
-
           showIndicatorCommands.push({
             type: "extraContent",
             extraUsers: extraCount,
             index: activityIndex,
             indicator: contentIndicator,
-          });
-          showIndicatorCommands.push({
-            type: "extraBackground",
-            index: activityIndex,
-            indicator: backgroundIndicator,
           });
           break;
         } else {
@@ -590,7 +588,7 @@ export class PieceActivityService implements PieceActivityServicePort {
             this.getDataIndicatorByActivityIndex(container, activityIndex) ??
             this.#createIndicatorData(container, activityIndex, "regular");
 
-          const color = this.#userColorStorePort.getUserColor({
+          const identity = this.#userColorStorePort.getUserDataByIds({
             connectionId: activity.connectionId,
           });
 
@@ -600,7 +598,9 @@ export class PieceActivityService implements PieceActivityServicePort {
             indicator,
             isSelected: activity.selected,
             isOwnUser: activity.connectionId === ownUserId,
-            color: color ?? "#ffffff",
+            color: identity?.visual.color ?? "#ffffff",
+            icon: identity?.visual.defaultIcon ?? "",
+            pictureUrl: identity?.profile?.pictureUrl,
           });
         }
       }
@@ -656,7 +656,6 @@ export class PieceActivityService implements PieceActivityServicePort {
       piece: container.piece,
     }).filter((activity) => activity.selected);
     const isPieceSelected = container.getIsSelectedForNotification();
-    const direction = container.getNotificationDirection();
 
     const shouldHide =
       pieceActivity.length === 0 ||
@@ -679,7 +678,7 @@ export class PieceActivityService implements PieceActivityServicePort {
     const activityCount = pieceActivity.length;
 
     const firstUserConnectionId = pieceActivity[0]?.connectionId;
-    const color = this.#userColorStorePort.getUserColor({
+    const identity = this.#userColorStorePort.getUserDataByIds({
       connectionId: firstUserConnectionId,
     });
 
@@ -687,8 +686,7 @@ export class PieceActivityService implements PieceActivityServicePort {
       this.#activityNotificationAdapterPort.showNotification({
         isOwnUserInPiece,
         activityCount,
-        color: color ?? "#ffffff",
-        direction,
+        color: identity?.visual.color ?? "#ffffff",
         container,
         notification: container.activityNotification,
       });
@@ -708,6 +706,20 @@ export class PieceActivityService implements PieceActivityServicePort {
 
     for (const container of containers) {
       this.updateNotification(container);
+    }
+  }
+
+  updateAllNotificationsDirection() {
+    const stackChaptersData =
+      this.#dataRegistryPort.getAllPiecesDataByType("StackChapter");
+
+    const containers: NotifiableContainer[] = [...stackChaptersData];
+
+    for (const container of containers) {
+      if (!container.activityNotification) continue;
+      this.#activityNotificationAdapterPort.updateNotificationDirection(
+        container
+      );
     }
   }
 }

@@ -14,12 +14,14 @@ import {
   type ActivityIndicator,
   type Piece,
 } from "../../../domain/models/canvas";
+import type { HexString } from "../../../domain/models/commonTypes";
+import { GetTonalChipColors } from "../../../domain/functions/colors";
 import { InfoLabelData } from "../../../domain/entities/InfoLabelData";
 import { ActivityIndicatorData } from "../../../domain/entities/ActivityIndicatorData";
 import type { PieceBot } from "../../models/casualos";
 import type {
   ActivityIndicatorBot,
-  ExtraBackgroundActivityIndicatorTags,
+  BackgroundActivityIndicatorTags,
   ExtraContentActivityIndicatorTags,
   InfoLabelTextBot,
   RegularActivityIndicatorTags,
@@ -162,9 +164,6 @@ type UpdateStrategyType = (
   extraContentScales:
     | ActivityIndicatorVisualConfig["LabelExtraUsersContentScales"]
     | ActivityIndicatorVisualConfig["GroundedExtraUsersContentScales"];
-  extraBackgroundScales:
-    | ActivityIndicatorVisualConfig["LabelExtraUsersBackgroundScales"]
-    | ActivityIndicatorVisualConfig["GroundedExtraUsersBackgroundScales"];
   form:
     | ActivityIndicatorVisualConfig["LabelForm"]
     | ActivityIndicatorVisualConfig["GroundedForm"];
@@ -175,15 +174,11 @@ const updateLabelStrategy: UpdateStrategyType = (configProviderPort) => {
   const extraContentScales = configProviderPort.getVisualConfig(
     "LabelExtraUsersContentScales"
   );
-  const extraBackgroundScales = configProviderPort.getVisualConfig(
-    "LabelExtraUsersBackgroundScales"
-  );
   const form = configProviderPort.getVisualConfig("LabelForm");
 
   return {
     indicatorScales,
     extraContentScales,
-    extraBackgroundScales,
     form,
   };
 };
@@ -193,15 +188,11 @@ const updatePieceStrategy: UpdateStrategyType = (configProviderPort) => {
   const extraContentScales = configProviderPort.getVisualConfig(
     "GroundedExtraUsersContentScales"
   );
-  const extraBackgroundScales = configProviderPort.getVisualConfig(
-    "GroundedExtraUsersBackgroundScales"
-  );
   const form = configProviderPort.getVisualConfig("GroundedForm");
 
   return {
     indicatorScales,
     extraContentScales,
-    extraBackgroundScales,
     form,
   };
 };
@@ -258,11 +249,24 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
 
     const dimension = this.#dimensionProviderPort.getDimension();
     let piece: Piece | undefined = undefined;
+    let borderColor: HexString = "#ffffff";
+    let labelBackground: HexString = "#ffffff";
+    let labelInk: HexString = "#000000";
     if (container instanceof InfoLabelData) {
       piece = container.transformer;
+      const labelTextBot = this.#labelTextMapperPort.toInfrastructure(
+        container.label
+      );
+      if (labelTextBot) {
+        borderColor = labelTextBot.tags.color as HexString;
+        labelBackground = labelTextBot.tags.color as HexString;
+        labelInk = (labelTextBot.tags.labelColor ?? "#000000") as HexString;
+      }
     } else {
       piece = container.piece;
     }
+
+    const chipColors = GetTonalChipColors({ labelBackground, labelInk });
 
     if (!piece) {
       throw new Error(
@@ -280,14 +284,14 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
       );
     }
 
-    const { indicatorScales, extraContentScales, extraBackgroundScales, form } =
-      strategy(this.#configProviderPort);
+    const { indicatorScales, form } = strategy(
+      this.#configProviderPort
+    );
 
     for (const currCommand of commands) {
-      const { index, indicator } = currCommand;
+      const { indicator } = currCommand;
       let mod:
         | Partial<ExtraContentActivityIndicatorTags>
-        | Partial<ExtraBackgroundActivityIndicatorTags>
         | Partial<RegularActivityIndicatorTags>
         | undefined;
 
@@ -307,6 +311,10 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
         form,
         isActivityIndicator: true,
         system: undefined,
+        formRenderOrder: 0,
+        scaleX: indicatorScales.x,
+        scaleY: indicatorScales.y,
+        scaleZ: indicatorScales.z,
       };
 
       let targetOpacity = 1;
@@ -314,22 +322,16 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
       switch (currCommand.type) {
         case "regular":
           {
-            const { isOwnUser, isSelected, color } = currCommand;
+            const { isSelected, color, pictureUrl } = currCommand;
             const opacity = isSelected ? 1 : 0.5;
             targetOpacity = opacity;
-            const formRenderOrder = isSelected && isOwnUser
-              ? -1
-              : 10 - Number(index);
 
             mod = {
-              color: color ?? "#ffffff",
+              color: color && !pictureUrl ? color : "#ffffff",
               [dimension]: true,
-              scaleX: indicatorScales.x,
-              scaleY: indicatorScales.y,
-              scaleZ: indicatorScales.z,
               formOpacity: opacity,
-              formRenderOrder,
               type: "ActivityIndicator",
+              formAddress: pictureUrl ?? undefined,
               ...baseMod,
             };
           }
@@ -340,26 +342,10 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
             const label = `+${extraUsers}`;
 
             mod = {
-              color: "#ffffff",
+              color: chipColors.background,
+              labelColor: chipColors.text,
               [dimension]: true,
               label,
-              scaleX: extraContentScales.x,
-              scaleY: extraContentScales.y,
-              scaleZ: extraContentScales.z,
-              formOpacity: 1,
-              type: "ActivityIndicator",
-              ...baseMod,
-            };
-          }
-          break;
-        case "extraBackground":
-          {
-            mod = {
-              color: "#000000",
-              [dimension]: true,
-              scaleX: extraBackgroundScales.x,
-              scaleY: extraBackgroundScales.y,
-              scaleZ: extraBackgroundScales.z,
               formOpacity: 1,
               type: "ActivityIndicator",
               ...baseMod,
@@ -377,8 +363,62 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
           targetOpacity,
         },
       });
+
+      this.#applyBackground(
+        indicator,
+        form,
+        dimension,
+        baseMod,
+        indicatorScales,
+        borderColor
+      );
     }
   };
+  #applyBackground(
+    indicator: ActivityIndicatorData,
+    form: "sphere" | "circle",
+    dimension: string,
+    baseMod: Partial<BackgroundActivityIndicatorTags>,
+    indicatorScale: { x: number; y: number; z: number },
+    borderColor: HexString
+  ): void {
+    const background = indicator.background;
+    if (!background) {
+      return;
+    }
+    const backgroundBot =
+      this.#activityIndicatorMapperPort.toInfrastructure(background);
+    if (!backgroundBot) {
+      return;
+    }
+
+    const factor = this.#configProviderPort.getVisualConfig("BorderScaleFactor");
+    const depth =
+      form === "sphere"
+        ? this.#configProviderPort.getVisualConfig("GroundedBorderDepth")
+        : this.#configProviderPort.getVisualConfig("LabelBorderDepth");
+
+    const mod: Partial<BackgroundActivityIndicatorTags> = {
+      color: borderColor,
+      [dimension]: true,
+      formOpacity: 1,
+      type: "ActivityIndicator",
+      ...baseMod,
+      scaleX: indicatorScale.x * factor,
+      scaleY: indicatorScale.y * factor,
+      scaleZ: depth,
+    };
+
+    applyMod(backgroundBot, mod);
+
+    this.#visualStateRegistryPort.registerState({
+      piece: background,
+      state: {
+        initialPosition: new Vector3(0, 0, 0),
+        targetOpacity: 1,
+      },
+    });
+  }
   hideIndicators: (indicators: ActivityIndicatorData[]) => void = (
     indicators
   ) => {
@@ -392,6 +432,14 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
     );
     if (indicatorBot) {
       this.#objectPooler.releaseObject(indicatorBot, "ActivityIndicator");
+    }
+    if (indicator.background) {
+      const backgroundBot = this.#activityIndicatorMapperPort.toInfrastructure(
+        indicator.background
+      );
+      if (backgroundBot) {
+        this.#objectPooler.releaseObject(backgroundBot, "ActivityIndicator");
+      }
     }
   };
   updateIndicatorsPosition: (container: ActivityContainer) => void = (
@@ -409,42 +457,73 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
     const indicatorBot = this.#activityIndicatorMapperPort.toInfrastructure(
       indicator.piece
     );
-    if (indicatorBot) {
-      const ownerBot = getBot(byID(indicator.containerPieceId)) as
-        | PieceBot
-        | undefined;
-      if (!ownerBot) {
-        throw new Error(
-          "ActivityIndicatorsAdapter: ownerBot not found at updateIndicatorPosition"
-        );
+    if (!indicatorBot) {
+      return;
+    }
+    const ownerBot = getBot(byID(indicator.containerPieceId)) as
+      | PieceBot
+      | undefined;
+    if (!ownerBot) {
+      throw new Error(
+        "ActivityIndicatorsAdapter: ownerBot not found at updateIndicatorPosition"
+      );
+    }
+    const strategy = positionStrategiesMap[indicator.containerType];
+
+    if (!strategy)
+      throw new Error(
+        `ActivityIndicatorsAdapter: Strategy not found for ${indicator.containerType} at updateIndicatorPosition`
+      );
+
+    const dimension = this.#dimensionProviderPort.getDimension();
+
+    const strategyParams = {
+      ownerBot,
+      indicator,
+      dimension,
+      container,
+      configProviderPort: this.#configProviderPort,
+      labelTextMapperPort: this.#labelTextMapperPort,
+      visualStateRegistryPort: this.#visualStateRegistryPort,
+    };
+
+    const position = strategy({ ...strategyParams, indicatorBot });
+    setTag(indicatorBot, dimension + "X", position.x);
+    setTag(indicatorBot, dimension + "Y", position.y);
+    setTag(indicatorBot, dimension + "Z", position.z);
+    this.#visualStateRegistryPort.registerStateProperty({
+      piece: indicator.piece,
+      property: "initialPosition",
+      value: position,
+    });
+
+    if (indicator.background) {
+      const backgroundBot = this.#activityIndicatorMapperPort.toInfrastructure(
+        indicator.background
+      );
+      if (backgroundBot) {
+        const backgroundPosition = strategy({
+          ...strategyParams,
+          indicatorBot: backgroundBot,
+        });
+        const zBias =
+          indicator.containerType === BiblePieces.InfoLabelTransformer
+            ? this.#configProviderPort.getVisualConfig("LabelStep").z / 2
+            : 0;
+        const backgroundZ = backgroundPosition.z - zBias;
+        setTag(backgroundBot, dimension + "X", backgroundPosition.x);
+        setTag(backgroundBot, dimension + "Y", backgroundPosition.y);
+        setTag(backgroundBot, dimension + "Z", backgroundZ);
+        this.#visualStateRegistryPort.registerStateProperty({
+          piece: indicator.background,
+          property: "initialPosition",
+          value: new Vector3(
+            backgroundPosition.x,
+            backgroundPosition.y,
+            backgroundZ
+          ),
+        });
       }
-      const strategy = positionStrategiesMap[indicator.containerType];
-
-      if (!strategy)
-        throw new Error(
-          `ActivityIndicatorsAdapter: Strategy not found for ${indicator.containerType} at updateIndicatorPosition`
-        );
-
-      const dimension = this.#dimensionProviderPort.getDimension();
-
-      const position = strategy({
-        ownerBot,
-        indicatorBot,
-        indicator,
-        dimension,
-        container,
-        configProviderPort: this.#configProviderPort,
-        labelTextMapperPort: this.#labelTextMapperPort,
-        visualStateRegistryPort: this.#visualStateRegistryPort,
-      });
-      setTag(indicatorBot, dimension + "X", position.x);
-      setTag(indicatorBot, dimension + "Y", position.y);
-      setTag(indicatorBot, dimension + "Z", position.z);
-      this.#visualStateRegistryPort.registerStateProperty({
-        piece: indicator.piece,
-        property: "initialPosition",
-        value: position,
-      });
     }
   }
 }

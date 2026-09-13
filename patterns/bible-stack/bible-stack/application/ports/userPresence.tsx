@@ -5,10 +5,10 @@ import type { StackSectionBookData } from "../../domain/entities/StackSectionBoo
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
-import type { UserReadingInstance } from "../../domain/models/reading";
+import type { ReadingInstance } from "../../domain/models/userPresence";
 
 export interface PresenceProviderPort {
-  getActiveTab(): UserReadingInstance | undefined;
+  getActiveTab(): ReadingInstance | undefined;
 }
 
 export interface DimensionProviderPort {
@@ -21,6 +21,7 @@ export interface PieceAdapterPort {
 
 export interface SequenceStateServicePort {
   isThereAnOngoingSequence(): boolean;
+  executeAsSequence(task: () => Promise<void>): Promise<void>;
 }
 
 export interface BibleSequenceServicePort {

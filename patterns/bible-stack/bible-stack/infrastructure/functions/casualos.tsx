@@ -3,7 +3,17 @@ import type {
   Bot,
   Vector3 as Vector3Type,
 } from "../../../../pattern-typings/AuxLibraryDefinitions";
-import type { AnimateTagData, SetTagData, TypedBot } from "../models/casualos";
+import type {
+  AnimateTagData,
+  PatternMessage,
+  SetTagData,
+  TypedBot,
+} from "../models/casualos";
+
+export function SendEmbedMessage(message: PatternMessage): void {
+  // @ts-expect-error CasualOS typings misplace sendEmbedMessage under appHooks; it's on os at runtime
+  os.sendEmbedMessage(message);
+}
 
 type GetCamRotationFocusPointType = (params: {
   theta: number;

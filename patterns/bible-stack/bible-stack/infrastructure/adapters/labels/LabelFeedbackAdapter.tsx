@@ -227,6 +227,19 @@ export class LabelFeedbackAdapter {
           property: "initialPosition",
         }),
       })),
+      ...data.activityIndicators.map((indicator) =>
+        indicator.background
+          ? {
+              pieceBot: this.#activityIndicatorMapperPort.toInfrastructure(
+                indicator.background
+              ),
+              initialPosition: this.#visualStateRegistryPort.getStateProperty({
+                piece: indicator.background,
+                property: "initialPosition",
+              }),
+            }
+          : undefined
+      ),
     ];
 
     const animations = piecesBotData.map(async (pieceBotData) => {
@@ -319,7 +332,7 @@ export class LabelFeedbackAdapter {
       this.#labelFeedbackConfigProviderPort.getShowAnimationDuration(pacing);
     this.stopOpacityTransition(data);
 
-    const { text, tail, activityIndicators, date } =
+    const { text, tail, activityIndicators, activityBackgrounds, date } =
       this.#unpackLabelData(data);
 
     const labelTargetOpacity = this.#visualStateRegistryPort.getStateProperty({
@@ -363,6 +376,20 @@ export class LabelFeedbackAdapter {
             tagMaskSpace: false,
           });
         }) ?? []),
+        ...activityBackgrounds.map((background) => {
+          return AnimateStrictTag(background, "formOpacity", {
+            toValue: this.#visualStateRegistryPort.getStateProperty({
+              piece: { id: background.id, type: background.tags.type },
+              property: "targetOpacity",
+            }),
+            duration,
+            easing:
+              this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+                "easing"
+              ),
+            tagMaskSpace: false,
+          });
+        }),
         AnimateStrictTag(activityIndicators, {
           fromValue: { labelOpacity: 0 },
           toValue: { labelOpacity: labelTargetOpacity },
@@ -400,12 +427,13 @@ export class LabelFeedbackAdapter {
     const duration =
       this.#labelFeedbackConfigProviderPort.getShowAnimationDuration(pacing);
     this.stopOpacityTransition(data);
-    const { text, tail, activityIndicators, date } =
+    const { text, tail, activityIndicators, activityBackgrounds, date } =
       this.#unpackLabelData(data);
 
     try {
       const botsToAnimateOpacity: TypedBot[] = [
         ...activityIndicators,
+        ...activityBackgrounds,
         tail,
         text,
       ];
@@ -518,6 +546,7 @@ export class LabelFeedbackAdapter {
     text: InfoLabelTextBot;
     tail: InfoLabelTailBot;
     activityIndicators: ActivityIndicatorBot[];
+    activityBackgrounds: ActivityIndicatorBot[];
     date: InfoLabelDateBot | undefined;
   } {
     const transformer = this.#infoLabelTransformerMapperPort.toInfrastructure(
@@ -551,6 +580,16 @@ export class LabelFeedbackAdapter {
       }
       return indicatorBot;
     });
+    const activityBackgrounds = data.activityIndicators
+      .map((indicator) => indicator.background)
+      .filter(
+        (background): background is ActivityIndicator =>
+          background !== undefined
+      )
+      .map((background) =>
+        this.#activityIndicatorMapperPort.toInfrastructure(background)
+      )
+      .filter((bot): bot is ActivityIndicatorBot => bot !== undefined);
     let date: InfoLabelDateBot | undefined = undefined;
     if (data.date) {
       date = this.#infoLabelDateMapperPort.toInfrastructure(data.date);
@@ -561,6 +600,7 @@ export class LabelFeedbackAdapter {
       text,
       tail,
       activityIndicators,
+      activityBackgrounds,
       date,
     };
   }
@@ -581,6 +621,18 @@ export class LabelFeedbackAdapter {
     for (const indicator of activityIndicators) {
       if (indicator) {
         bots.push(indicator);
+      }
+    }
+    const activityBackgrounds = data.activityIndicators.map((indicator) =>
+      indicator.background
+        ? this.#activityIndicatorMapperPort.toInfrastructure(
+            indicator.background
+          )
+        : undefined
+    );
+    for (const background of activityBackgrounds) {
+      if (background) {
+        bots.push(background);
       }
     }
     if (data.date) {

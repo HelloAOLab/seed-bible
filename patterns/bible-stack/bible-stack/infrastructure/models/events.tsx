@@ -1,4 +1,9 @@
 import type { BotListenerParametersMap, PieceBot } from "./casualos";
+import type {
+  UserPresence,
+  UserIdentityMap,
+} from "../../domain/models/userPresence";
+import type { BaseEventManager } from "../../application/services/BaseEventManager";
 
 /**
  * Infrastructure-only event map for the listen-tag bus. Pooled objects emit one
@@ -16,7 +21,22 @@ export type ListenTagEventMap = {
 
 export interface BibleStackInfrastructureEvents {
   OnPieceBotReleased: { pieceBot: PieceBot };
+  OnUserPresenceChangedMessage: { presence: UserPresence };
+  OnUserIdentityChangedMessage: { identity: UserIdentityMap };
+  UserColorStoreChanged: void;
+  OnUserIdentityChanged: void;
 }
 
 export type BibleStackInfrastructureEvent =
   keyof BibleStackInfrastructureEvents;
+
+export const MESSAGE_TO_EVENT_MAP: Record<
+  string,
+  keyof BibleStackInfrastructureEvents
+> = {
+  OnUserPresenceChanged: "OnUserPresenceChangedMessage",
+  OnUserIdentityChanged: "OnUserIdentityChangedMessage",
+};
+
+export type InfrastructureEventManager =
+  BaseEventManager<BibleStackInfrastructureEvents>;

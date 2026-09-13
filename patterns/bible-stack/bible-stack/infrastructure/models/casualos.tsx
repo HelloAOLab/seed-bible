@@ -8,6 +8,10 @@ import type {
   BotTags,
 } from "../../../../pattern-typings/AuxLibraryDefinitions";
 import type { BiblePiece } from "../../domain/models/canvas";
+import type {
+  UserPresence,
+  UserIdentityMap,
+} from "../../domain/models/userPresence";
 
 export interface BaseTagData<T> {
   bot: Bot;
@@ -95,6 +99,7 @@ export interface PieceBotTags<T extends BiblePiece = BiblePiece> {
   formAddress?: string;
   strokeWidth?: number;
   formDepthTest?: boolean;
+  formDepthWrite?: boolean;
   scale?: number;
   scaleX?: number;
   scaleY?: number;
@@ -141,3 +146,30 @@ export interface BotListenerParametersMap<B extends PieceBot> {
   onPointerExit: { bot: Bot; dimension: string };
   onPointerUp: { bot: Bot; dimension: string };
 }
+
+export interface UserPresenceChangedMessage {
+  type?: "OnUserPresenceChanged";
+  presence?: UserPresence;
+}
+
+export interface UserIdentityChangedMessage {
+  type?: "OnUserIdentityChanged";
+  identity?: UserIdentityMap;
+}
+
+export type Message = UserPresenceChangedMessage | UserIdentityChangedMessage;
+
+export interface ReadyMessage {
+  id: "ready";
+}
+
+export interface ReaderNavigationMessage {
+  id: "reader-navigation";
+  data: {
+    bookId: string;
+    chapter?: number;
+    verse?: number;
+  };
+}
+
+export type PatternMessage = ReadyMessage | ReaderNavigationMessage;

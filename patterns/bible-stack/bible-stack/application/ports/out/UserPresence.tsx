@@ -1,8 +1,8 @@
-import type { UserReadingInstance } from "../../../domain/models/reading";
+import type { ReadingInstance } from "../../../domain/models/userPresence";
 import type { UserPresence } from "../../../domain/models/userPresence";
 
 export interface UserPresenceProviderPort {
-  getSelectedReadingInstance: () => UserReadingInstance | undefined;
+  getSelectedReadingInstance: () => ReadingInstance | undefined;
   getRemotesPresence: () => UserPresence;
   getCurrUserId: () => string;
 }

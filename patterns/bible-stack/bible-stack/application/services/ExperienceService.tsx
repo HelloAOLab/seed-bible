@@ -17,6 +17,7 @@ import type {
 import { BibleTypes } from "../../domain/models/canvas";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
 import type { ExperienceServicePort } from "../ports/in/Experience";
+import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 
 interface ExperienceServiceParams {
   environmentAdapterPort: EnvironmentAdapterPort;
@@ -32,6 +33,7 @@ interface ExperienceServiceParams {
   bibleSequenceServicePort: BibleSequenceServicePort;
   stackPresenceNavigationServicePort: StackPresenceNavigationServicePort;
   awaiterPort: AwaiterPort;
+  pieceActivityServicePort: PieceActivityServicePort;
 }
 
 export class ExperienceService implements ExperienceServicePort {
@@ -49,6 +51,7 @@ export class ExperienceService implements ExperienceServicePort {
   #bibleSequenceServicePort: ExperienceServiceParams["bibleSequenceServicePort"];
   #stackPresenceNavigationServicePort: ExperienceServiceParams["stackPresenceNavigationServicePort"];
   #awaiterPort: ExperienceServiceParams["awaiterPort"];
+  #pieceActivityServicePort: ExperienceServiceParams["pieceActivityServicePort"];
 
   constructor({
     environmentAdapterPort,
@@ -64,6 +67,7 @@ export class ExperienceService implements ExperienceServicePort {
     bibleSequenceServicePort,
     stackPresenceNavigationServicePort,
     awaiterPort,
+    pieceActivityServicePort,
   }: ExperienceServiceParams) {
     this.#environmentAdapterPort = environmentAdapterPort;
     this.#stackManagementServicePort = stackManagementServicePort;
@@ -79,6 +83,7 @@ export class ExperienceService implements ExperienceServicePort {
     this.#stackPresenceNavigationServicePort =
       stackPresenceNavigationServicePort;
     this.#awaiterPort = awaiterPort;
+    this.#pieceActivityServicePort = pieceActivityServicePort;
   }
 
   clearExperience() {
@@ -107,6 +112,7 @@ export class ExperienceService implements ExperienceServicePort {
       this.#cameraAdapterPort.focusOn(position, "bibleSetup");
       await this.#bibleSequenceServicePort.crackOpenBible(bibleData);
       await this.#stackPresenceNavigationServicePort.update();
+      this.#pieceActivityServicePort.updateAllNotifications();
     });
   }
 }

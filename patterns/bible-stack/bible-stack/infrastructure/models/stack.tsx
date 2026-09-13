@@ -88,6 +88,8 @@ export interface ChapterTags extends StackDraggablePieceBotTags<"StackChapter"> 
   scaleX: number;
   scaleY: number;
   scaleZ: number;
+  labelFontAddress?: string;
+  labelFontSize?: number;
 }
 
 export interface ChapterMasks {
@@ -175,6 +177,12 @@ export interface ActivityIndicatorTags extends PieceBotTags<"ActivityIndicator">
   label?: string;
   labelOpacity?: number;
   formRenderOrder?: number;
+  labelPadding?: number;
+  labelAlignment?: "center";
+  labelFontAddress?: string;
+  labelColor?: string;
+  labelWordWrapMode?: "none";
+  labelFontSize?: number;
   // isActivityIndicator: boolean;
   // isActivityIndicatorPrefab?: boolean;
 }
@@ -191,7 +199,10 @@ export interface ActivityNotificationTags extends PieceBotTags<"ActivityNotifica
   offset?: number;
   scaleX: number;
   scaleY: number;
-  isActivityNotificationPrefab: boolean;
+  form: "circle";
+  orientationMode: "billboard";
+  labelFontSize?: number;
+  labelFontAddress?: string;
 }
 
 export type ActivityNotificationBot = TypedBot<ActivityNotificationTags>;
@@ -247,9 +258,7 @@ export type InfoLabelTailBot = TypedBot<InfoLabelTailTags>;
 // eslint-disable-next-line
 export interface RegularActivityIndicatorTags extends ActivityIndicatorTags {}
 
-export interface ExtraBackgroundActivityIndicatorTags extends ActivityIndicatorTags {
-  color: "#000000";
-}
+export type BackgroundActivityIndicatorTags = ActivityIndicatorTags;
 
 export interface ExtraContentActivityIndicatorTags extends ActivityIndicatorTags {
   color: "#ffffff";
@@ -257,8 +266,8 @@ export interface ExtraContentActivityIndicatorTags extends ActivityIndicatorTags
   labelOpacity: number;
 }
 
-export type ExtraBackgroundActivityIndicatorBot =
-  TypedBot<ExtraBackgroundActivityIndicatorTags>;
+export type BackgroundActivityIndicatorBot =
+  TypedBot<BackgroundActivityIndicatorTags>;
 
 export interface InfoLabelTextTags extends PieceBotTags<"InfoLabelText"> {
   ownerBotId?: string;
@@ -277,7 +286,8 @@ export interface InfoLabelTextTags extends PieceBotTags<"InfoLabelText"> {
   form: Form;
   formRenderOrder: number;
   scale: 1;
-
+  labelFontAddress?: string;
+  labelFontSize?: number;
   // labelPaddingX: "0.4",
   // labelPaddingY: "0.4",
 }
