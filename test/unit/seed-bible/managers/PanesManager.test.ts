@@ -806,6 +806,58 @@ describe("createPanes", () => {
     });
   });
 
+  describe("initial size", () => {
+    it("uses the width and height the caller asked for", () => {
+      const panes = createPanes();
+
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Atlas",
+        component: componentReturning("Atlas"),
+        size: { width: 760, height: 620 },
+      });
+
+      expect(pane.width).toBe(760);
+      expect(pane.height).toBe(620);
+    });
+
+    it("falls back to the defaults when no size is given", () => {
+      const panes = createPanes();
+
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+
+      expect(pane.width).toBe(480);
+      expect(pane.height).toBe(320);
+    });
+
+    it("keeps the user's resized size when a pane is reopened by id", () => {
+      const panes = createPanes();
+      panes.openPane({
+        id: "atlas",
+        placement: "floating",
+        title: "Atlas",
+        component: componentReturning("Atlas"),
+        size: { width: 760, height: 620 },
+      });
+      panes.resizePane("atlas", 100, 100, 1);
+
+      const reopened = panes.openPane({
+        id: "atlas",
+        placement: "floating",
+        title: "Atlas again",
+        component: componentReturning("Atlas again"),
+        size: { width: 760, height: 620 },
+      });
+
+      expect(reopened.width).toBe(860);
+      expect(reopened.height).toBe(720);
+    });
+  });
+
   describe("resizePane", () => {
     it("resizes a side pane's width only, ignoring height deltas", () => {
       const panes = createPanes();
