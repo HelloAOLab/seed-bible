@@ -1,0 +1,10 @@
+{
+  "id": "bible-atlas",
+  "translations": {
+    "en": {
+      "title": "Bible Atlas",
+      "description": "Visualize the bible through interactive maps, genealogies, timelines and many other charts",
+      "browse-title": "Bible Atlas"
+    }
+  }
+}
