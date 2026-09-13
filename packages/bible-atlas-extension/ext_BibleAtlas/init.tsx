@@ -119,6 +119,7 @@ export default function initBibleAtlasExtension() {
         context.panes.openPane({
           id: "bible-atlas-pane",
           placement: "floating",
+          size: { width: 760, height: 620 },
           title,
           component: () => (
             <iframe
