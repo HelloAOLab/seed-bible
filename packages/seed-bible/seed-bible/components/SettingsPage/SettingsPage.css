@@ -119,10 +119,27 @@
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
   color: var(--sb-font-color);
   display: flex;
-  align-items: center;
-  gap: 0.625rem;
+  flex-direction: column;
+  gap: 0.5rem;
   flex: 1;
   cursor: pointer;
+}
+
+.sb-extension-row-main {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.sb-extension-row-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  font-size: 0.8125rem;
 }
 
 .sb-extension-row-actions {
@@ -232,10 +249,6 @@
 
 .sb-extension-state-pending {
   color: color-mix(in srgb, var(--sb-primary-color), black 6%);
-}
-
-.sb-extension-state-downloaded {
-  color: color-mix(in srgb, var(--sb-primary-color), black 18%);
 }
 
 .sb-extension-state-installed {
@@ -851,6 +864,20 @@
 .sb-settings-breadcrumbs-current {
   color: var(--sb-font-color);
   font-weight: 500;
+}
+
+.sb-settings-breadcrumbs-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.sb-settings-breadcrumbs-link:hover {
+  color: var(--sb-font-color);
+  text-decoration: underline;
 }
 
 /* Title hero (icon + title + description) — ported from develop */

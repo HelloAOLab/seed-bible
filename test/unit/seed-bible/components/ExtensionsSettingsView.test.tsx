@@ -157,25 +157,30 @@ describe("ExtensionsSettingsView", () => {
 
   const viewDetailsButtons = () =>
     Array.from(
-      container.querySelectorAll<HTMLButtonElement>(
-        'button[aria-label="View details"]'
-      )
+      container.querySelectorAll<HTMLElement>('[aria-label="View details"]')
     );
   const click = (el: Element) => {
     act(() => {
       el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
   };
+  const pressEnter = (el: Element) => {
+    act(() => {
+      el.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+      );
+    });
+  };
 
-  it("opens the details pane from a real button so it is reachable by keyboard", () => {
+  it("opens the details pane with the keyboard", () => {
     renderExtensions([makeEntry("installed-one", true)]);
 
-    const [detailsButton] = viewDetailsButtons();
-    expect(detailsButton).toBeDefined();
-    expect(detailsButton!.tagName).toBe("BUTTON");
-    expect(detailsButton!.type).toBe("button");
+    const [detailsTarget] = viewDetailsButtons();
+    expect(detailsTarget).toBeDefined();
+    expect(detailsTarget!.getAttribute("role")).toBe("button");
+    expect(detailsTarget!.tabIndex).toBe(0);
 
-    click(detailsButton!);
+    pressEnter(detailsTarget!);
 
     expect(container.querySelector(".sb-extension-details")).not.toBeNull();
   });

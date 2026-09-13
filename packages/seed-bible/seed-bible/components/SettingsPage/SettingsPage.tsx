@@ -121,7 +121,12 @@ type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
 
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
-function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
+type BreadcrumbItem = string | { label: string; onClick: () => void };
+
+function SettingsBreadcrumbs(props: {
+  onBack: () => void;
+  trail: BreadcrumbItem[];
+}) {
   const { t } = useI18n();
   return (
     <div className="sb-settings-breadcrumbs">
@@ -133,24 +138,37 @@ function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
       >
         <span className="material-symbols-outlined">arrow_back</span>
       </button>
-      {props.trail.map((item, index) => (
-        <span key={index} className="sb-settings-breadcrumbs-item">
-          {index > 0 && (
-            <span className="material-symbols-outlined sb-settings-breadcrumbs-sep rtl-mirror">
-              chevron_right
-            </span>
-          )}
-          <span
-            className={`sb-settings-breadcrumbs-text${
-              index === props.trail.length - 1
-                ? " sb-settings-breadcrumbs-current"
-                : ""
-            }`}
-          >
-            {item}
+      {props.trail.map((item, index) => {
+        const isLast = index === props.trail.length - 1;
+        const label = typeof item === "string" ? item : item.label;
+        return (
+          <span key={index} className="sb-settings-breadcrumbs-item">
+            {index > 0 && (
+              <span className="material-symbols-outlined sb-settings-breadcrumbs-sep rtl-mirror">
+                chevron_right
+              </span>
+            )}
+            {typeof item === "string" || isLast ? (
+              <span
+                className={`sb-settings-breadcrumbs-text${
+                  isLast ? " sb-settings-breadcrumbs-current" : ""
+                }`}
+                aria-current={isLast ? "page" : undefined}
+              >
+                {label}
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="sb-settings-breadcrumbs-text sb-settings-breadcrumbs-link"
+                onClick={item.onClick}
+              >
+                {label}
+              </button>
+            )}
           </span>
-        </span>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -329,7 +347,10 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
       <SettingsBreadcrumbs
         onBack={() => (state.sidebar.requestedSettingsView.value = "main")}
         trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
+          {
+            label: t("page-settings", { defaultValue: "Page settings" }),
+            onClick: () => (state.sidebar.requestedSettingsView.value = "main"),
+          },
           t("account-settings", { defaultValue: "Account settings" }),
         ]}
       />
@@ -718,7 +739,10 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
       <SettingsBreadcrumbs
         onBack={onBack}
         trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
+          {
+            label: t("page-settings", { defaultValue: "Page settings" }),
+            onClick: onBack,
+          },
           t("display-and-theme", { defaultValue: "Display & Theme" }),
         ]}
       />
@@ -1122,11 +1146,13 @@ type ExtensionsTab = "installed" | "available";
 function ExtensionDetailsView(props: {
   entry: ExtensionListEntry;
   onBack: () => void;
+  onHome: () => void;
   onToggleEnabled: (id: string, enabled: boolean) => void;
   onUninstall: (id: string) => void;
   installState: ExtensionInstallState;
 }) {
-  const { entry, onBack, onToggleEnabled, onUninstall, installState } = props;
+  const { entry, onBack, onHome, onToggleEnabled, onUninstall, installState } =
+    props;
   // Enabling/disabling and uninstalling only mean anything for an extension
   // the user actually has — offering them for a never-installed one would
   // write a disabled flag for it and make it report as installed.
@@ -1154,8 +1180,14 @@ function ExtensionDetailsView(props: {
       <SettingsBreadcrumbs
         onBack={onBack}
         trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
-          t("extensions", { defaultValue: "Extensions" }),
+          {
+            label: t("page-settings", { defaultValue: "Page settings" }),
+            onClick: onHome,
+          },
+          {
+            label: t("extensions", { defaultValue: "Extensions" }),
+            onClick: onBack,
+          },
           title,
         ]}
       />
@@ -1359,77 +1391,115 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       isRegistered
     );
 
+    // A disabled extension reports as "downloaded" because it is no longer
+    // registered, but it is still installed — the Enabled switch says whether
+    // it is running, so the icon shouldn't change when it is turned off.
+    const iconState =
+      installState === "downloaded" ? "installed" : installState;
+
     const stateIcon =
-      installState === "installed"
+      iconState === "installed"
         ? "check_circle"
-        : installState === "downloaded"
-          ? "download_done"
-          : installState === "pending"
-            ? "downloading"
-            : "extension";
+        : iconState === "pending"
+          ? "downloading"
+          : "extension";
 
     const stateLabel =
-      installState === "installed"
+      iconState === "installed"
         ? t("extension-state-installed", { defaultValue: "Installed" })
-        : installState === "downloaded"
-          ? t("extension-state-downloaded", { defaultValue: "Downloaded" })
-          : installState === "pending"
-            ? t("extension-state-pending", { defaultValue: "Installing…" })
-            : t("extension-state-none", { defaultValue: "Not installed" });
+        : iconState === "pending"
+          ? t("extension-state-pending", { defaultValue: "Installing…" })
+          : t("extension-state-none", { defaultValue: "Not installed" });
 
     return (
       <li key={id} className="sb-extension-row">
         <div
           className="sb-extension-row-body"
+          role="button"
+          tabIndex={0}
+          aria-label={t("extension-view-details", {
+            defaultValue: "View details",
+          })}
           onClick={() => {
             selectedExtensionId.value = id;
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              selectedExtensionId.value = id;
+            }
+          }}
         >
-          <span className="sb-extension-icon-avatar" aria-hidden="true">
-            <span className="material-symbols-outlined">
-              {extensionEntry.extension?.meta.icon ?? "extension"}
+          <div className="sb-extension-row-main">
+            <span
+              className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${iconState}`}
+              title={stateLabel}
+            >
+              {stateIcon}
             </span>
-          </span>
-          <span
-            className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
-            title={stateLabel}
-          >
-            {stateIcon}
-          </span>
-          <div className="sb-extension-row-content">
-            <span className="sb-extension-name">
-              {getBrandedAppText(
-                // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
-                t("title", { ns: id, defaultValue: id }),
-                t,
-                branding
+            <div className="sb-extension-row-content">
+              <span className="sb-extension-name">
+                {getBrandedAppText(
+                  // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+                  t("title", { ns: id, defaultValue: id }),
+                  t,
+                  branding
+                )}
+              </span>
+              <span className="sb-extension-description">
+                {getBrandedAppText(
+                  t("description", { ns: id, defaultValue: "" }),
+                  t,
+                  branding
+                )}
+              </span>
+            </div>
+            <div
+              className="sb-extension-row-actions"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {installState === "none" && (
+                <button
+                  type="button"
+                  className="sb-extension-row-action-button"
+                  onClick={() => void handleInstall(id)}
+                  aria-label={t("install", { defaultValue: "Install" })}
+                  title={t("install", { defaultValue: "Install" })}
+                >
+                  <span className="material-symbols-outlined">download</span>
+                </button>
               )}
-            </span>
-            <span className="sb-extension-description">
-              {getBrandedAppText(
-                t("description", { ns: id, defaultValue: "" }),
-                t,
-                branding
+              {(installState === "installed" ||
+                installState === "downloaded") && (
+                <button
+                  type="button"
+                  className="sb-extension-row-action-button"
+                  onClick={() => handleUninstall(id)}
+                  aria-label={t("uninstall", {
+                    defaultValue: "Uninstall",
+                  })}
+                  title={t("uninstall", { defaultValue: "Uninstall" })}
+                >
+                  <span className="material-symbols-outlined">delete</span>
+                </button>
               )}
-            </span>
+            </div>
           </div>
-          <div
-            className="sb-extension-row-actions"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {(installState === "installed" ||
-              installState === "downloaded") && (
+          {(installState === "installed" || installState === "downloaded") && (
+            <div
+              className="sb-extension-row-footer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span id={`${id}-enabled-label`}>
+                {t("extension-enabled-label", { defaultValue: "Enabled" })}
+              </span>
               <button
                 type="button"
                 role="switch"
                 aria-checked={enabled}
+                aria-labelledby={`${id}-enabled-label`}
                 className={`sb-extension-toggle${enabled ? " sb-extension-toggle-on" : ""}`}
                 onClick={() => handleToggleEnabled(id, !enabled)}
-                aria-label={
-                  enabled
-                    ? t("extension-disable", { defaultValue: "Disable" })
-                    : t("extension-enable", { defaultValue: "Enable" })
-                }
                 title={
                   enabled
                     ? t("extension-disable", { defaultValue: "Disable" })
@@ -1438,50 +1508,8 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
               >
                 <span className="sb-extension-toggle-thumb" />
               </button>
-            )}
-            {installState === "none" && (
-              <button
-                type="button"
-                className="sb-extension-row-action-button"
-                onClick={() => void handleInstall(id)}
-                aria-label={t("install", { defaultValue: "Install" })}
-                title={t("install", { defaultValue: "Install" })}
-              >
-                <span className="material-symbols-outlined">download</span>
-              </button>
-            )}
-            {(installState === "installed" ||
-              installState === "downloaded") && (
-              <button
-                type="button"
-                className="sb-extension-row-action-button"
-                onClick={() => handleUninstall(id)}
-                aria-label={t("uninstall", {
-                  defaultValue: "Uninstall",
-                })}
-                title={t("uninstall", { defaultValue: "Uninstall" })}
-              >
-                <span className="material-symbols-outlined">delete</span>
-              </button>
-            )}
-            <button
-              type="button"
-              className="sb-extension-row-action-button"
-              onClick={() => {
-                selectedExtensionId.value = id;
-              }}
-              aria-label={t("extension-view-details", {
-                defaultValue: "View details",
-              })}
-              title={t("extension-view-details", {
-                defaultValue: "View details",
-              })}
-            >
-              <span className="material-symbols-outlined rtl-mirror">
-                chevron_right
-              </span>
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       </li>
     );
@@ -1511,6 +1539,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           onBack={() => {
             selectedExtensionId.value = null;
           }}
+          onHome={onBack}
           onToggleEnabled={handleToggleEnabled}
           onUninstall={(id) => {
             handleUninstall(id);
@@ -1535,7 +1564,10 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       <SettingsBreadcrumbs
         onBack={onBack}
         trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
+          {
+            label: t("page-settings", { defaultValue: "Page settings" }),
+            onClick: onBack,
+          },
           t("extensions", { defaultValue: "Extensions" }),
         ]}
       />
@@ -1667,7 +1699,7 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
     <div className="sb-settings-page">
       <SettingsBreadcrumbs
         onBack={onBack}
-        trail={["Page settings", "Toolbar"]}
+        trail={[{ label: "Page settings", onClick: onBack }, "Toolbar"]}
       />
       <SettingsHero
         icon="tune"
@@ -2249,8 +2281,14 @@ function AllSettingsView(props: { state: SeedBibleState }) {
       <SettingsBreadcrumbs
         onBack={onBack}
         trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
-          t("display-and-theme", { defaultValue: "Display & Theme" }),
+          {
+            label: t("page-settings", { defaultValue: "Page settings" }),
+            onClick: () => (state.sidebar.requestedSettingsView.value = "main"),
+          },
+          {
+            label: t("display-and-theme", { defaultValue: "Display & Theme" }),
+            onClick: onBack,
+          },
           t("all-settings", { defaultValue: "All settings" }),
         ]}
       />
