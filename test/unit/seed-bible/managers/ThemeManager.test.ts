@@ -1,6 +1,7 @@
 import {
   applyHighlightOverrides,
   createTheme as createThemeManager,
+  DARK_THEME,
   filterValidFontFamilyOverrides,
   composeThemeStyleText,
   THEME_PRESET_STYLE_TEXT,
@@ -543,5 +544,72 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
       "#00ff00"
     );
+  });
+});
+
+describe("system theme", () => {
+  function stubColorScheme(dark: boolean) {
+    const listeners: Array<(event: { matches: boolean }) => void> = [];
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: dark,
+        addEventListener: (_: string, cb: (event: any) => void) =>
+          listeners.push(cb),
+        removeEventListener: () => {},
+      }))
+    );
+    return (matches: boolean) => {
+      for (const cb of listeners) cb({ matches });
+    };
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("resolves to the dark preset when the device prefers dark", () => {
+    stubColorScheme(true);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+
+    theme.setTheme("system");
+
+    expect(theme.selectedThemeId.value).toBe("system");
+    expect(theme.basePresetTheme.value.id).toBe("dark");
+  });
+
+  it("resolves to the light preset when the device prefers light", () => {
+    stubColorScheme(false);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+
+    theme.setTheme("system");
+
+    expect(theme.basePresetTheme.value.id).toBe("light");
+  });
+
+  it("follows the device switching to dark while the app is open", () => {
+    const emitChange = stubColorScheme(false);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.setTheme("system");
+
+    emitChange(true);
+
+    expect(theme.basePresetTheme.value.id).toBe("dark");
+    expect(theme.currentTheme.value.variables.background).toBe(
+      DARK_THEME.variables.background
+    );
+  });
+
+  it("ignores the device preference once a preset is picked explicitly", () => {
+    stubColorScheme(true);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+
+    theme.setTheme("light");
+
+    expect(theme.basePresetTheme.value.id).toBe("light");
   });
 });

@@ -521,7 +521,7 @@ export function composeThemeStyleText(theme: BibleTheme): string {
   return css.replace(/</g, "");
 }
 
-const LIGHT_THEME: BibleTheme = {
+export const LIGHT_THEME: BibleTheme = {
   id: "light",
   name: "Light",
   variables: {
@@ -710,7 +710,7 @@ export const LIGHT_THEME_FONT_DEFAULTS: Record<ThemeFontFamilyKey, string> = {
   hebrewSubtitleFontFamily: LIGHT_THEME.variables.hebrewSubtitleFontFamily!,
 };
 
-const DARK_THEME: BibleTheme = {
+export const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
   variables: {
@@ -904,6 +904,34 @@ export const THEME_PRESET_STYLE_TEXT: Record<string, string> = {
   [LIGHT_THEME.id]: composeThemeStyleText(LIGHT_THEME),
   [DARK_THEME.id]: composeThemeStyleText(DARK_THEME),
 };
+
+/**
+ * Resolves to `LIGHT_THEME`/`DARK_THEME` at read time, so it is not a preset and
+ * stays out of `themes` (the presets a customization variant can be based on).
+ * The pre-hydration script in `index.html` special-cases the same id.
+ */
+export const SYSTEM_THEME_ID = "system";
+
+const prefersDarkScheme = signal(false);
+
+/**
+ * Seeds `prefersDarkScheme` from the OS setting and keeps it in sync as that
+ * setting changes. Called per manager rather than at module load, so nothing
+ * touches `window` on the server.
+ */
+function watchSystemColorScheme(): void {
+  if (
+    typeof window === "undefined" ||
+    typeof window.matchMedia !== "function"
+  ) {
+    return;
+  }
+  const query = window.matchMedia("(prefers-color-scheme: dark)");
+  prefersDarkScheme.value = query.matches;
+  query.addEventListener("change", (event) => {
+    prefersDarkScheme.value = event.matches;
+  });
+}
 
 /**
  * Keys of `BibleThemeVariables` that represent a plain color value and are
@@ -1181,6 +1209,7 @@ export interface ThemeManager {
 
 export function createTheme(settings: SettingsManager): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
+  watchSystemColorScheme();
 
   const selectedThemeId = computed(() => settings.settings.value.themeId);
   const customOverrides = computed(() =>
@@ -1200,12 +1229,16 @@ export function createTheme(settings: SettingsManager): ThemeManager {
   const previewOverrides = signal<ThemeOverrides>({});
   const previewHighlightOverrides = signal<HighlightOverrides>({});
 
-  const basePresetTheme = computed<BibleTheme>(
-    () =>
+  const basePresetTheme = computed<BibleTheme>(() => {
+    if (selectedThemeId.value === SYSTEM_THEME_ID) {
+      return prefersDarkScheme.value ? DARK_THEME : LIGHT_THEME;
+    }
+    return (
       themes.value.find((theme) => theme.id === selectedThemeId.value) ??
       themes.value[0] ??
       LIGHT_THEME
-  );
+    );
+  });
 
   const currentTheme = computed<BibleTheme>(() => {
     const withColorOverrides = applyOverrides(
@@ -1278,7 +1311,10 @@ export function createTheme(settings: SettingsManager): ThemeManager {
   }
 
   const setTheme = (themeId: string) => {
-    if (themes.value.some((theme) => theme.id === themeId)) {
+    if (
+      themeId === SYSTEM_THEME_ID ||
+      themes.value.some((theme) => theme.id === themeId)
+    ) {
       settings.setThemeId(themeId);
     }
   };
