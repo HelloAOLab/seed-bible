@@ -49,6 +49,16 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       setExtensionEnabled: vi.fn().mockResolvedValue(undefined),
       getAllExtensionsAsSet: vi.fn().mockReturnValue(null),
     },
+    // No customization is active in these tests — the list renders exactly
+    // as it would outside the Customization Center.
+    customizations: {
+      activeCustomization: signal(null),
+      getActiveExtensionAvailability: vi.fn().mockReturnValue("available"),
+      addExtensionToActiveCustomization: vi.fn().mockResolvedValue(undefined),
+      removeExtensionFromActiveCustomization: vi
+        .fn()
+        .mockResolvedValue(undefined),
+    },
   } as unknown as SeedBibleState;
 }
 

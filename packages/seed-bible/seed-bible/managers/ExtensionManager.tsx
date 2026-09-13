@@ -1151,7 +1151,8 @@ export function createExtensionManager(
    */
   const loadExtension = async (
     uploaded: Extension,
-    installStack: Set<string> = new Set()
+    installStack: Set<string> = new Set(),
+    options?: { persist?: boolean }
   ) => {
     const extensionId = uploaded.meta.id;
     knownExtensionsById.set(extensionId, uploaded);
@@ -1191,16 +1192,20 @@ export function createExtensionManager(
         }
 
         // Installing a dependent force-installs its dependencies, so a
-        // dependency the user had turned off is about to start running again
-        // — clear its disabled flag rather than let the toggle claim it's off
-        // while it runs. Deliberately one-directional: disabling an extension
-        // still does not cascade to its dependents.
+        // dependency the user had turned off is about to start running again.
+        // Clear its disabled flag so the toggle can't claim it is off while it
+        // runs. Deliberately one-directional: disabling an extension still does
+        // not cascade to its dependents.
         if (disabledExtensionIds.delete(dependencyId)) {
           writePersistedDisabledExtensionIds(disabledExtensionIds);
           refreshExtensionsSignal();
         }
 
-        const loadedDependency = await loadExtension(dependency, installStack);
+        const loadedDependency = await loadExtension(
+          dependency,
+          installStack,
+          options
+        );
         if (!loadedDependency) {
           installStack.delete(extensionId);
           console.error(
@@ -1254,7 +1259,7 @@ export function createExtensionManager(
     refreshExtensionsSignal();
     try {
       const result = await installationPromise;
-      if (result) {
+      if (result && options?.persist !== false) {
         await persistInstalledExtensionId(extensionId);
       }
       return result;
@@ -1299,19 +1304,19 @@ export function createExtensionManager(
   };
 
   /**
-   * Loads the extensions that the user previously installed. The saved set
-   * merges the IDs persisted in local storage with the IDs stored in the
+   * Computes the viewer's true default installed-extension set: the merge
+   * of the IDs persisted in local storage with the IDs stored in the
    * logged-in user's profile config via `mergeInstalledExtensionIds` — so
    * extensions installed while logged out are adopted into the account,
    * extensions installed on another device are installed here, and an
    * extension uninstalled on another device (which already reached the
-   * profile) is not resurrected by a stale local copy, or vice versa (#1454).
-   * The merged set and its sync metadata are written back to whichever
-   * store(s) changed. Extensions that are already installed are skipped, and
-   * IDs that are not part of any known extension set are left in storage (a
-   * later build may reintroduce them) but skipped for now.
+   * profile) is not resurrected by a stale local copy, or vice versa
+   * (#1454). The merged set and its sync metadata are written back to
+   * whichever store(s) changed. Otherwise read-only, so it's safe to call
+   * repeatedly (e.g. from `reconcileInstalledExtensions`) without further
+   * side effects beyond that sync.
    */
-  const loadSavedExtensions = async () => {
+  const computeSavedExtensionIds = async (): Promise<Set<string>> => {
     await awaitProfileLoaded();
     const localIds = readPersistedExtensionIds();
     const profileIds = readProfileExtensionIds();
@@ -1333,6 +1338,18 @@ export function createExtensionManager(
     if (!setsEqual(profileIds, savedIds)) {
       writeProfileExtensionState(savedIds, merged.profileMeta);
     }
+
+    return savedIds;
+  };
+
+  /**
+   * Loads the extensions in the viewer's true default set (see
+   * `computeSavedExtensionIds`). Extensions that are already installed are
+   * skipped, and IDs that are not part of any known extension set are left
+   * in storage (a later build may reintroduce them) but skipped for now.
+   */
+  const loadSavedExtensions = async () => {
+    const savedIds = await computeSavedExtensionIds();
 
     const promises: Promise<boolean>[] = [];
     for (const id of savedIds) {
@@ -1429,25 +1446,29 @@ export function createExtensionManager(
    * Unloads the extension with the given ID by unregistering it and removing it from the set of installed extensions. An "onExtensionUninstalled" event will be shouted with the extension ID as a parameter.
    * @param id The ID of the extension to unload.
    */
-  const unloadExtension = (id: string) => {
+  const unloadExtension = (id: string, options?: { persist?: boolean }) => {
     unregisterExtension(id);
     installedExtensionIds.delete(id);
-    // A clean uninstall shouldn't leave residue in the disabled-ids ledger:
-    // otherwise `computeExtensions()`'s `installed` (which folds in
-    // `disabledExtensionIds` so a merely-disabled extension keeps reading as
-    // installed, see `setExtensionEnabled`) would keep reporting this id as
-    // installed-but-disabled forever, since `knownExtensionsById` is never
-    // pruned once an extension has been loaded.
-    if (disabledExtensionIds.delete(id)) {
-      writePersistedDisabledExtensionIds(disabledExtensionIds);
+    if (options?.persist !== false) {
+      // A clean uninstall shouldn't leave residue in the disabled-ids ledger:
+      // otherwise `computeExtensions()`'s `installed` (which folds in
+      // `disabledExtensionIds` so a merely-disabled extension keeps reading as
+      // installed, see `setExtensionEnabled`) would keep reporting this id as
+      // installed-but-disabled forever, since `knownExtensionsById` is never
+      // pruned once an extension has been loaded. A session-only uninstall
+      // leaves the flag alone so a customization preview can't erase the
+      // viewer's real enabled/disabled choices.
+      if (disabledExtensionIds.delete(id)) {
+        writePersistedDisabledExtensionIds(disabledExtensionIds);
+      }
+      void forgetInstalledExtensionId(id);
+      // Extensions that are only ever force-installed as a dependency (e.g.
+      // `seed-bible-utils`) never carry `autoinstall: true` themselves, so
+      // `loadDefaultExtensions` never records them in the "handled" set.
+      // This is what records their uninstall, so they aren't dragged back
+      // in the next time their dependent gets (re)installed.
+      void persistHandledExtensionId(id);
     }
-    void forgetInstalledExtensionId(id);
-    // Extensions that are only ever force-installed as a dependency (e.g.
-    // `seed-bible-utils`) never carry `autoinstall: true` themselves, so
-    // `loadDefaultExtensions` never records them in the "handled" set. This
-    // is what records their uninstall, so they aren't dragged back in the
-    // next time their dependent gets (re)installed.
-    void persistHandledExtensionId(id);
     refreshExtensionsSignal();
   };
 
@@ -1495,6 +1516,43 @@ export function createExtensionManager(
     unregisterExtension(id);
     installedExtensionIds.delete(id);
     refreshExtensionsSignal();
+  };
+
+  /**
+   * Swaps the currently-installed extension set to exactly `targetIds`,
+   * installing what's missing and uninstalling what's not wanted — all
+   * session-only (`persist: false`), so none of it touches the viewer's
+   * real default-profile storage. Pass `null` to mean "no customization is
+   * active," which reconciles back to the viewer's true default set
+   * (`computeSavedExtensionIds()`) rather than an explicit list.
+   */
+  const reconcileInstalledExtensions = async (
+    targetIds: string[] | null
+  ): Promise<void> => {
+    const target =
+      targetIds === null
+        ? await computeSavedExtensionIds()
+        : new Set(targetIds);
+    const current = new Set(installedExtensionIds);
+
+    for (const id of current) {
+      if (!target.has(id)) {
+        unloadExtension(id, { persist: false });
+      }
+    }
+    for (const id of target) {
+      if (installedExtensionIds.has(id)) {
+        continue;
+      }
+      const extension = knownExtensionsById.get(id);
+      if (!extension) {
+        console.warn(
+          `reconcileInstalledExtensions: unknown extension id '${id}'; skipping.`
+        );
+        continue;
+      }
+      await loadExtension(extension, undefined, { persist: false });
+    }
   };
 
   /**
@@ -1562,6 +1620,7 @@ export function createExtensionManager(
     loadExtension,
     unloadExtension,
     setExtensionEnabled,
+    reconcileInstalledExtensions,
 
     extensions: extensionsSignal,
     getExtensions,

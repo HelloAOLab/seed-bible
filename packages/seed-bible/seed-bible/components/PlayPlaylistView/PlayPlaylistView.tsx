@@ -9,6 +9,7 @@ import { playlistItemIcon } from "../playlistItemIcon";
 import { useDragReorder } from "../useDragReorder";
 import { MaterialIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import { HeroImageBanner } from "../HeroImageField/HeroImageField";
 
 interface PlayPlaylistViewProps {
   playlists: PlaylistManager;
@@ -43,6 +44,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   }
 
   const currentIndex = playing.currentIndex.value;
+  const heroImageUrl = playing.playlists.value[0]?.heroImageUrl ?? null;
 
   // Resolve verse book IDs to full book names using the selected tab's loaded
   // translation, when available. Falls back to the raw book ID otherwise.
@@ -57,6 +59,13 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   return (
     <div className="sb-discover-pane sb-play-playlist">
       <div className="sb-play-playlist-body">
+        <HeroImageBanner
+          url={heroImageUrl}
+          alt={
+            playing.playlists.value[0]?.title ??
+            t("untitled-playlist", { defaultValue: "Untitled playlist" })
+          }
+        />
         <DiscoverSection title={t("queue", { defaultValue: "Queue" })}>
           <ul className="sb-discover-list">
             {queue.map((item, index) => (

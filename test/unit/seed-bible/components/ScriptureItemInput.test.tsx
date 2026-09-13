@@ -173,6 +173,52 @@ describe("ScriptureItemInput", () => {
     expect(container.querySelector(".sb-scripture-suggestions")).toBeNull();
   });
 
+  it.each(["Gen 1", "Gen.1", "Gen. 1"])(
+    "submits %s as Genesis chapter 1",
+    (value) => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+        input().focus();
+        setValue(input(), value);
+      });
+
+      act(() => {
+        input().dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+        );
+      });
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1 },
+      } satisfies PlaylistItemData);
+    }
+  );
+
+  it.each(["Gen 1.1", "Gen.1.1", "Gen. 1.1"])(
+    "submits %s as Genesis 1:1",
+    (value) => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+        input().focus();
+        setValue(input(), value);
+      });
+
+      act(() => {
+        input().dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+        );
+      });
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1, verse: 1 },
+      } satisfies PlaylistItemData);
+    }
+  );
+
   it("shows an error and does not call onAdd when the reference can't be resolved", () => {
     const onAdd = vi.fn();
     act(() => {
