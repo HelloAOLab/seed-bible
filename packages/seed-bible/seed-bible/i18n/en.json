@@ -624,6 +624,7 @@
   "adopt-device-content-skip": "Don't add",
   "theme-light": "Light",
   "theme-dark": "Dark",
+  "theme-system": "System",
   "installed-extensions": "Installed",
   "available-extensions": "Available",
   "no-installed-extensions": "You haven't installed any extensions yet.",

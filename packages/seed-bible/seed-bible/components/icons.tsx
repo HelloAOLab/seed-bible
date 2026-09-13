@@ -1697,6 +1697,33 @@ const ChatParticipantsIcon = (props: any) => {
   );
 };
 
+/** Three stacked rules whose spacing grows with `index`, one per line-height option. */
+export function ScriptureLineHeightIcon({ index }: { index: number }) {
+  const gap = 3.5 + index * 1.5;
+  const startY = 1;
+  return (
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
+      <rect x="0" y={startY} width="20" height="2" rx="1" fill="currentColor" />
+      <rect
+        x="0"
+        y={startY + gap}
+        width="20"
+        height="2"
+        rx="1"
+        fill="currentColor"
+      />
+      <rect
+        x="0"
+        y={startY + 2 * gap}
+        width="20"
+        height="2"
+        rx="1"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 export function StopIcon() {
   return (
     <svg

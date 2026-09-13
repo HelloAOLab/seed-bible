@@ -1,5 +1,6 @@
 import "./SettingsPage.css";
 import { useComputed, useSignal } from "@preact/signals";
+import { ScriptureLineHeightIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   TEXT_FONT_OPTIONS,
@@ -16,7 +17,10 @@ import {
   type UISize,
 } from "../../managers/SettingsManager";
 import {
+  DARK_THEME,
   DEFAULT_HIGHLIGHT_IDS,
+  LIGHT_THEME,
+  SYSTEM_THEME_ID,
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
@@ -502,32 +506,6 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   );
 }
 
-function ScriptureLineHeightIcon({ index }: { index: number }) {
-  const gap = 3.5 + index * 1.5;
-  const startY = 1;
-  return (
-    <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
-      <rect x="0" y={startY} width="20" height="2" rx="1" fill="currentColor" />
-      <rect
-        x="0"
-        y={startY + gap}
-        width="20"
-        height="2"
-        rx="1"
-        fill="currentColor"
-      />
-      <rect
-        x="0"
-        y={startY + 2 * gap}
-        width="20"
-        height="2"
-        rx="1"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
 /**
  * Built-in theme names are authored in English on the theme object, so they'd
  * otherwise render untranslated. Spelled out as separate `t()` calls (rather
@@ -540,13 +518,43 @@ export function localizedThemeName(
   t: I18nHook["t"],
   theme: { id: string; name: string }
 ): string {
-  if (theme.id === "light") {
+  if (theme.id === LIGHT_THEME.id) {
     return t("theme-light", { defaultValue: theme.name });
   }
-  if (theme.id === "dark") {
+  if (theme.id === DARK_THEME.id) {
     return t("theme-dark", { defaultValue: theme.name });
   }
+  if (theme.id === SYSTEM_THEME_ID) {
+    return t("theme-system", { defaultValue: theme.name });
+  }
   return theme.name;
+}
+
+/**
+ * A theme card's footer: the theme name, plus a check mark when it's the
+ * selected theme. The check is hidden rather than unmounted when unselected, so
+ * the name sits in the same place on every card.
+ */
+function ThemeCardLabel(props: { name: string; isSelected: boolean }) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-theme-ready-label">
+      <span>{props.name}</span>
+      <span
+        className={`material-symbols-outlined sb-theme-ready-check${
+          props.isSelected ? "" : " sb-theme-ready-check-hidden"
+        }`}
+        aria-hidden={!props.isSelected}
+        aria-label={
+          props.isSelected
+            ? t("selected", { defaultValue: "Selected" })
+            : undefined
+        }
+      >
+        check_circle
+      </span>
+    </div>
+  );
 }
 
 function ThemesGallerySection(props: { state: SeedBibleState }) {
@@ -600,20 +608,48 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
                   style={{ background: vars.tertiaryColor }}
                 />
               </div>
-              <div className="sb-theme-ready-label">
-                <span>{localizedThemeName(t, theme)}</span>
-                {isSelected && (
-                  <span
-                    className="material-symbols-outlined sb-theme-ready-check"
-                    aria-label={t("selected", { defaultValue: "Selected" })}
-                  >
-                    check_circle
-                  </span>
-                )}
-              </div>
+              <ThemeCardLabel
+                name={localizedThemeName(t, theme)}
+                isSelected={isSelected}
+              />
             </button>
           );
         })}
+        <button
+          type="button"
+          className={`sb-theme-ready-card${
+            selectedThemeId.value === SYSTEM_THEME_ID
+              ? " sb-theme-ready-card-selected"
+              : ""
+          }`}
+          onClick={() => setTheme(SYSTEM_THEME_ID)}
+        >
+          <div className="sb-theme-ready-preview sb-theme-ready-preview-system">
+            {[LIGHT_THEME, DARK_THEME].map((half) => (
+              <div
+                key={half.id}
+                className="sb-theme-ready-system-half"
+                style={{
+                  background:
+                    half.variables.readerBackground ??
+                    half.variables.background,
+                }}
+              >
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
+                  style={{ background: half.variables.primaryColor }}
+                />
+              </div>
+            ))}
+          </div>
+          <ThemeCardLabel
+            name={localizedThemeName(t, {
+              id: SYSTEM_THEME_ID,
+              name: "System",
+            })}
+            isSelected={selectedThemeId.value === SYSTEM_THEME_ID}
+          />
+        </button>
       </div>
     </section>
   );
