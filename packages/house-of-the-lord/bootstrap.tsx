@@ -5,6 +5,7 @@ import {
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 import {
   composeThemeStyleText,
+  emphasizeVerses,
   registerExtension,
   type BibleToolContext,
   type SeedBibleState,
@@ -15,19 +16,9 @@ import pattern from "virtual:@pattern/house-of-the-lord";
 import { getPiecesForExperience, toPieceLabel } from "./verseReference";
 import { EXPERIENCE_KEYS } from "./experience";
 import { EXPERIENCE_META } from "./experienceMeta";
+import type { BookId } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 
 const extensionId = "house-of-the-lord";
-
-// `scrollToVerse` only scrolls; the flash is a separate decoration.
-const VERSE_FLASH = {
-  highlight: { colorId: "yellow" },
-  removeAfterMs: 1000,
-};
-
-function versesInRange(verse: number, endVerse?: number): number[] {
-  const last = endVerse && endVerse > verse ? endVerse : verse;
-  return Array.from({ length: last - verse + 1 }, (_, index) => verse + index);
-}
 
 async function openScripture(
   context: SeedBibleState,
@@ -37,7 +28,6 @@ async function openScripture(
   endVerse?: number
 ) {
   const tab = context.app.selectedTab.value;
-  const verses = verse === undefined ? null : versesInRange(verse, endVerse);
 
   if (!tab) {
     const newTab = context.tabs.addTab(undefined, {
@@ -46,8 +36,13 @@ async function openScripture(
       scrollToVerse: verse,
     });
     context.app.selectTab(newTab.id);
-    if (verses) {
-      newTab.readingState.decorateVerses(bookId, chapter, verses, VERSE_FLASH);
+    if (verse !== undefined) {
+      emphasizeVerses(newTab.readingState, {
+        book: bookId as BookId,
+        chapter,
+        verse,
+        endVerse,
+      });
     }
     return;
   }
@@ -59,8 +54,13 @@ async function openScripture(
     { scrollToVerse: verse }
   );
 
-  if (verses) {
-    tab.readingState.decorateVerses(bookId, chapter, verses, VERSE_FLASH);
+  if (verse !== undefined) {
+    emphasizeVerses(tab.readingState, {
+      book: bookId as BookId,
+      chapter,
+      verse,
+      endVerse,
+    });
   }
 }
 
