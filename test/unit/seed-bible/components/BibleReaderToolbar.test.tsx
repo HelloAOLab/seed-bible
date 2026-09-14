@@ -801,7 +801,7 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     expect(prompt).not.toHaveBeenCalled();
   });
 
-  it("does not apply a highlight a signed-out user declines to log in for", async () => {
+  it("does not apply a signed-out highlight this device has nowhere to keep", async () => {
     signIn(null);
     const prompt = watchLoginPrompt();
     // Restricted participant: saving is the only thing highlighting can mean.
@@ -810,9 +810,13 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await renderToolbar();
     await openPickerAndHighlight();
 
-    expect(prompt).toHaveBeenCalled();
-    // The highlight used to appear behind the modal and then never save.
+    // A signed-out highlight normally lands in the device's local store, but
+    // there is no IndexedDB here — and a highlight that appears without being
+    // saved anywhere is gone on the next load.
     expect(readingState.highlights.value.highlights).toHaveLength(0);
+    // Nothing about this is worth a login modal: the highlight is either kept
+    // on the device or not made at all.
+    expect(prompt).not.toHaveBeenCalled();
   });
 
   it("saves a personal highlight instead, when not allowed to broadcast", async () => {

@@ -428,6 +428,35 @@ function removeSharedHighlightsFromSelection(
 }
 
 /**
+ * Ref callback (not a hook — both menus render inside a per-tool loop) for
+ * the scrollable `.sb-tool-context-menu-scroll` list. Flips the menu to open
+ * downward when it doesn't fit above its button (the verse toolbar can dock
+ * near the top of the viewport), and toggles the `.sb-tool-context-menu-fade`
+ * sibling's `hidden` attribute to show more-content-below scroll affordance.
+ */
+function attachMenuOverflowFade(el: HTMLDivElement | null): void {
+  if (!el) {
+    return;
+  }
+  const menu = el.parentElement;
+  if (menu?.classList.contains("sb-tool-context-menu")) {
+    if (menu.getBoundingClientRect().top < 0) {
+      menu.classList.add("sb-tool-context-menu-below");
+    }
+  }
+
+  const fade = el.nextElementSibling as HTMLElement | null;
+  if (!fade?.classList.contains("sb-tool-context-menu-fade")) {
+    return;
+  }
+  const update = () => {
+    fade.hidden = el.scrollHeight - el.scrollTop - el.clientHeight <= 1;
+  };
+  update();
+  el.addEventListener("scroll", update, { passive: true });
+}
+
+/**
  * Applies a highlight to the current selection with the right lifetime for the
  * current context:
  *
@@ -2251,24 +2280,30 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             );
                           }}
                         >
-                          {menuItems.map((item) => {
-                            const MenuItemIcon = item.icon;
-                            return (
-                              <button
-                                key={item.id}
-                                disabled={item.disabled.value}
-                                onClick={() => {
-                                  item.onSelect();
-                                  selectedToolbarToolId.value = null;
-                                }}
-                                className="sb-tool-context-menu-item"
-                                role="menuitem"
-                              >
-                                <MenuItemIcon />
-                                <span>{translateTitle(t, item.title)}</span>
-                              </button>
-                            );
-                          })}
+                          <div
+                            className="sb-tool-context-menu-scroll"
+                            ref={attachMenuOverflowFade}
+                          >
+                            {menuItems.map((item) => {
+                              const MenuItemIcon = item.icon;
+                              return (
+                                <button
+                                  key={item.id}
+                                  disabled={item.disabled.value}
+                                  onClick={() => {
+                                    item.onSelect();
+                                    selectedToolbarToolId.value = null;
+                                  }}
+                                  className="sb-tool-context-menu-item"
+                                  role="menuitem"
+                                >
+                                  <MenuItemIcon />
+                                  <span>{translateTitle(t, item.title)}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="sb-tool-context-menu-fade" hidden />
                         </div>
                       )}
                   </div>
@@ -2725,24 +2760,30 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                               );
                             }}
                           >
-                            {menuItems.map((item) => {
-                              const MenuItemIcon = item.icon;
-                              return (
-                                <button
-                                  key={item.id}
-                                  disabled={item.disabled.value}
-                                  onClick={() => {
-                                    item.onSelect();
-                                    selectedVerseToolId.value = null;
-                                  }}
-                                  className="sb-tool-context-menu-item"
-                                  role="menuitem"
-                                >
-                                  <MenuItemIcon />
-                                  <span>{translateTitle(t, item.title)}</span>
-                                </button>
-                              );
-                            })}
+                            <div
+                              className="sb-tool-context-menu-scroll"
+                              ref={attachMenuOverflowFade}
+                            >
+                              {menuItems.map((item) => {
+                                const MenuItemIcon = item.icon;
+                                return (
+                                  <button
+                                    key={item.id}
+                                    disabled={item.disabled.value}
+                                    onClick={() => {
+                                      item.onSelect();
+                                      selectedVerseToolId.value = null;
+                                    }}
+                                    className="sb-tool-context-menu-item"
+                                    role="menuitem"
+                                  >
+                                    <MenuItemIcon />
+                                    <span>{translateTitle(t, item.title)}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="sb-tool-context-menu-fade" hidden />
                           </div>
                         )}
                     </div>
