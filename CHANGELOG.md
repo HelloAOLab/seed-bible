@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.9.0 — 2026-09-14
+
+### ✨ Added
+
 - Add a profile screen for managing your content, opened from the new "You" tab on mobile or the avatar at the bottom of the sidebar on desktop. ([#1721](https://github.com/HelloAOLab/seed-bible/pull/1721))
   - Shows your picture, email, location and description, which you can change from an Edit profile screen.
   - "Your content" lists your notes, highlights, saves and playlists, searchable by reference or by highlighted verse text.
