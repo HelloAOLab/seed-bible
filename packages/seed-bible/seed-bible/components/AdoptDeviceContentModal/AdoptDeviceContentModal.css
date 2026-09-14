@@ -1,0 +1,24 @@
+.sb-adopt-device-content-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.sb-adopt-device-content-actions button {
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.sb-adopt-device-content-actions .sb-adopt-device-content-add {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}

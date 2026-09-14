@@ -305,7 +305,13 @@ export function DiscoverPane(props: DiscoverPaneProps) {
   }
 
   if (actualView.value === "create_annotation") {
-    return <CreateAnnotationForm annotations={annotations} tabs={tabs} />;
+    return (
+      <CreateAnnotationForm
+        annotations={annotations}
+        tabs={tabs}
+        toast={props.toast}
+      />
+    );
   }
 
   if (actualView.value === "play_playlist") {
