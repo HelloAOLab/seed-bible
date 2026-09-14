@@ -1171,6 +1171,12 @@ export interface ThemeManager {
   currentTheme: ReadonlySignal<BibleTheme>;
   /** The base preset for `selectedThemeId`, without custom overrides. */
   basePresetTheme: ReadonlySignal<BibleTheme>;
+  /**
+   * The device's color scheme, tracked whatever theme is selected, so a
+   * Customization with a light and a dark variant can follow it without
+   * going through `selectedThemeId`.
+   */
+  prefersDarkScheme: ReadonlySignal<boolean>;
   /** User color overrides layered on top of the selected preset. */
   customOverrides: ReadonlySignal<ThemeOverrides>;
   /** User highlight color overrides layered on top of the preset highlights. */
@@ -1414,6 +1420,7 @@ export function createTheme(settings: SettingsManager): ThemeManager {
     selectedThemeId,
     currentTheme,
     basePresetTheme,
+    prefersDarkScheme,
     customOverrides,
     customHighlightOverrides,
     setTheme,

@@ -10,6 +10,7 @@ import {
   type BibleTheme,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { stubColorScheme } from "../testUtils/stubColorScheme";
 import {
   createSettings,
   type SettingsManager,
@@ -548,22 +549,6 @@ describe("ThemeManager storage (via SettingsManager)", () => {
 });
 
 describe("system theme", () => {
-  function stubColorScheme(dark: boolean) {
-    const listeners: Array<(event: { matches: boolean }) => void> = [];
-    vi.stubGlobal(
-      "matchMedia",
-      vi.fn(() => ({
-        matches: dark,
-        addEventListener: (_: string, cb: (event: any) => void) =>
-          listeners.push(cb),
-        removeEventListener: () => {},
-      }))
-    );
-    return (matches: boolean) => {
-      for (const cb of listeners) cb({ matches });
-    };
-  }
-
   afterEach(() => {
     vi.unstubAllGlobals();
   });

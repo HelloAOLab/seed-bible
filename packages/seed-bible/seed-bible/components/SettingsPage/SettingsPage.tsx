@@ -655,7 +655,7 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
   );
 }
 
-function CustomizationVariantGallery(props: {
+export function CustomizationVariantGallery(props: {
   state: SeedBibleState;
   customization: SeedBibleCustomization;
 }) {
@@ -677,6 +677,7 @@ function CustomizationVariantGallery(props: {
       >
         {customization.variants.map((variant) => {
           const isSelected =
+            !customizations.isFollowingSystemScheme.value &&
             variant.id === customizations.activeVariant.value?.id;
           return (
             <button
@@ -706,22 +707,65 @@ function CustomizationVariantGallery(props: {
                   style={{ background: variant.themes.fontColor }}
                 />
               </div>
-              <div className="sb-theme-ready-label">
-                <span>{variant.name}</span>
-                {isSelected && (
-                  <span
-                    className="material-symbols-outlined sb-theme-ready-check"
-                    aria-label={t("selected", { defaultValue: "Selected" })}
-                  >
-                    check_circle
-                  </span>
-                )}
-              </div>
+              <ThemeCardLabel name={variant.name} isSelected={isSelected} />
             </button>
           );
         })}
+        {customizations.canFollowSystemScheme.value && (
+          <CustomizationSystemCard
+            state={state}
+            customization={customization}
+          />
+        )}
       </div>
     </section>
+  );
+}
+
+/**
+ * Follows the device between a customization's Light-based and Dark-based
+ * variants instead of pinning one. Rendered only when it has both — see
+ * `canFollowSystemScheme`.
+ */
+function CustomizationSystemCard(props: {
+  state: SeedBibleState;
+  customization: SeedBibleCustomization;
+}) {
+  const { customizations } = props.state;
+  const { t } = useI18n();
+  const isSelected = customizations.isFollowingSystemScheme.value;
+  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => ({
+    presetId,
+    variant: props.customization.variants.find((v) => v.baseTheme === presetId),
+  }));
+
+  return (
+    <button
+      type="button"
+      className={`sb-theme-ready-card${
+        isSelected ? " sb-theme-ready-card-selected" : ""
+      }`}
+      onClick={() => void customizations.selectActiveVariant(SYSTEM_THEME_ID)}
+    >
+      <div className="sb-theme-ready-preview sb-theme-ready-preview-system">
+        {halves.map(({ presetId, variant }) => (
+          <div
+            key={presetId}
+            className="sb-theme-ready-system-half"
+            style={{ background: variant?.themes.tertiaryColor }}
+          >
+            <div
+              className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
+              style={{ background: variant?.themes.primaryColor }}
+            />
+          </div>
+        ))}
+      </div>
+      <ThemeCardLabel
+        name={localizedThemeName(t, { id: SYSTEM_THEME_ID, name: "System" })}
+        isSelected={isSelected}
+      />
+    </button>
   );
 }
 
