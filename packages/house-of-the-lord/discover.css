@@ -1,0 +1,17 @@
+.sb-hotl-exhibit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 50px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sb-hotl-exhibit-button:hover {
+  opacity: 0.88;
+}

@@ -1,3 +1,4 @@
+import "./discover.css";
 import {
   PortalComponent,
   type PortalComponentHandle,
@@ -13,8 +14,16 @@ import {
 import { useSignal, useSignalEffect } from "@preact/signals";
 import { v4 as uuid } from "uuid";
 import pattern from "virtual:@pattern/house-of-the-lord";
-import { getPiecesForExperience, toPieceLabel } from "./verseReference";
-import { EXPERIENCE_KEYS } from "./experience";
+import {
+  getPiecesForChapter,
+  getPiecesForExperience,
+  toPieceLabel,
+} from "./verseReference";
+import {
+  EXPERIENCE_KEYS,
+  type AnyPieceKey,
+  type ExperienceKey,
+} from "./experience";
 import { EXPERIENCE_META } from "./experienceMeta";
 import type { BookId } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 
@@ -64,6 +73,24 @@ async function openScripture(
   }
 }
 
+function ExhibitCard(props: { experience: ExperienceKey; onOpen: () => void }) {
+  // Literal rather than `extensionId`: the i18n lint rule resolves the
+  // namespace statically to check the key against the extension's translations.
+  const { t } = useI18n("house-of-the-lord");
+  const Icon = EXPERIENCE_META[props.experience].icon;
+
+  return (
+    <button
+      type="button"
+      className="sb-hotl-exhibit-button"
+      onClick={props.onOpen}
+    >
+      <Icon />
+      <span>{t("discover-open-exhibit", { defaultValue: "View in 3D" })}</span>
+    </button>
+  );
+}
+
 export const bootstrapExtension = () => {
   registerExtension({
     id: extensionId,
@@ -75,7 +102,141 @@ export const bootstrapExtension = () => {
           verse: v.verse.number,
         }));
 
+      const translate = (key: string, defaultValue: string) =>
+        context.i18n.t(key, { ns: extensionId, defaultValue });
+
       let portalRef: PortalComponentHandle | null = null;
+
+      const openExhibit = (experience: ExperienceKey, key: AnyPieceKey) => {
+        if (portalRef) {
+          portalRef.sendMessage({ type: "highlight-piece", key, experience });
+          return;
+        }
+
+        const meta = EXPERIENCE_META[experience];
+        // Generated once per pane rather than per render, so re-renders (e.g.
+        // dragging the pane) reuse the same `inst` and the iframe keeps its
+        // document instead of reloading.
+        const inst = uuid();
+
+        context.panes.openPane({
+          placement: "floating",
+          title: () => {
+            const { t } = useI18n();
+            return t(meta.title.key, {
+              ns: meta.title.ns,
+              defaultValue: meta.title.defaultValue,
+            });
+          },
+          icon: meta.icon,
+          onClose: () => {
+            portalRef = null;
+          },
+          component: () => {
+            const isReady = useSignal(false);
+            // The pattern is cross-origin, so it cannot inherit the
+            // reader's --sb-* variables; it gets the composed theme
+            // text instead, and again whenever the theme changes.
+            useSignalEffect(() => {
+              if (!isReady.value) return;
+              portalRef?.sendMessage({
+                type: "theme-changed",
+                css: composeThemeStyleText(context.theme.currentTheme.value),
+              });
+            });
+
+            useSignalEffect(() => {
+              if (!isReady.value) return;
+              const readingState = context.app.selectedTab.value?.readingState;
+              const bookId = readingState?.bookId.value;
+              const chapterNumber = readingState?.chapterNumber.value;
+              if (!bookId || !chapterNumber) return;
+              portalRef?.sendMessage({
+                type: "reading-changed",
+                bookId,
+                chapterNumber,
+              });
+            });
+
+            return (
+              <PortalComponent
+                ref={(handle: PortalComponentHandle | null) => {
+                  portalRef = handle;
+                }}
+                onMessage={(inbound: unknown) => {
+                  const message = inbound as {
+                    id: string;
+                    data: {
+                      bookId: string;
+                      chapter?: number;
+                      verse?: number;
+                      endVerse?: number;
+                    };
+                  };
+
+                  switch (message.id) {
+                    case "reader-navigation":
+                      {
+                        openScripture(
+                          context,
+                          message.data.bookId,
+                          message.data.chapter ?? 1,
+                          message.data.verse,
+                          message.data.endVerse
+                        );
+                      }
+                      break;
+                    case "ready":
+                      {
+                        isReady.value = true;
+                      }
+                      break;
+                  }
+                }}
+                portal={experience}
+                portalType="grid"
+                inst={inst}
+                pattern={pattern}
+                query={{
+                  dimension: experience,
+                  experience,
+                  highlightedPiece: key,
+                }}
+              />
+            );
+          },
+        });
+      };
+
+      // `reference` has to name the chapter being read: results whose reference
+      // doesn't match it are dropped before display (BibleReadingManager's
+      // `hasMatchingReference`).
+      context.discover.registerDiscoverProvider({
+        id: `${extensionId}-exhibits`,
+        title: translate("title", "House of the Lord"),
+        description: translate(
+          "description",
+          "Interactive 3D experiences of things the Bible describes, tied to the verses that mention them."
+        ),
+        discover: ({ book, chapter }) =>
+          Object.values(EXPERIENCE_KEYS).flatMap((experience) =>
+            getPiecesForChapter(experience, book, chapter).map((key) => ({
+              type: "content" as const,
+              title: translate(`piece-${key}`, toPieceLabel(key)),
+              description: translate(
+                EXPERIENCE_META[experience].title.key,
+                EXPERIENCE_META[experience].title.defaultValue
+              ),
+              reference: { book, chapter },
+              content: (
+                <ExhibitCard
+                  experience={experience}
+                  onOpen={() => openExhibit(experience, key)}
+                />
+              ),
+            }))
+          ),
+      });
 
       for (const experience of Object.values(EXPERIENCE_KEYS)) {
         const meta = EXPERIENCE_META[experience];
@@ -97,105 +258,7 @@ export const bootstrapExtension = () => {
               },
               icon: meta.icon,
               onSelect: () => {
-                const inst = uuid();
-                if (portalRef) {
-                  portalRef.sendMessage({
-                    type: "highlight-piece",
-                    key,
-                    experience,
-                  });
-                } else {
-                  context.panes.openPane({
-                    placement: "floating",
-                    title: () => {
-                      const { t } = useI18n();
-                      return t(meta.title.key, {
-                        ns: meta.title.ns,
-                        defaultValue: meta.title.defaultValue,
-                      });
-                    },
-                    icon: meta.icon,
-                    onClose: () => {
-                      portalRef = null;
-                    },
-                    component: () => {
-                      const isReady = useSignal(false);
-                      // The pattern is cross-origin, so it cannot inherit the
-                      // reader's --sb-* variables; it gets the composed theme
-                      // text instead, and again whenever the theme changes.
-                      useSignalEffect(() => {
-                        if (!isReady.value) return;
-                        portalRef?.sendMessage({
-                          type: "theme-changed",
-                          css: composeThemeStyleText(
-                            context.theme.currentTheme.value
-                          ),
-                        });
-                      });
-
-                      useSignalEffect(() => {
-                        if (!isReady.value) return;
-                        const readingState =
-                          context.app.selectedTab.value?.readingState;
-                        const bookId = readingState?.bookId.value;
-                        const chapterNumber = readingState?.chapterNumber.value;
-                        if (!bookId || !chapterNumber) return;
-                        portalRef?.sendMessage({
-                          type: "reading-changed",
-                          bookId,
-                          chapterNumber,
-                        });
-                      });
-
-                      return (
-                        <PortalComponent
-                          ref={(handle: PortalComponentHandle | null) => {
-                            portalRef = handle;
-                          }}
-                          onMessage={(inbound: unknown) => {
-                            const message = inbound as {
-                              id: string;
-                              data: {
-                                bookId: string;
-                                chapter?: number;
-                                verse?: number;
-                                endVerse?: number;
-                              };
-                            };
-
-                            switch (message.id) {
-                              case "reader-navigation":
-                                {
-                                  openScripture(
-                                    context,
-                                    message.data.bookId,
-                                    message.data.chapter ?? 1,
-                                    message.data.verse,
-                                    message.data.endVerse
-                                  );
-                                }
-                                break;
-                              case "ready":
-                                {
-                                  isReady.value = true;
-                                }
-                                break;
-                            }
-                          }}
-                          portal={experience}
-                          portalType="grid"
-                          inst={inst}
-                          pattern={pattern}
-                          query={{
-                            dimension: experience,
-                            experience,
-                            highlightedPiece: key,
-                          }}
-                        />
-                      );
-                    },
-                  });
-                }
+                openExhibit(experience, key);
                 ctx.readingState.clearSelectedVerses();
               },
             })),

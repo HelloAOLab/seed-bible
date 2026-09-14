@@ -1,6 +1,7 @@
 import { EXPERIENCE_KEYS } from "@packages/house-of-the-lord/experience";
 import { TABERNACLE_PIECE_KEYS } from "@packages/house-of-the-lord/pieceKeys";
 import {
+  getPiecesForChapter,
   getPiecesForExperience,
   toPieceLabel,
 } from "@packages/house-of-the-lord/verseReference";
@@ -89,6 +90,48 @@ describe("verseReference.getPiecesForExperience", () => {
       TABERNACLE_PIECE_KEYS.INCENSE_ALTAR,
       TABERNACLE_PIECE_KEYS.ALTAR_OF_SACRIFICE,
       TABERNACLE_PIECE_KEYS.BRONZE_LAVER,
+    ]);
+  });
+});
+
+describe("verseReference.getPiecesForChapter", () => {
+  it("returns nothing for a book with no references", () => {
+    expect(getPiecesForChapter(EXPERIENCE_KEYS.TABERNACLE, "JHN", 1)).toEqual(
+      []
+    );
+  });
+
+  it("returns nothing for a chapter with no references", () => {
+    expect(getPiecesForChapter(EXPERIENCE_KEYS.TABERNACLE, "EXO", 1)).toEqual(
+      []
+    );
+  });
+
+  it("does not leak pieces across experiences", () => {
+    expect(
+      getPiecesForChapter(EXPERIENCE_KEYS.SOLOMON_TEMPLE, "EXO", 25)
+    ).toEqual([]);
+  });
+
+  it("dedupes pieces spanning many verses, keeping verse order", () => {
+    expect(getPiecesForChapter(EXPERIENCE_KEYS.TABERNACLE, "EXO", 25)).toEqual([
+      TABERNACLE_PIECE_KEYS.ARK_OF_COVENANT,
+      TABERNACLE_PIECE_KEYS.TABLE_OF_SHOWBREAD,
+      TABERNACLE_PIECE_KEYS.MENORAH,
+    ]);
+  });
+
+  it("keeps first-appearance order when later verses repeat earlier pieces", () => {
+    expect(getPiecesForChapter(EXPERIENCE_KEYS.TABERNACLE, "EXO", 39)).toEqual([
+      TABERNACLE_PIECE_KEYS.ARK_OF_COVENANT,
+      TABERNACLE_PIECE_KEYS.TABLE_OF_SHOWBREAD,
+      TABERNACLE_PIECE_KEYS.MENORAH,
+      TABERNACLE_PIECE_KEYS.INCENSE_ALTAR,
+      TABERNACLE_PIECE_KEYS.ALTAR_OF_SACRIFICE,
+      TABERNACLE_PIECE_KEYS.BRONZE_LAVER,
+      TABERNACLE_PIECE_KEYS.INNER_CURTAIN,
+      TABERNACLE_PIECE_KEYS.FRONT_CURTAIN,
+      TABERNACLE_PIECE_KEYS.FENCE,
     ]);
   });
 });
