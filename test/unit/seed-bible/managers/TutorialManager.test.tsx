@@ -1,6 +1,9 @@
 import { signal, type ReadonlySignal } from "@preact/signals";
 
-import { createTutorialManager } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
+import {
+  createTutorialManager,
+  type TutorialStep,
+} from "@packages/seed-bible/seed-bible/managers/TutorialManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
@@ -151,6 +154,68 @@ describe("createTutorialManager — session-link joins", () => {
     tutorial.startContextual("search");
 
     expect(tutorial.running.value).toBe(true);
+  });
+});
+
+describe("createTutorialManager — startContextual with inline steps", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  function makeStep(id: string): TutorialStep {
+    return {
+      id,
+      target: `.${id}`,
+      titleKey: `${id}.title`,
+      titleDefault: id,
+      bodyKey: `${id}.body`,
+      bodyDefault: id,
+    };
+  }
+
+  it("runs the steps passed in, instead of the CONTEXTUAL_TUTORIALS registry lookup", () => {
+    window.localStorage.setItem("sb-tutorial-seen", "true");
+
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    // Not a registered CONTEXTUAL_TUTORIALS key, so a plain
+    // `startContextual("a-brand-new-feature")` would no-op.
+    tutorial.startContextual("a-brand-new-feature", [makeStep("step-1")]);
+
+    expect(tutorial.running.value).toBe(true);
+    expect(tutorial.currentStep.value?.id).toBe("step-1");
+  });
+
+  it("still tracks the seen flag under featureId, so it won't replay once finished", () => {
+    window.localStorage.setItem("sb-tutorial-seen", "true");
+
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    tutorial.startContextual("a-brand-new-feature", [makeStep("step-1")]);
+    tutorial.finish();
+
+    expect(tutorial.featuresSeen.value["a-brand-new-feature"]).toBe(true);
+
+    tutorial.startContextual("a-brand-new-feature", [makeStep("step-1")]);
+    expect(tutorial.running.value).toBe(false);
   });
 });
 
