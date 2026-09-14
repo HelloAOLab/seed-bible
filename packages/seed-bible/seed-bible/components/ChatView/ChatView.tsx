@@ -14,7 +14,7 @@ import {
 } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
-import { AskIcon } from "../icons";
+import { AskIcon, MaterialIcon } from "../icons";
 import { VerseReferenceLink } from "../../app/verseReferenceLink";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
@@ -23,6 +23,181 @@ import { useEffect, useRef, useState } from "preact/hooks";
 interface ChatViewProps {
   chat: ChatSession;
   state: SeedBibleState;
+}
+
+function AiBibleTranslationControl(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { t } = useI18n();
+  const isMenuOpen = useSignal(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const tab = state.app?.selectedTab?.value ?? null;
+  const tabTranslationId = tab?.readingState.translationId.value ?? null;
+  const overrideId = state.chats?.aiBibleTranslationId?.value ?? null;
+  const effectiveId =
+    state.chats?.getEffectiveAiBibleTranslationId?.(tabTranslationId) ??
+    tabTranslationId;
+  const followingTab = overrideId == null;
+
+  const availableTranslations =
+    state.bibleData?.availableTranslations?.value ?? [];
+  const effectiveTranslation =
+    (effectiveId &&
+      availableTranslations.find(
+        (translation) => translation.id === effectiveId
+      )) ||
+    (tab?.readingState.translation.value?.id === effectiveId
+      ? tab.readingState.translation.value
+      : null) ||
+    tab?.readingState.translation.value ||
+    null;
+
+  const shortName =
+    effectiveTranslation?.shortName ?? effectiveId ?? tabTranslationId ?? "—";
+  const sourceLabel = followingTab
+    ? t("ai-bible-following-tab", { defaultValue: "Following tab" })
+    : t("ai-bible-ai-default", { defaultValue: "AI default" });
+
+  useEffect(() => {
+    if (!isMenuOpen.value) {
+      return;
+    }
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || rootRef.current?.contains(target)) {
+        return;
+      }
+      isMenuOpen.value = false;
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isMenuOpen.value]);
+
+  const openActiveTabTranslationPicker = async () => {
+    isMenuOpen.value = false;
+    const slots = state.tabsLayout?.slots?.value ?? [];
+    const selectedSlotId = state.tabsLayout?.selectedSlotId?.value ?? null;
+    const slot = slots.find((s) => s.id === selectedSlotId) ?? slots[0] ?? null;
+    if (!slot || !state.selector?.setOpen) {
+      return;
+    }
+    await state.selector.setOpen(true, slot);
+    if (state.selector.selectingTranslation) {
+      state.selector.selectingTranslation.value = true;
+    }
+  };
+
+  const useCurrentAsAiDefault = () => {
+    isMenuOpen.value = false;
+    if (!effectiveId || !state.chats?.setAiBibleTranslationId) {
+      return;
+    }
+    state.chats.setAiBibleTranslationId(effectiveId);
+  };
+
+  const followActiveTab = () => {
+    isMenuOpen.value = false;
+    state.chats?.setAiBibleTranslationId?.(null);
+  };
+
+  return (
+    <div className="sb-chat-view-ai-bible" ref={rootRef}>
+      <button
+        type="button"
+        className="sb-chat-view-ai-bible-button"
+        aria-haspopup="menu"
+        aria-expanded={isMenuOpen.value}
+        aria-label={t("ai-bible-translation", {
+          defaultValue: "AI Bible translation: {{name}} ({{source}})",
+          name: shortName,
+          source: sourceLabel,
+        })}
+        title={t("ai-bible-translation", {
+          defaultValue: "AI Bible translation: {{name}} ({{source}})",
+          name: shortName,
+          source: sourceLabel,
+        })}
+        onClick={() => {
+          isMenuOpen.value = !isMenuOpen.value;
+        }}
+      >
+        <MaterialIcon className="sb-chat-view-ai-bible-icon" aria-hidden="true">
+          menu_book
+        </MaterialIcon>
+        <span className="sb-chat-view-ai-bible-short-name">{shortName}</span>
+        <span className="sb-chat-view-ai-bible-source">{sourceLabel}</span>
+        <MaterialIcon
+          className="sb-chat-view-ai-bible-chevron"
+          aria-hidden="true"
+        >
+          expand_more
+        </MaterialIcon>
+      </button>
+      {isMenuOpen.value && (
+        <div className="sb-chat-view-ai-bible-menu" role="menu">
+          <button
+            type="button"
+            className="sb-chat-view-ai-bible-menu-item"
+            role="menuitem"
+            onClick={() => {
+              void openActiveTabTranslationPicker();
+            }}
+          >
+            <MaterialIcon
+              className="sb-chat-view-ai-bible-menu-icon"
+              aria-hidden="true"
+            >
+              swap_horiz
+            </MaterialIcon>
+            <span>
+              {t("ai-bible-change-tab-translation", {
+                defaultValue: "Change active tab translation",
+              })}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="sb-chat-view-ai-bible-menu-item"
+            role="menuitem"
+            onClick={useCurrentAsAiDefault}
+          >
+            <MaterialIcon
+              className="sb-chat-view-ai-bible-menu-icon"
+              aria-hidden="true"
+            >
+              push_pin
+            </MaterialIcon>
+            <span>
+              {t("ai-bible-use-current-as-default", {
+                defaultValue: "Use current as AI default",
+              })}
+            </span>
+          </button>
+          {!followingTab && (
+            <button
+              type="button"
+              className="sb-chat-view-ai-bible-menu-item"
+              role="menuitem"
+              onClick={followActiveTab}
+            >
+              <MaterialIcon
+                className="sb-chat-view-ai-bible-menu-icon"
+                aria-hidden="true"
+              >
+                tab
+              </MaterialIcon>
+              <span>
+                {t("ai-bible-follow-active-tab", {
+                  defaultValue: "Follow active tab instead",
+                })}
+              </span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** A run of consecutive messages that share the same author(s). */
@@ -1095,6 +1270,8 @@ export function ChatView(props: ChatViewProps) {
             </span>
           </div>
         )}
+
+        <AiBibleTranslationControl state={state} />
 
         {isMentionPickerOpen && (
           <div

@@ -7,6 +7,13 @@ import {
   resolveMessageAuthors,
   type ChatProviderMessageOptions,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import {
+  getEffectiveSeedTranslationForAi,
+  postApologistChatCompletion,
+  resolveApologistBible,
+  uiLocaleForApologist,
+  warnIfApologistBibleFallback,
+} from "./apologistBible";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -209,13 +216,33 @@ export default function initApologistExtension() {
         generateResponse: async function* (
           chatContext
         ): AsyncGenerator<ChatProviderMessageOptions> {
-          const instructions =
+          const seedTranslation = getEffectiveSeedTranslationForAi(context);
+          const bibleResolution = resolveApologistBible({
+            translation: seedTranslation,
+            availableTranslations:
+              context.bibleData.availableTranslations.value,
+          });
+          const shouldContinue = await warnIfApologistBibleFallback(
+            context,
+            bibleResolution
+          );
+          if (!shouldContinue) {
+            // User dismissed the fallback warning (go back) — do not call AI.
+            return;
+          }
+
+          const uiLanguage = uiLocaleForApologist(i18n.language);
+          const readingInstructions =
             chatContext.instructions ??
-            `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`;
+            `Currently reading: ${context.app.selectedTab.value?.readingState.bookId.value} ${context.app.selectedTab.value?.readingState.chapterNumber.value}`;
+          const languageAndBibleInstructions = [
+            `Reply in ${uiLanguage}.`,
+            `Prefer quoting scripture from the ${bibleResolution.code} Bible translation.`,
+          ].join(" ");
 
           const contextMessage: ChatMessage = {
             role: "developer",
-            content: instructions,
+            content: `${readingInstructions}\n\n${languageAndBibleInstructions}`,
           };
 
           const tools = chatContext.tools?.map((t) => ({
@@ -255,28 +282,31 @@ export default function initApologistExtension() {
             }
           }
 
+          let bibleCode = bibleResolution.code;
+
           for (let turn = 0; turn < MAX_COMPLETION_TURNS; turn++) {
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/chat/completions`,
-              {
-                method: "POST",
-                body: JSON.stringify({
-                  model: apologistModel,
-                  stream: true,
-                  metadata: {
-                    bible: "bsb",
-                    language: i18n.language,
-                  },
-                  messages: messages,
-                  tools,
-                }),
+            const { response, bible, retriedWithDefault } =
+              await postApologistChatCompletion({
+                url: `https://${apologistDomain}/api/v1/chat/completions`,
+                model: apologistModel,
+                stream: true,
+                language: uiLanguage,
+                bible: bibleCode,
+                messages,
+                tools,
                 headers: apologistApiKey
                   ? {
                       Authorization: `Bearer ${apologistApiKey}`,
                     }
                   : {},
-              }
-            );
+              });
+
+            if (retriedWithDefault && bible !== bibleCode) {
+              console.warn(
+                `[Apologist] Agent rejected bible "${bibleCode}"; retrying with "${bible}".`
+              );
+              bibleCode = bible;
+            }
 
             if (!response.ok) {
               const body = await response.text().catch(() => "");

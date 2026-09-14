@@ -758,6 +758,10 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       // though they're part of this panel's UI. Ignore taps inside them so
       // picking a provider doesn't close the panel out from under the click.
       if (target.closest(".sb-context-menu")) return;
+      // Footnote-style modals (e.g. Apologist bible fallback warning) use this
+      // overlay class and sit outside the chat panel in the DOM. Ignore taps on
+      // them so dismissing or interacting with the modal doesn't also close chat.
+      if (target.closest(".sb-footnote-modal-overlay")) return;
       sidebar.closeChatPanel();
     };
 
