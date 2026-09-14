@@ -912,14 +912,12 @@ export const THEME_PRESET_STYLE_TEXT: Record<string, string> = {
  */
 export const SYSTEM_THEME_ID = "system";
 
-const prefersDarkScheme = signal(false);
-
 /**
  * Seeds `prefersDarkScheme` from the OS setting and keeps it in sync as that
  * setting changes. Called per manager rather than at module load, so nothing
  * touches `window` on the server.
  */
-function watchSystemColorScheme(): void {
+function watchSystemColorScheme(prefersDarkScheme: Signal<boolean>): void {
   if (
     typeof window === "undefined" ||
     typeof window.matchMedia !== "function"
@@ -1215,7 +1213,8 @@ export interface ThemeManager {
 
 export function createTheme(settings: SettingsManager): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
-  watchSystemColorScheme();
+  const prefersDarkScheme = signal(false);
+  watchSystemColorScheme(prefersDarkScheme);
 
   const selectedThemeId = computed(() => settings.settings.value.themeId);
   const customOverrides = computed(() =>
@@ -1318,11 +1317,20 @@ export function createTheme(settings: SettingsManager): ThemeManager {
 
   const setTheme = (themeId: string) => {
     if (
-      themeId === SYSTEM_THEME_ID ||
-      themes.value.some((theme) => theme.id === themeId)
+      themeId !== SYSTEM_THEME_ID &&
+      !themes.value.some((theme) => theme.id === themeId)
     ) {
-      settings.setThemeId(themeId);
+      return;
     }
+    // The theme drives text colors, so picking one drops any per-section
+    // color the text editor holds. Tied to this call rather than to the
+    // resolved preset: that also changes when the device flips under the
+    // System theme, and wiping a saved color needs a deliberate choice
+    // behind it — `resetTextColors` writes through to the profile.
+    if (themeId !== selectedThemeId.value) {
+      settings.resetTextColors();
+    }
+    settings.setThemeId(themeId);
   };
 
   const writeOverrides = (next: ThemeOverrides) => {
