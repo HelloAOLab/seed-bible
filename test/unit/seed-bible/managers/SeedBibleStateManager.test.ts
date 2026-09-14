@@ -3,6 +3,7 @@ import {
   MOBILE_BREAKPOINT,
   type SeedBibleState,
 } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type {
   Translation,
@@ -2540,5 +2541,68 @@ describe("createSeedBibleState", () => {
         parts: ["Ver Génesis 1:1"],
       });
     });
+  });
+});
+
+/**
+ * Today is a fullscreen pane, and `PanesManager` gives fullscreen panes the
+ * whole reader area: opening one closes every other pane, while a *side* pane
+ * only replaces the existing side pane and leaves the rest alone. That second
+ * rule is what let Reading plans and Discover open underneath Today, where
+ * nothing could see them.
+ */
+describe("opening another screen while Today is up", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const paneIds = (state: SeedBibleState) =>
+    state.panes.panes.value.map((pane) => pane.id);
+
+  const openToday = async (state: SeedBibleState) => {
+    state.today.open();
+    await Promise.resolve();
+    expect(paneIds(state)).toContain(TODAY_PANE_ID);
+    expect(state.today.isOpen.value).toBe(true);
+  };
+
+  it("closes Today when a fullscreen pane opens over it", async () => {
+    // A generic pane rather than Profile: this is about Today stepping aside,
+    // and Profile carries its own `?profile=` URL binding whose imperative
+    // setter behaves differently under jsdom than at boot.
+    const state = await createState();
+    await openToday(state);
+
+    state.panes.openPane({
+      id: "test-fullscreen-pane",
+      placement: "fullscreen",
+      title: () => null,
+      component: () => null,
+    });
+    await Promise.resolve();
+
+    expect(paneIds(state)).toEqual(["test-fullscreen-pane"]);
+    expect(state.today.isOpen.value).toBe(false);
+  });
+
+  it("closes Today when a side pane opens, rather than hiding behind it", async () => {
+    const state = await createState();
+    await openToday(state);
+
+    state.panes.openPane({
+      id: "test-side-pane",
+      placement: "side",
+      title: () => null,
+      component: () => null,
+    });
+    await Promise.resolve();
+
+    expect(paneIds(state)).toEqual(["test-side-pane"]);
+    expect(state.today.isOpen.value).toBe(false);
   });
 });

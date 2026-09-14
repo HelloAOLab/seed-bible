@@ -61,6 +61,7 @@ describe("I18nManager getInitialLanguage()", () => {
       batchWrites: vi.fn((fn: () => unknown) => fn()),
       updateQueryParam: vi.fn(),
       linkToQuery: vi.fn(),
+      linkToBareRoot: vi.fn(),
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
       dispose: vi.fn(),
@@ -195,6 +196,7 @@ describe("I18nManager language fallback prompt", () => {
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
       linkToQuery: vi.fn(),
+      linkToBareRoot: vi.fn(),
       dispose: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);
@@ -251,6 +253,7 @@ describe("I18nManager UI language switch prompt", () => {
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
       linkToQuery: vi.fn(),
+      linkToBareRoot: vi.fn(),
       dispose: vi.fn(),
       batchWrites: vi.fn((fn: () => unknown) => fn()),
     } as NavigationManager;

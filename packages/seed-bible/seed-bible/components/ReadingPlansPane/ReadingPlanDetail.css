@@ -89,11 +89,19 @@
   font-weight: 600;
 }
 
-/* Body */
-.sb-rpd-body {
+/* Scrolls the hero image and peach header along with the day content, so a
+   tall hero doesn't eat most of a short mobile viewport — only the footer
+   stays pinned. */
+.sb-rpd-scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Body */
+.sb-rpd-body {
   padding: 16px;
   display: flex;
   flex-direction: column;

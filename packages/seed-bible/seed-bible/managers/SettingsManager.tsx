@@ -1083,17 +1083,28 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHT_COLORS, colors);
   };
 
+  // Next ring-buffer slot to overwrite once all 3 custom colours are filled.
+  // Empty/partial palettes always append, so this only matters at the cap:
+  // the 4th pick replaces slot 0 (the 1st), the 5th replaces slot 1 (the 2nd).
+  let nextCustomHighlightSlot = 0;
+
   const addCustomHighlightColor = (color: string) => {
     const normalized = color.trim().toLowerCase();
     if (!normalized) return;
     const current = settings.value.customHighlightColors;
-    // Move to front if already present; evict oldest when over the cap.
-    const withoutDuplicate = current.filter(
-      (c) => c.toLowerCase() !== normalized
-    );
-    writeCustomHighlightColors(
-      [normalized, ...withoutDuplicate].slice(0, MAX_CUSTOM_HIGHLIGHT_COLORS)
-    );
+    if (current.some((c) => c.toLowerCase() === normalized)) {
+      return;
+    }
+    if (current.length < MAX_CUSTOM_HIGHLIGHT_COLORS) {
+      writeCustomHighlightColors([...current, normalized]);
+      nextCustomHighlightSlot = 0;
+      return;
+    }
+    const next = [...current];
+    next[nextCustomHighlightSlot] = normalized;
+    nextCustomHighlightSlot =
+      (nextCustomHighlightSlot + 1) % MAX_CUSTOM_HIGHLIGHT_COLORS;
+    writeCustomHighlightColors(next);
   };
 
   const removeCustomHighlightColor = (color: string) => {
@@ -1103,6 +1114,7 @@ export function createSettings(
         (c) => c.toLowerCase() !== normalized
       )
     );
+    nextCustomHighlightSlot = 0;
   };
 
   const setThemeId = (themeId: string) => {
@@ -1153,6 +1165,7 @@ export function createSettings(
   };
 
   const resetToDefaults = () => {
+    nextCustomHighlightSlot = 0;
     settings.value = DEFAULT_SETTINGS;
     sessionOverrides[TAG_FONT_SIZE] = DEFAULT_SETTINGS.fontSize;
     sessionOverrides[TAG_DISABLE_PANELS] = DEFAULT_SETTINGS.disablePanels;
