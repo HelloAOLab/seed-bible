@@ -23,6 +23,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/OfflineReadingHistoryStore";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { signal } from "@preact/signals";
+import { Subject } from "rxjs";
 import type { Mock } from "vitest";
 
 describe("ReadingHistoryManager", () => {
@@ -277,11 +278,25 @@ describe("ReadingHistoryManager", () => {
       },
     };
 
+    // A real document reports its connection here, and a write is only evidence
+    // the server got anything while this says synced.
+    const onStatusUpdated = new Subject<{
+      type: string;
+      synced?: boolean;
+      connected?: boolean;
+    }>();
+
     return {
       doc: {
         getArray: () => array,
         createMap,
+        onStatusUpdated,
       } as unknown as SharedDocument,
+
+      /** Reports the connection dropping, the way a real document would. */
+      disconnect: () => {
+        onStatusUpdated.next({ type: "sync", synced: false });
+      },
       /** Puts an event in the document without going through a save. */
       seed: (event: ReadingEvent) => {
         const map = createMap();
@@ -1036,6 +1051,92 @@ describe("ReadingHistoryManager", () => {
       } finally {
         vi.useRealTimers();
       }
+    });
+
+    it("leaves the row queued when the wifi went off and the socket never noticed", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+
+      // Loaded and read while connected, which caches the year document for the
+      // rest of the page load.
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "GEN",
+        1,
+        NOON,
+        NOON + 5,
+        { store }
+      );
+      expect(await store.listPending("user-1")).toEqual([]);
+
+      // Now the wifi goes off. Deliberately *without* the document saying
+      // anything: it only learns it is disconnected when the websocket fires
+      // `close`, and a connection pulled out from under a socket leaves it
+      // half-open with no close event for minutes. The document goes on
+      // reporting the last thing it heard, which was "synced".
+      const onLine = vi
+        .spyOn(navigator, "onLine", "get")
+        .mockReturnValue(false);
+      try {
+        await saveReadingHistorySpan(
+          os,
+          "user-1",
+          "user-1",
+          "EXO",
+          2,
+          NOON + 100,
+          NOON + 105,
+          { store }
+        );
+      } finally {
+        onLine.mockRestore();
+      }
+
+      // The device knows the interface is gone even though the socket doesn't,
+      // and that is enough to refuse to call the write delivered.
+      expect(
+        (await store.listPending("user-1")).map((row) => row.bookId)
+      ).toEqual(["EXO"]);
+    });
+
+    it("leaves the row queued when the connection dropped after the page loaded", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+
+      // Read once while connected, which is what puts the year document in the
+      // cache and keeps it there for the rest of the page load.
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "GEN",
+        1,
+        NOON,
+        NOON + 5,
+        { store }
+      );
+      expect(await store.listPending("user-1")).toEqual([]);
+
+      // Now the connection goes away without the page reloading. The cached
+      // document answers instantly and the write into it still succeeds,
+      // because a CRDT edit is local — nothing throws.
+      fakeDoc.disconnect();
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "EXO",
+        2,
+        NOON + 100,
+        NOON + 105,
+        { store }
+      );
+
+      // So the only thing standing between this and losing the reading is
+      // refusing to call it synced. The row stays queued for the replay.
+      expect(
+        (await store.listPending("user-1")).map((row) => row.bookId)
+      ).toEqual(["EXO"]);
     });
 
     it("still records reading when this device can't keep a local store", async () => {

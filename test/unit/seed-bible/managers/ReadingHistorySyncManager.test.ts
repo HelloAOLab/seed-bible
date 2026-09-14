@@ -36,6 +36,7 @@ function recordingWriter() {
   const writes: { recordName: string; year: number; events: ReadingEvent[] }[] =
     [];
   let failWith: Error | null = null;
+  let disconnected = false;
   const failuresByYear = new Map<number, Error>();
   let gate: Promise<void> | null = null;
   let openGate: (() => void) | null = null;
@@ -73,6 +74,18 @@ function recordingWriter() {
       }
     },
 
+    /**
+     * Takes writes without complaint, but reports the document was not
+     * connected.
+     *
+     * This is what an offline write actually looks like: the events go into a
+     * document held in memory and nothing throws, because the edit is local.
+     * Only the document's own status says the server never saw them.
+     */
+    acceptButDisconnected: (value: boolean) => {
+      disconnected = value;
+    },
+
     /** Every event written to one year, across all of that year's writes. */
     eventsFor: (year: number): ReadingEvent[] =>
       writes.filter((w) => w.year === year).flatMap((w) => w.events),
@@ -92,9 +105,41 @@ function recordingWriter() {
       if (gate) {
         await gate;
       }
+      return { synced: !disconnected };
     },
   };
 }
+
+function onLineGetter() {
+  return vi.spyOn(navigator, "onLine", "get");
+}
+let onLineSpy: ReturnType<typeof onLineGetter> | null = null;
+
+/**
+ * Puts the browser into the state a real connection change produces.
+ *
+ * Dispatching the event on its own leaves `navigator.onLine` saying the
+ * opposite, which no browser does — and the manager reads both, so a test that
+ * only fires the event is testing a state that cannot happen.
+ *
+ * `announce: false` is the case that matters most: the connection returns but
+ * the event never arrives.
+ */
+function setOnline(
+  online: boolean,
+  { announce = true }: { announce?: boolean } = {}
+): void {
+  onLineSpy ??= onLineGetter();
+  onLineSpy.mockReturnValue(online);
+  if (announce) {
+    window.dispatchEvent(new Event(online ? "online" : "offline"));
+  }
+}
+
+afterEach(() => {
+  onLineSpy?.mockRestore();
+  onLineSpy = null;
+});
 
 /** Polls until `check()` is true, or throws after `timeoutMs`. */
 async function waitForCondition(
@@ -305,6 +350,30 @@ describe("ReadingHistorySyncManager", () => {
     expect(await store.listPending("user-1")).toEqual([]);
   });
 
+  it("keeps a row queued when the write went into a disconnected document", async () => {
+    const row = await record(IN_2026);
+    // Nothing throws: writing an event is a local edit to a document held in
+    // memory, and that works with the network unplugged. Only the document's
+    // own status tells us the server never saw it.
+    writer.acceptButDisconnected(true);
+
+    const { manager: sync } = create("user-1");
+    await sync.sync();
+
+    // Clearing `pendingOp` here would record the server as holding an event it
+    // has never seen, and nothing would push it again — the reading would be
+    // lost the moment the page went away.
+    expect((await store.listPending("user-1")).map((r) => r.key)).toEqual([
+      row.key,
+    ]);
+    expect(sync.pendingCount.value).toBe(1);
+
+    // And it goes out for real once the connection is back.
+    writer.acceptButDisconnected(false);
+    await sync.sync();
+    expect(await store.listPending("user-1")).toEqual([]);
+  });
+
   it("replays a failed event once it can reach the document again", async () => {
     await record(IN_2026);
     writer.failWith(new Error("no connection"));
@@ -323,23 +392,43 @@ describe("ReadingHistorySyncManager", () => {
 
   it("replays when the browser comes back online", async () => {
     await record(IN_2026);
+    // Offline before the manager exists, so the sign-in pass can't be the thing
+    // that drains it.
+    setOnline(false);
     const { manager: sync } = create("user-1");
-    // Start offline so the sign-in pass can't be the thing that drains it.
-    window.dispatchEvent(new Event("offline"));
     await sync.sync();
     expect(writer.writes).toHaveLength(0);
 
-    window.dispatchEvent(new Event("online"));
+    setOnline(true);
     await waitForCondition(() => writer.writes.length > 0);
 
     expect(sync.isOnline.value).toBe(true);
   });
 
+  it("drains a backlog even if the `online` event never arrives", async () => {
+    await record(IN_2026);
+    setOnline(false);
+    const { manager: sync } = create("user-1");
+    await sync.sync();
+    expect(writer.writes).toHaveLength(0);
+
+    // The connection is back but nothing announced it. Going by the last event
+    // heard would keep this gate shut for the rest of the page load: every
+    // later pass returns immediately, and a backlog recorded offline stays
+    // queued until the tab is closed and reopened.
+    setOnline(true, { announce: false });
+    await sync.sync();
+
+    expect(writer.writes).toHaveLength(1);
+    expect(await store.listPending("user-1")).toEqual([]);
+    expect(sync.isOnline.value).toBe(true);
+  });
+
   it("does nothing while the browser reports no connection", async () => {
     await record(IN_2026);
+    setOnline(false);
     const { manager: sync } = create("user-1");
 
-    window.dispatchEvent(new Event("offline"));
     await sync.sync();
 
     expect(writer.writes).toHaveLength(0);
@@ -348,21 +437,21 @@ describe("ReadingHistorySyncManager", () => {
 
   it("stops listening once disposed", async () => {
     await record(IN_2026);
+    setOnline(false);
     const { manager: sync } = create("user-1");
-    window.dispatchEvent(new Event("offline"));
 
     // Coming back online drives a pass while the listener is attached, so the
     // assertion after disposing is about the disposing and not about the event
     // having been inert all along.
-    window.dispatchEvent(new Event("online"));
+    setOnline(true);
     await waitForCondition(() => writer.writes.length === 1);
 
-    window.dispatchEvent(new Event("offline"));
+    setOnline(false);
     sync.dispose();
     manager = null;
     await record(IN_2026, 2);
 
-    window.dispatchEvent(new Event("online"));
+    setOnline(true);
     await flushMicrotasks();
 
     expect(writer.writes).toHaveLength(1);

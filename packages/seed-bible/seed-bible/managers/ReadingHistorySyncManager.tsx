@@ -80,7 +80,7 @@ export interface CreateReadingHistorySyncManagerOptions {
     recordName: string,
     year: number,
     events: readonly ReadingEvent[]
-  ) => Promise<void>;
+  ) => Promise<{ synced: boolean }>;
 
   /**
    * How long a synced row is kept for reading history offline. Defaults to
@@ -133,6 +133,25 @@ export function createReadingHistorySyncManager(
 
   let running: Promise<void> | null = null;
   let disposed = false;
+
+  /**
+   * Whether this device has a network, read now rather than remembered.
+   *
+   * `isOnline` is carried by the `online`/`offline` events, and a single missed
+   * `online` used to shut this gate for the rest of the page load: every later
+   * pass returned immediately while the connection was in fact fine, so a
+   * backlog recorded offline stayed queued until the tab was closed and
+   * reopened. Asking the browser at the moment it matters makes that
+   * self-correcting, and keeps the signal honest for anything watching it.
+   */
+  const readIsOnline = (): boolean => {
+    const online =
+      typeof navigator === "undefined" ? true : navigator.onLine !== false;
+    if (isOnline.peek() !== online) {
+      isOnline.value = online;
+    }
+    return online;
+  };
 
   const refreshPendingCount = async (): Promise<void> => {
     // `store` is checked before the login signal is touched, so a device with
@@ -190,7 +209,23 @@ export function createReadingHistorySyncManager(
     const outcomes = await Promise.all(
       [...byYear].map(async ([year, rows]): Promise<YearFailure | null> => {
         try {
-          await writeEvents(userId, year, rows.map(toReadingEvent));
+          const { synced } = await writeEvents(
+            userId,
+            year,
+            rows.map(toReadingEvent)
+          );
+          if (!synced) {
+            // Written into a document with nothing under it. The rows keep
+            // their `pendingOp` so the next pass sends them again, which
+            // extends what is already there rather than duplicating it.
+            console.warn(
+              `Replayed reading history for ${year} into a document that was not connected. It stays queued.`
+            );
+            return {
+              year,
+              message: "the document was not connected.",
+            };
+          }
           await store.markSynced(
             rows.map((row) => ({ key: row.key, end: row.end }))
           );
@@ -218,7 +253,7 @@ export function createReadingHistorySyncManager(
       return Promise.resolve();
     }
     const userId = login.userId.peek();
-    if (!userId || !isOnline.peek()) {
+    if (!userId || !readIsOnline()) {
       return Promise.resolve();
     }
 

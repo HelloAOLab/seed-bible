@@ -93,6 +93,75 @@ function resolveStore(
 const DEFAULT_READING_HISTORY_DOCUMENT = "reading_history";
 
 /**
+ * What each year document last said about its own connection.
+ *
+ * Writing an event is a local CRDT edit — `array.push` on a document held in
+ * memory — which succeeds whether or not anything is listening at the other
+ * end. So a write returning cleanly is no evidence the server received it, and
+ * the document's own status report is the only evidence available.
+ */
+const documentSyncState = new WeakMap<SharedDocument, { synced: boolean }>();
+
+/**
+ * Starts following a document's connection, so a write into it can tell whether
+ * it was going anywhere.
+ *
+ * A document with nothing to report — a test double, or any implementation that
+ * doesn't publish status — is taken as connected. Only {@link
+ * getReadingHistoryDocument} registers documents here, and everything it
+ * registers is real.
+ */
+function trackDocumentSync(doc: SharedDocument): void {
+  if (documentSyncState.has(doc)) {
+    return;
+  }
+  const state = { synced: true };
+  documentSyncState.set(doc, state);
+
+  const statuses = doc.onStatusUpdated;
+  if (!statuses || typeof statuses.subscribe !== "function") {
+    return;
+  }
+  statuses.subscribe({
+    next: (status) => {
+      if (status.type === "sync") {
+        state.synced = status.synced;
+      } else if (status.type === "connection" && !status.connected) {
+        state.synced = false;
+      }
+    },
+    error: () => {
+      state.synced = false;
+    },
+  });
+}
+
+/** Whether a document was still reporting itself synced. */
+function isDocumentSynced(doc: SharedDocument): boolean {
+  return documentSyncState.get(doc)?.synced !== false;
+}
+
+/**
+ * Whether this device has a network at all.
+ *
+ * Asked alongside the document's own report because the two notice different
+ * failures, and each is blind to the other's. A document only learns it is
+ * disconnected when the websocket fires `close`, and a connection that goes away
+ * underneath the socket — wifi switched off, a laptop suspended — leaves it
+ * half-open with no close event until a send times out, which can be minutes. By
+ * then a reading has been recorded as delivered several times over. This flips
+ * the moment the interface goes.
+ *
+ * It is not sufficient on its own either: it stays true on a captive portal, and
+ * it says nothing about a server that is refusing the record. That is what the
+ * document's status covers. Together they catch both, and the same expression is
+ * what `AnnotationSyncManager` and `OfflineTranslationsManager` already use.
+ */
+function isBrowserOnline(): boolean {
+  return typeof navigator === "undefined" ? true : navigator.onLine !== false;
+}
+
+/**
  * How long to wait for a year's document before treating it as unreachable.
  *
  * Long enough that an ordinary sync on a slow connection still wins, short
@@ -137,6 +206,10 @@ function getReadingHistoryDocument(
       markers,
       timeoutMs: DOCUMENT_TIMEOUT_MS,
     })
+    .then((doc) => {
+      trackDocumentSync(doc);
+      return doc;
+    })
     .catch((error: unknown) => {
       if (readingHistoryDocs[key] === docPromise) {
         delete readingHistoryDocs[key];
@@ -145,6 +218,20 @@ function getReadingHistoryDocument(
     });
   readingHistoryDocs[key] = docPromise;
   return docPromise;
+}
+
+/** What a write to a year's document could tell about where it went. */
+export interface WriteReadingEventsResult {
+  /**
+   * Whether the document was still reporting itself synced when the events were
+   * written into it.
+   *
+   * False means the edit is sitting in an in-memory document with no connection
+   * under it. Yjs will carry it up if the connection returns while the page is
+   * still alive, but the page may not last that long — so the row it came from
+   * has to stay queued rather than be marked as the server's problem now.
+   */
+  synced: boolean;
 }
 
 /**
@@ -162,9 +249,9 @@ export async function writeReadingEventsToDocument(
   year: number,
   events: readonly ReadingEvent[],
   options: { marker?: string; name?: string } = {}
-): Promise<void> {
+): Promise<WriteReadingEventsResult> {
   if (events.length === 0) {
-    return;
+    return { synced: true };
   }
 
   const doc = await getReadingHistoryDocument(
@@ -226,6 +313,11 @@ export async function writeReadingEventsToDocument(
     map.set("end", event.end);
     array.push(map);
   }
+
+  // Read after the write, not before: a connection that dropped part-way
+  // through is one this write did not get out on either. Both signals have to
+  // agree before an edit counts as delivered.
+  return { synced: isBrowserOnline() && isDocumentSynced(doc) };
 }
 
 /** Options for {@link saveReadingHistory}. */
@@ -415,13 +507,19 @@ export async function saveReadingHistorySpan(
 
   if (row && store) {
     // The stretch is now safe on this device, so the push is allowed to fail.
-    await writeReadingEventsToDocument(
+    const { synced } = await writeReadingEventsToDocument(
       os,
       recordName,
       row.year,
       [toReadingEvent(row)],
       { marker, name }
     );
+    if (!synced) {
+      // The edit went into a document with no connection under it. Clearing
+      // `pendingOp` here would be recording that the server has an event it has
+      // never seen, and nothing would ever push it again.
+      return { awaitingReplay: true };
+    }
     try {
       await store.markSynced([{ key: row.key, end: row.end }]);
     } catch (error) {
