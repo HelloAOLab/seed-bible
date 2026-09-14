@@ -52,8 +52,6 @@ import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import {
   SaveStarIcon,
-  SelfAvatarVisual,
-  getSelfDisplayName,
   openSaveModalForLocation,
   saveChapterLabel,
 } from "../Tabs/Tabs";
@@ -2219,32 +2217,17 @@ export function BibleReader(props: BibleReaderProps) {
                 app={state.app}
                 className="sb-quick-toolbar-mobile-header"
               />
+              {/*
+               * No account avatar here: "You" is a bottom-bar tab again
+               * (#1554), and two avatars on one screen made it unclear which
+               * one was the way to your profile.
+               */}
               {sharedSession ? (
                 <MobileSessionParticipants
                   state={state}
                   session={sharedSession}
                 />
-              ) : (
-                <button
-                  type="button"
-                  className="sb-bible-reader-mobile-header-account"
-                  aria-label={`Open account settings (${getSelfDisplayName(
-                    state,
-                    t
-                  )})`}
-                  // The reader pane wrapper selects the pane on pointerdown/click
-                  // (which runs closeSidebarAndSettings). Stop the tap here so it
-                  // doesn't immediately dismiss the account view we're opening.
-                  onPointerDown={(e: PointerEvent) => e.stopPropagation()}
-                  onClick={(e: MouseEvent) => {
-                    e.stopPropagation();
-                    state.sidebar.openSidebar();
-                    state.sidebar.openSettingsToView("account");
-                  }}
-                >
-                  <SelfAvatarVisual state={state} />
-                </button>
-              )}
+              ) : null}
               <button
                 type="button"
                 className="sb-bible-reader-mobile-header-settings"
