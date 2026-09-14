@@ -25,6 +25,7 @@ import {
   type ExperienceKey,
 } from "./experience";
 import { EXPERIENCE_META } from "./experienceMeta";
+import { ExhibitCard } from "./ExhibitCard";
 import type { BookId } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 
 const extensionId = "house-of-the-lord";
@@ -73,24 +74,6 @@ async function openScripture(
   }
 }
 
-function ExhibitCard(props: { experience: ExperienceKey; onOpen: () => void }) {
-  // Literal rather than `extensionId`: the i18n lint rule resolves the
-  // namespace statically to check the key against the extension's translations.
-  const { t } = useI18n("house-of-the-lord");
-  const Icon = EXPERIENCE_META[props.experience].icon;
-
-  return (
-    <button
-      type="button"
-      className="sb-hotl-exhibit-button"
-      onClick={props.onOpen}
-    >
-      <Icon />
-      <span>{t("discover-open-exhibit", { defaultValue: "View in 3D" })}</span>
-    </button>
-  );
-}
-
 export const bootstrapExtension = () => {
   registerExtension({
     id: extensionId,
@@ -107,9 +90,13 @@ export const bootstrapExtension = () => {
 
       let portalRef: PortalComponentHandle | null = null;
 
-      const openExhibit = (experience: ExperienceKey, key: AnyPieceKey) => {
+      const openExhibit = (experience: ExperienceKey, key?: AnyPieceKey) => {
         if (portalRef) {
-          portalRef.sendMessage({ type: "highlight-piece", key, experience });
+          portalRef.sendMessage({
+            type: "highlight-piece",
+            experience,
+            ...(key ? { key } : {}),
+          });
           return;
         }
 
@@ -200,7 +187,7 @@ export const bootstrapExtension = () => {
                 query={{
                   dimension: experience,
                   experience,
-                  highlightedPiece: key,
+                  ...(key ? { highlightedPiece: key } : {}),
                 }}
               />
             );
@@ -219,23 +206,39 @@ export const bootstrapExtension = () => {
           "Interactive 3D experiences of things the Bible describes, tied to the verses that mention them."
         ),
         discover: ({ book, chapter }) =>
-          Object.values(EXPERIENCE_KEYS).flatMap((experience) =>
-            getPiecesForChapter(experience, book, chapter).map((key) => ({
-              type: "content" as const,
-              title: translate(`piece-${key}`, toPieceLabel(key)),
-              description: translate(
-                EXPERIENCE_META[experience].title.key,
-                EXPERIENCE_META[experience].title.defaultValue
-              ),
-              reference: { book, chapter },
-              content: (
-                <ExhibitCard
-                  experience={experience}
-                  onOpen={() => openExhibit(experience, key)}
-                />
-              ),
-            }))
-          ),
+          Object.values(EXPERIENCE_KEYS).flatMap((experience) => {
+            const keys = getPiecesForChapter(experience, book, chapter);
+            if (keys.length === 0) return [];
+
+            const meta = EXPERIENCE_META[experience];
+            const experienceName = translate(
+              meta.title.key,
+              meta.title.defaultValue
+            );
+
+            return [
+              {
+                type: "content" as const,
+                title: experienceName,
+                description: translate(
+                  meta.description.key,
+                  meta.description.defaultValue
+                ),
+                reference: { book, chapter },
+                content: (
+                  <ExhibitCard
+                    experience={experience}
+                    experienceName={experienceName}
+                    pieces={keys.map((key) => ({
+                      key,
+                      label: translate(`piece-${key}`, toPieceLabel(key)),
+                    }))}
+                    onOpen={(key) => openExhibit(experience, key)}
+                  />
+                ),
+              },
+            ];
+          }),
       });
 
       for (const experience of Object.values(EXPERIENCE_KEYS)) {

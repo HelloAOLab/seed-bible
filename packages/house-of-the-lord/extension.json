@@ -4,9 +4,12 @@
     "en": {
       "title": "House of the Lord",
       "description": "Interactive 3D experiences of things the Bible describes, tied to the verses that mention them.",
-      "discover-open-exhibit": "View in 3D",
+      "discover-explore-experience": "Explore the {{name}}",
+      "discover-pieces-label": "In this chapter",
       "experience-tabernacle": "Tabernacle",
+      "experience-tabernacle-description": "The portable sanctuary of Exodus, explorable piece by piece.",
       "experience-solomon-temple": "Solomon's temple",
+      "experience-solomon-temple-description": "The temple Solomon raised in Jerusalem, explorable piece by piece.",
       "piece-altar-of-sacrifice": "Altar Of Sacrifice",
       "piece-ark-of-covenant": "Ark Of Covenant",
       "piece-bars": "Bars",

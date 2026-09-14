@@ -1,17 +1,111 @@
-.sb-hotl-exhibit-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 50px;
-  background: var(--sb-primary-color);
-  color: var(--sb-background);
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
+/*
+ * Content slot of a House of the Lord discover entry. The pane owns the
+ * surrounding `li.sb-discover-item` (border, radius 8, padding 8/10) and
+ * renders the experience title + description above; everything here lives
+ * inside `.sb-discover-item-content`, which is `font-size: 0.8125rem` and
+ * `margin-top: 4px`.
+ */
+.sb-hotl-exhibit {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
 }
 
-.sb-hotl-exhibit-button:hover {
-  opacity: 0.88;
+.sb-hotl-exhibit *,
+.sb-hotl-exhibit *::before,
+.sb-hotl-exhibit *::after {
+  box-sizing: border-box;
+}
+
+/*
+ * Primary action: opens the whole experience. Tinted rather than solid so it
+ * doesn't compete with the pane's "+ Create" button, and full width so the
+ * target spans the entry instead of a 130px pill.
+ */
+.sb-hotl-exhibit-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 60%);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.sb-hotl-exhibit-primary:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
+  border-color: var(--sb-primary-color);
+}
+
+.sb-hotl-exhibit-primary .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-hotl-exhibit-primary-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-hotl-exhibit-chevron {
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
+.sb-hotl-exhibit-pieces {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-hotl-exhibit-pieces-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-hotl-exhibit-piece-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Pieces are secondary: neutral chips, tinted only on hover/focus. */
+.sb-hotl-exhibit-piece {
+  padding: 4px 11px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 50px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-hotl-exhibit-piece:hover,
+.sb-hotl-exhibit-piece:focus-visible {
+  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 55%);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+  color: var(--sb-primary-color);
 }
