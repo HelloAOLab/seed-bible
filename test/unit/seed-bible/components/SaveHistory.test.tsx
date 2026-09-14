@@ -3,9 +3,9 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
 import {
-  DEFAULT_BOOKMARK_CATEGORY,
-  type Bookmark,
-} from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
+  DEFAULT_SAVE_CATEGORY,
+  type Save,
+} from "@packages/seed-bible/seed-bible/managers/SavesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   createTestSeedBibleState,
@@ -65,23 +65,23 @@ vi.mock("../components/SidebarSearch", () => ({
 /** Narrow enough that `app.isMobile` reports true. */
 const MOBILE_VIEWPORT_WIDTH = 400;
 
-const EXODUS_2_BOOKMARK: Bookmark = {
-  id: "bookmark-exodus-2",
+const EXODUS_2_SAVE: Save = {
+  id: "save-exodus-2",
   translationId: "AAB",
   bookId: "EXO",
   chapterNumber: 2,
   createdAt: 0,
-  category: DEFAULT_BOOKMARK_CATEGORY,
+  categories: [DEFAULT_SAVE_CATEGORY],
 };
 
-const EXODUS_2_VERSE_BOOKMARK: Bookmark = {
-  ...EXODUS_2_BOOKMARK,
-  id: "bookmark-exodus-2-verse-3",
+const EXODUS_2_VERSE_SAVE: Save = {
+  ...EXODUS_2_SAVE,
+  id: "save-exodus-2-verse-3",
   verse: 3,
 };
 
 // A tab created after startup resolves its data against the app's default
-// (private) endpoint, so the bookmark's chapter has to be mocked there too.
+// (private) endpoint, so the save's chapter has to be mocked there too.
 const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org";
 
 function createResponses() {
@@ -101,19 +101,19 @@ function createResponses() {
 }
 
 /**
- * The bookmark list normally arrives from the records server for a logged-in
+ * The saves list normally arrives from the records server for a logged-in
  * user. Swap in a fixed list at that boundary so the test can drive the real
- * bookmarks UI (and the real tab/navigation managers) without an auth round
+ * saves UI (and the real tab/navigation managers) without an auth round
  * trip.
  */
-function seedBookmarks(state: SeedBibleState, bookmarks: Bookmark[]): void {
-  Object.defineProperty(state.bookmarks, "bookmarks", {
-    value: signal(bookmarks),
+function seedSaves(state: SeedBibleState, saves: Save[]): void {
+  Object.defineProperty(state.saves, "saves", {
+    value: signal(saves),
     configurable: true,
   });
 }
 
-describe("opening a bookmark from the mobile sidebar", () => {
+describe("opening a save from the mobile sidebar", () => {
   let container: HTMLDivElement;
   let state: SeedBibleState;
   let originalInnerWidth: number;
@@ -133,11 +133,11 @@ describe("opening a bookmark from the mobile sidebar", () => {
       window.dispatchEvent(new Event("resize"));
     });
 
-    seedBookmarks(state, [EXODUS_2_BOOKMARK]);
-    // The mobile Bookmarks screen: the drawer is open with the bookmark filter
-    // on, which is what the bottom Bookmarks tab does.
-    state.bookmarks.openedFromToolbar.value = true;
-    state.bookmarks.isFilterActive.value = true;
+    seedSaves(state, [EXODUS_2_SAVE]);
+    // The mobile Saves screen: the drawer is open with the saves filter on,
+    // which is what the bottom Saves tab does.
+    state.saves.openedFromToolbar.value = true;
+    state.saves.isFilterActive.value = true;
   });
 
   afterEach(() => {
@@ -158,9 +158,9 @@ describe("opening a bookmark from the mobile sidebar", () => {
     });
   }
 
-  async function tapBookmark(): Promise<void> {
+  async function tapSave(): Promise<void> {
     const button = container.querySelector<HTMLButtonElement>(
-      ".sb-bookmark-item-button"
+      ".sb-save-item-button"
     );
     expect(button).not.toBeNull();
     await act(async () => {
@@ -185,10 +185,10 @@ describe("opening a bookmark from the mobile sidebar", () => {
     const pushSpy = vi.spyOn(window.history, "pushState");
     const replaceSpy = vi.spyOn(window.history, "replaceState");
 
-    await tapBookmark();
+    await tapSave();
     await waitFor(() => window.location.pathname.includes("exodus/2"), 2000);
 
-    // One push for the bookmark, and nothing rewriting the entry that opened
+    // One push for the save, and nothing rewriting the entry that opened
     // the drawer: a `replace` there would stamp Exodus 2 onto it, so going
     // back would land on the chapter the user is already reading.
     expect(pushSpy).toHaveBeenCalledTimes(1);
@@ -200,14 +200,14 @@ describe("opening a bookmark from the mobile sidebar", () => {
     replaceSpy.mockRestore();
   });
 
-  it("costs a single history entry when a tab is already open at the bookmark", async () => {
-    // Second tap on the same bookmark: the tab exists now, so this takes the
+  it("costs a single history entry when a tab is already open at the save", async () => {
+    // Second tap on the same save: the tab exists now, so this takes the
     // "select the open tab" path instead of creating one.
     await act(async () => {
       state.sidebar.openSidebar();
     });
     await renderSidebar();
-    await tapBookmark();
+    await tapSave();
     await waitFor(() => window.location.pathname.includes("exodus/2"), 2000);
 
     await act(async () => {
@@ -217,7 +217,7 @@ describe("opening a bookmark from the mobile sidebar", () => {
     const pushSpy = vi.spyOn(window.history, "pushState");
     const replaceSpy = vi.spyOn(window.history, "replaceState");
 
-    await tapBookmark();
+    await tapSave();
     await waitFor(() => !window.location.href.includes("sidebar=open"), 2000);
 
     expect(pushSpy).toHaveBeenCalledTimes(1);
@@ -234,20 +234,20 @@ describe("opening a bookmark from the mobile sidebar", () => {
     expect(window.location.href).toBe(sidebarEntryHref);
   });
 
-  it("costs a single history entry when a bookmark with a verse opens in an already-open tab", async () => {
+  it("costs a single history entry when a save with a verse opens in an already-open tab", async () => {
     // The existing-tab branch reaches the verse through an async
     // `selectTranslationAndChapter()` that resolves after the batch has already
     // flushed, so whatever it writes to the URL escapes the batch. It costs no
     // entry today only because the tab is matched on chapter and the verse
     // never reaches the URL, leaving that write with nothing to change — an
     // invariant worth pinning, since either half of it could change.
-    seedBookmarks(state, [EXODUS_2_VERSE_BOOKMARK]);
+    seedSaves(state, [EXODUS_2_VERSE_SAVE]);
 
     await act(async () => {
       state.sidebar.openSidebar();
     });
     await renderSidebar();
-    await tapBookmark();
+    await tapSave();
     await waitFor(() => window.location.pathname.includes("exodus/2"), 2000);
 
     await act(async () => {
@@ -257,7 +257,7 @@ describe("opening a bookmark from the mobile sidebar", () => {
     const pushSpy = vi.spyOn(window.history, "pushState");
     const replaceSpy = vi.spyOn(window.history, "replaceState");
 
-    await tapBookmark();
+    await tapSave();
     await waitFor(() => !window.location.href.includes("sidebar=open"), 2000);
 
     expect(pushSpy).toHaveBeenCalledTimes(1);
@@ -284,7 +284,7 @@ describe("opening a bookmark from the mobile sidebar", () => {
     const sidebarEntryHref = window.location.href;
 
     await renderSidebar();
-    await tapBookmark();
+    await tapSave();
     await waitFor(() => window.location.pathname.includes("exodus/2"), 2000);
 
     await act(async () => {
