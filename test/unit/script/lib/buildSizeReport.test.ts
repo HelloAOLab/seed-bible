@@ -1,6 +1,7 @@
 import {
   canonicalLabelFor,
   buildCanonicalMap,
+  buildKeyMap,
   stripHash,
   formatBytes,
   diffSnapshots,
@@ -189,6 +190,205 @@ describe("diffSnapshots", () => {
     const byLabel = new Map(diff.assetFiles.map((f) => [f.label, f]));
     expect(byLabel.get("assets/new.js")?.status).toBe("added");
     expect(byLabel.get("assets/old.js")?.status).toBe("removed");
+  });
+});
+
+describe("buildKeyMap", () => {
+  it("gives each file its manifest key", () => {
+    const map = buildKeyMap({
+      "packages/seed-bible/seed-bible/i18n/ml.json": {
+        file: "assets/ml-AAAAAAAA.js",
+        name: "ml",
+      },
+      "virtual:@extensions/locale/ml": {
+        file: "assets/ml-BBBBBBBB.js",
+        name: "ml",
+      },
+    });
+    expect(map.get("assets/ml-AAAAAAAA.js")).toBe(
+      "packages/seed-bible/seed-bible/i18n/ml.json"
+    );
+    expect(map.get("assets/ml-BBBBBBBB.js")).toBe(
+      "virtual:@extensions/locale/ml"
+    );
+  });
+
+  it("strips the hash from a self-named shared chunk's key", () => {
+    // All 12 anonymous chunk keys in this build embed a content hash. Keeping
+    // it would make the chunk read as removed+added whenever it really changed.
+    const before = buildKeyMap({
+      "_en-BEvdY7cG.js": { file: "assets/en-BEvdY7cG.js", name: "en" },
+    });
+    const after = buildKeyMap({
+      "_en-CCCCCCCC.js": { file: "assets/en-CCCCCCCC.js", name: "en" },
+    });
+    expect(before.get("assets/en-BEvdY7cG.js")).toBe("_en.js");
+    expect(after.get("assets/en-CCCCCCCC.js")).toBe("_en.js");
+  });
+});
+
+describe("diffSnapshots with colliding labels", () => {
+  // Two real chunks in this build both canonicalize to `assets/ml.js`: the
+  // ~85 KB `i18n/ml.json` locale and the ~5.7 KB `virtual:@extensions/locale/ml`
+  // one. 78 chunk names are shared this way.
+  const collidingPair = (bytes: [number, number]) => [
+    {
+      label: "assets/ml.js",
+      key: "packages/seed-bible/seed-bible/i18n/ml.json",
+      relPath: "assets/ml-AAAAAAAA.js",
+      bytes: bytes[0],
+      gzipBytes: bytes[0] / 5,
+    },
+    {
+      label: "assets/ml.js",
+      key: "virtual:@extensions/locale/ml",
+      relPath: "assets/ml-BBBBBBBB.js",
+      bytes: bytes[1],
+      gzipBytes: bytes[1] / 5,
+    },
+  ];
+
+  it("diffs each colliding file against its own counterpart", () => {
+    // Base lists the two in the opposite order, as a different `readdir` would.
+    const diff = diffSnapshots(
+      snapshot({ assetFiles: collidingPair([85483, 5685]) }),
+      snapshot({ assetFiles: collidingPair([85483, 5685]).reverse() }),
+      50 * 1024
+    );
+
+    // Nothing changed, so nothing may be reported as changed. Pre-fix, the
+    // last-wins Map made these two swap and report ~80KB of phantom delta.
+    expect(diff.assetFiles.every((f) => f.deltaBytes === 0)).toBe(true);
+    expect(diff.assetFiles.some((f) => f.flagged)).toBe(false);
+  });
+
+  it("gives each colliding file its own size, not the last one read", () => {
+    const diff = diffSnapshots(
+      snapshot({ assetFiles: collidingPair([85483, 5685]) }),
+      snapshot({ assetFiles: collidingPair([85483, 5685]) }),
+      50 * 1024
+    );
+    expect(diff.assetFiles).toHaveLength(2);
+    // Pre-fix, the last-wins Map gave both rows the same file's bytes.
+    expect(
+      diff.assetFiles.map((f) => f.headBytes ?? 0).sort((a, b) => a - b)
+    ).toEqual([5685, 85483]);
+  });
+
+  it("disambiguates the display label so the rows are tellable apart", () => {
+    const diff = diffSnapshots(
+      snapshot({ assetFiles: collidingPair([85483, 5685]) }),
+      snapshot({ assetFiles: collidingPair([85483, 5685]) }),
+      50 * 1024
+    );
+    expect(diff.assetFiles.map((f) => f.label).sort()).toEqual([
+      "assets/ml.js (i18n/ml.json)",
+      "assets/ml.js (virtual:@extensions/locale/ml)",
+    ]);
+  });
+
+  it("leaves an uncontested label alone", () => {
+    const diff = diffSnapshots(
+      snapshot({
+        assetFiles: [
+          {
+            label: VENDOR_LABEL,
+            key: "vendor-entry",
+            relPath: "assets/vendor-AAAAAAAA.js",
+            bytes: 100,
+            gzipBytes: 30,
+          },
+        ],
+      }),
+      snapshot({ assetFiles: [] }),
+      50 * 1024
+    );
+    expect(diff.assetFiles.map((f) => f.label)).toEqual([VENDOR_LABEL]);
+  });
+
+  it("never emits duplicate rows for entries with no key", () => {
+    const keyless = [
+      {
+        label: "assets/ml.js",
+        relPath: "assets/ml-AAAAAAAA.js",
+        bytes: 10,
+        gzipBytes: 5,
+      },
+      {
+        label: "assets/ml.js",
+        relPath: "assets/ml-BBBBBBBB.js",
+        bytes: 20,
+        gzipBytes: 6,
+      },
+    ];
+    const diff = diffSnapshots(
+      snapshot({ assetFiles: keyless }),
+      snapshot({ assetFiles: keyless }),
+      50 * 1024
+    );
+    expect(diff.assetFiles).toHaveLength(1);
+  });
+});
+
+describe("locale row aggregation", () => {
+  function locales(
+    key: (i: number) => string,
+    count: number,
+    bytesEach: number
+  ) {
+    return Array.from({ length: count }, (_, i) => ({
+      label: `assets/loc${i}.js`,
+      key: key(i),
+      relPath: `assets/loc${i}-AAAAAAAA.js`,
+      bytes: bytesEach,
+      gzipBytes: bytesEach / 5,
+    }));
+  }
+
+  it("collapses the per-language chunks into one row per family", () => {
+    const head = [
+      ...locales(
+        (i) => `packages/seed-bible/seed-bible/i18n/l${i}.json`,
+        20,
+        2000
+      ),
+      ...locales((i) => `virtual:@extensions/locale/l${i}`, 20, 500),
+    ];
+    const base = [
+      ...locales(
+        (i) => `packages/seed-bible/seed-bible/i18n/l${i}.json`,
+        20,
+        1000
+      ),
+      ...locales((i) => `virtual:@extensions/locale/l${i}`, 20, 500),
+    ];
+    const markdown = renderReport(
+      snapshot({ assetFiles: head }),
+      snapshot({ assetFiles: base }),
+      50 * 1024
+    );
+
+    expect(markdown).toContain("i18n locales (20 files)");
+    // 20 locales x +1000 bytes, summed into the one row.
+    expect(markdown).toContain("+20KB");
+    // Individual locale chunks must not also appear.
+    expect(markdown).not.toContain("assets/loc3.js");
+  });
+
+  it("leaves the policy chunks as ordinary rows", () => {
+    const policy = {
+      label: "assets/en.js",
+      key: "packages/seed-bible/seed-bible/i18n/policies/privacy-policy/en.json",
+      relPath: "assets/en-AAAAAAAA.js",
+      bytes: 40000,
+      gzipBytes: 8000,
+    };
+    const diff = diffSnapshots(
+      snapshot({ assetFiles: [policy] }),
+      snapshot({ assetFiles: [] }),
+      50 * 1024
+    );
+    expect(diff.assetFiles.map((f) => f.key)).toEqual([policy.key]);
   });
 });
 

@@ -13,6 +13,18 @@ export interface OutputEntry {
 /** A client asset file (JS/CSS under `standalone/dist/client/assets`), keyed by a hash-stable label. */
 export interface AssetFileEntry {
   label: string;
+  /**
+   * The file's stable identity across builds — its Vite manifest key (a source
+   * path like `packages/…/i18n/ml.json`), falling back to `label`.
+   *
+   * `label` alone is not an identity: 78 chunk names in this build are shared
+   * by more than one manifest entry, so several distinct files canonicalize to
+   * the same label (`assets/ml.js` is both the 85 KB `i18n/ml.json` chunk and
+   * the 5.7 KB `virtual:@extensions/locale/ml` one). Diffing on the label made
+   * those two swap places between the head and base builds and report a 78 KB
+   * change to a file nobody touched. Optional so older snapshots still parse.
+   */
+  key?: string;
   relPath: string;
   bytes: number;
   gzipBytes: number;
@@ -108,6 +120,51 @@ export function buildCanonicalMap(manifest: ViteManifest): Map<string, string> {
   return map;
 }
 
+/**
+ * Rolldown keys a shared chunk it named itself as `_<name>-<hash>.js`, so that
+ * key changes whenever the chunk's content does. Left alone it would make such
+ * a chunk read as a removal plus an addition on any real change, so the hash is
+ * stripped — `_en-BEvdY7cG.js` becomes `_en.js`. The leading underscore is what
+ * keeps it from colliding with a source path ending in the same basename.
+ */
+function stableManifestKey(key: string): string {
+  return key.startsWith("_") ? stripHash(key) : key;
+}
+
+/**
+ * Builds a `hashed file path -> manifest key` map. The manifest key is a source
+ * path (or a virtual module id), so unlike the canonical label it is unique per
+ * chunk and stable across builds and checkouts.
+ */
+export function buildKeyMap(manifest: ViteManifest): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const [rawKey, entry] of Object.entries(manifest)) {
+    const key = stableManifestKey(rawKey);
+    if (entry.file) {
+      map.set(entry.file, key);
+    }
+    // CSS and plain assets have no manifest key of their own, so they inherit
+    // their owning entry's. That keeps them distinguishable from a same-named
+    // file emitted by a different entry.
+    for (const file of [...(entry.css ?? []), ...(entry.assets ?? [])]) {
+      if (!map.has(file)) {
+        map.set(file, `${key}::${path.posix.basename(file)}`);
+      }
+    }
+  }
+  return map;
+}
+
+/** Shortens a manifest key to something readable in a report table. */
+export function shortenKey(key: string): string {
+  const cleaned = key.replace(/^\0/, "");
+  if (cleaned.startsWith("virtual:")) {
+    return cleaned;
+  }
+  const segments = cleaned.split("/");
+  return segments.slice(-2).join("/");
+}
+
 async function readManifest(root: string): Promise<ViteManifest> {
   try {
     const raw = await fsp.readFile(path.join(root, MANIFEST_PATH), "utf-8");
@@ -187,7 +244,9 @@ export async function measureRoot(root: string): Promise<SizeSnapshot> {
   const assetFiles: AssetFileEntry[] = [];
   const assetsDirAbs = path.join(root, ASSETS_DIR);
   if (existsSync(assetsDirAbs)) {
-    const canonicalMap = buildCanonicalMap(await readManifest(root));
+    const manifest = await readManifest(root);
+    const canonicalMap = buildCanonicalMap(manifest);
+    const keyMap = buildKeyMap(manifest);
     const entries = await fsp.readdir(assetsDirAbs, { withFileTypes: true });
     for (const entry of entries) {
       if (!entry.isFile() || entry.name.endsWith(".map")) {
@@ -199,6 +258,10 @@ export async function measureRoot(root: string): Promise<SizeSnapshot> {
       const label = canonicalMap.get(relPath) ?? stripHash(relPath);
       assetFiles.push({
         label,
+        // Falls back to the label, not to `relPath`: a hashed filename changes
+        // whenever the content does, which would make every changed file read
+        // as a removal plus an addition instead of a change.
+        key: keyMap.get(relPath) ?? label,
         relPath,
         bytes,
         gzipBytes: gzipBytesOf(absPath),
@@ -262,7 +325,10 @@ export interface OutputDiffRow {
 }
 
 export interface AssetDiffRow {
+  /** Display label, disambiguated when several files share one. */
   label: string;
+  /** The row's stable identity — see `AssetFileEntry.key`. */
+  key: string;
   baseBytes: number | null;
   headBytes: number | null;
   baseGzipBytes: number | null;
@@ -280,10 +346,43 @@ export interface SnapshotDiff {
   assetFiles: AssetDiffRow[];
 }
 
-/** Orders labels head-first (preserving head's natural order), appending any base-only labels. */
-function orderedLabels(headLabels: string[], baseLabels: string[]): string[] {
-  const headSet = new Set(headLabels);
-  return [...headLabels, ...baseLabels.filter((l) => !headSet.has(l))];
+/**
+ * Orders row identities head-first (preserving head's natural order), appending
+ * any base-only ones. Deduplicates: two entries sharing an identity must never
+ * produce two identical rows.
+ */
+function orderedKeys(head: string[], base: string[]): string[] {
+  const headKeys = [...new Set(head)];
+  const headSet = new Set(headKeys);
+  return [...headKeys, ...new Set(base.filter((k) => !headSet.has(k)))];
+}
+
+/** A file's identity for diffing: its manifest key, or its label if it has none. */
+function identity(file: AssetFileEntry): string {
+  return file.key ?? file.label;
+}
+
+/**
+ * Picks each file's display label, appending a shortened key to any label that
+ * more than one file claims. Without this, the two chunks that both canonicalize
+ * to `assets/ml.js` render as two indistinguishable rows.
+ */
+function displayLabels(files: AssetFileEntry[]): Map<string, string> {
+  const owners = new Map<string, Set<string>>();
+  for (const file of files) {
+    const set = owners.get(file.label) ?? new Set<string>();
+    set.add(identity(file));
+    owners.set(file.label, set);
+  }
+  const labels = new Map<string, string>();
+  for (const file of files) {
+    const shared = (owners.get(file.label)?.size ?? 0) > 1;
+    labels.set(
+      identity(file),
+      shared ? `${file.label} (${shortenKey(identity(file))})` : file.label
+    );
+  }
+  return labels;
 }
 
 /** Diffs two snapshots, flagging any output/asset whose absolute size delta exceeds the threshold. */
@@ -294,7 +393,7 @@ export function diffSnapshots(
 ): SnapshotDiff {
   const baseOutputs = new Map(base.outputs.map((o) => [o.label, o.bytes]));
   const headOutputs = new Map(head.outputs.map((o) => [o.label, o.bytes]));
-  const outputs: OutputDiffRow[] = orderedLabels(
+  const outputs: OutputDiffRow[] = orderedKeys(
     head.outputs.map((o) => o.label),
     base.outputs.map((o) => o.label)
   ).map((label) => {
@@ -312,14 +411,19 @@ export function diffSnapshots(
 
   const totalDelta = head.totalBytes - base.totalBytes;
 
-  const baseAssets = new Map(base.assetFiles.map((f) => [f.label, f]));
-  const headAssets = new Map(head.assetFiles.map((f) => [f.label, f]));
-  const assetFiles: AssetDiffRow[] = orderedLabels(
-    head.assetFiles.map((f) => f.label),
-    base.assetFiles.map((f) => f.label)
-  ).map((label) => {
-    const baseFile = baseAssets.get(label);
-    const headFile = headAssets.get(label);
+  // Keyed by identity, not label: `new Map` is last-wins, so two files sharing
+  // a label would collapse to whichever `readdir` happened to return last — and
+  // that order can differ between the head checkout and `base-branch/`, which is
+  // how an untouched build reports a 78 KB swing.
+  const baseAssets = new Map(base.assetFiles.map((f) => [identity(f), f]));
+  const headAssets = new Map(head.assetFiles.map((f) => [identity(f), f]));
+  const labels = displayLabels([...head.assetFiles, ...base.assetFiles]);
+  const assetFiles: AssetDiffRow[] = orderedKeys(
+    head.assetFiles.map(identity),
+    base.assetFiles.map(identity)
+  ).map((key) => {
+    const baseFile = baseAssets.get(key);
+    const headFile = headAssets.get(key);
     const baseBytes = baseFile?.bytes ?? null;
     const headBytes = headFile?.bytes ?? null;
     const baseGzipBytes = baseFile?.gzipBytes ?? null;
@@ -334,7 +438,8 @@ export function diffSnapshots(
           ? "unchanged"
           : "changed";
     return {
-      label,
+      label: labels.get(key) ?? key,
+      key,
       baseBytes,
       headBytes,
       baseGzipBytes,
@@ -356,6 +461,64 @@ export function diffSnapshots(
 
 const NOISE_FLOOR_BYTES = 1024;
 const MAX_CHANGED_FILES_ROWS = 15;
+
+/**
+ * Chunk families that are emitted once per language. There are ~77 of each, and
+ * a translation refresh churns all of them at once — enough to fill the changed
+ * files table and bury whatever regression the PR actually introduced. Each
+ * family collapses to a single summed row instead.
+ *
+ * Matched on the manifest key rather than the filename: the policy chunks live
+ * under `i18n/` too but are only three files, so they stay as ordinary rows.
+ */
+const LOCALE_FAMILIES: { label: string; test: RegExp }[] = [
+  { label: "i18n locales", test: /(^|\/)i18n\/[^/]+\.json$/ },
+  {
+    label: "extension locales",
+    test: /^\0?virtual:@extensions\/locale\//,
+  },
+];
+
+/** Collapses each per-language chunk family into one summed row. */
+function aggregateLocaleRows(rows: AssetDiffRow[]): AssetDiffRow[] {
+  const out: AssetDiffRow[] = [];
+  const groups = new Map<string, AssetDiffRow[]>();
+
+  for (const row of rows) {
+    const family = LOCALE_FAMILIES.find((f) => f.test.test(row.key));
+    if (!family) {
+      out.push(row);
+      continue;
+    }
+    groups.set(family.label, [...(groups.get(family.label) ?? []), row]);
+  }
+
+  for (const [label, members] of groups) {
+    // A missing side stays missing rather than counting as zero, so an
+    // added/removed family doesn't read as if it had shrunk from nothing.
+    const sum = (pick: (r: AssetDiffRow) => number | null): number | null =>
+      members.every((m) => pick(m) === null)
+        ? null
+        : members.reduce((total, m) => total + (pick(m) ?? 0), 0);
+    out.push({
+      label: `${label} (${members.length} files)`,
+      key: `aggregate:${label}`,
+      baseBytes: sum((m) => m.baseBytes),
+      headBytes: sum((m) => m.headBytes),
+      baseGzipBytes: sum((m) => m.baseGzipBytes),
+      headGzipBytes: sum((m) => m.headGzipBytes),
+      deltaBytes: members.reduce((t, m) => t + m.deltaBytes, 0),
+      deltaGzipBytes: members.reduce((t, m) => t + m.deltaGzipBytes, 0),
+      // Deliberately still flaggable: "every locale grew 30%" is real news.
+      flagged: members.some((m) => m.flagged),
+      status: members.every((m) => m.status === "unchanged")
+        ? "unchanged"
+        : "changed",
+    });
+  }
+
+  return out;
+}
 
 function sizeCell(bytes: number | null): string {
   return bytes === null ? "_missing_" : formatBytes(bytes);
@@ -413,7 +576,9 @@ export function renderReport(
       lines.push(renderAssetDiffRow(label, byLabel.get(label)));
     }
 
-    const otherChanged = diff.assetFiles
+    const reportRows = aggregateLocaleRows(diff.assetFiles);
+
+    const otherChanged = reportRows
       .filter((f) => f.label !== VENDOR_LABEL && f.label !== INDEX_LABEL)
       .filter((f) => Math.abs(f.deltaBytes) >= NOISE_FLOOR_BYTES)
       .sort((a, b) => Math.abs(b.deltaBytes) - Math.abs(a.deltaBytes));
@@ -446,7 +611,7 @@ export function renderReport(
           head: o.headBytes,
           delta: o.deltaBytes,
         })),
-      ...diff.assetFiles
+      ...reportRows
         .filter((f) => f.flagged)
         .map((f) => ({
           label: `\`${f.label}\``,
