@@ -22,7 +22,7 @@ export class PieceAdapter implements PieceAdapterPort {
   setPosition(piece: Piece, position: Vector3) {
     const bot = this.#pieceMapper.toInfrastructure(piece);
     if (!bot) {
-      throw new Error("PieceAdapter: bot not found at ");
+      throw new Error("PieceAdapter: bot not found at setPosition");
     }
     const dimension = this.#getDimension();
 
@@ -36,7 +36,7 @@ export class PieceAdapter implements PieceAdapterPort {
   getCurrentState(piece: Piece): PieceVisibilityState {
     const bot = this.#pieceMapper.toInfrastructure(piece);
     if (!bot) {
-      throw new Error("PieceAdapter: bot not found at ");
+      throw new Error("PieceAdapter: bot not found at getCurrentState");
     }
     return bot.tags.state;
   }
