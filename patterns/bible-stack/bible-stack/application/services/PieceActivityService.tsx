@@ -236,7 +236,7 @@ export class PieceActivityService implements PieceActivityServicePort {
     this.#loggerPort = loggerPort;
     this.#eventBus = eventBus;
 
-    this.#eventBus.subscribe("OnUserPresenceUpdated", () => {
+    this.#eventBus.subscribe("OnStackSequenceEnd", () => {
       this.updateAllIndicators();
       this.updateAllNotifications();
     });

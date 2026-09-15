@@ -173,6 +173,7 @@ export const INITIAL_CONFIG_MAP: {
     labelAlignment: "center",
     labelColor: "#000000",
     labelWordWrapMode: "none",
+    pointable: false,
   },
   [BiblePieces.ActivityNotification]: {
     color: "#e07b4c",
@@ -189,6 +190,7 @@ export const INITIAL_CONFIG_MAP: {
     labelFontSize: 0.4,
     labelFontAddress:
       "https://cdn.jsdelivr.net/npm/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff",
+    pointable: false,
   },
   [BiblePieces.InfoLabelDate]: {
     color: "white",

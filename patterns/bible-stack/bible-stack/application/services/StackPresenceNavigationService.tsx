@@ -82,8 +82,8 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   #testamentSelectionServicePort: ServiceParams["testamentSelectionServicePort"];
   #sectionSelectionServicePort: ServiceParams["sectionSelectionServicePort"];
   #explodedViewServicePort: ServiceParams["explodedViewServicePort"];
-  #isUpdateQueued: boolean = false;
-  #isThereAnOngoingUpdate: boolean = false;
+  #isUpdatePending: boolean = false;
+  #didUpdateRunInSequence: boolean = false;
   #arrangementServicePort: ServiceParams["arrangementServicePort"];
 
   constructor({
@@ -124,79 +124,103 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     this.#arrangementServicePort = arrangementServicePort;
 
     this.#eventBus.subscribe("OnUserPresenceUpdated", () => {
-      this.#sequenceStateServicePort.executeAsSequence(() => this.update());
+      this.#isUpdatePending = true;
+      this.#tryDrainUpdate();
+    });
+
+    this.#eventBus.subscribe("OnStackSectionExploded", (payload) => {
+      this.#handleSectionExploded(payload);
+    });
+
+    this.#eventBus.subscribe("OnStackSequenceStart", () => {
+      this.#didUpdateRunInSequence = false;
+    });
+
+    this.#eventBus.subscribe("OnStackSequenceEnd", () => {
+      if (!this.#didUpdateRunInSequence) {
+        this.#isUpdatePending = false;
+        return;
+      }
+      this.#tryDrainUpdate();
     });
   }
 
-  handleSectionExploded(payload: { sectionData: StackSectionData }): void {
+  #handleSectionExploded(payload: { sectionData: StackSectionData }): void {
     const selectedInstance =
       this.#userPresencePort.getOwnUserSelectedInstance();
-    if (selectedInstance) {
-      const activeBook = payload.sectionData.childrenData
-        .flat()
-        .find((bookData) => {
-          return (
-            bookData.getPieceInfoProperty("bookId") ===
-              selectedInstance.bookId && bookData.isActivelySelected()
-          );
-        });
-      if (activeBook) this.update();
-    }
+    if (!selectedInstance) return;
+
+    const activeBook = payload.sectionData.childrenData
+      .flat()
+      .find((bookData) => {
+        return (
+          bookData.getPieceInfoProperty("bookId") === selectedInstance.bookId &&
+          bookData.isActivelySelected()
+        );
+      });
+    if (!activeBook) return;
+
+    this.#isUpdatePending = true;
+    this.#tryDrainUpdate();
   }
 
   async update(): Promise<void> {
-    const selectedInstance =
-      this.#userPresencePort.getOwnUserSelectedInstance();
+    this.#didUpdateRunInSequence = true;
 
-    const shouldQueue = this.#isThereAnOngoingUpdate;
+    do {
+      this.#isUpdatePending = false;
 
-    if (
-      this.#bibleDataRepositoryPort.getAllBiblesData().length === 0 ||
-      !selectedInstance ||
-      shouldQueue
-    ) {
-      if (shouldQueue) this.#isUpdateQueued = true;
-      return;
-    }
+      const selectedInstance =
+        this.#userPresencePort.getOwnUserSelectedInstance();
 
-    this.#isUpdateQueued = false;
-    this.#isThereAnOngoingUpdate = true;
-
-    try {
-      const { chaptersToDeselect, chaptersToSelectDirectly, chapterToFocus } =
-        this.#determineNavigationTargets(selectedInstance);
-
-      const animations: Promise<void>[] = [
-        ...chaptersToSelectDirectly.map((data) =>
-          this.#chapterSelectionServicePort.trySelectChapter({
-            data,
-            bookData: undefined,
-          })
-        ),
-        ...chaptersToDeselect.map((data) =>
-          this.#chapterSelectionServicePort.deselectChapter({ data })
-        ),
-      ];
-
-      if (chapterToFocus) {
-        animations.push(this.#navigateToChapter(chapterToFocus));
+      if (
+        this.#bibleDataRepositoryPort.getAllBiblesData().length === 0 ||
+        !selectedInstance
+      ) {
+        return;
       }
 
-      await (animations.length > 0
-        ? Promise.all(animations)
-        : this.#awaiterPort.sleep(1));
-    } catch (error) {
-      this.#loggerPort.error(
-        "StackPresenceNavigationService: update failed",
-        error
-      );
-    } finally {
-      this.#isThereAnOngoingUpdate = false;
+      try {
+        await this.#runUpdatePass(selectedInstance);
+      } catch (error) {
+        this.#loggerPort.error(
+          "StackPresenceNavigationService: update failed",
+          error
+        );
+      }
+    } while (this.#isUpdatePending);
+  }
+
+  async #runUpdatePass(selectedInstance: ReadingInstance): Promise<void> {
+    const { chaptersToDeselect, chaptersToSelectDirectly, chapterToFocus } =
+      this.#determineNavigationTargets(selectedInstance);
+
+    const animations: Promise<void>[] = [
+      ...chaptersToSelectDirectly.map((data) =>
+        this.#chapterSelectionServicePort.trySelectChapter({
+          data,
+          bookData: undefined,
+        })
+      ),
+      ...chaptersToDeselect.map((data) =>
+        this.#chapterSelectionServicePort.deselectChapter({ data })
+      ),
+    ];
+
+    if (chapterToFocus) {
+      animations.push(this.#navigateToChapter(chapterToFocus));
     }
 
-    if (this.#isUpdateQueued) {
-      this.update();
-    }
+    await (animations.length > 0
+      ? Promise.all(animations)
+      : this.#awaiterPort.sleep(1));
+  }
+
+  #tryDrainUpdate(): void {
+    if (!this.#isUpdatePending) return;
+    if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
+
+    this.#sequenceStateServicePort.executeAsSequence(() => this.update());
   }
 
   #determineNavigationTargets(
@@ -346,7 +370,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     } else {
       await this.#awaiterPort.sleep(1);
     }
-    if (this.#isUpdateQueued) return;
+    if (this.#isUpdatePending) return;
 
     // Step 2: Select the testament that contains the target chapter
     if (testamentData && !testamentData.isSplitIntoSections) {
@@ -358,7 +382,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     } else {
       await this.#awaiterPort.sleep(1);
     }
-    if (this.#isUpdateQueued) return;
+    if (this.#isUpdatePending) return;
 
     // Step 3: Select the section book or drill into the section
     if (sectionBookData) {
@@ -385,7 +409,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     } else {
       await this.#awaiterPort.sleep(1);
     }
-    if (this.#isUpdateQueued) return;
+    if (this.#isUpdatePending) return;
 
     // Step 4: Expand the section into exploded view so individual books are reachable
     if (sectionData && !sectionData.isInExplodedView) {
@@ -396,7 +420,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     } else {
       await this.#awaiterPort.sleep(1);
     }
-    if (this.#isUpdateQueued) return;
+    if (this.#isUpdatePending) return;
 
     // Step 5: Select the specific book that contains the target chapter
     if (bookData && bookData.selectionState !== "Selected") {
@@ -408,7 +432,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     } else {
       await this.#awaiterPort.sleep(1);
     }
-    if (this.#isUpdateQueued) return;
+    if (this.#isUpdatePending) return;
 
     // Step 6: Select the chapter itself
     await this.#chapterSelectionServicePort.trySelectChapter({

@@ -144,7 +144,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
             duration,
             easing,
             tagMaskSpace: false,
-            ignoreCancellation: true,
+            expectsCancellation: true,
           });
         }
       }
@@ -271,7 +271,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
       duration,
       easing,
       tagMaskSpace: false,
-      ignoreCancellation: true,
+      expectsCancellation: true,
     });
   }
 
@@ -325,7 +325,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
       duration,
       easing,
       tagMaskSpace: false,
-      ignoreCancellation: true,
+      expectsCancellation: true,
     });
   }
 
@@ -364,7 +364,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
             duration,
             easing,
             tagMaskSpace: false,
-            ignoreCancellation: true,
+            expectsCancellation: true,
           });
         }
       }
@@ -486,7 +486,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
       duration,
       easing,
       tagMaskSpace: false,
-      ignoreCancellation: true,
+      expectsCancellation: true,
     });
   }
 

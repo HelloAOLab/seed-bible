@@ -167,7 +167,7 @@ export function AnimateStrictTag<
   options: Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
     fromValue?: B["tags"][K];
     toValue: B["tags"][K];
-    ignoreCancellation?: boolean;
+    expectsCancellation?: boolean;
   }
 ): Promise<void>;
 // Overload 2: animate several tags at once — animateTag(bot, options), where
@@ -180,7 +180,7 @@ export function AnimateStrictTag<
   options: Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
     fromValue?: Partial<B["tags"]>;
     toValue: Partial<B["tags"]>;
-    ignoreCancellation?: boolean;
+    expectsCancellation?: boolean;
   }
 ): Promise<void>;
 export function AnimateStrictTag<
@@ -194,19 +194,19 @@ export function AnimateStrictTag<
     | (Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
         fromValue?: Partial<B["tags"]>;
         toValue: Partial<B["tags"]>;
-        ignoreCancellation?: boolean;
+        expectsCancellation?: boolean;
       }),
   options?: Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
     fromValue?: B["tags"][K];
     toValue: B["tags"][K];
-    ignoreCancellation?: boolean;
+    expectsCancellation?: boolean;
   }
 ): Promise<void> {
   // The native animateTag is poorly typed; the strict overloads above are the
   // contract callers see, so the implementation passes through.
   const optionsObject =
     typeof tagOrOptions === "object" ? tagOrOptions : options;
-  const ignoreCancellation = optionsObject?.ignoreCancellation ?? false;
+  const expectsCancellation = optionsObject?.expectsCancellation ?? false;
 
   const promise = animateTag(
     bot,
@@ -214,17 +214,19 @@ export function AnimateStrictTag<
     options
   ) as Promise<void>;
 
-  if (!ignoreCancellation) return promise;
-
-  // Opt-in: treat a canceled animation (an unhighlight or a newer update
-  // superseding an in-flight one) as a normal outcome instead of a rejection,
-  // so it never aborts a caller that expects to coexist with such interruptions.
+  // A canceled animation is never fatal: releasing a pooled bot clears its
+  // animations, which rejects whatever was still awaiting them, and that
+  // rejection would otherwise abort an unrelated caller mid-sequence. Callers
+  // that coexist with the interruption by design (an unhighlight superseding a
+  // highlight) set expectsCancellation to keep it out of the console.
   return promise.catch((error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
-    if (message.includes("The animation was canceled")) {
-      return;
+    if (!message.includes("The animation was canceled")) {
+      throw error;
     }
-    throw error;
+    if (!expectsCancellation) {
+      console.warn("AnimateStrictTag: animation canceled.", error);
+    }
   });
 }
 

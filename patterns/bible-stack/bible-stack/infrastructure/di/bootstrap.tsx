@@ -1326,10 +1326,6 @@ export const bootstrapExtension = () => {
     }
   );
 
-  bibleStackEventManager.subscribe("OnStackSectionExploded", (payload) =>
-    stackPresenceNavigationService.handleSectionExploded(payload)
-  );
-
   bibleStackEventManager.subscribe("OnSectionBeginSelect", () =>
     audioAdapter.playSound("SectionOpen")
   );
@@ -1360,11 +1356,6 @@ export const bootstrapExtension = () => {
       if (!hasABibleEverBeenCreated) audioAdapter.playSound("BibleOpenSound");
     }
   );
-
-  bibleStackEventManager.subscribe("OnUserPresenceUpdated", () => {
-    pieceActivityService.updateAllIndicators();
-    pieceActivityService.updateAllNotifications();
-  });
 
   listenTagEventBus.subscribe("onBotChanged", ({ bot, params }) => {
     botStateController.handleStateChanged(bot, params.tags);
