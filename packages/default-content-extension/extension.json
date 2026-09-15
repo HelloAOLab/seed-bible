@@ -1,0 +1,12 @@
+{
+  "id": "default-content-extension",
+  "autoinstall": true,
+  "translations": {
+    "en": {
+      "title": "Seed Bible Default Content",
+      "description": "Discover content selected by the Seed Bible authors.",
+      "content-by-author": "By {{author}}",
+      "content-watch-link": "Watch"
+    }
+  }
+}

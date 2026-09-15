@@ -1,0 +1,13 @@
+diff --git a/DataRecordsController.d.ts b/DataRecordsController.d.ts
+index fb572786933824fe3a4f67c9611fe81c7c6720e8..c5e55ae215cf0c074cc7b05032d9ddc5fcfb2d40 100644
+--- a/DataRecordsController.d.ts
++++ b/DataRecordsController.d.ts
+@@ -249,7 +249,7 @@ export interface EraseDataFailure {
+     /**
+      * The error code for the failure.
+      */
+-    errorCode: ServerError | NotLoggedInError | NotAuthorizedError | EraseDataStoreResult['errorCode'] | ValidatePublicRecordKeyFailure['errorCode'] | AuthorizeSubjectFailure['errorCode'];
++    errorCode: KnownErrorCodes;
+     /**
+      * The error message for the failure.
+      */
