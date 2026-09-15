@@ -1,4 +1,7 @@
-import { EXPERIENCE_KEYS } from "@packages/house-of-the-lord/experience";
+import {
+  EXPERIENCE_KEYS,
+  isExperienceKey,
+} from "@packages/house-of-the-lord/experience";
 import { TABERNACLE_PIECE_KEYS } from "@packages/house-of-the-lord/pieceKeys";
 import {
   getPiecesForChapter,
@@ -133,6 +136,26 @@ describe("verseReference.getPiecesForChapter", () => {
       TABERNACLE_PIECE_KEYS.FRONT_CURTAIN,
       TABERNACLE_PIECE_KEYS.FENCE,
     ]);
+  });
+});
+
+describe("experience.isExperienceKey", () => {
+  it("accepts every known experience", () => {
+    for (const key of Object.values(EXPERIENCE_KEYS)) {
+      expect(isExperienceKey(key)).toBe(true);
+    }
+  });
+
+  it("rejects an unknown string", () => {
+    expect(isExperienceKey("herods-temple")).toBe(false);
+    expect(isExperienceKey("")).toBe(false);
+  });
+
+  it("rejects non-string values", () => {
+    expect(isExperienceKey(null)).toBe(false);
+    expect(isExperienceKey(undefined)).toBe(false);
+    expect(isExperienceKey(1)).toBe(false);
+    expect(isExperienceKey({})).toBe(false);
   });
 });
 

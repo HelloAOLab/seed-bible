@@ -6,6 +6,7 @@ import type {
   BotVars,
 } from "../../../../pattern-typings/AuxLibraryDefinitions";
 import type { VFXPieceKey } from "../../domain/models/vfx";
+import type { ExperienceKey } from "../../domain/models/experience";
 
 export interface TypedBot<T = BotTags, M = BotTags> {
   id: string;
@@ -145,4 +146,14 @@ export interface ScriptureNavigationMessage {
   };
 }
 
-export type PatternMessage = ReadyMessage | ScriptureNavigationMessage;
+export interface ExperienceChangedMessage {
+  id: "experience-changed";
+  data: {
+    experience: ExperienceKey | null;
+  };
+}
+
+export type PatternMessage =
+  | ReadyMessage
+  | ScriptureNavigationMessage
+  | ExperienceChangedMessage;

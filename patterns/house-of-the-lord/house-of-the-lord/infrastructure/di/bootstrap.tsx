@@ -410,6 +410,7 @@ export const bootstrapExtension = async () => {
     if (experience) {
       navMenuStateService.setExperience(experience);
     }
+    hostNotifierAdapter.notifyExperienceChanged(experience);
   });
 
   os.addBotListener(
