@@ -729,7 +729,8 @@ export function createSeedBibleState(
     if (targetIds === null && !hasEnteredCustomizationExtensionMode) {
       return;
     }
-    const key = targetIds === null ? " default" : [...targetIds].sort().join("");
+    const key =
+      targetIds === null ? " default" : [...targetIds].sort().join("");
     if (key === previousExtensionTargetKey) {
       return;
     }

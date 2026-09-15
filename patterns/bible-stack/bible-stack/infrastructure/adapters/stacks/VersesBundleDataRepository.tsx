@@ -3,7 +3,9 @@ import type { VersesBundleDataRepositoryPort as PieceLifecycleRepositoryPort } f
 import type { VersesBundleDataRepositoryPort as VersesBundleInteractionRepositoryPort } from "../../../application/ports/versesBundle";
 
 export class VersesBundleRepository
-  implements PieceLifecycleRepositoryPort, VersesBundleInteractionRepositoryPort
+  implements
+    PieceLifecycleRepositoryPort,
+    VersesBundleInteractionRepositoryPort
 {
   #dataSet: Set<VersesBundleData> = new Set();
 

@@ -235,8 +235,7 @@ describe("truncateForMeta", () => {
     // *does* end on a mark, because the mark belongs to the letter before it.
     // What must never happen is a cut landing inside a cluster, which would
     // strip a letter's vowel points or leave them attached to the ellipsis.
-    const hebrew =
-      "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ וְהָאָרֶץ הָיְתָה תֹהוּ וָבֹהוּ";
+    const hebrew = "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ וְהָאָרֶץ הָיְתָה תֹהוּ וָבֹהוּ";
 
     for (const budget of [5, 8, 12, 17, 21, 30]) {
       const result = truncateForMeta(hebrew, budget);

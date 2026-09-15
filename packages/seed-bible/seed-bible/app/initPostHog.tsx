@@ -60,9 +60,7 @@ if (
             u.toString = function (t) {
               var e = "posthog";
               return (
-                "posthog" !== a && (e += "." + a),
-                t || (e += " (stub)"),
-                e
+                "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e
               );
             },
             u.people.toString = function () {

@@ -161,27 +161,21 @@ function buildTimeline(
     | { kind: "join"; timeMs: number; participant: ChatParticipant };
 
   const entries: Entry[] = [
-    ...messages.map(
-      (message): Entry => ({
-        kind: "message",
-        timeMs: message.timeMs,
-        message,
-      })
-    ),
-    ...toolCallMessages.map(
-      (message): Entry => ({
-        kind: "tool",
-        timeMs: message.timeMs,
-        message,
-      })
-    ),
-    ...getJoinEvents(messages, participants).map(
-      (event): Entry => ({
-        kind: "join",
-        timeMs: event.timeMs,
-        participant: event.participant,
-      })
-    ),
+    ...messages.map((message): Entry => ({
+      kind: "message",
+      timeMs: message.timeMs,
+      message,
+    })),
+    ...toolCallMessages.map((message): Entry => ({
+      kind: "tool",
+      timeMs: message.timeMs,
+      message,
+    })),
+    ...getJoinEvents(messages, participants).map((event): Entry => ({
+      kind: "join",
+      timeMs: event.timeMs,
+      participant: event.participant,
+    })),
   ];
 
   // Stable sort by time; at equal times, messages come before tool calls, which come before joins.
