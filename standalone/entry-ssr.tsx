@@ -499,12 +499,9 @@ export async function render(
     state.app.selectedTab.value?.readingState.chapterDataPromise,
   ]);
 
-  // oxlint-disable-next-line unicorn/no-single-promise-in-promise-methods -- mirrors the Promise.all above so both awaits read the same way
-  const [appHtml] = await Promise.all([
-    renderToStringAsync(
-      <Main initialState={state} config={config} initialHref={href} />
-    ),
-  ]);
+  const appHtml = await renderToStringAsync(
+    <Main initialState={state} config={config} initialHref={href} />
+  );
 
   const metaHtml = await renderToStringAsync(
     <>
