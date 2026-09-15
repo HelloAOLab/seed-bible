@@ -66,7 +66,7 @@ This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader.
 
 **App entry** (`app/`) — initialization hooks, PostHog bootstrap, and the entry point that wires managers together.
 
-**i18n** (`i18n/`) — i18next with 24 locale JSON files. Translation keys are validated at lint time by a custom ESLint rule in `script/eslint/`.
+**i18n** (`i18n/`) — i18next with 24 locale JSON files. Translation keys are validated at lint time by a custom ESLint rule in `script/lint/`.
 
 ### Extensions (`packages/*-extension/`)
 

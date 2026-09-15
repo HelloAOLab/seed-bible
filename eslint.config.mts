@@ -2,12 +2,12 @@ import globals from "globals";
 import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
 import css from "@eslint/css";
-import i18nMissingKeysRule from "./script/eslint/i18nMissingKeysRule";
-import i18nUnusedKeysRule from "./script/eslint/i18nUnusedKeysRule";
-import i18nIncompleteTranslationsRule from "./script/eslint/i18nIncompleteTranslationsRule";
-import i18nExtensionIncompleteTranslationsRule from "./script/eslint/i18nExtensionIncompleteTranslationsRule";
-import i18nUntranslatedContentRule from "./script/eslint/i18nUntranslatedContentRule";
-import noImmediateStorageAccessRule from "./script/eslint/noImmediateStorageAccessRule";
+import i18nMissingKeysRule from "./script/lint/i18nMissingKeysRule";
+import i18nUnusedKeysRule from "./script/lint/i18nUnusedKeysRule";
+import i18nIncompleteTranslationsRule from "./script/lint/i18nIncompleteTranslationsRule";
+import i18nExtensionIncompleteTranslationsRule from "./script/lint/i18nExtensionIncompleteTranslationsRule";
+import i18nUntranslatedContentRule from "./script/lint/i18nUntranslatedContentRule";
+import noImmediateStorageAccessRule from "./script/lint/noImmediateStorageAccessRule";
 import json from "@eslint/json";
 
 import { defineConfig, globalIgnores } from "eslint/config";

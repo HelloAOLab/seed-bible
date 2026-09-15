@@ -1,5 +1,5 @@
 import { RuleTester, type Rule } from "eslint";
-import noImmediateStorageAccessRule from "../../../../script/eslint/noImmediateStorageAccessRule";
+import noImmediateStorageAccessRule from "../../../../script/lint/noImmediateStorageAccessRule";
 
 // `@typescript-eslint/utils`'s RuleModule type (what our rule is typed as)
 // and eslint's own `Rule.RuleModule` (what `RuleTester.run` expects) are
