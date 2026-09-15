@@ -1,5 +1,4 @@
-/// <reference types="vitest/config" />
-import { defineConfig } from "vite";
+import { defineConfig } from "vite-plus";
 import preact from "@preact/preset-vite";
 import path from "path";
 import { execSync } from "child_process";
