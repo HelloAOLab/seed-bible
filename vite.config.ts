@@ -422,6 +422,91 @@ export default defineConfig(({ isSsrBuild }) => ({
     ],
   },
 
+  lint: {
+    ignorePatterns: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/typings/**",
+      "**/obsolete/**",
+      "pattern-dist/**",
+    ],
+    jsPlugins: [
+      "./script/lint/i18nPlugin.ts",
+      "./script/lint/hydrationPlugin.ts",
+    ],
+    env: { browser: true, es2024: true },
+    categories: { correctness: "error" },
+    rules: {
+      "no-constant-binary-expression": "error",
+      "no-constant-condition": "error",
+      "no-unused-expressions": "error",
+      "no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      "typescript/no-explicit-any": "error",
+      "no-empty": "error",
+      "no-prototype-builtins": "error",
+      "no-case-declarations": "error",
+      "no-empty-pattern": "error",
+      "prefer-const": [
+        "warn",
+        {
+          destructuring: "all",
+          // Allows a closure to read a `let` before its one assignment.
+          ignoreReadBeforeAssign: true,
+        },
+      ],
+      "no-useless-escape": "off",
+      "no-control-regex": "off",
+
+      // Oxlint's `correctness` category turns on the unicorn and oxc plugins,
+      // which ESLint never ran here. The rules below only fired on idiomatic or
+      // deliberate code, so they stay off to hold the ESLint baseline; the rest
+      // of both plugins is left on.
+      // Spreading an iterable into an array before `for…of`, or re-spreading a
+      // freshly built array, is the repo's normal way of taking a snapshot.
+      "unicorn/no-useless-spread": "off",
+      // `{...(x || {})}` is used deliberately to keep the intent readable.
+      "unicorn/no-useless-fallback-in-spread": "off",
+      // `new Array(n)` is always the length form in this codebase.
+      "unicorn/no-new-array": "off",
+      // Test URL matchers are regexes on purpose, for symmetry with the ones
+      // that genuinely need a pattern.
+      "unicorn/prefer-string-starts-ends-with": "off",
+    },
+    overrides: [
+      {
+        files: ["packages/**/*.{js,mjs,cjs,ts,tsx,jsx}"],
+        rules: {
+          "seed-bible-i18n/translation-missing-keys": "error",
+          "seed-bible-i18n/i18n-untranslated-content": "warn",
+        },
+      },
+      {
+        files: [
+          "packages/seed-bible/seed-bible/managers/**/*.{ts,tsx}",
+          "packages/seed-bible/seed-bible/components/**/*.{ts,tsx}",
+          "packages/seed-bible/seed-bible/app/**/*.{ts,tsx}",
+        ],
+        rules: {
+          "seed-bible-hydration/no-immediate-storage-access": "error",
+        },
+      },
+      {
+        files: ["test/**/*.{js,mjs,cjs,ts,tsx,jsx}"],
+        env: { node: true, vitest: true },
+        rules: {
+          "typescript/no-explicit-any": "off",
+        },
+      },
+    ],
+  },
+
   staged: {
     "*.{js,mjs,cjs,ts,tsx,css,json,md}": "vp fmt",
   },

@@ -19,6 +19,10 @@
     "noImplicitReturns": true,
     "module": "preserve",
     "noEmit": true,
+    // Oxlint loads the custom lint rules in `script/lint` with a plain Node
+    // `import()`, which will not guess a file extension, so those modules spell
+    // out the `.ts` on their relative imports.
+    "allowImportingTsExtensions": true,
     "lib": ["es2024", "dom", "dom.iterable"],
     "paths": {
       "@packages/*": ["./packages/*"]

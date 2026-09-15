@@ -316,7 +316,7 @@ describe("createCompareState persistence", () => {
     await vi.advanceTimersByTimeAsync(500);
 
     expect(
-      (login.profile.value?.config as Record<string, unknown>)[
+      (login.profile.value?.config as Record<string, unknown> | undefined)?.[
         COMPARE_TRANSLATIONS_KEY
       ]
     ).toEqual(["a"]);

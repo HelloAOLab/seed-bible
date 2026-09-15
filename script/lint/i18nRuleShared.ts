@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ESLintUtils, type TSESLint } from "@typescript-eslint/utils";
-import { getTranslationUsageStats } from "../getTranslationUsageStats";
-import { ExtensionMetaSchema } from "../lib/extension";
+import { getTranslationUsageStats } from "../getTranslationUsageStats.ts";
+import { ExtensionMetaSchema } from "../lib/extension.ts";
 import * as z from "zod/v4";
 
 type TranslationObject = Record<string, unknown>;

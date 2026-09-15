@@ -287,14 +287,15 @@ function TranslationLanguageSection(props: {
               ({languageEnglishName})
             </span>
           )}
+        {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
         <span
           className={`material-symbols-outlined sb-translation-list-chevron ${
             showSig.value ? "sb-translation-list-chevron--open" : ""
           }`}
-          // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
         >
           expand_more
         </span>
+        {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
       </div>
       {showSig.value && (
         <div style={{ margin: "0.3125rem 0.3125rem" }}>

@@ -64,6 +64,7 @@ if (
               );
             },
             u.people.toString = function () {
+              // oxlint-disable-next-line oxc/number-arg-out-of-range -- this is the stub's own `toString` defined just above, not `Number.prototype.toString`
               return u.toString(1) + ".people (stub)";
             },
             o =

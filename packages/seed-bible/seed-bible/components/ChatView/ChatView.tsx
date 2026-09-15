@@ -1120,10 +1120,11 @@ export function ChatView(props: ChatViewProps) {
                     <span className="sb-chat-view-mention-picker-name">
                       {t("everyone", { defaultValue: "Everyone" })}
                     </span>
-                    {/* eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content */}
+                    {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
                     <span className="sb-chat-view-mention-picker-meta">
                       @everyone
                     </span>
+                    {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
                   </button>
                 )}
                 {(

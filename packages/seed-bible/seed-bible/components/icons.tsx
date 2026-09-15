@@ -391,6 +391,7 @@ const AiIcon = (props: any) => (
     <rect x="2" y="4" width="20" height="16" rx="4" fill="currentColor" />
 
     {/* AI text */}
+    {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
     <text
       x="12"
       y="14"
@@ -399,10 +400,10 @@ const AiIcon = (props: any) => (
       fontWeight="bold"
       fill="currentColor"
       fontFamily="Arial, sans-serif"
-      // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
     >
       AI
     </text>
+    {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
   </svg>
 );
 const AiChatIcon = (props: any) => (
@@ -421,6 +422,7 @@ const AiChatIcon = (props: any) => (
     />
 
     {/* AI text */}
+    {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
     <text
       x="12"
       y="11.5"
@@ -429,10 +431,10 @@ const AiChatIcon = (props: any) => (
       fontWeight="bold"
       fill="currentColor"
       fontFamily="Arial, sans-serif"
-      // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
     >
       AI
     </text>
+    {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
   </svg>
 );
 const UserAvatar = (props: any) => (

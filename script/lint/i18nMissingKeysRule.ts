@@ -1,6 +1,6 @@
-import { createRule, analyzeProject, getContextCwd } from "./i18nRuleShared";
+import { createRule, analyzeProject, getContextCwd } from "./i18nRuleShared.ts";
 import type { TSESTree } from "@typescript-eslint/utils";
-import { TUTORIAL_STEP_TEXT_PROPERTIES } from "../getTranslationUsageStats";
+import { TUTORIAL_STEP_TEXT_PROPERTIES } from "../getTranslationUsageStats.ts";
 
 type MessageIds = "missing_key" | "missing_key_in_extension" | "config_error";
 type Options = [];

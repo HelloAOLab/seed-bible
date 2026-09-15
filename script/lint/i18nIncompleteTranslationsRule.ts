@@ -4,7 +4,7 @@ import {
   getContextCwd,
   getContextFilename,
   getLocaleFromFilePath,
-} from "./i18nRuleShared";
+} from "./i18nRuleShared.ts";
 
 type MessageIds = "incomplete_translation" | "config_error";
 type Options = [];
@@ -50,6 +50,8 @@ const i18nIncompleteTranslationsRule = createRule<Options, MessageIds>({
         }
       },
 
+      // `@eslint/json` doesn't export its JSON AST node types.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Member(node: any): void {
         const key =
           node.name.type === "String" ? node.name.value : node.name.name;

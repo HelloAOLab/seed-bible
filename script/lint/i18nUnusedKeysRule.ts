@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { analyzeProject, createRule, getContextCwd } from "./i18nRuleShared";
+import { analyzeProject, createRule, getContextCwd } from "./i18nRuleShared.ts";
 
 type MessageIds = "unused_key" | "config_error";
 type RuleOption = {

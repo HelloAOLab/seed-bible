@@ -1,5 +1,6 @@
-import { createRule } from "./i18nRuleShared";
+import { createRule } from "./i18nRuleShared.ts";
 import type { TSESTree } from "@typescript-eslint/utils";
+import { decode } from "html-entities";
 
 type MessageIds = "untranslated_content" | "untranslated_attribute";
 type Options = [];
@@ -39,8 +40,13 @@ function getAttributeValueAsString(
   return null;
 }
 
+// The two linters disagree on `JSXText.value`: typescript-eslint hands over the
+// text with HTML character references already resolved, oxlint hands over the
+// source as written. Decoding here makes both judge the same string, so e.g.
+// `&#x2022;` is the bullet it renders as (no letters, nothing to translate)
+// rather than a word-looking `#x2022`.
 function normalizeText(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
+  return decode(value).replace(/\s+/g, " ").trim();
 }
 
 function createPreview(value: string): string {

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createRule } from "./i18nRuleShared";
+import { createRule } from "./i18nRuleShared.ts";
 import { difference } from "es-toolkit";
 
 type MessageIds = "incomplete_translation" | "config_error";
