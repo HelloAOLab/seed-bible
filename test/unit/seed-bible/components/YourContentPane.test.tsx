@@ -7,7 +7,7 @@ import { highlightKey } from "@packages/seed-bible/seed-bible/managers/YourConte
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { StoredHighlight } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
-import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
+import type { Save } from "@packages/seed-bible/seed-bible/managers/SavesManager";
 import type { Playlist } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { ContentLoadStatus } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
 
@@ -40,7 +40,7 @@ function highlight(
   };
 }
 
-function bookmark(id: string, verse?: number): Bookmark {
+function save(id: string, verse?: number): Save {
   return {
     id,
     translationId: "BSB",
@@ -48,8 +48,8 @@ function bookmark(id: string, verse?: number): Bookmark {
     chapterNumber: 23,
     verse,
     createdAt: 1761955200000,
-    category: "My Bookmarks",
-  } as unknown as Bookmark;
+    category: "My Saves",
+  } as unknown as Save;
 }
 
 function playlist(id: string, title: string, items = 3): Playlist {
@@ -68,7 +68,7 @@ function playlist(id: string, title: string, items = 3): Playlist {
 interface StateOptions {
   annotations?: Annotation[];
   highlights?: StoredHighlight[];
-  bookmarks?: Bookmark[];
+  saves?: Save[];
   playlists?: Playlist[];
   unhighlightError?: Error;
   /** Verse wording per highlight key, as the manager would have read it back. */
@@ -83,7 +83,7 @@ function createState(options: StateOptions = {}) {
   const load = vi.fn(async () => {});
   const removeAnnotation = vi.fn(() => {});
   const restoreAnnotation = vi.fn(() => {});
-  const removeBookmark = vi.fn(async (_id: string) => {});
+  const removeSave = vi.fn(async (_id: string) => {});
   const removeHighlight = vi.fn((_highlight: StoredHighlight) => {});
   const highlightVerseText = signal<ReadonlyMap<string, string>>(
     new Map(Object.entries(options.highlightVerseText ?? {}))
@@ -124,11 +124,11 @@ function createState(options: StateOptions = {}) {
       readHighlightVerseText,
     },
     highlights: { unhighlightVerse },
-    bookmarks: {
-      bookmarks: signal(options.bookmarks ?? []),
-      categories: signal([{ name: "My Bookmarks" }]),
+    saves: {
+      saves: signal(options.saves ?? []),
+      categories: signal([{ name: "My Saves" }]),
       expandedCategories: signal([]),
-      removeBookmark: removeBookmark,
+      removeSave: removeSave,
     },
     playlists: {
       userPlaylists: signal(options.playlists ?? []),
@@ -157,7 +157,7 @@ function createState(options: StateOptions = {}) {
 
   return {
     state,
-    removeBookmark,
+    removeSave,
     readHighlightVerseText,
     highlightVerseText,
     removeHighlight,
@@ -228,7 +228,7 @@ describe("YourContentPane", () => {
     const { state } = createState({
       annotations: [annotation("a", "<p>note</p>")],
       highlights: [highlight("JHN")],
-      bookmarks: [bookmark("b1")],
+      saves: [save("b1")],
       playlists: [playlist("p1", "Morning devotions")],
     });
     renderPane(state);
@@ -236,16 +236,16 @@ describe("YourContentPane", () => {
     expect(sectionTitles()).toEqual([
       "Annotations",
       "Highlights",
-      "Bookmarks",
+      "Saves",
       "Playlists",
     ]);
   });
 
   it("leaves out sections the user has nothing in", () => {
-    const { state } = createState({ bookmarks: [bookmark("b1")] });
+    const { state } = createState({ saves: [save("b1")] });
     renderPane(state);
 
-    expect(sectionTitles()).toEqual(["Bookmarks"]);
+    expect(sectionTitles()).toEqual(["Saves"]);
   });
 
   it("tells a user with nothing yet what will show up here", () => {
@@ -282,34 +282,29 @@ describe("YourContentPane", () => {
   it("narrows to one section when a chip is picked", () => {
     const { state, filter } = createState({
       annotations: [annotation("a", "<p>note</p>")],
-      bookmarks: [bookmark("b1")],
+      saves: [save("b1")],
     });
     renderPane(state);
 
     const chips = Array.from(
       container.querySelectorAll(".sb-content-chip")
     ) as HTMLButtonElement[];
-    const bookmarksChip = chips.find((c) => c.textContent === "Bookmarks")!;
+    const savesChip = chips.find((c) => c.textContent === "Saves")!;
     act(() => {
-      bookmarksChip.click();
+      savesChip.click();
     });
 
-    expect(filter.value).toBe("bookmarks");
-    expect(sectionTitles()).toEqual(["Bookmarks"]);
+    expect(filter.value).toBe("saves");
+    expect(sectionTitles()).toEqual(["Saves"]);
   });
 
   it("previews only the first few of a section until See all", () => {
     const { state, filter } = createState({
-      bookmarks: [
-        bookmark("b1"),
-        bookmark("b2"),
-        bookmark("b3"),
-        bookmark("b4"),
-      ],
+      saves: [save("b1"), save("b2"), save("b3"), save("b4")],
     });
     renderPane(state);
 
-    expect(container.querySelectorAll(".sb-content-bookmark")).toHaveLength(3);
+    expect(container.querySelectorAll(".sb-content-save")).toHaveLength(3);
 
     act(() => {
       (
@@ -317,12 +312,12 @@ describe("YourContentPane", () => {
       ).click();
     });
 
-    expect(filter.value).toBe("bookmarks");
-    expect(container.querySelectorAll(".sb-content-bookmark")).toHaveLength(4);
+    expect(filter.value).toBe("saves");
+    expect(container.querySelectorAll(".sb-content-save")).toHaveLength(4);
   });
 
   it("offers no See all when a section already shows everything", () => {
-    const { state } = createState({ bookmarks: [bookmark("b1")] });
+    const { state } = createState({ saves: [save("b1")] });
     renderPane(state);
 
     expect(container.querySelector(".sb-content-see-all")).toBeNull();
@@ -345,7 +340,7 @@ describe("YourContentPane", () => {
 
   it("says so when a search matches nothing", () => {
     const { state, query } = createState({
-      bookmarks: [bookmark("b1")],
+      saves: [save("b1")],
     });
     renderPane(state);
 
@@ -359,7 +354,7 @@ describe("YourContentPane", () => {
   });
 
   /**
-   * Highlights and bookmarks carry no text of their own, so their reference is
+   * Highlights and saves carry no text of their own, so their reference is
    * all there is to search. It used to be matched as the bare book name, which
    * meant the reference printed on the row — "John 3:16" — found nothing when
    * typed back in.
@@ -418,13 +413,13 @@ describe("YourContentPane", () => {
       expect(highlightRows()).toBe(1);
     });
 
-    it("finds a bookmark by its reference", () => {
-      const { state, query } = createState({ bookmarks: [bookmark("b1", 1)] });
+    it("finds a save by its reference", () => {
+      const { state, query } = createState({ saves: [save("b1", 1)] });
       search(state, query, "Psalm 23:1");
 
-      expect(
-        container.querySelectorAll(".sb-content-bookmark-row")
-      ).toHaveLength(1);
+      expect(container.querySelectorAll(".sb-content-save-row")).toHaveLength(
+        1
+      );
     });
 
     it("finds an annotation by its reference, not only its text", () => {
@@ -494,46 +489,46 @@ describe("YourContentPane", () => {
     it("matches as a substring, so Psalm 2 also reaches Psalm 23", () => {
       // Pinned deliberately: this box searches text, it does not parse the
       // query as a reference.
-      const { state, query } = createState({ bookmarks: [bookmark("b1", 1)] });
+      const { state, query } = createState({ saves: [save("b1", 1)] });
       search(state, query, "Psalm 2");
 
-      expect(
-        container.querySelectorAll(".sb-content-bookmark-row")
-      ).toHaveLength(1);
+      expect(container.querySelectorAll(".sb-content-save-row")).toHaveLength(
+        1
+      );
     });
   });
 
-  it("labels a verse bookmark and a chapter bookmark differently", () => {
+  it("labels a verse save and a chapter save differently", () => {
     const { state } = createState({
-      bookmarks: [bookmark("verse", 3), bookmark("chapter")],
+      saves: [save("verse", 3), save("chapter")],
     });
     renderPane(state);
 
     const kinds = Array.from(
-      container.querySelectorAll(".sb-content-bookmark-kind")
+      container.querySelectorAll(".sb-content-save-kind")
     ).map((el) => el.textContent);
     expect(kinds).toEqual(["Verse", "Chapter"]);
     expect(
-      container.querySelector(".sb-content-bookmark-kind-verse")?.textContent
+      container.querySelector(".sb-content-save-kind-verse")?.textContent
     ).toBe("Verse");
   });
 
-  it("names bookmarks by book, chapter and verse", () => {
-    const { state } = createState({ bookmarks: [bookmark("b1", 3)] });
+  it("names saves by book, chapter and verse", () => {
+    const { state } = createState({ saves: [save("b1", 3)] });
     renderPane(state);
 
-    expect(
-      container.querySelector(".sb-content-bookmark-name")?.textContent
-    ).toBe("Psalm 23:3");
+    expect(container.querySelector(".sb-content-save-name")?.textContent).toBe(
+      "Psalm 23:3"
+    );
   });
 
-  it("opens the passage behind a bookmark", () => {
-    const { state } = createState({ bookmarks: [bookmark("b1", 3)] });
+  it("opens the passage behind a save", () => {
+    const { state } = createState({ saves: [save("b1", 3)] });
     renderPane(state);
 
     act(() => {
       (
-        container.querySelector(".sb-content-bookmark") as HTMLButtonElement
+        container.querySelector(".sb-content-save") as HTMLButtonElement
       ).click();
     });
 
@@ -786,12 +781,12 @@ describe("YourContentPane", () => {
 });
 
 /**
- * The pills carry the same options menu the bookmarks sidebar gives each
- * bookmark. Remove is not folder-scoped here as it is there: this list is
- * flat, so there is no folder to remove from, and it removes the bookmark
+ * The pills carry the same options menu the saves sidebar gives each
+ * save. Remove is not folder-scoped here as it is there: this list is
+ * flat, so there is no folder to remove from, and it removes the save
  * outright — the same thing the edit modal's "Remove from all folders" does.
  */
-describe("YourContentPane bookmark options", () => {
+describe("YourContentPane save options", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
@@ -805,8 +800,8 @@ describe("YourContentPane bookmark options", () => {
     document.body.innerHTML = "";
   });
 
-  const renderWithBookmark = () => {
-    const created = createState({ bookmarks: [bookmark("b1")] });
+  const renderWithSave = () => {
+    const created = createState({ saves: [save("b1")] });
     act(() => {
       render(
         <YourContentPane
@@ -825,10 +820,9 @@ describe("YourContentPane bookmark options", () => {
   // The menu portals into `document.body`, not the pane.
   const openMenu = () => {
     const trigger = container.querySelector<HTMLButtonElement>(
-      ".sb-content-bookmark-menu"
+      ".sb-content-save-menu"
     );
-    if (!trigger)
-      throw new Error("The bookmark options button did not render.");
+    if (!trigger) throw new Error("The save options button did not render.");
     act(() => {
       trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
@@ -839,44 +833,42 @@ describe("YourContentPane bookmark options", () => {
       document.body.querySelectorAll<HTMLElement>(".sb-context-menu-item")
     );
 
-  it("gives every bookmark an options button", () => {
-    renderWithBookmark();
+  it("gives every save an options button", () => {
+    renderWithSave();
 
-    expect(
-      container.querySelectorAll(".sb-content-bookmark-menu")
-    ).toHaveLength(1);
+    expect(container.querySelectorAll(".sb-content-save-menu")).toHaveLength(1);
   });
 
-  it("offers edit and remove, like the bookmarks sidebar", () => {
-    renderWithBookmark();
+  it("offers edit and remove, like the saves sidebar", () => {
+    renderWithSave();
     openMenu();
 
     expect(menuItems().map((item) => item.textContent)).toEqual([
-      "Edit bookmark",
-      "Remove bookmark",
+      "Edit save",
+      "Remove save",
     ]);
   });
 
-  it("removes the bookmark from the remove entry", () => {
-    const { removeBookmark } = renderWithBookmark();
+  it("removes the save from the remove entry", () => {
+    const { removeSave } = renderWithSave();
     openMenu();
 
     const remove = menuItems().find(
-      (item) => item.textContent === "Remove bookmark"
+      (item) => item.textContent === "Remove save"
     );
-    if (!remove) throw new Error("Remove bookmark was not in the menu.");
+    if (!remove) throw new Error("Remove save was not in the menu.");
     act(() => {
       remove.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(removeBookmark).toHaveBeenCalledWith("b1");
+    expect(removeSave).toHaveBeenCalledWith("b1");
   });
 
   it("does not open the passage when the options button is used", () => {
     // The pill and the menu are siblings, so the menu must not fall through
     // to the pill's own click.
     const onOpenPassage = vi.fn();
-    const created = createState({ bookmarks: [bookmark("b1")] });
+    const created = createState({ saves: [save("b1")] });
     act(() => {
       render(
         <YourContentPane

@@ -208,7 +208,7 @@ export function createNavigationManager(
    * any write inside it asked to push, and replaces otherwise.
    *
    * One user action often changes two things that both mirror to the URL: for
-   * example tapping a bookmark in the mobile sidebar moves the reader (a
+   * example tapping a save in the mobile sidebar moves the reader (a
    * `replace`, since it's a tab switch) *and* dismisses the sidebar (a `push`,
    * removing `?sidebar=open`). Left unbatched those are two history writes:
    * the reader's `replace` overwrites the entry that opened the sidebar — so
@@ -438,6 +438,28 @@ export function createNavigationManager(
     return url.toString();
   };
 
+  /**
+   * Like `linkToQuery`, but drops the current URL entirely first, keeping
+   * only the origin and the deployment root (`basePath`, or "/") — for
+   * links that should carry only the parameters passed in (e.g. a
+   * customization share link), not whatever the current page happens to
+   * have. The reading position (language, translation, book, chapter) lives
+   * in the URL *path* now, not the query string — see `ReadingUrlPath.ts` —
+   * so a link that must not leak the sharer's current reading position has
+   * to drop the path too, not just the query.
+   */
+  const linkToBareRoot = (query: Record<string, string | null>) => {
+    const url = new URL(currentUrl.value);
+    url.pathname = basePath || "/";
+    url.search = "";
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== null) {
+        url.searchParams.set(key, value);
+      }
+    }
+    return url.toString();
+  };
+
   return {
     currentUrl: computed(() => currentUrl.value),
     initialUrl,
@@ -451,6 +473,7 @@ export function createNavigationManager(
     updatePathAndQueryParams,
     syncSignalsToUrl,
     linkToQuery,
+    linkToBareRoot,
     dispose,
   };
 }

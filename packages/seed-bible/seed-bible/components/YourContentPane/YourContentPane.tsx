@@ -4,7 +4,7 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { Annotation } from "../../managers/AnnotationsManager";
 import { annotationVerseNumbers } from "../../managers/AnnotationsManager";
 import type { StoredHighlight } from "../../managers/HighlightsManager";
-import type { Bookmark } from "../../managers/BookmarksManager";
+import type { Save } from "../../managers/SavesManager";
 import type { Playlist } from "../../managers/PlaylistManager";
 import type { TodayPassageTarget } from "../../managers/TodayManager";
 import {
@@ -15,7 +15,7 @@ import {
 } from "../../managers/YourContentManager";
 import { AnnotationPreview } from "../DiscoverPane/AnnotationsSection";
 import { PlaylistRow } from "../DiscoverPane/PlaylistRow";
-import { openBookmarkCategoryModal } from "../Tabs/Tabs";
+import { openSaveModalForLocation } from "../Tabs/Tabs";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
@@ -68,7 +68,7 @@ function formatReference(
 }
 
 /**
- * Expands a stored verse target into its numbers. Highlights and bookmarks
+ * Expands a stored verse target into its numbers. Highlights and saves
  * record a target the same way — one verse, or an inclusive `[start, end]`.
  */
 function verseNumbersOf(
@@ -317,80 +317,75 @@ function HighlightRow(props: {
   );
 }
 
-function BookmarkPill(props: {
+function SavePill(props: {
   state: SeedBibleState;
-  bookmark: Bookmark;
+  save: Save;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) {
-  const { state, bookmark } = props;
+  const { state, save } = props;
   const { t, language } = useI18n();
   const bookNames = state.today.bookNames.value;
-  const verse = verseNumbersOf(bookmark.verse)[0];
-  const book = bookNames.get(bookmark.bookId) ?? bookmark.bookId;
+  const verse = verseNumbersOf(save.verse)[0];
+  const book = bookNames.get(save.bookId) ?? save.bookId;
 
   const location = {
-    translationId: bookmark.translationId,
-    bookId: bookmark.bookId,
-    chapterNumber: bookmark.chapterNumber,
-    ...(bookmark.verse !== undefined ? { verse: bookmark.verse } : {}),
+    translationId: save.translationId,
+    bookId: save.bookId,
+    chapterNumber: save.chapterNumber,
+    ...(save.verse !== undefined ? { verse: save.verse } : {}),
   };
 
   return (
     // The pill and its menu are siblings inside the surface, because a
     // <button> cannot nest inside another one.
-    <div className="sb-content-bookmark-row">
+    <div className="sb-content-save-row">
       <button
         type="button"
-        className="sb-content-bookmark"
+        className="sb-content-save"
         onClick={() =>
           props.onOpenPassage({
-            bookId: bookmark.bookId,
-            chapter: bookmark.chapterNumber,
+            bookId: save.bookId,
+            chapter: save.chapterNumber,
             verse,
-            translationId: bookmark.translationId,
+            translationId: save.translationId,
           })
         }
       >
-        <span className="sb-content-bookmark-name">
-          {`${book} ${bookmark.chapterNumber}${verse ? `:${verse}` : ""}`}
+        <span className="sb-content-save-name">
+          {`${book} ${save.chapterNumber}${verse ? `:${verse}` : ""}`}
         </span>
         <span
-          className={`sb-content-bookmark-kind${
-            verse ? " sb-content-bookmark-kind-verse" : ""
+          className={`sb-content-save-kind${
+            verse ? " sb-content-save-kind-verse" : ""
           }`}
         >
           {verse
             ? t("verse", { defaultValue: "Verse" })
             : t("chapter", { defaultValue: "Chapter" })}
         </span>
-        <span className="sb-content-bookmark-date">
-          {formatDate(bookmark.createdAt, language, "short")}
+        <span className="sb-content-save-date">
+          {formatDate(save.createdAt, language, "short")}
         </span>
       </button>
       <ContextMenuWithButton
-        buttonClassName="sb-content-bookmark-menu"
-        aria-label={t("bookmark-options", { defaultValue: "Bookmark options" })}
-        title={t("bookmark-options", { defaultValue: "Bookmark options" })}
+        buttonClassName="sb-content-save-menu"
+        aria-label={t("save-options", { defaultValue: "Save options" })}
+        title={t("save-options", { defaultValue: "Save options" })}
       >
         <ContextMenuItem
-          onClick={() =>
-            openBookmarkCategoryModal(state, location, {
-              mode: "edit",
-              bookmarkId: bookmark.id,
-            })
-          }
+          onClick={() => openSaveModalForLocation(state, location)}
         >
-          {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
+          {t("edit-save", { defaultValue: "Edit save" })}
         </ContextMenuItem>
         <ContextMenuItem
           onClick={() => {
-            // Removes the bookmark outright, not from one folder: this list is
+            // Removes the save outright, not from one folder: this list is
             // flat, so there is no folder to remove it from. That is what the
             // edit modal's own "Remove from all folders" does.
-            void state.bookmarks.removeBookmark(bookmark.id);
+            void state.saves.removeSave(save.id);
           }}
         >
-          {t("remove-bookmark", { defaultValue: "Remove bookmark" })}
+          {t("remove-save", { defaultValue: "Remove save" })}
         </ContextMenuItem>
       </ContextMenuWithButton>
     </div>
@@ -401,7 +396,7 @@ function BookmarkPill(props: {
 
 /**
  * The "Your content" screen (issue #1553): everything the reader has made —
- * annotations, highlights, bookmarks and playlists — in one place, filtered
+ * annotations, highlights, saves and playlists — in one place, filtered
  * by a search box and a row of chips.
  *
  * "All" shows the first few of each section with a "See all" that switches
@@ -409,7 +404,7 @@ function BookmarkPill(props: {
  */
 export function YourContentPane(props: YourContentScreenProps) {
   const { state, onOpenPassage } = props;
-  const { yourContent, bookmarks, playlists, annotations } = state;
+  const { yourContent, saves, playlists, annotations } = state;
   const { t } = useI18n();
 
   // Every open refreshes, so a verse highlighted or annotated in the reader
@@ -482,7 +477,7 @@ export function YourContentPane(props: YourContentScreenProps) {
       verseTextByHighlight.get(highlightKey(h))
     )
   );
-  const visibleBookmarks = bookmarks.bookmarks.value.filter((b) =>
+  const visibleSaves = saves.saves.value.filter((b) =>
     matches(
       ...referenceFields(b.bookId, b.chapterNumber, verseNumbersOf(b.verse))
     )
@@ -511,8 +506,8 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("annotations", { defaultValue: "Annotations" });
       case "highlights":
         return t("highlights", { defaultValue: "Highlights" });
-      case "bookmarks":
-        return t("bookmarks", { defaultValue: "Bookmarks" });
+      case "saves":
+        return t("saves", { defaultValue: "Saves" });
       case "playlists":
         return t("playlists", { defaultValue: "Playlists" });
     }
@@ -521,7 +516,7 @@ export function YourContentPane(props: YourContentScreenProps) {
   const sectionCounts: Record<Exclude<ContentFilter, "all">, number> = {
     annotations: visibleAnnotations.length,
     highlights: visibleHighlights.length,
-    bookmarks: visibleBookmarks.length,
+    saves: visibleSaves.length,
     playlists: visiblePlaylists.length,
   };
 
@@ -555,9 +550,9 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("your-content-empty-highlights", {
           defaultValue: "Verses you highlight will show up here.",
         });
-      case "bookmarks":
-        return t("your-content-empty-bookmarks", {
-          defaultValue: "Passages you bookmark will show up here.",
+      case "saves":
+        return t("your-content-empty-saves", {
+          defaultValue: "Passages you save will show up here.",
         });
       case "playlists":
         return t("your-content-empty-playlists", {
@@ -566,7 +561,7 @@ export function YourContentPane(props: YourContentScreenProps) {
       case "all":
         return t("your-content-empty", {
           defaultValue:
-            "Notes, highlights, bookmarks and playlists you make will show up here.",
+            "Notes, highlights, saves and playlists you make will show up here.",
         });
     }
   };
@@ -713,18 +708,18 @@ export function YourContentPane(props: YourContentScreenProps) {
           </section>
         ) : null}
 
-        {showing("bookmarks") && visibleBookmarks.length > 0 ? (
+        {showing("saves") && visibleSaves.length > 0 ? (
           <section className="sb-content-section">
             <SectionHeader
-              title={t("bookmarks", { defaultValue: "Bookmarks" })}
-              onSeeAll={seeAll("bookmarks", visibleBookmarks)}
+              title={t("saves", { defaultValue: "Saves" })}
+              onSeeAll={seeAll("saves", visibleSaves)}
             />
-            <div className="sb-content-bookmarks">
-              {visibleBookmarks.slice(0, limit(visibleBookmarks)).map((b) => (
-                <BookmarkPill
+            <div className="sb-content-saves">
+              {visibleSaves.slice(0, limit(visibleSaves)).map((b) => (
+                <SavePill
                   key={b.id}
                   state={state}
-                  bookmark={b}
+                  save={b}
                   onOpenPassage={onOpenPassage}
                 />
               ))}
