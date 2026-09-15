@@ -1,4 +1,7 @@
-import { createTextToSpeechManager } from "@packages/seed-bible/seed-bible/managers/TextToSpeechManager";
+import {
+  createTextToSpeechManager,
+  splitForSpeech,
+} from "@packages/seed-bible/seed-bible/managers/TextToSpeechManager";
 
 /**
  * jsdom implements neither `speechSynthesis` nor `SpeechSynthesisUtterance`, so
@@ -123,6 +126,157 @@ describe("TextToSpeechManager", () => {
 
       expect(manager.canSpeakLanguage("en")).toBe(true);
     });
+  });
+
+  describe("splitForSpeech", () => {
+    it("leaves an ordinary verse as one utterance", () => {
+      expect(
+        splitForSpeech("In the beginning God created the heavens.")
+      ).toEqual(["In the beginning God created the heavens."]);
+    });
+
+    it("has nothing to say for blank text", () => {
+      expect(splitForSpeech("")).toEqual([]);
+      expect(splitForSpeech("   ")).toEqual([]);
+    });
+
+    it("breaks a long verse at sentence ends, where a pause sounds natural", () => {
+      const verse = "One two three. Four five six. Seven eight nine.";
+
+      expect(splitForSpeech(verse, 20)).toEqual([
+        "One two three.",
+        "Four five six.",
+        "Seven eight nine.",
+      ]);
+    });
+
+    it("packs whole sentences together while they still fit", () => {
+      const verse = "One two. Three four. Five six.";
+
+      // Room for two sentences at a time, so it doesn't emit one utterance per
+      // sentence when fewer will do.
+      expect(splitForSpeech(verse, 22)).toEqual([
+        "One two. Three four.",
+        "Five six.",
+      ]);
+    });
+
+    it("breaks a sentence too long to fit at a word, not mid-word", () => {
+      const verse = "alpha bravo charlie delta echo foxtrot golf hotel india";
+
+      const chunks = splitForSpeech(verse, 20);
+
+      expect(chunks.every((chunk) => chunk.length <= 20)).toBe(true);
+      // Every word survives intact.
+      expect(chunks.join(" ").split(/\s+/)).toEqual(verse.split(" "));
+    });
+
+    it("breaks mid-run for scripts that do not use spaces", () => {
+      // Chinese writes without spaces, so there is no word boundary to find —
+      // an unbroken line is still better than an utterance long enough to cut.
+      const verse = "起初神創造天地".repeat(10);
+
+      const chunks = splitForSpeech(verse, 20);
+
+      expect(chunks.length).toBeGreaterThan(1);
+      expect(chunks.every((chunk) => chunk.length <= 20)).toBe(true);
+      expect(chunks.join("")).toBe(verse);
+    });
+
+    it("keeps every word of a long verse, in order", () => {
+      const verse = Array.from(
+        { length: 80 },
+        (_, index) => `word${index}`
+      ).join(" ");
+
+      expect(splitForSpeech(verse, 40).join(" ")).toBe(verse);
+    });
+
+    it("makes progress even on a nonsensical limit", () => {
+      // A zero-width cut would consume nothing and spin forever, so the split
+      // always advances by at least one character.
+      expect(splitForSpeech("abcdef", 0)).toEqual([
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+      ]);
+    });
+
+    it("keeps every chunk inside the limit", () => {
+      const verse =
+        "Now the king's scribes were summoned, and an edict was written. " +
+        "It was sent to the satraps and the governors and the officials. " +
+        "Each province was addressed in its own script and language.";
+
+      expect(
+        splitForSpeech(verse, 60).every((chunk) => chunk.length <= 60)
+      ).toBe(true);
+    });
+  });
+
+  it("splits a verse too long to speak in one go, keeping it one verse", () => {
+    const speech = installSpeech();
+    const manager = createTextToSpeechManager();
+    const onFinished = vi.fn();
+
+    const longVerse = {
+      number: 9,
+      text:
+        "Now the king's scribes were summoned in the third month. " +
+        "An edict was written to the satraps and the governors. " +
+        "Each province was addressed in its own script and language. " +
+        "It was sealed with the king's ring and sent by mounted couriers.",
+    };
+
+    manager.speak([longVerse], { lang: "en", onFinished });
+
+    // More than one utterance, none of them long enough to risk being cut off.
+    expect(speech.queued.length).toBeGreaterThan(1);
+    expect(
+      speech.queued.every((utterance) => utterance.text.length <= 160)
+    ).toBe(true);
+
+    // The reader sees one verse, however many pieces it took to say it.
+    speech.queued[0]!.onstart?.();
+    expect(manager.currentVerse.value).toBe(9);
+    speech.queued[1]!.onstart?.();
+    expect(manager.currentVerse.value).toBe(9);
+
+    // The chapter isn't over until the last piece is, so only it ends the run.
+    expect(
+      speech.queued.slice(0, -1).every((utterance) => utterance.onend === null)
+    ).toBe(true);
+    expect(onFinished).not.toHaveBeenCalled();
+
+    speech.queued.at(-1)!.onend?.();
+    expect(onFinished).toHaveBeenCalledTimes(1);
+    expect(manager.isSpeaking.value).toBe(false);
+  });
+
+  it("never pauses the engine while it is speaking", () => {
+    vi.useFakeTimers();
+    try {
+      const speech = installSpeech();
+      const manager = createTextToSpeechManager();
+
+      manager.speak(GENESIS, { lang: "en" });
+      speech.queued[0]!.onstart?.();
+
+      // A periodic `pause()`/`resume()` is the usual workaround for Chrome
+      // cutting long speech off, and it broke playback outright here: the pause
+      // landed and the resume never took. Short utterances stand in for it, so
+      // nothing may touch the engine mid-chapter.
+      vi.advanceTimersByTime(120_000);
+
+      expect(speech.pauseCount).toBe(0);
+      expect(speech.resumeCount).toBe(0);
+      expect(manager.isSpeaking.value).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("reports no support when the browser cannot speak", () => {

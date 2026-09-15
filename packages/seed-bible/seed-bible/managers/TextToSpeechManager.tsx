@@ -49,13 +49,92 @@ export interface TextToSpeechManager {
   stop: () => void;
 }
 
+const MAX_UTTERANCE_CHARACTERS = 160;
+
+const SENTENCE_ENDINGS = new Set([
+  ".",
+  "!",
+  "?",
+  ";",
+  ":",
+  "।", // Devanagari danda
+  "۔", // Arabic full stop
+  "؟", // Arabic question mark
+  "。", // Ideographic full stop
+  "！", // Fullwidth exclamation mark
+  "？", // Fullwidth question mark
+]);
+
 /**
- * Chrome stops speaking after roughly 15 seconds of continuous speech, without
- * firing `end` — the utterance simply goes quiet. Pausing and immediately
- * resuming resets that timer. Most verses are far shorter than the limit, but
- * the long ones (Esther 8:9) are not, so the keepalive runs for every queue.
+ * Breaks `text` into pieces of at most `limit` characters, preferring to split
+ * at a space.
+ *
+ * Falls back to cutting mid-run when there is no space to use, which is the
+ * normal case for Chinese, Japanese and Thai — an unbroken line is still
+ * better than one utterance long enough to be cut off entirely.
  */
-const KEEPALIVE_INTERVAL_MS = 10_000;
+function splitToLength(text: string, limit: number): string[] {
+  if (text.length <= limit) return [text];
+
+  const pieces: string[] = [];
+  let rest = text;
+  while (rest.length > limit) {
+    const candidate = rest.slice(0, limit + 1);
+    const lastSpace = candidate.lastIndexOf(" ");
+    // Never zero: a cut of zero would consume nothing and loop forever.
+    const cut = lastSpace > 0 ? lastSpace : Math.max(1, limit);
+    pieces.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) pieces.push(rest);
+  return pieces;
+}
+
+/**
+ * Splits a verse into the utterances it should be spoken as: one, for almost
+ * every verse, and several for the few long enough to risk being cut off.
+ *
+ * Sentence boundaries are preferred, because a break there sounds like
+ * punctuation rather than a fault. Only a sentence that is itself too long
+ * gets broken at a word.
+ *
+ * Returns an empty array for text with nothing to say, so callers don't have
+ * to filter blanks separately.
+ */
+export function splitForSpeech(
+  text: string,
+  limit: number = MAX_UTTERANCE_CHARACTERS
+): string[] {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+  if (trimmed.length <= limit) return [trimmed];
+
+  const sentences: string[] = [];
+  let sentence = "";
+  for (const character of trimmed) {
+    sentence += character;
+    if (SENTENCE_ENDINGS.has(character)) {
+      sentences.push(sentence.trim());
+      sentence = "";
+    }
+  }
+  if (sentence.trim()) sentences.push(sentence.trim());
+
+  const chunks: string[] = [];
+  let chunk = "";
+  for (const piece of sentences.flatMap((s) => splitToLength(s, limit))) {
+    if (!chunk) {
+      chunk = piece;
+    } else if (chunk.length + 1 + piece.length <= limit) {
+      chunk = `${chunk} ${piece}`;
+    } else {
+      chunks.push(chunk);
+      chunk = piece;
+    }
+  }
+  if (chunk) chunks.push(chunk);
+  return chunks;
+}
 
 /**
  * How long a stop keeps insisting the engine fall silent, and how often it
@@ -162,21 +241,12 @@ export function createTextToSpeechManager(): TextToSpeechManager {
     );
   };
 
-  let keepAlive: ReturnType<typeof setInterval> | null = null;
-
   /**
    * Identifies the current run. `cancel()` still delivers `end`/`error` for
    * utterances that were already queued, so without this a stopped run's
    * callbacks would clear state belonging to the run that replaced it.
    */
   let runToken = 0;
-
-  const clearKeepAlive = () => {
-    if (keepAlive !== null) {
-      clearInterval(keepAlive);
-      keepAlive = null;
-    }
-  };
 
   let silenceCheck: ReturnType<typeof setInterval> | null = null;
 
@@ -188,7 +258,6 @@ export function createTextToSpeechManager(): TextToSpeechManager {
   };
 
   const reset = () => {
-    clearKeepAlive();
     clearSilenceCheck();
     isSpeaking.value = false;
     currentVerse.value = null;
@@ -244,8 +313,17 @@ export function createTextToSpeechManager(): TextToSpeechManager {
 
     stop();
 
-    const speakable = verses.filter((verse) => verse.text.trim().length > 0);
-    if (speakable.length === 0) return;
+    // One utterance per verse would hand the engine a long enough run of text
+    // to be cut off on the few very long verses, so each verse contributes as
+    // many utterances as it needs. Every piece still carries its verse number,
+    // so the reader's highlight is unaffected by the extra breaks.
+    const parts = verses.flatMap((verse) =>
+      splitForSpeech(verse.text).map((text) => ({
+        number: verse.number,
+        text,
+      }))
+    );
+    if (parts.length === 0) return;
 
     const token = ++runToken;
     const voice = options.lang ? pickVoice(options.lang) : null;
@@ -256,8 +334,8 @@ export function createTextToSpeechManager(): TextToSpeechManager {
     // A new run supersedes any stop still being enforced from a previous one.
     clearSilenceCheck();
 
-    speakable.forEach((verse, index) => {
-      const utterance = new Utterance(verse.text);
+    parts.forEach((part, index) => {
+      const utterance = new Utterance(part.text);
       if (options.lang) utterance.lang = options.lang;
       if (voice) utterance.voice = voice;
 
@@ -275,7 +353,7 @@ export function createTextToSpeechManager(): TextToSpeechManager {
           if (!isSpeaking.peek()) speech.cancel();
           return;
         }
-        currentVerse.value = verse.number;
+        currentVerse.value = part.number;
       };
 
       // Leaves `isSpeaking` stuck on — and the toolbar stuck showing a pause
@@ -285,7 +363,7 @@ export function createTextToSpeechManager(): TextToSpeechManager {
         reset();
       };
 
-      if (index === speakable.length - 1) {
+      if (index === parts.length - 1) {
         utterance.onend = () => {
           if (token !== runToken) return;
           reset();
@@ -295,12 +373,6 @@ export function createTextToSpeechManager(): TextToSpeechManager {
 
       speech.speak(utterance);
     });
-
-    keepAlive = setInterval(() => {
-      if (token !== runToken) return;
-      speech.pause();
-      speech.resume();
-    }, KEEPALIVE_INTERVAL_MS);
   };
 
   // Speech carries on after the page goes away otherwise — a back navigation
