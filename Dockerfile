@@ -29,7 +29,10 @@ COPY package.json .
 # [optional] tests & build
 ENV NODE_ENV=production
 
-RUN bun build --target=bun --outfile=server/dist/index.js /temp/build/server/index.ts
+# vite and express are dev-only dynamic imports in server/index.ts, and the
+# Vite+ core package that "vite" now resolves to has an optional devtools
+# import Bun's bundler can't resolve, so both must stay externalized here too.
+RUN bun build --target=bun --external express --external vite --outfile=server/dist/index.js /temp/build/server/index.ts
 
 # copy production dependencies and source code into final image
 FROM prerelease AS release
