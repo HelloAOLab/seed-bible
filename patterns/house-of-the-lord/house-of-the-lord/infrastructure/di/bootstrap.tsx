@@ -335,6 +335,7 @@ export const bootstrapExtension = async () => {
   });
   const scriptureInteractionService = new ScriptureInteractionService({
     pieceFocusPort: pieceFocusService,
+    experienceServicePort: experienceService,
   });
   // 3. Controller
   const piecesInteractionController = new PiecesInteractionController({
@@ -348,7 +349,6 @@ export const bootstrapExtension = async () => {
   const scriptureInteractionController = new ScriptureInteractionController({
     scriptureInteractionPort: scriptureInteractionService,
     readingStatePort: readingStateService,
-    experienceServicePort: experienceService,
   });
   const seedBibleController = new SeedBibleController({
     themeStateAdapter,

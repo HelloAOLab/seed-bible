@@ -5,6 +5,10 @@
  * inside `.sb-discover-item-content`, which is `font-size: 0.8125rem` and
  * `margin-top: 4px`.
  */
+.sb-discover-item-content:has(.sb-hotl-exhibit) {
+  align-self: stretch;
+}
+
 .sb-hotl-exhibit {
   box-sizing: border-box;
   display: flex;
