@@ -4,7 +4,10 @@ import {
   getUserAnimalVisual,
   type BibleReadingSession,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
-import { createBibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import {
+  createBibleReadingState,
+  type VisibleVerseRange,
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type {
   VerseDecoration,
@@ -136,6 +139,7 @@ function createMockReadingState() {
   const bookId = signal<string | null>("GEN");
   const chapterNumber = signal<number>(1);
   const scrollToVerse = signal<number | null>(null);
+  const visibleVerseRange = signal<VisibleVerseRange | null>(null);
   const chapterData = signal<any>(null);
   const decorations = signal<VerseDecoration[]>([]);
 
@@ -197,6 +201,7 @@ function createMockReadingState() {
     bookId,
     chapterNumber,
     scrollToVerse,
+    visibleVerseRange,
     chapterData,
     decorations,
     translationBooks: signal<any>(null),
@@ -299,6 +304,14 @@ function deferred<T>() {
  */
 async function flushPublishDebounce(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 250));
+}
+
+/**
+ * Waits out the longer trailing debounce on publishing the visible verse range
+ * (`RANGE_PUBLISH_DEBOUNCE_MS` in SessionsManager, 500ms).
+ */
+async function flushRangePublishDebounce(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 700));
 }
 
 /**
@@ -2009,6 +2022,175 @@ describe("SessionsManager", () => {
     expect(mockReadingPositionsMap.delete).toHaveBeenCalledWith(
       os.connectionId
     );
+  });
+
+  it("publishes the verses on screen alongside the chapter", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await flushPublishDebounce();
+    mockReadingPositionsMap.set.mockClear();
+
+    session.readingState.visibleVerseRange.value = { first: 3, last: 9 };
+    await flushRangePublishDebounce();
+
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "GEN",
+      chapterNumber: 1,
+      firstVerse: 3,
+      lastVerse: 9,
+    });
+  });
+
+  // Scrolling changes the range continuously, so a settled scroll has to leave
+  // one entry in a document that never shrinks — not one per verse it passed.
+  it("publishes one entry for a scroll that passes several verses", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await flushPublishDebounce();
+    mockReadingPositionsMap.set.mockClear();
+
+    for (let first = 1; first <= 5; first++) {
+      session.readingState.visibleVerseRange.value = {
+        first,
+        last: first + 4,
+      };
+    }
+    await flushRangePublishDebounce();
+
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledTimes(1);
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "GEN",
+      chapterNumber: 1,
+      firstVerse: 5,
+      lastVerse: 9,
+    });
+  });
+
+  // A navigation is always chased by verse-range changes as the old chapter's
+  // verses leave the screen and the new one's are measured. Those follow-ups
+  // used to re-arm the timer on the slow scroll window, so a chapter change
+  // reached peers at roughly 500ms instead of 150ms.
+  it("publishes a chapter change on the navigation window, not the scroll one", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await flushPublishDebounce();
+
+    // Settle on a range first, so the teardown below is a real change.
+    session.readingState.visibleVerseRange.value = { first: 1, last: 5 };
+    await flushRangePublishDebounce();
+    mockReadingPositionsMap.set.mockClear();
+
+    session.readingState.chapterNumber.value = 2;
+    // The reader's observer tears down with the chapter it was watching.
+    session.readingState.visibleVerseRange.value = null;
+
+    await flushPublishDebounce();
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "GEN",
+      chapterNumber: 2,
+    });
+
+    // And with the navigation out, scrolling goes back to the longer window.
+    mockReadingPositionsMap.set.mockClear();
+    session.readingState.visibleVerseRange.value = { first: 4, last: 8 };
+    await flushPublishDebounce();
+    expect(mockReadingPositionsMap.set).not.toHaveBeenCalled();
+    await flushRangePublishDebounce();
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "GEN",
+      chapterNumber: 2,
+      firstVerse: 4,
+      lastVerse: 8,
+    });
+  });
+
+  it("reports a peer's verse range with their position", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: { connectionId: "conn-1", userId: "user-1" },
+    });
+    await waitFor(() => session.connectedUsers.value.length === 1);
+
+    mockReadingPositionsMap.set("conn-1", {
+      bookId: "REV",
+      chapterNumber: 22,
+      firstVerse: 2,
+      lastVerse: 6,
+    });
+    mockReadingPositionsMap.emitChange();
+    await waitFor(() => session.participantPositions.value.has("conn-1"));
+
+    expect(session.participantPositions.value.get("conn-1")).toEqual({
+      bookId: "REV",
+      chapterNumber: 22,
+      firstVerse: 2,
+      lastVerse: 6,
+    });
+  });
+
+  // A half-written or back-to-front range would draw a marker in the wrong
+  // place, so the chapter is kept and the range dropped.
+  it("keeps the chapter but drops an unusable verse range", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: { connectionId: "conn-1", userId: "user-1" },
+    });
+    await waitFor(() => session.connectedUsers.value.length === 1);
+
+    mockReadingPositionsMap.set("conn-1", {
+      bookId: "REV",
+      chapterNumber: 22,
+      firstVerse: 9,
+      lastVerse: 2,
+    });
+    mockReadingPositionsMap.emitChange();
+    await waitFor(() => session.participantPositions.value.has("conn-1"));
+
+    expect(session.participantPositions.value.get("conn-1")).toEqual({
+      bookId: "REV",
+      chapterNumber: 22,
+    });
   });
 
   it("joins with inactive users seeded from user_profiles map", async () => {
