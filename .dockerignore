@@ -2,7 +2,7 @@
 .cursor
 .devcontainer
 .github
-.husky
+.vite-hooks
 .pnpm-store
 node_modules
 .git

@@ -401,6 +401,31 @@ export default defineConfig(({ isSsrBuild }) => ({
     ],
   },
 
+  // oxfmt defaults to printWidth 100; the repo was formatted by Prettier at 80.
+  fmt: {
+    printWidth: 80,
+    tabWidth: 2,
+    semi: true,
+    singleQuote: false,
+    trailingComma: "es5",
+    sortPackageJson: false,
+    ignorePatterns: [
+      "**/dist/**",
+      "pnpm-lock.yaml",
+      "obsolete/**",
+      "pattern-dist/**",
+      "standalone/dist/**",
+      // Vendored CasualOS ambient typings (19.7k lines); oxfmt's stricter
+      // parser rejects a stray `` `` ``; statement in it that Prettier
+      // tolerates. Not ours to edit, so it's excluded rather than fixed.
+      "patterns/pattern-typings/**",
+    ],
+  },
+
+  staged: {
+    "*.{js,mjs,cjs,ts,tsx,css,json,md}": "vp fmt",
+  },
+
   test: {
     environment: "jsdom",
     globals: true,
