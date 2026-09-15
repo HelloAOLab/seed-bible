@@ -1,9 +1,6 @@
-import { createRule, analyzeProject, getContextCwd } from "./i18nRuleShared.ts";
-import type { TSESTree } from "@typescript-eslint/utils";
+import { analyzeProject, getContextCwd } from "./i18nRuleShared.ts";
+import { defineRule, type ESTree } from "vite-plus/lint/plugins";
 import { TUTORIAL_STEP_TEXT_PROPERTIES } from "../getTranslationUsageStats.ts";
-
-type MessageIds = "missing_key" | "missing_key_in_extension" | "config_error";
-type Options = [];
 
 let reportedConfigError = false;
 
@@ -11,9 +8,7 @@ type NamespaceInfo = {
   namespace: string | null;
 };
 
-function getStaticString(
-  node: TSESTree.Node | null | undefined
-): string | null {
+function getStaticString(node: ESTree.Node | null | undefined): string | null {
   if (!node) {
     return null;
   }
@@ -34,7 +29,7 @@ function getStaticString(
   return null;
 }
 
-function getNamespaceOption(node: TSESTree.CallExpression): NamespaceInfo {
+function getNamespaceOption(node: ESTree.CallExpression): NamespaceInfo {
   const optionsArgument = node.arguments[1];
   if (!optionsArgument || optionsArgument.type !== "ObjectExpression") {
     return { namespace: null };
@@ -65,7 +60,7 @@ function getNamespaceOption(node: TSESTree.CallExpression): NamespaceInfo {
   return { namespace: null };
 }
 
-function getPropertyName(node: TSESTree.Property["key"]): string | null {
+function getPropertyName(node: ESTree.ObjectProperty["key"]): string | null {
   if (node.type === "Identifier") {
     return node.name;
   }
@@ -78,9 +73,9 @@ function getPropertyName(node: TSESTree.Property["key"]): string | null {
 }
 
 function getObjectProperty(
-  objectNode: TSESTree.ObjectExpression,
+  objectNode: ESTree.ObjectExpression,
   propertyName: string
-): TSESTree.Property | null {
+): ESTree.ObjectProperty | null {
   for (const property of objectNode.properties) {
     if (property.type !== "Property" || property.kind !== "init") {
       continue;
@@ -94,10 +89,10 @@ function getObjectProperty(
   return null;
 }
 
-function getTitleTranslationInfo(node: TSESTree.ObjectExpression): {
+function getTitleTranslationInfo(node: ESTree.ObjectExpression): {
   key: string;
   namespace: string | null;
-  keyNode: TSESTree.Node;
+  keyNode: ESTree.Node;
 } | null {
   const titleProperty = getObjectProperty(node, "title");
   if (!titleProperty || titleProperty.value.type !== "ObjectExpression") {
@@ -132,11 +127,11 @@ function getTitleTranslationInfo(node: TSESTree.ObjectExpression): {
  * extractor does — all four text properties present — so an unrelated object
  * that happens to name a `titleKey` isn't reported.
  */
-function getTutorialStepTranslationInfo(node: TSESTree.ObjectExpression): {
+function getTutorialStepTranslationInfo(node: ESTree.ObjectExpression): {
   key: string;
-  keyNode: TSESTree.Node;
+  keyNode: ESTree.Node;
 }[] {
-  const found: { key: string; keyNode: TSESTree.Node }[] = [];
+  const found: { key: string; keyNode: ESTree.Node }[] = [];
 
   for (const {
     keyProperty,
@@ -159,12 +154,12 @@ function getTutorialStepTranslationInfo(node: TSESTree.ObjectExpression): {
 }
 
 function isUseI18nCall(
-  node: TSESTree.CallExpression["callee"] | null | undefined
-): node is TSESTree.Identifier {
+  node: ESTree.CallExpression["callee"] | null | undefined
+): node is ESTree.IdentifierReference {
   return !!node && node.type === "Identifier" && node.name === "useI18n";
 }
 
-function objectPatternDefinesT(pattern: TSESTree.ObjectPattern): boolean {
+function objectPatternDefinesT(pattern: ESTree.ObjectPattern): boolean {
   for (const property of pattern.properties) {
     if (property.type !== "Property") {
       continue;
@@ -187,7 +182,7 @@ function objectPatternDefinesT(pattern: TSESTree.ObjectPattern): boolean {
 }
 
 function getNamespaceFromVariableDeclaration(
-  declaration: TSESTree.VariableDeclarator
+  declaration: ESTree.VariableDeclarator
 ): NamespaceInfo {
   if (declaration.id.type !== "ObjectPattern") {
     return { namespace: null };
@@ -211,7 +206,7 @@ function getNamespaceFromVariableDeclaration(
 }
 
 function getNamespaceFromStatement(
-  statement: TSESTree.ProgramStatement
+  statement: ESTree.Statement | ESTree.Directive
 ): NamespaceInfo {
   if (statement.type === "VariableDeclaration") {
     for (
@@ -260,9 +255,9 @@ function getNamespaceFromStatement(
 }
 
 function getNamespaceFromLocalUseI18n(
-  node: TSESTree.CallExpression
+  node: ESTree.CallExpression
 ): NamespaceInfo {
-  let current: TSESTree.Node | undefined = node.parent ?? undefined;
+  let current: ESTree.Node | undefined = node.parent ?? undefined;
 
   while (current) {
     if (current.type === "Program" || current.type === "BlockStatement") {
@@ -308,8 +303,7 @@ function hasExtensionTranslationKey(
   return false;
 }
 
-const i18nMissingKeysRule = createRule<Options, MessageIds>({
-  name: "translation-missing-keys",
+const i18nMissingKeysRule = defineRule({
   meta: {
     type: "problem",
     docs: {
@@ -323,7 +317,6 @@ const i18nMissingKeysRule = createRule<Options, MessageIds>({
       config_error: "i18n lint rule configuration error: {{message}}",
     },
   },
-  defaultOptions: [],
 
   create(context) {
     const projectRoot = getContextCwd(context);

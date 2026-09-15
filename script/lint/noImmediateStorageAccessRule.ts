@@ -1,18 +1,8 @@
-import { ESLintUtils } from "@typescript-eslint/utils";
-import type { TSESTree } from "@typescript-eslint/utils";
-
-const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/HelloAOLab/seed-bible/eslint-rules/${name}`
-);
-
-type MessageIds = "immediateStorageAccess";
-type Options = [];
+import { defineRule, type ESTree } from "vite-plus/lint/plugins";
 
 type StorageApiName = "localStorage" | "indexedDB";
 
-function getIdentifierStorageApiName(
-  node: TSESTree.Node
-): StorageApiName | null {
+function getIdentifierStorageApiName(node: ESTree.Node): StorageApiName | null {
   if (node.type !== "Identifier") {
     return null;
   }
@@ -28,7 +18,7 @@ function getIdentifierStorageApiName(
  * MemberExpression there), so the codebase's ubiquitous
  * `typeof localStorage !== "undefined"` SSR guard never trips this rule.
  */
-function getStorageApiName(node: TSESTree.Node): StorageApiName | null {
+function getStorageApiName(node: ESTree.Node): StorageApiName | null {
   const direct = getIdentifierStorageApiName(node);
   if (direct) {
     return direct;
@@ -46,12 +36,9 @@ function getStorageApiName(node: TSESTree.Node): StorageApiName | null {
   return null;
 }
 
-type NamedFunction =
-  | TSESTree.FunctionDeclaration
-  | TSESTree.FunctionExpression
-  | TSESTree.ArrowFunctionExpression;
+type NamedFunction = ESTree.Function | ESTree.ArrowFunctionExpression;
 
-function isFunctionNode(node: TSESTree.Node): node is NamedFunction {
+function isFunctionNode(node: ESTree.Node): node is NamedFunction {
   return (
     node.type === "FunctionDeclaration" ||
     node.type === "FunctionExpression" ||
@@ -59,8 +46,8 @@ function isFunctionNode(node: TSESTree.Node): node is NamedFunction {
   );
 }
 
-function findEnclosingFunction(node: TSESTree.Node): NamedFunction | null {
-  let current: TSESTree.Node | undefined = node.parent ?? undefined;
+function findEnclosingFunction(node: ESTree.Node): NamedFunction | null {
+  let current: ESTree.Node | undefined = node.parent ?? undefined;
   while (current) {
     if (isFunctionNode(current)) {
       return current;
@@ -126,8 +113,7 @@ function describeBoundary(fn: NamedFunction | null): string {
   return getFunctionName(fn) ?? "this function";
 }
 
-const noImmediateStorageAccessRule = createRule<Options, MessageIds>({
-  name: "no-immediate-storage-access",
+const noImmediateStorageAccessRule = defineRule({
   meta: {
     type: "problem",
     docs: {
@@ -140,11 +126,10 @@ const noImmediateStorageAccessRule = createRule<Options, MessageIds>({
         "Don't use `{{api}}` directly in {{boundary}}'s body — this also runs during SSR and can cause a hydration mismatch. Seed the signal to match SSR (empty/null) and apply the real value from a `hydrate*()` function called in a post-mount effect, or move this inside an existing effect/handler.",
     },
   },
-  defaultOptions: [],
 
   create(context) {
     return {
-      MemberExpression(node: TSESTree.MemberExpression): void {
+      MemberExpression(node: ESTree.MemberExpression): void {
         const api = getStorageApiName(node.object);
         if (!api) {
           return;
