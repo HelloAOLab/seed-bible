@@ -1,0 +1,29 @@
+{
+  "id": "mcp-extension",
+  "translations": {
+    "en": {
+      "title": "MCP Servers",
+      "description": "Connect remote MCP (Model Context Protocol) servers so AI chat participants can use their tools.",
+      "ai-chat-settings-menu-item": "AI Chat Settings",
+      "ai-chat-settings-title": "AI Chat Settings",
+      "ai-chat-settings-description": "Connect remote MCP servers to give AI chat participants access to their tools.",
+      "mcp-servers-chat-context": "MCP servers",
+      "mcp-server-name-placeholder": "Server name",
+      "mcp-server-url-placeholder": "https://example.com/mcp",
+      "mcp-server-auth-header-placeholder": "Authorization header (optional)",
+      "mcp-server-auth-header-sse-warning": "This server only supports the legacy SSE transport, which can't carry the auth header below — it may not have been applied.",
+      "mcp-server-add": "Add server",
+      "mcp-server-add-url-error": "Enter a valid URL",
+      "mcp-server-add-failed": "Couldn't add the server.",
+      "mcp-server-connect-error": "Couldn't connect: {{error}}",
+      "mcp-server-remove": "Remove",
+      "mcp-server-enable": "Enable",
+      "mcp-server-disable": "Disable",
+      "mcp-server-status-connected": "Connected",
+      "mcp-server-status-connecting": "Connecting…",
+      "mcp-server-status-error": "Connection failed",
+      "mcp-server-status-disabled": "Disabled",
+      "no-mcp-servers-configured": "No MCP servers configured yet."
+    }
+  }
+}
