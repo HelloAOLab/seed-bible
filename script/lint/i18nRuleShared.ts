@@ -24,7 +24,7 @@ function isObject(value: unknown): value is TranslationObject {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function flattenTranslationKeys(
+export function flattenTranslationKeys(
   value: unknown,
   prefix = "",
   output = new Set<string>()
@@ -160,6 +160,10 @@ export function analyzeProject(projectRoot: string): ProjectAnalysis {
 
   analyzedProjects.set(projectRoot, result);
   return result;
+}
+
+export function forgetProjectAnalysis(projectRoot: string): void {
+  analyzedProjects.delete(projectRoot);
 }
 
 export function getContextCwd<
