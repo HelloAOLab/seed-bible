@@ -45,14 +45,31 @@ describe("checkI18n", () => {
   });
 
   it("reports an extension locale missing an English key, at the locale's line", () => {
-    expect(
-      findings("translation-extension-incomplete-translations", all)
-    ).toEqual([
+    const extensionFindings = findings(
+      "translation-extension-incomplete-translations",
+      all
+    ).filter((f) => f.file === "packages/demo-extension/extension.json");
+    expect(extensionFindings).toEqual([
       {
         file: "packages/demo-extension/extension.json",
         line: 5,
         rule: "translation-extension-incomplete-translations",
         message: "Locale 'de' is missing key 'extra'",
+      },
+    ]);
+  });
+
+  it("reports an extension manifest with no English translations, at the 'translations' line", () => {
+    const extensionFindings = findings(
+      "translation-extension-incomplete-translations",
+      all
+    ).filter((f) => f.file === "packages/no-english-extension/extension.json");
+    expect(extensionFindings).toEqual([
+      {
+        file: "packages/no-english-extension/extension.json",
+        line: 3,
+        rule: "translation-extension-incomplete-translations",
+        message: "Missing 'en' translations in extension manifest.",
       },
     ]);
   });

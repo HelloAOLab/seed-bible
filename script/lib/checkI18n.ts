@@ -154,6 +154,16 @@ export function checkI18n(
     const translations = manifest.translations;
     if (!isObject(translations)) continue;
 
+    if (!isObject(translations.en)) {
+      findings.push({
+        file,
+        line: lineOfKey(text, "translations"),
+        rule: "translation-extension-incomplete-translations",
+        message: "Missing 'en' translations in extension manifest.",
+      });
+      continue;
+    }
+
     const englishKeys = [...flattenTranslationKeys(translations.en)];
     for (const [locale, value] of Object.entries(translations)) {
       if (locale === "en") continue;
