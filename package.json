@@ -102,6 +102,7 @@
     "puppeteer": "^24.30.0",
     "rxjs": "catalog:",
     "stylelint": "^17.14.1",
+    "stylelint-plugin-use-baseline": "^1.4.6",
     "ts-morph": "^27.0.2",
     "tsx": "^4.20.5",
     "typescript": "^6.0.3",

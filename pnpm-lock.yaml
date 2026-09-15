@@ -6,7 +6,55 @@ settings:
 
 catalogs:
   default:
+    '@casual-simulation/aux-common':
+      specifier: 4.2.3
+      version: 4.2.3
+    '@casual-simulation/aux-websocket':
+      specifier: 4.2.3
+      version: 4.2.3
+    '@casual-simulation/websocket':
+      specifier: 4.0.0
+      version: 4.0.0
     '@tiptap/core':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-bullet-list':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-color':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-highlight':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-image':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-link':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-list-item':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-ordered-list':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-subscript':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-superscript':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-text-align':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-text-style':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/extension-underline':
+      specifier: 3.27.1
+      version: 3.27.1
+    '@tiptap/pm':
       specifier: 3.27.1
       version: 3.27.1
     '@tiptap/starter-kit':
@@ -18,12 +66,21 @@ catalogs:
     axios:
       specifier: 1.13.5
       version: 1.13.5
+    base64-js:
+      specifier: 1.5.1
+      version: 1.5.1
+    dompurify:
+      specifier: ^3.4.11
+      version: 3.4.11
     i18next:
       specifier: 26.2.0
       version: 26.2.0
     i18next-resources-to-backend:
       specifier: ^1.2.1
       version: 1.2.1
+    luxon:
+      specifier: ^3.7.2
+      version: 3.7.2
     preact:
       specifier: 10.29.8
       version: 10.29.8
@@ -278,6 +335,9 @@ importers:
       stylelint:
         specifier: ^17.14.1
         version: 17.14.1(typescript@6.0.3)
+      stylelint-plugin-use-baseline:
+        specifier: ^1.4.6
+        version: 1.4.6(stylelint@17.14.1(typescript@6.0.3))
       ts-morph:
         specifier: ^27.0.2
         version: 27.0.2
@@ -5112,6 +5172,10 @@ packages:
     resolution: {integrity: sha512-lJJV/5dYS+RcL8uQdBDW9c9uWFLLBNRyFhnAKXw5tVqLlKZ4RMGZKv+YQ/IA3OhD+RpbJa1LLFM1FQPGyIXvOA==}
     engines: {node: '>=12'}
 
+  is-plain-object@5.1.0:
+    resolution: {integrity: sha512-bUi/yjmtKYcRVUtWRGr0UA6xEFh2I6zWUwMrUXB3s7bmYCaZ8a+0ZsTRkrawh/mzlSD1Y0Ph8bp/U+TvBpWDNw==}
+    engines: {node: '>=0.10.0'}
+
   is-potential-custom-element-name@1.0.1:
     resolution: {integrity: sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ==}
 
@@ -6392,6 +6456,11 @@ packages:
 
   stubs@3.0.0:
     resolution: {integrity: sha512-PdHt7hHUJKxvTCgbKX9C1V/ftOcjJQgz8BZwNfV5c4B6dcGqlpelTbJ999jBGZ2jYiPAwcX5dP6oBwVlBlUbxw==}
+
+  stylelint-plugin-use-baseline@1.4.6:
+    resolution: {integrity: sha512-8FyloHsa3YXt0y3wVYToV1frYgX/p7GYOCV7EjV/BjiNFzzGnqJvcKK94vNBfI/BOUi1d8L+VdgBqx5zNMF3uw==}
+    peerDependencies:
+      stylelint: ^16.0.2 || ^17.0.0
 
   stylelint@17.14.1:
     resolution: {integrity: sha512-xVQwyiuxALUBNB2fBe0tmNemg9KqLtdj3T64mioFDar79B2cU8LIyz+3KL6LdiHs9NkeNfwxpKSaIVOY8f112g==}
@@ -11866,6 +11935,8 @@ snapshots:
 
   is-path-inside@4.0.0: {}
 
+  is-plain-object@5.1.0: {}
+
   is-potential-custom-element-name@1.0.1: {}
 
   is-promise@4.0.0: {}
@@ -13273,6 +13344,14 @@ snapshots:
   stubborn-utils@1.0.2: {}
 
   stubs@3.0.0: {}
+
+  stylelint-plugin-use-baseline@1.4.6(stylelint@17.14.1(typescript@6.0.3)):
+    dependencies:
+      css-tree: 3.2.1
+      is-plain-object: 5.1.0
+      postcss: 8.5.26
+      postcss-value-parser: 4.2.0
+      stylelint: 17.14.1(typescript@6.0.3)
 
   stylelint@17.14.1(typescript@6.0.3):
     dependencies:
