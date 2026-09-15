@@ -15,6 +15,7 @@
     "build:server": "bun build --target=bun --external express --external vite --outfile=server/dist/index.js ./server/index.ts",
     "lint": "vp lint && stylelint \"packages/**/*.css\" && tsx script/check-i18n.ts",
     "lint:fix": "vp lint --fix && stylelint \"packages/**/*.css\" --fix && tsx script/check-i18n.ts --fix",
+    "check": "vp check",
     "check:ts": "pnpm run check:ts:client && pnpm run check:ts:sw && pnpm run check:patterns",
     "check:ts:client": "tsgo --project ./tsconfig.json",
     "check:ts:sw": "tsgo --project ./standalone/tsconfig.sw.json",

@@ -423,6 +423,15 @@ export default defineConfig(({ isSsrBuild }) => ({
   },
 
   lint: {
+    // `options.typeCheck` is off: oxlint 1.82 rejects it on its own ("The
+    // `--type-check` option requires type-aware linting"), and turning
+    // `typeAware` on to satisfy it does two unrelated things at once — it also
+    // enables the type-aware rules (no-floating-promises alone fires 1387
+    // times) — while tsgolint (7.0.2001) reports compiler diagnostics tsgo
+    // does not: 15 errors on files tsgo calls clean, because tsgolint resolves
+    // modules from its own root, not the three tsconfigs (TS2307 across
+    // `lib/vendor.ts`, TS7026 in `test/fixtures/i18n-project/`, TS2322 in this
+    // file). `pnpm check:ts` runs tsgo against those three projects instead.
     ignorePatterns: [
       "**/node_modules/**",
       "**/dist/**",
@@ -522,6 +531,11 @@ export default defineConfig(({ isSsrBuild }) => ({
         },
       },
     ],
+  },
+
+  check: {
+    fmt: true,
+    lint: true,
   },
 
   staged: {
