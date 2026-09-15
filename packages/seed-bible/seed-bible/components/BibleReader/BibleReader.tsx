@@ -1607,7 +1607,7 @@ function ChapterContent(props: ChapterContentProps) {
 
   // Where each note marker sits vertically. Markers live in a gutter beside
   // the text rather than in the flow, so their position has to be measured:
-  // it is the top of the verse's *first* line box, which is the line carrying
+  // it is the verse's *first* visual line box, which is the line carrying
   // the verse number.
   const measureNoteMarkers = () => {
     const content = contentRef.current;
@@ -1620,12 +1620,19 @@ function ChapterContent(props: ChapterContentProps) {
         const verseEl = content.querySelector<HTMLElement>(
           `.sb-verse[data-verse-number="${verseNumber}"]`
         );
-        const rect = verseEl?.getClientRects()[0];
-        if (!rect) continue;
+        if (!verseEl) continue;
+        // A verse containing poetry is block-level (so is each of its lines),
+        // which makes its own client rect the whole multi-line column —
+        // centring on that drops the marker halfway down the verse.
+        // `collectLineRects` walks past the block lines and reports one rect
+        // per *visual* line, so [0] is the line carrying the verse number
+        // whether the verse is prose or poetry.
+        const line = collectLineRects(verseEl, box.left, box.top)[0];
+        if (!line) continue;
         next.push({
           verseNumber,
-          top: rect.top - box.top,
-          height: rect.height,
+          top: line.top,
+          height: line.bottom - line.top,
         });
       }
     }
