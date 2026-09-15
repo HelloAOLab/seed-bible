@@ -12,7 +12,20 @@ import type {
 } from "@casual-simulation/aux-common";
 import { existsSync } from "node:fs";
 import { ExtensionMetaSchema } from "./extension";
-import type { ExtensionSet } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import type { ExtensionMeta } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+
+/**
+ * The dev-extension list handed to the CasualOS page: packages as inline aux
+ * data rather than the URLs the app's `ExtensionSet` carries.
+ */
+interface DevExtensionSet {
+  id: string;
+  recordName: string;
+  extensions: {
+    aux: Awaited<ReturnType<typeof readPackage>>;
+    meta: ExtensionMeta & { autoinstall: boolean };
+  }[];
+}
 
 declare global {
   interface Window {
@@ -359,7 +372,7 @@ export async function loadSeedBible(
   //   (p) => p !== "seed-bible-refresh"
   // );
 
-  const availablePackages: ExtensionSet = {
+  const availablePackages: DevExtensionSet = {
     id: "dev-extensions",
     extensions: [],
     recordName: "",

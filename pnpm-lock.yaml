@@ -115,7 +115,7 @@ overrides:
 
 patchedDependencies:
   '@casual-simulation/aux-records': b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e
-  '@casual-simulation/fast-json-stable-stringify': a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef
+  '@casual-simulation/fast-json-stable-stringify': 3ff7367df3287fc636faa526bd2c10f031969e85cdc8e33bbd70b0523bf57289
   follow-redirects: 6c86d1ca9b95ef9c8aca9f39dd13a02652b3d033c6067e152f056e89a3f67a66
 
 importers:
@@ -209,7 +209,7 @@ importers:
         version: 4.0.5
       '@casual-simulation/fast-json-stable-stringify':
         specifier: ^4.0.5
-        version: 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+        version: 4.0.5(patch_hash=3ff7367df3287fc636faa526bd2c10f031969e85cdc8e33bbd70b0523bf57289)
       '@eslint/css':
         specifier: ^0.10.0
         version: 0.10.0
@@ -871,11 +871,6 @@ packages:
   '@babel/helpers@7.28.6':
     resolution: {integrity: sha512-xOBvwq86HHdB7WUDTfKfT/Vuxh7gElQ+Sfti2Cy6yIWNW05P8iUslOVcZ4/sKbE+/jQaukQAdz/gf3724kYdqw==}
     engines: {node: '>=6.9.0'}
-
-  '@babel/parser@7.28.6':
-    resolution: {integrity: sha512-TeR9zWR18BvbfPmGbLampPMW+uW1NZnJlRuuHso8i87QZNq2JRF9i6RgxRqtEq+wQGsS19NNTWr2duhnE49mfQ==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
 
   '@babel/parser@7.29.7':
     resolution: {integrity: sha512-hnORnjP/1P/zFEndoeX+n+t1RwWRJiJpM/jO7FW32Kn9r5+sJB2JWOdYo4L6k78j15eCwY3Gm/7364B1EMwtNg==}
@@ -6892,7 +6887,7 @@ snapshots:
 
   '@babel/code-frame@7.28.6':
     dependencies:
-      '@babel/helper-validator-identifier': 7.28.5
+      '@babel/helper-validator-identifier': 7.29.7
       js-tokens: 4.0.0
       picocolors: 1.1.1
 
@@ -6905,10 +6900,10 @@ snapshots:
       '@babel/helper-compilation-targets': 7.28.6
       '@babel/helper-module-transforms': 7.28.6(@babel/core@7.28.6)
       '@babel/helpers': 7.28.6
-      '@babel/parser': 7.28.6
+      '@babel/parser': 7.29.7
       '@babel/template': 7.28.6
       '@babel/traverse': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/types': 7.29.7
       '@jridgewell/remapping': 2.3.5
       convert-source-map: 2.0.0
       debug: 4.4.3
@@ -6920,8 +6915,8 @@ snapshots:
 
   '@babel/generator@7.28.6':
     dependencies:
-      '@babel/parser': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/parser': 7.29.7
+      '@babel/types': 7.29.7
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
       jsesc: 3.1.0
@@ -6981,7 +6976,7 @@ snapshots:
   '@babel/helper-module-imports@7.28.6':
     dependencies:
       '@babel/traverse': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/types': 7.29.7
     transitivePeerDependencies:
       - supports-color
 
@@ -6989,7 +6984,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.28.6
       '@babel/helper-module-imports': 7.28.6
-      '@babel/helper-validator-identifier': 7.28.5
+      '@babel/helper-validator-identifier': 7.29.7
       '@babel/traverse': 7.28.6
     transitivePeerDependencies:
       - supports-color
@@ -7046,11 +7041,7 @@ snapshots:
   '@babel/helpers@7.28.6':
     dependencies:
       '@babel/template': 7.28.6
-      '@babel/types': 7.28.6
-
-  '@babel/parser@7.28.6':
-    dependencies:
-      '@babel/types': 7.28.6
+      '@babel/types': 7.29.7
 
   '@babel/parser@7.29.7':
     dependencies:
@@ -7555,17 +7546,17 @@ snapshots:
   '@babel/template@7.28.6':
     dependencies:
       '@babel/code-frame': 7.28.6
-      '@babel/parser': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/parser': 7.29.7
+      '@babel/types': 7.29.7
 
   '@babel/traverse@7.28.6':
     dependencies:
       '@babel/code-frame': 7.28.6
       '@babel/generator': 7.28.6
       '@babel/helper-globals': 7.28.0
-      '@babel/parser': 7.28.6
+      '@babel/parser': 7.29.7
       '@babel/template': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/types': 7.29.7
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
@@ -7606,7 +7597,7 @@ snapshots:
       '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
       '@casual-simulation/error-stack-parser': 2.0.7
       '@casual-simulation/expect': 4.0.0
-      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=3ff7367df3287fc636faa526bd2c10f031969e85cdc8e33bbd70b0523bf57289)
       '@casual-simulation/js-interpreter': 4.0.0
       '@casual-simulation/stacktrace': 4.0.0
       '@casual-simulation/timesync': 4.0.0
@@ -7638,7 +7629,7 @@ snapshots:
       '@anthropic-ai/sdk': 0.92.0(zod@4.4.3)
       '@casual-simulation/aux-common': 4.2.3
       '@casual-simulation/crypto': 4.0.5
-      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=3ff7367df3287fc636faa526bd2c10f031969e85cdc8e33bbd70b0523bf57289)
       '@casual-simulation/rate-limit-redis': 4.0.0
       '@casual-simulation/timesync': 4.0.0
       '@google/generative-ai': 0.11.3
@@ -7683,7 +7674,7 @@ snapshots:
       '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
       '@casual-simulation/error-stack-parser': 2.0.7
       '@casual-simulation/expect': 4.0.0
-      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=3ff7367df3287fc636faa526bd2c10f031969e85cdc8e33bbd70b0523bf57289)
       '@casual-simulation/js-interpreter': 4.0.0
       '@casual-simulation/stacktrace': 4.0.0
       '@sveltejs/acorn-typescript': 1.0.8(acorn@8.11.3)
@@ -7727,7 +7718,7 @@ snapshots:
       '@casual-simulation/aux-records': 4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto': 4.0.5
-      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=3ff7367df3287fc636faa526bd2c10f031969e85cdc8e33bbd70b0523bf57289)
       '@casual-simulation/timesync': 4.0.0
       '@casual-simulation/undom': 4.0.0
       axios: 1.7.7
@@ -7757,7 +7748,7 @@ snapshots:
 
   '@casual-simulation/crypto@4.0.5':
     dependencies:
-      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=3ff7367df3287fc636faa526bd2c10f031969e85cdc8e33bbd70b0523bf57289)
       '@types/scrypt-async': 1.3.5
       base64-js: 1.5.1
       hash.js: 1.1.7
@@ -7775,7 +7766,7 @@ snapshots:
       '@casual-simulation/chalk': 4.0.0
       '@jest/types': 27.5.1
 
-  '@casual-simulation/fast-json-stable-stringify@4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)': {}
+  '@casual-simulation/fast-json-stable-stringify@4.0.5(patch_hash=3ff7367df3287fc636faa526bd2c10f031969e85cdc8e33bbd70b0523bf57289)': {}
 
   '@casual-simulation/js-interpreter@4.0.0':
     dependencies:

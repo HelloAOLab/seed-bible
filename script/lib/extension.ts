@@ -3,12 +3,25 @@ import path from "node:path";
 import { existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 import fs from "fs";
-import type {
-  ExtensionMeta,
-  ExtensionSet,
-  UploadedExtension,
-} from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import type { ExtensionMeta } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import * as z from "zod/v4";
+
+/**
+ * What `upload` records for one extension: the package-version address in
+ * the records server. The app's `UploadedExtension` is a different shape (a
+ * loadable URL), which is why this isn't reused.
+ */
+export interface UploadedPackage {
+  recordName: string;
+  address: string;
+  meta: ExtensionMeta;
+}
+
+export interface UploadedPackageSet {
+  id: string;
+  recordName: string;
+  extensions: UploadedPackage[];
+}
 
 // const downloadRecordName = "testingPublickKey";
 const uploadRecordName = "seedBibleExtensions";
@@ -283,18 +296,6 @@ export function generateExtension(pckgName: string, mainBot: string) {
 //   };
 // }
 
-// interface UploadedExtension {
-//   recordName: string;
-//   address: string;
-//   name: string;
-//   meta: ExtensionMeta;
-// }
-
-// interface ExtensionSet {
-//   id: string;
-//   extensions: UploadedExtension[];
-// }
-
 async function getRecordName(key: string) {
   const { isRecordKey, parseRecordKey } =
     await import("@casual-simulation/aux-common/records/RecordKeys.js");
@@ -335,7 +336,7 @@ export const ExtensionMetaSchema = z.looseObject({
 export async function upload(
   directoryName: string,
   options: { sessionKey?: string; recordKey?: string; saveMeta?: boolean }
-): Promise<UploadedExtension> {
+): Promise<UploadedPackage> {
   if (!options.sessionKey) {
     throw new Error(
       "You must specify a session key using the --session-key option."
@@ -412,7 +413,7 @@ export async function uploadAll(options: {
     }
   }
 
-  const extensionData: UploadedExtension[] = [];
+  const extensionData: UploadedPackage[] = [];
   for (const name of extensions) {
     extensionData.push(await upload(name, options));
   }
@@ -420,7 +421,7 @@ export async function uploadAll(options: {
   const recordName: string = await getRecordName(
     options.recordKey ?? uploadRecordName
   );
-  const set: ExtensionSet = {
+  const set: UploadedPackageSet = {
     recordName: recordName,
     id: `set-${Date.now()}`,
     extensions: extensionData,
