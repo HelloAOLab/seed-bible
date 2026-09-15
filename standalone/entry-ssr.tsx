@@ -52,8 +52,8 @@ export interface RenderOptions {
    * - `<!--SEED_JSON-->` where the JSON-serialized API response snapshot
    *   should be injected, so the client can seed its own API cache with data
    *   the server already fetched instead of re-fetching it.
-   * - `<!--THEME_STYLE_TAG-->` where the active theme's composed CSS text
-   *   should be injected, inside a `<style id="sb-theme-styles">` tag.
+   * - `<!--THEME_STYLE_TAG-->` where a `<style id="sb-theme-styles">` tag
+   *   holding the active theme's composed CSS should be injected.
    * - `<!--THEME_PRESETS_JSON-->` where the built-in theme presets' composed
    *   CSS text should be injected, for the pre-hydration script that applies
    *   a returning visitor's saved theme before first paint.
@@ -583,7 +583,7 @@ export async function render(
     ["<!-- HTML_LANG -->", escapeForHtmlAttribute(state.i18n.language.value)],
     [
       "<!-- THEME_STYLE_TAG -->",
-      composeThemeStyleText(state.theme.currentTheme.value),
+      `<style id="sb-theme-styles">${composeThemeStyleText(state.theme.currentTheme.value)}</style>`,
     ],
     ["<!-- THEME_PRESETS_JSON -->", themePresetsJson],
     ["<!-- CONFIG_JSON -->", configJson],

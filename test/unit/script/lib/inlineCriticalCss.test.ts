@@ -17,8 +17,8 @@ function createHtml(): string {
         opacity: 0;
       }
     </style>
-    <style id="sb-critical-styles">${CRITICAL_STYLE_PLACEHOLDER}</style>
-    <style id="sb-theme-styles"></style>
+    ${CRITICAL_STYLE_PLACEHOLDER}
+    <!-- THEME_STYLE_TAG -->
   </head>
   <body></body>
 </html>`;

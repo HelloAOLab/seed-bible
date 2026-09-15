@@ -13,7 +13,12 @@
  * can pin them down without running a build.
  */
 
-/** Placeholder in `index.html`'s `<style id="sb-critical-styles">` tag. */
+/**
+ * Bare HTML comment in `index.html` that the whole
+ * `<style id="sb-critical-styles">` tag replaces. It can't live inside an
+ * empty `<style>`: Vite (8.3+) parses every inline `<style>` as CSS at build
+ * time and mangles anything that isn't.
+ */
 export const CRITICAL_STYLE_PLACEHOLDER = "<!-- CRITICAL_STYLE_TAG -->";
 
 const LINK_TAG_RE = /<link\b[^>]*>/gi;
@@ -65,7 +70,10 @@ export function injectCriticalStyles(
     );
   }
 
-  return html.replace(CRITICAL_STYLE_PLACEHOLDER, () => criticalCss);
+  return html.replace(
+    CRITICAL_STYLE_PLACEHOLDER,
+    () => `<style id="sb-critical-styles">${criticalCss}</style>`
+  );
 }
 
 /**
