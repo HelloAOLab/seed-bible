@@ -1436,7 +1436,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       responses: createPrivateEndpointResponses(),
     });
 
-    // The default tool set renders exactly one row here (highlight, bookmark,
+    // The default tool set renders exactly one row here (highlight, save,
     // copy, share), so there would be nothing to drag open. Two extra tools push
     // it past a row, which is the case the gesture exists for.
     for (const id of ["test-extra-one", "test-extra-two"]) {
@@ -1548,6 +1548,39 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       );
     });
   }
+
+  const saveTrigger = () =>
+    container.querySelector<HTMLButtonElement>(
+      ".sb-verse-toolbar-save-trigger"
+    );
+
+  it("never announces the save action as a toggle", async () => {
+    await renderSheet();
+
+    // Pressing it always opens the folder picker; it never removes a save. An
+    // aria-pressed state would announce a toggle that isn't there, and would
+    // disagree with the reader star and the tab-row button, which both dropped
+    // it for the same reason.
+    expect(saveTrigger()).not.toBeNull();
+    expect(saveTrigger()!.getAttribute("aria-pressed")).toBeNull();
+    expect(saveTrigger()!.getAttribute("aria-label")).toBe("Save");
+  });
+
+  it("says the verses are already saved in its label, not a pressed state", async () => {
+    vi.spyOn(state.saves, "getSaveForLocation").mockReturnValue({
+      id: "save-1",
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      createdAt: 1,
+      categories: ["My Saves"],
+    });
+
+    await renderSheet();
+
+    expect(saveTrigger()!.getAttribute("aria-label")).toBe("Edit save");
+    expect(saveTrigger()!.getAttribute("aria-pressed")).toBeNull();
+  });
 
   it("starts collapsed, with the swipe hint in place of a More button", async () => {
     await renderSheet();
@@ -2418,7 +2451,7 @@ describe("BibleReaderToolbar — the mobile Today tab", () => {
 
 /**
  * The mobile bottom bar is fixed at five tabs — Today, You, Bible, Search,
- * More — and everything else (Bookmarks, Chat, Tabs, extension tools) is
+ * More — and everything else (Saves, Chat, Tabs, extension tools) is
  * reached from the More menu. `?chatFirst=true` does not change that set; on
  * mobile it only lifts Chat to the top of the More menu, and on desktop/laptop
  * it keeps Chat in the labeled toolbar (covered by the desktop suite below).
@@ -2528,30 +2561,30 @@ describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
     ["without chatFirst", undefined],
     ["with chatFirst=true", true],
   ])(
-    "keeps Bookmarks, Chat and Tabs out of the bar %s",
+    "keeps Saves, Chat and Tabs out of the bar %s",
     async (_label, chatFirst) => {
       await renderToolbar({ chatFirst });
 
-      expect(tabButton("Bookmarks")).toBeNull();
+      expect(tabButton("Saves")).toBeNull();
       expect(tabButton("Chat")).toBeNull();
       expect(tabButton("Tabs")).toBeNull();
       expect(tabButton("More")).not.toBeNull();
     }
   );
 
-  it("puts Bookmarks and Tabs in the More menu without chatFirst", async () => {
+  it("puts Saves and Tabs in the More menu without chatFirst", async () => {
     await renderToolbar();
     await openMore();
 
-    expect(moreMenuLabels()).toContain("Bookmarks");
+    expect(moreMenuLabels()).toContain("Saves");
     expect(moreMenuLabels()).toContain("Tabs");
   });
 
-  it("puts Bookmarks and Tabs in the More menu with chatFirst too", async () => {
+  it("puts Saves and Tabs in the More menu with chatFirst too", async () => {
     await renderToolbar({ chatFirst: true });
     await openMore();
 
-    expect(moreMenuLabels()).toContain("Bookmarks");
+    expect(moreMenuLabels()).toContain("Saves");
     expect(moreMenuLabels()).toContain("Tabs");
   });
 
@@ -2575,11 +2608,11 @@ describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
 
     const labels = moreMenuLabels();
     expect(labels).toContain("Chat");
-    expect(labels.indexOf("Chat")).toBeLessThan(labels.indexOf("Bookmarks"));
+    expect(labels.indexOf("Chat")).toBeLessThan(labels.indexOf("Saves"));
     expect(labels.indexOf("Extension Tool")).toBeLessThan(
-      labels.indexOf("Bookmarks")
+      labels.indexOf("Saves")
     );
-    expect(labels.indexOf("Bookmarks")).toBeLessThan(labels.indexOf("Tabs"));
+    expect(labels.indexOf("Saves")).toBeLessThan(labels.indexOf("Tabs"));
   });
 
   it("keeps extension tools above the pinned app items without chatFirst", async () => {
@@ -2589,9 +2622,9 @@ describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
 
     const labels = moreMenuLabels();
     expect(labels.indexOf("Extension Tool")).toBeLessThan(
-      labels.indexOf("Bookmarks")
+      labels.indexOf("Saves")
     );
-    expect(labels.indexOf("Bookmarks")).toBeLessThan(labels.indexOf("Tabs"));
+    expect(labels.indexOf("Saves")).toBeLessThan(labels.indexOf("Tabs"));
   });
 
   it("opens the chat panel from the More menu", async () => {
@@ -2624,29 +2657,29 @@ describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
     expect(isActive("More")).toBe(false);
   });
 
-  it("opens Bookmarks from the More menu", async () => {
+  it("opens Saves from the More menu", async () => {
     const { state } = await renderToolbar();
 
     await openMore();
-    await tap(moreMenuItem("Bookmarks"));
+    await tap(moreMenuItem("Saves"));
 
     expect(state.sidebar.isMobileOpen.value).toBe(true);
-    expect(state.bookmarks.isFilterActive.value).toBe(true);
+    expect(state.saves.isFilterActive.value).toBe(true);
     expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
   });
 
-  it("highlights More while Bookmarks is open", async () => {
+  it("highlights More while Saves is open", async () => {
     const { state } = await renderToolbar();
 
     await openMore();
-    await tap(moreMenuItem("Bookmarks"));
+    await tap(moreMenuItem("Saves"));
 
-    expect(state.bookmarks.isFilterActive.value).toBe(true);
+    expect(state.saves.isFilterActive.value).toBe(true);
     expect(isActive("More")).toBe(true);
     expect(isActive("Bible")).toBe(false);
   });
 
-  it("closes Chat when opening Bookmarks from More", async () => {
+  it("closes Chat when opening Saves from More", async () => {
     const { state } = await renderToolbar({ chatFirst: true });
 
     await openMore();
@@ -2654,10 +2687,10 @@ describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
     expect(state.sidebar.isChatPanelOpen.value).toBe(true);
 
     await openMore();
-    await tap(moreMenuItem("Bookmarks"));
+    await tap(moreMenuItem("Saves"));
 
     expect(state.sidebar.isChatPanelOpen.value).toBe(false);
-    expect(state.bookmarks.isFilterActive.value).toBe(true);
+    expect(state.saves.isFilterActive.value).toBe(true);
   });
 
   it("closes Chat when opening Search, Today, or Bible", async () => {
@@ -2812,12 +2845,10 @@ describe("BibleReaderToolbar — chat-first desktop / laptop toolbar", () => {
     expect(state.sidebar.isChatPanelOpen.value).toBe(true);
   });
 
-  it("does not add a Bookmarks bottom tab on desktop under chat-first", async () => {
+  it("does not add a Saves bottom tab on desktop under chat-first", async () => {
     await renderToolbar({ chatFirst: true });
 
-    expect(
-      container.querySelector('button[aria-label="Bookmarks"]')
-    ).toBeNull();
+    expect(container.querySelector('button[aria-label="Saves"]')).toBeNull();
   });
 
   it("ignores non-canonical chatFirst values on desktop", async () => {

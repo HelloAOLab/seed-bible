@@ -298,9 +298,9 @@
   font-size: 0.8125rem;
 }
 
-/* --------------------------------------------------------------- bookmarks */
+/* --------------------------------------------------------------- saves */
 
-.sb-content-bookmarks {
+.sb-content-saves {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -311,18 +311,18 @@
  * one rounded background and highlight together, rather than looking like
  * two separate controls that happen to sit side by side.
  */
-.sb-content-bookmark-row {
+.sb-content-save-row {
   display: inline-flex;
   align-items: center;
   border-radius: 8px;
   background: var(--sb-content-surface);
 }
 
-.sb-content-bookmark-row:hover {
+.sb-content-save-row:hover {
   background: var(--sb-content-surface-strong);
 }
 
-.sb-content-bookmark {
+.sb-content-save {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -335,7 +335,7 @@
   cursor: pointer;
 }
 
-.sb-content-bookmark-menu {
+.sb-content-save-menu {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -347,16 +347,16 @@
   cursor: pointer;
 }
 
-.sb-content-bookmark-menu:hover {
+.sb-content-save-menu:hover {
   color: inherit;
 }
 
-.sb-content-bookmark-name {
+.sb-content-save-name {
   font-size: 0.9375rem;
   font-weight: 700;
 }
 
-.sb-content-bookmark-kind {
+.sb-content-save-kind {
   color: var(--sb-content-muted);
   font-size: 0.6875rem;
   font-weight: 700;
@@ -364,12 +364,12 @@
   text-transform: uppercase;
 }
 
-/* A verse bookmark is the more specific of the two, so it carries the accent. */
-.sb-content-bookmark-kind-verse {
+/* A verse save is the more specific of the two, so it carries the accent. */
+.sb-content-save-kind-verse {
   color: var(--sb-content-accent);
 }
 
-.sb-content-bookmark-date {
+.sb-content-save-date {
   color: var(--sb-content-muted);
   font-size: 0.75rem;
 }
