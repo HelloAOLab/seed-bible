@@ -2,10 +2,12 @@ import type { VersesBundleData } from "../../../domain/entities/VersesBundleData
 import type { VersesBundleDataRepositoryPort as PieceLifecycleRepositoryPort } from "../../../application/ports/pieceLifecycle";
 import type { VersesBundleDataRepositoryPort as VersesBundleInteractionRepositoryPort } from "../../../application/ports/versesBundle";
 
+// The CasualOS tag transpiler behind `casualos minify-aux` fails on an
+// `implements` clause split across lines ("Expected { but found impl"), so
+// the formatter must not wrap it.
+// prettier-ignore
 export class VersesBundleRepository
-  implements
-    PieceLifecycleRepositoryPort,
-    VersesBundleInteractionRepositoryPort
+  implements PieceLifecycleRepositoryPort, VersesBundleInteractionRepositoryPort
 {
   #dataSet: Set<VersesBundleData> = new Set();
 
