@@ -29,6 +29,7 @@
     "list-bible-translations": "tsx script/list-bible-translations.ts",
     "generate-book-chapter-verse-counts": "tsx script/generate-book-chapter-verse-counts.ts",
     "sitemap": "tsx script/generate-sitemap.ts",
+    "index-sitemap-urls": "tsx script/index-sitemap-urls.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
     "prepare": "husky && tsx script/setupMergeDriver.ts",
