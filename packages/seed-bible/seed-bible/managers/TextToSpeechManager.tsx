@@ -47,6 +47,12 @@ export interface TextToSpeechManager {
 
   /** Stops immediately and clears the queue. Safe to call when idle. */
   stop: () => void;
+
+  /**
+   * Stops any speech and releases the listeners this manager put on shared
+   * globals. Safe to call twice.
+   */
+  dispose: () => void;
 }
 
 const MAX_UTTERANCE_CHARACTERS = 160;
@@ -57,12 +63,12 @@ const SENTENCE_ENDINGS = new Set([
   "?",
   ";",
   ":",
-  "।", // Devanagari danda
-  "۔", // Arabic full stop
-  "؟", // Arabic question mark
-  "。", // Ideographic full stop
-  "！", // Fullwidth exclamation mark
-  "？", // Fullwidth question mark
+  "।",
+  "۔",
+  "؟",
+  "。",
+  "！",
+  "？",
 ]);
 
 /**
@@ -203,11 +209,18 @@ export function createTextToSpeechManager(): TextToSpeechManager {
    */
   const voices = signal<SpeechSynthesisVoice[]>([]);
 
+  const teardowns: (() => void)[] = [];
+
   const refreshVoices = () => {
     voices.value = speech?.getVoices() ?? [];
   };
   refreshVoices();
-  speech?.addEventListener("voiceschanged", refreshVoices);
+  if (speech) {
+    speech.addEventListener("voiceschanged", refreshVoices);
+    teardowns.push(() =>
+      speech.removeEventListener("voiceschanged", refreshVoices)
+    );
+  }
 
   const canSpeakLanguage = (lang: string | null | undefined): boolean => {
     if (!speech || !Utterance || !lang) return false;
@@ -305,7 +318,6 @@ export function createTextToSpeechManager(): TextToSpeechManager {
     if (!speech) return;
     speech.cancel();
     enforceSilence();
-    console.log("Stopped speech run with token:", runToken);
   };
 
   const speak = (verses: readonly SpeechVerse[], options: SpeakOptions) => {
@@ -327,8 +339,6 @@ export function createTextToSpeechManager(): TextToSpeechManager {
 
     const token = ++runToken;
     const voice = options.lang ? pickVoice(options.lang) : null;
-
-    console.log("Starting new speech run with token:", token);
 
     isSpeaking.value = true;
     // A new run supersedes any stop still being enforced from a previous one.
@@ -356,11 +366,9 @@ export function createTextToSpeechManager(): TextToSpeechManager {
         currentVerse.value = part.number;
       };
 
-      // Leaves `isSpeaking` stuck on — and the toolbar stuck showing a pause
-      // icon — if it isn't handled, since a failed utterance never ends.
       utterance.onerror = () => {
         if (token !== runToken) return;
-        reset();
+        stop();
       };
 
       if (index === parts.length - 1) {
@@ -375,13 +383,20 @@ export function createTextToSpeechManager(): TextToSpeechManager {
     });
   };
 
-  // Speech carries on after the page goes away otherwise — a back navigation
-  // mid-chapter would leave a disembodied voice reading on.
   if (typeof window !== "undefined" && speech) {
-    window.addEventListener("pagehide", () => {
-      speech.cancel();
-    });
+    const silenceOnPageHide = () => speech.cancel();
+    window.addEventListener("pagehide", silenceOnPageHide);
+    teardowns.push(() =>
+      window.removeEventListener("pagehide", silenceOnPageHide)
+    );
   }
+
+  const dispose = () => {
+    stop();
+    for (const teardown of teardowns.splice(0)) {
+      teardown();
+    }
+  };
 
   return {
     isSupported,
@@ -390,5 +405,6 @@ export function createTextToSpeechManager(): TextToSpeechManager {
     currentVerse,
     speak,
     stop,
+    dispose,
   };
 }

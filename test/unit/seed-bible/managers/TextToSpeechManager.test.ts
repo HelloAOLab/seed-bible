@@ -503,6 +503,50 @@ describe("TextToSpeechManager", () => {
     expect(manager.currentVerse.value).toBe(null);
   });
 
+  it("abandons the rest of the chapter when an utterance fails", () => {
+    const speech = installSpeech();
+    const manager = createTextToSpeechManager();
+    const onFinished = vi.fn();
+
+    manager.speak(GENESIS, { lang: "en", onFinished });
+    const handedToEngine = [...speech.queued];
+    const cancelsSoFar = speech.cancelCount;
+
+    // An error kills one utterance, not the queue behind it. Clearing the UI
+    // alone would leave the engine reading the rest of the chapter aloud with
+    // nothing tracking it.
+    handedToEngine[0]!.onerror?.();
+    expect(speech.cancelCount).toBeGreaterThan(cancelsSoFar);
+
+    // The verses that were still queued belong to a run that no longer exists,
+    // so nothing they report may light a verse or end the chapter.
+    handedToEngine[1]!.onstart?.();
+    expect(manager.currentVerse.value).toBe(null);
+    expect(manager.isSpeaking.value).toBe(false);
+
+    handedToEngine[1]!.onend?.();
+    expect(onFinished).not.toHaveBeenCalled();
+  });
+
+  it("takes its listeners with it when disposed", () => {
+    const speech = installSpeech();
+    const manager = createTextToSpeechManager();
+    manager.speak(GENESIS, { lang: "en" });
+
+    manager.dispose();
+
+    // Anything still speaking is stopped, not orphaned.
+    expect(manager.isSpeaking.value).toBe(false);
+    expect(speech.cancelCount).toBeGreaterThan(0);
+
+    // The engine and `window` outlive the manager, so a discarded one must
+    // stop reacting to them — voices arriving later are no longer its business.
+    speech.loadVoices([{ lang: "en-US", name: "English" }]);
+    expect(manager.canSpeakLanguage("en")).toBe(false);
+
+    expect(() => manager.dispose()).not.toThrow();
+  });
+
   it("skips verses with nothing to say and stays idle when none are left", () => {
     const speech = installSpeech();
     const manager = createTextToSpeechManager();
