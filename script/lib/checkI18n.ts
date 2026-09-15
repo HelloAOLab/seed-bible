@@ -5,6 +5,7 @@ import {
   analyzeProject,
   flattenTranslationKeys,
   forgetProjectAnalysis,
+  isObject,
 } from "../lint/i18nRuleShared";
 
 export type I18nRule =
@@ -68,10 +69,6 @@ export const EXEMPT_KEYS: ReadonlySet<string> = new Set([
 const I18N_DIR = path.join("packages", "seed-bible", "seed-bible", "i18n");
 
 type JsonObject = Record<string, unknown>;
-
-function isObject(value: unknown): value is JsonObject {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
 
 function toPosix(relative: string): string {
   return relative.split(path.sep).join("/");

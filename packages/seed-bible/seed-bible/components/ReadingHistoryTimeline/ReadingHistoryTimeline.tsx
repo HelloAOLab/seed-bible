@@ -22,7 +22,7 @@ export type { TooltipAnchor };
  * consumer owns its own tooltip data type.
  */
 export type ReadingHistoryTooltip = (props: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   contentsData: any[];
   anchor: TooltipAnchor;
   offsetY?: number;
@@ -112,7 +112,7 @@ const Label = memo(
 );
 
 type ItemProps =
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   ReadingHistoryItemProps<any> & {
     Tooltip?: ReadingHistoryTooltip;
   };

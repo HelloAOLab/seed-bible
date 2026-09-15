@@ -1,6 +1,6 @@
 import { useAppConfig } from "../app/appConfig";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable typescript/no-explicit-any */
 export const SplitScreenIcon = ({ size = 24 }) => {
   const scale = size / 24;
 

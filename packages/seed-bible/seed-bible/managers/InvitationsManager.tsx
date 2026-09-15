@@ -116,11 +116,11 @@ export type OnJoinSharedSession = (
  * from the list so hosts don't see their own published sessions.
  */
 export function createInvitationsManager(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line typescript/no-unused-vars
   os: CasualOSManager,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line typescript/no-unused-vars
   login: LoginManager,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line typescript/no-unused-vars
   onJoin: OnJoinSharedSession
 ): InvitationsManager {
   const availableSessions = signal<AvailableSharedSession[]>([]);
@@ -262,7 +262,7 @@ export function createInvitationsManager(
   // // void openRegistry();
 
   const publishSession = async (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line typescript/no-unused-vars
     session: BibleReadingSession
   ): Promise<void> => {
     // await openRegistry();
@@ -285,7 +285,7 @@ export function createInvitationsManager(
     // });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line typescript/no-unused-vars
   const unpublishSession = async (sessionId: string): Promise<void> => {
     // if (!registryDoc || !registryMap) return;
     // const docRef = registryDoc;
@@ -296,13 +296,13 @@ export function createInvitationsManager(
   };
 
   const joinAvailableSession = async (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line typescript/no-unused-vars
     entry: AvailableSharedSession
   ): Promise<void> => {
     // await Promise.resolve(onJoin(entry.sessionId));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line typescript/no-unused-vars
   const dismissAvailableSession = (entry: AvailableSharedSession) => {
     // locallyDismissed.add(entry.sessionId);
     // if (registryMap) {

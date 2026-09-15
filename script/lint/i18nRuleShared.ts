@@ -20,7 +20,7 @@ export const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/HelloAOLab/seed-bible/eslint-rules/${name}`
 );
 
-function isObject(value: unknown): value is TranslationObject {
+export function isObject(value: unknown): value is TranslationObject {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
@@ -176,31 +176,4 @@ export function getContextCwd<
   return typeof maybeContext.cwd === "string"
     ? maybeContext.cwd
     : process.cwd();
-}
-
-export function getContextFilename<
-  MessageIds extends string,
-  Options extends readonly unknown[],
->(context: Readonly<TSESLint.RuleContext<MessageIds, Options>>): string {
-  const maybeContext = context as TSESLint.RuleContext<MessageIds, Options> & {
-    filename?: unknown;
-    getFilename?: () => string;
-  };
-
-  if (typeof maybeContext.filename === "string") {
-    return maybeContext.filename;
-  }
-
-  if (typeof maybeContext.getFilename === "function") {
-    return maybeContext.getFilename();
-  }
-
-  return "";
-}
-
-export function getLocaleFromFilePath(filePath: string): string | null {
-  if (!filePath.toLowerCase().endsWith(".json")) {
-    return null;
-  }
-  return path.basename(filePath, ".json");
 }

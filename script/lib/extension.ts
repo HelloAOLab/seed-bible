@@ -435,7 +435,7 @@ export async function uploadAll(options: {
     client.sessionKey = options.sessionKey;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   const result: any = await client.recordData(
     {
       recordKey: options.recordKey ?? uploadRecordName,

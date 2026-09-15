@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable typescript/ban-ts-comment */
+/* eslint-disable typescript/no-explicit-any */
 /* eslint-disable prefer-rest-params */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable typescript/no-unused-expressions */
 /* eslint-disable no-var */
 
 if (

@@ -185,7 +185,7 @@ export function createReadingHistoryState(deps: ReadingHistoryStateDeps): {
   const dispose = effect(() => {
     const userId = deps.userId.value;
     // Re-run when reading progresses so the resume position stays fresh.
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    // eslint-disable-next-line typescript/no-unused-expressions
     deps.refetchTrigger.value;
 
     const userChanged = userId !== lastSeenUserId;

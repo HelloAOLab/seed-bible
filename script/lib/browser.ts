@@ -29,9 +29,9 @@ interface DevExtensionSet {
 
 declare global {
   interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line typescript/no-explicit-any
     aux: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line typescript/no-explicit-any
     __name: (any: any) => any;
   }
 }
@@ -57,7 +57,7 @@ export async function getPrimarySim(page: Page) {
     const app = window.aux.getApp();
     const sim = app.simulationManager.primary;
     return sim;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line typescript/no-explicit-any
   })) as JSHandle<any>;
 }
 

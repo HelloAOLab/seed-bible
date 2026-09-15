@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable typescript/no-explicit-any */
 import { createRequire } from "node:module";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";

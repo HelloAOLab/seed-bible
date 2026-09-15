@@ -429,6 +429,9 @@ export default defineConfig(({ isSsrBuild }) => ({
       "**/typings/**",
       "**/obsolete/**",
       "pattern-dist/**",
+      // Vendored CasualOS ambient typings (not ours to edit) — `fmt.ignorePatterns`
+      // above excludes the same path, for the same reason.
+      "patterns/pattern-typings/**",
     ],
     jsPlugins: [
       "./script/lint/i18nPlugin.ts",
@@ -502,6 +505,20 @@ export default defineConfig(({ isSsrBuild }) => ({
         env: { node: true, vitest: true },
         rules: {
           "typescript/no-explicit-any": "off",
+        },
+      },
+      {
+        // These two pattern packages keep prior tag implementations commented
+        // out as in-repo reference during their ongoing rewrite (`inspect_*.tsx`,
+        // `legacy/`, `application/services/*`, etc.) rather than deleting them.
+        // That trips unicorn's no-empty-file check, which has no inline-disable
+        // directive (it fires before per-line suppression comments apply).
+        files: [
+          "patterns/bible-stack/**/*.tsx",
+          "patterns/house-of-the-lord/**/*.tsx",
+        ],
+        rules: {
+          "unicorn/no-empty-file": "off",
         },
       },
     ],
