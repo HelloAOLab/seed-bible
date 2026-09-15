@@ -498,13 +498,16 @@
   font-size: 1em;
 
   /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
-     Short enough to read as immediate rather than as an animation. The indent
-     is here too: it opens for the session presence gutter and widens as people
-     gather on the same verses (see `.sb-chapter-content-presence`), and the
-     text should move with them rather than reflow in a jump. */
-  transition:
-    opacity 0.1s ease,
-    padding-inline-start 0.35s ease;
+     Short enough to read as immediate rather than as an animation.
+
+     The session presence gutter's indent (`.sb-chapter-content-presence`) is
+     deliberately NOT transitioned. The highlight ribbons behind the text are
+     measured in JavaScript from the live line boxes, and an animated indent
+     reflows the text for a third of a second after the measurement is taken,
+     leaving every ribbon sitting a gutter's width to the side of the words it
+     belongs to. Opening the gutter in one step means the text is in its final
+     place by the time the ribbons are measured. */
+  transition: opacity 0.1s ease;
 
   /* Positioning context + own stacking context so the highlight ribbon layer
      can sit behind the scripture text (z-index: -1) without slipping behind the
@@ -768,11 +771,6 @@
 @media (prefers-reduced-motion: reduce) {
   .sb-presence-marker {
     transition: none;
-  }
-
-  /* Keep the stale-content fade, drop the gutter's reflow. */
-  .sb-chapter-content {
-    transition: opacity 0.1s ease;
   }
 }
 

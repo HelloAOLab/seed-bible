@@ -2791,6 +2791,95 @@ describe("BibleReader", () => {
         last: 2,
       });
     });
+
+    // Highlighting a verse re-parents its span into a run wrapper, so Preact
+    // throws away the element the observer was watching and builds a new one.
+    // The reader used to keep watching the detached element — which duly
+    // reports that it has left the screen — and never watch its replacement,
+    // so every highlighted verse dropped out of the range it told peers
+    // about: someone looking at verses 1-19 with 1-10 highlighted was shown
+    // to their session as reading 11-19.
+    it("keeps reporting a verse whose element is replaced when it is highlighted", () => {
+      const observed = new Set<Element>();
+      let fire: ((entries: unknown[]) => void) | null = null;
+      vi.stubGlobal(
+        "IntersectionObserver",
+        class {
+          constructor(callback: IntersectionObserverCallback) {
+            fire = (entries) =>
+              callback(
+                entries as IntersectionObserverEntry[],
+                this as unknown as IntersectionObserver
+              );
+          }
+          observe(el: Element) {
+            observed.add(el);
+          }
+          unobserve(el: Element) {
+            observed.delete(el);
+          }
+          disconnect() {
+            observed.clear();
+          }
+          takeRecords() {
+            return [];
+          }
+        }
+      );
+
+      const fixture = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={createMobileState()}
+          />,
+          container
+        );
+      });
+
+      const verseOne = () =>
+        container.querySelector('.sb-verse[data-verse-number="1"]')!;
+      const firstElement = verseOne();
+
+      act(() => {
+        fire?.(
+          [...observed].map((target) => ({ target, isIntersecting: true }))
+        );
+      });
+      expect(fixture.readingState.visibleVerseRange.value).toEqual({
+        first: 1,
+        last: 2,
+      });
+
+      act(() => {
+        fixture.highlights.value = {
+          highlights: [{ verse: 1, colorId: "yellow" }],
+        };
+      });
+
+      // The premise of the bug: this really is a different element now.
+      const replacement = verseOne();
+      expect(replacement).not.toBe(firstElement);
+      expect(firstElement.isConnected).toBe(false);
+
+      // What a real observer does with the element that was taken out of the
+      // page, and with the one that took its place.
+      act(() => {
+        fire?.([{ target: firstElement, isIntersecting: false }]);
+      });
+      expect(observed.has(replacement)).toBe(true);
+      act(() => {
+        fire?.([{ target: replacement, isIntersecting: true }]);
+      });
+
+      expect(fixture.readingState.visibleVerseRange.value).toEqual({
+        first: 1,
+        last: 2,
+      });
+    });
   });
 
   it("separates adjacent verses with a space when verse numbers are hidden", () => {

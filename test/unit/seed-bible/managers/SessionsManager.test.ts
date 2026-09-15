@@ -2080,6 +2080,51 @@ describe("SessionsManager", () => {
     });
   });
 
+  // A navigation is always chased by verse-range changes as the old chapter's
+  // verses leave the screen and the new one's are measured. Those follow-ups
+  // used to re-arm the timer on the slow scroll window, so a chapter change
+  // reached peers at roughly 500ms instead of 150ms.
+  it("publishes a chapter change on the navigation window, not the scroll one", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await flushPublishDebounce();
+
+    // Settle on a range first, so the teardown below is a real change.
+    session.readingState.visibleVerseRange.value = { first: 1, last: 5 };
+    await flushRangePublishDebounce();
+    mockReadingPositionsMap.set.mockClear();
+
+    session.readingState.chapterNumber.value = 2;
+    // The reader's observer tears down with the chapter it was watching.
+    session.readingState.visibleVerseRange.value = null;
+
+    await flushPublishDebounce();
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "GEN",
+      chapterNumber: 2,
+    });
+
+    // And with the navigation out, scrolling goes back to the longer window.
+    mockReadingPositionsMap.set.mockClear();
+    session.readingState.visibleVerseRange.value = { first: 4, last: 8 };
+    await flushPublishDebounce();
+    expect(mockReadingPositionsMap.set).not.toHaveBeenCalled();
+    await flushRangePublishDebounce();
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "GEN",
+      chapterNumber: 2,
+      firstVerse: 4,
+      lastVerse: 8,
+    });
+  });
+
   it("reports a peer's verse range with their position", async () => {
     const manager = createSessionsManager(
       os,

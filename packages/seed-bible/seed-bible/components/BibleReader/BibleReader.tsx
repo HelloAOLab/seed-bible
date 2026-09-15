@@ -1628,6 +1628,16 @@ function ChapterContent(props: ChapterContentProps) {
   // rather than a scroll listener: it only wakes when a verse crosses the edge
   // of the viewport, so a scroll doesn't measure every verse on every frame.
   // Re-armed per chapter, because the verse elements are replaced wholesale.
+  //
+  // Which verses are on screen is tracked per element rather than per verse
+  // number, and the observed set is re-synced after every render (through
+  // `syncVersesRef`, called from the layout effect below). Highlighting a
+  // verse re-parents its span into a run wrapper, so Preact swaps the element
+  // out: the detached one reports that it left the screen while its
+  // replacement is not observed at all. Keyed by number that dropped every
+  // highlighted verse from the range, so a reader looking at verses 1-19 with
+  // 1-10 highlighted told its peers it was on 11-19.
+  const syncVersesRef = useRef<() => void>(() => {});
   useEffect(() => {
     const content = contentRef.current;
     if (
@@ -1638,31 +1648,59 @@ function ChapterContent(props: ChapterContentProps) {
       return;
     }
 
-    const visible = new Set<number>();
+    const visible = new Map<Element, number>();
+    const observed = new Set<Element>();
+    const report = () => {
+      let first = Infinity;
+      let last = -Infinity;
+      for (const verseNumber of visible.values()) {
+        if (verseNumber < first) first = verseNumber;
+        if (verseNumber > last) last = verseNumber;
+      }
+      onVisibleVersesChange(first === Infinity ? null : { first, last });
+    };
+
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
-        const verseNumber = Number(
-          (entry.target as HTMLElement).dataset.verseNumber ?? NaN
-        );
-        if (!Number.isFinite(verseNumber)) continue;
-        if (entry.isIntersecting) {
-          visible.add(verseNumber);
+        const el = entry.target as HTMLElement;
+        const verseNumber = Number(el.dataset.verseNumber ?? NaN);
+        if (
+          entry.isIntersecting &&
+          el.isConnected &&
+          Number.isFinite(verseNumber)
+        ) {
+          visible.set(el, verseNumber);
         } else {
-          visible.delete(verseNumber);
+          visible.delete(el);
         }
       }
-      onVisibleVersesChange(
-        visible.size === 0
-          ? null
-          : { first: Math.min(...visible), last: Math.max(...visible) }
-      );
+      report();
     });
-    for (const el of content.querySelectorAll<HTMLElement>(
-      ".sb-verse[data-verse-number]"
-    )) {
-      observer.observe(el);
-    }
+
+    const sync = () => {
+      let dropped = false;
+      for (const el of observed) {
+        if (el.isConnected) continue;
+        observer.unobserve(el);
+        observed.delete(el);
+        dropped = visible.delete(el) || dropped;
+      }
+      for (const el of content.querySelectorAll<HTMLElement>(
+        ".sb-verse[data-verse-number]"
+      )) {
+        if (observed.has(el)) continue;
+        observed.add(el);
+        observer.observe(el);
+      }
+      // Every newly observed element gets an entry from the observer, which
+      // reports on their behalf. A verse that only went away does not.
+      if (dropped) report();
+    };
+    syncVersesRef.current = sync;
+    sync();
+
     return () => {
+      syncVersesRef.current = () => {};
       observer.disconnect();
       onVisibleVersesChange(null);
     };
@@ -1744,18 +1782,29 @@ function ChapterContent(props: ChapterContentProps) {
     setPresenceMarkers(next);
   };
 
+  // Both measurements re-run after every render, and the ResizeObserver below
+  // reaches them through this ref instead of closing over them. Registered
+  // once at mount, that callback kept the very first render's `presence` —
+  // the empty list a reader has before any peer position arrives — so every
+  // reflow measured "nobody here", wiped the markers, and closed the gutter,
+  // which moved the text out from under the highlight ribbons that had just
+  // been measured against it.
+  const remeasureRef = useRef<() => void>(() => {});
+
   useLayoutEffect(() => {
+    remeasureRef.current = () => {
+      measureRibbons();
+      measurePresence();
+    };
     measureRibbons();
     measurePresence();
+    syncVersesRef.current();
   });
 
   useLayoutEffect(() => {
     const content = contentRef.current;
     if (!content || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => {
-      measureRibbons();
-      measurePresence();
-    });
+    const observer = new ResizeObserver(() => remeasureRef.current());
     observer.observe(content);
     return () => observer.disconnect();
   }, []);

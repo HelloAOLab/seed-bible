@@ -784,10 +784,14 @@ async function createBibleReadingSession(
   let publishTimer: ReturnType<typeof setTimeout> | null = null;
   /** Armed while our own reading position is waiting to be broadcast. */
   let positionBroadcastTimer: ReturnType<typeof setTimeout> | null = null;
-  // What the debounce above last saw, so a chapter change can be told apart
-  // from a scroll within the same chapter and given the shorter window.
-  let lastBroadcastBookId: string | null = null;
-  let lastBroadcastChapter = 0;
+  // The chapter the last broadcast actually went out for, so a chapter change
+  // can be told apart from a scroll within the same chapter and given the
+  // shorter window. Updated when the broadcast fires, not when a change is
+  // noticed.
+  let publishedBookId: string | null = null;
+  let publishedChapter = 0;
+  /** Set while a change waiting to go out was (or followed) a navigation. */
+  let pendingIsNavigation = false;
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
   let applyingRemoteExtensions = false;
@@ -1228,24 +1232,32 @@ async function createBibleReadingSession(
   // often than the chapter does, and peers only need where the reader came to
   // rest.
   const stopBroadcastLocalPosition = effect(() => {
-    void readingState.bookId.value;
-    void readingState.chapterNumber.value;
-    const rangeChanged = readingState.visibleVerseRange.value;
-    void rangeChanged;
-    const isNavigation =
-      lastBroadcastBookId !== readingState.bookId.peek() ||
-      lastBroadcastChapter !== readingState.chapterNumber.peek();
-    lastBroadcastBookId = readingState.bookId.peek();
-    lastBroadcastChapter = readingState.chapterNumber.peek();
+    const bookId = readingState.bookId.value;
+    const chapterNumber = readingState.chapterNumber.value;
+    void readingState.visibleVerseRange.value;
+
+    // A navigation is always chased by range changes — the old chapter's
+    // verses leave the screen and the new one's are measured — so whether this
+    // particular run was the navigation is the wrong question to ask. What
+    // matters is whether anything still waiting to go out was one. Asking per
+    // run, those follow-ups re-armed the timer on the scroll window and a
+    // chapter change reached peers at the scroll cadence instead of the
+    // navigation one.
+    if (publishedBookId !== bookId || publishedChapter !== chapterNumber) {
+      pendingIsNavigation = true;
+    }
     if (positionBroadcastTimer !== null) {
       clearTimeout(positionBroadcastTimer);
     }
     positionBroadcastTimer = setTimeout(
       () => {
         positionBroadcastTimer = null;
+        pendingIsNavigation = false;
+        publishedBookId = readingState.bookId.peek();
+        publishedChapter = readingState.chapterNumber.peek();
         broadcastLocalPosition();
       },
-      isNavigation ? PUBLISH_DEBOUNCE_MS : RANGE_PUBLISH_DEBOUNCE_MS
+      pendingIsNavigation ? PUBLISH_DEBOUNCE_MS : RANGE_PUBLISH_DEBOUNCE_MS
     );
   });
 
