@@ -26,7 +26,11 @@ import {
   StopIcon,
 } from "../../components/icons";
 import { useEffect, useRef } from "preact/hooks";
-import { SelfAvatarVisual, openBookmarkCategoryModal } from "../Tabs/Tabs";
+import {
+  SaveStarIcon,
+  SelfAvatarVisual,
+  openSaveModalForLocation,
+} from "../Tabs/Tabs";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
@@ -61,7 +65,7 @@ const CHAT_FIRST_VISIBLE = signal(true);
 
 /**
  * Boot-only integration flag: `?chatFirst=true` promotes Chat on mobile (fourth
- * bottom tab instead of Bookmarks/Discover) and keeps Chat prominent on
+ * bottom tab instead of Saves/Discover) and keeps Chat prominent on
  * desktop/laptop. Case-insensitive `"true"` only — `"1"` / `"yes"` stay off.
  */
 function readChatFirstFlag(url: URL): boolean {
@@ -181,7 +185,7 @@ interface MobileMoreMenuProps {
   tools: BibleReaderToolbarTool[];
   /**
    * App-level items (not extension tools) appended after extension tools, e.g.
-   * Tabs, or Bookmarks when chat-first has demoted it off the bottom toolbar.
+   * Tabs, or Saves when chat-first has demoted it off the bottom toolbar.
    * Each item's `onClick` is responsible for closing the menu.
    */
   pinnedItems?: Array<{
@@ -641,7 +645,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     chats,
     tools: toolsManager,
     settings,
-    bookmarks,
+    saves,
     login,
     navigation,
   } = props.state;
@@ -901,22 +905,22 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         : 0
   );
 
-  // True when the sidebar drawer is open showing the tabs/bookmarks view
-  // (not the settings view) with the bookmark filter active.
-  const isBookmarksViewOpen = useComputed(
+  // True when the sidebar drawer is open showing the tabs/saves view
+  // (not the settings view) with the saves filter active.
+  const isSavesViewOpen = useComputed(
     () =>
       sidebar.isMobileOpen.value &&
       !sidebar.isSettingsOpen.value &&
-      bookmarks.isFilterActive.value
+      saves.isFilterActive.value
   );
 
   // True when the sidebar drawer is open showing the tabs list (not the
-  // settings view and not the bookmark filter view).
+  // settings view and not the saves filter view).
   const isTabsViewOpen = useComputed(
     () =>
       sidebar.isMobileOpen.value &&
       !sidebar.isSettingsOpen.value &&
-      !bookmarks.isFilterActive.value
+      !saves.isFilterActive.value
   );
 
   const isTodayOpen = useComputed(() => props.state.today.isOpen.value);
@@ -934,11 +938,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     if (sidebar.isSearchPanelOpen.value) return "search";
     if (isProfileOpen.value) return "you";
     if (sidebar.isSettingsOpen.value) return "none";
-    // Chat and Bookmarks are both reached from More, so More stays lit while
+    // Chat and Saves are both reached from More, so More stays lit while
     // either is showing — otherwise nothing in the bar would tell the user
     // where the panel covering the reader came from.
     if (sidebar.isChatPanelOpen.value) return "more";
-    if (isBookmarksViewOpen.value) return "more";
+    if (isSavesViewOpen.value) return "more";
     if (isTodayOpen.value) return "today";
     // Some other extension pane is covering the reader (opened from More).
     if (isFullscreenPaneVisible.value) return "more";
@@ -1757,23 +1761,23 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();
     sidebar.closeSettings();
-    // Show the tabs list, not the bookmark filter view.
-    if (bookmarks.isFilterActive.value) {
-      bookmarks.toggleFilter();
+    // Show the tabs list, not the saves filter view.
+    if (saves.isFilterActive.value) {
+      saves.toggleFilter();
     }
-    bookmarks.openedFromToolbar.value = false;
+    saves.openedFromToolbar.value = false;
     // Opened straight from the toolbar (not the book selector), so the tabs
     // header should show a Close (X), not a Back arrow to the selector.
     sidebar.tabsOpenedFromToolbar.value = true;
     sidebar.openSidebar();
   };
 
-  // Opens (or closes) the bookmarks view in the sidebar drawer. Shared by the
-  // Bookmarks bottom tab and the Bookmarks entry inside the More menu.
-  const openBookmarksView = () => {
+  // Opens (or closes) the saves view in the sidebar drawer. Shared by the
+  // Saves bottom tab and the Saves entry inside the More menu.
+  const openSavesView = () => {
     isMoreMenuOpen.value = false;
-    if (isBookmarksViewOpen.value) {
-      bookmarks.closeView();
+    if (isSavesViewOpen.value) {
+      saves.closeView();
       sidebar.closeSidebar();
       return;
     }
@@ -1782,29 +1786,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar.closeChatPanel();
     sidebar.closeSettings();
     sidebar.openSidebar();
-    bookmarks.openedFromToolbar.value = true;
-    if (!bookmarks.isFilterActive.value) {
-      bookmarks.toggleFilter();
+    saves.openedFromToolbar.value = true;
+    if (!saves.isFilterActive.value) {
+      saves.toggleFilter();
     }
   };
 
-  const bookmarksTabIcon = (filled: boolean) => (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill={filled ? "currentColor" : "none"}
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-    </svg>
+  const savesTabIcon = (filled: boolean) => (
+    <SaveStarIcon isSaved={filled} size={24} />
   );
 
   /**
@@ -2087,7 +2076,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   onClick={() => {
                     isMoreMenuOpen.value = false;
                     panes.closeAll();
-                    // Dismiss the tabs/bookmarks drawer if it's open.
+                    // Dismiss the tabs/saves drawer if it's open.
                     sidebar.closeSidebar();
                     if (sidebar.isSearchPanelOpen.value) {
                       sidebar.closeSearchPanel();
@@ -2104,7 +2093,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     onClick={() => {
                       // Opening the More menu should dismiss whatever else is
                       // covering the reader — the search bar, the chat panel,
-                      // the settings view, or the tabs/bookmarks drawer — the
+                      // the settings view, or the tabs/saves drawer — the
                       // same way the other bottom tabs do. Extension panes are
                       // left alone, since those are opened *from* this menu.
                       if (!isMoreMenuOpen.value) {
@@ -2171,12 +2160,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       hasTypingInChats={hasTypingInChats.value}
                       pinnedItems={[
                         {
-                          id: "bookmarks",
-                          label: t("bookmarks", {
-                            defaultValue: "Bookmarks",
+                          id: "saves",
+                          label: t("saves", {
+                            defaultValue: "Saves",
                           }),
-                          iconNode: bookmarksTabIcon(false),
-                          onClick: openBookmarksView,
+                          iconNode: savesTabIcon(false),
+                          onClick: openSavesView,
                         },
                         {
                           id: "tabs",
@@ -2812,19 +2801,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           Math.min(...selectedVerseNumbers),
                           Math.max(...selectedVerseNumbers),
                         ] as [number, number]);
-                const selectionBookmark =
+                const selectionSave =
                   rs && verseTarget !== undefined
-                    ? bookmarks.getBookmarkForLocation(
+                    ? saves.getSaveForLocation(
                         rs.translationId.value,
                         rs.bookId.value,
                         rs.chapterNumber.value,
                         verseTarget
                       )
                     : undefined;
-                const isSelectionBookmarked = selectionBookmark !== undefined;
-                const bookmarkLabel = isSelectionBookmarked
-                  ? t("edit-bookmark", { defaultValue: "Edit bookmark" })
-                  : t("bookmark-verses", { defaultValue: "Bookmark" });
+                const isSelectionSaved = selectionSave !== undefined;
+                const saveLabel = isSelectionSaved
+                  ? t("edit-save", { defaultValue: "Edit save" })
+                  : t("save-verses", { defaultValue: "Save" });
 
                 const highlightCard = selectionUI.value.showHighlightColors ? (
                   <div key="highlight" className="sb-verse-toolbar-action-item">
@@ -2852,13 +2841,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   </div>
                 ) : null;
 
-                const bookmarkCard = (
-                  <div key="bookmark" className="sb-verse-toolbar-action-item">
+                const saveCard = (
+                  <div key="save" className="sb-verse-toolbar-action-item">
                     <button
                       type="button"
-                      className={`sb-verse-toolbar-action sb-verse-toolbar-bookmark-trigger${
-                        isSelectionBookmarked
-                          ? " sb-verse-toolbar-bookmark-trigger-active"
+                      className={`sb-verse-toolbar-action sb-verse-toolbar-save-trigger${
+                        isSelectionSaved
+                          ? " sb-verse-toolbar-save-trigger-active"
                           : ""
                       }`}
                       onClick={() => {
@@ -2874,52 +2863,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         ) {
                           return;
                         }
-                        openBookmarkCategoryModal(
-                          props.state,
-                          {
-                            translationId,
-                            bookId,
-                            chapterNumber,
-                            verse: verseTarget,
-                          },
-                          selectionBookmark
-                            ? {
-                                mode: "edit",
-                                bookmarkId: selectionBookmark.id,
-                              }
-                            : undefined
-                        );
+                        openSaveModalForLocation(props.state, {
+                          translationId,
+                          bookId,
+                          chapterNumber,
+                          verse: verseTarget,
+                        });
                       }}
-                      aria-label={bookmarkLabel}
-                      aria-pressed={isSelectionBookmarked}
-                      title={bookmarkLabel}
+                      aria-label={saveLabel}
+                      title={saveLabel}
                     >
                       <span className="sb-verse-toolbar-action-icon">
-                        <span
-                          className="material-symbols-outlined"
-                          style={{
-                            fontVariationSettings: isSelectionBookmarked
-                              ? '"FILL" 1'
-                              : '"FILL" 0',
-                          }}
-                        >
-                          bookmark
-                        </span>
+                        <SaveStarIcon isSaved={isSelectionSaved} size={20} />
                       </span>
                       <span className="sb-verse-toolbar-action-label">
-                        {bookmarkLabel}
+                        {saveLabel}
                       </span>
                     </button>
                   </div>
                 );
 
-                // Desktop keeps the single horizontal row (highlight, bookmark,
+                // Desktop keeps the single horizontal row (highlight, save,
                 // the registered tools, then cancel).
                 if (!isSmallScreen.value) {
                   return (
                     <>
                       {highlightCard}
-                      {bookmarkCard}
+                      {saveCard}
                       {nonCancel.map(renderTool)}
                       {cancelTools.map(renderTool)}
                     </>
@@ -2932,7 +2902,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 // Cancel tool is dropped here.
                 const actionCards = [
                   highlightCard,
-                  bookmarkCard,
+                  saveCard,
                   ...nonCancel.map(renderTool),
                 ].filter(Boolean);
 
