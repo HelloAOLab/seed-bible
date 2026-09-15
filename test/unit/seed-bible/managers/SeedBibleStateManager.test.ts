@@ -683,8 +683,10 @@ describe("createSeedBibleState", () => {
         (tab) => tab.sharedSession === session
       )!.id;
 
+      // A real drop clears every entry, our own included — see
+      // `rebuildRemoteClientsSubscription` in SessionsManager.
       session.isSynced.value = false;
-      session.connectedUsers.value = [selfConnectedUser];
+      session.connectedUsers.value = [];
 
       expect(state.app.currentToast.value?.message).toBe(
         "You lost connection to the session"
@@ -922,7 +924,7 @@ describe("createSeedBibleState", () => {
       );
 
       session.isSynced.value = false;
-      session.connectedUsers.value = [selfConnectedUser];
+      session.connectedUsers.value = [];
       expect(state.app.currentToast.value?.message).toBe(
         "You lost connection to the session"
       );
@@ -975,12 +977,15 @@ describe("createSeedBibleState", () => {
       );
 
       session.isSynced.value = false;
-      session.connectedUsers.value = [selfConnectedUser];
+      session.connectedUsers.value = [];
       expect(state.app.currentToast.value?.message).toBe(
         "You lost connection to the session"
       );
 
+      // Coming back rebuilds presence from scratch, so we reappear first and
+      // the host lands a beat later.
       session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser];
       expect(state.app.currentToast.value?.message).toBe(
         "You rejoined the session"
       );
@@ -992,6 +997,56 @@ describe("createSeedBibleState", () => {
       expect(originalDispose).not.toHaveBeenCalled();
     });
 
+    it("still shows the you-rejoined toast when the connection recovers during the post-resume window", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session } = await joinAsHostedSession(
+        state,
+        "session-resume-rejoin"
+      );
+
+      // We drop while the app is in the foreground, so we are told about it.
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+
+      // The phone is locked and unlocked, which opens the resume window that
+      // suppresses presence toasts.
+      document.dispatchEvent(new Event("visibilitychange"));
+
+      // The connection comes back inside that window. Having already been
+      // told we dropped, we must be told we are back.
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+    });
+
+    it("stays silent on recovery when the drop itself was never announced", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session } = await joinAsHostedSession(
+        state,
+        "session-resume-silent"
+      );
+
+      // Drop detected inside the resume window — no toast is shown.
+      document.dispatchEvent(new Event("visibilitychange"));
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      expect(state.app.currentToast.value).toBeNull();
+
+      // The window closes and the connection recovers. Nothing was ever
+      // announced, so there is nothing to take back.
+      vi.advanceTimersByTime(5000);
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
     it("still shows a host-disconnected toast if the host is still gone after our reconnect presence settles", async () => {
       const state = await createStateWithTwoTabs();
       const { session, originalDispose } = await joinAsHostedSession(
@@ -1000,8 +1055,9 @@ describe("createSeedBibleState", () => {
       );
 
       session.isSynced.value = false;
-      session.connectedUsers.value = [selfConnectedUser];
+      session.connectedUsers.value = [];
       session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser];
 
       expect(state.app.currentToast.value?.message).toBe(
         "You rejoined the session"

@@ -1973,6 +1973,9 @@ export function createSeedBibleState(
   // is what our own dropped connection looks like on the presence list.
   const sessionsWhereOtherGuestsWereSeen = new Set<string>();
   const sessionsWhereWeLostConnection = new Set<string>();
+  // Sessions where the "you lost connection" toast was actually shown (it is
+  // suppressed right after a resume). Only those owe a "you rejoined" toast.
+  const sessionsWhereWeAnnouncedDrop = new Set<string>();
   // After we recover from our own drop, presence can still omit the host
   // for a beat (the peer list is rebuilt on resync). Don't treat that as
   // "the host left and came back" — prefer the you-rejoined toast.
@@ -2000,6 +2003,7 @@ export function createSeedBibleState(
     sessionsWhereHostWasSeen.delete(sessionId);
     sessionsWhereOtherGuestsWereSeen.delete(sessionId);
     sessionsWhereWeLostConnection.delete(sessionId);
+    sessionsWhereWeAnnouncedDrop.delete(sessionId);
     clearPendingPresenceSettle(sessionId);
   };
   const clearPendingHostDisconnect = (sessionId: string): boolean => {
@@ -2091,16 +2095,18 @@ export function createSeedBibleState(
       // If this device is itself a host (including another of the host's
       // devices), an empty remote list is "someone else left", not "we
       // disconnected" — even if `isSynced` blips when that peer drops.
-      const weSeeOurselves = session.connectedUsers.value.some(
-        (user) => user.isSelf
-      );
+      //
+      // Deliberately NOT gated on seeing our own entry in the list: when our
+      // connection really drops, the OS clears every peer *including us*
+      // (see `rebuildRemoteClientsSubscription` in SessionsManager), so a
+      // check for self would only ever pass in tests that keep self in the
+      // list by hand, never in production.
       const ourConnectionDropped =
         !sessionWeAreHost(session) &&
-        weSeeOurselves &&
-        !sessionHasRemoteUsers(session) &&
         sessionsWhereHostWasSeen.has(session.id) &&
         (!session.isSynced.value ||
-          sessionsWhereOtherGuestsWereSeen.has(session.id));
+          (!sessionHasRemoteUsers(session) &&
+            sessionsWhereOtherGuestsWereSeen.has(session.id)));
 
       if (ourConnectionDropped) {
         clearPendingHostDisconnect(session.id);
@@ -2108,6 +2114,9 @@ export function createSeedBibleState(
         if (!sessionsWhereWeLostConnection.has(session.id)) {
           sessionsWhereWeLostConnection.add(session.id);
           if (!justResumedFromBackground.value) {
+            // Remember that we actually said it, so the matching
+            // "you're back" toast below isn't silently dropped.
+            sessionsWhereWeAnnouncedDrop.add(session.id);
             toast(
               t("session-disconnected", {
                 defaultValue: "You lost connection to the session",
@@ -2118,8 +2127,20 @@ export function createSeedBibleState(
         continue;
       }
 
-      if (sessionsWhereWeLostConnection.delete(session.id)) {
-        if (!justResumedFromBackground.value) {
+      // Recovery needs positive evidence, not just the absence of the drop
+      // signals: right after a resume the list can be empty while `isSynced`
+      // already reads true, which is presence still catching up rather than
+      // us being back.
+      if (
+        sessionsWhereWeLostConnection.has(session.id) &&
+        session.isSynced.value &&
+        session.connectedUsers.value.length > 0
+      ) {
+        sessionsWhereWeLostConnection.delete(session.id);
+        // Having told someone they dropped, always tell them they're back —
+        // even inside the post-resume window that suppresses the first
+        // toast, otherwise they are left believing they're still offline.
+        if (sessionsWhereWeAnnouncedDrop.delete(session.id)) {
           toast(
             t("session-reconnected", {
               defaultValue: "You rejoined the session",
