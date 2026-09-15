@@ -509,9 +509,8 @@ function hasRenderedThemeStyles(): boolean {
  */
 export function parseThemeBackgroundColor(css: string): string | null {
   const match = /--sb-background:\s*([^;]+)/.exec(css);
-  if (!match) return null;
-  const value = match[1].trim();
-  return value.length > 0 ? value : null;
+  const value = match?.[1]?.trim();
+  return value && value.length > 0 ? value : null;
 }
 
 /**
