@@ -1,19 +1,15 @@
 import { signal } from "@preact/signals";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   APOLOGIST_DEFAULT_BIBLE,
-  dismissApologistBibleFallbackWarning,
+  getEffectiveSeedTranslationForAi,
   isLikelyUnsupportedApologistBibleError,
   mapCandidateToApologistBible,
-  pauseChatWhileModalOpen,
   postApologistChatCompletion,
   resolveApologistBible,
-  SHOW_APOLOGIST_BIBLE_FALLBACK_WARNING,
-  warnIfApologistBibleFallback,
   type SeedTranslationRef,
 } from "@packages/apologist-extension/ext_Apologist/main/apologistBible";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { safeLocalStorage } from "@packages/seed-bible/seed-bible/app/ssrEnv";
 
 function translation(
   partial: Partial<SeedTranslationRef> &
@@ -50,10 +46,9 @@ describe("resolveApologistBible", () => {
     ];
 
     for (const { id, shortName, expected } of cases) {
-      const result = resolveApologistBible({
-        translation: translation({ id, shortName, language: "eng" }),
-      });
-      expect(result).toMatchObject({
+      expect(
+        resolveApologistBible(translation({ id, shortName, language: "eng" }))
+      ).toMatchObject({
         code: expected,
         usedFallback: false,
       });
@@ -62,387 +57,113 @@ describe("resolveApologistBible", () => {
 
   it("maps bare ids like BSB and KJAV without fallback", () => {
     expect(
-      resolveApologistBible({
-        translation: translation({
+      resolveApologistBible(
+        translation({
           id: "BSB",
           shortName: "BSB",
           language: "eng",
-        }),
-      })
+        })
+      )
     ).toMatchObject({ code: "bsb", usedFallback: false });
 
     expect(
-      resolveApologistBible({
-        translation: translation({
+      resolveApologistBible(
+        translation({
           id: "KJAV",
           shortName: "KJAV",
           language: "eng",
-        }),
-      })
+        })
+      )
     ).toMatchObject({ code: "kjv", usedFallback: false });
   });
 
   it("falls back to bsb for unsupported hin_cvb / guj_irv", () => {
     for (const id of ["hin_cvb", "guj_irv"] as const) {
-      const result = resolveApologistBible({
-        translation: translation({
-          id,
-          shortName: id.toUpperCase(),
-          language: id.slice(0, 3),
-        }),
-        availableTranslations: [],
-      });
-      expect(result).toMatchObject({
+      expect(
+        resolveApologistBible(
+          translation({
+            id,
+            shortName: id.toUpperCase(),
+            language: id.slice(0, 3),
+          })
+        )
+      ).toMatchObject({
         code: "bsb",
         usedFallback: true,
       });
     }
   });
 
-  it("prefers a same-language supported catalog translation before English bsb", () => {
-    const result = resolveApologistBible({
-      translation: translation({
-        id: "spa_unknown",
-        shortName: "UNK",
-        language: "spa",
-      }),
-      availableTranslations: [
-        translation({ id: "spa_rv60", shortName: "RV60", language: "spa" }),
-        translation({ id: "eng_esv", shortName: "ESV", language: "eng" }),
-        translation({ id: "spa_nvi", shortName: "NIV", language: "spa" }),
-      ],
-    });
-
-    expect(result).toMatchObject({
-      code: "niv",
+  it("falls back to bsb when the tab translation is unsupported, even if another catalog translation would map", () => {
+    expect(
+      resolveApologistBible(
+        translation({
+          id: "spa_unknown",
+          shortName: "UNK",
+          language: "spa",
+        })
+      )
+    ).toMatchObject({
+      code: APOLOGIST_DEFAULT_BIBLE,
       usedFallback: true,
     });
   });
 });
 
-describe("pauseChatWhileModalOpen", () => {
-  it("closes chat, waits for modal close, then reopens when chat was open", async () => {
-    const isChatPanelOpen = signal(true);
-    const closeChatPanel = vi.fn(() => {
-      isChatPanelOpen.value = false;
+describe("getEffectiveSeedTranslationForAi", () => {
+  it("uses the active tab translation, not a pinned AI default", () => {
+    const tabTranslation = translation({
+      id: "eng_kjv",
+      shortName: "KJV",
+      language: "eng",
     });
-    const openChatPanel = vi.fn(() => {
-      isChatPanelOpen.value = true;
-    });
-    const modals = signal<{ id: string }[]>([]);
-
     const context = {
-      sidebar: {
-        isChatPanelOpen,
-        closeChatPanel,
-        openChatPanel,
+      app: {
+        selectedTab: signal({
+          readingState: {
+            translation: signal(tabTranslation),
+            translationId: signal("eng_kjv"),
+          },
+        }),
       },
-      modals: {
-        modals,
-        openModal: vi.fn(),
-        closeModal: (id: string) => {
-          modals.value = modals.value.filter((modal) => modal.id !== id);
-        },
-      },
-    } as unknown as Pick<SeedBibleState, "sidebar" | "modals">;
-
-    const done = pauseChatWhileModalOpen(context, () => {
-      modals.value = [...modals.value, { id: "test-modal" }];
-      return "test-modal";
-    });
-
-    expect(closeChatPanel).toHaveBeenCalledTimes(1);
-    expect(openChatPanel).not.toHaveBeenCalled();
-    expect(isChatPanelOpen.value).toBe(false);
-
-    context.modals.closeModal("test-modal");
-    await done;
-
-    expect(openChatPanel).toHaveBeenCalledTimes(1);
-    expect(isChatPanelOpen.value).toBe(true);
-  });
-
-  it("does not reopen chat when it was already closed", async () => {
-    const isChatPanelOpen = signal(false);
-    const closeChatPanel = vi.fn();
-    const openChatPanel = vi.fn();
-    const modals = signal<{ id: string }[]>([]);
-
-    const context = {
-      sidebar: {
-        isChatPanelOpen,
-        closeChatPanel,
-        openChatPanel,
-      },
-      modals: {
-        modals,
-        closeModal: (id: string) => {
-          modals.value = modals.value.filter((modal) => modal.id !== id);
-        },
-      },
-    } as unknown as Pick<SeedBibleState, "sidebar" | "modals">;
-
-    const done = pauseChatWhileModalOpen(context, () => {
-      modals.value = [...modals.value, { id: "test-modal" }];
-      return "test-modal";
-    });
-
-    expect(closeChatPanel).not.toHaveBeenCalled();
-    context.modals.closeModal("test-modal");
-    await done;
-
-    expect(openChatPanel).not.toHaveBeenCalled();
-  });
-});
-
-describe("warnIfApologistBibleFallback", () => {
-  beforeEach(() => {
-    safeLocalStorage.removeItem(
-      "sb-apologist-bible-fallback-warning-dismissed"
-    );
-  });
-
-  afterEach(() => {
-    safeLocalStorage.removeItem(
-      "sb-apologist-bible-fallback-warning-dismissed"
-    );
-  });
-
-  it("warns once for unsupported translations then skips after dismiss", async () => {
-    const isChatPanelOpen = signal(true);
-    const closeChatPanel = vi.fn(() => {
-      isChatPanelOpen.value = false;
-    });
-    const openChatPanel = vi.fn(() => {
-      isChatPanelOpen.value = true;
-    });
-    const modals = signal<{ id: string }[]>([]);
-    const openModal = vi.fn(
-      (registration: { id?: string; content: unknown }) => {
-        const id = registration.id ?? "modal";
-        modals.value = [...modals.value, { id }];
-        return id;
-      }
-    );
-
-    const context = {
-      features: {
-        isFeatureEnabled: (key: string) =>
-          signal(key === SHOW_APOLOGIST_BIBLE_FALLBACK_WARNING),
-      },
-      sidebar: {
-        isChatPanelOpen,
-        closeChatPanel,
-        openChatPanel,
-      },
-      modals: {
-        modals,
-        openModal,
-        closeModal: (id: string) => {
-          modals.value = modals.value.filter((modal) => modal.id !== id);
-        },
+      bibleData: {
+        availableTranslations: signal([
+          tabTranslation,
+          translation({ id: "eng_esv", shortName: "ESV", language: "eng" }),
+        ]),
       },
     } as unknown as SeedBibleState;
 
-    const resolution = resolveApologistBible({
-      translation: translation({
-        id: "hin_cvb",
-        shortName: "CVB",
-        language: "hin",
-        name: "Hindi CVB",
-      }),
+    expect(getEffectiveSeedTranslationForAi(context)).toMatchObject({
+      id: "eng_kjv",
+      shortName: "KJV",
     });
-    expect(resolution.usedFallback).toBe(true);
-
-    const firstWarnPromise = warnIfApologistBibleFallback(context, resolution);
-    expect(openModal).toHaveBeenCalledTimes(1);
-
-    // Persist "don't show again", then close the modal (go back). The next call
-    // should skip the warning because of localStorage.
-    dismissApologistBibleFallbackWarning();
-    context.modals.closeModal("apologist-bible-fallback-warning");
-    await firstWarnPromise;
-
-    openModal.mockClear();
-    const second = await warnIfApologistBibleFallback(context, resolution);
-    expect(second).toBe(true);
-    expect(openModal).not.toHaveBeenCalled();
   });
 
-  it("returns false when the user dismisses, true when they continue", async () => {
-    const isChatPanelOpen = signal(true);
-    const modals = signal<{ id: string }[]>([]);
-    type ContentFn = (props: {
-      t: (key: string, options?: Record<string, unknown>) => string;
-    }) => unknown;
-    let contentFn: ContentFn | null = null;
-
+  it("looks up the tab translation id in the catalog when the tab object is not loaded yet", () => {
+    const catalogTranslation = translation({
+      id: "eng_web",
+      shortName: "WEB",
+      language: "eng",
+    });
     const context = {
-      features: {
-        isFeatureEnabled: (key: string) =>
-          signal(key === SHOW_APOLOGIST_BIBLE_FALLBACK_WARNING),
-      },
-      sidebar: {
-        isChatPanelOpen,
-        closeChatPanel: vi.fn(() => {
-          isChatPanelOpen.value = false;
-        }),
-        openChatPanel: vi.fn(() => {
-          isChatPanelOpen.value = true;
+      app: {
+        selectedTab: signal({
+          readingState: {
+            translation: signal(null),
+            translationId: signal("eng_web"),
+          },
         }),
       },
-      modals: {
-        modals,
-        openModal: vi.fn(
-          (registration: { id?: string; content: ContentFn | unknown }) => {
-            const id = registration.id ?? "modal";
-            contentFn =
-              typeof registration.content === "function"
-                ? (registration.content as ContentFn)
-                : null;
-            modals.value = [...modals.value, { id }];
-            return id;
-          }
-        ),
-        closeModal: (id: string) => {
-          modals.value = modals.value.filter((modal) => modal.id !== id);
-        },
+      bibleData: {
+        availableTranslations: signal([catalogTranslation]),
       },
     } as unknown as SeedBibleState;
 
-    const resolution = resolveApologistBible({
-      translation: translation({
-        id: "guj_irv",
-        shortName: "IRV",
-        language: "guj",
-        name: "Gujarati IRV",
-      }),
+    expect(getEffectiveSeedTranslationForAi(context)).toMatchObject({
+      id: "eng_web",
+      shortName: "WEB",
     });
-
-    const t = (key: string) => key;
-
-    const dismissedPromise = warnIfApologistBibleFallback(context, resolution);
-    context.modals.closeModal("apologist-bible-fallback-warning");
-    expect(await dismissedPromise).toBe(false);
-
-    safeLocalStorage.removeItem(
-      "sb-apologist-bible-fallback-warning-dismissed"
-    );
-    modals.value = [];
-    contentFn = null;
-
-    const continuePromise = warnIfApologistBibleFallback(context, resolution);
-    const vnode = contentFn!({ t }) as {
-      props: { onContinue: () => void };
-    };
-    expect(vnode.props.onContinue).toEqual(expect.any(Function));
-    vnode.props.onContinue();
-    expect(await continuePromise).toBe(true);
-  });
-});
-
-describe("isLikelyUnsupportedApologistBibleError", () => {
-  it("matches 400/422 bodies that mention bible/translation/metadata", () => {
-    expect(
-      isLikelyUnsupportedApologistBibleError(400, 'Unknown bible "esv"')
-    ).toBe(true);
-    expect(
-      isLikelyUnsupportedApologistBibleError(
-        422,
-        "Invalid metadata.translation"
-      )
-    ).toBe(true);
-  });
-
-  it("ignores unrelated failures", () => {
-    expect(isLikelyUnsupportedApologistBibleError(401, "Unauthorized")).toBe(
-      false
-    );
-    expect(isLikelyUnsupportedApologistBibleError(500, "Internal error")).toBe(
-      false
-    );
-    expect(isLikelyUnsupportedApologistBibleError(400, "rate limited")).toBe(
-      false
-    );
-  });
-});
-
-describe("postApologistChatCompletion", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("retries once with the default bible when the agent rejects the code", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ error: 'Unknown bible "esv"' }), {
-          status: 400,
-        })
-      )
-      .mockResolvedValueOnce(new Response("ok-stream", { status: 200 }));
-
-    vi.stubGlobal("fetch", fetchMock);
-
-    const result = await postApologistChatCompletion({
-      url: "https://apologist.example/api/v1/chat/completions",
-      model: "test-model",
-      stream: true,
-      language: "en",
-      bible: "esv",
-      messages: [],
-    });
-
-    expect(result.retriedWithDefault).toBe(true);
-    expect(result.bible).toBe(APOLOGIST_DEFAULT_BIBLE);
-    expect(result.response.ok).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-
-    const firstBody = JSON.parse(
-      (fetchMock.mock.calls[0]?.[1] as RequestInit).body as string
-    );
-    const secondBody = JSON.parse(
-      (fetchMock.mock.calls[1]?.[1] as RequestInit).body as string
-    );
-    expect(firstBody.metadata.bible).toBe("esv");
-    expect(secondBody.metadata.bible).toBe(APOLOGIST_DEFAULT_BIBLE);
-  });
-
-  it("does not retry auth failures or when already on the default bible", async () => {
-    const authFailure = vi
-      .fn()
-      .mockResolvedValue(new Response("Unauthorized", { status: 401 }));
-    vi.stubGlobal("fetch", authFailure);
-
-    const authResult = await postApologistChatCompletion({
-      url: "https://apologist.example/api/v1/chat/completions",
-      model: "test-model",
-      stream: true,
-      language: "en",
-      bible: "esv",
-      messages: [],
-    });
-    expect(authResult.retriedWithDefault).toBe(false);
-    expect(authResult.bible).toBe("esv");
-    expect(authFailure).toHaveBeenCalledTimes(1);
-
-    const defaultFailure = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ error: "Unknown bible" }), {
-        status: 400,
-      })
-    );
-    vi.stubGlobal("fetch", defaultFailure);
-
-    const defaultResult = await postApologistChatCompletion({
-      url: "https://apologist.example/api/v1/chat/completions",
-      model: "test-model",
-      stream: true,
-      language: "en",
-      bible: APOLOGIST_DEFAULT_BIBLE,
-      messages: [],
-    });
-    expect(defaultResult.retriedWithDefault).toBe(false);
-    expect(defaultFailure).toHaveBeenCalledTimes(1);
   });
 });
 

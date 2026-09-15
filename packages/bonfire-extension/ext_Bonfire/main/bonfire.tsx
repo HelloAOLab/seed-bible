@@ -207,26 +207,15 @@ export function* registerBonfireChatProvider(
       console.log("[Bonfire] Generating response for message:", lastMessage);
 
       const readingState = context.app.selectedTab.value?.readingState;
+      const tabTranslation = readingState?.translation.value ?? null;
       const tabTranslationId = readingState?.translationId.value ?? null;
-      const effectiveTranslationId =
-        context.chats.getEffectiveAiBibleTranslationId(tabTranslationId);
-      const effectiveTranslation =
-        (effectiveTranslationId &&
-          context.bibleData.availableTranslations.value.find(
-            (t) => t.id === effectiveTranslationId
-          )) ||
-        (readingState?.translation.value?.id === effectiveTranslationId
-          ? readingState.translation.value
-          : null) ||
-        readingState?.translation.value ||
-        null;
       const translationLabel =
-        effectiveTranslation?.name ??
-        effectiveTranslation?.englishName ??
-        effectiveTranslationId ??
+        tabTranslation?.name ??
+        tabTranslation?.englishName ??
+        tabTranslationId ??
         "unknown";
       const translationShortName =
-        effectiveTranslation?.shortName ?? effectiveTranslationId ?? "";
+        tabTranslation?.shortName ?? tabTranslationId ?? "";
       const uiLanguage = context.i18n.language.value.replace(/_/g, "-");
       const response = await fetch(
         "https://bonfire.seedbible.io/api/v1/session/chat",

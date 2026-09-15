@@ -12,7 +12,6 @@ import {
   postApologistChatCompletion,
   resolveApologistBible,
   uiLocaleForApologist,
-  warnIfApologistBibleFallback,
 } from "./apologistBible";
 
 const completionsSchema = z.object({
@@ -216,20 +215,9 @@ export default function initApologistExtension() {
         generateResponse: async function* (
           chatContext
         ): AsyncGenerator<ChatProviderMessageOptions> {
-          const seedTranslation = getEffectiveSeedTranslationForAi(context);
-          const bibleResolution = resolveApologistBible({
-            translation: seedTranslation,
-            availableTranslations:
-              context.bibleData.availableTranslations.value,
-          });
-          const shouldContinue = await warnIfApologistBibleFallback(
-            context,
-            bibleResolution
+          const bibleResolution = resolveApologistBible(
+            getEffectiveSeedTranslationForAi(context)
           );
-          if (!shouldContinue) {
-            // User dismissed the fallback warning (go back) — do not call AI.
-            return;
-          }
 
           const uiLanguage = uiLocaleForApologist(i18n.language);
           const readingInstructions =

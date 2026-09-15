@@ -102,21 +102,6 @@ function createMockState(options: { isMobile?: boolean } = {}): SeedBibleState {
     },
     chats: {
       composerDraft: signal(""),
-      aiBibleTranslationId: signal(null),
-      setAiBibleTranslationId: vi.fn(),
-      getEffectiveAiBibleTranslationId: (tabId: string | null | undefined) =>
-        tabId ?? null,
-    },
-    bibleData: {
-      availableTranslations: signal([]),
-    },
-    tabsLayout: {
-      slots: signal([]),
-      selectedSlotId: signal(null),
-    },
-    selector: {
-      setOpen: vi.fn().mockResolvedValue(undefined),
-      selectingTranslation: signal(false),
     },
   } as unknown as SeedBibleState;
 }
