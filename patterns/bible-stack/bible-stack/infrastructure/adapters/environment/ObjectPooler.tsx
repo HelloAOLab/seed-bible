@@ -22,7 +22,7 @@ interface AdapterParams<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
 }
 
 export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   #poolDictionary: Map<keyof P, any>;
   #dimensionGetter: AdapterParams<P>["dimensionGetter"];
   #eventManager: AdapterParams<P>["eventManager"];
@@ -59,7 +59,7 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
     // Attach listeners last: the setup above runs before they exist (so it
     // never triggers them), and every object — eager or on-demand — gets them.
     for (const [tag, callback] of Object.entries(poolData.listeners ?? {})) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line typescript/no-explicit-any
       os.addBotListener(object, tag, callback as any);
     }
     return object;
@@ -69,10 +69,10 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
     object: P[K],
     poolData: PoolData<K, P[K]>
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line typescript/no-explicit-any
     (object.tags as any).type = poolData.key;
     for (const [tag, value] of Object.entries(poolData.customTags)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line typescript/no-explicit-any
       (object.tags as any)[tag] = value;
     }
   }
@@ -118,7 +118,7 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
       clearTagMasks(inUseObject);
       clearAnimations(inUseObject);
       this.#applyDefaultTags(inUseObject, pool.poolData);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line typescript/no-explicit-any
       (inUseObject.tags as any)[dimension] = false;
       inUseObject.tags.isInUse = false;
       const idx = pool.inUseObjects.indexOf(inUseObject);

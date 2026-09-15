@@ -6,7 +6,7 @@ import {
   flattenTranslationKeys,
   forgetProjectAnalysis,
   isObject,
-} from "../lint/i18nRuleShared";
+} from "../lint/i18nRuleShared.ts";
 
 export type I18nRule =
   | "translation-unused-keys"
@@ -18,6 +18,8 @@ export interface I18nFinding {
   line: number;
   rule: I18nRule;
   message: string;
+  /** The translation key, for findings about one key. */
+  key?: string;
 }
 
 export interface CheckI18nOptions {
@@ -128,6 +130,7 @@ export function checkI18n(
         line: lineOfKey(text, key),
         rule: "translation-unused-keys",
         message: `Unused translation key: '${key}'.`,
+        key,
       });
     }
 
@@ -190,10 +193,9 @@ export function fixUnusedKeys(
   const keysByFile = new Map<string, Set<string>>();
   for (const finding of findings) {
     if (finding.rule !== "translation-unused-keys") continue;
-    const key = finding.message.match(/'(.*)'\.$/)?.[1];
-    if (!key) continue;
+    if (!finding.key) continue;
     const set = keysByFile.get(finding.file) ?? new Set<string>();
-    set.add(key);
+    set.add(finding.key);
     keysByFile.set(finding.file, set);
   }
 

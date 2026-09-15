@@ -1,7 +1,5 @@
 /* eslint-disable typescript/no-explicit-any */
 import { createRequire } from "node:module";
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
 import hash from "hash.js";
 import axios from "axios";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
@@ -82,26 +80,6 @@ export async function downloadPattern(
   const aux = await versionResult.json();
 
   return aux;
-}
-
-/**
- * Downloads and saves the given pattern to the dist folder.
- * @param name The name of the pattern to download.
- * @param version The version of the pattern to download. If not specified, the latest version will be downloaded.
- * @returns The path to the saved file.
- */
-export async function downloadAndSave(
-  name: string,
-  version?: number,
-  fileName?: string
-) {
-  const pattern = await downloadPattern(name, version);
-  if (!pattern) {
-    throw new Error("Failed to download pattern: " + name);
-  }
-  const filePath = path.resolve("dist", fileName || `${name}.aux`);
-  await writeFile(filePath, JSON.stringify(pattern, null, 2), "utf-8");
-  return filePath;
 }
 
 const UNSAFE_HEADERS = new Set([
