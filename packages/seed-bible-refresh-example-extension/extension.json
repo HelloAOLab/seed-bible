@@ -859,5 +859,7 @@
       "item-1": "Into 1",
       "item-2": "Into 2"
     }
-  }
+  },
+  "icon": "refresh",
+  "version": "1.0.0"
 }

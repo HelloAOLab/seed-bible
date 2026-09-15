@@ -71,6 +71,41 @@ describe("trimMeta", () => {
   });
 });
 
+describe("trimMeta() — icon/version/homepage", () => {
+  it("passes through icon, version, and homepage when present", () => {
+    const meta = {
+      id: "ext.with-meta",
+      translations: {
+        en: { title: "With Meta", description: "Has icon/version/homepage" },
+      },
+      icon: "map",
+      version: "1.2.0",
+      homepage: "https://example.com/ext",
+    };
+
+    const trimmed = trimMeta(meta);
+
+    expect(trimmed.icon).toBe("map");
+    expect(trimmed.version).toBe("1.2.0");
+    expect(trimmed.homepage).toBe("https://example.com/ext");
+  });
+
+  it("omits icon, version, and homepage when absent", () => {
+    const meta = {
+      id: "ext.no-meta",
+      translations: {
+        en: { title: "No Meta", description: "Nothing extra" },
+      },
+    };
+
+    const trimmed = trimMeta(meta);
+
+    expect(trimmed.icon).toBeUndefined();
+    expect(trimmed.version).toBeUndefined();
+    expect(trimmed.homepage).toBeUndefined();
+  });
+});
+
 describe("listExtensionLanguages", () => {
   it("returns the union across extensions, sorted", () => {
     // Extensions do not all carry the same languages: es is Apologist-only,
