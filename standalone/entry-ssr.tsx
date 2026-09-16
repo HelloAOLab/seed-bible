@@ -562,16 +562,6 @@ export async function render(
 
   const metaHtml = await renderToStringAsync(
     <>
-      <meta
-        name="theme-color"
-        content="#FFFFFF"
-        media="(prefers-color-scheme: light)"
-      />
-      <meta
-        name="theme-color"
-        content="#000000"
-        media="(prefers-color-scheme: dark)"
-      />
       <meta name="description" content={state.app.description.value} />
       <meta httpEquiv="content-language" content={state.i18n.language.value} />
       <meta property="og:locale" content={state.i18n.language.value} />
