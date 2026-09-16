@@ -140,11 +140,12 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   );
 
   // Triggered by the *position* changing, not by `chapterData` arriving:
-  // `applyPosition` has already set `scrollPosition` (zero for a first visit,
-  // restored for a chapter the reader has been in), so this is what puts the
-  // reader there while the placeholder or outgoing chapter still shows. Kept
-  // separate from the listener effect below — attaching a listener must never
-  // move the reader, or every re-render that re-attaches it repeats this write.
+  // `applyPosition` has already set `scrollPosition` (zero for every ordinary
+  // navigation, the stamped offset when Back/Forward restored an entry), so
+  // this is what puts the reader there while the placeholder or outgoing
+  // chapter still shows. Kept separate from the listener effect below —
+  // attaching a listener must never move the reader, or every re-render that
+  // re-attaches it repeats this write.
   //
   // When matching chapter text later arrives, a restored offset that was
   // clamped against the shorter placeholder is applied once more. Later

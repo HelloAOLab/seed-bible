@@ -957,11 +957,10 @@ export interface SelectTranslationAndChapterOptions {
   updateUrl?: boolean;
 
   /**
-   * Pixel offset to restore in the destination chapter. Used when the
-   * navigation came from Back/Forward and the history entry we landed on
-   * remembered where the reader was. When omitted, the last offset saved
-   * for that chapter is restored; a chapter with no saved offset starts
-   * at the heading.
+   * Pixel offset to restore at the destination. Set only when the navigation
+   * came from Back/Forward and the history entry we landed on recorded where
+   * the reader was. Every other way into a chapter omits it and starts at the
+   * heading — scroll is restored for browser history alone.
    */
   scrollPosition?: number;
 }
@@ -975,9 +974,9 @@ export interface ReadingNavigationOptions {
   replace?: boolean;
 
   /**
-   * Scroll offset of the chapter this navigation is leaving. Present only on
-   * a push that changes book/chapter, so the current history entry can be
-   * stamped before the new one is added and Back can restore it.
+   * Scroll offset of the position this navigation is leaving. Present only on
+   * a push that changes translation/book/chapter, so the current history entry
+   * can be stamped before the new one is added and Back can restore it.
    */
   departingScrollPosition?: number;
 }
@@ -1434,11 +1433,6 @@ export function createBibleReadingState(
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
-  // Last scroll offset per chapter. Written only when leaving, so arriving
-  // at the heading does not erase an earlier visit until the reader leaves
-  // again. Unbounded on purpose: one number per visited chapter is tiny, and
-  // a short ring (e.g. last 3) would skip restore after a few next-taps.
-  const chapterScrollByKey = new Map<string, number>();
   const pendingAnnotationScrollVerse = signal<number | null>(null);
 
   // Reading-extension enablement (per reading state). Extensions are registered
@@ -2143,8 +2137,8 @@ export function createBibleReadingState(
        */
       content?: TranslationBookChapter;
       /**
-       * Pixel offset for the destination chapter. When omitted, a chapter
-       * change starts at the heading.
+       * Pixel offset recorded on the history entry being restored. Omitted for
+       * every navigation that is not Back/Forward, which starts at the heading.
        */
       scrollPosition?: number;
     }
@@ -2153,41 +2147,22 @@ export function createBibleReadingState(
       translationId.peek() !== next.translationId ||
       bookId.peek() !== next.bookId ||
       chapterNumber.peek() !== next.chapterNumber;
-    const didChapterChange =
-      bookId.peek() !== next.bookId ||
-      chapterNumber.peek() !== next.chapterNumber;
     const scrollToVerseRequest = options?.scrollToVerse ?? null;
     const leavingScroll = scrollPosition.peek();
-    const leavingPosition = {
-      translationId: translationId.peek(),
-      bookId: bookId.peek(),
-      chapterNumber: chapterNumber.peek(),
-    };
 
     batch(() => {
-      if (didChapterChange) {
-        if (leavingPosition.bookId) {
-          chapterScrollByKey.set(
-            positionKey({
-              translationId: leavingPosition.translationId,
-              bookId: leavingPosition.bookId,
-              chapterNumber: leavingPosition.chapterNumber,
-            }),
-            leavingScroll
-          );
-        }
-        // A linked verse owns the scroller. Otherwise prefer a stamped
-        // history offset when it is a real one, then wherever the reader
-        // last stood in this chapter — Next/Previous, the selector, Back.
-        const remembered = chapterScrollByKey.get(positionKey(next));
+      if (didPositionChange) {
+        // Only Back/Forward carries an offset to return to: that is the one
+        // navigation that means "take me back where I was". Next/Previous,
+        // the Bible Selector and a translation switch are all fresh reads and
+        // start at the heading, which is also what keeps the book and chapter
+        // at the top of the reader in view while flipping through chapters.
+        // A linked verse owns the scroller and overrides both.
         const fromHistory = options?.scrollPosition;
-        if (scrollToVerseRequest !== null) {
-          scrollPosition.value = 0;
-        } else if (typeof fromHistory === "number" && fromHistory > 0) {
-          scrollPosition.value = fromHistory;
-        } else {
-          scrollPosition.value = remembered ?? 0;
-        }
+        scrollPosition.value =
+          scrollToVerseRequest === null && typeof fromHistory === "number"
+            ? fromHistory
+            : 0;
       }
 
       translationId.value = next.translationId;
@@ -2295,7 +2270,7 @@ export function createBibleReadingState(
     }
     emitPositionNavigate(
       options?.replace,
-      didChapterChange ? leavingScroll : undefined
+      didPositionChange ? leavingScroll : undefined
     );
   };
 
