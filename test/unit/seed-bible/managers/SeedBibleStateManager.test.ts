@@ -219,6 +219,9 @@ function createMockSharedSession(id: string) {
       bookId: signal<string | null>(null),
       chapterNumber: signal<number | null>(null),
       chapterData: signal(null),
+      // TabsManager stamps this onto the history entry so Back/Forward can
+      // return the reader to where they were.
+      scrollPosition: signal(0),
       selectedVerses: signal([]),
       translationBooks: signal(null),
       selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),

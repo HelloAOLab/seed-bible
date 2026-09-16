@@ -1330,6 +1330,44 @@ describe("TabSlotReader integration", () => {
     expect(writes).toEqual([120]);
   });
 
+  it("re-applies the saved scroll offset when the matching chapter text arrives", () => {
+    const { slot, readingState, chapterData } = createFixture();
+
+    renderTabSlotReader(slot, readingState, createDesktopState(), container);
+
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback: FrameRequestCallback) => {
+        callback(0);
+        return 0;
+      });
+
+    try {
+      const writes = recordScrollTopWrites(
+        container.querySelector(".sb-pane-reader") as HTMLDivElement
+      );
+
+      act(() => {
+        batch(() => {
+          readingState.scrollPosition.value = 320;
+          readingState.chapterNumber.value = 2;
+        });
+      });
+      expect(writes).toEqual([320]);
+
+      act(() => {
+        chapterData.value = {
+          ...chapterData.value!,
+          chapter: { ...chapterData.value!.chapter, number: 2 },
+        };
+      });
+
+      expect(writes).toEqual([320, 320]);
+    } finally {
+      rafSpy.mockRestore();
+    }
+  });
+
   // Replays a capture from a real device. A touchmove generated during the
   // previous swipe was delivered 1.2s late, in the middle of the next gesture,
   // carrying the coordinate the finger had back then — which threw the track
