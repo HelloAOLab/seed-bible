@@ -1513,6 +1513,26 @@ describe("createTabs", () => {
     expect(readingState.scrollPosition.value).toBe(500);
   });
 
+  it("does not stamp a closed tab's scroll offset onto the entry that outlives it", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const onlyTab = manager.tabs.value[0]!;
+    // Scroll, then close the only tab before the debounced stamp can land.
+    onlyTab.readingState.scrollPosition.value = 400;
+    manager.removeTab(onlyTab.id);
+    expect(manager.tabs.value).toHaveLength(0);
+
+    // Well past the debounce window. The assertion is on the offset itself
+    // rather than "unchanged", because managers built by earlier cases in this
+    // file are never disposed and keep stamping their own (zero) offsets; 400
+    // is this tab's alone, and must never reach an entry that outlives it.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(window.history.state?.scrollPosition).not.toBe(400);
+  });
+
   it("decorates initial verses from the verse URL param on the initial tab", async () => {
     window.history.replaceState(null, "", "?book=GEN&chapter=1&verse=3,5-6");
     setWebResponses(createExampleManagerResponseMap());

@@ -5,6 +5,7 @@ import {
   untracked,
   type Signal,
 } from "@preact/signals";
+import { debounce } from "es-toolkit";
 import type { BibleDataManager, BookId } from "./BibleDataManager";
 import {
   DEFAULT_UI_LANGUAGE,
@@ -907,28 +908,31 @@ export function createTabs(
   // the entry it leaves (`departingScrollPosition`), but Back/Forward never
   // re-stamps the entry it leaves: without this, going back and then forward
   // again would return to the zero that entry was pushed with.
-  let scrollStampTimer: ReturnType<typeof setTimeout> | undefined;
+  const stampScrollPosition = debounce((offset: number) => {
+    // A static page's entry is not showing this reading position, so it must
+    // not collect the reader's offset.
+    if (
+      parseStaticPagePath(
+        navigation.currentUrl.peek().pathname,
+        navigation.basePath
+      )
+    ) {
+      return;
+    }
+    navigation.stampCurrentState({ scrollPosition: offset });
+  }, SCROLL_STAMP_DEBOUNCE_MS);
+
   effect(() => {
     const tab = selectedTab.value;
     if (!tab) {
+      // Closing the last tab leaves nothing selected. Drop any stamp still
+      // waiting, or it lands the closed tab's offset on whatever entry is
+      // current when it fires.
+      stampScrollPosition.cancel();
       return;
     }
 
-    const offset = tab.readingState.scrollPosition.value;
-    clearTimeout(scrollStampTimer);
-    scrollStampTimer = setTimeout(() => {
-      // A static page's entry is not showing this reading position, so it must
-      // not collect the reader's offset.
-      if (
-        parseStaticPagePath(
-          navigation.currentUrl.peek().pathname,
-          navigation.basePath
-        )
-      ) {
-        return;
-      }
-      navigation.stampCurrentState({ scrollPosition: offset });
-    }, SCROLL_STAMP_DEBOUNCE_MS);
+    stampScrollPosition(tab.readingState.scrollPosition.value);
   });
 
   // Resolves once `readingState` is no longer in the middle of an operation
