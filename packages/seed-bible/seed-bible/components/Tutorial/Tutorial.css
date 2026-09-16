@@ -69,25 +69,32 @@
 
 /* Title + skip sit on one row so skip stays pinned to the dialog's upper
    trailing corner (upper-right in LTR, upper-left in RTL) rather than
-   reflowing with the other controls. */
+   reflowing with the other controls. `align-items: center` (rather than
+   flex-start) is what actually puts the skip label in line with the title
+   text — the two have different font sizes/line-heights, so lining up their
+   boxes' top edges doesn't line up the text itself. */
 .sb-tour-popover-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  margin-bottom: 0.375rem;
 }
 
 .sb-tour-popover-title {
-  margin: 0 0 0.375rem;
+  margin: 0;
   font-family: system-ui, sans-serif;
   font-size: 1rem;
   line-height: 1;
   font-weight: 700;
 }
 
-.sb-tour-btn-skip {
+/* Both classes needed: `.sb-tour-btn`'s padding is a shorthand that would
+   otherwise win the cascade over this (equal specificity, declared later) and
+   silently clobber the smaller padding a compact header button needs. */
+.sb-tour-btn.sb-tour-btn-skip {
   flex: 0 0 auto;
-  padding: 0.125rem 0.375rem;
+  padding: 0.25rem 0.5rem;
 }
 
 .sb-tour-popover-body {
