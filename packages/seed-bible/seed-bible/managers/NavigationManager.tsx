@@ -190,8 +190,19 @@ export function createNavigationManager(
         const destination = new URL(
           event.destination?.url ?? window.location.href
         );
-        if (currentUrl.peek().href !== destination.href) {
-          currentUrl.value = destination;
+        // Back/forward is left to the `popstate` listener above. This event
+        // fires *before* the browser swaps the history entry in, so
+        // `window.location` and `window.history.state` both still describe the
+        // entry being left — and the destination's own classic state is not
+        // readable from here (`destination.getState()` returns the Navigation
+        // API's state, which `pushState` never writes). Publishing the URL now
+        // would run the URL->state effects against the departing entry's
+        // scroll offset, restoring the reader one navigation behind. `popstate`
+        // fires once the entry is current, where both reads are correct.
+        if (event.navigationType !== "traverse") {
+          if (currentUrl.peek().href !== destination.href) {
+            currentUrl.value = destination;
+          }
         }
         event.intercept();
       };
