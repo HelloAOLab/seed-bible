@@ -8,6 +8,8 @@
 
 ### 🐛 Fixed
 
+- Lift the mobile Search verses field off the scripture with a box shadow so it no longer blends into the verse text.
+
 ### 🗑️ Removed
 
 ## v1.9.0 — 2026-09-14
