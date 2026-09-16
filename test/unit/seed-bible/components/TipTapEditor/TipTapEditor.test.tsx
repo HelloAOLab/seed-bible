@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import type { Editor } from "@tiptap/core";
+import type { Editor, FocusPosition } from "@tiptap/core";
 import TipTapEditor from "@packages/seed-bible/seed-bible/components/TipTapEditor/TipTapEditor";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -41,7 +41,7 @@ function dispatchEditorKey(
   return handled;
 }
 
-describe("TipTapEditor keyboard shortcuts", () => {
+describe("TipTapEditor", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
@@ -54,17 +54,21 @@ describe("TipTapEditor keyboard shortcuts", () => {
     container.remove();
   });
 
-  async function mountEditor(onModEnter?: () => void): Promise<Editor> {
+  async function mountEditor(options?: {
+    onModEnter?: () => void;
+    autofocus?: FocusPosition;
+  }): Promise<Editor> {
     let editorInstance: Editor | null = null;
     await act(async () => {
       render(
         <TipTapEditor
           initialContent="<p>Hello</p>"
+          autofocus={options?.autofocus}
           onEditor={(editor) => {
             editorInstance = editor;
           }}
           onEmptyChange={() => {}}
-          onModEnter={onModEnter}
+          onModEnter={options?.onModEnter}
         />,
         container
       );
@@ -75,9 +79,18 @@ describe("TipTapEditor keyboard shortcuts", () => {
     return editorInstance;
   }
 
+  /** TipTap applies DOM focus on the next animation frame. */
+  async function flushAutofocus() {
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
+  }
+
   it("inserts a new paragraph on Enter instead of saving", async () => {
     const onModEnter = vi.fn();
-    const editor = await mountEditor(onModEnter);
+    const editor = await mountEditor({ onModEnter });
 
     editor.commands.focus("end");
     const handled = dispatchEditorKey(editor, "Enter");
@@ -89,7 +102,7 @@ describe("TipTapEditor keyboard shortcuts", () => {
 
   it("saves on Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux) without inserting a line", async () => {
     const onModEnter = vi.fn();
-    const editor = await mountEditor(onModEnter);
+    const editor = await mountEditor({ onModEnter });
 
     editor.commands.focus("end");
     const htmlBefore = editor.getHTML();
@@ -102,11 +115,27 @@ describe("TipTapEditor keyboard shortcuts", () => {
 
   it("does not save on the other platform's modifier+Enter", async () => {
     const onModEnter = vi.fn();
-    const editor = await mountEditor(onModEnter);
+    const editor = await mountEditor({ onModEnter });
 
     editor.commands.focus("end");
     dispatchEditorKey(editor, "Enter", otherPlatformSaveModifiers());
 
     expect(onModEnter).not.toHaveBeenCalled();
+  });
+
+  it("autofocuses the editor when autofocus is set", async () => {
+    const editor = await mountEditor({ autofocus: "end" });
+    await flushAutofocus();
+
+    expect(editor.isFocused).toBe(true);
+    expect(document.activeElement).toBe(editor.view.dom);
+  });
+
+  it("leaves the editor unfocused when autofocus is unset", async () => {
+    const editor = await mountEditor();
+    await flushAutofocus();
+
+    expect(editor.isFocused).toBe(false);
+    expect(document.activeElement).not.toBe(editor.view.dom);
   });
 });

@@ -1,17 +1,9 @@
 import type { ExperienceKey } from "../../../domain/models/experience";
 
-export interface PanelDisplayerPort {
-  displayPanel(): void;
-}
-
-export interface LoggerPort {
-  log(message: string): void;
-  warn(message: string): void;
-  error(message: string, error?: unknown): void;
-}
-
 export interface PiecesSequencePort {
   displayDropSequence(experience: ExperienceKey): Promise<void>;
+  displayClearSequence(experience: ExperienceKey): Promise<void>;
+  tryAbortCurrentDropSequence(): void;
 }
 
 export interface UpdatePiecesPositionPort {

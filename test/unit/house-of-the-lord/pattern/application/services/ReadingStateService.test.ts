@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ReadingStateService } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/services/ReadingStateService";
+import { BaseEventManager } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/services/BaseEventManager";
+import type { DomainEventMap } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/events";
 
 describe("application.services.ReadingStateService", () => {
   let service: ReadingStateService;
@@ -9,7 +11,9 @@ describe("application.services.ReadingStateService", () => {
   };
 
   beforeEach(() => {
-    service = new ReadingStateService();
+    service = new ReadingStateService({
+      eventBus: new BaseEventManager<DomainEventMap>(),
+    });
   });
 
   it("returns null at start", () => {

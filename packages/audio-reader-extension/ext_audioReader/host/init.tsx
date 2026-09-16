@@ -1,10 +1,15 @@
 import { computed, effect, signal } from "@preact/signals";
+import { debounce } from "es-toolkit";
 import { registerExtension, type SeedBibleState } from "seed-bible";
-import type {
-  BibleReadingState,
-  ChapterVerse,
-  QuickToolContext,
-  TranslationBookChapter,
+import { LANG_META } from "seed-bible/i18n";
+import {
+  bibleLanguageToUiLocale,
+  extractContentText,
+  type BibleReadingState,
+  type ChapterVerse,
+  type QuickToolContext,
+  type SpeechVerse,
+  type TranslationBookChapter,
 } from "seed-bible/managers";
 
 /** Drives the icon swap between play and pause. Shared across the tool. */
@@ -22,12 +27,31 @@ const isPlaying = signal(false);
  */
 const VERSE_HIGHLIGHT_LEAD_IN_SECONDS = 0.3;
 
+/**
+ * How long the Listen control waits out a burst of presses before acting, so a
+ * double-press toggles once rather than playing and immediately stopping.
+ */
+const TOGGLE_DEBOUNCE_MS = 300;
+
 /** Lazily-created shared audio element and the URL currently loaded into it. */
 let audioEl: HTMLAudioElement | null = null;
 let currentUrl: string | null = null;
 
 /** The chapter whose narration is loaded into that element, if any. */
 let currentChapter: ListeningTarget | null = null;
+
+/**
+ * The reader whose verses the speech synthesiser is currently lighting up, and
+ * the decoration doing the lighting. Kept separate from `verseTrack` because
+ * spoken playback needs no timing data at all — an utterance's `start` event is
+ * the verse boundary — so the two paths share nothing but `decorateVerses`.
+ */
+let speechHighlight: {
+  readingState: BibleReadingState;
+  bookId: string;
+  chapterNumber: number;
+  decorationId: string | null;
+} | null = null;
 
 /**
  * Set for as long as the extension is installed. The recorder writes through
@@ -282,6 +306,26 @@ export function chapterVerseNumbers(chapter: TranslationBookChapter): number[] {
     .map((verse) => verse.number);
 }
 
+/**
+ * A chapter's verses as speakable prose, in reading order.
+ *
+ * Headings and Hebrew subtitles are left out — they're publisher apparatus
+ * rather than scripture, and there's no verse to highlight while one is being
+ * read. `extractContentText` drops footnote markers and line breaks for the
+ * same reason, so what comes back is only what a narrator would actually say.
+ */
+export function chapterSpeechVerses(
+  chapter: TranslationBookChapter
+): SpeechVerse[] {
+  return chapter.chapter.content
+    .filter((item): item is ChapterVerse => item.type === "verse")
+    .map((verse) => ({
+      number: verse.number,
+      text: extractContentText(verse.content),
+    }))
+    .filter((verse) => verse.text.length > 0);
+}
+
 function ensureAudio(): HTMLAudioElement | null {
   if (typeof Audio === "undefined") return null;
   if (!audioEl) {
@@ -435,6 +479,85 @@ function resumeVerseHighlight(currentTime: number): void {
 }
 
 /**
+ * Moves the "now reading" spotlight to `verseNumber` as the synthesiser
+ * reaches it, or clears it when `verseNumber` is null.
+ *
+ * Reuses the same "diminish" decoration recorded narration uses, so a spoken
+ * chapter looks no different from a narrated one. Unlike that path there's no
+ * `removeAfterMs`: a verse's spoken length isn't known ahead of time, and the
+ * next verse's `start` event replaces the highlight anyway.
+ */
+function highlightSpokenVerse(verseNumber: number | null): void {
+  if (!speechHighlight) return;
+  const { readingState, bookId, chapterNumber, decorationId } = speechHighlight;
+
+  if (verseNumber === null) {
+    if (decorationId !== null) {
+      readingState.removeDecoration(decorationId);
+      speechHighlight.decorationId = null;
+    }
+    return;
+  }
+
+  speechHighlight.decorationId = readingState.decorateVerses(
+    bookId,
+    chapterNumber,
+    [verseNumber],
+    {
+      className: "sb-verse-decoration-diminish",
+      containerClassName: "sb-chapter-decoration-diminish",
+    },
+    decorationId ?? undefined
+  );
+}
+
+/** Clears any spoken-verse highlight and forgets the chapter it belonged to. */
+function clearSpeechHighlight(): void {
+  highlightSpokenVerse(null);
+  speechHighlight = null;
+}
+
+/**
+ * Reads the chapter in view aloud with the browser's speech synthesiser, for
+ * the translations that ship no recorded narration.
+ */
+function startSpeaking(
+  context: SeedBibleState,
+  readingState: BibleReadingState
+): void {
+  const chapter = readingState.chapterData.value;
+  if (!chapter) return;
+
+  const lang = speakableChapterLanguage(
+    chapter,
+    context.textToSpeech.canSpeakLanguage
+  );
+  const verses = chapterSpeechVerses(chapter);
+  if (verses.length === 0 || !lang) {
+    context.app.toast(
+      context.i18n.t("no-audio", {
+        defaultValue: "No audio is available for this chapter.",
+        ns: "ext_audioReader",
+      })
+    );
+    return;
+  }
+
+  clearSpeechHighlight();
+  speechHighlight = {
+    readingState,
+    bookId: chapter.book.id,
+    chapterNumber: chapter.chapter.number,
+    decorationId: null,
+  };
+
+  context.textToSpeech.speak(verses, {
+    lang,
+    onFinished: clearSpeechHighlight,
+  });
+}
+
+/**
  * Fetches the reader's per-verse timings for the chapter currently loaded
  * into `readingState` and starts tracking them, so subsequent `timeupdate`
  * ticks can highlight along. Does nothing (leaves `verseTrack` null) when the
@@ -503,13 +626,152 @@ function chapterTarget(
 }
 
 /**
+ * `language` as CLDR canonicalises it, or null if this runtime can't say.
+ *
+ * CLDR knows the alias from most ISO 639-3 codes to the two-letter tag voices
+ * are labelled with — "hau" to "ha", "npi" to "ne" — and correctly leaves the
+ * ones with no two-letter form alone ("haw", "yue"). That covers every
+ * language it knows rather than only the handful the UI ships a locale for.
+ *
+ * Guarded the same way `isRightToLeftLanguage` guards its own `Intl` use: a
+ * malformed tag makes `getCanonicalLocales` throw rather than return nothing.
+ */
+function canonicalLanguageTag(language: string): string | null {
+  if (
+    typeof Intl === "undefined" ||
+    typeof Intl.getCanonicalLocales !== "function"
+  ) {
+    return null;
+  }
+  try {
+    return Intl.getCanonicalLocales(language)[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The script `tag` is written in ("Deva", "Gujr"), or null when this runtime
+ * can't say. `maximize()` fills in the script CLDR treats as the language's
+ * default, which is what makes two tags comparable at all.
+ */
+function scriptForLanguage(tag: string): string | null {
+  if (typeof Intl === "undefined" || typeof Intl.Locale !== "function") {
+    return null;
+  }
+  try {
+    return new Intl.Locale(tag).maximize().script ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The stand-in `LANG_META` nominates for `tag`, but only when the two are
+ * written in the same script.
+ *
+ * `fallback` answers "what else can this reader read" — it's how the app picks
+ * a Bible text when it has none in the reader's own language — which makes it
+ * a poor guide for voices by itself. Gujarati falls back to Hindi, but the two
+ * use different scripts, so a Hindi voice handed Gujarati text has no glyphs
+ * to sound out and produces nothing usable. Requiring a shared script keeps
+ * the pairs whose letters at least map to sounds (Marathi and Hindi are both
+ * Devanagari) and drops the rest.
+ *
+ * A shared script is a floor, not a guarantee of a good reading: it also
+ * admits pairs that are merely written alike, such as German falling back to
+ * English. That stays tolerable only because this tier is a last resort — it
+ * applies solely when nothing can read the language itself, so the choice is
+ * between an accented approximation and no Listen button at all.
+ */
+function sameScriptFallbackLanguage(tag: string): string | null {
+  const fallback = LANG_META[tag]?.fallback;
+  if (!fallback) return null;
+  const script = scriptForLanguage(tag);
+  const fallbackScript = scriptForLanguage(fallback);
+  if (!script || !fallbackScript || script !== fallbackScript) return null;
+  return fallback;
+}
+
+/**
+ * The tags a chapter might be spoken in, most trustworthy first.
+ *
+ * The Bible API reports ISO 639-3 ("eng"), which the Web Speech API doesn't
+ * accept, so the code has to be translated to the BCP-47 tag voices carry
+ * ("en") — and neither source of that translation is right on its own:
+ *
+ * - `UI_TO_BIBLE_LANGUAGE_CODES` is curated and agrees with the rest of the
+ *   app, but it maps UI locales, not voices: it leaves "ind" as "ind" (the key
+ *   it happens to use) where voices say "id".
+ * - CLDR gets "ind" right, but returns "zlm" unchanged where the curated map
+ *   knows Malay voices are labelled "ms".
+ *
+ * So both are offered, and the caller takes whichever the browser actually has
+ * a voice for. The raw code comes last as a floor for runtimes without `Intl`.
+ *
+ * Anything {@link sameScriptFallbackLanguage} allows is appended after all of
+ * those, so a related language is only ever reached for once every way of
+ * naming the real one has come up empty.
+ */
+export function chapterSpeechLanguages(
+  chapter: TranslationBookChapter
+): string[] {
+  const language = chapter.translation.language;
+  if (!language) return [];
+  const spoken = [
+    bibleLanguageToUiLocale(language),
+    canonicalLanguageTag(language),
+    language,
+  ].filter((tag): tag is string => !!tag);
+  const fallbacks = spoken
+    .map(sameScriptFallbackLanguage)
+    .filter((tag): tag is string => !!tag);
+  return [...new Set([...spoken, ...fallbacks])];
+}
+
+/**
+ * The first of a chapter's candidate tags the browser has a voice for, or null
+ * when it has none — which is what hides the Listen button.
+ */
+function speakableChapterLanguage(
+  chapter: TranslationBookChapter,
+  canSpeakLanguage: (lang: string | null) => boolean
+): string | null {
+  return (
+    chapterSpeechLanguages(chapter).find((tag) => canSpeakLanguage(tag)) ?? null
+  );
+}
+
+/**
+ * Whether the chapter in view can be listened to at all: either it has a
+ * recording, or the browser has a voice for its language and there is
+ * something to read.
+ */
+function isChapterListenable(
+  readingState: BibleReadingState,
+  canSpeakLanguage: (lang: string | null) => boolean
+): boolean {
+  if (chapterAudioReader(readingState) !== null) return true;
+  const chapter = readingState.chapterData.value;
+  if (!chapter) return false;
+  if (!speakableChapterLanguage(chapter, canSpeakLanguage)) return false;
+  return chapterSpeechVerses(chapter).length > 0;
+}
+
+/**
  * Hidden from the quick toolbar on mobile since the mobile nav bar
  * (BibleReaderToolbar) is its home there.
+ *
+ * `canSpeakLanguage` is injected rather than read off a manager so this stays
+ * a pure function the tests can call directly.
  */
-export function isAudioPlayToolVisible(ctx: QuickToolContext): boolean {
+export function isAudioPlayToolVisible(
+  ctx: QuickToolContext,
+  canSpeakLanguage: (lang: string | null) => boolean
+): boolean {
   return (
     !ctx.playlists.playing.value &&
-    chapterAudioReader(ctx.readingState) !== null &&
+    isChapterListenable(ctx.readingState, canSpeakLanguage) &&
     (ctx.surface !== "quick-toolbar" || !ctx.playlists.isMobile.value)
   );
 }
@@ -592,6 +854,8 @@ export default function initAudioReaderExtension() {
         saveListeningSpan = null;
       };
 
+      const textToSpeech = context.textToSpeech;
+
       yield context.tools.registerQuickTool({
         id: "ext_audioReader-play",
         priority: 250,
@@ -600,12 +864,25 @@ export default function initAudioReaderExtension() {
           defaultValue: "Listen",
           ns: "ext_audioReader",
         },
-        icon: () => (isPlaying.value ? <PauseIcon /> : <PlayIcon />),
-        isVisible: (ctx) => computed(() => isAudioPlayToolVisible(ctx)),
-        onSelect: (ctx) => {
+        icon: () =>
+          isPlaying.value || textToSpeech.isSpeaking.value ? (
+            <PauseIcon />
+          ) : (
+            <PlayIcon />
+          ),
+        isVisible: (ctx) =>
+          computed(() =>
+            isAudioPlayToolVisible(ctx, textToSpeech.canSpeakLanguage)
+          ),
+        onSelect: debounce((ctx: QuickToolContext) => {
           const chapterAudio = chapterAudioReader(ctx.readingState);
           if (!chapterAudio) {
-            context.app.toast("No audio is available for this chapter.");
+            // No recording for this chapter, so read it aloud instead.
+            if (textToSpeech.isSpeaking.value) {
+              textToSpeech.stop();
+            } else {
+              startSpeaking(context, ctx.readingState);
+            }
             return;
           }
           const el = ensureAudio();
@@ -625,12 +902,29 @@ export default function initAudioReaderExtension() {
                 chapterAudio.reader
               );
             }
-            void el.play();
+            // A quick second press pauses before playback has begun, which
+            // rejects this promise with AbortError. That's the user getting
+            // what they asked for, not a failure worth reporting. (jsdom's
+            // element returns nothing at all, hence the guard.)
+            void el.play()?.catch(() => undefined);
           } else {
             el.pause();
           }
-        },
+        }, TOGGLE_DEBOUNCE_MS),
       });
+
+      // Follows the synthesiser from verse to verse. Recorded narration drives
+      // its highlight off the audio clock instead — see `highlightVerseForTime`.
+      yield effect(() => {
+        highlightSpokenVerse(textToSpeech.currentVerse.value);
+      });
+
+      // Speech outlives an uninstall otherwise: `speechSynthesis` belongs to
+      // the page, not to this extension.
+      yield () => {
+        textToSpeech.stop();
+        clearSpeechHighlight();
+      };
 
       // Stop and rewind whenever the active chapter changes so a previous
       // chapter's narration never keeps playing under a new one.
@@ -644,6 +938,8 @@ export default function initAudioReaderExtension() {
         isPlaying.value = false;
         verseTrack = null;
         verseTrackToken++;
+        textToSpeech.stop();
+        clearSpeechHighlight();
       });
     },
   });
