@@ -300,3 +300,26 @@ describe("createNavigationManager nested batchWrites", () => {
     expect(window.location.search).toBe("");
   });
 });
+
+describe("createNavigationManager history state", () => {
+  it("stamps scroll on the current entry and starts the next push at 0", () => {
+    const navigation = createNavigationManager();
+    navigation.push("/genesis/1");
+
+    navigation.stampCurrentState({ scrollPosition: 420 });
+    expect(navigation.getCurrentScrollPosition()).toBe(420);
+
+    navigation.push("/exodus/2");
+    expect(navigation.getCurrentScrollPosition()).toBe(0);
+    expect(window.location.pathname).toBe("/exodus/2");
+  });
+
+  it("does not stamp after dispose", () => {
+    const navigation = createNavigationManager();
+    navigation.push("/genesis/1");
+    navigation.dispose();
+
+    navigation.stampCurrentState({ scrollPosition: 420 });
+    expect(navigation.getCurrentScrollPosition()).toBe(0);
+  });
+});

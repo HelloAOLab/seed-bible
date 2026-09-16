@@ -2,12 +2,41 @@ import { computed, effect, signal } from "@preact/signals";
 
 export type NavigationDestination = number | string | URL;
 
+/** Fields this app stores on `history.state`. Other keys are left untouched. */
+export interface NavigationHistoryStatePatch {
+  scrollPosition?: number;
+}
+
 function toAbsoluteUrl(url: string | URL): string {
   if (typeof window === "undefined") {
     return String(url);
   }
 
   return new URL(String(url), window.location.href).toString();
+}
+
+function asHistoryStateObject(state: unknown): Record<string, unknown> {
+  if (state !== null && typeof state === "object" && !Array.isArray(state)) {
+    return { ...(state as Record<string, unknown>) };
+  }
+  return {};
+}
+
+function mergeHistoryState(
+  state: unknown,
+  patch: NavigationHistoryStatePatch
+): Record<string, unknown> {
+  return { ...asHistoryStateObject(state), ...patch };
+}
+
+function readScrollPositionFromHistoryState(
+  state: unknown
+): number | undefined {
+  const value = asHistoryStateObject(state).scrollPosition;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    return undefined;
+  }
+  return value;
 }
 
 export interface SimpleSignal<T> {
@@ -261,10 +290,44 @@ export function createNavigationManager(
 
     console.log(isPush ? "Push URL:" : "Replace URL:", url);
     if (isPush) {
-      window.history.pushState(window.history.state, "", href);
+      // A push copies the current entry's state unless we zero scroll here:
+      // `stampCurrentState` just wrote the departing chapter's offset onto
+      // that entry, and the destination should start at the heading.
+      window.history.pushState(
+        mergeHistoryState(window.history.state, { scrollPosition: 0 }),
+        "",
+        href
+      );
     } else {
       window.history.replaceState(window.history.state, "", href);
     }
+  };
+
+  /**
+   * Merges `patch` into the current history entry's state without changing
+   * the URL. Used to remember the chapter's scroll offset on the entry we
+   * are about to leave, so Back can restore it. Must not go through
+   * `writeHistory` / `batchWrites`: those fold URL writes, and a stamp
+   * folded into a later push would land the departing scroll on the
+   * destination instead of the origin.
+   */
+  const stampCurrentState = (patch: NavigationHistoryStatePatch) => {
+    if (disposed || typeof window === "undefined") {
+      return;
+    }
+
+    window.history.replaceState(
+      mergeHistoryState(window.history.state, patch),
+      "",
+      window.location.href
+    );
+  };
+
+  const getCurrentScrollPosition = (): number | undefined => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+    return readScrollPositionFromHistoryState(window.history.state);
   };
 
   const push = (url: string | URL) => {
@@ -445,6 +508,8 @@ export function createNavigationManager(
     go,
     replace,
     push,
+    stampCurrentState,
+    getCurrentScrollPosition,
     batchWrites,
     updateQueryParam,
     updateQueryParams,

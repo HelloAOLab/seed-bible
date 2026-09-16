@@ -1414,7 +1414,10 @@ describe("createTabs", () => {
     await waitFor(() => readingState.chapterNumber.value === 5);
 
     expect(pushSpy).toHaveBeenCalledTimes(1);
-    expect(replaceSpy).toHaveBeenCalledTimes(3);
+    // The extra replace stamps the origin chapter's scroll onto the history
+    // entry the skim is leaving; the other three overwrite the skim's
+    // destination as each next-chapter lands.
+    expect(replaceSpy).toHaveBeenCalledTimes(4);
 
     const url = new URL(window.location.href);
     expect(url.pathname).toBe("/en/AAB/genesis/5");
@@ -1464,6 +1467,24 @@ describe("createTabs", () => {
 
     expect(readingState.chapterNumber.value).toBe(2);
     expect(pushSpy).not.toHaveBeenCalled();
+  });
+
+  it("restores the previous chapter's scroll position when the browser goes back", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    readingState.scrollPosition.value = 240;
+
+    await readingState.selectChapter("GEN", 2);
+    await waitFor(() => readingState.chapterNumber.value === 2);
+    expect(readingState.scrollPosition.value).toBe(0);
+
+    window.history.back();
+    await waitFor(() => readingState.chapterNumber.value === 1);
+
+    expect(readingState.scrollPosition.value).toBe(240);
   });
 
   it("decorates initial verses from the verse URL param on the initial tab", async () => {

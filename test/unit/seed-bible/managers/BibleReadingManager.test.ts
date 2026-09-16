@@ -3456,7 +3456,10 @@ describe("createBibleReadingState", () => {
       await state.selectChapter("GEN", 5);
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith({ replace: false });
+      expect(listener).toHaveBeenCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("fires once with { replace: false } when selecting a book", async () => {
@@ -3470,7 +3473,10 @@ describe("createBibleReadingState", () => {
       await state.selectBook("EXO");
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith({ replace: false });
+      expect(listener).toHaveBeenCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("fires once with { replace: false } when selecting a translation", async () => {
@@ -3484,7 +3490,10 @@ describe("createBibleReadingState", () => {
       await state.selectTranslation("NIV");
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith({ replace: false });
+      expect(listener).toHaveBeenCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("fires once with { replace: false } when selecting a translation, book, and chapter", async () => {
@@ -3498,7 +3507,10 @@ describe("createBibleReadingState", () => {
       await state.selectTranslationAndChapter("NIV", "MAT", 3);
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith({ replace: false });
+      expect(listener).toHaveBeenCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("replaces rather than pushes for navigations that continue the same gesture", async () => {
@@ -3513,7 +3525,10 @@ describe("createBibleReadingState", () => {
       state.onNavigate(listener);
 
       await state.loadNextChapter();
-      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+      expect(listener).toHaveBeenLastCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
 
       await state.loadPreviousChapter();
       await state.loadNextChapter();
@@ -3536,7 +3551,10 @@ describe("createBibleReadingState", () => {
       state.onNavigate(listener);
 
       await state.loadNextChapter();
-      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+      expect(listener).toHaveBeenLastCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
 
       // Real elapsed time rather than a stubbed clock: `performance.now()` is
       // read by test infrastructure too, so mocking it globally would be a
@@ -3547,7 +3565,10 @@ describe("createBibleReadingState", () => {
 
       await state.loadNextChapter();
       expect(listener).toHaveBeenCalledTimes(2);
-      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+      expect(listener).toHaveBeenLastCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("replaces rather than pushes when the position does not actually change", async () => {
@@ -3601,7 +3622,10 @@ describe("createBibleReadingState", () => {
       await state.loadNextChapter();
 
       expect(listener).toHaveBeenCalledTimes(2);
-      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+      expect(listener).toHaveBeenLastCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("corrects an out-of-range chapter from the URL with a replace, not a push", async () => {
@@ -3804,6 +3828,67 @@ describe("createBibleReadingState", () => {
       expect(state.chapterNumber.value).toBe(1);
       expect(listener).toHaveBeenCalledTimes(1);
       expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+  });
+
+  describe("chapter scroll memory", () => {
+    it("restores scroll after next then previous", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      state.scrollPosition.value = 240;
+      await state.loadNextChapter();
+      expect(state.chapterNumber.value).toBe(2);
+      expect(state.scrollPosition.value).toBe(0);
+
+      await state.loadPreviousChapter();
+      expect(state.chapterNumber.value).toBe(1);
+      expect(state.scrollPosition.value).toBe(240);
+    });
+
+    it("restores scroll after leaving through any chapter change and returning", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      state.scrollPosition.value = 180;
+      await state.selectChapter("GEN", 5);
+      expect(state.scrollPosition.value).toBe(0);
+
+      await state.selectChapter("GEN", 1);
+      expect(state.scrollPosition.value).toBe(180);
+    });
+
+    it("still restores the first chapter after visiting more than three others", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      state.scrollPosition.value = 320;
+      await state.selectChapter("GEN", 2);
+      await state.selectChapter("GEN", 5);
+      await state.selectBook("EXO");
+      expect(state.bookId.value).toBe("EXO");
+
+      await state.selectChapter("GEN", 1);
+      expect(state.scrollPosition.value).toBe(320);
+    });
+
+    it("does not restore a remembered offset when scrolling to a verse", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      state.scrollPosition.value = 240;
+      await state.selectChapter("GEN", 5);
+      await state.selectTranslationAndChapter("AAB", "GEN", 1, {
+        scrollToVerse: 1,
+      });
+
+      expect(state.chapterNumber.value).toBe(1);
+      expect(state.scrollPosition.value).toBe(0);
+      expect(state.scrollToVerse.value).toBe(1);
     });
   });
 

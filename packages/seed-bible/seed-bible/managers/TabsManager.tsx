@@ -23,6 +23,7 @@ import {
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
   type InitialBibleReadingOptions,
+  type ReadingNavigationOptions,
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
@@ -688,12 +689,16 @@ export function createTabs(
     });
     // This navigation originates from the URL, so pass `updateUrl: false` to
     // keep the reading state from pushing the URL we just read back onto the
-    // history stack.
+    // history stack. Restore the scroll this history entry remembered, if any
+    // — that's what makes Back land where the reader was, not at the heading.
     await readingState.selectTranslationAndChapter(
       requestedTranslation,
       requestedBookId,
       nextChapter,
-      { updateUrl: false }
+      {
+        updateUrl: false,
+        scrollPosition: navigation.getCurrentScrollPosition(),
+      }
     );
   };
 
@@ -725,13 +730,23 @@ export function createTabs(
    * and on tab switch / mount (replace) — never reactively off the underlying
    * position signals, so one navigation produces exactly one history entry.
    */
-  const commitSelectedTabToUrl = (options: { replace?: boolean } = {}) => {
+  const commitSelectedTabToUrl = (options: ReadingNavigationOptions = {}) => {
     // Read all signals untracked: `getUrlQueryParams` touches bookId/chapter/
     // translation/extension signals, and this runs inside a signals effect. If
     // those reads were tracked, the effect would re-run on every position
     // change and re-commit, defeating the prescriptive (one-write-per-nav)
     // design.
     untracked(() => {
+      if (
+        !options.replace &&
+        typeof options.departingScrollPosition === "number"
+      ) {
+        // Stamp the chapter we're leaving onto the current entry *before*
+        // pushing the destination, so Back can restore this offset.
+        navigation.stampCurrentState({
+          scrollPosition: options.departingScrollPosition,
+        });
+      }
       const tab = selectedTab.peek();
       const nextQueryParams: Record<string, string | null> =
         tab?.readingState.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
