@@ -240,6 +240,10 @@ export class PieceActivityService implements PieceActivityServicePort {
       this.updateAllIndicators();
       this.updateAllNotifications();
     });
+
+    this.#eventBus.subscribe("OnStackSequenceStart", () => {
+      this.hideAllNotifications();
+    });
   }
 
   getPieceActivity({ piece }: { piece: Piece }) {
@@ -706,6 +710,17 @@ export class PieceActivityService implements PieceActivityServicePort {
 
     for (const container of containers) {
       this.updateNotification(container);
+    }
+  }
+
+  hideAllNotifications() {
+    const stackChaptersData =
+      this.#dataRegistryPort.getAllPiecesDataByType("StackChapter");
+
+    const containers: NotifiableContainer[] = [...stackChaptersData];
+
+    for (const container of containers) {
+      this.tryHideNotification(container);
     }
   }
 

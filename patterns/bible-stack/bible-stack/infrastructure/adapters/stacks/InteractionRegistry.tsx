@@ -28,16 +28,40 @@ export class InteractionRegistry implements InteractionRegistryServicePort {
     this.#registryMap["StackBible"] = data;
   }
 
+  handleBibleDeleted(bibleId: StackBibleData["id"]) {
+    if (this.#registryMap.StackBible?.id === bibleId) {
+      this.#registryMap.StackBible = undefined;
+    }
+  }
+
   handleTestamentInteracted(data: StackTestamentData) {
     this.#registryMap["StackTestament"] = data;
+  }
+
+  handleTestamentDeleted(id: StackTestamentData["id"]) {
+    if (this.#registryMap["StackTestament"]?.id === id) {
+      this.#registryMap["StackTestament"] = undefined;
+    }
   }
 
   handleSectionInteracted(data: StackSectionData) {
     this.#registryMap["StackSection"] = data;
   }
 
+  handleSectionDeleted(id: StackSectionData["id"]) {
+    if (this.#registryMap["StackSection"]?.id === id) {
+      this.#registryMap["StackSection"] = undefined;
+    }
+  }
+
   handleBookInteracted(data: StackBookData | StackSectionBookData) {
     this.#registryMap["StackBook"] = data;
+  }
+
+  handleBookDeleted(id: StackSectionBookData["id"] | StackBookData["id"]) {
+    if (this.#registryMap["StackBook"]?.id === id) {
+      this.#registryMap["StackBook"] = undefined;
+    }
   }
 
   handleChapterInteracted(data: StackChapterData) {

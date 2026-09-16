@@ -70,7 +70,7 @@ export class BibleLifecycleService {
 
     this.#bibleLifecycleEventPort.emit("OnBibleDelete", {
       bibleId: bibleData.id,
-    }); // TODO: Wire this event to the InteractionRegistryService to check if the deleted bible is the last interacted
+    });
   }
 
   deleteBibles(biblesData: StackBibleData[]) {
@@ -148,7 +148,7 @@ export class BibleLifecycleService {
     });
 
     this.#bibleDataRepositoryPort.addBibleData(bibleData);
-    this.#bibleLifecycleEventPort.emit("OnBibleCreated", { bibleData }); // TODO: Make the interaction registry service listen to this to register this bible as the last interacted.
+    this.#bibleLifecycleEventPort.emit("OnBibleCreated", { bibleData });
 
     const { testamentPiecesMap } = this.#bibleSetupAdapterPort.setUp({
       bibleData,

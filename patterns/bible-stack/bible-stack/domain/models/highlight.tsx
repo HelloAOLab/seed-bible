@@ -22,3 +22,11 @@ export const HighlightEvents = {
 } as const;
 export type HighlightEvent =
   (typeof HighlightEvents)[keyof typeof HighlightEvents];
+
+export const HighlightIntensities = {
+  Solid: "Solid",
+  Faded: "Faded",
+} as const;
+
+export type HighlightIntensity =
+  (typeof HighlightIntensities)[keyof typeof HighlightIntensities];

@@ -4,7 +4,7 @@ import type {
   UnhighlightRequestSource,
 } from "../../../domain/models/pieces";
 import type { Piece } from "../../../domain/models/canvas";
-import type { LabelTranslucencyMode } from "../../../domain/models/label";
+import type { HighlightIntensity } from "../../../domain/models/highlight";
 
 export interface PieceHighlighterPort {
   tryHighlightPiece: (params: {
@@ -45,8 +45,8 @@ export interface PieceHighlighterPort {
       | "StackBook"
       | "StackChapter"
     >;
-    intensity: LabelTranslucencyMode;
-  }) => void; // TODO: Change this to use a particular interface for the intensity. Leave LabelTranslucencyMode to the label only.
+    intensity: HighlightIntensity;
+  }) => void;
   clearScheduledUnhighlights(): void;
   clearHighlightedPieces(): void;
   forgetPiece(piece: Piece): void;

@@ -120,11 +120,6 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
           });
         });
     } else {
-      // setTag( // TODO: Understand the purpose of desiredPositionZ and determine where it belongs to.
-      //   piece,
-      //   "desiredPositionZ",
-      //   newPosition ? newPosition.z : piecePosition.z
-      // );
       if (pieceData.isFocused) {
         this.#pieceHighlightServicePort.tryHighlightPiece({
           piece,
@@ -133,24 +128,6 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
       }
     }
 
-    this.#pieceDropEventPort.emit("OnStackPieceDrop", { piece });
-
-    // TODO: Wire this event to a service that makes this piece the last interacted of its type
-    // switch (true) {
-    //   case data instanceof StackTestamentData:
-    //     thisBot.vars.lastInteractedStackTestamentData = data;
-    //     break;
-    //   case data instanceof StackSectionData:
-    //     thisBot.vars.lastInteractedStackSectionData = data;
-    //     break;
-    //   case data instanceof StackBookData:
-    //     thisBot.vars.lastInteractedStackBookData = data;
-    //     break;
-    //   default:
-    //     break;
-    // }
-
-    // TODO: Wire this event to a sound service that plays the StackPieceDrop sound
-    //thisBot.PlaySound({ soundName: "StackPieceDrop" });
+    this.#pieceDropEventPort.emit("OnStackPieceDrop", { data: pieceData });
   }
 }

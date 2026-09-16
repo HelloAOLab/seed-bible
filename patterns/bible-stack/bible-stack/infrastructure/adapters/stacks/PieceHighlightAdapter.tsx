@@ -15,6 +15,8 @@ import {
 } from "../../functions/casualos";
 import type { HighlightConfigProvider } from "../../config/highlight/HighlightConfigProvider";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
+import type { ColorLerper } from "../environment/ColorLerper";
+import { ColorParser } from "../../../domain/functions/colors";
 
 type StackPieceUnion =
   | Piece<"StackTestament">
@@ -32,6 +34,7 @@ export interface AdapterParams {
   visualStatePort: VisualStateRegistry;
   animationConfigProviderPort: HighlightConfigProvider;
   pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
+  colorLerper: ColorLerper;
 }
 
 export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
@@ -43,6 +46,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
   #visualStatePort: VisualStateRegistry;
   #animationConfigProviderPort: HighlightConfigProvider;
   #pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
+  #colorLerper: AdapterParams["colorLerper"];
 
   constructor({
     testamentMapperPort,
@@ -53,6 +57,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     visualStatePort,
     animationConfigProviderPort,
     pieceDataRepositoryPort,
+    colorLerper,
   }: AdapterParams) {
     this.#testamentMapperPort = testamentMapperPort;
     this.#sectionMapperPort = sectionMapperPort;
@@ -62,13 +67,14 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     this.#visualStatePort = visualStatePort;
     this.#animationConfigProviderPort = animationConfigProviderPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
+    this.#colorLerper = colorLerper;
   }
 
   interruptSequence(piece: StackPieceUnion): void {
     if (piece.type === BiblePieces.StackChapter) {
       const bot = this.#chapterMapperPort.toInfrastructure(piece);
       if (!bot) return;
-      // TODO: Clear color lerp as well.
+      this.#colorLerper.stop(bot, "color");
       clearAnimations(bot, "scaleZ");
       return;
     }
@@ -127,26 +133,37 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
         chapterData.selectionState !== "Selecting" &&
         chapterData.selectionState !== "Deselecting"
       ) {
+        const animations: Promise<void>[] = [];
         if (!chapterData.isSelected || chapterData.isOnTheGround) {
           const color = this.#visualStatePort.getStateProperty({
             piece,
             property: "highlightedColor",
           });
-          SetStrictTag(bot, "color", color); // TODO: Implement color lerping
+          animations.push(
+            this.#colorLerper.lerp({
+              end: ColorParser(color, "arrayRGB"),
+              bot,
+              tag: "color",
+              durationSec: duration,
+            })
+          );
         }
         if (chapterData.isSelected && chapterData.isOnTheGround) {
           const scaleZ = this.#visualStatePort.getStateProperty({
             piece,
             property: "highlightedScaleZ",
           });
-          await AnimateStrictTag(bot, "scaleZ", {
-            toValue: scaleZ,
-            duration,
-            easing,
-            tagMaskSpace: false,
-            expectsCancellation: true,
-          });
+          animations.push(
+            AnimateStrictTag(bot, "scaleZ", {
+              toValue: scaleZ,
+              duration,
+              easing,
+              tagMaskSpace: false,
+              expectsCancellation: true,
+            })
+          );
         }
+        await Promise.all(animations);
       }
       return;
     }
@@ -352,7 +369,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
             piece,
             property: "initialColor",
           });
-          SetStrictTag(bot, "color", color); // TODO: Implement color lerping
+          SetStrictTag(bot, "color", color);
         }
         if (chapterData.isSelected && chapterData.isOnTheGround) {
           const scaleZ = this.#visualStatePort.getStateProperty({

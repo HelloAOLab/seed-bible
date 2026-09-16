@@ -135,7 +135,6 @@ export class BookShapeAdapter {
       piece,
       property: "initialColor",
     });
-    // TODO(history-mode): the legacy chose the colour via history-mode/GetHistoryColor.
     const baseColor = data.paintColor ?? initialColor;
 
     data.changeShape(shape);
@@ -331,7 +330,6 @@ export class BookShapeAdapter {
       piece,
       property: "initialColor",
     });
-    // TODO(history-mode): the legacy chose the colour via history-mode/GetHistoryColor.
     const baseColor = data.paintColor ?? initialColor;
 
     data.changeShape(shape);

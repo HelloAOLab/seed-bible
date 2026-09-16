@@ -34,6 +34,7 @@ import { VersesBundleRepository } from "../adapters/stacks/VersesBundleDataRepos
 import { VerseRepository } from "../adapters/stacks/VerseDataRepository";
 import { VisualStateRegistry } from "../adapters/stacks/VisualStateRegistry";
 import { InteractionRegistry } from "../adapters/stacks/InteractionRegistry";
+import type { AnyStackData } from "../../application/ports/pieces";
 import { BibleSetupAdapter } from "../adapters/stacks/BibleSetupAdapter";
 import { BibleStackUpdaterAdapter } from "../adapters/stacks/BibleStackUpdaterAdapter";
 import { TestamentStackUpdaterAdapter } from "../adapters/stacks/TestamentStackUpdaterAdapter";
@@ -593,6 +594,7 @@ export const bootstrapExtension = () => {
     visualStatePort: visualStateRegistry,
     animationConfigProviderPort: highlightConfigProvider,
     pieceDataRepositoryPort: pieceDataRepository,
+    colorLerper,
   });
   const pieceUnhighlightSchedulerAdapter =
     new PieceUnhighlightSchedulerAdapter();
@@ -920,6 +922,7 @@ export const bootstrapExtension = () => {
     },
     configProviderPort: layoutConfigProvider,
     pieceHighlightServicePort: pieceHighlightService,
+    eventManger: bibleStackEventManager,
   });
   const stackStructureService = new StackStructureService({
     pieceAdapterPort: pieceAdapter,
@@ -1109,6 +1112,7 @@ export const bootstrapExtension = () => {
     pieceLabelServicePort: pieceLabelService,
     tourGuideServicePort: tourGuideService,
     pieceHierarchyServicePort: pieceHierarchyService,
+    eventManager: bibleStackEventManager,
   });
 
   const stackPresenceNavigationService = new StackPresenceNavigationService({
@@ -1190,6 +1194,7 @@ export const bootstrapExtension = () => {
     pieceDataRepository: pieceDataRepository,
     sectionSelectionServicePort: sectionSelectionService,
     testamentSelectionServicePort: testamentSelectionService,
+    eventManager: bibleStackEventManager,
   });
   const sectionShadowInteractionService = new SectionShadowInteractionService({
     pieceDataRepositoryPort: pieceDataRepository,
@@ -1314,6 +1319,23 @@ export const bootstrapExtension = () => {
     labelInteractionServicePort: labelInteractionService,
   });
 
+  const registryStrategy: {
+    [K in AnyStackData["type"]]: (
+      data: Extract<AnyStackData, { type: K }>
+    ) => void;
+  } = {
+    StackTestament: (data) =>
+      interactionRegistry.handleTestamentInteracted(data),
+    StackSection: (data) => interactionRegistry.handleSectionInteracted(data),
+    StackSectionBook: (data) => interactionRegistry.handleBookInteracted(data),
+    StackBook: (data) => interactionRegistry.handleBookInteracted(data),
+    StackChapter: (data) => interactionRegistry.handleChapterInteracted(data),
+  };
+
+  const handlePieceInteracted = (data: AnyStackData) => {
+    (registryStrategy[data.type] as (data: AnyStackData) => void)(data);
+  };
+
   // 6. Event wiring
 
   os.addBotListener(
@@ -1334,13 +1356,18 @@ export const bootstrapExtension = () => {
     audioAdapter.playSound("BookSelect")
   );
 
-  bibleStackEventManager.subscribe("OnBibleResetSequenceStart", () =>
-    audioAdapter.playSound("ResetBible")
+  bibleStackEventManager.subscribe(
+    "OnBibleResetSequenceStart",
+    ({ bibleData }) => {
+      audioAdapter.playSound("ResetBible");
+      interactionRegistry.handleBibleInteracted(bibleData);
+    }
   );
 
-  bibleStackEventManager.subscribe("OnStackPieceDrop", () =>
-    audioAdapter.playSound("StackPieceDrop")
-  );
+  bibleStackEventManager.subscribe("OnStackPieceDrop", ({ data }) => {
+    audioAdapter.playSound("StackPieceDrop");
+    handlePieceInteracted(data);
+  });
 
   bibleStackEventManager.subscribe("OnStackPiecePulledOut", () =>
     audioAdapter.playSound("StackPiecePulledOut")
@@ -1662,6 +1689,53 @@ export const bootstrapExtension = () => {
       default:
         break;
     }
+  });
+
+  bibleStackEventManager.subscribe("OnBibleDelete", ({ bibleId }) => {
+    interactionRegistry.handleBibleDeleted(bibleId);
+  });
+
+  bibleStackEventManager.subscribe("OnBibleCreated", ({ bibleData }) => {
+    interactionRegistry.handleBibleInteracted(bibleData);
+  });
+
+  bibleStackEventManager.subscribe("OnBibleAttemptToggleMode", ({ data }) => {
+    interactionRegistry.handleBibleInteracted(data);
+  });
+
+  bibleStackEventManager.subscribe("OnBookBeginSelect", ({ data }) => {
+    interactionRegistry.handleBookInteracted(data);
+  });
+
+  bibleStackEventManager.subscribe("OnBookBeginDeselect", ({ data }) => {
+    interactionRegistry.handleBookInteracted(data);
+  });
+
+  bibleStackEventManager.subscribe(
+    "OnScripturePieceHighlighted",
+    ({ pieceData }) => {
+      handlePieceInteracted(pieceData);
+    }
+  );
+
+  bibleStackEventManager.subscribe("OnTestamentDelete", ({ dataId }) => {
+    interactionRegistry.handleTestamentDeleted(dataId);
+  });
+
+  bibleStackEventManager.subscribe("OnSectionDelete", ({ dataId }) => {
+    interactionRegistry.handleSectionDeleted(dataId);
+  });
+
+  bibleStackEventManager.subscribe("OnSectionBookDelete", ({ dataId }) => {
+    interactionRegistry.handleBookDeleted(dataId);
+  });
+
+  bibleStackEventManager.subscribe("OnBookDelete", ({ dataId }) => {
+    interactionRegistry.handleBookDeleted(dataId);
+  });
+
+  bibleStackEventManager.subscribe("OnSectionDeselected", ({ data }) => {
+    interactionRegistry.handleSectionInteracted(data);
   });
 
   SendEmbedMessage({ id: "ready" });

@@ -6,7 +6,9 @@ import {
 } from "../../domain/models/canvas";
 import {
   HighlightEvents,
+  HighlightIntensities,
   HighlightStates,
+  type HighlightIntensity,
 } from "../../domain/models/highlight";
 import type {
   PieceHighlightPieceDataRepositoryPort,
@@ -31,10 +33,6 @@ import {
   HighlightRequestSources,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
-import {
-  LabelTranslucencyModes,
-  type LabelTranslucencyMode,
-} from "../../domain/models/label";
 
 interface PieceHighlightServiceParams {
   eventPort: PieceHighlightEventPort;
@@ -151,7 +149,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
         if (data.type === BiblePieces.StackBook) {
           this.changeHighlightIntensity({
             piece,
-            intensity: LabelTranslucencyModes.Solid,
+            intensity: HighlightIntensities.Solid,
             pacing,
           });
         }
@@ -160,10 +158,9 @@ export class PieceHighlightService implements PieceHighlighterPort {
       return;
     }
 
-    data.changeHighlightIntensity(LabelTranslucencyModes.Solid);
+    data.changeHighlightIntensity(HighlightIntensities.Solid);
 
     this.#highlightedPiecesIds.set(piece.id, piece);
-    // TODO: Wire this event to the interaction registry and add this piece to the last interacted of its type
     this.#eventPort.emit("OnScripturePieceHighlighted", { pieceData: data });
 
     let highlightAction: Promise<void> | undefined = undefined;
@@ -226,7 +223,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
           this.tryUnhighlightPiece({
             piece: currPiece,
             pacing,
-            source: "UserFocus", // TODO: Determine the right value for this
+            source: UnhighlightRequestSources.Transition,
           });
         });
       }
@@ -407,13 +404,13 @@ export class PieceHighlightService implements PieceHighlighterPort {
     pacing = "Regular",
   }: {
     piece: Piece<keyof PieceDataMap>;
-    intensity: LabelTranslucencyMode;
+    intensity: HighlightIntensity;
     pacing?: HighlightPacing;
   }): void {
     const data = this.#pieceDataRepositoryPort.getPieceData(piece);
     const changed = data?.changeHighlightIntensity(intensity);
     if (!changed) return;
-    if (intensity === LabelTranslucencyModes.Solid) {
+    if (intensity === HighlightIntensities.Solid) {
       this.#pieceHighlightAdapterPort.increaseIntensity(piece, pacing);
     } else {
       this.#pieceHighlightAdapterPort.decreaseIntensity(piece);

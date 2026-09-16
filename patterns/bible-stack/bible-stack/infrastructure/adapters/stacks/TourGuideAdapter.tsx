@@ -105,6 +105,7 @@ export class TourGuideAdapter implements TourGuieAdapterPort {
     MakePortalFree();
 
     const books = sectionData.getReversedActiveBooks();
+    console.log(`[Debug] TourGuideAdapter.startTourGuideSequence`, { books });
     if (books.length === 0) return;
 
     const delay = this.#tourGuideConfigProvider.getDelayBetweenBookHighlight();

@@ -15,6 +15,7 @@ import type {
 } from "../ports/out/BibleMode";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type { BibleModeServicePort } from "../ports/in/BibleMode";
+import type { DomainEventManager } from "../ports/in/EventManager";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
@@ -24,6 +25,7 @@ interface ServiceParams {
   pieceDataRepository: PieceDataRepositoryPort;
   sectionSelectionServicePort: SectionSelectionServicePort;
   testamentSelectionServicePort: TestamentSelectionPort;
+  eventManager: DomainEventManager;
 }
 
 export class BibleModeService implements BibleModeServicePort {
@@ -36,6 +38,7 @@ export class BibleModeService implements BibleModeServicePort {
   #pieceDataRepository: ServiceParams["pieceDataRepository"];
   #sectionSelectionServicePort: ServiceParams["sectionSelectionServicePort"];
   #testamentSelectionServicePort: ServiceParams["testamentSelectionServicePort"];
+  #eventManager: ServiceParams["eventManager"];
 
   constructor({
     sequenceStateServicePort,
@@ -45,6 +48,7 @@ export class BibleModeService implements BibleModeServicePort {
     pieceDataRepository,
     sectionSelectionServicePort,
     testamentSelectionServicePort,
+    eventManager,
   }: ServiceParams) {
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#sequenceAdapterPort = sequenceAdapterPort;
@@ -53,6 +57,7 @@ export class BibleModeService implements BibleModeServicePort {
     this.#pieceDataRepository = pieceDataRepository;
     this.#sectionSelectionServicePort = sectionSelectionServicePort;
     this.#testamentSelectionServicePort = testamentSelectionServicePort;
+    this.#eventManager = eventManager;
   }
 
   async tryToggleMode(bibleData: StackBibleData) {
@@ -80,7 +85,7 @@ export class BibleModeService implements BibleModeServicePort {
     }
 
     this.#isTryingToToggle = true;
-    // TODO: Emit an event that will liste the interaction registry to register this bible as the last interacted.
+    this.#eventManager.emit("OnBibleAttemptToggleMode", { data: bibleData });
     await this.#sequenceAdapterPort
       .showToggleAttemptFeedback({
         crossHorizontalLine,

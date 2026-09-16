@@ -118,6 +118,12 @@ export class BookChapterManagementAdapter implements BookChaptersManagementAdapt
           (bookInfo.type === "subset" ? bookInfo.startIndex : 0)
       ),
     };
+    const {
+      selectedColor,
+      expandedScaleZ,
+      highlightedScaleZ,
+      highlightedColor,
+    } = this.#piecesConfigProvider.getInitialVisualState("StackChapter");
     this.#visualStateRegistry.registerState({
       piece: chapter,
       state: {
@@ -137,17 +143,13 @@ export class BookChapterManagementAdapter implements BookChaptersManagementAdapt
           this.#layoutConfigProvider.getStackPieceMeasurement(
             "ChapterFrontSelectedDepth"
           ),
-        selectedColor:
-          this.#piecesConfigProvider.getInitialVisualState("StackChapter")
-            .selectedColor!,
-        expandedScaleZ: 1, // TODO: Where does this value come from?
-        highlightedScaleZ: 1, // TODO: Where does this value come from?
+        selectedColor: selectedColor!,
+        expandedScaleZ: expandedScaleZ!,
+        highlightedScaleZ: highlightedScaleZ!,
         initialColor:
           chapterBot.tags.color ??
           this.#piecesConfigProvider.getInitialConfig("StackChapter").color!,
-        highlightedColor:
-          this.#piecesConfigProvider.getInitialVisualState("StackChapter")
-            .highlightedColor ?? "#ffffff",
+        highlightedColor: highlightedColor ?? "#ffffff",
       },
     });
 

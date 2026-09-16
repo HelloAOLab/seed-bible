@@ -16,6 +16,7 @@ import type { BookSpawnerPort } from "../ports/in/PieceSpawn";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
+import type { DomainEventManager } from "../ports/in/EventManager";
 
 interface ServiceParams {
   labelDataStorePort: LabelDataStorePort;
@@ -30,6 +31,7 @@ interface ServiceParams {
   bookSpawnerPort: BookSpawnerPort;
   tourGuideServicePort: TourGuideServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
+  eventManager: DomainEventManager;
 }
 
 export class SectionSelectionService implements SectionSelectionServicePort {
@@ -46,6 +48,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
   #tourGuideServicePort: ServiceParams["tourGuideServicePort"];
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #selectionNameRegistry: Set<string> = new Set();
+  #eventManager: ServiceParams["eventManager"];
 
   constructor({
     labelDataStorePort,
@@ -60,6 +63,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     bookSpawnerPort,
     tourGuideServicePort,
     pieceHierarchyServicePort,
+    eventManager,
   }: ServiceParams) {
     this.#labelDataStorePort = labelDataStorePort;
     this.#pieceHighlighterPort = pieceHighlighterPort;
@@ -73,6 +77,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     this.#bookSpawnerPort = bookSpawnerPort;
     this.#tourGuideServicePort = tourGuideServicePort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
+    this.#eventManager = eventManager;
   }
 
   async #prepareSelection(data: StackSectionData): Promise<void> {
@@ -210,7 +215,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
 
     const selectedBooksData = data.getActivelySelectedBooks();
     const highlightedBooks = data.getActivelyHighlightedChildren();
-    // thisBot.vars.lastInteractedStackSectionData = data; TODO: Call an event here. Make the interaction registry listen;
+    this.#eventManager.emit("OnSectionDeselected", { data });
 
     if (highlightedBooks.length > 0) {
       const booksPieces = highlightedBooks.map((bookData) => bookData.piece);

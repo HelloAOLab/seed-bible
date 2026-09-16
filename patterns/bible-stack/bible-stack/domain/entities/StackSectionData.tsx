@@ -200,6 +200,7 @@ export class StackSectionData extends StackPieceData<
   }
   getReversedActiveBooks(): StackBookData[] {
     return this.getReversedChildren()
+      .map((bookArr) => bookArr.toReversed())
       .flat()
       .filter((book) => book.isActive);
   }

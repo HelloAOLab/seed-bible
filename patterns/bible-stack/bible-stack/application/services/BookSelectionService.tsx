@@ -78,7 +78,7 @@ export class BookSelectionService implements BookSelectionServicePort {
       return;
     }
 
-    this.#bookSelectionEventPort.emit("OnBookBeginSelect", { data }); // TODO: Make the interaction registry listen to this and make this book the last interacted.
+    this.#bookSelectionEventPort.emit("OnBookBeginSelect", { data });
     await this.#pieceHighlighterPort.tryUnhighlightPiece({
       piece,
       source: "Transition",
@@ -99,15 +99,12 @@ export class BookSelectionService implements BookSelectionServicePort {
   #finalizeBookSelection(data: BookEntity): void {
     data.changeSelectionState("SequenceComplete");
     this.#bookSelectionEventPort.emit("OnBookEndSelect", { data });
-
-    // TODO: Move this to a propper adapter called by a PieceSelectionFeedbackService or something like that. Wire it to the OnBookEndSelect event at composition root.
-    // thisBot.PlaySound({ soundName: "BookSelect" });
   }
 
   // --- Deselection pre/post-flight ----------------------------------------
 
   #prepareBookDeselection(data: BookEntity): void {
-    this.#bookSelectionEventPort.emit("OnBookBeginDeselect", { data }); // TODO: Make the interaction registry listen to this and make this book the last interacted.
+    this.#bookSelectionEventPort.emit("OnBookBeginDeselect", { data });
     data.changeSelectionState("RequestDeselect");
     data.changeChildrenSelectionState("RequestDeselect");
     if (data.piece) {
