@@ -6,7 +6,14 @@
 
 ### 🔧 Changed
 
+- Show "The host disconnected from the session" and "The host reconnected to the session" when only the host drops from a shared session, instead of "Reconnecting to the session" / "Reconnected to the session". When it is your own connection that goes, the toasts are "You lost connection to the session" and "You rejoined the session" instead. Other people leaving one by one, however many of them, is never reported as you losing your connection.
+
 ### 🐛 Fixed
+
+- Stop showing "You lost connection to the session" on a remaining host device when another of the host's devices disconnects.
+- Show "You rejoined the session" instead of "The host reconnected to the session" when you come back from a dropped connection and the host reappears at the same time.
+- Actually show the "You lost connection to the session" and "You rejoined the session" toasts when your own connection drops. Losing your connection empties the list of who's in the session — and that list is where the toasts were being worked out from, so it took your own name with it and neither message ever appeared. Turning on airplane mode and turning it off again left you with no word either way; now you're told both times.
+- Stop swallowing "You rejoined the session" when the connection comes back within a few seconds of returning to the app. Toasts are held back briefly after the app comes to the foreground, because the list of who's present is still settling and can look wrong; the "you're back" message was being dropped for that reason even when you had already been told you were disconnected, leaving you to assume you still were. Once you've been told you dropped, you're now always told when you're back.
 
 ### 🗑️ Removed
 
