@@ -1,6 +1,6 @@
 {
   "id": "default-content-extension",
-  "autoinstall": true,
+  "autoinstall": false,
   "translations": {
     "en": {
       "title": "Seed Bible Default Content",
