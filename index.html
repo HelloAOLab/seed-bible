@@ -73,6 +73,11 @@
           if (!raw) return;
           var themeId = JSON.parse(raw).themeId;
           if (!themeId) return;
+          if (themeId === "system") {
+            themeId = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          }
           var presetsEl = document.getElementById("sb-theme-presets");
           if (!presetsEl || !presetsEl.textContent) return;
           var css = JSON.parse(presetsEl.textContent)[themeId];

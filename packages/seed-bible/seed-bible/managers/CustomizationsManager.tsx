@@ -14,9 +14,12 @@ import type { CustomizationVariantSelectionsManager } from "./CustomizationVaria
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
 import {
   applyHighlightOverrides,
+  DARK_THEME,
   filterValidColorOverrides,
   filterValidFontFamilyOverrides,
+  LIGHT_THEME,
   LIGHT_THEME_FONT_DEFAULTS,
+  SYSTEM_THEME_ID,
   type BibleTheme,
   type HighlightOverrides,
   type ThemeColorKey,
@@ -575,8 +578,17 @@ export interface CustomizationsManager {
    * was loaded via the URL.
    */
   activeCustomization: ReadonlySignal<SeedBibleCustomization | null>;
-  /** The variant of the active customization currently in effect (viewer's own pick, else the customization's default, else its first variant). */
+  /** The variant of the active customization currently in effect (the device's color scheme when `isFollowingSystemScheme`, else the viewer's own pick, else the customization's default, else its first variant). */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
+  /** Whether the active customization has both a Light-based and a Dark-based variant, and so can follow the device the way the app-wide System theme does. False when nothing is active. */
+  canFollowSystemScheme: ReadonlySignal<boolean>;
+  /**
+   * Whether `activeVariant` is tracking the device right now — the viewer
+   * picked the System card (stored as the `SYSTEM_THEME_ID` sentinel in
+   * their variant selections), or never picked a variant here and their
+   * app-wide theme is System.
+   */
+  isFollowingSystemScheme: ReadonlySignal<boolean>;
   /**
    * The active variant's colors, session-only: layered on top of the
    * rendered theme by `SeedBibleStateManager`, never written to
@@ -763,7 +775,7 @@ export interface CustomizationsManager {
   setEditingDefaultVariant: (variantId: string) => void;
   /** Removes a variant from the draft. No-op if it's the only remaining variant. */
   removeEditingVariant: (variantId: string) => void;
-  /** Persists the viewer's variant choice for the currently active customization. No-op if none is active. */
+  /** Persists the viewer's variant choice for the currently active customization. Pass `SYSTEM_THEME_ID` to follow the device's color scheme instead of pinning one variant. No-op if none is active. */
   selectActiveVariant: (variantId: string) => Promise<void>;
   /** Sets an extension's availability on the draft. No-op with no open draft. */
   setEditingExtensionAvailability: (
@@ -1068,19 +1080,52 @@ export function createCustomizationsManager(
     return Array.from(new Set([...autoInstalled, ...validExtra]));
   });
 
+  const selectedVariantId = computed<string | null>(() => {
+    const locator = activeCustomizationLocator.value;
+    return locator ? variantSelections.getSelectedVariantId(locator) : null;
+  });
+
+  const canFollowSystemScheme = computed<boolean>(() => {
+    const customization = activeCustomization.value;
+    if (!customization) {
+      return false;
+    }
+    return (
+      customization.variants.some((v) => v.baseTheme === LIGHT_THEME.id) &&
+      customization.variants.some((v) => v.baseTheme === DARK_THEME.id)
+    );
+  });
+
+  const isFollowingSystemScheme = computed<boolean>(() => {
+    if (!canFollowSystemScheme.value) {
+      return false;
+    }
+    // An explicit pick wins, including the System card's own sentinel. Only
+    // a viewer who has never picked a variant here inherits their app-wide
+    // System preference.
+    const selectedId = selectedVariantId.value;
+    return selectedId
+      ? selectedId === SYSTEM_THEME_ID
+      : theme.selectedThemeId.value === SYSTEM_THEME_ID;
+  });
+
   const activeVariant = computed<CustomizationThemeVariant | null>(() => {
     const customization = activeCustomization.value;
     if (!customization) {
       return null;
     }
-    const locator = activeCustomizationLocator.value;
-    const selectedId = locator
-      ? variantSelections.getSelectedVariantId(locator)
-      : null;
     const byId = (id: string | null | undefined) =>
       id ? customization.variants.find((v) => v.id === id) : undefined;
+    const bySystemScheme = isFollowingSystemScheme.value
+      ? customization.variants.find(
+          (v) =>
+            v.baseTheme ===
+            (theme.prefersDarkScheme.value ? DARK_THEME.id : LIGHT_THEME.id)
+        )
+      : undefined;
     return (
-      byId(selectedId) ??
+      bySystemScheme ??
+      byId(selectedVariantId.value) ??
       byId(customization.defaultVariantId) ??
       customization.variants[0] ??
       null
@@ -1818,6 +1863,8 @@ export function createCustomizationsManager(
     isLoading,
     activeCustomization,
     activeVariant,
+    canFollowSystemScheme,
+    isFollowingSystemScheme,
     activeThemeOverrides,
     activeHighlightOverrides,
     activeResolvedTheme,
