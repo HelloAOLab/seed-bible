@@ -1,4 +1,6 @@
+import type { ReadingState } from "../../../domain/models/scripture";
+
 export interface ReadingStatePort {
   setCurrentReading(bookId: string, chapterNumber: number): void;
-  getCurrentReading(): { bookId: string; chapterNumber: number } | null;
+  getCurrentReading(): ReadingState | null;
 }
