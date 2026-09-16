@@ -4,6 +4,11 @@
 
 ### ✨ Added
 
+- Save an annotation with Cmd+Enter on Mac or Ctrl+Enter on Windows and Linux while typing, and keep Enter inserting a new line.
+- Focus the annotation editor when it opens so you can start typing right away, whether you are writing a new note or editing an existing one. ([#1793](https://github.com/HelloAOLab/seed-bible/issues/1793))
+- Edit your profile from the profile screen. The pencil in the corner of the profile card — or tapping your name — opens an Edit profile screen with your name, location and description. Your email address, location and description now show on the profile screen itself. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1", "Gen.1" and "Gen. 1:1" resolve the same as "Gen 1:1", and a trailing abbreviation period ("Gen.") keeps offering suggestions. Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+
 ### 🔧 Changed
 
 - Show "The host disconnected from the session" and "The host reconnected to the session" when only the host drops from a shared session, instead of "Reconnecting to the session" / "Reconnected to the session". When it is your own connection that goes, the toasts are "You lost connection to the session" and "You rejoined the session" instead. Other people leaving one by one, however many of them, is never reported as you losing your connection.
