@@ -25,11 +25,16 @@ export interface ViteManifestChunk {
  * dependency of vite-plugin-pwa and isn't resolvable from the project root, and
  * the plugin doesn't re-export its types.
  */
+/**
+ * Shape Workbox hands to `manifestTransforms` (`ManifestEntry & { size }`);
+ * `revision` and `size` are required there, so they're required here too or
+ * the transform's return type no longer satisfies Workbox's.
+ */
 export interface PrecacheManifestEntry {
   url: string;
-  revision?: string | null;
+  revision: string | null;
   integrity?: string;
-  size?: number;
+  size: number;
 }
 
 /** Files that count as core regardless of how the bundler reached them. */

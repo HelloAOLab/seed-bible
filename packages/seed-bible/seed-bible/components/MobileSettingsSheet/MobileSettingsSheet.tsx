@@ -115,6 +115,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
             {t("scripture-settings", { defaultValue: "Scripture settings" })}
           </div>
           <div className="sb-mobile-settings-sheet-scripture-row">
+            {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
             <button
               type="button"
               className="sb-mobile-settings-sheet-scripture-button"
@@ -124,10 +125,11 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
                 defaultValue: "Decrease scripture font size",
               })}
               style={{ fontSize: "0.875rem" }}
-              // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
             >
               A
             </button>
+            {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
+            {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
             <button
               type="button"
               className="sb-mobile-settings-sheet-scripture-button"
@@ -137,10 +139,10 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
                 defaultValue: "Increase scripture font size",
               })}
               style={{ fontSize: "1.25rem", fontWeight: 500 }}
-              // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
             >
               A
             </button>
+            {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
             <button
               type="button"
               className="sb-mobile-settings-sheet-scripture-button"

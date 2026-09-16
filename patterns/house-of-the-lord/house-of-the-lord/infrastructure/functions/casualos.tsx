@@ -2,7 +2,7 @@ import type { AnimateTagFunctionOptions } from "../../../../pattern-typings/AuxL
 import type { TypedBot } from "../models/casualos";
 
 export const SetStrictTag = <
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   B extends TypedBot<any>,
   K extends keyof B["tags"],
 >(
@@ -13,7 +13,7 @@ export const SetStrictTag = <
   setTag(bot, tag as string, value);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line typescript/no-explicit-any
 export function ApplyStrictMod<B extends TypedBot<any>>(
   bot: B | undefined,
   mod: Partial<B["tags"]>
@@ -23,7 +23,7 @@ export function ApplyStrictMod<B extends TypedBot<any>>(
 
 // Overload 1: animate a single tag — animateTag(bot, tag, options).
 export function AnimateStrictTag<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   B extends TypedBot<any>,
   K extends keyof B["tags"],
 >(
@@ -38,7 +38,7 @@ export function AnimateStrictTag<
 // Overload 2: animate several tags at once — animateTag(bot, options), where
 // fromValue/toValue are objects of tag values.
 export function AnimateStrictTag<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   B extends TypedBot<any>,
 >(
   bot: B | B[],
@@ -49,7 +49,7 @@ export function AnimateStrictTag<
   }
 ): Promise<void>;
 export function AnimateStrictTag<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   B extends TypedBot<any>,
   K extends keyof B["tags"],
 >(

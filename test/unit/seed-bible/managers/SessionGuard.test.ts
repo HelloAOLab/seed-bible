@@ -83,6 +83,7 @@ describe("guardRecordsClient", () => {
       // The SDK pins `then`/`catch` to undefined on purpose so its client isn't
       // mistaken for a thenable. Wrapping every property in a function would undo
       // that and make `await client` hang.
+      // oxlint-disable-next-line unicorn/no-thenable -- the `then` property is the thing under test
       const { wrapped } = createGuard({ then: undefined, catch: undefined });
 
       expect((wrapped as { then?: unknown }).then).toBeUndefined();

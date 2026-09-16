@@ -1,0 +1,7 @@
+{
+  "id": "demo-extension",
+  "translations": {
+    "en": { "title": "Demo", "description": "A demo", "extra": "Extra" },
+    "de": { "title": "Demo", "description": "Eine Demo" }
+  }
+}

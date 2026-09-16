@@ -277,7 +277,12 @@ export function getTranslationUsageStats(
 ): TranslationUsageStats {
   const tsconfigPath = path.resolve(projectRoot, "tsconfig.json");
   const project = new Project({ tsConfigFilePath: tsconfigPath });
-  const sourceFiles = project.getSourceFiles("packages/**/*.ts{,x}");
+  // ts-morph resolves a relative glob against process.cwd(), not projectRoot,
+  // so an absolute pattern is required for callers (like checkI18n's tests)
+  // that analyze a project other than the current working directory.
+  const sourceFiles = project.getSourceFiles(
+    path.join(projectRoot, "packages/**/*.ts{,x}")
+  );
 
   const usage = new Map<string, { count: number; files: Set<string> }>();
   const translationKeysByNamespace = new Map<string, Set<string>>();

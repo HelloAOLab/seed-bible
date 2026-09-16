@@ -352,15 +352,16 @@ const SearchBar = (props: {
                 <span class="sidebar-selected-title flex-align-center">
                   {selectedTranslation?.value?.shortName}
                 </span>
+                {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
                 <span
                   style={{
                     transition: "transform 0.3s",
                   }}
                   class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
-                  // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
                 >
                   expand_more
                 </span>
+                {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
               </div>
 
               <div
@@ -621,16 +622,17 @@ const SideBarBooks = (props: {
               >
                 {book.commonName}
               </span>
+              {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
               <span
                 style={{
                   transition: "transform 0.3s",
                   color: isSelected ? "var(--sb-primary-color)" : "",
                 }}
                 class={`material-symbols-outlined ${isSelected ? "upside-down" : ""}`}
-                // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
               >
                 expand_more
               </span>
+              {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
             </div>
           ) : (
             <div

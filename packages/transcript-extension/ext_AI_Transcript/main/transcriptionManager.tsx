@@ -157,8 +157,7 @@ function createTranscriptionManager(
     let sum = 0;
     for (const f of list) {
       if (f.status === "done") sum += 1;
-      else if (f.status === "error")
-        sum += 1; // counts as resolved
+      else if (f.status === "error") sum += 1; // counts as resolved
       else sum += clamp01(f.progress);
     }
     overallProgress.value = sum / list.length;

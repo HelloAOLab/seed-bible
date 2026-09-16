@@ -19,6 +19,10 @@
     "noImplicitReturns": true,
     "module": "preserve",
     "noEmit": true,
+    // Oxlint loads the custom lint rules in `script/lint` with a plain Node
+    // `import()`, which will not guess a file extension, so those modules spell
+    // out the `.ts` on their relative imports.
+    "allowImportingTsExtensions": true,
     "lib": ["es2024", "dom", "dom.iterable"],
     "paths": {
       "@packages/*": ["./packages/*"]
@@ -41,7 +45,15 @@
     "typeRoots": ["./node_modules/@types", "./typings", "./node_modules"],
     "types": ["vitest/globals", "vitest/jsdom", "node"]
   },
-  "include": ["packages", "typings", "script", "test", "standalone", "server"],
+  "include": [
+    "packages",
+    "typings",
+    "script",
+    "test",
+    "standalone",
+    "server",
+    "vite.config.ts"
+  ],
   // `standalone/sw.ts` needs the `webworker` lib, which conflicts with `dom`.
   // It has its own project (`standalone/tsconfig.sw.json`, run by
   // `pnpm check:ts:sw`), the same way `patterns/` does.

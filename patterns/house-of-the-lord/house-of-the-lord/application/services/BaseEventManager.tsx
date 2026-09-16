@@ -2,9 +2,9 @@
 // patterns and packages don't share a runtime, so it can't be imported. Keep both copies in sync.
 export type EventCallback<TPayload> = (payload: TPayload) => void;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line typescript/no-explicit-any
 export class BaseEventManager<TEventMap extends Record<string, any>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   #listeners: Map<keyof TEventMap, Set<EventCallback<any>>>;
 
   constructor() {

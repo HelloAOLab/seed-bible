@@ -29,7 +29,7 @@ patchedDependencies:
   "@casual-simulation/aux-records": "patches/@casual-simulation__aux-records.patch"
   "follow-redirects": "patches/follow-redirects.patch"
 catalog:
-  i18next: "26.2.0"
+  i18next: "26.4.2"
   i18next-resources-to-backend: "^1.2.1"
   preact: "10.29.8"
   preact-iso: "^2.12.0"
@@ -71,6 +71,8 @@ catalog:
   # `node_modules`, and pnpm does not hoist transitive dependencies there. Pinning
   # via `overrides` is what actually collapses them.
   "@types/json-schema": "7.0.15"
+  vite: npm:@voidzero-dev/vite-plus-core@0.3.2
+  vitest: 4.1.11
 overrides:
   "prosemirror-model": "catalog:"
   "prosemirror-transform": "catalog:"
@@ -83,3 +85,12 @@ overrides:
   # specific selector wins over the blanket override above and keeps the dev
   # tooling on the version it expects. It never reaches the client bundle.
   "chromium-bidi>zod": "3.25.76"
+  # Vite+ ships its own Vite build as `@voidzero-dev/vite-plus-core`. Every
+  # plugin that peers on `vite` or `vitest` (@preact/preset-vite,
+  # vite-plugin-pwa, the @vitest/* packages) would otherwise resolve a second,
+  # stock Vite alongside it; forcing them onto the aliased package is what keeps
+  # the tree at one copy. The override also applies to the root's own direct
+  # dependency, so the version in this catalog wins over the one in
+  # package.json — bump it here.
+  vite@*: "catalog:"
+  vitest@*: "catalog:"

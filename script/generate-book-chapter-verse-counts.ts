@@ -24,7 +24,7 @@
  */
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import * as prettier from "prettier";
+import { execFileSync } from "node:child_process";
 import {
   FreeUseBibleAPI,
   FREE_USE_BIBLE_API_ENDPOINT,
@@ -53,7 +53,7 @@ function lastVerseNumber(
 }
 
 function formatArray(numbers: readonly number[]): string {
-  // Match the source style: comma-separated, wrapped by prettier afterward.
+  // Match the source style: comma-separated, wrapped by oxfmt afterward.
   return `[${numbers.join(", ")}]`;
 }
 
@@ -146,13 +146,12 @@ ${entries}
     newDataObject
   );
 
-  const prettierConfig = await prettier.resolveConfig(OUTPUT_PATH);
-  const formattedSource = await prettier.format(updatedSource, {
-    ...prettierConfig,
-    filepath: OUTPUT_PATH,
+  await writeFile(OUTPUT_PATH, updatedSource, "utf-8");
+  // `formatArray` emits one long line per chapter list, so the written file
+  // needs the project formatter run over it before it matches the repo style.
+  execFileSync("pnpm", ["exec", "vp", "fmt", OUTPUT_PATH], {
+    stdio: "inherit",
   });
-
-  await writeFile(OUTPUT_PATH, formattedSource, "utf-8");
   console.log(`Wrote ${OUTPUT_PATH}`);
 }
 

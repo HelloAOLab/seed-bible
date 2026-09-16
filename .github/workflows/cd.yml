@@ -58,6 +58,8 @@ jobs:
       # ─── Quality gates (same as CI) ─────────────────────────────────────────
       - name: Lint
         run: pnpm lint
+      - name: Check formatting
+        run: pnpm format:check
       - name: Check TypeScript
         run: pnpm check:ts
       - name: Test

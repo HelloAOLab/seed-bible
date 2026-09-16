@@ -211,6 +211,7 @@ const InfoTooltip = ({ text }: { text: string }) => {
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >
+      {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
       <button
         type="button"
         className="material-symbols-outlined twitch-tooltip__icon icon-btn"
@@ -221,10 +222,10 @@ const InfoTooltip = ({ text }: { text: string }) => {
           setOpen((v) => !v);
         }}
         style={{ fontSize: "18px" }}
-        // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
       >
         info
       </button>
+      {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
       <span className="twitch-tooltip__bubble" role="tooltip">
         {text}
       </span>

@@ -217,12 +217,9 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                       onTouchStart={(e) => e.stopPropagation()}
                       className="twitch-custom-timer-input"
                     />
-                    <span
-                      className="twitch-custom-timer-suffix"
-                      // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
-                    >
-                      m
-                    </span>
+                    {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
+                    <span className="twitch-custom-timer-suffix">m</span>
+                    {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
                   </div>
                 )}
               </div>
@@ -271,6 +268,7 @@ const InfoTooltip = ({ text }: { text: string }) => {
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >
+      {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
       <button
         type="button"
         className="twitch-icon-btn material-symbols-outlined twitch-tooltip__icon"
@@ -280,10 +278,10 @@ const InfoTooltip = ({ text }: { text: string }) => {
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
       >
         info
       </button>
+      {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
       <span className="twitch-tooltip__bubble" role="tooltip">
         {text}
       </span>

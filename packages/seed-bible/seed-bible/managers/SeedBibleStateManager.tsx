@@ -591,7 +591,7 @@ export function createSeedBibleState(
 ): SeedBibleState {
   console.log("Creating SeedBibleState with options:", options);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   const features = createFeaturesManager((globalThis as any).posthog ?? null);
   const navigation = createNavigationManager({
     initialHref: options.initialHref,
@@ -729,7 +729,8 @@ export function createSeedBibleState(
     if (targetIds === null && !hasEnteredCustomizationExtensionMode) {
       return;
     }
-    const key = targetIds === null ? " default" : [...targetIds].sort().join("");
+    const key =
+      targetIds === null ? " default" : [...targetIds].sort().join("");
     if (key === previousExtensionTargetKey) {
       return;
     }

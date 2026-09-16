@@ -1085,7 +1085,7 @@ function renderChapterContent(
   // nothing to the DOM — what renders is the bare text node either way.
   const verseSeparator = (key: string) => <Fragment key={key}> </Fragment>;
 
-  for (let i = 0; i < entries.length; ) {
+  for (let i = 0; i < entries.length;) {
     const entry = entries[i];
 
     if (!entry || typeof entry !== "object") {

@@ -16,7 +16,7 @@ export type EventCallback<TPayload> = (payload: TPayload) => void;
  * the `PieceBot` payload and re-narrow by `bot.tags.type`.
  */
 export class ListenTagEventManager {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line typescript/no-explicit-any
   #listeners: Map<keyof ListenTagEventMap, Set<EventCallback<any>>>;
 
   constructor() {

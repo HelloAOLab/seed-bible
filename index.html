@@ -44,18 +44,18 @@
         margin: 0;
       }
     </style>
-    <!-- Inlined by script/lib/vite-plugin-inline-critical-css.ts at build
-         time from the *.inline.css files (base + BibleReader +
-         BibleReaderToolbar) — must come after the hidden-by-default rule
-         above so its `html { visibility: visible }` rule wins the cascade
-         without waiting on the external stylesheet. In dev this is never
-         replaced (build-only plugin), so it stays an empty, harmless tag. -->
-    <style id="sb-critical-styles">
-      <!-- CRITICAL_STYLE_TAG -->
-    </style>
-    <style id="sb-theme-styles">
-      <!-- THEME_STYLE_TAG -->
-    </style>
+    <!-- Replaced at build time by script/lib/vite-plugin-inline-critical-css.ts
+         with a <style id="sb-critical-styles"> tag holding the minified
+         *.inline.css files — must come after the hidden-by-default rule above
+         so its `html { visibility: visible }` rule wins the cascade without
+         waiting on the external stylesheet. A bare comment rather than a
+         placeholder inside an empty <style>: Vite (8.3+) parses every inline
+         <style> as CSS and mangles anything that isn't. In dev this is never
+         replaced (build-only plugin). -->
+    <!-- CRITICAL_STYLE_TAG -->
+    <!-- Replaced per request by entry-ssr.tsx with a
+         <style id="sb-theme-styles"> tag; same reason it's a bare comment. -->
+    <!-- THEME_STYLE_TAG -->
     <script type="application/json" id="sb-theme-presets">
       <!-- THEME_PRESETS_JSON -->
     </script>

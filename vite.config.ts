@@ -1,5 +1,4 @@
-/// <reference types="vitest/config" />
-import { defineConfig } from "vite";
+import { defineConfig } from "vite-plus";
 import preact from "@preact/preset-vite";
 import path from "path";
 import { execSync } from "child_process";
@@ -400,6 +399,148 @@ export default defineConfig(({ isSsrBuild }) => ({
       "@preact/signals",
       "@preact/signals-core",
     ],
+  },
+
+  // oxfmt defaults to printWidth 100; the repo was formatted by Prettier at 80.
+  fmt: {
+    printWidth: 80,
+    tabWidth: 2,
+    semi: true,
+    singleQuote: false,
+    trailingComma: "es5",
+    sortPackageJson: false,
+    ignorePatterns: [
+      "**/dist/**",
+      "pnpm-lock.yaml",
+      "obsolete/**",
+      "pattern-dist/**",
+      "standalone/dist/**",
+      // Vendored CasualOS ambient typings (19.7k lines); oxfmt's stricter
+      // parser rejects a stray `` `` ``; statement in it that Prettier
+      // tolerates. Not ours to edit, so it's excluded rather than fixed.
+      "patterns/pattern-typings/**",
+    ],
+  },
+
+  lint: {
+    // `options.typeCheck` is off: oxlint 1.82 rejects it on its own ("The
+    // `--type-check` option requires type-aware linting"), and turning
+    // `typeAware` on to satisfy it does two unrelated things at once — it also
+    // enables the type-aware rules (no-floating-promises alone fires 1387
+    // times) — while tsgolint (7.0.2001) reports compiler diagnostics tsc
+    // does not: 15 errors on files tsc calls clean, because tsgolint resolves
+    // modules from its own root, not the three tsconfigs (TS2307 across
+    // `lib/vendor.ts`, TS7026 in `test/fixtures/i18n-project/`, TS2322 in this
+    // file). `pnpm check:ts` runs tsc (TS 7's native compiler) against those
+    // three projects instead.
+    ignorePatterns: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/typings/**",
+      "**/obsolete/**",
+      "pattern-dist/**",
+      // Vendored CasualOS ambient typings (not ours to edit) — `fmt.ignorePatterns`
+      // above excludes the same path, for the same reason.
+      "patterns/pattern-typings/**",
+    ],
+    jsPlugins: [
+      "./script/lint/i18nPlugin.ts",
+      "./script/lint/hydrationPlugin.ts",
+    ],
+    env: { browser: true, es2024: true },
+    categories: { correctness: "error" },
+    rules: {
+      "no-constant-binary-expression": "error",
+      "no-constant-condition": "error",
+      "no-unused-expressions": "error",
+      "no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      "typescript/no-explicit-any": "error",
+      "no-empty": "error",
+      "no-prototype-builtins": "error",
+      "no-case-declarations": "error",
+      "no-empty-pattern": "error",
+      "prefer-const": [
+        "warn",
+        {
+          destructuring: "all",
+          // Allows a closure to read a `let` before its one assignment.
+          ignoreReadBeforeAssign: true,
+        },
+      ],
+      "no-useless-escape": "off",
+      "no-control-regex": "off",
+
+      // Oxlint's `correctness` category turns on the unicorn and oxc plugins,
+      // which ESLint never ran here. The rules below only fired on idiomatic or
+      // deliberate code, so they stay off to hold the ESLint baseline; the rest
+      // of both plugins is left on.
+      // Spreading an iterable into an array before `for…of`, or re-spreading a
+      // freshly built array, is the repo's normal way of taking a snapshot.
+      "unicorn/no-useless-spread": "off",
+      // `{...(x || {})}` is used deliberately to keep the intent readable.
+      "unicorn/no-useless-fallback-in-spread": "off",
+      // `new Array(n)` is always the length form in this codebase.
+      "unicorn/no-new-array": "off",
+      // Test URL matchers are regexes on purpose, for symmetry with the ones
+      // that genuinely need a pattern.
+      "unicorn/prefer-string-starts-ends-with": "off",
+    },
+    overrides: [
+      {
+        files: ["packages/**/*.{js,mjs,cjs,ts,tsx,jsx}"],
+        rules: {
+          "seed-bible-i18n/translation-missing-keys": "error",
+          "seed-bible-i18n/i18n-untranslated-content": "warn",
+        },
+      },
+      {
+        files: [
+          "packages/seed-bible/seed-bible/managers/**/*.{ts,tsx}",
+          "packages/seed-bible/seed-bible/components/**/*.{ts,tsx}",
+          "packages/seed-bible/seed-bible/app/**/*.{ts,tsx}",
+        ],
+        rules: {
+          "seed-bible-hydration/no-immediate-storage-access": "error",
+        },
+      },
+      {
+        files: ["test/**/*.{js,mjs,cjs,ts,tsx,jsx}"],
+        env: { node: true, vitest: true },
+        rules: {
+          "typescript/no-explicit-any": "off",
+        },
+      },
+      {
+        // These two pattern packages keep prior tag implementations commented
+        // out as in-repo reference during their ongoing rewrite (`inspect_*.tsx`,
+        // `legacy/`, `application/services/*`, etc.) rather than deleting them.
+        // That trips unicorn's no-empty-file check, which has no inline-disable
+        // directive (it fires before per-line suppression comments apply).
+        files: [
+          "patterns/bible-stack/**/*.tsx",
+          "patterns/house-of-the-lord/**/*.tsx",
+        ],
+        rules: {
+          "unicorn/no-empty-file": "off",
+        },
+      },
+    ],
+  },
+
+  check: {
+    fmt: true,
+    lint: true,
+  },
+
+  staged: {
+    "*.{js,mjs,cjs,ts,tsx,css,json,md}": "vp fmt",
   },
 
   test: {

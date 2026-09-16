@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { ESLintUtils, type TSESLint } from "@typescript-eslint/utils";
-import { getTranslationUsageStats } from "../getTranslationUsageStats";
-import { ExtensionMetaSchema } from "../lib/extension";
+import type { Context } from "vite-plus/lint/plugins";
+import { getTranslationUsageStats } from "../getTranslationUsageStats.ts";
+import { ExtensionMetaSchema } from "../lib/extension.ts";
 import * as z from "zod/v4";
 
 type TranslationObject = Record<string, unknown>;
@@ -16,15 +16,11 @@ export interface ProjectAnalysis {
 
 const analyzedProjects = new Map<string, ProjectAnalysis>();
 
-export const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/HelloAOLab/seed-bible/eslint-rules/${name}`
-);
-
-function isObject(value: unknown): value is TranslationObject {
+export function isObject(value: unknown): value is TranslationObject {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function flattenTranslationKeys(
+export function flattenTranslationKeys(
   value: unknown,
   prefix = "",
   output = new Set<string>()
@@ -162,41 +158,12 @@ export function analyzeProject(projectRoot: string): ProjectAnalysis {
   return result;
 }
 
-export function getContextCwd<
-  MessageIds extends string,
-  Options extends readonly unknown[],
->(context: Readonly<TSESLint.RuleContext<MessageIds, Options>>): string {
-  const maybeContext = context as TSESLint.RuleContext<MessageIds, Options> & {
-    cwd?: unknown;
-  };
-  return typeof maybeContext.cwd === "string"
-    ? maybeContext.cwd
-    : process.cwd();
+export function forgetProjectAnalysis(projectRoot: string): void {
+  analyzedProjects.delete(projectRoot);
 }
 
-export function getContextFilename<
-  MessageIds extends string,
-  Options extends readonly unknown[],
->(context: Readonly<TSESLint.RuleContext<MessageIds, Options>>): string {
-  const maybeContext = context as TSESLint.RuleContext<MessageIds, Options> & {
-    filename?: unknown;
-    getFilename?: () => string;
-  };
-
-  if (typeof maybeContext.filename === "string") {
-    return maybeContext.filename;
-  }
-
-  if (typeof maybeContext.getFilename === "function") {
-    return maybeContext.getFilename();
-  }
-
-  return "";
-}
-
-export function getLocaleFromFilePath(filePath: string): string | null {
-  if (!filePath.toLowerCase().endsWith(".json")) {
-    return null;
-  }
-  return path.basename(filePath, ".json");
+export function getContextCwd(context: Context): string {
+  // Typed as always present, but keep the fallback rather than analyze
+  // `undefined` as the project root if a host ever omits it.
+  return typeof context.cwd === "string" ? context.cwd : process.cwd();
 }

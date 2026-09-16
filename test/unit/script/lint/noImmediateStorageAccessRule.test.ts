@@ -1,21 +1,8 @@
-import { RuleTester, type Rule } from "eslint";
-import noImmediateStorageAccessRule from "../../../../script/eslint/noImmediateStorageAccessRule";
+import { RuleTester } from "vite-plus/lint/plugins-dev";
+import noImmediateStorageAccessRule from "../../../../script/lint/noImmediateStorageAccessRule.ts";
 
-// `@typescript-eslint/utils`'s RuleModule type (what our rule is typed as)
-// and eslint's own `Rule.RuleModule` (what `RuleTester.run` expects) are
-// structurally compatible at runtime but not nominally identical — this
-// cast bridges the two type systems without changing any actual behavior.
-const rule = noImmediateStorageAccessRule as unknown as Rule.RuleModule;
-
-// No TypeScript-specific syntax appears in any test case below, so the
-// default (espree) parser's plain ESTree output is shaped identically to
-// what `@typescript-eslint/parser` would produce here — no need to pull in
-// the TS parser just for this.
 const ruleTester = new RuleTester({
-  languageOptions: {
-    sourceType: "module",
-    ecmaVersion: 2020,
-  },
+  languageOptions: { parserOptions: { lang: "ts" } },
 });
 
 // RuleTester looks for global `describe`/`it` by default; wiring vitest's in
@@ -23,7 +10,7 @@ const ruleTester = new RuleTester({
 RuleTester.describe = describe;
 RuleTester.it = it;
 
-ruleTester.run("no-immediate-storage-access", rule, {
+ruleTester.run("no-immediate-storage-access", noImmediateStorageAccessRule, {
   valid: [
     {
       name: "a hydrate*-named function defined in a factory, but not called there",

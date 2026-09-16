@@ -14,7 +14,7 @@ import { createDefaultManagerResponseMap } from "../seed-bible/managers/testUtil
 
 const TEMPLATE = [
   "<!doctype html><html><head>",
-  '<style id="sb-theme-styles"><!-- THEME_STYLE_TAG --></style>',
+  "<!-- THEME_STYLE_TAG -->",
   '<script type="application/json" id="sb-theme-presets"><!-- THEME_PRESETS_JSON --></script>',
   "<!-- META -->",
   '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',

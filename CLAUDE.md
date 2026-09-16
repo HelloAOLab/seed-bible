@@ -27,21 +27,21 @@ This project requires **pnpm v10+**. Do not use npm or yarn.
 
 ```bash
 pnpm dev               # Run the SSR dev server (Express + Vite, HMR)
-pnpm test              # Run Vitest test suite
+pnpm test              # Run Vitest test suite (via vp test)
 pnpm test:watch        # Vitest in watch mode
-pnpm lint              # ESLint (includes i18n translation key validation) + stylelint (duplicate selectors/declarations)
+pnpm lint              # oxlint (vp lint, includes the i18n missing-key rule) + stylelint (CSS bugs + baseline) + check-i18n (locale JSON completeness)
 pnpm lint:fix          # Auto-fix linting issues
-pnpm check:ts          # TypeScript type check — client + patterns (non-emit)
+pnpm format            # oxfmt formatting (vp fmt); format:check for CI
+pnpm check             # vp check: format + lint in one pass (oxlint only — stylelint and check-i18n run under pnpm lint; no type-check, see check:ts)
+pnpm check:ts          # TypeScript type check with tsc (TS 7's native compiler) — client + service worker + patterns (non-emit)
 pnpm build             # Production build (client + SSR + server bundles)
 pnpm pattern pack <name>  # Package a patterns/<name> portal into .aux
-pnpm format            # Prettier formatting
 ```
 
 **Run a single test file:**
 
 ```bash
 pnpm vitest run FreeUseBibleAPI.test.ts
->>>>>>> develop
 ```
 
 ## Architecture
@@ -66,7 +66,7 @@ This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader.
 
 **App entry** (`app/`) — initialization hooks, PostHog bootstrap, and the entry point that wires managers together.
 
-**i18n** (`i18n/`) — i18next with 24 locale JSON files. Translation keys are validated at lint time by a custom ESLint rule in `script/eslint/`.
+**i18n** (`i18n/`) — i18next with 24 locale JSON files. Translation keys are validated at lint time by a custom oxlint rule in `script/lint/`; locale completeness by `script/check-i18n.ts`.
 
 ### Extensions (`packages/*-extension/`)
 
@@ -106,6 +106,6 @@ The app deploys as a **web app, not a pattern**: `pnpm build` makes client + SSR
 
 **Duplication**: Before writing new logic, do a quick grep for an existing helper in the same manager/component or obvious nearby domain — reuse or extend a close match rather than writing a parallel version. Keep the check light (a grep or two, not an audit); if nothing turns up, write the new code. Once the same logic lands in a third file, extract a shared helper — copies drift, and fixes reach some but not others. But only extract real shared concepts: code that's merely similar is better left duplicated than forced into one abstraction.
 
-**Formatting**: Prettier with 2-space indent, double quotes, trailing commas (es5). Enforced by a Husky + pretty-quick pre-commit hook.
+**Formatting**: oxfmt via `vp fmt` with 2-space indent, double quotes, trailing commas (es5), 80 columns. Enforced by a `vp hooks` + `vp staged` pre-commit hook and `pnpm format:check` in CI.
 
 **Theming**: `managers/ThemeManager.tsx` (`LIGHT_THEME`/`DARK_THEME`) duplicates many of the same `--sb-*` CSS variables as `app/main.css`'s `:root` block, and `ThemeManager`'s values silently win (it's injected `body`-scoped, which beats an inherited `:root` value). When editing a `--sb-*` value in `main.css`, grep `ThemeManager.tsx` for it and update both, or the CSS change won't render.

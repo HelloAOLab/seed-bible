@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable typescript/ban-ts-comment */
+/* eslint-disable typescript/no-explicit-any */
 /* eslint-disable prefer-rest-params */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable typescript/no-unused-expressions */
 /* eslint-disable no-var */
 
 if (
@@ -60,12 +60,11 @@ if (
             u.toString = function (t) {
               var e = "posthog";
               return (
-                "posthog" !== a && (e += "." + a),
-                t || (e += " (stub)"),
-                e
+                "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e
               );
             },
             u.people.toString = function () {
+              // oxlint-disable-next-line oxc/number-arg-out-of-range -- this is the stub's own `toString` defined just above, not `Number.prototype.toString`
               return u.toString(1) + ".people (stub)";
             },
             o =

@@ -1,13 +1,10 @@
-import { createRule } from "./i18nRuleShared";
-import type { TSESTree } from "@typescript-eslint/utils";
-
-type MessageIds = "untranslated_content" | "untranslated_attribute";
-type Options = [];
+import { defineRule, type ESTree } from "vite-plus/lint/plugins";
+import { decode } from "html-entities";
 
 const ALPHABETIC_PATTERN = /\p{L}/u;
 
 function getAttributeValueAsString(
-  attribute: TSESTree.JSXAttribute
+  attribute: ESTree.JSXAttribute
 ): string | null {
   const value = attribute.value;
   if (!value) {
@@ -39,8 +36,12 @@ function getAttributeValueAsString(
   return null;
 }
 
+// Oxlint hands over `JSXText.value` as written in the source, HTML character
+// references and all. Decoding here makes the rule judge the text as it
+// renders, so e.g. `&#x2022;` is the bullet it becomes (no letters, nothing to
+// translate) rather than a word-looking `#x2022`.
 function normalizeText(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
+  return decode(value).replace(/\s+/g, " ").trim();
 }
 
 function createPreview(value: string): string {
@@ -51,7 +52,7 @@ function isTranslatableAttributeName(name: string): boolean {
   return name === "aria-label" || name === "title" || name === "placeholder";
 }
 
-function hasMaterialSymbolsOutlinedClass(node: TSESTree.JSXElement): boolean {
+function hasMaterialSymbolsOutlinedClass(node: ESTree.JSXElement): boolean {
   for (const attribute of node.openingElement.attributes) {
     if (attribute.type !== "JSXAttribute") {
       continue;
@@ -78,8 +79,8 @@ function hasMaterialSymbolsOutlinedClass(node: TSESTree.JSXElement): boolean {
   return false;
 }
 
-function shouldIgnoreNode(node: TSESTree.JSXText): boolean {
-  let current: TSESTree.Node | undefined = node.parent ?? undefined;
+function shouldIgnoreNode(node: ESTree.JSXText): boolean {
+  let current: ESTree.Node | undefined = node.parent ?? undefined;
 
   while (current) {
     if (current.type === "JSXElement") {
@@ -105,8 +106,7 @@ function shouldIgnoreNode(node: TSESTree.JSXText): boolean {
   return false;
 }
 
-const i18nUntranslatedContentRule = createRule<Options, MessageIds>({
-  name: "i18n-untranslated-content",
+const i18nUntranslatedContentRule = defineRule({
   meta: {
     type: "problem",
     docs: {
@@ -121,11 +121,10 @@ const i18nUntranslatedContentRule = createRule<Options, MessageIds>({
         "Untranslated content detected in JSX attribute '{{attribute}}': '{{text}}'.",
     },
   },
-  defaultOptions: [],
 
   create(context) {
     return {
-      JSXText(node: TSESTree.JSXText): void {
+      JSXText(node: ESTree.JSXText): void {
         if (shouldIgnoreNode(node)) {
           return;
         }
@@ -149,7 +148,7 @@ const i18nUntranslatedContentRule = createRule<Options, MessageIds>({
         });
       },
 
-      JSXAttribute(node: TSESTree.JSXAttribute): void {
+      JSXAttribute(node: ESTree.JSXAttribute): void {
         if (node.name.type !== "JSXIdentifier") {
           return;
         }

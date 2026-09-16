@@ -2970,8 +2970,8 @@ describe("time-zone-aware day boundaries", () => {
     const startMs = Date.UTC(2026, 2, 6, 17, 0, 0); // 2026-03-06 12:00 EST
     const zone = "America/New_York";
 
-    const dates = [0, 1, 2, 3, 4].map(
-      (i) => dateForSession(DAILY, startMs, i, zone)!
+    const dates = [0, 1, 2, 3, 4].map((i) =>
+      dateForSession(DAILY, startMs, i, zone)!
     );
 
     expect(dates.map((d) => civilDateToISO(d))).toEqual([
@@ -2988,8 +2988,8 @@ describe("time-zone-aware day boundaries", () => {
     const startMs = Date.UTC(2026, 9, 30, 16, 0, 0); // 2026-10-30 12:00 EDT
     const zone = "America/New_York";
 
-    const dates = [0, 1, 2, 3, 4].map(
-      (i) => dateForSession(DAILY, startMs, i, zone)!
+    const dates = [0, 1, 2, 3, 4].map((i) =>
+      dateForSession(DAILY, startMs, i, zone)!
     );
 
     expect(dates.map((d) => civilDateToISO(d))).toEqual([

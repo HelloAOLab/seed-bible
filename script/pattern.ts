@@ -1,15 +1,12 @@
 import { program } from "commander";
-import { readFile, rmdir, cp, readdir } from "node:fs/promises";
-import { downloadAndSave, uploadPattern } from "./lib/pattern";
+import { readFile, readdir } from "node:fs/promises";
+import { uploadPattern } from "./lib/pattern";
 import { uploadFile, getCurrentSessionKey } from "./lib/records";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { uploadAll } from "./lib/extension";
-import os from "node:os";
 import { existsSync } from "node:fs";
 import type { StoredAuxVersion1 } from "@casual-simulation/aux-common";
-
-const packageNameMap = new Map([["SeedBible", "seed-bible"]]);
 
 program
   .name("pattern")
