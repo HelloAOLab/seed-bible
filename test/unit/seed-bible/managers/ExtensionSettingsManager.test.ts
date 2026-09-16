@@ -29,6 +29,16 @@ describe("ExtensionSettingsManager", () => {
     await Promise.resolve();
   };
 
+  const deferred = <T>() => {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
+
   const extensionEntry = (
     settings: Record<
       string,
@@ -243,7 +253,7 @@ describe("ExtensionSettingsManager", () => {
     expect(manager.valuesByExtensionId.value).toEqual({});
   });
 
-  it("clears the previous user's values and reloads when the signed-in user changes", async () => {
+  it("clears the previous user's values as soon as the signed-in user changes, before the new user's values load", async () => {
     getDataMock.mockResolvedValueOnce({
       success: true,
       data: { "ext-1": { greeting: "First" } },
@@ -252,13 +262,62 @@ describe("ExtensionSettingsManager", () => {
     await flushPromises();
     expect(manager.getValue("ext-1", "greeting")).toBe("First");
 
-    getDataMock.mockResolvedValueOnce({
+    const secondLoad = deferred<unknown>();
+    getDataMock.mockReturnValueOnce(secondLoad.promise);
+    userIdSignal.value = "user-2";
+
+    expect(manager.getValue("ext-1", "greeting")).toBe("Hello");
+
+    secondLoad.resolve({
       success: true,
       data: { "ext-1": { greeting: "Second" } },
     });
-    userIdSignal.value = "user-2";
     await flushPromises();
 
     expect(manager.getValue("ext-1", "greeting")).toBe("Second");
+  });
+
+  it("a save made while the new user's values are loading lands in the new user's record, merged with what they had stored", async () => {
+    getDataMock.mockResolvedValueOnce({
+      success: true,
+      data: { "ext-1": { greeting: "First" } },
+    });
+    const manager = create();
+    await flushPromises();
+
+    const secondLoad = deferred<unknown>();
+    getDataMock.mockReturnValueOnce(secondLoad.promise);
+    userIdSignal.value = "user-2";
+    recordDataMock.mockClear();
+
+    const saving = manager.setValue("ext-1", "count", 9);
+    secondLoad.resolve({
+      success: true,
+      data: { "ext-1": { enabled: true } },
+    });
+    await saving;
+
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-2",
+      EXTENSION_SETTING_VALUES_ADDRESS,
+      { "ext-1": { enabled: true, count: 9 } },
+      { marker: "publicRead" }
+    );
+    expect(manager.getValue("ext-1", "count")).toBe(9);
+    expect(manager.getValue("ext-1", "greeting")).toBe("Hello");
+  });
+
+  it("skips a save rather than overwriting the record when the user's stored values failed to load", async () => {
+    const failedLoad = deferred<unknown>();
+    getDataMock.mockReturnValueOnce(failedLoad.promise);
+    const manager = create();
+
+    const saving = manager.setValue("ext-1", "count", 9);
+    failedLoad.reject(new Error("network down"));
+    await saving;
+
+    expect(recordDataMock).not.toHaveBeenCalled();
+    expect(manager.getValue("ext-1", "count")).toBe(5);
   });
 });

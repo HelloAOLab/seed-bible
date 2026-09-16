@@ -42,13 +42,17 @@ export interface ExtensionSettingsManager {
     extensionId: string,
     key: string
   ) => ExtensionSettingValue | undefined;
-  /** Sets the viewer's own value for a setting. No-op while signed out, or if `extensionId`/`key` isn't a currently-declared setting. */
+  /**
+   * Sets the viewer's own value for a setting, once the viewer's stored values
+   * have loaded. No-op while signed out, if those values failed to load, or if
+   * `extensionId`/`key` isn't a currently-declared setting.
+   */
   setValue: (
     extensionId: string,
     key: string,
     value: ExtensionSettingValue
   ) => Promise<void>;
-  /** Clears the viewer's own value, falling back to the Customization/extension default. No-op if nothing was set. */
+  /** Clears the viewer's own value, falling back to the Customization/extension default. Same loading rules as `setValue`; no-op if nothing was set. */
   clearValue: (extensionId: string, key: string) => Promise<void>;
 }
 
@@ -61,7 +65,10 @@ export function createExtensionSettingsManager(
   const valuesByExtensionId = signal<
     Record<string, Record<string, ExtensionSettingValue>>
   >({});
-  const loadedUserId = signal<string | null>(null);
+  // The account whose stored values `valuesByExtensionId` holds. Null while
+  // signed out and while the signed-in account's values are still loading.
+  let loadedUserId: string | null = null;
+  let currentLoad: Promise<void> = Promise.resolve();
 
   const load = async (userId: string): Promise<void> => {
     const result = await os.getData(userId, EXTENSION_SETTING_VALUES_ADDRESS);
@@ -72,32 +79,51 @@ export function createExtensionSettingsManager(
     }
     if (!result.success || !result.data) {
       valuesByExtensionId.value = {};
-      loadedUserId.value = userId;
+      loadedUserId = userId;
       return;
     }
     const parsed = extensionSettingValuesPayloadSchema.safeParse(result.data);
     if (!parsed.success) {
       console.warn("Failed to parse extension setting values:", parsed.error);
       valuesByExtensionId.value = {};
-      loadedUserId.value = userId;
+      loadedUserId = userId;
       return;
     }
     valuesByExtensionId.value = parsed.data;
-    loadedUserId.value = userId;
+    loadedUserId = userId;
   };
 
   effect(() => {
     const userId = login.userId.value;
-    if (!userId) {
-      valuesByExtensionId.value = {};
-      loadedUserId.value = null;
+    if (userId === loadedUserId) {
       return;
     }
-    if (loadedUserId.value === userId) {
-      return;
+    // Drop the previous account's values now rather than when the new
+    // account's load resolves. Until then they would show in the new account's
+    // UI, and a save would merge them into the new account's record.
+    valuesByExtensionId.value = {};
+    loadedUserId = null;
+    if (userId) {
+      currentLoad = load(userId);
     }
-    void load(userId);
   });
+
+  /**
+   * Resolves to the signed-in account once its stored values are in memory, or
+   * null if signed out, the load failed, or the account changed while waiting.
+   * Saves merge into those values, so saving before they load would overwrite
+   * the record with a blob missing everything else the account had stored.
+   */
+  const waitForOwnValues = async (): Promise<string | null> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      return null;
+    }
+    if (loadedUserId !== userId) {
+      await currentLoad.catch(() => undefined);
+    }
+    return loadedUserId === userId ? userId : null;
+  };
 
   const getDefinition = (extensionId: string, key: string) =>
     extensions.extensions.value.find((entry) => entry.id === extensionId)
@@ -127,12 +153,9 @@ export function createExtensionSettingsManager(
   };
 
   const persist = async (
+    userId: string,
     next: Record<string, Record<string, ExtensionSettingValue>>
   ): Promise<void> => {
-    const userId = login.userId.value;
-    if (!userId) {
-      return;
-    }
     valuesByExtensionId.value = next;
     await os.recordData(userId, EXTENSION_SETTING_VALUES_ADDRESS, next, {
       marker: "publicRead",
@@ -144,10 +167,11 @@ export function createExtensionSettingsManager(
     key: string,
     value: ExtensionSettingValue
   ): Promise<void> => {
-    if (!login.userId.value || !getDefinition(extensionId, key)) {
+    const userId = await waitForOwnValues();
+    if (!userId || !getDefinition(extensionId, key)) {
       return;
     }
-    await persist({
+    await persist(userId, {
       ...valuesByExtensionId.value,
       [extensionId]: {
         ...valuesByExtensionId.value[extensionId],
@@ -160,13 +184,14 @@ export function createExtensionSettingsManager(
     extensionId: string,
     key: string
   ): Promise<void> => {
+    const userId = await waitForOwnValues();
     const current = valuesByExtensionId.value[extensionId];
-    if (!login.userId.value || !current || !(key in current)) {
+    if (!userId || !current || !(key in current)) {
       return;
     }
     const nextExtensionValues = { ...current };
     delete nextExtensionValues[key];
-    await persist({
+    await persist(userId, {
       ...valuesByExtensionId.value,
       [extensionId]: nextExtensionValues,
     });
