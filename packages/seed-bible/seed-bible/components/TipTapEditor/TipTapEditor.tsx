@@ -1,4 +1,4 @@
-import { Editor, Extension } from "@tiptap/core";
+import { Editor, Extension, type FocusPosition } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "./TextAlign";
@@ -22,6 +22,12 @@ interface TipTapEditorProps {
    * the shortcut, such as the playlist text item composer.
    */
   onModEnter?: () => void;
+  /**
+   * Where to put the caret when the editor mounts. Unset (or false) leaves
+   * it unfocused so a nearby field, such as a playlist item title, can keep
+   * focus.
+   */
+  autofocus?: FocusPosition;
 }
 
 /**
@@ -32,12 +38,19 @@ interface TipTapEditorProps {
  * its contents.
  */
 export default function TipTapEditor(props: TipTapEditorProps) {
-  const { className, initialContent, onEditor, onEmptyChange, onModEnter } =
-    props;
+  const {
+    className,
+    initialContent,
+    onEditor,
+    onEmptyChange,
+    onModEnter,
+    autofocus = false,
+  } = props;
   const elementRef = useRef<HTMLDivElement>(null);
   // Captured once so the mount-only effect starts the editor with this content
   // without re-creating it if the prop identity changes.
   const initialContentRef = useRef(initialContent);
+  const autofocusRef = useRef(autofocus);
   // Rendered so the menu bar can appear once the editor is ready; the parent
   // still receives the instance through `onEditor`.
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -84,6 +97,10 @@ export default function TipTapEditor(props: TipTapEditorProps) {
       ],
       onUpdate: ({ editor }) => onEmptyChangeRef.current(editor.isEmpty),
     });
+    const autofocusPosition = autofocusRef.current;
+    if (autofocusPosition !== false && autofocusPosition != null) {
+      editor.commands.focus(autofocusPosition, { scrollIntoView: false });
+    }
     onEditorRef.current(editor);
     setEditor(editor);
     return () => {
