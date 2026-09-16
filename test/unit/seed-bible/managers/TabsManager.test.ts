@@ -1487,6 +1487,32 @@ describe("createTabs", () => {
     expect(readingState.scrollPosition.value).toBe(240);
   });
 
+  it("restores where the reader was when the browser goes forward again", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    readingState.scrollPosition.value = 240;
+
+    await readingState.selectChapter("GEN", 2);
+    await waitFor(() => readingState.chapterNumber.value === 2);
+
+    // Reading down the second chapter. Nothing pushes here, so only the
+    // debounced stamp records this offset on the entry the reader is on.
+    readingState.scrollPosition.value = 500;
+    await waitFor(() => window.history.state?.scrollPosition === 500);
+
+    window.history.back();
+    await waitFor(() => readingState.chapterNumber.value === 1);
+    expect(readingState.scrollPosition.value).toBe(240);
+
+    window.history.forward();
+    await waitFor(() => readingState.chapterNumber.value === 2);
+
+    expect(readingState.scrollPosition.value).toBe(500);
+  });
+
   it("decorates initial verses from the verse URL param on the initial tab", async () => {
     window.history.replaceState(null, "", "?book=GEN&chapter=1&verse=3,5-6");
     setWebResponses(createExampleManagerResponseMap());

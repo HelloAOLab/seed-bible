@@ -129,6 +129,13 @@ function getInitialFirstTabBookId(url: URL, basePath: string): string {
 // the selector; read here to restore it once the profile loads.
 export const PROFILE_TRANSLATION_ID = "translationId";
 
+/**
+ * How long the reader must stop scrolling before the offset is written to the
+ * current history entry. A scroll gesture fires continuously and browsers rate
+ * limit `replaceState`, so this debounces down to one write per gesture.
+ */
+const SCROLL_STAMP_DEBOUNCE_MS = 200;
+
 function getInitialTranslationId(
   url: URL,
   basePath: string,
@@ -893,6 +900,35 @@ export function createTabs(
   effect(() => {
     void i18nManager.language.value;
     commitSelectedTabToUrl({ replace: true });
+  });
+
+  // Keep the current history entry's offset up to date while the reader
+  // scrolls, so Forward lands where they were just as Back does. A push stamps
+  // the entry it leaves (`departingScrollPosition`), but Back/Forward never
+  // re-stamps the entry it leaves: without this, going back and then forward
+  // again would return to the zero that entry was pushed with.
+  let scrollStampTimer: ReturnType<typeof setTimeout> | undefined;
+  effect(() => {
+    const tab = selectedTab.value;
+    if (!tab) {
+      return;
+    }
+
+    const offset = tab.readingState.scrollPosition.value;
+    clearTimeout(scrollStampTimer);
+    scrollStampTimer = setTimeout(() => {
+      // A static page's entry is not showing this reading position, so it must
+      // not collect the reader's offset.
+      if (
+        parseStaticPagePath(
+          navigation.currentUrl.peek().pathname,
+          navigation.basePath
+        )
+      ) {
+        return;
+      }
+      navigation.stampCurrentState({ scrollPosition: offset });
+    }, SCROLL_STAMP_DEBOUNCE_MS);
   });
 
   // Resolves once `readingState` is no longer in the middle of an operation
