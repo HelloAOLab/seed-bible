@@ -427,11 +427,12 @@ export default defineConfig(({ isSsrBuild }) => ({
     // `--type-check` option requires type-aware linting"), and turning
     // `typeAware` on to satisfy it does two unrelated things at once — it also
     // enables the type-aware rules (no-floating-promises alone fires 1387
-    // times) — while tsgolint (7.0.2001) reports compiler diagnostics tsgo
-    // does not: 15 errors on files tsgo calls clean, because tsgolint resolves
+    // times) — while tsgolint (7.0.2001) reports compiler diagnostics tsc
+    // does not: 15 errors on files tsc calls clean, because tsgolint resolves
     // modules from its own root, not the three tsconfigs (TS2307 across
     // `lib/vendor.ts`, TS7026 in `test/fixtures/i18n-project/`, TS2322 in this
-    // file). `pnpm check:ts` runs tsgo against those three projects instead.
+    // file). `pnpm check:ts` runs tsc (TS 7's native compiler) against those
+    // three projects instead.
     ignorePatterns: [
       "**/node_modules/**",
       "**/dist/**",

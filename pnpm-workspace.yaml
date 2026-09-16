@@ -29,7 +29,7 @@ patchedDependencies:
   "@casual-simulation/aux-records": "patches/@casual-simulation__aux-records.patch"
   "follow-redirects": "patches/follow-redirects.patch"
 catalog:
-  i18next: "26.2.0"
+  i18next: "26.4.2"
   i18next-resources-to-backend: "^1.2.1"
   preact: "10.29.8"
   preact-iso: "^2.12.0"

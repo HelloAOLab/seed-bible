@@ -33,7 +33,7 @@ pnpm lint              # oxlint (vp lint, includes the i18n missing-key rule) + 
 pnpm lint:fix          # Auto-fix linting issues
 pnpm format            # oxfmt formatting (vp fmt); format:check for CI
 pnpm check             # vp check: format + lint in one pass (oxlint only — stylelint and check-i18n run under pnpm lint; no type-check, see check:ts)
-pnpm check:ts          # TypeScript type check with tsgo — client + service worker + patterns (non-emit)
+pnpm check:ts          # TypeScript type check with tsc (TS 7's native compiler) — client + service worker + patterns (non-emit)
 pnpm build             # Production build (client + SSR + server bundles)
 pnpm pattern pack <name>  # Package a patterns/<name> portal into .aux
 ```
