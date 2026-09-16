@@ -1,5 +1,4 @@
 import type { ReadonlySignal } from "@preact/signals";
-import type { Bookmark } from "../../managers/BookmarksManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type {
@@ -10,7 +9,6 @@ import { TimeProvider } from "./TimeContext";
 import { Welcome } from "./Welcome";
 import { Header } from "./Header";
 import { ResumeReadingSection } from "./ResumeReadingSection";
-import { BookmarksSection } from "./BookmarksSection";
 import { SearchSection } from "./SearchSection";
 import { SocialSection } from "./SocialSection";
 import { useI18n } from "../../i18n";
@@ -28,15 +26,12 @@ import { memo } from "preact/compat";
 export interface TodayScreenProps {
   today: TodayManager;
   login: LoginManager;
-  bookmarks: ReadonlySignal<Bookmark[]>;
   theme: ReadonlySignal<BibleTheme>;
   isMobile: ReadonlySignal<boolean>;
   /** Opens a passage in the reader and leaves Today. */
   onOpenPassage: (target: TodayPassageTarget) => void;
   /** Opens the book selector over the reader. */
   onOpenBookSelector: () => void;
-  /** Reveals the full bookmarks list in the sidebar. */
-  onShowBookmarksList: () => void;
 }
 
 export const TodayPane = memo<(props: TodayScreenProps) => preact.JSX.Element>(
@@ -95,15 +90,6 @@ function TodayContent(props: TodayScreenProps) {
         today={props.today}
         onOpenPassage={props.onOpenPassage}
       />
-      {props.bookmarks.value.length > 0 && (
-        <BookmarksSection
-          today={props.today}
-          bookmarks={props.bookmarks}
-          isMobile={props.isMobile}
-          onOpenPassage={props.onOpenPassage}
-          onShowBookmarksList={props.onShowBookmarksList}
-        />
-      )}
       <SearchSection
         today={props.today}
         theme={props.theme}

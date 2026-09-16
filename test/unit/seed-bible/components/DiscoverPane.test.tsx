@@ -253,9 +253,9 @@ function createMockAnnotations(
     deleteAnnotationAndRefresh,
     hasRecordOverride: overrides.hasRecordOverride ?? false,
     // The pane shows how much is waiting to sync, so this has to be present.
+    pendingCountForChapter: vi.fn(() => overrides.pendingSyncCount ?? 0),
     sync: {
       pendingCount: signal(overrides.pendingSyncCount ?? 0),
-      pendingCountForChapter: vi.fn(() => overrides.pendingSyncCount ?? 0),
       conflicts: signal([]),
     },
   } as unknown as AnnotationsManager;

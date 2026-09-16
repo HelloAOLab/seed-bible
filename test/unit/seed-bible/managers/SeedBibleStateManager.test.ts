@@ -1,5 +1,9 @@
-import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { MOBILE_BREAKPOINT } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  ABOUT_PANE_ID,
+  MOBILE_BREAKPOINT,
+  type SeedBibleState,
+} from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type {
   Translation,
@@ -679,8 +683,10 @@ describe("createSeedBibleState", () => {
         (tab) => tab.sharedSession === session
       )!.id;
 
+      // A real drop clears every entry, our own included — see
+      // `rebuildRemoteClientsSubscription` in SessionsManager.
       session.isSynced.value = false;
-      session.connectedUsers.value = [selfConnectedUser];
+      session.connectedUsers.value = [];
 
       expect(state.app.currentToast.value?.message).toBe(
         "You lost connection to the session"
@@ -847,32 +853,31 @@ describe("createSeedBibleState", () => {
       expect(originalDispose).not.toHaveBeenCalled();
     });
 
-    it("shows a you-lost-connection toast instead of a host toast when every other user disappears", async () => {
+    it("blames the host, not our own connection, when the other guest leaves first and the host follows", async () => {
       const state = await createStateWithTwoTabs();
       const { session, originalDispose } = await joinAsHostedSession(
         state,
         "session-all-others-gone"
       );
-      const tabId = state.tabs.tabs.value.find(
-        (tab) => tab.sharedSession === session
-      )!.id;
 
       session.connectedUsers.value = [
         selfConnectedUser,
         hostConnectedUser,
         otherGuestConnectedUser,
       ];
+
+      // The other guest goes first — nothing to announce, the host is here.
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      expect(state.app.currentToast.value).toBeNull();
+
+      // Then the host goes, leaving us alone. We can still see ourselves, so
+      // our own connection is demonstrably fine and the host is who left.
       session.connectedUsers.value = [selfConnectedUser];
 
       expect(state.app.currentToast.value?.message).toBe(
-        "You lost connection to the session"
+        "The host disconnected from the session"
       );
       expect(originalDispose).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(30_000);
-
-      expect(originalDispose).not.toHaveBeenCalled();
-      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
     });
 
     it("shows a you-rejoined toast when other users reappear after our own connection dropped", async () => {
@@ -890,11 +895,15 @@ describe("createSeedBibleState", () => {
         hostConnectedUser,
         otherGuestConnectedUser,
       ];
-      session.connectedUsers.value = [selfConnectedUser];
+
+      // A real drop takes the whole list with it, our own entry included.
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
       expect(state.app.currentToast.value?.message).toBe(
         "You lost connection to the session"
       );
 
+      session.isSynced.value = true;
       session.connectedUsers.value = [
         selfConnectedUser,
         hostConnectedUser,
@@ -918,7 +927,7 @@ describe("createSeedBibleState", () => {
       );
 
       session.isSynced.value = false;
-      session.connectedUsers.value = [selfConnectedUser];
+      session.connectedUsers.value = [];
       expect(state.app.currentToast.value?.message).toBe(
         "You lost connection to the session"
       );
@@ -971,12 +980,15 @@ describe("createSeedBibleState", () => {
       );
 
       session.isSynced.value = false;
-      session.connectedUsers.value = [selfConnectedUser];
+      session.connectedUsers.value = [];
       expect(state.app.currentToast.value?.message).toBe(
         "You lost connection to the session"
       );
 
+      // Coming back rebuilds presence from scratch, so we reappear first and
+      // the host lands a beat later.
       session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser];
       expect(state.app.currentToast.value?.message).toBe(
         "You rejoined the session"
       );
@@ -988,6 +1000,56 @@ describe("createSeedBibleState", () => {
       expect(originalDispose).not.toHaveBeenCalled();
     });
 
+    it("still shows the you-rejoined toast when the connection recovers during the post-resume window", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session } = await joinAsHostedSession(
+        state,
+        "session-resume-rejoin"
+      );
+
+      // We drop while the app is in the foreground, so we are told about it.
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+
+      // The phone is locked and unlocked, which opens the resume window that
+      // suppresses presence toasts.
+      document.dispatchEvent(new Event("visibilitychange"));
+
+      // The connection comes back inside that window. Having already been
+      // told we dropped, we must be told we are back.
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+    });
+
+    it("stays silent on recovery when the drop itself was never announced", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session } = await joinAsHostedSession(
+        state,
+        "session-resume-silent"
+      );
+
+      // Drop detected inside the resume window — no toast is shown.
+      document.dispatchEvent(new Event("visibilitychange"));
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      expect(state.app.currentToast.value).toBeNull();
+
+      // The window closes and the connection recovers. Nothing was ever
+      // announced, so there is nothing to take back.
+      vi.advanceTimersByTime(5000);
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
     it("still shows a host-disconnected toast if the host is still gone after our reconnect presence settles", async () => {
       const state = await createStateWithTwoTabs();
       const { session, originalDispose } = await joinAsHostedSession(
@@ -996,8 +1058,9 @@ describe("createSeedBibleState", () => {
       );
 
       session.isSynced.value = false;
-      session.connectedUsers.value = [selfConnectedUser];
+      session.connectedUsers.value = [];
       session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser];
 
       expect(state.app.currentToast.value?.message).toBe(
         "You rejoined the session"
@@ -2030,6 +2093,74 @@ describe("createSeedBibleState", () => {
     });
   });
 
+  describe("customizationLogoUrl", () => {
+    it("is null with no active customization", async () => {
+      const state = await createState();
+
+      expect(state.app.customizationLogoUrl.value).toBeNull();
+    });
+
+    it("is null when the active customization has no uploaded logo", async () => {
+      const state = await createState();
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            baseTheme: "light",
+            themes: {},
+            highlightColors: {},
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: null,
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+      };
+
+      expect(state.app.customizationLogoUrl.value).toBeNull();
+    });
+
+    it("is the active customization's logo when one is uploaded", async () => {
+      const state = await createState();
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            baseTheme: "light",
+            themes: {},
+            highlightColors: {},
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: "https://example.com/logo.png",
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+      };
+
+      expect(state.app.customizationLogoUrl.value).toBe(
+        "https://example.com/logo.png"
+      );
+
+      state.customizations.editingCustomization.value = null;
+
+      expect(state.app.customizationLogoUrl.value).toBeNull();
+    });
+  });
+
   describe("customization highlight-color overrides", () => {
     it("layers the active customization variant's highlight overrides onto the rendered theme, leaving untouched ids alone", async () => {
       const state = await createState();
@@ -2070,6 +2201,161 @@ describe("createSeedBibleState", () => {
       expect(state.theme.themeCssVariables.value).not.toContain(
         "--sb-highlight-yellow-color: #123456;"
       );
+    });
+  });
+
+  describe("about page", () => {
+    it("recognizes the /{lang}/about URL and branches every meta signal", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com/en/about?useFreeBibleAPI=true",
+      });
+      const state = await createState();
+
+      expect(state.app.isAboutPage.value).toBe(true);
+      expect(state.app.title.value).toBe("About Seed Bible | Seed Bible");
+      expect(state.app.description.value).toBe(
+        "Seed Bible is a free Bible app built for reading Scripture together with your family, friends, and community — free forever, no ads or paywalls."
+      );
+      expect(state.app.socialTitle.value).toBe("About Seed Bible");
+      expect(state.app.canonicalUrl.value).toBe("/en/about");
+    });
+
+    it("does not treat an ordinary reading URL as the About page", async () => {
+      const state = await createState();
+
+      expect(state.app.isAboutPage.value).toBe(false);
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "ESV");
+      expect(state.app.title.value).toBe("Genesis 1 - ESV | Seed Bible");
+    });
+
+    it("registers a real fullscreen pane while on /en/about", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com/en/about?useFreeBibleAPI=true",
+      });
+      const state = await createState();
+
+      const pane = state.panes.panes.value.find(
+        (candidate) => candidate.id === ABOUT_PANE_ID
+      );
+      expect(pane).toBeDefined();
+      expect(pane?.placement).toBe("fullscreen");
+    });
+
+    // Regression: opening "/en/about" as a returning visitor. Everything the
+    // app restores just after mount — the saved tabs, their slot layout, the
+    // saved translation, Today's auto-open — has to leave the static page
+    // alone. Previously the stored tab won and Today opened on top of it.
+    it("stays on the About page for a returning visitor with saved tabs", async () => {
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        "sb-tabs-state",
+        JSON.stringify({
+          version: 1,
+          tabs: [
+            {
+              id: "tab-1",
+              translationId: "AAB",
+              bookId: "GEN",
+              chapterNumber: 1,
+            },
+            {
+              id: "tab-2",
+              translationId: "NIV",
+              bookId: "MAT",
+              chapterNumber: 1,
+            },
+          ],
+          selectedTabId: "tab-2",
+          layout: "split-2v",
+          slotTabIds: ["tab-1", "tab-2"],
+          selectedSlotIndex: 1,
+        })
+      );
+      jsdom.reconfigure({
+        url: "https://example.com/en/about?useFreeBibleAPI=true",
+      });
+
+      // `todayOpen: "fromUrl"` because this is precisely about what the real
+      // app does with this URL; the helper otherwise pins `?today=closed`.
+      const state = await createTestSeedBibleState({ todayOpen: "fromUrl" });
+
+      // Let anything the restores queued run, rather than only asserting on
+      // the synchronous outcome. Zero-delay turns, not a fixed wait.
+      for (let i = 0; i < 5; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+
+      expect(new URL(window.location.href).pathname).toBe("/en/about");
+      expect(state.app.isAboutPage.value).toBe(true);
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === ABOUT_PANE_ID)
+      ).toBe(true);
+      expect(state.today.isOpen.value).toBe(false);
+
+      window.localStorage.clear();
+    });
+
+    it("selecting a different tab closes the About pane and leaves the page, per the same rule as any fullscreen pane", async () => {
+      window.localStorage.clear();
+      window.history.replaceState(null, "", "/en/about");
+      window.localStorage.setItem(
+        "sb-tabs-state",
+        JSON.stringify({
+          version: 1,
+          tabs: [
+            {
+              id: "tab-1",
+              translationId: "AAB",
+              bookId: "GEN",
+              chapterNumber: 1,
+            },
+            {
+              id: "tab-2",
+              translationId: "NIV",
+              bookId: "MAT",
+              chapterNumber: 1,
+            },
+          ],
+          selectedTabId: "tab-1",
+          layout: "split-2v",
+          slotTabIds: ["tab-1", "tab-2"],
+          selectedSlotIndex: 0,
+        })
+      );
+      const state = await createState();
+
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === ABOUT_PANE_ID)
+      ).toBe(true);
+
+      state.app.selectTab("tab-2");
+
+      await waitFor(() => state.app.isAboutPage.value === false);
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === ABOUT_PANE_ID)
+      ).toBe(false);
+      expect(new URL(window.location.href).pathname).toBe("/en/NIV/matthew/1");
+
+      window.localStorage.clear();
+    });
+
+    it("closing the About pane's own close button leaves the page for the selected tab", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com/en/about?useFreeBibleAPI=true",
+      });
+      const state = await createState();
+
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === ABOUT_PANE_ID)
+      ).toBe(true);
+
+      state.panes.closePane(ABOUT_PANE_ID, "user");
+
+      await waitFor(() => state.app.isAboutPage.value === false);
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === ABOUT_PANE_ID)
+      ).toBe(false);
+      expect(new URL(window.location.href).pathname).toBe("/en/AAB/genesis/1");
     });
   });
 
@@ -2578,5 +2864,68 @@ describe("createSeedBibleState", () => {
         parts: ["Ver Génesis 1:1"],
       });
     });
+  });
+});
+
+/**
+ * Today is a fullscreen pane, and `PanesManager` gives fullscreen panes the
+ * whole reader area: opening one closes every other pane, while a *side* pane
+ * only replaces the existing side pane and leaves the rest alone. That second
+ * rule is what let Reading plans and Discover open underneath Today, where
+ * nothing could see them.
+ */
+describe("opening another screen while Today is up", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const paneIds = (state: SeedBibleState) =>
+    state.panes.panes.value.map((pane) => pane.id);
+
+  const openToday = async (state: SeedBibleState) => {
+    state.today.open();
+    await Promise.resolve();
+    expect(paneIds(state)).toContain(TODAY_PANE_ID);
+    expect(state.today.isOpen.value).toBe(true);
+  };
+
+  it("closes Today when a fullscreen pane opens over it", async () => {
+    // A generic pane rather than Profile: this is about Today stepping aside,
+    // and Profile carries its own `?profile=` URL binding whose imperative
+    // setter behaves differently under jsdom than at boot.
+    const state = await createState();
+    await openToday(state);
+
+    state.panes.openPane({
+      id: "test-fullscreen-pane",
+      placement: "fullscreen",
+      title: () => null,
+      component: () => null,
+    });
+    await Promise.resolve();
+
+    expect(paneIds(state)).toEqual(["test-fullscreen-pane"]);
+    expect(state.today.isOpen.value).toBe(false);
+  });
+
+  it("closes Today when a side pane opens, rather than hiding behind it", async () => {
+    const state = await createState();
+    await openToday(state);
+
+    state.panes.openPane({
+      id: "test-side-pane",
+      placement: "side",
+      title: () => null,
+      component: () => null,
+    });
+    await Promise.resolve();
+
+    expect(paneIds(state)).toEqual(["test-side-pane"]);
+    expect(state.today.isOpen.value).toBe(false);
   });
 });

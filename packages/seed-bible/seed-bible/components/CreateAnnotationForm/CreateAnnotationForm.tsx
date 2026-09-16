@@ -18,16 +18,26 @@ import { sanitize } from "../../managers/Sanitization";
 // actually opens the annotation composer.
 const TipTapEditor = lazy(() => import("../TipTapEditor/TipTapEditor"));
 
+/** TipTap's `Mod` key: Cmd on Apple, Ctrl on Windows/Linux. */
+function isApplePlatform(): boolean {
+  return typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
+}
+
 interface CreateAnnotationFormProps {
   annotations: AnnotationsManager;
   tabs: TabsManager;
+  toast: (message: string) => void;
 }
 
 /** Create/edit-annotation screen shown inside the discover pane. */
 export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
-  const { annotations, tabs } = props;
+  const { annotations, tabs, toast } = props;
   const { t } = useI18n();
   const editorRef = useRef<Editor | null>(null);
+  // Sync re-entry gate: React `saving` state is too late for Mod+Enter
+  // (disabled only blocks the button; a second key event can land before
+  // setSaving re-renders). Flip this before the first await.
+  const savingRef = useRef(false);
   const editing = annotations.editingAnnotation.value;
   // Seeded content counts as non-empty so the submit button starts enabled.
   const [editorEmpty, setEditorEmpty] = useState(!editing?.data.html);
@@ -58,16 +68,30 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
     : null;
 
   const doSave = async () => {
+    if (savingRef.current || editorEmpty) {
+      return;
+    }
     const editor = editorRef.current;
-    const html = editor ? await sanitize(editor.getHTML()) : "";
-    annotations.editingAnnotation.value = {
-      ...editing,
-      data: { ...editing.data, html },
-    };
+    if (!editor || editor.isEmpty) {
+      return;
+    }
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
+      const html = await sanitize(editor.getHTML());
+      annotations.editingAnnotation.value = {
+        ...editing,
+        data: { ...editing.data, html },
+      };
       await annotations.saveEditingAnnotation();
+      toast(
+        t("annotation-saved", {
+          defaultValue: "Annotation saved",
+        })
+      );
+      // Leave savingRef true on success — the form unmounts when editing
+      // clears. Resetting here would reopen a Mod+Enter race before unmount.
     } catch (err) {
       console.error("Failed to save annotation:", err);
       setError(
@@ -76,6 +100,7 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
         })
       );
       setSaving(false);
+      savingRef.current = false;
     }
   };
 
@@ -107,6 +132,9 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
             editorRef.current = editor;
           }}
           onEmptyChange={setEditorEmpty}
+          onModEnter={() => {
+            void doSave();
+          }}
         />
       </Suspense>
 
@@ -125,6 +153,16 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
           className="sb-settings-save-button"
           onClick={() => void doSave()}
           disabled={saving || editorEmpty}
+          title={
+            isApplePlatform()
+              ? t("save-annotation-shortcut-mac", {
+                  defaultValue: "Save (⌘Enter)",
+                })
+              : t("save-annotation-shortcut", {
+                  defaultValue: "Save (Ctrl+Enter)",
+                })
+          }
+          aria-keyshortcuts={isApplePlatform() ? "Meta+Enter" : "Control+Enter"}
         >
           {saving
             ? t("saving", { defaultValue: "Saving…" })

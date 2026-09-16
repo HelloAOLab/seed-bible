@@ -1277,6 +1277,20 @@ function completeTranslationPath(translationId: string): string {
 }
 
 /**
+ * The path to one chapter. Shared by the fetch and the synchronous peek so
+ * they cannot end up keyed differently in the response cache.
+ */
+function chapterPath(
+  translation: string,
+  book: string,
+  chapter: number | string
+): string {
+  return `api/${encodeURIComponent(translation)}/${encodeURIComponent(
+    book
+  )}/${encodeURIComponent(String(chapter))}.json`;
+}
+
+/**
  * Options accepted by every `FreeUseBibleAPI` request method. `signal` lets a
  * caller cancel its own in-flight request (e.g. when the user navigates
  * again before a previous request resolved). See `_getJson` for how this
@@ -1384,14 +1398,34 @@ export class FreeUseBibleAPI {
     endpoint?: string,
     options?: ApiRequestOptions
   ): Promise<TranslationBookChapter> {
-    const encodedTranslation = encodeURIComponent(translation);
-    const encodedBook = encodeURIComponent(book);
-    const encodedChapter = encodeURIComponent(String(chapter));
     return this._getJson<TranslationBookChapter>(
-      `api/${encodedTranslation}/${encodedBook}/${encodedChapter}.json`,
+      chapterPath(translation, book, chapter),
       endpoint,
       options
     );
+  }
+
+  /**
+   * The chapter as already fetched, or undefined when it has not been — read
+   * synchronously, so a caller can use what is in hand without waiting.
+   *
+   * `_resolvedResponses` exists precisely because the promise cache cannot be
+   * read back out synchronously. A request still in flight reads as undefined
+   * here: this reports what is *available*, not what is coming.
+   */
+  getCachedTranslationBookChapter(
+    translation: string,
+    book: string,
+    chapter: number | string,
+    endpoint?: string
+  ): TranslationBookChapter | undefined {
+    const url = this._buildUrl(
+      chapterPath(translation, book, chapter),
+      endpoint
+    );
+    return this._resolvedResponses.get(url) as
+      | TranslationBookChapter
+      | undefined;
   }
 
   /**
