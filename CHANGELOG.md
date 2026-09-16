@@ -15,6 +15,7 @@
 
 ### 🐛 Fixed
 
+- Fix the reader sitting partly offscreen after swiping between chapters on mobile and then rotating to a larger layout.
 - Lift the mobile Search verses field off the scripture with a box shadow so it no longer blends into the verse text.
 - Stop showing "You lost connection to the session" on a remaining host device when another of the host's devices disconnects.
 - Show "You rejoined the session" instead of "The host reconnected to the session" when you come back from a dropped connection and the host reappears at the same time.
