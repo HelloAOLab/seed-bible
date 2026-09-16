@@ -46,6 +46,7 @@
   position: relative;
   border: none;
   background-color: transparent;
+  text-decoration: none;
   cursor: pointer;
   width: 100%;
   height: 100%;
@@ -55,6 +56,14 @@
   transition:
     background-color 0.2s ease,
     transform 0.25s ease;
+}
+
+/* The chapter controls render as real `<a>` elements, which pulls in the
+   global anchor styling from base.css. `a:visited` outspecifies the class
+   rule above, so without this the chevron takes the visited-link colour as
+   soon as the reader has been to the next chapter — which is immediately. */
+.sb-reader-toolbar-button:visited {
+  color: inherit;
 }
 
 .sb-reader-toolbar-button:hover:not(:disabled) {
@@ -361,8 +370,16 @@
     border: none;
     background: transparent;
     color: var(--sb-font-color);
+    /* Same reason as `.sb-reader-toolbar-button` above: these are links now,
+       and the chevron is a ligature font — actual text — so the anchor's
+       default underline would draw right under the glyph. */
+    text-decoration: none;
     cursor: pointer;
     transition: transform 0.12s ease;
+  }
+
+  .sb-reader-floating-nav-arrow:visited {
+    color: var(--sb-font-color);
   }
 
   /* The 34px visual circle, centered in the wider hit region. Carries the
@@ -789,8 +806,8 @@
 }
 
 /* Verse toolbar — color picker mode.
-   Two rows of six swatches, full width. Back lives in the ref header so it
-   doesn't steal a column beside the colours. */
+   Two rows of six default swatches, then a third row of three custom
+   slots. Back lives in the ref header so it doesn't steal a column. */
 .sb-verse-toolbar-picker {
   flex-direction: column;
   align-items: stretch;
@@ -807,6 +824,12 @@
   gap: 0.5rem 0.375rem;
   justify-content: center;
   align-content: start;
+}
+
+.sb-verse-toolbar-color-slot {
+  background: transparent;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
 
 .sb-verse-toolbar-picker-actions {
@@ -944,16 +967,6 @@
 .sb-verse-toolbar-bookmark-trigger-active,
 .sb-verse-toolbar-bookmark-trigger-active:hover {
   color: var(--sb-primary-color);
-}
-
-.sb-verse-toolbar-color-input {
-  position: absolute;
-  width: 0;
-  height: 0;
-  padding: 0;
-  border: none;
-  opacity: 0;
-  pointer-events: none;
 }
 
 .sb-verse-toolbar-tools {
@@ -1317,6 +1330,12 @@
   border: none;
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--sb-font-color), transparent 85%);
+}
+
+.sb-verse-toolbar-mobile .sb-verse-toolbar-color-slot {
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  box-shadow: none;
 }
 
 .sb-verse-toolbar-mobile .sb-verse-toolbar-picker-actions {

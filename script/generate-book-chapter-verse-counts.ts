@@ -5,15 +5,26 @@
  * order and only touching books that already appear there (the Protestant
  * canon) — any apocryphal books AAB includes are ignored.
  *
+ * AAB is used specifically because it numbers the traditional Textus
+ * Receptus verses (e.g. Matt 17:21, Mark 9:44/46, Acts 8:37), so its last
+ * verse number per chapter matches the familiar KJV maxima. A translation
+ * that omits those verses would yield lower, stricter bounds.
+ *
  * The "last verse number" is computed from the actual verse content rather
  * than trusting `numberOfVerses`, since some chapters omit verse numbers
  * (e.g. combined or bracketed verses), which would make a plain count
  * diverge from the true last verse number.
  *
+ * Only the `BOOK_CHAPTER_VERSE_COUNTS` data object is rewritten — the rest
+ * of the file (the header comment and the `getBookChapterCount`/
+ * `getChapterVerseCount` functions) is preserved verbatim so hand-written
+ * changes to them survive regeneration.
+ *
  * Usage: pnpm generate-book-chapter-verse-counts
  */
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import * as prettier from "prettier";
 import {
   FreeUseBibleAPI,
   FREE_USE_BIBLE_API_ENDPOINT,
@@ -116,44 +127,33 @@ async function main(): Promise<void> {
     )
     .join("\n");
 
-  const header = `/**
- * Per-chapter verse counts for Protestant-canon books (USFM ids).
- * Used by the free-text verse scanner for verse bounds when no translation
- * book list is available. Derived from the ${TRANSLATION_ID} translation's
- * last verse number per chapter.
- *
- * Mirrors seed-bible-utils BooksStaticInfo; kept local to avoid a circular
- * package dependency (seed-bible-utils depends on seed-bible).
- */
-export const BOOK_CHAPTER_VERSE_COUNTS: Readonly<
+  const newDataObject = `export const BOOK_CHAPTER_VERSE_COUNTS: Readonly<
   Record<string, readonly number[]>
 > = {
 ${entries}
-};
+};`;
 
-/** Number of chapters in a book, or undefined when unknown. */
-export function getBookChapterCount(bookId: string): number | undefined {
-  return BOOK_CHAPTER_VERSE_COUNTS[bookId]?.length;
-}
-
-/** Verses in a 1-based chapter, or undefined when unknown. */
-export function getChapterVerseCount(
-  bookId: string,
-  chapter: number
-): number | undefined {
-  const chapters = BOOK_CHAPTER_VERSE_COUNTS[bookId];
-  if (!chapters || chapter < 1 || chapter > chapters.length) {
-    return undefined;
+  const existingSource = await readFile(OUTPUT_PATH, "utf-8");
+  const dataObjectPattern =
+    /export const BOOK_CHAPTER_VERSE_COUNTS[\s\S]*?\n};/;
+  if (!dataObjectPattern.test(existingSource)) {
+    throw new Error(
+      `Could not find the BOOK_CHAPTER_VERSE_COUNTS data object in ${OUTPUT_PATH}; refusing to overwrite the file.`
+    );
   }
-  return chapters[chapter - 1];
-}
-`;
-
-  await writeFile(OUTPUT_PATH, header, "utf-8");
-  console.log(`Wrote ${OUTPUT_PATH}`);
-  console.log(
-    "Run `pnpm exec prettier --write` on the file to normalize array wrapping."
+  const updatedSource = existingSource.replace(
+    dataObjectPattern,
+    newDataObject
   );
+
+  const prettierConfig = await prettier.resolveConfig(OUTPUT_PATH);
+  const formattedSource = await prettier.format(updatedSource, {
+    ...prettierConfig,
+    filepath: OUTPUT_PATH,
+  });
+
+  await writeFile(OUTPUT_PATH, formattedSource, "utf-8");
+  console.log(`Wrote ${OUTPUT_PATH}`);
 }
 
 main().catch((error) => {

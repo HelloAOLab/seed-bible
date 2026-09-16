@@ -24,6 +24,16 @@ describe("todayWillAutoOpenForUrl", () => {
       ).toBe(false);
     });
 
+    // A static page carries no reading position, so it used to read as
+    // "nowhere in particular" and Today opened over it. Today's pane is
+    // fullscreen, so it displaced the About pane and sent the reader back to
+    // the selected tab's chapter.
+    it("stays closed on a static page such as /en/about", () => {
+      expect(
+        todayWillAutoOpenForUrl(new URL("http://localhost:3000/en/about"), "/")
+      ).toBe(false);
+    });
+
     it("stays closed for a shared-session invite", () => {
       expect(
         todayWillAutoOpenForUrl(
@@ -39,6 +49,15 @@ describe("todayWillAutoOpenForUrl", () => {
       expect(
         todayWillAutoOpenForUrl(
           new URL("http://localhost:3000/en/BSB/genesis/1?today=open"),
+          "/"
+        )
+      ).toBe(true);
+    });
+
+    it("opens on ?today=open even over a static page", () => {
+      expect(
+        todayWillAutoOpenForUrl(
+          new URL("http://localhost:3000/en/about?today=open"),
           "/"
         )
       ).toBe(true);

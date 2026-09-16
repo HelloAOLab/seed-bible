@@ -80,10 +80,13 @@ function createFixture(): ReaderFixture {
     },
     thisChapterLink: "/api/BSB/GEN/1.json",
     thisChapterAudioLinks: {},
+    thisChapterAudioTimings: {},
     nextChapterApiLink: "/api/BSB/GEN/2.json",
     nextChapterAudioLinks: {},
+    nextChapterAudioTimings: {},
     previousChapterApiLink: null,
     previousChapterAudioLinks: null,
+    previousChapterAudioTimings: null,
     numberOfVerses: 2,
     chapter: {
       number: 1,
@@ -150,12 +153,15 @@ function createFixture(): ReaderFixture {
     loadNextChapter: vi.fn(async () => undefined),
     hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
     hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
+    nextChapterPosition: computed(() => null),
+    previousChapterPosition: computed(() => null),
     getAdjacentChapter: vi.fn(async () => null),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     defaultTranslation: { id: "BSB", language: "en" },
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialLoadSettled: computed(() => true),
     initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(() => chapterData.value === null),
     discoveredContent: signal([]),
@@ -180,6 +186,7 @@ function createFixture(): ReaderFixture {
 
   const selectorState = {
     setOpen,
+    selectingTranslation: signal(false),
   } as any as BibleSelectorState;
 
   const slot: TabSlot = {

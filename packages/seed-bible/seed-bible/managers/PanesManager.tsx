@@ -57,6 +57,20 @@ export interface Pane {
    * sync external state that mirrors the pane's open/closed status.
    */
   onClose?: (reason: PaneCloseReason) => void;
+  /**
+   * Optional guard consulted before the pane closes via the header's close
+   * (X) button, before anything else happens. Returning `false` blocks that
+   * close — the guard is then responsible for closing the pane itself (e.g.
+   * after the user confirms in a modal it opens), typically via `closePane`.
+   * Returning `true` (or omitting `confirmClose` entirely) lets the close
+   * proceed immediately, same as today. Only consulted for the header's
+   * close button — a programmatic `closePane`/`closeAll`/
+   * `closeFullscreenPanes` call, or displacement when another pane opens,
+   * bypasses it entirely, since those already represent a decision made
+   * elsewhere and blocking them on an unrelated confirmation would surprise
+   * the caller.
+   */
+  confirmClose?: () => boolean;
   /** Placement mode, fixed at creation time. */
   placement: PanePlacement;
   /** Pane X position for floating placement. */
@@ -107,6 +121,11 @@ export interface PaneOpenOptions {
    * sync external state that mirrors the pane's open/closed status.
    */
   onClose?: (reason: PaneCloseReason) => void;
+  /**
+   * Optional guard consulted before the pane closes via the header's close
+   * (X) button. See the identical field on `Pane` for the full contract.
+   */
+  confirmClose?: () => boolean;
   /**
    * Optional stable pane identifier.
    * When provided, an existing pane with this ID is reused and updated with
@@ -184,7 +203,8 @@ function createPaneFactory() {
     header?: () => ComponentChild,
     icon?: () => ComponentChild,
     leading?: () => ComponentChild,
-    onClose?: (reason: PaneCloseReason) => void
+    onClose?: (reason: PaneCloseReason) => void,
+    confirmClose?: () => boolean
   ): Pane => {
     const paneId = nextPaneId;
     nextPaneId += 1;
@@ -198,6 +218,7 @@ function createPaneFactory() {
       leading,
       header,
       onClose,
+      confirmClose,
       placement,
       x: 48 + offset,
       y: 48 + offset,
@@ -288,6 +309,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
           leading: options.leading,
           header: options.header,
           onClose: options.onClose,
+          confirmClose: options.confirmClose,
         };
         syncPaneState(
           willFillScreen
@@ -320,7 +342,8 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
       options.header,
       options.icon,
       options.leading,
-      options.onClose
+      options.onClose,
+      options.confirmClose
     );
     syncPaneState([...basePanes, nextPane], nextPane.id, "displaced");
     return nextPane;

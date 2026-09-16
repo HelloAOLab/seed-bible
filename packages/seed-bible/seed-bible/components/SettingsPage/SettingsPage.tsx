@@ -20,15 +20,10 @@ import {
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
+import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
+import { openCustomizationEditPane } from "../CustomizationEditPane/CustomizationEditPane";
 import { download, translateTitle } from "../../app/utils";
-// The picture editor pulls in `react-avatar-editor`, and it is only reachable
-// through the "Update picture" button — so it is fetched on that click rather
-// than at boot, the same way TextItemInput defers TipTap.
-const ProfilePictureModalContent = lazy(() =>
-  import("../../components/ProfilePictureModal/ProfilePictureModal").then(
-    (m) => ({ default: m.ProfilePictureModalContent })
-  )
-);
+import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
 import {
   Skeleton,
   SkeletonContainer,
@@ -54,9 +49,15 @@ import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
-import { useRef } from "preact/hooks";
-import { lazy, Suspense } from "preact/compat";
+import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
+import { normalizeHex } from "../ColorPicker/color";
+import { buildStaticPagePath } from "../../managers/StaticPagePath";
+import { useEffect, useRef } from "preact/hooks";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
+import {
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "../ContextMenu/ContextMenu";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -84,8 +85,6 @@ const TEXT_COLOR_PALETTE = [
   "#F43F5E",
 ];
 
-const HEX_6 = /^#[0-9a-fA-F]{6}$/;
-
 import { LANG_META } from "../../i18n/languageMeta";
 import { useAppConfig } from "../../app/appConfig";
 
@@ -103,17 +102,6 @@ function FlagImg({ cc }: { cc: string }) {
       }}
     />
   );
-}
-const HEX_3 = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/;
-
-/** Normalize an arbitrary color string to #RRGGBB for `<input type="color">`. */
-function toHexInputValue(value: string | null | undefined): string {
-  if (!value) return "#000000";
-  const trimmed = value.trim();
-  if (HEX_6.test(trimmed)) return trimmed.toLowerCase();
-  const m = trimmed.match(HEX_3);
-  if (m) return `#${m[1]}${m[1]}${m[2]}${m[2]}${m[3]}${m[3]}`.toLowerCase();
-  return "#000000";
 }
 
 type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
@@ -273,36 +261,13 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleUploadPicture = () => {
-    const modalId = state.modals.openModal({
-      title: { key: "update-picture", defaultValue: "Update picture" },
-      content: () => (
-        <Suspense
-          fallback={
-            <SkeletonContainer
-              label={t("loading-picture-editor", {
-                defaultValue: "Loading the picture editor…",
-              })}
-            >
-              <Skeleton width="100%" height="16rem" radius="0.625rem" />
-            </SkeletonContainer>
-          }
-        >
-          <ProfilePictureModalContent
-            onClose={() => state.modals.closeModal(modalId)}
-            onUpload={async (file) => {
-              isUploadingPicture.value = true;
-              try {
-                await login.uploadProfilePicture(file);
-              } catch (error) {
-                console.error("Failed to upload profile picture.", error);
-                throw error;
-              } finally {
-                isUploadingPicture.value = false;
-              }
-            }}
-          />
-        </Suspense>
-      ),
+    openProfilePictureModal({
+      modals: state.modals,
+      login,
+      t,
+      onUploadingChange: (uploading) => {
+        isUploadingPicture.value = uploading;
+      },
     });
   };
 
@@ -654,6 +619,76 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
   );
 }
 
+function CustomizationVariantGallery(props: {
+  state: SeedBibleState;
+  customization: SeedBibleCustomization;
+}) {
+  const { state, customization } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+
+  return (
+    <section className="sb-settings-section">
+      <h3 className="sb-settings-subheading">
+        {t("variants", { defaultValue: "Themes" })}
+      </h3>
+      <div
+        className="sb-theme-ready-gallery"
+        role="radiogroup"
+        onKeyDown={(event) => {
+          handleGridKeyNav(event, event.currentTarget);
+        }}
+      >
+        {customization.variants.map((variant) => {
+          const isSelected =
+            variant.id === customizations.activeVariant.value?.id;
+          return (
+            <button
+              key={variant.id}
+              type="button"
+              className={`sb-theme-ready-card${
+                isSelected ? " sb-theme-ready-card-selected" : ""
+              }`}
+              onClick={() =>
+                void customizations.selectActiveVariant(variant.id)
+              }
+            >
+              <div
+                className="sb-theme-ready-preview"
+                style={{ background: variant.themes.tertiaryColor }}
+              >
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
+                  style={{ background: variant.themes.primaryColor }}
+                />
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
+                  style={{ background: variant.themes.secondaryColor }}
+                />
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
+                  style={{ background: variant.themes.fontColor }}
+                />
+              </div>
+              <div className="sb-theme-ready-label">
+                <span>{variant.name}</span>
+                {isSelected && (
+                  <span
+                    className="material-symbols-outlined sb-theme-ready-check"
+                    aria-label={t("selected", { defaultValue: "Selected" })}
+                  >
+                    check_circle
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const settings = state.settings;
@@ -730,7 +765,14 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         })}
       />
 
-      <ThemesGallerySection state={state} />
+      {state.customizations.activeCustomization.value ? (
+        <CustomizationVariantGallery
+          state={state}
+          customization={state.customizations.activeCustomization.value}
+        />
+      ) : (
+        <ThemesGallerySection state={state} />
+      )}
 
       <section className="sb-settings-section">
         <h3 className="sb-settings-subheading">
@@ -807,7 +849,9 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
                     if (Number.isFinite(parsed)) setScriptureWidth(parsed);
                   }}
                 />
-                <span className="sb-scripture-margins-unit">ch</span>
+                <span className="sb-scripture-margins-unit">
+                  {t("scripture-width-unit", { defaultValue: "ch" })}
+                </span>
               </div>
               <button
                 type="button"
@@ -1120,11 +1164,18 @@ type ExtensionsTab = "installed" | "available";
 
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { extensions } = state;
+  const { extensions, customizations } = state;
   const extensionsList = extensions.extensions.value;
   const installingIds = useSignal<Set<string>>(new Set());
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
+  const activeCustomization = customizations.activeCustomization.value;
+  // Extensions the active customization has marked "hidden" don't appear in
+  // this list at all — not installable, not shown as installed, nothing.
+  const visibleExtensionsList = extensionsList.filter(
+    (entry) =>
+      customizations.getActiveExtensionAvailability(entry.id) !== "hidden"
+  );
   const activeTab = useSignal<ExtensionsTab>("installed");
 
   const onBack = () => {
@@ -1132,6 +1183,15 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleInstall = async (extensionId: string) => {
+    // While a customization is active, installs are customization-scoped:
+    // the actual install happens automatically via the reconcile effect in
+    // SeedBibleStateManager reacting to activeExtensionIds, not as a direct
+    // result of this click.
+    if (activeCustomization) {
+      await customizations.addExtensionToActiveCustomization(extensionId);
+      return;
+    }
+
     const extensionData = extensionsList.find(
       (e) => e.extension?.meta.id === extensionId
     );
@@ -1145,6 +1205,10 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleUninstall = (extensionId: string) => {
+    if (activeCustomization) {
+      void customizations.removeExtensionFromActiveCustomization(extensionId);
+      return;
+    }
     extensions.unloadExtension(extensionId);
   };
 
@@ -1213,6 +1277,8 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
     const { id, installed, pendingInstallation } = extensionEntry;
+    const isBaseExtension =
+      customizations.getActiveExtensionAvailability(id) === "auto-installed";
     const isRegistered =
       ExtensionInitalizer.getInstance().isExtensionRegistered(id);
     const installState = getExtensionInstallState(
@@ -1254,14 +1320,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
                 t("title", { ns: id, defaultValue: id }),
                 t,
-                branding
+                branding,
+                customizations.activeCustomization.value?.name
               )}
             </span>
             <span className="sb-extension-description">
               {getBrandedAppText(
                 t("description", { ns: id, defaultValue: "" }),
                 t,
-                branding
+                branding,
+                customizations.activeCustomization.value?.name
               )}
             </span>
           </div>
@@ -1277,28 +1345,28 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 <span className="material-symbols-outlined">download</span>
               </button>
             )}
-            {(installState === "installed" ||
-              installState === "downloaded") && (
-              <button
-                type="button"
-                className="sb-extension-row-action-button"
-                onClick={() => handleUninstall(id)}
-                aria-label={t("uninstall", {
-                  defaultValue: "Uninstall",
-                })}
-                title={t("uninstall", { defaultValue: "Uninstall" })}
-              >
-                <span className="material-symbols-outlined">delete</span>
-              </button>
-            )}
+            {(installState === "installed" || installState === "downloaded") &&
+              !isBaseExtension && (
+                <button
+                  type="button"
+                  className="sb-extension-row-action-button"
+                  onClick={() => handleUninstall(id)}
+                  aria-label={t("uninstall", {
+                    defaultValue: "Uninstall",
+                  })}
+                  title={t("uninstall", { defaultValue: "Uninstall" })}
+                >
+                  <span className="material-symbols-outlined">delete</span>
+                </button>
+              )}
           </div>
         </div>
       </li>
     );
   };
 
-  const installedExtensions = extensionsList.filter((e) => e.installed);
-  const availableExtensions = extensionsList.filter((e) => !e.installed);
+  const installedExtensions = visibleExtensionsList.filter((e) => e.installed);
+  const availableExtensions = visibleExtensionsList.filter((e) => !e.installed);
   const activeExtensions =
     activeTab.value === "installed" ? installedExtensions : availableExtensions;
   const activeEmptyMessage =
@@ -1320,7 +1388,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
         ]}
       />
       <section className="sb-settings-section">
-        {extensionsList.length === 0 ? (
+        {activeCustomization && (
+          <p className="sb-settings-field-description">
+            {t("extensions-for-active-customization", {
+              defaultValue:
+                "Showing extensions for {{name}}. Extensions this customization includes can't be removed here.",
+              name: activeCustomization.name,
+            })}
+          </p>
+        )}
+        {visibleExtensionsList.length === 0 ? (
           <div className="sb-settings-empty-state">
             <p>
               {t("no-extensions-available", {
@@ -1647,17 +1724,18 @@ function TextFormattingToolbar(props: {
                 }}
               />
             ))}
-            <label className="sb-text-format-palette-custom">
+            <div className="sb-text-format-palette-custom">
               <span>{t("custom", { defaultValue: "Custom" })}</span>
-              <input
-                type="color"
-                value={toHexInputValue(section.color)}
-                onInput={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  onChange({ color: target.value });
+              <LazyColorPicker
+                value={normalizeHex(section.color)}
+                className="sb-text-format-palette-custom-swatch"
+                ariaLabel={t("custom", { defaultValue: "Custom" })}
+                onChange={(color) => {
+                  onChange({ color });
+                  paletteOpen.value = false;
                 }}
               />
-            </label>
+            </div>
           </div>
         )}
       </div>
@@ -1811,7 +1889,7 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
             {group.fields.map((field) => {
               const currentValue =
                 effectiveTheme.value.variables[field.key] ?? "";
-              const hexValue = toHexInputValue(
+              const hexValue = normalizeHex(
                 typeof currentValue === "string" ? currentValue : ""
               );
               const isOverridden =
@@ -1828,14 +1906,18 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                     </span>
                   </div>
                   <div className="sb-theme-color-row-controls">
-                    <input
-                      type="color"
-                      className="sb-theme-color-input"
+                    <LazyColorPicker
                       value={hexValue}
-                      aria-label={field.label}
-                      onInput={(event: Event) => {
-                        const target = event.currentTarget as HTMLInputElement;
-                        theme.setCustomColor(field.key, target.value);
+                      className="sb-theme-color-input"
+                      ariaLabel={field.label}
+                      onChange={(color) => {
+                        theme.setCustomColor(field.key, color);
+                      }}
+                      onPreview={(color) => {
+                        theme.previewCustomColor(field.key, color);
+                      }}
+                      onCancel={() => {
+                        theme.clearPreviewCustomColor(field.key);
                       }}
                     />
                     {isOverridden && (
@@ -1885,30 +1967,32 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                 <span className="sb-theme-color-value">{bg || "—"}</span>
               </div>
               <div className="sb-theme-color-row-controls">
-                <input
-                  type="color"
+                <LazyColorPicker
+                  value={normalizeHex(bg)}
                   className="sb-theme-color-input"
-                  value={toHexInputValue(bg)}
-                  aria-label={t("id_highlight-background-color", { id })}
-                  title={t("highlight-background-color", {
-                    defaultValue: "Highlight background color",
-                  })}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    theme.setHighlightColor(id, { color: target.value });
+                  ariaLabel={t("id_highlight-background-color", { id })}
+                  onChange={(color) => {
+                    theme.setHighlightColor(id, { color });
+                  }}
+                  onPreview={(color) => {
+                    theme.previewHighlightColor(id, { color });
+                  }}
+                  onCancel={() => {
+                    theme.clearPreviewHighlightField(id, "color");
                   }}
                 />
-                <input
-                  type="color"
+                <LazyColorPicker
+                  value={normalizeHex(fg)}
                   className="sb-theme-color-input"
-                  value={toHexInputValue(fg)}
-                  aria-label={t("id_highlight-text-color", { id })}
-                  title={t("highlight-text-color", {
-                    defaultValue: "Highlight text color",
-                  })}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    theme.setHighlightColor(id, { fontColor: target.value });
+                  ariaLabel={t("id_highlight-text-color", { id })}
+                  onChange={(color) => {
+                    theme.setHighlightColor(id, { fontColor: color });
+                  }}
+                  onPreview={(color) => {
+                    theme.previewHighlightColor(id, { fontColor: color });
+                  }}
+                  onCancel={() => {
+                    theme.clearPreviewHighlightField(id, "fontColor");
                   }}
                 />
                 {isOverridden && (
@@ -2043,7 +2127,31 @@ function AllSettingsView(props: { state: SeedBibleState }) {
         })}
       />
       <TextSettingsContent state={state} />
-      <ThemeCustomColorsContent state={state} />
+      {state.customizations.activeCustomization.value ? (
+        <section className="sb-settings-section">
+          <div className="sb-settings-empty-state">
+            <p>
+              {t("colors-controlled-by-customization", {
+                defaultValue:
+                  "Colors are controlled by the active Customization. Change which theme you're using from Display & Theme.",
+              })}
+            </p>
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              onClick={() => {
+                state.sidebar.requestedSettingsView.value = "display-and-theme";
+              }}
+            >
+              {t("go-to-display-and-theme", {
+                defaultValue: "Go to Display & Theme",
+              })}
+            </button>
+          </div>
+        </section>
+      ) : (
+        <ThemeCustomColorsContent state={state} />
+      )}
       <div className="sb-extension-footer-actions">
         <button
           className="sb-settings-action-button"
@@ -2120,9 +2228,147 @@ function SettingsVersionFooter() {
   );
 }
 
+function CustomizationsSettingsView(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+
+  useEffect(() => {
+    void customizations.load();
+  }, []);
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = "main";
+  };
+
+  const openCustomization = (id: string) => {
+    openCustomizationEditPane(state, id);
+  };
+
+  const handleCreate = async () => {
+    const created = await customizations.create();
+    openCustomizationEditPane(state, created.id);
+  };
+
+  const list = customizations.customizations.value;
+  const isEmpty = list.length === 0;
+
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("customize", { defaultValue: "Customize" }),
+        ]}
+      />
+      <section className="sb-settings-section">
+        {isEmpty ? (
+          <div className="sb-settings-empty-state">
+            <p>
+              {customizations.isLoading.value
+                ? t("loading", { defaultValue: "Loading…" })
+                : t("no-customizations", {
+                    defaultValue:
+                      "You don't have any customizations yet. Create one to get started.",
+                  })}
+            </p>
+          </div>
+        ) : (
+          <ul className="sb-settings-list">
+            {list.map((customization) => {
+              const previewVariant =
+                customization.variants.find(
+                  (v) => v.id === customization.defaultVariantId
+                ) ?? customization.variants[0];
+              return (
+                <li
+                  key={customization.id}
+                  className="sb-settings-nav-item sb-customization-row"
+                  onClick={() => openCustomization(customization.id)}
+                >
+                  <span
+                    className="sb-customization-swatches"
+                    aria-hidden="true"
+                  >
+                    <span
+                      className="sb-customization-swatch"
+                      style={{
+                        background: previewVariant?.themes.primaryColor,
+                      }}
+                    />
+                    <span
+                      className="sb-customization-swatch"
+                      style={{
+                        background: previewVariant?.themes.secondaryColor,
+                      }}
+                    />
+                    <span
+                      className="sb-customization-swatch"
+                      style={{
+                        background: previewVariant?.themes.tertiaryColor,
+                      }}
+                    />
+                  </span>
+                  <span className="sb-settings-nav-label">
+                    {customization.name}
+                  </span>
+                  <ContextMenuWithButton
+                    buttonClassName="sb-extension-row-action-button"
+                    aria-label={t("customization-options", {
+                      defaultValue: "Customization options",
+                    })}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ContextMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(
+                          customizations.getShareLink(customization)
+                        );
+                        state.app.toast(
+                          t("customization-link-copied", {
+                            defaultValue:
+                              "Customization link copied to clipboard",
+                          })
+                        );
+                      }}
+                    >
+                      <MaterialIcon className="sb-context-menu-item-icon">
+                        share
+                      </MaterialIcon>
+                      <span>{t("share", { defaultValue: "Share" })}</span>
+                    </ContextMenuItem>
+                  </ContextMenuWithButton>
+                  <span className="material-symbols-outlined rtl-mirror">
+                    chevron_right
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <div className="sb-settings-actions">
+          <button
+            type="button"
+            className="sb-settings-save-button"
+            onClick={() => void handleCreate()}
+          >
+            {t("create-customization", {
+              defaultValue: "Create Customization",
+            })}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t, language, availableLanguages, setLanguage } = useI18n();
+  const isLoggedIn = useComputed(() => state.login.userId.value !== null);
   const isLanguageMenuOpen = useSignal(false);
   const languageSearchQuery = useSignal("");
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -2255,6 +2501,48 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
               <span className="sb-settings-nav-label">
                 {t("launch-tutorial", { defaultValue: "Launch tutorial" })}
+              </span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
+            </button>
+          </li>
+          {isLoggedIn.value && (
+            <li>
+              <button
+                className="sb-settings-nav-item"
+                onClick={() => onNavigate("customizations")}
+              >
+                <span className="sb-settings-nav-icon">
+                  <MaterialIcon>palette</MaterialIcon>
+                </span>
+                <span className="sb-settings-nav-label">
+                  {t("customize", { defaultValue: "Customize" })}
+                </span>
+                <span className="material-symbols-outlined rtl-mirror">
+                  chevron_right
+                </span>
+              </button>
+            </li>
+          )}
+          <li>
+            <button
+              className="sb-settings-nav-item"
+              onClick={() => {
+                state.sidebar.closeSettings();
+                state.navigation.push(
+                  buildStaticPagePath({
+                    language: state.i18n.language.value,
+                    page: "about",
+                  })
+                );
+              }}
+            >
+              <span className="sb-settings-nav-icon">
+                <MaterialIcon>info</MaterialIcon>
+              </span>
+              <span className="sb-settings-nav-label">
+                {t("about-title", { defaultValue: "About Seed Bible" })}
               </span>
               <span className="material-symbols-outlined rtl-mirror">
                 chevron_right
@@ -2468,6 +2756,10 @@ export function SettingsPage(props: { state: SeedBibleState }) {
 
   if (currentView.value === "extensions") {
     return <ExtensionsSettingsView state={state} />;
+  }
+
+  if (currentView.value === "customizations") {
+    return <CustomizationsSettingsView state={state} />;
   }
 
   return <SettingsMainView state={state} />;

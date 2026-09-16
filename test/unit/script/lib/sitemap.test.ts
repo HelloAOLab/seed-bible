@@ -2,6 +2,7 @@ import {
   bibleLanguageToUiLocale,
   buildBibleLanguageToUiLocale,
   buildChapterUrl,
+  buildStaticPageUrl,
   buildTranslationParam,
   chapterUrlsForTranslation,
   chunk,
@@ -9,6 +10,7 @@ import {
   renderSitemapIndex,
   renderUrlset,
   sanitizeSitemapName,
+  staticPageUrls,
   trimTrailingSlash,
   uniqueSitemapName,
   MAX_URLS_PER_SITEMAP,
@@ -142,6 +144,41 @@ describe("buildChapterUrl", () => {
     });
     expect(withSlash).toBe(withoutSlash);
     expect(withSlash).toBe("https://x.org/en/t/genesis/1");
+  });
+});
+
+describe("buildStaticPageUrl", () => {
+  it("builds the canonical /{lang}/{page} URL", () => {
+    expect(buildStaticPageUrl(ORIGIN, { language: "en", page: "about" })).toBe(
+      "https://seedbible.org/en/about"
+    );
+  });
+
+  it("works whether or not the origin has a trailing slash", () => {
+    const withSlash = buildStaticPageUrl("https://x.org/", {
+      language: "es",
+      page: "about",
+    });
+    const withoutSlash = buildStaticPageUrl("https://x.org", {
+      language: "es",
+      page: "about",
+    });
+    expect(withSlash).toBe(withoutSlash);
+    expect(withSlash).toBe("https://x.org/es/about");
+  });
+});
+
+describe("staticPageUrls", () => {
+  it("builds one URL per language", () => {
+    expect(staticPageUrls(ORIGIN, ["en", "es", "fr"])).toEqual([
+      "https://seedbible.org/en/about",
+      "https://seedbible.org/es/about",
+      "https://seedbible.org/fr/about",
+    ]);
+  });
+
+  it("returns an empty array for no languages", () => {
+    expect(staticPageUrls(ORIGIN, [])).toEqual([]);
   });
 });
 

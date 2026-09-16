@@ -168,7 +168,12 @@ export function getBookChapterCount(bookId: string): number | undefined {
   return BOOK_CHAPTER_VERSE_COUNTS[bookId]?.length;
 }
 
-/** Verses in a 1-based chapter, or undefined when unknown. */
+/**
+ * Highest verse number in a 1-based chapter, or undefined when unknown.
+ * This is an upper bound for scanning, not necessarily the verse count —
+ * a chapter that skips or combines verse numbers has fewer actual verses
+ * than this value.
+ */
 export function getChapterVerseCount(
   bookId: string,
   chapter: number
