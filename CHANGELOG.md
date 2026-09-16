@@ -8,6 +8,8 @@
 
 ### 🐛 Fixed
 
+- Fix the reader sitting partly offscreen after swiping between chapters on mobile and then rotating to a larger layout.
+
 ### 🗑️ Removed
 
 ## v1.9.0 — 2026-09-14

@@ -1043,6 +1043,66 @@ describe("TabSlotReader integration", () => {
     }
   });
 
+  // Swipe parks an inline translateX on the track. Switching to the larger
+  // layout must not reuse that node as desktop content, or the chapter sits
+  // partly offscreen.
+  it("does not leave the reader shifted offscreen after swiping and switching to a larger layout", () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        vi.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        (state.app.isMobile as Signal<boolean>).value = false;
+      });
+
+      expect(container.querySelector(".sb-reader-swipe-track")).toBeNull();
+      expect(
+        container.querySelector(".sb-bible-reader-content")
+      ).not.toBeNull();
+
+      const content = container.querySelector(
+        ".sb-bible-reader-content"
+      ) as HTMLDivElement | null;
+      const main = container.querySelector(
+        ".sb-bible-reader-main-content"
+      ) as HTMLDivElement | null;
+      expect(content?.style.transform).toBe("");
+      expect(main?.style.transform).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // Navigation does not wait on the download, so the *centre* panel still holds
   // the outgoing chapter while the new one is in flight. Recentring straight
   // away is what made a swipe flash the chapter the reader just left.

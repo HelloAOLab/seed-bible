@@ -2151,7 +2151,7 @@ export function BibleReader(props: BibleReaderProps) {
       dir={translation.value?.textDirection ?? "auto"}
     >
       {isMobile && state ? (
-        <>
+        <Fragment key="mobile">
           <div
             className={`sb-bible-reader-mobile-header${
               mobileChrome?.isScrolled
@@ -2297,9 +2297,9 @@ export function BibleReader(props: BibleReaderProps) {
               onOpenAllSettings={() => mobileChrome.onOpenAllSettings()}
             />
           )}
-        </>
+        </Fragment>
       ) : (
-        <>
+        <Fragment key="desktop">
           <div className="sb-bible-reader-header">
             <div className="sb-bible-reader-heading">
               <h2
@@ -2377,7 +2377,7 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
             {extraContent}
           </div>
-        </>
+        </Fragment>
       )}
 
       {scriptureElements.showFootnotes && selectedFootnote.value !== null && (

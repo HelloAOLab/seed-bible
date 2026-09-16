@@ -58,6 +58,14 @@ const DISCOVER_PANEL_SELECTOR = ".sb-bible-reader-discover-panel";
 const isInsideDiscoverPanel = (target: EventTarget | null) =>
   target instanceof Element && target.closest(DISCOVER_PANEL_SELECTOR) !== null;
 
+function clearSwipeTrackInlineStyles(track: HTMLDivElement | null) {
+  if (!track) {
+    return;
+  }
+  track.style.removeProperty("transition");
+  track.style.removeProperty("transform");
+}
+
 export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
@@ -572,6 +580,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       // bump stops a settled one writing to a track this effect no longer owns.
       window.clearTimeout(swipeCommitTimer.current);
       swipeCommitToken.current += 1;
+      clearSwipeTrackInlineStyles(swipeTrackRef.current);
       viewport.removeEventListener("touchstart", onTouchStart);
       viewport.removeEventListener("touchmove", onTouchMove);
       viewport.removeEventListener("touchend", onTouchEnd);
@@ -658,7 +667,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           return;
         }
 
-        track.style.removeProperty("transform");
+        clearSwipeTrackInlineStyles(track);
       }),
     [readingState]
   );
@@ -696,6 +705,14 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         currentScrollerRefCallback,
       }
     : undefined;
+
+  // Swipe writes `transform` as an inline style. Effects run after the DOM
+  // commit, so on a layout change Preact can reuse that node as desktop
+  // content with the leftover translate still on it — the chapter then sits
+  // partly offscreen. Strip it here, while the ref still points at the track.
+  if (!isMobile) {
+    clearSwipeTrackInlineStyles(swipeTrackRef.current);
+  }
 
   return (
     <div className="sb-pane-reader-outer">
