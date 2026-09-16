@@ -21,6 +21,7 @@ describe("VerseReferenceMark", () => {
 
   afterEach(() => {
     editor?.destroy();
+    jsdom.reconfigure({ url: "https://example.test/" });
   });
 
   it("links a verse reference as it's typed", () => {
@@ -78,6 +79,106 @@ describe("VerseReferenceMark", () => {
     editor = createEditor();
 
     editor.commands.insertContent("Just a regular note, nothing special.");
+
+    expect(getReferenceLinks(editor.getHTML())).toHaveLength(0);
+  });
+
+  // Same bug as annotating John 3:9 and typing "Jonah 2" in the note: the
+  // page URL already has `?verse=9`, which used to be copied onto the
+  // chapter-only link.
+  it("does not copy the current page's verse onto a chapter-only reference", () => {
+    jsdom.reconfigure({
+      url: "https://example.test/en/AAB/john/3?verse=9&sessionId=abc",
+    });
+    editor = createEditor();
+
+    editor.commands.insertContent("Jonah 2");
+
+    const links = getReferenceLinks(editor.getHTML());
+    expect(links).toHaveLength(1);
+    expect(links[0]?.textContent).toBe("Jonah 2");
+    expect(links[0]?.getAttribute("href")).toBe(
+      "https://example.test/en/AAB/jonah/2"
+    );
+  });
+
+  it("does not copy the current page's verse onto a chapter range", () => {
+    jsdom.reconfigure({ url: "https://example.test/en/AAB/john/3?verse=9" });
+    editor = createEditor();
+
+    editor.commands.insertContent("Jonah 2-3");
+
+    const links = getReferenceLinks(editor.getHTML());
+    expect(links).toHaveLength(1);
+    expect(links[0]?.textContent).toBe("Jonah 2-3");
+    expect(links[0]?.getAttribute("href")).toBe(
+      "https://example.test/en/AAB/jonah/2"
+    );
+  });
+
+  it("keeps each reference's own verse when a chapter-only and a verse sit in the same note", () => {
+    jsdom.reconfigure({
+      url: "https://example.test/en/AAB/john/3?verse=9&sessionId=abc",
+    });
+    editor = createEditor();
+
+    editor.commands.insertContent("Jonah 2 and John 3:16");
+
+    const links = getReferenceLinks(editor.getHTML());
+    expect(links).toHaveLength(2);
+    expect(links[0]?.textContent).toBe("Jonah 2");
+    expect(links[0]?.getAttribute("href")).toBe(
+      "https://example.test/en/AAB/jonah/2"
+    );
+    expect(links[1]?.textContent).toBe("John 3:16");
+    expect(links[1]?.getAttribute("href")).toBe(
+      "https://example.test/en/AAB/john/3?verse=16"
+    );
+  });
+
+  it("drops the page's verse after a linked reference is edited down to a chapter", () => {
+    jsdom.reconfigure({ url: "https://example.test/en/AAB/john/3?verse=9" });
+    editor = createEditor();
+    editor.commands.insertContent("John 3:16");
+
+    expect(getReferenceLinks(editor.getHTML())[0]?.getAttribute("href")).toBe(
+      "https://example.test/en/AAB/john/3?verse=16"
+    );
+
+    const text = editor.state.doc.textContent;
+    const verseIndex = text.indexOf(":16");
+    const from = 1 + verseIndex;
+    const to = from + ":16".length;
+    editor.commands.deleteRange({ from, to });
+
+    const links = getReferenceLinks(editor.getHTML());
+    expect(links).toHaveLength(1);
+    expect(links[0]?.textContent).toBe("John 3");
+    expect(links[0]?.getAttribute("href")).toBe(
+      "https://example.test/en/AAB/john/3"
+    );
+  });
+
+  it("links colon, European period, and compact period references", () => {
+    editor = createEditor();
+
+    editor.commands.insertContent("See Gen 1:1, Gen 1.1, and Gen.1.1");
+
+    const links = getReferenceLinks(editor.getHTML());
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Gen 1:1",
+      "Gen 1.1",
+      "Gen.1.1",
+    ]);
+    for (const link of links) {
+      expect(link.getAttribute("href")).toBeTruthy();
+    }
+  });
+
+  it("does not link a book name used as a list header", () => {
+    editor = createEditor();
+
+    editor.commands.insertContent("Mark: 3 things stood out");
 
     expect(getReferenceLinks(editor.getHTML())).toHaveLength(0);
   });

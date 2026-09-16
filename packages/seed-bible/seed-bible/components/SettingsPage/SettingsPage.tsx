@@ -23,15 +23,8 @@ import {
 import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
 import { openCustomizationEditPane } from "../CustomizationEditPane/CustomizationEditPane";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
-import { download, toHexInputValue, translateTitle } from "../../app/utils";
-// The picture editor pulls in `react-avatar-editor`, and it is only reachable
-// through the "Update picture" button — so it is fetched on that click rather
-// than at boot, the same way TextItemInput defers TipTap.
-const ProfilePictureModalContent = lazy(() =>
-  import("../../components/ProfilePictureModal/ProfilePictureModal").then(
-    (m) => ({ default: m.ProfilePictureModalContent })
-  )
-);
+import { download, translateTitle } from "../../app/utils";
+import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
 import {
   Skeleton,
   SkeletonContainer,
@@ -57,8 +50,10 @@ import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
+import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
+import { normalizeHex } from "../ColorPicker/color";
+import { buildStaticPagePath } from "../../managers/StaticPagePath";
 import { useEffect, useRef } from "preact/hooks";
-import { lazy, Suspense } from "preact/compat";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
 import {
   ContextMenuItem,
@@ -267,36 +262,13 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleUploadPicture = () => {
-    const modalId = state.modals.openModal({
-      title: { key: "update-picture", defaultValue: "Update picture" },
-      content: () => (
-        <Suspense
-          fallback={
-            <SkeletonContainer
-              label={t("loading-picture-editor", {
-                defaultValue: "Loading the picture editor…",
-              })}
-            >
-              <Skeleton width="100%" height="16rem" radius="0.625rem" />
-            </SkeletonContainer>
-          }
-        >
-          <ProfilePictureModalContent
-            onClose={() => state.modals.closeModal(modalId)}
-            onUpload={async (file) => {
-              isUploadingPicture.value = true;
-              try {
-                await login.uploadProfilePicture(file);
-              } catch (error) {
-                console.error("Failed to upload profile picture.", error);
-                throw error;
-              } finally {
-                isUploadingPicture.value = false;
-              }
-            }}
-          />
-        </Suspense>
-      ),
+    openProfilePictureModal({
+      modals: state.modals,
+      login,
+      t,
+      onUploadingChange: (uploading) => {
+        isUploadingPicture.value = uploading;
+      },
     });
   };
 
@@ -878,7 +850,9 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
                     if (Number.isFinite(parsed)) setScriptureWidth(parsed);
                   }}
                 />
-                <span className="sb-scripture-margins-unit">ch</span>
+                <span className="sb-scripture-margins-unit">
+                  {t("scripture-width-unit", { defaultValue: "ch" })}
+                </span>
               </div>
               <button
                 type="button"
@@ -1806,17 +1780,18 @@ function TextFormattingToolbar(props: {
                 }}
               />
             ))}
-            <label className="sb-text-format-palette-custom">
+            <div className="sb-text-format-palette-custom">
               <span>{t("custom", { defaultValue: "Custom" })}</span>
-              <input
-                type="color"
-                value={toHexInputValue(section.color)}
-                onInput={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  onChange({ color: target.value });
+              <LazyColorPicker
+                value={normalizeHex(section.color)}
+                className="sb-text-format-palette-custom-swatch"
+                ariaLabel={t("custom", { defaultValue: "Custom" })}
+                onChange={(color) => {
+                  onChange({ color });
+                  paletteOpen.value = false;
                 }}
               />
-            </label>
+            </div>
           </div>
         )}
       </div>
@@ -1970,7 +1945,7 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
             {group.fields.map((field) => {
               const currentValue =
                 effectiveTheme.value.variables[field.key] ?? "";
-              const hexValue = toHexInputValue(
+              const hexValue = normalizeHex(
                 typeof currentValue === "string" ? currentValue : ""
               );
               const isOverridden =
@@ -1987,14 +1962,18 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                     </span>
                   </div>
                   <div className="sb-theme-color-row-controls">
-                    <input
-                      type="color"
-                      className="sb-theme-color-input"
+                    <LazyColorPicker
                       value={hexValue}
-                      aria-label={field.label}
-                      onInput={(event: Event) => {
-                        const target = event.currentTarget as HTMLInputElement;
-                        theme.setCustomColor(field.key, target.value);
+                      className="sb-theme-color-input"
+                      ariaLabel={field.label}
+                      onChange={(color) => {
+                        theme.setCustomColor(field.key, color);
+                      }}
+                      onPreview={(color) => {
+                        theme.previewCustomColor(field.key, color);
+                      }}
+                      onCancel={() => {
+                        theme.clearPreviewCustomColor(field.key);
                       }}
                     />
                     {isOverridden && (
@@ -2044,30 +2023,32 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                 <span className="sb-theme-color-value">{bg || "—"}</span>
               </div>
               <div className="sb-theme-color-row-controls">
-                <input
-                  type="color"
+                <LazyColorPicker
+                  value={normalizeHex(bg)}
                   className="sb-theme-color-input"
-                  value={toHexInputValue(bg)}
-                  aria-label={t("id_highlight-background-color", { id })}
-                  title={t("highlight-background-color", {
-                    defaultValue: "Highlight background color",
-                  })}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    theme.setHighlightColor(id, { color: target.value });
+                  ariaLabel={t("id_highlight-background-color", { id })}
+                  onChange={(color) => {
+                    theme.setHighlightColor(id, { color });
+                  }}
+                  onPreview={(color) => {
+                    theme.previewHighlightColor(id, { color });
+                  }}
+                  onCancel={() => {
+                    theme.clearPreviewHighlightField(id, "color");
                   }}
                 />
-                <input
-                  type="color"
+                <LazyColorPicker
+                  value={normalizeHex(fg)}
                   className="sb-theme-color-input"
-                  value={toHexInputValue(fg)}
-                  aria-label={t("id_highlight-text-color", { id })}
-                  title={t("highlight-text-color", {
-                    defaultValue: "Highlight text color",
-                  })}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    theme.setHighlightColor(id, { fontColor: target.value });
+                  ariaLabel={t("id_highlight-text-color", { id })}
+                  onChange={(color) => {
+                    theme.setHighlightColor(id, { fontColor: color });
+                  }}
+                  onPreview={(color) => {
+                    theme.previewHighlightColor(id, { fontColor: color });
+                  }}
+                  onCancel={() => {
+                    theme.clearPreviewHighlightField(id, "fontColor");
                   }}
                 />
                 {isOverridden && (
@@ -2443,6 +2424,7 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t, language, availableLanguages, setLanguage } = useI18n();
+  const isLoggedIn = useComputed(() => state.login.userId.value !== null);
   const isLanguageMenuOpen = useSignal(false);
   const languageSearchQuery = useSignal("");
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -2581,16 +2563,42 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
             </button>
           </li>
+          {isLoggedIn.value && (
+            <li>
+              <button
+                className="sb-settings-nav-item"
+                onClick={() => onNavigate("customizations")}
+              >
+                <span className="sb-settings-nav-icon">
+                  <MaterialIcon>palette</MaterialIcon>
+                </span>
+                <span className="sb-settings-nav-label">
+                  {t("customize", { defaultValue: "Customize" })}
+                </span>
+                <span className="material-symbols-outlined rtl-mirror">
+                  chevron_right
+                </span>
+              </button>
+            </li>
+          )}
           <li>
             <button
               className="sb-settings-nav-item"
-              onClick={() => onNavigate("customizations")}
+              onClick={() => {
+                state.sidebar.closeSettings();
+                state.navigation.push(
+                  buildStaticPagePath({
+                    language: state.i18n.language.value,
+                    page: "about",
+                  })
+                );
+              }}
             >
               <span className="sb-settings-nav-icon">
-                <MaterialIcon>palette</MaterialIcon>
+                <MaterialIcon>info</MaterialIcon>
               </span>
               <span className="sb-settings-nav-label">
-                {t("customize", { defaultValue: "Customize" })}
+                {t("about-title", { defaultValue: "About Seed Bible" })}
               </span>
               <span className="material-symbols-outlined rtl-mirror">
                 chevron_right

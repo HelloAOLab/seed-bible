@@ -23,12 +23,16 @@ import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
-import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
+import {
+  CreatePlaylistForm,
+  requestCancelPlaylistEditor,
+} from "../CreatePlaylistForm/CreatePlaylistForm";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
-import { ExpandableText } from "../ExpandableText/ExpandableText";
+import { PlaylistRow } from "./PlaylistRow";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   CrossReferencesSection,
@@ -104,6 +108,7 @@ export function DiscoverPaneTitle(props: {
   tabs: TabsManager;
   chats: ChatsManager;
   openChatPanel: () => void;
+  modals?: ModalManager;
 }) {
   const { playlists, annotations, tabs, chats, openChatPanel } = props;
   const { t } = useI18n();
@@ -206,7 +211,13 @@ export function DiscoverPaneTitle(props: {
           type="button"
           className="sb-reading-plans-back"
           aria-label={t("back", { defaultValue: "Back" })}
-          onClick={() => playlists.cancelEditingPlaylist()}
+          onClick={() => {
+            if (props.modals) {
+              requestCancelPlaylistEditor(playlists, props.modals);
+              return;
+            }
+            playlists.cancelEditingPlaylist();
+          }}
         >
           <MaterialIcon>arrow_back</MaterialIcon>
         </button>
@@ -282,12 +293,25 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   if (actualView.value === "create_playlist") {
     return (
-      <CreatePlaylistForm playlists={playlists} tabs={tabs} modals={modals} />
+      <CreatePlaylistForm
+        playlists={playlists}
+        tabs={tabs}
+        modals={modals}
+        os={props.state.os}
+        login={props.state.login}
+        gallery={props.state.gallery}
+      />
     );
   }
 
   if (actualView.value === "create_annotation") {
-    return <CreateAnnotationForm annotations={annotations} tabs={tabs} />;
+    return (
+      <CreateAnnotationForm
+        annotations={annotations}
+        tabs={tabs}
+        toast={props.toast}
+      />
+    );
   }
 
   if (actualView.value === "play_playlist") {
@@ -318,6 +342,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
       <PlaylistHistorySection
         history={playlistHistory}
+        userPlaylists={userPlaylists}
         playlists={playlists}
         tabs={tabs}
         toast={props.toast}
@@ -365,100 +390,13 @@ function PlaylistSection({
       ) : (
         <ul className="sb-discover-list">
           {userPlaylists.map((playlist) => (
-            <li
+            <PlaylistRow
               key={playlist.id}
-              className="sb-discover-item sb-discover-item--row sb-playlist-item"
-              dir="auto"
-              onClick={() => playlists.startPlaying(playlist)}
-            >
-              <div className="sb-discover-item-main">
-                <span className="sb-discover-item-title">
-                  {playlist.title ??
-                    t("untitled-playlist", {
-                      defaultValue: "Untitled playlist",
-                    })}
-                </span>
-                {playlist.description ? (
-                  <ExpandableText
-                    className="sb-discover-item-description"
-                    readMoreLabel={t("read-more", {
-                      defaultValue: "Read more",
-                    })}
-                    readLessLabel={t("read-less", {
-                      defaultValue: "Read less",
-                    })}
-                  >
-                    {playlist.description}
-                  </ExpandableText>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                className="sb-discover-item-play"
-                aria-label={t("play-playlist", {
-                  defaultValue: "Play playlist",
-                })}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  playlists.startPlaying(playlist);
-                }}
-              >
-                <MaterialIcon>play_arrow</MaterialIcon>
-              </button>
-              <ContextMenuWithButton
-                buttonClassName="sb-discover-item-menu"
-                aria-label={t("playlist-options", {
-                  defaultValue: "Playlist options",
-                })}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ContextMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const url = playlists.getPlaylistUrl(playlist);
-                    navigator.clipboard.writeText(url);
-                    toast(
-                      t("playlist-url-copied", {
-                        defaultValue: "Playlist URL copied to clipboard",
-                      })
-                    );
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    share
-                  </MaterialIcon>
-                  {t("share-playlist", { defaultValue: "Share playlist" })}
-                </ContextMenuItem>
-                <ContextMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    playlists.editPlaylist(playlist);
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    edit
-                  </MaterialIcon>
-                  {t("edit-playlist", { defaultValue: "Edit playlist" })}
-                </ContextMenuItem>
-                <ContextMenuItem
-                  className="sb-context-menu-item--danger"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openDeletePlaylistConfirm(
-                      modals,
-                      playlists,
-                      playlist,
-                      toast
-                    );
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    delete
-                  </MaterialIcon>
-                  {t("delete-playlist", { defaultValue: "Delete" })}
-                </ContextMenuItem>
-              </ContextMenuWithButton>
-            </li>
+              playlist={playlist}
+              playlists={playlists}
+              modals={modals}
+              toast={toast}
+            />
           ))}
         </ul>
       )}
@@ -536,11 +474,13 @@ function playFromHistory(
 
 function PlaylistHistorySection({
   history,
+  userPlaylists,
   playlists,
   tabs,
   toast,
 }: {
   history: PlaylistPlayHistory[];
+  userPlaylists: Playlist[];
   playlists: PlaylistManager;
   tabs: TabsManager;
   toast: SeedBibleState["app"]["toast"];
@@ -600,6 +540,14 @@ function PlaylistHistorySection({
                       percent,
                     });
 
+                const live = userPlaylists.find(
+                  (p) =>
+                    p.id === entry.playlistId &&
+                    p.recordName === entry.playlistRecordName
+                );
+                const heroUrl =
+                  live?.heroImageUrl ?? entry.playlistHeroImageUrl ?? null;
+
                 return (
                   <li
                     key={entry.id}
@@ -607,6 +555,7 @@ function PlaylistHistorySection({
                     dir="auto"
                     onClick={() => playFromHistory(playlists, entry, toast, t)}
                   >
+                    <HeroImageThumb url={heroUrl} />
                     <div className="sb-discover-item-main">
                       <span className="sb-discover-item-title">
                         {playlistTitle(entry, t)}
@@ -665,86 +614,4 @@ function PlaylistHistorySection({
       )}
     </DiscoverSection>
   );
-}
-
-/**
- * Confirmation body shown before permanently deleting a playlist. Confirming
- * erases the playlist and closes the modal; on failure it surfaces a toast but
- * still closes.
- */
-function ConfirmDeletePlaylistModalContent(props: {
-  playlists: PlaylistManager;
-  playlist: Playlist;
-  toast: SeedBibleState["app"]["toast"];
-  onClose: () => void;
-}) {
-  const { playlists, playlist, toast, onClose } = props;
-  const { t } = useI18n();
-
-  const confirm = async () => {
-    try {
-      await playlists.deletePlaylist(playlist);
-    } catch {
-      toast(
-        t("delete-playlist-failed", {
-          defaultValue: "Couldn't delete the playlist.",
-        })
-      );
-    }
-    onClose();
-  };
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("delete-playlist-confirm-message", {
-          title:
-            playlist.title ??
-            t("untitled-playlist", { defaultValue: "Untitled playlist" }),
-          defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
-          {t("cancel")}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={confirm}
-        >
-          {t("delete")}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/** Opens the delete-playlist confirmation modal. */
-function openDeletePlaylistConfirm(
-  modals: ModalManager,
-  playlists: PlaylistManager,
-  playlist: Playlist,
-  toast: SeedBibleState["app"]["toast"]
-) {
-  const modalId = `delete-playlist-confirm-${playlist.id}`;
-  modals.openModal({
-    id: modalId,
-    title: {
-      key: "delete-playlist-confirm-title",
-      defaultValue: "Delete playlist?",
-    },
-    content: () => (
-      <ConfirmDeletePlaylistModalContent
-        playlists={playlists}
-        playlist={playlist}
-        toast={toast}
-        onClose={() => modals.closeModal(modalId)}
-      />
-    ),
-  });
 }

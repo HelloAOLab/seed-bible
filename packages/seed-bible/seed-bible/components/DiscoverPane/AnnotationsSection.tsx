@@ -547,10 +547,7 @@ export function AnnotationsSection(props: {
     chapterAnnotations,
     login.userId.value
   );
-  const pending = annotations.sync.pendingCountForChapter(
-    bookId,
-    chapterNumber
-  );
+  const pending = annotations.pendingCountForChapter(bookId, chapterNumber);
 
   return (
     <DiscoverSection title={title}>

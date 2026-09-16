@@ -80,10 +80,13 @@ function createFixture(): ReaderFixture {
     },
     thisChapterLink: "/api/BSB/GEN/1.json",
     thisChapterAudioLinks: {},
+    thisChapterAudioTimings: {},
     nextChapterApiLink: "/api/BSB/GEN/2.json",
     nextChapterAudioLinks: {},
+    nextChapterAudioTimings: {},
     previousChapterApiLink: null,
     previousChapterAudioLinks: null,
+    previousChapterAudioTimings: null,
     numberOfVerses: 2,
     chapter: {
       number: 1,
@@ -150,12 +153,15 @@ function createFixture(): ReaderFixture {
     loadNextChapter: vi.fn(async () => undefined),
     hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
     hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
+    nextChapterPosition: computed(() => null),
+    previousChapterPosition: computed(() => null),
     getAdjacentChapter: vi.fn(async () => null),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     defaultTranslation: { id: "BSB", language: "en" },
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialLoadSettled: computed(() => true),
     initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(() => chapterData.value === null),
     discoveredContent: signal([]),
@@ -180,6 +186,7 @@ function createFixture(): ReaderFixture {
 
   const selectorState = {
     setOpen,
+    selectingTranslation: signal(false),
   } as any as BibleSelectorState;
 
   const slot: TabSlot = {
@@ -203,10 +210,11 @@ function createFixture(): ReaderFixture {
   };
 }
 
-function createBookmarksStub() {
+function createSavesStub() {
   return {
-    isLocationBookmarked: vi.fn(() => false),
-    toggleBookmarkAtLocation: vi.fn(async () => undefined),
+    isLocationSaved: vi.fn(() => false),
+    getSaveForLocation: vi.fn(() => undefined),
+    addSave: vi.fn(async () => undefined),
   };
 }
 
@@ -239,7 +247,7 @@ function createMobileState(): SeedBibleState {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(testBranding),
-    bookmarks: createBookmarksStub(),
+    saves: createSavesStub(),
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
@@ -252,9 +260,9 @@ function createMobileState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
-        pendingCountForChapter: vi.fn(() => 0),
       },
     },
   } as any as SeedBibleState;
@@ -285,7 +293,7 @@ function createDesktopState(): SeedBibleState {
       getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
     },
     tools: createBibleToolsManager(testBranding),
-    bookmarks: createBookmarksStub(),
+    saves: createSavesStub(),
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
@@ -298,9 +306,9 @@ function createDesktopState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
-        pendingCountForChapter: vi.fn(() => 0),
       },
     },
   } as any as SeedBibleState;
@@ -1035,6 +1043,66 @@ describe("TabSlotReader integration", () => {
     }
   });
 
+  // Swipe parks an inline translateX on the track. Switching to the larger
+  // layout must not reuse that node as desktop content, or the chapter sits
+  // partly offscreen.
+  it("does not leave the reader shifted offscreen after swiping and switching to a larger layout", () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        vi.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        (state.app.isMobile as Signal<boolean>).value = false;
+      });
+
+      expect(container.querySelector(".sb-reader-swipe-track")).toBeNull();
+      expect(
+        container.querySelector(".sb-bible-reader-content")
+      ).not.toBeNull();
+
+      const content = container.querySelector(
+        ".sb-bible-reader-content"
+      ) as HTMLDivElement | null;
+      const main = container.querySelector(
+        ".sb-bible-reader-main-content"
+      ) as HTMLDivElement | null;
+      expect(content?.style.transform).toBe("");
+      expect(main?.style.transform).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // Navigation does not wait on the download, so the *centre* panel still holds
   // the outgoing chapter while the new one is in flight. Recentring straight
   // away is what made a swipe flash the chapter the reader just left.
@@ -1260,6 +1328,44 @@ describe("TabSlotReader integration", () => {
     });
 
     expect(writes).toEqual([120]);
+  });
+
+  it("re-applies the saved scroll offset when the matching chapter text arrives", () => {
+    const { slot, readingState, chapterData } = createFixture();
+
+    renderTabSlotReader(slot, readingState, createDesktopState(), container);
+
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback: FrameRequestCallback) => {
+        callback(0);
+        return 0;
+      });
+
+    try {
+      const writes = recordScrollTopWrites(
+        container.querySelector(".sb-pane-reader") as HTMLDivElement
+      );
+
+      act(() => {
+        batch(() => {
+          readingState.scrollPosition.value = 320;
+          readingState.chapterNumber.value = 2;
+        });
+      });
+      expect(writes).toEqual([320]);
+
+      act(() => {
+        chapterData.value = {
+          ...chapterData.value!,
+          chapter: { ...chapterData.value!.chapter, number: 2 },
+        };
+      });
+
+      expect(writes).toEqual([320, 320]);
+    } finally {
+      rafSpy.mockRestore();
+    }
   });
 
   // Replays a capture from a real device. A touchmove generated during the

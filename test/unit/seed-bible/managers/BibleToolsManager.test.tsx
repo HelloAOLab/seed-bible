@@ -10,9 +10,11 @@ vi.mock("@packages/seed-bible/seed-bible/components/icons", () => ({
 import {
   createBibleToolsManager,
   getShareUrl,
+  readingPlanDayPlaylist,
   type BibleToolContext,
   type QuickToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import type { ReadingPlan } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { PlaylistItemData } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
@@ -70,6 +72,9 @@ function createContext(
       loadNextChapter: vi.fn(),
       hasNext: signal(false),
       hasPrevious: signal(false),
+      translation: signal(null),
+      nextChapterPosition: signal(null),
+      previousChapterPosition: signal(null),
     } as any,
     sharedSession: null,
     selectorState: {
@@ -284,6 +289,48 @@ describe("getShareUrl", () => {
     );
 
     expect(url.toString()).toBe("https://example.test/es/spa_onbv/john/3");
+  });
+});
+
+describe("readingPlanDayPlaylist", () => {
+  const plan = {
+    address: "plan-address",
+    title: "Through the Psalms",
+    description: "Thirty days in the Psalter",
+    heroImageUrl: "https://example.com/psalms.jpg",
+  } satisfies Pick<
+    ReadingPlan,
+    "address" | "title" | "description" | "heroImageUrl"
+  >;
+  const items = [
+    { type: "verse", reference: { bookId: "PSA", chapter: 1, verse: 1 } },
+  ] as unknown as PlaylistItemData[];
+
+  // The player takes its cover art from the playlist it is handed, so a plan
+  // that drops its hero image plays with a blank cover.
+  it("carries the plan's own presentation into playback", () => {
+    expect(readingPlanDayPlaylist(plan, items)).toEqual({
+      id: "plan-address",
+      title: "Through the Psalms",
+      description: "Thirty days in the Psalter",
+      heroImageUrl: "https://example.com/psalms.jpg",
+      items,
+    });
+  });
+
+  // No record name means play history won't offer to resume it — a plan's day
+  // is an ad-hoc queue, not a playlist record.
+  it("is not a recorded playlist", () => {
+    expect(readingPlanDayPlaylist(plan, items)).not.toHaveProperty(
+      "recordName"
+    );
+  });
+
+  it("leaves a plan without a hero image without one", () => {
+    expect(
+      readingPlanDayPlaylist({ ...plan, heroImageUrl: null }, items)
+        .heroImageUrl
+    ).toBeNull();
   });
 });
 
@@ -1598,6 +1645,117 @@ describe("createBibleToolsManager", () => {
 
       expect(tool).toBeDefined();
       expect(tool?.disabled.value).toBe(false);
+    });
+  });
+
+  describe("chapter navigation tool hrefs", () => {
+    function createLinkableContext(
+      overrides: Partial<BibleToolContext> = {}
+    ): BibleToolContext {
+      const context = createContext();
+      (context.readingState as any).translation = signal({
+        id: "BSB",
+        language: "eng",
+      });
+      (context.readingState as any).nextChapterPosition = signal({
+        translationId: "BSB",
+        bookId: "JHN",
+        chapterNumber: 4,
+      });
+      (context.readingState as any).previousChapterPosition = signal({
+        translationId: "BSB",
+        bookId: "JHN",
+        chapterNumber: 2,
+      });
+      return { ...context, ...overrides };
+    }
+
+    function hrefOf(context: BibleToolContext, toolId: string) {
+      return (
+        createBibleToolsManager()
+          .getToolbarTools(context)
+          .find((t) => t.id === toolId)?.href.value ?? null
+      );
+    }
+
+    it("gives the chapter tools canonical addresses", () => {
+      const context = createLinkableContext();
+
+      expect(hrefOf(context, "next-chapter")).toBe("/en/BSB/john/4");
+      expect(hrefOf(context, "previous-chapter")).toBe("/en/BSB/john/2");
+    });
+
+    it("keeps the deployment path prefix", () => {
+      const context = createLinkableContext({
+        navigation: { basePath: "/b/some-branch" } as any,
+      });
+
+      expect(hrefOf(context, "next-chapter")).toBe(
+        "/b/some-branch/en/BSB/john/4"
+      );
+    });
+
+    it("has no href when the adjacent chapter cannot be named", () => {
+      const context = createLinkableContext();
+      (context.readingState as any).nextChapterPosition = signal(null);
+
+      expect(hrefOf(context, "next-chapter")).toBeNull();
+    });
+
+    it("follows the translation's language, not the interface's", () => {
+      const context = createLinkableContext();
+      (context.readingState as any).translation = signal({
+        id: "spa_onbv",
+        language: "spa",
+      });
+      (context.readingState as any).nextChapterPosition = signal({
+        translationId: "spa_onbv",
+        bookId: "JHN",
+        chapterNumber: 4,
+      });
+
+      // Same rule as `canonicalUrl`: a Spanish translation read through an
+      // English interface is still the Spanish page, so the link points there
+      // rather than at a URL that would redirect.
+      expect(hrefOf(context, "next-chapter")).toBe("/es/spa_onbv/john/4");
+    });
+
+    it("uses the translation's full address for a custom endpoint", () => {
+      // `buildTranslationId` is a no-op for official translations but expands a
+      // custom-endpoint one into its full URL. `canonicalUrl` applies it, so
+      // these links have to as well — otherwise a custom translation's next
+      // chapter link would name an id the canonical tag disowns.
+      const context = createLinkableContext({
+        data: {
+          buildTranslationId: (id: string) =>
+            `https://custom.example/api/${id}/books.json`,
+        } as any,
+      });
+
+      expect(hrefOf(context, "next-chapter")).toBe(
+        `/en/${encodeURIComponent("https://custom.example/api/BSB/books.json")}/john/4`
+      );
+    });
+
+    it("leaves tools that only act without an href", () => {
+      const context = createLinkableContext();
+
+      expect(hrefOf(context, "open-selector")).toBeNull();
+      expect(hrefOf(context, "open-search")).toBeNull();
+    });
+
+    it("falls back to a button while in a shared session", () => {
+      // A bare path drops `?sessionId=`, which is what keeps a reader in a
+      // shared session — so a real href here would silently open a
+      // middle-clicked "Next Chapter" (or a copied link) outside the
+      // session it was clicked from. A session is never being crawled, so
+      // there's nothing to lose by falling back, same as an unnamed position.
+      const context = createLinkableContext({
+        sharedSession: {} as any,
+      });
+
+      expect(hrefOf(context, "next-chapter")).toBeNull();
+      expect(hrefOf(context, "previous-chapter")).toBeNull();
     });
   });
 

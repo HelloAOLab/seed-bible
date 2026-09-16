@@ -171,12 +171,12 @@ const LEGACY_POSITION_PARAMS = [
  * own params).
  *
  * This is what anything that *hands out* a link should use — the share
- * buttons, scripture reference links — rather than setting `?book=`/`?chapter=`
- * on top of the current URL. Since the position moved into the path, those
- * params no longer win: `getInitialFirstTabBookId` and friends read the path
- * first and only fall back to the query, so a link that sets them alongside a
- * path that says something else silently opens the path's position instead.
- * They're stripped here for the same reason.
+ * buttons — rather than setting `?book=`/`?chapter=` on top of the current URL.
+ * Since the position moved into the path, those params no longer win:
+ * `getInitialFirstTabBookId` and friends read the path first and only fall
+ * back to the query, so a link that sets them alongside a path that says
+ * something else silently opens the path's position instead. They're stripped
+ * here for the same reason.
  */
 export function buildReadingUrl(params: {
   /** The URL to rewrite — normally the page's current one. */

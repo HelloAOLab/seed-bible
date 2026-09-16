@@ -10,6 +10,7 @@ import { BibleReaderToolbar } from "../components/BibleReaderToolbar/BibleReader
 import { FloatingReaderPanels } from "../components/FloatingReaderPanels/FloatingReaderPanels";
 import { Sidebar, SharedSessionsToasts } from "../components/Tabs/Tabs";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
+import { Suspense } from "preact/compat";
 import { useEffect } from "preact/hooks";
 import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu/ContextMenu";
@@ -27,6 +28,7 @@ import {
   type AppConfig,
 } from "./appConfig";
 import { isWebKit } from "./ssrEnv";
+import { useCustomizationLinkOverrides } from "./customizationLinkOverrides";
 // Foundation stylesheets — must load before any component's co-located CSS.
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
@@ -55,16 +57,31 @@ import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/Offli
  * the server but not on the client, causing a hydration mismatch; Preact also
  * never diffs `dangerouslySetInnerHTML` during hydration, so this stays
  * inert even if the two sides' CSS text does legitimately differ.
+ *
+ * The SSR suspend below is deliberately scoped to just this component rather
+ * than gating `MainContent` as a whole: `_renderToString`'s array-of-children
+ * traversal doesn't block later siblings on an earlier one suspending, so
+ * gating only here keeps everything else's first-render timing (most notably
+ * `BibleReader`'s own chapter-load suspend) exactly as it is without a
+ * `?customization=` link in play.
  */
 export function ExternalResourceDependencies({
   themeCssVariables,
   themeCssClasses,
   googleFontFamilies,
+  initialCustomizationLoadPromise,
+  initialCustomizationLoadSettled,
 }: {
   themeCssVariables: ReadonlySignal<string>;
   themeCssClasses: ReadonlySignal<string>;
   googleFontFamilies: ReadonlySignal<string[]>;
+  initialCustomizationLoadPromise: Promise<void>;
+  initialCustomizationLoadSettled: ReadonlySignal<boolean>;
 }) {
+  if (import.meta.env.SSR && !initialCustomizationLoadSettled.value) {
+    throw initialCustomizationLoadPromise;
+  }
+
   return (
     <>
       <link
@@ -210,6 +227,8 @@ function MainBody({
     });
   }
 
+  useCustomizationLinkOverrides(state);
+
   return (
     <AppConfigProvider value={appConfig}>
       <I18nProvider i18n={state.i18n}>
@@ -256,6 +275,12 @@ function MainContent(props: {
           themeCssVariables={theme.themeCssVariables}
           themeCssClasses={theme.themeCssClasses}
           googleFontFamilies={theme.googleFontFamiliesToLoad}
+          initialCustomizationLoadPromise={
+            state.customizations.initialCustomizationLoadPromise
+          }
+          initialCustomizationLoadSettled={
+            state.customizations.initialCustomizationLoadSettled
+          }
         />
         <Sidebar state={state} />
 
@@ -289,7 +314,12 @@ function MainContent(props: {
 
         <FloatingReaderPanels state={state} />
 
-        <BibleReaderToolbar state={state} />
+        {/* The toolbar suspends during SSR until the reading position is
+            known, so its chapter links land in the server-rendered HTML.
+            Nothing suspends here on the client. */}
+        <Suspense fallback={null}>
+          <BibleReaderToolbar state={state} />
+        </Suspense>
 
         <SharedSessionsToasts state={state} />
 

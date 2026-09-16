@@ -10,7 +10,8 @@
   flex: 1;
 }
 
-.sb-bible-reader-bookmark-button {
+.sb-bible-reader-bookmark-button,
+.sb-bible-reader-save-button {
   position: relative;
   width: 2.25rem;
   height: 2.25rem;
@@ -28,24 +29,29 @@
   z-index: 1;
 }
 
-.sb-bible-reader-bookmark-button:hover {
+.sb-bible-reader-bookmark-button:hover,
+.sb-bible-reader-save-button:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
 }
 
-.sb-bible-reader-bookmark-button-active,
-.sb-bible-reader-bookmark-button-active:hover {
-  color: var(--sb-primary-color);
-}
-
-.sb-bible-reader-bookmark-button:disabled {
+.sb-bible-reader-bookmark-button:disabled,
+.sb-bible-reader-save-button:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.sb-bible-reader-bookmark-button svg {
+.sb-bible-reader-bookmark-button svg,
+.sb-bible-reader-save-button svg {
   width: 1.375rem; /* 22px */
   height: 1.375rem;
+}
+
+/* A filled star already reads as "saved"; the tint is what keeps it legible
+ * against the outlined bookmark sitting next to it. */
+.sb-bible-reader-save-button-saved,
+.sb-bible-reader-save-button-saved:hover {
+  color: var(--sb-primary-color);
 }
 
 /* Force a tight 1% reader margin in mobile view, regardless of the
@@ -60,8 +66,8 @@
 }
 
 /* Reader header: lays the chapter title and the right-hand action cluster
-   (quick toolbar + bookmark button) in a flex row so the buttons can never
-   overlap the title, regardless of how many quick tools are registered. */
+   (quick toolbar + save and bookmark buttons) in a flex row so the buttons can
+   never overlap the title, regardless of how many quick tools are registered. */
 .sb-bible-reader-header {
   display: flex;
   align-items: flex-start;
@@ -71,8 +77,19 @@
   border-bottom: 1px solid var(--sb-divider-color);
 }
 
-.sb-bible-reader-title {
+/* Chapter title and translation chip sit on one row so the chip stays beside
+   the chapter number instead of drifting over to the action cluster. */
+.sb-bible-reader-heading {
   flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.sb-bible-reader-title {
+  flex: 0 1 auto;
   min-width: 0;
   font-family: var(--text-bookTitle-font);
   /* color: var(--text-bookTitle-color); */
@@ -104,15 +121,37 @@
   color: inherit;
 }
 
+/* The translation chip is the same muted pill on both layouts; only its size
+   changes, to suit each header's title. Keep the two in step. */
+.sb-bible-reader-translation,
+.sb-bible-reader-mobile-header-translation {
+  display: inline-block;
+  cursor: pointer;
+  border: none;
+  font-family: var(--text-bookTitle-font);
+  font-weight: 500;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
 .sb-bible-reader-translation {
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 1.5rem;
-  font-weight: 600;
+  flex-shrink: 0;
+  border-radius: 62.4375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 1.25rem;
   line-height: 1;
   letter-spacing: 0;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-  margin-inline-start: 0.4em;
-  vertical-align: 0.15em;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-bible-reader-translation:hover,
+.sb-bible-reader-translation:focus-visible,
+.sb-bible-reader-mobile-header-translation:active,
+.sb-bible-reader-mobile-header-translation:focus-visible {
+  color: var(--sb-font-color);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
 }
 
 .sb-bible-reader-meta {
@@ -214,13 +253,29 @@
 
 .sb-bible-reader-mobile-header-translation {
   font-size: 1rem;
-  font-weight: 400;
-  cursor: pointer;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  display: inline-flex;
   padding: 0.3125rem 0.625rem;
   border-radius: 0.9375rem;
+}
+
+/* A line box reserves room for descenders that an all-caps abbreviation never
+   uses, so it sits high in an evenly padded chip — badly so in Newsreader,
+   which leaves 0.265em below the baseline but only 0.065em above the caps.
+   Trimming the box to the caps centres the letters themselves, whichever font
+   the reader has chosen. The padding grows to hold the chip's size once the
+   box shrinks from the full 1em to the cap height. */
+@supports (text-box: trim-both cap alphabetic) {
+  .sb-bible-reader-translation,
+  .sb-bible-reader-mobile-header-translation {
+    text-box: trim-both cap alphabetic;
+  }
+
+  .sb-bible-reader-translation {
+    padding-block: 0.5625rem;
+  }
+
+  .sb-bible-reader-mobile-header-translation {
+    padding-block: 0.475rem;
+  }
 }
 
 .sb-bible-reader-mobile-header-play {
@@ -250,9 +305,9 @@
   margin-inline-start: 0.125rem;
 }
 
-/* The chapter-bookmark toggle joins the header's right-hand icon cluster on
- * mobile. The cluster wrapper consumes the free space so bookmark, share,
- * account, and settings stay together on the right even when bookmark is
+/* The chapter save and bookmark buttons join the header's right-hand icon
+ * cluster on mobile. The cluster wrapper consumes the free space so they,
+ * share, account, and settings stay together on the right even when the pair is
  * hidden during playlist playback. */
 .sb-bible-reader-mobile-header-actions {
   display: flex;
@@ -262,7 +317,8 @@
   margin-inline-start: auto;
 }
 
-.sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button {
+.sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button,
+.sb-bible-reader-mobile-header .sb-bible-reader-save-button {
   position: static;
   flex-shrink: 0;
   width: 2rem;
@@ -270,7 +326,7 @@
   border-radius: 50%;
 }
 
-/* Match the 2rem circular header buttons (bookmark, account, settings)
+/* Match the 2rem circular header buttons (save, bookmark, account, settings)
  * rather than the desktop quick-toolbar's 2.25rem size. */
 .sb-bible-reader-mobile-header .sb-quick-toolbar-button {
   width: 2rem;
@@ -541,6 +597,7 @@
   margin-right: var(--text-heading-margin-right);
   font-size: 1.125em;
   line-height: 1;
+  transition: opacity 0.3s ease-in-out;
 }
 
 .sb-line-break {
@@ -571,10 +628,10 @@
   transition:
     background-color 0.2s ease,
     background 0.3s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    opacity 0.3s ease-in-out;
 
   &:has(.sb-verse-decoration-diminish) {
-    animation: none;
     opacity: 1;
   }
 }
@@ -968,12 +1025,12 @@
  * (matches the design spec). The modal frame itself is reused, but the
  * outer overlay aligns it to the bottom and stretches it to full width. */
 @media (max-width: 480px) {
-  .sb-footnote-modal-overlay:has(.sb-bookmark-picker) {
+  .sb-footnote-modal-overlay:has(.sb-save-picker) {
     align-items: flex-end;
     padding: 0;
   }
 
-  .sb-footnote-modal:has(.sb-bookmark-picker) {
+  .sb-footnote-modal:has(.sb-save-picker) {
     width: 100%;
     max-width: 100%;
     border-radius: 1rem 1rem 0 0;
@@ -991,37 +1048,34 @@
 }
 
 .sb-chapter-decoration-diminish {
-  /* Excluding the decorated verses here (rather than relying on the
-     `.sb-verse:has(.sb-verse-decoration-diminish)` override above to win)
-     matters because both selectors have equal specificity (two classes) —
-     a tie the later-declared rule would otherwise win regardless of which
-     one is meant to take precedence, silently dimming the very verses this
-     decoration exists to keep bright. */
+  /* Opacity is a plain state (dimmed while this class is present) rather
+     than a fixed-length @keyframes animation, so it holds for as long as
+     the decoration stays active instead of finishing on its own clock —
+     if a second diminish decoration arrives before the first expires, the
+     class never toggles off, so already-dimmed verses just stay dimmed
+     until the last matching decoration is removed (see `containerClasses`
+     in BibleReader.tsx). Excluding the decorated verses here (rather than
+     relying on the `.sb-verse:has(.sb-verse-decoration-diminish)` override
+     above to win) matters because both selectors have equal specificity
+     (two classes) — a tie the later-declared rule would otherwise win
+     regardless of which one is meant to take precedence, silently dimming
+     the very verses this decoration exists to keep bright. */
   .sb-verse:not(:has(.sb-verse-decoration-diminish)),
   .sb-chapter-heading {
-    animation: diminish-in-out 3s ease-in-out;
+    opacity: 0.4;
   }
 
   /* Nested so this beats `.sb-chapter-decoration-diminish .sb-verse` above
-     (equal specificity would otherwise let the dim animation win). */
+     (equal specificity would otherwise let the dim opacity win). */
   .sb-verse:has(.sb-verse-decoration-diminish) {
-    animation: none;
     opacity: 1;
   }
 }
 
-@keyframes diminish-in-out {
-  0% {
-    opacity: 1;
-  }
-
-  10%,
-  90% {
-    opacity: 0.4;
-  }
-
-  100% {
-    opacity: 1;
+@media (prefers-reduced-motion: reduce) {
+  .sb-verse,
+  .sb-chapter-heading {
+    transition: none;
   }
 }
 
