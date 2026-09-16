@@ -853,32 +853,31 @@ describe("createSeedBibleState", () => {
       expect(originalDispose).not.toHaveBeenCalled();
     });
 
-    it("shows a you-lost-connection toast instead of a host toast when every other user disappears", async () => {
+    it("blames the host, not our own connection, when the other guest leaves first and the host follows", async () => {
       const state = await createStateWithTwoTabs();
       const { session, originalDispose } = await joinAsHostedSession(
         state,
         "session-all-others-gone"
       );
-      const tabId = state.tabs.tabs.value.find(
-        (tab) => tab.sharedSession === session
-      )!.id;
 
       session.connectedUsers.value = [
         selfConnectedUser,
         hostConnectedUser,
         otherGuestConnectedUser,
       ];
+
+      // The other guest goes first — nothing to announce, the host is here.
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      expect(state.app.currentToast.value).toBeNull();
+
+      // Then the host goes, leaving us alone. We can still see ourselves, so
+      // our own connection is demonstrably fine and the host is who left.
       session.connectedUsers.value = [selfConnectedUser];
 
       expect(state.app.currentToast.value?.message).toBe(
-        "You lost connection to the session"
+        "The host disconnected from the session"
       );
       expect(originalDispose).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(30_000);
-
-      expect(originalDispose).not.toHaveBeenCalled();
-      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
     });
 
     it("shows a you-rejoined toast when other users reappear after our own connection dropped", async () => {
@@ -896,11 +895,15 @@ describe("createSeedBibleState", () => {
         hostConnectedUser,
         otherGuestConnectedUser,
       ];
-      session.connectedUsers.value = [selfConnectedUser];
+
+      // A real drop takes the whole list with it, our own entry included.
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
       expect(state.app.currentToast.value?.message).toBe(
         "You lost connection to the session"
       );
 
+      session.isSynced.value = true;
       session.connectedUsers.value = [
         selfConnectedUser,
         hostConnectedUser,

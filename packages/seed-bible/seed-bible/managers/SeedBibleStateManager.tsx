@@ -1975,10 +1975,6 @@ export function createSeedBibleState(
   // stale/resyncing connection can make the host look gone when it never
   // left — see issue #1346.
   const sessionsWhereHostWasSeen = new Set<string>();
-  // Other guests (not us, not the host) we've actually observed. Used to
-  // tell "only the host dropped" apart from "everyone else vanished," which
-  // is what our own dropped connection looks like on the presence list.
-  const sessionsWhereOtherGuestsWereSeen = new Set<string>();
   const sessionsWhereWeLostConnection = new Set<string>();
   // Sessions where the "you lost connection" toast was actually shown (it is
   // suppressed right after a resume). Only those owe a "you rejoined" toast.
@@ -2008,7 +2004,6 @@ export function createSeedBibleState(
   };
   const forgetSessionPresence = (sessionId: string): void => {
     sessionsWhereHostWasSeen.delete(sessionId);
-    sessionsWhereOtherGuestsWereSeen.delete(sessionId);
     sessionsWhereWeLostConnection.delete(sessionId);
     sessionsWhereWeAnnouncedDrop.delete(sessionId);
     clearPendingPresenceSettle(sessionId);
@@ -2036,27 +2031,6 @@ export function createSeedBibleState(
         (isSessionHost(session.options.value, user.userId) ||
           isSessionHost(session.options.value, user.connectionId))
     );
-  const sessionHasRemoteUsers = (session: BibleReadingSession): boolean =>
-    session.connectedUsers.value.some((user) => !user.isSelf);
-  const sessionHasNonHostRemoteUsers = (
-    session: BibleReadingSession
-  ): boolean => {
-    const self = session.connectedUsers.value.find((user) => user.isSelf);
-    return session.connectedUsers.value.some((user) => {
-      if (user.isSelf) return false;
-      if (
-        isSessionHost(session.options.value, user.userId) ||
-        isSessionHost(session.options.value, user.connectionId)
-      ) {
-        return false;
-      }
-      // Another device of the same logged-in user is not a "guest".
-      if (self?.userId && user.userId === self.userId) {
-        return false;
-      }
-      return true;
-    });
-  };
   // Whether this client's view of who's present is worth acting on. We are
   // definitionally present in our own session, so a list that doesn't even
   // include us means the presence channel is broken (it can go permanently
@@ -2083,10 +2057,6 @@ export function createSeedBibleState(
 
       const { t } = i18n;
 
-      if (sessionHasNonHostRemoteUsers(session)) {
-        sessionsWhereOtherGuestsWereSeen.add(session.id);
-      }
-
       const hostId = session.options.value.hostUserId;
       const hostIsConnected = hostId ? sessionHostIsConnected(session) : false;
       if (hostIsConnected) {
@@ -2103,17 +2073,15 @@ export function createSeedBibleState(
       // devices), an empty remote list is "someone else left", not "we
       // disconnected" — even if `isSynced` blips when that peer drops.
       //
-      // Deliberately NOT gated on seeing our own entry in the list: when our
-      // connection really drops, the OS clears every peer *including us*
-      // (see `rebuildRemoteClientsSubscription` in SessionsManager), so a
-      // check for self would only ever pass in tests that keep self in the
-      // list by hand, never in production.
+      // Our own drop clears the WHOLE list, our own entry included (see
+      // `rebuildRemoteClientsSubscription` in SessionsManager), so an empty
+      // list means us. Still seeing ourselves while everyone else has gone
+      // means the presence channel is working fine and they really did
+      // leave — one at a time or all at once, it makes no difference.
       const ourConnectionDropped =
         !sessionWeAreHost(session) &&
         sessionsWhereHostWasSeen.has(session.id) &&
-        (!session.isSynced.value ||
-          (!sessionHasRemoteUsers(session) &&
-            sessionsWhereOtherGuestsWereSeen.has(session.id)));
+        (!session.isSynced.value || session.connectedUsers.value.length === 0);
 
       if (ourConnectionDropped) {
         clearPendingHostDisconnect(session.id);
