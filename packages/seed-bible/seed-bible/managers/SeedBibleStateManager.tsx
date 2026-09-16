@@ -466,6 +466,11 @@ export interface SeedBibleState {
    * Playlist manager for creating, editing, and syncing user playlists.
    */
   playlists: PlaylistManager;
+  /**
+   * Reads scripture aloud with the browser's own speech synthesiser, for the
+   * translations that ship no recorded narration.
+   */
+  textToSpeech: TextToSpeechManager;
   /** Saved photos the user has uploaded, for reuse as covers and later features. */
   gallery: UserGalleryManager;
   /** Aggregated computed app state and top-level UI actions. */
@@ -538,6 +543,10 @@ import {
   createUserGalleryManager,
   type UserGalleryManager,
 } from "./UserGalleryManager";
+import {
+  createTextToSpeechManager,
+  type TextToSpeechManager,
+} from "./TextToSpeechManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
@@ -916,6 +925,7 @@ export function createSeedBibleState(
   });
   const readingPlans = createReadingPlansManager(os, login);
   const gallery = createUserGalleryManager(os, login);
+  const textToSpeech = createTextToSpeechManager();
 
   const { currentTheme } = themeManager;
   // While a Customization is active, its variant is rendered against its
@@ -2533,6 +2543,7 @@ export function createSeedBibleState(
     readingPlans,
     playlists,
     gallery,
+    textToSpeech,
     tutorial,
     onboarding,
     yourContent,
