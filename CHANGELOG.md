@@ -15,6 +15,7 @@
 
 ### 🐛 Fixed
 
+- Lift the mobile Search verses field off the scripture with a box shadow so it no longer blends into the verse text.
 - Stop showing "You lost connection to the session" on a remaining host device when another of the host's devices disconnects.
 - Show "You rejoined the session" instead of "The host reconnected to the session" when you come back from a dropped connection and the host reappears at the same time.
 - Actually show the "You lost connection to the session" and "You rejoined the session" toasts when your own connection drops. Losing your connection empties the list of who's in the session — and that list is where the toasts were being worked out from, so it took your own name with it and neither message ever appeared. Turning on airplane mode and turning it off again left you with no word either way; now you're told both times.
