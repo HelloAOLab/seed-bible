@@ -4,6 +4,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import type {
   TutorialManager,
   TutorialPlacement,
+  TutorialStep,
 } from "../../managers/TutorialManager";
 import { useEffect, useRef } from "preact/hooks";
 
@@ -41,7 +42,6 @@ export function Tutorial({
    */
   groupFilter?: "selector" | "non-selector";
 }) {
-  const { t } = useI18n();
   const running = tutorial.running.value;
   const step = tutorial.currentStep.value;
   const canGoBack = tutorial.canGoBack.value;
@@ -191,78 +191,100 @@ export function Tutorial({
           />
         )}
 
+        <TutorialPopoverContent
+          step={step}
+          tutorial={tutorial}
+          isLastStep={isLast}
+          canGoBack={canGoBack}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Shared card body (title + skip, description, back/progress/next) for a tour
+ * step's popover. Used both here and by the book selector's own popover: its
+ * nodes live in a shadow-root portal this component can't reach, so it renders
+ * the card itself but reuses this markup so the two layouts can't drift apart.
+ */
+export function TutorialPopoverContent({
+  step,
+  tutorial,
+  isLastStep,
+  canGoBack,
+}: {
+  step: TutorialStep;
+  tutorial: TutorialManager;
+  isLastStep: boolean;
+  canGoBack: boolean;
+}) {
+  const { t } = useI18n();
+  return (
+    <>
+      <div className="sb-tour-popover-header">
         <h3 className="sb-tour-popover-title">
           {t(step.titleKey, { defaultValue: step.titleDefault })}
         </h3>
-        <p className="sb-tour-popover-body">
-          {t(step.bodyKey, { defaultValue: step.bodyDefault })}
-        </p>
-
-        <div className="sb-tour-popover-actions">
-          {tutorial.steps.length > 1 && (
-            <div
-              className="sb-tour-popover-dots"
-              role="img"
-              aria-label={t("tutorial.stepProgress", {
-                current: tutorial.index.value + 1,
-                total: tutorial.steps.length,
-                defaultValue: "Step {{current}} of {{total}}",
-              })}
-            >
-              {tutorial.steps.map((tourStep, position) => (
-                <span
-                  key={tourStep.id}
-                  className={`sb-tour-dot${
-                    position === tutorial.index.value
-                      ? " sb-tour-dot-active"
-                      : ""
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-          <button
-            type="button"
-            className="sb-tour-btn sb-tour-btn-text"
-            onClick={tutorial.finish}
-          >
-            {t("tutorial.skip", { defaultValue: "Skip" })}
-          </button>
-          <button
-            type="button"
-            className="sb-tour-btn sb-tour-btn-text"
-            onClick={tutorial.optOut}
-          >
-            {t("tutorial.optOut", { defaultValue: "Don't show tutorials" })}
-          </button>
-          <div className="sb-tour-popover-actions-spacer" />
-          {canGoBack && (
-            <button
-              type="button"
-              className="sb-tour-btn sb-tour-btn-back"
-              onClick={tutorial.prev}
-            >
-              {t("tutorial.back", { defaultValue: "Back" })}
-            </button>
-          )}
-          <button
-            type="button"
-            className="sb-tour-btn sb-tour-btn-next"
-            onClick={tutorial.next}
-          >
-            {isLast
-              ? t("tutorial.done", { defaultValue: "Done" })
-              : t("tutorial.next", { defaultValue: "Next" })}
-            {/* `dir="ltr"` isolates the glyph from the surrounding RTL run so
-                Arabic-capable fallback fonts can't mirror it — the arrow points
-                right in every language. */}
-            <span className="sb-tour-next-arrow" dir="ltr" aria-hidden="true">
-              →
-            </span>
-          </button>
-        </div>
+        <button
+          type="button"
+          className="sb-tour-btn sb-tour-btn-text sb-tour-btn-skip"
+          onClick={tutorial.skip}
+        >
+          {t("tutorial.skip", { defaultValue: "Skip" })}
+        </button>
       </div>
-    </div>
+      <p className="sb-tour-popover-body">
+        {t(step.bodyKey, { defaultValue: step.bodyDefault })}
+      </p>
+
+      <div className="sb-tour-popover-actions">
+        {canGoBack && (
+          <button
+            type="button"
+            className="sb-tour-btn sb-tour-btn-back"
+            onClick={tutorial.prev}
+          >
+            {t("tutorial.back", { defaultValue: "Back" })}
+          </button>
+        )}
+        {tutorial.steps.length > 1 && (
+          <div
+            className="sb-tour-popover-dots"
+            role="img"
+            aria-label={t("tutorial.stepProgress", {
+              current: tutorial.index.value + 1,
+              total: tutorial.steps.length,
+              defaultValue: "Step {{current}} of {{total}}",
+            })}
+          >
+            {tutorial.steps.map((tourStep, position) => (
+              <span
+                key={tourStep.id}
+                className={`sb-tour-dot${
+                  position === tutorial.index.value ? " sb-tour-dot-active" : ""
+                }`}
+              />
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          className="sb-tour-btn sb-tour-btn-next"
+          onClick={tutorial.next}
+        >
+          {isLastStep
+            ? t("tutorial.done", { defaultValue: "Done" })
+            : t("tutorial.next", { defaultValue: "Next" })}
+          {/* `dir="ltr"` isolates the glyph from the surrounding RTL run so
+              Arabic-capable fallback fonts can't mirror it — the arrow points
+              right in every language. */}
+          <span className="sb-tour-next-arrow" dir="ltr" aria-hidden="true">
+            →
+          </span>
+        </button>
+      </div>
+    </>
   );
 }
 

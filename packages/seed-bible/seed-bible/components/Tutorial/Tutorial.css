@@ -67,12 +67,27 @@
   opacity: 1;
 }
 
+/* Title + skip sit on one row so skip stays pinned to the dialog's upper
+   trailing corner (upper-right in LTR, upper-left in RTL) rather than
+   reflowing with the other controls. */
+.sb-tour-popover-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .sb-tour-popover-title {
   margin: 0 0 0.375rem;
   font-family: system-ui, sans-serif;
   font-size: 1rem;
   line-height: 1;
   font-weight: 700;
+}
+
+.sb-tour-btn-skip {
+  flex: 0 0 auto;
+  padding: 0.125rem 0.375rem;
 }
 
 .sb-tour-popover-body {
@@ -83,23 +98,24 @@
   opacity: 0.7;
 }
 
+/* Back/next are anchored to the dialog's leading/trailing bottom corners so
+   their position never shifts as steps come and go — only their presence
+   does. Back (when shown) sits first in the row; the dots take whatever
+   space is left between it and next; next's `margin-inline-start: auto`
+   pins it to the trailing edge even when back and/or the dots are absent. */
 .sb-tour-popover-actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 0.5rem;
-}
-
-.sb-tour-popover-actions-spacer {
-  flex: 1 1 auto;
 }
 
 /* Step progress. Only rendered for tours with more than one step. */
 .sb-tour-popover-dots {
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
   gap: 0.3125rem;
-  margin-right: 0.25rem;
 }
 
 .sb-tour-popover-actions-right {
@@ -161,6 +177,9 @@
   gap: 0.375rem;
   padding-left: 0.125rem;
   padding-right: 0.125rem;
+  /* Pins next to the row's trailing edge (right in LTR, left in RTL) whether
+     or not back and/or the progress dots are present. */
+  margin-inline-start: auto;
 }
 
 .sb-tour-next-arrow {
