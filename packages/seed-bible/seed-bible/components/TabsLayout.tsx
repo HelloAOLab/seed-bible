@@ -3,7 +3,6 @@ import {
   CHAPTER_SKELETON_DELAY_MS,
 } from "./BibleReader/BibleReader";
 import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
-import { ReadingPlanBelongsCard } from "./ReadingPlanBelongsCard/ReadingPlanBelongsCard";
 import type {
   ApiRequestOptions,
   TranslationBookChapter,
@@ -49,6 +48,23 @@ const SWIPE_LOCK_THRESHOLD_PX = 10;
  * chapter falls back to dimmed text before the placeholder appears.
  */
 const SWIPE_SETTLE_BUDGET_MS = CHAPTER_SKELETON_DELAY_MS / 2;
+
+// The discover panel scrolls its own filter chip row horizontally and its own
+// content vertically — a touch that starts there must not be claimed by the
+// chapter-swipe gesture below, or the gesture's preventDefault() steals the
+// filter row's native horizontal scroll.
+const DISCOVER_PANEL_SELECTOR = ".sb-bible-reader-discover-panel";
+
+const isInsideDiscoverPanel = (target: EventTarget | null) =>
+  target instanceof Element && target.closest(DISCOVER_PANEL_SELECTOR) !== null;
+
+function clearSwipeTrackInlineStyles(track: HTMLDivElement | null) {
+  if (!track) {
+    return;
+  }
+  track.style.removeProperty("transition");
+  track.style.removeProperty("transform");
+}
 
 export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
@@ -336,6 +352,16 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
+      if (isInsideDiscoverPanel(event.target)) {
+        // Leave the start coordinates unset — `onTouchMove` bails out on that
+        // for the rest of this gesture, so the panel's own scrolling proceeds
+        // untouched.
+        swipeTouchStartX.current = null;
+        swipeTouchStartY.current = null;
+        swipeDirectionLocked.current = null;
+        return;
+      }
+
       swipeTouchStartX.current = touch.clientX;
       swipeTouchStartY.current = touch.clientY;
       swipeDirectionLocked.current = null;
@@ -554,6 +580,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       // bump stops a settled one writing to a track this effect no longer owns.
       window.clearTimeout(swipeCommitTimer.current);
       swipeCommitToken.current += 1;
+      clearSwipeTrackInlineStyles(swipeTrackRef.current);
       viewport.removeEventListener("touchstart", onTouchStart);
       viewport.removeEventListener("touchmove", onTouchMove);
       viewport.removeEventListener("touchend", onTouchEnd);
@@ -640,7 +667,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           return;
         }
 
-        track.style.removeProperty("transform");
+        clearSwipeTrackInlineStyles(track);
       }),
     [readingState]
   );
@@ -657,17 +684,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }, 50);
   };
 
-  // On mobile the reader's chapter panel is the scroll container, so the card
-  // goes inside it (via `belowContent`) and is reached by scrolling to the end
-  // of the passage. On desktop the pane itself scrolls, so it stays a sibling
-  // rendered after the reader.
-  const belongsCard = (
-    <ReadingPlanBelongsCard state={state} readingState={readingState} />
-  );
-
   const mobileChrome = isMobile
     ? {
-        belowContent: belongsCard,
         isScrolled,
         prevChapterPreview,
         nextChapterPreview,
@@ -688,38 +706,47 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }
     : undefined;
 
+  // Swipe writes `transform` as an inline style. Effects run after the DOM
+  // commit, so on a layout change Preact can reuse that node as desktop
+  // content with the leftover translate still on it — the chapter then sits
+  // partly offscreen. Strip it here, while the ref still points at the track.
+  if (!isMobile) {
+    clearSwipeTrackInlineStyles(swipeTrackRef.current);
+  }
+
   return (
-    <div
-      className={`sb-pane-reader${isMobile ? " sb-pane-reader-mobile" : ""}`}
-      ref={slotScrollerRefCallback}
-    >
-      <BibleReader
-        currentSlot={slot}
-        readingState={readingState}
-        selectorState={state.selector}
-        state={state}
-        mobileChrome={mobileChrome}
-        sharedSession={tab.sharedSession}
-      />
-      {!isMobile && belongsCard}
-      {!isMobile && (
-        <BelowReaderToolbar
-          toolsManager={state.tools}
-          readingState={readingState}
-          sharedSession={tab.sharedSession}
-          selectorState={state.selector}
-          tabsManager={state.tabs}
-          panesManager={state.panes}
-          tabsLayoutManager={state.tabsLayout}
-          openSidebar={state.sidebar.openSidebar}
-          openSearch={state.sidebar.openSearch}
+    <div className="sb-pane-reader-outer">
+      <div
+        className={`sb-pane-reader${isMobile ? " sb-pane-reader-mobile" : ""}`}
+        ref={slotScrollerRefCallback}
+      >
+        <BibleReader
           currentSlot={slot}
-          toast={state.app.toast}
-          openChat={state.sidebar.openChatPanel}
-          chats={state.chats}
-          features={state.features}
+          readingState={readingState}
+          selectorState={state.selector}
+          state={state}
+          mobileChrome={mobileChrome}
+          sharedSession={tab.sharedSession}
         />
-      )}
+        {!isMobile && (
+          <BelowReaderToolbar
+            toolsManager={state.tools}
+            readingState={readingState}
+            sharedSession={tab.sharedSession}
+            selectorState={state.selector}
+            tabsManager={state.tabs}
+            panesManager={state.panes}
+            tabsLayoutManager={state.tabsLayout}
+            openSidebar={state.sidebar.openSidebar}
+            openSearch={state.sidebar.openSearch}
+            currentSlot={slot}
+            toast={state.app.toast}
+            openChat={state.sidebar.openChatPanel}
+            chats={state.chats}
+            features={state.features}
+          />
+        )}
+      </div>
     </div>
   );
 }

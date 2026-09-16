@@ -31,7 +31,7 @@ patchedDependencies:
 catalog:
   i18next: "26.2.0"
   i18next-resources-to-backend: "^1.2.1"
-  preact: "10.29.2"
+  preact: "10.29.8"
   preact-iso: "^2.12.0"
   react: "npm:@preact/compat@^18.3.2"
   react-dom: "npm:@preact/compat@^18.3.2"

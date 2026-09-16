@@ -1,9 +1,10 @@
-import { computed, signal, type ReadonlySignal } from "@preact/signals";
+import { batch, computed, signal, type ReadonlySignal } from "@preact/signals";
 import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "../managers/ProfileConfigSync";
+import { safeLocalStorage } from "../app/ssrEnv";
 
 /**
  * The platform the app is currently running on. Used to decide how the app can
@@ -81,16 +82,12 @@ export function isStandalone(): boolean {
 }
 
 function readFlag(key: string): boolean {
-  try {
-    return window.localStorage.getItem(key) === "true";
-  } catch {
-    return false;
-  }
+  return safeLocalStorage.getItem(key) === "true";
 }
 
 function writeFlag(key: string): void {
   try {
-    window.localStorage.setItem(key, "true");
+    safeLocalStorage.setItem(key, "true");
   } catch {
     // Best-effort — onboarding still works without persistence, it just may
     // show again on the next visit.
@@ -127,6 +124,13 @@ export interface OnboardingManager {
    * Called when an install completes.
    */
   markInstalled: () => void;
+
+  /**
+   * Applies the device's real `localStorage` install/dismissed flags. They seed
+   * to their SSR values so the client's first render matches the served HTML;
+   * call once from a post-mount effect via `AppState.hydrateFromStorage`.
+   */
+  hydrateStoredFlags: () => void;
 }
 
 /**
@@ -159,7 +163,18 @@ export function createOnboardingManager(
   // Whether the user dismissed the install prompt ("Maybe later"). Profile is
   // the source of truth when logged in, with a localStorage cache for
   // anonymous/offline use.
-  const dismissedLocally = signal<boolean>(readFlag(INSTALL_DISMISSED_KEY));
+  const dismissedLocally = signal<boolean>(false);
+
+  /**
+   * Applies the device's real install/dismissed flags. See
+   * `OnboardingManager.hydrateStoredFlags`.
+   */
+  const hydrateStoredFlags = () => {
+    batch(() => {
+      dismissedLocally.value =
+        dismissedLocally.value || readFlag(INSTALL_DISMISSED_KEY);
+    });
+  };
 
   const dismissed = computed<boolean>(() => {
     if (dismissedLocally.value) {
@@ -200,5 +215,6 @@ export function createOnboardingManager(
     dismissInstall,
     openInstall,
     markInstalled,
+    hydrateStoredFlags,
   };
 }

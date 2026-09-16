@@ -1,5 +1,7 @@
 import {
+  batch,
   computed,
+  effect,
   signal,
   type ReadonlySignal,
   type Signal,
@@ -439,17 +441,25 @@ function toKebabCase(value: string): string {
   return value.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
 }
 
+/** Keep a value from closing the `body { }` theme rule and wiping every `--sb-*` color. */
+function sanitizeCssValue(value: string): string {
+  return value.replace(/[{}<;]/g, "");
+}
+
 export function generateThemeCssVariables(variables: BibleTheme): string {
   const cssVariables = Object.entries(variables.variables)
     .filter(([, value]) => value !== undefined && value !== null)
-    .map(([key, value]) => `--sb-${toKebabCase(key)}: ${value};`)
+    .map(
+      ([key, value]) =>
+        `--sb-${toKebabCase(key)}: ${sanitizeCssValue(String(value))};`
+    )
     .join("\n");
 
   const highlightColorVariables = Object.entries(variables.highlightColors)
     .flatMap(([key, value]) => [
-      `--sb-highlight-${key}-color: ${value.color};`,
-      `--sb-highlight-${key}-font-color: ${value.fontColor};`,
-      `--sb-highlight-${key}-words-of-jesus-font-color: ${value.wordsOfJesusFontColor};`,
+      `--sb-highlight-${key}-color: ${sanitizeCssValue(String(value.color))};`,
+      `--sb-highlight-${key}-font-color: ${sanitizeCssValue(String(value.fontColor))};`,
+      `--sb-highlight-${key}-words-of-jesus-font-color: ${sanitizeCssValue(String(value.wordsOfJesusFontColor))};`,
     ])
     .join("\n");
 
@@ -460,18 +470,98 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
   // Highlighted text keeps a readable font color; the highlight *background* is
   // drawn behind the text by the ribbon layer (from `--sb-highlight-<id>-color`),
   // not as a `background-color` here.
+  //
+  // Un-nested selectors: this string is assigned to a <style> tag's
+  // `textContent` on every theme change. Nested `&` is valid in a stylesheet
+  // file, but assigning it through the CSSOM can make the engine throw out
+  // the whole tag — every `--sb-*` color on `body` included.
   return Object.entries(theme.highlightColors)
     .map(([colorId]) => {
       return [
         `.sb-highlight-${colorId} {`,
         `color: var(--sb-highlight-${colorId}-font-color);`,
-        `&.sb-words-of-jesus { `,
+        `}`,
+        `.sb-highlight-${colorId}.sb-words-of-jesus {`,
         `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,
         `}`,
-        ` }`,
       ].join("\n");
     })
     .join("\n");
+}
+
+/**
+ * Whether the `#sb-theme-styles` tag already holds a real theme (rendered by
+ * the server and possibly corrected by the pre-hydration inline script in
+ * `index.html`), as opposed to being absent, empty, or the un-substituted
+ * placeholder the dev server leaves behind. Detected by the `--sb-` custom
+ * properties every composed theme emits — see `composeThemeStyleText`.
+ */
+function hasRenderedThemeStyles(): boolean {
+  const tag = document.getElementById("sb-theme-styles");
+  return !!tag?.textContent?.includes("--sb-");
+}
+
+/**
+ * The app-chrome color the Android/Chrome status bar should use. Parsed
+ * from composed theme CSS so the pre-hydration inline script in
+ * `index.html` (which only has that CSS string) and this manager stay on
+ * the same value without a second payload.
+ */
+export function parseThemeBackgroundColor(css: string): string | null {
+  const match = /--sb-background:\s*([^;]+)/.exec(css);
+  const value = match?.[1]?.trim();
+  return value && value.length > 0 ? value : null;
+}
+
+/**
+ * Android Chrome (and other browsers) color the installed-PWA status bar
+ * from `<meta name="theme-color">`. A tag without `media` always matches,
+ * so any leftover `prefers-color-scheme` tags from an older SSR document
+ * would be ignored only if we also strip `media` and keep every copy in
+ * sync — browsers walk the tags in tree order and stop at the first match.
+ */
+export function applyBrowserThemeColor(color: string): void {
+  if (typeof document === "undefined") return;
+  const metas = [
+    ...document.head.querySelectorAll('meta[name="theme-color"]'),
+  ] as HTMLMetaElement[];
+  if (metas.length === 0) {
+    const tag = document.createElement("meta");
+    tag.name = "theme-color";
+    tag.id = "sb-theme-color";
+    tag.content = color;
+    document.head.appendChild(tag);
+    return;
+  }
+  for (const tag of metas) {
+    tag.removeAttribute("media");
+    tag.content = color;
+  }
+}
+
+function applyBrowserThemeColorFromCss(css: string): void {
+  const color = parseThemeBackgroundColor(css);
+  if (color) applyBrowserThemeColor(color);
+}
+
+/**
+ * `<style>`-ready text for a theme (variables + highlight classes), scoped
+ * to `body` — NOT `:root`/`html`. See CLAUDE.md: `ThemeManager`'s
+ * body-scoped custom properties beat `base.css`'s `:root` block via DOM-
+ * proximity inheritance, not CSS specificity, so wherever this text ends up
+ * in the document, the selector inside it must stay `body`.
+ *
+ * `<` is stripped defensively: it never appears in a legitimate value here
+ * (colors, sizes, font names), and custom theme/highlight overrides are
+ * free text that isn't validated for CSS syntax (see
+ * `filterValidColorOverrides` below — it only checks for a non-empty
+ * string). This text ends up spliced as a raw string into `index.html`
+ * server-side (see `entry-ssr.tsx`'s `THEME_STYLE_TAG` substitution), so an
+ * override containing `</style` could otherwise break out of that tag.
+ */
+export function composeThemeStyleText(theme: BibleTheme): string {
+  const css = `body {\n${generateThemeCssVariables(theme)}\n}\n${generateThemeCssClasses(theme)}`;
+  return css.replace(/</g, "");
 }
 
 const LIGHT_THEME: BibleTheme = {
@@ -649,14 +739,28 @@ const LIGHT_THEME: BibleTheme = {
   },
 };
 
+/**
+ * The Light theme's own font-family values, keyed by `ThemeFontFamilyKey`.
+ * Used to offer a "Default" option in a customization's font picker that
+ * always means "the Seed Bible Light theme's font," regardless of which
+ * theme the editor happens to be previewing.
+ */
+export const LIGHT_THEME_FONT_DEFAULTS: Record<ThemeFontFamilyKey, string> = {
+  fontFamily: LIGHT_THEME.variables.fontFamily,
+  bookTitleFontFamily: LIGHT_THEME.variables.bookTitleFontFamily!,
+  chapterHeadingFontFamily: LIGHT_THEME.variables.chapterHeadingFontFamily!,
+  verseFontFamily: LIGHT_THEME.variables.verseFontFamily!,
+  hebrewSubtitleFontFamily: LIGHT_THEME.variables.hebrewSubtitleFontFamily!,
+};
+
 const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
   variables: {
-    primaryColor: "#e6e6e6",
+    primaryColor: "#e07b4c",
     primaryFontColor: "#111111",
 
-    secondaryColor: "#262626",
+    secondaryColor: "#433228",
     secondaryFontColor: "#f5f5f5",
 
     tertiaryColor: "#1c1c1c",
@@ -832,6 +936,19 @@ const DARK_THEME: BibleTheme = {
 };
 
 /**
+ * Precomposed style text for the two built-in presets, with no custom
+ * overrides applied. Consumed both server-side (`entry-ssr.tsx` seeds a
+ * `<!-- THEME_PRESETS_JSON -->` payload from this) and by the pre-hydration
+ * inline script in `index.html`, which reads it before any JS bundle loads.
+ * Keeping this as the one place that composes preset text is what keeps
+ * that script and the runtime effect below from silently diverging.
+ */
+export const THEME_PRESET_STYLE_TEXT: Record<string, string> = {
+  [LIGHT_THEME.id]: composeThemeStyleText(LIGHT_THEME),
+  [DARK_THEME.id]: composeThemeStyleText(DARK_THEME),
+};
+
+/**
  * Keys of `BibleThemeVariables` that represent a plain color value and are
  * safe to expose in a generic color-picker UI. Typography, spacing, borders,
  * and composite CSS values are intentionally excluded.
@@ -858,10 +975,12 @@ export type ThemeColorKey =
   | "selectedVerseTextDecorationColor"
   | "hebrewSubtitleFontColor"
   | "readerToolbarBackground"
+  | "readerToolbarFontColor"
   | "readerToolbarFloatingButtonBackground"
   | "readerToolbarFloatingButtonFontColor"
   | "tabFontColor"
-  | "selectedTabFontColor";
+  | "selectedTabFontColor"
+  | "dividerColor";
 
 export interface ThemeColorField {
   key: ThemeColorKey;
@@ -901,6 +1020,7 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
         key: "readerToolbarFloatingButtonBackground",
         label: "Floating button background",
       },
+      { key: "dividerColor", label: "Divider" },
     ],
   },
   {
@@ -915,6 +1035,7 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
       { key: "chapterHeadingFontColor", label: "Chapter heading" },
       { key: "verseFontColor", label: "Verse" },
       { key: "hebrewSubtitleFontColor", label: "Hebrew subtitle" },
+      { key: "readerToolbarFontColor", label: "Reader toolbar text" },
       {
         key: "readerToolbarFloatingButtonFontColor",
         label: "Floating button text",
@@ -958,14 +1079,21 @@ export const DEFAULT_HIGHLIGHT_IDS = [
 
 export type HighlightId = (typeof DEFAULT_HIGHLIGHT_IDS)[number];
 
-type ThemeOverrides = Partial<Record<ThemeColorKey, string>>;
-type HighlightOverrides = Record<string, Partial<ThemeHighlightColor>>;
+export type ThemeOverrides = Partial<
+  Record<ThemeColorKey | ThemeFontFamilyKey, string>
+>;
+export type HighlightOverrides = Record<string, Partial<ThemeHighlightColor>>;
 
 const THEME_COLOR_KEYS: ThemeColorKey[] = THEME_COLOR_GROUPS.flatMap((group) =>
   group.fields.map((field) => field.key)
 );
 
-function applyHighlightOverrides(
+/**
+ * Merges per-highlight-id color overrides onto a theme's own highlight
+ * colors, filling in any field an override omits from that theme's existing
+ * value. A no-op (returns `theme` unchanged) when `overrides` is empty.
+ */
+export function applyHighlightOverrides(
   theme: BibleTheme,
   overrides: HighlightOverrides
 ): BibleTheme {
@@ -986,11 +1114,49 @@ function applyHighlightOverrides(
  * raw `Record<string, string>` (it doesn't know about `ThemeColorKey`); this
  * is the theme-domain validation layered on top of that generic storage.
  */
-function filterValidColorOverrides(
+export function filterValidColorOverrides(
   raw: Record<string, string>
 ): ThemeOverrides {
   const overrides: ThemeOverrides = {};
   for (const key of THEME_COLOR_KEYS) {
+    const value = raw[key];
+    if (typeof value === "string" && value.length > 0) {
+      overrides[key] = value;
+    }
+  }
+  return overrides;
+}
+
+/**
+ * Keys of `BibleThemeVariables` that hold a font-family stack and are safe
+ * to expose in a font-picker UI (as opposed to a plain color picker).
+ */
+export type ThemeFontFamilyKey =
+  | "fontFamily"
+  | "bookTitleFontFamily"
+  | "chapterHeadingFontFamily"
+  | "verseFontFamily"
+  | "hebrewSubtitleFontFamily";
+
+const THEME_FONT_FAMILY_KEYS: ThemeFontFamilyKey[] = [
+  "fontFamily",
+  "bookTitleFontFamily",
+  "chapterHeadingFontFamily",
+  "verseFontFamily",
+  "hebrewSubtitleFontFamily",
+];
+
+/**
+ * Same purpose as `filterValidColorOverrides`, scoped to font-family keys.
+ * Kept as its own function (rather than folded into `filterValidColorOverrides`)
+ * so it isn't accidentally reachable from the app's own color-only
+ * "Customize colors" feature, which only ever narrows against `ThemeColorKey`.
+ */
+export function filterValidFontFamilyOverrides(
+  raw: Record<string, string>
+): Partial<Record<ThemeFontFamilyKey, string>> {
+  const overrides: Partial<Record<ThemeFontFamilyKey, string>> = {};
+  for (const key of THEME_FONT_FAMILY_KEYS) {
     const value = raw[key];
     if (typeof value === "string" && value.length > 0) {
       overrides[key] = value;
@@ -1034,6 +1200,26 @@ export interface ThemeManager {
   ) => void;
   resetHighlightColor: (colorId: string) => void;
   resetAllHighlightColors: () => void;
+  /**
+   * Live, non-committing preview of a theme color — reflected in
+   * `currentTheme` (and the injected `--sb-*` CSS) immediately, but never
+   * written to `settings`. Meant to be called on a `ColorPicker`'s
+   * `onPreview` while the user drags; `setCustomColor` clears any pending
+   * preview for the same key once the color is actually committed.
+   */
+  previewCustomColor: (key: ThemeColorKey, value: string) => void;
+  /** Discards a pending `previewCustomColor`, e.g. on the picker's `onCancel`. */
+  clearPreviewCustomColor: (key: ThemeColorKey) => void;
+  /** Same as `previewCustomColor`, for one field of a highlight color. */
+  previewHighlightColor: (
+    colorId: string,
+    patch: Partial<ThemeHighlightColor>
+  ) => void;
+  /** Discards a pending `previewHighlightColor` field, e.g. on `onCancel`. */
+  clearPreviewHighlightField: (
+    colorId: string,
+    field: keyof ThemeHighlightColor
+  ) => void;
 }
 
 export function createTheme(settings: SettingsManager): ThemeManager {
@@ -1047,6 +1233,16 @@ export function createTheme(settings: SettingsManager): ThemeManager {
     () => settings.settings.value.customHighlights
   );
 
+  /**
+   * In-memory-only overrides from an open `ColorPicker`'s live drag. Never
+   * read from or written to `settings`, so there is nothing to undo on
+   * reload — a picker's `onCancel` (or the next commit for the same key)
+   * simply clears the entry and `currentTheme` falls back to
+   * `customOverrides`/`customHighlightOverrides`.
+   */
+  const previewOverrides = signal<ThemeOverrides>({});
+  const previewHighlightOverrides = signal<HighlightOverrides>({});
+
   const basePresetTheme = computed<BibleTheme>(
     () =>
       themes.value.find((theme) => theme.id === selectedThemeId.value) ??
@@ -1054,12 +1250,84 @@ export function createTheme(settings: SettingsManager): ThemeManager {
       LIGHT_THEME
   );
 
-  const currentTheme = computed<BibleTheme>(() =>
-    applyHighlightOverrides(
+  const currentTheme = computed<BibleTheme>(() => {
+    const withColorOverrides = applyOverrides(
       applyOverrides(basePresetTheme.value, customOverrides.value),
-      customHighlightOverrides.value
-    )
+      previewOverrides.value
+    );
+    return applyHighlightOverrides(
+      applyHighlightOverrides(
+        withColorOverrides,
+        customHighlightOverrides.value
+      ),
+      previewHighlightOverrides.value
+    );
+  });
+
+  const themeStyleText = computed(() =>
+    composeThemeStyleText(currentTheme.value)
   );
+
+  // Writes the active theme (preset + custom overrides) directly to a
+  // <head> <style> tag, entirely outside the Preact tree. This is a plain
+  // @preact/signals `effect()`, not `useEffect` — it runs synchronously the
+  // moment `createTheme()` is called (during `createSeedBibleState()`,
+  // before Preact's first render/hydrate pass), same as the in-tree
+  // <style> this replaced used to, but the target (document.head) is never
+  // diffed by Preact, so there is no hydration-mismatch class of bug here
+  // at all.
+  //
+  // Reuses id "sb-theme-styles" — the SAME id the SSR-rendered <style> tag
+  // in index.html carries, and the same id the pre-hydration inline script
+  // writes to. All three converge on one element.
+  //
+  // The first run does NOT write, though, whenever that element already
+  // holds real theme CSS. Being outside the diffed tree means no
+  // *mismatch* risk, but it does not exempt this from the *flash* the
+  // deferred `localConfig` seed creates: at `createTheme()` time
+  // `login.localConfig` is still empty (see LoginManager), so `themeId` is
+  // the default "light" even for a visitor whose saved theme is dark, and
+  // writing it here would clobber the dark CSS the pre-hydration inline
+  // script just put in that tag — painting light until
+  // `hydrateLocalConfig()` restores the real id post-mount. Whatever is
+  // already in the tag (server-rendered, then corrected by that inline
+  // script from `localStorage`) is the better answer until then, so this
+  // takes over only from the first real *change* onwards.
+  if (typeof document !== "undefined") {
+    let skipWrite = hasRenderedThemeStyles();
+    effect(() => {
+      const text = themeStyleText.value;
+      if (skipWrite) {
+        skipWrite = false;
+        // Keep the already-painted CSS (it may be dark while `currentTheme`
+        // is still the light default — see the skipWrite comment above),
+        // but copy its --sb-background onto the status-bar meta. The
+        // inline script does this too; doing it here covers a cached
+        // document whose script predates that update.
+        applyBrowserThemeColorFromCss(
+          document.getElementById("sb-theme-styles")?.textContent ?? ""
+        );
+        return;
+      }
+      // A broken compose (empty, or a value that closed `body {` early) would
+      // replace the live theme tag and strip every `--sb-*` color until
+      // refresh. Keep whatever is already on the page if this text isn't a
+      // real theme.
+      if (!text.includes("--sb-background:")) {
+        return;
+      }
+      let tag = document.getElementById(
+        "sb-theme-styles"
+      ) as HTMLStyleElement | null;
+      if (!tag) {
+        tag = document.createElement("style");
+        tag.id = "sb-theme-styles";
+        document.head.appendChild(tag);
+      }
+      tag.textContent = text;
+      applyBrowserThemeColorFromCss(text);
+    });
+  }
 
   const setTheme = (themeId: string) => {
     if (themes.value.some((theme) => theme.id === themeId)) {
@@ -1071,8 +1339,22 @@ export function createTheme(settings: SettingsManager): ThemeManager {
     settings.setCustomTheme(next);
   };
 
+  const previewCustomColor = (key: ThemeColorKey, value: string) => {
+    previewOverrides.value = { ...previewOverrides.value, [key]: value };
+  };
+
+  const clearPreviewCustomColor = (key: ThemeColorKey) => {
+    if (!(key in previewOverrides.value)) return;
+    const next = { ...previewOverrides.value };
+    delete next[key];
+    previewOverrides.value = next;
+  };
+
   const setCustomColor = (key: ThemeColorKey, value: string) => {
-    writeOverrides({ ...customOverrides.value, [key]: value });
+    batch(() => {
+      writeOverrides({ ...customOverrides.value, [key]: value });
+      clearPreviewCustomColor(key);
+    });
   };
 
   const resetCustomColor = (key: ThemeColorKey) => {
@@ -1089,15 +1371,47 @@ export function createTheme(settings: SettingsManager): ThemeManager {
     settings.setCustomHighlights(next);
   };
 
+  const previewHighlightColor = (
+    colorId: string,
+    patch: Partial<ThemeHighlightColor>
+  ) => {
+    const existing = previewHighlightOverrides.value[colorId] ?? {};
+    previewHighlightOverrides.value = {
+      ...previewHighlightOverrides.value,
+      [colorId]: { ...existing, ...patch },
+    };
+  };
+
+  const clearPreviewHighlightField = (
+    colorId: string,
+    field: keyof ThemeHighlightColor
+  ) => {
+    const existing = previewHighlightOverrides.value[colorId];
+    if (!existing || !(field in existing)) return;
+    const next = { ...previewHighlightOverrides.value };
+    const { [field]: _removed, ...rest } = existing;
+    if (Object.keys(rest).length === 0) {
+      delete next[colorId];
+    } else {
+      next[colorId] = rest;
+    }
+    previewHighlightOverrides.value = next;
+  };
+
   const setHighlightColor = (
     colorId: string,
     patch: Partial<ThemeHighlightColor>
   ) => {
-    const current = customHighlightOverrides.value;
-    const existing = current[colorId] ?? {};
-    writeHighlightOverrides({
-      ...current,
-      [colorId]: { ...existing, ...patch },
+    batch(() => {
+      const current = customHighlightOverrides.value;
+      const existing = current[colorId] ?? {};
+      writeHighlightOverrides({
+        ...current,
+        [colorId]: { ...existing, ...patch },
+      });
+      for (const field of Object.keys(patch) as (keyof ThemeHighlightColor)[]) {
+        clearPreviewHighlightField(colorId, field);
+      }
     });
   };
 
@@ -1125,5 +1439,9 @@ export function createTheme(settings: SettingsManager): ThemeManager {
     setHighlightColor,
     resetHighlightColor,
     resetAllHighlightColors,
+    previewCustomColor,
+    clearPreviewCustomColor,
+    previewHighlightColor,
+    clearPreviewHighlightField,
   };
 }

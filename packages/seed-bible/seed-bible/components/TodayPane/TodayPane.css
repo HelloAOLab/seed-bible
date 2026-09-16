@@ -25,9 +25,10 @@
   padding-bottom: 4rem;
 
   /* A third, more muted text tier than `--sb-secondary-font-color`: the
-     resume card deliberately pairs the two, so they are not interchangeable.
-     Local rather than a theme token because core has no equivalent, and this
-     mid-grey is legible on both themes as-is. */
+     welcome screen's greeting and book label pair it against the brighter
+     `--sb-font-color` verse text below them. Local rather than a theme token
+     because core has no equivalent, and this mid-grey is legible on both
+     themes as-is. */
   --sb-today-muted-font-color: #989898;
 }
 
@@ -81,6 +82,36 @@
   text-align: center;
 }
 
+/* Both wait on an async translation lookup, so they start hidden and grow in
+   instead of snapping into place -- also easing the buttons below down
+   smoothly, as later siblings in this gapped column. `grid-template-rows`
+   (0fr -> 1fr) grows to the real content height rather than a guessed
+   `max-height` cap, so a font change can't clip it; the inner
+   `.sb-today-welcome-screen-reveal` needs its own `overflow: hidden` for the
+   0fr row to actually clip it mid-transition. */
+.sb-today-welcome-screen .sb-today-welcome-screen-book,
+.sb-today-welcome-screen .sb-today-welcome-screen-verse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    opacity 1s ease,
+    grid-template-rows 1s ease;
+}
+
+.sb-today-welcome-screen
+  .sb-today-welcome-screen-book.sb-today-welcome-screen-passage-visible,
+.sb-today-welcome-screen
+  .sb-today-welcome-screen-verse.sb-today-welcome-screen-passage-visible {
+  opacity: 1;
+  grid-template-rows: 1fr;
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-reveal {
+  overflow: hidden;
+  min-height: 0;
+}
+
 .sb-today-welcome-screen
   .sb-today-welcome-screen-verse
   .sb-today-welcome-screen-verse-highlight {
@@ -91,7 +122,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.25rem;
   width: 100%;
 }
 
@@ -100,29 +130,73 @@
   border-radius: 0.25rem;
   font-size: 0.75rem;
   appearance: none;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
   font-weight: 600;
 }
 
 .sb-today-welcome-screen
   .sb-today-welcome-screen-navigation
   .sb-today-book-selector-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
   background-color: var(--sb-reader-background);
   color: var(--sb-reader-font-color);
   border-color: var(--sb-reader-font-color);
 }
 
+/* Skips the 0fr grid technique above: as a flex item with the default
+   `flex-basis: auto`, this button asks the grid for its own intrinsic size,
+   and per spec that context treats `fr` tracks as `auto` instead of
+   collapsing -- so `0fr` never reached true 0 width and visibly nudged the
+   book-selector button off-centre. `max-width` is a plain box clamp instead,
+   unaffected by that carve-out; the generous cap is safe since the label is
+   short and bounded, unlike the verse quote. Padding and the icon gap live on
+   the inner `.sb-today-welcome-screen-reveal` span so they collapse too, and
+   the leading margin animates in lockstep so the button contributes zero
+   width and zero gap while hidden. */
 .sb-today-welcome-screen .sb-today-welcome-screen-start-button {
+  overflow: hidden;
   border: none;
+  /* The UA stylesheet's default button padding (e.g. Chrome's `1px 6px`)
+     isn't reset by `appearance: none`, and left alone it's 12px the
+     max-width collapse below can't clip away -- the real padding lives on
+     the inner `.sb-today-welcome-screen-reveal` span instead. */
+  padding: 0;
   background-color: var(--sb-primary-color);
   color: var(--sb-reader-background);
+  opacity: 1;
+  max-width: 14rem;
+  margin-left: 1.25rem;
+  transition:
+    max-width 0.5s ease,
+    margin-left 0.5s ease,
+    opacity 0.4s ease;
 }
 
-.sb-today-welcome-screen .sb-today-welcome-screen-start-button > span {
+.sb-today-welcome-screen .sb-today-welcome-screen-start-button:disabled {
+  max-width: 0;
+  margin-left: 0;
+  opacity: 0;
+  cursor: default;
+}
+
+.sb-today-welcome-screen
+  .sb-today-welcome-screen-start-button
+  .sb-today-welcome-screen-reveal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+}
+
+.sb-today-welcome-screen
+  .sb-today-welcome-screen-start-button
+  .sb-today-welcome-screen-reveal
+  > span {
   font-size: 1rem;
 }
 
@@ -183,9 +257,8 @@
   height: 2.25rem;
   justify-self: end;
   align-self: self-start;
-  background-color: #f1ece4;
-  background-color: var(--sb-tertiary-color);
-  color: var(--sb-reader-font-color);
+  background-color: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-header > button:nth-of-type(1) {
@@ -229,7 +302,7 @@
 }
 
 .sb-today-container .sb-today-resume-card > h1 > span {
-  color: var(--sb-today-muted-font-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-container .sb-today-resume-card > button {
@@ -247,7 +320,7 @@
 }
 
 .sb-today-container .sb-today-resume-card > button > span {
-  color: var(--sb-background);
+  color: var(--sb-primary-font-color);
 }
 
 /* Loading placeholder for the resume card — shown while the reading-history
@@ -297,7 +370,7 @@
   .sb-today-titled-section-header
   > button {
   margin: 0;
-  color: var(--sb-today-muted-font-color);
+  color: var(--sb-font-color);
 }
 
 .sb-today-container .sb-today-titled-section .sb-today-titled-section-header {
@@ -344,7 +417,7 @@
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: 1fr;
-  background-color: var(--sb-tertiary-color);
+  background-color: var(--sb-secondary-color);
   border-radius: 0.5rem;
   justify-content: center;
   align-items: center;
@@ -353,13 +426,13 @@
 }
 
 .sb-today-container .sb-today-search-container .sb-today-searchbar > span {
-  color: var(--sb-reader-font-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-container .sb-today-search-container .sb-today-searchbar > input {
   background-color: transparent;
   border: none;
-  color: var(--sb-reader-font-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-container
@@ -568,13 +641,13 @@
   .sb-today-timespan-filter-container
   .sb-today-timespan-filter-option {
   border: none;
-  background-color: var(--sb-tertiary-color);
+  background-color: var(--sb-secondary-color);
   border-radius: 1.875rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;
   min-width: 3.25rem;
   font-weight: 500;
-  color: var(--sb-reader-font-color);
+  color: var(--sb-secondary-font-color);
   flex-shrink: 0;
 }
 
@@ -582,14 +655,18 @@
   .sb-today-history-card
   .sb-today-timespan-filter-container
   .sb-today-timespan-filter-option:hover {
-  background-color: var(--sb-secondary-color);
+  background-color: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    var(--sb-font-color) 8%
+  );
 }
 
 .sb-today-container
   .sb-today-history-card
   .sb-today-timespan-filter-container
   .sb-today-timespan-filter-option.sb-today-timespan-filter-option-selected {
-  color: var(--sb-reader-background);
+  color: var(--sb-primary-font-color);
   background-color: var(--sb-primary-color);
 }
 
@@ -806,6 +883,17 @@
     flex-direction: column-reverse;
     align-items: stretch;
     gap: 1rem;
+  }
+  /* The stacked mobile layout stretches both buttons to full width, so the
+     row-recentring above doesn't apply -- the leading margin would otherwise
+     misalign this button against its stretched sibling once it reveals, and
+     the desktop `max-width` cap would clip it short of the full stretch
+     width once enabled. `100%` rather than `none`: the disabled state
+     transitions from `0`, and CSS can't animate a length to the keyword
+     `none` (it just jumps), so the reveal wouldn't actually grow in here. */
+  .sb-today-welcome-screen .sb-today-welcome-screen-start-button {
+    margin-left: 0;
+    max-width: 100%;
   }
   .sb-today-welcome-screen .sb-today-welcome-screen-greeting {
     font-size: 2rem;

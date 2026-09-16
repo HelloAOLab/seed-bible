@@ -1,0 +1,23 @@
+/* Closed-state rule for the book/chapter selector panel, duplicated from
+ * BibleSelector.css. The panel mounts on first paint but its full styling
+ * loads via the deferred external stylesheet, so without this the browser
+ * default (visible, untransformed) renders briefly before that stylesheet
+ * arrives and snaps it into its hidden state. */
+.sb-selector-panel {
+  opacity: 0;
+  transform: translateY(50%);
+}
+
+.sb-selector-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.25rem;
+
+  transition: background 0.3s ease;
+}

@@ -1,6 +1,6 @@
 import { useMemo } from "preact/hooks";
 import {
-  parseVerseReferences,
+  scanVerseReferencesInText,
   type VerseRef,
 } from "../managers/BibleDataManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
@@ -11,8 +11,14 @@ import { readInjectedConfig } from "./appConfig";
 
 /**
  * Builds the href for an inline scripture reference (a footnote body, a chat
- * message). The translation and language come from the URL the reader is
- * already on, so the reference opens in what they're reading.
+ * message, an annotation). The translation and language come from the URL the
+ * reader is already on, so the reference opens in what they're reading.
+ *
+ * Query params from the current page are not copied. A saved note should not
+ * hardcode a shared session, a scroll target, or any other page state — only
+ * `?verse=` when the reference itself names a verse. Clearing the search
+ * string (rather than deleting known keys) is what keeps a new, unrelated
+ * param from quietly getting baked in later.
  *
  * Note this has to write the path, not `?book=`/`?chapter=`. Those params lost
  * to the path when the position moved into it, so setting them on top of the
@@ -36,8 +42,16 @@ export function getVerseReferenceLinkHref(ref: VerseRef) {
         fallbackLanguage:
           uiLocaleForDefaultTranslation(parsed.translationId) ?? undefined,
       })
-    : legacyVerseReferenceUrl(url, ref);
+    : new URL(url.href);
 
+  // Whitelist: nothing from the page, then only params the reference itself
+  // needs. Legacy links still have to name book/chapter in the query because
+  // there is no reading path to put them in.
+  next.search = "";
+  if (!parsed) {
+    next.searchParams.set("book", ref.book);
+    next.searchParams.set("chapter", String(ref.chapter));
+  }
   if (ref.verse) {
     next.searchParams.set(
       "verse",
@@ -46,13 +60,6 @@ export function getVerseReferenceLinkHref(ref: VerseRef) {
   }
 
   return next.toString();
-}
-
-function legacyVerseReferenceUrl(currentUrl: URL, ref: VerseRef): URL {
-  const url = new URL(currentUrl.href);
-  url.searchParams.set("book", ref.book);
-  url.searchParams.set("chapter", String(ref.chapter));
-  return url;
 }
 
 export function VerseReferenceLink({
@@ -91,7 +98,7 @@ export function VerseReferenceText({
     event: JSX.TargetedMouseEvent<HTMLAnchorElement>
   ) => void;
 }) {
-  const matches = parseVerseReferences(text, books);
+  const matches = scanVerseReferencesInText(text, books);
   if (matches.length === 0) {
     return <>{text}</>;
   }

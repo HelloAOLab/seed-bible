@@ -748,6 +748,11 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       if (!target) return;
       if (target.closest(".sb-floating-chat-panel")) return;
       if (target.closest(".sb-reader-toolbar")) return;
+      // Verse-toolbar Ask AI opens this panel, then clears the selection
+      // (unmounting the sheet). Ignore taps still aimed at that sheet so the
+      // opening gesture — or a ghost pointerdown after unmount — cannot
+      // immediately dismiss the chat.
+      if (target.closest(".sb-verse-toolbar")) return;
       // Context menus (e.g. the "new chat" provider list) are portaled to
       // <body>, so they live outside `.sb-floating-chat-panel` in the DOM even
       // though they're part of this panel's UI. Ignore taps inside them so
@@ -762,10 +767,21 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       }
     };
 
-    document.addEventListener("pointerdown", handleDocumentPointerDown);
+    // Defer attaching the outside-dismiss listener so the same tap that opened
+    // the panel (Ask AI on the verse toolbar, Chat in the reader bar, etc.)
+    // cannot close it before the gesture finishes.
+    let removePointerDown: (() => void) | undefined;
+    const attachTimer = window.setTimeout(() => {
+      document.addEventListener("pointerdown", handleDocumentPointerDown);
+      removePointerDown = () => {
+        document.removeEventListener("pointerdown", handleDocumentPointerDown);
+      };
+    }, 0);
+
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("pointerdown", handleDocumentPointerDown);
+      window.clearTimeout(attachTimer);
+      removePointerDown?.();
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);

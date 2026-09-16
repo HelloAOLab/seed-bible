@@ -13,6 +13,7 @@ function createLogin(): LoginManager {
     userId: signal(null),
     profile: signal(null),
     localConfig: signal({}),
+    hydrateLocalConfig: vi.fn(),
     updateProfile: vi.fn(),
   } as unknown as LoginManager;
 }
@@ -68,6 +69,13 @@ describe("createTutorialManager — session-link joins", () => {
       /* joinedViaSessionLink */ true
     );
 
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
     expect(tutorial.promptVisible.value).toBe(false);
     expect(tutorial.running.value).toBe(false);
   });
@@ -83,6 +91,13 @@ describe("createTutorialManager — session-link joins", () => {
       createPanes(),
       createSidebar()
     );
+
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
 
     expect(tutorial.promptVisible.value).toBe(true);
   });
@@ -102,6 +117,13 @@ describe("createTutorialManager — session-link joins", () => {
       /* joinedViaSessionLink */ true
     );
 
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
     tutorial.startContextual("search");
 
     expect(tutorial.running.value).toBe(false);
@@ -118,6 +140,13 @@ describe("createTutorialManager — session-link joins", () => {
       createPanes(),
       createSidebar()
     );
+
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
 
     tutorial.startContextual("search");
 
@@ -140,6 +169,13 @@ describe("createTutorialManager — reader visibility gate", () => {
       createSidebar()
     );
 
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
     expect(tutorial.promptVisible.value).toBe(false);
   });
 
@@ -154,6 +190,13 @@ describe("createTutorialManager — reader visibility gate", () => {
       createPanes(),
       createSidebar()
     );
+
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
 
     expect(tutorial.promptVisible.value).toBe(false);
 

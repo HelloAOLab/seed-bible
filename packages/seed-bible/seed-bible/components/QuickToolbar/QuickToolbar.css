@@ -1,20 +1,22 @@
 /* Quick toolbar: compact row of extension-registered chapter actions
-   shown at the top of the reader, beside the bookmark button. */
+   shown at the top of the reader, beside the save and bookmark buttons. */
 .sb-quick-toolbar {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  opacity: 1;
+  transition: opacity 0.25s ease;
 }
 
-/* Desktop: sits in the header's action cluster, just left of the bookmark
-   button. Flow layout (not absolute) so it pushes the title instead of
-   overlapping it. */
+/* Desktop: sits in the header's action cluster, just after the save and
+   bookmark buttons, matching the mobile order below. Flow layout (not
+   absolute) so it pushes the title instead of overlapping it. */
 .sb-quick-toolbar-reader {
   flex-shrink: 0;
 }
 
-/* Mobile: sits in the header's right cluster, just after the bookmark
-   button, so Share (and any other quick tools) stay next to chapter
+/* Mobile: sits in the header's right cluster, just after the save and bookmark
+   buttons, so Share (and any other quick tools) stay next to chapter
    actions instead of floating beside the translation pill. */
 .sb-quick-toolbar-mobile-header {
   flex-shrink: 0;
@@ -83,4 +85,11 @@
 
 .sb-now-playing-icon-title {
   margin: 0;
+}
+
+/* Visual on/off cue for toggle-style quick tools (e.g. the discover content
+   panel toggle) — the framework's tool predicates don't carry a "pressed"
+   signal, so the tool's own icon function applies this class conditionally. */
+.sb-quick-tool-icon-active {
+  color: var(--sb-primary-color);
 }

@@ -2,6 +2,7 @@ import {
   acceptLanguageRedirect,
   legacyReadingUrlRedirect,
   render,
+  stripDefaultOgImageMeta,
 } from "../../../standalone/entry-ssr";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import {
@@ -12,6 +13,7 @@ import {
   makeUrl,
 } from "../seed-bible/managers/testUtils/mockBibleApiData";
 import { buildChapterUrl } from "../../../script/lib/sitemap";
+import { resetSsrTranslationsCacheForTests } from "../../../standalone/ssrTranslationsCache";
 
 describe("legacyReadingUrlRedirect", () => {
   describe("already the canonical shape", () => {
@@ -27,23 +29,29 @@ describe("legacyReadingUrlRedirect", () => {
     });
 
     it("corrects a typo in an already-explicit 4-segment path without disturbing its language", () => {
-      expect(legacyReadingUrlRedirect("/en/AAB/luke-skywalker/1", "")).toBe(
-        "/en/AAB/luke/1"
+      expect(legacyReadingUrlRedirect("/en/AAB/senesis/1", "")).toBe(
+        "/en/AAB/genesis/1"
       );
       expect(legacyReadingUrlRedirect("/en/AAB/john/3", "")).toBeNull();
     });
 
-    // The review's table. `getBookId`'s `startsWith` fallback resolves all of
-    // these, so they used to be served 200 at their own indexable URLs.
+    // Aliases and casing still canonicalize. Junk prefixes that used to match
+    // via the old "typed text starts with book key" fallback (luke-skywalker,
+    // genocide, …) no longer resolve — they 404 instead of being indexed.
     it.each([
-      ["/en/AAB/luke-skywalker/1", "/en/AAB/luke/1"],
-      ["/en/AAB/genocide/1", "/en/AAB/genesis/1"],
-      ["/en/AAB/mark-twain/1", "/en/AAB/mark/1"],
-      ["/en/AAB/acts-of-congress/1", "/en/AAB/acts/1"],
       ["/en/AAB/gen/1", "/en/AAB/genesis/1"],
       ["/en/AAB/Genesis/1", "/en/AAB/genesis/1"],
     ])("canonicalizes %s -> %s", (from, to) => {
       expect(legacyReadingUrlRedirect(from, "")).toBe(to);
+    });
+
+    it.each([
+      "/en/AAB/luke-skywalker/1",
+      "/en/AAB/genocide/1",
+      "/en/AAB/mark-twain/1",
+      "/en/AAB/acts-of-congress/1",
+    ])("does not resolve junk book prefix %s", (from) => {
+      expect(legacyReadingUrlRedirect(from, "")).toBeNull();
     });
 
     it("canonicalizes a zero-padded chapter and a trailing slash", () => {
@@ -153,6 +161,13 @@ describe("legacyReadingUrlRedirect", () => {
       return;
     }
     expect(legacyReadingUrlRedirect(once, "")).toBeNull();
+  });
+
+  // A static page's 2-segment "/{lang}/about" shape happens to be the same
+  // segment count as the legacy "/{book}/{chapter}" reading shape; this pins
+  // that the numeric-chapter check keeps them from colliding.
+  it("declines a static page path", () => {
+    expect(legacyReadingUrlRedirect("/en/about", "")).toBeNull();
   });
 });
 
@@ -278,6 +293,52 @@ describe("acceptLanguageRedirect", () => {
     expect(legacyReadingUrlRedirect(once, "")).toBeNull();
     expect(acceptLanguageRedirect(once, "", [])).toBeNull();
   });
+
+  it("declines a static page path", () => {
+    expect(acceptLanguageRedirect("/en/about", "", ["en"])).toBeNull();
+  });
+});
+
+describe("stripDefaultOgImageMeta", () => {
+  const DEFAULT_OG_IMAGE_BLOCK = [
+    '<meta property="og:type" content="website" />',
+    // Mirrors index.html: `og:image` itself spans multiple lines.
+    '<meta\n      property="og:image"\n      content="/standalone/img/SeedBibleLogoBlackOnWhiteBackground.jpg"\n    />',
+    '<meta property="og:image:type" content="image/jpeg" />',
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    '<meta property="og:image:alt" content="Seed Bible Logo" />',
+  ].join("\n");
+
+  it("removes every og:image/:type/:width/:height/:alt tag, including one split across lines", () => {
+    const result = stripDefaultOgImageMeta(DEFAULT_OG_IMAGE_BLOCK);
+
+    expect(result).not.toContain("og:image");
+    // Untouched neighbor, to prove this isn't just wiping the whole block.
+    expect(result).toContain('<meta property="og:type" content="website" />');
+  });
+
+  it("leaves other og:*/twitter:* tags alone while stripping only the og:image family", () => {
+    const html = [
+      '<meta property="og:title" content="Hello" />',
+      '<meta property="og:image" content="/default.jpg" />',
+      '<meta name="twitter:card" content="summary_large_image" />',
+    ].join("\n");
+
+    const result = stripDefaultOgImageMeta(html);
+
+    expect(result).toContain('<meta property="og:title" content="Hello" />');
+    expect(result).toContain(
+      '<meta name="twitter:card" content="summary_large_image" />'
+    );
+    expect(result).not.toContain("og:image");
+  });
+
+  it("is a no-op when there is nothing to strip", () => {
+    const html = "<head><title>Test</title></head>";
+
+    expect(stripDefaultOgImageMeta(html)).toBe(html);
+  });
 });
 
 describe("render() redirect wiring", () => {
@@ -385,10 +446,28 @@ describe("render() redirect wiring", () => {
 // test that only reads `state.app.canonicalUrl`.
 describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
-    "<!doctype html><html><head>",
+    '<!doctype html><html lang="<!-- HTML_LANG -->"><head>',
+    '<meta property="og:type" content="website" />',
+    // Mirrors index.html: `og:image` itself spans multiple lines (its
+    // `property`/`content` attributes on separate lines), the rest don't —
+    // `stripDefaultOgImageMeta` has to handle both shapes.
+    '<meta\n      property="og:image"\n      content="/standalone/img/SeedBibleLogoBlackOnWhiteBackground.jpg"\n    />',
+    '<meta property="og:image:type" content="image/jpeg" />',
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    '<meta property="og:image:alt" content="Seed Bible Logo" />',
+    // The real default icon links (index.html:15-16) — a `.ico` favicon and a
+    // `.png` apple-touch-icon, matching what a real browser sees, so the
+    // "override wins" tests below assert against an actual ordering effect
+    // rather than a template with nothing to override in the first place.
+    '<link rel="icon" href="/standalone/img/favicon.ico" />',
+    '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />',
+    '<style id="sb-theme-styles"><!-- THEME_STYLE_TAG --></style>',
+    '<script type="application/json" id="sb-theme-presets"><!-- THEME_PRESETS_JSON --></script>',
     "<!-- META -->",
     '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
     '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
+    '<script type="application/json" id="app-customization-seed"><!-- CUSTOMIZATION_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -420,6 +499,11 @@ describe("render() server-rendered meta tags", () => {
     // the server, and that suspension is what makes the meta tags render with
     // content rather than an empty shell.
     import.meta.env.SSR = true;
+    // The SSR translations cache is a module-level singleton shared across
+    // every `render()` call in the real server process (that's the point —
+    // see ssrTranslationsCache.ts). Reset it so one test's cached response
+    // can't leak into the next.
+    resetSsrTranslationsCacheForTests();
   });
 
   afterEach(() => {
@@ -481,6 +565,102 @@ describe("render() server-rendered meta tags", () => {
     expect(JSON.parse(injected as string)).toMatchObject(config);
   });
 
+  it("injects the exact request path as renderedForPath, ssrChapterContentSettled true, and this bundle's own commit as renderedByCommit, for the hydration gate", async () => {
+    const path = "/en/AAB/genesis/1?useFreeBibleAPI=true";
+    const html = await renderHtml(path);
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-config">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    const config = JSON.parse(injected as string) as {
+      renderedForPath: string;
+      ssrChapterContentSettled: boolean;
+      renderedByCommit: string;
+    };
+    expect(config.renderedForPath).toBe(path);
+    expect(config.ssrChapterContentSettled).toBe(true);
+    // This bundle's own build identity, not anything derived from the
+    // request — see AppConfig.renderedByCommit.
+    expect(config.renderedByCommit).toBe(__GIT_COMMIT__);
+  });
+
+  it("injects ssrChapterContentSettled false when the initial chapter fetch fails, not just on an SSR timeout", async () => {
+    // Genesis 2 is a real chapter the fixture has no response for, so the
+    // position resolves but the fetch fails outright — no timeout involved.
+    // A real client hitting the same failure would not necessarily see it too
+    // (a network blip specific to the server's own request path), so the
+    // client must not hydrate onto whatever this render produced — including
+    // any next/previous-chapter availability computed off the missing data.
+    const html = await renderHtml("/en/AAB/genesis/2?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-config">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    const config = JSON.parse(injected as string) as {
+      ssrChapterContentSettled: boolean;
+    };
+    expect(config.ssrChapterContentSettled).toBe(false);
+  });
+
+  it("does not disable the mobile floating nav's chapter buttons for a genuine mid-book chapter", async () => {
+    // `<BibleReaderToolbar>` (which renders the mobile floating nav) is a
+    // sibling of `<TabsLayout>`/`<BibleReader>`, not a descendant of it, so
+    // `BibleReader`'s own SSR suspend-on-chapter-load doesn't defer it too.
+    // Exodus has 40 chapters in the fixture catalog, so chapter 2 has both a
+    // previous and next chapter — the buttons must not render disabled.
+    const html = await renderHtml("/en/AAB/exodus/2?useFreeBibleAPI=true", {
+      renderedAsMobile: true,
+    });
+
+    // Matched by `data-tool-id` (stable) rather than `aria-label`
+    // (translatable, user-facing copy that can change independently of the
+    // button's behavior), and via `hasAttribute` on the parsed element rather
+    // than a `disabled[^>]*data-tool-id=...` regex, so the assertion doesn't
+    // depend on attribute order in the serialized tag.
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const prevButton = doc.querySelector('[data-tool-id="previous-chapter"]');
+    const nextButton = doc.querySelector('[data-tool-id="next-chapter"]');
+
+    expect(prevButton).not.toBeNull();
+    expect(nextButton).not.toBeNull();
+    expect(prevButton?.hasAttribute("disabled")).toBe(false);
+    expect(nextButton?.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("injects the active theme's CSS into the #sb-theme-styles tag", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<style id="sb-theme-styles">([^<]*)<\/style>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    expect(injected).toContain("body {");
+    expect(injected).toContain("--sb-");
+  });
+
+  it("injects the built-in theme presets into the #sb-theme-presets tag, for the pre-hydration script", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="sb-theme-presets">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    const presets = JSON.parse(injected as string) as Record<string, string>;
+    expect(presets.light).toContain("body {");
+    expect(presets.dark).toContain("body {");
+  });
+
+  it("does not inject prefers-color-scheme theme-color tags that would ignore the in-app theme", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html).not.toMatch(/name="theme-color"[^>]*media=/);
+    expect(html).not.toMatch(
+      /media="\(prefers-color-scheme:[^"]*\)"[^>]*name="theme-color"/
+    );
+  });
+
   it("injects the fetched API responses into the #app-seed-data JSON script tag", async () => {
     const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
 
@@ -494,6 +674,28 @@ describe("render() server-rendered meta tags", () => {
     // The render fetches (at least) the chapter it displays — everything
     // else the client would otherwise refetch on top of that.
     expect(urls.some((url) => url.includes("/AAB/GEN/1.json"))).toBe(true);
+  });
+
+  it("excludes the full translation catalog from the #app-seed-data JSON script tag", async () => {
+    // An unrecognized translation ID still forces the render to fetch the
+    // full catalog internally, to confirm there's genuinely nothing to fall
+    // back to — that's exactly the large response that must never be
+    // embedded in the page, even when the render does fetch it itself. A
+    // returning visitor likely already has it in their browser's own HTTP
+    // cache; the point of this exclusion is to stop paying for it again on
+    // every single page load's inlined HTML.
+    const html = await renderHtml("/en/NOPE/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-seed-data">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+
+    const seedData = JSON.parse(injected as string) as Record<string, unknown>;
+    const urls = Object.keys(seedData);
+    expect(
+      urls.some((url) => url.endsWith("/available_translations.json"))
+    ).toBe(false);
   });
 
   // Regression: the placeholder substitutions in render()'s final `return`
@@ -629,6 +831,47 @@ describe("render() server-rendered meta tags", () => {
     expect(html).not.toContain('<meta name="og:locale"');
   });
 
+  it("emits a content-language meta tag matching the page's og:locale", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const locale = html.match(
+      /<meta property="og:locale" content="([^"]+)"/
+    )?.[1];
+    expect(locale).toBeDefined();
+    expect(html).toContain(
+      `<meta http-equiv="content-language" content="${locale}"`
+    );
+  });
+
+  // The conforming, accessibility-relevant signal — screen readers pick
+  // pronunciation from `<html lang>`, not from a `content-language` meta tag.
+  it("sets the root <html lang> to match the page's detected language", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const locale = html.match(
+      /<meta property="og:locale" content="([^"]+)"/
+    )?.[1];
+    expect(locale).toBeDefined();
+    expect(html).toContain(`<html lang="${locale}">`);
+  });
+
+  it("HTML-escapes the <html lang> value instead of splicing it in raw", async () => {
+    // The language segment is decoded straight off the URL path and isn't
+    // validated against known language codes (see `parseReadingPath`), and
+    // unlike the <meta> tags above — rendered through Preact, which escapes
+    // attribute values — `<html lang>` is filled in by a raw string
+    // substitution into the static template. A quote in the language segment
+    // must not be able to break out of the attribute.
+    const html = await renderHtml(
+      "/%22%3E%3Cscript%3E/AAB/genesis/1?useFreeBibleAPI=true"
+    );
+
+    // The decoded language segment is `"><script>` — escaping just the quote
+    // keeps it a single, well-formed `lang="..."` attribute instead of one
+    // that terminates early and lets `<script>` become a real tag.
+    expect(html).toContain('<html lang="&quot;><script>">');
+  });
+
   it("still emits the real canonical URL when the chapter fails to load", async () => {
     // Regression for `<link rel="canonical" href="/">` on every SSR'd page.
     // Genesis 2 is a real chapter the fixture has no response for, so the
@@ -685,5 +928,394 @@ describe("render() server-rendered meta tags", () => {
       throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
     }
     expect(result.notFound).toBe(true);
+  });
+
+  it("renders the About page's own title, description, and canonical URL, with no notFound", async () => {
+    const result = (await render({
+      path: "/en/about?useFreeBibleAPI=true",
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
+      html: TEMPLATE,
+    })) as { html: string; notFound?: true; redirectTo?: string };
+
+    if ("redirectTo" in result) {
+      throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
+    }
+    expect(result.notFound).toBeFalsy();
+    expect(result.html).toContain(
+      "<title>About Seed Bible | Seed Bible</title>"
+    );
+    expect(result.html).toContain('<link rel="canonical" href="/en/about"');
+    expect(result.html).toContain(
+      '<meta property="og:url" content="/en/about"'
+    );
+    expect(result.html).not.toContain('<link rel="canonical" href="/"');
+  });
+
+  // Regression: every `render()` used to build a brand-new, empty-cache
+  // FreeUseBibleAPI and unconditionally re-fetch the translations list, so a
+  // long-running SSR process fetched `available_translations.json` fresh on
+  // every single HTTP request. The shared, TTL-based `ssrTranslationsCache`
+  // fixes that — two renders sharing an endpoint should hit the network for
+  // it only once.
+  //
+  // Uses unrecognized translation IDs rather than AAB/NIV: an ordinary
+  // request for a known translation resolves entirely off its own (much
+  // smaller) `books.json` and never touches the catalog at all (see
+  // `BibleReadingManager.loadInitialData`), so it wouldn't exercise the
+  // catalog cache this test is about. An unresolved translation is exactly
+  // the case that still falls through to the full catalog fetch.
+  it("shares one available_translations.json fetch across multiple SSR renders", async () => {
+    const responses = createDefaultManagerResponseMap();
+    const fetchMock = vi.fn(async (url: string) => {
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    });
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    await renderHtml("/en/NOPE/genesis/1?useFreeBibleAPI=true");
+    await renderHtml("/en/NOPE2/matthew/1?useFreeBibleAPI=true");
+
+    const translationsCalls = fetchMock.mock.calls.filter(([url]) =>
+      (url as string).endsWith("/api/available_translations.json")
+    );
+    expect(translationsCalls).toHaveLength(1);
+  });
+
+  // These are the tests that actually exercise the SSR customization fix:
+  // `CustomizationsManager`'s `?customization=` fetch used to race
+  // `renderToStringAsync` instead of blocking it, so the served HTML always
+  // carried the visitor's own default theme, then flashed to the
+  // customization's colors once the client-side fetch resolved after
+  // hydration. `ExternalResourceDependencies` now throws
+  // `initialCustomizationLoadPromise` during SSR until that fetch settles,
+  // so the customization's CSS variables must already be present in the
+  // HTML this test reads back.
+  describe("?customization= share link", () => {
+    const CALL_PROCEDURE_URL =
+      "https://auth.seedbible.org/api/v3/callProcedure";
+
+    // A real (short) delay, not just an extra microtask tick: `render()`
+    // also blocks on the initial chapter's own load before ever attempting
+    // to render (see `entry-ssr.tsx`), so a customization response that
+    // resolves on the same tick as everything else the mocked fetch serves
+    // would settle before rendering starts regardless of whether
+    // `ExternalResourceDependencies` actually suspends on it — which would
+    // make this test pass even with that suspend removed. Delaying it past
+    // that first render attempt is what actually exercises the suspend.
+    function mockFetchWithCustomizationResponse(
+      customizationResponse: unknown
+    ) {
+      const responses = createDefaultManagerResponseMap();
+      globalThis.fetch = (async (url: string) => {
+        if (url === CALL_PROCEDURE_URL) {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          return createResponse(customizationResponse);
+        }
+        const response = responses[url];
+        if (!response) {
+          throw new Error(`No mocked response for ${url}`);
+        }
+        return response;
+      }) as typeof globalThis.fetch;
+    }
+
+    it("includes the linked customization's theme colors in the SSR'd HTML", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: { primaryColor: "#abc123" },
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain("Verse 1");
+      expect(html).toContain("--sb-primary-color: #abc123;");
+    });
+
+    // Unlike the test above, this one doesn't actually exercise the SSR
+    // suspend: a `data_not_found` response makes `loadByLocator` return
+    // before it ever sets `linkedCustomization`, so `--sb-primary-color`
+    // would be absent from the HTML whether or not the suspend/settle path
+    // works. Kept because it proves a missing record doesn't crash SSR or
+    // inject phantom colors — just not as regression coverage for the fix
+    // itself.
+    it("renders normally, with no customization CSS, when the record isn't found", async () => {
+      mockFetchWithCustomizationResponse({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_missing"
+      );
+
+      expect(html).toContain("Verse 1");
+      expect(html).not.toContain("--sb-primary-color: #abc123;");
+    });
+
+    // Asserts a true replacement, not merely an override tag added after the
+    // default: browsers do not reliably prefer the *last* declared icon link
+    // when several share a `rel` (some use whichever they fetch or parse
+    // first), so relying on document order — as an earlier version of this
+    // fix did — can't be trusted. There must be exactly one tag per `rel`,
+    // with the default href gone entirely.
+    it("replaces the favicon and apple-touch-icon with the linked customization's uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: "https://example.com/logo.png",
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="icon" href="https://example.com/logo.png"/>'
+      );
+      expect(html).not.toContain("/standalone/img/favicon.ico");
+
+      expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="apple-touch-icon" href="https://example.com/logo.png"/>'
+      );
+      expect(html).not.toContain("/standalone/img/apple-touch-icon.png");
+    });
+
+    it("leaves the default favicon and apple-touch-icon alone when the linked customization has no uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      // Exactly one of each — the default, with no override tag alongside it.
+      expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="icon" href="/standalone/img/favicon.ico" />'
+      );
+      expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />'
+      );
+    });
+
+    it("replaces og:image with the linked customization's uploaded logo, dropping the stale type/width/height", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: "https://example.com/logo.png",
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain(
+        '<meta property="og:image" content="https://example.com/logo.png"/>'
+      );
+      // Only one og:image tag — the default was removed, not merely
+      // shadowed, since a crawler can't be relied on to prefer the last of
+      // two.
+      expect(html.match(/property="og:image"/g)).toHaveLength(1);
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground");
+      expect(html).not.toContain('property="og:image:type"');
+      expect(html).not.toContain('property="og:image:width"');
+      expect(html).not.toContain('property="og:image:height"');
+    });
+
+    it("leaves the default og:image (and its type/width/height) alone when the linked customization has no uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground");
+      expect(html).toContain('property="og:image:type"');
+      expect(html.match(/property="og:image"/g)).toHaveLength(1);
+    });
+
+    // Regression coverage for the SSR->client customization re-fetch: before
+    // `getInitialCustomizationSeed` existed, nothing was embedded here, so the
+    // client's own `CustomizationsManager` always repeated the same
+    // `os.getData()` round trip the server had just made, even though the
+    // page already reflects its result.
+    function readEmbeddedCustomizationSeed(html: string): unknown {
+      const match = /id="app-customization-seed">([\s\S]*?)<\/script>/.exec(
+        html
+      );
+      if (!match) {
+        throw new Error("app-customization-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("embeds the resolved customization as a seed for the client to reuse", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: { primaryColor: "#abc123" },
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(readEmbeddedCustomizationSeed(html)).toMatchObject({
+        locator: "owner.customization_shared",
+        customization: { id: "customization_shared", name: "Shared" },
+      });
+    });
+
+    it("embeds a resolved-missing seed when the record isn't found, instead of leaving the client to retry", async () => {
+      mockFetchWithCustomizationResponse({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_missing"
+      );
+
+      expect(readEmbeddedCustomizationSeed(html)).toEqual({
+        locator: "owner.customization_missing",
+        customization: null,
+      });
+    });
+  });
+
+  it("embeds no customization seed when there's no ?customization= link", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const match = /id="app-customization-seed">([\s\S]*?)<\/script>/.exec(html);
+    expect(match).not.toBeNull();
+    expect(JSON.parse(match![1]!)).toBeNull();
+  });
+
+  it("leaves the default favicon and apple-touch-icon alone with no customization active", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+    expect(html).toContain(
+      '<link rel="icon" href="/standalone/img/favicon.ico" />'
+    );
+    expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+    expect(html).toContain(
+      '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />'
+    );
+  });
+
+  it("leaves the default og:image alone with no customization active", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground");
+    expect(html.match(/property="og:image"/g)).toHaveLength(1);
   });
 });

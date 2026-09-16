@@ -16,6 +16,8 @@ import {
   DEFAULT_UI_LANGUAGE,
   parseReadingPath,
 } from "../managers/ReadingUrlPath";
+import { parseStaticPagePath } from "../managers/StaticPagePath";
+import type { BrandingConfig } from "../app/appConfig";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -64,7 +66,38 @@ export function addTranslations(
     i18n.addResourceBundle(lang, ns, resources, true, options?.overwrite);
   }
 }
+type TranslationFn = (key: string, options?: Record<string, unknown>) => string;
+function getAppName(
+  t: TranslationFn,
+  branding?: BrandingConfig,
+  customizationName?: string | null
+): string {
+  return (
+    customizationName ??
+    branding?.appName ??
+    t("seed-bible", { defaultValue: "Seed Bible" })
+  );
+}
 
+/**
+ * Replaces occurrences of "Seed Bible" in the given text with the branded app name, which can be customized via the branding configuration.
+ * This function is useful for ensuring that the app's name is consistently displayed according to the user's branding preferences.
+ * Currently, this only means that English is fully supported for branding.
+ * @param text The text in which to replace "Seed Bible" with the branded app name.
+ * @param t The translation function to use for retrieving the branded app name. This is typically obtained from the i18n manager.
+ * @param branding The branding configuration that may contain a custom app name. If not provided, the default app name "Seed Bible" will be used.
+ * @param customizationName The name of the active Customization (loaded via a `?customization=...` link, or previewed in its editor), if any. Takes priority over `branding.appName` — a customization's own name is a more specific override than the deployment's default branding.
+ * @returns
+ */
+export function getBrandedAppText(
+  text: string,
+  t: TranslationFn,
+  branding?: BrandingConfig,
+  customizationName?: string | null
+): string {
+  const appName = getAppName(t, branding, customizationName);
+  return text.replace(/Seed Bible/gi, appName);
+}
 // /**
 //  * Loads translations from the given bot's tags.
 //  * Each tag with a key of 3 characters or less is considered a language code, and its value is expected to be a JSON string or an object containing the translations for that language.
@@ -130,13 +163,19 @@ export function getPreferredSupportedLanguage(
  * and an omitted one canonically means `DEFAULT_UI_LANGUAGE` — that's the
  * meaning of the 3-segment "fully default" form, not "detect from the
  * browser" (browser-based detection only applies to a bare `/` with no
- * reading path at all, via `getInitialLanguage`). Falls back to the legacy
- * `?lang=` query param for a non-reading-path URL.
+ * reading path at all, via `getInitialLanguage`). Next, a static page path
+ * (e.g. "/es/about") always names its language explicitly. Falls back to the
+ * legacy `?lang=` query param for anything else.
  */
 export function getUrlLanguage(url: URL, basePath: string): string | null {
   const parsed = parseReadingPath(url.pathname, basePath);
   if (parsed) {
     return parsed.language ?? DEFAULT_UI_LANGUAGE;
+  }
+
+  const staticPage = parseStaticPagePath(url.pathname, basePath);
+  if (staticPage) {
+    return staticPage.language;
   }
 
   const urlLang = url.searchParams.get("lang");
@@ -224,7 +263,13 @@ export function createI18nManager(
             new Error(`No locale file for language: ${language}`)
           );
         }
-        return loader().then((mod) => mod.default);
+        // Return the module namespace object as-is: `resourcesToBackend`
+        // already unwraps `.default` itself (`(data && data.default) || data`
+        // in its `read()`). Unwrapping it here too double-unwraps any locale
+        // whose JSON has a top-level key literally named "default" (e.g.
+        // ar.json's `"default": "تقصير"`) — its own `.default` re-unwrap then
+        // grabs that string instead of falling through to the whole object.
+        return loader();
       })
     );
 

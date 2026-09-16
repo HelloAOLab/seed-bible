@@ -29,6 +29,7 @@ import type {
   HighlightsManager,
 } from "../managers/HighlightsManager";
 import { v4 as uuid } from "uuid";
+import type { SettingsManager } from "./SettingsManager";
 import type { I18nManager } from "../i18n";
 import { LANG_META } from "../i18n/languageMeta";
 import type {
@@ -270,8 +271,11 @@ export interface BibleReadingState {
    * Never rejects — a rejected promise thrown during `renderToStringAsync`
    * becomes a render exception and loses the whole document.
    *
-   * Always pair a throw with `initialChapterLoadSettled`, or a load that
-   * finishes without content will suspend, resume, and suspend again in a loop.
+   * Always pair a throw with a settled check, or a load that finishes without
+   * content will suspend, resume, and suspend again in a loop. Which check
+   * depends on what the component needs: `initialChapterLoadSettled` for the
+   * chapter text alone, {@link initialLoadSettled} for anything that also needs
+   * the book catalog.
    */
   chapterDataPromise: Promise<void>;
   /**
@@ -280,6 +284,37 @@ export interface BibleReadingState {
    * `chapterData === null` on its own cannot.
    */
   initialChapterLoadSettled: ReadonlySignal<boolean>;
+  /**
+   * True once everything {@link chapterDataPromise} waits for has settled —
+   * the chapter, and during SSR the book catalog too.
+   *
+   * This is the check to pair with a throw of that promise unless you only care
+   * about the chapter text. Guarding on `initialChapterLoadSettled` alone is a
+   * trap: the chapter and the catalog are independent requests, so when the
+   * chapter wins that latch flips while the catalog is still in flight, the
+   * component stops suspending, and it renders without a catalog — which for
+   * the toolbar means serving a chapter page with no links out of it.
+   */
+  initialLoadSettled: ReadonlySignal<boolean>;
+  /**
+   * True when `initialChapterLoadSettled` became true for a reason that
+   * doesn't guarantee a live client would land on the same content: the
+   * SSR-only load deadline passed, or the load errored out. Either way, the
+   * catalog and/or chapter data behind availability computations (like
+   * `hasNext`/`hasPrevious`) may be missing on the server even though a
+   * client-side retry succeeds — a network hiccup, rate limit, or timeout
+   * hitting the server process doesn't necessarily hit a visitor's own
+   * browser. `false` only for a load that actually completed with content.
+   *
+   * Deliberately not raised by the SSR catalog deadline alone (see
+   * `initialCatalogTimer`): that path can leave `initialChapterLoadSettled`
+   * true for a perfectly reliable reason (the chapter itself arrived), with
+   * only catalog-dependent computations affected — those already degrade to
+   * null/fallback rather than serving anything a client would need to
+   * "correct", so there's nothing unreliable for a consumer of this flag to
+   * react to.
+   */
+  initialChapterLoadUnreliable: ReadonlySignal<boolean>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
@@ -389,6 +424,25 @@ export interface BibleReadingState {
   hasPrevious: ReadonlySignal<boolean>;
 
   /**
+   * Where "next" actually leads, for anything that needs to *name* the
+   * destination rather than just move there — chapter links, most of all.
+   *
+   * Null whenever the destination can't be named honestly: at the end of the
+   * canon, before the book catalog has loaded (the target is only discoverable
+   * by fetching, see `navigateByChapterLink`), or when an enabled reading
+   * extension owns this direction and may send it somewhere else entirely.
+   * Callers should fall back to plain `loadNextChapter()` in those cases.
+   *
+   * Distinct from {@link getAdjacentChapter}, which fetches the neighbouring
+   * chapter's content: this only names it, synchronously, and answers null
+   * rather than guess.
+   */
+  nextChapterPosition: ReadonlySignal<ReadingPosition | null>;
+
+  /** Where "previous" leads. See {@link nextChapterPosition}. */
+  previousChapterPosition: ReadonlySignal<ReadingPosition | null>;
+
+  /**
    * The chapter `loadNextChapter`/`loadPreviousChapter` would move to, resolved
    * without moving there — for callers that render the neighbouring chapter
    * ahead of time, like the mobile swipe preview. Enabled extensions answer
@@ -412,6 +466,18 @@ export interface BibleReadingState {
   discoveredStudyNotes: ReadonlySignal<
     DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >;
+  /**
+   * Placement toggle for the compact discover content panel (cross
+   * references/study notes/content), which is otherwise always shown when
+   * there's something to show. True (the default) lets the panel sit beside
+   * the scripture text when there's room; false forces it below the
+   * scripture text, after the license notice, at any viewport width. Flipped
+   * by the "discover-content-panel" quick tool. Seeded from — and, when a
+   * `SettingsManager` was passed to `createBibleReadingState`, kept in sync
+   * with — the user's persisted `discoverContentPanelInline` setting; other
+   * callers (e.g. shared sessions) get an in-memory-only signal.
+   */
+  discoverContentPanelInline: Signal<boolean>;
 
   /**
    * True while this reading state is part of a shared/multiplayer session.
@@ -665,6 +731,32 @@ export function uiLocaleForDefaultTranslation(
     return null;
   }
   return UI_LOCALE_BY_DEFAULT_TRANSLATION_ID.get(translationId) ?? null;
+}
+
+/**
+ * The language segment for a translation's address: its own language when
+ * that maps to a UI locale, then the locale of the hardcoded default
+ * translation for its id, then `fallback`.
+ *
+ * Extracted because this exact two-step chain had landed in more than one
+ * place with a different last-resort `fallback` each time — `canonicalUrl`
+ * falls back to the current UI language (the page being rendered right now
+ * genuinely has one), while the chapter tool links fall back to
+ * `DEFAULT_UI_LANGUAGE` (an href that might be handed to a crawler or opened
+ * in a background tab has no "current" visitor to derive one from). Making
+ * `fallback` an explicit, required argument keeps that difference visible at
+ * each call site instead of a silent drift between near-identical copies.
+ */
+export function resolveTranslationUiLanguage(params: {
+  translationLanguage: string | null | undefined;
+  translationId: string | null | undefined;
+  fallback: string;
+}): string {
+  return (
+    bibleLanguageToUiLocale(params.translationLanguage) ??
+    uiLocaleForDefaultTranslation(params.translationId) ??
+    params.fallback
+  );
 }
 
 function bibleLanguageCodesForUi(uiLanguage: string): string[] {
@@ -1177,6 +1269,20 @@ export function emphasizeVerses(
   });
 }
 
+/** True when the reading state has any discovered cross reference, study note, or content result for the current chapter. */
+export function hasAnyDiscoverResults(
+  readingState: BibleReadingState | null | undefined
+): boolean {
+  if (!readingState) {
+    return false;
+  }
+  return (
+    readingState.discoveredCrossReferences.value.length > 0 ||
+    readingState.discoveredStudyNotes.value.length > 0 ||
+    readingState.discoveredContent.value.length > 0
+  );
+}
+
 export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
@@ -1191,7 +1297,13 @@ export function createBibleReadingState(
    * By the time anything actually reads `selectionAnnotations.value`, the
    * caller's `AnnotationsManager` already exists.
    */
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  /**
+   * Backs `discoverContentPanelInline` with the user's persisted setting when
+   * provided. Omitted for reading states that shouldn't persist it (e.g.
+   * shared sessions), which fall back to an in-memory-only signal.
+   */
+  settingsManager?: SettingsManager
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -1251,6 +1363,15 @@ export function createBibleReadingState(
    * rather than repeatedly.
    */
   const initialChapterLoadSettled = signal<boolean>(false);
+  /**
+   * Latches true once the book catalog has arrived (or given up trying), so
+   * server rendering can wait for it. Starts true on the client, where nothing
+   * suspends on it — a browser fills the chapter links in as soon as the
+   * catalog lands, with no render to block.
+   */
+  const initialCatalogSettled = signal<boolean>(!import.meta.env.SSR);
+  /** See the interface doc on `initialChapterLoadUnreliable`. */
+  const initialChapterLoadUnreliable = signal<boolean>(false);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<ReadonlySignal<ChapterHighlights>>(
@@ -1335,6 +1456,7 @@ export function createBibleReadingState(
   const SSR_INITIAL_CHAPTER_TIMEOUT_MS = 5000;
   const initialChapterLoadTimer = import.meta.env.SSR
     ? setTimeout(() => {
+        initialChapterLoadUnreliable.value = true;
         initialChapterLoadSettled.value = true;
       }, SSR_INITIAL_CHAPTER_TIMEOUT_MS)
     : null;
@@ -1345,16 +1467,64 @@ export function createBibleReadingState(
   };
   effectDisposers.push(clearInitialChapterLoadTimer);
 
+  /**
+   * Its own, much shorter deadline — deliberately not the chapter's. A slow
+   * catalog past this point isn't going to produce a link either way, so
+   * there's nothing to gain by holding the whole response open for it; giving
+   * it the 5s chapter deadline instead would mean a hung `books.json` costs a
+   * five-second TTFB on the live host for a page that ends up with no
+   * chapter links regardless of how long it waited.
+   */
+  const SSR_INITIAL_CATALOG_TIMEOUT_MS = 1000;
+  const initialCatalogTimer = import.meta.env.SSR
+    ? setTimeout(() => {
+        initialCatalogSettled.value = true;
+      }, SSR_INITIAL_CATALOG_TIMEOUT_MS)
+    : null;
+  const clearInitialCatalogTimer = () => {
+    if (initialCatalogTimer !== null) {
+      clearTimeout(initialCatalogTimer);
+    }
+  };
+  effectDisposers.push(clearInitialCatalogTimer);
+
+  // Latches once the book catalog has landed. Server-side only: the chapter
+  // links in the toolbar can only name their target once the catalog says
+  // where the current book ends, and the catalog is fetched on a separate,
+  // deliberately un-awaited request (see `requestContent`). Without this the
+  // server would race it and usually win, rendering a chapter page with no
+  // links out of it — which is precisely what a crawler needs.
+  //
+  // Costs close to nothing in the common case: that request is issued before
+  // the chapter's own and returns the smaller payload, so it is normally
+  // already home well inside the catalog's own short deadline above.
+  effectDisposers.push(
+    effect(() => {
+      if (translationBooks.value) {
+        clearInitialCatalogTimer();
+        initialCatalogSettled.value = true;
+      }
+    })
+  );
+
+  // The single condition this promise settles on. Anything that throws the
+  // promise guards on this same signal, so the two cannot drift apart — a guard
+  // watching a subset would stop suspending before the promise was ready.
+  const initialLoadSettled = computed<boolean>(
+    () => initialChapterLoadSettled.value && initialCatalogSettled.value
+  );
+
   // Resolves — never rejects. A rejected promise thrown during
   // `renderToStringAsync` surfaces as a render exception and takes down the
   // whole document; resolving lets the already-rendered error branch explain
-  // what went wrong instead. Depends only on the latch, so it settles once.
+  // what went wrong instead. Depends only on the latches, so it settles once.
   effectDisposers.push(
     effect(() => {
-      if (!initialChapterLoadSettled.value) {
+      if (!initialLoadSettled.value) {
         return;
       }
       clearInitialChapterLoadTimer();
+      clearInitialCatalogTimer();
       resolveChapterDataPromise();
     })
   );
@@ -2160,6 +2330,14 @@ export function createBibleReadingState(
       }
       error.value =
         err instanceof Error ? err.message : "Failed to load chapter.";
+      // A failure here on the *initial* load doesn't mean a live client would
+      // hit the same wall — it may be the server's own request path (e.g. an
+      // HTML error page coming back where JSON was expected), not something
+      // wrong with the chapter itself. It must not look "settled" to the
+      // hydration gate — see the interface doc on `initialChapterLoadUnreliable`.
+      if (!initialChapterLoadSettled.peek()) {
+        initialChapterLoadUnreliable.value = true;
+      }
     } finally {
       if (contentRequestController === controller) {
         contentRequestController = null;
@@ -2618,33 +2796,64 @@ export function createBibleReadingState(
     error.value = null;
 
     try {
-      const loadedTranslations =
-        await dataManager.getTranslations(getActiveEndpoint());
-      availableTranslations.value = toAvailableTranslations(
-        dataManager.availableTranslations.value
-      );
+      // The overwhelmingly common case is a URL that already names a valid
+      // translation on the default endpoint. Validating it against just that
+      // translation's own (much smaller) book catalog — rather than always
+      // pulling down every translation's metadata first — is what keeps an
+      // ordinary chapter load from downloading the full, large translation
+      // list on every single page view. The full catalog below is only
+      // fetched when there's no translation to validate yet
+      // (`useFirstAvailableTranslation`), a custom endpoint is in play (its
+      // translations aren't known until the catalog itself names them), or
+      // the requested translation turns out to be missing.
+      let nextTranslationId: string | undefined;
+      let books: TranslationBooks | undefined;
 
-      const firstAvailableTranslation = loadedTranslations[0];
-      const currentTranslation = useFirstAvailableTranslation.value
-        ? firstAvailableTranslation
-        : (availableTranslations.value.translations.find(
-            (translation) => translation.id === translationId.value
-          ) ??
-          (shouldFallbackToFirstAvailableTranslation
-            ? firstAvailableTranslation
-            : undefined));
-      if (!currentTranslation) {
-        throw new Error(
-          useFirstAvailableTranslation.value
-            ? "No available translations found for endpoint."
-            : `Translation with ID "${translationId.value}" not available.`
+      if (!useFirstAvailableTranslation.value && !getActiveEndpoint()) {
+        try {
+          books = await dataManager.getTranslationBooks(translationId.value);
+          nextTranslationId = translationId.value;
+        } catch {
+          // Not confidently "this translation doesn't exist" on its own — a
+          // network blip would fail the same way. Fall through to the
+          // catalog resolution below, which is what actually decides that.
+        }
+      }
+
+      if (!books || !nextTranslationId) {
+        const loadedTranslations =
+          await dataManager.getTranslations(getActiveEndpoint());
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
+        );
+
+        const firstAvailableTranslation = loadedTranslations[0];
+        const currentTranslation = useFirstAvailableTranslation.value
+          ? firstAvailableTranslation
+          : (availableTranslations.value.translations.find(
+              (translation) => translation.id === translationId.value
+            ) ??
+            (shouldFallbackToFirstAvailableTranslation
+              ? firstAvailableTranslation
+              : undefined));
+        if (!currentTranslation) {
+          throw new Error(
+            useFirstAvailableTranslation.value
+              ? "No available translations found for endpoint."
+              : `Translation with ID "${translationId.value}" not available.`
+          );
+        }
+
+        nextTranslationId = currentTranslation.id;
+        books = await dataManager.getTranslationBooks(nextTranslationId);
+      } else {
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
         );
       }
 
-      const nextTranslationId = currentTranslation.id;
       useFirstAvailableTranslation.value = false;
 
-      const books = await dataManager.getTranslationBooks(nextTranslationId);
       const firstBook = books.books[0];
       if (!firstBook) {
         throw new Error("No books available for selected translation.");
@@ -2704,12 +2913,21 @@ export function createBibleReadingState(
       console.error("Error loading initial Bible data:", err);
       error.value =
         err instanceof Error ? err.message : "Failed to load Bible data.";
+      // An error here doesn't mean a live client would hit the same wall —
+      // it may be the server's own network path (rate limiting, a transient
+      // upstream blip) rather than something the requested chapter itself is
+      // missing. Flagging it the same as a timeout keeps the SSR host from
+      // baking availability computed off no data (e.g. disabled next/previous
+      // buttons) into a page a client then hydrates onto and never corrects.
+      initialChapterLoadUnreliable.value = true;
     } finally {
       endRequest();
       // Terminal either way. Without this a failed first load leaves anything
       // suspended on `chapterDataPromise` waiting forever — which on the server
-      // means the HTTP request never completes.
+      // means the HTTP request never completes. Both latches, because this path
+      // is also where a catalog that never arrives gives up.
       initialChapterLoadSettled.value = true;
+      initialCatalogSettled.value = true;
     }
   };
 
@@ -2829,6 +3047,61 @@ export function createBibleReadingState(
       }))
       .filter((providerResults) => providerResults.results.length > 0);
   });
+
+  const discoverContentPanelInline = signal<boolean>(
+    settingsManager?.settings.value.discoverContentPanelInline ?? true
+  );
+
+  if (settingsManager) {
+    // Persists every local change (the quick tool's explicit toggle, and
+    // BibleReader's "force inline to reveal a note" nudge alike) to the
+    // user's settings, mirroring how other per-tab UI toggles write through.
+    // Skips the first run so re-seeding this same value back on construction
+    // isn't a redundant profile write.
+    let isFirstRun = true;
+    effectDisposers.push(
+      effect(() => {
+        const value = discoverContentPanelInline.value;
+        if (isFirstRun) {
+          isFirstRun = false;
+          return;
+        }
+        // `untracked` matters here, not just style: it also guards the loop
+        // with the "settings -> local" effect below — when *that* effect
+        // applies an externally-changed setting to `discoverContentPanelInline`,
+        // this effect re-runs, but the value it's about to write is already
+        // what `settings.value` holds, so the equality check no-ops instead of
+        // writing it straight back out. Left tracked, the read of
+        // `settings.value` — made synchronously inside this very effect's
+        // evaluation — would also silently subscribe the effect to the *entire*
+        // settings signal, and the write that follows would then immediately
+        // re-trigger this same effect, forever.
+        untracked(() => {
+          if (
+            settingsManager.settings.value.discoverContentPanelInline === value
+          ) {
+            return;
+          }
+          settingsManager.setDiscoverContentPanelInline(value);
+        });
+      })
+    );
+
+    // Pulls in changes made elsewhere — another tab, another device synced
+    // through the profile — so this reading state's signal doesn't go stale
+    // once construction is done.
+    effectDisposers.push(
+      effect(() => {
+        const settingValue =
+          settingsManager.settings.value.discoverContentPanelInline;
+        untracked(() => {
+          if (discoverContentPanelInline.value !== settingValue) {
+            discoverContentPanelInline.value = settingValue;
+          }
+        });
+      })
+    );
+  }
 
   if (discoverManager) {
     let discoverGeneration = 0;
@@ -3016,6 +3289,56 @@ export function createBibleReadingState(
   );
 
   /**
+   * The adjacent position, but only when it can be named with certainty.
+   *
+   * Stricter than `resolveAvailability` on purpose: that one only needs to
+   * answer "can we move?", and both of its fallbacks are fine for that. Here
+   * the answer has to be an actual book and chapter, so neither fallback
+   * applies. An extension that owns the direction may navigate anywhere (or
+   * refuse), and the chapter's `next/previousChapterApiLink` says a chapter
+   * exists without saying which one — that only comes back from fetching it.
+   */
+  const resolveAdjacentPosition = (
+    owns: (instance: ReadingExtensionInstance) => boolean,
+    step: (
+      books: TranslationBooks,
+      position: ReadingPosition
+    ) => ReadingPosition | null
+  ): ReadingPosition | null => {
+    for (const runtime of orderedEnabledRuntimes.value) {
+      if (owns(runtime.instance)) {
+        return null;
+      }
+    }
+
+    const books = translationBooks.value;
+    const currentBookId = bookId.value;
+    if (!books || !currentBookId) {
+      return null;
+    }
+
+    return step(books, {
+      translationId: translationId.value,
+      bookId: currentBookId,
+      chapterNumber: chapterNumber.value,
+    });
+  };
+
+  const nextChapterPosition = computed<ReadingPosition | null>(() =>
+    resolveAdjacentPosition(
+      (instance) => !!instance.hasNext || !!instance.navigateNext,
+      nextPosition
+    )
+  );
+
+  const previousChapterPosition = computed<ReadingPosition | null>(() =>
+    resolveAdjacentPosition(
+      (instance) => !!instance.hasPrevious || !!instance.navigatePrevious,
+      previousPosition
+    )
+  );
+
+  /**
    * The chapter that `loadNextChapter`/`loadPreviousChapter` would move to,
    * resolved without moving there. Enabled extensions get first say (in
    * priority order), so a caller that renders the neighbouring chapter ahead of
@@ -3078,6 +3401,8 @@ export function createBibleReadingState(
     chapterData,
     chapterDataPromise,
     initialChapterLoadSettled,
+    initialLoadSettled,
+    initialChapterLoadUnreliable,
     isChapterContentStale,
     highlights,
     decorations,
@@ -3105,10 +3430,13 @@ export function createBibleReadingState(
     loadNextChapter,
     hasNext,
     hasPrevious,
+    nextChapterPosition,
+    previousChapterPosition,
     getAdjacentChapter,
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,
+    discoverContentPanelInline,
     title,
     shortTitle,
     subTitle,

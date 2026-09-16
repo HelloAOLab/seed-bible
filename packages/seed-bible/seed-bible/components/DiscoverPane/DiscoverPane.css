@@ -117,13 +117,38 @@
 
 .sb-playlist-item {
   cursor: pointer;
-  align-items: flex-start;
+  align-items: center;
+}
+
+.sb-hero-thumb {
+  align-self: center;
 }
 
 .sb-annotation-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  border-radius: 8px;
+}
+
+/* Briefly flashed on the group a clicked annotated verse number just jumped
+   to (see AnnotationsSection's `highlightedGroupKey`). Duration must match
+   `HIGHLIGHT_DURATION_MS` in AnnotationsSection.tsx. */
+.sb-annotation-group--highlighted {
+  animation: sb-annotation-group-highlight 2s ease-out;
+}
+
+@keyframes sb-annotation-group-highlight {
+  from {
+    background-color: color-mix(
+      in srgb,
+      var(--sb-primary-color),
+      transparent 75%
+    );
+  }
+  to {
+    background-color: transparent;
+  }
 }
 
 /* Annotation row (see `AnnotationGroupSection`) — its own class rather than

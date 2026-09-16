@@ -34,6 +34,7 @@ import type {
   TodayManager,
   TodayPassageTarget,
 } from "../../managers/TodayManager";
+import { trimmedOrNull } from "../../managers/Utils";
 
 const TIMESPAN_OPTION_IDS = ["twoDays", "week", "month", "all"] as const;
 
@@ -62,14 +63,16 @@ export const SocialSection = (props: {
       [
         userId,
         {
-          name: profile?.name ?? "Guest",
+          name:
+            trimmedOrNull(profile?.name) ??
+            t("anonymous", { defaultValue: "Anonymous" }),
           pictureUrl: profile?.pictureUrl,
           color: visual.color,
           icon: visual.defaultIcon,
         },
       ],
     ]);
-  }, [userId, profile?.name, profile?.pictureUrl]);
+  }, [userId, profile?.name, profile?.pictureUrl, t]);
 
   const initialOption = useMemo(() => buildTimespanOptions().twoDays, []);
   const year = useSignal<number>(initialOption.year);

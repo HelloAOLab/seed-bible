@@ -29,7 +29,7 @@ This project requires **pnpm v10+**. Do not use npm or yarn.
 pnpm dev               # Run the SSR dev server (Express + Vite, HMR)
 pnpm test              # Run Vitest test suite
 pnpm test:watch        # Vitest in watch mode
-pnpm lint              # ESLint (includes i18n translation key validation)
+pnpm lint              # ESLint (includes i18n translation key validation) + stylelint (duplicate selectors/declarations)
 pnpm lint:fix          # Auto-fix linting issues
 pnpm check:ts          # TypeScript type check — client + patterns (non-emit)
 pnpm build             # Production build (client + SSR + server bundles)
@@ -56,7 +56,7 @@ This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader.
 - `LoginManager` — Email-code auth, sessions, and user profile
 - `BibleDataManager` — Bible content and translation loading
 - `BibleReadingManager` — Reading position and navigation
-- `HighlightsManager`, `BookmarksManager`, `AnnotationsManager` — Annotations, persisted via CasualOS records
+- `HighlightsManager`, `SavesManager`, `AnnotationsManager` — Annotations, persisted via CasualOS records
 - `SessionsManager` — Shared/multiplayer sessions (Yjs shared documents)
 - `ThemeManager` — Dark/light mode and color schemes
 - `ExtensionManager` — Extension lifecycle

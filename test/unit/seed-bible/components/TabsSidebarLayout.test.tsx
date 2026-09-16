@@ -258,6 +258,12 @@ describe("tabs Share control", () => {
   it("opens the share sheet from the mobile tabs header instead of creating a session", async () => {
     window.innerWidth = 400;
     const state = await createState();
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
     expect(state.app.isMobile.value).toBe(true);
     const createSharedSession = vi.spyOn(state.app, "createSharedSession");
     state.sidebar.isMobileOpen.value = true;
@@ -285,8 +291,6 @@ describe("tabs Share control", () => {
     expect(isShareSheetOpen(state)).toBe(true);
   });
 });
-
-
 
 describe("Sidebar self avatar", () => {
   let container: HTMLDivElement;
@@ -374,6 +378,32 @@ describe("Sidebar self avatar", () => {
     expect(avatar).not.toBeNull();
     expect(avatar?.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
     expect(avatar?.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+  });
+
+  // The desktop entry point for the Profile screen (#1554). It used to open
+  // account settings directly; account settings now hangs off Profile.
+  it("opens the Profile screen when clicked", async () => {
+    const state = await createTestSeedBibleState();
+    state.settings.setDisablePanels(false);
+    expect(state.isProfileOpen.value).toBe(false);
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    act(() => {
+      (
+        container.querySelector(".sb-sidebar-self-avatar") as HTMLButtonElement
+      ).click();
+    });
+
+    expect(state.isProfileOpen.value).toBe(true);
+    expect(state.sidebar.isSettingsOpen.value).toBe(false);
   });
 
   it("shows the animal fallback when the user has no profile picture and is in a chat with another person", async () => {

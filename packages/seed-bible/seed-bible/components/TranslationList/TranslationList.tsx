@@ -336,7 +336,6 @@ function TranslationLanguageSection(props: {
                       <span
                         style={{ fontSize: "1.125rem" }}
                         className="material-symbols-outlined"
-                        // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
                       >
                         info
                       </span>

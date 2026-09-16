@@ -8,6 +8,7 @@ function createLogin(): LoginManager {
     userId: signal(null),
     profile: signal(null),
     localConfig: signal({}),
+    hydrateLocalConfig: vi.fn(),
     updateProfile: vi.fn(),
   } as unknown as LoginManager;
 }

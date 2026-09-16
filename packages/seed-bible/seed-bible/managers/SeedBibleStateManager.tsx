@@ -4,11 +4,11 @@ import {
   createBibleDataManager,
   type BibleDataManager,
   type BookId,
+  type TranslationsCache,
   type VerseRef,
 } from "../managers/BibleDataManager";
 import {
-  bibleLanguageToUiLocale,
-  uiLocaleForDefaultTranslation,
+  resolveTranslationUiLanguage,
   type BibleReadingState,
 } from "../managers/BibleReadingManager";
 import { buildReadingPath, parseReadingPath } from "../managers/ReadingUrlPath";
@@ -17,8 +17,35 @@ import {
   createTodayManager,
   openTodayPassage,
   type TodayManager,
+  type TodayPassageTarget,
 } from "../managers/TodayManager";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
+import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
+import {
+  buildStaticPagePath,
+  parseStaticPagePath,
+} from "../managers/StaticPagePath";
+import {
+  PROFILE_PANE_ID,
+  ProfileBackButton,
+  ProfilePane,
+  ProfilePaneTitle,
+} from "../components/ProfilePane/ProfilePane";
+import {
+  EDIT_PROFILE_PANE_ID,
+  EditProfilePane,
+  EditProfilePaneTitle,
+} from "../components/ProfilePane/EditProfilePane";
+import { openProfilePictureModal } from "../components/ProfilePictureModal/openProfilePictureModal";
+import {
+  YOUR_CONTENT_PANE_ID,
+  YourContentPane,
+  YourContentPaneTitle,
+} from "../components/YourContentPane/YourContentPane";
+import {
+  createYourContentManager,
+  type YourContentManager,
+} from "../managers/YourContentManager";
 import {
   META_DESCRIPTION_MAX_GRAPHEMES,
   buildChapterExcerpt,
@@ -26,7 +53,10 @@ import {
   truncateForMeta,
 } from "../managers/ChapterText";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
-import { createBibleToolsManager } from "../managers/BibleToolsManager";
+import {
+  createBibleToolsManager,
+  openReadingPlansPane,
+} from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
   FreeUseBibleAPI,
@@ -55,7 +85,21 @@ import {
   createTheme,
   generateThemeCssClasses,
 } from "../managers/ThemeManager";
-import type { ThemeManager } from "../managers/ThemeManager";
+import type {
+  ThemeManager,
+  ThemeFontFamilyKey,
+} from "../managers/ThemeManager";
+import {
+  createCustomizationsManager,
+  CUSTOMIZATION_FONT_FIELDS,
+  CUSTOMIZATION_FONT_PRESETS,
+} from "../managers/CustomizationsManager";
+import type {
+  CustomizationsManager,
+  InitialCustomizationSeed,
+} from "../managers/CustomizationsManager";
+import { createCustomizationVariantSelectionsManager } from "../managers/CustomizationVariantSelectionsManager";
+import { createCustomizationExtensionPreferencesManager } from "../managers/CustomizationExtensionPreferencesManager";
 import {
   batch,
   computed,
@@ -77,9 +121,9 @@ import {
   type HighlightsManager,
 } from "../managers/HighlightsManager";
 import {
-  createBookmarksManager,
-  type BookmarksManager,
-} from "../managers/BookmarksManager";
+  createSavesManager,
+  type SavesManager,
+} from "../managers/SavesManager";
 import {
   createChatsManager,
   type ChatSession,
@@ -94,9 +138,11 @@ import {
 } from "../managers/SessionsManager";
 import {
   createAnnotationsManager,
+  type Annotation,
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
 import { syncAnnotationConflictModal } from "../components/AnnotationConflictModal/AnnotationConflictModal";
+import { createAdoptionPrompt } from "../components/AdoptDeviceContentModal/AdoptDeviceContentModal";
 import {
   createModalManager,
   type ModalManager,
@@ -116,7 +162,11 @@ import {
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
 import { type AppConfig } from "../app/appConfig";
-import { createI18nManager, type I18nManager } from "../i18n";
+import {
+  createI18nManager,
+  getBrandedAppText,
+  type I18nManager,
+} from "../i18n";
 import {
   createOnboardingManager,
   type OnboardingManager,
@@ -169,6 +219,9 @@ export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
 const APP_META_DESCRIPTION =
   "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans.";
 
+/** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
+export const ABOUT_PANE_ID = "about-page-pane";
+
 /**
  * Derived app-level state and high-level actions used by UI components.
  *
@@ -204,6 +257,27 @@ export interface AppState {
   viewportWidth: ReadonlySignal<number>;
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
+  /**
+   * Re-reads the real `window.innerWidth`/`.innerHeight` and applies them.
+   * Call once from a post-mount effect to correct the SSR-matched seed value
+   * (see `viewportWidth`/`viewportHeight`) to the device's real viewport
+   * right after Preact's first commit. No-op on the server.
+   */
+  applyViewport: () => void;
+
+  /**
+   * Applies every value the app keeps in `localStorage` that also feeds the
+   * first render — saved tabs and their slot layout, the cached translation
+   * catalog, the selector's view mode, and the tutorial/onboarding flags.
+   *
+   * All of those seed to what the server rendered (it has no `localStorage` at
+   * all), because a client tree with extra elements is the one hydration
+   * divergence Preact reports rather than silently patching. Call once from a
+   * post-mount effect — see `MainBody` in `app/main.tsx` — so the device's real
+   * state arrives as a normal diffed re-render. Ordering matters and is fixed
+   * here: slots bind to tab objects by id, so tabs are restored first.
+   */
+  hydrateFromStorage: () => void;
 
   /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
@@ -268,6 +342,18 @@ export interface AppState {
   /** The name of the site (used for Open Graph and other social media metadata). */
   siteName: ReadonlySignal<string>;
 
+  /**
+   * The active customization's uploaded logo, used as this page's favicon and
+   * its `og:image`/`og:image:alt` social-preview image (see entry-ssr.tsx's
+   * `<link rel="icon">` and meta block). Null when no customization is active
+   * or the active one hasn't uploaded a logo — either way, the page keeps the
+   * defaults already in index.html.
+   */
+  customizationLogoUrl: ReadonlySignal<string | null>;
+
+  /** Whether the current URL is the static "/{lang}/about" page. */
+  isAboutPage: ReadonlySignal<boolean>;
+
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<{ id: number; message: string } | null>;
   /**
@@ -306,11 +392,21 @@ export interface SeedBibleState {
 
   /** Bible API and translation/chapter data orchestration. */
   bibleData: BibleDataManager;
-  /** Theme manager plus derived CSS variables/classes for rendering. */
+  /**
+   * Theme manager plus derived CSS variables/classes for rendering the
+   * Customization-blended theme (see `theme` below). `ThemeManager` itself
+   * still writes the unblended preset+settings theme straight to
+   * `document.head` — see `ThemeManager.tsx` — these extra fields are what
+   * layers the active Customization on top of that in the component tree.
+   */
   theme: ThemeManager & {
     themeCssVariables: ReadonlySignal<string>;
     themeCssClasses: ReadonlySignal<string>;
+    /** Google Font family names an active customization's variant needs that aren't already statically loaded. */
+    googleFontFamiliesToLoad: ReadonlySignal<string[]>;
   };
+  /** Saved, named "look and feel" color profiles the user can create/activate. */
+  customizations: CustomizationsManager;
   /** Sidebar/settings visibility manager. */
   sidebar: SidebarManager;
   /** Reader tab lifecycle manager. */
@@ -329,8 +425,8 @@ export interface SeedBibleState {
   readingHistory: ReadingHistoryManager;
   /** Verse highlight manager. */
   highlights: HighlightsManager;
-  /** Per-tab/location bookmarks manager. */
-  bookmarks: BookmarksManager;
+  /** Archival saves manager: categorized references to chapters and verses. */
+  saves: SavesManager;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Chat session manager for in-app chat state. */
@@ -370,6 +466,13 @@ export interface SeedBibleState {
    * Playlist manager for creating, editing, and syncing user playlists.
    */
   playlists: PlaylistManager;
+  /**
+   * Reads scripture aloud with the browser's own speech synthesiser, for the
+   * translations that ship no recorded narration.
+   */
+  textToSpeech: TextToSpeechManager;
+  /** Saved photos the user has uploaded, for reuse as covers and later features. */
+  gallery: UserGalleryManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -379,6 +482,30 @@ export interface SeedBibleState {
    * Feature flag manager for enabling/disabling features at runtime.
    */
   features: FeaturesManager;
+
+  /** Backs the "Your content" screen: the user's own annotations/highlights. */
+  yourContent: YourContentManager;
+
+  /** True when the "Your content" screen is showing. */
+  isYourContentOpen: ReadonlySignal<boolean>;
+  /** Opens "Your content" (reflected in the URL as `?content=open`). */
+  openYourContent: () => void;
+  /** Closes "Your content" (clears `content` from the URL). */
+  closeYourContent: () => void;
+
+  /** True when the Profile screen is showing. */
+  isProfileOpen: ReadonlySignal<boolean>;
+  /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
+  openProfile: () => void;
+  /** Closes the Profile screen (clears `profile` from the URL). */
+  closeProfile: () => void;
+
+  /** True when the "Edit profile" screen is showing. */
+  isEditProfileOpen: ReadonlySignal<boolean>;
+  /** Opens "Edit profile" (reflected in the URL as `?edit-profile=open`). */
+  openEditProfile: () => void;
+  /** Closes "Edit profile" (clears `edit-profile` from the URL). */
+  closeEditProfile: () => void;
 
   /** True when the Terms of Service modal is open. */
   isTermsOpen: ReadonlySignal<boolean>;
@@ -410,7 +537,16 @@ import {
   createPlaylistManager,
   type PlaylistManager,
   type PlaylistItemData,
+  type Playlist,
 } from "./PlaylistManager";
+import {
+  createUserGalleryManager,
+  type UserGalleryManager,
+} from "./UserGalleryManager";
+import {
+  createTextToSpeechManager,
+  type TextToSpeechManager,
+} from "./TextToSpeechManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
@@ -445,6 +581,12 @@ export interface CreateSeedBibleStateOptions {
    */
   offlineStore?: OfflineTranslationStore | null;
   /**
+   * Cache shared across `getTranslations()` calls. Only the SSR host passes
+   * one in (see `standalone/ssrTranslationsCache.ts`) — omitted here, client
+   * behavior (per-page-load cache + localStorage) is unchanged.
+   */
+  translationsCache?: TranslationsCache;
+  /**
    * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
    * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
    * instance already fetched. The client uses this to seed its own API cache
@@ -452,6 +594,15 @@ export interface CreateSeedBibleStateOptions {
    * `readInjectedApiResponseSnapshot` in `app/apiResponseSeed.ts`.
    */
   apiResponseSnapshot?: Record<string, unknown>;
+
+  /**
+   * A prior SSR render's completed `?customization=...` load, so the new
+   * `CustomizationsManager` doesn't re-fetch a record the server already
+   * resolved. The client uses this to seed its own load with whatever the
+   * server already fetched for the SSR render — see
+   * `readInjectedCustomizationSeed` in `app/customizationSeed.ts`.
+   */
+  initialCustomizationSeed?: InitialCustomizationSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -489,11 +640,18 @@ export function createSeedBibleState(
   );
   const data = createBibleDataManager(api, {
     offlineStore: options.offlineStore,
+    translationsCache: options.translationsCache,
   });
   const os = CasualOSManager();
   const login = createLoginManager({ os });
-  const highlights = createHighlightsManager(os, login);
-  const bookmarks = createBookmarksManager(os, login);
+  const modals = createModalManager();
+  // Both managers ask through the same prompt, so one sign-in raises one
+  // dialog even when the device holds highlights and notes.
+  const askToAdopt = createAdoptionPrompt(modals);
+  const highlights = createHighlightsManager(os, login, {
+    confirmAdoption: (owner) => askToAdopt(owner, "highlights"),
+  });
+  const saves = createSavesManager(os, login);
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
@@ -510,6 +668,19 @@ export function createSeedBibleState(
 
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
   const themeManager = createTheme(settings);
+  const customizationVariantSelections =
+    createCustomizationVariantSelectionsManager(os, login);
+  const customizationExtensionPreferences =
+    createCustomizationExtensionPreferencesManager(os, login);
+  const customizations = createCustomizationsManager(
+    os,
+    login,
+    themeManager,
+    navigation,
+    customizationVariantSelections,
+    customizationExtensionPreferences,
+    options.initialCustomizationSeed
+  );
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
     undefined
@@ -528,7 +699,8 @@ export function createSeedBibleState(
     discover,
     readingExtensions,
     () => annotations,
-    branding
+    branding,
+    settings
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -537,7 +709,7 @@ export function createSeedBibleState(
     tabsLayout,
     settings,
     sidebar,
-    bookmarks,
+    saves,
     navigation,
     login,
     i18n
@@ -553,8 +725,14 @@ export function createSeedBibleState(
     login,
     tabs,
     discover,
-    annotationRecordKey
+    annotationRecordKey,
+    { confirmAdoption: (owner) => askToAdopt(owner, "notes") }
   );
+  const yourContent = createYourContentManager({
+    annotations,
+    highlights,
+    bibleData: data,
+  });
   const sessions = createSessionsManager(
     os,
     data,
@@ -567,7 +745,31 @@ export function createSeedBibleState(
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
   });
-  const modals = createModalManager();
+  // Swaps the live installed-extension set over to whichever customization is
+  // active (its own extensionIds plus anything the viewer added for it), and
+  // back to the viewer's real default profile when none is active. Guarded
+  // so it stays a no-op until a customization has genuinely gone active at
+  // least once this session — effect() runs synchronously on registration,
+  // and without the guard this would fire on every page load and race
+  // app/main.tsx's own initial `loadDefaultExtensions()` call.
+  let previousExtensionTargetKey: string | null = null;
+  let hasEnteredCustomizationExtensionMode = false;
+  effect(() => {
+    const active = customizations.activeCustomization.value;
+    const targetIds = active ? customizations.activeExtensionIds.value : null;
+    if (targetIds === null && !hasEnteredCustomizationExtensionMode) {
+      return;
+    }
+    const key = targetIds === null ? " default" : [...targetIds].sort().join("");
+    if (key === previousExtensionTargetKey) {
+      return;
+    }
+    previousExtensionTargetKey = key;
+    if (targetIds !== null) {
+      hasEnteredCustomizationExtensionMode = true;
+    }
+    void extensions.reconcileInstalledExtensions(targetIds);
+  });
   const search = createSearchManager();
 
   // When the app is opened via a content link — a shared-session invite
@@ -622,7 +824,80 @@ export function createSeedBibleState(
     codeOfConductOpen.value = false;
   };
 
+  // The "Your content" screen, reached from Profile. Bound to `?content=open`
+  // on the same terms as the Profile screen below.
+  const contentOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("content") === "open"
+  );
+  const isYourContentOpen = computed(() => contentOpen.value);
+  const openYourContent = () => {
+    contentOpen.value = true;
+  };
+  const closeYourContent = () => {
+    contentOpen.value = false;
+  };
+
+  // The Profile screen. Two-way bound to `?profile=open` so it can be
+  // deep-linked and so the browser's back button leaves it, mirroring Today.
+  //
+  // Never open during SSR: `effectivePanes` renders fullscreen panes
+  // unconditionally, so a crawled `/?profile=open` would otherwise serialize
+  // the signed-in profile into the response HTML.
+  const profileOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("profile") === "open"
+  );
+  const isProfileOpen = computed(() => profileOpen.value);
+  const openProfile = () => {
+    profileOpen.value = true;
+  };
+  const closeProfile = () => {
+    profileOpen.value = false;
+  };
+
+  // "Edit profile", reached from the Profile screen. Kept out of SSR for the
+  // same reason as Profile above: it renders the signed-in account.
+  const editProfileOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("edit-profile") === "open"
+  );
+  const isEditProfileOpen = computed(() => editProfileOpen.value);
+  const openEditProfile = () => {
+    editProfileOpen.value = true;
+  };
+  const closeEditProfile = () => {
+    editProfileOpen.value = false;
+  };
+
   navigation.syncSignalsToUrl({
+    profile: {
+      get value() {
+        return profileOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        profileOpen.value = newValue === "open";
+      },
+    },
+    content: {
+      get value() {
+        return contentOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        contentOpen.value = newValue === "open";
+      },
+    },
+    "edit-profile": {
+      get value() {
+        return editProfileOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        editProfileOpen.value = newValue === "open";
+      },
+    },
     terms: {
       get value() {
         return termsOpen.value ? "open" : null;
@@ -649,13 +924,48 @@ export function createSeedBibleState(
     },
   });
   const readingPlans = createReadingPlansManager(os, login);
+  const gallery = createUserGalleryManager(os, login);
+  const textToSpeech = createTextToSpeechManager();
 
   const { currentTheme } = themeManager;
-  const theme = computed(() => currentTheme.value);
+  // While a Customization is active, its variant is rendered against its
+  // own `baseTheme` preset (via `activeResolvedTheme` — see
+  // `buildBibleThemeFromCustomizationTheme`), not against the viewer's own
+  // theme — session-only, since that resolution is derived from in-memory
+  // customization data, never written to `SettingsManager`.
+  // `themeManager.currentTheme` itself (exposed as `state.theme.currentTheme`)
+  // stays unblended so Display & Theme settings keep showing/editing the
+  // user's actual theme, decoupled from whichever Customization is active.
+  const theme = computed(
+    () => customizations.activeResolvedTheme.value ?? currentTheme.value
+  );
   const themeCssVariables = computed(() =>
     generateThemeCssVariables(theme.value)
   );
   const themeCssClasses = computed(() => generateThemeCssClasses(theme.value));
+
+  // Presets (statically loaded in app/main.tsx's ExternalResourceDependencies)
+  // plus the built-in themes' own defaults never need a dynamic <link> —
+  // only a manually-typed custom font name does.
+  const ALWAYS_LOADED_FONT_NAMES = new Set([
+    ...CUSTOMIZATION_FONT_PRESETS.map((preset) => preset.name),
+    "Plus Jakarta Sans", // default bookTitle/chapterHeading/verse font in the built-in themes
+  ]);
+  const FONT_FAMILY_KEYS: ThemeFontFamilyKey[] = CUSTOMIZATION_FONT_FIELDS.map(
+    (field) => field.key
+  );
+  const googleFontFamiliesToLoad = computed<string[]>(() => {
+    const vars = theme.value.variables;
+    const names = new Set<string>();
+    for (const key of FONT_FAMILY_KEYS) {
+      const value = vars[key];
+      const name = value?.split(",")[0]?.trim();
+      if (name && !ALWAYS_LOADED_FONT_NAMES.has(name)) {
+        names.add(name);
+      }
+    }
+    return [...names];
+  });
 
   // Theme is the source of truth for text colors. When the user switches
   // theme presets, drop any per-section color override from the text editor
@@ -679,22 +989,16 @@ export function createSeedBibleState(
   });
 
   const renderedAsMobile = options.config?.renderedAsMobile ?? false;
-  const isSSR = import.meta.env.SSR as boolean;
 
-  const viewportWidth = signal(
-    typeof window === "undefined"
-      ? isSSR && renderedAsMobile
-        ? MOBILE_BREAKPOINT
-        : 1000
-      : window.innerWidth
-  );
-  const viewportHeight = signal(
-    typeof window === "undefined"
-      ? isSSR && renderedAsMobile
-        ? 800
-        : 1000
-      : window.innerHeight
-  );
+  // Seeded from the SAME `renderedAsMobile` guess the server made — never
+  // `window.innerWidth`/`.innerHeight` here — so the client's first
+  // render/hydrate pass produces the identical viewport-derived layout the
+  // server rendered, regardless of the device's actual screen size.
+  // `applyViewport` (below, exposed on `AppState`) corrects this to the real
+  // dimensions once, from a post-mount effect in `MainBody` — see
+  // `app/main.tsx`.
+  const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
+  const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
 
   // Created after `isMobile` so panes can enforce a single fullscreen pane:
@@ -713,6 +1017,14 @@ export function createSeedBibleState(
     discover,
     chats
   );
+  // True only while `hydrateFromStorage` below is applying the saved tab state.
+  // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
+  // the restored book/chapter to the address bar — a URL move that looks exactly
+  // like a navigation to the effect below, but is the tail end of the same page
+  // load. Without this, a returning visitor whose last chapter wasn't the boot
+  // default watched Today open and then immediately close again.
+  let restoringStoredState = false;
+
   // Close any fullscreen pane when the book/chapter in the URL path changes,
   // so navigating reveals the reader (every navigation path writes this
   // position into the path — see `commitSelectedTabToUrl` in TabsManager).
@@ -744,6 +1056,16 @@ export function createSeedBibleState(
     lastReadingLocation = location;
 
     if (previous === null || previous === location) {
+      return;
+    }
+    // A restore is not a navigation: the reader hasn't gone anywhere, the app is
+    // catching the URL up to state that only arrived after the load — the saved
+    // tabs from `localStorage` (see `restoringStoredState`) or the profile's
+    // saved translation, which reaches this effect at all because it can fall
+    // back to a different book (see `isRestoringProfileTranslation`). The
+    // baseline above is updated first in both cases, so the restored position
+    // becomes the position everything after it is compared against.
+    if (restoringStoredState || tabs.isRestoringProfileTranslation()) {
       return;
     }
     panes.closeFullscreenPanes();
@@ -835,19 +1157,29 @@ export function createSeedBibleState(
       viewportWidth.value > viewportHeight.value
   );
 
+  /**
+   * Re-reads the real `window.innerWidth`/`.innerHeight` and applies them.
+   * Shared by the resize listener below and a one-time post-mount correction
+   * (`MainBody` in `app/main.tsx`) — one place reads `window.inner*` into
+   * these signals. No-op on the server.
+   */
+  const applyViewport = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    batch(() => {
+      viewportWidth.value = window.innerWidth;
+      viewportHeight.value = window.innerHeight;
+    });
+  };
+
   effect(() => {
     if (typeof window === "undefined") {
       return;
     }
-    const handleResize = () => {
-      batch(() => {
-        viewportWidth.value = window.innerWidth;
-        viewportHeight.value = window.innerHeight;
-      });
-    };
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", applyViewport);
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", applyViewport);
     };
   });
 
@@ -991,6 +1323,13 @@ export function createSeedBibleState(
     }
   });
 
+  // Blocks the persistence effect below until `hydrateFromStorage` has read the
+  // stored tabs back. Until then the managers hold only the single URL-derived
+  // tab they seed with to match SSR, and persisting *that* would overwrite the
+  // visitor's saved tabs with a one-tab state before anything ever restored
+  // them — the saved session would be destroyed by the act of loading the page.
+  const tabsRestored = signal(false);
+
   // Persist the non-ephemeral tab state (translation/book/chapter per tab, the
   // selected tab, the layout preset, and the slot arrangement) to localStorage
   // so TabsManager/TabsLayoutManager can restore it on the next refresh or
@@ -1016,6 +1355,10 @@ export function createSeedBibleState(
         });
 
     effect(() => {
+      if (!tabsRestored.value) {
+        return;
+      }
+
       const persistedTabs = buildPersistedTabs();
       const persistableIds = new Set(persistedTabs.map((tab) => tab.id));
 
@@ -1051,6 +1394,51 @@ export function createSeedBibleState(
     });
   }
 
+  /**
+   * Whether the current URL is a static, non-reading page (currently just
+   * "/{lang}/about"). Drives the About fullscreen-pane's open/close effect
+   * below and the meta-signal branches further down — a single source of
+   * truth so the rendered content and its title/description/canonical
+   * always agree.
+   */
+  const isAboutPage = computed(
+    () =>
+      parseStaticPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )?.page === "about"
+  );
+
+  /**
+   * One-time correction of every `localStorage`-derived value that feeds the
+   * first render. See `AppState.hydrateFromStorage`.
+   */
+  const hydrateFromStorage = () => {
+    // `batch` flushes its effects before it returns, so the reader's write of
+    // the restored position to the URL lands inside this window.
+    restoringStoredState = true;
+    try {
+      batch(() => {
+        // Tabs before slots: slots are bound to tab objects by id, and restoring
+        // tabs replaces those objects wholesale.
+        tabs.hydrateStoredTabs();
+        tabsLayout.hydrateStoredLayout();
+        data.hydrateCachedCatalog();
+        selector.hydrateStoredViewMode();
+        tutorial.hydrateStoredFlags();
+        onboarding.hydrateStoredFlags();
+        // Unblocks the persistence effect above, which now sees the restored tab
+        // list rather than the URL-only seed.
+        tabsRestored.value = true;
+      });
+    } finally {
+      restoringStoredState = false;
+    }
+    // Deliberately outside the batch: this can set `promptVisible`, and it must
+    // observe the settled reader state rather than a half-applied one.
+    tutorial.armAutoStart();
+  };
+
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
     void i18n.language.value;
@@ -1058,11 +1446,18 @@ export function createSeedBibleState(
 
     const { t } = i18n;
 
-    const seedBibleTitle = t("seed-bible", {
-      defaultValue: "Seed Bible",
-    });
+    const seedBibleTitle = getBrandedAppText(
+      t("seed-bible", { defaultValue: "Seed Bible" }),
+      t,
+      branding,
+      customizations.activeCustomization.value?.name
+    );
 
     const getTitle = () => {
+      if (isAboutPage.value) {
+        return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
+      }
+
       if (!selectedTab.value) {
         return seedBibleTitle;
       }
@@ -1076,6 +1471,16 @@ export function createSeedBibleState(
   const description = computed(() => {
     void i18n.language.value;
     const { t } = i18n;
+
+    if (isAboutPage.value) {
+      return truncateForMeta(
+        t("about-meta-description", {
+          defaultValue:
+            "Seed Bible is a free Bible app with dozens of translations, reading plans, notes, highlights, and study tools.",
+        }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
@@ -1136,10 +1541,17 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
-    return t("seed-bible", {
-      defaultValue: "Seed Bible",
-    });
+    return getBrandedAppText(
+      t("seed-bible", { defaultValue: "Seed Bible" }),
+      t,
+      branding,
+      customizations.activeCustomization.value?.name
+    );
   });
+
+  const customizationLogoUrl = computed<string | null>(
+    () => customizations.activeCustomization.value?.logoUrl ?? null
+  );
 
   /**
    * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
@@ -1160,6 +1572,10 @@ export function createSeedBibleState(
   const socialTitle = computed(() => {
     void i18n.language.value;
     const { t } = i18n;
+
+    if (isAboutPage.value) {
+      return t("about-title", { defaultValue: "About the Seed Bible" });
+    }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
@@ -1202,6 +1618,16 @@ export function createSeedBibleState(
    * would point every canonical at a URL that redirects.
    */
   const canonicalUrl = computed(() => {
+    if (isAboutPage.value) {
+      // Uses the *resolved* i18n language, not the raw URL segment, so a
+      // garbage/unsupported language in the URL still canonicalizes to a
+      // real page instead of echoing back something that doesn't exist.
+      return `${navigation.basePath}${buildStaticPagePath({
+        language: i18n.language.value,
+        page: "about",
+      })}`;
+    }
+
     const readingState = selectedTab.value?.readingState;
     const bookId = readingState?.bookId.value;
 
@@ -1212,10 +1638,15 @@ export function createSeedBibleState(
     const translationId = data.buildTranslationId(
       readingState.translationId.value
     );
-    const language =
-      bibleLanguageToUiLocale(readingState.translation.value?.language) ??
-      uiLocaleForDefaultTranslation(translationId) ??
-      i18n.language.value;
+    // Falls back to the current UI language, unlike the chapter tool links'
+    // version of this chain (see `resolveTranslationUiLanguage`) — this is
+    // the page actually being rendered right now, so it has a real "current
+    // visitor" to derive one from.
+    const language = resolveTranslationUiLanguage({
+      translationLanguage: readingState.translation.value?.language,
+      translationId,
+      fallback: i18n.language.value,
+    });
 
     const readingPath = buildReadingPath({
       language,
@@ -1227,6 +1658,14 @@ export function createSeedBibleState(
     return `${navigation.basePath}${readingPath}`;
   });
 
+  /** How often time spent on the chapter in view is written to history. */
+  const READING_TICK_MS = 5000;
+  /**
+   * The most one tick may credit. A page can be frozen without ever reporting
+   * itself hidden, and its next tick then arrives with the whole sleep behind
+   * it; this caps what that tick can claim to have watched.
+   */
+  const READING_MAX_TICK_CREDIT_MS = READING_TICK_MS * 2;
   effect(() => {
     if (!selectedTab.value) {
       return;
@@ -1242,12 +1681,66 @@ export function createSeedBibleState(
     // that's what the "used for a day" download offer is judged against.
     data.offline.noteTranslationInUse(chapter.translation.id);
 
-    const readingHistoryTimeoutId = setInterval(() => {
-      readingHistory.saveReadingHistory(
-        chapter.book.id,
-        chapter.chapter.number
+    // Reading time accrues only while the chapter is actually on screen. Each
+    // tick credits just the stretch since the last one rather than stretching
+    // the event's end to the present, so time the app slept through — a locked
+    // phone, a backgrounded tab — opens a fresh event on return instead of
+    // being back-filled as though it had been read. Time spent listening with
+    // the screen off is recorded separately, by whatever is playing the audio.
+    let creditedThroughMs = Date.now();
+    let readingTicker: ReturnType<typeof setInterval> | null = null;
+
+    const creditTimeOnScreen = () => {
+      const now = Date.now();
+      const from = Math.max(
+        creditedThroughMs,
+        now - READING_MAX_TICK_CREDIT_MS
       );
-    }, 5000);
+      creditedThroughMs = now;
+      readingHistory.saveReadingSpan(
+        chapter.book.id,
+        chapter.chapter.number,
+        Math.floor(from / 1000),
+        Math.floor(now / 1000)
+      );
+    };
+
+    const startCrediting = () => {
+      if (readingTicker !== null) {
+        return;
+      }
+      creditedThroughMs = Date.now();
+      readingTicker = setInterval(creditTimeOnScreen, READING_TICK_MS);
+    };
+
+    const stopCrediting = () => {
+      if (readingTicker === null) {
+        return;
+      }
+      clearInterval(readingTicker);
+      readingTicker = null;
+      // The part-tick since the last one goes uncredited on purpose: a chapter
+      // has always had to hold the screen for a whole tick before it counts as
+      // read at all, and crediting stragglers here would let one flicked past
+      // on the way somewhere else earn a place in history.
+    };
+
+    const canWatchVisibility =
+      typeof document !== "undefined" && !import.meta.env.SSR;
+    const handleReadingVisibility = () => {
+      if (document.visibilityState === "visible") {
+        startCrediting();
+      } else {
+        stopCrediting();
+      }
+    };
+
+    if (canWatchVisibility) {
+      document.addEventListener("visibilitychange", handleReadingVisibility);
+    }
+    if (!canWatchVisibility || document.visibilityState === "visible") {
+      startCrediting();
+    }
 
     const posthogTimeoutId = setTimeout(() => {
       captureEvent("user_chapter_read", {
@@ -1258,7 +1751,13 @@ export function createSeedBibleState(
     }, 30_000);
 
     return () => {
-      clearInterval(readingHistoryTimeoutId);
+      if (canWatchVisibility) {
+        document.removeEventListener(
+          "visibilitychange",
+          handleReadingVisibility
+        );
+      }
+      stopCrediting();
       clearTimeout(posthogTimeoutId);
     };
   });
@@ -1298,11 +1797,26 @@ export function createSeedBibleState(
     sidebar.closeSidebar();
   };
 
+  /**
+   * Dismisses the sidebar and runs a navigation as a single history entry.
+   * Both halves write the URL — the sidebar drops `?sidebar=open`, the reader
+   * writes the new position — and each write on its own would cost a history
+   * entry, so pressing back afterwards would land on a stale duplicate of the
+   * destination instead of where the user actually came from.
+   */
+  const navigateFromSidebar = (navigate: () => void) => {
+    navigation.batchWrites(() => {
+      closeSidebarAndSettings();
+      navigate();
+    });
+  };
+
   const handleSelectTab = (tabId: string) => {
-    closeSidebarAndSettings();
-    tabs.selectTab(tabId);
-    tabsLayout.setSelectedSlotTab(tabId);
-    panes.closeFullscreenPanes();
+    navigateFromSidebar(() => {
+      tabs.selectTab(tabId);
+      tabsLayout.setSelectedSlotTab(tabId);
+      panes.closeFullscreenPanes();
+    });
   };
 
   const handleAddTab = () => {
@@ -1316,27 +1830,43 @@ export function createSeedBibleState(
   };
 
   const handleOpenInNewSlot = (tabId: string) => {
-    closeSidebarAndSettings();
-    const slot = tabsLayout.openTabInNewSlot(tabId);
-    if (slot?.tab) {
-      tabs.selectTab(slot.tab.id);
-    }
+    navigateFromSidebar(() => {
+      const slot = tabsLayout.openTabInNewSlot(tabId);
+      if (slot?.tab) {
+        tabs.selectTab(slot.tab.id);
+      }
+    });
   };
 
   const handleSelectSlot = (slotId: string) => {
-    closeSidebarAndSettings();
-    tabsLayout.selectSlot(slotId);
+    navigateFromSidebar(() => {
+      tabsLayout.selectSlot(slotId);
 
-    const selectedSlot =
-      tabsLayout.slots.value.find((slot) => slot.id === slotId) ?? null;
-    if (selectedSlot?.tab) {
-      tabs.selectTab(selectedSlot.tab.id);
-    }
+      const selectedSlot =
+        tabsLayout.slots.value.find((slot) => slot.id === slotId) ?? null;
+      if (selectedSlot?.tab) {
+        tabs.selectTab(selectedSlot.tab.id);
+      }
+    });
   };
 
   const handleSelectPane = (paneId: string) => {
-    closeSidebarAndSettings();
-    panes.selectPane(paneId);
+    // Side and fullscreen panes render docked beside the sidebar on desktop
+    // (see PaneLayout's SidePane/FullscreenPane) rather than covering it, so
+    // interacting with one shouldn't close it there — the Customization
+    // Center's editor pane in particular depends on the Settings list
+    // staying open behind it. On mobile every pane is forced to fullscreen
+    // (see `effectivePanes`) and the sidebar is a full-screen drawer, so it
+    // still needs to close to reveal the pane — batched with the pane
+    // selection via `navigateFromSidebar` so the sidebar/settings URL writes
+    // don't cost the back button a stale extra history entry.
+    if (isMobile.value) {
+      navigateFromSidebar(() => {
+        panes.selectPane(paneId);
+      });
+    } else {
+      panes.selectPane(paneId);
+    }
   };
 
   // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
@@ -1481,11 +2011,39 @@ export function createSeedBibleState(
   // stale/resyncing connection can make the host look gone when it never
   // left — see issue #1346.
   const sessionsWhereHostWasSeen = new Set<string>();
+  const sessionsWhereWeLostConnection = new Set<string>();
+  // Sessions where the "you lost connection" toast was actually shown (it is
+  // suppressed right after a resume). Only those owe a "you rejoined" toast.
+  const sessionsWhereWeAnnouncedDrop = new Set<string>();
+  // After we recover from our own drop, presence can still omit the host
+  // for a beat (the peer list is rebuilt on resync). Don't treat that as
+  // "the host left and came back" — prefer the you-rejoined toast.
+  const SELF_RECONNECT_SETTLE_MS = 2000;
+  const sessionsSettlingAfterSelfReconnect = new Set<string>();
+  const presenceSettleTick = signal(0);
+  const pendingPresenceSettleTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
   const HOST_DISCONNECT_GRACE_MS = 30000;
   const pendingHostDisconnectTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
   >();
+  const clearPendingPresenceSettle = (sessionId: string): void => {
+    sessionsSettlingAfterSelfReconnect.delete(sessionId);
+    const timer = pendingPresenceSettleTimers.get(sessionId);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      pendingPresenceSettleTimers.delete(sessionId);
+    }
+  };
+  const forgetSessionPresence = (sessionId: string): void => {
+    sessionsWhereHostWasSeen.delete(sessionId);
+    sessionsWhereWeLostConnection.delete(sessionId);
+    sessionsWhereWeAnnouncedDrop.delete(sessionId);
+    clearPendingPresenceSettle(sessionId);
+  };
   const clearPendingHostDisconnect = (sessionId: string): boolean => {
     const timer = pendingHostDisconnectTimers.get(sessionId);
     if (timer !== undefined) {
@@ -1501,6 +2059,14 @@ export function createSeedBibleState(
         isSessionHost(session.options.value, user.userId) ||
         isSessionHost(session.options.value, user.connectionId)
     );
+  const sessionWeAreHost = (session: BibleReadingSession): boolean =>
+    locallyHostedSessionIds.has(session.id) ||
+    session.connectedUsers.value.some(
+      (user) =>
+        user.isSelf &&
+        (isSessionHost(session.options.value, user.userId) ||
+          isSessionHost(session.options.value, user.connectionId))
+    );
   // Whether this client's view of who's present is worth acting on. We are
   // definitionally present in our own session, so a list that doesn't even
   // include us means the presence channel is broken (it can go permanently
@@ -1512,15 +2078,110 @@ export function createSeedBibleState(
     session.isSynced.value &&
     session.connectedUsers.value.some((user) => user.isSelf);
   effect(() => {
+    // Read so this effect re-runs when the self-reconnect settle timer fires.
+    const _presenceSettleGeneration = presenceSettleTick.value;
     for (const tab of tabs.tabs.value) {
       const session = tab.sharedSession;
       if (!session) continue;
 
       if (session.options.value.endedAt !== null) {
-        sessionsWhereHostWasSeen.delete(session.id);
+        forgetSessionPresence(session.id);
         clearPendingHostDisconnect(session.id);
         tabs.removeTab(tab.id);
         continue;
+      }
+
+      const { t } = i18n;
+
+      const hostId = session.options.value.hostUserId;
+      const hostIsConnected = hostId ? sessionHostIsConnected(session) : false;
+      if (hostIsConnected) {
+        sessionsWhereHostWasSeen.add(session.id);
+      }
+
+      // Two different failures look similar on the presence list:
+      //  - Our own connection dropped: `isSynced` goes false, and/or every
+      //    other user disappears at once (the OS reports all peers as
+      //    disconnected). Show "you lost/rejoined" toasts.
+      //  - Only the host dropped: other guests are still visible. Show
+      //    host-specific toasts below, not these.
+      // If this device is itself a host (including another of the host's
+      // devices), an empty remote list is "someone else left", not "we
+      // disconnected" — even if `isSynced` blips when that peer drops.
+      //
+      // Our own drop clears the WHOLE list, our own entry included (see
+      // `rebuildRemoteClientsSubscription` in SessionsManager), so an empty
+      // list means us. Still seeing ourselves while everyone else has gone
+      // means the presence channel is working fine and they really did
+      // leave — one at a time or all at once, it makes no difference.
+      const ourConnectionDropped =
+        !sessionWeAreHost(session) &&
+        sessionsWhereHostWasSeen.has(session.id) &&
+        (!session.isSynced.value || session.connectedUsers.value.length === 0);
+
+      if (ourConnectionDropped) {
+        clearPendingHostDisconnect(session.id);
+        clearPendingPresenceSettle(session.id);
+        if (!sessionsWhereWeLostConnection.has(session.id)) {
+          sessionsWhereWeLostConnection.add(session.id);
+          if (!justResumedFromBackground.value) {
+            // Remember that we actually said it, so the matching
+            // "you're back" toast below isn't silently dropped.
+            sessionsWhereWeAnnouncedDrop.add(session.id);
+            toast(
+              t("session-disconnected", {
+                defaultValue: "You lost connection to the session",
+              })
+            );
+          }
+        }
+        continue;
+      }
+
+      // Recovery needs positive evidence, not just the absence of the drop
+      // signals: right after a resume the list can be empty while `isSynced`
+      // already reads true, which is presence still catching up rather than
+      // us being back.
+      if (
+        sessionsWhereWeLostConnection.has(session.id) &&
+        session.isSynced.value &&
+        session.connectedUsers.value.length > 0
+      ) {
+        sessionsWhereWeLostConnection.delete(session.id);
+        // Having told someone they dropped, always tell them they're back —
+        // even inside the post-resume window that suppresses the first
+        // toast, otherwise they are left believing they're still offline.
+        if (sessionsWhereWeAnnouncedDrop.delete(session.id)) {
+          toast(
+            t("session-reconnected", {
+              defaultValue: "You rejoined the session",
+            })
+          );
+        }
+        if (!locallyHostedSessionIds.has(session.id) && !hostIsConnected) {
+          clearPendingPresenceSettle(session.id);
+          sessionsSettlingAfterSelfReconnect.add(session.id);
+          pendingPresenceSettleTimers.set(
+            session.id,
+            setTimeout(() => {
+              pendingPresenceSettleTimers.delete(session.id);
+              sessionsSettlingAfterSelfReconnect.delete(session.id);
+              presenceSettleTick.value++;
+            }, SELF_RECONNECT_SETTLE_MS)
+          );
+        }
+      }
+
+      if (
+        sessionsSettlingAfterSelfReconnect.has(session.id) &&
+        !hostIsConnected
+      ) {
+        // Presence is still catching up after our own reconnect. Skip
+        // host disconnect/reconnect toasts until it settles.
+        continue;
+      }
+      if (sessionsSettlingAfterSelfReconnect.has(session.id)) {
+        clearPendingPresenceSettle(session.id);
       }
 
       // Never auto-close a session this client created — the host is the
@@ -1528,23 +2189,18 @@ export function createSeedBibleState(
       // (login/logout), not a real departure.
       if (locallyHostedSessionIds.has(session.id)) continue;
 
-      const hostId = session.options.value.hostUserId;
       if (!hostId) continue;
 
       // A session stays alive as long as the host OR any co-host is present,
       // so appointing a co-host lets the original host leave without kicking
       // everyone else out.
-      const hostIsConnected = sessionHostIsConnected(session);
-      const { t } = i18n;
-
       if (hostIsConnected) {
-        sessionsWhereHostWasSeen.add(session.id);
         // Host came back (e.g. reconnected after their login flow) — cancel
         // any pending close so the tab survives the round-trip.
         if (clearPendingHostDisconnect(session.id)) {
           toast(
             t("session-host-reconnected", {
-              defaultValue: "Reconnected to the session",
+              defaultValue: "The host reconnected to the session",
             })
           );
         }
@@ -1564,8 +2220,8 @@ export function createSeedBibleState(
         const tabId = tab.id;
         const sessionId = session.id;
         toast(
-          t("session-host-reconnecting", {
-            defaultValue: "Reconnecting to the session…",
+          t("session-host-disconnected", {
+            defaultValue: "The host disconnected from the session",
           })
         );
         const timer = setTimeout(() => {
@@ -1576,7 +2232,7 @@ export function createSeedBibleState(
           const currentSession = currentTab?.sharedSession;
           if (!currentSession || currentSession.id !== sessionId) {
             // Tab/session already gone (e.g. closed some other way).
-            sessionsWhereHostWasSeen.delete(sessionId);
+            forgetSessionPresence(sessionId);
             return;
           }
           if (
@@ -1590,7 +2246,7 @@ export function createSeedBibleState(
             // genuinely gone once presence is trustworthy again.
             return;
           }
-          sessionsWhereHostWasSeen.delete(sessionId);
+          forgetSessionPresence(sessionId);
           toast(
             t("session-host-left", {
               defaultValue: "The host left — you were removed from the session",
@@ -1728,7 +2384,7 @@ export function createSeedBibleState(
   // Tell the user when we signed them out for them. `login.sessionEnded` only fires
   // when a forced sign-out actually happened, so this can't toast for a request that
   // merely failed, nor for a sign-out the user asked for. Without a message they
-  // would just watch their highlights and bookmarks vanish with no explanation.
+  // would just watch their highlights and saves vanish with no explanation.
   effect(() => {
     const ended = login.sessionEnded.value;
     if (!ended || typeof window === "undefined") {
@@ -1984,7 +2640,9 @@ export function createSeedBibleState(
       ...themeManager,
       themeCssVariables,
       themeCssClasses,
+      googleFontFamiliesToLoad,
     },
+    customizations,
     sidebar,
     tabs,
     tabsLayout,
@@ -1994,7 +2652,7 @@ export function createSeedBibleState(
     login,
     readingHistory,
     highlights,
-    bookmarks,
+    saves,
     annotations,
     chats,
     sessions,
@@ -2010,8 +2668,20 @@ export function createSeedBibleState(
     extensions,
     readingPlans,
     playlists,
+    gallery,
+    textToSpeech,
     tutorial,
     onboarding,
+    yourContent,
+    isYourContentOpen,
+    openYourContent,
+    closeYourContent,
+    isProfileOpen,
+    openProfile,
+    closeProfile,
+    isEditProfileOpen,
+    openEditProfile,
+    closeEditProfile,
     isTermsOpen,
     openTerms,
     closeTerms,
@@ -2032,6 +2702,8 @@ export function createSeedBibleState(
       effectivePanes,
       viewportWidth,
       viewportHeight,
+      applyViewport,
+      hydrateFromStorage,
       isMobile,
       isMobileLandscape,
       isCompactDesktop,
@@ -2047,8 +2719,10 @@ export function createSeedBibleState(
       title,
       description,
       siteName,
+      customizationLogoUrl,
       canonicalUrl,
       socialTitle,
+      isAboutPage,
       currentToast,
       toast,
       isDiscoverOpen: playlists.isDiscoverOpen,
@@ -2083,6 +2757,7 @@ export function createSeedBibleState(
             tabs={tabs}
             chats={chats}
             openChatPanel={sidebar.openChatPanel}
+            modals={modals}
           />
         ),
         header: () => (
@@ -2144,20 +2819,14 @@ export function createSeedBibleState(
       selector.setOpen(true, slot);
     }
   };
-  const showTodayBookmarksList = () => {
-    sidebar.isSidebarCollapsed.value = false;
-    bookmarks.isFilterActive.value = true;
-  };
   const renderTodayPane = () => (
     <TodayPane
       today={today}
       login={login}
-      bookmarks={bookmarks.bookmarks}
-      theme={theme}
+      theme={themeManager.currentTheme}
       isMobile={isMobile}
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
-      onShowBookmarksList={showTodayBookmarksList}
     />
   );
   const renderTodayPaneTitle = () => <TodayPaneTitle />;
@@ -2175,12 +2844,219 @@ export function createSeedBibleState(
     }
   });
 
+  // Today is the fullscreen home screen, so anything else opening replaces it,
+  // and this is where that is enforced. Two ways it can happen:
+  //
+  // - Today's own pane went away, because another fullscreen pane displaced it
+  //   or its close button was used.
+  // - Another pane is open alongside Today's. `PanesManager` only clears the
+  //   other panes for a pane that fills the screen; a "side" pane replaces
+  //   just the previous side pane, so Discover and Reading plans used to open
+  //   underneath Today with nothing to tell the user they were there.
+  effect(() => {
+    const openPanes = panes.panes.value;
+    const todayPaneOpen = openPanes.some((pane) => pane.id === TODAY_PANE_ID);
+    const anotherPaneOpen = openPanes.some((pane) => pane.id !== TODAY_PANE_ID);
+    if (today.isOpen.peek() && (!todayPaneOpen || anotherPaneOpen)) {
+      today.close();
+    }
+  });
+
+  // The Profile screen, wired the same way as Today above: a fullscreen pane
+  // mirrored from `isProfileOpen`, with the thunks hoisted so their identity
+  // stays stable across reopens.
+  //
+  // Opening any fullscreen pane closes the others, so the screens reached from
+  // Profile ("Edit profile", "Your content") each carry a back button that
+  // reopens it rather than relying on a pane stack.
+  const backToProfile = () => {
+    closeEditProfile();
+    closeYourContent();
+    openProfile();
+  };
+  const renderProfileBackButton = () => (
+    <ProfileBackButton onBack={backToProfile} />
+  );
+  const editProfilePicture = () => {
+    // Destructured for the same reason as the toast below: the translation
+    // lint rules only recognise calls made through a bare `t`.
+    const { t } = i18n;
+    openProfilePictureModal({ modals, login, t });
+  };
+  const openReadingPlansFromProfile = () => {
+    const readingState = selectedTab.peek()?.readingState;
+    if (!readingState) {
+      return;
+    }
+    closeProfile();
+    // Fullscreen rather than the toolbar's docked "side": the user came from a
+    // fullscreen screen, so a side panel would leave them looking at the reader.
+    openReadingPlansPane({
+      readingPlans,
+      readingState,
+      panesManager: panes,
+      modals,
+      playlists,
+      os,
+      login,
+      gallery,
+      placement: "fullscreen",
+    });
+  };
+  const renderProfilePane = () => (
+    <ProfilePane
+      state={state}
+      onEditProfile={openEditProfile}
+      onEditPicture={editProfilePicture}
+      onOpenReadingPlans={openReadingPlansFromProfile}
+      onOpenYourContent={openYourContent}
+    />
+  );
+  const renderProfilePaneTitle = () => <ProfilePaneTitle />;
+
+  effect(() => {
+    if (isProfileOpen.value) {
+      panes.openPane({
+        id: PROFILE_PANE_ID,
+        placement: "fullscreen",
+        title: renderProfilePaneTitle,
+        component: renderProfilePane,
+      });
+    } else {
+      panes.closePane(PROFILE_PANE_ID); // no-op when already closed
+    }
+  });
+
   effect(() => {
     const paneOpen = panes.panes.value.some(
-      (pane) => pane.id === TODAY_PANE_ID
+      (pane) => pane.id === PROFILE_PANE_ID
     );
-    if (!paneOpen && today.isOpen.peek()) {
-      today.close();
+    if (!paneOpen && isProfileOpen.peek()) {
+      closeProfile();
+    }
+  });
+
+  // "Edit profile", reached from the pencil on the profile card or from the
+  // name itself.
+  const renderEditProfilePane = () => (
+    <EditProfilePane state={state} onEditPicture={editProfilePicture} />
+  );
+  const renderEditProfilePaneTitle = () => <EditProfilePaneTitle />;
+
+  effect(() => {
+    if (isEditProfileOpen.value) {
+      panes.openPane({
+        id: EDIT_PROFILE_PANE_ID,
+        placement: "fullscreen",
+        title: renderEditProfilePaneTitle,
+        leading: renderProfileBackButton,
+        component: renderEditProfilePane,
+      });
+    } else {
+      panes.closePane(EDIT_PROFILE_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === EDIT_PROFILE_PANE_ID
+    );
+    if (!paneOpen && isEditProfileOpen.peek()) {
+      closeEditProfile();
+    }
+  });
+
+  // "Your content", the third fullscreen screen, wired like the two above.
+  // Each handler closes the screen first: all three destinations (reader,
+  // playlist player, annotation editor) sit behind it.
+  const openPassageFromContent = (target: TodayPassageTarget) => {
+    closeYourContent();
+    closeProfile();
+    openTodayPassage(state, today, target);
+  };
+  const playPlaylistFromContent = (playlist: Playlist) => {
+    closeYourContent();
+    closeProfile();
+    playlists.startPlaying(playlist, 0);
+  };
+  const editPlaylistFromContent = (playlist: Playlist) => {
+    closeYourContent();
+    closeProfile();
+    // `editPlaylist` only sets the Discover pane's view, and that pane docks
+    // beside the reader — so the fullscreen screens above it have to close
+    // first, or the editor opens behind them.
+    playlists.editPlaylist(playlist);
+  };
+  const editAnnotationFromContent = (annotation: Annotation) => {
+    closeYourContent();
+    closeProfile();
+    // Opens the Discover pane's annotation editor, the same one the reader
+    // uses — rather than growing a second editor on this screen.
+    annotations.editAnnotation(annotation);
+  };
+  const renderYourContentPane = () => (
+    <YourContentPane
+      state={state}
+      onOpenPassage={openPassageFromContent}
+      onPlayPlaylist={playPlaylistFromContent}
+      onEditPlaylist={editPlaylistFromContent}
+      onEditAnnotation={editAnnotationFromContent}
+    />
+  );
+  const renderYourContentPaneTitle = () => <YourContentPaneTitle />;
+
+  effect(() => {
+    if (isYourContentOpen.value) {
+      panes.openPane({
+        id: YOUR_CONTENT_PANE_ID,
+        placement: "fullscreen",
+        title: renderYourContentPaneTitle,
+        leading: renderProfileBackButton,
+        component: renderYourContentPane,
+      });
+    } else {
+      panes.closePane(YOUR_CONTENT_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === YOUR_CONTENT_PANE_ID
+    );
+    if (!paneOpen && isYourContentOpen.peek()) {
+      closeYourContent();
+    }
+  });
+
+  const renderAboutPane = () => <AboutPage state={state} />;
+  const renderAboutPaneTitle = () => <AboutPaneTitle />;
+
+  effect(() => {
+    if (isAboutPage.value) {
+      panes.openPane({
+        id: ABOUT_PANE_ID,
+        placement: "fullscreen",
+        title: renderAboutPaneTitle,
+        component: renderAboutPane,
+      });
+    } else {
+      panes.closePane(ABOUT_PANE_ID); // no-op when already closed
+    }
+  });
+
+  // Unlike Today's `isOpen` (a plain writable boolean), `isAboutPage` is a
+  // read-only computed derived from the URL — closing the pane can't just
+  // flip a signal back. Instead, leave "/about" for the current tab's
+  // reading position, mirroring how a genuine tab-focus change already does
+  // (see TabsManager.leaveStaticPage). This fires whether the pane was
+  // closed via its header's close button, `closeFullscreenPanes()` (e.g.
+  // selecting a tab), or displacement by another fullscreen pane.
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === ABOUT_PANE_ID
+    );
+    if (!paneOpen && isAboutPage.peek()) {
+      tabs.leaveStaticPage();
     }
   });
 
@@ -2232,7 +3108,7 @@ export function createSeedBibleState(
     },
     () => data.availableTranslations.value,
     async () => {
-      if (data.availableTranslations.value.length === 0) {
+      if (!data.catalogLoaded.value) {
         await data.getTranslations();
       }
       return data.availableTranslations.value;

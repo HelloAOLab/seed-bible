@@ -37,7 +37,9 @@ function makeScriptureMapContext() {
   return {
     readingHistoryService: { getColorByReadingTime: vi.fn(() => "#aabbcc") },
     userColorStore: { getUserColor: vi.fn(() => "#000000") },
-    translate: vi.fn((key: string) => key),
+    translate: vi.fn((key: string) =>
+      key === "anonymous" ? "Anonymous" : key
+    ),
     seedBibleState: {
       theme: {
         currentTheme: {
@@ -619,7 +621,7 @@ describe("useReadingHistoryTimeline", () => {
       expect(userEntry.userName).toBe("You"); // CapitalizeFirstLetter(translate("you"))
     });
 
-    it("user entry shows 'Guest' for non-myAuthBotId users", () => {
+    it("user entry shows 'Anonymous' for non-myAuthBotId users", () => {
       const result = setupWithDaySummary(180, {
         stranger: { totalTimeSpentReading: 180 },
       });
@@ -629,7 +631,7 @@ describe("useReadingHistoryTimeline", () => {
       const userEntry = item.tooltipContentsData.find(
         (d: any) => d.type === "readingHistory"
       );
-      expect(userEntry.userName).toBe("Guest");
+      expect(userEntry.userName).toBe("Anonymous");
     });
 
     it("user entry includes dotStyle with userColor from userColorStore", () => {
@@ -664,7 +666,7 @@ describe("useReadingHistoryTimeline", () => {
       );
       // "me" (null) skipped; "other" (180s) added
       expect(userEntries).toHaveLength(1);
-      expect(userEntries[0].userName).toBe("Guest"); // other !== myAuthBotId
+      expect(userEntries[0].userName).toBe("Anonymous"); // other !== myAuthBotId
     });
 
     it("only top 3 users appear as individual readingHistory entries", () => {

@@ -31,14 +31,26 @@ const DEFAULT_LANGUAGE = "en";
 /** Mutable stub state. Assign to it to drive a language-dependent assertion. */
 export const mockI18nState = { language: DEFAULT_LANGUAGE };
 
+/**
+ * Per-key translation overrides. Assign one to stand in for a real locale's
+ * string — useful where the point of the test is that the *translation* owns
+ * something the code used to hardcode, such as punctuation or word order.
+ */
+export const mockI18nTranslations: Record<string, string> = {};
+
 /** Restores the defaults. Call from `beforeEach` in tests that mutate state. */
 export function resetMockI18n() {
   mockI18nState.language = DEFAULT_LANGUAGE;
+  for (const key of Object.keys(mockI18nTranslations)) {
+    delete mockI18nTranslations[key];
+  }
 }
 
 /**
  * Stand-in for i18next's `t`: returns the call site's `defaultValue` with any
- * `{{param}}` placeholders substituted.
+ * `{{param}}` placeholders substituted. An entry in
+ * {@link mockI18nTranslations} wins over the `defaultValue`, the way a real
+ * locale's string does.
  *
  * Falls back to the key when a call site has no `defaultValue`, so a missing one
  * shows up as a key in an assertion rather than as an empty string.
@@ -47,7 +59,10 @@ export function mockTranslate(
   key: string,
   options?: Record<string, unknown>
 ): string {
-  let text = (options?.defaultValue as string | undefined) ?? key;
+  let text =
+    mockI18nTranslations[key] ??
+    (options?.defaultValue as string | undefined) ??
+    key;
   for (const [name, value] of Object.entries(options ?? {})) {
     if (name === "defaultValue") continue;
     text = text.replaceAll(`{{${name}}}`, String(value));

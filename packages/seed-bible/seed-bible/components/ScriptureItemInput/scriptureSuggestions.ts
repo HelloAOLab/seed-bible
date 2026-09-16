@@ -1,7 +1,11 @@
 import { range } from "es-toolkit";
 import type { VerseRef } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import { bookHasChapter, buildTail } from "../../managers/parseVerseReference";
+import { bookHasChapter } from "../../managers/parseVerseReference";
+import {
+  buildTail,
+  splitTypedVerseReference,
+} from "../../managers/verseReferenceSyntax";
 
 /** One selectable chapter/verse within a book suggestion. */
 export interface ChapterOption {
@@ -132,17 +136,11 @@ export function computeSuggestions(
     return [];
   }
 
-  // Leading book portion plus an optional chapter/verse/range. The chapter is
-  // optional (a bare "Phil" still matches), and book names may start with a
-  // digit ("1 John"), so the book runs non-greedily up to a space-separated
-  // number.
-  const match = trimmed.match(
-    /^(.+?)(?:\s+(\d+)(?::(\d+))?(?:\s*-\s*(?:(\d+):)?(\d+))?)?$/
-  );
-  if (!match || !match[1]) {
+  const split = splitTypedVerseReference(trimmed);
+  if (!split) {
     return [];
   }
-  const [, bookQuery, chapterStr, verseStr, endChapterStr, endVerseStr] = match;
+  const { bookQuery, chapterStr, verseStr, endChapterStr, endVerseStr } = split;
 
   const matched = matchBooksByPrefix(bookQuery, books);
   if (matched.length === 0) {

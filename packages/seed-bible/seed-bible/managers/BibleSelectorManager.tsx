@@ -27,7 +27,7 @@ import type {
 import { createSidebar } from "../managers/SidebarManager";
 import type { NavigationManager } from "../managers/NavigationManager";
 import type { I18nManager } from "../i18n/I18nManager";
-import { type BookmarksManager } from "../managers/BookmarksManager";
+import { type SavesManager } from "../managers/SavesManager";
 import {
   computed,
   effect,
@@ -188,6 +188,12 @@ export interface BibleSelectorState {
   allowedTranslationLimit: Signal<number>;
   apiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
   showAllLanguages: Signal<TranslationViewMode>;
+  /**
+   * Applies the visitor's stored translation-list view mode. Seeds to the
+   * default to match SSR; call once from a post-mount effect (via
+   * `AppState.hydrateFromStorage`).
+   */
+  hydrateStoredViewMode: () => void;
   showTranslationSettings: Signal<boolean>;
   showTranslationInfo: Signal<{
     translation: Translation;
@@ -210,7 +216,7 @@ export interface BibleSelectorState {
   matchingTranslationGroupCount: ReadonlySignal<number>;
   handleTranslationAddition: () => void;
   openTabs: () => void;
-  bookmarks: BookmarksManager;
+  saves: SavesManager;
   showApocryphaInfo: Signal<boolean>;
 }
 
@@ -259,7 +265,7 @@ export function createBibleSelectorState(
   tabsLayoutManager: TabsLayoutManager,
   settings: SettingsManager,
   sidebar: SidebarManager,
-  bookmarks: BookmarksManager,
+  saves: SavesManager,
   navigation: NavigationManager,
   login: LoginManager,
   i18n: I18nManager
@@ -303,7 +309,7 @@ export function createBibleSelectorState(
     error.value = null;
 
     try {
-      if (dataManager.availableTranslations.value.length === 0) {
+      if (!dataManager.catalogLoaded.value) {
         await dataManager.getTranslations();
       }
 
@@ -597,11 +603,20 @@ export function createBibleSelectorState(
 
   // ─── TranslationModal State ───────────────────────────────────────────────────
 
-  const showAllLanguages = signal<TranslationViewMode>(
-    (safeLocalStorage.getItem(
+  // Seeded to the default rather than read from `localStorage` here, matching
+  // SSR (which has none) so the first hydrate pass can't disagree.
+  // `hydrateStoredViewMode` applies the stored choice after the first commit —
+  // see `AppState.hydrateFromStorage`.
+  const showAllLanguages = signal<TranslationViewMode>("complete");
+
+  const hydrateStoredViewMode = () => {
+    const stored = safeLocalStorage.getItem(
       "showAllLanguages"
-    ) as TranslationViewMode | null) || "complete"
-  );
+    ) as TranslationViewMode | null;
+    if (stored) {
+      showAllLanguages.value = stored;
+    }
+  };
 
   const showTranslationSettings = signal<boolean>(false);
 
@@ -873,8 +888,18 @@ export function createBibleSelectorState(
     () => pagedApiTranslations.value.totalMatching
   );
 
+  // Skip the effect's first, unconditional run. `showAllLanguages` seeds to the
+  // SSR-matching default, so writing it back straight away would overwrite the
+  // visitor's stored choice with "complete" before `hydrateStoredViewMode` ever
+  // got to read it.
+  let isFirstViewModeWrite = true;
   effect(() => {
-    safeLocalStorage.setItem("showAllLanguages", showAllLanguages.value);
+    const viewMode = showAllLanguages.value;
+    if (isFirstViewModeWrite) {
+      isFirstViewModeWrite = false;
+      return;
+    }
+    safeLocalStorage.setItem("showAllLanguages", viewMode);
   });
 
   return {
@@ -923,6 +948,7 @@ export function createBibleSelectorState(
     allowedTranslationLimit,
     apiTranslations,
     showAllLanguages,
+    hydrateStoredViewMode,
     showTranslationSettings,
     showTranslationInfo,
     pendingOfflineDelete,
@@ -931,7 +957,7 @@ export function createBibleSelectorState(
     matchingTranslationGroupCount,
     handleTranslationAddition,
     openTabs,
-    bookmarks,
+    saves,
     showApocryphaInfo,
   };
 }
