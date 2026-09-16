@@ -4,12 +4,10 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { TodayPane } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
 import type { ReadingHistoryState } from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
-import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import { todayScreenPropsStub, todayStub } from "../../testUtils/todayStubs";
 import { Welcome } from "@packages/seed-bible/seed-bible/components/TodayPane/Welcome";
 import { Header } from "@packages/seed-bible/seed-bible/components/TodayPane/Header";
 import { ResumeReadingSection } from "@packages/seed-bible/seed-bible/components/TodayPane/ResumeReadingSection";
-import { BookmarksSection } from "@packages/seed-bible/seed-bible/components/TodayPane/BookmarksSection";
 import { SearchSection } from "@packages/seed-bible/seed-bible/components/TodayPane/SearchSection";
 import { SocialSection } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSection";
 
@@ -78,7 +76,6 @@ describe("TodayPane", () => {
   function setup(
     options: {
       status?: ReadingHistoryState["status"];
-      bookmarks?: Bookmark[];
     } = {}
   ) {
     const status = options.status ?? "ready";
@@ -91,7 +88,6 @@ describe("TodayPane", () => {
         : signal<ReadingHistoryState>({ status });
     const props = todayScreenPropsStub({
       today: todayStub({ readingHistory }),
-      bookmarks: signal(options.bookmarks ?? []),
     });
     act(() => render(<TodayPane {...props} />, container));
     return props;
@@ -153,13 +149,10 @@ describe("TodayPane", () => {
       expect(q("[data-testid='section-resume']")).not.toBeNull();
     });
 
-    it("renders the bookmarks section when there is at least one bookmark", () => {
-      setup({ bookmarks: [{ id: "b1" } as Bookmark] });
-      expect(q("[data-testid='section-bookmarks']")).not.toBeNull();
-    });
-
-    it("omits the bookmarks section when there are none", () => {
-      setup({ bookmarks: [] });
+    // Saves moved off Today in #1657 and bookmarks take the slot in #1658, so
+    // nothing renders between the resume card and search in the meantime.
+    it("renders no strip between the resume card and search", () => {
+      setup();
       expect(q("[data-testid='section-bookmarks']")).toBeNull();
     });
 
@@ -199,19 +192,12 @@ describe("TodayPane", () => {
     });
 
     it("hands each personalized section the props it needs", () => {
-      const props = setup({ bookmarks: [{ id: "b1" } as Bookmark] });
+      const props = setup();
 
       expect(propsOf(Header)).toMatchObject({ login: props.login });
       expect(propsOf(ResumeReadingSection)).toMatchObject({
         today: props.today,
         onOpenPassage: props.onOpenPassage,
-      });
-      expect(propsOf(BookmarksSection)).toMatchObject({
-        today: props.today,
-        bookmarks: props.bookmarks,
-        isMobile: props.isMobile,
-        onOpenPassage: props.onOpenPassage,
-        onShowBookmarksList: props.onShowBookmarksList,
       });
       expect(propsOf(SearchSection)).toMatchObject({
         today: props.today,
