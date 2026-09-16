@@ -38,6 +38,7 @@ import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
 import {
+  closeContextMenus,
   ContextMenuItem,
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
@@ -385,21 +386,6 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
     });
   };
 
-  const handleOpenDefaultTranslationPicker = () => {
-    const modalId = state.modals.openModal({
-      title: {
-        key: "customization-default-translation",
-        defaultValue: "Default translation",
-      },
-      content: () => (
-        <DefaultTranslationPickerModalContent
-          state={state}
-          onClose={() => state.modals.closeModal(modalId)}
-        />
-      ),
-    });
-  };
-
   if (!record) {
     return (
       <div className="sb-settings-page">
@@ -455,23 +441,28 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           />
         </div>
 
-        <button
+        <ContextMenuWithButton
           type="button"
-          className="sb-settings-nav-item"
-          onClick={handleOpenDefaultTranslationPicker}
+          buttonClassName="sb-settings-nav-item"
+          menuClassName="sb-customization-translation-picker-menu"
+          icon={
+            <>
+              <span className="sb-settings-nav-label">
+                {t("customization-default-translation", {
+                  defaultValue: "Default translation",
+                })}
+              </span>
+              <span className="sb-settings-nav-value">
+                {defaultTranslationLabel}
+              </span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
+            </>
+          }
         >
-          <span className="sb-settings-nav-label">
-            {t("customization-default-translation", {
-              defaultValue: "Default translation",
-            })}
-          </span>
-          <span className="sb-settings-nav-value">
-            {defaultTranslationLabel}
-          </span>
-          <span className="material-symbols-outlined rtl-mirror">
-            chevron_right
-          </span>
-        </button>
+          <DefaultTranslationPickerMenuContent state={state} />
+        </ContextMenuWithButton>
 
         <div className="sb-settings-field-row">
           <label className="sb-settings-field-label">
@@ -753,21 +744,19 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
 const TRANSLATION_PAGE_SIZE = 50;
 
 /**
- * Modal body for picking a customization's default translation — reuses the
- * same searchable, grouped-by-language `TranslationList` the reader's own
- * translation modal and the Compare pane use, so translations are searched
- * and grouped identically everywhere. Local-only search/view-mode/page-size
- * state, deliberately not shared with the reader's own picker: this pane has
- * no "current reader" preference to speak for, just this one customization's
- * setting. Single-select — picking a translation (or "Seed Bible's default")
- * applies it immediately and closes the modal, unlike the Compare pane's
- * multi-select picker which needs an explicit "Done".
+ * Popover body for picking a customization's default translation — reuses
+ * the same searchable, grouped-by-language `TranslationList` the reader's
+ * own translation picker and the Compare pane use, so translations are
+ * searched and grouped identically everywhere. Local-only
+ * search/view-mode/page-size state, deliberately not shared with the
+ * reader's own picker: this pane has no "current reader" preference to
+ * speak for, just this one customization's setting. Single-select — picking
+ * a translation (or "Seed Bible's default") applies it immediately and
+ * closes the popover, unlike the Compare pane's multi-select picker which
+ * needs an explicit "Done".
  */
-function DefaultTranslationPickerModalContent(props: {
-  state: SeedBibleState;
-  onClose: () => void;
-}) {
-  const { state, onClose } = props;
+function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
+  const { state } = props;
   const { customizations, bibleData } = state;
   const { t } = useI18n();
   const query = useSignal("");
@@ -813,11 +802,28 @@ function DefaultTranslationPickerModalContent(props: {
 
   const pick = (translation: Translation | null) => {
     customizations.updateEditingDefaultTranslationId(translation?.id ?? null);
-    onClose();
+    closeContextMenus();
   };
 
   return (
-    <div className="sb-customization-translation-picker">
+    <div
+      className="sb-customization-translation-picker"
+      // Arrow keys and Home/End are handled by the popover's own
+      // vertical-list keyboard nav (`ContextMenu.tsx`), which would
+      // otherwise hijack them from the search input below (e.g. Home/End
+      // moving DOM focus to the first/last translation row instead of the
+      // text cursor).
+      onKeyDown={(event) => {
+        if (
+          event.key === "ArrowUp" ||
+          event.key === "ArrowDown" ||
+          event.key === "Home" ||
+          event.key === "End"
+        ) {
+          event.stopPropagation();
+        }
+      }}
+    >
       <p className="sb-settings-field-description">
         {t("customization-default-translation-description", {
           defaultValue:
