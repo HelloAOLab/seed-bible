@@ -16,6 +16,7 @@ describe("ExtensionSettingsManager", () => {
   let getDataMock: Mock;
   let recordDataMock: Mock;
   let warnSpy: Mock;
+  let errorSpy: Mock;
   let login: Mocked<LoginManager>;
   let os: CasualOSManager;
   let userIdSignal: Signal<string | null>;
@@ -70,10 +71,13 @@ describe("ExtensionSettingsManager", () => {
       errorCode: "data_not_found",
       errorMessage: "Data not found",
     });
-    recordDataMock = vi
-      .spyOn(os, "recordData")
-      .mockResolvedValue(undefined as never);
+    recordDataMock = vi.spyOn(os, "recordData").mockResolvedValue({
+      success: true,
+      recordName: "user-1",
+      address: EXTENSION_SETTING_VALUES_ADDRESS,
+    } as never);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     userIdSignal = signal<string | null>("user-1");
     login = {
@@ -124,6 +128,7 @@ describe("ExtensionSettingsManager", () => {
 
   afterEach(() => {
     warnSpy.mockRestore();
+    errorSpy.mockRestore();
   });
 
   const create = () =>
@@ -308,7 +313,7 @@ describe("ExtensionSettingsManager", () => {
     expect(manager.getValue("ext-1", "greeting")).toBe("Hello");
   });
 
-  it("skips a save rather than overwriting the record when the user's stored values failed to load", async () => {
+  it("flags a save as failed, without overwriting the record, when the user's stored values failed to load", async () => {
     const failedLoad = deferred<unknown>();
     getDataMock.mockReturnValueOnce(failedLoad.promise);
     const manager = create();
@@ -319,5 +324,88 @@ describe("ExtensionSettingsManager", () => {
 
     expect(recordDataMock).not.toHaveBeenCalled();
     expect(manager.getValue("ext-1", "count")).toBe(5);
+    expect(manager.saveError.value).toBe(true);
+  });
+
+  it.each([
+    [
+      "the records server refuses the save",
+      () =>
+        recordDataMock.mockResolvedValueOnce({
+          success: false,
+          errorCode: "not_authorized",
+          errorMessage: "Not authorized",
+        }),
+    ],
+    [
+      "the save can't reach the server",
+      () => recordDataMock.mockRejectedValueOnce(new Error("network down")),
+    ],
+  ])(
+    "flags the failure, without rejecting, when %s, and keeps the change for this session",
+    async (_case, failNextSave) => {
+      const manager = create();
+      await flushPromises();
+      failNextSave();
+
+      await expect(manager.setValue("ext-1", "count", 9)).resolves.toBe(
+        undefined
+      );
+
+      expect(manager.saveError.value).toBe(true);
+      expect(manager.getValue("ext-1", "count")).toBe(9);
+    }
+  );
+
+  it("the next successful save stores the change that failed and clears the error", async () => {
+    const manager = create();
+    await flushPromises();
+    recordDataMock.mockResolvedValueOnce({
+      success: false,
+      errorCode: "server_error",
+      errorMessage: "Server error",
+    });
+    await manager.setValue("ext-1", "count", 9);
+    expect(manager.saveError.value).toBe(true);
+
+    await manager.setValue("ext-1", "greeting", "Hi");
+
+    expect(recordDataMock).toHaveBeenLastCalledWith(
+      "user-1",
+      EXTENSION_SETTING_VALUES_ADDRESS,
+      { "ext-1": { count: 9, greeting: "Hi" } },
+      { marker: "publicRead" }
+    );
+    expect(manager.saveError.value).toBe(false);
+  });
+
+  // Regression test: without serialized writes, the second save is sent while
+  // the first is still in flight, and a slower first write could land last and
+  // leave the older value stored.
+  it("sends saves one at a time, in the order they were made", async () => {
+    const manager = create();
+    await flushPromises();
+    const firstWrite = deferred<unknown>();
+    recordDataMock.mockReturnValueOnce(firstWrite.promise);
+
+    const firstSave = manager.setValue("ext-1", "count", 1);
+    const secondSave = manager.setValue("ext-1", "count", 2);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+
+    firstWrite.resolve({
+      success: true,
+      recordName: "user-1",
+      address: EXTENSION_SETTING_VALUES_ADDRESS,
+    });
+    await Promise.all([firstSave, secondSave]);
+
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
+    expect(recordDataMock).toHaveBeenLastCalledWith(
+      "user-1",
+      EXTENSION_SETTING_VALUES_ADDRESS,
+      { "ext-1": { count: 2 } },
+      { marker: "publicRead" }
+    );
   });
 });

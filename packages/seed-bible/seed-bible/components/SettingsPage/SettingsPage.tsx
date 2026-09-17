@@ -1229,23 +1229,34 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
         },
       },
       content: () => (
-        <ExtensionSettingsForm
-          extensionId={extensionEntry.id}
-          settings={settings}
-          getValue={(key) => extensionSettings.getValue(extensionEntry.id, key)}
-          onChange={(key, value) =>
-            void extensionSettings.setValue(extensionEntry.id, key, value)
-          }
-          resetting={{
-            hasOwnValue: (key) =>
-              extensionSettings.valuesByExtensionId.value[extensionEntry.id]?.[
-                key
-              ] !== undefined,
-            onReset: (key) =>
-              void extensionSettings.clearValue(extensionEntry.id, key),
-          }}
-          t={t}
-        />
+        <>
+          <ExtensionSettingsForm
+            extensionId={extensionEntry.id}
+            settings={settings}
+            getValue={(key) =>
+              extensionSettings.getValue(extensionEntry.id, key)
+            }
+            onChange={(key, value) =>
+              void extensionSettings.setValue(extensionEntry.id, key, value)
+            }
+            resetting={{
+              hasOwnValue: (key) =>
+                extensionSettings.valuesByExtensionId.value[
+                  extensionEntry.id
+                ]?.[key] !== undefined,
+              onReset: (key) =>
+                void extensionSettings.clearValue(extensionEntry.id, key),
+            }}
+            t={t}
+          />
+          {extensionSettings.saveError.value && (
+            <p className="sb-settings-save-error" role="alert">
+              {t("extension-settings-save-failed", {
+                defaultValue: "Couldn't save your settings.",
+              })}
+            </p>
+          )}
+        </>
       ),
     });
   };

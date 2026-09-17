@@ -725,6 +725,7 @@
   "extension-settings-title": "{{name}} settings",
   "extension-settings-defaults-title": "{{name}} defaults",
   "no-extension-settings": "This extension has no configurable settings.",
+  "extension-settings-save-failed": "Couldn't save your settings.",
   "variants": "Themes",
   "add-variant": "Add theme",
   "base-theme": "Base theme",
