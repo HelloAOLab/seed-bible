@@ -50,6 +50,11 @@ export function ExtensionSettingsForm(props: {
   settings: Record<string, ExtensionSettingDefinition>;
   /** The value to show for a field: the effective value (an explicit override, a Customization default, or the setting's own default). */
   getValue: (key: string) => ExtensionSettingValue | undefined;
+  /**
+   * The default this field overrides, noted under the setting's description so
+   * the viewer can see what it falls back to. Omit to show nothing.
+   */
+  getDefault?: (key: string) => ExtensionSettingValue | undefined;
   onChange: (key: string, value: ExtensionSettingValue) => void;
   /**
    * Lets a field be reverted to whatever it falls back to when nothing is
@@ -62,7 +67,15 @@ export function ExtensionSettingsForm(props: {
   };
   t: I18nHook["t"];
 }) {
-  const { extensionId, settings, getValue, onChange, resetting, t } = props;
+  const {
+    extensionId,
+    settings,
+    getValue,
+    getDefault,
+    onChange,
+    resetting,
+    t,
+  } = props;
   const entries = Object.entries(settings);
 
   if (entries.length === 0) {
@@ -94,6 +107,22 @@ export function ExtensionSettingsForm(props: {
         const descriptionNode = description ? (
           <p className="sb-settings-field-description">{description}</p>
         ) : null;
+        const defaultValue = getDefault?.(key);
+        const defaultNode =
+          defaultValue !== undefined ? (
+            <p className="sb-settings-field-default-note">
+              {t("setting-default-value", {
+                defaultValue: "Default value: {{value}}",
+                value:
+                  typeof defaultValue === "boolean"
+                    ? t(
+                        defaultValue ? "setting-value-on" : "setting-value-off",
+                        { defaultValue: defaultValue ? "On" : "Off" }
+                      )
+                    : String(defaultValue),
+              })}
+            </p>
+          ) : null;
         const resetNode = resetting?.hasOwnValue(key) ? (
           <button
             type="button"
@@ -137,6 +166,7 @@ export function ExtensionSettingsForm(props: {
                   />
                 </div>
                 {descriptionNode}
+                {defaultNode}
               </>
             ) : (
               <>
@@ -147,6 +177,7 @@ export function ExtensionSettingsForm(props: {
                   {resetNode}
                 </div>
                 {descriptionNode}
+                {defaultNode}
                 {definition.type === "number" ? (
                   <NumberSettingInput
                     id={fieldId}

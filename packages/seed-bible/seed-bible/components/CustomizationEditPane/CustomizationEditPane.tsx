@@ -646,6 +646,8 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
           extensionId={entry.id}
           settings={settings}
           getValue={draftDefault}
+          // A Customization default overrides only the extension's own default.
+          getDefault={(key) => settings[key]?.default}
           onChange={(key, value) =>
             customizations.setEditingExtensionSettingDefault(
               entry.id,

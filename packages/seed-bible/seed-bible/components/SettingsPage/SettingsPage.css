@@ -339,6 +339,15 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
+/* Says what the field's value is overriding, so it reads as a note about the
+   value above it rather than as part of the setting's own explanation. */
+.sb-settings-field-default-note {
+  margin: 0;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+}
+
 .sb-settings-language-select {
   border: none;
   border-radius: 0.5rem;
