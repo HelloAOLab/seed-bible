@@ -89,31 +89,40 @@ export function ExtensionSettingsForm(props: {
           defaultValue: "",
         });
         const value = getValue(key);
+        // Rendered under the setting's title in both layouts, so the
+        // explanation reads as part of the title rather than of the field.
+        const descriptionNode = description ? (
+          <p className="sb-settings-field-description">{description}</p>
+        ) : null;
 
         return (
           <div className="sb-settings-field-row" key={key}>
             {definition.type === "boolean" ? (
-              <div className="sb-settings-toggle-row">
-                <label className="sb-settings-toggle-label" htmlFor={fieldId}>
-                  {title}
-                </label>
-                <input
-                  id={fieldId}
-                  type="checkbox"
-                  checked={Boolean(value)}
-                  onChange={(event: Event) =>
-                    onChange(
-                      key,
-                      (event.currentTarget as HTMLInputElement).checked
-                    )
-                  }
-                />
-              </div>
+              <>
+                <div className="sb-settings-toggle-row">
+                  <label className="sb-settings-toggle-label" htmlFor={fieldId}>
+                    {title}
+                  </label>
+                  <input
+                    id={fieldId}
+                    type="checkbox"
+                    checked={Boolean(value)}
+                    onChange={(event: Event) =>
+                      onChange(
+                        key,
+                        (event.currentTarget as HTMLInputElement).checked
+                      )
+                    }
+                  />
+                </div>
+                {descriptionNode}
+              </>
             ) : (
               <>
                 <label className="sb-settings-field-label" htmlFor={fieldId}>
                   {title}
                 </label>
+                {descriptionNode}
                 {definition.type === "number" ? (
                   <NumberSettingInput
                     id={fieldId}
@@ -135,9 +144,6 @@ export function ExtensionSettingsForm(props: {
                   />
                 )}
               </>
-            )}
-            {description && (
-              <p className="sb-settings-field-description">{description}</p>
             )}
             {resetting?.hasOwnValue(key) && (
               <button

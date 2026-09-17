@@ -305,6 +305,14 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
+/* Sits under a setting's title, so it stays close to the title's size rather
+   than the browser's default paragraph size, which was larger than the title. */
+.sb-settings-field-description {
+  margin: 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
 .sb-settings-language-select {
   border: none;
   border-radius: 0.5rem;
