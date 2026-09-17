@@ -490,6 +490,61 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
 }
 
 /**
+ * Whether the `#sb-theme-styles` tag already holds a real theme (rendered by
+ * the server and possibly corrected by the pre-hydration inline script in
+ * `index.html`), as opposed to being absent, empty, or the un-substituted
+ * placeholder the dev server leaves behind. Detected by the `--sb-` custom
+ * properties every composed theme emits — see `composeThemeStyleText`.
+ */
+function hasRenderedThemeStyles(): boolean {
+  const tag = document.getElementById("sb-theme-styles");
+  return !!tag?.textContent?.includes("--sb-");
+}
+
+/**
+ * The app-chrome color the Android/Chrome status bar should use. Parsed
+ * from composed theme CSS so the pre-hydration inline script in
+ * `index.html` (which only has that CSS string) and this manager stay on
+ * the same value without a second payload.
+ */
+export function parseThemeBackgroundColor(css: string): string | null {
+  const match = /--sb-background:\s*([^;]+)/.exec(css);
+  const value = match?.[1]?.trim();
+  return value && value.length > 0 ? value : null;
+}
+
+/**
+ * Android Chrome (and other browsers) color the installed-PWA status bar
+ * from `<meta name="theme-color">`. A tag without `media` always matches,
+ * so any leftover `prefers-color-scheme` tags from an older SSR document
+ * would be ignored only if we also strip `media` and keep every copy in
+ * sync — browsers walk the tags in tree order and stop at the first match.
+ */
+export function applyBrowserThemeColor(color: string): void {
+  if (typeof document === "undefined") return;
+  const metas = [
+    ...document.head.querySelectorAll('meta[name="theme-color"]'),
+  ] as HTMLMetaElement[];
+  if (metas.length === 0) {
+    const tag = document.createElement("meta");
+    tag.name = "theme-color";
+    tag.id = "sb-theme-color";
+    tag.content = color;
+    document.head.appendChild(tag);
+    return;
+  }
+  for (const tag of metas) {
+    tag.removeAttribute("media");
+    tag.content = color;
+  }
+}
+
+function applyBrowserThemeColorFromCss(css: string): void {
+  const color = parseThemeBackgroundColor(css);
+  if (color) applyBrowserThemeColor(color);
+}
+
+/**
  * `<style>`-ready text for a theme (variables + highlight classes), scoped
  * to `body` — NOT `:root`/`html`. See CLAUDE.md: `ThemeManager`'s
  * body-scoped custom properties beat `base.css`'s `:root` block via DOM-
@@ -504,18 +559,6 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
  * server-side (see `entry-ssr.tsx`'s `THEME_STYLE_TAG` substitution), so an
  * override containing `</style` could otherwise break out of that tag.
  */
-/**
- * Whether the `#sb-theme-styles` tag already holds a real theme (rendered by
- * the server and possibly corrected by the pre-hydration inline script in
- * `index.html`), as opposed to being absent, empty, or the un-substituted
- * placeholder the dev server leaves behind. Detected by the `--sb-` custom
- * properties every composed theme emits — see `composeThemeStyleText`.
- */
-function hasRenderedThemeStyles(): boolean {
-  const tag = document.getElementById("sb-theme-styles");
-  return !!tag?.textContent?.includes("--sb-");
-}
-
 export function composeThemeStyleText(theme: BibleTheme): string {
   const css = `body {\n${generateThemeCssVariables(theme)}\n}\n${generateThemeCssClasses(theme)}`;
   return css.replace(/</g, "");
@@ -1295,6 +1338,14 @@ export function createTheme(settings: SettingsManager): ThemeManager {
       const text = themeStyleText.value;
       if (skipWrite) {
         skipWrite = false;
+        // Keep the already-painted CSS (it may be dark while `currentTheme`
+        // is still the light default — see the skipWrite comment above),
+        // but copy its --sb-background onto the status-bar meta. The
+        // inline script does this too; doing it here covers a cached
+        // document whose script predates that update.
+        applyBrowserThemeColorFromCss(
+          document.getElementById("sb-theme-styles")?.textContent ?? ""
+        );
         return;
       }
       // A broken compose (empty, or a value that closed `body {` early) would
@@ -1313,6 +1364,7 @@ export function createTheme(settings: SettingsManager): ThemeManager {
         document.head.appendChild(tag);
       }
       tag.textContent = text;
+      applyBrowserThemeColorFromCss(text);
     });
   }
 

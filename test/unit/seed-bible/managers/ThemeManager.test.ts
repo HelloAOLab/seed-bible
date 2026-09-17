@@ -1,9 +1,11 @@
 import {
+  applyBrowserThemeColor,
   applyHighlightOverrides,
   createTheme as createThemeManager,
   DARK_THEME,
   filterValidFontFamilyOverrides,
   composeThemeStyleText,
+  parseThemeBackgroundColor,
   THEME_PRESET_STYLE_TEXT,
   generateThemeCssClasses,
   generateThemeCssVariables,
@@ -159,6 +161,63 @@ describe("ThemeManager CSS helpers", () => {
 
       expect(css).not.toContain("<");
     });
+  });
+});
+
+describe("parseThemeBackgroundColor", () => {
+  it("reads --sb-background from composed theme CSS", () => {
+    expect(
+      parseThemeBackgroundColor("body {\n--sb-background: #0a0a0a;\n}")
+    ).toBe("#0a0a0a");
+  });
+
+  it("returns null when the custom property is missing", () => {
+    expect(
+      parseThemeBackgroundColor("body { --sb-font-color: #333; }")
+    ).toBeNull();
+  });
+});
+
+describe("applyBrowserThemeColor", () => {
+  afterEach(() => {
+    document
+      .querySelectorAll('meta[name="theme-color"]')
+      .forEach((el) => el.remove());
+  });
+
+  it("creates a theme-color meta tag when the document has none", () => {
+    applyBrowserThemeColor("#0a0a0a");
+
+    const tag = document.querySelector(
+      'meta[name="theme-color"]'
+    ) as HTMLMetaElement | null;
+    expect(tag).not.toBeNull();
+    expect(tag?.id).toBe("sb-theme-color");
+    expect(tag?.content).toBe("#0a0a0a");
+  });
+
+  it("updates every existing theme-color tag and drops media queries", () => {
+    const light = document.createElement("meta");
+    light.name = "theme-color";
+    light.content = "#FFFFFF";
+    light.media = "(prefers-color-scheme: light)";
+    document.head.appendChild(light);
+    const dark = document.createElement("meta");
+    dark.name = "theme-color";
+    dark.content = "#000000";
+    dark.media = "(prefers-color-scheme: dark)";
+    document.head.appendChild(dark);
+
+    applyBrowserThemeColor("#0a0a0a");
+
+    const metas = [
+      ...document.querySelectorAll('meta[name="theme-color"]'),
+    ] as HTMLMetaElement[];
+    expect(metas).toHaveLength(2);
+    for (const meta of metas) {
+      expect(meta.getAttribute("media")).toBeNull();
+      expect(meta.content).toBe("#0a0a0a");
+    }
   });
 });
 
@@ -347,6 +406,28 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(tag?.textContent).toContain("--sb-background: #0a0a0a;");
   });
 
+  it("sets the theme-color meta to the active theme's background", () => {
+    document.querySelectorAll('meta[name="theme-color"]').forEach((el) => {
+      el.remove();
+    });
+    document.getElementById("sb-theme-styles")?.remove();
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    const tag = document.querySelector(
+      'meta[name="theme-color"]'
+    ) as HTMLMetaElement | null;
+    expect(tag?.content).toBe("#f8fafc");
+
+    theme.setTheme("dark");
+
+    expect(
+      (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
+        .content
+    ).toBe("#0a0a0a");
+  });
+
   it("does not clobber a dark #sb-theme-styles tag with the system default on boot", () => {
     // Boot order on a returning visitor who explicitly pinned dark: the server
     // renders the system-resolved default into the tag, then the pre-hydration
@@ -373,6 +454,10 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(document.getElementById("sb-theme-styles")?.textContent).toBe(
       darkCss
     );
+    expect(
+      (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
+        .content
+    ).toBe("#0a0a0a");
 
     // ...and once the real saved config lands, the tag still tracks it.
     login.localConfig.value = { themeId: "dark" };
@@ -441,6 +526,23 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(css).toContain("--sb-background:");
     expect(css).toContain("--sb-font-color:");
     expect(css).toContain("body {");
+  });
+
+  it("updates theme-color when the app background color is customized", () => {
+    document.querySelectorAll('meta[name="theme-color"]').forEach((el) => {
+      el.remove();
+    });
+    document.getElementById("sb-theme-styles")?.remove();
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.setCustomColor("background", "#123456");
+
+    expect(
+      (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
+        .content
+    ).toBe("#123456");
   });
 
   it("setHighlightColor / resetHighlightColor read back correctly through settings", () => {

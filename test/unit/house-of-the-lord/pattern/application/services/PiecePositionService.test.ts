@@ -1,20 +1,18 @@
 import { describe, expect, it, vi, type Mocked, beforeEach } from "vitest";
 import { PiecePositionService } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/services/PiecePositionService";
-import type {
-  PiecePositionProviderPort,
-  PiecePositionUpdaterPort,
-  PiecesProviderPort,
-} from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/piecePosition";
+import type { PiecePositionProviderPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/piecePosition";
 import type { Piece } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/piece";
 import {
   EXPERIENCE_KEYS,
   type ExperienceKeyMap,
 } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/experience";
 import type { Point3D } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/commonTypes";
+import type { PiecesProviderAdapterPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/PiecesProviderAdapter";
+import type { PieceAdapterPort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/PieceAdapter";
 
 describe("application.services.PiecePositionService", () => {
-  let piecesProviderPort: Mocked<PiecesProviderPort>;
-  let piecePositionUpdaterPort: Mocked<PiecePositionUpdaterPort>;
+  let piecesProviderPort: Mocked<PiecesProviderAdapterPort>;
+  let piecePositionUpdaterPort: Mocked<PieceAdapterPort>;
   let piecePositionProviderPort: Mocked<PiecePositionProviderPort>;
   let service: PiecePositionService;
 
@@ -42,11 +40,14 @@ describe("application.services.PiecePositionService", () => {
   };
 
   beforeEach(() => {
+    const getPiece = vi.fn();
     piecesProviderPort = {
       getPieces: vi.fn(() => pieces),
+      getPiece,
     };
     piecePositionUpdaterPort = {
       setPosition: vi.fn(),
+      getCurrentState: vi.fn(),
     };
     piecePositionProviderPort = {
       getPiecePosition: vi.fn((_, pieceKey) => piecesPosition[pieceKey]!),

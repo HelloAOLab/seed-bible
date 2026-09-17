@@ -12,6 +12,13 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
+    <!-- Default matches LIGHT_THEME.variables.background in ThemeManager.
+         Android Chrome uses this for the installed PWA status bar; without
+         it, Chrome falls back to the manifest's theme_color. The inline
+         script below and ThemeManager update `content` to the active
+         theme's --sb-background so the bar follows light/dark (and custom
+         background colors) instead of the OS prefers-color-scheme. -->
+    <meta name="theme-color" id="sb-theme-color" content="#f8fafc" />
     <link rel="icon" href="/standalone/img/favicon.ico" />
     <link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />
     <link rel="preconnect" href="https://assets.seedbible.org" />
@@ -84,6 +91,12 @@
           if (!css) return;
           var tag = document.getElementById("sb-theme-styles");
           if (tag) tag.textContent = css;
+          var bg = /--sb-background:\s*([^;]+)/.exec(css);
+          var themeColor =
+            document.getElementById("sb-theme-color") ||
+            document.querySelector('meta[name="theme-color"]');
+          if (bg && themeColor)
+            themeColor.setAttribute("content", bg[1].trim());
         } catch (e) {
           // Corrupt/inaccessible storage — keep the server's default.
         }
@@ -95,6 +108,9 @@
     </script>
     <script type="application/json" id="app-seed-data">
       <!-- SEED_JSON -->
+    </script>
+    <script type="application/json" id="app-customization-seed">
+      <!-- CUSTOMIZATION_JSON -->
     </script>
   </head>
   <body>

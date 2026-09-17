@@ -555,8 +555,7 @@
   "reading-plan-read-nudge-title": "Nice reading!",
   "reading-plan-read-nudge-toast": "Mark {{passage}} complete?",
   "reading-plan-nudge-later": "Not now",
-  "session-host-reconnecting": "Reconnecting to the session…",
-  "session-host-reconnected": "Reconnected to the session",
+  "session-host-reconnected": "The host reconnected to the session",
   "session-host-left": "The host left — you were removed from the session",
   "annotation-saved": "Annotation saved",
   "save-annotation-shortcut": "Save (Ctrl+Enter)",
@@ -828,5 +827,8 @@
   "remove-save-from-all-folders": "Remove from all folders",
   "add-save-modal": "Add save",
   "bookmark-redesign-coming-soon": "Bookmark redesign coming soon",
-  "your-content-empty-saves": "Passages you save will show up here."
+  "your-content-empty-saves": "Passages you save will show up here.",
+  "session-disconnected": "You lost connection to the session",
+  "session-reconnected": "You rejoined the session",
+  "session-host-disconnected": "The host disconnected from the session"
 }
