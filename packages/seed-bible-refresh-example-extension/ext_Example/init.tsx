@@ -80,7 +80,44 @@ export default function initExampleExtension() {
             component: () => {
               // You can use the useI18n hook in your tool component to get translated strings
               const { t } = useI18n("example-extension");
-              return <div style={{ padding: 20 }}>{t("my-example-tool")}</div>;
+              // Settings declared in extension.json are read with getValue, which
+              // already falls back to the Customization's default and then the
+              // setting's own default. Reading them while rendering re-renders
+              // this pane as soon as the viewer changes them in Settings.
+              const greeting = context.extensionSettings.getValue(
+                "example-extension",
+                "greeting"
+              );
+              const showBanner =
+                context.extensionSettings.getValue(
+                  "example-extension",
+                  "showBanner"
+                ) === true;
+              return (
+                <div
+                  style={{
+                    padding: 20,
+                    color: "var(--sb-font-color, #333)",
+                  }}
+                >
+                  {showBanner && (
+                    <div
+                      style={{
+                        marginBottom: 12,
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        background: "var(--sb-primary-color, #e07b4c)",
+                        color: "var(--sb-primary-font-color, #fff)",
+                      }}
+                    >
+                      {t("example-banner")}
+                    </div>
+                  )}
+                  {typeof greeting === "string" && greeting && (
+                    <p>{greeting}</p>
+                  )}
+                </div>
+              );
             },
           });
         },
