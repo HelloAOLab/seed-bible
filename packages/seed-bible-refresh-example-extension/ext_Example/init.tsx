@@ -92,6 +92,12 @@ export default function initExampleExtension() {
                 "example-extension",
                 "greetingSize"
               );
+              // `subtitle` declares no default, so it stays undefined until
+              // the viewer (or a Customization) sets one.
+              const subtitle = context.extensionSettings.getValue(
+                "example-extension",
+                "subtitle"
+              );
               const showBanner =
                 context.extensionSettings.getValue(
                   "example-extension",
@@ -128,6 +134,9 @@ export default function initExampleExtension() {
                     >
                       {greeting}
                     </p>
+                  )}
+                  {typeof subtitle === "string" && subtitle && (
+                    <p style={{ opacity: 0.75 }}>{subtitle}</p>
                   )}
                 </div>
               );
