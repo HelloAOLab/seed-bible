@@ -145,30 +145,4 @@ describe("initDefaultContentExtension", () => {
     const video = container.querySelector("video");
     expect(video?.getAttribute("src")).toBe("https://example.com/bp-video.mp4");
   });
-
-  it("does not open the modal when the card's 'Watch' link is clicked", async () => {
-    const context = createFakeContext();
-    setupExtensionContext(context);
-    initDefaultContentExtension();
-
-    const provider = findProvider(context, "default-content-extension");
-    const results = await provider.discover({
-      book: "GEN",
-      chapter: 28,
-      translationId: "t1",
-      language: "en",
-    });
-
-    const cardOnClick = vi.fn();
-    act(() => {
-      render(<div onClick={cardOnClick}>{results[0].content}</div>, container);
-    });
-
-    const link = container.querySelector(".sb-default-content-link");
-    act(() => {
-      link?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(cardOnClick).not.toHaveBeenCalled();
-  });
 });

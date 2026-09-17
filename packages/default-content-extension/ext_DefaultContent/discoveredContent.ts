@@ -206,10 +206,8 @@ export function findBibleProjectContentForChapter(context: DiscoverContext) {
       context.chapter >= item.chapter_start &&
       context.chapter <= item.chapter_end;
     if (!containsCurrentChapter) {
-      console.warn("No match", { context, item });
       continue;
     }
-    console.error("Match", { context, item });
 
     content.push({
       ...item,

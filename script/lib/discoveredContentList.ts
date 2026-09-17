@@ -283,13 +283,21 @@ export async function buildDiscoveredContentList(
 
     console.log("Got link preview", linkPreview);
 
+    const imageUrl = linkPreview.meta["og:image"] ?? linkPreview.imageUrl;
+    if (!imageUrl) {
+      warnings.push(
+        `Row ${sheetRow} ("${title}"): link preview for URL "${url}" has no image; skipped.`
+      );
+      continue;
+    }
+
     items.push({
       id: uniqueSlug(title, usedIds),
       title,
       author: cell(row, "Author"),
       description: cell(row, "Description"),
       url: cell(row, "URL"),
-      imageUrl: linkPreview.meta["og:image"] ?? linkPreview.imageUrl!,
+      imageUrl,
       references,
     });
   }
