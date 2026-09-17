@@ -1,8 +1,43 @@
+import { useSignal } from "@preact/signals";
 import type {
   ExtensionSettingDefinition,
   ExtensionSettingValue,
 } from "../../managers/ExtensionManager";
 import type { I18nHook } from "../../i18n/I18nManager";
+
+function NumberSettingInput(props: {
+  id: string;
+  value: number | undefined;
+  onChange: (value: number) => void;
+}) {
+  const { id, value, onChange } = props;
+  // The text as typed, held while the field is focused. Showing the parsed
+  // number instead would rewrite an in-progress "1.0" to "1" on the next
+  // render, so a decimal like 1.05 could never be typed.
+  const draft = useSignal<string | null>(null);
+
+  return (
+    <input
+      id={id}
+      className="sb-settings-text-input"
+      type="number"
+      value={draft.value ?? (value === undefined ? "" : String(value))}
+      onInput={(event: Event) => {
+        const raw = (event.currentTarget as HTMLInputElement).value;
+        draft.value = raw;
+        const parsed = Number(raw);
+        // An in-progress edit that isn't a number yet (e.g. empty, or a bare
+        // "-") keeps the last valid value rather than clobbering it.
+        if (raw.trim() !== "" && Number.isFinite(parsed)) {
+          onChange(parsed);
+        }
+      }}
+      onBlur={() => {
+        draft.value = null;
+      }}
+    />
+  );
+}
 
 /**
  * One field per declared setting, typed by `ExtensionSettingDefinition.type`.
@@ -79,27 +114,26 @@ export function ExtensionSettingsForm(props: {
                 <label className="sb-settings-field-label" htmlFor={fieldId}>
                   {title}
                 </label>
-                <input
-                  id={fieldId}
-                  className="sb-settings-text-input"
-                  type={definition.type === "number" ? "number" : "text"}
-                  value={value === undefined ? "" : String(value)}
-                  onInput={(event: Event) => {
-                    const raw = (event.currentTarget as HTMLInputElement).value;
-                    if (definition.type === "number") {
-                      const parsed = Number(raw);
-                      // Ignore an in-progress edit that isn't a valid number
-                      // yet (e.g. a bare "-" or empty string) rather than
-                      // clobbering the last valid value.
-                      if (raw === "" || Number.isNaN(parsed)) {
-                        return;
-                      }
-                      onChange(key, parsed);
-                    } else {
-                      onChange(key, raw);
+                {definition.type === "number" ? (
+                  <NumberSettingInput
+                    id={fieldId}
+                    value={typeof value === "number" ? value : undefined}
+                    onChange={(parsed) => onChange(key, parsed)}
+                  />
+                ) : (
+                  <input
+                    id={fieldId}
+                    className="sb-settings-text-input"
+                    type="text"
+                    value={value === undefined ? "" : String(value)}
+                    onInput={(event: Event) =>
+                      onChange(
+                        key,
+                        (event.currentTarget as HTMLInputElement).value
+                      )
                     }
-                  }}
-                />
+                  />
+                )}
               </>
             )}
             {description && (
