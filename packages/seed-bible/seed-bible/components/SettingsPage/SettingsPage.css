@@ -311,6 +311,10 @@
   gap: 1rem;
 }
 
+.sb-extension-settings-fields .sb-settings-toggle-row {
+  padding: 0;
+}
+
 /* Keeps a setting's reset action beside its title instead of below the field.
    The row holds the button's height whether or not it is showing, so a field
    doesn't shift as the viewer sets and resets its value. */
@@ -537,6 +541,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  padding: 0.375rem 0.25rem;
 }
 
 .sb-settings-toggle-label {
