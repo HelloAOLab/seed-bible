@@ -10,6 +10,13 @@ import type { CustomizationsManager } from "./CustomizationsManager";
 
 export const EXTENSION_SETTING_VALUES_ADDRESS = "extensionSettingValues";
 
+/**
+ * How long a typed change waits before it is written. Text and number fields
+ * change on every keystroke, so without this a 20-character value would mean 20
+ * writes. A toggle or a reset is one deliberate change and doesn't wait.
+ */
+export const SETTING_SAVE_DEBOUNCE_MS = 700;
+
 const extensionSettingValuesPayloadSchema = z.record(
   z.string(),
   z.record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
@@ -67,6 +74,11 @@ export interface ExtensionSettingsManager {
   ) => Promise<void>;
   /** Clears the viewer's own value, falling back to the Customization/extension default. Same loading and failure rules as `setValue`; no-op if nothing was set. */
   clearValue: (extensionId: string, key: string) => Promise<void>;
+  /**
+   * Writes a typed change that is still waiting out its debounce, rather than
+   * leaving it for the timer. Resolves once nothing is outstanding.
+   */
+  flushPendingSave: () => Promise<void>;
 }
 
 export function createExtensionSettingsManager(
@@ -88,6 +100,15 @@ export function createExtensionSettingsManager(
   // Serializes writes so an older save can't land after a newer one. A number
   // field saves on every keystroke, so out-of-order writes are a real risk.
   let saveChain: Promise<void> = Promise.resolve();
+  // A typed change waiting out its debounce, with the extensions it covers so a
+  // failed write can be reported against each of them.
+  let pendingSave: {
+    userId: string;
+    extensionIds: Set<string>;
+    timer: ReturnType<typeof setTimeout>;
+    waited: Promise<void>;
+    settle: () => void;
+  } | null = null;
 
   const load = async (userId: string): Promise<void> => {
     const result = await os.getData(userId, EXTENSION_SETTING_VALUES_ADDRESS);
@@ -111,22 +132,6 @@ export function createExtensionSettingsManager(
     valuesByExtensionId.value = parsed.data;
     loadedUserId = userId;
   };
-
-  effect(() => {
-    const userId = login.userId.value;
-    if (userId === loadedUserId) {
-      return;
-    }
-    // Drop the previous account's values now rather than when the new
-    // account's load resolves. Until then they would show in the new account's
-    // UI, and a save would merge them into the new account's record.
-    valuesByExtensionId.value = {};
-    saveErrors.value = {};
-    loadedUserId = null;
-    if (userId) {
-      currentLoad = load(userId);
-    }
-  });
 
   const hasSaveError = (extensionId: string): boolean =>
     saveErrors.value[extensionId] === true;
@@ -208,7 +213,7 @@ export function createExtensionSettingsManager(
 
   const write = async (
     userId: string,
-    extensionId: string,
+    extensionIds: Set<string>,
     next: Record<string, Record<string, ExtensionSettingValue>>
   ): Promise<void> => {
     let failed = false;
@@ -236,22 +241,94 @@ export function createExtensionSettingsManager(
       return;
     }
     if (failed) {
-      flagSaveError(extensionId);
+      for (const extensionId of extensionIds) {
+        flagSaveError(extensionId);
+      }
     } else {
       clearSaveErrors();
     }
   };
 
+  const queueWrite = (
+    userId: string,
+    extensionIds: Set<string>
+  ): Promise<void> => {
+    // The record holds every extension's values, so the write always sends the
+    // newest of them rather than the snapshot the change was built from.
+    const next = valuesByExtensionId.value;
+    // `write` handles its own failures, so the chain always settles and one
+    // failed save doesn't block the saves queued behind it.
+    saveChain = saveChain.then(() => write(userId, extensionIds, next));
+    return saveChain;
+  };
+
+  const flushPendingSave = (): Promise<void> => {
+    const pending = pendingSave;
+    if (!pending) {
+      return saveChain;
+    }
+    clearTimeout(pending.timer);
+    pendingSave = null;
+    const written = queueWrite(pending.userId, pending.extensionIds);
+    void written.then(pending.settle);
+    return written;
+  };
+
+  /**
+   * Holds a typed change back so a burst of them lands as one write. Resolves
+   * when that write has been made, so callers still learn when their change is
+   * stored.
+   */
+  const schedulePendingSave = (
+    userId: string,
+    extensionId: string
+  ): Promise<void> => {
+    if (pendingSave && pendingSave.userId === userId) {
+      clearTimeout(pendingSave.timer);
+      pendingSave.extensionIds.add(extensionId);
+      pendingSave.timer = setTimeout(
+        () => void flushPendingSave(),
+        SETTING_SAVE_DEBOUNCE_MS
+      );
+      return pendingSave.waited;
+    }
+    // A change for a different account says nothing about the one waiting.
+    void flushPendingSave();
+    let settle!: () => void;
+    const waited = new Promise<void>((resolve) => {
+      settle = resolve;
+    });
+    pendingSave = {
+      userId,
+      extensionIds: new Set([extensionId]),
+      timer: setTimeout(
+        () => void flushPendingSave(),
+        SETTING_SAVE_DEBOUNCE_MS
+      ),
+      waited,
+      settle,
+    };
+    return waited;
+  };
+
   const persist = (
     userId: string,
     extensionId: string,
-    next: Record<string, Record<string, ExtensionSettingValue>>
+    next: Record<string, Record<string, ExtensionSettingValue>>,
+    debounced: boolean
   ): Promise<void> => {
     valuesByExtensionId.value = next;
-    // `write` handles its own failures, so the chain always settles and one
-    // failed save doesn't block the saves queued behind it.
-    saveChain = saveChain.then(() => write(userId, extensionId, next));
-    return saveChain;
+    if (debounced) {
+      return schedulePendingSave(userId, extensionId);
+    }
+    // A toggle or a reset is one deliberate change, so it goes now — and takes
+    // anything typing has queued with it.
+    if (pendingSave && pendingSave.userId === userId) {
+      pendingSave.extensionIds.add(extensionId);
+      return flushPendingSave();
+    }
+    void flushPendingSave();
+    return queueWrite(userId, new Set([extensionId]));
   };
 
   const setValue = async (
@@ -260,16 +337,24 @@ export function createExtensionSettingsManager(
     value: ExtensionSettingValue
   ): Promise<void> => {
     const userId = await waitForOwnValues(extensionId);
-    if (!userId || !getDefinition(extensionId, key)) {
+    const definition = getDefinition(extensionId, key);
+    if (!userId || !definition) {
       return;
     }
-    await persist(userId, extensionId, {
-      ...valuesByExtensionId.value,
-      [extensionId]: {
-        ...valuesByExtensionId.value[extensionId],
-        [key]: value,
+    await persist(
+      userId,
+      extensionId,
+      {
+        ...valuesByExtensionId.value,
+        [extensionId]: {
+          ...valuesByExtensionId.value[extensionId],
+          [key]: value,
+        },
       },
-    });
+      // Text and number fields report every keystroke; a checkbox reports one
+      // deliberate change.
+      definition.type !== "boolean"
+    );
   };
 
   const clearValue = async (
@@ -283,11 +368,49 @@ export function createExtensionSettingsManager(
     }
     const nextExtensionValues = { ...current };
     delete nextExtensionValues[key];
-    await persist(userId, extensionId, {
-      ...valuesByExtensionId.value,
-      [extensionId]: nextExtensionValues,
-    });
+    await persist(
+      userId,
+      extensionId,
+      {
+        ...valuesByExtensionId.value,
+        [extensionId]: nextExtensionValues,
+      },
+      // Clearing a value is one deliberate change, like a toggle.
+      false
+    );
   };
+
+  // A change still inside its debounce would be lost with the page, and a
+  // mobile browser may never come back to fire the timer, so hiding the page
+  // sends it.
+  if (typeof document !== "undefined" && !import.meta.env.SSR) {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        void flushPendingSave();
+      }
+    });
+  }
+
+  // Started once everything it reaches for exists: this runs immediately, and
+  // an account change has to be able to flush a save that is still waiting.
+  effect(() => {
+    const userId = login.userId.value;
+    if (userId === loadedUserId) {
+      return;
+    }
+    // Send a change that is still waiting before the values it covers are
+    // dropped below, or it would write this account's settings as empty.
+    void flushPendingSave();
+    // Drop the previous account's values now rather than when the new
+    // account's load resolves. Until then they would show in the new account's
+    // UI, and a save would merge them into the new account's record.
+    valuesByExtensionId.value = {};
+    saveErrors.value = {};
+    loadedUserId = null;
+    if (userId) {
+      currentLoad = load(userId);
+    }
+  });
 
   return {
     valuesByExtensionId,
@@ -295,5 +418,6 @@ export function createExtensionSettingsManager(
     getValue,
     setValue,
     clearValue,
+    flushPendingSave,
   };
 }

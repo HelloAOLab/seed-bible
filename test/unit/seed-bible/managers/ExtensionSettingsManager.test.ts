@@ -1,6 +1,7 @@
 import {
   createExtensionSettingsManager,
   EXTENSION_SETTING_VALUES_ADDRESS,
+  SETTING_SAVE_DEBOUNCE_MS,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionSettingsManager";
 import type {
   ExtensionListEntry,
@@ -28,6 +29,13 @@ describe("ExtensionSettingsManager", () => {
   const flushPromises = async () => {
     await Promise.resolve();
     await Promise.resolve();
+  };
+
+  /** Runs a typed change's debounce out so its write goes, then awaits it. */
+  const saved = async (saving: Promise<void>): Promise<void> => {
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(SETTING_SAVE_DEBOUNCE_MS);
+    await saving;
   };
 
   const deferred = <T>() => {
@@ -66,6 +74,7 @@ describe("ExtensionSettingsManager", () => {
   });
 
   beforeEach(() => {
+    vi.useFakeTimers();
     os = CasualOSManager();
     getDataMock = vi.spyOn(os, "getData").mockResolvedValue({
       success: false,
@@ -130,6 +139,7 @@ describe("ExtensionSettingsManager", () => {
   afterEach(() => {
     warnSpy.mockRestore();
     errorSpy.mockRestore();
+    vi.useRealTimers();
   });
 
   const create = () =>
@@ -161,7 +171,7 @@ describe("ExtensionSettingsManager", () => {
     expect(manager.getValue("ext-1", "greeting")).toBe("Howdy");
 
     // The viewer's own value wins over both.
-    await manager.setValue("ext-1", "greeting", "Hiya");
+    await saved(manager.setValue("ext-1", "greeting", "Hiya"));
     expect(manager.getValue("ext-1", "greeting")).toBe("Hiya");
   });
 
@@ -178,7 +188,7 @@ describe("ExtensionSettingsManager", () => {
     await flushPromises();
     recordDataMock.mockClear();
 
-    await manager.setValue("ext-1", "count", 7);
+    await saved(manager.setValue("ext-1", "count", 7));
 
     expect(manager.getValue("ext-1", "count")).toBe(7);
     expect(recordDataMock).toHaveBeenCalledWith(
@@ -203,7 +213,7 @@ describe("ExtensionSettingsManager", () => {
   it("clearValue removes a previously-set value and persists, falling back to the default", async () => {
     const manager = create();
     await flushPromises();
-    await manager.setValue("ext-1", "greeting", "Hiya");
+    await saved(manager.setValue("ext-1", "greeting", "Hiya"));
     recordDataMock.mockClear();
 
     await manager.clearValue("ext-1", "greeting");
@@ -301,7 +311,7 @@ describe("ExtensionSettingsManager", () => {
       success: true,
       data: { "ext-1": { enabled: true } },
     });
-    await saving;
+    await saved(saving);
 
     expect(recordDataMock).toHaveBeenCalledTimes(1);
     expect(recordDataMock).toHaveBeenCalledWith(
@@ -349,7 +359,7 @@ describe("ExtensionSettingsManager", () => {
       await flushPromises();
       failNextSave();
 
-      await expect(manager.setValue("ext-1", "count", 9)).resolves.toBe(
+      await expect(saved(manager.setValue("ext-1", "count", 9))).resolves.toBe(
         undefined
       );
 
@@ -373,14 +383,14 @@ describe("ExtensionSettingsManager", () => {
       errorMessage: "Server error",
     });
 
-    await manager.setValue("ext-1", "count", 9);
+    await saved(manager.setValue("ext-1", "count", 9));
 
     expect(manager.hasSaveError("ext-1")).toBe(true);
     expect(manager.hasSaveError("ext-2")).toBe(false);
 
     // One record holds every extension's values, so a save that lands stores
     // the earlier failed change too and nothing is left outstanding.
-    await manager.setValue("ext-2", "tone", "Cool");
+    await saved(manager.setValue("ext-2", "tone", "Cool"));
 
     expect(manager.hasSaveError("ext-1")).toBe(false);
     expect(manager.getValue("ext-1", "count")).toBe(9);
@@ -394,10 +404,10 @@ describe("ExtensionSettingsManager", () => {
       errorCode: "server_error",
       errorMessage: "Server error",
     });
-    await manager.setValue("ext-1", "count", 9);
+    await saved(manager.setValue("ext-1", "count", 9));
     expect(manager.hasSaveError("ext-1")).toBe(true);
 
-    await manager.setValue("ext-1", "greeting", "Hi");
+    await saved(manager.setValue("ext-1", "greeting", "Hi"));
 
     expect(recordDataMock).toHaveBeenLastCalledWith(
       "user-1",
@@ -417,9 +427,10 @@ describe("ExtensionSettingsManager", () => {
     const firstWrite = deferred<unknown>();
     recordDataMock.mockReturnValueOnce(firstWrite.promise);
 
-    const firstSave = manager.setValue("ext-1", "count", 1);
-    const secondSave = manager.setValue("ext-1", "count", 2);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Toggles save straight away, so both writes are queued at once.
+    const firstSave = manager.setValue("ext-1", "enabled", true);
+    const secondSave = manager.setValue("ext-1", "enabled", false);
+    await vi.advanceTimersByTimeAsync(0);
     expect(recordDataMock).toHaveBeenCalledTimes(1);
 
     firstWrite.resolve({
@@ -433,7 +444,68 @@ describe("ExtensionSettingsManager", () => {
     expect(recordDataMock).toHaveBeenLastCalledWith(
       "user-1",
       EXTENSION_SETTING_VALUES_ADDRESS,
-      { "ext-1": { count: 2 } },
+      { "ext-1": { enabled: false } },
+      { marker: "publicRead" }
+    );
+  });
+
+  // Regression test: every keystroke used to be its own write, so typing a
+  // short value meant a burst of network writes.
+  it("coalesces a burst of typing into one write holding the latest value", async () => {
+    const manager = create();
+    await flushPromises();
+    recordDataMock.mockClear();
+
+    const typing = [
+      manager.setValue("ext-1", "greeting", "H"),
+      manager.setValue("ext-1", "greeting", "Hi"),
+      manager.setValue("ext-1", "greeting", "Hiya"),
+    ];
+    await flushPromises();
+    expect(recordDataMock).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(SETTING_SAVE_DEBOUNCE_MS);
+    await Promise.all(typing);
+
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      EXTENSION_SETTING_VALUES_ADDRESS,
+      { "ext-1": { greeting: "Hiya" } },
+      { marker: "publicRead" }
+    );
+  });
+
+  it("saves a toggle and a reset without waiting out the typing debounce", async () => {
+    const manager = create();
+    await flushPromises();
+    recordDataMock.mockClear();
+
+    await manager.setValue("ext-1", "enabled", true);
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+
+    await manager.clearValue("ext-1", "enabled");
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("sends a typed change that is still waiting when the account changes", async () => {
+    const manager = create();
+    await flushPromises();
+    recordDataMock.mockClear();
+
+    const saving = manager.setValue("ext-1", "greeting", "Hiya");
+    await flushPromises();
+    expect(recordDataMock).not.toHaveBeenCalled();
+
+    userIdSignal.value = "user-2";
+    await saving;
+
+    // Written for the account that made the change, with that account's values
+    // rather than the empty set the switch leaves behind.
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      EXTENSION_SETTING_VALUES_ADDRESS,
+      { "ext-1": { greeting: "Hiya" } },
       { marker: "publicRead" }
     );
   });
