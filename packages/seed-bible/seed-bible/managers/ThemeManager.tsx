@@ -1222,7 +1222,10 @@ export interface ThemeManager {
   ) => void;
 }
 
-export function createTheme(settings: SettingsManager): ThemeManager {
+export function createTheme(
+  settings: SettingsManager,
+  whiteLabelThemeOverrides: ThemeOverrides = {}
+): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
 
   const selectedThemeId = computed(() => settings.settings.value.themeId);
@@ -1252,9 +1255,13 @@ export function createTheme(settings: SettingsManager): ThemeManager {
 
   const currentTheme = computed<BibleTheme>(() => {
     const withColorOverrides = applyOverrides(
-      applyOverrides(basePresetTheme.value, customOverrides.value),
+      applyOverrides(
+        applyOverrides(basePresetTheme.value, whiteLabelThemeOverrides),
+        customOverrides.value
+      ),
       previewOverrides.value
     );
+
     return applyHighlightOverrides(
       applyHighlightOverrides(
         withColorOverrides,

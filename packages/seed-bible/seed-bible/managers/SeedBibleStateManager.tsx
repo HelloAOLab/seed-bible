@@ -628,6 +628,7 @@ export function createSeedBibleState(
     basePath: options.config?.basePath,
   });
   const branding = options.config?.branding;
+  const whiteLabelThemeOverrides = branding?.whiteLabelOverrides || {};
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
@@ -667,7 +668,7 @@ export function createSeedBibleState(
   });
 
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
-  const themeManager = createTheme(settings);
+  const themeManager = createTheme(settings, whiteLabelThemeOverrides);
   const customizationVariantSelections =
     createCustomizationVariantSelectionsManager(os, login);
   const customizationExtensionPreferences =

@@ -1,5 +1,6 @@
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
+import type { BibleTheme } from "../managers";
 /**
  * Runtime deployment configuration injected by the host server into the page
  * (as a `<script type="application/json" id="app-config">` element) and
@@ -18,6 +19,7 @@ export interface BrandingConfig {
   websiteUrl: string;
   disabledToolbarTools?: string[];
   defaultTranslationId?: string;
+  whiteLabelOverrides?: BibleTheme;
 }
 
 // Injected from Vite
