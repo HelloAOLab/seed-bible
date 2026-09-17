@@ -11,6 +11,7 @@ import {
   buildCustomFontValue,
   getContrastRatio,
   getExtensionAvailability,
+  getExtensionSettingDefault,
   getFontPresetsForField,
   type CustomizationsManager,
   type ExtensionAvailability,
@@ -621,6 +622,15 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
 
   const handleConfigureDefaults = (entry: ExtensionListEntry) => {
     const settings = entry.extension?.meta.settings ?? {};
+    // The customization being edited, not the one the viewer currently has
+    // active — those are only the same customization some of the time, and the
+    // defaults written here belong to the draft.
+    const draftDefault = (key: string) =>
+      getExtensionSettingDefault(
+        customizations.editingCustomization.value,
+        entry.id,
+        key
+      );
     state.modals.openModal({
       title: {
         key: "extension-settings-defaults-title",
@@ -635,9 +645,7 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
         <ExtensionSettingsForm
           extensionId={entry.id}
           settings={settings}
-          getValue={(key) =>
-            customizations.getActiveExtensionSettingDefault(entry.id, key)
-          }
+          getValue={draftDefault}
           onChange={(key, value) =>
             customizations.setEditingExtensionSettingDefault(
               entry.id,
@@ -646,9 +654,7 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
             )
           }
           resetting={{
-            hasOwnValue: (key) =>
-              customizations.getActiveExtensionSettingDefault(entry.id, key) !==
-              undefined,
+            hasOwnValue: (key) => draftDefault(key) !== undefined,
             onReset: (key) =>
               customizations.clearEditingExtensionSettingDefault(entry.id, key),
           }}
