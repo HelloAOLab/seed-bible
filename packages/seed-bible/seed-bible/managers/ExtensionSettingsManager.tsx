@@ -26,6 +26,11 @@ const extensionSettingValuesPayloadSchema = z.record(
  * installed-extension bookkeeping — which extensions are installed and what
  * values they're configured with are independent facts, so uninstalling an
  * extension never clears the values a viewer already set for it.
+ *
+ * Values exist only for a signed-in viewer, in that viewer's own record.
+ * Nothing is kept on the device, so a signed-out viewer only ever gets the
+ * defaults. Offline and signed-out settings are planned as follow-up work
+ * built on this manager.
  */
 export interface ExtensionSettingsManager {
   /** extensionId -> settingKey -> the value this viewer explicitly set. Empty when signed out. */

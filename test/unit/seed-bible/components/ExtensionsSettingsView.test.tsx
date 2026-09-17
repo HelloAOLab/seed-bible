@@ -62,6 +62,10 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
         .fn()
         .mockResolvedValue(undefined),
     },
+    login: {
+      userId: signal<string | null>("user-1"),
+      login: vi.fn().mockResolvedValue(null),
+    },
     modals: {
       openModal: vi.fn(),
     },
@@ -243,6 +247,37 @@ describe("ExtensionsSettingsView", () => {
 
       expect(modalBody.querySelector('[role="alert"]')?.textContent).toBe(
         "Couldn't save your settings."
+      );
+    });
+
+    it("asks a signed-out viewer to log in, then shows the settings once they have", () => {
+      const state = renderExtensions([configurableEntry()]);
+      const userId = state.login.userId as Signal<string | null>;
+      act(() => {
+        userId.value = null;
+      });
+      openConfigureModal(state);
+      const greetingField = () =>
+        modalBody.querySelector("#sb-extension-setting-configurable-greeting");
+
+      expect(modalBody.textContent).toContain(
+        "Please log in to configure this extension."
+      );
+      expect(greetingField()).toBeNull();
+
+      const logInButton = Array.from(modalBody.querySelectorAll("button")).find(
+        (button) => button.textContent === "Log in"
+      );
+      act(() => logInButton?.click());
+      expect(state.login.login).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        userId.value = "user-1";
+      });
+
+      expect(greetingField()).not.toBeNull();
+      expect(modalBody.textContent).not.toContain(
+        "Please log in to configure this extension."
       );
     });
   });

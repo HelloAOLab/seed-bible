@@ -1165,7 +1165,7 @@ type ExtensionsTab = "installed" | "available";
 
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { extensions, customizations, extensionSettings } = state;
+  const { extensions, customizations, extensionSettings, login } = state;
   const extensionsList = extensions.extensions.value;
   const installingIds = useSignal<Set<string>>(new Set());
   const isDownloadingSet = useSignal(false);
@@ -1228,36 +1228,56 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             }),
         },
       },
-      content: () => (
-        <>
-          <ExtensionSettingsForm
-            extensionId={extensionEntry.id}
-            settings={settings}
-            getValue={(key) =>
-              extensionSettings.getValue(extensionEntry.id, key)
-            }
-            onChange={(key, value) =>
-              void extensionSettings.setValue(extensionEntry.id, key, value)
-            }
-            resetting={{
-              hasOwnValue: (key) =>
-                extensionSettings.valuesByExtensionId.value[
-                  extensionEntry.id
-                ]?.[key] !== undefined,
-              onReset: (key) =>
-                void extensionSettings.clearValue(extensionEntry.id, key),
-            }}
-            t={t}
-          />
-          {extensionSettings.saveError.value && (
-            <p className="sb-settings-save-error" role="alert">
-              {t("extension-settings-save-failed", {
-                defaultValue: "Couldn't save your settings.",
+      // Values are saved to the viewer's account, so a signed-out viewer is
+      // asked to log in first. The body re-renders on sign-in, swapping this
+      // prompt for the form without reopening the modal.
+      // TODO: Support offline / signed-out extension settings so this prompt isn't needed.
+      content: () =>
+        login.userId.value === null ? (
+          <div className="sb-settings-login-prompt">
+            <p>
+              {t("extension-settings-login-required", {
+                defaultValue: "Please log in to configure this extension.",
               })}
             </p>
-          )}
-        </>
-      ),
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              onClick={() => void login.login()}
+            >
+              {t("log-in", { defaultValue: "Log in" })}
+            </button>
+          </div>
+        ) : (
+          <>
+            <ExtensionSettingsForm
+              extensionId={extensionEntry.id}
+              settings={settings}
+              getValue={(key) =>
+                extensionSettings.getValue(extensionEntry.id, key)
+              }
+              onChange={(key, value) =>
+                void extensionSettings.setValue(extensionEntry.id, key, value)
+              }
+              resetting={{
+                hasOwnValue: (key) =>
+                  extensionSettings.valuesByExtensionId.value[
+                    extensionEntry.id
+                  ]?.[key] !== undefined,
+                onReset: (key) =>
+                  void extensionSettings.clearValue(extensionEntry.id, key),
+              }}
+              t={t}
+            />
+            {extensionSettings.saveError.value && (
+              <p className="sb-settings-save-error" role="alert">
+                {t("extension-settings-save-failed", {
+                  defaultValue: "Couldn't save your settings.",
+                })}
+              </p>
+            )}
+          </>
+        ),
     });
   };
 
