@@ -305,10 +305,36 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
+.sb-extension-settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Keeps a setting's reset action beside its title instead of below the field.
+   The row holds the button's height whether or not it is showing, so a field
+   doesn't shift as the viewer sets and resets its value. */
+.sb-settings-field-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 1.5rem;
+}
+
+.sb-settings-field-title-row .sb-theme-color-reset {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.sb-settings-field-title-row .sb-theme-color-reset .material-symbols-outlined {
+  font-size: 1rem;
+}
+
 /* Sits under a setting's title, so it stays close to the title's size rather
    than the browser's default paragraph size, which was larger than the title. */
 .sb-settings-field-description {
   margin: 0;
+  margin-top: -0.5rem;
   font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }

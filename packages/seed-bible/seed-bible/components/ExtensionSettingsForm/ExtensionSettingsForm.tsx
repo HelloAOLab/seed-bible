@@ -78,7 +78,7 @@ export function ExtensionSettingsForm(props: {
   }
 
   return (
-    <>
+    <div className="sb-extension-settings-fields">
       {entries.map(([key, definition]) => {
         const fieldId = `sb-extension-setting-${extensionId}-${key}`;
         const title =
@@ -94,15 +94,36 @@ export function ExtensionSettingsForm(props: {
         const descriptionNode = description ? (
           <p className="sb-settings-field-description">{description}</p>
         ) : null;
+        const resetNode = resetting?.hasOwnValue(key) ? (
+          <button
+            type="button"
+            className="sb-theme-color-reset"
+            title={t("reset-to-default", {
+              defaultValue: "Reset to default",
+            })}
+            aria-label={t("reset-to-default", {
+              defaultValue: "Reset to default",
+            })}
+            onClick={() => resetting.onReset(key)}
+          >
+            <span className="material-symbols-outlined">restart_alt</span>
+          </button>
+        ) : null;
 
         return (
           <div className="sb-settings-field-row" key={key}>
             {definition.type === "boolean" ? (
               <>
                 <div className="sb-settings-toggle-row">
-                  <label className="sb-settings-toggle-label" htmlFor={fieldId}>
-                    {title}
-                  </label>
+                  <div className="sb-settings-field-title-row">
+                    <label
+                      className="sb-settings-field-label"
+                      htmlFor={fieldId}
+                    >
+                      {title}
+                    </label>
+                    {resetNode}
+                  </div>
                   <input
                     id={fieldId}
                     type="checkbox"
@@ -119,9 +140,12 @@ export function ExtensionSettingsForm(props: {
               </>
             ) : (
               <>
-                <label className="sb-settings-field-label" htmlFor={fieldId}>
-                  {title}
-                </label>
+                <div className="sb-settings-field-title-row">
+                  <label className="sb-settings-field-label" htmlFor={fieldId}>
+                    {title}
+                  </label>
+                  {resetNode}
+                </div>
                 {descriptionNode}
                 {definition.type === "number" ? (
                   <NumberSettingInput
@@ -145,24 +169,9 @@ export function ExtensionSettingsForm(props: {
                 )}
               </>
             )}
-            {resetting?.hasOwnValue(key) && (
-              <button
-                type="button"
-                className="sb-theme-color-reset"
-                title={t("reset-to-default", {
-                  defaultValue: "Reset to default",
-                })}
-                aria-label={t("reset-to-default", {
-                  defaultValue: "Reset to default",
-                })}
-                onClick={() => resetting.onReset(key)}
-              >
-                <span className="material-symbols-outlined">restart_alt</span>
-              </button>
-            )}
           </div>
         );
       })}
-    </>
+    </div>
   );
 }
