@@ -577,6 +577,41 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
           handleGridKeyNav(event, event.currentTarget);
         }}
       >
+        <button
+          type="button"
+          className={`sb-theme-ready-card${
+            selectedThemeId.value === SYSTEM_THEME_ID
+              ? " sb-theme-ready-card-selected"
+              : ""
+          }`}
+          onClick={() => setTheme(SYSTEM_THEME_ID)}
+        >
+          <div className="sb-theme-ready-preview sb-theme-ready-preview-system">
+            {[LIGHT_THEME, DARK_THEME].map((half) => (
+              <div
+                key={half.id}
+                className="sb-theme-ready-system-half"
+                style={{
+                  background:
+                    half.variables.readerBackground ??
+                    half.variables.background,
+                }}
+              >
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
+                  style={{ background: half.variables.primaryColor }}
+                />
+              </div>
+            ))}
+          </div>
+          <ThemeCardLabel
+            name={localizedThemeName(t, {
+              id: SYSTEM_THEME_ID,
+              name: "System",
+            })}
+            isSelected={selectedThemeId.value === SYSTEM_THEME_ID}
+          />
+        </button>
         {themes.value.map((theme) => {
           const isSelected = theme.id === selectedThemeId.value;
           const vars = theme.variables;
@@ -615,41 +650,6 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
             </button>
           );
         })}
-        <button
-          type="button"
-          className={`sb-theme-ready-card${
-            selectedThemeId.value === SYSTEM_THEME_ID
-              ? " sb-theme-ready-card-selected"
-              : ""
-          }`}
-          onClick={() => setTheme(SYSTEM_THEME_ID)}
-        >
-          <div className="sb-theme-ready-preview sb-theme-ready-preview-system">
-            {[LIGHT_THEME, DARK_THEME].map((half) => (
-              <div
-                key={half.id}
-                className="sb-theme-ready-system-half"
-                style={{
-                  background:
-                    half.variables.readerBackground ??
-                    half.variables.background,
-                }}
-              >
-                <div
-                  className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-                  style={{ background: half.variables.primaryColor }}
-                />
-              </div>
-            ))}
-          </div>
-          <ThemeCardLabel
-            name={localizedThemeName(t, {
-              id: SYSTEM_THEME_ID,
-              name: "System",
-            })}
-            isSelected={selectedThemeId.value === SYSTEM_THEME_ID}
-          />
-        </button>
       </div>
     </section>
   );

@@ -301,7 +301,7 @@ describe("ThemeManager storage (via SettingsManager)", () => {
 
     theme.setTheme("not-a-real-theme");
 
-    expect(theme.selectedThemeId.value).toBe("light");
+    expect(theme.selectedThemeId.value).toBe("system");
   });
 
   it("an anonymous theme choice survives a simulated page refresh", () => {
@@ -347,13 +347,14 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(tag?.textContent).toContain("--sb-background: #0a0a0a;");
   });
 
-  it("does not clobber a dark #sb-theme-styles tag with the light default on boot", () => {
-    // Boot order on a returning visitor whose saved theme is dark: the server
-    // renders the light default into the tag, then the pre-hydration inline
-    // script in index.html reads localStorage and patches it to dark, and only
-    // then does the bundle run createSeedBibleState() -> createTheme(). At that
-    // point `localConfig` is still the empty SSR-matching seed, so `themeId` is
-    // "light" — writing it here would flash the page light until
+  it("does not clobber a dark #sb-theme-styles tag with the system default on boot", () => {
+    // Boot order on a returning visitor who explicitly pinned dark: the server
+    // renders the system-resolved default into the tag, then the pre-hydration
+    // inline script in index.html reads localStorage and patches it to dark,
+    // and only then does the bundle run createSeedBibleState() -> createTheme().
+    // At that point `localConfig` is still the empty SSR-matching seed, so
+    // `themeId` is "system" — writing it here would flash the page to
+    // whatever the device currently resolves to until
     // `hydrateLocalConfig()` restores the real id post-mount.
     const darkCss = THEME_PRESET_STYLE_TEXT.dark ?? "";
     expect(darkCss).toContain("--sb-background: #0a0a0a;");
@@ -368,7 +369,7 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     const settings = makeSettings(login);
     const theme = createThemeManager(settings);
 
-    expect(theme.selectedThemeId.value).toBe("light");
+    expect(theme.selectedThemeId.value).toBe("system");
     expect(document.getElementById("sb-theme-styles")?.textContent).toBe(
       darkCss
     );

@@ -1281,9 +1281,10 @@ export function createTheme(settings: SettingsManager): ThemeManager {
   // *mismatch* risk, but it does not exempt this from the *flash* the
   // deferred `localConfig` seed creates: at `createTheme()` time
   // `login.localConfig` is still empty (see LoginManager), so `themeId` is
-  // the default "light" even for a visitor whose saved theme is dark, and
-  // writing it here would clobber the dark CSS the pre-hydration inline
-  // script just put in that tag — painting light until
+  // the default `SYSTEM_THEME_ID` even for a visitor who explicitly pinned
+  // "dark", and writing it here would clobber the dark CSS the
+  // pre-hydration inline script just put in that tag — painting whatever
+  // the device's current color scheme resolves to until
   // `hydrateLocalConfig()` restores the real id post-mount. Whatever is
   // already in the tag (server-rendered, then corrected by that inline
   // script from `localStorage`) is the better answer until then, so this
