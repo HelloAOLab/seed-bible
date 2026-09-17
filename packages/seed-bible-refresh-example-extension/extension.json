@@ -2,6 +2,7 @@
   "id": "example-extension",
   "settings": {
     "greeting": { "type": "string", "default": "Hello, World" },
+    "greetingSize": { "type": "number", "default": 1.5 },
     "showBanner": { "type": "boolean", "default": true }
   },
   "translations": {
@@ -17,6 +18,8 @@
       "item-2": "Item 2",
       "setting-greeting-title": "Greeting",
       "setting-greeting-description": "The greeting shown by this extension's example tool.",
+      "setting-greetingSize-title": "Greeting size",
+      "setting-greetingSize-description": "How large the greeting is, in rem. 1 is normal text size, and decimals like 1.25 work.",
       "setting-showBanner-title": "Show banner",
       "setting-showBanner-description": "Whether to show the example banner.",
       "example-banner": "This is the example banner. Turn it off in this extension's settings."

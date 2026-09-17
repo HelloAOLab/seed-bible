@@ -88,6 +88,10 @@ export default function initExampleExtension() {
                 "example-extension",
                 "greeting"
               );
+              const greetingSize = context.extensionSettings.getValue(
+                "example-extension",
+                "greetingSize"
+              );
               const showBanner =
                 context.extensionSettings.getValue(
                   "example-extension",
@@ -114,7 +118,16 @@ export default function initExampleExtension() {
                     </div>
                   )}
                   {typeof greeting === "string" && greeting && (
-                    <p>{greeting}</p>
+                    <p
+                      style={{
+                        fontSize:
+                          typeof greetingSize === "number"
+                            ? `${greetingSize}rem`
+                            : undefined,
+                      }}
+                    >
+                      {greeting}
+                    </p>
                   )}
                 </div>
               );
