@@ -1269,7 +1269,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
               }}
               t={t}
             />
-            {extensionSettings.saveError.value && (
+            {extensionSettings.hasSaveError(extensionEntry.id) && (
               <p className="sb-settings-save-error" role="alert">
                 {t("extension-settings-save-failed", {
                   defaultValue: "Couldn't save your settings.",

@@ -42,6 +42,9 @@ function makeEntry(
 }
 
 function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
+  // Kept as a signal the tests can drive: the Configure modal reads the flags
+  // for the extension it was opened for.
+  const extensionSaveErrors = signal<Record<string, boolean>>({});
   return {
     sidebar: {
       requestedSettingsView: signal<string>("extensions"),
@@ -71,7 +74,9 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
     },
     extensionSettings: {
       valuesByExtensionId: signal({}),
-      saveError: signal(false),
+      saveErrors: extensionSaveErrors,
+      hasSaveError: (extensionId: string) =>
+        extensionSaveErrors.value[extensionId] === true,
       getValue: vi.fn(),
       setValue: vi.fn().mockResolvedValue(undefined),
       clearValue: vi.fn().mockResolvedValue(undefined),
@@ -236,13 +241,24 @@ describe("ExtensionsSettingsView", () => {
       });
     };
 
-    it("tells the viewer when their settings couldn't be saved", () => {
+    it("tells the viewer when their settings couldn't be saved, and only for the extension that failed", () => {
       const state = renderExtensions([configurableEntry()]);
       openConfigureModal(state);
+      const saveErrors = (
+        state.extensionSettings as unknown as {
+          saveErrors: Signal<Record<string, boolean>>;
+        }
+      ).saveErrors;
+      expect(modalBody.querySelector('[role="alert"]')).toBeNull();
+
+      // A different extension's failed save says nothing about this one.
+      act(() => {
+        saveErrors.value = { "other-extension": true };
+      });
       expect(modalBody.querySelector('[role="alert"]')).toBeNull();
 
       act(() => {
-        (state.extensionSettings.saveError as Signal<boolean>).value = true;
+        saveErrors.value = { configurable: true };
       });
 
       expect(modalBody.querySelector('[role="alert"]')?.textContent).toBe(

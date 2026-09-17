@@ -47,14 +47,18 @@ export interface ExtensionSettingsManager {
     extensionId: string,
     key: string
   ) => ExtensionSettingValue | undefined;
-  /** True when the viewer's latest change couldn't be saved. Cleared by the next save that succeeds. */
-  saveError: ReadonlySignal<boolean>;
+  /**
+   * True when the viewer's latest change to this extension's settings couldn't
+   * be saved. Scoped per extension so one extension's failure doesn't report
+   * itself in another's UI; cleared by that extension's next successful save.
+   */
+  hasSaveError: (extensionId: string) => boolean;
   /**
    * Sets the viewer's own value for a setting, once the viewer's stored values
-   * have loaded. Never rejects: a failed save sets `saveError`, as does a
-   * change made when those stored values couldn't be loaded (saving then would
-   * replace them, so nothing is saved). No-op while signed out, or if
-   * `extensionId`/`key` isn't a currently-declared setting.
+   * have loaded. Never rejects: a failed save sets `hasSaveError` for this
+   * extension, as does a change made when those stored values couldn't be
+   * loaded (saving then would replace them, so nothing is saved). No-op while
+   * signed out, or if `extensionId`/`key` isn't a currently-declared setting.
    */
   setValue: (
     extensionId: string,
@@ -74,7 +78,9 @@ export function createExtensionSettingsManager(
   const valuesByExtensionId = signal<
     Record<string, Record<string, ExtensionSettingValue>>
   >({});
-  const saveError = signal(false);
+  // Extensions whose latest save failed. Keyed by extension so a failure in one
+  // extension's Configure modal doesn't show in every other one's.
+  const saveErrors = signal<Record<string, boolean>>({});
   // The account whose stored values `valuesByExtensionId` holds. Null while
   // signed out and while the signed-in account's values are still loading.
   let loadedUserId: string | null = null;
@@ -115,21 +121,44 @@ export function createExtensionSettingsManager(
     // account's load resolves. Until then they would show in the new account's
     // UI, and a save would merge them into the new account's record.
     valuesByExtensionId.value = {};
-    saveError.value = false;
+    saveErrors.value = {};
     loadedUserId = null;
     if (userId) {
       currentLoad = load(userId);
     }
   });
 
+  const hasSaveError = (extensionId: string): boolean =>
+    saveErrors.value[extensionId] === true;
+
+  const flagSaveError = (extensionId: string): void => {
+    if (hasSaveError(extensionId)) {
+      return;
+    }
+    saveErrors.value = { ...saveErrors.value, [extensionId]: true };
+  };
+
+  /**
+   * Every extension's values live in one record, so a write that lands stores
+   * all of them — including a change an earlier failed save left unsaved.
+   */
+  const clearSaveErrors = (): void => {
+    if (Object.keys(saveErrors.value).length === 0) {
+      return;
+    }
+    saveErrors.value = {};
+  };
+
   /**
    * Resolves to the signed-in account once its stored values are in memory, or
    * null if signed out, the account changed while waiting, or the values failed
-   * to load (which also sets `saveError`). Saves merge into those values, so
-   * saving before they load would overwrite the record with a blob missing
-   * everything else the account had stored.
+   * to load (which also flags the failure against `extensionId`). Saves merge
+   * into those values, so saving before they load would overwrite the record
+   * with a blob missing everything else the account had stored.
    */
-  const waitForOwnValues = async (): Promise<string | null> => {
+  const waitForOwnValues = async (
+    extensionId: string
+  ): Promise<string | null> => {
     const userId = login.userId.value;
     if (!userId) {
       return null;
@@ -144,7 +173,7 @@ export function createExtensionSettingsManager(
       console.error(
         "Failed to save extension setting values: this account's stored values didn't load"
       );
-      saveError.value = true;
+      flagSaveError(extensionId);
       return null;
     }
     return userId;
@@ -179,6 +208,7 @@ export function createExtensionSettingsManager(
 
   const write = async (
     userId: string,
+    extensionId: string,
     next: Record<string, Record<string, ExtensionSettingValue>>
   ): Promise<void> => {
     let failed = false;
@@ -202,19 +232,25 @@ export function createExtensionSettingsManager(
     }
     // A save for an account that has since been switched away from says
     // nothing about whether the current account's values are saved.
-    if (loadedUserId === userId) {
-      saveError.value = failed;
+    if (loadedUserId !== userId) {
+      return;
+    }
+    if (failed) {
+      flagSaveError(extensionId);
+    } else {
+      clearSaveErrors();
     }
   };
 
   const persist = (
     userId: string,
+    extensionId: string,
     next: Record<string, Record<string, ExtensionSettingValue>>
   ): Promise<void> => {
     valuesByExtensionId.value = next;
     // `write` handles its own failures, so the chain always settles and one
     // failed save doesn't block the saves queued behind it.
-    saveChain = saveChain.then(() => write(userId, next));
+    saveChain = saveChain.then(() => write(userId, extensionId, next));
     return saveChain;
   };
 
@@ -223,11 +259,11 @@ export function createExtensionSettingsManager(
     key: string,
     value: ExtensionSettingValue
   ): Promise<void> => {
-    const userId = await waitForOwnValues();
+    const userId = await waitForOwnValues(extensionId);
     if (!userId || !getDefinition(extensionId, key)) {
       return;
     }
-    await persist(userId, {
+    await persist(userId, extensionId, {
       ...valuesByExtensionId.value,
       [extensionId]: {
         ...valuesByExtensionId.value[extensionId],
@@ -240,14 +276,14 @@ export function createExtensionSettingsManager(
     extensionId: string,
     key: string
   ): Promise<void> => {
-    const userId = await waitForOwnValues();
+    const userId = await waitForOwnValues(extensionId);
     const current = valuesByExtensionId.value[extensionId];
     if (!userId || !current || !(key in current)) {
       return;
     }
     const nextExtensionValues = { ...current };
     delete nextExtensionValues[key];
-    await persist(userId, {
+    await persist(userId, extensionId, {
       ...valuesByExtensionId.value,
       [extensionId]: nextExtensionValues,
     });
@@ -255,7 +291,7 @@ export function createExtensionSettingsManager(
 
   return {
     valuesByExtensionId,
-    saveError,
+    hasSaveError,
     getValue,
     setValue,
     clearValue,

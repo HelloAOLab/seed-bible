@@ -47,14 +47,15 @@ describe("ExtensionSettingsManager", () => {
         type: "string" | "boolean" | "number";
         default?: string | boolean | number;
       }
-    >
+    >,
+    id = "ext-1"
   ): ExtensionListEntry => ({
-    id: "ext-1",
+    id,
     extension: {
-      url: "https://example.com/ext-1.js",
+      url: `https://example.com/${id}.js`,
       meta: {
-        id: "ext-1",
-        translations: { en: { title: "Ext 1", description: "" } },
+        id,
+        translations: { en: { title: id, description: "" } },
         settings,
       },
     },
@@ -324,7 +325,7 @@ describe("ExtensionSettingsManager", () => {
 
     expect(recordDataMock).not.toHaveBeenCalled();
     expect(manager.getValue("ext-1", "count")).toBe(5);
-    expect(manager.saveError.value).toBe(true);
+    expect(manager.hasSaveError("ext-1")).toBe(true);
   });
 
   it.each([
@@ -352,10 +353,38 @@ describe("ExtensionSettingsManager", () => {
         undefined
       );
 
-      expect(manager.saveError.value).toBe(true);
+      expect(manager.hasSaveError("ext-1")).toBe(true);
       expect(manager.getValue("ext-1", "count")).toBe(9);
     }
   );
+
+  // Regression test: one shared flag meant a failure while configuring one
+  // extension reported itself in every other extension's Configure modal.
+  it("flags a failed save against the extension it was for, not every extension", async () => {
+    extensionsListSignal.value = [
+      ...extensionsListSignal.value,
+      extensionEntry({ tone: { type: "string", default: "Warm" } }, "ext-2"),
+    ];
+    const manager = create();
+    await flushPromises();
+    recordDataMock.mockResolvedValueOnce({
+      success: false,
+      errorCode: "server_error",
+      errorMessage: "Server error",
+    });
+
+    await manager.setValue("ext-1", "count", 9);
+
+    expect(manager.hasSaveError("ext-1")).toBe(true);
+    expect(manager.hasSaveError("ext-2")).toBe(false);
+
+    // One record holds every extension's values, so a save that lands stores
+    // the earlier failed change too and nothing is left outstanding.
+    await manager.setValue("ext-2", "tone", "Cool");
+
+    expect(manager.hasSaveError("ext-1")).toBe(false);
+    expect(manager.getValue("ext-1", "count")).toBe(9);
+  });
 
   it("the next successful save stores the change that failed and clears the error", async () => {
     const manager = create();
@@ -366,7 +395,7 @@ describe("ExtensionSettingsManager", () => {
       errorMessage: "Server error",
     });
     await manager.setValue("ext-1", "count", 9);
-    expect(manager.saveError.value).toBe(true);
+    expect(manager.hasSaveError("ext-1")).toBe(true);
 
     await manager.setValue("ext-1", "greeting", "Hi");
 
@@ -376,7 +405,7 @@ describe("ExtensionSettingsManager", () => {
       { "ext-1": { count: 9, greeting: "Hi" } },
       { marker: "publicRead" }
     );
-    expect(manager.saveError.value).toBe(false);
+    expect(manager.hasSaveError("ext-1")).toBe(false);
   });
 
   // Regression test: without serialized writes, the second save is sent while
