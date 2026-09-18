@@ -29,8 +29,10 @@ import {
 import {
   groupTranslationsByLanguage,
   filterTranslationGroups,
+  type TranslationLanguageGroup,
   type TranslationViewMode,
 } from "../../managers/translationGrouping";
+import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { useI18n } from "../../i18n/I18nManager";
 import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
@@ -758,7 +760,7 @@ const TRANSLATION_PAGE_SIZE = 50;
 function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
   const { state } = props;
   const { customizations, bibleData } = state;
-  const { t } = useI18n();
+  const { t, language: uiLanguage } = useI18n();
   const query = useSignal("");
   const viewMode = useSignal<TranslationViewMode>("complete");
   const limit = useSignal(TRANSLATION_PAGE_SIZE);
@@ -776,17 +778,55 @@ function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
     () => groupTranslationsByLanguage(translations),
     [translations]
   );
-  const { groups, totalMatching } = useMemo(
-    () =>
-      filterTranslationGroups({
-        groups: allGroups,
-        query: query.value,
-        viewMode: viewMode.value,
-        limit: limit.value,
-        selectedTranslation,
+  const { groups, totalMatching } = useMemo(() => {
+    const filtered = filterTranslationGroups({
+      groups: allGroups,
+      query: query.value,
+      viewMode: viewMode.value,
+      limit: limit.value,
+      selectedTranslation,
+    });
+
+    // The UI language's own translations are the ones most viewers of this
+    // customization are likely to want, so they sort to the top by default
+    // — unless a translation in a different language is already selected,
+    // in which case that one leads (it's the current pick) with the UI
+    // language's group right behind it, rather than buried alphabetically.
+    const uiBibleLanguages = (UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage] ?? []).map(
+      (code) => code.toLowerCase()
+    );
+    const selectedLanguage = selectedTranslation?.language?.toLowerCase();
+    const priorityLanguages = selectedLanguage
+      ? [
+          selectedLanguage,
+          ...uiBibleLanguages.filter((code) => code !== selectedLanguage),
+        ]
+      : uiBibleLanguages;
+
+    if (priorityLanguages.length === 0) {
+      return filtered;
+    }
+
+    const priorityRank = (group: TranslationLanguageGroup) => {
+      const index = priorityLanguages.indexOf(group.language.toLowerCase());
+      return index === -1 ? priorityLanguages.length : index;
+    };
+
+    return {
+      ...filtered,
+      groups: [...filtered.groups].sort((a, b) => {
+        const rankDiff = priorityRank(a) - priorityRank(b);
+        return rankDiff !== 0 ? rankDiff : a.language.localeCompare(b.language);
       }),
-    [allGroups, query.value, viewMode.value, limit.value, selectedTranslation]
-  );
+    };
+  }, [
+    allGroups,
+    query.value,
+    viewMode.value,
+    limit.value,
+    selectedTranslation,
+    uiLanguage,
+  ]);
 
   if (!record) {
     return (
@@ -824,31 +864,6 @@ function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
         }
       }}
     >
-      <p className="sb-settings-field-description">
-        {t("customization-default-translation-description", {
-          defaultValue:
-            "The translation viewers of this customization start reading in, instead of Seed Bible's own default for their language.",
-        })}
-      </p>
-
-      <div
-        className="translation-option flex-between-center-gap-md"
-        onClick={() => pick(null)}
-      >
-        <span className="translation-title inline-flex-start-center-gap-sm">
-          {record.defaultTranslationId ? (
-            <span className="emptyCircle" aria-hidden="true" />
-          ) : (
-            <TickIcon height={15} width={15} />
-          )}
-          <span className="translation-description">
-            {t("customization-default-translation-none", {
-              defaultValue: "Seed Bible's default",
-            })}
-          </span>
-        </span>
-      </div>
-
       <div className="searchbar flex-align-center">
         <span className="material-symbols-outlined search-icon">search</span>
         <input
@@ -919,6 +934,25 @@ function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
         onLoadMore={() => {
           limit.value += TRANSLATION_PAGE_SIZE;
         }}
+        leadingItem={
+          <div
+            className="translation-option flex-between-center-gap-md"
+            onClick={() => pick(null)}
+          >
+            <span className="translation-title inline-flex-start-center-gap-sm">
+              {record.defaultTranslationId ? (
+                <span className="emptyCircle" aria-hidden="true" />
+              ) : (
+                <TickIcon height={15} width={15} />
+              )}
+              <span className="translation-description">
+                {t("customization-default-translation-none", {
+                  defaultValue: "Seed Bible's default",
+                })}
+              </span>
+            </span>
+          </div>
+        }
       />
     </div>
   );

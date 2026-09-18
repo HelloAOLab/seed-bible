@@ -1605,6 +1605,18 @@
   overflow-y: auto;
 }
 
+/*
+ * `.searchbar` (`BibleSelector.css`) is 80% width there because that page's
+ * search field sits next to a separate filter icon in the same row. Here
+ * the filter button is nested inside `.searchbar` itself, so 80% leaves a
+ * dead gap down the right side of this narrower popover — scoped to this
+ * picker rather than changing the shared rule, which the reader's own
+ * layout still depends on.
+ */
+.sb-customization-translation-picker .searchbar {
+  width: 100%;
+}
+
 /* Customization logo upload (editor page) */
 .sb-customization-logo-row {
   display: flex;
