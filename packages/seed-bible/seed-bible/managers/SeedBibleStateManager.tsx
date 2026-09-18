@@ -979,16 +979,6 @@ export function createSeedBibleState(
     return [...names];
   });
 
-  // Theme is the source of truth for text colors. When the user switches
-  // theme presets, drop any per-section color override from the text editor
-  // so verse / book title / heading pick up the new theme's colors.
-  let prevPresetId = themeManager.selectedThemeId.peek();
-  effect(() => {
-    const id = themeManager.selectedThemeId.value;
-    if (id === prevPresetId) return;
-    prevPresetId = id;
-    settings.resetTextColors();
-  });
   const selectedTab = computed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null

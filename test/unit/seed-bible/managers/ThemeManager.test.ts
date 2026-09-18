@@ -2,6 +2,7 @@ import {
   applyBrowserThemeColor,
   applyHighlightOverrides,
   createTheme as createThemeManager,
+  DARK_THEME,
   filterValidFontFamilyOverrides,
   composeThemeStyleText,
   parseThemeBackgroundColor,
@@ -11,6 +12,7 @@ import {
   type BibleTheme,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { stubColorScheme } from "../testUtils/stubColorScheme";
 import {
   createSettings,
   type SettingsManager,
@@ -358,7 +360,7 @@ describe("ThemeManager storage (via SettingsManager)", () => {
 
     theme.setTheme("not-a-real-theme");
 
-    expect(theme.selectedThemeId.value).toBe("light");
+    expect(theme.selectedThemeId.value).toBe("system");
   });
 
   it("an anonymous theme choice survives a simulated page refresh", () => {
@@ -426,13 +428,14 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     ).toBe("#0a0a0a");
   });
 
-  it("does not clobber a dark #sb-theme-styles tag with the light default on boot", () => {
-    // Boot order on a returning visitor whose saved theme is dark: the server
-    // renders the light default into the tag, then the pre-hydration inline
-    // script in index.html reads localStorage and patches it to dark, and only
-    // then does the bundle run createSeedBibleState() -> createTheme(). At that
-    // point `localConfig` is still the empty SSR-matching seed, so `themeId` is
-    // "light" — writing it here would flash the page light until
+  it("does not clobber a dark #sb-theme-styles tag with the system default on boot", () => {
+    // Boot order on a returning visitor who explicitly pinned dark: the server
+    // renders the system-resolved default into the tag, then the pre-hydration
+    // inline script in index.html reads localStorage and patches it to dark,
+    // and only then does the bundle run createSeedBibleState() -> createTheme().
+    // At that point `localConfig` is still the empty SSR-matching seed, so
+    // `themeId` is "system" — writing it here would flash the page to
+    // whatever the device currently resolves to until
     // `hydrateLocalConfig()` restores the real id post-mount.
     const darkCss = THEME_PRESET_STYLE_TEXT.dark ?? "";
     expect(darkCss).toContain("--sb-background: #0a0a0a;");
@@ -447,7 +450,7 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     const settings = makeSettings(login);
     const theme = createThemeManager(settings);
 
-    expect(theme.selectedThemeId.value).toBe("light");
+    expect(theme.selectedThemeId.value).toBe("system");
     expect(document.getElementById("sb-theme-styles")?.textContent).toBe(
       darkCss
     );
@@ -645,5 +648,56 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
       "#00ff00"
     );
+  });
+});
+
+describe("system theme", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("resolves to the dark preset when the device prefers dark", () => {
+    stubColorScheme(true);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+
+    theme.setTheme("system");
+
+    expect(theme.selectedThemeId.value).toBe("system");
+    expect(theme.basePresetTheme.value.id).toBe("dark");
+  });
+
+  it("resolves to the light preset when the device prefers light", () => {
+    stubColorScheme(false);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+
+    theme.setTheme("system");
+
+    expect(theme.basePresetTheme.value.id).toBe("light");
+  });
+
+  it("follows the device switching to dark while the app is open", () => {
+    const emitChange = stubColorScheme(false);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.setTheme("system");
+
+    emitChange(true);
+
+    expect(theme.basePresetTheme.value.id).toBe("dark");
+    expect(theme.currentTheme.value.variables.background).toBe(
+      DARK_THEME.variables.background
+    );
+  });
+
+  it("ignores the device preference once a preset is picked explicitly", () => {
+    stubColorScheme(true);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+
+    theme.setTheme("light");
+
+    expect(theme.basePresetTheme.value.id).toBe("light");
   });
 });

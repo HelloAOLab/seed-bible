@@ -878,16 +878,14 @@
 
 /* Ready-themes preview gallery */
 .sb-theme-ready-gallery {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
-  overflow-x: auto;
   padding: 0.25rem 0.125rem 0.75rem;
-  scrollbar-width: thin;
 }
 
 .sb-theme-ready-card {
-  flex: 0 0 auto;
-  width: 7.5rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -912,6 +910,21 @@
   transition:
     border-color 0.2s ease,
     transform 0.1s ease;
+}
+
+.sb-theme-ready-preview-system {
+  padding: 0;
+  gap: 0;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.sb-theme-ready-system-half {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 0.625rem;
 }
 
 .sb-theme-ready-card:hover .sb-theme-ready-preview {
@@ -946,6 +959,10 @@
 .sb-theme-ready-check {
   font-size: 1rem;
   color: var(--sb-primary-color);
+}
+
+.sb-theme-ready-check-hidden {
+  visibility: hidden;
 }
 
 /* Scripture quick-settings (font size + line height) */
