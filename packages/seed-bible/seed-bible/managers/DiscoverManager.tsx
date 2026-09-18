@@ -33,8 +33,15 @@ export type DiscoverResult =
   | DiscoverCrossReferenceResult
   | DiscoverStudyNoteResult;
 
+export type DiscoverContentType = "person_profile" | "place_profile" | "event";
+
+export const DISCOVER_CONTENT_TYPES_HIDDEN_BY_DEFAULT: readonly DiscoverContentType[] =
+  ["person_profile", "place_profile", "event"];
+
 export interface DiscoverContentResult {
   type: "content";
+  contentType?: DiscoverContentType;
+  verses?: readonly number[];
   title: string;
   description: string;
   reference: DiscoverReference;

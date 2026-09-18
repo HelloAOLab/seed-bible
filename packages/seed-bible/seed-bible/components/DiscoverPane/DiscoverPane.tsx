@@ -38,6 +38,9 @@ import {
   CrossReferencesSection,
   StudyNotesSection,
   ContentSection,
+  PeopleSection,
+  PlacesSection,
+  EventsSection,
 } from "./DiscoveredResultsSections";
 import {
   AnnotationsSection,
@@ -363,6 +366,10 @@ export function DiscoverPane(props: DiscoverPaneProps) {
       <CrossReferencesSection tab={selectedTab} />
       <StudyNotesSection tab={selectedTab} />
       <ContentSection tab={selectedTab} />
+
+      <PeopleSection tab={selectedTab} collapsible />
+      <PlacesSection tab={selectedTab} collapsible />
+      <EventsSection tab={selectedTab} collapsible />
     </div>
   );
 }

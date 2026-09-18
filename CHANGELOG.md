@@ -4,6 +4,12 @@
 
 ### ✨ Added
 
+- Show the people, places and events a chapter names, from the Theographic Bible Metadata dataset. ([#1744](https://github.com/HelloAOLab/seed-bible/issues/1744))
+  - New People, Places and Events filters in the Discover panel, each listing what the chapter mentions and the verses it appears in. Tap a verse to jump to it.
+  - Open an entry to read its description, plus a person's family and events, a place's type and coordinates, or an event's date, participants and locations.
+  - Select a verse and the lists narrow to what that verse mentions.
+  - These are left out of the "All" view until you pick one of the three filters, so a chapter with dozens of names doesn't bury your own notes.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

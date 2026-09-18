@@ -8,9 +8,15 @@ import {
   CrossReferencesSection,
   StudyNotesSection,
   ContentSection,
+  PeopleSection,
+  PlacesSection,
+  EventsSection,
+  theographicResultsFor,
 } from "../DiscoverPane/DiscoveredResultsSections";
 import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
+import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
 import { MaterialIcon } from "../icons";
+import { DISCOVER_CONTENT_TYPES_HIDDEN_BY_DEFAULT } from "../../managers/DiscoverManager";
 import {
   getReadingPlansForChapter,
   ReadingPlansSection,
@@ -21,7 +27,10 @@ type FilterKey =
   | "annotations"
   | "cross-references"
   | "study-notes"
-  | "content";
+  | "content"
+  | "people"
+  | "places"
+  | "events";
 
 interface DiscoverContentPanelProps {
   tab: ReaderTab | null;
@@ -78,8 +87,24 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
       (group) => group.results
     ).length > 0;
   const hasContent =
-    tab.readingState.discoveredContent.value.flatMap((group) => group.results)
-      .length > 0;
+    tab.readingState.discoveredContent.value
+      .flatMap((group) => group.results)
+      .filter(
+        (result) =>
+          !result.contentType ||
+          !DISCOVER_CONTENT_TYPES_HIDDEN_BY_DEFAULT.includes(result.contentType)
+      ).length > 0;
+
+  const hasPeople = theographicResultsFor(tab, "person_profile").length > 0;
+  const hasPlaces = theographicResultsFor(tab, "place_profile").length > 0;
+  const hasEvents = theographicResultsFor(tab, "event").length > 0;
+
+  const hasVisibleUnderAll =
+    hasAnnotations ||
+    hasCrossReferences ||
+    hasStudyNotes ||
+    hasContent ||
+    plans.length > 0;
 
   const filters: { key: FilterKey; label: string }[] = [
     { key: "all", label: t("all", { defaultValue: "All" }) },
@@ -112,6 +137,30 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
           {
             key: "content" as const,
             label: t("content", { defaultValue: "Content" }),
+          },
+        ]
+      : []),
+    ...(hasPeople
+      ? [
+          {
+            key: "people" as const,
+            label: t("people", { defaultValue: "People" }),
+          },
+        ]
+      : []),
+    ...(hasPlaces
+      ? [
+          {
+            key: "places" as const,
+            label: t("places", { defaultValue: "Places" }),
+          },
+        ]
+      : []),
+    ...(hasEvents
+      ? [
+          {
+            key: "events" as const,
+            label: t("events", { defaultValue: "Events" }),
           },
         ]
       : []),
@@ -192,11 +241,22 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             <StudyNotesSection tab={tab} />
           )}
           {(f === "all" || f === "content") && <ContentSection tab={tab} />}
+          {f === "people" && <PeopleSection tab={tab} />}
+          {f === "places" && <PlacesSection tab={tab} />}
+          {f === "events" && <EventsSection tab={tab} />}
           {f === "all" && plans.length > 0 && (
             <ReadingPlansSection
               readingState={tab.readingState}
               state={state}
               plans={plans}
+            />
+          )}
+          {f === "all" && !hasVisibleUnderAll && (
+            <DiscoverEmpty
+              text={t("discover-choose-type-hint", {
+                defaultValue:
+                  "Choose People, Places or Events to see who and what appears in this chapter.",
+              })}
             />
           )}
         </div>
