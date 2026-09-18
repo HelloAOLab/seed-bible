@@ -23,6 +23,7 @@ export * from "./SettingsManager";
 export * from "./SidebarManager";
 export * from "./TabsManager";
 export * from "./TabsLayoutManager";
+export * from "./TextToSpeechManager";
 export * from "./ThemeManager";
 export * from "./translationGrouping";
 export * from "./TutorialManager";

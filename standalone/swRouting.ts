@@ -45,11 +45,36 @@ export function isAppShellNavigation(input: AppShellNavigationInput): boolean {
   return true;
 }
 
-/** Synthetic path every navigation's cached HTML is stored/read under, regardless of the actual path requested. */
+/** Synthetic path every ordinary navigation's cached HTML is stored/read under, regardless of the actual path requested. */
 export const APP_SHELL_CACHE_PATH = "/__app-shell";
 
-export function getAppShellCacheKey(origin: string): string {
-  return new URL(APP_SHELL_CACHE_PATH, origin).href;
+/**
+ * Query param a customization share link is carried under — see
+ * `CustomizationsManager.getShareLink`/`loadByLocator`. Its value (a
+ * `{recordName}.{id}` locator) is what partitions the cache key below, so one
+ * customization's branded HTML can't overwrite (or be overwritten by) the
+ * plain shell, or another customization's.
+ */
+export const CUSTOMIZATION_QUERY_PARAM = "customization";
+
+/**
+ * Cache key a navigation's HTML is stored/read under. An ordinary navigation
+ * always resolves to the one fixed `APP_SHELL_CACHE_PATH` key, same
+ * "single shared entry, not one per path" model the app shell has always
+ * used. A `?customization=...` link instead resolves to its own shared key,
+ * partitioned by that locator — still one entry per customization, not one
+ * per path, so every book/chapter view opened through the *same*
+ * customization link keeps sharing a single cached copy, exactly like the
+ * plain shell does for ordinary navigations.
+ */
+export function getAppShellCacheKey(origin: string, requestUrl: URL): string {
+  const customizationLocator = requestUrl.searchParams.get(
+    CUSTOMIZATION_QUERY_PARAM
+  );
+  const path = customizationLocator
+    ? `${APP_SHELL_CACHE_PATH}/customization/${encodeURIComponent(customizationLocator)}`
+    : APP_SHELL_CACHE_PATH;
+  return new URL(path, origin).href;
 }
 
 export interface CacheableStaticAssetInput {
