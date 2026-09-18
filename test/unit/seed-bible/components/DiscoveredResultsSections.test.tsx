@@ -5,6 +5,7 @@ import {
   CrossReferencesSection,
   StudyNotesSection,
   ContentSection,
+  theographicResultsFor,
 } from "@packages/seed-bible/seed-bible/components/DiscoverPane/DiscoveredResultsSections";
 import { hasAnyDiscoverResults } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
@@ -28,6 +29,7 @@ function createMockTab(
     discoveredCrossReferences?: unknown[];
     discoveredStudyNotes?: unknown[];
     discoveredContent?: unknown[];
+    selectedVerses?: number[];
   } = {}
 ): ReaderTab {
   return {
@@ -38,8 +40,30 @@ function createMockTab(
       ),
       discoveredStudyNotes: signal(overrides.discoveredStudyNotes ?? []),
       discoveredContent: signal(overrides.discoveredContent ?? []),
+      selectedVerses: signal(
+        (overrides.selectedVerses ?? []).map((verse) => ({
+          verse: { number: verse },
+        }))
+      ),
     },
   } as unknown as ReaderTab;
+}
+
+/** One Theographic result as the provider builds it. */
+function theographicResult(
+  contentType: "person_profile" | "place_profile" | "event",
+  title: string,
+  verses: number[]
+) {
+  return {
+    type: "content",
+    contentType,
+    verses,
+    title,
+    description: "",
+    reference: { book: "EXO", chapter: 4, verse: verses[0] },
+    content: <span>{title} card</span>,
+  };
 }
 
 describe("CrossReferencesSection / StudyNotesSection / ContentSection", () => {
@@ -407,6 +431,146 @@ describe("CrossReferencesSection / StudyNotesSection / ContentSection", () => {
     ).map((el) => el.textContent);
     expect(sectionTitles).toEqual(["Bible Project", "Content"]);
     expect(container.textContent).toContain("No author here.");
+  });
+
+  it("leaves people, places and events to their own sections", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "Some context",
+              content: "The full article.",
+            },
+            theographicResult("person_profile", "Aaron", [14]),
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    expect(container.textContent).toContain("The full article.");
+    expect(container.textContent).not.toContain("Aaron");
+  });
+
+  it("renders nothing at all when the only content is Theographic", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "theographic",
+          results: [theographicResult("place_profile", "Egypt", [19])],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    expect(container.innerHTML).toBe("");
+  });
+});
+
+describe("hasAnyDiscoverResults", () => {
+  it("is false for a null or undefined reading state", () => {
+    expect(hasAnyDiscoverResults(null)).toBe(false);
+    expect(hasAnyDiscoverResults(undefined)).toBe(false);
+  });
+
+  it("is false when every discovered-results signal is empty", () => {
+    const tab = createMockTab();
+
+    expect(hasAnyDiscoverResults(tab.readingState)).toBe(false);
+  });
+
+  it("is true when there are cross references, study notes, or content", () => {
+    const withCrossReferences = createMockTab({
+      discoveredCrossReferences: [{ providerId: "p1", results: [{}] }],
+    });
+    const withStudyNotes = createMockTab({
+      discoveredStudyNotes: [{ providerId: "p1", results: [{}] }],
+    });
+    const withContent = createMockTab({
+      discoveredContent: [{ providerId: "p1", results: [{}] }],
+    });
+
+    expect(hasAnyDiscoverResults(withCrossReferences.readingState)).toBe(true);
+    expect(hasAnyDiscoverResults(withStudyNotes.readingState)).toBe(true);
+    expect(hasAnyDiscoverResults(withContent.readingState)).toBe(true);
+  });
+});
+
+describe("theographicResultsFor", () => {
+  const tab = () =>
+    createMockTab({
+      discoveredContent: [
+        {
+          providerId: "theographic",
+          results: [
+            theographicResult("person_profile", "Aaron", [14, 27]),
+            theographicResult("person_profile", "Moses", [1, 14]),
+            theographicResult("place_profile", "Egypt", [19]),
+          ],
+        },
+      ],
+    });
+
+  it("returns only the requested type", () => {
+    expect(
+      theographicResultsFor(tab(), "person_profile").map(
+        (result) => result.title
+      )
+    ).toEqual(["Aaron", "Moses"]);
+    expect(
+      theographicResultsFor(tab(), "place_profile").map(
+        (result) => result.title
+      )
+    ).toEqual(["Egypt"]);
+  });
+
+  it("returns the whole chapter when no verse is selected", () => {
+    expect(theographicResultsFor(tab(), "person_profile")).toHaveLength(2);
+  });
+
+  it("keeps only entries appearing in the selected verse", () => {
+    const selected = createMockTab({
+      discoveredContent: tab().readingState.discoveredContent.value,
+      selectedVerses: [27],
+    });
+
+    expect(
+      theographicResultsFor(selected, "person_profile").map(
+        (result) => result.title
+      )
+    ).toEqual(["Aaron"]);
+  });
+
+  it("keeps an entry matching any of several selected verses", () => {
+    const selected = createMockTab({
+      discoveredContent: tab().readingState.discoveredContent.value,
+      selectedVerses: [1, 27],
+    });
+
+    expect(
+      theographicResultsFor(selected, "person_profile").map(
+        (result) => result.title
+      )
+    ).toEqual(["Aaron", "Moses"]);
+  });
+
+  it("returns nothing for a selected verse that names no one", () => {
+    const selected = createMockTab({
+      discoveredContent: tab().readingState.discoveredContent.value,
+      selectedVerses: [99],
+    });
+
+    expect(theographicResultsFor(selected, "person_profile")).toEqual([]);
   });
 });
 

@@ -8,6 +8,11 @@
 - Focus the annotation editor when it opens so you can start typing right away, whether you are writing a new note or editing an existing one. ([#1793](https://github.com/HelloAOLab/seed-bible/issues/1793))
 - Edit your profile from the profile screen. The pencil in the corner of the profile card — or tapping your name — opens an Edit profile screen with your name, location and description. Your email address, location and description now show on the profile screen itself. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 - Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1", "Gen.1" and "Gen. 1:1" resolve the same as "Gen 1:1", and a trailing abbreviation period ("Gen.") keeps offering suggestions. Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+- Show the people, places and events a chapter names, from the Theographic Bible Metadata dataset. ([#1744](https://github.com/HelloAOLab/seed-bible/issues/1744))
+  - New People, Places and Events filters in the Discover panel, each listing what the chapter mentions and the verses it appears in. Tap a verse to jump to it.
+  - Open an entry to read its description, plus a person's family and events, a place's type and coordinates, or an event's date, participants and locations.
+  - Select a verse and the lists narrow to what that verse mentions.
+  - These are left out of the "All" view until you pick one of the three filters, so a chapter with dozens of names doesn't bury your own notes.
 
 ### 🔧 Changed
 

@@ -53,9 +53,34 @@ function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
   } as Annotation;
 }
 
+/** One Theographic result as the provider builds it. */
+function theographicResult(
+  contentType: "person_profile" | "place_profile" | "event",
+  title: string,
+  verses: number[]
+) {
+  return {
+    type: "content",
+    contentType,
+    verses,
+    title,
+    description: "",
+    reference: {
+      book: "GEN",
+      chapter: 1,
+      verse: verses[0],
+      endVerse: verses[verses.length - 1],
+      bookData: { commonName: "Genesis", name: "Genesis" },
+    },
+    content: <span>{title} card</span>,
+  };
+}
+
 function createMockTab(
   overrides: {
     discoveredCrossReferences?: unknown[];
+    discoveredContent?: unknown[];
+    selectedVerses?: number[];
   } = {}
 ): ReaderTab {
   return {
@@ -69,7 +94,12 @@ function createMockTab(
         overrides.discoveredCrossReferences ?? []
       ),
       discoveredStudyNotes: signal([]),
-      discoveredContent: signal([]),
+      discoveredContent: signal(overrides.discoveredContent ?? []),
+      selectedVerses: signal(
+        (overrides.selectedVerses ?? []).map((verse) => ({
+          verse: { number: verse },
+        }))
+      ),
     },
   } as unknown as ReaderTab;
 }
@@ -272,6 +302,114 @@ describe("DiscoverContentPanel", () => {
 
     expect(container.querySelector(".sb-dcp-filters")).toBeNull();
     expect(container.textContent).toContain("A helpful note.");
+  });
+
+  describe("Theographic content", () => {
+    const THEOGRAPHIC_FIXTURE = [
+      {
+        providerId: "theographic",
+        results: [
+          theographicResult("person_profile", "Aaron", [14, 27]),
+          theographicResult("person_profile", "Moses", [1, 14]),
+          theographicResult("place_profile", "Egypt", [19]),
+        ],
+      },
+    ];
+
+    const chipLabels = () =>
+      Array.from(container.querySelectorAll(".sb-dcp-chip")).map(
+        (el) => el.textContent
+      );
+
+    const getChip = (label: string) =>
+      Array.from(container.querySelectorAll(".sb-dcp-chip")).find(
+        (el) => el.textContent === label
+      ) as HTMLButtonElement;
+
+    function renderPanel(tab: ReaderTab) {
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      });
+    }
+
+    it("offers a chip per type that has entries, and no Content chip", () => {
+      renderPanel(createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE }));
+
+      // No Events chip: the fixture has none. No Content chip either — these
+      // results have their own types.
+      expect(chipLabels()).toEqual(["All", "Notes", "People", "Places"]);
+    });
+
+    it("keeps people and places out of the 'All' view", () => {
+      renderPanel(createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE }));
+
+      expect(container.textContent).toContain("A helpful note.");
+      expect(container.textContent).not.toContain("Aaron card");
+      expect(container.textContent).not.toContain("Egypt card");
+    });
+
+    it("shows only that type once its chip is picked", () => {
+      renderPanel(createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE }));
+
+      act(() => {
+        getChip("People").dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      expect(container.textContent).toContain("Aaron card");
+      expect(container.textContent).toContain("Moses card");
+      expect(container.textContent).not.toContain("Egypt card");
+      expect(container.textContent).not.toContain("A helpful note.");
+    });
+
+    it("narrows to the entries named in the selected verse", () => {
+      renderPanel(
+        createMockTab({
+          discoveredContent: THEOGRAPHIC_FIXTURE,
+          selectedVerses: [27],
+        })
+      );
+
+      act(() => {
+        getChip("People").dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      // Aaron is in verse 27; Moses (1, 14) is not.
+      expect(container.textContent).toContain("Aaron card");
+      expect(container.textContent).not.toContain("Moses card");
+    });
+
+    it("drops a type's chip when the selected verse has none of it", () => {
+      renderPanel(
+        createMockTab({
+          discoveredContent: THEOGRAPHIC_FIXTURE,
+          selectedVerses: [14],
+        })
+      );
+
+      // Verse 14 has people but no places, so offering a Places chip would
+      // open an empty section.
+      expect(chipLabels()).toEqual(["All", "Notes", "People"]);
+    });
+
+    it("explains where the content went when it is all there is", () => {
+      const tab = createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE });
+      const state = createMockState({ annotationsForChapter: [] });
+
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      });
+
+      expect(container.textContent).toContain(
+        "Choose People, Places or Events"
+      );
+    });
   });
 
   it("clicking '+ Create' calls createNewAnnotation", () => {

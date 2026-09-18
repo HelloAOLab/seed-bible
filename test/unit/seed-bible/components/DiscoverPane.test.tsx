@@ -337,6 +337,7 @@ function createMockTab(
     discoveredCrossReferences?: unknown[];
     discoveredStudyNotes?: unknown[];
     discoveredContent?: unknown[];
+    selectedVerses?: number[];
     translationId?: string;
     selectTranslationAndChapter?: ReturnType<typeof vi.fn>;
     decorateVerses?: ReturnType<typeof vi.fn>;
@@ -353,6 +354,11 @@ function createMockTab(
       ),
       discoveredStudyNotes: signal(overrides.discoveredStudyNotes ?? []),
       discoveredContent: signal(overrides.discoveredContent ?? []),
+      selectedVerses: signal(
+        (overrides.selectedVerses ?? []).map((verse) => ({
+          verse: { number: verse },
+        }))
+      ),
       translationBooks: signal(null),
       translationId: signal(overrides.translationId ?? "BSB"),
       selectTranslationAndChapter:
@@ -2180,6 +2186,70 @@ describe("DiscoverPane", () => {
     expect(container.textContent).toContain("Background");
     expect(container.textContent).toContain("Some context");
     expect(container.textContent).toContain("The full article.");
+  });
+
+  it("folds people, places and events away until their header is clicked", () => {
+    const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations();
+    const tab = createMockTab({
+      chapterData: { book: { name: "Exodus" }, chapter: { number: 4 } },
+      discoveredContent: [
+        {
+          providerId: "theographic",
+          results: [
+            {
+              type: "content",
+              contentType: "person_profile",
+              verses: [14, 27],
+              title: "Aaron",
+              description: "Male",
+              reference: {
+                book: "EXO",
+                chapter: 4,
+                verse: 14,
+                bookData: { commonName: "Exodus", name: "Exodus" },
+              },
+              content: "Aaron card",
+            },
+          ],
+        },
+      ],
+    });
+    const tabs = createMockTabs(tab);
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={createModalManager()}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    // The header is there with a count, but the entries behind it are not —
+    // this pane has no filter chips, so collapsing is how they stay out of the
+    // way until asked for.
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toContain("People (1)");
+    expect(sectionTitles).not.toContain("Places");
+    expect(container.textContent).not.toContain("Aaron card");
+
+    const toggle = Array.from(
+      container.querySelectorAll(".sb-discover-section-toggle")
+    ).find((el) => el.textContent === "People (1)") as HTMLButtonElement;
+    act(() => {
+      toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(container.textContent).toContain("Aaron card");
   });
 
   it("renders CreatePlaylistForm when view is create_playlist", () => {

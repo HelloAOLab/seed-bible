@@ -189,6 +189,11 @@ import {
   type DiscoverManager,
 } from "../managers/DiscoverManager";
 import {
+  createIndexedDbTheographicStore,
+  createTheographicClient,
+  createTheographicDiscoverProvider,
+} from "../managers/TheographicDiscoverProvider";
+import {
   createBibleReadingExtensionManager,
   type BibleReadingExtensionManager,
 } from "../managers/BibleReadingExtensionManager";
@@ -2374,6 +2379,18 @@ export function createSeedBibleState(
     sidebar.openChatPanel();
     chats.selectChat(sharedChat.id);
   };
+
+  discover.registerDiscoverProvider(
+    createTheographicDiscoverProvider({
+      client: createTheographicClient(
+        api.endpoint,
+        createIndexedDbTheographicStore()
+      ),
+      data,
+      onReferenceClick: (ref) => void handleOpenVerseReference(ref),
+      panes,
+    })
+  );
 
   const invitations = createInvitationsManager(os, login, async (sessionId) => {
     await handleJoinSharedSession(sessionId);
