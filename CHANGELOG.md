@@ -12,6 +12,7 @@
 ### 🔧 Changed
 
 - Show "The host disconnected from the session" and "The host reconnected to the session" when only the host drops from a shared session, instead of "Reconnecting to the session" / "Reconnected to the session". When it is your own connection that goes, the toasts are "You lost connection to the session" and "You rejoined the session" instead. Other people leaving one by one, however many of them, is never reported as you losing your connection.
+- Show Notes first in Discover instead of Playlists, and hide Playlist history when you have none. When a chapter has no notes, prompt you to create one.
 
 ### 🐛 Fixed
 
