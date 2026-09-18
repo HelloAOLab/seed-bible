@@ -42,6 +42,7 @@ import {
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
+import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 
 /**
  * Font `<link>`s, plus the CSS for the active Customization layered on top
@@ -361,6 +362,12 @@ function MainContent(props: {
         />
 
         <OfflineDownloadPrompt
+          offline={state.bibleData.offline}
+          toast={state.app.toast}
+          className={`${webkitClass}`}
+        />
+
+        <OfflineUpdatePrompt
           offline={state.bibleData.offline}
           toast={state.app.toast}
           className={`${webkitClass}`}
