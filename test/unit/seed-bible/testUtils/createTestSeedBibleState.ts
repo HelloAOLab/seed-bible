@@ -225,6 +225,9 @@ if (typeof afterEach === "function") {
     // older manager's (inert) wrapper underneath whenever a test builds two.
     for (const state of liveTestStates.splice(0).reverse()) {
       state.navigation.dispose();
+      // Speech outlives the state that started it, and its listeners sit on
+      // globals every other test shares.
+      state.textToSpeech.dispose();
     }
     // The reading position lives in the URL path, so it outlives the listeners
     // that wrote it: without this the next test starts on whatever chapter —

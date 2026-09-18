@@ -466,6 +466,11 @@ export interface SeedBibleState {
    * Playlist manager for creating, editing, and syncing user playlists.
    */
   playlists: PlaylistManager;
+  /**
+   * Reads scripture aloud with the browser's own speech synthesiser, for the
+   * translations that ship no recorded narration.
+   */
+  textToSpeech: TextToSpeechManager;
   /** Saved photos the user has uploaded, for reuse as covers and later features. */
   gallery: UserGalleryManager;
   /** Aggregated computed app state and top-level UI actions. */
@@ -538,6 +543,10 @@ import {
   createUserGalleryManager,
   type UserGalleryManager,
 } from "./UserGalleryManager";
+import {
+  createTextToSpeechManager,
+  type TextToSpeechManager,
+} from "./TextToSpeechManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
@@ -916,6 +925,7 @@ export function createSeedBibleState(
   });
   const readingPlans = createReadingPlansManager(os, login);
   const gallery = createUserGalleryManager(os, login);
+  const textToSpeech = createTextToSpeechManager();
 
   const { currentTheme } = themeManager;
   // While a Customization is active, its variant is rendered against its
@@ -2001,11 +2011,39 @@ export function createSeedBibleState(
   // stale/resyncing connection can make the host look gone when it never
   // left — see issue #1346.
   const sessionsWhereHostWasSeen = new Set<string>();
+  const sessionsWhereWeLostConnection = new Set<string>();
+  // Sessions where the "you lost connection" toast was actually shown (it is
+  // suppressed right after a resume). Only those owe a "you rejoined" toast.
+  const sessionsWhereWeAnnouncedDrop = new Set<string>();
+  // After we recover from our own drop, presence can still omit the host
+  // for a beat (the peer list is rebuilt on resync). Don't treat that as
+  // "the host left and came back" — prefer the you-rejoined toast.
+  const SELF_RECONNECT_SETTLE_MS = 2000;
+  const sessionsSettlingAfterSelfReconnect = new Set<string>();
+  const presenceSettleTick = signal(0);
+  const pendingPresenceSettleTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
   const HOST_DISCONNECT_GRACE_MS = 30000;
   const pendingHostDisconnectTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
   >();
+  const clearPendingPresenceSettle = (sessionId: string): void => {
+    sessionsSettlingAfterSelfReconnect.delete(sessionId);
+    const timer = pendingPresenceSettleTimers.get(sessionId);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      pendingPresenceSettleTimers.delete(sessionId);
+    }
+  };
+  const forgetSessionPresence = (sessionId: string): void => {
+    sessionsWhereHostWasSeen.delete(sessionId);
+    sessionsWhereWeLostConnection.delete(sessionId);
+    sessionsWhereWeAnnouncedDrop.delete(sessionId);
+    clearPendingPresenceSettle(sessionId);
+  };
   const clearPendingHostDisconnect = (sessionId: string): boolean => {
     const timer = pendingHostDisconnectTimers.get(sessionId);
     if (timer !== undefined) {
@@ -2021,6 +2059,14 @@ export function createSeedBibleState(
         isSessionHost(session.options.value, user.userId) ||
         isSessionHost(session.options.value, user.connectionId)
     );
+  const sessionWeAreHost = (session: BibleReadingSession): boolean =>
+    locallyHostedSessionIds.has(session.id) ||
+    session.connectedUsers.value.some(
+      (user) =>
+        user.isSelf &&
+        (isSessionHost(session.options.value, user.userId) ||
+          isSessionHost(session.options.value, user.connectionId))
+    );
   // Whether this client's view of who's present is worth acting on. We are
   // definitionally present in our own session, so a list that doesn't even
   // include us means the presence channel is broken (it can go permanently
@@ -2032,15 +2078,110 @@ export function createSeedBibleState(
     session.isSynced.value &&
     session.connectedUsers.value.some((user) => user.isSelf);
   effect(() => {
+    // Read so this effect re-runs when the self-reconnect settle timer fires.
+    const _presenceSettleGeneration = presenceSettleTick.value;
     for (const tab of tabs.tabs.value) {
       const session = tab.sharedSession;
       if (!session) continue;
 
       if (session.options.value.endedAt !== null) {
-        sessionsWhereHostWasSeen.delete(session.id);
+        forgetSessionPresence(session.id);
         clearPendingHostDisconnect(session.id);
         tabs.removeTab(tab.id);
         continue;
+      }
+
+      const { t } = i18n;
+
+      const hostId = session.options.value.hostUserId;
+      const hostIsConnected = hostId ? sessionHostIsConnected(session) : false;
+      if (hostIsConnected) {
+        sessionsWhereHostWasSeen.add(session.id);
+      }
+
+      // Two different failures look similar on the presence list:
+      //  - Our own connection dropped: `isSynced` goes false, and/or every
+      //    other user disappears at once (the OS reports all peers as
+      //    disconnected). Show "you lost/rejoined" toasts.
+      //  - Only the host dropped: other guests are still visible. Show
+      //    host-specific toasts below, not these.
+      // If this device is itself a host (including another of the host's
+      // devices), an empty remote list is "someone else left", not "we
+      // disconnected" — even if `isSynced` blips when that peer drops.
+      //
+      // Our own drop clears the WHOLE list, our own entry included (see
+      // `rebuildRemoteClientsSubscription` in SessionsManager), so an empty
+      // list means us. Still seeing ourselves while everyone else has gone
+      // means the presence channel is working fine and they really did
+      // leave — one at a time or all at once, it makes no difference.
+      const ourConnectionDropped =
+        !sessionWeAreHost(session) &&
+        sessionsWhereHostWasSeen.has(session.id) &&
+        (!session.isSynced.value || session.connectedUsers.value.length === 0);
+
+      if (ourConnectionDropped) {
+        clearPendingHostDisconnect(session.id);
+        clearPendingPresenceSettle(session.id);
+        if (!sessionsWhereWeLostConnection.has(session.id)) {
+          sessionsWhereWeLostConnection.add(session.id);
+          if (!justResumedFromBackground.value) {
+            // Remember that we actually said it, so the matching
+            // "you're back" toast below isn't silently dropped.
+            sessionsWhereWeAnnouncedDrop.add(session.id);
+            toast(
+              t("session-disconnected", {
+                defaultValue: "You lost connection to the session",
+              })
+            );
+          }
+        }
+        continue;
+      }
+
+      // Recovery needs positive evidence, not just the absence of the drop
+      // signals: right after a resume the list can be empty while `isSynced`
+      // already reads true, which is presence still catching up rather than
+      // us being back.
+      if (
+        sessionsWhereWeLostConnection.has(session.id) &&
+        session.isSynced.value &&
+        session.connectedUsers.value.length > 0
+      ) {
+        sessionsWhereWeLostConnection.delete(session.id);
+        // Having told someone they dropped, always tell them they're back —
+        // even inside the post-resume window that suppresses the first
+        // toast, otherwise they are left believing they're still offline.
+        if (sessionsWhereWeAnnouncedDrop.delete(session.id)) {
+          toast(
+            t("session-reconnected", {
+              defaultValue: "You rejoined the session",
+            })
+          );
+        }
+        if (!locallyHostedSessionIds.has(session.id) && !hostIsConnected) {
+          clearPendingPresenceSettle(session.id);
+          sessionsSettlingAfterSelfReconnect.add(session.id);
+          pendingPresenceSettleTimers.set(
+            session.id,
+            setTimeout(() => {
+              pendingPresenceSettleTimers.delete(session.id);
+              sessionsSettlingAfterSelfReconnect.delete(session.id);
+              presenceSettleTick.value++;
+            }, SELF_RECONNECT_SETTLE_MS)
+          );
+        }
+      }
+
+      if (
+        sessionsSettlingAfterSelfReconnect.has(session.id) &&
+        !hostIsConnected
+      ) {
+        // Presence is still catching up after our own reconnect. Skip
+        // host disconnect/reconnect toasts until it settles.
+        continue;
+      }
+      if (sessionsSettlingAfterSelfReconnect.has(session.id)) {
+        clearPendingPresenceSettle(session.id);
       }
 
       // Never auto-close a session this client created — the host is the
@@ -2048,23 +2189,18 @@ export function createSeedBibleState(
       // (login/logout), not a real departure.
       if (locallyHostedSessionIds.has(session.id)) continue;
 
-      const hostId = session.options.value.hostUserId;
       if (!hostId) continue;
 
       // A session stays alive as long as the host OR any co-host is present,
       // so appointing a co-host lets the original host leave without kicking
       // everyone else out.
-      const hostIsConnected = sessionHostIsConnected(session);
-      const { t } = i18n;
-
       if (hostIsConnected) {
-        sessionsWhereHostWasSeen.add(session.id);
         // Host came back (e.g. reconnected after their login flow) — cancel
         // any pending close so the tab survives the round-trip.
         if (clearPendingHostDisconnect(session.id)) {
           toast(
             t("session-host-reconnected", {
-              defaultValue: "Reconnected to the session",
+              defaultValue: "The host reconnected to the session",
             })
           );
         }
@@ -2084,8 +2220,8 @@ export function createSeedBibleState(
         const tabId = tab.id;
         const sessionId = session.id;
         toast(
-          t("session-host-reconnecting", {
-            defaultValue: "Reconnecting to the session…",
+          t("session-host-disconnected", {
+            defaultValue: "The host disconnected from the session",
           })
         );
         const timer = setTimeout(() => {
@@ -2096,7 +2232,7 @@ export function createSeedBibleState(
           const currentSession = currentTab?.sharedSession;
           if (!currentSession || currentSession.id !== sessionId) {
             // Tab/session already gone (e.g. closed some other way).
-            sessionsWhereHostWasSeen.delete(sessionId);
+            forgetSessionPresence(sessionId);
             return;
           }
           if (
@@ -2110,7 +2246,7 @@ export function createSeedBibleState(
             // genuinely gone once presence is trustworthy again.
             return;
           }
-          sessionsWhereHostWasSeen.delete(sessionId);
+          forgetSessionPresence(sessionId);
           toast(
             t("session-host-left", {
               defaultValue: "The host left — you were removed from the session",
@@ -2533,6 +2669,7 @@ export function createSeedBibleState(
     readingPlans,
     playlists,
     gallery,
+    textToSpeech,
     tutorial,
     onboarding,
     yourContent,

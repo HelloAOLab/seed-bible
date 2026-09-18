@@ -955,6 +955,14 @@ export interface SelectTranslationAndChapterOptions {
    * a redundant history entry back onto the stack.
    */
   updateUrl?: boolean;
+
+  /**
+   * Pixel offset to restore at the destination. Set only when the navigation
+   * came from Back/Forward and the history entry we landed on recorded where
+   * the reader was. Every other way into a chapter omits it and starts at the
+   * heading — scroll is restored for browser history alone.
+   */
+  scrollPosition?: number;
 }
 
 /** Options describing how a reading-state navigation should affect the URL. */
@@ -964,6 +972,13 @@ export interface ReadingNavigationOptions {
    * entry). When `false`/omitted, a new history entry is pushed.
    */
   replace?: boolean;
+
+  /**
+   * Scroll offset of the position this navigation is leaving. Present only on
+   * a push that changes translation/book/chapter, so the current history entry
+   * can be stamped before the new one is added and Back can restore it.
+   */
+  departingScrollPosition?: number;
 }
 
 function normalizeDecorationVerses(verses: number | number[]): number[] {
@@ -1694,12 +1709,23 @@ export function createBibleReadingState(
    * clamped chapter, an extension toggle) pass `replace` explicitly and are not
    * subject to the timing rule.
    */
-  const emitPositionNavigate = (explicitReplace?: boolean) => {
+  const emitPositionNavigate = (
+    explicitReplace?: boolean,
+    departingScrollPosition?: number
+  ) => {
     const now = performance.now();
     const isContinuationOfGesture =
       lastNavigateAt !== null && now - lastNavigateAt < NAVIGATION_COALESCE_MS;
     lastNavigateAt = now;
-    emitNavigate({ replace: explicitReplace ?? isContinuationOfGesture });
+    const replace = explicitReplace ?? isContinuationOfGesture;
+    emitNavigate({
+      replace,
+      // Only the entry we leave needs the offset, and a replace overwrites
+      // that entry. A skim's first press is the push that stamps the origin.
+      ...(!replace && departingScrollPosition !== undefined
+        ? { departingScrollPosition }
+        : {}),
+    });
   };
 
   const disposeReadingState = () => {
@@ -2110,6 +2136,11 @@ export function createBibleReadingState(
        * which hand over a whole chapter rather than a reference.
        */
       content?: TranslationBookChapter;
+      /**
+       * Pixel offset recorded on the history entry being restored. Omitted for
+       * every navigation that is not Back/Forward, which starts at the heading.
+       */
+      scrollPosition?: number;
     }
   ) => {
     const didPositionChange =
@@ -2117,13 +2148,21 @@ export function createBibleReadingState(
       bookId.peek() !== next.bookId ||
       chapterNumber.peek() !== next.chapterNumber;
     const scrollToVerseRequest = options?.scrollToVerse ?? null;
+    const leavingScroll = scrollPosition.peek();
 
     batch(() => {
-      const didChapterChange =
-        bookId.value !== next.bookId ||
-        chapterNumber.value !== next.chapterNumber;
-      if (didChapterChange) {
-        scrollPosition.value = 0;
+      if (didPositionChange) {
+        // Only Back/Forward carries an offset to return to: that is the one
+        // navigation that means "take me back where I was". Next/Previous,
+        // the Bible Selector and a translation switch are all fresh reads and
+        // start at the heading, which is also what keeps the book and chapter
+        // at the top of the reader in view while flipping through chapters.
+        // A linked verse owns the scroller and overrides both.
+        const fromHistory = options?.scrollPosition;
+        scrollPosition.value =
+          scrollToVerseRequest === null && typeof fromHistory === "number"
+            ? fromHistory
+            : 0;
       }
 
       translationId.value = next.translationId;
@@ -2229,7 +2268,10 @@ export function createBibleReadingState(
       emitNavigate({ replace: true });
       return;
     }
-    emitPositionNavigate(options?.replace);
+    emitPositionNavigate(
+      options?.replace,
+      didPositionChange ? leavingScroll : undefined
+    );
   };
 
   /**
@@ -2765,6 +2807,7 @@ export function createBibleReadingState(
       applyPosition(target, {
         scrollToVerse: options?.scrollToVerse ?? null,
         updateUrl: options?.updateUrl,
+        scrollPosition: options?.scrollPosition,
       });
       await whenContentSettled(target);
     } catch (err) {

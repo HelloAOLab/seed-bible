@@ -652,6 +652,15 @@ describe("render() server-rendered meta tags", () => {
     expect(presets.dark).toContain("body {");
   });
 
+  it("does not inject prefers-color-scheme theme-color tags that would ignore the in-app theme", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html).not.toMatch(/name="theme-color"[^>]*media=/);
+    expect(html).not.toMatch(
+      /media="\(prefers-color-scheme:[^"]*\)"[^>]*name="theme-color"/
+    );
+  });
+
   it("injects the fetched API responses into the #app-seed-data JSON script tag", async () => {
     const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
 

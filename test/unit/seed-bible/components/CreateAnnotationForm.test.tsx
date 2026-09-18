@@ -46,18 +46,21 @@ let fakeEditor:
   | undefined;
 let latestOnEmptyChange: ((isEmpty: boolean) => void) | null = null;
 let latestOnModEnter: (() => void) | undefined;
+let latestAutofocus: unknown;
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TipTapEditor/TipTapEditor",
   () => ({
     default: (props: {
       initialContent?: string;
+      autofocus?: unknown;
       onEditor: (editor: NonNullable<typeof fakeEditor>) => void;
       onEmptyChange: (isEmpty: boolean) => void;
       onModEnter?: () => void;
     }) => {
       latestOnEmptyChange = props.onEmptyChange;
       latestOnModEnter = props.onModEnter;
+      latestAutofocus = props.autofocus;
       if (!fakeEditor) {
         fakeEditor = {
           isEmpty: !props.initialContent,
@@ -160,6 +163,7 @@ describe("CreateAnnotationForm", () => {
     fakeEditor = undefined;
     latestOnEmptyChange = null;
     latestOnModEnter = undefined;
+    latestAutofocus = undefined;
   });
 
   afterEach(() => {
@@ -511,5 +515,47 @@ describe("CreateAnnotationForm", () => {
     expect(saveButton.title).toBe(
       isMac ? "Save (⌘Enter)" : "Save (Ctrl+Enter)"
     );
+  });
+
+  it("autofocuses the editor when creating a new annotation", async () => {
+    const { annotations } = createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    expect(latestAutofocus).toBe("end");
+  });
+
+  it("autofocuses the editor when editing an existing annotation", async () => {
+    const { annotations } = createMockAnnotationsManager(
+      createAnnotation({
+        data: { type: "comment", html: "<p>Already written</p>" },
+      })
+    );
+    const tabs = createMockTabsManager();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    expect(latestAutofocus).toBe("end");
   });
 });
