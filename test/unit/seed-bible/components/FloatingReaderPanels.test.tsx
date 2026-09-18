@@ -775,6 +775,33 @@ describe("FloatingChatPanel", () => {
     expect(closeChatPanel).not.toHaveBeenCalled();
   });
 
+  it("ignores a pointerdown on .sb-footnote-modal-overlay so modal clicks do not close chat", () => {
+    const { state, closeChatPanel } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    const overlay = document.createElement("div");
+    overlay.className = "sb-footnote-modal-overlay";
+    const modalButton = document.createElement("button");
+    overlay.appendChild(modalButton);
+    document.body.appendChild(overlay);
+
+    act(() => {
+      modalButton.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true })
+      );
+    });
+    overlay.remove();
+
+    expect(closeChatPanel).not.toHaveBeenCalled();
+  });
+
   it("does not close on an outside pointerdown that arrives before the dismiss listener attaches", () => {
     const { state, closeChatPanel } = createMockFloatingChatPanelState();
 

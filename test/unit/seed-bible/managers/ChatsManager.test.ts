@@ -146,16 +146,33 @@ class MockSharedMap<T> {
 
 function createLoginManagerMock() {
   const userId = signal<string | null>(null);
-  const profile = signal<{ name: string } | null>(null);
+  const profile = signal<{
+    name: string;
+    config?: Record<string, unknown>;
+  } | null>(null);
+  const localConfig = signal<Record<string, unknown>>({});
 
   const loginManager = {
     userId,
     profile,
-  } as LoginManager;
+    localConfig,
+    updateProfile: (patch: { config?: Record<string, unknown> }) => {
+      profile.value = {
+        name: profile.value?.name ?? "",
+        ...profile.value,
+        ...patch,
+        config: {
+          ...(profile.value?.config ?? {}),
+          ...(patch.config ?? {}),
+        },
+      };
+    },
+  } as unknown as LoginManager;
 
   return {
     userId,
     profile,
+    localConfig,
     loginManager,
   };
 }

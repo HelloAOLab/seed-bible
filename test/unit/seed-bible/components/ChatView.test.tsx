@@ -93,11 +93,12 @@ function createMockChatSession(
   };
 }
 
-function createMockState(): SeedBibleState {
+function createMockState(options: { isMobile?: boolean } = {}): SeedBibleState {
   return {
     app: {
       openVerseReference: vi.fn().mockResolvedValue(undefined),
-      isMobile: signal(false),
+      isMobile: signal(options.isMobile ?? false),
+      selectedTab: signal(null),
     },
     chats: {
       composerDraft: signal(""),
@@ -509,15 +510,7 @@ describe("ChatView", () => {
 
   it("shows a mobile type-hint caret whenever the empty input is blurred", () => {
     const chat = createMockChatSession();
-    const state = {
-      app: {
-        openVerseReference: vi.fn().mockResolvedValue(undefined),
-        isMobile: signal(true),
-      },
-      chats: {
-        composerDraft: signal(""),
-      },
-    } as unknown as SeedBibleState;
+    const state = createMockState({ isMobile: true });
 
     act(() => {
       render(<ChatView chat={chat} state={state} />, container);

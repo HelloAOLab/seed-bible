@@ -354,6 +354,7 @@
   "unable-to-send-message": "Unable to send message.",
   "type-a-message": "Type a message...",
   "send-message": "Send message",
+  "continue": "Continue",
   "someone-is-typing": "Someone is typing...",
   "x-and-x-are-typing": "{{first}} and {{second}} are typing...",
   "x-is-typing": "{{name}} is typing...",
