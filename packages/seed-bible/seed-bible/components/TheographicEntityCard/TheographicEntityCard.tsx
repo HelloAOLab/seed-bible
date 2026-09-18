@@ -153,7 +153,7 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
             aria-label={t("show-on-map", { defaultValue: "Show on map" })}
             onClick={() => openPlace?.(mappablePlace)}
           >
-            <MaterialIcon>open_in_new</MaterialIcon>
+            <MaterialIcon style={{ fontSize: "1rem" }}>map</MaterialIcon>
           </button>
         ) : null}
       </div>
