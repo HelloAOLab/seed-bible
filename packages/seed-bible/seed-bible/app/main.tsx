@@ -41,6 +41,7 @@ import {
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
+import { TutorialSkipPrompt } from "../components/TutorialSkipPrompt/TutorialSkipPrompt";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 
@@ -377,6 +378,11 @@ function MainContent(props: {
           tutorial={state.tutorial}
           className={`${webkitClass}`}
           groupFilter="non-selector"
+        />
+
+        <TutorialSkipPrompt
+          tutorial={state.tutorial}
+          className={`${webkitClass}`}
         />
 
         <LanguageUnavailableModal className={`${webkitClass}`} />
