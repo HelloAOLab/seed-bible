@@ -1032,6 +1032,7 @@ export const bootstrapExtension = () => {
       getId: () => uuid(),
     },
     arrangementServicePort: arrangementService,
+    loggerPort: loggerAdapter,
   });
   const stackManagementService = new StackManagementService({
     bibleLifecycleServicePort: bibleLifecycleService,
@@ -1195,6 +1196,7 @@ export const bootstrapExtension = () => {
     sectionSelectionServicePort: sectionSelectionService,
     testamentSelectionServicePort: testamentSelectionService,
     eventManager: bibleStackEventManager,
+    loggerPort: loggerAdapter,
   });
   const sectionShadowInteractionService = new SectionShadowInteractionService({
     pieceDataRepositoryPort: pieceDataRepository,

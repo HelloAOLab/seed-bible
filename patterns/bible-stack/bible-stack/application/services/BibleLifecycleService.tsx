@@ -16,6 +16,7 @@ import {
 } from "../../domain/models/canvas";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
+import type { LoggerPort } from "../ports/out/BibleLifecycle";
 
 interface ServiceParams {
   pieceLifecycleAdapterPort: PieceLifecycleAdapterPort;
@@ -26,6 +27,7 @@ interface ServiceParams {
   idGeneratorPort: IdGeneratorPort;
   stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
   bibleSetupAdapterPort: BibleSetupAdapterPort;
+  loggerPort: LoggerPort;
 }
 
 export class BibleLifecycleService {
@@ -38,6 +40,7 @@ export class BibleLifecycleService {
   #hasABibleEverBeenCreated: boolean = false;
   #stackPieceLifecycleAdapterPort: ServiceParams["stackPieceLifecycleAdapterPort"];
   #bibleSetupAdapterPort: ServiceParams["bibleSetupAdapterPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     pieceLifecycleAdapterPort,
@@ -48,6 +51,7 @@ export class BibleLifecycleService {
     idGeneratorPort,
     stackPieceLifecycleAdapterPort,
     bibleSetupAdapterPort,
+    loggerPort,
   }: ServiceParams) {
     this.#pieceLifecycleAdapterPort = pieceLifecycleAdapterPort;
     this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
@@ -57,6 +61,7 @@ export class BibleLifecycleService {
     this.#idGeneratorPort = idGeneratorPort;
     this.#stackPieceLifecycleAdapterPort = stackPieceLifecycleAdapterPort;
     this.#bibleSetupAdapterPort = bibleSetupAdapterPort;
+    this.#loggerPort = loggerPort;
   }
 
   deleteBible(bibleData: StackBibleData) {
@@ -161,10 +166,15 @@ export class BibleLifecycleService {
 
     for (const testamentData of bibleData.childrenData) {
       const piece = testamentPiecesMap.get(testamentData.id);
-      if (piece) {
-        testamentData.setPiece(piece);
-        testamentData.activate();
+      if (!piece) {
+        this.#loggerPort.error(
+          "BibleLifecycleService: testament piece not found at createBible.",
+          { testamentDataId: testamentData.id }
+        );
+        continue;
       }
+      testamentData.setPiece(piece);
+      testamentData.activate();
     }
 
     // if (displayJarvisSpawnPieceAnimation)

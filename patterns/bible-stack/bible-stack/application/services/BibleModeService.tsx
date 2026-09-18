@@ -11,6 +11,7 @@ import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type {
   BibleModeSequenceAdapterPort,
+  LoggerPort,
   PieceDataRepositoryPort,
 } from "../ports/out/BibleMode";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
@@ -26,6 +27,7 @@ interface ServiceParams {
   sectionSelectionServicePort: SectionSelectionServicePort;
   testamentSelectionServicePort: TestamentSelectionPort;
   eventManager: DomainEventManager;
+  loggerPort: LoggerPort;
 }
 
 export class BibleModeService implements BibleModeServicePort {
@@ -39,6 +41,7 @@ export class BibleModeService implements BibleModeServicePort {
   #sectionSelectionServicePort: ServiceParams["sectionSelectionServicePort"];
   #testamentSelectionServicePort: ServiceParams["testamentSelectionServicePort"];
   #eventManager: ServiceParams["eventManager"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     sequenceStateServicePort,
@@ -49,6 +52,7 @@ export class BibleModeService implements BibleModeServicePort {
     sectionSelectionServicePort,
     testamentSelectionServicePort,
     eventManager,
+    loggerPort,
   }: ServiceParams) {
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#sequenceAdapterPort = sequenceAdapterPort;
@@ -58,6 +62,7 @@ export class BibleModeService implements BibleModeServicePort {
     this.#sectionSelectionServicePort = sectionSelectionServicePort;
     this.#testamentSelectionServicePort = testamentSelectionServicePort;
     this.#eventManager = eventManager;
+    this.#loggerPort = loggerPort;
   }
 
   async tryToggleMode(bibleData: StackBibleData) {
@@ -73,15 +78,17 @@ export class BibleModeService implements BibleModeServicePort {
     const crossVerticalLine = bibleData.getStaticPiece("crossVerticalLine");
 
     if (!crossHorizontalLine) {
-      throw new Error(
+      this.#loggerPort.error(
         "BibleModeService: crossHorizontalLine not found at tryToggleMode."
       );
+      return;
     }
 
     if (!crossVerticalLine) {
-      throw new Error(
+      this.#loggerPort.error(
         "BibleModeService: crossVerticalLine not found at tryToggleMode."
       );
+      return;
     }
 
     this.#isTryingToToggle = true;
@@ -97,6 +104,9 @@ export class BibleModeService implements BibleModeServicePort {
           crossHorizontalLine,
           crossVerticalLine,
         });
+        // A sequence started by another source while the attempt feedback was
+        // running still owns the stack, so the toggle is dropped.
+        if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
         return this.#toggleMode(bibleData);
       });
   }
@@ -108,25 +118,35 @@ export class BibleModeService implements BibleModeServicePort {
     const crossVerticalLine = bibleData.getStaticPiece("crossVerticalLine");
 
     if (!crossHorizontalLine) {
-      throw new Error(
-        "BibleModeService: crossHorizontalLine not found at tryToggleMode."
+      this.#loggerPort.error(
+        "BibleModeService: crossHorizontalLine not found at tryStopToggle."
       );
+      return;
     }
 
     if (!crossVerticalLine) {
-      throw new Error(
-        "BibleModeService: crossVerticalLine not found at tryToggleMode."
+      this.#loggerPort.error(
+        "BibleModeService: crossVerticalLine not found at tryStopToggle."
       );
+      return;
     }
 
     this.#isStopping = true;
 
-    await this.#sequenceAdapterPort.showAttemptStopFeedback({
-      crossHorizontalLine,
-      crossVerticalLine,
-    });
-    this.#isTryingToToggle = false;
-    this.#isStopping = false;
+    try {
+      await this.#sequenceAdapterPort.showAttemptStopFeedback({
+        crossHorizontalLine,
+        crossVerticalLine,
+      });
+    } catch (error) {
+      this.#loggerPort.error(
+        "BibleModeService: showAttemptStopFeedback failed at tryStopToggle.",
+        error
+      );
+    } finally {
+      this.#isTryingToToggle = false;
+      this.#isStopping = false;
+    }
   }
 
   async #toggleMode(bibleData: StackBibleData) {
