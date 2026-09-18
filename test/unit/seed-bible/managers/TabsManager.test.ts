@@ -1501,7 +1501,10 @@ describe("createTabs", () => {
     await waitFor(() => readingState.chapterNumber.value === 5);
 
     expect(pushSpy).toHaveBeenCalledTimes(1);
-    expect(replaceSpy).toHaveBeenCalledTimes(3);
+    // The extra replace stamps the origin chapter's scroll onto the history
+    // entry the skim is leaving; the other three overwrite the skim's
+    // destination as each next-chapter lands.
+    expect(replaceSpy).toHaveBeenCalledTimes(4);
 
     const url = new URL(window.location.href);
     expect(url.pathname).toBe("/en/AAB/genesis/5");
@@ -1551,6 +1554,70 @@ describe("createTabs", () => {
 
     expect(readingState.chapterNumber.value).toBe(2);
     expect(pushSpy).not.toHaveBeenCalled();
+  });
+
+  it("restores the previous chapter's scroll position when the browser goes back", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    readingState.scrollPosition.value = 240;
+
+    await readingState.selectChapter("GEN", 2);
+    await waitFor(() => readingState.chapterNumber.value === 2);
+    expect(readingState.scrollPosition.value).toBe(0);
+
+    window.history.back();
+    await waitFor(() => readingState.chapterNumber.value === 1);
+
+    expect(readingState.scrollPosition.value).toBe(240);
+  });
+
+  it("restores where the reader was when the browser goes forward again", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    readingState.scrollPosition.value = 240;
+
+    await readingState.selectChapter("GEN", 2);
+    await waitFor(() => readingState.chapterNumber.value === 2);
+
+    // Reading down the second chapter. Nothing pushes here, so only the
+    // debounced stamp records this offset on the entry the reader is on.
+    readingState.scrollPosition.value = 500;
+    await waitFor(() => window.history.state?.scrollPosition === 500);
+
+    window.history.back();
+    await waitFor(() => readingState.chapterNumber.value === 1);
+    expect(readingState.scrollPosition.value).toBe(240);
+
+    window.history.forward();
+    await waitFor(() => readingState.chapterNumber.value === 2);
+
+    expect(readingState.scrollPosition.value).toBe(500);
+  });
+
+  it("does not stamp a closed tab's scroll offset onto the entry that outlives it", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const onlyTab = manager.tabs.value[0]!;
+    // Scroll, then close the only tab before the debounced stamp can land.
+    onlyTab.readingState.scrollPosition.value = 400;
+    manager.removeTab(onlyTab.id);
+    expect(manager.tabs.value).toHaveLength(0);
+
+    // Well past the debounce window. The assertion is on the offset itself
+    // rather than "unchanged", because managers built by earlier cases in this
+    // file are never disposed and keep stamping their own (zero) offsets; 400
+    // is this tab's alone, and must never reach an entry that outlives it.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(window.history.state?.scrollPosition).not.toBe(400);
   });
 
   it("decorates initial verses from the verse URL param on the initial tab", async () => {

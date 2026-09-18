@@ -6,6 +6,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import { debounce } from "es-toolkit";
 import type { BibleDataManager, BookId } from "./BibleDataManager";
 import {
   DEFAULT_UI_LANGUAGE,
@@ -25,6 +26,7 @@ import {
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
   type InitialBibleReadingOptions,
+  type ReadingNavigationOptions,
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
@@ -128,6 +130,13 @@ function getInitialFirstTabBookId(url: URL, basePath: string): string {
 // BibleSelectorManager.tsx when the user explicitly picks a translation from
 // the selector; read here to restore it once the profile loads.
 export const PROFILE_TRANSLATION_ID = "translationId";
+
+/**
+ * How long the reader must stop scrolling before the offset is written to the
+ * current history entry. A scroll gesture fires continuously and browsers rate
+ * limit `replaceState`, so this debounces down to one write per gesture.
+ */
+const SCROLL_STAMP_DEBOUNCE_MS = 200;
 
 function getInitialTranslationId(
   url: URL,
@@ -725,12 +734,16 @@ export function createTabs(
     });
     // This navigation originates from the URL, so pass `updateUrl: false` to
     // keep the reading state from pushing the URL we just read back onto the
-    // history stack.
+    // history stack. Restore the scroll this history entry remembered, if any
+    // — that's what makes Back land where the reader was, not at the heading.
     await readingState.selectTranslationAndChapter(
       requestedTranslation,
       requestedBookId,
       nextChapter,
-      { updateUrl: false }
+      {
+        updateUrl: false,
+        scrollPosition: navigation.getCurrentScrollPosition(),
+      }
     );
   };
 
@@ -763,7 +776,7 @@ export function createTabs(
    * position signals, so one navigation produces exactly one history entry.
    */
   const commitSelectedTabToUrl = (
-    options: { replace?: boolean; leaveStaticPage?: boolean } = {}
+    options: ReadingNavigationOptions & { leaveStaticPage?: boolean } = {}
   ) => {
     // Read all signals untracked: `getUrlQueryParams` touches bookId/chapter/
     // translation/extension signals, and this runs inside a signals effect. If
@@ -790,6 +803,17 @@ export function createTabs(
         )
       ) {
         return;
+      }
+
+      if (
+        !options.replace &&
+        typeof options.departingScrollPosition === "number"
+      ) {
+        // Stamp the chapter we're leaving onto the current entry *before*
+        // pushing the destination, so Back can restore this offset.
+        navigation.stampCurrentState({
+          scrollPosition: options.departingScrollPosition,
+        });
       }
 
       const tab = selectedTab.peek();
@@ -889,6 +913,38 @@ export function createTabs(
   effect(() => {
     void i18nManager.language.value;
     commitSelectedTabToUrl({ replace: true });
+  });
+
+  // Keep the current history entry's offset up to date while the reader
+  // scrolls, so Forward lands where they were just as Back does. A push stamps
+  // the entry it leaves (`departingScrollPosition`), but Back/Forward never
+  // re-stamps the entry it leaves: without this, going back and then forward
+  // again would return to the zero that entry was pushed with.
+  const stampScrollPosition = debounce((offset: number) => {
+    // A static page's entry is not showing this reading position, so it must
+    // not collect the reader's offset.
+    if (
+      parseStaticPagePath(
+        navigation.currentUrl.peek().pathname,
+        navigation.basePath
+      )
+    ) {
+      return;
+    }
+    navigation.stampCurrentState({ scrollPosition: offset });
+  }, SCROLL_STAMP_DEBOUNCE_MS);
+
+  effect(() => {
+    const tab = selectedTab.value;
+    if (!tab) {
+      // Closing the last tab leaves nothing selected. Drop any stamp still
+      // waiting, or it lands the closed tab's offset on whatever entry is
+      // current when it fires.
+      stampScrollPosition.cancel();
+      return;
+    }
+
+    stampScrollPosition(tab.readingState.scrollPosition.value);
   });
 
   // Resolves once `readingState` is no longer in the middle of an operation

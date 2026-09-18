@@ -41,7 +41,6 @@ pnpm format            # Prettier formatting
 
 ```bash
 pnpm vitest run FreeUseBibleAPI.test.ts
->>>>>>> develop
 ```
 
 ## Architecture

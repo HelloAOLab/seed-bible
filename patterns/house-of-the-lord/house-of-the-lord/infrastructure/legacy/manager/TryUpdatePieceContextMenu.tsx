@@ -1,3 +1,0 @@
-// const currContextMenuTransformer = getBot(
-//   true
-// );
