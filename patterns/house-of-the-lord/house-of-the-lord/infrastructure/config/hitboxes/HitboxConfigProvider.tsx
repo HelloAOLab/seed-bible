@@ -23,7 +23,7 @@ export class HitboxConfigProvider implements HitboxProviderPort {
   getHitboxData<E extends ExperienceKey>(
     experienceKey: E,
     pieceKey: ExperienceKeyMap[E]
-  ): HitboxData | null {
-    return HITBOX_MAP[experienceKey][pieceKey] ?? null;
+  ): HitboxData[] {
+    return HITBOX_MAP[experienceKey][pieceKey] ?? [];
   }
 }

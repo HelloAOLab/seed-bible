@@ -11,6 +11,10 @@ import {
   DEFAULT_UI_LANGUAGE,
   buildReadingPath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
+import {
+  buildStaticPagePath,
+  type StaticPageId,
+} from "@packages/seed-bible/seed-bible/managers/StaticPagePath";
 import type { BookId } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 
 // Re-exported rather than defined here: the app's `canonicalUrl` needs the
@@ -123,6 +127,41 @@ export function chapterUrlsForTranslation(
           uiLocale,
         })
       );
+    }
+  }
+  return urls;
+}
+
+/**
+ * Builds the crawlable `/{lang}/{page}` URL for a static (non-reading) page,
+ * mirroring `buildStaticPagePath` — the same source of truth the app itself
+ * uses for `canonicalUrl`, so sitemap entries and their pages' own
+ * `rel=canonical` always agree.
+ */
+export function buildStaticPageUrl(
+  origin: string,
+  params: { language: string; page: StaticPageId }
+): string {
+  return new URL(
+    buildStaticPagePath(params),
+    ensureTrailingSlash(origin)
+  ).toString();
+}
+
+/**
+ * One static-page URL per supported UI language, listed exactly once
+ * regardless of how many Bible translations exist for that language — unlike
+ * chapter URLs, static pages aren't per-translation.
+ */
+export function staticPageUrls(
+  origin: string,
+  languages: readonly string[],
+  pages: readonly StaticPageId[] = ["about"]
+): string[] {
+  const urls: string[] = [];
+  for (const language of languages) {
+    for (const page of pages) {
+      urls.push(buildStaticPageUrl(origin, { language, page }));
     }
   }
   return urls;

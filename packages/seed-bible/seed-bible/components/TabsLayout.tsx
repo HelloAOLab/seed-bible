@@ -58,6 +58,14 @@ const DISCOVER_PANEL_SELECTOR = ".sb-bible-reader-discover-panel";
 const isInsideDiscoverPanel = (target: EventTarget | null) =>
   target instanceof Element && target.closest(DISCOVER_PANEL_SELECTOR) !== null;
 
+function clearSwipeTrackInlineStyles(track: HTMLDivElement | null) {
+  if (!track) {
+    return;
+  }
+  track.style.removeProperty("transition");
+  track.style.removeProperty("transform");
+}
+
 export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
@@ -140,21 +148,73 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   );
 
   // Triggered by the *position* changing, not by `chapterData` arriving:
-  // `applyPosition` has already zeroed `scrollPosition`, so this is what puts
-  // the reader at the chapter heading while the placeholder shows. Kept
-  // separate from the listener effect below — attaching a listener must never
-  // move the reader, or every re-render that re-attaches it repeats this write.
+  // `applyPosition` has already set `scrollPosition` (zero for every ordinary
+  // navigation, the stamped offset when Back/Forward restored an entry), so
+  // this is what puts the reader there while the placeholder or outgoing
+  // chapter still shows. Kept separate from the listener effect below —
+  // attaching a listener must never move the reader, or every re-render that
+  // re-attaches it repeats this write.
+  //
+  // When matching chapter text later arrives, a restored offset that was
+  // clamped against the shorter placeholder is applied once more. Later
+  // `chapterData` identity changes (content settling, a preview resolving)
+  // must not rewrite `scrollTop`, or a partly scrolled chapter gets yanked.
   useEffect(() => {
     if (!scroller) {
       return;
     }
 
-    return effect(() => {
-      void readingState.translationId.value;
-      void readingState.bookId.value;
-      void readingState.chapterNumber.value;
-      scroller.scrollTop = readingState.scrollPosition.peek();
+    let lastPositionKey = "";
+    let appliedForMatchingContent = false;
+    let frame = 0;
+
+    const dispose = effect(() => {
+      const translationId = readingState.translationId.value;
+      const bookId = readingState.bookId.value;
+      const chapterNumber = readingState.chapterNumber.value;
+      const chapter = readingState.chapterData.value;
+      const positionKey = `${translationId}:${bookId}:${chapterNumber}`;
+
+      if (positionKey !== lastPositionKey) {
+        lastPositionKey = positionKey;
+        appliedForMatchingContent = false;
+        cancelAnimationFrame(frame);
+        frame = 0;
+        scroller.scrollTop = readingState.scrollPosition.peek();
+      }
+
+      const contentMatches =
+        !!chapter &&
+        chapter.translation.id === translationId &&
+        chapter.book.id === bookId &&
+        chapter.chapter.number === chapterNumber;
+
+      if (!contentMatches || appliedForMatchingContent) {
+        return;
+      }
+
+      appliedForMatchingContent = true;
+      // A linked verse owns the scroller once content is on screen.
+      if (readingState.scrollToVerse.peek() !== null) {
+        return;
+      }
+
+      const offset = readingState.scrollPosition.peek();
+      if (offset === 0) {
+        return;
+      }
+
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        scroller.scrollTop = offset;
+      });
     });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      dispose();
+    };
   }, [scroller, readingState]);
 
   // Bring a linked verse into view once its chapter is on screen.
@@ -572,6 +632,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       // bump stops a settled one writing to a track this effect no longer owns.
       window.clearTimeout(swipeCommitTimer.current);
       swipeCommitToken.current += 1;
+      clearSwipeTrackInlineStyles(swipeTrackRef.current);
       viewport.removeEventListener("touchstart", onTouchStart);
       viewport.removeEventListener("touchmove", onTouchMove);
       viewport.removeEventListener("touchend", onTouchEnd);
@@ -658,7 +719,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           return;
         }
 
-        track.style.removeProperty("transform");
+        clearSwipeTrackInlineStyles(track);
       }),
     [readingState]
   );
@@ -696,6 +757,14 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         currentScrollerRefCallback,
       }
     : undefined;
+
+  // Swipe writes `transform` as an inline style. Effects run after the DOM
+  // commit, so on a layout change Preact can reuse that node as desktop
+  // content with the leftover translate still on it — the chapter then sits
+  // partly offscreen. Strip it here, while the ref still points at the track.
+  if (!isMobile) {
+    clearSwipeTrackInlineStyles(swipeTrackRef.current);
+  }
 
   return (
     <div className="sb-pane-reader-outer">

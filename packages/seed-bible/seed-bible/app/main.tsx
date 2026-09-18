@@ -10,6 +10,7 @@ import { BibleReaderToolbar } from "../components/BibleReaderToolbar/BibleReader
 import { FloatingReaderPanels } from "../components/FloatingReaderPanels/FloatingReaderPanels";
 import { Sidebar, SharedSessionsToasts } from "../components/Tabs/Tabs";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
+import { Suspense } from "preact/compat";
 import { useEffect } from "preact/hooks";
 import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu/ContextMenu";
@@ -27,6 +28,7 @@ import {
   type AppConfig,
 } from "./appConfig";
 import { isWebKit } from "./ssrEnv";
+import { useCustomizationLinkOverrides } from "./customizationLinkOverrides";
 // Foundation stylesheets — must load before any component's co-located CSS.
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
@@ -226,6 +228,8 @@ function MainBody({
     });
   }
 
+  useCustomizationLinkOverrides(state);
+
   return (
     <AppConfigProvider value={appConfig}>
       <I18nProvider i18n={state.i18n}>
@@ -311,7 +315,12 @@ function MainContent(props: {
 
         <FloatingReaderPanels state={state} />
 
-        <BibleReaderToolbar state={state} />
+        {/* The toolbar suspends during SSR until the reading position is
+            known, so its chapter links land in the server-rendered HTML.
+            Nothing suspends here on the client. */}
+        <Suspense fallback={null}>
+          <BibleReaderToolbar state={state} />
+        </Suspense>
 
         <SharedSessionsToasts state={state} />
 
