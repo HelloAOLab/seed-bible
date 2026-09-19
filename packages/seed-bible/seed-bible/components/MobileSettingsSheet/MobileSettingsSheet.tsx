@@ -193,23 +193,29 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
             />
           </div>
 
-          <div className="sb-mobile-settings-sheet-divider" />
+          {!state.app.isMinimalEmbed?.value && (
+            <>
+              <div className="sb-mobile-settings-sheet-divider" />
 
-          <button
-            type="button"
-            className="sb-mobile-settings-sheet-all-settings"
-            onClick={onOpenAllSettings}
-          >
-            <span className="material-symbols-outlined sb-mobile-settings-icon">
-              <SettingsIcon />
-            </span>
-            <span>
-              {t("go-to-all-settings", { defaultValue: "Go to all settings" })}
-            </span>
-            <span className="material-symbols-outlined sb-mobile-settings-sheet-all-settings-chevron rtl-mirror">
-              chevron_right
-            </span>
-          </button>
+              <button
+                type="button"
+                className="sb-mobile-settings-sheet-all-settings"
+                onClick={onOpenAllSettings}
+              >
+                <span className="material-symbols-outlined sb-mobile-settings-icon">
+                  <SettingsIcon />
+                </span>
+                <span>
+                  {t("go-to-all-settings", {
+                    defaultValue: "Go to all settings",
+                  })}
+                </span>
+                <span className="material-symbols-outlined sb-mobile-settings-sheet-all-settings-chevron rtl-mirror">
+                  chevron_right
+                </span>
+              </button>
+            </>
+          )}
         </div>
       </div>
     </>

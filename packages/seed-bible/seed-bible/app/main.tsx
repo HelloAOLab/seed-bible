@@ -249,6 +249,7 @@ function MainContent(props: {
   const webkitClass = isWebKit(renderedAsWebKit) ? "is-webkit" : "";
   const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
+  const isMinimalEmbed = state.app.isMinimalEmbed.value;
   const sidePane =
     state.app.effectivePanes.value.find((pane) => pane.placement === "side") ??
     null;
@@ -260,7 +261,9 @@ function MainContent(props: {
   return (
     <>
       <div
-        className={`sb-app-root ${webkitClass}`}
+        className={`sb-app-root ${webkitClass}${
+          isMinimalEmbed ? " sb-embed-minimal" : ""
+        }`}
         dir={appDirection}
         onClick={(e) => {
           if (!e.defaultPrevented) {
@@ -284,7 +287,7 @@ function MainContent(props: {
             state.customizations.initialCustomizationLoadSettled
           }
         />
-        <Sidebar state={state} />
+        {!isMinimalEmbed && <Sidebar state={state} />}
 
         <div className="sb-content-row">
           <main className="sb-main-content">

@@ -291,6 +291,213 @@
   display: none;
 }
 
+/* Full-width floating bar above the bottom nav: play (audio reader) on the
+ * far left, with previous / chapter label / next centered. Sits directly
+ * above the main bottom toolbar and is always visible. When the user
+ * scrolls down, the toolbar slides off the bottom and this bar drops into
+ * its place (see the scroll-hide rule below).
+ *
+ * Unscoped from the 480px query so a compact embed (`?embed=minimal`) can
+ * reuse the same chrome in a wider iframe — the element is only in the DOM
+ * for phone layout and embed. */
+.sb-reader-floating-nav {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--sb-reader-toolbar-background);
+  color: var(--sb-font-color);
+  height: 3.125rem;
+  transition: transform 0.3s ease;
+}
+
+/* Play button — peach circle with a dark glyph. The audio extension draws
+   * its own filled circle + glyph via presentation `fill` attributes, which
+   * CSS `fill` overrides, so we recolor it here to match the design without
+   * losing the play/pause state swap the extension owns. */
+.sb-reader-floating-nav-play {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 62.4375rem;
+}
+
+.sb-reader-floating-nav-play:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sb-reader-floating-nav-play > svg {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.sb-reader-floating-nav-play > svg circle {
+  fill: var(--sb-reader-floating-nav-play-background);
+}
+
+.sb-reader-floating-nav-play > svg path,
+.sb-reader-floating-nav-play > svg rect {
+  fill: var(--sb-reader-floating-nav-play-glyph);
+}
+
+/* Capsule that wraps the arrows + book label: a pill with a subtle border,
+   * the chevrons pushed to its edges and the label centered between them. */
+.sb-reader-floating-nav-group {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  /* No gap or padding: the three buttons tile the whole pill so every pixel
+       is a hit target (prev / label / next) — no dead zones between them. The
+       former 6px/12px padding is preserved as min-height + the buttons' own
+       internal spacing instead of dead inset. */
+  gap: 0;
+  min-width: 0;
+  min-height: 2.875rem;
+  border: 1px solid var(--sb-reader-floating-nav-group-border);
+  border-radius: 62.4375rem;
+  background: var(--sb-reader-floating-nav-group-background);
+  user-select: none;
+  overflow: hidden;
+}
+
+.sb-reader-floating-nav-arrow {
+  position: relative;
+  flex: 0 0 auto;
+  /* Full-height, wide hit region; the visual circle lives in ::before so the
+       whole button is tappable with no dead margin around the chevron. */
+  align-self: stretch;
+  min-width: min(4.5rem, 18vw);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  /* Same reason as `.sb-reader-toolbar-button` above: these are links now,
+       and the chevron is a ligature font — actual text — so the anchor's
+       default underline would draw right under the glyph. */
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.sb-reader-floating-nav-arrow:visited {
+  color: var(--sb-font-color);
+}
+
+/* The 34px visual circle, centered in the wider hit region. Carries the
+     press-feedback fill so the feedback stays circular even though the
+     clickable button now fills its whole third of the pill. */
+.sb-reader-floating-nav-arrow::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.125rem;
+  height: 2.125rem;
+  transform: translate(-50%, -50%);
+  border-radius: 62.4375rem;
+  transition: background-color 0.12s ease;
+  z-index: 0;
+}
+
+/* Press feedback: the circle fills and the button shrinks briefly on tap so
+     the arrow feels responsive. */
+.sb-reader-floating-nav-arrow:active:not(:disabled)::before {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
+}
+
+.sb-reader-floating-nav-arrow:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.sb-reader-floating-nav-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sb-reader-floating-nav-arrow > svg,
+.sb-reader-floating-nav-arrow > .material-symbols-outlined {
+  position: relative;
+  z-index: 1;
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.sb-reader-floating-nav-label {
+  position: relative;
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-book-title-font-color);
+  font-family: var(--text-bookTitle-font);
+  font-size: min(1.2rem, 22px);
+  font-weight: 700;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  column-gap: 0.35em;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    transform 0.12s ease;
+}
+
+/* The book name ellipsizes instead of forcing the pill wider; the chapter
+     number keeps its own line when the row wraps. */
+.sb-reader-floating-nav-label > :first-child {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Press feedback for the book/chapter label, matching the arrows. */
+.sb-reader-floating-nav-label:active {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  transform: scale(0.97);
+}
+
+/* Tap ripple: a circle that expands from the touch point and fades out.
+     Spawned by spawnRipple() and removed on animationend. */
+.sb-ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: var(--sb-primary-color);
+  transform: scale(0);
+  opacity: 0.9;
+  animation: sb-ripple-fade 0.5s ease-out forwards;
+}
+
+@keyframes sb-ripple-fade {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
 @media (max-width: 480px) {
   .sb-reader-toolbar-wrap {
     position: fixed;
@@ -302,210 +509,6 @@
      * The overlay already reserves `padding-bottom: 68px` for it. */
     z-index: 101;
     width: 100vw;
-    /* max-width: 420px; */
-  }
-
-  /* Full-width floating bar above the bottom nav: play (audio reader) on the
-   * far left, with previous / chapter label / next centered. Sits directly
-   * above the main bottom toolbar and is always visible. When the user
-   * scrolls down, the toolbar slides off the bottom and this bar drops into
-   * its place (see the scroll-hide rule below). */
-  .sb-reader-floating-nav {
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    background: var(--sb-reader-toolbar-background);
-    color: var(--sb-font-color);
-    height: 3.125rem;
-    transition: transform 0.3s ease;
-  }
-
-  /* Play button — peach circle with a dark glyph. The audio extension draws
-   * its own filled circle + glyph via presentation `fill` attributes, which
-   * CSS `fill` overrides, so we recolor it here to match the design without
-   * losing the play/pause state swap the extension owns. */
-  .sb-reader-floating-nav-play {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.125rem;
-    height: 2.125rem;
-    padding: 0;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    border-radius: 62.4375rem;
-  }
-
-  .sb-reader-floating-nav-play:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-
-  .sb-reader-floating-nav-play > svg {
-    width: 2.75rem;
-    height: 2.75rem;
-  }
-
-  .sb-reader-floating-nav-play > svg circle {
-    fill: var(--sb-reader-floating-nav-play-background);
-  }
-
-  .sb-reader-floating-nav-play > svg path,
-  .sb-reader-floating-nav-play > svg rect {
-    fill: var(--sb-reader-floating-nav-play-glyph);
-  }
-
-  /* Capsule that wraps the arrows + book label: a pill with a subtle border,
-   * the chevrons pushed to its edges and the label centered between them. */
-  .sb-reader-floating-nav-group {
-    flex: 1 1 auto;
-    display: flex;
-    align-items: stretch;
-    justify-content: space-between;
-    /* No gap or padding: the three buttons tile the whole pill so every pixel
-       is a hit target (prev / label / next) — no dead zones between them. The
-       former 6px/12px padding is preserved as min-height + the buttons' own
-       internal spacing instead of dead inset. */
-    gap: 0;
-    min-width: 0;
-    min-height: 2.875rem;
-    border: 1px solid var(--sb-reader-floating-nav-group-border);
-    border-radius: 62.4375rem;
-    background: var(--sb-reader-floating-nav-group-background);
-    user-select: none;
-    overflow: hidden;
-  }
-
-  .sb-reader-floating-nav-arrow {
-    position: relative;
-    flex: 0 0 auto;
-    /* Full-height, wide hit region; the visual circle lives in ::before so the
-       whole button is tappable with no dead margin around the chevron. */
-    align-self: stretch;
-    min-width: min(4.5rem, 18vw);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--sb-font-color);
-    /* Same reason as `.sb-reader-toolbar-button` above: these are links now,
-       and the chevron is a ligature font — actual text — so the anchor's
-       default underline would draw right under the glyph. */
-    text-decoration: none;
-    cursor: pointer;
-    transition: transform 0.12s ease;
-  }
-
-  .sb-reader-floating-nav-arrow:visited {
-    color: var(--sb-font-color);
-  }
-
-  /* The 34px visual circle, centered in the wider hit region. Carries the
-     press-feedback fill so the feedback stays circular even though the
-     clickable button now fills its whole third of the pill. */
-  .sb-reader-floating-nav-arrow::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 2.125rem;
-    height: 2.125rem;
-    transform: translate(-50%, -50%);
-    border-radius: 62.4375rem;
-    transition: background-color 0.12s ease;
-    z-index: 0;
-  }
-
-  /* Press feedback: the circle fills and the button shrinks briefly on tap so
-     the arrow feels responsive. */
-  .sb-reader-floating-nav-arrow:active:not(:disabled)::before {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  }
-
-  .sb-reader-floating-nav-arrow:active:not(:disabled) {
-    transform: scale(0.9);
-  }
-
-  .sb-reader-floating-nav-arrow:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
-
-  .sb-reader-floating-nav-arrow > svg,
-  .sb-reader-floating-nav-arrow > .material-symbols-outlined {
-    position: relative;
-    z-index: 1;
-    width: 1.25rem;
-    height: 1.25rem;
-    font-size: 1.25rem;
-  }
-
-  .sb-reader-floating-nav-label {
-    position: relative;
-    flex: 1 1 auto;
-    align-self: stretch;
-    min-width: 0;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--sb-book-title-font-color);
-    font-family: var(--text-bookTitle-font);
-    font-size: min(1.2rem, 22px);
-    font-weight: 700;
-    display: flex;
-    flex-wrap: wrap;
-    align-content: center;
-    justify-content: center;
-    column-gap: 0.35em;
-    overflow: hidden;
-    cursor: pointer;
-    transition:
-      background-color 0.12s ease,
-      transform 0.12s ease;
-  }
-
-  /* The book name ellipsizes instead of forcing the pill wider; the chapter
-     number keeps its own line when the row wraps. */
-  .sb-reader-floating-nav-label > :first-child {
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  /* Press feedback for the book/chapter label, matching the arrows. */
-  .sb-reader-floating-nav-label:active {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-    transform: scale(0.97);
-  }
-
-  /* Tap ripple: a circle that expands from the touch point and fades out.
-     Spawned by spawnRipple() and removed on animationend. */
-  .sb-ripple {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    background: var(--sb-primary-color);
-    transform: scale(0);
-    opacity: 0.9;
-    animation: sb-ripple-fade 0.5s ease-out forwards;
-  }
-
-  @keyframes sb-ripple-fade {
-    to {
-      transform: scale(1);
-      opacity: 0;
-    }
   }
 
   .sb-action-btns {
@@ -770,6 +773,25 @@
   body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
     transform: translateX(-50%) translateY(100%);
   }
+}
+
+/* Compact embed: pin the floating chapter nav to the iframe bottom with no
+   tab bar underneath. `position: relative` puts the nav in the wrap's flow
+   so the wrap has height (the nav used to sit at `bottom: 100%` of the tab
+   bar). */
+.sb-reader-toolbar-wrap-embed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none;
+  z-index: 101;
+  width: 100%;
+}
+
+.sb-reader-toolbar-wrap-embed .sb-reader-floating-nav {
+  position: relative;
+  bottom: auto;
 }
 
 .sb-verse-toolbar {
