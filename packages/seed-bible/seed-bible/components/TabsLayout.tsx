@@ -69,7 +69,11 @@ function clearSwipeTrackInlineStyles(track: HTMLDivElement | null) {
 export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
-  const isMobile = state?.app.isMobile.value ?? false;
+  // Phone layout, or a compact embed: swipe chapters, mobile header, and
+  // the floating chapter nav. Embed is included so a wide iframe still
+  // gets the minimal reading chrome rather than the full desktop app.
+  const isMinimalEmbed = state?.app.isMinimalEmbed?.value ?? false;
+  const isMobile = (state?.app.isMobile.value ?? false) || isMinimalEmbed;
 
   const swipeViewportRef = useRef<HTMLDivElement | null>(null);
   const swipeTrackRef = useRef<HTMLDivElement | null>(null);
@@ -94,9 +98,11 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
   // Mirror scroll-direction state to a body class so chrome rendered outside
   // this component (e.g. the global BibleReaderToolbar in app/main.tsx) can
-  // hide/show in sync with the reader header.
+  // hide/show in sync with the reader header. Embed keeps the compact chrome
+  // pinned: translation, open-in-new-tab, and chapter nav are the only
+  // way around the iframe, so they must not slide away on scroll.
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isMobile || isMinimalEmbed) return;
     const className = "sb-scroll-hide-bars";
     if (isScrolled) {
       document.body.classList.add(className);
@@ -106,7 +112,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     return () => {
       document.body.classList.remove(className);
     };
-  }, [isMobile, isScrolled]);
+  }, [isMobile, isMinimalEmbed, isScrolled]);
 
   // When a mobile pane opens (every pane fills the screen there), the verse
   // sheet yields and the default bottom toolbar comes back. Clear scroll-hide

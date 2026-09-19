@@ -65,6 +65,14 @@
   }
 }
 
+/* Same tight margin as the phone reader when the page is a compact embed
+   in a wider iframe, where the 480px query would not apply. */
+.sb-embed-minimal .sb-bible-reader {
+  width: 100%;
+  padding-right: 1%;
+  padding-left: 1%;
+}
+
 /* Reader header: lays the chapter title and the right-hand action cluster
    (quick toolbar + save and bookmark buttons) in a flex row so the buttons can
    never overlap the title, regardless of how many quick tools are registered. */
@@ -353,6 +361,52 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }
 
+.sb-bible-reader-mobile-header-open-tab {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--sb-reader-floating-nav-play-background);
+  color: var(--sb-reader-floating-nav-play-glyph);
+  cursor: pointer;
+  padding: 0;
+}
+
+.sb-bible-reader-mobile-header-open-tab:active {
+  filter: brightness(0.95);
+}
+
+.sb-bible-reader-mobile-header-open-tab .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-bible-reader-mobile-header-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  padding: 0;
+}
+
+.sb-bible-reader-mobile-header-close:active {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-bible-reader-mobile-header-close .material-symbols-outlined {
+  font-size: 1.375rem;
+}
+
 .sb-bible-reader-mobile-header-notes {
   flex-shrink: 0;
   display: inline-flex;
@@ -581,6 +635,10 @@
   .sb-chapter-content {
     padding-inline: 0.625rem;
   }
+}
+
+.sb-embed-minimal .sb-chapter-content {
+  padding-inline: 0.625rem;
 }
 
 .sb-chapter-heading {
