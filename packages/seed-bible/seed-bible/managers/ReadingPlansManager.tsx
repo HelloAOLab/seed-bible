@@ -14,6 +14,17 @@ import { CasualOSManager } from "./OsManager";
 import { v4 as uuid } from "uuid";
 import { captureEvent } from "./Utils";
 import { savePhotoToGallery } from "./UserGalleryManager";
+import { getBookId, type BookId } from "./BibleDataManager";
+import {
+  getDefaultTranslationForLanguage,
+  uiLocaleForDefaultTranslation,
+} from "./BibleReadingManager";
+import {
+  buildReadingUrl,
+  DEFAULT_UI_LANGUAGE,
+  parseReadingPath,
+} from "./ReadingUrlPath";
+import { readInjectedConfig } from "../app/appConfig";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -125,6 +136,109 @@ export const ReadingPlanSchema = ReadingPlanMetadataSchema.extend({
   sessions: z.array(ReadingPlanSessionSchema),
 });
 export type ReadingPlan = z.infer<typeof ReadingPlanSchema>;
+
+export function getReadingPlanLocator(plan: {
+  recordName: string;
+  address: string;
+}): string {
+  return `${plan.recordName}.${plan.address}`;
+}
+
+export function parseReadingPlanLocator(
+  locator: string | null | undefined
+): { recordName: string; address: string } | null {
+  if (!locator) {
+    return null;
+  }
+  const lastDot = locator.lastIndexOf(".");
+  if (lastDot <= 0 || lastDot === locator.length - 1) {
+    console.error("Invalid reading plan locator:", locator);
+    return null;
+  }
+  return {
+    recordName: locator.slice(0, lastDot),
+    address: locator.slice(lastDot + 1),
+  };
+}
+
+/**
+ * The chapter a reading-plan share link should open on: the first scripture
+ * reading whose book actually resolves. Null when the plan has no usable
+ * scripture, so the share URL can keep the page the sharer is already on.
+ */
+export function firstPlanScriptureShareRef(
+  plan: Pick<ReadingPlan, "sessions">
+): {
+  bookId: BookId;
+  chapter: number;
+  translationId?: string;
+} | null {
+  for (const session of plan.sessions) {
+    for (const reading of session.readings) {
+      if (reading.item.type !== "bible-verse") {
+        continue;
+      }
+      const bookId = getBookId(reading.item.ref.bookId);
+      if (!bookId) {
+        continue;
+      }
+      return {
+        bookId,
+        chapter: reading.item.ref.chapter,
+        translationId: reading.item.translationId,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Builds a shareable reading-plan URL. The path is the first resolvable
+ * scripture reading's chapter so opening the link does not load the chapter
+ * the sharer happened to be reading and then jump to the plan.
+ */
+export function buildReadingPlanShareUrl(params: {
+  plan: Pick<ReadingPlan, "recordName" | "address" | "sessions">;
+  currentUrl: URL;
+  basePath: string;
+}): string {
+  const { plan, currentUrl, basePath } = params;
+  const current = new URL(currentUrl.href);
+  const scripture = firstPlanScriptureShareRef(plan);
+
+  let shareUrl: URL;
+  if (scripture) {
+    const parsed = parseReadingPath(current.pathname, basePath);
+    const translationId =
+      scripture.translationId ??
+      parsed?.translationId ??
+      getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id;
+    shareUrl = buildReadingUrl({
+      currentUrl: current,
+      basePath,
+      translationId,
+      bookId: scripture.bookId,
+      chapter: scripture.chapter,
+      fallbackLanguage:
+        uiLocaleForDefaultTranslation(translationId) ?? undefined,
+    });
+  } else {
+    shareUrl = current;
+  }
+
+  shareUrl.search = "";
+  shareUrl.searchParams.set("readingPlan", getReadingPlanLocator(plan));
+  return shareUrl.toString();
+}
+
+/** Shareable URL for a plan, based on the page the sharer is currently on. */
+export function getReadingPlanShareUrl(plan: ReadingPlan): string {
+  return buildReadingPlanShareUrl({
+    plan,
+    currentUrl: new URL(window.location.href),
+    basePath: readInjectedConfig().basePath,
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Progress
@@ -1457,6 +1571,22 @@ export function createReadingPlansManager(
     return parsed.data;
   };
 
+  /**
+   * Loads a plan from a `recordName.address` share locator and selects it.
+   * Returns null when the locator is malformed.
+   */
+  const loadByLocator = async (
+    locator: string
+  ): Promise<ReadingPlan | null> => {
+    const parsed = parseReadingPlanLocator(locator);
+    if (!parsed) {
+      return null;
+    }
+    const plan = await getReadingPlan(parsed.recordName, parsed.address);
+    selectedReadingPlan.value = plan;
+    return plan;
+  };
+
   // A plan lives in two records: the plan itself and a `_metadata` companion
   // the list reads so it can render without loading every plan's contents.
   // They are written one after the other rather than together, so a failure
@@ -2393,6 +2523,7 @@ export function createReadingPlansManager(
     addReadingToEditingPlan,
     removeReadingFromEditingPlan,
     finishEditingReadingPlan,
+    loadByLocator,
   };
 }
 

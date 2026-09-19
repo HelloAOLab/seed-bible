@@ -37,6 +37,7 @@ import {
   EditProfilePaneTitle,
 } from "../components/ProfilePane/EditProfilePane";
 import { openProfilePictureModal } from "../components/ProfilePictureModal/openProfilePictureModal";
+import { showReadingPlanDetailView } from "../components/ReadingPlansPane/ReadingPlansPane";
 import {
   YOUR_CONTENT_PANE_ID,
   YourContentPane,
@@ -182,6 +183,7 @@ import {
 import { range } from "es-toolkit";
 import {
   createReadingPlansManager,
+  type ReadingPlan,
   type ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
 import {
@@ -785,15 +787,17 @@ export function createSeedBibleState(
   const search = createSearchManager();
 
   // When the app is opened via a content link — a shared-session invite
-  // (`?sessionId=...`) or a shared playlist (`?playlist=...`) — the user came to
-  // view that content, not to onboard, so we skip the welcome screen and the
-  // auto-starting tutorial for this visit. This is derived from the current URL
-  // rather than persisted, so it only affects this tab/load: revisiting without
-  // either param shows onboarding and tutorials as usual.
+  // (`?sessionId=...`), a shared playlist (`?playlist=...`), or a shared
+  // reading plan (`?readingPlan=...`) — the user came to view that content,
+  // not to onboard, so we skip the welcome screen and the auto-starting
+  // tutorial for this visit. This is derived from the current URL rather
+  // than persisted, so it only affects this tab/load: revisiting without
+  // those params shows onboarding and tutorials as usual.
   const openedViaContentLink =
     typeof window !== "undefined" &&
     (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
-      !!navigation.currentUrl.value.searchParams.get("playlist"));
+      !!navigation.currentUrl.value.searchParams.get("playlist") ||
+      !!navigation.currentUrl.value.searchParams.get("readingPlan"));
 
   const onboarding = createOnboardingManager(login);
 
@@ -2633,6 +2637,68 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
+  // A shared `?readingPlan=` link loads the plan, then opens the pane once a
+  // reading tab is actually there. The tab is usually ready after the network
+  // round-trip, but if it isn't yet this waits rather than selecting the plan
+  // and leaving the pane closed with no explanation.
+  const pendingSharedPlan = signal<ReadingPlan | null>(null);
+  effect(() => {
+    const plan = pendingSharedPlan.value;
+    if (!plan) {
+      return;
+    }
+    const readingState = selectedTab.value?.readingState;
+    if (!readingState) {
+      return;
+    }
+    pendingSharedPlan.value = null;
+    openReadingPlansPane({
+      readingPlans,
+      readingState,
+      panesManager: panes,
+      modals,
+      playlists,
+      os,
+      login,
+      gallery,
+      toast,
+    });
+    showReadingPlanDetailView();
+  });
+
+  const setupInitialReadingPlan = async () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const locator = navigation.currentUrl.value.searchParams.get("readingPlan");
+    if (!locator) {
+      return;
+    }
+    // Destructured rather than called as `i18n.t(...)`: the translation lint
+    // rules only recognise calls made through a bare `t`.
+    const { t } = i18n;
+    try {
+      const plan = await readingPlans.loadByLocator(locator);
+      if (!plan) {
+        toast(
+          t("failed-to-load-reading-plan", {
+            defaultValue: "Failed to load reading plan",
+          })
+        );
+        return;
+      }
+      pendingSharedPlan.value = plan;
+    } catch (error) {
+      console.error("Failed to load reading plan from URL:", error);
+      toast(
+        t("failed-to-load-reading-plan", {
+          defaultValue: "Failed to load reading plan",
+        })
+      );
+    }
+  };
+  void setupInitialReadingPlan();
+
   // Constructed here rather than beside the other managers because it needs
   // `currentReadingState`, which is defined well below them.
   const today = createTodayManager({
@@ -2914,6 +2980,7 @@ export function createSeedBibleState(
       login,
       gallery,
       placement: "fullscreen",
+      toast,
     });
   };
   const renderProfilePane = () => (
