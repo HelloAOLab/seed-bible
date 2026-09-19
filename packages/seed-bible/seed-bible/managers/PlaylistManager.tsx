@@ -159,30 +159,30 @@ export type VerseRef = z.infer<typeof VerseRefSchema>;
 
 /**
  * The chapter a playlist share link should open on: the first scripture
- * item's start chapter. Null when the playlist has no scripture, so the
- * share URL can keep the page the sharer is already on.
+ * item whose book actually resolves. An unresolvable book is skipped so
+ * a later valid item can still set the path. Null when none resolve, so
+ * the share URL can keep the page the sharer is already on.
  */
 function firstScriptureShareRef(playlist: Playlist): {
   bookId: BookId;
   chapter: number;
   translationId?: string;
 } | null {
-  const firstScripture = playlist.items.find(
-    (item): item is Extract<PlaylistItemData, { type: "bible-verse" }> =>
-      item.type === "bible-verse"
-  );
-  if (!firstScripture) {
-    return null;
+  for (const item of playlist.items) {
+    if (item.type !== "bible-verse") {
+      continue;
+    }
+    const bookId = getBookId(item.ref.bookId);
+    if (!bookId) {
+      continue;
+    }
+    return {
+      bookId,
+      chapter: item.ref.chapter,
+      translationId: item.translationId,
+    };
   }
-  const bookId = getBookId(firstScripture.ref.bookId);
-  if (!bookId) {
-    return null;
-  }
-  return {
-    bookId,
-    chapter: firstScripture.ref.chapter,
-    translationId: firstScripture.translationId,
-  };
+  return null;
 }
 
 /**
@@ -1656,8 +1656,8 @@ export function createPlaylistManager(
 
   /**
    * Gets a shareable URL for the given playlist. The path is the first
-   * scripture item's chapter so opening the link does not load the chapter
-   * the sharer happened to be reading and then jump to the playlist.
+   * resolvable scripture item's chapter so opening the link does not load
+   * the chapter the sharer happened to be reading and then jump to the playlist.
    */
   const getPlaylistUrl = (playlist: Playlist): string => {
     const current = new URL(navigation.currentUrl.value);

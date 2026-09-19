@@ -2438,6 +2438,31 @@ describe("createPlaylistManager", () => {
       expect(url.pathname).toBe("/en/AAB/john/3");
     });
 
+    it("skips a scripture item whose book cannot be resolved and uses the next one", async () => {
+      const manager = makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/en/AAB/genesis/1"
+      );
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "NOTABOOK", chapter: 9 },
+          },
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 3, verse: 16 },
+          },
+        ],
+      });
+
+      const url = new URL(manager.getPlaylistUrl(playlist));
+
+      expect(url.pathname).toBe("/en/AAB/john/3");
+    });
+
     it("uses the start chapter of a cross-chapter scripture item", async () => {
       const manager = makeManager(
         "user-1",
