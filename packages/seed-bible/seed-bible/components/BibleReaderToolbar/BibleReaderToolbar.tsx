@@ -822,9 +822,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     () => readingState.value!.selectedVerses.value.length > 0
   );
   // Align with compact reader chrome (`app.isCompactReader`): phone layout
-  // or a partner-site embed. Kept as a local computed so its own
-  // subscriptions continue to drive re-renders even if `app.isCompactReader`
-  // is not consumed elsewhere.
+  // or a partner-site embed. Local computed so this toolbar re-renders from
+  // those signals without waiting on a parent.
   const isSmallScreen = useComputed(
     () =>
       props.state.app.isCompactReader?.value ?? props.state.app.isMobile.value

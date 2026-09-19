@@ -1763,9 +1763,9 @@ export function BibleReader(props: BibleReaderProps) {
     () => translation.value?.website.trim() ?? ""
   );
 
-  const isMobile = state?.app.isMobile.value ?? false;
   const isMinimalEmbed = state?.app.isMinimalEmbed?.value ?? false;
-  const isCompactReader = isMobile || isMinimalEmbed;
+  const isCompactReader =
+    state?.app.isCompactReader?.value ?? state?.app.isMobile.value ?? false;
 
   // Clicking an annotated verse number jumps straight to its note: on
   // mobile, it also selects the verse (like clicking its text does) and
@@ -2160,7 +2160,7 @@ export function BibleReader(props: BibleReaderProps) {
               !isMinimalEmbed && mobileChrome?.isScrolled
                 ? " sb-bible-reader-mobile-header-hidden"
                 : ""
-            }${isMinimalEmbed ? " sb-bible-reader-mobile-header-embed" : ""}`}
+            }`}
           >
             <div className="sb-bible-reader-mobile-header-text">
               <h1 className="sb-bible-reader-mobile-header-title">
