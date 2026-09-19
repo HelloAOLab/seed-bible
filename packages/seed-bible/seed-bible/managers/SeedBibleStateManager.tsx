@@ -183,6 +183,7 @@ import {
 import { range } from "es-toolkit";
 import {
   createReadingPlansManager,
+  type ReadingPlan,
   type ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
 import {
@@ -2636,6 +2637,35 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
+  // A shared `?readingPlan=` link loads the plan, then opens the pane once a
+  // reading tab is actually there. The tab is usually ready after the network
+  // round-trip, but if it isn't yet this waits rather than selecting the plan
+  // and leaving the pane closed with no explanation.
+  const pendingSharedPlan = signal<ReadingPlan | null>(null);
+  effect(() => {
+    const plan = pendingSharedPlan.value;
+    if (!plan) {
+      return;
+    }
+    const readingState = selectedTab.value?.readingState;
+    if (!readingState) {
+      return;
+    }
+    pendingSharedPlan.value = null;
+    openReadingPlansPane({
+      readingPlans,
+      readingState,
+      panesManager: panes,
+      modals,
+      playlists,
+      os,
+      login,
+      gallery,
+      toast,
+    });
+    showReadingPlanDetailView();
+  });
+
   const setupInitialReadingPlan = async () => {
     if (typeof window === "undefined") {
       return;
@@ -2644,29 +2674,27 @@ export function createSeedBibleState(
     if (!locator) {
       return;
     }
+    // Destructured rather than called as `i18n.t(...)`: the translation lint
+    // rules only recognise calls made through a bare `t`.
+    const { t } = i18n;
     try {
       const plan = await readingPlans.loadByLocator(locator);
       if (!plan) {
+        toast(
+          t("failed-to-load-reading-plan", {
+            defaultValue: "Failed to load reading plan",
+          })
+        );
         return;
       }
-      const readingState = selectedTab.peek()?.readingState;
-      if (!readingState) {
-        return;
-      }
-      openReadingPlansPane({
-        readingPlans,
-        readingState,
-        panesManager: panes,
-        modals,
-        playlists,
-        os,
-        login,
-        gallery,
-        toast,
-      });
-      showReadingPlanDetailView();
+      pendingSharedPlan.value = plan;
     } catch (error) {
       console.error("Failed to load reading plan from URL:", error);
+      toast(
+        t("failed-to-load-reading-plan", {
+          defaultValue: "Failed to load reading plan",
+        })
+      );
     }
   };
   void setupInitialReadingPlan();

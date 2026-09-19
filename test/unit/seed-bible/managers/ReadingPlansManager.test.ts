@@ -1588,27 +1588,33 @@ describe("createReadingPlansManager", () => {
     expect(getDataMock).not.toHaveBeenCalled();
   });
 
-  it("loadByLocator loads and selects the plan from a share locator", async () => {
-    const plan = makePlan();
-    getDataMock.mockResolvedValue({ success: true, data: plan });
-
+  it("loadByLocator rejects (and selects nothing) when loading fails", async () => {
+    getDataMock.mockResolvedValue({ success: false, errorCode: "not_found" });
     const manager = makeManager("user-1");
     await flush();
 
-    const loaded = await manager.loadByLocator("record-1.plan-1");
+    await expect(manager.loadByLocator("record-1.plan-1")).rejects.toThrow(
+      /not_found/
+    );
 
-    expect(getDataMock).toHaveBeenCalledWith("record-1", "plan-1");
-    expect(loaded).toEqual(plan);
-    expect(manager.selectedReadingPlan.value).toEqual(plan);
+    expect(manager.selectedReadingPlan.value).toBeNull();
+    expect(errorSpy).toHaveBeenCalled();
   });
 
-  it("loadByLocator returns null for a malformed locator", async () => {
+  it("loadByLocator rejects (and selects nothing) when the record fails to parse", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: { not: "a plan" },
+    });
     const manager = makeManager("user-1");
     await flush();
 
-    expect(await manager.loadByLocator(".plan-1")).toBeNull();
-    expect(await manager.loadByLocator("record-1.")).toBeNull();
-    expect(getDataMock).not.toHaveBeenCalled();
+    await expect(manager.loadByLocator("record-1.plan-1")).rejects.toThrow(
+      /Error parsing reading plan/
+    );
+
+    expect(manager.selectedReadingPlan.value).toBeNull();
+    expect(errorSpy).toHaveBeenCalled();
   });
 
   it("walks every page of results", async () => {

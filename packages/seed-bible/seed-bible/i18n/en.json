@@ -430,6 +430,7 @@
   "share-playlist": "Share playlist",
   "share-reading-plan": "Share plan",
   "reading-plan-url-copied": "Reading plan URL copied to clipboard",
+  "failed-to-load-reading-plan": "Failed to load reading plan",
   "playlist-url-copied": "Playlist URL copied to clipboard",
   "current-playlist": "Current playlist",
   "playlist-add-mode-label": "Item type",
