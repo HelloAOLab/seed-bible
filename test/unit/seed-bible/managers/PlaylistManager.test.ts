@@ -2391,6 +2391,158 @@ describe("createPlaylistManager", () => {
     expect(manager.playing.value).toBeNull();
   });
 
+  describe("getPlaylistUrl", () => {
+    it("points at the first scripture item's chapter, not the chapter the sharer is viewing", async () => {
+      const manager = makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/en/AAB/john/3"
+      );
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+
+      const url = new URL(manager.getPlaylistUrl(playlist));
+
+      expect(url.pathname).toBe("/en/AAB/genesis/1");
+      expect(url.searchParams.get("playlist")).toBe("user-1.playlist-1");
+      expect([...url.searchParams.keys()]).toEqual(["playlist"]);
+    });
+
+    it("skips leading non-scripture items and uses the first bible-verse chapter", async () => {
+      const manager = makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/en/AAB/genesis/1"
+      );
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "<p>intro</p>" },
+          { type: "link", url: "https://example.com" },
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 3, verse: 16 },
+          },
+        ],
+      });
+
+      const url = new URL(manager.getPlaylistUrl(playlist));
+
+      expect(url.pathname).toBe("/en/AAB/john/3");
+    });
+
+    it("uses the start chapter of a cross-chapter scripture item", async () => {
+      const manager = makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/en/AAB/genesis/1"
+      );
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 1, endChapter: 3 },
+          },
+        ],
+      });
+
+      const url = new URL(manager.getPlaylistUrl(playlist));
+
+      expect(url.pathname).toBe("/en/AAB/john/1");
+    });
+
+    it("uses the scripture item's translation when it names one", async () => {
+      const manager = makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/en/AAB/genesis/1"
+      );
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 3 },
+            translationId: "NIV",
+          },
+        ],
+      });
+
+      const url = new URL(manager.getPlaylistUrl(playlist));
+
+      expect(url.pathname).toBe("/en/NIV/john/3");
+    });
+
+    it("keeps the UI language the sharer was already reading in", async () => {
+      const manager = makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/es/spa_onbv/genesis/1"
+      );
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 3 },
+          },
+        ],
+      });
+
+      const url = new URL(manager.getPlaylistUrl(playlist));
+
+      expect(url.pathname).toBe("/es/spa_onbv/john/3");
+    });
+
+    it("does not copy unrelated query params from the current page", async () => {
+      const manager = makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/en/AAB/genesis/1?sessionId=abc&verse=4"
+      );
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 3 },
+          },
+        ],
+      });
+
+      const url = new URL(manager.getPlaylistUrl(playlist));
+
+      expect(url.searchParams.get("sessionId")).toBeNull();
+      expect(url.searchParams.get("verse")).toBeNull();
+      expect(url.searchParams.get("playlist")).toBe("user-1.playlist-1");
+    });
+
+    it("keeps the current chapter when the playlist has no scripture items", async () => {
+      const manager = makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/en/AAB/john/3"
+      );
+      await flush();
+      const playlist = makePlaylist({
+        items: [{ type: "html", html: "<p>notes</p>" }],
+      });
+
+      const url = new URL(manager.getPlaylistUrl(playlist));
+
+      expect(url.pathname).toBe("/en/AAB/john/3");
+      expect(url.searchParams.get("playlist")).toBe("user-1.playlist-1");
+    });
+  });
+
   describe("playlist analytics", () => {
     let mockPosthogCapture: Mock;
 
