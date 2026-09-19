@@ -2051,6 +2051,7 @@ describe("createSeedBibleState", () => {
         createdAt: 0,
         updatedAt: 0,
         extensionSettings: {},
+        extensionSettingDefaults: {},
       };
 
       expect(state.app.title.value).toBe("Genesis 7 - ESV | Grandma's Bible");
@@ -2090,6 +2091,7 @@ describe("createSeedBibleState", () => {
         createdAt: 0,
         updatedAt: 0,
         extensionSettings: {},
+        extensionSettingDefaults: {},
       };
 
       expect(state.app.siteName.value).toBe("Grandma's Bible");
@@ -2125,6 +2127,7 @@ describe("createSeedBibleState", () => {
         createdAt: 0,
         updatedAt: 0,
         extensionSettings: {},
+        extensionSettingDefaults: {},
       };
 
       expect(state.app.customizationLogoUrl.value).toBeNull();
@@ -2152,6 +2155,7 @@ describe("createSeedBibleState", () => {
         createdAt: 0,
         updatedAt: 0,
         extensionSettings: {},
+        extensionSettingDefaults: {},
       };
 
       expect(state.app.customizationLogoUrl.value).toBe(
@@ -2187,6 +2191,7 @@ describe("createSeedBibleState", () => {
         createdAt: 0,
         updatedAt: 0,
         extensionSettings: {},
+        extensionSettingDefaults: {},
       };
 
       expect(state.theme.themeCssVariables.value).toContain(

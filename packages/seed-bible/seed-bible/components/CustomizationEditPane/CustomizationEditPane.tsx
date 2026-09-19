@@ -11,6 +11,7 @@ import {
   buildCustomFontValue,
   getContrastRatio,
   getExtensionAvailability,
+  getExtensionSettingDefault,
   getFontPresetsForField,
   type CustomizationsManager,
   type ExtensionAvailability,
@@ -23,6 +24,12 @@ import {
 } from "../../managers/ThemeManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
+import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
+import type {
+  ExtensionListEntry,
+  ExtensionSettingDefinition,
+  ExtensionSettingValue,
+} from "../../managers/ExtensionManager";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
@@ -590,6 +597,12 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
   );
 }
 
+/** What a newly overridden setting starts from when it declares no default. */
+const EMPTY_SETTING_VALUES: Record<
+  ExtensionSettingDefinition["type"],
+  ExtensionSettingValue
+> = { string: "", boolean: false, number: 0 };
+
 function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { customizations, extensions } = state;
@@ -616,6 +629,68 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
   const installableExtensions = extensions.extensions.value.filter(
     (entry) => entry.extension !== null
   );
+
+  const handleConfigureDefaults = (entry: ExtensionListEntry) => {
+    const settings = entry.extension?.meta.settings ?? {};
+    // The customization being edited, not the one the viewer currently has
+    // active — those are only the same customization some of the time, and the
+    // defaults written here belong to the draft.
+    const draftDefault = (key: string) =>
+      getExtensionSettingDefault(
+        customizations.editingCustomization.value,
+        entry.id,
+        key
+      );
+    state.modals.openModal({
+      title: {
+        key: "extension-settings-defaults-title",
+        defaultValue: "{{name}} defaults",
+        options: {
+          name:
+            // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+            t("title", { ns: entry.id, defaultValue: entry.id }),
+        },
+      },
+      content: () => (
+        <ExtensionSettingsForm
+          extensionId={entry.id}
+          settings={settings}
+          getValue={draftDefault}
+          // A Customization default overrides only the extension's own default.
+          getDefault={(key) => settings[key]?.default}
+          onChange={(key, value) =>
+            customizations.setEditingExtensionSettingDefault(
+              entry.id,
+              key,
+              value
+            )
+          }
+          overriding={{
+            isOverridden: (key) => draftDefault(key) !== undefined,
+            onOverrideChange: (key, overridden) => {
+              const definition = settings[key];
+              if (!overridden || !definition) {
+                customizations.clearEditingExtensionSettingDefault(
+                  entry.id,
+                  key
+                );
+                return;
+              }
+              // Storing a value as soon as the box is ticked keeps the record
+              // and the checkbox saying the same thing; a setting that declares
+              // no default starts from its type's empty value.
+              customizations.setEditingExtensionSettingDefault(
+                entry.id,
+                key,
+                definition.default ?? EMPTY_SETTING_VALUES[definition.type]
+              );
+            },
+          }}
+          t={t}
+        />
+      ),
+    });
+  };
 
   return (
     <div className="sb-settings-page">
@@ -674,6 +749,22 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
                   })}
                 </option>
               </select>
+              {entry.extension?.meta.settings &&
+                Object.keys(entry.extension.meta.settings).length > 0 && (
+                  <button
+                    type="button"
+                    className="sb-extension-row-action-button"
+                    onClick={() => handleConfigureDefaults(entry)}
+                    aria-label={t("configure-extension-defaults", {
+                      defaultValue: "Configure defaults",
+                    })}
+                    title={t("configure-extension-defaults", {
+                      defaultValue: "Configure defaults",
+                    })}
+                  >
+                    <span className="material-symbols-outlined">tune</span>
+                  </button>
+                )}
             </div>
           ))
         )}
