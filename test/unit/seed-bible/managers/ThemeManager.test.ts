@@ -591,55 +591,6 @@ describe("ThemeManager storage (via SettingsManager)", () => {
 
     expect(theme.currentTheme.value.variables.primaryColor).toBe("#123456");
   });
-  describe("White-label theme overrides", () => {
-    it("applies a white-label override when the user has no custom color", () => {
-      const login = makeFakeLogin(null);
-      const settings = makeSettings(login);
-
-      const theme = createThemeManager(settings, {
-        background: "#123456",
-      });
-
-      expect(theme.currentTheme.value.variables.background).toBe("#123456");
-    });
-
-    it("user custom override takes precedence over white-label override", () => {
-      const login = makeFakeLogin(null);
-      const settings = makeSettings(login);
-
-      const theme = createThemeManager(settings, {
-        background: "#123456",
-      });
-
-      theme.setCustomColor("background", "#ffffff");
-
-      expect(theme.currentTheme.value.variables.background).toBe("#ffffff");
-    });
-
-    it("white-label override remains for keys not customized by the user", () => {
-      const login = makeFakeLogin(null);
-      const settings = makeSettings(login);
-
-      const theme = createThemeManager(settings, {
-        background: "#123456",
-        fontColor: "#abcdef",
-      });
-
-      theme.setCustomColor("background", "#ffffff");
-
-      expect(theme.currentTheme.value.variables.background).toBe("#ffffff");
-      expect(theme.currentTheme.value.variables.fontColor).toBe("#abcdef");
-    });
-
-    it("does not change the base theme when white-label overrides are absent", () => {
-      const login = makeFakeLogin(null);
-      const settings = makeSettings(login);
-
-      const theme = createThemeManager(settings);
-
-      expect(theme.currentTheme.value.variables.background).toBe("#f8fafc");
-    });
-  });
 
   it("previewHighlightColor updates only the previewed field, leaving the other field's real value alone", () => {
     const login = makeFakeLogin(null);

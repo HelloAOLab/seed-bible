@@ -1224,9 +1224,14 @@ export interface ThemeManager {
 
 export function createTheme(
   settings: SettingsManager,
-  whiteLabelThemeOverrides: ThemeOverrides = {}
+  brandingThemes?: BibleTheme[]
 ): ThemeManager {
-  const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
+  // default themes used when no valid branding themes are provided
+  const DEFAULT_THEMES: BibleTheme[] = [LIGHT_THEME, DARK_THEME];
+  // use branding themes when available otherwise fall back to the default themes
+  const themes = signal<BibleTheme[]>(
+    brandingThemes?.length ? brandingThemes : DEFAULT_THEMES
+  );
 
   const selectedThemeId = computed(() => settings.settings.value.themeId);
   const customOverrides = computed(() =>
@@ -1255,13 +1260,9 @@ export function createTheme(
 
   const currentTheme = computed<BibleTheme>(() => {
     const withColorOverrides = applyOverrides(
-      applyOverrides(
-        applyOverrides(basePresetTheme.value, whiteLabelThemeOverrides),
-        customOverrides.value
-      ),
+      applyOverrides(basePresetTheme.value, customOverrides.value),
       previewOverrides.value
     );
-
     return applyHighlightOverrides(
       applyHighlightOverrides(
         withColorOverrides,
