@@ -37,6 +37,7 @@ import {
   EditProfilePaneTitle,
 } from "../components/ProfilePane/EditProfilePane";
 import { openProfilePictureModal } from "../components/ProfilePictureModal/openProfilePictureModal";
+import { showReadingPlanDetailView } from "../components/ReadingPlansPane/ReadingPlansPane";
 import {
   YOUR_CONTENT_PANE_ID,
   YourContentPane,
@@ -785,15 +786,17 @@ export function createSeedBibleState(
   const search = createSearchManager();
 
   // When the app is opened via a content link — a shared-session invite
-  // (`?sessionId=...`) or a shared playlist (`?playlist=...`) — the user came to
-  // view that content, not to onboard, so we skip the welcome screen and the
-  // auto-starting tutorial for this visit. This is derived from the current URL
-  // rather than persisted, so it only affects this tab/load: revisiting without
-  // either param shows onboarding and tutorials as usual.
+  // (`?sessionId=...`), a shared playlist (`?playlist=...`), or a shared
+  // reading plan (`?readingPlan=...`) — the user came to view that content,
+  // not to onboard, so we skip the welcome screen and the auto-starting
+  // tutorial for this visit. This is derived from the current URL rather
+  // than persisted, so it only affects this tab/load: revisiting without
+  // those params shows onboarding and tutorials as usual.
   const openedViaContentLink =
     typeof window !== "undefined" &&
     (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
-      !!navigation.currentUrl.value.searchParams.get("playlist"));
+      !!navigation.currentUrl.value.searchParams.get("playlist") ||
+      !!navigation.currentUrl.value.searchParams.get("readingPlan"));
 
   const onboarding = createOnboardingManager(login);
 
@@ -2633,6 +2636,41 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
+  const setupInitialReadingPlan = async () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const locator = navigation.currentUrl.value.searchParams.get("readingPlan");
+    if (!locator) {
+      return;
+    }
+    try {
+      const plan = await readingPlans.loadByLocator(locator);
+      if (!plan) {
+        return;
+      }
+      const readingState = selectedTab.peek()?.readingState;
+      if (!readingState) {
+        return;
+      }
+      openReadingPlansPane({
+        readingPlans,
+        readingState,
+        panesManager: panes,
+        modals,
+        playlists,
+        os,
+        login,
+        gallery,
+        toast,
+      });
+      showReadingPlanDetailView();
+    } catch (error) {
+      console.error("Failed to load reading plan from URL:", error);
+    }
+  };
+  void setupInitialReadingPlan();
+
   // Constructed here rather than beside the other managers because it needs
   // `currentReadingState`, which is defined well below them.
   const today = createTodayManager({
@@ -2914,6 +2952,7 @@ export function createSeedBibleState(
       login,
       gallery,
       placement: "fullscreen",
+      toast,
     });
   };
   const renderProfilePane = () => (

@@ -32,6 +32,10 @@ import {
   createReadingPlansManager,
   draftReadingCount,
   sessionsFromDraft,
+  firstPlanScriptureShareRef,
+  buildReadingPlanShareUrl,
+  getReadingPlanLocator,
+  parseReadingPlanLocator,
   type Cadence,
   type ReadingPlanDraft,
   type ReadingPlan,
@@ -1147,6 +1151,269 @@ describe("estimateReadingMinutes", () => {
   });
 });
 
+describe("reading plan share URLs", () => {
+  it("points at the first scripture reading's chapter, not the chapter the sharer is viewing", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "GEN", chapter: 1, verse: 1 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/john/3"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/AAB/genesis/1");
+    expect(url.searchParams.get("readingPlan")).toBe("record-1.plan-1");
+    expect([...url.searchParams.keys()]).toEqual(["readingPlan"]);
+  });
+
+  it("skips leading notes and links, then uses the first bible-verse chapter", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            { id: "r1", item: { type: "html", html: "<p>intro</p>" } },
+            { id: "r2", item: { type: "link", url: "https://example.com" } },
+            {
+              id: "r3",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 3, verse: 16 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/genesis/1"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/AAB/john/3");
+  });
+
+  it("skips a scripture reading whose book does not resolve and uses the next one", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "NOTABOOK", chapter: 9 },
+              },
+            },
+            {
+              id: "r2",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 3 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(firstPlanScriptureShareRef(plan)).toEqual({
+      bookId: "JHN",
+      chapter: 3,
+      translationId: undefined,
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/genesis/1"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/AAB/john/3");
+  });
+
+  it("uses the start chapter of a cross-chapter scripture reading", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 1, endChapter: 3 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/genesis/1"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/AAB/john/1");
+  });
+
+  it("uses the scripture reading's translation when it names one", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 3 },
+                translationId: "NIV",
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/genesis/1"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/NIV/john/3");
+  });
+
+  it("keeps the UI language the sharer was already reading in", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 3 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/es/spa_onbv/genesis/1"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/es/spa_onbv/john/3");
+  });
+
+  it("does not copy unrelated query params from the current page", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 3 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL(
+          "http://localhost:3000/en/AAB/genesis/1?sessionId=abc&verse=4"
+        ),
+        basePath: "",
+      })
+    );
+
+    expect(url.searchParams.get("sessionId")).toBeNull();
+    expect(url.searchParams.get("verse")).toBeNull();
+    expect(url.searchParams.get("readingPlan")).toBe("record-1.plan-1");
+  });
+
+  it("keeps the current chapter when the plan has no resolvable scripture", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            { id: "r1", item: { type: "html", html: "<p>notes</p>" } },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/john/3"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/AAB/john/3");
+    expect(url.searchParams.get("readingPlan")).toBe("record-1.plan-1");
+  });
+
+  it("round-trips a locator whose recordName contains dots", () => {
+    const locator = getReadingPlanLocator({
+      recordName: "user.name",
+      address: "plan-1",
+    });
+    expect(locator).toBe("user.name.plan-1");
+    expect(parseReadingPlanLocator(locator)).toEqual({
+      recordName: "user.name",
+      address: "plan-1",
+    });
+  });
+});
+
 describe("createReadingPlansManager", () => {
   type LoginArg = Parameters<typeof createReadingPlansManager>[1];
 
@@ -1296,6 +1563,52 @@ describe("createReadingPlansManager", () => {
 
     expect(manager.userReadingPlans.value).toEqual([metadata]);
     expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it("loadByLocator loads and selects the plan from a share locator", async () => {
+    const plan = makePlan();
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+
+    const manager = makeManager("user-1");
+    await flush();
+
+    const loaded = await manager.loadByLocator("record-1.plan-1");
+
+    expect(getDataMock).toHaveBeenCalledWith("record-1", "plan-1");
+    expect(loaded).toEqual(plan);
+    expect(manager.selectedReadingPlan.value).toEqual(plan);
+  });
+
+  it("loadByLocator returns null for a malformed locator", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    expect(await manager.loadByLocator(".plan-1")).toBeNull();
+    expect(await manager.loadByLocator("record-1.")).toBeNull();
+    expect(getDataMock).not.toHaveBeenCalled();
+  });
+
+  it("loadByLocator loads and selects the plan from a share locator", async () => {
+    const plan = makePlan();
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+
+    const manager = makeManager("user-1");
+    await flush();
+
+    const loaded = await manager.loadByLocator("record-1.plan-1");
+
+    expect(getDataMock).toHaveBeenCalledWith("record-1", "plan-1");
+    expect(loaded).toEqual(plan);
+    expect(manager.selectedReadingPlan.value).toEqual(plan);
+  });
+
+  it("loadByLocator returns null for a malformed locator", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    expect(await manager.loadByLocator(".plan-1")).toBeNull();
+    expect(await manager.loadByLocator("record-1.")).toBeNull();
+    expect(getDataMock).not.toHaveBeenCalled();
   });
 
   it("walks every page of results", async () => {
