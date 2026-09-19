@@ -797,26 +797,28 @@ export function TabsHeader(props: TabsHeaderProps) {
           </span>
         </button>
 
-        {activeLogoUrl && (
+        {activeLogoUrl ? (
           <span
             className="sb-sidebar-logo sb-tab-user-icon sb-tab-user-icon-has-image"
             style={{ backgroundImage: `url(${activeLogoUrl})` }}
             aria-hidden="true"
           />
-        )}
-        {branding?.logo && branding?.websiteUrl && (
-          <a
-            href={branding.websiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={branding.appName || "Brand logo"}
-          >
-            <img
-              src={branding.logo}
-              alt={branding.appName || ""}
-              className="sb-sidebar-branding-logo"
-            />
-          </a>
+        ) : (
+          branding?.logo &&
+          branding?.websiteUrl && (
+            <a
+              href={branding.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={branding.appName || "Brand logo"}
+            >
+              <img
+                src={branding.logo}
+                alt={branding.appName || ""}
+                className="sb-sidebar-branding-logo"
+              />
+            </a>
+          )
         )}
       </div>
 
