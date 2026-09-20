@@ -759,7 +759,8 @@ export function resolveTranslationUiLanguage(params: {
   );
 }
 
-function bibleLanguageCodesForUi(uiLanguage: string): string[] {
+/** Bible-API language codes that correspond to a UI locale (e.g. "en" → "eng"). */
+export function bibleLanguageCodesForUi(uiLanguage: string): string[] {
   const mapped = UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage];
   if (mapped?.length) {
     return mapped;
