@@ -739,7 +739,7 @@ describe("BibleReader", () => {
 
     const errorPanel = container.querySelector(".sb-reader-error");
     expect(errorPanel?.textContent).toContain(
-      "Accessible Ancients Bible,New International Version are saved on this device."
+      "Accessible Ancients Bible and New International Version are saved on this device."
     );
 
     const trigger = container.querySelector<HTMLButtonElement>(

@@ -121,6 +121,27 @@ function ReaderSaveButton(props: ReaderChapterActionProps) {
 const SHOW_BOOKMARK_BUTTON = false;
 
 /**
+ * Joins names the way the UI language writes a list ("A and B", "A, B, and C").
+ * Falls back to a spaced comma list if the locale cannot format conjunctions.
+ */
+function formatConjunctionList(
+  names: readonly string[],
+  locale: string
+): string {
+  if (names.length <= 1) {
+    return names[0] ?? "";
+  }
+  try {
+    return new Intl.ListFormat(locale, {
+      style: "long",
+      type: "conjunction",
+    }).format(names);
+  } catch {
+    return names.join(", ");
+  }
+}
+
+/**
  * Offers downloaded translations the reader can switch to after a chapter
  * load fails. One match is a single switch; two or more are listed by name
  * and chosen from the same searchable picker Settings uses for language.
@@ -2161,9 +2182,10 @@ export function BibleReader(props: BibleReaderProps) {
                     defaultValue: "{{names}} is saved on this device.",
                   })
                 : t("chapter-unavailable-offline-switch-plural", {
-                    names: offlineFallbackTranslations
-                      .map((item) => item.name)
-                      .join(","),
+                    names: formatConjunctionList(
+                      offlineFallbackTranslations.map((item) => item.name),
+                      language
+                    ),
                     defaultValue: "{{names}} are saved on this device.",
                   })}
             </p>
