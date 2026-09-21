@@ -6,6 +6,8 @@
 
 ### 🔧 Changed
 
+- Move the playlists section from the discover panel to the "Your Content" screen. ([#1838](https://github.com/HelloAOLab/seed-bible/pull/1838))
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed
