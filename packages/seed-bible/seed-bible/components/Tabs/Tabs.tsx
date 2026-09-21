@@ -45,6 +45,7 @@ import {
 import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 import { trimmedOrNull } from "../../managers/Utils";
+import { useAppConfig } from "../../app/appConfig";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -758,6 +759,7 @@ export function TabsHeader(props: TabsHeaderProps) {
     closeLayoutMenu,
     setLayout,
   } = props;
+  const { branding } = useAppConfig();
   const { sidebar, settings, customizations } = state;
   const isAwake = settings.settings.value.keepScreenAwake;
   const activeLogoUrl = customizations.activeCustomization.value?.logoUrl;
@@ -795,12 +797,28 @@ export function TabsHeader(props: TabsHeaderProps) {
           </span>
         </button>
 
-        {activeLogoUrl && (
+        {activeLogoUrl ? (
           <span
             className="sb-sidebar-logo sb-tab-user-icon sb-tab-user-icon-has-image"
             style={{ backgroundImage: `url(${activeLogoUrl})` }}
             aria-hidden="true"
           />
+        ) : (
+          branding?.logo &&
+          branding?.websiteUrl && (
+            <a
+              href={branding.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={branding.appName || "Brand logo"}
+            >
+              <img
+                src={branding.logo}
+                alt={branding.appName || ""}
+                className="sb-sidebar-branding-logo"
+              />
+            </a>
+          )
         )}
       </div>
 
