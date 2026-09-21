@@ -1263,6 +1263,45 @@ describe("createTabs", () => {
     expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
+  it("re-applies a customization's default translation when reactivated after being manually overridden", async () => {
+    // Reproduces a real gap: the previewer activates a customization, picks
+    // a different translation by hand, then switches away and back to the
+    // same customization. The guard exists to stop an *unrelated* draft
+    // edit (e.g. a rename, which changes `activeCustomization`'s identity
+    // without changing its default) from clobbering that manual pick — but
+    // it must not also survive a full deactivate/reactivate cycle, which is
+    // a deliberate "preview this customization again" action.
+    setWebResponses(createExampleManagerResponseMap());
+    const activeCustomizationDefaultTranslationId = signal<string | undefined>(
+      undefined
+    );
+
+    const { tabs: manager } = createTabsManager({
+      activeCustomizationDefaultTranslationId,
+    });
+    const firstTab = manager.tabs.value[0]!;
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    // Activate customization A, whose default is NIV.
+    activeCustomizationDefaultTranslationId.value = "NIV";
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+
+    // Previewer manually picks a different translation.
+    await firstTab.readingState.selectTranslationAndChapter("AAB", "GEN", 1);
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    // Deactivate, then reactivate the same customization.
+    activeCustomizationDefaultTranslationId.value = undefined;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    activeCustomizationDefaultTranslationId.value = "NIV";
+
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
   it("falls back to the saved translation's first book when it doesn't contain the current book", async () => {
     // No `?book=` param, so the initial tab is on the default book (GEN),
     // which AAB has but NIV (mocked with a single book, MAT) does not.

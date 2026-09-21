@@ -30,7 +30,6 @@ import {
 import {
   groupTranslationsByLanguage,
   filterTranslationGroups,
-  type TranslationLanguageGroup,
   type TranslationViewMode,
 } from "../../managers/translationGrouping";
 import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
@@ -870,46 +869,26 @@ function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
     [translations]
   );
   const { groups, totalMatching } = useMemo(() => {
-    const filtered = filterTranslationGroups({
+    // The UI language's own translations are the ones most viewers of this
+    // customization are likely to want, so they sort to the top by default
+    // — unless a translation in a different language is already selected,
+    // in which case that one leads (it's the current pick, and always
+    // outranks `priorityLanguages` inside `filterTranslationGroups`) with
+    // the UI language's group right behind it, rather than buried
+    // alphabetically. Passed straight into `filterTranslationGroups` so the
+    // priority sort runs *before* the list is cut down to `limit` — sorting
+    // an already-sliced page can't recover a language that didn't make the
+    // cut in the first place.
+    const uiBibleLanguages = UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage] ?? [];
+
+    return filterTranslationGroups({
       groups: allGroups,
       query: query.value,
       viewMode: viewMode.value,
       limit: limit.value,
       selectedTranslation,
+      priorityLanguages: uiBibleLanguages,
     });
-
-    // The UI language's own translations are the ones most viewers of this
-    // customization are likely to want, so they sort to the top by default
-    // — unless a translation in a different language is already selected,
-    // in which case that one leads (it's the current pick) with the UI
-    // language's group right behind it, rather than buried alphabetically.
-    const uiBibleLanguages = (UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage] ?? []).map(
-      (code) => code.toLowerCase()
-    );
-    const selectedLanguage = selectedTranslation?.language?.toLowerCase();
-    const priorityLanguages = selectedLanguage
-      ? [
-          selectedLanguage,
-          ...uiBibleLanguages.filter((code) => code !== selectedLanguage),
-        ]
-      : uiBibleLanguages;
-
-    if (priorityLanguages.length === 0) {
-      return filtered;
-    }
-
-    const priorityRank = (group: TranslationLanguageGroup) => {
-      const index = priorityLanguages.indexOf(group.language.toLowerCase());
-      return index === -1 ? priorityLanguages.length : index;
-    };
-
-    return {
-      ...filtered,
-      groups: [...filtered.groups].sort((a, b) => {
-        const rankDiff = priorityRank(a) - priorityRank(b);
-        return rankDiff !== 0 ? rankDiff : a.language.localeCompare(b.language);
-      }),
-    };
   }, [
     allGroups,
     query.value,

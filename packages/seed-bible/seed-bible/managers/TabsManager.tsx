@@ -1132,6 +1132,11 @@ export function createTabs(
   effect(() => {
     const targetTranslationId = activeCustomizationDefaultTranslationId?.value;
     if (!targetTranslationId) {
+      // No active customization default (deactivated, or cleared) — clear
+      // the guard too, so reactivating the same customization (or another
+      // with the same default) re-applies it instead of being mistaken for
+      // an unrelated identity churn of the still-active one.
+      appliedCustomizationDefaultTranslationId = null;
       return;
     }
 
