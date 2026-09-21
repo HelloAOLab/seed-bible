@@ -28,6 +28,10 @@ const bonfire: DiscoveredExtension = {
   meta: {
     id: "ext_Bonfire",
     dependencies: ["ext_Apologist"],
+    settings: {
+      apiKey: { type: "string" },
+      maxEmbers: { type: "number", default: 3 },
+    },
     translations: {
       en: { title: "Bonfire", description: "Gather round" },
       // No Spanish, and a language no other extension has.
@@ -55,10 +59,14 @@ describe("trimMeta", () => {
         en: { title: "Bonfire", description: "Gather round" },
       },
       dependencies: ["ext_Apologist"],
+      settings: {
+        apiKey: { type: "string" },
+        maxEmbers: { type: "number", default: 3 },
+      },
     });
   });
 
-  it("omits dependencies and autoinstall when absent rather than emitting undefined", () => {
+  it("omits dependencies, autoinstall and settings when absent rather than emitting undefined", () => {
     const trimmed = trimMeta({ id: "ext_X", translations: {} });
     expect(Object.keys(trimmed).sort()).toEqual(["id", "translations"]);
   });
@@ -140,6 +148,11 @@ describe("generateEntryModuleSource", () => {
     expect(source).toContain('"id":"ext_Apologist"');
     expect(source).toContain('"autoinstall":true');
     expect(source).toContain('"dependencies":["ext_Apologist"]');
+  });
+
+  it("inlines an extension's settings definitions, since they're structural rather than per-locale text", () => {
+    expect(source).toContain('"apiKey":{"type":"string"}');
+    expect(source).toContain('"maxEmbers":{"type":"number","default":3}');
   });
 
   it("exposes one lazy loader per language except the inlined English", () => {

@@ -41,7 +41,9 @@ import {
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
+import { TutorialSkipPrompt } from "../components/TutorialSkipPrompt/TutorialSkipPrompt";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
+import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 
 /**
  * Font `<link>`s, plus the CSS for the active Customization layered on top
@@ -366,10 +368,21 @@ function MainContent(props: {
           className={`${webkitClass}`}
         />
 
+        <OfflineUpdatePrompt
+          offline={state.bibleData.offline}
+          toast={state.app.toast}
+          className={`${webkitClass}`}
+        />
+
         <Tutorial
           tutorial={state.tutorial}
           className={`${webkitClass}`}
           groupFilter="non-selector"
+        />
+
+        <TutorialSkipPrompt
+          tutorial={state.tutorial}
+          className={`${webkitClass}`}
         />
 
         <LanguageUnavailableModal className={`${webkitClass}`} />
