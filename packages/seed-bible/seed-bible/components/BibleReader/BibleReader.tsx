@@ -51,15 +51,15 @@ import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import {
-  SelfAvatarVisual,
-  getSelfDisplayName,
-  openBookmarkCategoryModal,
+  SaveStarIcon,
+  openSaveModalForLocation,
+  saveChapterLabel,
 } from "../Tabs/Tabs";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
 
-interface ReaderBookmarkButtonProps {
+interface ReaderChapterActionProps {
   state: SeedBibleState;
   translationId: string | null;
   bookId: string | null;
@@ -67,61 +67,86 @@ interface ReaderBookmarkButtonProps {
 }
 
 /**
- * Toggle for the chapter currently shown in the reader. Sits in the top-right
- * of the chapter content area: filled + orange when the chapter is saved,
- * outlined when not. Opens the category picker to save into an existing or
- * new folder; when already bookmarked, removes the chapter-level bookmark.
+ * Files the chapter currently shown in the reader. Sits in the top-right
+ * action cluster and opens the same folder picker a verse selection does, so
+ * one press archives the whole chapter into an existing or new folder.
+ *
+ * The star fills once a chapter-level save exists, and pressing a filled star
+ * edits that save's folders rather than filing a second copy. Either way it is
+ * not a toggle — removing a save is done from the saves panel.
  */
-function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
+function ReaderSaveButton(props: ReaderChapterActionProps) {
   const { state, translationId, bookId, chapterNumber } = props;
   const { t } = useI18n();
-  const canBookmark = !!(translationId && bookId && chapterNumber);
-  const isBookmarked =
-    canBookmark &&
-    state.bookmarks.isLocationBookmarked(translationId, bookId, chapterNumber);
+  const canSave = !!(translationId && bookId && chapterNumber);
+  const isSaved =
+    canSave &&
+    state.saves.isLocationSaved(translationId, bookId, chapterNumber);
 
   return (
     <button
       type="button"
-      className={`sb-bible-reader-bookmark-button${
-        isBookmarked ? " sb-bible-reader-bookmark-button-active" : ""
+      className={`sb-bible-reader-save-button${
+        isSaved ? " sb-bible-reader-save-button-saved" : ""
       }`}
       onClick={() => {
-        if (!canBookmark || !translationId || !bookId || !chapterNumber) {
+        if (!canSave || !translationId || !bookId || !chapterNumber) {
           return;
         }
-        if (isBookmarked) {
-          void state.bookmarks.removeBookmarkForLocation(
-            translationId,
-            bookId,
-            chapterNumber
-          );
-          return;
-        }
-        openBookmarkCategoryModal(state, {
+        openSaveModalForLocation(state, {
           translationId,
           bookId,
           chapterNumber,
         });
       }}
-      disabled={!canBookmark}
-      aria-pressed={isBookmarked}
-      aria-label={
-        isBookmarked
-          ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-          : t("add-bookmark", { defaultValue: "Bookmark chapter" })
-      }
-      title={
-        isBookmarked
-          ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-          : t("add-bookmark", { defaultValue: "Bookmark chapter" })
-      }
+      disabled={!canSave}
+      aria-label={saveChapterLabel(t, isSaved)}
+      title={saveChapterLabel(t, isSaved)}
+    >
+      <SaveStarIcon isSaved={isSaved} />
+    </button>
+  );
+}
+
+/**
+ * Whether the reader header shows a bookmark button at all.
+ *
+ * Off until #1658 builds the real one. The placeholder below stays in the tree
+ * — and keeps its slot in both header clusters — so turning bookmarks back on
+ * is this one line rather than a rebuild of the layout around it.
+ */
+const SHOW_BOOKMARK_BUTTON = false;
+
+/**
+ * Placeholder for the redesigned bookmarks of #1658. The archival behavior
+ * this button used to have moved to Saves (the button beside it), and the
+ * replacement — a named, colored marker you move as you read — does not exist
+ * yet, so pressing it says so rather than quietly doing nothing.
+ */
+function ReaderBookmarkButton(props: ReaderChapterActionProps) {
+  const { state } = props;
+  const { t } = useI18n();
+  const label = t("bookmark", { defaultValue: "Bookmark" });
+
+  return (
+    <button
+      type="button"
+      className="sb-bible-reader-bookmark-button"
+      onClick={() => {
+        state.app.toast(
+          t("bookmark-redesign-coming-soon", {
+            defaultValue: "Bookmark redesign coming soon",
+          })
+        );
+      }}
+      aria-label={label}
+      title={label}
     >
       <svg
         width="22"
         height="22"
         viewBox="0 0 24 24"
-        fill={isBookmarked ? "currentColor" : "none"}
+        fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
@@ -2254,7 +2279,7 @@ export function BibleReader(props: BibleReaderProps) {
       dir={translation.value?.textDirection ?? "auto"}
     >
       {isMobile && state ? (
-        <>
+        <Fragment key="mobile">
           <div
             className={`sb-bible-reader-mobile-header${
               mobileChrome?.isScrolled
@@ -2291,12 +2316,22 @@ export function BibleReader(props: BibleReaderProps) {
             />
             <div className="sb-bible-reader-mobile-header-actions">
               {!state.playlists.playing.value && (
-                <ReaderBookmarkButton
-                  state={state}
-                  translationId={translationId.value}
-                  bookId={bookId.value}
-                  chapterNumber={chapterNumber.value}
-                />
+                <>
+                  <ReaderSaveButton
+                    state={state}
+                    translationId={translationId.value}
+                    bookId={bookId.value}
+                    chapterNumber={chapterNumber.value}
+                  />
+                  {SHOW_BOOKMARK_BUTTON && (
+                    <ReaderBookmarkButton
+                      state={state}
+                      translationId={translationId.value}
+                      bookId={bookId.value}
+                      chapterNumber={chapterNumber.value}
+                    />
+                  )}
+                </>
               )}
               <QuickToolbar
                 toolsManager={state.tools}
@@ -2310,32 +2345,17 @@ export function BibleReader(props: BibleReaderProps) {
                 app={state.app}
                 className="sb-quick-toolbar-mobile-header"
               />
+              {/*
+               * No account avatar here: "You" is a bottom-bar tab again
+               * (#1554), and two avatars on one screen made it unclear which
+               * one was the way to your profile.
+               */}
               {sharedSession ? (
                 <MobileSessionParticipants
                   state={state}
                   session={sharedSession}
                 />
-              ) : (
-                <button
-                  type="button"
-                  className="sb-bible-reader-mobile-header-account"
-                  aria-label={`Open account settings (${getSelfDisplayName(
-                    state,
-                    t
-                  )})`}
-                  // The reader pane wrapper selects the pane on pointerdown/click
-                  // (which runs closeSidebarAndSettings). Stop the tap here so it
-                  // doesn't immediately dismiss the account view we're opening.
-                  onPointerDown={(e: PointerEvent) => e.stopPropagation()}
-                  onClick={(e: MouseEvent) => {
-                    e.stopPropagation();
-                    state.sidebar.openSidebar();
-                    state.sidebar.openSettingsToView("account");
-                  }}
-                >
-                  <SelfAvatarVisual state={state} />
-                </button>
-              )}
+              ) : null}
               <button
                 type="button"
                 className="sb-bible-reader-mobile-header-settings"
@@ -2405,9 +2425,9 @@ export function BibleReader(props: BibleReaderProps) {
               onOpenAllSettings={() => mobileChrome.onOpenAllSettings()}
             />
           )}
-        </>
+        </Fragment>
       ) : (
-        <>
+        <Fragment key="desktop">
           <div className="sb-bible-reader-header">
             <div className="sb-bible-reader-heading">
               <h2
@@ -2437,6 +2457,27 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
             {state && (
               <div className="sb-bible-reader-actions">
+                {/* Chapter actions lead, extension quick tools follow — the
+                    same order as the mobile header cluster below, so Save
+                    doesn't swap sides with Share between breakpoints. */}
+                {!state.playlists.playing.value && (
+                  <>
+                    <ReaderSaveButton
+                      state={state}
+                      translationId={translationId.value}
+                      bookId={bookId.value}
+                      chapterNumber={chapterNumber.value}
+                    />
+                    {SHOW_BOOKMARK_BUTTON && (
+                      <ReaderBookmarkButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                    )}
+                  </>
+                )}
                 <QuickToolbar
                   toolsManager={state.tools}
                   readingState={readingState}
@@ -2449,14 +2490,6 @@ export function BibleReader(props: BibleReaderProps) {
                   app={state.app}
                   className="sb-quick-toolbar-reader"
                 />
-                {!state.playlists.playing.value && (
-                  <ReaderBookmarkButton
-                    state={state}
-                    translationId={translationId.value}
-                    bookId={bookId.value}
-                    chapterNumber={chapterNumber.value}
-                  />
-                )}
               </div>
             )}
           </div>
@@ -2472,7 +2505,7 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
             {extraContent}
           </div>
-        </>
+        </Fragment>
       )}
 
       {scriptureElements.showFootnotes && selectedFootnote.value !== null && (

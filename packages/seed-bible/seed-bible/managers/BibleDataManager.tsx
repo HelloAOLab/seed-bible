@@ -16,6 +16,11 @@ import {
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
 import { isVerseReferenceInBounds } from "./verseReferenceBounds";
+import {
+  BOOK_CHAPTER_JOIN_PATTERN,
+  PROSE_REFERENCE_NUMBERS_PATTERN,
+  buildTail,
+} from "./verseReferenceSyntax";
 
 /**
  * Opaque cache for `getTranslations()`'s network result, keyed by normalized
@@ -104,6 +109,19 @@ export interface BibleDataManager {
     chapter: number | string,
     options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter>;
+  /**
+   * A chapter already fetched this session, read synchronously, or null.
+   *
+   * Only the API's response cache is consulted — the offline store is an
+   * async read, so a downloaded chapter that has not also been requested this
+   * session reads as null here. Callers should treat this as a fast path over
+   * {@link getTranslationBookChapter}, never as proof a chapter is absent.
+   */
+  getCachedTranslationBookChapter: (
+    translationId: string,
+    book: string,
+    chapter: number | string
+  ) => TranslationBookChapter | null;
   getNextChapter: (
     chapter: TranslationBookChapter,
     options?: ApiRequestOptions
@@ -324,22 +342,27 @@ export function parseVerseReference(
   text: string,
   books?: TranslationBook[]
 ): VerseRef | null {
-  // Formats supported:
+  // Formats supported (`:` and `.` are interchangeable):
   //   GEN 1          – chapter only
   //   GEN 1:1        – chapter + verse
+  //   GEN 1.1        – same, European period
+  //   GEN.1.1        – compact period form
   //   GEN 5-7        – chapter range (hyphen, en dash, or em dash)
   //   GEN 5:16-19    – verse range within one chapter
   //   GEN 1:1-2:10   – cross-chapter verse range
   // Book names may include non-ASCII letters (e.g. Spanish "Génesis").
   const match = text.match(
-    /^\s*((?:\d+\s?)?\p{L}[\p{L}\p{N}]*(?:\s+\p{L}[\p{L}\p{N}]*)*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/u
+    new RegExp(
+      `^\\s*((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+\\p{L}[\\p{L}\\p{N}]*)*)${BOOK_CHAPTER_JOIN_PATTERN}${PROSE_REFERENCE_NUMBERS_PATTERN}`,
+      "u"
+    )
   );
 
   if (!match) {
     return null;
   }
 
-  const [reference, book, chapterStr, verseStr, rangeStartStr, rangeEndStr] =
+  const [reference, book, chapterStr, verseStr, endChapterStr, endVerseStr] =
     match;
 
   if (!book || !chapterStr) {
@@ -351,27 +374,12 @@ export function parseVerseReference(
     return null;
   }
 
-  const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
-  if (verse !== undefined && isNaN(verse)) {
+  const tail = buildTail(verseStr, endChapterStr, endVerseStr);
+  if (tail === null) {
     return null;
   }
 
-  let endChapter: number | undefined;
-  let endVerse: number | undefined;
-
-  if (rangeStartStr) {
-    if (verse === undefined) {
-      // No verse → range is chapter-based: "GEN 5-7"
-      endChapter = parseInt(rangeStartStr);
-    } else if (rangeEndStr) {
-      // Both sides have a colon separator: "GEN 1:1-2:10"
-      endChapter = parseInt(rangeStartStr);
-      endVerse = parseInt(rangeEndStr);
-    } else {
-      // Verse present, no colon on range end: "GEN 5:16-19"
-      endVerse = parseInt(rangeStartStr);
-    }
-  }
+  const { verse, endChapter, endVerse } = tail;
 
   const content =
     reference.length !== text.length
@@ -428,8 +436,14 @@ export function scanVerseReferencesInText(
   //   \p{L}[\p{L}\p{N}]* — word starting with a letter in any script
   //   (?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)? — optional "of …" for "Song of Solomon"
   // Word boundary: not preceded by a letter/digit (ASCII \b alone fails for non-ASCII).
-  const pattern =
-    /(?<![\p{L}\p{N}])((?:\d+\s?)?\p{L}[\p{L}\p{N}]*(?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)?)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/gu;
+  // Numeric tail is {@link PROSE_REFERENCE_NUMBERS_PATTERN}, which requires a
+  // tight range mark ("Luke 1-2", not "Luke 1 - 2"). The book→chapter joiner is
+  // {@link BOOK_CHAPTER_JOIN_PATTERN}, which excludes the colon, so a list
+  // header like "Mark: 3 things" is not Mark chapter 3.
+  const pattern = new RegExp(
+    `(?<![\\p{L}\\p{N}])((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+[Oo][Ff]\\s+\\p{L}[\\p{L}\\p{N}]*)?)${BOOK_CHAPTER_JOIN_PATTERN}${PROSE_REFERENCE_NUMBERS_PATTERN}`,
+    "gu"
+  );
 
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
@@ -438,8 +452,8 @@ export function scanVerseReferencesInText(
       bookStr,
       chapterStr,
       verseStr,
-      rangeStartStr,
-      rangeEndStr,
+      endChapterStr,
+      endVerseStr,
     ] = match;
 
     // Rejected candidates must retry one character later. Otherwise a false
@@ -466,25 +480,13 @@ export function scanVerseReferencesInText(
       continue;
     }
 
-    const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
-    if (verse !== undefined && isNaN(verse)) {
+    const tail = buildTail(verseStr, endChapterStr, endVerseStr);
+    if (tail === null) {
       retryFromNextChar();
       continue;
     }
 
-    let endChapter: number | undefined;
-    let endVerse: number | undefined;
-
-    if (rangeStartStr) {
-      if (verse === undefined) {
-        endChapter = parseInt(rangeStartStr);
-      } else if (rangeEndStr) {
-        endChapter = parseInt(rangeStartStr);
-        endVerse = parseInt(rangeEndStr);
-      } else {
-        endVerse = parseInt(rangeStartStr);
-      }
-    }
+    const { verse, endChapter, endVerse } = tail;
 
     if (
       !isVerseReferenceInBounds(
@@ -1151,6 +1153,21 @@ export function createBibleDataManager(
     );
   };
 
+  const getCachedTranslationBookChapter = (
+    translationId: string,
+    book: string,
+    chapter: number | string
+  ): TranslationBookChapter | null => {
+    return (
+      api.getCachedTranslationBookChapter(
+        translationId,
+        book,
+        chapter,
+        getEndpointForTranslation(translationId)
+      ) ?? null
+    );
+  };
+
   const getNextChapter = async (
     chapter: TranslationBookChapter,
     options?: ApiRequestOptions
@@ -1292,6 +1309,7 @@ export function createBibleDataManager(
     getTranslationBooks,
     getCachedTranslationBooks,
     getTranslationBookChapter,
+    getCachedTranslationBookChapter,
     getNextChapter,
     getPreviousChapter,
     getAudioTimings,

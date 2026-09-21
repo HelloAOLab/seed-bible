@@ -4,6 +4,7 @@ import {
   createI18nManager,
   getBrandedAppText,
   getPreferredSupportedLanguage,
+  getUrlLanguage,
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -60,8 +61,11 @@ describe("I18nManager getInitialLanguage()", () => {
       batchWrites: vi.fn((fn: () => unknown) => fn()),
       updateQueryParam: vi.fn(),
       linkToQuery: vi.fn(),
+      linkToBareRoot: vi.fn(),
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
+      stampCurrentState: vi.fn(),
+      getCurrentScrollPosition: vi.fn(),
       dispose: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ssrLanguages);
@@ -193,7 +197,10 @@ describe("I18nManager language fallback prompt", () => {
       updateQueryParam: vi.fn(),
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
+      stampCurrentState: vi.fn(),
+      getCurrentScrollPosition: vi.fn(),
       linkToQuery: vi.fn(),
+      linkToBareRoot: vi.fn(),
       dispose: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);
@@ -249,7 +256,10 @@ describe("I18nManager UI language switch prompt", () => {
       updateQueryParam: vi.fn(),
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
+      stampCurrentState: vi.fn(),
+      getCurrentScrollPosition: vi.fn(),
       linkToQuery: vi.fn(),
+      linkToBareRoot: vi.fn(),
       dispose: vi.fn(),
       batchWrites: vi.fn((fn: () => unknown) => fn()),
     } as NavigationManager;
@@ -365,6 +375,30 @@ describe("I18nManager URL <-> language sync", () => {
     expect(manager.language.value).toBe("fr");
     expect(nav.currentUrl.value.search).toBe("");
     expect(nav.currentUrl.value.pathname).toBe("/");
+  });
+});
+
+describe("getUrlLanguage", () => {
+  it("resolves the language segment of a reading path", () => {
+    expect(
+      getUrlLanguage(new URL("https://x.example/es/spa_onbv/john/3"), "")
+    ).toBe("es");
+  });
+
+  it("resolves the language segment of a static page path", () => {
+    expect(getUrlLanguage(new URL("https://x.example/es/about"), "")).toBe(
+      "es"
+    );
+  });
+
+  it("falls back to the legacy ?lang= param for anything else", () => {
+    expect(getUrlLanguage(new URL("https://x.example/?lang=fr"), "")).toBe(
+      "fr"
+    );
+  });
+
+  it("returns null when nothing in the URL names a language", () => {
+    expect(getUrlLanguage(new URL("https://x.example/"), "")).toBeNull();
   });
 });
 

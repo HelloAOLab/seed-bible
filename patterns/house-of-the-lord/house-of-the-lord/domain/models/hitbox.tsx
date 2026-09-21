@@ -7,6 +7,7 @@ export interface HitboxData {
   scaleY: number;
   scaleZ: number;
   form?: string;
+  rotation?: Point3D;
 }
 
 export interface Hitbox {

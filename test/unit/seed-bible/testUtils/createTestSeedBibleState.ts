@@ -179,7 +179,10 @@ async function ensureI18nInitialized(): Promise<void> {
           new Error(`No locale file for language: ${language}`)
         );
       }
-      return loader().then((mod) => mod.default);
+      // Let `resourcesToBackend` do the `.default` unwrap itself (see
+      // I18nManager's matching backend) — unwrapping here too double-unwraps
+      // any locale whose JSON has a top-level "default" key.
+      return loader();
     })
   );
 
@@ -222,6 +225,9 @@ if (typeof afterEach === "function") {
     // older manager's (inert) wrapper underneath whenever a test builds two.
     for (const state of liveTestStates.splice(0).reverse()) {
       state.navigation.dispose();
+      // Speech outlives the state that started it, and its listeners sit on
+      // globals every other test shares.
+      state.textToSpeech.dispose();
     }
     // The reading position lives in the URL path, so it outlives the listeners
     // that wrote it: without this the next test starts on whatever chapter —

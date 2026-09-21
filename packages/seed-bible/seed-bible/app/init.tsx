@@ -3,6 +3,7 @@ import { Main } from "../app/main";
 import { render } from "preact";
 import { readInjectedConfig } from "../app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../app/apiResponseSeed";
+import { readInjectedCustomizationSeed } from "../app/customizationSeed";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { decideHydration, type HydrationDecision } from "../app/hydrationGate";
 import { hydrateWithFallback } from "../app/hydrateWithFallback";
@@ -19,6 +20,11 @@ const config = readInjectedConfig();
 // the page already contains.
 const apiResponseSnapshot = readInjectedApiResponseSnapshot();
 
+// The `?customization=...` load the server already completed, if any —
+// seeding the client's own CustomizationsManager with it means the manager
+// creation below doesn't re-fetch a record the page already reflects.
+const initialCustomizationSeed = readInjectedCustomizationSeed();
+
 const container = document.getElementById("app") ?? document.body;
 
 console.log("Starting APP");
@@ -28,7 +34,11 @@ console.log("Starting APP");
 // paint. This keeps the initial paint on the correct-language, correct-
 // content SSR markup instead of flashing a fallback that a moment later
 // gets replaced.
-const state = createSeedBibleState({ config, apiResponseSnapshot });
+const state = createSeedBibleState({
+  config,
+  apiResponseSnapshot,
+  initialCustomizationSeed,
+});
 
 /**
  * Every initial tab's chapter fetch is already in flight by the time
