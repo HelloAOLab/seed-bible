@@ -12,6 +12,7 @@ import type { LoginManager } from "./LoginManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
+import type { ExtensionSettingValue } from "./ExtensionManager";
 import {
   applyHighlightOverrides,
   filterValidColorOverrides,
@@ -316,6 +317,20 @@ const customizationSchema = z
     extensionSettings: z
       .record(z.string(), extensionAvailabilitySchema)
       .default({}),
+    /**
+     * Default values this customization sets for extension settings
+     * (`ExtensionMeta.settings`), keyed by extension id then setting name.
+     * A viewer's own value (see `ExtensionSettingsManager`) always wins over
+     * this; this only fills in for a viewer who hasn't set one themselves.
+     * Only ever written from the extension settings editor in
+     * `CustomizationEditExtensionsView`.
+     */
+    extensionSettingDefaults: z
+      .record(
+        z.string(),
+        z.record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
+      )
+      .default({}),
   })
   .refine((r) => r.variants.some((v) => v.id === r.defaultVariantId), {
     message: "defaultVariantId must reference an existing variant",
@@ -356,6 +371,11 @@ export interface SeedBibleCustomization {
   updatedAt: number;
   /** Per-extension availability while this customization is active. An id with no entry defaults to "available". */
   extensionSettings: Record<string, ExtensionAvailability>;
+  /** Per-extension setting defaults while this customization is active. An extension/key with no entry has no default here. */
+  extensionSettingDefaults: Record<
+    string,
+    Record<string, ExtensionSettingValue>
+  >;
 }
 
 /** Resolves an extension's effective availability for a customization, defaulting to "available" when unset. */
@@ -364,6 +384,15 @@ export function getExtensionAvailability(
   extensionId: string
 ): ExtensionAvailability {
   return customization?.extensionSettings[extensionId] ?? "available";
+}
+
+/** Resolves a customization's default for one extension setting, or undefined if it doesn't set one. */
+export function getExtensionSettingDefault(
+  customization: SeedBibleCustomization | null,
+  extensionId: string,
+  key: string
+): ExtensionSettingValue | undefined {
+  return customization?.extensionSettingDefaults[extensionId]?.[key];
 }
 
 function buildCustomizationLocator(recordName: string, id: string): string {
@@ -637,6 +666,14 @@ export interface CustomizationsManager {
   /** True once the initial `?customization=` load has settled — see above. */
   initialCustomizationLoadSettled: ReadonlySignal<boolean>;
   /**
+   * Builds a seed of the initial `?customization=...` load for the client to
+   * reuse instead of re-fetching — see `InitialCustomizationSeed`. Called by
+   * `entry-ssr.tsx` after rendering settles; null when there was no
+   * `?customization=` param, or when the load hadn't actually completed (the
+   * SSR-only timeout backstop fired first).
+   */
+  getInitialCustomizationSeed: () => InitialCustomizationSeed | null;
+  /**
    * The local, unpersisted draft of the customization currently open in the
    * editor settings pages, or null when none is open. Edits accumulate here
    * and are only written to CasualOS by `saveEditingCustomization`.
@@ -766,6 +803,22 @@ export interface CustomizationsManager {
   getActiveExtensionAvailability: (
     extensionId: string
   ) => ExtensionAvailability;
+  /** Sets an extension setting's default value on the draft. No-op with no open draft. */
+  setEditingExtensionSettingDefault: (
+    extensionId: string,
+    key: string,
+    value: ExtensionSettingValue
+  ) => void;
+  /** Removes an extension setting's default value from the draft. No-op with no open draft. */
+  clearEditingExtensionSettingDefault: (
+    extensionId: string,
+    key: string
+  ) => void;
+  /** The active customization's default for an extension setting, or undefined if nothing is active or it sets no default there. */
+  getActiveExtensionSettingDefault: (
+    extensionId: string,
+    key: string
+  ) => ExtensionSettingValue | undefined;
   /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active or the extension's availability there isn't "available". */
   addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
   /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
@@ -774,13 +827,47 @@ export interface CustomizationsManager {
   ) => Promise<void>;
 }
 
+/**
+ * A prior SSR render's completed `?customization=...` load, handed to the
+ * client so it can skip re-fetching over `os.getData()` — see
+ * `CustomizationsManager.getInitialCustomizationSeed` (which produces this)
+ * and `app/customizationSeed.ts` (which reads it back out of the injected
+ * HTML on the client).
+ */
+export interface InitialCustomizationSeed {
+  /**
+   * The `?customization=...` locator this seed was resolved for. Checked
+   * against the page's own `?customization=` param before use — a seed for a
+   * different locator (a mismatched or stale cached HTML page, say) must
+   * never be applied as if it were this page's own load.
+   */
+  locator: string;
+  /**
+   * The customization SSR resolved for `locator`, or null if that load
+   * completed and found nothing (an invalid or deleted link). Only ever
+   * built from a load that actually completed — see the caller in
+   * `entry-ssr.tsx` — never from one the SSR-only timeout backstop cut
+   * short, which would incorrectly tell the client "this doesn't exist" for
+   * a link that might still resolve.
+   *
+   * Typed here as already-narrowed, but it crossed a server/client boundary
+   * (embedded as JSON in the page) to get here — nothing enforces that shape
+   * on the way in. The consumer (`createCustomizationsManager`'s
+   * `parseSeedCustomization`) re-validates it through the same
+   * `customizationSchema` a fresh fetch goes through before trusting it, so
+   * treat this field as untrusted input, not as a guarantee.
+   */
+  customization: SeedBibleCustomization | null;
+}
+
 export function createCustomizationsManager(
   os: CasualOSManager,
   login: LoginManager,
   theme: ThemeManager,
   navigation: NavigationManager,
   variantSelections: CustomizationVariantSelectionsManager,
-  extensionPreferences: CustomizationExtensionPreferencesManager
+  extensionPreferences: CustomizationExtensionPreferencesManager,
+  initialCustomizationSeed?: InitialCustomizationSeed
 ): CustomizationsManager {
   const customizations = signal<SeedBibleCustomization[]>([]);
   const isLoading = signal(false);
@@ -862,31 +949,125 @@ export function createCustomizationsManager(
     resolveInitialCustomizationLoadPromise();
   };
 
-  if (initialLocator) {
-    void loadByLocator(initialLocator).then(settleInitialCustomizationLoad);
+  /**
+   * True once the initial `?customization=...` load has actually completed
+   * (found, not found, or errored) — unlike `initialCustomizationLoadSettled`
+   * above, this is never forced true by the SSR-only timeout backstop below.
+   * `getInitialCustomizationSeed` relies on that distinction: seeding the
+   * client with "not found" for a load the timeout merely gave up waiting on
+   * would incorrectly rule out a customization that might still resolve.
+   */
+  let initialCustomizationLoadCompleted = false;
 
-    // During SSR the render blocks on `initialCustomizationLoadPromise`, so an
-    // `os.getData()` that never answers would hold the request open
-    // indefinitely — `loadByLocator` itself always resolves (its try/catch
-    // covers every other failure mode), so this timeout is purely a backstop
-    // for that one case. Not armed on the client: the promise is only thrown
-    // (to suspend) during SSR (see `ExternalResourceDependencies` in
-    // `app/main.tsx`), so on the client it's never awaited and a slow load
-    // simply applies the customization late, exactly as it did before this
-    // feature existed.
-    const SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS = 5000;
-    if (import.meta.env.SSR) {
-      initialCustomizationLoadTimer = setTimeout(() => {
+  /**
+   * Validates a same-locator seed the same way `loadByLocator` validates a
+   * freshly-fetched record — `initialCustomizationSeed.customization` is
+   * typed as an already-narrowed `SeedBibleCustomization`, but it crossed a
+   * server/client boundary (embedded as JSON in the page) to get here, so
+   * nothing actually enforces that shape at this point except this parse.
+   * Skipping it would let the fetch path and the seed path silently drift
+   * apart the next time the schema changes (a new required field, a
+   * different variant shape): the fetch path would reject a stale/bad
+   * record, while the seed path would wave it through as-is.
+   */
+  function parseSeedCustomization(
+    customization: SeedBibleCustomization
+  ): SeedBibleCustomization | null {
+    const parsed = customizationSchema.safeParse(customization);
+    if (!parsed.success) {
+      return null;
+    }
+    return {
+      ...parsed.data,
+      variants: narrowVariants(parsed.data.variants),
+    };
+  }
+
+  if (initialLocator) {
+    const seedForLocator =
+      initialCustomizationSeed?.locator === initialLocator
+        ? initialCustomizationSeed
+        : null;
+
+    // `customization: null` means the seed itself already resolved to "not
+    // found" — nothing to validate, that outcome applies as-is. A non-null
+    // seed still has to pass the same schema check `loadByLocator` applies to
+    // a fresh fetch; an invalid one is treated as no seed at all, falling
+    // through to a normal fetch below rather than trusting a shape the
+    // schema no longer accepts.
+    const validatedSeedCustomization =
+      seedForLocator && seedForLocator.customization
+        ? parseSeedCustomization(seedForLocator.customization)
+        : null;
+    const seedIsUsable =
+      seedForLocator &&
+      (seedForLocator.customization === null || validatedSeedCustomization);
+
+    if (seedIsUsable) {
+      // A prior SSR render already resolved this exact locator — apply its
+      // result directly instead of repeating the `os.getData()` round trip.
+      if (validatedSeedCustomization) {
+        linkedCustomization.value = validatedSeedCustomization;
+        linkedCustomizationLocator.value = initialLocator;
+      }
+      initialCustomizationLoadCompleted = true;
+      settleInitialCustomizationLoad();
+    } else {
+      if (seedForLocator) {
         console.warn(
-          "Timed out waiting for initial customization load:",
+          "Ignoring an initialCustomizationSeed that failed validation; fetching instead:",
           initialLocator
         );
+      }
+      void loadByLocator(initialLocator).then(() => {
+        initialCustomizationLoadCompleted = true;
         settleInitialCustomizationLoad();
-      }, SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS);
+      });
+
+      // During SSR the render blocks on `initialCustomizationLoadPromise`, so
+      // an `os.getData()` that never answers would hold the request open
+      // indefinitely — `loadByLocator` itself always resolves (its try/catch
+      // covers every other failure mode), so this timeout is purely a
+      // backstop for that one case. Not armed on the client: the promise is
+      // only thrown (to suspend) during SSR (see
+      // `ExternalResourceDependencies` in `app/main.tsx`), so on the client
+      // it's never awaited and a slow load simply applies the customization
+      // late, exactly as it did before this feature existed.
+      const SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS = 5000;
+      if (import.meta.env.SSR) {
+        initialCustomizationLoadTimer = setTimeout(() => {
+          console.warn(
+            "Timed out waiting for initial customization load:",
+            initialLocator
+          );
+          settleInitialCustomizationLoad();
+        }, SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS);
+      }
     }
   } else {
     settleInitialCustomizationLoad();
   }
+
+  /**
+   * Builds a seed of the initial `?customization=...` load for
+   * `entry-ssr.tsx` to embed in the page, so the client's own
+   * `CustomizationsManager` can skip re-fetching what SSR already resolved —
+   * see `InitialCustomizationSeed`. Null when there was no `?customization=`
+   * param, or when the load hadn't actually completed by the time this was
+   * called (the SSR-only timeout backstop fired first).
+   */
+  const getInitialCustomizationSeed = (): InitialCustomizationSeed | null => {
+    if (!initialLocator || !initialCustomizationLoadCompleted) {
+      return null;
+    }
+    return {
+      locator: initialLocator,
+      customization:
+        linkedCustomizationLocator.value === initialLocator
+          ? linkedCustomization.value
+          : null,
+    };
+  };
 
   // The only two ways for a customization to become "active" (applied to
   // the live theme): an in-progress edit draft, or a `?customization=...`
@@ -1077,6 +1258,7 @@ export function createCustomizationsManager(
       createdAt: now,
       updatedAt: now,
       extensionSettings: {},
+      extensionSettingDefaults: {},
     };
 
     await persist(userId, record);
@@ -1639,6 +1821,58 @@ export function createCustomizationsManager(
   ): ExtensionAvailability =>
     getExtensionAvailability(activeCustomization.value, extensionId);
 
+  const setEditingExtensionSettingDefault = (
+    extensionId: string,
+    key: string,
+    value: ExtensionSettingValue
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      extensionSettingDefaults: {
+        ...current.extensionSettingDefaults,
+        [extensionId]: {
+          ...current.extensionSettingDefaults[extensionId],
+          [key]: value,
+        },
+      },
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
+  const clearEditingExtensionSettingDefault = (
+    extensionId: string,
+    key: string
+  ): void => {
+    const current = editingCustomization.value;
+    const currentExtensionDefaults =
+      current?.extensionSettingDefaults[extensionId];
+    if (!current || !currentExtensionDefaults) {
+      return;
+    }
+    const nextExtensionDefaults = { ...currentExtensionDefaults };
+    delete nextExtensionDefaults[key];
+    editingCustomization.value = {
+      ...current,
+      extensionSettingDefaults: {
+        ...current.extensionSettingDefaults,
+        [extensionId]: nextExtensionDefaults,
+      },
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
+  const getActiveExtensionSettingDefault = (
+    extensionId: string,
+    key: string
+  ): ExtensionSettingValue | undefined =>
+    getExtensionSettingDefault(activeCustomization.value, extensionId, key);
+
   const addExtensionToActiveCustomization = async (
     extensionId: string
   ): Promise<void> => {
@@ -1691,6 +1925,7 @@ export function createCustomizationsManager(
     linkedCustomization,
     initialCustomizationLoadPromise,
     initialCustomizationLoadSettled,
+    getInitialCustomizationSeed,
     editingCustomization,
     editingVariantId,
     load,
@@ -1723,6 +1958,9 @@ export function createCustomizationsManager(
     selectActiveVariant,
     setEditingExtensionAvailability,
     getActiveExtensionAvailability,
+    setEditingExtensionSettingDefault,
+    clearEditingExtensionSettingDefault,
+    getActiveExtensionSettingDefault,
     addExtensionToActiveCustomization,
     removeExtensionFromActiveCustomization,
   };

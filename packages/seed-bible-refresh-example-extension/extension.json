@@ -1,5 +1,11 @@
 {
   "id": "example-extension",
+  "settings": {
+    "greeting": { "type": "string", "default": "Hello, World" },
+    "greetingSize": { "type": "number", "default": 1.5 },
+    "subtitle": { "type": "string" },
+    "showBanner": { "type": "boolean", "default": true }
+  },
   "translations": {
     "en": {
       "title": "Example Extension",
@@ -10,7 +16,16 @@
       "open-grid-portal": "Open grid portal",
       "open-map-portal": "Open map portal",
       "item-1": "Item 1",
-      "item-2": "Item 2"
+      "item-2": "Item 2",
+      "setting-greeting-title": "Greeting",
+      "setting-greeting-description": "The greeting shown by this extension's example tool.",
+      "setting-greetingSize-title": "Greeting size",
+      "setting-greetingSize-description": "How large the greeting is, in rem. 1 is normal text size, and decimals like 1.25 work.",
+      "setting-subtitle-title": "Subtitle",
+      "setting-subtitle-description": "Optional line shown under the greeting. This setting declares no default, so nothing shows until you set one.",
+      "setting-showBanner-title": "Show banner",
+      "setting-showBanner-description": "Whether to show the example banner.",
+      "example-banner": "This is the example banner. Turn it off in this extension's settings."
     },
     "es": {
       "title": "Ejemplo de extensión",

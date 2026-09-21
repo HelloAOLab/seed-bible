@@ -128,6 +128,7 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
         <TipTapEditor
           className="sb-settings-text-input sb-annotation-editor"
           initialContent={editing.data.html}
+          autofocus="end"
           onEditor={(editor) => {
             editorRef.current = editor;
           }}

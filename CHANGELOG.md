@@ -10,6 +10,46 @@
 
 ### 🗑️ Removed
 
+## v1.10.0 — 2026-09-21
+
+### ✨ Added
+
+- Focus the annotation editor when it opens so you can start typing right away, whether you are writing a new note or editing an existing one. ([#1826](https://github.com/HelloAOLab/seed-bible/pull/1826))
+- Listen to translations that have no narrated audio; the Listen button now reads the chapter aloud with your device's built-in voice when it has one for that language. ([#1803](https://github.com/HelloAOLab/seed-bible/pull/1803))
+  - The rest of the chapter dims so the verse being read stands out.
+- Show House of the Lord's 3D exhibits in Discover for chapters that mention them, with a button to explore the exhibit and a shortcut to each piece the chapter mentions. ([#1791](https://github.com/HelloAOLab/seed-bible/pull/1791))
+  - An Explore menu inside the exhibit lists its pieces and the verses that mention each one; picking a verse opens it in the reader.
+  - The exhibit follows the reader's light or dark theme.
+- Add a Seed Bible Default Content extension, installed from Settings → Extensions, that shows Bible Project and other hand-picked videos in Discover for the chapter you're reading. ([#1717](https://github.com/HelloAOLab/seed-bible/pull/1717))
+  - Videos are grouped by creator, show a preview image, and play in a window when you tap them.
+- Let extensions offer their own settings, which you change with Configure in Settings → Extensions. ([#1747](https://github.com/HelloAOLab/seed-bible/pull/1747))
+  - Customization authors can set defaults for everyone using their customization with "Configure default overrides".
+  - Changing extension settings requires signing in.
+- Use a customization's logo as the tab icon, home screen icon and link preview image when opening its share link. ([#1759](https://github.com/HelloAOLab/seed-bible/pull/1759))
+
+### 🔧 Changed
+
+- Show "The host disconnected from the session" and "The host reconnected to the session" when the host of a shared session you've joined drops out and comes back, instead of "Reconnecting to the session…" and "Reconnected to the session". ([#1727](https://github.com/HelloAOLab/seed-bible/pull/1727))
+  - You now also see "You lost connection to the session" and "You rejoined the session" when your own connection drops and returns.
+- Update a downloaded translation automatically when a newer version is available, instead of waiting for you to tap it in the translation list. ([#1752](https://github.com/HelloAOLab/seed-bible/pull/1752))
+  - With data saver turned on, you're asked first.
+- Ask whether to turn off all tutorials or skip just this one when you press Skip, instead of showing a "Don't show tutorials" button on every tutorial step. ([#1832](https://github.com/HelloAOLab/seed-bible/pull/1832))
+  - Back and Next now stay in the same corners on every step.
+- Reuse an open House of the Lord exhibit when you pick another piece from a verse's tools, instead of opening a new pane each time. ([#1791](https://github.com/HelloAOLab/seed-bible/pull/1791))
+
+### 🐛 Fixed
+
+- Fix the reader sitting partly offscreen after swiping between chapters on mobile and then rotating to a larger layout. ([#1828](https://github.com/HelloAOLab/seed-bible/pull/1828))
+- Lift the mobile Search verses field off the scripture with a box shadow so it no longer blends into the verse text. ([#1827](https://github.com/HelloAOLab/seed-bible/pull/1827))
+- Restore your place in a chapter when you go back to it with the browser's back or forward button, instead of always landing at the top. Going back means "take me to where I was", so it now returns you to the spot you were reading. Opening a chapter any other way — Next/Previous, the Bible Selector, or switching translation — still starts you at the chapter heading, so you can see which chapter you have landed on. ([#1825](https://github.com/HelloAOLab/seed-bible/pull/1825))
+- Fix the installed Android app's status bar staying white; it now matches the app's background in light, dark and custom themes. ([#1817](https://github.com/HelloAOLab/seed-bible/pull/1817))
+- Fix House of the Lord pieces inside the tent, such as the menorah and the ark, being impossible to select while the walls or curtains were showing. ([#1791](https://github.com/HelloAOLab/seed-bible/pull/1791))
+- Fix the House of the Lord camera cutting off large pieces when you select them; each piece is now framed to fit its size. ([#1791](https://github.com/HelloAOLab/seed-bible/pull/1791))
+
+### 🗑️ Removed
+
+- Remove the About button from the desktop sidebar; About Seed Bible is still in the settings menu. ([#1833](https://github.com/HelloAOLab/seed-bible/pull/1833))
+
 ## v1.9.0 — 2026-09-14
 
 ### ✨ Added
@@ -38,6 +78,9 @@
 
 ### 🐛 Fixed
 
+- Close the Today screen when another screen opens over it. Opening Discover or Reading plans while Today was up left them behind it, with nothing on screen to say they had opened — Today fills the reader area, and only a pane that fills it too would displace one. Today now steps aside for anything else that opens. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Stop linking an ambiguous chapter-to-verse range in prose. "John 1-2:3" mixes a whole-chapter start with a verse end, and used to link as John 1–2 with the ":3" silently dropped; it now links nothing rather than a reference the reader did not write. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+- Fix "Read more" appearing on a playlist's description in the Discover panel however short the description is, for some fonts. Whether it fitted on one line was worked out from a guessed line height (1.2 times the font size) rather than a real one, and whether that guess came out too small depended on the font in use — with the default font it behaved correctly, but with a taller one, such as the fallbacks used for Chinese and Thai text, even a three-word description got a "Read more" that expanded to nothing. It now compares the line's real width against the space it has, which does not depend on the font. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 - Fix the last chapters of a reading session going missing from reading history when the tab closed, the page reloaded, or the phone froze the app. ([#1762](https://github.com/HelloAOLab/seed-bible/pull/1762))
   - Reading is now recorded on the device first and synced to the server once a connection is available.
   - Today's reading shows up right away, even with no connection.

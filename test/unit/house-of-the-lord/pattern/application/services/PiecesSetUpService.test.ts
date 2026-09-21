@@ -12,6 +12,7 @@ describe("application.services.PiecesSetUpService", () => {
     };
     const hitboxSpawnerPort: Mocked<HitboxSpawnerPort> = {
       spawnPiecesHitbox: vi.fn(),
+      despawnPiecesHitbox: vi.fn(),
     };
     const piecesRenderOrderPort: Mocked<PiecesRenderOrderPort> = {
       setOrder: vi.fn(),
