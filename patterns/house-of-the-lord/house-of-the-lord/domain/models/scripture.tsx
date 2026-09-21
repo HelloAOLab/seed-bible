@@ -28,3 +28,14 @@ export type HighlightStatesMap = {
     };
   };
 };
+
+export interface ReadingState {
+  bookId: string;
+  chapterNumber: number;
+}
+export interface VerseRange {
+  bookId: string;
+  chapter: number;
+  start: number;
+  end: number;
+}

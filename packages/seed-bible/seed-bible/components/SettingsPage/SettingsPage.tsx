@@ -25,6 +25,7 @@ import {
   buildCustomizationTutorialSteps,
   openCustomizationEditPane,
 } from "../CustomizationEditPane/CustomizationEditPane";
+import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { download, translateTitle } from "../../app/utils";
 import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
 import {
@@ -1167,7 +1168,7 @@ type ExtensionsTab = "installed" | "available";
 
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { extensions, customizations } = state;
+  const { extensions, customizations, extensionSettings, login } = state;
   const extensionsList = extensions.extensions.value;
   const installingIds = useSignal<Set<string>>(new Set());
   const isDownloadingSet = useSignal(false);
@@ -1213,6 +1214,74 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       return;
     }
     extensions.unloadExtension(extensionId);
+  };
+
+  const handleConfigureExtension = (extensionEntry: ExtensionListEntry) => {
+    const settings = extensionEntry.extension?.meta.settings ?? {};
+    state.modals.openModal({
+      title: {
+        key: "extension-settings-title",
+        defaultValue: "{{name}} settings",
+        options: {
+          name:
+            // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+            t("title", {
+              ns: extensionEntry.id,
+              defaultValue: extensionEntry.id,
+            }),
+        },
+      },
+      // Values are saved to the viewer's account, so a signed-out viewer is
+      // asked to log in first. The body re-renders on sign-in, swapping this
+      // prompt for the form without reopening the modal.
+      // TODO: Support offline / signed-out extension settings so this prompt isn't needed.
+      content: () =>
+        login.userId.value === null ? (
+          <div className="sb-settings-login-prompt">
+            <p>
+              {t("extension-settings-login-required", {
+                defaultValue: "Please log in to configure this extension.",
+              })}
+            </p>
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              onClick={() => void login.login()}
+            >
+              {t("log-in", { defaultValue: "Log in" })}
+            </button>
+          </div>
+        ) : (
+          <>
+            <ExtensionSettingsForm
+              extensionId={extensionEntry.id}
+              settings={settings}
+              getValue={(key) =>
+                extensionSettings.getValue(extensionEntry.id, key)
+              }
+              onChange={(key, value) =>
+                void extensionSettings.setValue(extensionEntry.id, key, value)
+              }
+              resetting={{
+                hasOwnValue: (key) =>
+                  extensionSettings.valuesByExtensionId.value[
+                    extensionEntry.id
+                  ]?.[key] !== undefined,
+                onReset: (key) =>
+                  void extensionSettings.clearValue(extensionEntry.id, key),
+              }}
+              t={t}
+            />
+            {extensionSettings.hasSaveError(extensionEntry.id) && (
+              <p className="sb-settings-save-error" role="alert">
+                {t("extension-settings-save-failed", {
+                  defaultValue: "Couldn't save your settings.",
+                })}
+              </p>
+            )}
+          </>
+        ),
+    });
   };
 
   const handleDownloadExtensions = async () => {
@@ -1337,6 +1406,24 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             </span>
           </div>
           <div className="sb-extension-row-actions">
+            {installState === "installed" &&
+              extensionEntry.extension?.meta.settings &&
+              Object.keys(extensionEntry.extension.meta.settings).length >
+                0 && (
+                <button
+                  type="button"
+                  className="sb-extension-row-action-button"
+                  onClick={() => handleConfigureExtension(extensionEntry)}
+                  aria-label={t("configure-extension", {
+                    defaultValue: "Configure",
+                  })}
+                  title={t("configure-extension", {
+                    defaultValue: "Configure",
+                  })}
+                >
+                  <span className="material-symbols-outlined">tune</span>
+                </button>
+              )}
             {installState === "none" && (
               <button
                 type="button"

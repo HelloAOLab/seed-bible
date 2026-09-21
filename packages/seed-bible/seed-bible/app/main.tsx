@@ -28,6 +28,7 @@ import {
   type AppConfig,
 } from "./appConfig";
 import { isWebKit } from "./ssrEnv";
+import { useCustomizationLinkOverrides } from "./customizationLinkOverrides";
 // Foundation stylesheets — must load before any component's co-located CSS.
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
@@ -40,7 +41,9 @@ import {
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
+import { TutorialSkipPrompt } from "../components/TutorialSkipPrompt/TutorialSkipPrompt";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
+import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 
 /**
  * Font `<link>`s, plus the CSS for the active Customization layered on top
@@ -226,6 +229,8 @@ function MainBody({
     });
   }
 
+  useCustomizationLinkOverrides(state);
+
   return (
     <AppConfigProvider value={appConfig}>
       <I18nProvider i18n={state.i18n}>
@@ -363,10 +368,21 @@ function MainContent(props: {
           className={`${webkitClass}`}
         />
 
+        <OfflineUpdatePrompt
+          offline={state.bibleData.offline}
+          toast={state.app.toast}
+          className={`${webkitClass}`}
+        />
+
         <Tutorial
           tutorial={state.tutorial}
           className={`${webkitClass}`}
           groupFilter="non-selector"
+        />
+
+        <TutorialSkipPrompt
+          tutorial={state.tutorial}
+          className={`${webkitClass}`}
         />
 
         <LanguageUnavailableModal className={`${webkitClass}`} />

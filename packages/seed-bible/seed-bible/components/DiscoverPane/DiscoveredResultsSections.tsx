@@ -1,8 +1,12 @@
 import "./DiscoverPane.css";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
-import type { DiscoverReference } from "../../managers/DiscoverManager";
+import type {
+  DiscoverContentResult,
+  DiscoverReference,
+} from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
+import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 
 type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
@@ -102,30 +106,67 @@ export function ContentSection(props: { tab: ReaderTab | null }) {
     return null; // Don't show the section at all if there are no results, since this is a "discover" feature and we don't want to show empty sections for chapters that have no cross references.
   }
 
+  const resultsByAuthor = new Map<string, DiscoverContentResult[]>();
+  const authorlessResults: DiscoverContentResult[] = [];
+  for (const result of results) {
+    if (result.author) {
+      const existing = resultsByAuthor.get(result.author);
+      if (existing) {
+        existing.push(result);
+      } else {
+        resultsByAuthor.set(result.author, [result]);
+      }
+    } else {
+      authorlessResults.push(result);
+    }
+  }
+
   return (
-    <DiscoverSection title={title}>
-      {results.length === 0 ? (
-        <DiscoverEmpty
-          text={t("discover-content-empty", {
-            defaultValue: "No content for this chapter.",
-          })}
-        />
-      ) : (
-        <ul className="sb-discover-list">
-          {results.map((result, index) => (
-            <li key={index} className="sb-discover-item">
-              <span className="sb-discover-item-title">{result.title}</span>
-              {result.description ? (
-                <span className="sb-discover-item-description">
-                  {result.description}
-                </span>
-              ) : null}
-              <div className="sb-discover-item-content">{result.content}</div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </DiscoverSection>
+    <>
+      {[...resultsByAuthor.entries()].map(([author, authorResults]) => (
+        <DiscoverSection key={author} title={author}>
+          <ContentResultsList results={authorResults} />
+        </DiscoverSection>
+      ))}
+      {authorlessResults.length > 0 ? (
+        <DiscoverSection title={title}>
+          <ContentResultsList results={authorlessResults} />
+        </DiscoverSection>
+      ) : null}
+    </>
+  );
+}
+
+function ContentResultsList(props: { results: DiscoverContentResult[] }) {
+  const { t } = useI18n();
+
+  return (
+    <ul className="sb-discover-list">
+      {props.results.map((result, index) => (
+        <li
+          key={index}
+          className={`sb-discover-item${result.onClick ? " sb-discover-item--clickable" : ""}`}
+          onClick={result.onClick}
+        >
+          {result.image ? (
+            <img className="sb-discover-item-image" src={result.image} alt="" />
+          ) : null}
+          <span className="sb-discover-item-title">{result.title}</span>
+          {result.description ? (
+            <ExpandableText
+              className="sb-discover-item-description"
+              readMoreLabel={t("read-more", { defaultValue: "Read more" })}
+              readLessLabel={t("read-less", { defaultValue: "Read less" })}
+            >
+              {result.description}
+            </ExpandableText>
+          ) : null}
+          {result.content ? (
+            <div className="sb-discover-item-content">{result.content}</div>
+          ) : null}
+        </li>
+      ))}
+    </ul>
   );
 }
 

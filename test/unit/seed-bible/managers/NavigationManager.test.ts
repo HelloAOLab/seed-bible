@@ -361,7 +361,7 @@ describe("createNavigationManager nested batchWrites", () => {
     navigation.updatePathAndQueryParams("/genesis/1", { sidebar: "open" });
     const historyLengthBefore = window.history.length;
 
-    // Actions compose: opening a bookmark batches its own writes and calls
+    // Actions compose: opening a save batches its own writes and calls
     // into `selectTab`, which batches too.
     navigation.batchWrites(() => {
       navigation.updatePathAndQueryParams("/exodus/2", {}, true);
@@ -374,5 +374,102 @@ describe("createNavigationManager nested batchWrites", () => {
     expect(window.history.length).toBe(historyLengthBefore + 1);
     expect(window.location.pathname).toBe("/exodus/2");
     expect(window.location.search).toBe("");
+  });
+});
+
+describe("createNavigationManager history state", () => {
+  it("stamps scroll on the current entry and starts the next push at 0", () => {
+    const navigation = createNavigationManager();
+    navigation.push("/genesis/1");
+
+    navigation.stampCurrentState({ scrollPosition: 420 });
+    expect(navigation.getCurrentScrollPosition()).toBe(420);
+
+    navigation.push("/exodus/2");
+    expect(navigation.getCurrentScrollPosition()).toBe(0);
+    expect(window.location.pathname).toBe("/exodus/2");
+  });
+
+  it("does not stamp after dispose", () => {
+    const navigation = createNavigationManager();
+    navigation.push("/genesis/1");
+    navigation.dispose();
+
+    navigation.stampCurrentState({ scrollPosition: 420 });
+    expect(navigation.getCurrentScrollPosition()).toBe(0);
+  });
+
+  // jsdom has no Navigation API, so the rest of the suite exercises the
+  // `popstate` path. Chrome does have one, and its `navigate` event fires
+  // *before* the history entry is swapped in — publishing the URL from there
+  // made the reader restore the offset of the entry it was leaving.
+  describe("with the Navigation API present", () => {
+    function installNavigationApi() {
+      const target = new EventTarget() as EventTarget & {
+        addEventListener: EventTarget["addEventListener"];
+      };
+      Object.defineProperty(window, "navigation", {
+        value: target,
+        configurable: true,
+        writable: true,
+      });
+      return {
+        target,
+        dispatch: (url: string, navigationType: string) => {
+          const event = Object.assign(new Event("navigate"), {
+            destination: { url, getState: () => undefined },
+            navigationType,
+            downloadRequest: null,
+            intercept: () => undefined,
+          });
+          target.dispatchEvent(event);
+        },
+        remove: () => {
+          delete (window as { navigation?: unknown }).navigation;
+        },
+      };
+    }
+
+    afterEach(() => {
+      delete (window as { navigation?: unknown }).navigation;
+    });
+
+    it("leaves back/forward to popstate, so the offset is read after the entry is current", () => {
+      const api = installNavigationApi();
+      const navigation = createNavigationManager();
+      navigation.push("/genesis/1");
+      navigation.stampCurrentState({ scrollPosition: 420 });
+      navigation.push("/exodus/2");
+
+      const before = navigation.currentUrl.peek().href;
+
+      // A traverse announces the destination while the browser still sits on
+      // the entry being left. Acting on it here would read this entry's
+      // offset for the destination.
+      api.dispatch(new URL("/genesis/1", before).href, "traverse");
+
+      expect(navigation.currentUrl.peek().href).toBe(before);
+      expect(navigation.getCurrentScrollPosition()).toBe(0);
+
+      navigation.dispose();
+      api.remove();
+    });
+
+    it("still publishes a same-origin navigation that is not a traverse", () => {
+      const api = installNavigationApi();
+      const navigation = createNavigationManager();
+      navigation.push("/genesis/1");
+
+      const destination = new URL(
+        "/leviticus/3",
+        navigation.currentUrl.peek().href
+      ).href;
+      api.dispatch(destination, "push");
+
+      expect(navigation.currentUrl.peek().href).toBe(destination);
+
+      navigation.dispose();
+      api.remove();
+    });
   });
 });

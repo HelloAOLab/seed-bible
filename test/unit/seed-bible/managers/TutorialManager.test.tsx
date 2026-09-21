@@ -219,6 +219,82 @@ describe("createTutorialManager — startContextual with inline steps", () => {
   });
 });
 
+describe("createTutorialManager — skip flow", () => {
+  beforeEach(() => {
+    // The onboarding tour's own "seen" flag persists in localStorage; start
+    // clean so it doesn't mask what startContextual() decides.
+    window.localStorage.clear();
+    window.localStorage.setItem("sb-tutorial-seen", "true");
+  });
+
+  it("raises the skip prompt and ends the tour, without opting out", () => {
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.startContextual("search");
+    expect(tutorial.running.value).toBe(true);
+
+    tutorial.skip();
+
+    expect(tutorial.running.value).toBe(false);
+    expect(tutorial.skipPromptVisible.value).toBe(true);
+    expect(tutorial.optedOut.value).toBe(false);
+  });
+
+  it("keepTutorials() dismisses the prompt and leaves future tutorials enabled", () => {
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.startContextual("search");
+    tutorial.skip();
+
+    tutorial.keepTutorials();
+
+    expect(tutorial.skipPromptVisible.value).toBe(false);
+    expect(tutorial.optedOut.value).toBe(false);
+
+    // A different contextual tutorial can still pop later — opting out wasn't
+    // recorded just because the user skipped one tour.
+    tutorial.startContextual("pane-layout");
+    expect(tutorial.running.value).toBe(true);
+  });
+
+  it("optOut() from the skip prompt records the opt-out and hides the prompt", () => {
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.startContextual("search");
+    tutorial.skip();
+
+    tutorial.optOut();
+
+    expect(tutorial.skipPromptVisible.value).toBe(false);
+    expect(tutorial.optedOut.value).toBe(true);
+
+    // Opted out — a different contextual tutorial no longer pops.
+    tutorial.startContextual("pane-layout");
+    expect(tutorial.running.value).toBe(false);
+  });
+});
+
 describe("createTutorialManager — reader visibility gate", () => {
   beforeEach(() => {
     window.localStorage.clear();
