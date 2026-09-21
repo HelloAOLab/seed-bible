@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.10.0 — 2026-09-21
+
+### ✨ Added
+
 - Focus the annotation editor when it opens so you can start typing right away, whether you are writing a new note or editing an existing one. ([#1826](https://github.com/HelloAOLab/seed-bible/pull/1826))
 - Listen to translations that have no narrated audio; the Listen button now reads the chapter aloud with your device's built-in voice when it has one for that language. ([#1803](https://github.com/HelloAOLab/seed-bible/pull/1803))
   - The rest of the chapter dims so the verse being read stands out.
