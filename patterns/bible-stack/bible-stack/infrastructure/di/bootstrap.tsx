@@ -1041,6 +1041,7 @@ export const bootstrapExtension = () => {
     pieceDataRepositoryPort: pieceDataRepository,
   });
   const bibleSequenceService = new BibleSequenceService({
+    loggerPort: loggerAdapter,
     bibleSequenceAdapterPort: bibleSequenceAdapter,
     scripturePiecesStateServicePort: scripturePiecesStateService,
     configProviderPort: sequenceConfigProvider,

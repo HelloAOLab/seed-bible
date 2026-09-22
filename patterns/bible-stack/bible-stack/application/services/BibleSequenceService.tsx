@@ -30,8 +30,9 @@ import type { StackPresenceNavigationPacing } from "../../domain/models/userPres
 import type { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { StackBookData } from "../../domain/entities/StackBookData";
+import type { LoggerPort } from "../ports/out/Logger";
 
-interface BibleSequenceServiceParams {
+interface ServiceParams {
   eventPort: BibleSequenceEventPort;
   bibleSequenceAdapterPort: BibleSequenceAdapterPort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
@@ -52,22 +53,24 @@ interface BibleSequenceServiceParams {
     | "getAllBooks"
     | "getAllChapters"
   >;
+  loggerPort: LoggerPort;
 }
 
 export class BibleSequenceService implements BibleSequenceServicePort {
-  #eventPort: BibleSequenceServiceParams["eventPort"];
-  #bibleSequenceAdapterPort: BibleSequenceServiceParams["bibleSequenceAdapterPort"];
-  #scripturePiecesStateServicePort: BibleSequenceServiceParams["scripturePiecesStateServicePort"];
-  #awaiterPort: BibleSequenceServiceParams["awaiterPort"];
-  #configProviderPort: BibleSequenceServiceParams["configProviderPort"];
-  #pieceHighlightServicePort: BibleSequenceServiceParams["pieceHighlightServicePort"];
-  #pieceLabelServicePort: BibleSequenceServiceParams["pieceLabelServicePort"];
-  #labelDataRepositoryPort: BibleSequenceServiceParams["labelDataRepositoryPort"];
-  #pieceAdapterPort: BibleSequenceServiceParams["pieceAdapterPort"];
-  #stackPieceLifecycleAdapterPort: BibleSequenceServiceParams["stackPieceLifecycleAdapterPort"];
-  #bookChaptersManagementServicePort: BibleSequenceServiceParams["bookChaptersManagementServicePort"];
-  #renderOrderAdapterPort: BibleSequenceServiceParams["renderOrderAdapterPort"];
-  #pieceDataRepositoryPort: BibleSequenceServiceParams["pieceDataRepositoryPort"];
+  #eventPort: ServiceParams["eventPort"];
+  #bibleSequenceAdapterPort: ServiceParams["bibleSequenceAdapterPort"];
+  #scripturePiecesStateServicePort: ServiceParams["scripturePiecesStateServicePort"];
+  #awaiterPort: ServiceParams["awaiterPort"];
+  #configProviderPort: ServiceParams["configProviderPort"];
+  #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
+  #pieceLabelServicePort: ServiceParams["pieceLabelServicePort"];
+  #labelDataRepositoryPort: ServiceParams["labelDataRepositoryPort"];
+  #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
+  #stackPieceLifecycleAdapterPort: ServiceParams["stackPieceLifecycleAdapterPort"];
+  #bookChaptersManagementServicePort: ServiceParams["bookChaptersManagementServicePort"];
+  #renderOrderAdapterPort: ServiceParams["renderOrderAdapterPort"];
+  #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     eventPort,
@@ -83,7 +86,8 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     bookChaptersManagementServicePort,
     renderOrderAdapterPort,
     pieceDataRepositoryPort,
-  }: BibleSequenceServiceParams) {
+    loggerPort,
+  }: ServiceParams) {
     this.#eventPort = eventPort;
     this.#bibleSequenceAdapterPort = bibleSequenceAdapterPort;
     this.#scripturePiecesStateServicePort = scripturePiecesStateServicePort;
@@ -97,6 +101,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     this.#bookChaptersManagementServicePort = bookChaptersManagementServicePort;
     this.#renderOrderAdapterPort = renderOrderAdapterPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
+    this.#loggerPort = loggerPort;
   }
 
   async resetBible({
@@ -108,16 +113,22 @@ export class BibleSequenceService implements BibleSequenceServicePort {
   }): Promise<void> {
     this.#eventPort.emit("OnBibleResetSequenceStart", { bibleData });
 
-    await this.closeBible({
-      bibleData,
-      pacing,
-    });
-    await this.openBible({
-      bibleData,
-      pacing,
-    });
-
-    this.#eventPort.emit("OnBibleResetSequenceEnd", { bibleData });
+    try {
+      await this.closeBible({
+        bibleData,
+        pacing,
+      });
+      await this.openBible({
+        bibleData,
+        pacing,
+      });
+      this.#eventPort.emit("OnBibleResetSequenceEnd", { bibleData });
+    } catch (error) {
+      this.#loggerPort.error(
+        "BibleSequenceService: Failed to display reset sequence at resetBible.",
+        { error }
+      );
+    }
   }
 
   async closeBible({
