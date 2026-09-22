@@ -56,6 +56,13 @@ type TranslationBookSummary = {
 };
 
 /**
+ * On `document.documentElement` while the boot URL will open Today and this
+ * account is not already known to have reading history. Keeps the reader
+ * from painting before Welcome. Removed once Today is actually showing.
+ */
+export const TODAY_BOOT_HOLD_CLASS = "sb-hold-today";
+
+/**
  * Whether Today should auto-open over the reader for this boot URL: an explicit
  * `?today=` param always wins, and otherwise it opens unless the URL already
  * points somewhere specific — a canonical reading path, a static page such as

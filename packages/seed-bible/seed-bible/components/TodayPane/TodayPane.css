@@ -67,9 +67,26 @@
   color: var(--sb-today-muted-font-color);
 }
 
+.sb-today-welcome-screen .sb-today-welcome-screen-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-date {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sb-today-muted-font-color);
+}
+
 .sb-today-welcome-screen .sb-today-welcome-screen-greeting {
   margin: 0;
   text-box: auto;
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-greeting-name {
+  color: var(--sb-primary-color);
 }
 
 .sb-today-welcome-screen .sb-today-welcome-screen-book {
@@ -116,6 +133,14 @@
   .sb-today-welcome-screen-verse
   .sb-today-welcome-screen-verse-highlight {
   color: var(--sb-primary-color);
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
 }
 
 .sb-today-welcome-screen .sb-today-welcome-screen-navigation {
@@ -198,6 +223,19 @@
   .sb-today-welcome-screen-reveal
   > span {
   font-size: 1rem;
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-tour-button {
+  appearance: none;
+  height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--sb-reader-font-color);
+  background-color: transparent;
+  color: var(--sb-reader-font-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* Drag-to-scroll surfaces and sb-today-clickable chrome only — `user-select`
@@ -883,6 +921,12 @@
     flex-direction: column-reverse;
     align-items: stretch;
     gap: 1rem;
+  }
+  .sb-today-welcome-screen .sb-today-welcome-screen-actions {
+    align-items: stretch;
+  }
+  .sb-today-welcome-screen .sb-today-welcome-screen-tour-button {
+    height: 3rem;
   }
   /* The stacked mobile layout stretches both buttons to full width, so the
      row-recentring above doesn't apply -- the leading margin would otherwise

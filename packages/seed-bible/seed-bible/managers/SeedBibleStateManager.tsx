@@ -865,6 +865,15 @@ export function createSeedBibleState(
   );
   const isProfileOpen = computed(() => profileOpen.value);
   const openProfile = () => {
+    // Close Today before the profile flag flips. Opening the profile pane
+    // displaces Today's pane, but Today's URL binding is still `?today=open`
+    // until its own effect runs — and that binding turns Today straight back
+    // on, which removes the profile pane and closes the profile again. Closing
+    // first drops `?today=` before `?profile=open` is written, so the profile
+    // screen stays up (including over the welcome screen).
+    if (today.isOpen.peek()) {
+      today.close();
+    }
     profileOpen.value = true;
   };
   const closeProfile = () => {
@@ -1222,6 +1231,62 @@ export function createSeedBibleState(
     }
   });
 
+  // New visitors on desktop — signed in or not — start with the rail
+  // collapsed, so the welcome screen isn't competing with an open sidebar.
+  // A saved choice wins, and it is applied after mount (via
+  // `hydrateFromStorage`) so the first render still matches the expanded rail
+  // the server painted. The local tour flags are enough to decide; waiting
+  // on the account profile left signed-in visitors on the open rail until
+  // that request returned.
+  //
+  // Left unarmed until then on purpose: reading `localStorage` at construction
+  // would collapse the client tree and not the SSR HTML. Mobile has no docked
+  // rail, so a phone visit doesn't record a preference — resizing up to
+  // desktop still gets the new-user collapse.
+  let sidebarCollapsedArmed = false;
+  let sidebarCollapsedHydrated = false;
+  const armSidebarCollapsed = () => {
+    if (sidebarCollapsedArmed) {
+      return;
+    }
+    sidebarCollapsedArmed = true;
+    effect(() => {
+      if (sidebarCollapsedHydrated) {
+        return;
+      }
+      if (typeof window === "undefined") {
+        sidebarCollapsedHydrated = true;
+        return;
+      }
+
+      const storedApplied = sidebar.hydrateStoredCollapsed();
+      const mobile = isMobile.value;
+
+      if (
+        !storedApplied &&
+        !mobile &&
+        !openedViaContentLink &&
+        !tutorial.completed.value &&
+        !tutorial.optedOut.value
+      ) {
+        sidebar.setSidebarCollapsed(true);
+      }
+
+      // Applying a saved "expanded" choice undoes the band collapse the
+      // effects above already did at startup. Put it back without writing
+      // storage — the band is a viewport constraint, not a preference.
+      if (isCompactDesktop.value || isMobileLandscape.value) {
+        sidebar.isSidebarCollapsed.value = true;
+      }
+
+      if (!storedApplied && mobile) {
+        return;
+      }
+
+      sidebarCollapsedHydrated = true;
+    });
+  };
+
   const effectiveSlots = computed(() => {
     if (!panelsEnabled.value) {
       // tabsLayout.setLayout already forces "single" whenever panelsEnabled
@@ -1450,6 +1515,9 @@ export function createSeedBibleState(
     // Deliberately outside the batch: this can set `promptVisible`, and it must
     // observe the settled reader state rather than a half-applied one.
     tutorial.armAutoStart();
+    // After the tutorial flags, so "new user" sees the stored seen/opted-out
+    // state rather than the empty SSR seed.
+    armSidebarCollapsed();
   };
 
   const title = computed(() => {
@@ -2841,6 +2909,7 @@ export function createSeedBibleState(
       isMobile={isMobile}
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
+      onTakeTour={() => tutorial.acceptPrompt()}
     />
   );
   const renderTodayPaneTitle = () => <TodayPaneTitle />;

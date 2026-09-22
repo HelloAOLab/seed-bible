@@ -17,6 +17,37 @@ export type RequestedSettingsView =
   | "extensions"
   | "customizations";
 
+/**
+ * Remembers whether the desktop sidebar rail is collapsed. Absent until the
+ * user (or the new-user default) chooses — the signal itself stays expanded
+ * until `hydrateStoredCollapsed` runs, so SSR and the first client render match.
+ */
+export const SIDEBAR_COLLAPSED_STORAGE_KEY = "sb-sidebar-collapsed";
+
+function readStoredSidebarCollapsed(): boolean | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const stored = window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+  if (stored === "true") {
+    return true;
+  }
+  if (stored === "false") {
+    return false;
+  }
+  return null;
+}
+
+function writeStoredSidebarCollapsed(collapsed: boolean) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.localStorage.setItem(
+    SIDEBAR_COLLAPSED_STORAGE_KEY,
+    collapsed ? "true" : "false"
+  );
+}
+
 export interface CreateSidebarOptions {
   chatsManager: ChatsManager;
   navigation: NavigationManager;
@@ -119,8 +150,32 @@ export function createSidebar(options: CreateSidebarOptions) {
     isMobileOpen.value = false;
   };
 
+  /**
+   * Sets the rail and remembers the choice. Viewport-driven collapses (the
+   * compact-desktop band, mobile landscape) assign `isSidebarCollapsed`
+   * directly so they don't overwrite this preference.
+   */
+  const setSidebarCollapsed = (collapsed: boolean) => {
+    isSidebarCollapsed.value = collapsed;
+    writeStoredSidebarCollapsed(collapsed);
+  };
+
   const toggleSidebarCollapsed = () => {
-    isSidebarCollapsed.value = !isSidebarCollapsed.value;
+    setSidebarCollapsed(!isSidebarCollapsed.value);
+  };
+
+  /**
+   * Applies a saved rail preference. Returns false when nothing is stored so
+   * the caller can fall back to the new-user default; the signal stays at its
+   * SSR seed (expanded) in that case.
+   */
+  const hydrateStoredCollapsed = (): boolean => {
+    const stored = readStoredSidebarCollapsed();
+    if (stored === null) {
+      return false;
+    }
+    isSidebarCollapsed.value = stored;
+    return true;
   };
 
   const openSidebar = () => {
@@ -165,7 +220,7 @@ export function createSidebar(options: CreateSidebarOptions) {
     }
     requestedSettingsView.value = null;
     isMobileOpen.value = false;
-    isSidebarCollapsed.value = true;
+    setSidebarCollapsed(true);
   };
 
   navigation.syncSignalsToUrl({
@@ -200,6 +255,8 @@ export function createSidebar(options: CreateSidebarOptions) {
     openSettingsToView,
     closeSettings,
     toggleSidebarCollapsed,
+    setSidebarCollapsed,
+    hydrateStoredCollapsed,
     openSidebar,
     closeSidebar,
     collapseSidebarOverlay,

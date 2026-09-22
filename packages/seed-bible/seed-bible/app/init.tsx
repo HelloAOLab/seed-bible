@@ -1,10 +1,16 @@
 import "./initPostHog";
+import { parseSessionKey } from "@casual-simulation/aux-common";
 import { Main } from "../app/main";
 import { render } from "preact";
 import { readInjectedConfig } from "../app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../app/apiResponseSeed";
 import { readInjectedCustomizationSeed } from "../app/customizationSeed";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
+import {
+  TODAY_BOOT_HOLD_CLASS,
+  todayWillAutoOpenForUrl,
+} from "../managers/TodayManager";
+import { readKnownHistory } from "../managers/TodayReadingHistory";
 import { decideHydration, type HydrationDecision } from "../app/hydrationGate";
 import { hydrateWithFallback } from "../app/hydrateWithFallback";
 import { waitForInitialChapterLoads } from "../app/initialChapterLoadWait";
@@ -13,6 +19,29 @@ import { waitForInitialChapterLoads } from "../app/initialChapterLoadWait";
 // by the host server. Reading it on the client is what lets the hydration
 // gate below tell a trustworthy SSR document from one it should discard.
 const config = readInjectedConfig();
+
+// The served page is the reader. When this visit will land on Welcome, keep
+// that reader hidden until Today is up so it doesn't blink in first. A
+// signed-in account already known to have history is left alone — their page
+// is the resume screen, not Welcome.
+if (shouldHoldReaderForWelcome(config.basePath)) {
+  document.documentElement.classList.add(TODAY_BOOT_HOLD_CLASS);
+}
+
+function shouldHoldReaderForWelcome(basePath: string): boolean {
+  if (!todayWillAutoOpenForUrl(new URL(location.href), basePath)) {
+    return false;
+  }
+  try {
+    const userId = parseSessionKey(localStorage.getItem("sessionKey"))?.[0];
+    if (userId && readKnownHistory(userId) === "ready") {
+      return false;
+    }
+  } catch {
+    // Unreadable storage: Welcome is the safe first screen.
+  }
+  return true;
+}
 
 // The API responses the server already fetched to render this page
 // (translations, book catalog, chapter content) — seeding the client's own
@@ -57,8 +86,8 @@ function waitForThisPagesChapterLoads() {
   );
 }
 
-void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
-  ([, chapterLoads]) => {
+void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()])
+  .then(([, chapterLoads]) => {
     // A timed-out chapter load means this client never finished loading the
     // content the server rendered from, so the first client render can't be
     // trusted to match the markup on screen — render() instead of hydrate(),
@@ -113,5 +142,7 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
       );
       render(app, container);
     }
-  }
-);
+  })
+  .catch(() => {
+    document.documentElement.classList.remove(TODAY_BOOT_HOLD_CLASS);
+  });

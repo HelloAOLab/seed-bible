@@ -4,6 +4,7 @@ import {
   type SeedBibleState,
 } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
+import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/ProfilePane/ProfilePane";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type {
   Translation,
@@ -2935,5 +2936,17 @@ describe("opening another screen while Today is up", () => {
 
     expect(paneIds(state)).toEqual(["test-side-pane"]);
     expect(state.today.isOpen.value).toBe(false);
+  });
+
+  it("keeps the Profile screen up when it is opened over Today", async () => {
+    const state = await createState();
+    await openToday(state);
+
+    state.openProfile();
+    await Promise.resolve();
+
+    expect(state.isProfileOpen.value).toBe(true);
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
   });
 });
