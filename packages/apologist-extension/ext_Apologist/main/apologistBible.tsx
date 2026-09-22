@@ -50,6 +50,8 @@ export const APOLOGIST_SUPPORTED_BIBLES: ReadonlySet<string> = new Set(
 const APOLOGIST_BIBLE_ALIASES: Record<string, ApologistCanonicalBible> = {
   WEB: "webu",
   KJAV: "kjv",
+  KJVA: "kjv",
+  KJVCP: "kjv",
   NASB95: "nasb1995",
 };
 

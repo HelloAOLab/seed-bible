@@ -23,9 +23,11 @@ function translation(
 }
 
 describe("mapCandidateToApologistBible", () => {
-  it("maps aliases like NASB95, KJAV/KJV, and WEB", () => {
+  it("maps aliases like NASB95, KJAV/KJVA/KJVCP/KJV, and WEB", () => {
     expect(mapCandidateToApologistBible("NASB95")).toBe("nasb1995");
     expect(mapCandidateToApologistBible("KJAV")).toBe("kjv");
+    expect(mapCandidateToApologistBible("KJVA")).toBe("kjv");
+    expect(mapCandidateToApologistBible("KJVCP")).toBe("kjv");
     expect(mapCandidateToApologistBible("KJV")).toBe("kjv");
     expect(mapCandidateToApologistBible("WEB")).toBe("webu");
     expect(mapCandidateToApologistBible("BSB")).toBe("bsb");
@@ -55,7 +57,7 @@ describe("resolveApologistBible", () => {
     }
   });
 
-  it("maps bare ids like BSB and KJAV without fallback", () => {
+  it("maps bare ids like BSB, KJAV, KJVA, and KJVCP without fallback", () => {
     expect(
       resolveApologistBible(
         translation({
@@ -66,13 +68,29 @@ describe("resolveApologistBible", () => {
       )
     ).toMatchObject({ code: "bsb", usedFallback: false });
 
+    for (const id of ["KJAV", "KJVA", "KJVCP"] as const) {
+      expect(
+        resolveApologistBible(
+          translation({
+            id,
+            shortName: id,
+            language: "eng",
+          })
+        )
+      ).toMatchObject({ code: "kjv", usedFallback: false });
+    }
+  });
+
+  it("maps Free Use ids eng_kjva / eng_kjvcp to kjv without fallback", () => {
     expect(
       resolveApologistBible(
-        translation({
-          id: "KJAV",
-          shortName: "KJAV",
-          language: "eng",
-        })
+        translation({ id: "eng_kjva", shortName: "KJVA", language: "eng" })
+      )
+    ).toMatchObject({ code: "kjv", usedFallback: false });
+
+    expect(
+      resolveApologistBible(
+        translation({ id: "eng_kjvcp", shortName: "KJVCP", language: "eng" })
       )
     ).toMatchObject({ code: "kjv", usedFallback: false });
   });
