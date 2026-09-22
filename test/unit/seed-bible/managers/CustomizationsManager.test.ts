@@ -11,6 +11,7 @@ import {
   MIN_READABLE_CONTRAST_RATIO,
   SECONDARY_LIGHTEN_AMOUNT,
   TERTIARY_LIGHTEN_AMOUNT,
+  type InitialCustomizationSeed,
 } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
 import {
   createCustomizationVariantSelectionsManager,
@@ -130,7 +131,10 @@ describe("CustomizationsManager", () => {
     warnSpy.mockRestore();
   });
 
-  function createManager(nav: NavigationManager = navigation) {
+  function createManager(
+    nav: NavigationManager = navigation,
+    initialCustomizationSeed?: InitialCustomizationSeed
+  ) {
     const theme = createTheme(settings);
     const variantSelections = createCustomizationVariantSelectionsManager(
       os,
@@ -146,7 +150,8 @@ describe("CustomizationsManager", () => {
       theme,
       nav,
       variantSelections,
-      extensionPreferences
+      extensionPreferences,
+      initialCustomizationSeed
     );
     return { theme, variantSelections, extensionPreferences, manager };
   }
@@ -598,6 +603,132 @@ describe("CustomizationsManager", () => {
     );
   });
 
+  it("previewEditingVariantColor updates activeResolvedTheme live without persisting or auto-saving", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+
+    manager.previewEditingVariantColor(variantId, "primaryColor", "#abcdef");
+
+    expect(manager.activeResolvedTheme.value?.variables.primaryColor).toBe(
+      "#abcdef"
+    );
+    expect(
+      manager.editingCustomization.value?.variants[0]?.themes.primaryColor
+    ).toBeUndefined();
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("clearPreviewEditingVariantColor discards the preview and restores the real resolved value", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+    const original = manager.activeResolvedTheme.value?.variables.primaryColor;
+
+    manager.previewEditingVariantColor(variantId, "primaryColor", "#abcdef");
+    manager.clearPreviewEditingVariantColor(variantId, "primaryColor");
+
+    expect(manager.activeResolvedTheme.value?.variables.primaryColor).toBe(
+      original
+    );
+  });
+
+  it("setEditingVariantColor clears any pending preview, so the just-saved color actually shows", async () => {
+    // Without clearing the preview, resolveEditingVariantTheme would keep
+    // layering it on top of the fresh commit and the swatch would still
+    // show the old drag value instead of the color that was just confirmed.
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    manager.previewEditingVariantColor(
+      variantId,
+      "readerBackground",
+      "#abcdef"
+    );
+    manager.setEditingVariantColor(variantId, "readerBackground", "#123456");
+
+    expect(manager.activeResolvedTheme.value?.variables.readerBackground).toBe(
+      "#123456"
+    );
+  });
+
+  it("previewEditingVariantHighlightColor updates only the previewed field, leaving the other field's real value alone", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+    const originalFontColor =
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.fontColor;
+
+    manager.previewEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#ff00ff",
+    });
+
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.color
+    ).toBe("#ff00ff");
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.fontColor
+    ).toBe(originalFontColor);
+    expect(
+      manager.editingCustomization.value?.variants[0]?.highlightColors.yellow
+    ).toBeUndefined();
+  });
+
+  it("clearPreviewEditingVariantHighlightField discards only the named field, leaving a preview on the other field intact", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    manager.previewEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#ff00ff",
+      fontColor: "#00ff00",
+    });
+    manager.clearPreviewEditingVariantHighlightField(
+      variantId,
+      "yellow",
+      "color"
+    );
+
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.color
+    ).not.toBe("#ff00ff");
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.fontColor
+    ).toBe("#00ff00");
+  });
+
+  it("setEditingVariantHighlightColor clears only the committed field's preview, so an in-progress drag on the other field survives", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    manager.previewEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#ff00ff",
+    });
+    manager.previewEditingVariantHighlightColor(variantId, "yellow", {
+      fontColor: "#00ff00",
+    });
+
+    manager.setEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#123456",
+    });
+
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.color
+    ).toBe("#123456");
+    expect(
+      manager.activeResolvedTheme.value?.highlightColors.yellow?.fontColor
+    ).toBe("#00ff00");
+  });
+
   it("buildCustomFontValue() builds a font-family CSS value with a sans-serif fallback", () => {
     expect(buildCustomFontValue("Lora")).toBe("Lora, sans-serif");
     expect(buildCustomFontValue("IBM Plex Sans")).toBe(
@@ -929,6 +1060,75 @@ describe("CustomizationsManager", () => {
     manager.setEditingExtensionAvailability("ext.example", "hidden");
 
     expect(manager.editingCustomization.value).toBeNull();
+  });
+
+  it("setEditingExtensionSettingDefault() sets a default on the draft without persisting", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+
+    manager.setEditingExtensionSettingDefault("ext.example", "greeting", "Hi");
+
+    expect(
+      manager.editingCustomization.value?.extensionSettingDefaults
+    ).toEqual({ "ext.example": { greeting: "Hi" } });
+    expect(
+      manager.getActiveExtensionSettingDefault("ext.example", "greeting")
+    ).toBe("Hi");
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("clearEditingExtensionSettingDefault() removes a previously-set default", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.setEditingExtensionSettingDefault("ext.example", "greeting", "Hi");
+
+    manager.clearEditingExtensionSettingDefault("ext.example", "greeting");
+
+    expect(
+      manager.editingCustomization.value?.extensionSettingDefaults
+    ).toEqual({ "ext.example": {} });
+    expect(
+      manager.getActiveExtensionSettingDefault("ext.example", "greeting")
+    ).toBeUndefined();
+  });
+
+  it("clearEditingExtensionSettingDefault() no-ops when nothing was set", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+
+    manager.clearEditingExtensionSettingDefault("ext.example", "greeting");
+
+    expect(
+      manager.editingCustomization.value?.extensionSettingDefaults
+    ).toEqual({});
+  });
+
+  it("setEditingExtensionSettingDefault()/clearEditingExtensionSettingDefault() no-op when there is no open draft", async () => {
+    const { manager } = createManager();
+
+    manager.setEditingExtensionSettingDefault("ext.example", "greeting", "Hi");
+    manager.clearEditingExtensionSettingDefault("ext.example", "greeting");
+
+    expect(manager.editingCustomization.value).toBeNull();
+  });
+
+  it("getActiveExtensionSettingDefault() is undefined when nothing is active or no default is set there", async () => {
+    const { manager } = createManager();
+
+    expect(
+      manager.getActiveExtensionSettingDefault("ext.example", "greeting")
+    ).toBeUndefined();
+
+    const created = await manager.create();
+    manager.startEditing(created.id);
+
+    expect(
+      manager.getActiveExtensionSettingDefault("ext.example", "greeting")
+    ).toBeUndefined();
   });
 
   it("setEditingVariantColor() re-derives secondary and tertiary from a new primary color while they're still following it", async () => {
@@ -1325,6 +1525,48 @@ describe("CustomizationsManager", () => {
     const link = manager.getShareLink(created);
 
     expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
+  });
+
+  it("getShareLink() strips legacy reading-position query params (language, translation, book, chapter, ...) from the current URL, keeping only customization", async () => {
+    const nav = createNavigationManager({
+      initialHref:
+        "http://localhost/?language=en&translation=BSB&book=GEN&chapter=1&foo=bar",
+    });
+    const { manager } = createManager(nav);
+    const created = await manager.create();
+
+    const link = manager.getShareLink(created);
+
+    expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
+  });
+
+  it("getShareLink() drops the sharer's reading position from the URL path too, keeping only customization", async () => {
+    // The reading position (language, translation, book, chapter) lives in
+    // the path now, not the query string — see ReadingUrlPath.ts.
+    const nav = createNavigationManager({
+      initialHref: "http://localhost/en/BSB/genesis/1?foo=bar",
+    });
+    const { manager } = createManager(nav);
+    const created = await manager.create();
+
+    const link = manager.getShareLink(created);
+
+    expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
+  });
+
+  it("getShareLink() keeps the deployment's basePath prefix while dropping the reading position", async () => {
+    const nav = createNavigationManager({
+      initialHref: "http://localhost/b/some-branch/en/BSB/genesis/1",
+      basePath: "/b/some-branch",
+    });
+    const { manager } = createManager(nav);
+    const created = await manager.create();
+
+    const link = manager.getShareLink(created);
+
+    expect(link).toBe(
+      `http://localhost/b/some-branch?customization=user-1.${created.id}`
+    );
   });
 
   it("addEditingVariant() appends a new variant to the draft, based on the viewer's current preset with no overrides of its own", async () => {
@@ -1827,6 +2069,192 @@ describe("CustomizationsManager", () => {
       vi.clearAllTimers();
       vi.useRealTimers();
     }
+  });
+
+  describe("initialCustomizationSeed", () => {
+    const sharedRecord = {
+      id: "customization_shared",
+      name: "Shared",
+      variants: [
+        {
+          id: "variant_shared",
+          name: "Shared variant",
+          baseTheme: "light",
+          themes: { primaryColor: "#abc123" },
+          highlightColors: {},
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      defaultVariantId: "variant_shared",
+      logoUrl: null,
+      createdAt: 1,
+      updatedAt: 1,
+      extensionSettings: {},
+      extensionSettingDefaults: {},
+    };
+    const LOCATOR = "other-user.customization_shared";
+
+    it("applies a matching seed synchronously, without calling os.getData()", () => {
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation, {
+        locator: LOCATOR,
+        customization: sharedRecord,
+      });
+
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(manager.linkedCustomization.value).toEqual(sharedRecord);
+      expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+      expect(manager.activeCustomization.value?.id).toBe(
+        "customization_shared"
+      );
+    });
+
+    it("applies a resolved-missing seed (customization: null) without calling os.getData()", () => {
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation, {
+        locator: LOCATOR,
+        customization: null,
+      });
+
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(manager.linkedCustomization.value).toBeNull();
+      expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+    });
+
+    // Regression guard for the asymmetry flagged in review: a fetched record
+    // goes through `customizationSchema.safeParse`/`narrowVariants` before
+    // being trusted, but the seed — which also crosses a server/client JSON
+    // boundary — used to be assigned straight to `linkedCustomization` with
+    // no such check. Without this, the two paths could silently drift apart
+    // the next time the schema changes (a new required field, say): the
+    // fetch path would reject a bad record, the seed path would wave it
+    // through.
+    it("ignores a seed for the matching locator that fails schema validation, falling back to a normal fetch", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation, {
+        locator: LOCATOR,
+        // Violates `customizationSchema`'s `variants` min(1) — exactly the
+        // kind of shape `safeParse` rejects on the fetch path.
+        customization: { ...sharedRecord, variants: [] },
+      });
+      await manager.initialCustomizationLoadPromise;
+
+      expect(getDataMock).toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(manager.linkedCustomization.value?.id).toBe(
+        "customization_shared"
+      );
+      expect(warnSpy).toHaveBeenCalled();
+    });
+
+    it("ignores a seed for a different locator and fetches normally instead", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation, {
+        locator: "other-user.customization_stale",
+        customization: { ...sharedRecord, id: "customization_stale" },
+      });
+      await manager.initialCustomizationLoadPromise;
+
+      expect(getDataMock).toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(manager.linkedCustomization.value?.id).toBe(
+        "customization_shared"
+      );
+    });
+
+    it("getInitialCustomizationSeed() returns null with no ?customization= param", () => {
+      const { manager } = createManager();
+
+      expect(manager.getInitialCustomizationSeed()).toBeNull();
+    });
+
+    it("getInitialCustomizationSeed() reflects a load that resolved to a customization", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation);
+      await manager.initialCustomizationLoadPromise;
+
+      expect(manager.getInitialCustomizationSeed()).toEqual({
+        locator: LOCATOR,
+        customization: manager.linkedCustomization.value,
+      });
+    });
+
+    it("getInitialCustomizationSeed() reflects a load that resolved to 'not found'", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      });
+      const linkedNavigation = createNavigationManager({
+        initialHref:
+          "http://localhost/?customization=owner.customization_missing",
+      });
+
+      const { manager } = createManager(linkedNavigation);
+      await manager.initialCustomizationLoadPromise;
+
+      expect(manager.getInitialCustomizationSeed()).toEqual({
+        locator: "owner.customization_missing",
+        customization: null,
+      });
+    });
+
+    // The regression this guards against: if a timed-out SSR load were
+    // seeded as "not found", the client would trust that and never make its
+    // own attempt — silently dropping a customization that might have
+    // resolved fine given more time. `getInitialCustomizationSeed()` must
+    // stay null so `entry-ssr.tsx` embeds nothing for the client to (wrongly)
+    // trust.
+    it("getInitialCustomizationSeed() stays null when the SSR timeout backstop fired before the load completed", async () => {
+      vi.useFakeTimers();
+      getDataMock.mockReturnValue(new Promise(() => {}));
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      try {
+        import.meta.env.SSR = true;
+        const { manager } = createManager(linkedNavigation);
+
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+        expect(manager.getInitialCustomizationSeed()).toBeNull();
+      } finally {
+        delete import.meta.env.SSR;
+        vi.clearAllTimers();
+        vi.useRealTimers();
+      }
+    });
   });
 
   it("an in-progress edit draft takes priority over a URL-linked customization", async () => {

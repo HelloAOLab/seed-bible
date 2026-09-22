@@ -10,9 +10,11 @@ vi.mock("@packages/seed-bible/seed-bible/components/icons", () => ({
 import {
   createBibleToolsManager,
   getShareUrl,
+  readingPlanDayPlaylist,
   type BibleToolContext,
   type QuickToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import type { ReadingPlan } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { PlaylistItemData } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
@@ -287,6 +289,48 @@ describe("getShareUrl", () => {
     );
 
     expect(url.toString()).toBe("https://example.test/es/spa_onbv/john/3");
+  });
+});
+
+describe("readingPlanDayPlaylist", () => {
+  const plan = {
+    address: "plan-address",
+    title: "Through the Psalms",
+    description: "Thirty days in the Psalter",
+    heroImageUrl: "https://example.com/psalms.jpg",
+  } satisfies Pick<
+    ReadingPlan,
+    "address" | "title" | "description" | "heroImageUrl"
+  >;
+  const items = [
+    { type: "verse", reference: { bookId: "PSA", chapter: 1, verse: 1 } },
+  ] as unknown as PlaylistItemData[];
+
+  // The player takes its cover art from the playlist it is handed, so a plan
+  // that drops its hero image plays with a blank cover.
+  it("carries the plan's own presentation into playback", () => {
+    expect(readingPlanDayPlaylist(plan, items)).toEqual({
+      id: "plan-address",
+      title: "Through the Psalms",
+      description: "Thirty days in the Psalter",
+      heroImageUrl: "https://example.com/psalms.jpg",
+      items,
+    });
+  });
+
+  // No record name means play history won't offer to resume it — a plan's day
+  // is an ad-hoc queue, not a playlist record.
+  it("is not a recorded playlist", () => {
+    expect(readingPlanDayPlaylist(plan, items)).not.toHaveProperty(
+      "recordName"
+    );
+  });
+
+  it("leaves a plan without a hero image without one", () => {
+    expect(
+      readingPlanDayPlaylist({ ...plan, heroImageUrl: null }, items)
+        .heroImageUrl
+    ).toBeNull();
   });
 });
 
