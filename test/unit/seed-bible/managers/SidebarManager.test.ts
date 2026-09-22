@@ -311,6 +311,7 @@ describe("createSidebar", () => {
   });
 
   it("collapseSidebarOverlay() closes settings and collapses the sidebar when the Customization Center isn't open", () => {
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, "false");
     const sidebar = createSidebar({
       navigation,
       chatsManager: createChatsManagerMock(),
@@ -323,8 +324,10 @@ describe("createSidebar", () => {
     expect(sidebar.requestedSettingsView.value).toBeNull();
     expect(sidebar.isMobileOpen.value).toBe(false);
     expect(sidebar.isSidebarCollapsed.value).toBe(true);
+    // The scrim only exists in the compact band, so dismissing it must not
+    // replace a wide-desktop preference.
     expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY)).toBe(
-      "true"
+      "false"
     );
   });
 

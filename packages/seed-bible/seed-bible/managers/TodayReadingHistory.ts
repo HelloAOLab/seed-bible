@@ -163,6 +163,9 @@ const ONE_YEAR_SECONDS = 365 * DAY_SECONDS;
  * Everyone else starts on Welcome, so a signed-in user with nothing to resume
  * never sees the regular page blink in first. Remembered only after a real
  * result — a failed fetch must not teach the next visit the wrong screen.
+ * Left in place on sign-out: one short entry per account that has signed in
+ * here. Dropping it would make that account's next sign-in flash Welcome
+ * until the history fetch returns.
  */
 const HISTORY_KNOWN_KEY_PREFIX = "sb-today-history-";
 

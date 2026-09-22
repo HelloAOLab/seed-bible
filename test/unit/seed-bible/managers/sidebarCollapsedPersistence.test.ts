@@ -8,7 +8,7 @@ describe("desktop sidebar collapse for new visitors", () => {
     window.history.replaceState(null, "", window.location.pathname);
   });
 
-  it("starts collapsed, and remembers that, when a new visitor has no saved choice", async () => {
+  it("starts collapsed without recording a choice, when a new visitor has no saved choice", async () => {
     const state = await createTestSeedBibleState({
       sidebarCollapsed: "unset",
     });
@@ -16,7 +16,15 @@ describe("desktop sidebar collapse for new visitors", () => {
     expect(state.app.isMobile.value).toBe(false);
     expect(state.sidebar.isSidebarCollapsed.value).toBe(true);
     expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY)).toBe(
-      "true"
+      null
+    );
+
+    const nextVisit = await createTestSeedBibleState({
+      sidebarCollapsed: "unset",
+    });
+    expect(nextVisit.sidebar.isSidebarCollapsed.value).toBe(true);
+    expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY)).toBe(
+      null
     );
   });
 

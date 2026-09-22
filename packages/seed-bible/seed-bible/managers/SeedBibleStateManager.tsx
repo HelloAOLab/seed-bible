@@ -1240,9 +1240,9 @@ export function createSeedBibleState(
   // that request returned.
   //
   // Left unarmed until then on purpose: reading `localStorage` at construction
-  // would collapse the client tree and not the SSR HTML. Mobile has no docked
-  // rail, so a phone visit doesn't record a preference — resizing up to
-  // desktop still gets the new-user collapse.
+  // would collapse the client tree and not the SSR HTML. The default itself
+  // is not stored — only a toggle is — and a phone visit doesn't mark the
+  // decision done, so resizing up to desktop still gets the new-user collapse.
   let sidebarCollapsedArmed = false;
   let sidebarCollapsedHydrated = false;
   const armSidebarCollapsed = () => {
@@ -1269,7 +1269,10 @@ export function createSeedBibleState(
         !tutorial.completed.value &&
         !tutorial.optedOut.value
       ) {
-        sidebar.setSidebarCollapsed(true);
+        // The signal only. Writing it would turn the default into a saved
+        // choice, so a later change to that default would never reach a
+        // visitor who never toggled the rail.
+        sidebar.isSidebarCollapsed.value = true;
       }
 
       // Applying a saved "expanded" choice undoes the band collapse the

@@ -43,9 +43,11 @@ export const Welcome = (props: {
   // record is still loading. Prefer a real name from either, so the greeting
   // doesn't stay on "Welcome!" until that request finishes — and doesn't stay
   // there if the record arrives with a blank name while the cache has one.
-  const username = trimmedOrNull(
-    props.login.profile.value?.name ?? props.login.cachedProfile?.value?.name
-  );
+  // Trim first: `??` treats "" and whitespace as a real name and would skip
+  // the cache.
+  const username =
+    trimmedOrNull(props.login.profile.value?.name) ??
+    trimmedOrNull(props.login.cachedProfile?.value?.name);
   const { t, language } = useI18n();
   // `TimeProvider` re-renders this subtree every ten seconds so the date stays
   // current; without `tick` below it would be fixed at whenever Today opened.

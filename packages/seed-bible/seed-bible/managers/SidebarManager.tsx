@@ -207,7 +207,9 @@ export function createSidebar(options: CreateSidebarOptions) {
    * desktop band, where an expanded sidebar floats over the reader). Closes any
    * open settings view and collapses the sidebar back to its rail. Wired to the
    * scrim rendered behind the overlay so clicking anywhere on the page outside
-   * the sidebar collapses it again.
+   * the sidebar collapses it again. The collapse is assigned directly, like
+   * the other viewport-driven ones: this band is the only place the scrim
+   * exists, so dismissing it must not overwrite a wide-desktop preference.
    *
    * No-ops while the Customization Center is open, so an accidental outside
    * click can't silently discard unsaved edits — every other way of leaving
@@ -220,7 +222,7 @@ export function createSidebar(options: CreateSidebarOptions) {
     }
     requestedSettingsView.value = null;
     isMobileOpen.value = false;
-    setSidebarCollapsed(true);
+    isSidebarCollapsed.value = true;
   };
 
   navigation.syncSignalsToUrl({

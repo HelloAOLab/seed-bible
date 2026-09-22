@@ -120,6 +120,44 @@ describe("Welcome", () => {
       expect(q(".sb-today-welcome-screen-greeting-name")).toBeNull();
     });
 
+    it.each(["", "   "])(
+      "uses the cached name when the account record's name is blank (%j)",
+      (blankName) => {
+        const today = todayStub({
+          bookNames: signal(new Map([["JHN", "John"]])),
+          lastTranslationBooks: signal(null),
+          getVerseText,
+          lastTranslationId,
+          getDefaultTranslation,
+        });
+        act(() =>
+          render(
+            <TimeProvider>
+              <Welcome
+                today={today}
+                login={loginStub({
+                  userId: signal("user-1"),
+                  profile: signal({ name: blankName }) as never,
+                  cachedProfile: signal({ name: "John" }) as never,
+                })}
+                theme={theme}
+                onOpenBookSelector={onOpenBookSelector}
+                onOpenPassage={onOpenPassage}
+                onTakeTour={onTakeTour}
+              />
+            </TimeProvider>,
+            container
+          )
+        );
+        expect(q(".sb-today-welcome-screen-greeting")!.textContent).toBe(
+          "Welcome John"
+        );
+        expect(q(".sb-today-welcome-screen-greeting-name")!.textContent).toBe(
+          "John"
+        );
+      }
+    );
+
     it("shows a name that arrives after the welcome screen is already up", () => {
       const profile = signal<{ name: string } | null>(null);
       const cachedProfile = signal<{ name: string } | null>(null);
