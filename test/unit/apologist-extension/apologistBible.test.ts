@@ -7,24 +7,50 @@ import {
   mapCandidateToApologistBible,
   postApologistChatCompletion,
   resolveApologistBible,
-  type SeedTranslationRef,
 } from "@packages/apologist-extension/ext_Apologist/main/apologistBible";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  AAB,
+  BSB,
+  ENG_CPB,
+  ENG_KJA,
+  ENG_KJV,
+  ENG_NET,
+  ENG_WEB,
+  ENG_WEBU,
+  ENGWEBP,
+  FRA_LSG,
+  GUJ_IRV,
+  HIN_CVB,
+  NASB2020,
+  NASB95,
+  type CatalogTranslation,
+} from "../seed-bible/testUtils/catalogTranslations";
 
-function translation(
-  partial: Partial<SeedTranslationRef> &
-    Pick<SeedTranslationRef, "id" | "shortName" | "language">
-): SeedTranslationRef {
+function createTabContext(options: {
+  translation: CatalogTranslation | null;
+  translationId: string;
+  catalog: CatalogTranslation[];
+}): SeedBibleState {
   return {
-    name: partial.name ?? partial.shortName,
-    englishName: partial.englishName ?? partial.shortName,
-    ...partial,
-  };
+    app: {
+      selectedTab: signal({
+        readingState: {
+          translation: signal(options.translation),
+          translationId: signal(options.translationId),
+        },
+      }),
+    },
+    bibleData: {
+      availableTranslations: signal(options.catalog),
+    },
+  } as unknown as SeedBibleState;
 }
 
 describe("mapCandidateToApologistBible", () => {
-  it("maps aliases like NASB95, KJAV/KJVA/KJVCP/KJV, and WEB", () => {
+  it("maps aliases like NASB95/NASB2020, KJAV/KJVA/KJVCP/KJV, and WEB", () => {
     expect(mapCandidateToApologistBible("NASB95")).toBe("nasb1995");
+    expect(mapCandidateToApologistBible("NASB2020")).toBe("nasb");
     expect(mapCandidateToApologistBible("KJAV")).toBe("kjv");
     expect(mapCandidateToApologistBible("KJVA")).toBe("kjv");
     expect(mapCandidateToApologistBible("KJVCP")).toBe("kjv");
@@ -35,93 +61,41 @@ describe("mapCandidateToApologistBible", () => {
 });
 
 describe("resolveApologistBible", () => {
-  it("maps Free Use ids eng_kjv / eng_esv / eng_nasb95 / eng_web without fallback", () => {
-    const cases: Array<{
-      id: string;
-      shortName: string;
-      expected: string;
-    }> = [
-      { id: "eng_kjv", shortName: "KJV", expected: "kjv" },
-      { id: "eng_esv", shortName: "ESV", expected: "esv" },
-      { id: "eng_nasb95", shortName: "NASB95", expected: "nasb1995" },
-      { id: "eng_web", shortName: "WEB", expected: "webu" },
+  it("maps real English translations onto their Apologist code without fallback", () => {
+    const cases: Array<[CatalogTranslation, string]> = [
+      [BSB, "bsb"],
+      [ENG_KJV, "kjv"],
+      [ENG_KJA, "kjv"],
+      [ENG_CPB, "kjv"],
+      [ENGWEBP, "webu"],
+      // Short name WEBC matches nothing; the stripped id "web" does.
+      [ENG_WEB, "webu"],
+      [ENG_WEBU, "webu"],
+      // Short name NETB matches nothing; the stripped id "net" does.
+      [ENG_NET, "net"],
+      [NASB95, "nasb1995"],
+      [NASB2020, "nasb"],
     ];
 
-    for (const { id, shortName, expected } of cases) {
-      expect(
-        resolveApologistBible(translation({ id, shortName, language: "eng" }))
-      ).toMatchObject({
-        code: expected,
+    for (const [translation, code] of cases) {
+      expect(resolveApologistBible(translation), translation.id).toEqual({
+        code,
         usedFallback: false,
       });
     }
   });
 
-  it("maps bare ids like BSB, KJAV, KJVA, and KJVCP without fallback", () => {
-    expect(
-      resolveApologistBible(
-        translation({
-          id: "BSB",
-          shortName: "BSB",
-          language: "eng",
-        })
-      )
-    ).toMatchObject({ code: "bsb", usedFallback: false });
-
-    for (const id of ["KJAV", "KJVA", "KJVCP"] as const) {
-      expect(
-        resolveApologistBible(
-          translation({
-            id,
-            shortName: id,
-            language: "eng",
-          })
-        )
-      ).toMatchObject({ code: "kjv", usedFallback: false });
-    }
-  });
-
-  it("maps Free Use ids eng_kjva / eng_kjvcp to kjv without fallback", () => {
-    expect(
-      resolveApologistBible(
-        translation({ id: "eng_kjva", shortName: "KJVA", language: "eng" })
-      )
-    ).toMatchObject({ code: "kjv", usedFallback: false });
-
-    expect(
-      resolveApologistBible(
-        translation({ id: "eng_kjvcp", shortName: "KJVCP", language: "eng" })
-      )
-    ).toMatchObject({ code: "kjv", usedFallback: false });
-  });
-
-  it("falls back to bsb for unsupported hin_cvb / guj_irv", () => {
-    for (const id of ["hin_cvb", "guj_irv"] as const) {
-      expect(
-        resolveApologistBible(
-          translation({
-            id,
-            shortName: id.toUpperCase(),
-            language: id.slice(0, 3),
-          })
-        )
-      ).toMatchObject({
-        code: "bsb",
+  it("falls back to bsb for real translations Apologist doesn't have", () => {
+    for (const translation of [AAB, FRA_LSG, HIN_CVB, GUJ_IRV]) {
+      expect(resolveApologistBible(translation), translation.id).toEqual({
+        code: APOLOGIST_DEFAULT_BIBLE,
         usedFallback: true,
       });
     }
   });
 
-  it("falls back to bsb when the tab translation is unsupported, even if another catalog translation would map", () => {
-    expect(
-      resolveApologistBible(
-        translation({
-          id: "spa_unknown",
-          shortName: "UNK",
-          language: "spa",
-        })
-      )
-    ).toMatchObject({
+  it("falls back to bsb when there is no translation", () => {
+    expect(resolveApologistBible(null)).toEqual({
       code: APOLOGIST_DEFAULT_BIBLE,
       usedFallback: true,
     });
@@ -129,59 +103,42 @@ describe("resolveApologistBible", () => {
 });
 
 describe("getEffectiveSeedTranslationForAi", () => {
-  it("uses the active tab translation, not a pinned AI default", () => {
-    const tabTranslation = translation({
-      id: "eng_kjv",
-      shortName: "KJV",
-      language: "eng",
+  it("uses the active tab's translation", () => {
+    const context = createTabContext({
+      translation: ENG_KJV,
+      translationId: ENG_KJV.id,
+      catalog: [BSB, ENG_KJV],
     });
-    const context = {
-      app: {
-        selectedTab: signal({
-          readingState: {
-            translation: signal(tabTranslation),
-            translationId: signal("eng_kjv"),
-          },
-        }),
-      },
-      bibleData: {
-        availableTranslations: signal([
-          tabTranslation,
-          translation({ id: "eng_esv", shortName: "ESV", language: "eng" }),
-        ]),
-      },
-    } as unknown as SeedBibleState;
 
     expect(getEffectiveSeedTranslationForAi(context)).toMatchObject({
       id: "eng_kjv",
-      shortName: "KJV",
+      shortName: "KJAV",
     });
   });
 
   it("looks up the tab translation id in the catalog when the tab object is not loaded yet", () => {
-    const catalogTranslation = translation({
-      id: "eng_web",
-      shortName: "WEB",
-      language: "eng",
+    const context = createTabContext({
+      translation: null,
+      translationId: ENGWEBP.id,
+      catalog: [BSB, ENGWEBP],
     });
-    const context = {
-      app: {
-        selectedTab: signal({
-          readingState: {
-            translation: signal(null),
-            translationId: signal("eng_web"),
-          },
-        }),
-      },
-      bibleData: {
-        availableTranslations: signal([catalogTranslation]),
-      },
-    } as unknown as SeedBibleState;
 
     expect(getEffectiveSeedTranslationForAi(context)).toMatchObject({
-      id: "eng_web",
+      id: "ENGWEBP",
       shortName: "WEB",
     });
+  });
+
+  it("falls back to bsb for an unsupported tab translation, even when the catalog holds a supported one", () => {
+    const context = createTabContext({
+      translation: FRA_LSG,
+      translationId: FRA_LSG.id,
+      catalog: [ENG_KJV, FRA_LSG],
+    });
+
+    expect(
+      resolveApologistBible(getEffectiveSeedTranslationForAi(context))
+    ).toEqual({ code: APOLOGIST_DEFAULT_BIBLE, usedFallback: true });
   });
 });
 
