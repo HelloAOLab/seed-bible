@@ -1,5 +1,6 @@
 import { signal, type Signal } from "@preact/signals";
 import type { Mock } from "vitest";
+import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
 import type {
   ChatContext,
   ChatProvider,
@@ -57,6 +58,47 @@ function createReadingState(
   };
 }
 
+/** Encodes chat-completion chunks the way Apologist streams them (SSE). */
+function sse(...chunks: unknown[]): string {
+  return (
+    chunks.map((chunk) => `data: ${JSON.stringify(chunk)}\n\n`).join("") +
+    "data: [DONE]\n\n"
+  );
+}
+
+const EMPTY_TURN = sse();
+
+const TOOL_CALL_TURN = sse({
+  choices: [
+    {
+      delta: {
+        tool_calls: [
+          {
+            index: 0,
+            id: "call-1",
+            function: { name: "goToReference", arguments: "{}" },
+          },
+        ],
+      },
+      finish_reason: "tool_calls",
+    },
+  ],
+});
+
+const ANSWER_TURN = sse({
+  choices: [{ delta: { content: "Here you go." }, finish_reason: "stop" }],
+});
+
+function goToReferenceTool(): AIProviderFunctionTool {
+  return {
+    name: "goToReference",
+    type: "function",
+    description: "Navigates the user to a Bible reference.",
+    parameters: {} as AIProviderFunctionTool["parameters"],
+    function: vi.fn(async () => "success"),
+  };
+}
+
 interface SentRequest {
   bible: string;
   language: string;
@@ -66,8 +108,12 @@ interface SentRequest {
 /**
  * Starts the Apologist extension against a minimal app state and returns a
  * helper that sends one chat message and reports what Apologist received.
+ * `reply` picks the streamed body for each request, by its index.
  */
-function setUpApologistChat(readingState: MockReadingState) {
+function setUpApologistChat(
+  readingState: MockReadingState,
+  options: { reply?: (requestIndex: number) => string } = {}
+) {
   const context = {
     navigation: { currentUrl: signal(new URL("https://seedbible.test/")) },
     app: { selectedTab: signal({ readingState }) },
@@ -86,13 +132,15 @@ function setUpApologistChat(readingState: MockReadingState) {
     throw new Error("Apologist did not register a chat provider.");
   }
 
-  // An immediately-finished stream is enough: these tests only inspect the
+  // By default an immediately-finished stream: most tests only inspect the
   // request, not the reply.
+  const reply = options.reply ?? (() => EMPTY_TURN);
+  let requestIndex = 0;
   const fetchMock = vi.fn<
     (url: string, init?: RequestInit) => Promise<Response>
   >(() =>
     Promise.resolve(
-      new Response("data: [DONE]\n\n", {
+      new Response(reply(requestIndex++), {
         status: 200,
         headers: { "Content-Type": "text/event-stream" },
       })
@@ -100,11 +148,14 @@ function setUpApologistChat(readingState: MockReadingState) {
   );
   vi.stubGlobal("fetch", fetchMock);
 
-  const sendMessage = async (): Promise<SentRequest> => {
+  const sendMessage = async (
+    tools?: AIProviderFunctionTool[]
+  ): Promise<SentRequest> => {
     const response = (await provider.generateResponse({
       chatId: "chat-1",
       messages: [],
       participants: [],
+      tools,
     } as unknown as ChatContext)) as AsyncIterable<unknown>;
     for await (const _message of response) {
       // Drain the provider so the request is sent.
@@ -125,17 +176,19 @@ function setUpApologistChat(readingState: MockReadingState) {
     };
   };
 
-  return { sendMessage };
+  return { sendMessage, requestCount: () => fetchMock.mock.calls.length };
 }
 
 // The tab is deliberately never on BSB unless BSB is the expected fallback:
 // the request used to hardcode "bsb", so a BSB tab would pass without the code
 // reading the tab at all.
 describe("Apologist chat requests", () => {
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     resetMockI18n();
     vi.spyOn(console, "log").mockImplementation(() => {});
-    vi.spyOn(console, "warn").mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -186,6 +239,41 @@ describe("Apologist chat requests", () => {
     expect(request.developerMessage).toContain(
       "use their active Bible translation which is bsb."
     );
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[Apologist] Bible translation "fra_lsg" isn\'t supported; using "bsb" instead.'
+    );
+  });
+
+  it("reports an error instead of going silent when every turn is a tool call", async () => {
+    const { sendMessage, requestCount } = setUpApologistChat(
+      createReadingState(ENG_KJV),
+      { reply: () => TOOL_CALL_TURN }
+    );
+
+    await expect(sendMessage([goToReferenceTool()])).rejects.toThrow(
+      "stopped after 25 rounds of tool calls without an answer"
+    );
+    expect(requestCount()).toBe(25);
+  });
+
+  it("finishes without an error when a tool call is followed by an answer", async () => {
+    const { sendMessage, requestCount } = setUpApologistChat(
+      createReadingState(ENG_KJV),
+      { reply: (index) => (index === 0 ? TOOL_CALL_TURN : ANSWER_TURN) }
+    );
+
+    await expect(sendMessage([goToReferenceTool()])).resolves.toMatchObject({
+      bible: "kjv",
+    });
+    expect(requestCount()).toBe(2);
+  });
+
+  it("does not warn about a fallback when Apologist supports the tab's translation", async () => {
+    const { sendMessage } = setUpApologistChat(createReadingState(ENG_KJV));
+
+    await sendMessage();
+
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
   it("sends the app language as metadata.language and in the prompt", async () => {

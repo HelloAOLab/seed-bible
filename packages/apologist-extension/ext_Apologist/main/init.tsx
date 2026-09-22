@@ -215,9 +215,13 @@ export default function initApologistExtension() {
         generateResponse: async function* (
           chatContext
         ): AsyncGenerator<ChatProviderMessageOptions> {
-          const bibleResolution = resolveApologistBible(
-            getEffectiveSeedTranslationForAi(context)
-          );
+          const seedTranslation = getEffectiveSeedTranslationForAi(context);
+          const bibleResolution = resolveApologistBible(seedTranslation);
+          if (bibleResolution.usedFallback && seedTranslation) {
+            console.warn(
+              `[Apologist] Bible translation "${seedTranslation.id}" isn't supported; using "${bibleResolution.code}" instead.`
+            );
+          }
 
           const uiLanguage = uiLocaleForApologist(i18n.language);
           const readingInstructions =
@@ -272,7 +276,8 @@ export default function initApologistExtension() {
 
           let bibleCode = bibleResolution.code;
 
-          for (let turn = 0; turn < MAX_COMPLETION_TURNS; turn++) {
+          let turn = 0;
+          for (; turn < MAX_COMPLETION_TURNS; turn++) {
             const { response, bible, retriedWithDefault } =
               await postApologistChatCompletion({
                 url: `https://${apologistDomain}/api/v1/chat/completions`,
@@ -436,6 +441,15 @@ export default function initApologistExtension() {
             };
             messages.push({ role: "assistant", content: assembledContent });
             return;
+          }
+
+          // Only reached by using up every turn; the loop's normal endings
+          // `break` with turns to spare. Throwing lets ChatsManager post its
+          // standard error message instead of leaving the chat silent.
+          if (turn === MAX_COMPLETION_TURNS) {
+            throw new Error(
+              `stopped after ${MAX_COMPLETION_TURNS} rounds of tool calls without an answer`
+            );
           }
         },
       });
