@@ -8,6 +8,7 @@ import {
 } from "@packages/seed-bible/seed-bible/app/appConfig";
 import { readInjectedApiResponseSnapshot } from "@packages/seed-bible/seed-bible/app/apiResponseSeed";
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
 import { decideHydration } from "@packages/seed-bible/seed-bible/app/hydrationGate";
 import { waitForInitialChapterLoads } from "@packages/seed-bible/seed-bible/app/initialChapterLoadWait";
 import { createDefaultManagerResponseMap } from "../seed-bible/managers/testUtils/mockBibleApiData";
@@ -342,6 +343,9 @@ describe("client hydration", () => {
         selectedSlotIndex: 0,
       }
     );
+    // A new visit starts with the rail collapsed, and that view does not
+    // render tab rows. This check is about the rows, so keep the rail open.
+    localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, "false");
 
     const { config, state } = await createClientState();
     expect(state.tabs.tabs.value).toHaveLength(1);
