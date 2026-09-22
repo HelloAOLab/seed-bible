@@ -289,7 +289,7 @@ export default function initApologistExtension() {
                   : {},
               });
 
-            if (retriedWithDefault && bible !== bibleCode) {
+            if (retriedWithDefault) {
               console.warn(
                 `[Apologist] Agent rejected bible "${bibleCode}"; retrying with "${bible}".`
               );
