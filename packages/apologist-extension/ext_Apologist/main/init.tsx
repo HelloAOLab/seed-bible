@@ -224,7 +224,7 @@ export default function initApologistExtension() {
             chatContext.instructions ??
             `Currently reading: ${context.app.selectedTab.value?.readingState.bookId.value} ${context.app.selectedTab.value?.readingState.chapterNumber.value}`;
           const languageAndBibleInstructions = [
-            `Reply in ${uiLanguage}.`,
+            `User has their UI language set to ${uiLanguage}, however you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to ${uiLanguage}.`,
             `Prefer quoting scripture from the ${bibleResolution.code} Bible translation.`,
           ].join(" ");
 
