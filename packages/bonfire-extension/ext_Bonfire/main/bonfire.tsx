@@ -220,8 +220,8 @@ export function* registerBonfireChatProvider(
       const customInstructions = [
         `You are chatting with a user who is reading the Bible.`,
         `They are currently reading: ${readingState?.bookId.value} ${readingState?.chapterNumber.value}.`,
-        `Prefer the Bible translation ${translationLabel} (${translationShortName}).`,
-        `User has their UI language set to ${uiLanguage}, however you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to ${uiLanguage}.`,
+        `User has their UI language set to ${uiLanguage}, however when speaking to the user you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to speaking to them in ${uiLanguage}.`,
+        `When quoting scripture for the user, use their active Bible translation which is ${translationLabel} (${translationShortName}).`,
       ].join(" ");
       const response = await fetch(
         "https://bonfire.seedbible.io/api/v1/session/chat",
