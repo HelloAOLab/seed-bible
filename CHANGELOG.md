@@ -12,6 +12,8 @@
 
 ### 🐛 Fixed
 
+- Open a shared playlist on its first scripture chapter instead of the chapter the sharer was reading, so the reader does not load one chapter and then jump to another.  ([#1840](https://github.com/HelloAOLab/seed-bible/pull/1840))
+
 ### 🗑️ Removed
 
 ## v1.10.0 — 2026-09-21
