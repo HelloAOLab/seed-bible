@@ -1,13 +1,14 @@
 import "./DiscoverPane.css";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
-import {
-  DISCOVER_CONTENT_TYPES_HIDDEN_BY_DEFAULT,
-  type DiscoverContentResult,
-  type DiscoverContentType,
-  type DiscoverReference,
+import type {
+  DiscoverContentResult,
+  DiscoverContentType,
+  DiscoverContentTypeDefinition,
+  DiscoverReference,
 } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
+import { translateTitle } from "../../app/utils";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 
@@ -18,18 +19,20 @@ type ContentResult =
   ReaderTab["readingState"]["discoveredContent"]["value"][number]["results"][number];
 
 /**
- * The chapter's results for one Theographic type, narrowed to the reader's
- * verse selection when there is one.
+ * The chapter's results of one content type, narrowed to the reader's verse
+ * selection when there is one.
  *
  * Shared by the compact panel and the full pane so the two can't disagree
  * about what "in this verse" means. With nothing selected the whole chapter is
  * returned, so the lists still read as a chapter overview.
  *
- * Only *which* entries are listed narrows. Each surviving card still shows
- * every verse of the chapter its subject appears in, so a reader on Exodus 4:14
- * sees Aaron listed and can tell at a glance that he returns at 27-30.
+ * Only a result that says which verses it covers (`verses`) is narrowed; one
+ * that doesn't is about the chapter as a whole and stays. And only *which*
+ * results are listed narrows — each survivor still shows every verse it
+ * covers, so a reader on Exodus 4:14 sees Aaron listed and can tell at a
+ * glance that he returns at 27-30.
  */
-export function theographicResultsFor(
+export function contentTypeResultsFor(
   tab: ReaderTab,
   contentType: DiscoverContentType
 ): ContentResult[] {
@@ -44,15 +47,23 @@ export function theographicResultsFor(
     return results;
   }
 
-  return results.filter((result) =>
-    (result.verses ?? []).some((verse) => selected.has(verse))
+  return results.filter(
+    (result) =>
+      !result.verses || result.verses.some((verse) => selected.has(verse))
   );
 }
 
-/** Whether any of the three Theographic types has something to show. */
-export function hasTheographicResults(tab: ReaderTab): boolean {
-  return DISCOVER_CONTENT_TYPES_HIDDEN_BY_DEFAULT.some(
-    (contentType) => theographicResultsFor(tab, contentType).length > 0
+/**
+ * Whether a result belongs to a registered type, and so gets that type's own
+ * chip and section instead of appearing under the generic "Content".
+ */
+export function hasRegisteredContentType(
+  result: Pick<DiscoverContentResult, "contentType">,
+  contentTypes: readonly DiscoverContentTypeDefinition[]
+): boolean {
+  return (
+    !!result.contentType &&
+    contentTypes.some((definition) => definition.id === result.contentType)
   );
 }
 
@@ -135,8 +146,12 @@ export function StudyNotesSection(props: { tab: ReaderTab | null }) {
   );
 }
 
-export function ContentSection(props: { tab: ReaderTab | null }) {
-  const { tab } = props;
+export function ContentSection(props: {
+  tab: ReaderTab | null;
+  /** Types that get their own sections, and so are left out of this one. */
+  contentTypes?: readonly DiscoverContentTypeDefinition[];
+}) {
+  const { tab, contentTypes = [] } = props;
   const { t } = useI18n();
   const title = t("content", { defaultValue: "Content" });
 
@@ -147,11 +162,7 @@ export function ContentSection(props: { tab: ReaderTab | null }) {
   const groups = tab.readingState.discoveredContent.value;
   const results = groups
     .flatMap((group) => group.results)
-    .filter(
-      (result) =>
-        !result.contentType ||
-        !DISCOVER_CONTENT_TYPES_HIDDEN_BY_DEFAULT.includes(result.contentType)
-    );
+    .filter((result) => !hasRegisteredContentType(result, contentTypes));
 
   if (results.length <= 0) {
     return null;
@@ -222,89 +233,48 @@ function ContentResultsList(props: { results: DiscoverContentResult[] }) {
 }
 
 /**
- * One Theographic type's entries for the chapter.
+ * The section for one registered content type.
  *
- * The card in `result.content` renders the whole entry — name, subtitle, verse
- * links and the expandable detail — so unlike {@link ContentSection} this
- * doesn't also print the title and description above it.
+ * `"custom"` types supply the whole card in each result's `content`, so only
+ * that is rendered; `"standard"` ones get the same layout as ordinary content.
  */
-function TheographicSection(props: {
+export function ContentTypeSection(props: {
   tab: ReaderTab | null;
-  contentType: DiscoverContentType;
-  title: string;
+  definition: DiscoverContentTypeDefinition;
+  /** Lets the reader fold the section away; hidden-by-default types start folded. */
   collapsible?: boolean;
 }) {
-  const { tab, contentType, title, collapsible } = props;
+  const { tab, definition, collapsible } = props;
+  const { t } = useI18n();
 
   if (!tab) {
     return null;
   }
 
-  const results = theographicResultsFor(tab, contentType);
+  const results = contentTypeResultsFor(tab, definition.id);
   if (results.length === 0) {
     return null;
   }
 
   return (
     <DiscoverSection
-      title={title}
+      title={translateTitle(t, definition.title)}
       count={results.length}
       collapsible={collapsible}
-      defaultCollapsed={collapsible}
+      defaultCollapsed={collapsible && !!definition.hiddenByDefault}
     >
-      <ul className="sb-discover-list">
-        {results.map((result, index) => (
-          <li key={index} className="sb-discover-item">
-            {result.content}
-          </li>
-        ))}
-      </ul>
+      {definition.layout === "custom" ? (
+        <ul className="sb-discover-list">
+          {results.map((result, index) => (
+            <li key={index} className="sb-discover-item">
+              {result.content}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ContentResultsList results={results} />
+      )}
     </DiscoverSection>
-  );
-}
-
-export function PeopleSection(props: {
-  tab: ReaderTab | null;
-  collapsible?: boolean;
-}) {
-  const { t } = useI18n();
-  return (
-    <TheographicSection
-      tab={props.tab}
-      contentType="person_profile"
-      title={t("people", { defaultValue: "People" })}
-      collapsible={props.collapsible}
-    />
-  );
-}
-
-export function PlacesSection(props: {
-  tab: ReaderTab | null;
-  collapsible?: boolean;
-}) {
-  const { t } = useI18n();
-  return (
-    <TheographicSection
-      tab={props.tab}
-      contentType="place_profile"
-      title={t("places", { defaultValue: "Places" })}
-      collapsible={props.collapsible}
-    />
-  );
-}
-
-export function EventsSection(props: {
-  tab: ReaderTab | null;
-  collapsible?: boolean;
-}) {
-  const { t } = useI18n();
-  return (
-    <TheographicSection
-      tab={props.tab}
-      contentType="event"
-      title={t("events", { defaultValue: "Events" })}
-      collapsible={props.collapsible}
-    />
   );
 }
 

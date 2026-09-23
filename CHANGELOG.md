@@ -10,9 +10,12 @@
 - Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1", "Gen.1" and "Gen. 1:1" resolve the same as "Gen 1:1", and a trailing abbreviation period ("Gen.") keeps offering suggestions. Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
 - Show the people, places and events a chapter names, from the Theographic Bible Metadata dataset. ([#1744](https://github.com/HelloAOLab/seed-bible/issues/1744))
   - New People, Places and Events filters in the Discover panel, each listing what the chapter mentions and the verses it appears in. Tap a verse to jump to it.
-  - Open an entry to read its description, plus a person's family and events, a place's type and coordinates, or an event's date, participants and locations.
+  - Open an entry and pick one of the chapter's verses that mention it to read it, quoted in your translation with the name marked.
+  - Each entry also shows its facts — a person's family, a place's other names and what it's called today, an event's date and participants — and its full dictionary entry. Places appear on a map right in the entry, which can be moved into its own window.
   - Select a verse and the lists narrow to what that verse mentions.
   - These are left out of the "All" view until you pick one of the three filters, so a chapter with dozens of names doesn't bury your own notes.
+  - Comes as the "People, Places & Events" extension, installed automatically. Uninstall it from Settings ▸ Extensions if you don't want it.
+- Let extensions add their own kinds of content to Discover. Each kind gets its own filter in the Discover panel and its own section in the Discover pane, and can be kept out of the "All" view until it's picked.
 
 ### 🔧 Changed
 
@@ -20,6 +23,7 @@
 
 ### 🐛 Fixed
 
+- Show an extension's Discover content as soon as the extension is installed, and remove it as soon as it's uninstalled, instead of waiting until you move to another chapter.
 - Fix the reader sitting partly offscreen after swiping between chapters on mobile and then rotating to a larger layout.
 - Lift the mobile Search verses field off the scripture with a box shadow so it no longer blends into the verse text.
 - Stop showing "You lost connection to the session" on a remaining host device when another of the host's devices disconnects.

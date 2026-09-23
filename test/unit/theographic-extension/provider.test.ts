@@ -1,12 +1,12 @@
 import {
-  chapterVerseText,
   createTheographicDiscoverProvider,
-  mentionsName,
+  createScriptureReader,
+  TheographicRequestError,
+} from "@packages/theographic-extension/ext_theographic/provider";
+import {
   createOpenPlace,
-  narrowToMentionedVerses,
   placeToGeoJson,
-  primaryName,
-} from "@packages/seed-bible/seed-bible/managers/TheographicDiscoverProvider";
+} from "@packages/theographic-extension/ext_theographic/map";
 import type { BibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import type {
   Dataset,
@@ -15,7 +15,7 @@ import type {
 import type {
   TheographicBookChapter,
   TheographicClient,
-} from "@packages/seed-bible/seed-bible/managers/TheographicDiscoverProvider";
+} from "@packages/theographic-extension/ext_theographic/provider";
 import type { DiscoverContext } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 
@@ -76,47 +76,15 @@ function exodus4(): TheographicBookChapter {
   };
 }
 
-/** Only the verses the assertions depend on, worded as the KJV has them. */
-const EXODUS_4_TEXT: Record<number, string> = {
-  5: "That they may believe that the LORD God of their fathers, the God of Abraham, the God of Isaac, and the God of Jacob, hath appeared unto thee.",
-  14: "And the anger of the LORD was kindled against Moses, and he said, Is not Aaron the Levite thy brother?",
-  19: "And the LORD said unto Moses in Midian, Go, return into Egypt.",
-  20: "And Moses took his wife and his sons, and returned to the land of Egypt.",
-  22: "And thou shalt say unto Pharaoh, Thus saith the LORD, Israel is my son, even my firstborn.",
-  27: "And the LORD said to Aaron, Go into the wilderness to meet Moses.",
-  28: "And Moses told Aaron all the words of the LORD who had sent him.",
-  29: "And Moses and Aaron went and gathered together all the elders of the children of Israel.",
-  30: "And Aaron spake all the words which the LORD had spoken unto Moses.",
-  31: "And the people believed: and when they heard that the LORD had visited the children of Israel.",
-};
-
-function chapterText(
-  text: Record<number, string> = EXODUS_4_TEXT
-): TranslationBookChapter {
-  return {
-    chapter: {
-      number: 4,
-      content: Object.entries(text).map(([number, prose]) => ({
-        type: "verse" as const,
-        number: Number(number),
-        content: [prose],
-      })),
-    },
-  } as unknown as TranslationBookChapter;
-}
-
 function createDeps(
   options: {
     chapter?: () => Promise<TheographicBookChapter>;
-    text?: () => Promise<TranslationBookChapter>;
   } = {}
 ) {
   const getChapter = vi.fn(
     options.chapter ?? (() => Promise.resolve(exodus4()))
   );
-  const getTranslationBookChapter = vi.fn(
-    options.text ?? (() => Promise.resolve(chapterText()))
-  );
+  const getTranslationBookChapter = vi.fn();
 
   return {
     client: { getChapter, getEntity: vi.fn() } as unknown as TheographicClient,
@@ -134,63 +102,6 @@ async function discover(
   const provider = createTheographicDiscoverProvider(deps);
   return await provider.discover(context);
 }
-
-describe("primaryName", () => {
-  it("drops a trailing parenthetical, whether it's an alias or a qualifier", () => {
-    expect(primaryName("Jacob (Israel)")).toBe("Jacob");
-    expect(primaryName("Pharaoh (of the Exodus)")).toBe("Pharaoh");
-    expect(primaryName("Aaron")).toBe("Aaron");
-  });
-});
-
-describe("mentionsName", () => {
-  it("matches a name as a whole word", () => {
-    expect(mentionsName("Is not Aaron the Levite thy brother?", "Aaron")).toBe(
-      true
-    );
-  });
-
-  it("matches a possessive", () => {
-    expect(
-      mentionsName("And Aaron's rod swallowed up their rods.", "Aaron")
-    ).toBe(true);
-  });
-
-  it("matches a multi-word name", () => {
-    expect(mentionsName("they came unto Mount Hor.", "Mount Hor")).toBe(true);
-  });
-
-  it("ignores accents and case", () => {
-    expect(mentionsName("the men of Sïdon gathered.", "sidon")).toBe(true);
-  });
-
-  it("does not match a name buried inside a longer word", () => {
-    expect(mentionsName("He went to Aaronsburg.", "Aaron")).toBe(false);
-    expect(mentionsName("the danites gathered", "Dan")).toBe(false);
-  });
-});
-
-describe("narrowToMentionedVerses", () => {
-  const verseText = chapterVerseText(chapterText());
-
-  it("keeps only the verses whose text names the person", () => {
-    expect(
-      narrowToMentionedVerses([14, 27, 28, 29, 30], "Aaron", verseText)
-    ).toEqual([14, 27, 28, 29, 30]);
-  });
-
-  it("drops verses that use an alternate name instead", () => {
-    // 5 says "the God of Jacob"; 22, 29 and 31 say "Israel", which in 29 and
-    // 31 is the nation rather than the man.
-    expect(
-      narrowToMentionedVerses([5, 22, 29, 31], "Jacob (Israel)", verseText)
-    ).toEqual([5]);
-  });
-
-  it("keeps a verse the translation has no text for rather than guessing", () => {
-    expect(narrowToMentionedVerses([99], "Aaron", verseText)).toEqual([99]);
-  });
-});
 
 describe("createTheographicDiscoverProvider", () => {
   it("maps people, places and events to their own content types", async () => {
@@ -279,8 +190,10 @@ describe("createTheographicDiscoverProvider", () => {
     const deps = createDeps({
       chapter: () =>
         Promise.reject(
-          new Error(
-            "Failed request to https://example.test/api/d/theographic/PRO/27.json. Status: 404 Not Found"
+          new TheographicRequestError(
+            "https://example.test/api/d/theographic/PRO/27.json",
+            "not-found",
+            404
           )
         ),
     });
@@ -295,9 +208,7 @@ describe("createTheographicDiscoverProvider", () => {
     const deps = createDeps({
       chapter: () =>
         Promise.reject(
-          new Error(
-            "Failed request to https://example.test. Status: 500 Server Error"
-          )
+          new TheographicRequestError("https://example.test", "failed", 500)
         ),
     });
     const provider = createTheographicDiscoverProvider(deps);
@@ -337,9 +248,9 @@ describe("placeToGeoJson", () => {
 
   it("puts latitude before longitude, as the map portal expects", () => {
     // Deliberately not GeoJSON's documented [longitude, latitude]: the
-    // importer maps coordinates[0] to dimension X, which this map portal reads
-    // as the latitude. Flipping these lands every place ~1,500 km away, and
-    // both numbers stay valid coordinates, so nothing else catches it.
+    // importer labels and focuses a lone Feature with coordinates[0] as the
+    // latitude. Flipping these lands every place ~1,500 km away, and both
+    // numbers stay valid coordinates, so nothing else catches it.
     expect(placeToGeoJson(egypt)?.geometry.coordinates).toEqual([
       26.4902, 29.8808,
     ]);
@@ -432,5 +343,141 @@ describe("createOpenPlace", () => {
 
     const [first, second] = openPane.mock.calls.map((c) => c[0].id);
     expect(first).toBe(second);
+  });
+});
+
+describe("createScriptureReader", () => {
+  function chapterOf(verses: Record<number, string>, shortName = "BSB") {
+    return {
+      translation: { shortName },
+      chapter: {
+        number: 10,
+        content: Object.entries(verses).map(([number, text]) => ({
+          type: "verse",
+          number: Number(number),
+          content: [text],
+        })),
+      },
+    } as unknown as TranslationBookChapter;
+  }
+
+  function dataWith(options: {
+    books?: { id: string; name: string; commonName: string }[];
+    chapter?: () => Promise<TranslationBookChapter>;
+  }) {
+    const getTranslationBookChapter = vi.fn(
+      options.chapter ?? (() => Promise.resolve(chapterOf({})))
+    );
+    return {
+      data: {
+        getCachedTranslationBooks: () =>
+          options.books ? { books: options.books } : null,
+        getTranslationBookChapter,
+      } as unknown as BibleDataManager,
+      getTranslationBookChapter,
+    };
+  }
+
+  it("names a book the way the reader's translation does", () => {
+    const { data } = dataWith({
+      books: [{ id: "1CH", name: "1 Chron.", commonName: "1 Chronicles" }],
+    });
+
+    expect(createScriptureReader(data, "BSB").bookName("1CH")).toBe(
+      "1 Chronicles"
+    );
+  });
+
+  it("falls back to the book id when the book list isn't loaded", () => {
+    const { data } = dataWith({});
+
+    expect(createScriptureReader(data, "BSB").bookName("MIC")).toBe("MIC");
+  });
+
+  it("reads a verse in the reader's translation", async () => {
+    const { data, getTranslationBookChapter } = dataWith({
+      chapter: () =>
+        Promise.resolve(chapterOf({ 8: "Cush was the father of Nimrod." })),
+    });
+
+    await expect(
+      createScriptureReader(data, "BSB").readPassage({
+        book: "GEN",
+        chapter: 10,
+        verse: 8,
+      })
+    ).resolves.toEqual({
+      text: "Cush was the father of Nimrod.",
+      translation: "BSB",
+    });
+    expect(getTranslationBookChapter).toHaveBeenCalledWith("BSB", "GEN", 10);
+  });
+
+  it("joins every verse of a span", async () => {
+    const { data } = dataWith({
+      chapter: () =>
+        Promise.resolve(
+          chapterOf({ 8: "He began to be mighty.", 9: "He was a hunter." })
+        ),
+    });
+
+    const passage = await createScriptureReader(data, "BSB").readPassage({
+      book: "GEN",
+      chapter: 10,
+      verse: 8,
+      endVerse: 9,
+    });
+
+    expect(passage?.text).toBe("He began to be mighty. He was a hunter.");
+  });
+
+  it("answers null rather than throwing when the chapter can't be loaded", async () => {
+    const { data } = dataWith({
+      chapter: () => Promise.reject(new Error("offline")),
+    });
+
+    await expect(
+      createScriptureReader(data, "BSB").readPassage({
+        book: "GEN",
+        chapter: 10,
+        verse: 8,
+      })
+    ).resolves.toBeNull();
+  });
+
+  it("answers null for a verse the chapter doesn't have", async () => {
+    const { data } = dataWith({
+      chapter: () => Promise.resolve(chapterOf({ 1: "In the beginning." })),
+    });
+
+    await expect(
+      createScriptureReader(data, "BSB").readPassage({
+        book: "GEN",
+        chapter: 10,
+        verse: 99,
+      })
+    ).resolves.toBeNull();
+  });
+});
+
+describe("reference clicks from a card", () => {
+  it("carry the chapter the card was discovered for", async () => {
+    const deps = createDeps();
+    const results = await discover(CONTEXT, deps);
+    const card = results[0];
+    if (card?.type !== "content" || !card.content) {
+      throw new Error("expected a content result with a card");
+    }
+
+    // The card is a VNode; its onReferenceClick is what the chips call.
+    const { onReferenceClick } = (
+      card.content as { props: { onReferenceClick: (ref: unknown) => void } }
+    ).props;
+    onReferenceClick({ book: "MIC", chapter: 5, verse: 6 });
+
+    expect(deps.onReferenceClick).toHaveBeenCalledWith(
+      { book: "MIC", chapter: 5, verse: 6 },
+      { translationId: "eng_kjv", book: "EXO", chapter: 4 }
+    );
   });
 });

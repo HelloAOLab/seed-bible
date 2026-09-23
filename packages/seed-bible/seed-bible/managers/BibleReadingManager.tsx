@@ -3151,6 +3151,7 @@ export function createBibleReadingState(
 
     const stopDiscoverEffect = effect(() => {
       const chapter = chapterData.value;
+      void discoverManager.providers.value;
       if (!chapter) {
         discoveredResults.value = [];
         return;

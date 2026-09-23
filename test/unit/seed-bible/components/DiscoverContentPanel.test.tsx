@@ -5,6 +5,10 @@ import { DiscoverContentPanel } from "@packages/seed-bible/seed-bible/components
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import {
+  createDiscoverManager,
+  type DiscoverContentTypeDefinition,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -76,6 +80,18 @@ function theographicResult(
   };
 }
 
+/** A typed result with a readable card, for tests that only need one. */
+function typedResultOf(contentType: string, title: string) {
+  return {
+    type: "content",
+    contentType,
+    title,
+    description: "",
+    reference: { book: "GEN", chapter: 1 },
+    content: <span>{title} card</span>,
+  };
+}
+
 function createMockTab(
   overrides: {
     discoveredCrossReferences?: unknown[];
@@ -105,8 +121,15 @@ function createMockTab(
 }
 
 function createMockState(
-  overrides: { annotationsForChapter?: Annotation[] } = {}
+  overrides: {
+    annotationsForChapter?: Annotation[];
+    contentTypes?: DiscoverContentTypeDefinition[];
+  } = {}
 ): SeedBibleState {
+  const discover = createDiscoverManager();
+  for (const definition of overrides.contentTypes ?? []) {
+    discover.registerContentType(definition);
+  }
   return {
     app: {
       toast: vi.fn(),
@@ -120,7 +143,7 @@ function createMockState(
     tabs: { tabs: signal([]), selectedTabId: signal(null) },
     panes: { closeFullscreenPanes: vi.fn() },
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover,
     annotations: {
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
@@ -304,7 +327,25 @@ describe("DiscoverContentPanel", () => {
     expect(container.textContent).toContain("A helpful note.");
   });
 
-  describe("Theographic content", () => {
+  describe("registered content types", () => {
+    // The three an extension like Theographic registers: hidden from "All",
+    // and each result's `content` is the whole card.
+    const HIDDEN_TYPES: DiscoverContentTypeDefinition[] = [
+      {
+        id: "person_profile",
+        title: "People",
+        hiddenByDefault: true,
+        layout: "custom",
+      },
+      {
+        id: "place_profile",
+        title: "Places",
+        hiddenByDefault: true,
+        layout: "custom",
+      },
+      { id: "event", title: "Events", hiddenByDefault: true, layout: "custom" },
+    ];
+
     const THEOGRAPHIC_FIXTURE = [
       {
         providerId: "theographic",
@@ -326,9 +367,13 @@ describe("DiscoverContentPanel", () => {
         (el) => el.textContent === label
       ) as HTMLButtonElement;
 
-    function renderPanel(tab: ReaderTab) {
+    function renderPanel(
+      tab: ReaderTab,
+      contentTypes: DiscoverContentTypeDefinition[] = HIDDEN_TYPES
+    ) {
       const state = createMockState({
         annotationsForChapter: [createAnnotation()],
+        contentTypes,
       });
       act(() => {
         render(<DiscoverContentPanel tab={tab} state={state} />, container);
@@ -400,15 +445,64 @@ describe("DiscoverContentPanel", () => {
 
     it("explains where the content went when it is all there is", () => {
       const tab = createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE });
-      const state = createMockState({ annotationsForChapter: [] });
+      const state = createMockState({
+        annotationsForChapter: [],
+        contentTypes: HIDDEN_TYPES,
+      });
 
       act(() => {
         render(<DiscoverContentPanel tab={tab} state={state} />, container);
       });
 
-      expect(container.textContent).toContain(
-        "Choose People, Places or Events"
+      expect(container.textContent).toContain("Pick a filter above");
+    });
+
+    it("shows a type that isn't hidden by default under 'All'", () => {
+      renderPanel(createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE }), [
+        { id: "person_profile", title: "People", layout: "custom" },
+      ]);
+
+      expect(container.textContent).toContain("Aaron card");
+    });
+
+    it("shows results as ordinary content when their type isn't registered", () => {
+      // No chips for them, but nothing is hidden either.
+      renderPanel(
+        createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE }),
+        []
       );
+
+      expect(chipLabels()).toEqual(["All", "Notes", "Content"]);
+      expect(container.textContent).toContain("Aaron");
+    });
+
+    it("keys chips so a type id can't collide with a built-in filter", () => {
+      // A type literally named "content" still gets its own chip, separate
+      // from the built-in Content chip for untyped results.
+      const tab = createMockTab({
+        discoveredContent: [
+          {
+            providerId: "p1",
+            results: [
+              typedResultOf("content", "Typed"),
+              {
+                type: "content",
+                title: "Untyped",
+                description: "",
+                reference: { book: "GEN", chapter: 1 },
+              },
+            ],
+          },
+        ],
+      });
+      renderPanel(tab, [{ id: "content", title: "Typed content" }]);
+
+      expect(chipLabels()).toEqual([
+        "All",
+        "Notes",
+        "Content",
+        "Typed content",
+      ]);
     });
   });
 

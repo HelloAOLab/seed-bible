@@ -7,6 +7,10 @@ import {
   DiscoverPaneTitle,
 } from "@packages/seed-bible/seed-bible/components/DiscoverPane/DiscoverPane";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
+import {
+  createDiscoverManager,
+  type DiscoverManager,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import type {
   Playlist,
   PlaylistManager,
@@ -374,6 +378,7 @@ function createMockState(
   overrides: {
     getUserProfile?: ReturnType<typeof vi.fn>;
     openVerseReference?: ReturnType<typeof vi.fn>;
+    discover?: DiscoverManager;
   } = {}
 ): SeedBibleState {
   return {
@@ -394,9 +399,7 @@ function createMockState(
         url: "https://example.com/hero.jpg",
       }),
     },
-    discover: {
-      scrollToVerse: signal(null),
-    },
+    discover: overrides.discover ?? createDiscoverManager(),
     panes: {
       closeFullscreenPanes: vi.fn(),
     },
@@ -2188,7 +2191,7 @@ describe("DiscoverPane", () => {
     expect(container.textContent).toContain("The full article.");
   });
 
-  it("folds people, places and events away until their header is clicked", () => {
+  it("folds a hidden-by-default type away until its header is clicked", () => {
     const { playlists } = createMockPlaylists();
     const { annotations } = createMockAnnotations();
     const tab = createMockTab({
@@ -2216,7 +2219,20 @@ describe("DiscoverPane", () => {
       ],
     });
     const tabs = createMockTabs(tab);
-    const state = createMockState();
+    const discover = createDiscoverManager();
+    discover.registerContentType({
+      id: "person_profile",
+      title: "People",
+      hiddenByDefault: true,
+      layout: "custom",
+    });
+    discover.registerContentType({
+      id: "place_profile",
+      title: "Places",
+      hiddenByDefault: true,
+      layout: "custom",
+    });
+    const state = createMockState(false, { discover });
 
     act(() => {
       render(

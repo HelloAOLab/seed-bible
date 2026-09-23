@@ -5,8 +5,10 @@ import {
   CrossReferencesSection,
   StudyNotesSection,
   ContentSection,
-  theographicResultsFor,
+  ContentTypeSection,
+  contentTypeResultsFor,
 } from "@packages/seed-bible/seed-bible/components/DiscoverPane/DiscoveredResultsSections";
+import type { DiscoverContentTypeDefinition } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { hasAnyDiscoverResults } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 
@@ -49,21 +51,25 @@ function createMockTab(
   } as unknown as ReaderTab;
 }
 
-/** One Theographic result as the provider builds it. */
-function theographicResult(
-  contentType: "person_profile" | "place_profile" | "event",
-  title: string,
-  verses: number[]
-) {
+/** A content result of a given type, as an extension's provider would build it. */
+function typedResult(contentType: string, title: string, verses?: number[]) {
   return {
     type: "content",
     contentType,
-    verses,
+    ...(verses ? { verses } : {}),
     title,
-    description: "",
-    reference: { book: "EXO", chapter: 4, verse: verses[0] },
+    description: `${title} description`,
+    reference: { book: "EXO", chapter: 4, verse: verses?.[0] },
     content: <span>{title} card</span>,
   };
+}
+
+/** A registered type definition, with a plain-string title for readable asserts. */
+function definition(
+  id: string,
+  overrides: Partial<DiscoverContentTypeDefinition> = {}
+): DiscoverContentTypeDefinition {
+  return { id, title: `${id} title`, ...overrides };
 }
 
 describe("CrossReferencesSection / StudyNotesSection / ContentSection", () => {
@@ -433,7 +439,7 @@ describe("CrossReferencesSection / StudyNotesSection / ContentSection", () => {
     expect(container.textContent).toContain("No author here.");
   });
 
-  it("leaves people, places and events to their own sections", () => {
+  it("leaves a registered type to its own section", () => {
     const tab = createMockTab({
       discoveredContent: [
         {
@@ -445,32 +451,63 @@ describe("CrossReferencesSection / StudyNotesSection / ContentSection", () => {
               description: "Some context",
               content: "The full article.",
             },
-            theographicResult("person_profile", "Aaron", [14]),
+            typedResult("person_profile", "Aaron", [14]),
           ],
         },
       ],
     });
 
     act(() => {
-      render(<ContentSection tab={tab} />, container);
+      render(
+        <ContentSection
+          tab={tab}
+          contentTypes={[definition("person_profile")]}
+        />,
+        container
+      );
     });
 
     expect(container.textContent).toContain("The full article.");
     expect(container.textContent).not.toContain("Aaron");
   });
 
-  it("renders nothing at all when the only content is Theographic", () => {
+  it("still shows content whose type nobody has registered", () => {
+    // An extension that forgets to register its type, or is uninstalled
+    // mid-session, must not make its results silently disappear.
     const tab = createMockTab({
       discoveredContent: [
         {
-          providerId: "theographic",
-          results: [theographicResult("place_profile", "Egypt", [19])],
+          providerId: "p1",
+          results: [typedResult("person_profile", "Aaron", [14])],
         },
       ],
     });
 
     act(() => {
-      render(<ContentSection tab={tab} />, container);
+      render(<ContentSection tab={tab} contentTypes={[]} />, container);
+    });
+
+    expect(container.textContent).toContain("Aaron");
+  });
+
+  it("renders nothing at all when the only content is of a registered type", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "extension",
+          results: [typedResult("place_profile", "Egypt", [19])],
+        },
+      ],
+    });
+
+    act(() => {
+      render(
+        <ContentSection
+          tab={tab}
+          contentTypes={[definition("place_profile")]}
+        />,
+        container
+      );
     });
 
     expect(container.innerHTML).toBe("");
@@ -506,16 +543,16 @@ describe("hasAnyDiscoverResults", () => {
   });
 });
 
-describe("theographicResultsFor", () => {
+describe("contentTypeResultsFor", () => {
   const tab = () =>
     createMockTab({
       discoveredContent: [
         {
           providerId: "theographic",
           results: [
-            theographicResult("person_profile", "Aaron", [14, 27]),
-            theographicResult("person_profile", "Moses", [1, 14]),
-            theographicResult("place_profile", "Egypt", [19]),
+            typedResult("person_profile", "Aaron", [14, 27]),
+            typedResult("person_profile", "Moses", [1, 14]),
+            typedResult("place_profile", "Egypt", [19]),
           ],
         },
       ],
@@ -523,19 +560,19 @@ describe("theographicResultsFor", () => {
 
   it("returns only the requested type", () => {
     expect(
-      theographicResultsFor(tab(), "person_profile").map(
+      contentTypeResultsFor(tab(), "person_profile").map(
         (result) => result.title
       )
     ).toEqual(["Aaron", "Moses"]);
     expect(
-      theographicResultsFor(tab(), "place_profile").map(
+      contentTypeResultsFor(tab(), "place_profile").map(
         (result) => result.title
       )
     ).toEqual(["Egypt"]);
   });
 
   it("returns the whole chapter when no verse is selected", () => {
-    expect(theographicResultsFor(tab(), "person_profile")).toHaveLength(2);
+    expect(contentTypeResultsFor(tab(), "person_profile")).toHaveLength(2);
   });
 
   it("keeps only entries appearing in the selected verse", () => {
@@ -545,7 +582,7 @@ describe("theographicResultsFor", () => {
     });
 
     expect(
-      theographicResultsFor(selected, "person_profile").map(
+      contentTypeResultsFor(selected, "person_profile").map(
         (result) => result.title
       )
     ).toEqual(["Aaron"]);
@@ -558,10 +595,25 @@ describe("theographicResultsFor", () => {
     });
 
     expect(
-      theographicResultsFor(selected, "person_profile").map(
+      contentTypeResultsFor(selected, "person_profile").map(
         (result) => result.title
       )
     ).toEqual(["Aaron", "Moses"]);
+  });
+
+  it("keeps a result that doesn't say which verses it covers", () => {
+    // Without `verses`, a result is about the chapter as a whole, so no single
+    // verse selection can rule it out.
+    const selected = createMockTab({
+      discoveredContent: [
+        { providerId: "p1", results: [typedResult("note", "Overview")] },
+      ],
+      selectedVerses: [3],
+    });
+
+    expect(
+      contentTypeResultsFor(selected, "note").map((result) => result.title)
+    ).toEqual(["Overview"]);
   });
 
   it("returns nothing for a selected verse that names no one", () => {
@@ -570,7 +622,7 @@ describe("theographicResultsFor", () => {
       selectedVerses: [99],
     });
 
-    expect(theographicResultsFor(selected, "person_profile")).toEqual([]);
+    expect(contentTypeResultsFor(selected, "person_profile")).toEqual([]);
   });
 });
 
@@ -600,5 +652,149 @@ describe("hasAnyDiscoverResults", () => {
     expect(hasAnyDiscoverResults(withCrossReferences.readingState)).toBe(true);
     expect(hasAnyDiscoverResults(withStudyNotes.readingState)).toBe(true);
     expect(hasAnyDiscoverResults(withContent.readingState)).toBe(true);
+  });
+});
+
+describe("ContentTypeSection", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  const tabWith = (...results: unknown[]) =>
+    createMockTab({ discoveredContent: [{ providerId: "p1", results }] });
+
+  function sectionTitles() {
+    return Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+  }
+
+  it("titles itself from the definition and counts its results", () => {
+    const tab = tabWith(
+      typedResult("sermon", "First"),
+      typedResult("sermon", "Second")
+    );
+
+    act(() => {
+      render(
+        <ContentTypeSection
+          tab={tab}
+          definition={definition("sermon", { title: "Sermons" })}
+        />,
+        container
+      );
+    });
+
+    expect(sectionTitles()).toEqual(["Sermons (2)"]);
+  });
+
+  it("resolves a translatable title", () => {
+    const tab = tabWith(typedResult("sermon", "First"));
+
+    act(() => {
+      render(
+        <ContentTypeSection
+          tab={tab}
+          definition={definition("sermon", {
+            title: { key: "sermons", ns: "ext", defaultValue: "Sermons" },
+          })}
+        />,
+        container
+      );
+    });
+
+    expect(sectionTitles()).toEqual(["Sermons (1)"]);
+  });
+
+  it("lays standard results out like ordinary content", () => {
+    const tab = tabWith(typedResult("sermon", "First"));
+
+    act(() => {
+      render(
+        <ContentTypeSection tab={tab} definition={definition("sermon")} />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-discover-item-title")?.textContent
+    ).toBe("First");
+    expect(container.textContent).toContain("First description");
+    expect(container.textContent).toContain("First card");
+  });
+
+  it("renders only the content for a custom layout, which is the whole card", () => {
+    const tab = tabWith(typedResult("person", "Aaron"));
+
+    act(() => {
+      render(
+        <ContentTypeSection
+          tab={tab}
+          definition={definition("person", { layout: "custom" })}
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).toContain("Aaron card");
+    // Nothing printed around it: no separate title or description.
+    expect(container.querySelector(".sb-discover-item-title")).toBeNull();
+    expect(container.textContent).not.toContain("Aaron description");
+  });
+
+  it("renders nothing when the chapter has none of that type", () => {
+    const tab = tabWith(typedResult("other", "Elsewhere"));
+
+    act(() => {
+      render(
+        <ContentTypeSection tab={tab} definition={definition("sermon")} />,
+        container
+      );
+    });
+
+    expect(container.innerHTML).toBe("");
+  });
+
+  it("starts folded when collapsible and hidden by default", () => {
+    const tab = tabWith(typedResult("person", "Aaron"));
+
+    act(() => {
+      render(
+        <ContentTypeSection
+          tab={tab}
+          definition={definition("person", { hiddenByDefault: true })}
+          collapsible
+        />,
+        container
+      );
+    });
+
+    expect(sectionTitles()).toEqual(["person title (1)"]);
+    expect(container.textContent).not.toContain("Aaron card");
+  });
+
+  it("starts open when collapsible but not hidden by default", () => {
+    const tab = tabWith(typedResult("sermon", "First"));
+
+    act(() => {
+      render(
+        <ContentTypeSection
+          tab={tab}
+          definition={definition("sermon")}
+          collapsible
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).toContain("First card");
   });
 });
