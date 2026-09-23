@@ -286,7 +286,6 @@
   "discover": "Discover",
   "playlists": "Playlists",
   "playlist-history": "Playlist history",
-  "discover-playlist-history-empty": "Play a saved playlist while signed in and it will show up here.",
   "playlist-history-session-summary": "{{time}} - {{percent}}% complete - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}}% complete",
   "playlist-history-continue": "Continue",
@@ -299,8 +298,7 @@
   "study-notes": "Study notes",
   "content": "Content",
   "untitled-playlist": "Untitled playlist",
-  "discover-playlists-empty": "You haven't created any playlists yet.",
-  "discover-annotations-empty": "You have no annotations",
+  "discover-annotations-empty": "You don't have any notes for this chapter.",
   "discover-cross-references-empty": "No cross references for this chapter.",
   "discover-study-notes-empty": "No study notes for this chapter.",
   "discover-content-empty": "No content for this chapter.",
@@ -854,5 +852,11 @@
   "adopt-device-content-kind-both": "highlights and notes",
   "adopt-device-content-add": "Add to account",
   "adopt-device-content-skip": "Don't add",
-  "your-content-empty-saves": "Passages you save will show up here."
+  "your-content-empty-saves": "Passages you save will show up here.",
+  "theme-system": "System",
+  "customization-default-translation": "Default translation",
+  "customization-default-translation-none": "Seed Bible's default",
+  "customization-default-translation-unavailable": "{{id}} (unavailable)",
+  "filter-translations": "Filter translations",
+  "discover-annotations-empty-create": "Create a note"
 }
