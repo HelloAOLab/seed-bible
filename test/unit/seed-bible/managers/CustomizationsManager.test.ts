@@ -23,7 +23,11 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/CustomizationExtensionPreferencesManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
-import { createTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import {
+  createTheme,
+  DARK_THEME,
+  SYSTEM_THEME_ID,
+} from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { SettingsManager } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import {
   createNavigationManager,
@@ -31,6 +35,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
+import { stubColorScheme } from "../testUtils/stubColorScheme";
 
 function hexToRgbTuple(hex: string): [number, number, number] {
   const num = parseInt(hex.replace("#", ""), 16);
@@ -124,6 +129,7 @@ describe("CustomizationsManager", () => {
           settingsValue.value = { ...settingsValue.value, customHighlights };
         }
       ),
+      resetTextColors: vi.fn(),
     } as unknown as Mocked<SettingsManager>;
   });
 
@@ -136,6 +142,8 @@ describe("CustomizationsManager", () => {
     initialCustomizationSeed?: InitialCustomizationSeed
   ) {
     const theme = createTheme(settings);
+    // Mirrors the real app's post-mount read of the device's color scheme.
+    theme.hydrateSystemColorScheme();
     const variantSelections = createCustomizationVariantSelectionsManager(
       os,
       login
@@ -1020,6 +1028,68 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value?.name).toBe("My colors");
     expect(manager.customizations.value[0]?.name).toBe(created.name);
     expect(theme.customOverrides.value).toEqual({});
+  });
+
+  it("updateEditingDefaultTranslationId() sets the draft's default translation without persisting, then persists it on save", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    expect(created.defaultTranslationId).toBeUndefined();
+    manager.startEditing(created.id);
+
+    manager.updateEditingDefaultTranslationId("NIV");
+
+    expect(manager.editingCustomization.value?.defaultTranslationId).toBe(
+      "NIV"
+    );
+    expect(
+      manager.customizations.value[0]?.defaultTranslationId
+    ).toBeUndefined();
+
+    await manager.saveEditingCustomization();
+
+    expect(manager.customizations.value[0]?.defaultTranslationId).toBe("NIV");
+  });
+
+  it("updateEditingDefaultTranslationId(null) clears a previously-set default translation", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.updateEditingDefaultTranslationId("NIV");
+    await manager.saveEditingCustomization();
+    expect(manager.customizations.value[0]?.defaultTranslationId).toBe("NIV");
+
+    manager.updateEditingDefaultTranslationId(null);
+    await manager.saveEditingCustomization();
+
+    expect(
+      manager.customizations.value[0]?.defaultTranslationId
+    ).toBeUndefined();
+  });
+
+  it("updateEditingDefaultTranslationId() no-ops when there is no open draft", async () => {
+    const { manager } = createManager();
+    await manager.create();
+
+    manager.updateEditingDefaultTranslationId("NIV");
+
+    expect(manager.editingCustomization.value).toBeNull();
+  });
+
+  it("load() accepts a persisted record that already carries a defaultTranslationId", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.updateEditingDefaultTranslationId("ESV");
+    await manager.saveEditingCustomization();
+    const persisted = manager.customizations.value[0]!;
+
+    listAllDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [{ address: persisted.id, data: persisted }],
+    });
+    await manager.load();
+
+    expect(manager.customizations.value[0]?.defaultTranslationId).toBe("ESV");
   });
 
   it("setEditingExtensionAvailability() sets an id's availability on the draft without persisting", async () => {
@@ -2314,5 +2384,96 @@ describe("CustomizationsManager", () => {
     await manager.loadByLocator("owner.customization_missing");
 
     expect(manager.linkedCustomization.value).toBeNull();
+  });
+
+  describe("system color scheme", () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    /** A draft with a Light-based and a Dark-based variant, open in the editor so it counts as active. */
+    async function createLightAndDarkCustomization(
+      manager: ReturnType<typeof createManager>["manager"]
+    ) {
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      const light = created.variants[0]!;
+      manager.applyPresetToEditingVariant(light.id, "light");
+      const dark = manager.addEditingVariant()!;
+      manager.applyPresetToEditingVariant(dark.id, "dark");
+      return { lightVariantId: light.id, darkVariantId: dark.id };
+    }
+
+    it("follows the device between a customization's light and dark variants once the viewer picks System", async () => {
+      const emitChange = stubColorScheme(false);
+      const { manager } = createManager();
+      const { lightVariantId, darkVariantId } =
+        await createLightAndDarkCustomization(manager);
+
+      await manager.selectActiveVariant(SYSTEM_THEME_ID);
+
+      expect(manager.canFollowSystemScheme.value).toBe(true);
+      expect(manager.isFollowingSystemScheme.value).toBe(true);
+      expect(manager.activeVariant.value?.id).toBe(lightVariantId);
+
+      emitChange(true);
+
+      expect(manager.activeVariant.value?.id).toBe(darkVariantId);
+      expect(
+        manager.activeResolvedTheme.value?.variables.readerBackground
+      ).toBe(DARK_THEME.variables.readerBackground);
+    });
+
+    it("applies the scheme-matching variant to a viewer on the System theme who has never picked one here", async () => {
+      stubColorScheme(true);
+      const { manager, theme } = createManager();
+      const { lightVariantId, darkVariantId } =
+        await createLightAndDarkCustomization(manager);
+      manager.setEditingDefaultVariant(lightVariantId);
+      theme.setTheme(SYSTEM_THEME_ID);
+
+      expect(manager.isFollowingSystemScheme.value).toBe(true);
+      expect(manager.activeVariant.value?.id).toBe(darkVariantId);
+    });
+
+    it("keeps an explicitly picked variant even while the app theme is System", async () => {
+      stubColorScheme(true);
+      const { manager, theme } = createManager();
+      const { lightVariantId } = await createLightAndDarkCustomization(manager);
+      theme.setTheme(SYSTEM_THEME_ID);
+
+      await manager.selectActiveVariant(lightVariantId);
+
+      expect(manager.isFollowingSystemScheme.value).toBe(false);
+      expect(manager.activeVariant.value?.id).toBe(lightVariantId);
+    });
+
+    it("cannot follow the device when the customization only covers one color scheme", async () => {
+      stubColorScheme(true);
+      const { manager, theme } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      const only = created.variants[0]!;
+      manager.applyPresetToEditingVariant(only.id, "light");
+      theme.setTheme(SYSTEM_THEME_ID);
+
+      expect(manager.canFollowSystemScheme.value).toBe(false);
+      expect(manager.isFollowingSystemScheme.value).toBe(false);
+      expect(manager.activeVariant.value?.id).toBe(only.id);
+    });
+
+    it("never stores the System id as a variant's base theme", async () => {
+      stubColorScheme(true);
+      const { manager, theme } = createManager();
+      theme.setTheme(SYSTEM_THEME_ID);
+
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      const added = manager.addEditingVariant()!;
+
+      expect(created.variants[0]?.baseTheme).toBe("dark");
+      expect(added.baseTheme).toBe("dark");
+      expect(manager.resolveVariantBaseTheme(added).id).toBe("dark");
+    });
   });
 });
