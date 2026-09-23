@@ -1254,8 +1254,16 @@ export interface ThemeManager {
   ) => void;
 }
 
-export function createTheme(settings: SettingsManager): ThemeManager {
-  const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
+export function createTheme(
+  settings: SettingsManager,
+  brandingThemes?: BibleTheme[]
+): ThemeManager {
+  // default themes used when no valid branding themes are provided
+  const DEFAULT_THEMES: BibleTheme[] = [LIGHT_THEME, DARK_THEME];
+  // use branding themes when available otherwise fall back to the default themes
+  const themes = signal<BibleTheme[]>(
+    brandingThemes?.length ? brandingThemes : DEFAULT_THEMES
+  );
   const prefersDarkScheme = signal(false);
   watchSystemColorScheme(prefersDarkScheme);
 
