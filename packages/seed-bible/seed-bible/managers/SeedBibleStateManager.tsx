@@ -688,6 +688,13 @@ export function createSeedBibleState(
     customizationExtensionPreferences,
     options.initialCustomizationSeed
   );
+  // The active Customization's chosen default translation, if any — see
+  // `createTabs`'s `activeCustomizationDefaultTranslationId` parameter for how
+  // it overrides Seed Bible's per-language default the same way
+  // `branding.defaultTranslationId` does for a whole deployment.
+  const activeCustomizationDefaultTranslationId = computed(
+    () => customizations.activeCustomization.value?.defaultTranslationId
+  );
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
     undefined
@@ -707,7 +714,8 @@ export function createSeedBibleState(
     readingExtensions,
     () => annotations,
     branding,
-    settings
+    settings,
+    activeCustomizationDefaultTranslationId
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(

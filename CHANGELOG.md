@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
+
 ### 🔧 Changed
 
 - Move the playlists section from the discover panel to the "Your Content" screen. ([#1838](https://github.com/HelloAOLab/seed-bible/pull/1838))

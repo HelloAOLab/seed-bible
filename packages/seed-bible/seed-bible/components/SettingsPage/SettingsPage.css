@@ -673,6 +673,16 @@
   text-align: left;
 }
 
+/** Current-value preview shown after a nav row's label (e.g. the picked translation). */
+.sb-settings-nav-value {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 45%;
+}
+
 .sb-settings-subpage-header {
   display: flex;
   align-items: center;
@@ -1672,6 +1682,49 @@
   border-radius: 1rem;
   color: var(--sb-primary-font-color);
   background: var(--sb-primary-color);
+}
+
+/*
+ * The "Default translation" nav row is a `ContextMenuWithButton` trigger,
+ * so it picks up `.sb-context-menu-button`'s icon-button sizing
+ * (`ContextMenu.css`) alongside `.sb-settings-nav-item`'s own full-width row
+ * styling. Both are single-class selectors, so which one wins depends on
+ * CSS load order — this compound selector outranks either on specificity
+ * alone, regardless of order.
+ */
+.sb-context-menu-button.sb-settings-nav-item {
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+}
+
+.sb-context-menu-button.sb-settings-nav-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+}
+
+/*
+ * `.sb-context-menu`'s default size (`ContextMenu.css`) is sized for short
+ * menu item lists, too narrow/short for a searchable, scrollable
+ * translation list. Compound selector for the same load-order-independence
+ * reason as above.
+ */
+.sb-context-menu.sb-customization-translation-picker-menu {
+  width: 22rem;
+  max-width: min(22rem, calc(100vw - 2rem));
+  max-height: min(28rem, calc(100dvh - 2rem));
+  overflow-y: auto;
+}
+
+/*
+ * `.searchbar` (`BibleSelector.css`) is 80% width there because that page's
+ * search field sits next to a separate filter icon in the same row. Here
+ * the filter button is nested inside `.searchbar` itself, so 80% leaves a
+ * dead gap down the right side of this narrower popover — scoped to this
+ * picker rather than changing the shared rule, which the reader's own
+ * layout still depends on.
+ */
+.sb-customization-translation-picker .searchbar {
+  width: 100%;
 }
 
 /* Customization logo upload (editor page) */
