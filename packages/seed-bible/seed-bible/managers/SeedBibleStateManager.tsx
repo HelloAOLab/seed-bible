@@ -43,6 +43,11 @@ import {
   YourContentPaneTitle,
 } from "../components/YourContentPane/YourContentPane";
 import {
+  USER_IMAGES_PANE_ID,
+  UserImagesPane,
+  UserImagesPaneTitle,
+} from "../components/ProfilePane/UserImagesPane";
+import {
   createYourContentManager,
   type YourContentManager,
 } from "../managers/YourContentManager";
@@ -513,6 +518,13 @@ export interface SeedBibleState {
   /** Closes "Edit profile" (clears `edit-profile` from the URL). */
   closeEditProfile: () => void;
 
+  /** True when the "Your images" screen is showing. */
+  isYourImagesOpen: ReadonlySignal<boolean>;
+  /** Opens "Your images" (reflected in the URL as `?images=open`). */
+  openYourImages: () => void;
+  /** Closes "Your images" (clears `images` from the URL). */
+  closeYourImages: () => void;
+
   /** True when the Terms of Service modal is open. */
   isTermsOpen: ReadonlySignal<boolean>;
   /** Opens the Terms of Service modal (reflected in the URL as `?terms=open`). */
@@ -894,6 +906,21 @@ export function createSeedBibleState(
     editProfileOpen.value = false;
   };
 
+  // "Your images", reached from the Profile screen. Kept out of SSR for the
+  // same reason as Profile above: it lists the signed-in account's uploads.
+  const imagesOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("images") === "open"
+  );
+  const isYourImagesOpen = computed(() => imagesOpen.value);
+  const openYourImages = () => {
+    imagesOpen.value = true;
+  };
+  const closeYourImages = () => {
+    imagesOpen.value = false;
+  };
+
   navigation.syncSignalsToUrl({
     profile: {
       get value() {
@@ -917,6 +944,14 @@ export function createSeedBibleState(
       },
       set value(newValue) {
         editProfileOpen.value = newValue === "open";
+      },
+    },
+    images: {
+      get value() {
+        return imagesOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        imagesOpen.value = newValue === "open";
       },
     },
     terms: {
@@ -2694,6 +2729,9 @@ export function createSeedBibleState(
     isEditProfileOpen,
     openEditProfile,
     closeEditProfile,
+    isYourImagesOpen,
+    openYourImages,
+    closeYourImages,
     isTermsOpen,
     openTerms,
     closeTerms,
@@ -2884,6 +2922,7 @@ export function createSeedBibleState(
   const backToProfile = () => {
     closeEditProfile();
     closeYourContent();
+    closeYourImages();
     openProfile();
   };
   const renderProfileBackButton = () => (
@@ -2922,6 +2961,7 @@ export function createSeedBibleState(
       onEditPicture={editProfilePicture}
       onOpenReadingPlans={openReadingPlansFromProfile}
       onOpenYourContent={openYourContent}
+      onOpenYourImages={openYourImages}
     />
   );
   const renderProfilePaneTitle = () => <ProfilePaneTitle />;
@@ -3037,6 +3077,32 @@ export function createSeedBibleState(
     );
     if (!paneOpen && isYourContentOpen.peek()) {
       closeYourContent();
+    }
+  });
+
+  const renderUserImagesPane = () => <UserImagesPane state={state} />;
+  const renderUserImagesPaneTitle = () => <UserImagesPaneTitle />;
+
+  effect(() => {
+    if (isYourImagesOpen.value) {
+      panes.openPane({
+        id: USER_IMAGES_PANE_ID,
+        placement: "fullscreen",
+        title: renderUserImagesPaneTitle,
+        leading: renderProfileBackButton,
+        component: renderUserImagesPane,
+      });
+    } else {
+      panes.closePane(USER_IMAGES_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === USER_IMAGES_PANE_ID
+    );
+    if (!paneOpen && isYourImagesOpen.peek()) {
+      closeYourImages();
     }
   });
 

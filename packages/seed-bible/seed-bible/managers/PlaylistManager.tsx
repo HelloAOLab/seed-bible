@@ -1387,6 +1387,55 @@ export function createPlaylistManager(
   };
 
   /**
+   * Takes a cover image off every playlist of the user's that shows it, for
+   * when the image is being deleted from their gallery — the covers would
+   * otherwise point at a file that no longer exists. Each affected playlist is
+   * saved without its cover; the ones that save are updated locally even if
+   * another fails, and a failure is then re-thrown so the caller knows the
+   * image is still in use somewhere. Returns the playlists that were changed.
+   */
+  const clearHeroImage = async (url: string): Promise<Playlist[]> => {
+    const affected = userPlaylists.value.filter((p) => p.heroImageUrl === url);
+    const results = await Promise.allSettled(
+      affected.map(async (playlist) => {
+        const next: Playlist = {
+          ...playlist,
+          heroImageUrl: null,
+          updatedAtMs: Date.now(),
+        };
+        await savePlaylist(next);
+        return next;
+      })
+    );
+    const updated = results.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : []
+    );
+    if (updated.length > 0) {
+      const byId = new Map(updated.map((p) => [p.id, p]));
+      userPlaylists.value = userPlaylists.value.map((p) => byId.get(p.id) ?? p);
+    }
+    // The editor's copy loses the cover too, or saving the edit would put the
+    // dead URL straight back. Its baseline follows so this alone does not
+    // register as an unsaved change.
+    const editing = editingPlaylist.peek();
+    if (editing?.heroImageUrl === url) {
+      editingPlaylist.value = { ...editing, heroImageUrl: null };
+    }
+    const baseline = editingPlaylistBaseline.peek();
+    if (baseline?.heroImageUrl === url) {
+      editingPlaylistBaseline.value = { ...baseline, heroImageUrl: null };
+    }
+    const failed = results.find(
+      (result): result is PromiseRejectedResult => result.status === "rejected"
+    );
+    if (failed) {
+      console.error("Failed to remove a playlist cover image:", failed.reason);
+      throw new Error("Failed to remove the cover image from every playlist");
+    }
+    return updated;
+  };
+
+  /**
    * Appends an item to the currently-edited playlist. No-op when there is no
    * playlist being edited. Persisting happens later via `saveEditingPlaylist`.
    */
@@ -2167,6 +2216,7 @@ export function createPlaylistManager(
   return {
     savePlaylist,
     deletePlaylist,
+    clearHeroImage,
     createNewPlaylist,
     editPlaylist,
     saveEditingPlaylist,

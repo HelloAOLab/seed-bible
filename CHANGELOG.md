@@ -5,6 +5,8 @@
 ### ✨ Added
 
 - Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
+- Add a "Your images" section to the Profile screen that shows every image you've uploaded, where you can view each one full size or delete it. ([#1748](https://github.com/HelloAOLab/seed-bible/issues/1748))
+  - Deleting an image also takes it off any playlist or reading plan using it as a cover; the confirmation warns you about this and names them.
 
 ### 🔧 Changed
 

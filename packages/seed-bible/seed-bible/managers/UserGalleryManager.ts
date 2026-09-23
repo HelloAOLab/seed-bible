@@ -8,8 +8,19 @@ import { uploadPublicFile } from "./uploadPublicFile";
 export const USER_GALLERY_MARKER = "publicRead:userGallery";
 export const USER_GALLERY_CACHE_PREFIX = "seed-bible:user-gallery:";
 
-/** How many recent photos the picker shows. */
+/**
+ * How many recent photos the picker shows. The manager itself keeps every
+ * photo the user has, so the "Your images" screen can list them all; only the
+ * picker and the local cache are cut off here.
+ */
 export const MAX_RECENT_GALLERY_PHOTOS = 24;
+
+/**
+ * How long a locally known photo outlives a server list that lacks it. Long
+ * enough to cover a listing that has not caught up with a fresh write, short
+ * enough that a photo deleted on another device disappears here soon after.
+ */
+export const LIST_LAG_GRACE_MS = 5 * 60_000;
 
 export const GalleryPhotoSchema = z.object({
   id: z.string().min(1),
@@ -27,13 +38,10 @@ function prependPhoto(
   list: readonly GalleryPhoto[],
   photo: GalleryPhoto
 ): GalleryPhoto[] {
-  return [photo, ...list.filter((item) => item.id !== photo.id)].slice(
-    0,
-    MAX_RECENT_GALLERY_PHOTOS
-  );
+  return [photo, ...list.filter((item) => item.id !== photo.id)];
 }
 
-/** Newest-first, one row per URL, capped at {@link MAX_RECENT_GALLERY_PHOTOS}. */
+/** Newest-first, one row per URL. */
 export function mergeGalleryPhotos(
   ...groups: readonly (readonly GalleryPhoto[])[]
 ): GalleryPhoto[] {
@@ -46,9 +54,7 @@ export function mergeGalleryPhotos(
       }
     }
   }
-  return [...byUrl.values()]
-    .sort((a, b) => b.createdAtMs - a.createdAtMs)
-    .slice(0, MAX_RECENT_GALLERY_PHOTOS);
+  return [...byUrl.values()].sort((a, b) => b.createdAtMs - a.createdAtMs);
 }
 
 function readCachedGallery(userId: string): GalleryPhoto[] {
@@ -183,11 +189,17 @@ export async function uploadPhotoToGallery(
 export function createUserGalleryManager(
   os: Pick<
     CasualOSManager,
-    "recordFile" | "recordData" | "listAllDataByMarker"
+    | "recordFile"
+    | "recordData"
+    | "eraseData"
+    | "eraseFile"
+    | "listAllDataByMarker"
   >,
   login: Pick<LoginManager, "userId">
 ) {
   const photos = signal<GalleryPhoto[]>([]);
+  /** True while the user's gallery records are being listed. */
+  const isLoading = signal(false);
 
   const listPhotos = async (recordName: string): Promise<GalleryPhoto[]> => {
     const records = await os.listAllDataByMarker(
@@ -213,18 +225,60 @@ export function createUserGalleryManager(
     if (photos.peek().length === 0 && cached.length > 0) {
       photos.value = cached;
     }
+    const startedAtMs = Date.now();
+    isLoading.value = true;
     try {
       const listed = await listPhotos(userId);
+      // The server list is the source of truth: a photo the cache remembers
+      // but the list no longer has was deleted (maybe on another device) and
+      // must not come back. The exception is anything saved in the last few
+      // minutes — the listing can lag a fresh write, and a photo saved while
+      // this list was in flight is newer than the request itself.
+      const recentLocal = mergeGalleryPhotos(photos.peek(), cached).filter(
+        (photo) => photo.createdAtMs >= startedAtMs - LIST_LAG_GRACE_MS
+      );
       photos.value = commitPhotos(
         userId,
-        mergeGalleryPhotos(listed, cached, photos.peek())
+        mergeGalleryPhotos(listed, recentLocal)
       );
     } catch (error) {
       console.error("Failed to sync photo gallery:", error);
       if (photos.peek().length === 0 && cached.length > 0) {
         photos.value = cached;
       }
+    } finally {
+      isLoading.value = false;
     }
+  };
+
+  /**
+   * Removes a photo from the gallery and deletes its file.
+   *
+   * The file goes first so a failure part-way is recoverable: a gallery entry
+   * left pointing at a missing file can be deleted again, whereas a file left
+   * behind after its entry is gone could never be reached. A server answer of
+   * "not found" or "not yours" for the file is not an error here — a photo
+   * remembered from a URL that was never uploaded to this account has no file
+   * to remove — so only a request that never got an answer stops the delete.
+   */
+  const deletePhoto = async (photo: GalleryPhoto): Promise<void> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Cannot delete a photo while signed out.");
+    }
+    const fileResult = await os.eraseFile(userId, photo.url);
+    if (!fileResult.success) {
+      console.error("Failed to erase gallery photo file:", fileResult);
+    }
+    const result = await os.eraseData(userId, photo.id);
+    // An entry that is already gone (deleted elsewhere) counts as deleted.
+    if (!result.success && result.errorCode !== "data_not_found") {
+      throw new Error(`Failed to delete photo: ${result.errorCode}`);
+    }
+    photos.value = commitPhotos(
+      userId,
+      photos.peek().filter((item) => item.id !== photo.id)
+    );
   };
 
   /**
@@ -270,8 +324,10 @@ export function createUserGalleryManager(
 
   return {
     photos,
+    isLoading,
     savePhoto,
     rememberPhoto,
+    deletePhoto,
     syncPhotos,
   };
 }

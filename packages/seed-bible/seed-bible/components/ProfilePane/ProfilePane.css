@@ -476,3 +476,121 @@
   cursor: default;
   opacity: 0.6;
 }
+
+/* -------------------------------------------------------------- your images */
+
+.sb-images-intro {
+  margin: 0;
+  color: var(--sb-profile-muted);
+  font-size: 0.875rem;
+}
+
+.sb-images-status {
+  margin: 24px 0;
+  color: var(--sb-profile-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.sb-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Positioned so the delete button can sit in the tile's corner. */
+.sb-images-item {
+  position: relative;
+  min-width: 0;
+}
+
+.sb-images-tile {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--sb-profile-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--sb-profile-surface);
+  cursor: pointer;
+}
+
+.sb-images-tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/*
+ * Sits on top of the picture, so it is drawn for contrast against any image
+ * rather than in the theme's colours, which a photo could match.
+ */
+.sb-images-delete {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 55%);
+  color: #fff;
+  cursor: pointer;
+}
+
+.sb-images-delete:hover {
+  background: var(--sb-profile-danger);
+}
+
+.sb-images-delete .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-images-date {
+  display: block;
+  margin-top: 4px;
+  color: var(--sb-profile-muted);
+  font-size: 0.75rem;
+}
+
+/*
+ * The preview and confirm dialogs render in the modal host, outside
+ * `.sb-profile-screen`, so nothing below can use its custom properties.
+ */
+.sb-images-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sb-images-preview-img {
+  display: block;
+  max-width: 100%;
+  max-height: 60vh;
+  margin: 0 auto;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.sb-images-confirm-thumb {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 12px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.sb-images-usage-list {
+  margin: 0 0 12px;
+  padding-inline-start: 20px;
+}

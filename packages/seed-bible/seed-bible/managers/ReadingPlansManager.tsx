@@ -2083,6 +2083,88 @@ export function createReadingPlansManager(
     return (await savePhotoToGallery(os, userId, file)).url;
   };
 
+  /**
+   * Takes a cover image off every plan of the user's that shows it, for when
+   * the image is being deleted from their gallery — the covers would otherwise
+   * point at a file that no longer exists. A plan whose contents are not
+   * cached at the listed version is fetched first, since the cover lives in
+   * the plan record as well as its metadata. The plans that save are updated
+   * locally even if another fails, and a failure is then re-thrown so the
+   * caller knows the image is still in use somewhere.
+   */
+  const clearHeroImage = async (url: string): Promise<void> => {
+    const affected = userReadingPlans.value.filter(
+      (meta) => meta.heroImageUrl === url
+    );
+    const results = await Promise.allSettled(
+      affected.map(async (meta) => {
+        const cached = fullReadingPlans
+          .peek()
+          .find(
+            (p) =>
+              p.recordName === meta.recordName && p.address === meta.address
+          );
+        const plan =
+          cached && cached.updatedAtMs >= meta.updatedAtMs
+            ? cached
+            : await getReadingPlan(meta.recordName, meta.address);
+        const next: ReadingPlan = {
+          ...plan,
+          heroImageUrl: null,
+          updatedAtMs: Date.now(),
+        };
+        await saveReadingPlan(next);
+        return next;
+      })
+    );
+    const updated = results.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : []
+    );
+    if (updated.length > 0) {
+      const byId = new Map(
+        updated.map((p) => [formatReadingPlanId(p.recordName, p.address), p])
+      );
+      const replacement = (p: { recordName: string; address: string }) =>
+        byId.get(formatReadingPlanId(p.recordName, p.address));
+      batch(() => {
+        // Cached at the new version too, so the metadata change below does
+        // not send the full-plan sync back to the server for these.
+        const cachedIds = new Set(
+          fullReadingPlans.value.map((p) =>
+            formatReadingPlanId(p.recordName, p.address)
+          )
+        );
+        fullReadingPlans.value = [
+          ...fullReadingPlans.value.map((p) => replacement(p) ?? p),
+          ...updated.filter(
+            (p) => !cachedIds.has(formatReadingPlanId(p.recordName, p.address))
+          ),
+        ];
+        userReadingPlans.value = userReadingPlans.value.map((meta) => {
+          const next = replacement(meta);
+          return next ? omit(next, ["sessions"]) : meta;
+        });
+      });
+    }
+    // The draft being edited loses the cover too, or saving the edit would put
+    // the dead URL straight back.
+    if (editingReadingPlan.peek()?.plan.heroImageUrl === url) {
+      mutateDraft((plan) => ({ ...plan, heroImageUrl: null }));
+    }
+    const failed = results.find(
+      (result): result is PromiseRejectedResult => result.status === "rejected"
+    );
+    if (failed) {
+      console.error(
+        "Failed to remove a reading plan cover image:",
+        failed.reason
+      );
+      throw new Error(
+        "Failed to remove the cover image from every reading plan"
+      );
+    }
+  };
+
   /** Points new readings at a session of the draft. */
   const selectEditingPlanSession = (index: number) => {
     const current = editingReadingPlan.peek();
@@ -2386,6 +2468,7 @@ export function createReadingPlansManager(
     discardEditingReadingPlan,
     updateEditingReadingPlan,
     uploadHeroImage,
+    clearHeroImage,
     selectEditingPlanSession,
     setEditingPlanCadenceOptions,
     addSessionToEditingPlan,
