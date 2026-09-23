@@ -634,6 +634,7 @@ export function createSeedBibleState(
     basePath: options.config?.basePath,
   });
   const branding = options.config?.branding;
+  const brandingThemes = branding?.whiteLabelThemes;
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
@@ -673,7 +674,7 @@ export function createSeedBibleState(
   });
 
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
-  const themeManager = createTheme(settings);
+  const themeManager = createTheme(settings, brandingThemes);
   const customizationVariantSelections =
     createCustomizationVariantSelectionsManager(os, login);
   const customizationExtensionPreferences =
@@ -686,6 +687,13 @@ export function createSeedBibleState(
     customizationVariantSelections,
     customizationExtensionPreferences,
     options.initialCustomizationSeed
+  );
+  // The active Customization's chosen default translation, if any — see
+  // `createTabs`'s `activeCustomizationDefaultTranslationId` parameter for how
+  // it overrides Seed Bible's per-language default the same way
+  // `branding.defaultTranslationId` does for a whole deployment.
+  const activeCustomizationDefaultTranslationId = computed(
+    () => customizations.activeCustomization.value?.defaultTranslationId
   );
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
@@ -706,7 +714,8 @@ export function createSeedBibleState(
     readingExtensions,
     () => annotations,
     branding,
-    settings
+    settings,
+    activeCustomizationDefaultTranslationId
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -979,16 +988,6 @@ export function createSeedBibleState(
     return [...names];
   });
 
-  // Theme is the source of truth for text colors. When the user switches
-  // theme presets, drop any per-section color override from the text editor
-  // so verse / book title / heading pick up the new theme's colors.
-  let prevPresetId = themeManager.selectedThemeId.peek();
-  effect(() => {
-    const id = themeManager.selectedThemeId.value;
-    if (id === prevPresetId) return;
-    prevPresetId = id;
-    settings.resetTextColors();
-  });
   const selectedTab = computed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
