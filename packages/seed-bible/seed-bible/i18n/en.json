@@ -288,7 +288,6 @@
   "social-title": "Read {{bookName}} {{chapterNumber}}",
   "chapter-navigation": "Chapter navigation",
   "tutorial.skip": "Skip",
-  "tutorial.optOut": "Don't show tutorials",
   "tutorial.back": "Back",
   "tutorial.done": "Done",
   "tutorial.next": "Next",
@@ -346,7 +345,6 @@
   "discover": "Discover",
   "playlists": "Playlists",
   "playlist-history": "Playlist history",
-  "discover-playlist-history-empty": "Play a saved playlist while signed in and it will show up here.",
   "playlist-history-session-summary": "{{time}} - {{percent}}% complete - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}}% complete",
   "playlist-history-continue": "Continue",
@@ -360,8 +358,7 @@
   "study-notes": "Study notes",
   "content": "Content",
   "untitled-playlist": "Untitled playlist",
-  "discover-playlists-empty": "You haven't created any playlists yet.",
-  "discover-annotations-empty": "You have no annotations",
+  "discover-annotations-empty": "You don't have any notes for this chapter.",
   "discover-cross-references-empty": "No cross references for this chapter.",
   "discover-study-notes-empty": "No study notes for this chapter.",
   "discover-content-empty": "No content for this chapter.",
@@ -852,5 +849,10 @@
   "override-setting": "Override {{name}}",
   "override-setting-label": "Override",
   "setting-value-on": "On",
-  "setting-value-off": "Off"
+  "setting-value-off": "Off",
+  "discover-annotations-empty-create": "Create a note",
+  "tutorial.skipPromptTitle": "Turn off tutorials?",
+  "tutorial.skipPromptBody": "You can turn tutorials back on later from Settings. Would you like to stop seeing them, or just skip this one?",
+  "tutorial.skipPromptKeep": "Just this one",
+  "tutorial.skipPromptDisable": "Turn off tutorials"
 }

@@ -342,6 +342,12 @@ export interface TutorialManager {
    * tour unannounced. Resolved by {@link acceptPrompt} / {@link dismissPrompt}.
    */
   promptVisible: ReadonlySignal<boolean>;
+  /**
+   * Whether the "turn off all tutorials?" follow-up dialog is showing. Raised
+   * by {@link skip} once the tour it interrupted has ended, and resolved by
+   * {@link keepTutorials} / {@link optOut}.
+   */
+  skipPromptVisible: ReadonlySignal<boolean>;
   /** Per-feature contextual tutorial completion flags. */
   featuresSeen: ReadonlySignal<Record<string, boolean>>;
   /** Starts (or restarts) the onboarding tour from the first step. */
@@ -358,8 +364,17 @@ export interface TutorialManager {
   /** Ends the tour, recording completion for the active tour type. */
   finish: () => void;
   /**
-   * Ends the current tour and records that the user does not want future
-   * tutorial prompts. Marks the onboarding tour completed too.
+   * Ends the current tour (like {@link finish}) and raises the "turn off all
+   * tutorials?" follow-up dialog, rather than asking that question on the
+   * tour dialog itself.
+   */
+  skip: () => void;
+  /** Dismisses the skip follow-up dialog, leaving future tutorials enabled. */
+  keepTutorials: () => void;
+  /**
+   * Confirms the skip follow-up dialog: records that the user does not want
+   * future tutorial prompts. Also usable directly (e.g. from Settings) to opt
+   * out without going through the skip flow.
    */
   optOut: () => void;
   /** Accepts the first-run offer card: hides it and starts the onboarding tour. */
@@ -408,6 +423,9 @@ export function createTutorialManager(
   const index = signal<number>(0);
   // First-run offer card visibility (see `promptVisible` in the interface).
   const promptVisible = signal<boolean>(false);
+  // "Turn off all tutorials?" follow-up dialog visibility (see
+  // `skipPromptVisible` in the interface).
+  const skipPromptVisible = signal<boolean>(false);
 
   // The active step set is chosen at `start()` / `startContextual()` time
   // (snapshotted so a resize mid-tour doesn't swap the steps out from under us).
@@ -666,6 +684,16 @@ export function createTutorialManager(
     }
     running.value = false;
     activeFeatureId.value = null;
+    skipPromptVisible.value = false;
+  };
+
+  const skip = () => {
+    finish();
+    skipPromptVisible.value = true;
+  };
+
+  const keepTutorials = () => {
+    skipPromptVisible.value = false;
   };
 
   const acceptPrompt = () => {
@@ -752,12 +780,15 @@ export function createTutorialManager(
     completed,
     optedOut,
     promptVisible,
+    skipPromptVisible,
     featuresSeen,
     start,
     startContextual,
     next,
     prev,
     finish,
+    skip,
+    keepTutorials,
     optOut,
     acceptPrompt,
     dismissPrompt,
