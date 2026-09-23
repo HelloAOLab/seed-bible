@@ -51,6 +51,7 @@ function makeCustomization(
     createdAt: 1,
     updatedAt: 1,
     extensionSettings: {},
+    extensionSettingDefaults: {},
   };
 }
 
