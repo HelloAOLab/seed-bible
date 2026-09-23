@@ -1,12 +1,19 @@
 import {
+  applyBrowserThemeColor,
+  applyHighlightOverrides,
   createTheme as createThemeManager,
+  DARK_THEME,
+  LIGHT_THEME,
+  filterValidFontFamilyOverrides,
   composeThemeStyleText,
+  parseThemeBackgroundColor,
   THEME_PRESET_STYLE_TEXT,
   generateThemeCssClasses,
   generateThemeCssVariables,
   type BibleTheme,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { stubColorScheme } from "../testUtils/stubColorScheme";
 import {
   createSettings,
   type SettingsManager,
@@ -92,6 +99,20 @@ describe("ThemeManager CSS helpers", () => {
         "--sb-highlight-mint-words-of-jesus-font-color: #166534;"
       );
     });
+
+    it("strips braces from a custom override so it cannot close the body rule", () => {
+      const css = generateThemeCssVariables(
+        createTheme({
+          variables: {
+            ...createTheme().variables,
+            primaryColor: "#ff0000; } html { visibility: hidden",
+          },
+        })
+      );
+
+      expect(css).not.toContain("html {");
+      expect(css).toContain("--sb-background: #fafafa;");
+    });
   });
 
   describe("generateThemeCssClasses", () => {
@@ -110,7 +131,7 @@ describe("ThemeManager CSS helpers", () => {
       // background-color on the text.
       expect(css).not.toContain("background-color");
       expect(css).toContain("color: var(--sb-highlight-yellow-font-color);");
-      expect(css).toContain("&.sb-words-of-jesus {");
+      expect(css).toContain(".sb-highlight-yellow.sb-words-of-jesus {");
       expect(css).toContain(
         "color: var(--sb-highlight-yellow-words-of-jesus-font-color);"
       );
@@ -141,6 +162,150 @@ describe("ThemeManager CSS helpers", () => {
 
       expect(css).not.toContain("<");
     });
+  });
+});
+
+describe("parseThemeBackgroundColor", () => {
+  it("reads --sb-background from composed theme CSS", () => {
+    expect(
+      parseThemeBackgroundColor("body {\n--sb-background: #0a0a0a;\n}")
+    ).toBe("#0a0a0a");
+  });
+
+  it("returns null when the custom property is missing", () => {
+    expect(
+      parseThemeBackgroundColor("body { --sb-font-color: #333; }")
+    ).toBeNull();
+  });
+});
+
+describe("applyBrowserThemeColor", () => {
+  afterEach(() => {
+    document
+      .querySelectorAll('meta[name="theme-color"]')
+      .forEach((el) => el.remove());
+  });
+
+  it("creates a theme-color meta tag when the document has none", () => {
+    applyBrowserThemeColor("#0a0a0a");
+
+    const tag = document.querySelector(
+      'meta[name="theme-color"]'
+    ) as HTMLMetaElement | null;
+    expect(tag).not.toBeNull();
+    expect(tag?.id).toBe("sb-theme-color");
+    expect(tag?.content).toBe("#0a0a0a");
+  });
+
+  it("updates every existing theme-color tag and drops media queries", () => {
+    const light = document.createElement("meta");
+    light.name = "theme-color";
+    light.content = "#FFFFFF";
+    light.media = "(prefers-color-scheme: light)";
+    document.head.appendChild(light);
+    const dark = document.createElement("meta");
+    dark.name = "theme-color";
+    dark.content = "#000000";
+    dark.media = "(prefers-color-scheme: dark)";
+    document.head.appendChild(dark);
+
+    applyBrowserThemeColor("#0a0a0a");
+
+    const metas = [
+      ...document.querySelectorAll('meta[name="theme-color"]'),
+    ] as HTMLMetaElement[];
+    expect(metas).toHaveLength(2);
+    for (const meta of metas) {
+      expect(meta.getAttribute("media")).toBeNull();
+      expect(meta.content).toBe("#0a0a0a");
+    }
+  });
+});
+
+describe("filterValidFontFamilyOverrides", () => {
+  it("keeps only known font-family keys and drops everything else", () => {
+    const overrides = filterValidFontFamilyOverrides({
+      fontFamily: "Roboto, sans-serif",
+      bookTitleFontFamily: "Newsreader, serif",
+      chapterHeadingFontFamily: "",
+      verseFontFamily: "Lora, sans-serif",
+      hebrewSubtitleFontFamily: "Newsreader, serif",
+      primaryColor: "#111111",
+      someUnknownKey: "whatever",
+    });
+
+    expect(overrides).toEqual({
+      fontFamily: "Roboto, sans-serif",
+      bookTitleFontFamily: "Newsreader, serif",
+      verseFontFamily: "Lora, sans-serif",
+      hebrewSubtitleFontFamily: "Newsreader, serif",
+    });
+  });
+
+  it("returns an empty object when nothing matches", () => {
+    expect(filterValidFontFamilyOverrides({ primaryColor: "#111111" })).toEqual(
+      {}
+    );
+  });
+});
+
+describe("applyHighlightOverrides", () => {
+  function highlightTheme(): BibleTheme {
+    return {
+      id: "test-theme",
+      name: "Test Theme",
+      variables: {} as BibleTheme["variables"],
+      highlightColors: {
+        yellow: {
+          color: "#fff59d",
+          fontColor: "#333333",
+          wordsOfJesusFontColor: "#b45309",
+        },
+        mint: {
+          color: "#86efac",
+          fontColor: "#14532d",
+          wordsOfJesusFontColor: "#166534",
+        },
+      },
+    } as unknown as BibleTheme;
+  }
+
+  it("returns the theme unchanged when there are no overrides", () => {
+    const theme = highlightTheme();
+
+    expect(applyHighlightOverrides(theme, {})).toBe(theme);
+  });
+
+  it("merges a partial override onto the theme's own value for that id, leaving omitted fields as they were", () => {
+    const merged = applyHighlightOverrides(highlightTheme(), {
+      yellow: { color: "#ff0000" },
+    });
+
+    expect(merged.highlightColors.yellow).toEqual({
+      color: "#ff0000",
+      fontColor: "#333333",
+      wordsOfJesusFontColor: "#b45309",
+    });
+  });
+
+  it("leaves a highlight id with no override in the set completely untouched", () => {
+    const merged = applyHighlightOverrides(highlightTheme(), {
+      yellow: { color: "#ff0000" },
+    });
+
+    expect(merged.highlightColors.mint).toEqual({
+      color: "#86efac",
+      fontColor: "#14532d",
+      wordsOfJesusFontColor: "#166534",
+    });
+  });
+
+  it("does not mutate the original theme object", () => {
+    const theme = highlightTheme();
+
+    applyHighlightOverrides(theme, { yellow: { color: "#ff0000" } });
+
+    expect(theme.highlightColors.yellow?.color).toBe("#fff59d");
   });
 });
 
@@ -196,7 +361,7 @@ describe("ThemeManager storage (via SettingsManager)", () => {
 
     theme.setTheme("not-a-real-theme");
 
-    expect(theme.selectedThemeId.value).toBe("light");
+    expect(theme.selectedThemeId.value).toBe("system");
   });
 
   it("an anonymous theme choice survives a simulated page refresh", () => {
@@ -242,14 +407,33 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(tag?.textContent).toContain("--sb-background: #0a0a0a;");
   });
 
-  it("does not clobber a dark #sb-theme-styles tag with the light default on boot", () => {
-    // Boot order on a returning visitor whose saved theme is dark: the server
-    // renders the light default into the tag, then the pre-hydration inline
-    // script in index.html reads localStorage and patches it to dark, and only
-    // then does the bundle run createSeedBibleState() -> createTheme(). At that
-    // point `localConfig` is still the empty SSR-matching seed, so `themeId` is
-    // "light" — writing it here would flash the page light until
-    // `hydrateLocalConfig()` restores the real id post-mount.
+  it("sets the theme-color meta to the active theme's background", () => {
+    document.querySelectorAll('meta[name="theme-color"]').forEach((el) => {
+      el.remove();
+    });
+    document.getElementById("sb-theme-styles")?.remove();
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    const tag = document.querySelector(
+      'meta[name="theme-color"]'
+    ) as HTMLMetaElement | null;
+    expect(tag?.content).toBe("#f8fafc");
+
+    theme.setTheme("dark");
+
+    expect(
+      (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
+        .content
+    ).toBe("#0a0a0a");
+  });
+
+  it("does not clobber a dark #sb-theme-styles tag with the system default on boot", () => {
+    // Returning visitor who pinned dark: the server renders Light, the inline
+    // script in index.html patches the tag to dark, then createTheme() runs
+    // with the saved id and device scheme still unread (both post-mount), so
+    // it resolves to Light — writing that here would flash the page Light.
     const darkCss = THEME_PRESET_STYLE_TEXT.dark ?? "";
     expect(darkCss).toContain("--sb-background: #0a0a0a;");
 
@@ -263,10 +447,14 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     const settings = makeSettings(login);
     const theme = createThemeManager(settings);
 
-    expect(theme.selectedThemeId.value).toBe("light");
+    expect(theme.selectedThemeId.value).toBe("system");
     expect(document.getElementById("sb-theme-styles")?.textContent).toBe(
       darkCss
     );
+    expect(
+      (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
+        .content
+    ).toBe("#0a0a0a");
 
     // ...and once the real saved config lands, the tag still tracks it.
     login.localConfig.value = { themeId: "dark" };
@@ -322,6 +510,38 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(theme.customOverrides.value.primaryColor).toBeUndefined();
   });
 
+  it("keeps the rest of the theme CSS when a custom color is saved", () => {
+    document.getElementById("sb-theme-styles")?.remove();
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.setCustomColor("primaryColor", "#123456");
+
+    const css = document.getElementById("sb-theme-styles")?.textContent ?? "";
+    expect(css).toContain("--sb-primary-color: #123456;");
+    expect(css).toContain("--sb-background:");
+    expect(css).toContain("--sb-font-color:");
+    expect(css).toContain("body {");
+  });
+
+  it("updates theme-color when the app background color is customized", () => {
+    document.querySelectorAll('meta[name="theme-color"]').forEach((el) => {
+      el.remove();
+    });
+    document.getElementById("sb-theme-styles")?.remove();
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.setCustomColor("background", "#123456");
+
+    expect(
+      (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
+        .content
+    ).toBe("#123456");
+  });
+
   it("setHighlightColor / resetHighlightColor read back correctly through settings", () => {
     const login = makeFakeLogin(null);
     const settings = makeSettings(login);
@@ -332,5 +552,224 @@ describe("ThemeManager storage (via SettingsManager)", () => {
 
     theme.resetHighlightColor("yellow");
     expect(theme.customHighlightOverrides.value.yellow).toBeUndefined();
+  });
+
+  it("previewCustomColor updates currentTheme live without persisting anything", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.previewCustomColor("primaryColor", "#abcdef");
+
+    expect(theme.currentTheme.value.variables.primaryColor).toBe("#abcdef");
+    expect(theme.customOverrides.value.primaryColor).toBeUndefined();
+    expect(login.localConfig.value.customTheme).toBeUndefined();
+  });
+
+  it("clearPreviewCustomColor discards the preview and restores the persisted value", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+    const original = theme.currentTheme.value.variables.primaryColor;
+
+    theme.previewCustomColor("primaryColor", "#abcdef");
+    theme.clearPreviewCustomColor("primaryColor");
+
+    expect(theme.currentTheme.value.variables.primaryColor).toBe(original);
+  });
+
+  it("setCustomColor clears any pending preview, so the just-saved color actually shows", () => {
+    // Without clearing the preview, applyOverrides would keep layering it on
+    // top of the fresh commit and the swatch would still show the old drag
+    // value instead of the color that was just confirmed.
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.previewCustomColor("primaryColor", "#abcdef");
+    theme.setCustomColor("primaryColor", "#123456");
+
+    expect(theme.currentTheme.value.variables.primaryColor).toBe("#123456");
+  });
+
+  it("previewHighlightColor updates only the previewed field, leaving the other field's real value alone", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+    const originalFontColor =
+      theme.currentTheme.value.highlightColors.yellow.fontColor;
+
+    theme.previewHighlightColor("yellow", { color: "#ff00ff" });
+
+    expect(theme.currentTheme.value.highlightColors.yellow.color).toBe(
+      "#ff00ff"
+    );
+    expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
+      originalFontColor
+    );
+    expect(theme.customHighlightOverrides.value.yellow).toBeUndefined();
+  });
+
+  it("clearPreviewHighlightField discards only the named field, leaving a preview on the other field intact", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.previewHighlightColor("yellow", {
+      color: "#ff00ff",
+      fontColor: "#00ff00",
+    });
+    theme.clearPreviewHighlightField("yellow", "color");
+
+    expect(theme.currentTheme.value.highlightColors.yellow.color).not.toBe(
+      "#ff00ff"
+    );
+    expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
+      "#00ff00"
+    );
+  });
+
+  it("setHighlightColor clears only the committed field's preview, so an in-progress drag on the other field survives", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.previewHighlightColor("yellow", { color: "#ff00ff" });
+    theme.previewHighlightColor("yellow", { fontColor: "#00ff00" });
+
+    theme.setHighlightColor("yellow", { color: "#123456" });
+
+    expect(theme.currentTheme.value.highlightColors.yellow.color).toBe(
+      "#123456"
+    );
+    expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
+      "#00ff00"
+    );
+  });
+});
+
+describe("system theme", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("reads the device's scheme only once hydrated, so the first render matches the server's Light", () => {
+    stubColorScheme(true);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.setTheme("dark");
+    theme.setTheme("system");
+
+    expect(theme.prefersDarkScheme.value).toBe(false);
+    expect(theme.basePresetTheme.value.id).toBe("light");
+
+    theme.hydrateSystemColorScheme();
+
+    expect(theme.prefersDarkScheme.value).toBe(true);
+    expect(theme.basePresetTheme.value.id).toBe("dark");
+  });
+
+  it("tracks device changes only once, however many times it is hydrated", () => {
+    const listeners: unknown[] = [];
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: false,
+        addEventListener: (_: string, cb: unknown) => listeners.push(cb),
+        removeEventListener: () => {},
+      }))
+    );
+    const theme = createThemeManager(makeSettings(makeFakeLogin(null)));
+
+    theme.hydrateSystemColorScheme();
+    theme.hydrateSystemColorScheme();
+
+    expect(listeners).toHaveLength(1);
+  });
+
+  it("resolves to the dark preset when the device prefers dark", () => {
+    stubColorScheme(true);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.hydrateSystemColorScheme();
+    theme.setTheme("light");
+
+    theme.setTheme("system");
+
+    expect(theme.selectedThemeId.value).toBe("system");
+    expect(theme.basePresetTheme.value.id).toBe("dark");
+  });
+
+  it("resolves to the light preset when the device prefers light", () => {
+    stubColorScheme(false);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.hydrateSystemColorScheme();
+    theme.setTheme("dark");
+
+    theme.setTheme("system");
+
+    expect(theme.selectedThemeId.value).toBe("system");
+    expect(theme.basePresetTheme.value.id).toBe("light");
+  });
+
+  it("follows the device switching to dark while the app is open", () => {
+    const emitChange = stubColorScheme(false);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.hydrateSystemColorScheme();
+    theme.setTheme("dark");
+    theme.setTheme("system");
+    expect(theme.basePresetTheme.value.id).toBe("light");
+
+    emitChange(true);
+
+    expect(theme.basePresetTheme.value.id).toBe("dark");
+    expect(theme.currentTheme.value.variables.background).toBe(
+      DARK_THEME.variables.background
+    );
+  });
+
+  it("uses a white-label deployment's own dark theme when it reuses the dark id", () => {
+    stubColorScheme(true);
+    const brandedDark: BibleTheme = {
+      ...DARK_THEME,
+      variables: { ...DARK_THEME.variables, background: "#101820" },
+    };
+    const theme = createThemeManager(makeSettings(makeFakeLogin(null)), [
+      { ...LIGHT_THEME },
+      brandedDark,
+    ]);
+    theme.hydrateSystemColorScheme();
+    theme.setTheme("light");
+
+    theme.setTheme("system");
+
+    expect(theme.currentTheme.value.variables.background).toBe("#101820");
+  });
+
+  it("falls back to the built-in dark theme when a white-label deployment has no dark id", () => {
+    stubColorScheme(true);
+    const theme = createThemeManager(makeSettings(makeFakeLogin(null)), [
+      { ...LIGHT_THEME, id: "brand-day" },
+      { ...DARK_THEME, id: "brand-night" },
+    ]);
+    theme.hydrateSystemColorScheme();
+    theme.setTheme("brand-day");
+
+    theme.setTheme("system");
+
+    expect(theme.basePresetTheme.value).toBe(DARK_THEME);
+  });
+
+  it("ignores the device preference once a preset is picked explicitly", () => {
+    stubColorScheme(true);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.hydrateSystemColorScheme();
+
+    theme.setTheme("light");
+
+    expect(theme.basePresetTheme.value.id).toBe("light");
   });
 });

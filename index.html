@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="<!-- HTML_LANG -->">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -12,6 +12,13 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
+    <!-- Default matches LIGHT_THEME.variables.background in ThemeManager.
+         Android Chrome uses this for the installed PWA status bar; without
+         it, Chrome falls back to the manifest's theme_color. The inline
+         script below and ThemeManager update `content` to the active
+         theme's --sb-background so the bar follows light/dark (and custom
+         background colors) instead of the OS prefers-color-scheme. -->
+    <meta name="theme-color" id="sb-theme-color" content="#f8fafc" />
     <link rel="icon" href="/standalone/img/favicon.ico" />
     <link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />
     <link rel="preconnect" href="https://assets.seedbible.org" />
@@ -60,7 +67,8 @@
       <!-- THEME_PRESETS_JSON -->
     </script>
     <script>
-      // Applies the device's real saved theme before any JS bundle loads —
+      // Applies the device's real saved theme (or System, the default, when
+      // nothing is saved) before any JS bundle loads —
       // reads localStorage directly rather than going through the app's own
       // managers, since those don't run until much later. Corrects the
       // #sb-theme-styles tag the server rendered (see entry-ssr.tsx), which
@@ -70,15 +78,24 @@
       (function () {
         try {
           var raw = localStorage.getItem("sb-profile-config-local");
-          if (!raw) return;
-          var themeId = JSON.parse(raw).themeId;
-          if (!themeId) return;
+          var themeId = (raw && JSON.parse(raw).themeId) || "system";
+          if (themeId === "system") {
+            themeId = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          }
           var presetsEl = document.getElementById("sb-theme-presets");
           if (!presetsEl || !presetsEl.textContent) return;
           var css = JSON.parse(presetsEl.textContent)[themeId];
           if (!css) return;
           var tag = document.getElementById("sb-theme-styles");
           if (tag) tag.textContent = css;
+          var bg = /--sb-background:\s*([^;]+)/.exec(css);
+          var themeColor =
+            document.getElementById("sb-theme-color") ||
+            document.querySelector('meta[name="theme-color"]');
+          if (bg && themeColor)
+            themeColor.setAttribute("content", bg[1].trim());
         } catch (e) {
           // Corrupt/inaccessible storage — keep the server's default.
         }
@@ -90,6 +107,9 @@
     </script>
     <script type="application/json" id="app-seed-data">
       <!-- SEED_JSON -->
+    </script>
+    <script type="application/json" id="app-customization-seed">
+      <!-- CUSTOMIZATION_JSON -->
     </script>
   </head>
   <body>

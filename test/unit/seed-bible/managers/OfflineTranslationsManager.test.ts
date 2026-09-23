@@ -50,6 +50,19 @@ function makeEndpointUrl(
   return new URL(path, endpoint).href;
 }
 
+async function waitForCondition(
+  check: () => boolean,
+  timeoutMs = 1000
+): Promise<void> {
+  const start = Date.now();
+  while (!check()) {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error("waitForCondition timed out");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
+
 /** The AAB translation with a content hash, as the real API reports one. */
 function aabWithHash(sha256: string): Translation {
   return { ...aabBooks.translation, sha256 };
@@ -302,6 +315,60 @@ describe("reading a downloaded translation", () => {
     expect(webGetMock.mock.calls.length).toBe(callsBefore);
   });
 
+  it("resolves a downloaded chapter's audio timings without touching the network", async () => {
+    const { manager } = await createHarness(defaultResponses());
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+
+    const chapter = await manager.getTranslationBookChapter("AAB", "GEN", 1);
+    const link = chapter.thisChapterAudioTimings.reader;
+    expect(link).toBeTruthy();
+
+    const callsBefore = webGetMock.mock.calls.length;
+    const timings = await manager.offline.getAudioTimings(link!);
+    expect(webGetMock.mock.calls.length).toBe(callsBefore);
+
+    expect(timings).not.toBeNull();
+    expect(timings?.verses).toEqual([1.5, 3]);
+    expect(timings?.reader).toBe("reader");
+    expect(timings?.translationId).toBe("AAB");
+    expect(timings?.bookId).toBe("GEN");
+    expect(timings?.chapterNumber).toBe(1);
+
+    // The chapter's own audio timings link resolves through `getAudioTimings`
+    // exactly the same way, since that's the path the audio reader extension
+    // actually calls.
+    const viaBibleData = await manager.getAudioTimings("AAB", link!);
+    expect(viaBibleData.verses).toEqual([1.5, 3]);
+    expect(webGetMock.mock.calls.length).toBe(callsBefore);
+  });
+
+  it("links to the neighbouring chapters' audio timings, resolvable the same way", async () => {
+    const { manager } = await createHarness(defaultResponses());
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+
+    const chapter = await manager.getTranslationBookChapter("AAB", "GEN", 1);
+    const nextLink = chapter.nextChapterAudioTimings?.reader;
+    expect(nextLink).toBeTruthy();
+
+    const nextTimings = await manager.offline.getAudioTimings(nextLink!);
+    expect(nextTimings?.chapterNumber).toBe(2);
+    expect(nextTimings?.verses).toEqual([1.5, 3]);
+  });
+
+  it("returns null for a link this manager didn't create, so callers fall back to the network", async () => {
+    const { manager } = await createHarness(defaultResponses());
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+
+    expect(
+      await manager.offline.getAudioTimings(
+        makeEndpointUrl("api/AAB/GEN/1.someone.audioTimings.json")
+      )
+    ).toBeNull();
+  });
+
   it("exposes neighbour audio links alongside the navigation links", async () => {
     const { manager } = await createHarness(defaultResponses());
     await manager.getTranslations();
@@ -498,6 +565,232 @@ describe("checking downloads for updates", () => {
     expect(
       (await manager.getTranslationBookChapter("AAB", "GEN", 1)).chapter.number
     ).toBe(1);
+  });
+});
+
+describe("automatically applying an update to the translation in use", () => {
+  /** Stands in for `navigator.connection`, absent from jsdom by default. */
+  function setConnection(saveData: boolean | undefined): void {
+    Object.defineProperty(navigator, "connection", {
+      value: saveData === undefined ? undefined : { saveData },
+      configurable: true,
+    });
+  }
+
+  afterEach(() => {
+    // Never leaves a fake `navigator.connection` behind for another test to
+    // trip over.
+    delete (navigator as { connection?: unknown }).connection;
+    vi.useRealTimers();
+  });
+
+  async function harnessWithDetectedUpdate(): Promise<BibleDataManager> {
+    const { manager } = await createHarness(defaultResponses({}, "hash-one"));
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+
+    setWebResponses(defaultResponses({}, "hash-two"));
+    await manager.offline.checkForUpdates();
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+    return manager;
+  }
+
+  it("downloads the update immediately when there is no connection info", async () => {
+    setConnection(undefined);
+    const manager = await harnessWithDetectedUpdate();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.updatePrompt.value).toBeNull();
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      false
+    );
+  });
+
+  it("downloads the update immediately when the device isn't trying to save data", async () => {
+    setConnection(false);
+    const manager = await harnessWithDetectedUpdate();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.updatePrompt.value).toBeNull();
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      false
+    );
+  });
+
+  it("offers the update instead of downloading when the device wants to save data", async () => {
+    setConnection(true);
+    const manager = await harnessWithDetectedUpdate();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
+    // Nothing was downloaded — the stored copy is still the old one.
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+  });
+
+  it("does not offer a download for another translation while an update prompt is on screen", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-01T09:00:00Z"));
+
+    setConnection(true);
+    const manager = await harnessWithDetectedUpdate();
+
+    // NIV clears every other gate `offerDownloadPrompt` checks: it's been in
+    // use for over a day, it's never been offered before, and the device is
+    // online — so without the fix, only the update prompt already on screen
+    // stands between it and stacking a second modal.
+    const niv = translations.translations[1]!;
+    manager.offline.noteTranslationInUse(niv.id);
+    vi.setSystemTime(new Date("2026-03-02T10:00:00Z")); // 25 hours later
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
+
+    expect(manager.offline.offerDownloadPrompt(niv)).toBe(false);
+    expect(manager.offline.downloadPrompt.value).toBeNull();
+  });
+
+  it("does not re-offer the same update once it has already been shown", async () => {
+    setConnection(true);
+    const manager = await harnessWithDetectedUpdate();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
+    manager.offline.dismissUpdatePrompt();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(manager.offline.updatePrompt.value).toBeNull();
+  });
+
+  it("offers a newer update even after an older one was dismissed", async () => {
+    setConnection(true);
+    const manager = await harnessWithDetectedUpdate();
+    await manager.offline.checkAndApplyUpdate("AAB");
+    manager.offline.dismissUpdatePrompt();
+
+    setWebResponses(defaultResponses({}, "hash-three"));
+    await manager.offline.checkForUpdates();
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
+  });
+
+  it("does not retry a failed download attempt on every subsequent call", async () => {
+    setConnection(undefined);
+    const manager = await harnessWithDetectedUpdate();
+
+    // The newer version's `complete.json` is broken — a flaky connection or a
+    // server error, either way the download fails.
+    setWebResponses(
+      defaultResponses(
+        {
+          [makeEndpointUrl("api/AAB/complete.json")]: createResponse(
+            null,
+            500,
+            "Internal Server Error"
+          ),
+        },
+        "hash-two"
+      )
+    );
+
+    const completeUrl = makeEndpointUrl("api/AAB/complete.json");
+    const completeCallsSoFar = () =>
+      webGetMock.mock.calls.filter(([url]) => url === completeUrl).length;
+    // The initial download in `harnessWithDetectedUpdate` already hit this
+    // URL once (successfully); only calls from here on are the retries under
+    // test.
+    const callsBeforeFailedAttempt = completeCallsSoFar();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(manager.offline.errors.value.get("AAB")).toContain("500");
+    expect(completeCallsSoFar() - callsBeforeFailedAttempt).toBe(1);
+
+    // Simulates the reader turning several more pages: each one calls
+    // `checkAndApplyUpdate` again, and none of them may restart the
+    // multi-megabyte download that just failed.
+    await manager.offline.checkAndApplyUpdate("AAB");
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(completeCallsSoFar() - callsBeforeFailedAttempt).toBe(1);
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+  });
+
+  it("retries once a newer update appears after a failed attempt", async () => {
+    setConnection(undefined);
+    const manager = await harnessWithDetectedUpdate();
+
+    setWebResponses(
+      defaultResponses(
+        {
+          [makeEndpointUrl("api/AAB/complete.json")]: createResponse(
+            null,
+            500,
+            "Internal Server Error"
+          ),
+        },
+        "hash-two"
+      )
+    );
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(manager.offline.errors.value.get("AAB")).toContain("500");
+
+    setWebResponses(defaultResponses({}, "hash-three"));
+    await manager.offline.checkForUpdates();
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.records.value.get("AAB")?.sha256).toBe("hash-three");
+  });
+
+  it("does nothing for a translation that isn't downloaded", async () => {
+    setConnection(undefined);
+    const { manager } = await createHarness(defaultResponses());
+    await manager.getTranslations();
+
+    const callsBefore = webGetMock.mock.calls.length;
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(webGetMock.mock.calls.length).toBe(callsBefore);
+    expect(manager.offline.updatePrompt.value).toBeNull();
+  });
+
+  it("does nothing while the device reports no connection", async () => {
+    setConnection(undefined);
+    const manager = await harnessWithDetectedUpdate();
+
+    const onLineSpy = vi
+      .spyOn(navigator, "onLine", "get")
+      .mockReturnValue(false);
+    window.dispatchEvent(new Event("offline"));
+
+    const callsBefore = webGetMock.mock.calls.length;
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(webGetMock.mock.calls.length).toBe(callsBefore);
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+    onLineSpy.mockRestore();
+  });
+
+  it("is triggered automatically for the translation marked in use", async () => {
+    setConnection(undefined);
+    const manager = await harnessWithDetectedUpdate();
+
+    manager.offline.noteTranslationInUse("AAB");
+
+    await waitForCondition(
+      () =>
+        manager.offline.downloaded.value.get("AAB")?.updateAvailable === false
+    );
+    expect(manager.offline.records.value.get("AAB")?.sha256).toBe("hash-two");
   });
 });
 

@@ -23,12 +23,15 @@ import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
-import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
+import {
+  CreatePlaylistForm,
+  requestCancelPlaylistEditor,
+} from "../CreatePlaylistForm/CreatePlaylistForm";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
-import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
-import { ExpandableText } from "../ExpandableText/ExpandableText";
+import { DiscoverSection } from "./DiscoverSection";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   CrossReferencesSection,
@@ -104,6 +107,7 @@ export function DiscoverPaneTitle(props: {
   tabs: TabsManager;
   chats: ChatsManager;
   openChatPanel: () => void;
+  modals?: ModalManager;
 }) {
   const { playlists, annotations, tabs, chats, openChatPanel } = props;
   const { t } = useI18n();
@@ -206,7 +210,13 @@ export function DiscoverPaneTitle(props: {
           type="button"
           className="sb-reading-plans-back"
           aria-label={t("back", { defaultValue: "Back" })}
-          onClick={() => playlists.cancelEditingPlaylist()}
+          onClick={() => {
+            if (props.modals) {
+              requestCancelPlaylistEditor(playlists, props.modals);
+              return;
+            }
+            playlists.cancelEditingPlaylist();
+          }}
         >
           <MaterialIcon>arrow_back</MaterialIcon>
         </button>
@@ -268,9 +278,9 @@ export function DiscoverPaneTitle(props: {
 }
 
 /**
- * Pane content for the "Discover" tool. Shows the user's authored playlists and
- * annotations plus discovered cross references, study notes, and content for
- * the currently selected reader tab.
+ * Pane content for the "Discover" tool. Shows the user's notes for the current
+ * chapter, playlist history (when there is any), plus discovered cross
+ * references, study notes, and content for the currently selected reader tab.
  *
  * Rendered inside the managed side pane (`SidePane`), so the pane shell supplies
  * the surrounding chrome — the title/close (`PaneHeader`), the docking layout,
@@ -282,12 +292,25 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   if (actualView.value === "create_playlist") {
     return (
-      <CreatePlaylistForm playlists={playlists} tabs={tabs} modals={modals} />
+      <CreatePlaylistForm
+        playlists={playlists}
+        tabs={tabs}
+        modals={modals}
+        os={props.state.os}
+        login={props.state.login}
+        gallery={props.state.gallery}
+      />
     );
   }
 
   if (actualView.value === "create_annotation") {
-    return <CreateAnnotationForm annotations={annotations} tabs={tabs} />;
+    return (
+      <CreateAnnotationForm
+        annotations={annotations}
+        tabs={tabs}
+        toast={props.toast}
+      />
+    );
   }
 
   if (actualView.value === "play_playlist") {
@@ -309,20 +332,6 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   return (
     <div className="sb-discover-pane">
-      <PlaylistSection
-        userPlaylists={userPlaylists}
-        playlists={playlists}
-        modals={modals}
-        toast={props.toast}
-      />
-
-      <PlaylistHistorySection
-        history={playlistHistory}
-        playlists={playlists}
-        tabs={tabs}
-        toast={props.toast}
-      />
-
       <AnnotationsSection
         tab={selectedTab}
         annotations={annotations}
@@ -335,134 +344,18 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         onReferenceClick={props.state.app.openVerseReference}
       />
 
+      <PlaylistHistorySection
+        history={playlistHistory}
+        userPlaylists={userPlaylists}
+        playlists={playlists}
+        tabs={tabs}
+        toast={props.toast}
+      />
+
       <CrossReferencesSection tab={selectedTab} />
       <StudyNotesSection tab={selectedTab} />
       <ContentSection tab={selectedTab} />
     </div>
-  );
-}
-
-function PlaylistSection({
-  userPlaylists,
-  playlists,
-  modals,
-  toast,
-}: {
-  userPlaylists: Playlist[];
-  playlists: PlaylistManager;
-  modals: ModalManager;
-  toast: SeedBibleState["app"]["toast"];
-}) {
-  const { t } = useI18n();
-  return (
-    <DiscoverSection title={t("playlists", { defaultValue: "Playlists" })}>
-      {userPlaylists.length === 0 ? (
-        <DiscoverEmpty
-          text={t("discover-playlists-empty", {
-            defaultValue: "You haven't created any playlists yet.",
-          })}
-        />
-      ) : (
-        <ul className="sb-discover-list">
-          {userPlaylists.map((playlist) => (
-            <li
-              key={playlist.id}
-              className="sb-discover-item sb-discover-item--row sb-playlist-item"
-              dir="auto"
-              onClick={() => playlists.startPlaying(playlist)}
-            >
-              <div className="sb-discover-item-main">
-                <span className="sb-discover-item-title">
-                  {playlist.title ??
-                    t("untitled-playlist", {
-                      defaultValue: "Untitled playlist",
-                    })}
-                </span>
-                {playlist.description ? (
-                  <ExpandableText
-                    className="sb-discover-item-description"
-                    readMoreLabel={t("read-more", {
-                      defaultValue: "Read more",
-                    })}
-                    readLessLabel={t("read-less", {
-                      defaultValue: "Read less",
-                    })}
-                  >
-                    {playlist.description}
-                  </ExpandableText>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                className="sb-discover-item-play"
-                aria-label={t("play-playlist", {
-                  defaultValue: "Play playlist",
-                })}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  playlists.startPlaying(playlist);
-                }}
-              >
-                <MaterialIcon>play_arrow</MaterialIcon>
-              </button>
-              <ContextMenuWithButton
-                buttonClassName="sb-discover-item-menu"
-                aria-label={t("playlist-options", {
-                  defaultValue: "Playlist options",
-                })}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ContextMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const url = playlists.getPlaylistUrl(playlist);
-                    navigator.clipboard.writeText(url);
-                    toast(
-                      t("playlist-url-copied", {
-                        defaultValue: "Playlist URL copied to clipboard",
-                      })
-                    );
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    share
-                  </MaterialIcon>
-                  {t("share-playlist", { defaultValue: "Share playlist" })}
-                </ContextMenuItem>
-                <ContextMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    playlists.editPlaylist(playlist);
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    edit
-                  </MaterialIcon>
-                  {t("edit-playlist", { defaultValue: "Edit playlist" })}
-                </ContextMenuItem>
-                <ContextMenuItem
-                  className="sb-context-menu-item--danger"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openDeletePlaylistConfirm(
-                      modals,
-                      playlists,
-                      playlist,
-                      toast
-                    );
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    delete
-                  </MaterialIcon>
-                  {t("delete-playlist", { defaultValue: "Delete" })}
-                </ContextMenuItem>
-              </ContextMenuWithButton>
-            </li>
-          ))}
-        </ul>
-      )}
-    </DiscoverSection>
   );
 }
 
@@ -536,16 +429,22 @@ function playFromHistory(
 
 function PlaylistHistorySection({
   history,
+  userPlaylists,
   playlists,
   tabs,
   toast,
 }: {
   history: PlaylistPlayHistory[];
+  userPlaylists: Playlist[];
   playlists: PlaylistManager;
   tabs: TabsManager;
   toast: SeedBibleState["app"]["toast"];
 }) {
   const { t, language } = useI18n();
+  if (history.length === 0) {
+    return null;
+  }
+
   const dayGroups = groupPlaylistPlayHistoryByDay(history);
 
   const selectedTab =
@@ -560,191 +459,108 @@ function PlaylistHistorySection({
     <DiscoverSection
       title={t("playlist-history", { defaultValue: "Playlist history" })}
     >
-      {history.length === 0 ? (
-        <DiscoverEmpty
-          text={t("discover-playlist-history-empty", {
-            defaultValue:
-              "Play a saved playlist while signed in and it will show up here.",
-          })}
-        />
-      ) : (
-        dayGroups.map((group) => (
-          <div key={group.dayKey} className="sb-playlist-history-day-group">
-            <h4 className="sb-playlist-history-day">
-              {formatHistoryDayLabel(group.dayKey, language, t)}
-            </h4>
-            <ul className="sb-discover-list">
-              {group.entries.map((entry) => {
-                const percent = Math.round(
-                  playlistPlayHistoryPercent(entry) * 100
-                );
-                const complete = isPlaylistPlayHistoryComplete(entry);
-                const lastLabel = entry.lastItem
-                  ? playlistItemLabel(entry.lastItem, t, resolveBookName)
-                  : null;
-                const sessionTime = formatHistorySessionTime(
-                  entry.startedAtMs,
-                  language
-                );
-                const summary = lastLabel
-                  ? t("playlist-history-session-summary", {
-                      defaultValue:
-                        "{{time}} - {{percent}}% complete - {{item}}",
-                      time: sessionTime,
-                      percent,
-                      item: lastLabel,
-                    })
-                  : t("playlist-history-session-summary-no-item", {
-                      defaultValue: "{{time}} - {{percent}}% complete",
-                      time: sessionTime,
-                      percent,
-                    });
+      {dayGroups.map((group) => (
+        <div key={group.dayKey} className="sb-playlist-history-day-group">
+          <h4 className="sb-playlist-history-day">
+            {formatHistoryDayLabel(group.dayKey, language, t)}
+          </h4>
+          <ul className="sb-discover-list">
+            {group.entries.map((entry) => {
+              const percent = Math.round(
+                playlistPlayHistoryPercent(entry) * 100
+              );
+              const complete = isPlaylistPlayHistoryComplete(entry);
+              const lastLabel = entry.lastItem
+                ? playlistItemLabel(entry.lastItem, t, resolveBookName)
+                : null;
+              const sessionTime = formatHistorySessionTime(
+                entry.startedAtMs,
+                language
+              );
+              const summary = lastLabel
+                ? t("playlist-history-session-summary", {
+                    defaultValue: "{{time}} - {{percent}}% complete - {{item}}",
+                    time: sessionTime,
+                    percent,
+                    item: lastLabel,
+                  })
+                : t("playlist-history-session-summary-no-item", {
+                    defaultValue: "{{time}} - {{percent}}% complete",
+                    time: sessionTime,
+                    percent,
+                  });
 
-                return (
-                  <li
-                    key={entry.id}
-                    className="sb-discover-item sb-discover-item--row sb-playlist-item sb-playlist-history-item"
-                    dir="auto"
-                    onClick={() => playFromHistory(playlists, entry, toast, t)}
+              const live = userPlaylists.find(
+                (p) =>
+                  p.id === entry.playlistId &&
+                  p.recordName === entry.playlistRecordName
+              );
+              const heroUrl =
+                live?.heroImageUrl ?? entry.playlistHeroImageUrl ?? null;
+
+              return (
+                <li
+                  key={entry.id}
+                  className="sb-discover-item sb-discover-item--row sb-playlist-item sb-playlist-history-item"
+                  dir="auto"
+                  onClick={() => playFromHistory(playlists, entry, toast, t)}
+                >
+                  <HeroImageThumb url={heroUrl} />
+                  <div className="sb-discover-item-main">
+                    <span className="sb-discover-item-title">
+                      {playlistTitle(entry, t)}
+                    </span>
+                    <span className="sb-discover-item-description">
+                      {summary}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="sb-discover-item-play"
+                    aria-label={
+                      complete
+                        ? t("playlist-history-replay", {
+                            defaultValue: "Replay",
+                          })
+                        : t("playlist-history-continue", {
+                            defaultValue: "Continue",
+                          })
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      playFromHistory(playlists, entry, toast, t);
+                    }}
                   >
-                    <div className="sb-discover-item-main">
-                      <span className="sb-discover-item-title">
-                        {playlistTitle(entry, t)}
-                      </span>
-                      <span className="sb-discover-item-description">
-                        {summary}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="sb-discover-item-play"
-                      aria-label={
-                        complete
-                          ? t("playlist-history-replay", {
-                              defaultValue: "Replay",
-                            })
-                          : t("playlist-history-continue", {
-                              defaultValue: "Continue",
-                            })
-                      }
+                    <MaterialIcon>play_arrow</MaterialIcon>
+                  </button>
+                  <ContextMenuWithButton
+                    buttonClassName="sb-discover-item-menu"
+                    aria-label={t("playlist-history-options", {
+                      defaultValue: "Playlist history options",
+                    })}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ContextMenuItem
+                      className="sb-context-menu-item--danger"
                       onClick={(e) => {
                         e.stopPropagation();
-                        playFromHistory(playlists, entry, toast, t);
+                        void playlists.removePlayHistory(entry);
                       }}
                     >
-                      <MaterialIcon>play_arrow</MaterialIcon>
-                    </button>
-                    <ContextMenuWithButton
-                      buttonClassName="sb-discover-item-menu"
-                      aria-label={t("playlist-history-options", {
-                        defaultValue: "Playlist history options",
+                      <MaterialIcon className="sb-context-menu-item-icon">
+                        delete
+                      </MaterialIcon>
+                      {t("playlist-history-remove", {
+                        defaultValue: "Remove from history",
                       })}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ContextMenuItem
-                        className="sb-context-menu-item--danger"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void playlists.removePlayHistory(entry);
-                        }}
-                      >
-                        <MaterialIcon className="sb-context-menu-item-icon">
-                          delete
-                        </MaterialIcon>
-                        {t("playlist-history-remove", {
-                          defaultValue: "Remove from history",
-                        })}
-                      </ContextMenuItem>
-                    </ContextMenuWithButton>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))
-      )}
+                    </ContextMenuItem>
+                  </ContextMenuWithButton>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </DiscoverSection>
   );
-}
-
-/**
- * Confirmation body shown before permanently deleting a playlist. Confirming
- * erases the playlist and closes the modal; on failure it surfaces a toast but
- * still closes.
- */
-function ConfirmDeletePlaylistModalContent(props: {
-  playlists: PlaylistManager;
-  playlist: Playlist;
-  toast: SeedBibleState["app"]["toast"];
-  onClose: () => void;
-}) {
-  const { playlists, playlist, toast, onClose } = props;
-  const { t } = useI18n();
-
-  const confirm = async () => {
-    try {
-      await playlists.deletePlaylist(playlist);
-    } catch {
-      toast(
-        t("delete-playlist-failed", {
-          defaultValue: "Couldn't delete the playlist.",
-        })
-      );
-    }
-    onClose();
-  };
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("delete-playlist-confirm-message", {
-          title:
-            playlist.title ??
-            t("untitled-playlist", { defaultValue: "Untitled playlist" }),
-          defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
-          {t("cancel")}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={confirm}
-        >
-          {t("delete")}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/** Opens the delete-playlist confirmation modal. */
-function openDeletePlaylistConfirm(
-  modals: ModalManager,
-  playlists: PlaylistManager,
-  playlist: Playlist,
-  toast: SeedBibleState["app"]["toast"]
-) {
-  const modalId = `delete-playlist-confirm-${playlist.id}`;
-  modals.openModal({
-    id: modalId,
-    title: {
-      key: "delete-playlist-confirm-title",
-      defaultValue: "Delete playlist?",
-    },
-    content: () => (
-      <ConfirmDeletePlaylistModalContent
-        playlists={playlists}
-        playlist={playlist}
-        toast={toast}
-        onClose={() => modals.closeModal(modalId)}
-      />
-    ),
-  });
 }

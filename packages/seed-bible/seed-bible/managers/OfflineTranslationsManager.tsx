@@ -11,8 +11,10 @@
  * It owns three jobs:
  *
  * 1. **Download / delete** a translation, with progress and cancellation.
- * 2. **Detect stale downloads** by comparing the stored content hash against the
- *    `sha256` the API currently reports for that translation.
+ * 2. **Detect and apply stale downloads**: comparing the stored content hash
+ *    against the `sha256` the API currently reports for that translation, and,
+ *    for whichever translation is currently in use, either downloading the
+ *    newer version outright or asking first — see `checkAndApplyUpdate`.
  * 3. **Read** books and chapters back out of storage, rebuilding the
  *    `TranslationBooks` / `TranslationBookChapter` shapes the reader expects.
  *
@@ -25,11 +27,14 @@ import { computed, signal, type ReadonlySignal } from "@preact/signals";
 // imports this module to construct the manager).
 import type { MergeTranslationsOptions } from "./BibleDataManager";
 import type {
+  AudioTimings,
   CompleteTranslation,
+  CompleteTranslationChapterAudioTimings,
   FreeUseBibleAPI,
   Translation,
   TranslationBook,
   TranslationBookChapter,
+  TranslationBookChapterAudioTimingsLinks,
   TranslationBooks,
 } from "./FreeUseBibleAPI";
 import {
@@ -236,17 +241,31 @@ export interface OfflineTranslationsManager {
   downloadPrompt: ReadonlySignal<Translation | null>;
 
   /**
+   * The translation currently being offered as an update to its downloaded
+   * copy, or null when no update offer is on screen. Populated by
+   * {@link checkAndApplyUpdate} instead of downloading automatically, only when
+   * the device reports `navigator.connection.saveData` — see that method's doc
+   * comment.
+   */
+  updatePrompt: ReadonlySignal<Translation | null>;
+
+  /**
    * Records that the user is reading in a translation, stamping the first time
    * it was seen. Idempotent — later calls keep the original timestamp, since
    * {@link offerDownloadPrompt} asks how long a translation has been in use,
    * not when it was last used.
+   *
+   * Also triggers {@link checkAndApplyUpdate} for this translation on every
+   * call, not just the first, so an update noticed mid-session is acted on the
+   * next time the reader turns a page in it.
    */
   noteTranslationInUse: (translationId: string) => void;
 
   /**
    * Offers to save a translation for offline reading, if every condition is
    * met: the device can store downloads, no prompt has been shown yet this
-   * session, the device is online, this translation isn't already downloaded or
+   * session, no update offer ({@link updatePrompt}) is already on screen, the
+   * device is online, this translation isn't already downloaded or
    * downloading, it has never been offered before, and — unless this is the
    * first offer the device has ever made — the user has been reading this
    * translation for at least a day.
@@ -258,6 +277,9 @@ export interface OfflineTranslationsManager {
 
   /** Closes the download offer without downloading anything. */
   dismissDownloadPrompt: () => void;
+
+  /** Closes the update offer without downloading anything. */
+  dismissUpdatePrompt: () => void;
 
   /**
    * Downloads a translation to the device, replacing any existing copy.
@@ -284,6 +306,33 @@ export interface OfflineTranslationsManager {
    */
   checkForUpdates: () => Promise<void>;
 
+  /**
+   * Checks whether the given translation — already downloaded, with a newer
+   * version now known — should be updated, and if so applies that update.
+   *
+   * Does nothing when the translation isn't downloaded, has no update pending,
+   * is already downloading, or the device is offline. Otherwise:
+   *
+   * - No `navigator.connection` info at all → the update is downloaded
+   *   immediately, since there's nothing to say the user would mind.
+   * - `navigator.connection.saveData` is true → nothing is downloaded
+   *   automatically; the translation is offered through {@link updatePrompt}
+   *   instead, so the user decides whether to spend the data.
+   * - Otherwise (connection info exists, `saveData` false or unset) → the
+   *   update is downloaded immediately, same as with no connection info.
+   *
+   * Each content hash is only ever acted on once per session for a given
+   * translation — a download attempt (whether it succeeds or fails) or a
+   * shown prompt both count. Without that, a download that keeps failing
+   * would otherwise be retried in full on every subsequent call, since
+   * `updateAvailable` only clears on success.
+   *
+   * Called automatically by {@link noteTranslationInUse} for the translation
+   * just marked in use; exposed on its own so it doesn't have to be reached
+   * only through that path.
+   */
+  checkAndApplyUpdate: (translationId: string) => Promise<void>;
+
   /** The books of a downloaded translation, or null if it isn't downloaded. */
   getTranslationBooks: (
     translationId: string
@@ -305,6 +354,19 @@ export interface OfflineTranslationsManager {
     chapter: TranslationBookChapter,
     direction: "next" | "previous"
   ) => Promise<TranslationBookChapter | null>;
+
+  /**
+   * Resolves one of the offline links a downloaded chapter puts in
+   * `thisChapterAudioTimings` (and `nextChapterAudioTimings`/
+   * `previousChapterAudioTimings`) back into that reader's timings.
+   *
+   * Returns null for any link this manager didn't create — such as a real API
+   * link — so a caller can fall back to fetching it over the network. Also
+   * null if the link is one of ours but the reader's timings aren't in the
+   * download (a translation downloaded before this reader was added, for
+   * instance).
+   */
+  getAudioTimings: (link: string) => Promise<AudioTimings | null>;
 
   /**
    * Releases the manager's hold on the page: removes its `online`/`offline`
@@ -428,6 +490,7 @@ function toChapterEntries(complete: CompleteTranslation): StoredChapterEntry[] {
         data: {
           numberOfVerses: entry.numberOfVerses,
           thisChapterAudioLinks: entry.thisChapterAudioLinks ?? {},
+          thisChapterAudioTimings: entry.thisChapterAudioTimings ?? {},
           chapter: entry.chapter,
         },
       });
@@ -452,6 +515,90 @@ function chapterApiLink(
   } catch {
     return `/${path}`;
   }
+}
+
+/**
+ * The scheme used for audio-timings "links" on a chapter served from an
+ * offline download.
+ *
+ * The per-chapter API gives each reader a URL to a separate `*.audioTimings.json`
+ * file; the complete-translation download inlines the same data as plain
+ * number arrays instead, since there is no per-chapter file to link to. To
+ * keep {@link TranslationBookChapter.thisChapterAudioTimings} the same
+ * link-shaped map either way, offline chapters get one of these opaque links
+ * per reader instead of a real URL. {@link parseOfflineAudioTimingsLink}
+ * reverses it back into a lookup, and {@link OfflineTranslationsManager.getAudioTimings}
+ * is what a caller resolves it with instead of fetching it.
+ */
+const OFFLINE_AUDIO_TIMINGS_SCHEME = "offline-audio-timings:";
+
+function offlineAudioTimingsLink(
+  translationId: string,
+  bookId: string,
+  chapterNumber: number,
+  reader: string
+): string {
+  return (
+    OFFLINE_AUDIO_TIMINGS_SCHEME +
+    [
+      encodeURIComponent(translationId),
+      encodeURIComponent(bookId),
+      chapterNumber,
+      encodeURIComponent(reader),
+    ].join("/")
+  );
+}
+
+/** A parsed {@link offlineAudioTimingsLink}, or null if it wasn't one. */
+interface OfflineAudioTimingsRef {
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+  reader: string;
+}
+
+function parseOfflineAudioTimingsLink(
+  link: string
+): OfflineAudioTimingsRef | null {
+  if (!link.startsWith(OFFLINE_AUDIO_TIMINGS_SCHEME)) {
+    return null;
+  }
+  const [translationId, bookId, chapterNumberText, reader] = link
+    .slice(OFFLINE_AUDIO_TIMINGS_SCHEME.length)
+    .split("/");
+  const chapterNumber = Number(chapterNumberText);
+  if (!translationId || !bookId || !reader || !Number.isFinite(chapterNumber)) {
+    return null;
+  }
+  return {
+    translationId: decodeURIComponent(translationId),
+    bookId: decodeURIComponent(bookId),
+    chapterNumber,
+    reader: decodeURIComponent(reader),
+  };
+}
+
+/**
+ * Turns a chapter's stored (reader -> timing array) map into the
+ * (reader -> link) shape {@link TranslationBookChapter.thisChapterAudioTimings}
+ * expects, using offline links a reader never has to actually fetch.
+ */
+function toAudioTimingsLinks(
+  translationId: string,
+  bookId: string,
+  chapterNumber: number,
+  timings: CompleteTranslationChapterAudioTimings | undefined
+): TranslationBookChapterAudioTimingsLinks {
+  const links: TranslationBookChapterAudioTimingsLinks = {};
+  for (const reader of Object.keys(timings ?? {})) {
+    links[reader] = offlineAudioTimingsLink(
+      translationId,
+      bookId,
+      chapterNumber,
+      reader
+    );
+  }
+  return links;
 }
 
 /**
@@ -509,6 +656,26 @@ function toErrorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message
     : "Failed to download the translation.";
+}
+
+/**
+ * The one field of the (non-standard, Chromium-only) Network Information API
+ * the update check reads. Absent from TypeScript's DOM types since the API
+ * never reached a broad standard, hence the manual shape here.
+ */
+interface NetworkInformationLike {
+  saveData?: boolean;
+}
+
+/** Reads `navigator.connection`, or null wherever it doesn't exist (SSR, most non-Chromium browsers). */
+function getNetworkConnection(): NetworkInformationLike | null {
+  if (typeof navigator === "undefined") {
+    return null;
+  }
+  return (
+    (navigator as Navigator & { connection?: NetworkInformationLike })
+      .connection ?? null
+  );
 }
 
 export function createOfflineTranslationsManager(
@@ -960,6 +1127,12 @@ export function createOfflineTranslationsManager(
         chapterNumber
       ),
       thisChapterAudioLinks: stored.thisChapterAudioLinks ?? {},
+      thisChapterAudioTimings: toAudioTimingsLinks(
+        record.translationId,
+        bookId,
+        chapterNumber,
+        stored.thisChapterAudioTimings
+      ),
       nextChapterApiLink: nextRef
         ? chapterApiLink(
             record.endpoint,
@@ -969,6 +1142,14 @@ export function createOfflineTranslationsManager(
           )
         : null,
       nextChapterAudioLinks: nextStored?.thisChapterAudioLinks ?? null,
+      nextChapterAudioTimings: nextRef
+        ? toAudioTimingsLinks(
+            record.translationId,
+            nextRef.book,
+            nextRef.chapter,
+            nextStored?.thisChapterAudioTimings
+          )
+        : null,
       previousChapterApiLink: previousRef
         ? chapterApiLink(
             record.endpoint,
@@ -978,6 +1159,14 @@ export function createOfflineTranslationsManager(
           )
         : null,
       previousChapterAudioLinks: previousStored?.thisChapterAudioLinks ?? null,
+      previousChapterAudioTimings: previousRef
+        ? toAudioTimingsLinks(
+            record.translationId,
+            previousRef.book,
+            previousRef.chapter,
+            previousStored?.thisChapterAudioTimings
+          )
+        : null,
       numberOfVerses: stored.numberOfVerses,
       chapter: stored.chapter,
     };
@@ -1017,7 +1206,93 @@ export function createOfflineTranslationsManager(
     return await buildChapter(record, ref.book, ref.chapter);
   };
 
+  const getAudioTimings = async (
+    link: string
+  ): Promise<AudioTimings | null> => {
+    const ref = parseOfflineAudioTimingsLink(link);
+    if (!ref) {
+      return null;
+    }
+
+    const record = await getRecord(ref.translationId);
+    if (!record || !store) {
+      return null;
+    }
+
+    const stored = await store.getChapter(
+      ref.translationId,
+      ref.bookId,
+      ref.chapterNumber
+    );
+    const verses = stored?.thisChapterAudioTimings?.[ref.reader];
+    if (!stored || !verses) {
+      return null;
+    }
+
+    const nextRef = adjacentChapterRef(
+      record.books,
+      ref.bookId,
+      ref.chapterNumber,
+      "next"
+    );
+    const previousRef = adjacentChapterRef(
+      record.books,
+      ref.bookId,
+      ref.chapterNumber,
+      "previous"
+    );
+
+    return {
+      translationId: ref.translationId,
+      bookId: ref.bookId,
+      chapterNumber: ref.chapterNumber,
+      reader: ref.reader,
+      audioLink: stored.thisChapterAudioLinks[ref.reader] ?? "",
+      thisChapterLink: chapterApiLink(
+        record.endpoint,
+        ref.translationId,
+        ref.bookId,
+        ref.chapterNumber
+      ),
+      nextChapterLink: nextRef
+        ? chapterApiLink(
+            record.endpoint,
+            ref.translationId,
+            nextRef.book,
+            nextRef.chapter
+          )
+        : null,
+      previousChapterLink: previousRef
+        ? chapterApiLink(
+            record.endpoint,
+            ref.translationId,
+            previousRef.book,
+            previousRef.chapter
+          )
+        : null,
+      thisChapterAudioTimingsLink: link,
+      nextChapterAudioTimingsLink: nextRef
+        ? offlineAudioTimingsLink(
+            ref.translationId,
+            nextRef.book,
+            nextRef.chapter,
+            ref.reader
+          )
+        : null,
+      previousChapterAudioTimingsLink: previousRef
+        ? offlineAudioTimingsLink(
+            ref.translationId,
+            previousRef.book,
+            previousRef.chapter,
+            ref.reader
+          )
+        : null,
+      verses,
+    };
+  };
+
   const downloadPrompt = signal<Translation | null>(null);
+  const updatePrompt = signal<Translation | null>(null);
 
   // "When we show one prompt, we should never show any more download prompts
   // for that session." Deliberately a closure rather than storage: it resets on
@@ -1025,10 +1300,73 @@ export function createOfflineTranslationsManager(
   // stops the same translation being offered again.
   let promptedThisSession = false;
 
+  // Which content hash has already been acted on for a translation this
+  // session — either downloaded automatically or offered through
+  // `updatePrompt` — a closure, not storage, so it resets on the next load.
+  // Its job is only to stop the same update being retried or re-offered every
+  // time the reader turns a page: without it, a download that keeps failing
+  // (a flaky connection, a server error) would restart a fresh multi-megabyte
+  // fetch on every chapter navigation, with `updateAvailable` never clearing
+  // to stop it. It must not survive a reload — that's what would let a user
+  // who dismissed an old update, or hit a transient failure, learn about a
+  // newer one, or get a retry, the next time they visit.
+  const handledUpdateHashForTranslation = new Map<string, string>();
+
+  const checkAndApplyUpdate = async (translationId: string): Promise<void> => {
+    if (!store || !isOnline.value) {
+      return;
+    }
+    await ready;
+
+    const summary = downloaded.value.get(translationId);
+    if (!summary?.updateAvailable || downloads.value.has(translationId)) {
+      return;
+    }
+
+    const translation = availableTranslations.value.find(
+      (candidate) => candidate.id === translationId
+    );
+    if (!translation?.sha256) {
+      return;
+    }
+    if (
+      handledUpdateHashForTranslation.get(translationId) === translation.sha256
+    ) {
+      return;
+    }
+
+    const connection = getNetworkConnection();
+    if (!connection || connection.saveData !== true) {
+      // Marked before the download even starts (not just on success) so a
+      // failure can't be retried by the next page turn — see the map's doc
+      // comment above.
+      handledUpdateHashForTranslation.set(translationId, translation.sha256);
+      await downloadTranslation(translationId);
+      return;
+    }
+
+    // The device wants to save data, so ask instead of spending bandwidth on
+    // its behalf. Never stack this on top of another prompt already on screen
+    // — and don't mark the hash handled until it's actually offered, so a
+    // prompt that couldn't be shown this time still gets a next try.
+    if (downloadPrompt.value || updatePrompt.value) {
+      return;
+    }
+
+    handledUpdateHashForTranslation.set(translationId, translation.sha256);
+    updatePrompt.value = translation;
+  };
+
+  const dismissUpdatePrompt = () => {
+    updatePrompt.value = null;
+  };
+
   const noteTranslationInUse = (translationId: string) => {
     if (!translationId) {
       return;
     }
+    void checkAndApplyUpdate(translationId);
+
     const stamps = readTimestamps(TRANSLATION_FIRST_USED_KEY);
     if (stamps[translationId]) {
       return;
@@ -1043,7 +1381,9 @@ export function createOfflineTranslationsManager(
     if (store === null) {
       return false;
     }
-    if (promptedThisSession || downloadPrompt.value) {
+    if (promptedThisSession || downloadPrompt.value || updatePrompt.value) {
+      // Never stack this on top of an update offer already on screen — see
+      // the matching guard in `checkAndApplyUpdate`.
       return false;
     }
     // Offering a download with no connection would only fail.
@@ -1102,16 +1442,20 @@ export function createOfflineTranslationsManager(
     isOnline,
     isDownloaded,
     downloadPrompt,
+    updatePrompt,
     noteTranslationInUse,
     offerDownloadPrompt,
     dismissDownloadPrompt,
+    dismissUpdatePrompt,
     downloadTranslation,
     cancelDownload,
     deleteTranslation,
     checkForUpdates,
+    checkAndApplyUpdate,
     getTranslationBooks,
     getTranslationBookChapter,
     getAdjacentChapter,
+    getAudioTimings,
     dispose,
   };
 }

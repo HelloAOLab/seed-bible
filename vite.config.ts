@@ -153,8 +153,10 @@ export default defineConfig(({ isSsrBuild }) => ({
             registerType: "autoUpdate",
             // A hand-written worker (`standalone/sw.ts`) rather than a
             // generated one: the offline behaviour this deployment needs —
-            // network-first HTML keyed so every URL shares one cached copy,
-            // and asset caching scoped to this build's own chunks — can't be
+            // StaleWhileRevalidate HTML keyed to a single shared shell entry
+            // (so a controlled navigation loads instantly with no network
+            // round-trip, refreshed in the background for next time), and
+            // asset caching scoped to this build's own chunks — can't be
             // expressed in `generateSW`'s declarative config.
             strategies: "injectManifest",
             srcDir: "standalone",
@@ -202,8 +204,12 @@ export default defineConfig(({ isSsrBuild }) => ({
               ],
               start_url: "/",
               display: "standalone",
-              background_color: "#FFFFFF",
-              theme_color: "#FFFFFF",
+              // Splash/default only. Keep in sync with LIGHT_THEME
+              // `background` in ThemeManager. The installed app's live
+              // status bar is driven by <meta name="theme-color">, which
+              // ThemeManager updates to the active theme.
+              background_color: "#f8fafc",
+              theme_color: "#f8fafc",
               icons: [
                 {
                   src: "https://favicon.ao.bot/pwa/pwa-192x192.png",

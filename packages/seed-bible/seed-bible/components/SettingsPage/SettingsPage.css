@@ -49,6 +49,12 @@
   margin: 0;
 }
 
+.sb-settings-save-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--sb-error-color, #d64545);
+}
+
 .sb-extensions-list {
   list-style: none;
   margin: 0;
@@ -282,10 +288,108 @@
   padding: 0.25rem 0.25rem;
 }
 
+.sb-settings-field-row-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sb-settings-field-row-controls > *:not(.sb-theme-color-reset) {
+  flex: 1;
+  min-width: 0;
+}
+
 .sb-settings-field-label {
   font-size: 0.8125rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-extension-settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sb-extension-settings-fields .sb-settings-toggle-row {
+  padding: 0;
+}
+
+/* Keeps a setting's reset action beside its title instead of below the field.
+   The row holds the button's height whether or not it is showing, so a field
+   doesn't shift as the viewer sets and resets its value. */
+.sb-settings-field-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 1.5rem;
+}
+
+.sb-settings-field-title-row .sb-theme-color-reset {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.sb-settings-field-title-row .sb-theme-color-reset .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+/* Sits under a setting's title, so it stays close to the title's size rather
+   than the browser's default paragraph size, which was larger than the title. */
+.sb-settings-field-description {
+  margin: 0;
+  margin-top: -0.5rem;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+/* The choice to store a value for a setting at all, on its own row above the
+   field. The checkbox itself is hidden (but still focusable) so the Material
+   glyph can stand in for it. */
+.sb-settings-field-override {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  cursor: pointer;
+}
+
+.sb-settings-field-override-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sb-settings-field-override-icon {
+  font-size: 1.125rem;
+}
+
+.sb-settings-field-override-input:checked + .sb-settings-field-override-icon {
+  color: var(--sb-primary-color);
+}
+
+.sb-settings-field-override-input:focus-visible
+  + .sb-settings-field-override-icon {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Says what the field's value is overriding, so it reads as a note about the
+   value above it rather than as part of the setting's own explanation. */
+.sb-settings-field-default-note {
+  margin: 0;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
 
 .sb-settings-language-select {
@@ -569,6 +673,16 @@
   text-align: left;
 }
 
+/** Current-value preview shown after a nav row's label (e.g. the picked translation). */
+.sb-settings-nav-value {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 45%;
+}
+
 .sb-settings-subpage-header {
   display: flex;
   align-items: center;
@@ -629,6 +743,10 @@
 
 .sb-settings-actions {
   margin-top: 0.875rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
 }
 
 .sb-settings-save-button {
@@ -770,16 +888,14 @@
 
 /* Ready-themes preview gallery */
 .sb-theme-ready-gallery {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
-  overflow-x: auto;
   padding: 0.25rem 0.125rem 0.75rem;
-  scrollbar-width: thin;
 }
 
 .sb-theme-ready-card {
-  flex: 0 0 auto;
-  width: 7.5rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -804,6 +920,21 @@
   transition:
     border-color 0.2s ease,
     transform 0.1s ease;
+}
+
+.sb-theme-ready-preview-system {
+  padding: 0;
+  gap: 0;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.sb-theme-ready-system-half {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 0.625rem;
 }
 
 .sb-theme-ready-card:hover .sb-theme-ready-preview {
@@ -838,6 +969,10 @@
 .sb-theme-ready-check {
   font-size: 1rem;
   color: var(--sb-primary-color);
+}
+
+.sb-theme-ready-check-hidden {
+  visibility: hidden;
 }
 
 /* Scripture quick-settings (font size + line height) */
@@ -1098,13 +1233,10 @@
     color-mix(in srgb, var(--sb-font-color), transparent 88%);
 }
 
-.sb-text-format-palette-custom input[type="color"] {
+.sb-text-format-palette-custom-swatch {
   width: 1.75rem;
   height: 1.75rem;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
+  padding: 0.125rem;
 }
 
 /* Toolbar customization list */
@@ -1227,10 +1359,24 @@
   flex: 1;
 }
 
+.sb-theme-color-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  min-width: 0;
+}
+
 .sb-theme-color-label {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--sb-font-color);
+}
+
+.sb-theme-contrast-warning {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--sb-error-color, #d64545);
+  cursor: help;
 }
 
 .sb-theme-color-value {
@@ -1270,27 +1416,6 @@
 .sb-theme-color-input {
   width: 2.25rem;
   height: 2.25rem;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: 0.5rem;
-  background: transparent;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-.sb-theme-color-input::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.sb-theme-color-input::-webkit-color-swatch {
-  border: none;
-  border-radius: 0.375rem;
-}
-
-.sb-theme-color-input::-moz-color-swatch {
-  border: none;
-  border-radius: 0.375rem;
 }
 
 .sb-theme-color-reset {
@@ -1523,4 +1648,113 @@
   .hide-on-mobile {
     display: none;
   }
+}
+
+/* Customizations list rows */
+.sb-customization-row {
+  gap: 0.625rem;
+}
+
+.sb-customization-swatches {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.sb-customization-swatch {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, black, transparent 80%);
+  margin-left: -0.375rem;
+}
+
+.sb-customization-swatch:first-child {
+  margin-left: 0;
+}
+
+.sb-customization-active-badge {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 1rem;
+  color: var(--sb-primary-font-color);
+  background: var(--sb-primary-color);
+}
+
+/*
+ * The "Default translation" nav row is a `ContextMenuWithButton` trigger,
+ * so it picks up `.sb-context-menu-button`'s icon-button sizing
+ * (`ContextMenu.css`) alongside `.sb-settings-nav-item`'s own full-width row
+ * styling. Both are single-class selectors, so which one wins depends on
+ * CSS load order — this compound selector outranks either on specificity
+ * alone, regardless of order.
+ */
+.sb-context-menu-button.sb-settings-nav-item {
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+}
+
+.sb-context-menu-button.sb-settings-nav-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+}
+
+/*
+ * `.sb-context-menu`'s default size (`ContextMenu.css`) is sized for short
+ * menu item lists, too narrow/short for a searchable, scrollable
+ * translation list. Compound selector for the same load-order-independence
+ * reason as above.
+ */
+.sb-context-menu.sb-customization-translation-picker-menu {
+  width: 22rem;
+  max-width: min(22rem, calc(100vw - 2rem));
+  max-height: min(28rem, calc(100dvh - 2rem));
+  overflow-y: auto;
+}
+
+/*
+ * `.searchbar` (`BibleSelector.css`) is 80% width there because that page's
+ * search field sits next to a separate filter icon in the same row. Here
+ * the filter button is nested inside `.searchbar` itself, so 80% leaves a
+ * dead gap down the right side of this narrower popover — scoped to this
+ * picker rather than changing the shared rule, which the reader's own
+ * layout still depends on.
+ */
+.sb-customization-translation-picker .searchbar {
+  width: 100%;
+}
+
+/* Customization logo upload (editor page) */
+.sb-customization-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.sb-customization-logo-preview,
+.sb-customization-logo-placeholder {
+  width: 3.875rem;
+  height: 3.875rem !important;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+}
+
+.sb-customization-logo-preview {
+  object-fit: cover;
+  border: 2px solid color-mix(in srgb, var(--sb-primary-color), transparent 60%);
+}
+
+.sb-customization-logo-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--sb-primary-color), #000 26%);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-customization-logo-placeholder .material-symbols-outlined {
+  font-size: 1.875rem;
 }

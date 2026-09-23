@@ -1,0 +1,79 @@
+/* About page --------------------------------------------------------------- */
+
+/* The pane chrome (`.sb-pane-detached-body`/`.sb-pane-component` in
+   PaneLayout.css) already provides scrolling and sizes this to fill the
+   pane body, so this only needs to fill that box, not size/scroll itself. */
+.sb-about-page {
+  width: 100%;
+  height: 100%;
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+}
+
+.sb-about-content {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.sb-about-content h1 {
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
+  color: var(--sb-chapter-heading-font-color);
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0 0 1.5rem;
+}
+
+.sb-about-content p {
+  line-height: 1.7;
+  margin: 0 0 1.25rem;
+}
+
+.sb-about-content a {
+  color: var(--sb-link-color);
+}
+
+.sb-about-inline-action {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--sb-link-color);
+  cursor: pointer;
+}
+
+.sb-about-signature {
+  margin-top: 2rem;
+}
+
+.sb-about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+.sb-about-action {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sb-about-action-primary {
+  border: none;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-about-action-secondary {
+  border: 1px solid var(--sb-primary-color);
+  background: transparent;
+  color: var(--sb-primary-color);
+}

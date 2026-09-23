@@ -85,10 +85,13 @@ function createFixture(): ReaderFixture {
     },
     thisChapterLink: "/api/BSB/GEN/1.json",
     thisChapterAudioLinks: {},
+    thisChapterAudioTimings: {},
     nextChapterApiLink: "/api/BSB/GEN/2.json",
     nextChapterAudioLinks: {},
+    nextChapterAudioTimings: {},
     previousChapterApiLink: null,
     previousChapterAudioLinks: null,
+    previousChapterAudioTimings: null,
     numberOfVerses: 2,
     chapter: {
       number: 1,
@@ -176,11 +179,14 @@ function createFixture(): ReaderFixture {
     loadNextChapter: vi.fn(async () => undefined),
     hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
     hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
+    nextChapterPosition: computed(() => null),
+    previousChapterPosition: computed(() => null),
     getAdjacentChapter: vi.fn(async () => null),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialLoadSettled: computed(() => true),
     initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(
       () => contentStale.value ?? chapterData.value === null
@@ -208,6 +214,7 @@ function createFixture(): ReaderFixture {
 
   const selectorState = {
     setOpen,
+    selectingTranslation: signal(false),
   } as any as BibleSelectorState;
 
   const slot: TabSlot = {
@@ -231,13 +238,19 @@ function createFixture(): ReaderFixture {
   };
 }
 
-function createMobileState(): SeedBibleState {
+/**
+ * @param selectorState Wired in as `state.selector` for the mobile chrome's own
+ *   entry points into the Bible selector (the header's translation chip).
+ */
+function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
   return {
+    selector: selectorState,
     app: {
       isMobile: signal(true),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
       openDiscover: vi.fn(),
+      toast: vi.fn(),
     },
     bibleData: {
       getPreviousChapter: vi.fn(async () => null),
@@ -248,9 +261,10 @@ function createMobileState(): SeedBibleState {
       openSidebar: vi.fn(),
       openSettingsToView: vi.fn(),
     },
-    bookmarks: {
-      isLocationBookmarked: vi.fn(() => false),
-      toggleBookmarkAtLocation: vi.fn(async () => {}),
+    saves: {
+      isLocationSaved: vi.fn(() => false),
+      getSaveForLocation: vi.fn(() => undefined),
+      addSave: vi.fn(async () => {}),
     },
     login: {
       userId: signal<string | null>(null),
@@ -273,9 +287,9 @@ function createMobileState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
-        pendingCountForChapter: vi.fn(() => 0),
       },
     },
   } as any as SeedBibleState;
@@ -369,6 +383,59 @@ describe("BibleReader", () => {
     });
 
     expect(setOpen).toHaveBeenCalledWith(true, slot);
+  });
+
+  it("opens the selector on the book list when the title is clicked, even after the translation picker was left open", () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+    selectorState.selectingTranslation.value = true;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-bible-reader-title")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(false);
+  });
+
+  it("opens the translation picker from the header's translation button", async () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const button = container.querySelector<HTMLButtonElement>(
+      "button.sb-bible-reader-translation"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe("BSB");
+
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(true);
   });
 
   it("shows a not-found state and lets the user jump to the translation's first book when the requested book isn't in the book list", () => {
@@ -2664,8 +2731,8 @@ describe("BibleReader", () => {
       features: {
         isFeatureEnabled: vi.fn(() => true),
       },
-      bookmarks: {
-        isLocationBookmarked: vi.fn(() => false),
+      saves: {
+        isLocationSaved: vi.fn(() => false),
       },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
@@ -2719,6 +2786,119 @@ describe("BibleReader", () => {
     });
   });
 
+  describe("the header's save button", () => {
+    const renderHeader = (state: SeedBibleState) => {
+      const { slot, selectorState, readingState } = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={slot}
+            selectorState={selectorState}
+            readingState={readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+    };
+
+    const saveButton = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".sb-bible-reader-save-button"
+      );
+    const bookmarkButton = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".sb-bible-reader-bookmark-button"
+      );
+
+    it("opens the folder picker for the whole chapter", () => {
+      const state = createMobileState();
+      renderHeader(state);
+
+      expect(saveButton()).not.toBeNull();
+      act(() => saveButton()!.click());
+
+      expect(state.modals.openModal).toHaveBeenCalledTimes(1);
+      const opened = (state.modals.openModal as Mock).mock.calls[0]![0];
+      // The chapter-level id — a verse-scoped save would carry the verse
+      // numbers instead.
+      expect(opened.id).toBe("save-category-BSB-GEN-1-chapter");
+      expect(opened.title).toMatchObject({ key: "add-save-modal" });
+    });
+
+    /** The star renders as an SVG, so "filled" is its fill, not a font axis. */
+    const starFill = () =>
+      saveButton()!.querySelector("svg")!.getAttribute("fill");
+
+    it("edits the existing save when the chapter is already saved", () => {
+      // Add mode would be a dead end: addSave ignores a location it already
+      // holds, so the folders the user picked were silently discarded.
+      const state = createMobileState();
+      (state.saves.isLocationSaved as Mock).mockReturnValue(true);
+      (state.saves.getSaveForLocation as Mock).mockReturnValue({
+        id: "save-7",
+      });
+      renderHeader(state);
+
+      act(() => saveButton()!.click());
+
+      const opened = (state.modals.openModal as Mock).mock.calls[0]![0];
+      expect(opened.id).toBe("save-edit-save-7");
+      expect(opened.title).toMatchObject({ key: "edit-save" });
+      // Still never a toggle, so aria-pressed would mislead.
+      expect(saveButton()!.getAttribute("aria-pressed")).toBeNull();
+    });
+
+    it("fills its star only once the chapter is saved", () => {
+      const unsaved = createMobileState();
+      renderHeader(unsaved);
+      expect(starFill()).toBe("none");
+      expect(saveButton()!.className).not.toContain("saved");
+
+      const saved = createMobileState();
+      (saved.saves.isLocationSaved as Mock).mockReturnValue(true);
+      (saved.saves.getSaveForLocation as Mock).mockReturnValue({ id: "s1" });
+      renderHeader(saved);
+      expect(starFill()).toBe("currentColor");
+      expect(saveButton()!.className).toContain(
+        "sb-bible-reader-save-button-saved"
+      );
+    });
+
+    // Hidden behind SHOW_BOOKMARK_BUTTON until #1658. The placeholder and its
+    // "coming soon" toast are still in the file, just not rendered — flipping
+    // the flag is what brings them back.
+    it("shows no bookmark button beside it while bookmarks are off", () => {
+      renderHeader(createMobileState());
+
+      expect(saveButton()).not.toBeNull();
+      expect(bookmarkButton()).toBeNull();
+    });
+
+    // The two header clusters are built separately, and they had drifted:
+    // desktop rendered the extension quick tools first, so Save sat to the
+    // right of Share there and to the left of it on mobile. Asserting the
+    // chapter actions lead in both keeps them from parting again — and holds
+    // whether or not any quick tool is currently visible.
+    it.each([
+      ["desktop", false, ".sb-bible-reader-actions"],
+      ["mobile", true, ".sb-bible-reader-mobile-header-actions"],
+    ] as const)(
+      "puts the save button ahead of the quick tools on %s",
+      (_label, isMobile, clusterSelector) => {
+        const base = createMobileState();
+        renderHeader({
+          ...base,
+          app: { ...base.app, isMobile: signal(isMobile) },
+        } as any as SeedBibleState);
+
+        const cluster = container.querySelector(clusterSelector);
+        expect(cluster).not.toBeNull();
+        expect(cluster!.firstElementChild).toBe(saveButton());
+      }
+    );
+  });
+
   it("shows translation license notice and website when licenseNotice is present", () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
 
@@ -2758,20 +2938,43 @@ describe("BibleReader", () => {
     );
   });
 
-  it("shows a generic account icon in the mobile header when the user is alone", () => {
+  // The account avatar moved out of the reader header and back into the
+  // bottom bar as the "You" tab (#1554), so the header must not show one.
+  it("does not show an account button in the mobile header", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createMobileState();
 
     renderMobileReader({ slot, selectorState, readingState }, state, container);
 
-    const accountButton = container.querySelector(
-      ".sb-bible-reader-mobile-header-account"
-    );
-    expect(accountButton).not.toBeNull();
     expect(
-      accountButton?.querySelector(".sb-tab-user-icon-generic")
-    ).not.toBeNull();
-    expect(accountButton?.textContent).toContain("account_circle");
+      container.querySelector(".sb-bible-reader-mobile-header-account")
+    ).toBeNull();
+  });
+
+  it("opens the translation picker from the mobile header's translation button", async () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+    const state = createMobileState(selectorState);
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const button = container.querySelector<HTMLButtonElement>(
+      "button.sb-bible-reader-mobile-header-translation"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe("BSB");
+    expect(button?.getAttribute("aria-label")).toBe(
+      "Change translation (Berean Standard Bible)"
+    );
+
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ id: "slot-1" })
+    );
+    expect(selectorState.selectingTranslation.value).toBe(true);
   });
 
   it("updates readingState.scrollPosition when the chapter scroller scrolls", () => {

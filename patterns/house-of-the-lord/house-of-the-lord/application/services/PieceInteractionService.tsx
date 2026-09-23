@@ -1,63 +1,55 @@
-import type { ReadingStatePort } from "../ports/in/readingState";
-import type { PieceKey, VerseReference } from "../../domain/models/piece";
-import type { ExperienceKey } from "../../domain/models/experience";
-import type {
-  ContextMenuRendererPort,
-  PieceHighlightPort,
-  VerseReferenceConfigProviderPort,
-} from "../ports/out/PieceInteraction";
+import {
+  PIECE_VISIBILITY_STATES,
+  type PieceKey,
+} from "../../domain/models/piece";
+import type { PieceFocusPort } from "../ports/in/PieceFocus";
+import type { LoggerAdapterPort } from "../ports/out/LoggerAdapter";
+import type { PieceAdapterPort } from "../ports/out/PieceAdapter";
+import type { PiecesProviderAdapterPort } from "../ports/out/PiecesProviderAdapter";
+import type { ExperienceServicePort } from "../ports/in/experience";
 
-interface PieceInteractionServiceParams {
-  pieceHighlight: PieceHighlightPort;
-  contextMenu: ContextMenuRendererPort;
-  verseReferenceConfigProviderPort: VerseReferenceConfigProviderPort;
-  readingState: ReadingStatePort;
-  getExperienceKey: () => ExperienceKey;
+interface ServiceParams {
+  pieceFocusPort: PieceFocusPort;
+  piecesProvider: PiecesProviderAdapterPort;
+  experienceService: ExperienceServicePort;
+  loggerPort: LoggerAdapterPort;
+  pieceAdapterPort: PieceAdapterPort;
 }
 
 export class PieceInteractionService {
-  #pieceHighlight: PieceInteractionServiceParams["pieceHighlight"];
-  #contextMenu: PieceInteractionServiceParams["contextMenu"];
-  #readingState: PieceInteractionServiceParams["readingState"];
-  #getExperienceKey: PieceInteractionServiceParams["getExperienceKey"];
-  #verseReferenceConfigProviderPort: PieceInteractionServiceParams["verseReferenceConfigProviderPort"];
+  #pieceFocusPort: ServiceParams["pieceFocusPort"];
+  #piecesProvider: ServiceParams["piecesProvider"];
+  #experienceService: ServiceParams["experienceService"];
+  #loggerPort: ServiceParams["loggerPort"];
+  #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
 
   constructor({
-    pieceHighlight,
-    contextMenu,
-    readingState,
-    getExperienceKey,
-    verseReferenceConfigProviderPort,
-  }: PieceInteractionServiceParams) {
-    this.#pieceHighlight = pieceHighlight;
-    this.#contextMenu = contextMenu;
-    this.#verseReferenceConfigProviderPort = verseReferenceConfigProviderPort;
-    this.#readingState = readingState;
-    this.#getExperienceKey = getExperienceKey;
+    pieceFocusPort,
+    piecesProvider,
+    experienceService,
+    loggerPort,
+    pieceAdapterPort,
+  }: ServiceParams) {
+    this.#pieceFocusPort = pieceFocusPort;
+    this.#piecesProvider = piecesProvider;
+    this.#experienceService = experienceService;
+    this.#loggerPort = loggerPort;
+    this.#pieceAdapterPort = pieceAdapterPort;
   }
 
   handlePieceSelection(key: PieceKey): void {
-    const experience = this.#getExperienceKey();
-    const reading = this.#readingState.getCurrentReading();
-    let inChapter: VerseReference[] = [];
-    let inOtherChapters: VerseReference[] = [];
-    if (reading) {
-      ({ inChapter, inOtherChapters } =
-        this.#verseReferenceConfigProviderPort.getVersesForPiece({
-          experienceKey: experience,
-          pieceKey: key,
-          currentBookId: reading.bookId,
-          currentChapter: reading.chapterNumber,
-        }));
+    const experience = this.#experienceService.experience;
+    if (!experience) return;
+    const piece = this.#piecesProvider.getPiece(experience, key);
+    if (!piece) {
+      this.#loggerPort.error(
+        "PieceInteractionService: piece not found at handlePieceSelection."
+      );
+      return;
     }
-
-    this.#pieceHighlight.highlightPiece(experience, key);
-
-    this.#contextMenu.toggleContextMenu(
-      experience,
-      key,
-      inChapter,
-      inOtherChapters
-    );
+    const state = this.#pieceAdapterPort.getCurrentState(piece);
+    if (state === PIECE_VISIBILITY_STATES.SHOWN) {
+      this.#pieceFocusPort.focus(key);
+    }
   }
 }

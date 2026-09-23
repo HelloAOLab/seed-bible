@@ -15,7 +15,7 @@ export interface HitboxProviderPort {
   getHitboxData<E extends ExperienceKey>(
     experienceKey: E,
     pieceKey: ExperienceKeyMap[E]
-  ): HitboxData | null;
+  ): HitboxData[];
   getAnchorPoint(): string;
   isDraggable(): boolean;
   getColor(): string;
@@ -24,6 +24,7 @@ export interface HitboxProviderPort {
 
 export interface HitboxSpawnerPort {
   spawn(params: { data: HitboxData; piece: Piece }): Hitbox;
+  despawn(piece: Piece): void;
 }
 
 export interface DimensionProvider {

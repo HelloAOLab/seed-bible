@@ -14,7 +14,8 @@ export type RequestedSettingsView =
   | "display-and-theme"
   | "display-and-theme-all-settings"
   | "toolbar"
-  | "extensions";
+  | "extensions"
+  | "customizations";
 
 export interface CreateSidebarOptions {
   chatsManager: ChatsManager;
@@ -133,13 +134,35 @@ export function createSidebar(options: CreateSidebarOptions) {
   };
 
   /**
+   * True while the Customization Center's list is open in Settings. Its
+   * editors now open in their own side pane (see `CustomizationEditPane`),
+   * not in this settings view, but the list stays open behind them so
+   * previewing a customization means clicking around and selecting verses
+   * in the reader while the list is still showing — so both the scrim
+   * (Tabs.tsx, which would otherwise block input to the reader) and
+   * `collapseSidebarOverlay` below (which would close the view on that
+   * same click) need to stand down while it is.
+   */
+  const isCustomizationViewOpen = computed(
+    () => requestedSettingsView.value === "customizations"
+  );
+
+  /**
    * Dismisses the sidebar when it is shown as a floating overlay (the compact
    * desktop band, where an expanded sidebar floats over the reader). Closes any
    * open settings view and collapses the sidebar back to its rail. Wired to the
    * scrim rendered behind the overlay so clicking anywhere on the page outside
    * the sidebar collapses it again.
+   *
+   * No-ops while the Customization Center is open, so an accidental outside
+   * click can't silently discard unsaved edits — every other way of leaving
+   * Settings (the close button, breadcrumb back navigation) still works
+   * normally.
    */
   const collapseSidebarOverlay = () => {
+    if (isCustomizationViewOpen.value) {
+      return;
+    }
     requestedSettingsView.value = null;
     isMobileOpen.value = false;
     isSidebarCollapsed.value = true;
@@ -171,6 +194,7 @@ export function createSidebar(options: CreateSidebarOptions) {
     isMobileOpen,
     tabsOpenedFromToolbar,
     requestedSettingsView,
+    isCustomizationViewOpen,
     toggleSettings,
     openSettings,
     openSettingsToView,

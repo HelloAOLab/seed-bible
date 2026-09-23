@@ -24,6 +24,16 @@ describe("todayWillAutoOpenForUrl", () => {
       ).toBe(false);
     });
 
+    // A static page carries no reading position, so it used to read as
+    // "nowhere in particular" and Today opened over it. Today's pane is
+    // fullscreen, so it displaced the About pane and sent the reader back to
+    // the selected tab's chapter.
+    it("stays closed on a static page such as /en/about", () => {
+      expect(
+        todayWillAutoOpenForUrl(new URL("http://localhost:3000/en/about"), "/")
+      ).toBe(false);
+    });
+
     it("stays closed for a shared-session invite", () => {
       expect(
         todayWillAutoOpenForUrl(
@@ -39,6 +49,15 @@ describe("todayWillAutoOpenForUrl", () => {
       expect(
         todayWillAutoOpenForUrl(
           new URL("http://localhost:3000/en/BSB/genesis/1?today=open"),
+          "/"
+        )
+      ).toBe(true);
+    });
+
+    it("opens on ?today=open even over a static page", () => {
+      expect(
+        todayWillAutoOpenForUrl(
+          new URL("http://localhost:3000/en/about?today=open"),
           "/"
         )
       ).toBe(true);
@@ -130,6 +149,30 @@ describe("Today pane wiring", () => {
 
     expect(state.today.isOpen.value).toBe(false);
     expect(paneIsOpen(state)).toBe(false);
+  });
+
+  // The fix's core invariant: `isOpen` must stay `false` -- matching what SSR
+  // always renders -- until `hydrateAutoOpen` runs, even on a boot URL that
+  // will end up auto-opening Today. `skipHydrateAutoOpen` holds the fixture
+  // in that pre-hydrate window so this can be asserted directly, rather than
+  // only observing the already-corrected value every other test sees. Fails
+  // on the old construction-time seeding, which computed the real value
+  // immediately with no pre-hydrate window to observe.
+  it("seeds isOpen closed regardless of the URL, until hydrateAutoOpen runs", async () => {
+    window.history.replaceState(null, "", "/");
+
+    const state = await createTestSeedBibleState({
+      todayOpen: "fromUrl",
+      skipHydrateAutoOpen: true,
+    });
+
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIsOpen(state)).toBe(false);
+
+    state.today.hydrateAutoOpen();
+
+    expect(state.today.isOpen.value).toBe(true);
+    await waitFor(() => paneIsOpen(state));
   });
 
   // Reopening must reuse the same component thunk: a fresh one would remount

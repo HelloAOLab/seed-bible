@@ -61,6 +61,14 @@ export interface CreateTestSeedBibleStateOptions {
    * Pass a string to set a non-canonical value (e.g. `"1"`) for edge-case tests.
    */
   chatFirst?: boolean | string;
+  /**
+   * Skips the internal `state.today.hydrateAutoOpen()` call below, leaving
+   * `today.isOpen` at its pre-hydrate seed (`false`) instead of the URL's
+   * real open/closed state. For a test asserting the seed-then-correct
+   * invariant itself; every other test wants the fully-loaded-app behavior
+   * this helper otherwise mirrors, so this defaults to `false`.
+   */
+  skipHydrateAutoOpen?: boolean;
 }
 
 export async function waitFor(
@@ -171,7 +179,10 @@ async function ensureI18nInitialized(): Promise<void> {
           new Error(`No locale file for language: ${language}`)
         );
       }
-      return loader().then((mod) => mod.default);
+      // Let `resourcesToBackend` do the `.default` unwrap itself (see
+      // I18nManager's matching backend) — unwrapping here too double-unwraps
+      // any locale whose JSON has a top-level "default" key.
+      return loader();
     })
   );
 
@@ -214,6 +225,9 @@ if (typeof afterEach === "function") {
     // older manager's (inert) wrapper underneath whenever a test builds two.
     for (const state of liveTestStates.splice(0).reverse()) {
       state.navigation.dispose();
+      // Speech outlives the state that started it, and its listeners sit on
+      // globals every other test shares.
+      state.textToSpeech.dispose();
     }
     // The reading position lives in the URL path, so it outlives the listeners
     // that wrote it: without this the next test starts on whatever chapter —
@@ -235,9 +249,10 @@ export async function createTestSeedBibleState(
   installFreeUseBibleApiMock(globalThis as TestGlobalScope, responses);
   await ensureI18nInitialized();
 
-  // Pin Today's initial state before the state is built: `TodayManager` latches
-  // it from `initialUrl` at construction, so it cannot be set afterwards. Keeps
-  // whatever path the caller already navigated to.
+  // `TodayManager` reads `initialUrl` (captured from `window.location` at
+  // construction) when `hydrateAutoOpen` runs below, so the URL has to be
+  // pinned before the state is built. Keeps whatever path the caller already
+  // navigated to.
   if (typeof window !== "undefined" && options.todayOpen !== "fromUrl") {
     const url = new URL(window.location.href);
     url.searchParams.set("today", options.todayOpen ? "open" : "closed");
@@ -275,11 +290,19 @@ export async function createTestSeedBibleState(
   // represents a fully-loaded app for test purposes, so it should reflect
   // that step too, the same way it already waits for tabs to load below.
   state.login.hydrateLocalConfig();
+  state.theme.hydrateSystemColorScheme();
   // Mirrors the same post-mount sequence's other one-time correction: saved
   // tabs/layout/catalog/selector-mode/tutorial-and-onboarding flags all seed
   // to match SSR and only become real once this runs. Without it, anything
   // gated behind `tutorial.armAutoStart()` (called from here) never arms.
   state.app.hydrateFromStorage();
+  // Mirrors the same post-mount sequence's third one-time correction:
+  // `today.isOpen` seeds `false` to match SSR (which always renders Today
+  // closed), and only reflects the URL's real open/closed state once this
+  // runs.
+  if (!options.skipHydrateAutoOpen) {
+    state.today.hydrateAutoOpen();
+  }
   // Tabs first: awaiting anything else here would let asynchronously-created
   // tabs (e.g. an auto-joined shared session) appear before this runs, and those
   // tabs' reading states are mocked without a `loading` signal.

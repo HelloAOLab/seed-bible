@@ -393,6 +393,27 @@ describe("createChatsManager", () => {
     expect(firstChat).not.toBe(secondChat);
   });
 
+  it("exposes an empty composerDraft for prefilling the compose field", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    expect(chats.composerDraft.value).toBe("");
+    chats.composerDraft.value = "In the beginning. (Genesis 1:1 NIV)\n\n";
+    expect(chats.composerDraft.value).toBe(
+      "In the beginning. (Genesis 1:1 NIV)\n\n"
+    );
+  });
+
+  it("createLocalSession() exposes an empty unsentDraft for the compose field", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    expect(session.unsentDraft.value).toBe("");
+    session.unsentDraft.value = "how does this connect to";
+    expect(session.unsentDraft.value).toBe("how does this connect to");
+  });
+
   it("createLocalSession() exposes lastMessageRead and markAsRead()", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-1";
@@ -4162,6 +4183,51 @@ describe("createChatsManager", () => {
             ref: { book: "GEN", chapter: 1, verse: 1, endVerse: 5 },
           },
         ],
+      });
+    });
+
+    it("parses European period and compact period verse references", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Compare Gen 1.1 and Gen.1.1",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Compare ",
+          {
+            type: "verse_reference",
+            text: "Gen 1.1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+          " and ",
+          {
+            type: "verse_reference",
+            text: "Gen.1.1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("does not treat a book name used as a list header as a verse reference", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Mark: 3 things stood out",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Mark: 3 things stood out"],
       });
     });
 
