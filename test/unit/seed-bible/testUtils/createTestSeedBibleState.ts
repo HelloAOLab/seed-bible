@@ -179,7 +179,10 @@ async function ensureI18nInitialized(): Promise<void> {
           new Error(`No locale file for language: ${language}`)
         );
       }
-      return loader().then((mod) => mod.default);
+      // Let `resourcesToBackend` do the `.default` unwrap itself (see
+      // I18nManager's matching backend) — unwrapping here too double-unwraps
+      // any locale whose JSON has a top-level "default" key.
+      return loader();
     })
   );
 
@@ -222,6 +225,9 @@ if (typeof afterEach === "function") {
     // older manager's (inert) wrapper underneath whenever a test builds two.
     for (const state of liveTestStates.splice(0).reverse()) {
       state.navigation.dispose();
+      // Speech outlives the state that started it, and its listeners sit on
+      // globals every other test shares.
+      state.textToSpeech.dispose();
     }
     // The reading position lives in the URL path, so it outlives the listeners
     // that wrote it: without this the next test starts on whatever chapter —
@@ -284,6 +290,7 @@ export async function createTestSeedBibleState(
   // represents a fully-loaded app for test purposes, so it should reflect
   // that step too, the same way it already waits for tabs to load below.
   state.login.hydrateLocalConfig();
+  state.theme.hydrateSystemColorScheme();
   // Mirrors the same post-mount sequence's other one-time correction: saved
   // tabs/layout/catalog/selector-mode/tutorial-and-onboarding flags all seed
   // to match SSR and only become real once this runs. Without it, anything

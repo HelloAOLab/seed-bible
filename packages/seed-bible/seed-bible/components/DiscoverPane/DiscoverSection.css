@@ -16,3 +16,18 @@
   font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
+
+.sb-discover-empty-action {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-discover-empty-action:hover {
+  text-decoration: underline;
+}

@@ -340,7 +340,7 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.fontSize).toBe("M");
     expect(settings.settings.value.disablePanels).toBe(false);
     expect(settings.settings.value.bookOrientation).toBe("traditional");
-    expect(settings.settings.value.themeId).toBe("light");
+    expect(settings.settings.value.themeId).toBe("system");
     expect(settings.settings.value.customTheme).toEqual({});
     expect(settings.settings.value.customHighlights).toEqual({});
     expect(settings.settings.value.discoverContentPanelInline).toBe(true);
@@ -517,5 +517,55 @@ describe("anonymous settings survive a simulated page refresh", () => {
     const settings2 = createSettings(os, login2, nav);
 
     expect(settings2.settings.value.bookOrientation).toBe("tanakh");
+  });
+});
+
+describe("custom highlight colors", () => {
+  it("fills 3 slots then replaces the 1st, then the 2nd", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    settings.addCustomHighlightColor("#111111");
+    settings.addCustomHighlightColor("#222222");
+    settings.addCustomHighlightColor("#333333");
+    expect(settings.settings.value.customHighlightColors).toEqual([
+      "#111111",
+      "#222222",
+      "#333333",
+    ]);
+
+    settings.addCustomHighlightColor("#444444");
+    expect(settings.settings.value.customHighlightColors).toEqual([
+      "#444444",
+      "#222222",
+      "#333333",
+    ]);
+
+    settings.addCustomHighlightColor("#555555");
+    expect(settings.settings.value.customHighlightColors).toEqual([
+      "#444444",
+      "#555555",
+      "#333333",
+    ]);
+  });
+
+  it("ignores a color that is already in the selector", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    settings.addCustomHighlightColor("#111111");
+    settings.addCustomHighlightColor("#222222");
+    settings.addCustomHighlightColor("#111111");
+
+    expect(settings.settings.value.customHighlightColors).toEqual([
+      "#111111",
+      "#222222",
+    ]);
   });
 });

@@ -813,6 +813,9 @@
 
   .sb-floating-search-panel .sb-floating-search-input-wrap {
     margin-top: auto;
+    box-shadow:
+      0 0 0 1px var(--sb-divider-color),
+      0 2px 4px var(--sb-shadow-color);
   }
 
   /* No hover on touch — keep the action icon visible on each card. */

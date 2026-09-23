@@ -11,6 +11,11 @@ import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/S
 import { decideHydration } from "@packages/seed-bible/seed-bible/app/hydrationGate";
 import { waitForInitialChapterLoads } from "@packages/seed-bible/seed-bible/app/initialChapterLoadWait";
 import { createDefaultManagerResponseMap } from "../seed-bible/managers/testUtils/mockBibleApiData";
+import {
+  DARK_THEME,
+  LIGHT_THEME,
+} from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import { stubColorScheme } from "../seed-bible/testUtils/stubColorScheme";
 
 const TEMPLATE = [
   "<!doctype html><html><head>",
@@ -94,6 +99,7 @@ describe("client hydration", () => {
   afterEach(() => {
     globalThis.fetch = originalFetch;
     localStorage.clear();
+    vi.unstubAllGlobals();
   });
 
   /**
@@ -545,6 +551,44 @@ describe("client hydration", () => {
     });
     expect(decision).toEqual({ hydrate: true });
   });
+
+  // The server can't see the device, so it always paints Light. Both theme
+  // tags (the head `#sb-theme-styles` and the in-tree `<style>` that
+  // `ExternalResourceDependencies` renders, which wins) only repaint on a
+  // post-mount *change*, so the device's scheme has to arrive after mount.
+  it.each([
+    ["a first-time visitor on a dark device", null, true, DARK_THEME],
+    ["a visitor who saved System on a dark device", "system", true, DARK_THEME],
+    ["a visitor who saved Dark on a dark device", "dark", true, DARK_THEME],
+    ["a visitor who saved Dark on a light device", "dark", false, DARK_THEME],
+    ["a visitor who saved Light on a dark device", "light", true, LIGHT_THEME],
+  ])(
+    "paints the resolved theme after mount for %s",
+    async (_label, savedThemeId, deviceIsDark, expectedTheme) => {
+      const { container } = await installSsrDocument();
+      stubColorScheme(deviceIsDark);
+      if (savedThemeId) {
+        localStorage.setItem(
+          "sb-profile-config-local",
+          JSON.stringify({ themeId: savedThemeId })
+        );
+      }
+      const { config, state } = await createClientState();
+
+      await act(async () => {
+        hydrate(<Main initialState={state} config={config} />, container);
+      });
+
+      const expected = `--sb-background: ${expectedTheme.variables.background};`;
+      const inTreeCss = Array.from(container.querySelectorAll("style"))
+        .map((style) => style.innerHTML)
+        .find((css) => css.includes("--sb-background"));
+      expect(inTreeCss).toContain(expected);
+      expect(document.getElementById("sb-theme-styles")?.textContent).toContain(
+        expected
+      );
+    }
+  );
 });
 
 describe("waitForInitialChapterLoads()", () => {

@@ -1,6 +1,7 @@
 import * as z from "zod/v4";
 import { v4 as uuid } from "uuid";
 import {
+  batch,
   computed,
   signal,
   type ReadonlySignal,
@@ -11,11 +12,15 @@ import type { LoginManager } from "./LoginManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
+import type { ExtensionSettingValue } from "./ExtensionManager";
 import {
   applyHighlightOverrides,
+  DARK_THEME,
   filterValidColorOverrides,
   filterValidFontFamilyOverrides,
+  LIGHT_THEME,
   LIGHT_THEME_FONT_DEFAULTS,
+  SYSTEM_THEME_ID,
   type BibleTheme,
   type HighlightOverrides,
   type ThemeColorKey,
@@ -302,6 +307,14 @@ const customizationSchema = z
     variants: z.array(customizationVariantSchema).min(1),
     defaultVariantId: z.string().min(1),
     logoUrl: z.url().max(1024).optional().nullable(),
+    /**
+     * The translation viewers of this customization should start reading in,
+     * overriding Seed Bible's own per-language default (see
+     * `DEFAULT_TRANSLATIONS_BY_LANGUAGE` in `BibleReadingManager`) the same
+     * way `BrandingConfig.defaultTranslationId` does for a whole deployment.
+     * Absent means "no override — use Seed Bible's normal default."
+     */
+    defaultTranslationId: z.string().min(1).optional(),
     createdAt: z.number(),
     updatedAt: z.number(),
     /**
@@ -314,6 +327,20 @@ const customizationSchema = z
      */
     extensionSettings: z
       .record(z.string(), extensionAvailabilitySchema)
+      .default({}),
+    /**
+     * Default values this customization sets for extension settings
+     * (`ExtensionMeta.settings`), keyed by extension id then setting name.
+     * A viewer's own value (see `ExtensionSettingsManager`) always wins over
+     * this; this only fills in for a viewer who hasn't set one themselves.
+     * Only ever written from the extension settings editor in
+     * `CustomizationEditExtensionsView`.
+     */
+    extensionSettingDefaults: z
+      .record(
+        z.string(),
+        z.record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
+      )
       .default({}),
   })
   .refine((r) => r.variants.some((v) => v.id === r.defaultVariantId), {
@@ -351,10 +378,21 @@ export interface SeedBibleCustomization {
   /** The variant id shown to a viewer who hasn't picked one for this customization yet. Always references an entry in `variants`. */
   defaultVariantId: string;
   logoUrl?: string | null;
+  /**
+   * The translation viewers should start reading in while this
+   * customization is active, overriding Seed Bible's per-language default.
+   * Absent means no override.
+   */
+  defaultTranslationId?: string;
   createdAt: number;
   updatedAt: number;
   /** Per-extension availability while this customization is active. An id with no entry defaults to "available". */
   extensionSettings: Record<string, ExtensionAvailability>;
+  /** Per-extension setting defaults while this customization is active. An extension/key with no entry has no default here. */
+  extensionSettingDefaults: Record<
+    string,
+    Record<string, ExtensionSettingValue>
+  >;
 }
 
 /** Resolves an extension's effective availability for a customization, defaulting to "available" when unset. */
@@ -363,6 +401,15 @@ export function getExtensionAvailability(
   extensionId: string
 ): ExtensionAvailability {
   return customization?.extensionSettings[extensionId] ?? "available";
+}
+
+/** Resolves a customization's default for one extension setting, or undefined if it doesn't set one. */
+export function getExtensionSettingDefault(
+  customization: SeedBibleCustomization | null,
+  extensionId: string,
+  key: string
+): ExtensionSettingValue | undefined {
+  return customization?.extensionSettingDefaults[extensionId]?.[key];
 }
 
 function buildCustomizationLocator(recordName: string, id: string): string {
@@ -574,8 +621,17 @@ export interface CustomizationsManager {
    * was loaded via the URL.
    */
   activeCustomization: ReadonlySignal<SeedBibleCustomization | null>;
-  /** The variant of the active customization currently in effect (viewer's own pick, else the customization's default, else its first variant). */
+  /** The variant of the active customization currently in effect (the device's color scheme when `isFollowingSystemScheme`, else the viewer's own pick, else the customization's default, else its first variant). */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
+  /** Whether the active customization has both a Light-based and a Dark-based variant, and so can follow the device the way the app-wide System theme does. False when nothing is active. */
+  canFollowSystemScheme: ReadonlySignal<boolean>;
+  /**
+   * Whether `activeVariant` is tracking the device right now — the viewer
+   * picked the System card (stored as the `SYSTEM_THEME_ID` sentinel in
+   * their variant selections), or never picked a variant here and their
+   * app-wide theme is System.
+   */
+  isFollowingSystemScheme: ReadonlySignal<boolean>;
   /**
    * The active variant's colors, session-only: layered on top of the
    * rendered theme by `SeedBibleStateManager`, never written to
@@ -601,6 +657,16 @@ export interface CustomizationsManager {
   /** Resolves a variant's `baseTheme` id to the actual preset, falling back to the viewer's current preset if the id is unrecognized (e.g. a preset was removed). */
   resolveVariantBaseTheme: (variant: CustomizationThemeVariant) => BibleTheme;
   /**
+   * `variant`'s resolved theme (base preset + its own overrides), with any
+   * pending `previewEditingVariant*` override layered on top. This is what
+   * `activeResolvedTheme` uses, and what `CustomizationEditPane` should use
+   * to render a variant it's editing, so a `ColorPicker` drag previews live
+   * without touching the draft until the picker commits.
+   */
+  resolveEditingVariantTheme: (
+    variant: CustomizationThemeVariant
+  ) => BibleTheme;
+  /**
    * The extension ids that should be installed while the active
    * customization is in effect: its own `auto-installed` extensions,
    * unioned with any `available` extras the viewer added for it via
@@ -625,6 +691,14 @@ export interface CustomizationsManager {
   initialCustomizationLoadPromise: Promise<void>;
   /** True once the initial `?customization=` load has settled — see above. */
   initialCustomizationLoadSettled: ReadonlySignal<boolean>;
+  /**
+   * Builds a seed of the initial `?customization=...` load for the client to
+   * reuse instead of re-fetching — see `InitialCustomizationSeed`. Called by
+   * `entry-ssr.tsx` after rendering settles; null when there was no
+   * `?customization=` param, or when the load hadn't actually completed (the
+   * SSR-only timeout backstop fired first).
+   */
+  getInitialCustomizationSeed: () => InitialCustomizationSeed | null;
   /**
    * The local, unpersisted draft of the customization currently open in the
    * editor settings pages, or null when none is open. Edits accumulate here
@@ -670,6 +744,8 @@ export interface CustomizationsManager {
   // Synchronous, draft-only mutators. Each no-ops if `editingCustomization` is
   // null, and otherwise queues a debounced auto-save of the draft.
   updateEditingName: (name: string) => void;
+  /** Sets (or clears, given `null`) the draft's default translation. No-op with no open draft. */
+  updateEditingDefaultTranslationId: (translationId: string | null) => void;
   /** Clears the draft's logo and immediately persists it (unlike every other draft field, which auto-saves only after a short debounce). No-op with no open draft. */
   removeEditingLogo: () => Promise<void>;
   /** Adds a new variant to the draft, based on the viewer's current preset (no overrides of its own yet). */
@@ -711,10 +787,40 @@ export interface CustomizationsManager {
     variantId: string,
     highlightId: string
   ) => void;
+  /**
+   * Live, non-committing preview of one color field on a draft variant —
+   * reflected in `resolveEditingVariantTheme` immediately, but never
+   * written into `editingCustomization` or auto-saved. Meant to be called
+   * on a `ColorPicker`'s `onPreview` while the user drags;
+   * `setEditingVariantColor` clears any pending preview for the same
+   * variant/key once the color is actually committed.
+   */
+  previewEditingVariantColor: (
+    variantId: string,
+    key: ThemeColorKey,
+    value: string
+  ) => void;
+  /** Discards a pending `previewEditingVariantColor`, e.g. on the picker's `onCancel`. */
+  clearPreviewEditingVariantColor: (
+    variantId: string,
+    key: ThemeColorKey
+  ) => void;
+  /** Same as `previewEditingVariantColor`, for one field of a highlight color. */
+  previewEditingVariantHighlightColor: (
+    variantId: string,
+    highlightId: string,
+    patch: Partial<ThemeHighlightColor>
+  ) => void;
+  /** Discards a pending `previewEditingVariantHighlightColor` field, e.g. on `onCancel`. */
+  clearPreviewEditingVariantHighlightField: (
+    variantId: string,
+    highlightId: string,
+    field: keyof ThemeHighlightColor
+  ) => void;
   setEditingDefaultVariant: (variantId: string) => void;
   /** Removes a variant from the draft. No-op if it's the only remaining variant. */
   removeEditingVariant: (variantId: string) => void;
-  /** Persists the viewer's variant choice for the currently active customization. No-op if none is active. */
+  /** Persists the viewer's variant choice for the currently active customization. Pass `SYSTEM_THEME_ID` to follow the device's color scheme instead of pinning one variant. No-op if none is active. */
   selectActiveVariant: (variantId: string) => Promise<void>;
   /** Sets an extension's availability on the draft. No-op with no open draft. */
   setEditingExtensionAvailability: (
@@ -725,6 +831,22 @@ export interface CustomizationsManager {
   getActiveExtensionAvailability: (
     extensionId: string
   ) => ExtensionAvailability;
+  /** Sets an extension setting's default value on the draft. No-op with no open draft. */
+  setEditingExtensionSettingDefault: (
+    extensionId: string,
+    key: string,
+    value: ExtensionSettingValue
+  ) => void;
+  /** Removes an extension setting's default value from the draft. No-op with no open draft. */
+  clearEditingExtensionSettingDefault: (
+    extensionId: string,
+    key: string
+  ) => void;
+  /** The active customization's default for an extension setting, or undefined if nothing is active or it sets no default there. */
+  getActiveExtensionSettingDefault: (
+    extensionId: string,
+    key: string
+  ) => ExtensionSettingValue | undefined;
   /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active or the extension's availability there isn't "available". */
   addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
   /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
@@ -733,18 +855,65 @@ export interface CustomizationsManager {
   ) => Promise<void>;
 }
 
+/**
+ * A prior SSR render's completed `?customization=...` load, handed to the
+ * client so it can skip re-fetching over `os.getData()` — see
+ * `CustomizationsManager.getInitialCustomizationSeed` (which produces this)
+ * and `app/customizationSeed.ts` (which reads it back out of the injected
+ * HTML on the client).
+ */
+export interface InitialCustomizationSeed {
+  /**
+   * The `?customization=...` locator this seed was resolved for. Checked
+   * against the page's own `?customization=` param before use — a seed for a
+   * different locator (a mismatched or stale cached HTML page, say) must
+   * never be applied as if it were this page's own load.
+   */
+  locator: string;
+  /**
+   * The customization SSR resolved for `locator`, or null if that load
+   * completed and found nothing (an invalid or deleted link). Only ever
+   * built from a load that actually completed — see the caller in
+   * `entry-ssr.tsx` — never from one the SSR-only timeout backstop cut
+   * short, which would incorrectly tell the client "this doesn't exist" for
+   * a link that might still resolve.
+   *
+   * Typed here as already-narrowed, but it crossed a server/client boundary
+   * (embedded as JSON in the page) to get here — nothing enforces that shape
+   * on the way in. The consumer (`createCustomizationsManager`'s
+   * `parseSeedCustomization`) re-validates it through the same
+   * `customizationSchema` a fresh fetch goes through before trusting it, so
+   * treat this field as untrusted input, not as a guarantee.
+   */
+  customization: SeedBibleCustomization | null;
+}
+
 export function createCustomizationsManager(
   os: CasualOSManager,
   login: LoginManager,
   theme: ThemeManager,
   navigation: NavigationManager,
   variantSelections: CustomizationVariantSelectionsManager,
-  extensionPreferences: CustomizationExtensionPreferencesManager
+  extensionPreferences: CustomizationExtensionPreferencesManager,
+  initialCustomizationSeed?: InitialCustomizationSeed
 ): CustomizationsManager {
   const customizations = signal<SeedBibleCustomization[]>([]);
   const isLoading = signal(false);
   const editingCustomization = signal<SeedBibleCustomization | null>(null);
   const editingVariantId = signal<string | null>(null);
+  /**
+   * In-memory-only color overrides from an open `ColorPicker`'s live drag on
+   * a variant being edited, keyed by variant id. Never written into
+   * `editingCustomization` or auto-saved — `resolveEditingVariantTheme`
+   * layers these on top of the draft so a drag previews live (everywhere
+   * the variant renders, including the whole app while it's also the
+   * active one), and a cancel simply clears the entry.
+   */
+  const previewVariantOverrides = signal<Record<string, ThemeOverrides>>({});
+  /** Same as `previewVariantOverrides`, for highlight colors. */
+  const previewVariantHighlightOverrides = signal<
+    Record<string, HighlightOverrides>
+  >({});
   const linkedCustomization = signal<SeedBibleCustomization | null>(null);
   const linkedCustomizationLocator = signal<string | null>(null);
 
@@ -808,31 +977,125 @@ export function createCustomizationsManager(
     resolveInitialCustomizationLoadPromise();
   };
 
-  if (initialLocator) {
-    void loadByLocator(initialLocator).then(settleInitialCustomizationLoad);
+  /**
+   * True once the initial `?customization=...` load has actually completed
+   * (found, not found, or errored) — unlike `initialCustomizationLoadSettled`
+   * above, this is never forced true by the SSR-only timeout backstop below.
+   * `getInitialCustomizationSeed` relies on that distinction: seeding the
+   * client with "not found" for a load the timeout merely gave up waiting on
+   * would incorrectly rule out a customization that might still resolve.
+   */
+  let initialCustomizationLoadCompleted = false;
 
-    // During SSR the render blocks on `initialCustomizationLoadPromise`, so an
-    // `os.getData()` that never answers would hold the request open
-    // indefinitely — `loadByLocator` itself always resolves (its try/catch
-    // covers every other failure mode), so this timeout is purely a backstop
-    // for that one case. Not armed on the client: the promise is only thrown
-    // (to suspend) during SSR (see `ExternalResourceDependencies` in
-    // `app/main.tsx`), so on the client it's never awaited and a slow load
-    // simply applies the customization late, exactly as it did before this
-    // feature existed.
-    const SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS = 5000;
-    if (import.meta.env.SSR) {
-      initialCustomizationLoadTimer = setTimeout(() => {
+  /**
+   * Validates a same-locator seed the same way `loadByLocator` validates a
+   * freshly-fetched record — `initialCustomizationSeed.customization` is
+   * typed as an already-narrowed `SeedBibleCustomization`, but it crossed a
+   * server/client boundary (embedded as JSON in the page) to get here, so
+   * nothing actually enforces that shape at this point except this parse.
+   * Skipping it would let the fetch path and the seed path silently drift
+   * apart the next time the schema changes (a new required field, a
+   * different variant shape): the fetch path would reject a stale/bad
+   * record, while the seed path would wave it through as-is.
+   */
+  function parseSeedCustomization(
+    customization: SeedBibleCustomization
+  ): SeedBibleCustomization | null {
+    const parsed = customizationSchema.safeParse(customization);
+    if (!parsed.success) {
+      return null;
+    }
+    return {
+      ...parsed.data,
+      variants: narrowVariants(parsed.data.variants),
+    };
+  }
+
+  if (initialLocator) {
+    const seedForLocator =
+      initialCustomizationSeed?.locator === initialLocator
+        ? initialCustomizationSeed
+        : null;
+
+    // `customization: null` means the seed itself already resolved to "not
+    // found" — nothing to validate, that outcome applies as-is. A non-null
+    // seed still has to pass the same schema check `loadByLocator` applies to
+    // a fresh fetch; an invalid one is treated as no seed at all, falling
+    // through to a normal fetch below rather than trusting a shape the
+    // schema no longer accepts.
+    const validatedSeedCustomization =
+      seedForLocator && seedForLocator.customization
+        ? parseSeedCustomization(seedForLocator.customization)
+        : null;
+    const seedIsUsable =
+      seedForLocator &&
+      (seedForLocator.customization === null || validatedSeedCustomization);
+
+    if (seedIsUsable) {
+      // A prior SSR render already resolved this exact locator — apply its
+      // result directly instead of repeating the `os.getData()` round trip.
+      if (validatedSeedCustomization) {
+        linkedCustomization.value = validatedSeedCustomization;
+        linkedCustomizationLocator.value = initialLocator;
+      }
+      initialCustomizationLoadCompleted = true;
+      settleInitialCustomizationLoad();
+    } else {
+      if (seedForLocator) {
         console.warn(
-          "Timed out waiting for initial customization load:",
+          "Ignoring an initialCustomizationSeed that failed validation; fetching instead:",
           initialLocator
         );
+      }
+      void loadByLocator(initialLocator).then(() => {
+        initialCustomizationLoadCompleted = true;
         settleInitialCustomizationLoad();
-      }, SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS);
+      });
+
+      // During SSR the render blocks on `initialCustomizationLoadPromise`, so
+      // an `os.getData()` that never answers would hold the request open
+      // indefinitely — `loadByLocator` itself always resolves (its try/catch
+      // covers every other failure mode), so this timeout is purely a
+      // backstop for that one case. Not armed on the client: the promise is
+      // only thrown (to suspend) during SSR (see
+      // `ExternalResourceDependencies` in `app/main.tsx`), so on the client
+      // it's never awaited and a slow load simply applies the customization
+      // late, exactly as it did before this feature existed.
+      const SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS = 5000;
+      if (import.meta.env.SSR) {
+        initialCustomizationLoadTimer = setTimeout(() => {
+          console.warn(
+            "Timed out waiting for initial customization load:",
+            initialLocator
+          );
+          settleInitialCustomizationLoad();
+        }, SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS);
+      }
     }
   } else {
     settleInitialCustomizationLoad();
   }
+
+  /**
+   * Builds a seed of the initial `?customization=...` load for
+   * `entry-ssr.tsx` to embed in the page, so the client's own
+   * `CustomizationsManager` can skip re-fetching what SSR already resolved —
+   * see `InitialCustomizationSeed`. Null when there was no `?customization=`
+   * param, or when the load hadn't actually completed by the time this was
+   * called (the SSR-only timeout backstop fired first).
+   */
+  const getInitialCustomizationSeed = (): InitialCustomizationSeed | null => {
+    if (!initialLocator || !initialCustomizationLoadCompleted) {
+      return null;
+    }
+    return {
+      locator: initialLocator,
+      customization:
+        linkedCustomizationLocator.value === initialLocator
+          ? linkedCustomization.value
+          : null,
+    };
+  };
 
   // The only two ways for a customization to become "active" (applied to
   // the live theme): an in-progress edit draft, or a `?customization=...`
@@ -878,19 +1141,52 @@ export function createCustomizationsManager(
     return Array.from(new Set([...autoInstalled, ...validExtra]));
   });
 
+  const selectedVariantId = computed<string | null>(() => {
+    const locator = activeCustomizationLocator.value;
+    return locator ? variantSelections.getSelectedVariantId(locator) : null;
+  });
+
+  const canFollowSystemScheme = computed<boolean>(() => {
+    const customization = activeCustomization.value;
+    if (!customization) {
+      return false;
+    }
+    return (
+      customization.variants.some((v) => v.baseTheme === LIGHT_THEME.id) &&
+      customization.variants.some((v) => v.baseTheme === DARK_THEME.id)
+    );
+  });
+
+  const isFollowingSystemScheme = computed<boolean>(() => {
+    if (!canFollowSystemScheme.value) {
+      return false;
+    }
+    // An explicit pick wins, including the System card's own sentinel. Only
+    // a viewer who has never picked a variant here inherits their app-wide
+    // System preference.
+    const selectedId = selectedVariantId.value;
+    return selectedId
+      ? selectedId === SYSTEM_THEME_ID
+      : theme.selectedThemeId.value === SYSTEM_THEME_ID;
+  });
+
   const activeVariant = computed<CustomizationThemeVariant | null>(() => {
     const customization = activeCustomization.value;
     if (!customization) {
       return null;
     }
-    const locator = activeCustomizationLocator.value;
-    const selectedId = locator
-      ? variantSelections.getSelectedVariantId(locator)
-      : null;
     const byId = (id: string | null | undefined) =>
       id ? customization.variants.find((v) => v.id === id) : undefined;
+    const bySystemScheme = isFollowingSystemScheme.value
+      ? customization.variants.find(
+          (v) =>
+            v.baseTheme ===
+            (theme.prefersDarkScheme.value ? DARK_THEME.id : LIGHT_THEME.id)
+        )
+      : undefined;
     return (
-      byId(selectedId) ??
+      bySystemScheme ??
+      byId(selectedVariantId.value) ??
       byId(customization.defaultVariantId) ??
       customization.variants[0] ??
       null
@@ -911,15 +1207,40 @@ export function createCustomizationsManager(
     theme.themes.value.find((t) => t.id === variant.baseTheme) ??
     theme.basePresetTheme.value;
 
+  /**
+   * `variant`'s resolved theme, with any pending live-drag preview for it
+   * layered on top — same merge style `buildBibleThemeFromCustomizationTheme`
+   * itself uses (a plain `variables` spread, `applyHighlightOverrides` for
+   * highlights), just sourced from `previewVariantOverrides` instead of the
+   * variant's own persisted fields.
+   */
+  const resolveEditingVariantTheme = (
+    variant: CustomizationThemeVariant
+  ): BibleTheme => {
+    const resolved = buildBibleThemeFromCustomizationTheme(
+      variant,
+      resolveVariantBaseTheme(variant)
+    );
+    const colorPreview = previewVariantOverrides.value[variant.id];
+    const withColorPreview =
+      !colorPreview || Object.keys(colorPreview).length === 0
+        ? resolved
+        : {
+            ...resolved,
+            variables: { ...resolved.variables, ...colorPreview },
+          };
+    const highlightPreview = previewVariantHighlightOverrides.value[variant.id];
+    return highlightPreview
+      ? applyHighlightOverrides(withColorPreview, highlightPreview)
+      : withColorPreview;
+  };
+
   const activeResolvedTheme = computed<BibleTheme | null>(() => {
     const variant = activeVariant.value;
     if (!variant) {
       return null;
     }
-    return buildBibleThemeFromCustomizationTheme(
-      variant,
-      resolveVariantBaseTheme(variant)
-    );
+    return resolveEditingVariantTheme(variant);
   });
 
   /**
@@ -998,6 +1319,7 @@ export function createCustomizationsManager(
       createdAt: now,
       updatedAt: now,
       extensionSettings: {},
+      extensionSettingDefaults: {},
     };
 
     await persist(userId, record);
@@ -1111,6 +1433,21 @@ export function createCustomizationsManager(
     scheduleAutoSave();
   };
 
+  const updateEditingDefaultTranslationId = (
+    translationId: string | null
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      defaultTranslationId: translationId ?? undefined,
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
   const addEditingVariant = (): CustomizationThemeVariant | null => {
     const current = editingCustomization.value;
     if (!current) {
@@ -1183,6 +1520,37 @@ export function createCustomizationsManager(
     scheduleAutoSave();
   };
 
+  const previewEditingVariantColor = (
+    variantId: string,
+    key: ThemeColorKey,
+    value: string
+  ): void => {
+    previewVariantOverrides.value = {
+      ...previewVariantOverrides.value,
+      [variantId]: {
+        ...previewVariantOverrides.value[variantId],
+        [key]: value,
+      },
+    };
+  };
+
+  const clearPreviewEditingVariantColor = (
+    variantId: string,
+    key: ThemeColorKey
+  ): void => {
+    const existing = previewVariantOverrides.value[variantId];
+    if (!existing || !(key in existing)) return;
+    const next = { ...existing };
+    delete next[key];
+    const nextAll = { ...previewVariantOverrides.value };
+    if (Object.keys(next).length === 0) {
+      delete nextAll[variantId];
+    } else {
+      nextAll[variantId] = next;
+    }
+    previewVariantOverrides.value = nextAll;
+  };
+
   const setEditingVariantColor = (
     variantId: string,
     key: ThemeColorKey,
@@ -1192,58 +1560,61 @@ export function createCustomizationsManager(
     if (!current) {
       return;
     }
-    editingCustomization.value = {
-      ...current,
-      variants: current.variants.map((variant) => {
-        if (variant.id !== variantId) {
-          return variant;
-        }
-        if (key !== "primaryColor") {
-          return {
-            ...variant,
-            themes: { ...variant.themes, [key]: value },
-            updatedAt: Date.now(),
+    batch(() => {
+      editingCustomization.value = {
+        ...current,
+        variants: current.variants.map((variant) => {
+          if (variant.id !== variantId) {
+            return variant;
+          }
+          if (key !== "primaryColor") {
+            return {
+              ...variant,
+              themes: { ...variant.themes, [key]: value },
+              updatedAt: Date.now(),
+            };
+          }
+
+          // Secondary/tertiary follow the primary color as long as they still
+          // match its lightened derivation — including "never touched at
+          // all" (inherited from the base preset), which counts as following
+          // too. The moment a user manually picks one, it stops matching and
+          // is left alone on future primary edits.
+          const previousPrimary =
+            variant.themes.primaryColor ??
+            resolveVariantBaseTheme(variant).variables.primaryColor;
+          const nextThemes: ThemeOverrides = {
+            ...variant.themes,
+            primaryColor: value,
           };
-        }
+          if (
+            variant.themes.secondaryColor === undefined ||
+            variant.themes.secondaryColor ===
+              lightenColor(previousPrimary, SECONDARY_LIGHTEN_AMOUNT)
+          ) {
+            nextThemes.secondaryColor = lightenColor(
+              value,
+              SECONDARY_LIGHTEN_AMOUNT
+            );
+          }
+          if (
+            variant.themes.tertiaryColor === undefined ||
+            variant.themes.tertiaryColor ===
+              lightenColor(previousPrimary, TERTIARY_LIGHTEN_AMOUNT)
+          ) {
+            nextThemes.tertiaryColor = lightenColor(
+              value,
+              TERTIARY_LIGHTEN_AMOUNT
+            );
+          }
 
-        // Secondary/tertiary follow the primary color as long as they still
-        // match its lightened derivation — including "never touched at
-        // all" (inherited from the base preset), which counts as following
-        // too. The moment a user manually picks one, it stops matching and
-        // is left alone on future primary edits.
-        const previousPrimary =
-          variant.themes.primaryColor ??
-          resolveVariantBaseTheme(variant).variables.primaryColor;
-        const nextThemes: ThemeOverrides = {
-          ...variant.themes,
-          primaryColor: value,
-        };
-        if (
-          variant.themes.secondaryColor === undefined ||
-          variant.themes.secondaryColor ===
-            lightenColor(previousPrimary, SECONDARY_LIGHTEN_AMOUNT)
-        ) {
-          nextThemes.secondaryColor = lightenColor(
-            value,
-            SECONDARY_LIGHTEN_AMOUNT
-          );
-        }
-        if (
-          variant.themes.tertiaryColor === undefined ||
-          variant.themes.tertiaryColor ===
-            lightenColor(previousPrimary, TERTIARY_LIGHTEN_AMOUNT)
-        ) {
-          nextThemes.tertiaryColor = lightenColor(
-            value,
-            TERTIARY_LIGHTEN_AMOUNT
-          );
-        }
-
-        return { ...variant, themes: nextThemes, updatedAt: Date.now() };
-      }),
-      updatedAt: Date.now(),
-    };
-    scheduleAutoSave();
+          return { ...variant, themes: nextThemes, updatedAt: Date.now() };
+        }),
+        updatedAt: Date.now(),
+      };
+      clearPreviewEditingVariantColor(variantId, key);
+      scheduleAutoSave();
+    });
   };
 
   const setEditingVariantFont = (
@@ -1271,6 +1642,49 @@ export function createCustomizationsManager(
     scheduleAutoSave();
   };
 
+  const previewEditingVariantHighlightColor = (
+    variantId: string,
+    highlightId: string,
+    patch: Partial<ThemeHighlightColor>
+  ): void => {
+    const existingForVariant =
+      previewVariantHighlightOverrides.value[variantId] ?? {};
+    const existingForId = existingForVariant[highlightId] ?? {};
+    previewVariantHighlightOverrides.value = {
+      ...previewVariantHighlightOverrides.value,
+      [variantId]: {
+        ...existingForVariant,
+        [highlightId]: { ...existingForId, ...patch },
+      },
+    };
+  };
+
+  const clearPreviewEditingVariantHighlightField = (
+    variantId: string,
+    highlightId: string,
+    field: keyof ThemeHighlightColor
+  ): void => {
+    const existingForVariant =
+      previewVariantHighlightOverrides.value[variantId];
+    const existingForId = existingForVariant?.[highlightId];
+    if (!existingForId || !(field in existingForId)) return;
+    const nextForId = { ...existingForId };
+    delete nextForId[field];
+    const nextForVariant = { ...existingForVariant };
+    if (Object.keys(nextForId).length === 0) {
+      delete nextForVariant[highlightId];
+    } else {
+      nextForVariant[highlightId] = nextForId;
+    }
+    const nextAll = { ...previewVariantHighlightOverrides.value };
+    if (Object.keys(nextForVariant).length === 0) {
+      delete nextAll[variantId];
+    } else {
+      nextAll[variantId] = nextForVariant;
+    }
+    previewVariantHighlightOverrides.value = nextAll;
+  };
+
   const setEditingVariantHighlightColor = (
     variantId: string,
     highlightId: string,
@@ -1280,25 +1694,30 @@ export function createCustomizationsManager(
     if (!current) {
       return;
     }
-    editingCustomization.value = {
-      ...current,
-      variants: current.variants.map((variant) => {
-        if (variant.id !== variantId) {
-          return variant;
-        }
-        const existing = variant.highlightColors[highlightId] ?? {};
-        return {
-          ...variant,
-          highlightColors: {
-            ...variant.highlightColors,
-            [highlightId]: { ...existing, ...patch },
-          },
-          updatedAt: Date.now(),
-        };
-      }),
-      updatedAt: Date.now(),
-    };
-    scheduleAutoSave();
+    batch(() => {
+      editingCustomization.value = {
+        ...current,
+        variants: current.variants.map((variant) => {
+          if (variant.id !== variantId) {
+            return variant;
+          }
+          const existing = variant.highlightColors[highlightId] ?? {};
+          return {
+            ...variant,
+            highlightColors: {
+              ...variant.highlightColors,
+              [highlightId]: { ...existing, ...patch },
+            },
+            updatedAt: Date.now(),
+          };
+        }),
+        updatedAt: Date.now(),
+      };
+      for (const field of Object.keys(patch) as (keyof ThemeHighlightColor)[]) {
+        clearPreviewEditingVariantHighlightField(variantId, highlightId, field);
+      }
+      scheduleAutoSave();
+    });
   };
 
   /** Removes one field's override, reverting it to inherit from the variant's `baseTheme`. No-op with no open draft. */
@@ -1478,6 +1897,58 @@ export function createCustomizationsManager(
   ): ExtensionAvailability =>
     getExtensionAvailability(activeCustomization.value, extensionId);
 
+  const setEditingExtensionSettingDefault = (
+    extensionId: string,
+    key: string,
+    value: ExtensionSettingValue
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      extensionSettingDefaults: {
+        ...current.extensionSettingDefaults,
+        [extensionId]: {
+          ...current.extensionSettingDefaults[extensionId],
+          [key]: value,
+        },
+      },
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
+  const clearEditingExtensionSettingDefault = (
+    extensionId: string,
+    key: string
+  ): void => {
+    const current = editingCustomization.value;
+    const currentExtensionDefaults =
+      current?.extensionSettingDefaults[extensionId];
+    if (!current || !currentExtensionDefaults) {
+      return;
+    }
+    const nextExtensionDefaults = { ...currentExtensionDefaults };
+    delete nextExtensionDefaults[key];
+    editingCustomization.value = {
+      ...current,
+      extensionSettingDefaults: {
+        ...current.extensionSettingDefaults,
+        [extensionId]: nextExtensionDefaults,
+      },
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
+  const getActiveExtensionSettingDefault = (
+    extensionId: string,
+    key: string
+  ): ExtensionSettingValue | undefined =>
+    getExtensionSettingDefault(activeCustomization.value, extensionId, key);
+
   const addExtensionToActiveCustomization = async (
     extensionId: string
   ): Promise<void> => {
@@ -1503,7 +1974,7 @@ export function createCustomizationsManager(
 
   const getShareLink = (customization: SeedBibleCustomization): string => {
     const recordName = login.userId.value ?? "";
-    return navigation.linkToQuery({
+    return navigation.linkToBareRoot({
       customization: buildCustomizationLocator(recordName, customization.id),
     });
   };
@@ -1521,14 +1992,18 @@ export function createCustomizationsManager(
     isLoading,
     activeCustomization,
     activeVariant,
+    canFollowSystemScheme,
+    isFollowingSystemScheme,
     activeThemeOverrides,
     activeHighlightOverrides,
     activeResolvedTheme,
     resolveVariantBaseTheme,
+    resolveEditingVariantTheme,
     activeExtensionIds,
     linkedCustomization,
     initialCustomizationLoadPromise,
     initialCustomizationLoadSettled,
+    getInitialCustomizationSeed,
     editingCustomization,
     editingVariantId,
     load,
@@ -1543,6 +2018,7 @@ export function createCustomizationsManager(
     uploadLogo,
     getShareLink,
     updateEditingName,
+    updateEditingDefaultTranslationId,
     removeEditingLogo,
     addEditingVariant,
     applyPresetToEditingVariant,
@@ -1552,11 +2028,18 @@ export function createCustomizationsManager(
     setEditingVariantHighlightColor,
     resetEditingVariantField,
     resetEditingVariantHighlightColor,
+    previewEditingVariantColor,
+    clearPreviewEditingVariantColor,
+    previewEditingVariantHighlightColor,
+    clearPreviewEditingVariantHighlightField,
     setEditingDefaultVariant,
     removeEditingVariant,
     selectActiveVariant,
     setEditingExtensionAvailability,
     getActiveExtensionAvailability,
+    setEditingExtensionSettingDefault,
+    clearEditingExtensionSettingDefault,
+    getActiveExtensionSettingDefault,
     addExtensionToActiveCustomization,
     removeExtensionFromActiveCustomization,
   };
