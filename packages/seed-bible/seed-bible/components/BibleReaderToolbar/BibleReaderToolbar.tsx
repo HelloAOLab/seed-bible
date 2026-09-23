@@ -25,7 +25,7 @@ import {
   SbTabsIcon,
   StopIcon,
 } from "../../components/icons";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import {
   SaveStarIcon,
   SelfAvatarVisual,
@@ -631,6 +631,61 @@ function VerseToolbarAnnotationGroup(props: {
   );
 }
 
+/**
+ * How far the finger must travel before releasing commits the mobile verse
+ * sheet open or closed. A fraction of the content height would make a long
+ * note nearly impossible to drag open — the same short movement works for
+ * every verse.
+ */
+const VERSE_SHEET_SNAP_DISTANCE_PX = 50;
+
+/**
+ * Room kept for the handle, reference, and action row until those are
+ * measured, so a tall note can't cover the handle on the first frame.
+ */
+const VERSE_SHEET_FALLBACK_CHROME_PX = 200;
+
+/** Space left above a fully open sheet so the handle clears the status bar. */
+const VERSE_SHEET_TOP_GAP_PX = 8;
+
+/**
+ * Room a long note must keep below the pinned actions. Less than this and the
+ * buttons would cover the note, so they scroll with it instead of sticking.
+ */
+const VERSE_SHEET_PINNED_MIN_NOTE_ROOM_PX = 48;
+
+/**
+ * These stay out of the collapsed row. Once the drawer is open they pin to
+ * the top of the scrolling notes so Copy, Compare, and Share stay one tap away.
+ * Order follows each tool's priority.
+ */
+const VERSE_SHEET_PINNED_TOOL_IDS = new Set([
+  "copy-verse",
+  "compare-verses",
+  "share-verse",
+]);
+
+/** Visible viewport below the notch, or 0 when it can't be measured. */
+function readMobileSheetViewportCap(): number {
+  if (typeof document === "undefined") return 0;
+  const probe = document.createElement("div");
+  probe.style.cssText = [
+    "position:fixed",
+    "left:0",
+    "top:0",
+    "width:0",
+    "visibility:hidden",
+    "pointer-events:none",
+    "height:calc(100dvh - env(safe-area-inset-top, 0px))",
+  ].join(";");
+  document.body.appendChild(probe);
+  try {
+    return probe.offsetHeight;
+  } finally {
+    probe.remove();
+  }
+}
+
 interface BibleReaderToolbarProps {
   state: SeedBibleState;
 }
@@ -869,6 +924,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const verseSheetOverflowHeight = useSignal(0);
 
   /**
+   * Height of the sheet that is not the overflow row (handle, reference,
+   * action cards, padding, and the swipe hint while it is showing). 0 until
+   * measured; the fallback chrome stands in so the first paint still fits.
+   */
+  const verseSheetChromeHeight = useSignal(0);
+
+  /**
+   * Pixels the sheet may occupy vertically: the dynamic viewport below the
+   * notch when that can be measured, otherwise the layout viewport. 0 until
+   * the first measure.
+   */
+  const verseSheetViewportCap = useSignal(0);
+
+  /**
    * How much of the overflow row is showing *right now*, in pixels, while a drag
    * is in progress. Null when no drag is active, which hands the height back to
    * the expanded/collapsed state so it can animate to its resting position.
@@ -893,16 +962,70 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
 
   /**
+   * Largest the overflow row is allowed to grow. Past this, the note scrolls
+   * inside the drawer instead of pushing the grab handle off the top.
+   */
+  const verseSheetMaxReveal = useComputed(() => {
+    const viewport =
+      verseSheetViewportCap.value > 0
+        ? verseSheetViewportCap.value
+        : viewportHeight.value;
+    const chrome =
+      verseSheetChromeHeight.value > 0
+        ? verseSheetChromeHeight.value
+        : VERSE_SHEET_FALLBACK_CHROME_PX;
+    return Math.max(0, viewport - chrome - VERSE_SHEET_TOP_GAP_PX);
+  });
+
+  /** Overflow height actually shown when the sheet is fully open. */
+  const verseSheetVisibleOverflowHeight = useComputed(() =>
+    Math.min(verseSheetOverflowHeight.value, verseSheetMaxReveal.value)
+  );
+
+  /**
+   * Height of Copy / Compare / Share. 0 until measured. Used to decide whether
+   * that row can stay pinned without covering the note or clipping itself.
+   */
+  const verseSheetPinnedHeight = useSignal(0);
+
+  /**
+   * The pinned row sticks only when it fits in the open drawer and still leaves
+   * a thumb's worth of the note showing. A bar taller than the drawer (a short
+   * landscape screen, large text, wrapped labels) would clip its own buttons,
+   * and those buttons refuse the scroll gesture — so the row scrolls instead.
+   */
+  const verseSheetPinFits = useComputed(() => {
+    const pinned = verseSheetPinnedHeight.value;
+    if (pinned <= 0) return true;
+    const maxReveal = verseSheetMaxReveal.value;
+    if (pinned > maxReveal + 0.5) return false;
+    const contentBelow = verseSheetOverflowHeight.value - pinned;
+    if (contentBelow <= 1) return true;
+    return maxReveal - pinned >= VERSE_SHEET_PINNED_MIN_NOTE_ROOM_PX;
+  });
+
+  /**
    * The overflow row's height as rendered: tracking the finger mid-drag,
    * otherwise the resting height for the current expanded state (which the CSS
-   * transition animates towards).
+   * transition animates towards). Never taller than the viewport cap.
    */
-  const verseSheetRevealHeight = useComputed(() =>
-    verseSheetDragReveal.value !== null
-      ? verseSheetDragReveal.value
-      : isVerseSheetExpanded.value
-        ? verseSheetOverflowHeight.value
-        : 0
+  const verseSheetRevealHeight = useComputed(() => {
+    const visible = verseSheetVisibleOverflowHeight.value;
+    if (verseSheetDragReveal.value !== null) {
+      return Math.min(verseSheetDragReveal.value, visible);
+    }
+    return isVerseSheetExpanded.value ? visible : 0;
+  });
+
+  /**
+   * True when the open drawer is shorter than its notes, so the overflow row
+   * scrolls and must not also be a drag surface.
+   */
+  const isVerseSheetOverflowScrollable = useComputed(
+    () =>
+      !isVerseSheetDragging.value &&
+      isVerseSheetExpanded.value &&
+      verseSheetOverflowHeight.value > verseSheetMaxReveal.value + 0.5
   );
 
   // True when the sidebar drawer is open showing the tabs/saves view
@@ -1027,6 +1150,55 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // The toolbar uses `transform: translate(-50%, -100%)`, so `top` is the bottom
   // edge — we need the real height so the taller color picker stays on-screen.
   const verseToolbarHeight = useSignal(0);
+
+  // Keep the mobile sheet from growing past the screen. The viewport cap is
+  // the dynamic viewport below the notch; the chrome is everything in the
+  // sheet except the overflow row, remeasured as the hint comes and goes.
+  useLayoutEffect(() => {
+    if (!isSmallScreen.value || !isVerseToolbarVisible.value) return;
+
+    const measureViewport = () => {
+      const probed = readMobileSheetViewportCap();
+      const next = probed > 0 ? probed : viewportHeight.peek();
+      if (next !== verseSheetViewportCap.peek()) {
+        verseSheetViewportCap.value = next;
+      }
+    };
+
+    const measureChrome = () => {
+      const sheet = verseToolbarRef.current;
+      if (!sheet || isHighlightPickerOpen.peek()) return;
+      const overflowEl = sheet.querySelector<HTMLElement>(
+        ".sb-verse-toolbar-overflow"
+      );
+      const chrome = Math.round(
+        sheet.offsetHeight - (overflowEl?.offsetHeight ?? 0)
+      );
+      if (chrome > 0 && chrome !== verseSheetChromeHeight.peek()) {
+        verseSheetChromeHeight.value = chrome;
+      }
+    };
+
+    measureViewport();
+    measureChrome();
+    window.addEventListener("resize", measureViewport);
+
+    const sheet = verseToolbarRef.current;
+    if (!sheet || typeof ResizeObserver === "undefined") {
+      return () => window.removeEventListener("resize", measureViewport);
+    }
+    const observer = new ResizeObserver(measureChrome);
+    observer.observe(sheet);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measureViewport);
+    };
+  }, [
+    isSmallScreen.value,
+    isVerseToolbarVisible.value,
+    isHighlightPickerOpen.value,
+    isVerseSheetExpanded.value,
+  ]);
 
   const floatingX = useComputed(() => {
     const inset = 84 * uiScale.value;
@@ -1160,15 +1332,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   /**
    * Dragging the mobile verse sheet's grab handle.
    *
-   * The sheet follows the finger rather than snapping at a threshold: dragging up
-   * grows the overflow row a pixel at a time, dragging back down shrinks it, and
-   * once the overflow row is fully closed — whether the drag started collapsed or
+   * The sheet follows the finger: dragging up grows the overflow row a pixel at
+   * a time (never past the viewport), dragging back down shrinks it, and once
+   * the overflow row is fully closed — whether the drag started collapsed or
    * (after closing it mid-gesture) expanded — continuing to drag down slides the
    * whole sheet toward the bottom of the screen to dismiss it, all in one
    * continuous motion rather than requiring a release and a second drag.
-   * Releasing settles to whichever resting position the gesture ended up nearest,
-   * so a half-finished drag animates the rest of the way instead of being
-   * abandoned.
+   *
+   * Releasing commits open or closed once the finger has travelled
+   * `VERSE_SHEET_SNAP_DISTANCE_PX` toward that end. Using half the content
+   * height instead would make a long note require a drag longer than the
+   * screen. A half-finished drag animates the rest of the way.
    *
    * A press that barely moves is a tap, and toggles.
    */
@@ -1186,9 +1360,40 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   } | null>(null);
 
   /** The overflow row, measured so the reveal has a pixel target to animate to. */
+  const stopOverflowMeasure = useRef<(() => void) | null>(null);
+  /** The scrolling overflow box (parent of the measured row), so it can be rewound. */
+  const verseSheetScrollerRef = useRef<HTMLElement | null>(null);
   const measureVerseSheetOverflow = (element: HTMLElement | null) => {
+    stopOverflowMeasure.current?.();
+    stopOverflowMeasure.current = null;
+    // A new callback identity calls this with null before the next element.
+    // Don't write the pinned-height signal here — that would re-render in a loop.
+    verseSheetScrollerRef.current = element?.parentElement ?? null;
     if (!element) return;
-    verseSheetOverflowHeight.value = element.scrollHeight;
+    const measure = () => {
+      const next = element.scrollHeight;
+      if (next !== verseSheetOverflowHeight.peek()) {
+        verseSheetOverflowHeight.value = next;
+      }
+      const pinned = element.querySelector<HTMLElement>(
+        ".sb-verse-toolbar-overflow-pinned"
+      );
+      const pinnedHeight = Math.round(pinned?.offsetHeight ?? 0);
+      if (pinnedHeight !== verseSheetPinnedHeight.peek()) {
+        verseSheetPinnedHeight.value = pinnedHeight;
+      }
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    stopOverflowMeasure.current = () => observer.disconnect();
+  };
+
+  const resetVerseSheetScroll = () => {
+    const scroller = verseSheetScrollerRef.current;
+    if (!scroller || scroller.scrollTop === 0) return;
+    scroller.scrollTop = 0;
   };
 
   const endVerseSheetDrag = (event: PointerEvent): void => {
@@ -1203,16 +1408,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const handle = event.currentTarget as HTMLElement;
     handle.setPointerCapture?.(event.pointerId);
     const expanded = isVerseSheetExpanded.value;
+    // Track the height on screen, not the full note. A note taller than the
+    // viewport would otherwise have to be dragged its whole length before the
+    // sheet moved.
+    const visible = verseSheetVisibleOverflowHeight.value;
     verseSheetDrag.current = {
       pointerId: event.pointerId,
       startY: event.clientY,
       startExpanded: expanded,
-      startReveal: expanded ? verseSheetOverflowHeight.value : 0,
+      startReveal: expanded ? visible : 0,
       maxTravel: 0,
     };
     // Take over the height from the expanded/collapsed state so the first move
     // continues from where the sheet is now rather than jumping.
-    verseSheetDragReveal.value = expanded ? verseSheetOverflowHeight.value : 0;
+    verseSheetDragReveal.value = expanded ? visible : 0;
     // Keep the drag from also scrolling the chapter behind the sheet.
     event.preventDefault();
   };
@@ -1224,9 +1433,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const dy = event.clientY - drag.startY;
     drag.maxTravel = Math.max(drag.maxTravel, Math.abs(dy));
 
-    const overflowHeight = verseSheetOverflowHeight.value;
+    const visible = verseSheetVisibleOverflowHeight.value;
     // Up is negative, so subtracting `dy` grows the reveal as the finger rises.
-    const reveal = Math.min(overflowHeight, Math.max(0, drag.startReveal - dy));
+    // Cap at the on-screen height so a long note can't drag the handle away.
+    const reveal = Math.min(visible, Math.max(0, drag.startReveal - dy));
     verseSheetDragReveal.value = reveal;
 
     // Once the overflow row is fully closed, the rest of the same downward drag
@@ -1235,7 +1445,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     // using that (rather than raw `dy`) means the dismiss slide picks up smoothly
     // from 0 instead of jumping by however much drag it took to close the row,
     // and it works the same whether the drag started collapsed (startReveal 0) or
-    // expanded (startReveal the full row height).
+    // expanded (startReveal the on-screen height, not the full note).
     const distancePastClosed = dy - drag.startReveal;
     verseSheetDismissOffset.value =
       reveal === 0 && distancePastClosed > 0 ? distancePastClosed : 0;
@@ -1248,6 +1458,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const dismissOffset = verseSheetDismissOffset.value;
     const reveal = verseSheetDragReveal.value ?? drag.startReveal;
     const overflowHeight = verseSheetOverflowHeight.value;
+    const visible = verseSheetVisibleOverflowHeight.value;
+    // A sheet shorter than the snap distance commits when the finger reaches
+    // the end of it — there is no further to drag.
+    const commitDistance = Math.min(VERSE_SHEET_SNAP_DISTANCE_PX, visible);
     endVerseSheetDrag(event);
 
     if (drag.maxTravel <= VERSE_SHEET_TAP_SLOP) {
@@ -1264,11 +1478,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       return;
     }
 
-    // Settle to whichever end the drag finished nearest. Using the midpoint
-    // rather than a fixed threshold means the sheet always ends up where the
-    // finger left it pointing, in either direction.
-    isVerseSheetExpanded.value =
-      overflowHeight > 0 && reveal >= overflowHeight / 2;
+    if (overflowHeight <= 0 || commitDistance <= 0) {
+      isVerseSheetExpanded.value = false;
+      return;
+    }
+
+    if (drag.startExpanded) {
+      const pulledDown = drag.startReveal - reveal;
+      isVerseSheetExpanded.value = pulledDown < commitDistance;
+      return;
+    }
+
+    isVerseSheetExpanded.value = reveal >= commitDistance;
   };
 
   const handleVerseSheetHandlePointerCancel = (event: PointerEvent) => {
@@ -1283,11 +1504,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    * Elements inside the mobile sheet that must keep their own tap/scroll
    * behavior instead of starting the sheet drag: buttons and inputs (so taps
    * still register as clicks — capturing the pointer on the panel would
-   * otherwise steal their `pointerup`), and the horizontal highlight-color
-   * strip (its own swipe gesture would fight the sheet's vertical one).
+   * otherwise steal their `pointerup`), the horizontal highlight-color
+   * strip (its own swipe gesture would fight the sheet's vertical one), and
+   * the notes once they scroll (a drag there moves the note, not the sheet).
    */
   const VERSE_SHEET_DRAG_IGNORE_SELECTOR =
-    "button, input, a, .sb-verse-toolbar-swatches";
+    "button, input, a, .sb-verse-toolbar-swatches, .sb-verse-toolbar-overflow-scrollable";
 
   /**
    * Entry point for the whole-panel version of the handle drag: any part of
@@ -1437,6 +1659,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       verseSheetDismissOffset.value = 0;
     }
   }, [hasVerseSelection.value]);
+
+  // A scrolled note should not be where the next open — or the next verse —
+  // starts. Copy, Compare, and Share live at the top of that scroll, and a
+  // jump to a specific note (below) runs on the next frame, after this reset.
+  const verseSheetSelectionKey = useComputed(() => {
+    const verses = readingState.value?.selectedVerses.value ?? [];
+    return verses
+      .map(
+        (verse) =>
+          `${verse.bookId}:${verse.chapterNumber}:${verse.verse.number}`
+      )
+      .join("|");
+  });
+
+  useEffect(() => {
+    if (isVerseSheetExpanded.value) return;
+    resetVerseSheetScroll();
+  }, [isVerseSheetExpanded.value]);
+
+  useEffect(() => {
+    resetVerseSheetScroll();
+  }, [verseSheetSelectionKey.value]);
 
   // Clicking an annotated verse number (BibleReader.tsx) sets this once;
   // expand the sheet and scroll to that verse's annotation group, then clear
@@ -2336,6 +2580,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   // Suppresses the settle animations, so the sheet tracks the
                   // finger exactly instead of easing towards it.
                   isVerseSheetDragging.value ? " sb-verse-sheet-dragging" : ""
+                }${
+                  // Lets the notes scroll. The sheet itself must not keep
+                  // `touch-action: none`, or that would block the scroller.
+                  isVerseSheetOverflowScrollable.value
+                    ? " sb-verse-sheet-scrollable"
+                    : ""
                 }`
               : " sb-verse-toolbar-draggable"
           }`}
@@ -2900,22 +3150,31 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 // showing; the rest live in an overflow row that the grab handle
                 // drags open. The X in the corner handles dismissal, so the
                 // Cancel tool is dropped here.
+                // Copy, Compare, and Share are not part of that always-visible
+                // row. They appear when the drawer opens and stay pinned while
+                // a long note scrolls.
+                const pinnedTools = nonCancel.filter((tool) =>
+                  VERSE_SHEET_PINNED_TOOL_IDS.has(tool.id)
+                );
+                const otherTools = nonCancel.filter(
+                  (tool) => !VERSE_SHEET_PINNED_TOOL_IDS.has(tool.id)
+                );
                 const actionCards = [
                   highlightCard,
                   saveCard,
-                  ...nonCancel.map(renderTool),
+                  ...otherTools.map(renderTool),
                 ].filter(Boolean);
+                const pinnedCards = pinnedTools.map(renderTool).filter(Boolean);
 
                 // One full row of cards, matching the four-per-row grid below.
                 // Keeping the collapsed sheet to a single row is what makes it
                 // short by default.
                 const COLLAPSED_COUNT = 4;
-                // Annotations on the selection also make the sheet openable,
-                // even when there aren't enough tool cards to overflow on
-                // their own — otherwise there'd be nothing to drag/tap open
-                // to see them.
+                // Annotations, or Copy/Compare/Share, also make the sheet
+                // openable even when the remaining tools fit in one row.
                 const hasOverflow =
                   actionCards.length > COLLAPSED_COUNT ||
+                  pinnedCards.length > 0 ||
                   selectionAnnotations.value.length > 0;
                 const primaryCards = hasOverflow
                   ? actionCards.slice(0, COLLAPSED_COUNT)
@@ -2942,15 +3201,37 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           verseSheetRevealHeight.value === 0
                             ? " sb-verse-toolbar-overflow-closed"
                             : ""
+                        }${
+                          isVerseSheetOverflowScrollable.value
+                            ? " sb-verse-toolbar-overflow-scrollable"
+                            : ""
                         }`}
                         style={{
                           height: `${verseSheetRevealHeight.value}px`,
+                          // How far a scrolled-to note must clear the pinned
+                          // actions. Zero when that row scrolls with the note.
+                          "--sb-verse-sheet-pinned-offset": `${
+                            verseSheetPinFits.value
+                              ? verseSheetPinnedHeight.value
+                              : 0
+                          }px`,
                         }}
                       >
                         <div
                           className="sb-verse-toolbar-overflow-row"
                           ref={measureVerseSheetOverflow}
                         >
+                          {pinnedCards.length > 0 && (
+                            <div
+                              className={`sb-verse-toolbar-overflow-pinned${
+                                verseSheetPinFits.value
+                                  ? ""
+                                  : " sb-verse-toolbar-overflow-pinned-inline"
+                              }`}
+                            >
+                              {pinnedCards}
+                            </div>
+                          )}
                           {overflowCards}
                           {selectionAnnotations.value.length > 0 && (
                             <div className="sb-verse-toolbar-annotations">
@@ -3008,14 +3289,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 // *accessible* control, so this stays out of the a11y tree.
                 aria-hidden="true"
                 style={{
-                  // Fades in step with the drag, so the hint gets out of the way
-                  // as the sheet opens rather than blinking off at the end.
-                  opacity: verseSheetOverflowHeight.value
+                  // Fades across the on-screen travel, not the full note, so a
+                  // long annotation still clears the hint once the drawer is open.
+                  opacity: verseSheetVisibleOverflowHeight.value
                     ? 1 -
                       Math.min(
                         1,
                         verseSheetRevealHeight.value /
-                          verseSheetOverflowHeight.value
+                          verseSheetVisibleOverflowHeight.value
                       )
                     : 1,
                 }}
