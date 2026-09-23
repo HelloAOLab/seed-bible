@@ -142,6 +142,8 @@ describe("CustomizationsManager", () => {
     initialCustomizationSeed?: InitialCustomizationSeed
   ) {
     const theme = createTheme(settings);
+    // Mirrors the real app's post-mount read of the device's color scheme.
+    theme.hydrateSystemColorScheme();
     const variantSelections = createCustomizationVariantSelectionsManager(
       os,
       login

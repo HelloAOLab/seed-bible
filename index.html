@@ -67,7 +67,8 @@
       <!-- THEME_PRESETS_JSON -->
     </script>
     <script>
-      // Applies the device's real saved theme before any JS bundle loads —
+      // Applies the device's real saved theme (or System, the default, when
+      // nothing is saved) before any JS bundle loads —
       // reads localStorage directly rather than going through the app's own
       // managers, since those don't run until much later. Corrects the
       // #sb-theme-styles tag the server rendered (see entry-ssr.tsx), which
@@ -77,9 +78,7 @@
       (function () {
         try {
           var raw = localStorage.getItem("sb-profile-config-local");
-          if (!raw) return;
-          var themeId = JSON.parse(raw).themeId;
-          if (!themeId) return;
+          var themeId = (raw && JSON.parse(raw).themeId) || "system";
           if (themeId === "system") {
             themeId = window.matchMedia("(prefers-color-scheme: dark)").matches
               ? "dark"

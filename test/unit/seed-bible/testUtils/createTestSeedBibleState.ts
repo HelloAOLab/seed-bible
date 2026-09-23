@@ -290,6 +290,7 @@ export async function createTestSeedBibleState(
   // represents a fully-loaded app for test purposes, so it should reflect
   // that step too, the same way it already waits for tabs to load below.
   state.login.hydrateLocalConfig();
+  state.theme.hydrateSystemColorScheme();
   // Mirrors the same post-mount sequence's other one-time correction: saved
   // tabs/layout/catalog/selector-mode/tutorial-and-onboarding flags all seed
   // to match SSR and only become real once this runs. Without it, anything
