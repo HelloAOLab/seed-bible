@@ -657,6 +657,7 @@ describe("system theme", () => {
     stubColorScheme(true);
     const settings = makeSettings(makeFakeLogin(null));
     const theme = createThemeManager(settings);
+    theme.setTheme("dark");
     theme.setTheme("system");
 
     expect(theme.prefersDarkScheme.value).toBe(false);
@@ -691,6 +692,7 @@ describe("system theme", () => {
     const settings = makeSettings(makeFakeLogin(null));
     const theme = createThemeManager(settings);
     theme.hydrateSystemColorScheme();
+    theme.setTheme("light");
 
     theme.setTheme("system");
 
@@ -703,9 +705,11 @@ describe("system theme", () => {
     const settings = makeSettings(makeFakeLogin(null));
     const theme = createThemeManager(settings);
     theme.hydrateSystemColorScheme();
+    theme.setTheme("dark");
 
     theme.setTheme("system");
 
+    expect(theme.selectedThemeId.value).toBe("system");
     expect(theme.basePresetTheme.value.id).toBe("light");
   });
 
@@ -714,7 +718,9 @@ describe("system theme", () => {
     const settings = makeSettings(makeFakeLogin(null));
     const theme = createThemeManager(settings);
     theme.hydrateSystemColorScheme();
+    theme.setTheme("dark");
     theme.setTheme("system");
+    expect(theme.basePresetTheme.value.id).toBe("light");
 
     emitChange(true);
 
@@ -735,6 +741,7 @@ describe("system theme", () => {
       brandedDark,
     ]);
     theme.hydrateSystemColorScheme();
+    theme.setTheme("light");
 
     theme.setTheme("system");
 
@@ -748,6 +755,7 @@ describe("system theme", () => {
       { ...DARK_THEME, id: "brand-night" },
     ]);
     theme.hydrateSystemColorScheme();
+    theme.setTheme("brand-day");
 
     theme.setTheme("system");
 

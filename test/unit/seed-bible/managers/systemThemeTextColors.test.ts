@@ -11,6 +11,7 @@ describe("theme changes and per-section text colors", () => {
   it("keeps text colors when the device flips while on the System theme", async () => {
     const emitChange = stubColorScheme(false);
     const state = await createTestSeedBibleState();
+    state.theme.setTheme("light");
     state.theme.setTheme(SYSTEM_THEME_ID);
     state.settings.updateTextSection("verse", { color: "#101010" });
 
