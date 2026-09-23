@@ -82,6 +82,12 @@ export interface DiscoverScrollTarget {
 
 export interface DiscoverManager {
   registerDiscoverProvider: (provider: DiscoverProvider) => void;
+  /**
+   * Bumped on every `registerDiscoverProvider` call. The provider list itself
+   * is not reactive; consumers that should re-run when an extension registers
+   * (including after the chapter has already loaded) subscribe by reading this.
+   */
+  providersVersion: ReadonlySignal<number>;
   discover: (
     context: DiscoverContext
   ) => AsyncIterable<DiscoverProviderResults>;
@@ -105,6 +111,7 @@ export interface DiscoverManager {
 
 export function createDiscoverManager(): DiscoverManager {
   const providers: DiscoverProvider[] = [];
+  const providersVersion = signal(0);
   const view = signal<DiscoverView>(null);
   const isDiscoverOpen = computed(() => !!view.value);
   const scrollToVerse = signal<DiscoverScrollTarget | null>(null);
@@ -124,8 +131,10 @@ export function createDiscoverManager(): DiscoverManager {
       } else {
         providers.push(provider);
       }
+      providersVersion.value += 1;
     },
 
+    providersVersion,
     view,
     isDiscoverOpen,
     resolveActualView,
