@@ -1,0 +1,320 @@
+.sb-theographic-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+  min-width: 0;
+  max-width: 100%;
+  /* The list item lays its children out with `align-items: flex-start`, which
+     would shrink the card to its content — and let the chevron drift as the
+     card's contents change. Stretching keeps the header row full width. */
+  align-self: stretch;
+}
+
+/* The expanded card tints its whole list item, as in the design. Styled from
+   here rather than in core so Discover itself stays untouched. */
+.sb-discover-item:has(> .sb-theographic-card--expanded) {
+  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 40%);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 94%);
+}
+
+/* ── Header ── */
+
+.sb-theographic-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* The whole row is the toggle, with the chevron pinned to its far end. */
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-theographic-card-header:hover .sb-theographic-card-name {
+  text-decoration: underline;
+}
+
+/* The name and its type, which share a baseline. */
+.sb-theographic-card-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sb-theographic-card-chevron {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  font-size: 1.25rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-theographic-card-name {
+  font-family: var(--sb-reader-font-family, inherit);
+  font-size: 1rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-theographic-card-kind {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+/* ── Verse chips ── */
+
+.sb-theographic-card-verses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sb-theographic-verse-chip {
+  padding: 1px 8px;
+  border-radius: 50px;
+  border: 1px solid
+    color-mix(in srgb, var(--sb-secondary-color), transparent 55%);
+  background: none;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.sb-theographic-verse-chip:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+  border-color: var(--sb-primary-color);
+}
+
+/* The mention the quote below is showing. */
+.sb-theographic-verse-chip--active,
+.sb-theographic-verse-chip--active:hover {
+  border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+}
+
+/* ── Expanded detail ── */
+
+.sb-theographic-card-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Quoted mention ── */
+
+.sb-theographic-quote {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--sb-reader-background);
+  border: 1px solid var(--sb-divider-color);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-theographic-quote-text {
+  font-family: var(--sb-reader-font-family, inherit);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--sb-font-color);
+}
+
+.sb-theographic-quote-mark {
+  padding: 0 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 78%);
+  color: inherit;
+}
+
+.sb-theographic-quote-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.6875rem;
+}
+
+.sb-theographic-quote-ref {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-theographic-quote-go {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-theographic-quote-go:hover {
+  text-decoration: underline;
+}
+
+/* ── Inline map ── */
+
+/* PortalComponent absolutely positions its iframe over a placeholder, so the
+   map needs a positioned box with a real height to fill. */
+.sb-theographic-map {
+  position: relative;
+  height: 11rem;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid var(--sb-divider-color);
+}
+
+.sb-theographic-map-coords {
+  position: absolute;
+  inset-inline-start: 6px;
+  inset-block-end: 6px;
+  z-index: 1;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--sb-reader-background), transparent 10%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  font-size: 0.6875rem;
+  pointer-events: none;
+}
+
+/* Holds the map's space while its data loads, edge to edge like the map. */
+.sb-theographic-map-loading {
+  border-radius: 0;
+}
+
+/* Sits over the iframe, so it has to share the coordinates' stacking level. */
+.sb-theographic-map-open {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-end: 6px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--sb-reader-background), transparent 10%);
+  color: var(--sb-primary-color);
+  font-size: 1.125rem;
+  cursor: pointer;
+}
+
+.sb-theographic-map-open:hover {
+  background: var(--sb-reader-background);
+}
+
+/* ── Full entry ── */
+
+.sb-theographic-section-label {
+  margin: 0 0 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-theographic-card-description {
+  max-height: 18.75rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  border: 1px solid var(--sb-divider-color);
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.sb-theographic-card-description p {
+  margin: 0 0 6px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+/* ── Loading and errors ── */
+
+.sb-theographic-card-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-theographic-card-loading-fact {
+  margin-block-start: 4px;
+}
+
+.sb-theographic-card-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-theographic-card-retry {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── Facts ── */
+
+.sb-theographic-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 12px;
+  row-gap: 2px;
+}
+
+/* Each fact's label and value sit directly in the two grid columns, so every
+   value lines up regardless of how long its label is. */
+.sb-theographic-fact {
+  display: contents;
+}
+
+.sb-theographic-fact dt,
+.sb-theographic-fact dd {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.sb-theographic-fact dt {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-theographic-fact dd {
+  margin: 0;
+  min-width: 0;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
+}
+
+.sb-theographic-attribution {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+}
+
+.sb-theographic-attribution a {
+  color: inherit;
+}

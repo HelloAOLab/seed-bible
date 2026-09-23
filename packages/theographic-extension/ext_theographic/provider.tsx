@@ -4,16 +4,30 @@ import type {
   DiscoverContext,
   DiscoverProvider,
   DiscoverResult,
-} from "./DiscoverManager";
-import type { BibleDataManager, BookId, VerseRef } from "./BibleDataManager";
-import type { Dataset, TranslationBookChapter } from "./FreeUseBibleAPI";
-import { requestToPromise, transactionToPromise } from "./indexedDbUtils";
-import { extractContentText } from "./ChapterText";
-import { TheographicEntityCard } from "../components/TheographicEntityCard/TheographicEntityCard";
-import { PortalComponent } from "../components/PortalComponent/PortalComponent";
-import type { PanesManager } from "./PanesManager";
-import geoImporterPattern from "virtual:@pattern/geo-importer";
-import { v4 as uuid } from "uuid";
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import type {
+  BibleDataManager,
+  BookId,
+  VerseRef,
+} from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import type {
+  Dataset,
+  TranslationBookChapter,
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { ReadonlySignal } from "@preact/signals";
+import {
+  requestToPromise,
+  transactionToPromise,
+} from "@packages/seed-bible/seed-bible/managers/indexedDbUtils";
+import { extractContentText } from "@packages/seed-bible/seed-bible/managers/ChapterText";
+import { TheographicEntityCard } from "./TheographicEntityCard";
+import { createIsPlaceOpen, createOpenPlace, type PlaceLocations } from "./map";
+import {
+  EVENT_CONTENT_TYPE,
+  PERSON_CONTENT_TYPE,
+  PLACE_CONTENT_TYPE,
+} from "./contentTypes";
 
 /* ------------------------------------------------------------------ *
  * The Theographic dataset's wire format, and how we read it.
@@ -88,6 +102,14 @@ export interface TheographicBookChapter {
   numberOfEvents: number;
 }
 
+/** One passage an entity appears in, anywhere in the Bible. */
+export interface TheographicReference {
+  book: string;
+  chapter: number;
+  verse: number;
+  endVerse?: number;
+}
+
 /** One person's full record, from a {@link TheographicPersonEntry}'s `apiLink`. */
 export interface TheographicPersonDetail {
   dataset: Dataset;
@@ -108,6 +130,8 @@ export interface TheographicPersonDetail {
     siblings?: TheographicRelatedEntity[];
     memberOf?: TheographicRelatedEntity[];
     events?: TheographicRelatedEntity[];
+    /** Every passage this entity appears in, across the whole Bible. */
+    references?: TheographicReference[];
   };
 }
 
@@ -125,6 +149,8 @@ export interface TheographicPlaceDetail {
     longitude?: number;
     description?: string[];
     comment?: string;
+    /** Every passage this entity appears in, across the whole Bible. */
+    references?: TheographicReference[];
   };
 }
 
@@ -140,6 +166,8 @@ export interface TheographicEventDetail {
     participants?: TheographicRelatedEntity[];
     locations?: TheographicRelatedEntity[];
     predecessor?: TheographicRelatedEntity;
+    /** Every passage this entity appears in, across the whole Bible. */
+    references?: TheographicReference[];
   };
 }
 
@@ -154,8 +182,8 @@ export interface TheographicEventDetail {
  * Records are keyed by their API path, which is what the dataset itself uses
  * to address them (`/api/d/theographic/GEN/1.json`), so a cache key never has
  * to be derived twice. The client below goes through {@link TheographicStore}
- * rather than touching IndexedDB directly, which is what lets tests swap in
- * {@link createInMemoryTheographicStore}.
+ * rather than touching IndexedDB directly, which is what lets tests swap in an
+ * in-memory one.
  * ------------------------------------------------------------------ */
 
 export const THEOGRAPHIC_DB_NAME = "seed-bible-theographic";
@@ -173,21 +201,39 @@ const RECORDS_STORE = "records";
  */
 export const THEOGRAPHIC_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-interface StoredRecord {
-  /** The API path this record was fetched from. */
-  key: string;
-  value: unknown;
+/**
+ * How long a "this chapter doesn't exist" answer is remembered: the API's own
+ * one day, so a chapter the dataset gains shows up by the next day.
+ */
+export const THEOGRAPHIC_NOT_FOUND_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * What the cache holds for one path: the record itself, or the fact that
+ * there is nothing usable there — far smaller than the 1 MB outline of Crete
+ * it can stand in for.
+ */
+export interface CachedRecord {
+  value?: unknown;
+  /** Set when `value` is absent. Records written before this field have neither. */
+  outcome?: "not-found" | "too-large";
+  /** For "too-large": how long the body was, in characters. */
+  length?: number;
   fetchedAtMs: number;
 }
 
-export interface TheographicStore {
-  /**
-   * The cached record for a path, or null when it was never cached or has
-   * aged past {@link THEOGRAPHIC_CACHE_TTL_MS}.
-   */
-  get<T>(key: string): Promise<T | null>;
+interface StoredRecord extends CachedRecord {
+  /** The path this record was fetched from. */
+  key: string;
+}
 
-  put(key: string, value: unknown): Promise<void>;
+export interface TheographicStore {
+  /** The cached record for a path, however old, or null when there is none. */
+  get(key: string): Promise<CachedRecord | null>;
+
+  put(key: string, record: CachedRecord): Promise<void>;
+
+  /** Deletes every record fetched before `cutoffMs`. */
+  prune(cutoffMs: number): Promise<void>;
 
   /** Drops everything. Exposed for tests and for a future "clear data" action. */
   clear(): Promise<void>;
@@ -248,28 +294,38 @@ export function createIndexedDbTheographicStore(): TheographicStore | null {
   };
 
   return {
-    async get<T>(key: string): Promise<T | null> {
+    async get(key: string): Promise<CachedRecord | null> {
       const database = await openDatabase();
       const transaction = database.transaction(RECORDS_STORE, "readonly");
       const record = await requestToPromise<StoredRecord | undefined>(
         transaction.objectStore(RECORDS_STORE).get(key)
       );
-
-      if (!record) {
-        return null;
-      }
-      if (Date.now() - record.fetchedAtMs > THEOGRAPHIC_CACHE_TTL_MS) {
-        return null;
-      }
-      return record.value as T;
+      return record ?? null;
     },
 
-    async put(key: string, value: unknown): Promise<void> {
+    async put(key: string, record: CachedRecord): Promise<void> {
       const database = await openDatabase();
       const transaction = database.transaction(RECORDS_STORE, "readwrite");
       transaction
         .objectStore(RECORDS_STORE)
-        .put({ key, value, fetchedAtMs: Date.now() } satisfies StoredRecord);
+        .put({ ...record, key } satisfies StoredRecord);
+      await transactionToPromise(transaction);
+    },
+
+    async prune(cutoffMs: number): Promise<void> {
+      const database = await openDatabase();
+      const transaction = database.transaction(RECORDS_STORE, "readwrite");
+      const cursorRequest = transaction.objectStore(RECORDS_STORE).openCursor();
+      cursorRequest.onsuccess = () => {
+        const cursor = cursorRequest.result;
+        if (!cursor) {
+          return;
+        }
+        if ((cursor.value as StoredRecord).fetchedAtMs < cutoffMs) {
+          cursor.delete();
+        }
+        cursor.continue();
+      };
       await transactionToPromise(transaction);
     },
 
@@ -282,35 +338,38 @@ export function createIndexedDbTheographicStore(): TheographicStore | null {
   };
 }
 
-/** In-memory stand-in with the same expiry rules, for tests. */
-export function createInMemoryTheographicStore(): TheographicStore {
-  const records = new Map<string, StoredRecord>();
-
-  return {
-    async get<T>(key: string): Promise<T | null> {
-      const record = records.get(key);
-      if (!record) {
-        return null;
-      }
-      if (Date.now() - record.fetchedAtMs > THEOGRAPHIC_CACHE_TTL_MS) {
-        return null;
-      }
-      return record.value as T;
-    },
-
-    async put(key: string, value: unknown): Promise<void> {
-      records.set(key, { key, value, fetchedAtMs: Date.now() });
-    },
-
-    async clear(): Promise<void> {
-      records.clear();
-    },
-  };
-}
-
 /* ------------------------------------------------------------------ *
  * Reading the dataset.
  * ------------------------------------------------------------------ */
+
+/**
+ * A request the client couldn't answer with data. Callers branch on `reason`:
+ * "not-found" is the dataset's normal answer for a chapter it has nothing
+ * for, and "too-large" a body longer than the caller's `maxLength`.
+ */
+export class TheographicRequestError extends Error {
+  constructor(
+    readonly url: string,
+    readonly reason: "not-found" | "too-large" | "failed",
+    readonly status: number | null = null,
+    detail = ""
+  ) {
+    super(
+      `Failed request to ${url}.` +
+        (status != null ? ` Status: ${status}` : "") +
+        (detail ? ` ${detail}` : "")
+    );
+    this.name = "TheographicRequestError";
+  }
+}
+
+export interface ReadOptions {
+  /**
+   * The longest body, in characters, the caller can use. A longer one rejects
+   * with a "too-large" error, and only that fact is cached.
+   */
+  maxLength?: number;
+}
 
 /** Reads the dataset, preferring the on-device cache over the network. */
 export interface TheographicClient {
@@ -320,109 +379,11 @@ export interface TheographicClient {
   ): Promise<TheographicBookChapter>;
   /** Follows an entry's `apiLink` to its full record. */
   getEntity<T>(apiLink: string): Promise<T>;
-}
-
-/**
- * A place as a GeoJSON point, ready to hand to the geo-importer map.
- *
- * A bare `Feature` rather than a `FeatureCollection` on purpose: the importer
- * labels and focuses the map on a lone `Feature`, while a collection is drawn
- * without either unless it also carries `metadata.name` and a `bbox`.
- */
-export interface PlaceGeoJsonFeature {
-  type: "Feature";
-  geometry: {
-    type: "Point";
-    /**
-     * Latitude first, then longitude — deliberately *not* GeoJSON's documented
-     * `[longitude, latitude]` order.
-     *
-     * The importer feeds `coordinates[0]` to the bot's dimension X and
-     * `coordinates[1]` to Y (see `geometryHandlers.tsx`), and this map portal
-     * takes X as the latitude. Confirmed by opening a place and seeing where
-     * the pin lands. Swapping these to match the spec puts every place
-     * roughly 1,500 km from where it belongs, so leave the order alone.
-     */
-    coordinates: [number, number];
-  };
-  properties: {
-    /**
-     * Required by the importer's schema, and what it draws as the map label —
-     * so this is the readable name ("Egypt"), not the dataset's slug
-     * ("egypt_362").
-     */
-    id: string;
-    name: string;
-    featureType?: string;
-  };
-}
-
-/**
- * Turns a place's coordinates into a GeoJSON point.
- *
- * Null when the dataset has no position for it — about 20 of its 1,274 places,
- * which callers use to decide there is nothing to show on a map.
- */
-export function placeToGeoJson(
-  place: TheographicPlaceEntry
-): PlaceGeoJsonFeature | null {
-  const { latitude, longitude } = place;
-  if (typeof latitude !== "number" || typeof longitude !== "number") {
-    return null;
-  }
-
-  return {
-    type: "Feature",
-    geometry: {
-      type: "Point",
-      coordinates: [latitude, longitude],
-    },
-    properties: {
-      id: place.name,
-      name: place.name,
-      ...(place.featureType ? { featureType: place.featureType } : {}),
-    },
-  };
-}
-
-/**
- * Opens a place as a point on the geo-importer map, in its own floating pane.
- *
- * Lives here rather than at the registration site because everything it needs
- * is this module's own — the GeoJSON conversion above, and the pane it draws
- * into. Returns null without a `PanesManager`, which is how the card decides
- * whether to offer the control at all.
- */
-export function createOpenPlace(
-  panes: PanesManager | undefined
-): ((place: TheographicPlaceEntry) => void) | undefined {
-  if (!panes) {
-    return undefined;
-  }
-
-  return (place) => {
-    const geojson = placeToGeoJson(place);
-    if (!geojson) {
-      return;
-    }
-
-    const inst = uuid();
-
-    panes.openPane({
-      id: `theographic-place-${place.id}`,
-      placement: "floating",
-      title: place.name,
-      component: () => (
-        <PortalComponent
-          portal="map"
-          portalType="map"
-          pattern={geoImporterPattern}
-          inst={inst}
-          query={{ mapData: JSON.stringify(geojson) }}
-        />
-      ),
-    });
-  };
+  /**
+   * Any other JSON file, by absolute URL, through the same cache: the
+   * locations extension's GeoJSON files.
+   */
+  getResource<T>(url: string, options?: ReadOptions): Promise<T>;
 }
 
 /** The path one chapter of the dataset lives at. Doubles as its cache key. */
@@ -435,6 +396,14 @@ export function theographicChapterPath(
   )}/${encodeURIComponent(String(chapter))}.json`;
 }
 
+function isFresh(record: CachedRecord, nowMs: number): boolean {
+  const ttl =
+    record.outcome === "not-found"
+      ? THEOGRAPHIC_NOT_FOUND_TTL_MS
+      : THEOGRAPHIC_CACHE_TTL_MS;
+  return nowMs - record.fetchedAtMs <= ttl;
+}
+
 /**
  * Reads the Theographic dataset from `endpoint`, keeping what it fetches.
  *
@@ -442,7 +411,7 @@ export function theographicChapterPath(
  * one request (a chapter with forty places asks for forty records at once),
  * then `store` — IndexedDB, so the data survives a reload — then the network.
  *
- * A cache read that throws is treated as a miss rather than an error: storage
+ * A cache read or write that throws is ignored rather than surfaced: storage
  * can be blocked or full, and reference data is never worth failing a render
  * over.
  */
@@ -451,42 +420,101 @@ export function createTheographicClient(
   store: TheographicStore | null
 ): TheographicClient {
   const inFlight = new Map<string, Promise<unknown>>();
+  let hasPruned = false;
 
-  const read = async <T,>(path: string): Promise<T> => {
+  const remember = async (
+    path: string,
+    record: Omit<CachedRecord, "fetchedAtMs">
+  ) => {
+    try {
+      await store?.put(path, { ...record, fetchedAtMs: Date.now() });
+    } catch {
+      // A cache that won't accept writes still serves reads fine.
+    }
+  };
+
+  const fromCache = async (
+    path: string,
+    url: string,
+    options: ReadOptions
+  ): Promise<{ value: unknown } | null> => {
+    let cached: CachedRecord | null;
+    try {
+      cached = (await store?.get(path)) ?? null;
+    } catch {
+      return null;
+    }
+    if (!cached || !isFresh(cached, Date.now())) {
+      return null;
+    }
+    if (cached.outcome === "not-found") {
+      throw new TheographicRequestError(url, "not-found", 404);
+    }
+    if (cached.outcome === "too-large") {
+      // Only known to be too long for a caller as strict as the one that
+      // cached it; one allowing more has to fetch it to find out.
+      if (
+        options.maxLength !== undefined &&
+        (cached.length ?? Infinity) > options.maxLength
+      ) {
+        throw new TheographicRequestError(url, "too-large");
+      }
+      return null;
+    }
+    return { value: cached.value };
+  };
+
+  const fetchAndRemember = async (
+    path: string,
+    url: string,
+    options: ReadOptions
+  ): Promise<unknown> => {
+    const response = await fetch(url);
+    if (response.status === 404) {
+      await remember(path, { outcome: "not-found" });
+      throw new TheographicRequestError(url, "not-found", 404);
+    }
+    if (response.status < 200 || response.status >= 300) {
+      throw new TheographicRequestError(
+        url,
+        "failed",
+        response.status,
+        response.statusText
+      );
+    }
+
+    const text = await response.text();
+    if (options.maxLength !== undefined && text.length > options.maxLength) {
+      await remember(path, { outcome: "too-large", length: text.length });
+      throw new TheographicRequestError(url, "too-large");
+    }
+    const value: unknown = JSON.parse(text);
+    await remember(path, { value });
+    return value;
+  };
+
+  const read = async <T,>(
+    path: string,
+    options: ReadOptions = {}
+  ): Promise<T> => {
+    if (store && !hasPruned) {
+      // Expired records are otherwise only replaced when revisited, so the
+      // ones that never are would stay on the device for good.
+      hasPruned = true;
+      void store
+        .prune(Date.now() - THEOGRAPHIC_CACHE_TTL_MS)
+        .catch(() => undefined);
+    }
+
     const pending = inFlight.get(path);
     if (pending) {
       return (await pending) as T;
     }
 
+    const url = new URL(path, endpoint).href;
     const request = (async () => {
-      if (store) {
-        try {
-          const cached = await store.get<T>(path);
-          if (cached !== null) {
-            return cached;
-          }
-        } catch {
-          // Fall through to the network.
-        }
-      }
-
-      const url = new URL(path, endpoint).href;
-      const response = await fetch(url);
-      if (response.status < 200 || response.status >= 300) {
-        throw new Error(
-          `Failed request to ${url}. Status: ${response.status} ${response.statusText}`
-        );
-      }
-      const value = (await response.json()) as T;
-
-      if (store) {
-        try {
-          await store.put(path, value);
-        } catch {
-          // A cache that won't accept writes still serves reads fine.
-        }
-      }
-      return value;
+      const cached = await fromCache(path, url, options);
+      return cached ? cached.value : fetchAndRemember(path, url, options);
     })();
 
     inFlight.set(path, request);
@@ -501,82 +529,9 @@ export function createTheographicClient(
     getChapter: (book, chapter) =>
       read<TheographicBookChapter>(theographicChapterPath(book, chapter)),
     getEntity: <T,>(apiLink: string) => read<T>(apiLink),
+    getResource: <T,>(url: string, options?: ReadOptions) =>
+      read<T>(url, options),
   };
-}
-
-/**
- * The language the Theographic names are written in. The mention check below
- * can only ever run against a translation in this language, since matching an
- * English name against, say, Hindi verse text finds nothing.
- */
-const THEOGRAPHIC_LANGUAGE = "eng";
-
-/**
- * Whether to drop an entity from a verse whose text doesn't literally name it.
- *
- * Off, because Theographic's names are canonical while translations use
- * whatever form the passage uses, and the chapter listing carries no aliases to
- * bridge the two. Measured over seven chapters against the KJV, the check
- * removed 38% of entities outright — Abraham from Genesis 13 (called "Abram"
- * there), Paul from Acts 9 ("Saul"), Isaiah from Matthew 13 ("Esaias"), God
- * from Psalm 23 ("the LORD"), and every event, whose names are descriptive
- * labels rather than words in the text.
- *
- * What it does catch is a handful of over-broad links — "Jacob (Israel)" on
- * Exodus 4:29's "the children of Israel", which is the nation and not the man.
- * Worth revisiting if the API ever exposes per-entity alternate names; the
- * machinery and its tests are kept for that.
- */
-const REQUIRE_NAME_IN_VERSE_TEXT = false;
-
-/** Combining marks left behind by an NFD normalize. */
-const COMBINING_MARKS = /[̀-ͯ]/g;
-
-/** Characters that carry no meaning for a name match. */
-const NON_MATCHABLE = /[^\p{L}\p{N}]+/gu;
-
-/**
- * Casefolds and strips accents so "Sidon" matches "Sïdon". Punctuation and
- * whitespace collapse to single spaces, and the result is padded so a caller
- * can test for " name " and get a whole-word match without a regex.
- */
-export function normalizeForMatch(text: string): string {
-  return ` ${text
-    .normalize("NFD")
-    .replace(COMBINING_MARKS, "")
-    .toLowerCase()
-    .replace(NON_MATCHABLE, " ")
-    .trim()} `;
-}
-
-/**
- * The name to look for in the verse text.
- *
- * Theographic disambiguates with a trailing parenthetical, which may be an
- * alternate name ("Jacob (Israel)") or a qualifier ("Pharaoh (of the
- * Exodus)"). Nothing in the data distinguishes the two, so both are dropped
- * and the leading name is what must appear. That is also the behaviour we
- * want: "Jacob (Israel)" then keeps Exodus 4:5 ("the God of Jacob") and drops
- * 4:29 ("the children of Israel"), which is the nation rather than the man.
- */
-export function primaryName(name: string): string {
-  const parenthetical = name.indexOf("(");
-  return parenthetical > 0 ? name.slice(0, parenthetical).trim() : name.trim();
-}
-
-/**
- * Whether `text` names `name` as a whole word.
- *
- * Both sides are padded by `normalizeForMatch`, so a plain `includes` is a
- * word-boundary test that also handles multi-word names ("Mount Hor") and
- * possessives ("Aaron's rod" → " aaron s rod " contains " aaron ").
- */
-export function mentionsName(text: string, name: string): boolean {
-  const needle = normalizeForMatch(primaryName(name));
-  if (needle.trim().length === 0) {
-    return false;
-  }
-  return normalizeForMatch(text).includes(needle);
 }
 
 /** Verse number → that verse's prose, for every verse in a chapter. */
@@ -590,23 +545,6 @@ export function chapterVerseText(
     }
   }
   return byVerse;
-}
-
-/**
- * Narrows an entity's verses to the ones whose text actually names it.
- *
- * A verse the translation has no text for is kept rather than dropped — the
- * absence is a gap in what we can check, not evidence the entity isn't there.
- */
-export function narrowToMentionedVerses(
-  verses: readonly number[],
-  name: string,
-  verseText: Map<number, string>
-): number[] {
-  return verses.filter((verse) => {
-    const text = verseText.get(verse);
-    return text === undefined ? true : mentionsName(text, name);
-  });
 }
 
 function personSubtitle(entry: TheographicPersonEntry): string {
@@ -628,17 +566,17 @@ function flattenChapter(data: TheographicBookChapter): MappedEntry[] {
   const { people = [], places = [], events = [] } = data.chapter;
   return [
     ...people.map((entry) => ({
-      contentType: "person_profile" as const,
+      contentType: PERSON_CONTENT_TYPE,
       entry,
       description: personSubtitle(entry),
     })),
     ...places.map((entry) => ({
-      contentType: "place_profile" as const,
+      contentType: PLACE_CONTENT_TYPE,
       entry,
       description: "",
     })),
     ...events.map((entry) => ({
-      contentType: "event" as const,
+      contentType: EVENT_CONTENT_TYPE,
       entry,
       description: eventSubtitle(entry),
     })),
@@ -650,9 +588,84 @@ export interface TheographicProviderDeps {
   client: TheographicClient;
   /** Resolves the endpoint and offline copy for the chapter being checked. */
   data: BibleDataManager;
-  onReferenceClick: (ref: VerseRef) => void;
+  /**
+   * Navigates to a reference. `origin` is the chapter the card was showing,
+   * so the caller can navigate the tab that is actually showing it.
+   */
+  onReferenceClick: (ref: VerseRef, origin?: ReferenceOrigin) => void;
   /** Where a place's map opens. Omit and the map control is not offered. */
   panes?: PanesManager;
+  /** The locations extension's lookup, for places it has a file for. */
+  locations?: PlaceLocations;
+  /** Whether the reader is on a phone-sized screen; hides "Open in map". */
+  isMobile?: ReadonlySignal<boolean>;
+}
+
+/** The chapter a card was discovered for. */
+export interface ReferenceOrigin {
+  translationId: string;
+  book: string;
+  chapter: number;
+}
+
+/** A passage's text, ready to quote in a card. */
+export interface QuotedPassage {
+  text: string;
+  /** The translation's short name, e.g. "BSB". */
+  translation: string;
+}
+
+/**
+ * Scripture as the reader currently sees it: book names and verse text in
+ * the tab's own translation, so a card's labels and quotes match the page.
+ */
+export interface ScriptureReader {
+  /** The translation's name for a book, e.g. "1 Chronicles"; its id if unknown. */
+  bookName(bookId: string): string;
+  /** The text of a passage, or null when it can't be loaded. */
+  readPassage(ref: TheographicReference): Promise<QuotedPassage | null>;
+}
+
+/** Reads scripture in `translationId` through the app's own data manager. */
+export function createScriptureReader(
+  data: BibleDataManager,
+  translationId: string
+): ScriptureReader {
+  return {
+    bookName(bookId) {
+      const book = data
+        .getCachedTranslationBooks(translationId)
+        ?.books.find((candidate) => candidate.id === bookId);
+      return book?.commonName ?? book?.name ?? bookId;
+    },
+
+    async readPassage(ref) {
+      try {
+        // The reader's own chapter is already cached; any other chapter is one
+        // request, made only when the reader picks that mention.
+        const chapter = await data.getTranslationBookChapter(
+          translationId,
+          ref.book,
+          ref.chapter
+        );
+        const last = ref.endVerse ?? ref.verse;
+        const verses = chapterVerseText(chapter);
+        const text = Array.from({ length: last - ref.verse + 1 }, (_, i) =>
+          verses.get(ref.verse + i)
+        )
+          .filter((verse): verse is string => !!verse)
+          .join(" ");
+        return text
+          ? {
+              text,
+              translation: chapter.translation?.shortName ?? translationId,
+            }
+          : null;
+      } catch {
+        return null;
+      }
+    },
+  };
 }
 
 /**
@@ -663,17 +676,19 @@ export interface TheographicProviderDeps {
 export function toDiscoverResults(
   data: TheographicBookChapter,
   context: DiscoverContext,
-  verseText: Map<number, string> | null,
-  deps: Pick<TheographicProviderDeps, "client" | "onReferenceClick"> & {
+  deps: Pick<
+    TheographicProviderDeps,
+    "client" | "onReferenceClick" | "locations" | "isMobile"
+  > & {
     openPlace?: (place: TheographicPlaceEntry) => void;
+    isPlaceOpen?: (place: TheographicPlaceEntry) => boolean;
+    scripture?: ScriptureReader;
   }
 ): DiscoverContentResult[] {
   const results: DiscoverContentResult[] = [];
 
   for (const { contentType, entry, description } of flattenChapter(data)) {
-    const verses = verseText
-      ? narrowToMentionedVerses(entry.verses, entry.name, verseText)
-      : entry.verses;
+    const { verses } = entry;
 
     if (verses.length === 0) {
       continue;
@@ -701,8 +716,18 @@ export function toDiscoverResults(
           chapter={context.chapter}
           dataset={data.dataset}
           client={deps.client}
-          onReferenceClick={deps.onReferenceClick}
+          onReferenceClick={(ref) =>
+            deps.onReferenceClick(ref, {
+              translationId: context.translationId,
+              book: context.book,
+              chapter: context.chapter,
+            })
+          }
           openPlace={deps.openPlace}
+          isPlaceOpen={deps.isPlaceOpen}
+          isMobile={deps.isMobile}
+          locations={deps.locations}
+          scripture={deps.scripture}
         />
       ),
     });
@@ -715,15 +740,19 @@ export function toDiscoverResults(
  * Surfaces the Theographic dataset's people, places and events as discovered
  * content for the chapter being read.
  *
- * Results are deliberately hidden from the discover panel's "All" view — see
- * `DISCOVER_CONTENT_TYPES_HIDDEN_BY_DEFAULT` — because a single chapter can
- * name dozens of entities, which would bury the reader's own notes.
+ * Their content types are registered `hiddenByDefault` (see `init.tsx`), so
+ * they stay out of the discover panel's "All" view: a single chapter can name
+ * dozens of entities, which would bury the reader's own notes.
  */
 export function createTheographicDiscoverProvider(
   deps: TheographicProviderDeps
 ): DiscoverProvider {
   let hasWarned = false;
-  const openPlace = createOpenPlace(deps.panes);
+  const openPlace = createOpenPlace(deps.panes, {
+    client: deps.client,
+    locations: deps.locations,
+  });
+  const isPlaceOpen = createIsPlaceOpen(deps.panes);
 
   return {
     id: "theographic",
@@ -735,54 +764,25 @@ export function createTheographicDiscoverProvider(
       try {
         data = await deps.client.getChapter(context.book, context.chapter);
       } catch (error) {
-        if (!isNotFound(error) && !hasWarned) {
+        const isNotFound =
+          error instanceof TheographicRequestError &&
+          error.reason === "not-found";
+        if (!isNotFound && !hasWarned) {
           hasWarned = true;
           console.warn("Failed to load Theographic data.", error);
         }
         return [];
       }
 
-      const verseText = await loadVerseText(deps.data, context);
-      return toDiscoverResults(data, context, verseText, {
+      return toDiscoverResults(data, context, {
         client: deps.client,
         onReferenceClick: deps.onReferenceClick,
+        locations: deps.locations,
+        isMobile: deps.isMobile,
         openPlace,
+        isPlaceOpen,
+        scripture: createScriptureReader(deps.data, context.translationId),
       });
     },
   };
-}
-
-/**
- * The chapter's verse text, or null when the mention check cannot run.
- *
- * Null for any translation not in the dataset's language, and null when the
- * chapter text can't be loaded — in both cases the dataset's own verse links
- * stand, which lists a little more than it should rather than nothing at all.
- */
-async function loadVerseText(
-  data: BibleDataManager,
-  context: DiscoverContext
-): Promise<Map<number, string> | null> {
-  if (
-    !REQUIRE_NAME_IN_VERSE_TEXT ||
-    context.language !== THEOGRAPHIC_LANGUAGE
-  ) {
-    return null;
-  }
-
-  try {
-    const chapter = await data.getTranslationBookChapter(
-      context.translationId,
-      context.book,
-      context.chapter
-    );
-    return chapterVerseText(chapter);
-  } catch {
-    return null;
-  }
-}
-
-/** Whether a rejected request was a 404, which `_getJson` reports in its message. */
-function isNotFound(error: unknown): boolean {
-  return error instanceof Error && /\bStatus:\s*404\b/.test(error.message);
 }
