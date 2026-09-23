@@ -1343,9 +1343,362 @@ interface PresenceMarker {
    * Which column of the gutter this bar sits in. People reading the same
    * verses would otherwise be drawn on top of each other, hiding everyone but
    * whoever was painted last, so bars whose spans overlap are dealt out into
-   * side-by-side lanes. Zero whenever nobody overlaps.
+   * side-by-side lanes. Zero whenever nobody overlaps. A lane at or beyond
+   * `PRESENCE_MAX_LANES` has no room in the gutter and draws no bar.
    */
   lane: number;
+}
+
+/**
+ * How many bars fit side by side in the presence gutter. The gutter is a fixed
+ * width so the text never shifts as people come and go, which leaves a fourth
+ * person on the same verses nowhere to draw a bar: they keep their place in
+ * the avatar stack and only the bar is left out.
+ */
+const PRESENCE_MAX_LANES = 3;
+/**
+ * Where each lane sits relative to the gutter's centre line, in bar widths
+ * with gaps. Lane zero is centred so a lone bar lines up under its avatar, and
+ * later lanes fill in on either side of it.
+ */
+const PRESENCE_LANE_OFFSETS = [0, 1, -1] as const;
+/** Avatars a stack shows before collapsing the rest into a "+N" chip. */
+const PRESENCE_MAX_STACK_AVATARS = 3;
+/**
+ * Pixel geometry of the gutter's avatars and arrows. The stacks and arrows
+ * are placed in JavaScript against measured verse positions, so these are
+ * mirrored by the matching `--sb-presence-*` variables in the stylesheet.
+ */
+const PRESENCE_AVATAR_PX = 20;
+/** Vertical distance between one avatar of a stack and the next. */
+const PRESENCE_STACK_STEP_PX = 12;
+/** Room kept above a pinned stack for the "continues above" arrow. */
+const PRESENCE_PIN_INSET_PX = 14;
+const PRESENCE_ARROW_PX = 6;
+const PRESENCE_EDGE_INSET_PX = 4;
+
+/** The part of the chapter content box that is on screen, in content px. */
+interface PresenceViewport {
+  top: number;
+  bottom: number;
+}
+
+/**
+ * One or more avatars drawn together at a point in the gutter. Avatars that
+ * would land on top of one another (their owners' verses start on the same
+ * line, or several bars are pinned at the top of the screen at once) are
+ * collapsed into a single stack, the way the mobile participants list does.
+ */
+interface PresenceAvatarStack {
+  key: string;
+  /** Offset from the top of the chapter content box, in px. */
+  top: number;
+  /**
+   * Held at the top of the screen because its owners' verses start above it.
+   * A pinned stack is re-placed on every scroll frame, so it must not glide.
+   */
+  pinned: boolean;
+  markers: PresenceMarker[];
+}
+
+interface PresenceArrow {
+  key: string;
+  direction: "up" | "down";
+  top: number;
+  lane: number;
+  color: string;
+}
+
+/**
+ * Anchors each participant's avatar to the top of their bar, then holds it at
+ * the top of the screen once that has scrolled out of view, so the avatar
+ * follows the reader down the page for as long as its owner's verses do. It
+ * lets go at the bottom of the bar rather than leaving the verses it belongs
+ * to. Avatars that end up overlapping are merged into one stack.
+ */
+function stackPresenceAvatars(
+  markers: PresenceMarker[],
+  viewport: PresenceViewport | null
+): PresenceAvatarStack[] {
+  const anchored = markers.map((marker) => {
+    const lowest = marker.top + marker.height - PRESENCE_AVATAR_PX;
+    let top = marker.top;
+    let pinned = false;
+    if (viewport) {
+      const pinTop = viewport.top + PRESENCE_PIN_INSET_PX;
+      if (pinTop > marker.top && pinTop <= lowest) {
+        top = pinTop;
+        pinned = true;
+      } else if (pinTop > lowest && lowest > marker.top) {
+        top = lowest;
+      }
+    }
+    return { marker, top, pinned };
+  });
+  anchored.sort(
+    (a, b) =>
+      a.top - b.top ||
+      a.marker.connectionId.localeCompare(b.marker.connectionId)
+  );
+
+  const stacks: PresenceAvatarStack[] = [];
+  // Bottom edge of the stack being built, below which the next avatar is on
+  // its own again.
+  let reach = -Infinity;
+  for (const entry of anchored) {
+    const current = stacks[stacks.length - 1];
+    if (current && entry.top < reach) {
+      current.markers.push(entry.marker);
+      const shown = Math.min(
+        current.markers.length,
+        PRESENCE_MAX_STACK_AVATARS
+      );
+      const rows = shown + (current.markers.length > shown ? 1 : 0);
+      reach =
+        current.top + PRESENCE_AVATAR_PX + (rows - 1) * PRESENCE_STACK_STEP_PX;
+      continue;
+    }
+    stacks.push({
+      key: "",
+      top: entry.top,
+      pinned: entry.pinned,
+      markers: [entry.marker],
+    });
+    reach = entry.top + PRESENCE_AVATAR_PX;
+  }
+  for (const stack of stacks) {
+    stack.key = stack.markers.map((m) => m.connectionId).join("+");
+  }
+  return stacks;
+}
+
+/**
+ * A small arrow at the top or bottom edge of the screen for every bar that
+ * carries on past it, so the reader can tell that a participant sees more than
+ * the part of their bar on this screen. Only bars with a lane to draw in get
+ * one, since there is nothing on screen for the arrow to continue.
+ */
+function placePresenceArrows(
+  markers: PresenceMarker[],
+  viewport: PresenceViewport | null
+): PresenceArrow[] {
+  if (!viewport) return [];
+  const arrows: PresenceArrow[] = [];
+  for (const marker of markers) {
+    if (marker.lane >= PRESENCE_MAX_LANES) continue;
+    const bottom = marker.top + marker.height;
+    if (marker.top < viewport.top && bottom > viewport.top) {
+      arrows.push({
+        key: `${marker.connectionId}:up`,
+        direction: "up",
+        top: viewport.top + PRESENCE_EDGE_INSET_PX,
+        lane: marker.lane,
+        color: marker.visual.color,
+      });
+    }
+    if (bottom > viewport.bottom && marker.top < viewport.bottom) {
+      arrows.push({
+        key: `${marker.connectionId}:down`,
+        direction: "down",
+        top: viewport.bottom - PRESENCE_EDGE_INSET_PX - PRESENCE_ARROW_PX,
+        lane: marker.lane,
+        color: marker.visual.color,
+      });
+    }
+  }
+  return arrows;
+}
+
+/** The nearest ancestor that scrolls, or null when the page itself does. */
+function findScrollContainer(element: HTMLElement): HTMLElement | null {
+  for (
+    let node = element.parentElement;
+    node && node !== document.body;
+    node = node.parentElement
+  ) {
+    const { overflowY } = getComputedStyle(node);
+    if (overflowY === "auto" || overflowY === "scroll") {
+      return node;
+    }
+  }
+  return null;
+}
+
+/**
+ * How much of the bottom of the reader the fixed bottom chrome covers, read
+ * from the variable BibleReaderToolbar keeps up to date. Written in px at
+ * runtime; the stylesheet fallback is in rem.
+ */
+function readBottomChromeInset(): number {
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue("--sb-reader-bottom-inset")
+    .trim();
+  const value = parseFloat(raw);
+  if (!Number.isFinite(value)) return 0;
+  if (raw.endsWith("rem")) {
+    return (
+      value * parseFloat(getComputedStyle(document.documentElement).fontSize)
+    );
+  }
+  return raw.endsWith("px") ? value : 0;
+}
+
+/**
+ * Where the screen is over the chapter content, in the content's own
+ * coordinates. Accounts for the mobile header floating over the top of the
+ * scroller and the toolbar over its bottom, since verses under either are not
+ * really on screen.
+ */
+function measurePresenceViewport(
+  content: HTMLElement,
+  scroller: HTMLElement | null
+): PresenceViewport {
+  const contentRect = content.getBoundingClientRect();
+  let top = 0;
+  let bottom = window.innerHeight;
+  if (scroller) {
+    const rect = scroller.getBoundingClientRect();
+    top = rect.top;
+    bottom = rect.bottom;
+  }
+  const header = content
+    .closest(".sb-bible-reader")
+    ?.querySelector(".sb-bible-reader-mobile-header");
+  if (header) {
+    top = Math.max(top, header.getBoundingClientRect().bottom);
+  }
+  bottom -= readBottomChromeInset();
+  return { top: top - contentRect.top, bottom: bottom - contentRect.top };
+}
+
+/**
+ * The gutter down the start edge of the chapter showing where the other
+ * participants are (#1692): a bar per person spanning the verses they can
+ * see, their avatar at the top of it (held on screen as the reader scrolls
+ * past), and arrows where a bar runs off the screen.
+ *
+ * Its own component so that following the scroll only re-renders the gutter.
+ * The viewport is re-measured on every scroll frame, and doing that in
+ * ChapterContent would re-render the whole chapter's text each time.
+ */
+function PresenceGutter({
+  markers,
+  chapterKey,
+  contentRef,
+}: {
+  markers: PresenceMarker[];
+  chapterKey: string;
+  contentRef: RefObject<HTMLDivElement>;
+}) {
+  const [viewport, setViewport] = useState<PresenceViewport | null>(null);
+  const scrollerRef = useRef<HTMLElement | null>(null);
+
+  const measure = () => {
+    const content = contentRef.current;
+    if (!content) return;
+    const next = measurePresenceViewport(content, scrollerRef.current);
+    setViewport((prev) =>
+      prev && prev.top === next.top && prev.bottom === next.bottom ? prev : next
+    );
+  };
+  const measureRef = useRef(measure);
+  measureRef.current = measure;
+
+  // Declared before the per-render measurement below so the scroller is known
+  // by the time the first viewport is read, instead of a page-sized guess that
+  // the next frame has to correct.
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    scrollerRef.current = findScrollContainer(content);
+    const target: EventTarget = scrollerRef.current ?? window;
+    let frame: number | null = null;
+    const schedule = () => {
+      if (frame !== null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        measureRef.current();
+      });
+    };
+    target.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      target.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, [contentRef]);
+
+  // After every render: the markers only change once the content has been
+  // laid out, and the viewport has to be read against that same layout.
+  useLayoutEffect(() => {
+    measureRef.current();
+  });
+
+  const stacks = stackPresenceAvatars(markers, viewport);
+  const arrows = placePresenceArrows(markers, viewport);
+
+  return (
+    <div className="sb-presence-gutter" aria-hidden="true">
+      {markers
+        .filter((marker) => marker.lane < PRESENCE_MAX_LANES)
+        .map((marker) => (
+          <div
+            // Keyed by chapter as well as owner so a navigation gives every
+            // bar a fresh element. A bar glides between positions within a
+            // chapter (see the transition in the stylesheet), and the whole
+            // page's text is replaced on a navigation — a bar left to travel
+            // from its old verses to its new ones would be gliding across
+            // scripture it was never measured against.
+            key={`${chapterKey}:${marker.connectionId}`}
+            className="sb-presence-marker"
+            style={{
+              top: `${marker.top}px`,
+              height: `${marker.height}px`,
+              background: marker.visual.color,
+              "--sb-presence-lane-offset": PRESENCE_LANE_OFFSETS[marker.lane],
+            }}
+          />
+        ))}
+      {arrows.map((arrow) => (
+        <span
+          key={`${chapterKey}:${arrow.key}`}
+          className={`sb-presence-arrow sb-presence-arrow-${arrow.direction}`}
+          style={{
+            top: `${arrow.top}px`,
+            "--sb-presence-lane-offset": PRESENCE_LANE_OFFSETS[arrow.lane],
+            "--sb-presence-arrow-color": arrow.color,
+          }}
+        />
+      ))}
+      {stacks.map((stack) => {
+        const shown = stack.markers.slice(0, PRESENCE_MAX_STACK_AVATARS);
+        const overflow = stack.markers.length - shown.length;
+        return (
+          <div
+            key={`${chapterKey}:${stack.key}`}
+            className={`sb-presence-avatars${
+              stack.pinned ? " sb-presence-avatars-pinned" : ""
+            }`}
+            style={{ top: `${stack.top}px` }}
+          >
+            {shown.map((marker) => (
+              <span key={marker.connectionId} className="sb-presence-avatar">
+                <Avatar
+                  imageUrl={marker.imageUrl}
+                  visual={marker.visual}
+                  title={marker.displayName}
+                />
+              </span>
+            ))}
+            {overflow > 0 && (
+              <span className="sb-presence-avatars-more">+{overflow}</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 interface ChapterContentProps {
@@ -1377,7 +1730,9 @@ interface ChapterContentProps {
   isStale?: boolean;
   /**
    * Other participants reading this same chapter in a shared session, drawn as
-   * bars beside the text. Empty outside a session.
+   * bars beside the text. Undefined outside a session, which closes the gutter
+   * altogether; inside one the gutter stays open even while the list is empty,
+   * so the text never shifts as people arrive in and leave the chapter.
    */
   presence?: ParticipantPresence[];
   /**
@@ -1710,10 +2065,6 @@ function ChapterContent(props: ChapterContentProps) {
   // Signature of the last markers written to state, so the measure -> setState
   // -> re-render -> measure cycle settles instead of looping.
   const presenceSignatureRef = useRef("");
-  const presenceLaneCount = presenceMarkers.reduce(
-    (widest, marker) => Math.max(widest, marker.lane + 1),
-    1
-  );
 
   // A participant's bar spans from the top of the first verse they can see to
   // the bottom of the last, measured from the live line boxes so it follows
@@ -1755,10 +2106,10 @@ function ChapterContent(props: ChapterContentProps) {
     // Deal the bars into lanes so people reading the same verses stand beside
     // each other instead of hiding one another. Taking them top-down and
     // putting each in the first lane whose previous occupant has already ended
-    // uses no more columns than there are people genuinely overlapping at once,
-    // so the common case of a session spread through a chapter still draws a
-    // single-column gutter. Ties break on connection id to keep a lane from
-    // changing hands between two bars that start on the same line.
+    // uses no more lanes than there are people genuinely overlapping at once,
+    // so a session spread through a chapter keeps everyone on the centre line.
+    // Ties break on connection id to keep a lane from changing hands between
+    // two bars that start on the same line.
     next.sort(
       (a, b) => a.top - b.top || a.connectionId.localeCompare(b.connectionId)
     );
@@ -1844,16 +2195,12 @@ function ChapterContent(props: ChapterContentProps) {
       className={`sb-chapter-content${
         props.isStale ? " sb-chapter-content-stale" : ""
       }${
-        presenceMarkers.length > 0 ? " sb-chapter-content-presence" : ""
+        presence !== undefined ? " sb-chapter-content-presence" : ""
       } ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
       }}
       onPointerUp={selectVersesFromTextSelection}
-      // How many lanes of bars the gutter has to hold. The stylesheet turns it
-      // into both the gutter's width and the indent that keeps the scripture
-      // clear of it, so the text only gives up the room actually in use.
-      style={{ "--sb-presence-lanes": presenceLaneCount }}
     >
       <svg className="sb-highlight-layer" aria-hidden="true">
         {ribbons.map((ribbon) => (
@@ -1877,38 +2224,12 @@ function ChapterContent(props: ChapterContentProps) {
           />
         ))}
       </svg>
-      {presenceMarkers.length > 0 && (
-        <div className="sb-presence-gutter" aria-hidden="true">
-          {presenceMarkers.map((marker) => (
-            <div
-              // Keyed by chapter as well as owner so a navigation gives every
-              // marker a fresh element. Its bar glides between positions within
-              // a chapter (see the transition in the stylesheet), and the whole
-              // page's text is replaced on a navigation — a bar left to travel
-              // from its old verses to its new ones would be gliding across
-              // scripture it was never measured against.
-              key={`${chapterKey}:${marker.connectionId}`}
-              className="sb-presence-marker"
-              style={{
-                top: `${marker.top}px`,
-                height: `${marker.height}px`,
-                "--sb-presence-marker-lane": marker.lane,
-              }}
-            >
-              <span
-                className="sb-presence-range"
-                style={{ background: marker.visual.color }}
-              />
-              <span className="sb-presence-avatar">
-                <Avatar
-                  imageUrl={marker.imageUrl}
-                  visual={marker.visual}
-                  title={marker.displayName}
-                />
-              </span>
-            </div>
-          ))}
-        </div>
+      {presence !== undefined && (
+        <PresenceGutter
+          markers={presenceMarkers}
+          chapterKey={chapterKey}
+          contentRef={contentRef}
+        />
       )}
       {renderChapterContent(
         chapterData.value,
@@ -2007,8 +2328,8 @@ export function BibleReader(props: BibleReaderProps) {
 
   // Where the other people in this session are (#1692). Only participants
   // reading the same chapter can be placed against verses on this page, and
-  // this reader is never its own marker. Outside a session the list is empty
-  // and no gutter is drawn at all.
+  // this reader is never its own marker. Outside a session no gutter is drawn
+  // at all (the list is withheld from ChapterContent below).
   //
   // Built in the render body rather than in a `useComputed`: the session
   // arrives as a prop, and a memoised computed that returns early on a null one
@@ -2394,7 +2715,7 @@ export function BibleReader(props: BibleReaderProps) {
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
               onAnnotationVerseClick={handleAnnotationVerseClick}
-              presence={presence}
+              presence={sharedSession ? presence : undefined}
               onVisibleVersesChange={reportVisibleVerses}
             />
           </Suspense>

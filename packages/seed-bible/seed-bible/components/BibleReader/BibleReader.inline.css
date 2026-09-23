@@ -711,18 +711,19 @@
 /*
  * Where the other people in a shared session are reading (#1692). Each one
  * gets a thin bar down the start edge of the reader spanning the verses they
- * can see, with their avatar on it. Only drawn when there is somebody else in
- * this chapter, so a solo reader keeps the full text width.
+ * can see, with their avatar at the top of it. The gutter is a fixed width
+ * and open for the whole of a shared session, whether or not anyone else is in
+ * this chapter, so the text never shifts as people arrive, leave, or move on
+ * to the same verses. Outside a session there is no gutter at all.
  */
 .sb-chapter-content.sb-chapter-content-presence {
-  --sb-presence-lane-width: 1.5rem;
-
-  /* One lane per bar that has to stand beside another (`--sb-presence-lanes`
-     comes from the measured markers); a session reading in different places
-     needs only the one. */
-  --sb-presence-gutter-width: calc(
-    var(--sb-presence-lanes, 1) * var(--sb-presence-lane-width)
-  );
+  --sb-presence-gutter-width: 1.75rem;
+  /* Mirrored by PRESENCE_AVATAR_PX / PRESENCE_STACK_STEP_PX in BibleReader.tsx,
+     which places the avatar stacks against measured verse positions. */
+  --sb-presence-avatar-size: 20px;
+  --sb-presence-stack-step: 12px;
+  /* One bar's width plus the gap to the next. Three fit, centred. */
+  --sb-presence-lane-pitch: 6px;
 
   padding-inline-start: calc(var(--sb-presence-gutter-width) + 0.25rem);
 }
@@ -736,11 +737,14 @@
 }
 
 /* Placed against measured line boxes: from the top of the first verse the
-   participant can see to the bottom of the last.
+   participant can see to the bottom of the last. Bars whose spans overlap
+   share the gutter side by side (`--sb-presence-lane-offset`, in lane pitches
+   from the centre line) so several people on the same verses take no more
+   room than one.
 
    A peer's whole scroll arrives as a single update once they come to rest, so
    without a transition the bar teleports down the page. Gliding to the new
-   verses reads as somebody moving instead. A marker that has just appeared has
+   verses reads as somebody moving instead. A bar that has just appeared has
    no previous position to travel from and none is invented: it fades in where
    its owner is (`@starting-style` below), and the same fade covers the remount
    on a chapter change, which the key in BibleReader.tsx forces so a bar can't
@@ -748,13 +752,13 @@
 .sb-presence-marker {
   position: absolute;
   inset-inline-start: calc(
-    var(--sb-presence-marker-lane, 0) * var(--sb-presence-lane-width)
+    50% + var(--sb-presence-lane-offset, 0) * var(--sb-presence-lane-pitch)
   );
-  width: var(--sb-presence-lane-width);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 1;
+  width: 2px;
+  border-radius: 1px;
+  transform: translateX(-50%);
+  /* Softer than the avatar so neighbouring bars stay readable. */
+  opacity: 0.55;
   transition:
     top 0.35s ease,
     height 0.35s ease,
@@ -762,38 +766,118 @@
     opacity 0.25s ease;
 }
 
+/* A bar that carries on past the top or bottom of the screen gets a small
+   arrow at that edge, in its own lane and colour, so the reader knows the
+   participant sees more than what is on this screen. */
+.sb-presence-arrow {
+  position: absolute;
+  inset-inline-start: calc(
+    50% + var(--sb-presence-lane-offset, 0) * var(--sb-presence-lane-pitch)
+  );
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  transform: translateX(-50%);
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.sb-presence-arrow-up {
+  border-bottom: 6px solid var(--sb-presence-arrow-color);
+}
+
+.sb-presence-arrow-down {
+  border-top: 6px solid var(--sb-presence-arrow-color);
+}
+
+/* One or more avatars at the top of their owners' bars. Held at the top of
+   the screen while those bars extend above it, so the avatar keeps the reader
+   company for as long as its owner's verses do, and merged into a single stack
+   whenever several would land on the same spot (the mobile participants list
+   collapses the same way). Glides with its bar like the bar does, except while
+   pinned, when it is re-placed every scroll frame and must not lag behind. */
+.sb-presence-avatars {
+  position: absolute;
+  inset-inline-start: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  opacity: 1;
+  transition:
+    top 0.35s ease,
+    opacity 0.25s ease;
+}
+
+.sb-presence-avatars-pinned {
+  transition: opacity 0.25s ease;
+}
+
+/* `inset-inline-start: 50%` puts the element's end edge on the centre line in
+   a right-to-left reader, so it is nudged the other way to centre it. */
+.sb-bible-reader[dir="rtl"] .sb-presence-marker,
+.sb-bible-reader[dir="rtl"] .sb-presence-arrow,
+.sb-bible-reader[dir="rtl"] .sb-presence-avatars {
+  transform: translateX(50%);
+}
+
 @starting-style {
-  .sb-presence-marker {
+  .sb-presence-marker,
+  .sb-presence-arrow,
+  .sb-presence-avatars {
     opacity: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sb-presence-marker {
+  .sb-presence-marker,
+  .sb-presence-arrow,
+  .sb-presence-avatars {
     transition: none;
   }
 }
 
-.sb-presence-range {
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 50%;
-  width: 2px;
-  border-radius: 1px;
-  transform: translateX(-50%);
-  /* Softer than the avatar so several overlapping ranges stay readable. */
-  opacity: 0.55;
-}
-
 .sb-presence-avatar {
-  position: relative;
   display: flex;
   font-size: 0.625rem;
 }
 
+/* Later avatars sit in front of earlier ones; the page-coloured ring keeps
+   each one legible against the one behind it. */
+.sb-presence-avatar + .sb-presence-avatar,
+.sb-presence-avatars-more {
+  margin-top: calc(
+    var(--sb-presence-stack-step) - var(--sb-presence-avatar-size)
+  );
+}
+
 .sb-presence-avatar .sb-tab-user-icon {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: var(--sb-presence-avatar-size);
+  height: var(--sb-presence-avatar-size);
+  box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
+}
+
+.sb-presence-avatars-more {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--sb-presence-avatar-size);
+  height: var(--sb-presence-avatar-size);
+  padding: 0 0.1875rem;
+  border-radius: 62.4375rem;
+  background: color-mix(
+    in srgb,
+    var(--sb-font-color) 16%,
+    var(--sb-reader-background)
+  );
+  color: var(--sb-font-color);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
 }
 
 .sb-verse-number .material-symbols-outlined {

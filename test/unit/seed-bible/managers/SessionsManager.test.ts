@@ -2125,6 +2125,52 @@ describe("SessionsManager", () => {
     });
   });
 
+  // Somebody whose tab is in the background isn't looking at any verses, so
+  // peers shouldn't be shown a bar for them. They stay in the session at their
+  // chapter, and the bar comes back when the tab does.
+  it("withholds the verse range while the tab is hidden, and restores it when shown", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+    await flushPublishDebounce();
+
+    session.readingState.visibleVerseRange.value = { first: 3, last: 9 };
+    await flushRangePublishDebounce();
+    mockReadingPositionsMap.set.mockClear();
+
+    let visibilityState: DocumentVisibilityState = "hidden";
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => visibilityState,
+    });
+    try {
+      document.dispatchEvent(new Event("visibilitychange"));
+      // Promptly, on the navigation window, not the scroll one.
+      await flushPublishDebounce();
+      expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(
+        os.connectionId,
+        { bookId: "GEN", chapterNumber: 1 }
+      );
+
+      mockReadingPositionsMap.set.mockClear();
+      visibilityState = "visible";
+      document.dispatchEvent(new Event("visibilitychange"));
+      await flushPublishDebounce();
+      expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(
+        os.connectionId,
+        { bookId: "GEN", chapterNumber: 1, firstVerse: 3, lastVerse: 9 }
+      );
+    } finally {
+      delete (document as { visibilityState?: unknown }).visibilityState;
+      session.dispose();
+    }
+  });
+
   it("reports a peer's verse range with their position", async () => {
     const manager = createSessionsManager(
       os,

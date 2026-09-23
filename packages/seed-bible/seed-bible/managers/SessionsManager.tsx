@@ -790,8 +790,24 @@ async function createBibleReadingSession(
   // noticed.
   let publishedBookId: string | null = null;
   let publishedChapter = 0;
-  /** Set while a change waiting to go out was (or followed) a navigation. */
-  let pendingIsNavigation = false;
+  let publishedTabVisible = true;
+  /**
+   * Set while a change waiting to go out was (or followed) one that peers
+   * should see promptly: a navigation, or the tab going into or out of the
+   * background. A scroll on its own waits the longer window.
+   */
+  let pendingIsPrompt = false;
+  // Whether this tab is in the foreground. Somebody whose tab is hidden isn't
+  // looking at any verses, so their range is withheld while it is and peers
+  // drop their bar. The chapter-only entry is kept, so they stay a participant
+  // at their chapter rather than vanishing from the session.
+  const browserDocument =
+    typeof globalThis.document !== "undefined" ? globalThis.document : null;
+  const tabVisible = signal(browserDocument?.visibilityState !== "hidden");
+  const syncTabVisibility = () => {
+    tabVisible.value = browserDocument?.visibilityState !== "hidden";
+  };
+  browserDocument?.addEventListener("visibilitychange", syncTabVisibility);
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
   let applyingRemoteExtensions = false;
@@ -1193,7 +1209,9 @@ async function createBibleReadingSession(
     if (!bookId || chapterNumber <= 0) {
       return;
     }
-    const range = readingState.visibleVerseRange.value;
+    const range = tabVisible.value
+      ? readingState.visibleVerseRange.value
+      : null;
     const next: ParticipantReadingPosition = range
       ? {
           bookId,
@@ -1230,10 +1248,11 @@ async function createBibleReadingSession(
   //
   // A scroll gets the longer window: the visible verse range changes far more
   // often than the chapter does, and peers only need where the reader came to
-  // rest.
+  // rest. A navigation, or the tab being hidden or shown, gets the short one.
   const stopBroadcastLocalPosition = effect(() => {
     const bookId = readingState.bookId.value;
     const chapterNumber = readingState.chapterNumber.value;
+    const visible = tabVisible.value;
     void readingState.visibleVerseRange.value;
 
     // A navigation is always chased by range changes — the old chapter's
@@ -1243,8 +1262,12 @@ async function createBibleReadingSession(
     // run, those follow-ups re-armed the timer on the scroll window and a
     // chapter change reached peers at the scroll cadence instead of the
     // navigation one.
-    if (publishedBookId !== bookId || publishedChapter !== chapterNumber) {
-      pendingIsNavigation = true;
+    if (
+      publishedBookId !== bookId ||
+      publishedChapter !== chapterNumber ||
+      publishedTabVisible !== visible
+    ) {
+      pendingIsPrompt = true;
     }
     if (positionBroadcastTimer !== null) {
       clearTimeout(positionBroadcastTimer);
@@ -1252,12 +1275,13 @@ async function createBibleReadingSession(
     positionBroadcastTimer = setTimeout(
       () => {
         positionBroadcastTimer = null;
-        pendingIsNavigation = false;
+        pendingIsPrompt = false;
         publishedBookId = readingState.bookId.peek();
         publishedChapter = readingState.chapterNumber.peek();
+        publishedTabVisible = tabVisible.peek();
         broadcastLocalPosition();
       },
-      pendingIsNavigation ? PUBLISH_DEBOUNCE_MS : RANGE_PUBLISH_DEBOUNCE_MS
+      pendingIsPrompt ? PUBLISH_DEBOUNCE_MS : RANGE_PUBLISH_DEBOUNCE_MS
     );
   });
 
@@ -1749,6 +1773,7 @@ async function createBibleReadingSession(
       clearTimeout(positionBroadcastTimer);
       positionBroadcastTimer = null;
     }
+    browserDocument?.removeEventListener("visibilitychange", syncTabVisibility);
     // Drop our identity and position entries so peers' lookups for this
     // connection no longer resolve once we're gone.
     try {

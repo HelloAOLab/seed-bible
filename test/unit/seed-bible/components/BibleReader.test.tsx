@@ -2524,13 +2524,37 @@ describe("BibleReader", () => {
       // From the top of verse 1's first line to the bottom of verse 2's last.
       expect(marker.style.top).toBe("40px");
       expect(marker.style.height).toBe("54px");
+      expect(marker.style.background).toBe("rgb(10, 20, 30)");
+      // The avatar sits at the top of the bar.
+      const stack = container.querySelector(
+        ".sb-presence-avatars"
+      ) as HTMLElement;
+      expect(stack.style.top).toBe("40px");
       expect(
-        (marker.querySelector(".sb-presence-range") as HTMLElement).style
-          .background
-      ).toBe("rgb(10, 20, 30)");
-      expect(
-        marker.querySelector(".sb-tab-user-icon")?.getAttribute("title")
+        stack.querySelector(".sb-tab-user-icon")?.getAttribute("title")
       ).toBe("Mary");
+    });
+
+    // The gutter used to open only once somebody else arrived in the chapter,
+    // and grew a column per overlapping bar, so the scripture jumped sideways
+    // under the reader whenever a peer came, went, or caught up with another.
+    it("keeps a fixed gutter open for the whole session, even with nobody else in the chapter", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession([{ connectionId: "me", isSelf: true }], {}),
+        fixture
+      );
+
+      const content = container.querySelector(
+        ".sb-chapter-content-presence"
+      ) as HTMLElement;
+      expect(content).not.toBeNull();
+      expect(container.querySelector(".sb-presence-gutter")).not.toBeNull();
+      expect(container.querySelector(".sb-presence-marker")).toBeNull();
+      // Nothing per-bar is written to the content box, so its indent can't
+      // change with the number of people in it.
+      expect(content.getAttribute("style")).toBeNull();
     });
 
     // Two people on the same verses used to be drawn in the same 2px column,
@@ -2564,25 +2588,64 @@ describe("BibleReader", () => {
       );
 
       const lanes = [...container.querySelectorAll(".sb-presence-marker")].map(
-        (marker) => ({
-          who: marker.querySelector(".sb-tab-user-icon")?.getAttribute("title"),
-          lane: (marker as HTMLElement).style.getPropertyValue(
-            "--sb-presence-marker-lane"
-          ),
-        })
+        (marker) =>
+          (marker as HTMLElement).style.getPropertyValue(
+            "--sb-presence-lane-offset"
+          )
       );
 
-      // Both are on the same verses, so neither may be drawn over the other.
-      expect(lanes.map((entry) => entry.who).sort()).toEqual(["John", "Mary"]);
-      expect(new Set(lanes.map((entry) => entry.lane))).toEqual(
-        new Set(["0", "1"])
+      // Both are on the same verses, so neither may be drawn over the other:
+      // one on the centre line, the other beside it.
+      expect(lanes.sort()).toEqual(["0", "1"]);
+      // Their avatars would land on the same spot, so they share one stack.
+      expect(container.querySelectorAll(".sb-presence-avatars")).toHaveLength(
+        1
       );
-      // And the text steps aside far enough for both columns.
+      const stack = container.querySelector(
+        ".sb-presence-avatars"
+      ) as HTMLElement;
       expect(
-        (
-          container.querySelector(".sb-chapter-content-presence") as HTMLElement
-        ).style.getPropertyValue("--sb-presence-lanes")
-      ).toBe("2");
+        [...stack.querySelectorAll(".sb-tab-user-icon")]
+          .map((icon) => icon.getAttribute("title"))
+          .sort()
+      ).toEqual(["John", "Mary"]);
+      expect(stack.querySelector(".sb-presence-avatars-more")).toBeNull();
+    });
+
+    // The gutter has room for three bars. Anyone past that keeps their avatar
+    // in the stack but has no bar drawn, rather than the gutter growing and
+    // pushing the text over.
+    it("collapses a crowd on the same verses into three bars and a +N stack", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const crowd = ["ann", "bob", "cid", "dee", "eve"];
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            ...crowd.map((id) => ({ connectionId: id, name: id })),
+          ],
+          Object.fromEntries(
+            crowd.map((id) => [
+              id,
+              { bookId: "GEN", chapterNumber: 1, firstVerse: 1, lastVerse: 2 },
+            ])
+          )
+        ),
+        fixture
+      );
+
+      expect(container.querySelectorAll(".sb-presence-marker")).toHaveLength(3);
+      expect(container.querySelectorAll(".sb-presence-avatars")).toHaveLength(
+        1
+      );
+      const stack = container.querySelector(
+        ".sb-presence-avatars"
+      ) as HTMLElement;
+      expect(stack.querySelectorAll(".sb-tab-user-icon")).toHaveLength(3);
+      expect(
+        stack.querySelector(".sb-presence-avatars-more")?.textContent
+      ).toBe("+2");
     });
 
     // Bars that never overlap share the one lane, so a session spread through a
@@ -2619,16 +2682,15 @@ describe("BibleReader", () => {
       const lanes = [...container.querySelectorAll(".sb-presence-marker")].map(
         (marker) =>
           (marker as HTMLElement).style.getPropertyValue(
-            "--sb-presence-marker-lane"
+            "--sb-presence-lane-offset"
           )
       );
 
       expect(lanes).toEqual(["0", "0"]);
-      expect(
-        (
-          container.querySelector(".sb-chapter-content-presence") as HTMLElement
-        ).style.getPropertyValue("--sb-presence-lanes")
-      ).toBe("1");
+      // Far enough apart that each keeps their own avatar.
+      expect(container.querySelectorAll(".sb-presence-avatars")).toHaveLength(
+        2
+      );
     });
 
     it("never draws the reader's own position", () => {
@@ -2641,7 +2703,8 @@ describe("BibleReader", () => {
         fixture
       );
 
-      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+      expect(container.querySelector(".sb-presence-marker")).toBeNull();
+      expect(container.querySelector(".sb-presence-avatars")).toBeNull();
     });
 
     // A peer in another chapter has no verses on this page to point at.
@@ -2660,7 +2723,8 @@ describe("BibleReader", () => {
         fixture
       );
 
-      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+      expect(container.querySelector(".sb-presence-marker")).toBeNull();
+      expect(container.querySelector(".sb-presence-avatars")).toBeNull();
     });
 
     // Positions written before verse ranges existed carry the chapter only.
@@ -2674,7 +2738,177 @@ describe("BibleReader", () => {
         fixture
       );
 
-      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+      expect(container.querySelector(".sb-presence-marker")).toBeNull();
+      expect(container.querySelector(".sb-presence-avatars")).toBeNull();
+    });
+
+    // The avatar starts at the top of its owner's bar. Once that scrolls off
+    // the top of the screen the avatar is held there, following the reader for
+    // as long as the bar does, and arrows at both edges say the bar carries on
+    // past them.
+    it("pins a participant's avatar to the top of the screen while their verses run past it", () => {
+      // The reader is scrolled 200px into the content, and the screen is 300px
+      // tall. jsdom does no layout, so the boxes are stubbed per element. Line
+      // boxes are in screen coordinates: a long range, verse 1 at 40 and verse
+      // 2 way down at 600 within the content.
+      stubLineBoxes({ 1: 40 - 200, 2: 600 - 200 });
+      const rectSpy = vi
+        .spyOn(Element.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: Element) {
+          const rect = { left: 0, right: 100, width: 100, x: 0, toJSON() {} };
+          if (this === container) {
+            return {
+              ...rect,
+              top: 0,
+              bottom: 300,
+              height: 300,
+              y: 0,
+            } as DOMRect;
+          }
+          if (this.classList.contains("sb-chapter-content")) {
+            return {
+              ...rect,
+              top: -200,
+              bottom: 800,
+              height: 1000,
+              y: -200,
+            } as DOMRect;
+          }
+          return { ...rect, top: 0, bottom: 0, height: 0, y: 0 } as DOMRect;
+        });
+      // Makes the test container the scroller the gutter follows.
+      container.style.overflowY = "auto";
+      const rafSpy = vi
+        .spyOn(window, "requestAnimationFrame")
+        .mockImplementation((callback: FrameRequestCallback) => {
+          callback(0);
+          return 0;
+        });
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "peer", name: "Mary" },
+            ],
+            {
+              peer: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+        act(() => {
+          container.dispatchEvent(new Event("scroll"));
+        });
+
+        // The bar still spans the whole range...
+        const marker = container.querySelector(
+          ".sb-presence-marker"
+        ) as HTMLElement;
+        expect(marker.style.top).toBe("40px");
+        expect(marker.style.height).toBe("584px");
+
+        // ...but the avatar is held just inside the top of the screen (200px
+        // into the content), leaving room for the arrow above it.
+        const stack = container.querySelector(
+          ".sb-presence-avatars"
+        ) as HTMLElement;
+        expect(stack.classList.contains("sb-presence-avatars-pinned")).toBe(
+          true
+        );
+        expect(stack.style.top).toBe("214px");
+
+        // The bar runs off both edges of the screen (200px to 500px).
+        const arrows = [...container.querySelectorAll(".sb-presence-arrow")];
+        expect(
+          arrows.map((arrow) =>
+            arrow.classList.contains("sb-presence-arrow-up") ? "up" : "down"
+          )
+        ).toEqual(["up", "down"]);
+        expect((arrows[0] as HTMLElement).style.top).toBe("204px");
+        expect((arrows[1] as HTMLElement).style.top).toBe("490px");
+        expect(
+          (arrows[0] as HTMLElement).style.getPropertyValue(
+            "--sb-presence-arrow-color"
+          )
+        ).toBe("rgb(10, 20, 30)");
+      } finally {
+        rectSpy.mockRestore();
+        rafSpy.mockRestore();
+        container.style.overflowY = "";
+      }
+    });
+
+    it("lets a pinned avatar go at the bottom of its bar instead of leaving the verses", () => {
+      // Verse 1 at 40, verse 2 at 300 within the content: the bar ends at 324,
+      // and the screen starts 310px into the content, so there is no room to
+      // pin. Line boxes are stubbed in screen coordinates.
+      stubLineBoxes({ 1: 40 - 310, 2: 300 - 310 });
+      const rectSpy = vi
+        .spyOn(Element.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: Element) {
+          const rect = { left: 0, right: 100, width: 100, x: 0, toJSON() {} };
+          if (this === container) {
+            return {
+              ...rect,
+              top: 0,
+              bottom: 300,
+              height: 300,
+              y: 0,
+            } as DOMRect;
+          }
+          if (this.classList.contains("sb-chapter-content")) {
+            return {
+              ...rect,
+              top: -310,
+              bottom: 690,
+              height: 1000,
+              y: -310,
+            } as DOMRect;
+          }
+          return { ...rect, top: 0, bottom: 0, height: 0, y: 0 } as DOMRect;
+        });
+      container.style.overflowY = "auto";
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "peer", name: "Mary" },
+            ],
+            {
+              peer: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+
+        const stack = container.querySelector(
+          ".sb-presence-avatars"
+        ) as HTMLElement;
+        // Bar bottom (324) minus the avatar's own height (20).
+        expect(stack.style.top).toBe("304px");
+        expect(stack.classList.contains("sb-presence-avatars-pinned")).toBe(
+          false
+        );
+      } finally {
+        rectSpy.mockRestore();
+        container.style.overflowY = "";
+      }
     });
 
     it("draws no gutter outside a shared session", () => {
@@ -2723,11 +2957,11 @@ describe("BibleReader", () => {
         fixture
       );
 
-      const markers = container.querySelectorAll(".sb-presence-marker");
-      expect(markers).toHaveLength(1);
-      const marker = markers[0] as HTMLElement;
+      expect(container.querySelectorAll(".sb-presence-marker")).toHaveLength(1);
       expect(
-        marker.querySelector(".sb-tab-user-icon")?.getAttribute("title")
+        container
+          .querySelector(".sb-presence-avatars .sb-tab-user-icon")
+          ?.getAttribute("title")
       ).toBe("Mary");
     });
 
