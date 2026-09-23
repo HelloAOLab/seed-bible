@@ -28,8 +28,17 @@ import {
   type GeneratedPlaylist,
 } from "./AIManager";
 import type { DiscoverManager } from "./DiscoverManager";
-import { emphasizeVerses } from "./BibleReadingManager";
-import { BOOK_SLUGS, type BookId } from "./BibleDataManager";
+import {
+  emphasizeVerses,
+  getDefaultTranslationForLanguage,
+  uiLocaleForDefaultTranslation,
+} from "./BibleReadingManager";
+import { BOOK_SLUGS, getBookId, type BookId } from "./BibleDataManager";
+import {
+  buildReadingUrl,
+  DEFAULT_UI_LANGUAGE,
+  parseReadingPath,
+} from "./ReadingUrlPath";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
 
@@ -147,6 +156,34 @@ function isRecordedPlaylist(
 }
 export type PlaylistItemData = z.infer<typeof PlaylistItem>;
 export type VerseRef = z.infer<typeof VerseRefSchema>;
+
+/**
+ * The chapter a playlist share link should open on: the first scripture
+ * item whose book actually resolves. An unresolvable book is skipped so
+ * a later valid item can still set the path. Null when none resolve, so
+ * the share URL can keep the page the sharer is already on.
+ */
+function firstScriptureShareRef(playlist: Playlist): {
+  bookId: BookId;
+  chapter: number;
+  translationId?: string;
+} | null {
+  for (const item of playlist.items) {
+    if (item.type !== "bible-verse") {
+      continue;
+    }
+    const bookId = getBookId(item.ref.bookId);
+    if (!bookId) {
+      continue;
+    }
+    return {
+      bookId,
+      chapter: item.ref.chapter,
+      translationId: item.translationId,
+    };
+  }
+  return null;
+}
 
 /**
  * One verse or whole-chapter selection to collapse into playlist items.
@@ -1618,10 +1655,35 @@ export function createPlaylistManager(
   };
 
   /**
-   * Gets a shareable URL for the given playlist, which opens the app with that
+   * Gets a shareable URL for the given playlist. The path is the first
+   * resolvable scripture item's chapter so opening the link does not load
+   * the chapter the sharer happened to be reading and then jump to the playlist.
    */
   const getPlaylistUrl = (playlist: Playlist): string => {
-    const shareUrl = new URL(navigation.currentUrl.value);
+    const current = new URL(navigation.currentUrl.value);
+    const scripture = firstScriptureShareRef(playlist);
+
+    let shareUrl: URL;
+    if (scripture) {
+      const parsed = parseReadingPath(current.pathname, navigation.basePath);
+      const translationId =
+        scripture.translationId ??
+        parsed?.translationId ??
+        activeTab.peek()?.readingState.translationId.peek() ??
+        getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id;
+      shareUrl = buildReadingUrl({
+        currentUrl: current,
+        basePath: navigation.basePath,
+        translationId,
+        bookId: scripture.bookId,
+        chapter: scripture.chapter,
+        fallbackLanguage:
+          uiLocaleForDefaultTranslation(translationId) ?? undefined,
+      });
+    } else {
+      shareUrl = current;
+    }
+
     shareUrl.search = "";
     shareUrl.searchParams.set("playlist", getPlaylistLocator(playlist));
     return shareUrl.toString();

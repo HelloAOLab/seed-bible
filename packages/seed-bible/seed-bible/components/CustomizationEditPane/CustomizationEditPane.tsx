@@ -1,6 +1,11 @@
 import "../SettingsPage/SettingsPage.css";
+// `.searchbar`/`.search-icon`/`.filters-icon` are defined here rather than in
+// a shared stylesheet — imported explicitly rather than relying on
+// `BibleSelector.tsx` happening to already be in the bundle.
+import "../BibleSelector/BibleSelector.css";
 import { signal, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
+import { useMemo } from "preact/hooks";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import {
@@ -23,8 +28,15 @@ import {
   type ThemeFontFamilyKey,
 } from "../../managers/ThemeManager";
 import type { TutorialStep } from "../../managers/TutorialManager";
+import {
+  groupTranslationsByLanguage,
+  filterTranslationGroups,
+  type TranslationViewMode,
+} from "../../managers/translationGrouping";
+import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
+import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { useI18n } from "../../i18n/I18nManager";
-import { MaterialIcon } from "../icons";
+import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import type {
   ExtensionListEntry,
@@ -35,9 +47,12 @@ import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
 import {
+  closeContextMenus,
   ContextMenuItem,
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
+import { TranslationList } from "../TranslationList/TranslationList";
+import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
 
 // The picture editor pulls in `react-avatar-editor`, so it's only fetched on
 // the "Upload logo" click rather than at boot, same as SettingsPage does.
@@ -500,7 +515,7 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
 
 function CustomizationEditMainView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { customizations } = state;
+  const { customizations, bibleData } = state;
   const { t } = useI18n();
   const confirmingDelete = useSignal(false);
   const isUploadingLogo = useSignal(false);
@@ -574,6 +589,27 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
     );
   }
 
+  // The saved id can be absent from the catalog — a translation later
+  // removed, or simply the brief window before `availableTranslations` has
+  // loaded — in which case there's nothing to name it by except the raw id.
+  const defaultTranslationLabel = (() => {
+    if (!record.defaultTranslationId) {
+      return t("customization-default-translation-none", {
+        defaultValue: "Seed Bible's default",
+      });
+    }
+    const translation = bibleData.availableTranslations.value.find(
+      (t) => t.id === record.defaultTranslationId
+    );
+    if (translation) {
+      return `${translation.name} (${translation.shortName})`;
+    }
+    return t("customization-default-translation-unavailable", {
+      id: record.defaultTranslationId,
+      defaultValue: "{{id}} (unavailable)",
+    });
+  })();
+
   return (
     <div className="sb-settings-page">
       <section className="sb-settings-section">
@@ -594,6 +630,29 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
             }}
           />
         </div>
+
+        <ContextMenuWithButton
+          type="button"
+          buttonClassName="sb-settings-nav-item"
+          menuClassName="sb-customization-translation-picker-menu"
+          icon={
+            <>
+              <span className="sb-settings-nav-label">
+                {t("customization-default-translation", {
+                  defaultValue: "Default translation",
+                })}
+              </span>
+              <span className="sb-settings-nav-value">
+                {defaultTranslationLabel}
+              </span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
+            </>
+          }
+        >
+          <DefaultTranslationPickerMenuContent state={state} />
+        </ContextMenuWithButton>
 
         <div
           className="sb-settings-field-row"
@@ -957,6 +1016,202 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
           ))
         )}
       </section>
+    </div>
+  );
+}
+
+/** How many more language groups each "load more" reveals. */
+const TRANSLATION_PAGE_SIZE = 50;
+
+/**
+ * Popover body for picking a customization's default translation — reuses
+ * the same searchable, grouped-by-language `TranslationList` the reader's
+ * own translation picker and the Compare pane use, so translations are
+ * searched and grouped identically everywhere. Local-only
+ * search/view-mode/page-size state, deliberately not shared with the
+ * reader's own picker: this pane has no "current reader" preference to
+ * speak for, just this one customization's setting. Single-select — picking
+ * a translation (or "Seed Bible's default") applies it immediately and
+ * closes the popover, unlike the Compare pane's multi-select picker which
+ * needs an explicit "Done".
+ */
+function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { customizations, bibleData } = state;
+  const { t, language: uiLanguage } = useI18n();
+  const query = useSignal("");
+  const viewMode = useSignal<TranslationViewMode>("complete");
+  const limit = useSignal(TRANSLATION_PAGE_SIZE);
+  const showFilters = useSignal(false);
+
+  const record = customizations.editingCustomization.value;
+  const translations = bibleData.availableTranslations.value;
+  const selectedTranslation = record?.defaultTranslationId
+    ? (translations.find((tr) => tr.id === record.defaultTranslationId) ?? null)
+    : null;
+
+  // Memoized so a keystroke in search (or an unrelated re-render) doesn't
+  // redo the grouping/filtering pass over the whole catalog every time.
+  const allGroups = useMemo(
+    () => groupTranslationsByLanguage(translations),
+    [translations]
+  );
+  const { groups, totalMatching } = useMemo(() => {
+    // The UI language's own translations are the ones most viewers of this
+    // customization are likely to want, so they sort to the top by default
+    // — unless a translation in a different language is already selected,
+    // in which case that one leads (it's the current pick, and always
+    // outranks `priorityLanguages` inside `filterTranslationGroups`) with
+    // the UI language's group right behind it, rather than buried
+    // alphabetically. Passed straight into `filterTranslationGroups` so the
+    // priority sort runs *before* the list is cut down to `limit` — sorting
+    // an already-sliced page can't recover a language that didn't make the
+    // cut in the first place.
+    const uiBibleLanguages = UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage] ?? [];
+
+    return filterTranslationGroups({
+      groups: allGroups,
+      query: query.value,
+      viewMode: viewMode.value,
+      limit: limit.value,
+      selectedTranslation,
+      priorityLanguages: uiBibleLanguages,
+    });
+  }, [
+    allGroups,
+    query.value,
+    viewMode.value,
+    limit.value,
+    selectedTranslation,
+    uiLanguage,
+  ]);
+
+  if (!record) {
+    return (
+      <div className="sb-settings-empty-state">
+        <p>
+          {t("customization-not-found", {
+            defaultValue: "This customization could not be found.",
+          })}
+        </p>
+      </div>
+    );
+  }
+
+  const pick = (translation: Translation | null) => {
+    customizations.updateEditingDefaultTranslationId(translation?.id ?? null);
+    closeContextMenus();
+  };
+
+  return (
+    <div
+      className="sb-customization-translation-picker"
+      // Arrow keys and Home/End are handled by the popover's own
+      // vertical-list keyboard nav (`ContextMenu.tsx`), which would
+      // otherwise hijack them from the search input below (e.g. Home/End
+      // moving DOM focus to the first/last translation row instead of the
+      // text cursor).
+      onKeyDown={(event) => {
+        if (
+          event.key === "ArrowUp" ||
+          event.key === "ArrowDown" ||
+          event.key === "Home" ||
+          event.key === "End"
+        ) {
+          event.stopPropagation();
+        }
+      }}
+    >
+      <div className="searchbar flex-align-center">
+        <span className="material-symbols-outlined search-icon">search</span>
+        <input
+          type="search"
+          className="flex-1"
+          value={query.value}
+          dir="auto"
+          placeholder={t("search-translation", {
+            defaultValue: "Search translations...",
+          })}
+          aria-label={t("search-translation", {
+            defaultValue: "Search translations...",
+          })}
+          onInput={(event: Event) => {
+            query.value = (event.currentTarget as HTMLInputElement).value;
+          }}
+        />
+        <button
+          type="button"
+          className="filters-icon"
+          // `.filters-icon` (BibleSelector.css) styles a bare `<span>` in
+          // the reader's own picker, so it doesn't reset a real button's
+          // native border — do that here instead of copying the `<span>`
+          // (which would lose keyboard/focus semantics `<button>` gets for
+          // free).
+          style={{ border: "none" }}
+          aria-label={t("filter-translations", {
+            defaultValue: "Filter translations",
+          })}
+          title={t("filter-translations", {
+            defaultValue: "Filter translations",
+          })}
+          aria-expanded={showFilters.value}
+          onClick={() => {
+            showFilters.value = !showFilters.value;
+          }}
+        >
+          <FiltersIcon />
+        </button>
+      </div>
+      {showFilters.value && (
+        <TranslationViewModeMenu
+          viewMode={viewMode.value}
+          onChange={(mode) => {
+            viewMode.value = mode;
+            showFilters.value = false;
+            // A narrower or wider catalog is a different list; start it
+            // from the first page rather than mid-way through the old one.
+            limit.value = TRANSLATION_PAGE_SIZE;
+          }}
+        />
+      )}
+
+      <TranslationList
+        groups={groups}
+        query={query.value}
+        viewMode={viewMode.value}
+        selectedTranslationIds={
+          record.defaultTranslationId ? [record.defaultTranslationId] : []
+        }
+        expandedLanguage={selectedTranslation?.language?.toLowerCase() ?? null}
+        onPick={pick}
+        onShowAllTranslations={() => {
+          viewMode.value = "all";
+        }}
+        canLoadMore={limit.value < totalMatching}
+        totalGroupCount={totalMatching}
+        onLoadMore={() => {
+          limit.value += TRANSLATION_PAGE_SIZE;
+        }}
+        leadingItem={
+          <div
+            className="translation-option flex-between-center-gap-md"
+            onClick={() => pick(null)}
+          >
+            <span className="translation-title inline-flex-start-center-gap-sm">
+              {record.defaultTranslationId ? (
+                <span className="emptyCircle" aria-hidden="true" />
+              ) : (
+                <TickIcon height={15} width={15} />
+              )}
+              <span className="translation-description">
+                {t("customization-default-translation-none", {
+                  defaultValue: "Seed Bible's default",
+                })}
+              </span>
+            </span>
+          </div>
+        }
+      />
     </div>
   );
 }

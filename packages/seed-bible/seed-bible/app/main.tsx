@@ -197,9 +197,11 @@ function MainBody({
   // size, toolbar customization, disablePanels, theme, etc. Apply the
   // device's real saved config once, right after mount —
   // `SettingsManager`'s own effect() already re-derives `settings` whenever
-  // `login.localConfig` changes, so no change is needed there.
+  // `login.localConfig` changes, so no change is needed there. The device's
+  // color scheme is deferred the same way: the server always renders Light.
   useEffect(() => {
     state.login.hydrateLocalConfig();
+    state.theme.hydrateSystemColorScheme();
   }, []);
 
   // Deferred real read, same reason as the two above: saved tabs and their slot
