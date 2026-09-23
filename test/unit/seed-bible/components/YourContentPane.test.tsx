@@ -10,6 +10,12 @@ import type { StoredHighlight } from "@packages/seed-bible/seed-bible/managers/H
 import type { Save } from "@packages/seed-bible/seed-bible/managers/SavesManager";
 import type { Playlist } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { ContentLoadStatus } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
+import {
+  createReadingPlan,
+  createReadingPlanProgress,
+  type ReadingPlan,
+  type ReadingPlanProgress,
+} from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -65,6 +71,57 @@ function playlist(id: string, title: string, items = 3): Playlist {
   } as unknown as Playlist;
 }
 
+const PLAN_CREATED_MS = 1761868800000;
+
+/**
+ * A plan of the user's own, one chapter to read per session. Built with the
+ * real factory so it is a plan the calendar maths accept.
+ */
+function readingPlan(
+  address: string,
+  title: string | null,
+  options: {
+    status?: "draft" | "complete";
+    sessions?: number;
+    description?: string | null;
+    createdAtMs?: number;
+  } = {}
+): ReadingPlan {
+  return createReadingPlan(
+    "user-1",
+    "user-1",
+    address,
+    options.createdAtMs ?? PLAN_CREATED_MS,
+    {
+      title,
+      description: options.description ?? null,
+      status: options.status,
+      sessions: Array.from({ length: options.sessions ?? 0 }, (_, i) => ({
+        id: `${address}-session-${i + 1}`,
+        readings: [
+          {
+            id: `${address}-reading-${i + 1}`,
+            item: {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: i + 1 },
+            },
+          },
+        ],
+      })),
+    }
+  );
+}
+
+/** Progress for a plan the user started the day it was made and has not read from. */
+function startedProgress(plan: ReadingPlan): ReadingPlanProgress {
+  return createReadingPlanProgress(
+    plan,
+    "user-1",
+    `${plan.address}-progress`,
+    PLAN_CREATED_MS
+  );
+}
+
 interface StateOptions {
   annotations?: Annotation[];
   highlights?: StoredHighlight[];
@@ -77,6 +134,13 @@ interface StateOptions {
   status?: ContentLoadStatus;
   /** Makes the server delete fail, so the optimistic removal has to roll back. */
   deleteError?: Error;
+  /** Full plans; the screen reads them as the list and as the loaded plans. */
+  readingPlans?: ReadingPlan[];
+  readingPlanProgresses?: ReadingPlanProgress[];
+  /** The reading-plans feature flag. On unless a test turns it off. */
+  plansEnabled?: boolean;
+  /** Makes deleting a plan fail, so the screen has to say so. */
+  deleteReadingPlanError?: Error;
 }
 
 function createState(options: StateOptions = {}) {
@@ -103,6 +167,13 @@ function createState(options: StateOptions = {}) {
       throw options.deleteError;
     }
   });
+  const deleteReadingPlan = vi.fn(async (_plan: unknown) => {
+    if (options.deleteReadingPlanError) {
+      throw options.deleteReadingPlanError;
+    }
+  });
+  const openModal = vi.fn();
+  const toast = vi.fn();
   const query = signal("");
   const filter = signal("all");
 
@@ -137,9 +208,18 @@ function createState(options: StateOptions = {}) {
       getPlaylistUrl: vi.fn(() => "https://example.com/playlist"),
       deletePlaylist: vi.fn(async () => {}),
     },
-    modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    app: { toast: vi.fn() },
+    modals: { openModal, closeModal: vi.fn() },
+    app: { toast },
     annotations: { deleteAnnotationAndRefresh },
+    features: {
+      isFeatureEnabled: () => signal(options.plansEnabled ?? true),
+    },
+    readingPlans: {
+      userReadingPlans: signal(options.readingPlans ?? []),
+      fullReadingPlans: signal(options.readingPlans ?? []),
+      userReadingPlanProgresses: signal(options.readingPlanProgresses ?? []),
+      deleteReadingPlan,
+    },
     today: {
       bookNames: signal(
         new Map([
@@ -167,6 +247,9 @@ function createState(options: StateOptions = {}) {
     removeAnnotation,
     restoreAnnotation,
     deleteAnnotationAndRefresh,
+    deleteReadingPlan,
+    openModal,
+    toast,
     query,
     filter,
   };
@@ -178,6 +261,8 @@ describe("YourContentPane", () => {
   let onPlayPlaylist: Mock<(playlist: unknown) => void>;
   let onEditPlaylist: Mock<(playlist: unknown) => void>;
   let onEditAnnotation: Mock<(annotation: unknown) => void>;
+  let onOpenReadingPlan: Mock<(plan: unknown) => void>;
+  let onEditReadingPlan: Mock<(plan: unknown) => void>;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -186,6 +271,8 @@ describe("YourContentPane", () => {
     onPlayPlaylist = vi.fn((_playlist: unknown) => {});
     onEditPlaylist = vi.fn((_playlist: unknown) => {});
     onEditAnnotation = vi.fn((_annotation: unknown) => {});
+    onOpenReadingPlan = vi.fn((_plan: unknown) => {});
+    onEditReadingPlan = vi.fn((_plan: unknown) => {});
   });
 
   afterEach(() => {
@@ -202,6 +289,8 @@ describe("YourContentPane", () => {
           onPlayPlaylist={onPlayPlaylist}
           onEditPlaylist={onEditPlaylist}
           onEditAnnotation={onEditAnnotation}
+          onOpenReadingPlan={onOpenReadingPlan}
+          onEditReadingPlan={onEditReadingPlan}
         />,
         container
       );
@@ -230,6 +319,7 @@ describe("YourContentPane", () => {
       highlights: [highlight("JHN")],
       saves: [save("b1")],
       playlists: [playlist("p1", "Morning devotions")],
+      readingPlans: [readingPlan("plan-1", "Psalms in a month")],
     });
     renderPane(state);
 
@@ -238,6 +328,7 @@ describe("YourContentPane", () => {
       "Highlights",
       "Saves",
       "Playlists",
+      "Reading plans",
     ]);
   });
 
@@ -778,6 +869,240 @@ describe("YourContentPane", () => {
 
     expect(onEditAnnotation).toHaveBeenCalledWith(target);
   });
+
+  /**
+   * Reading plans (issue #1798) sit beside playlists and read the same way: a
+   * Discover row that opens the plan, with a menu for edit and delete.
+   */
+  describe("reading plans", () => {
+    const planRows = () =>
+      Array.from(container.querySelectorAll<HTMLElement>(".sb-content-plan"));
+    const planTitles = () =>
+      planRows().map(
+        (row) => row.querySelector(".sb-discover-item-title")?.textContent
+      );
+    const planStatuses = () =>
+      planRows().map(
+        (row) =>
+          row.querySelector(".sb-content-plan-status")?.textContent ?? null
+      );
+
+    const openPlanMenu = () => {
+      const trigger = container.querySelector<HTMLButtonElement>(
+        ".sb-content-plan .sb-discover-item-menu"
+      );
+      if (!trigger) throw new Error("The plan options button did not render.");
+      act(() => {
+        trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    };
+
+    const clickMenuItem = (label: string) => {
+      const item = menuItems().find((el) => el.textContent?.includes(label));
+      if (!item) throw new Error(`${label} was not in the options menu.`);
+      act(() => {
+        item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    };
+
+    it("lists the user's plans newest first, with where each one is up to", () => {
+      const older = readingPlan("plan-1", "Psalms in a month", {
+        createdAtMs: PLAN_CREATED_MS - 1000,
+      });
+      const draft = readingPlan("plan-2", "Gospels", { status: "draft" });
+      const { state } = createState({ readingPlans: [older, draft] });
+      renderPane(state);
+
+      expect(sectionTitles()).toEqual(["Reading plans"]);
+      expect(planTitles()).toEqual(["Gospels", "Psalms in a month"]);
+      expect(planStatuses()).toEqual(["Draft", "Not started"]);
+    });
+
+    it("shows how far along a started plan is", () => {
+      const plan = readingPlan("plan-1", "Genesis", { sessions: 3 });
+      const { state } = createState({
+        readingPlans: [plan],
+        readingPlanProgresses: [startedProgress(plan)],
+      });
+      renderPane(state);
+
+      expect(planStatuses()).toEqual(["Day 1 of 3"]);
+    });
+
+    it("names an untitled plan", () => {
+      const { state } = createState({
+        readingPlans: [readingPlan("plan-1", null)],
+      });
+      renderPane(state);
+
+      expect(planTitles()).toEqual(["Untitled plan"]);
+    });
+
+    it("opens a plan from its row", () => {
+      const plan = readingPlan("plan-1", "Genesis");
+      const { state } = createState({ readingPlans: [plan] });
+      renderPane(state);
+
+      act(() => {
+        planRows()[0]!.click();
+      });
+
+      expect(onOpenReadingPlan).toHaveBeenCalledWith(plan);
+    });
+
+    it("edits a plan from its options menu, without also opening it", () => {
+      const plan = readingPlan("plan-1", "Genesis");
+      const { state } = createState({ readingPlans: [plan] });
+      renderPane(state);
+      openPlanMenu();
+      clickMenuItem("Edit plan");
+
+      expect(onEditReadingPlan).toHaveBeenCalledWith(plan);
+      expect(onOpenReadingPlan).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Renders the confirmation the modal host would show for the last modal
+     * opened. Returns the element to click through and a way to clean it up.
+     */
+    const renderLastModal = (openModal: Mock) => {
+      const registration = openModal.mock.calls.at(-1)![0] as {
+        content: () => Parameters<typeof render>[0];
+      };
+      const host = document.createElement("div");
+      document.body.appendChild(host);
+      act(() => {
+        render(registration.content(), host);
+      });
+      return {
+        host,
+        cleanup: () => {
+          render(null, host);
+          host.remove();
+        },
+      };
+    };
+
+    // Deleting erases the plan and the user's progress through it for good,
+    // so the menu item alone must not be enough.
+    it("asks before deleting a plan, then deletes it", async () => {
+      const plan = readingPlan("plan-1", "Genesis");
+      const { state, openModal, deleteReadingPlan } = createState({
+        readingPlans: [plan],
+      });
+      renderPane(state);
+      openPlanMenu();
+      clickMenuItem("Delete");
+
+      expect(deleteReadingPlan).not.toHaveBeenCalled();
+      expect(openModal).toHaveBeenCalledTimes(1);
+
+      const modal = renderLastModal(openModal);
+      expect(modal.host.textContent).toContain('Delete "Genesis"?');
+      act(() => {
+        modal.host
+          .querySelector<HTMLButtonElement>(".sb-session-settings-end")!
+          .click();
+      });
+
+      await vi.waitFor(() => {
+        expect(deleteReadingPlan).toHaveBeenCalledWith(plan);
+      });
+      modal.cleanup();
+    });
+
+    it("says so when a plan could not be deleted", async () => {
+      const plan = readingPlan("plan-1", "Genesis");
+      const { state, openModal, toast } = createState({
+        readingPlans: [plan],
+        deleteReadingPlanError: new Error("nope"),
+      });
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      renderPane(state);
+      openPlanMenu();
+      clickMenuItem("Delete");
+
+      const modal = renderLastModal(openModal);
+      act(() => {
+        modal.host
+          .querySelector<HTMLButtonElement>(".sb-session-settings-end")!
+          .click();
+      });
+
+      await vi.waitFor(() => {
+        expect(toast).toHaveBeenCalledWith("Couldn't delete the reading plan.");
+      });
+      modal.cleanup();
+      consoleError.mockRestore();
+    });
+
+    it("finds a plan by its title or description", () => {
+      const { state, query } = createState({
+        readingPlans: [
+          readingPlan("plan-1", "Genesis", { description: "the beginning" }),
+          readingPlan("plan-2", "Psalms"),
+        ],
+      });
+      renderPane(state);
+
+      act(() => {
+        query.value = "beginning";
+      });
+
+      expect(planTitles()).toEqual(["Genesis"]);
+    });
+
+    it("previews only the first few plans until See all", () => {
+      const { state, filter } = createState({
+        readingPlans: ["a", "b", "c", "d"].map((n) =>
+          readingPlan(`plan-${n}`, `Plan ${n}`)
+        ),
+      });
+      renderPane(state);
+
+      expect(planRows()).toHaveLength(3);
+
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-content-see-all")!
+          .click();
+      });
+
+      expect(filter.value).toBe("reading-plans");
+      expect(planRows()).toHaveLength(4);
+    });
+
+    it("says the plans section is empty when that chip is chosen", () => {
+      const { state, filter } = createState({ saves: [save("b1")] });
+      renderPane(state);
+
+      act(() => {
+        filter.value = "reading-plans";
+      });
+
+      expect(
+        container.querySelector(".sb-content-status")?.textContent
+      ).toContain("Reading plans you create will show up here.");
+    });
+
+    // With the flag off nobody can make a plan, so a chip and a section for
+    // them would only ever be empty.
+    it("leaves reading plans out entirely while the feature is off", () => {
+      const { state } = createState({
+        readingPlans: [readingPlan("plan-1", "Genesis")],
+        plansEnabled: false,
+      });
+      renderPane(state);
+
+      const chips = Array.from(
+        container.querySelectorAll(".sb-content-chip")
+      ).map((chip) => chip.textContent);
+      expect(chips).not.toContain("Reading plans");
+      expect(sectionTitles()).toEqual([]);
+    });
+  });
 });
 
 /**
@@ -810,6 +1135,8 @@ describe("YourContentPane save options", () => {
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
+          onOpenReadingPlan={vi.fn()}
+          onEditReadingPlan={vi.fn()}
         />,
         container
       );
@@ -877,6 +1204,8 @@ describe("YourContentPane save options", () => {
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
+          onOpenReadingPlan={vi.fn()}
+          onEditReadingPlan={vi.fn()}
         />,
         container
       );
@@ -916,6 +1245,8 @@ describe("YourContentPane clearing a highlight", () => {
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
+          onOpenReadingPlan={vi.fn()}
+          onEditReadingPlan={vi.fn()}
         />,
         container
       );
@@ -992,6 +1323,8 @@ describe("YourContentPane clearing a highlight", () => {
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
+          onOpenReadingPlan={vi.fn()}
+          onEditReadingPlan={vi.fn()}
         />,
         container
       );

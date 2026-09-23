@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Show the reading plans you've created on the "Your content" screen, with a Reading plans chip to see just those, alongside your notes, highlights, saves and playlists. ([#1798](https://github.com/HelloAOLab/seed-bible/issues/1798))
+  - Each plan shows where you're up to, and tapping it opens the plan; its menu offers Edit and Delete.
 - Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
 
 ### 🔧 Changed

@@ -6,7 +6,17 @@ import { annotationVerseNumbers } from "../../managers/AnnotationsManager";
 import type { StoredHighlight } from "../../managers/HighlightsManager";
 import type { Save } from "../../managers/SavesManager";
 import type { Playlist } from "../../managers/PlaylistManager";
+import type { ModalManager } from "../../managers/ModalManager";
 import type { TodayPassageTarget } from "../../managers/TodayManager";
+import {
+  formatReadingPlanId,
+  getReadingCalendar,
+  latestReadingPlanProgress,
+  summarizeCalendar,
+  type ReadingPlanMetadata,
+  type ReadingPlansManager,
+} from "../../managers/ReadingPlansManager";
+import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
 import {
   CONTENT_FILTERS,
   annotationPlainText,
@@ -15,6 +25,7 @@ import {
 } from "../../managers/YourContentManager";
 import { AnnotationPreview } from "../DiscoverPane/AnnotationsSection";
 import { PlaylistRow } from "../DiscoverPane/PlaylistRow";
+import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import { openSaveModalForLocation } from "../Tabs/Tabs";
 import {
   ContextMenuItem,
@@ -39,6 +50,14 @@ export interface YourContentScreenProps {
   onEditPlaylist: (playlist: Playlist) => void;
   /** Opens an annotation in the editor and leaves this screen. */
   onEditAnnotation: (annotation: Annotation) => void;
+  /**
+   * Opens a reading plan in the plans pane and leaves this screen. A draft
+   * has nothing to read yet, so the caller is expected to open it where the
+   * author left off — the editor — rather than the detail view.
+   */
+  onOpenReadingPlan: (plan: ReadingPlanMetadata) => void;
+  /** Opens a reading plan in the plan editor and leaves this screen. */
+  onEditReadingPlan: (plan: ReadingPlanMetadata) => void;
 }
 
 /** Pane header title. A component so it can call `useI18n`. */
@@ -392,20 +411,232 @@ function SavePill(props: {
   );
 }
 
+function ReadingPlanRow(props: {
+  state: SeedBibleState;
+  plan: ReadingPlanMetadata;
+  onOpen: () => void;
+  onEdit: () => void;
+}) {
+  const { state, plan } = props;
+  const { t } = useI18n();
+  const status = readingPlanStatusLabel(state.readingPlans, plan, t);
+  const title =
+    plan.title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" });
+
+  return (
+    // Laid out as a Discover row, like the playlists beside it, so a plan
+    // reads the same way a playlist does on this screen.
+    <li
+      className="sb-discover-item sb-discover-item--row sb-content-plan"
+      dir="auto"
+      onClick={props.onOpen}
+    >
+      <HeroImageThumb url={plan.heroImageUrl} />
+      <div className="sb-discover-item-main">
+        <span className="sb-discover-item-title">{title}</span>
+        {status ? (
+          <span className="sb-content-plan-status">{status}</span>
+        ) : null}
+      </div>
+      <ContextMenuWithButton
+        buttonClassName="sb-discover-item-menu"
+        aria-label={t("reading-plan-options", { defaultValue: "Plan options" })}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ContextMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            props.onEdit();
+          }}
+        >
+          <MaterialIcon className="sb-context-menu-item-icon">
+            edit
+          </MaterialIcon>
+          {t("edit-reading-plan", { defaultValue: "Edit plan" })}
+        </ContextMenuItem>
+        <ContextMenuItem
+          className="sb-context-menu-item--danger"
+          onClick={(e) => {
+            e.stopPropagation();
+            openDeleteReadingPlanConfirm(
+              state.modals,
+              state.readingPlans,
+              plan,
+              title,
+              state.app.toast
+            );
+          }}
+        >
+          <MaterialIcon className="sb-context-menu-item-icon">
+            delete
+          </MaterialIcon>
+          {t("reading-plan-delete", { defaultValue: "Delete" })}
+        </ContextMenuItem>
+      </ContextMenuWithButton>
+    </li>
+  );
+}
+
+/**
+ * Where the user is with a plan, in a few words: "Draft" for one still being
+ * written, "Not started" for one never begun, "Day 3 of 10" (or "2/5
+ * sessions" for a self-paced read) while it is under way, and "Completed"
+ * once every day is done.
+ *
+ * Progress is worked out from the full plan, which loads a moment after the
+ * list. Until it has, a started plan has no status rather than a wrong one.
+ */
+function readingPlanStatusLabel(
+  readingPlans: ReadingPlansManager,
+  plan: ReadingPlanMetadata,
+  t: ReturnType<typeof useI18n>["t"]
+): string | null {
+  if (plan.status === "draft") {
+    return t("reading-plan-draft", { defaultValue: "Draft" });
+  }
+  const planId = formatReadingPlanId(plan.recordName, plan.address);
+  const progress = latestReadingPlanProgress(
+    readingPlans.userReadingPlanProgresses.value,
+    planId
+  );
+  if (!progress) {
+    return t("reading-plan-not-started", { defaultValue: "Not started" });
+  }
+  const full = readingPlans.fullReadingPlans.value.find(
+    (p) => p.recordName === plan.recordName && p.address === plan.address
+  );
+  if (!full) {
+    return null;
+  }
+  const nowMs = Date.now();
+  const summary = summarizeCalendar(
+    getReadingCalendar(full, progress, nowMs),
+    nowMs,
+    progress.timeZone
+  );
+  if (summary.totalDays > 0 && summary.doneDays === summary.totalDays) {
+    return t("reading-plan-completed", { defaultValue: "Completed" });
+  }
+  if (progress.selfPaced) {
+    return t("reading-plan-progress-sessions", {
+      defaultValue: "{{done}}/{{total}} sessions",
+      done: summary.doneDays,
+      total: summary.totalDays,
+    });
+  }
+  return t("plan-day-of", {
+    defaultValue: "Day {{day}} of {{total}}",
+    day: summary.nextDayNumber ?? summary.doneDays + 1,
+    total: summary.totalDays,
+  });
+}
+
+function ConfirmDeleteReadingPlanModalContent(props: {
+  readingPlans: ReadingPlansManager;
+  plan: ReadingPlanMetadata;
+  title: string;
+  toast: SeedBibleState["app"]["toast"];
+  onClose: () => void;
+}) {
+  const { readingPlans, plan, title, toast, onClose } = props;
+  const { t } = useI18n();
+
+  const confirm = async () => {
+    try {
+      await readingPlans.deleteReadingPlan(plan);
+    } catch (error) {
+      console.error("Error deleting reading plan:", error);
+      toast(
+        t("delete-reading-plan-failed", {
+          defaultValue: "Couldn't delete the reading plan.",
+        })
+      );
+    }
+    onClose();
+  };
+
+  return (
+    <div className="sb-confirm-delete">
+      <p className="sb-confirm-delete-message">
+        {t("delete-reading-plan-confirm-message", {
+          title,
+          defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
+        })}
+      </p>
+      <div className="sb-confirm-delete-actions">
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={onClose}
+        >
+          {t("cancel")}
+        </button>
+        <button
+          type="button"
+          className="sb-session-settings-end"
+          onClick={() => void confirm()}
+        >
+          {t("delete")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Asks before deleting a plan, the way the playlist row on this screen does.
+ * Deleting erases the plan and the user's progress through it for good, so a
+ * tap that was meant to open the menu must not be enough on its own.
+ */
+function openDeleteReadingPlanConfirm(
+  modals: ModalManager,
+  readingPlans: ReadingPlansManager,
+  plan: ReadingPlanMetadata,
+  title: string,
+  toast: SeedBibleState["app"]["toast"]
+) {
+  const modalId = `delete-reading-plan-confirm-${plan.address}`;
+  modals.openModal({
+    id: modalId,
+    title: {
+      key: "delete-reading-plan-confirm-title",
+      defaultValue: "Delete reading plan?",
+    },
+    content: () => (
+      <ConfirmDeleteReadingPlanModalContent
+        readingPlans={readingPlans}
+        plan={plan}
+        title={title}
+        toast={toast}
+        onClose={() => modals.closeModal(modalId)}
+      />
+    ),
+  });
+}
+
 /* ------------------------------------------------------------------ screen */
 
 /**
  * The "Your content" screen (issue #1553): everything the reader has made —
- * annotations, highlights, saves and playlists — in one place, filtered
- * by a search box and a row of chips.
+ * annotations, highlights, saves, playlists and reading plans — in one place,
+ * filtered by a search box and a row of chips.
  *
  * "All" shows the first few of each section with a "See all" that switches
  * the chips to that one section in full.
  */
 export function YourContentPane(props: YourContentScreenProps) {
   const { state, onOpenPassage } = props;
-  const { yourContent, saves, playlists, annotations } = state;
+  const { yourContent, saves, playlists, annotations, readingPlans } = state;
   const { t } = useI18n();
+
+  // Reading plans are still behind a feature flag. With it off the user can't
+  // make one, so the chip and the section go too rather than sitting empty.
+  const plansEnabled = state.features.isFeatureEnabled(
+    FEATURE_KEY_READING_PLANS
+  ).value;
+  const contentFilters = plansEnabled
+    ? CONTENT_FILTERS
+    : CONTENT_FILTERS.filter((value) => value !== "reading-plans");
 
   // Every open refreshes, so a verse highlighted or annotated in the reader
   // since the last visit shows up. It's quiet when content is already
@@ -485,6 +716,13 @@ export function YourContentPane(props: YourContentScreenProps) {
   const visiblePlaylists = playlists.userPlaylists.value.filter((p) =>
     matches(p.title, p.description)
   );
+  // Newest first, like annotations. The list arrives in record order, which
+  // is no order a reader would recognise.
+  const visibleReadingPlans = plansEnabled
+    ? readingPlans.userReadingPlans.value
+        .filter((p) => matches(p.title, p.description))
+        .sort((a, b) => b.createdAtMs - a.createdAtMs)
+    : [];
 
   const showing = (section: ContentFilter) =>
     filter === "all" || filter === section;
@@ -510,6 +748,8 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("saves", { defaultValue: "Saves" });
       case "playlists":
         return t("playlists", { defaultValue: "Playlists" });
+      case "reading-plans":
+        return t("reading-plans", { defaultValue: "Reading plans" });
     }
   };
 
@@ -518,6 +758,7 @@ export function YourContentPane(props: YourContentScreenProps) {
     highlights: visibleHighlights.length,
     saves: visibleSaves.length,
     playlists: visiblePlaylists.length,
+    "reading-plans": visibleReadingPlans.length,
   };
 
   /**
@@ -558,10 +799,14 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("your-content-empty-playlists", {
           defaultValue: "Playlists you create will show up here.",
         });
+      case "reading-plans":
+        return t("your-content-empty-reading-plans", {
+          defaultValue: "Reading plans you create will show up here.",
+        });
       case "all":
         return t("your-content-empty", {
           defaultValue:
-            "Notes, highlights, saves and playlists you make will show up here.",
+            "Notes, highlights, saves, playlists and reading plans you make will show up here.",
         });
     }
   };
@@ -587,7 +832,7 @@ export function YourContentPane(props: YourContentScreenProps) {
         </div>
 
         <div className="sb-content-chips" role="tablist">
-          {CONTENT_FILTERS.map((value) => (
+          {contentFilters.map((value) => (
             <button
               key={value}
               type="button"
@@ -745,6 +990,28 @@ export function YourContentPane(props: YourContentScreenProps) {
                   onEdit={props.onEditPlaylist}
                 />
               ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {showing("reading-plans") && visibleReadingPlans.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("reading-plans", { defaultValue: "Reading plans" })}
+              onSeeAll={seeAll("reading-plans", visibleReadingPlans)}
+            />
+            <ul className="sb-discover-list">
+              {visibleReadingPlans
+                .slice(0, limit(visibleReadingPlans))
+                .map((plan) => (
+                  <ReadingPlanRow
+                    key={formatReadingPlanId(plan.recordName, plan.address)}
+                    state={state}
+                    plan={plan}
+                    onOpen={() => props.onOpenReadingPlan(plan)}
+                    onEdit={() => props.onEditReadingPlan(plan)}
+                  />
+                ))}
             </ul>
           </section>
         ) : null}

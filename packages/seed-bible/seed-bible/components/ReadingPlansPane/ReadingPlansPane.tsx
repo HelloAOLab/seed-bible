@@ -7,6 +7,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import {
   formatReadingPlanId,
   getReadingCalendar,
+  latestReadingPlanProgress,
   summarizeCalendar,
   type CalendarReadingDay,
   type CalendarSummary,
@@ -82,24 +83,15 @@ const planLoadError = signal<string | null>(null);
 /** The plan currently being opened, so its card can show it's working. */
 const openingPlanId = signal<string | null>(null);
 
-/** The most recent progress the user has for a given plan id, if any. */
-function latestProgress(
-  progresses: ReadingPlanProgress[],
-  planId: string
-): ReadingPlanProgress | null {
-  return (
-    progresses
-      .filter((p) => p.planId === planId)
-      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
-  );
-}
-
 /**
  * Opens a plan's detail view. The view only switches once the plan is actually
  * in hand: a plan whose record is missing or unreadable leaves the user on the
  * list with an error, rather than on an empty screen.
+ *
+ * Exported for the "Your content" screen, which lists the user's plans too and
+ * hands a tapped one here after opening the pane.
  */
-async function openPlanDetail(
+export async function openReadingPlanDetail(
   readingPlans: ReadingPlansManager,
   plan: ReadingPlanMetadata
 ) {
@@ -114,12 +106,58 @@ async function openPlanDetail(
   } finally {
     openingPlanId.value = null;
   }
-  const progress = latestProgress(
+  const progress = latestReadingPlanProgress(
     readingPlans.userReadingPlanProgresses.value,
     planId
   );
   await readingPlans.selectReadingPlanProgress(progress);
   readingPlansView.value = "detail";
+}
+
+/**
+ * Opens an existing plan in the editor, loading its contents if needed. A plan
+ * still in draft picks up where it left off; a published one opens in edit
+ * mode, where backing out changes nothing.
+ *
+ * Exported for the same reason as {@link openReadingPlanDetail}.
+ */
+export async function openReadingPlanEditor(
+  readingPlans: ReadingPlansManager,
+  meta: ReadingPlanMetadata
+) {
+  // Already open in the editor — the author stepped out, to go read, say, and
+  // is coming back. Their unsaved changes are kept rather than reloaded over.
+  const current = readingPlans.editingReadingPlan.peek();
+  if (
+    current &&
+    current.plan.recordName === meta.recordName &&
+    current.plan.address === meta.address
+  ) {
+    readingPlansView.value = "edit";
+    return;
+  }
+  const planId = formatReadingPlanId(meta.recordName, meta.address);
+  planLoadError.value = null;
+  openingPlanId.value = planId;
+  let full: ReadingPlan | null = null;
+  try {
+    full = await readingPlans.selectReadingPlan(meta);
+  } catch {
+    planLoadError.value = planId;
+    return;
+  } finally {
+    openingPlanId.value = null;
+  }
+  if (!full) {
+    planLoadError.value = planId;
+    return;
+  }
+  if (full.status === "draft") {
+    readingPlans.resumeEditingReadingPlan(full);
+  } else {
+    readingPlans.editExistingReadingPlan(full);
+  }
+  readingPlansView.value = "edit";
 }
 
 /**
@@ -269,36 +307,11 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
       console.error("Failed to restart reading plan:", error);
       return;
     }
-    await openPlanDetail(readingPlans, plan);
+    await openReadingPlanDetail(readingPlans, plan);
   };
 
-  /** Opens an existing plan in the editor, loading its contents if needed. */
-  const editPlan = async (meta: ReadingPlanMetadata) => {
-    const planId = formatReadingPlanId(meta.recordName, meta.address);
-    planLoadError.value = null;
-    openingPlanId.value = planId;
-    let full: ReadingPlan | null = null;
-    try {
-      full = await readingPlans.selectReadingPlan(meta);
-    } catch {
-      planLoadError.value = planId;
-      return;
-    } finally {
-      openingPlanId.value = null;
-    }
-    if (!full) {
-      planLoadError.value = planId;
-      return;
-    }
-    // A plan still in draft picks up where it left off; a published one opens
-    // in edit mode, where backing out changes nothing.
-    if (full.status === "draft") {
-      readingPlans.resumeEditingReadingPlan(full);
-    } else {
-      readingPlans.editExistingReadingPlan(full);
-    }
-    readingPlansView.value = "edit";
-  };
+  const editPlan = (meta: ReadingPlanMetadata) =>
+    openReadingPlanEditor(readingPlans, meta);
 
   if (view === "edit") {
     return (
@@ -340,7 +353,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     <ReadingPlansList
       readingPlans={readingPlans}
       books={books}
-      onOpen={(plan) => void openPlanDetail(readingPlans, plan)}
+      onOpen={(plan) => void openReadingPlanDetail(readingPlans, plan)}
       onEdit={(plan) => void editPlan(plan)}
       onRestart={(plan) => void restartPlan(plan)}
     />
@@ -405,7 +418,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     .filter((meta) => meta.status !== "draft")
     .map((meta) => {
       const planId = formatReadingPlanId(meta.recordName, meta.address);
-      const progress = latestProgress(progresses, planId);
+      const progress = latestReadingPlanProgress(progresses, planId);
       const full = fullById.get(planId) ?? null;
       let summary: CalendarSummary | null = null;
       let state: PlanRow["state"] = "notstarted";

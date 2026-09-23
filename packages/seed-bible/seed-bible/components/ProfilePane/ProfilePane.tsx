@@ -1,8 +1,8 @@
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import type { ReadingPlanProgress } from "../../managers/ReadingPlansManager";
 import {
   formatReadingPlanId,
   getReadingCalendar,
+  latestReadingPlanProgress,
   summarizeCalendar,
 } from "../../managers/ReadingPlansManager";
 import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
@@ -46,18 +46,6 @@ export function getInitials(displayName: string): string {
     .join("");
 }
 
-/** The most recent progress the user has for a given plan id, if any. */
-function latestProgress(
-  progresses: ReadingPlanProgress[],
-  planId: string
-): ReadingPlanProgress | null {
-  return (
-    progresses
-      .filter((p) => p.planId === planId)
-      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
-  );
-}
-
 /** What the reading-plans card shows, once a plan in progress has been found. */
 interface ActivePlanSummary {
   title: string | null;
@@ -88,7 +76,7 @@ function findActivePlan(state: SeedBibleState): ActivePlanSummary | null {
   for (const meta of metas) {
     if (meta.status === "draft") continue;
     const planId = formatReadingPlanId(meta.recordName, meta.address);
-    const progress = latestProgress(progresses, planId);
+    const progress = latestReadingPlanProgress(progresses, planId);
     const full = fullById.get(planId);
     if (!progress || !full) continue;
 
