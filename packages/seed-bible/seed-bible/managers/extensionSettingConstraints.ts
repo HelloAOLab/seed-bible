@@ -221,7 +221,34 @@ export function numberFieldLimits(
   };
 }
 
-function alignToStep(
+/**
+ * True when some finite number can satisfy the bounds and step together.
+ * A step that isn't a positive finite number is ignored, matching
+ * {@link settingValueSatisfiesDefinition}. A range with only one bound always
+ * has room for a multiple.
+ */
+export function numberRangeAdmitsAValue(
+  definition: ExtensionNumberSettingDefinition
+): boolean {
+  const minimum = finiteBound(definition.minimum);
+  const maximum = finiteBound(definition.maximum);
+  if (minimum !== undefined && maximum !== undefined && minimum > maximum) {
+    return false;
+  }
+  const step = positiveStep(definition.multipleOf);
+  if (step === undefined || minimum === undefined || maximum === undefined) {
+    return true;
+  }
+  return alignToStep(minimum, step, "up") <= maximum;
+}
+
+/**
+ * The nearest multiple of `step` at or beyond `bound`. Rounding uses
+ * `toPrecision` rather than counting digits in `step.toString()`, because a
+ * step like `1e-7` has no decimal point and `toFixed(0)` would turn the
+ * bound into an integer.
+ */
+export function alignToStep(
   bound: number,
   step: number,
   direction: "up" | "down"
@@ -232,9 +259,5 @@ function alignToStep(
       ? Math.ceil(quotient - 1e-8)
       : Math.floor(quotient + 1e-8);
   const aligned = ticks * step;
-  const places = Math.min(
-    12,
-    (step.toString().split(".")[1] ?? "").replace(/e.*$/, "").length
-  );
-  return Number(aligned.toFixed(places));
+  return Number(aligned.toPrecision(15));
 }

@@ -9,7 +9,10 @@ import type {
   ExtensionSettingDefinition,
   UploadedExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
-import { settingConstraintProblems } from "../../packages/seed-bible/seed-bible/managers/extensionSettingConstraints";
+import {
+  numberRangeAdmitsAValue,
+  settingConstraintProblems,
+} from "../../packages/seed-bible/seed-bible/managers/extensionSettingConstraints";
 import * as z from "zod/v4";
 
 // const downloadRecordName = "testingPublickKey";
@@ -399,6 +402,17 @@ export const ExtensionSettingDefinitionSchema = z.discriminatedUnion("type", [
           code: "custom",
           message: `minimum ${value.minimum} is greater than maximum ${value.maximum}`,
           path: ["minimum"],
+        });
+      } else if (
+        value.multipleOf !== undefined &&
+        Number.isFinite(value.multipleOf) &&
+        value.multipleOf > 0 &&
+        !numberRangeAdmitsAValue(value)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `no multiple of ${value.multipleOf} lies between minimum ${value.minimum} and maximum ${value.maximum}`,
+          path: ["multipleOf"],
         });
       }
       rejectDefaultOutsideConstraints(value, ctx);

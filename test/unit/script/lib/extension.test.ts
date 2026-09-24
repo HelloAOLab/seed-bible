@@ -136,6 +136,14 @@ describe("ExtensionMetaSchema", () => {
     );
   });
 
+  it("rejects a range that no multiple of the step can fall inside", () => {
+    expect(
+      problems({
+        repeatCount: { type: "number", minimum: 1, maximum: 1, multipleOf: 2 },
+      })
+    ).toContain("no multiple of 2 lies between minimum 1 and maximum 1");
+  });
+
   // Unknown keys still ride along, so a setting can carry a field this script
   // doesn't understand yet without it being stripped from the uploaded meta.
   it("keeps keys it doesn't know about on a setting", () => {
