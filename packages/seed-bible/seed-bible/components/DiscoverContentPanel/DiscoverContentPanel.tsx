@@ -142,6 +142,10 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     })),
   ];
 
+  const showFilters =
+    filters.length > 2 ||
+    typesWithResults.some((definition) => definition.hiddenByDefault);
+
   // Falls back to "all" when the previously-active filter's content type is
   // no longer available (e.g. the user filtered to "Cross Refs" then
   // navigated to a chapter with none), so the chip row and content area don't
@@ -177,7 +181,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
           </button>
         </div>
 
-        {filters.length > 2 && (
+        {showFilters && (
           <div style={{ display: "contents" }}>
             <div className="sb-dcp-filters" role="tablist">
               {filters.map(({ key, label }) => (

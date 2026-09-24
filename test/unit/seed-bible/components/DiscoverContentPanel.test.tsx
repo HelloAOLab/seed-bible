@@ -443,6 +443,33 @@ describe("DiscoverContentPanel", () => {
       expect(chipLabels()).toEqual(["All", "Notes", "People"]);
     });
 
+    it("still offers the chip when a hidden type is the only thing there", () => {
+      // No notes and one type: "All" plus "People" is only two chips, but
+      // "All" hides people, so without the chip they can't be reached.
+      const tab = createMockTab({
+        discoveredContent: THEOGRAPHIC_FIXTURE,
+        selectedVerses: [14],
+      });
+      const state = createMockState({
+        annotationsForChapter: [],
+        contentTypes: HIDDEN_TYPES,
+      });
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      });
+
+      expect(chipLabels()).toEqual(["All", "People"]);
+
+      act(() => {
+        getChip("People").dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      expect(container.textContent).toContain("Aaron card");
+      expect(container.textContent).toContain("Moses card");
+    });
+
     it("explains where the content went when it is all there is", () => {
       const tab = createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE });
       const state = createMockState({
