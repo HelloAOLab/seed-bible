@@ -58,6 +58,7 @@ interface ReadingPlanDetailProps {
   onEdit?: () => void;
   /** Called after the plan has been deleted, so the pane can leave this view. */
   onDeleted?: () => void;
+  toast?: (message: string) => void;
 }
 
 function formatShortDate(ms: number): string {
@@ -88,6 +89,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     onPlayReadings,
     onEdit,
     onDeleted,
+    toast,
   } = props;
   const { t } = useI18n();
 
@@ -143,6 +145,24 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
    */
   const planActions = (
     <div className="sb-rpd-plan-actions">
+      <button
+        type="button"
+        className="sb-rp-icon-button"
+        onClick={() => {
+          void navigator.clipboard.writeText(
+            readingPlans.getReadingPlanShareUrl(plan)
+          );
+          toast?.(
+            t("reading-plan-url-copied", {
+              defaultValue: "Reading plan URL copied to clipboard",
+            })
+          );
+        }}
+        aria-label={t("share-reading-plan", { defaultValue: "Share plan" })}
+        title={t("share-reading-plan", { defaultValue: "Share plan" })}
+      >
+        <MaterialIcon>share</MaterialIcon>
+      </button>
       {canEdit && onEdit ? (
         <button
           type="button"

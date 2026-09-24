@@ -29,8 +29,7 @@ import {
 } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
-import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
-import { PlaylistRow } from "./PlaylistRow";
+import { DiscoverSection } from "./DiscoverSection";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -280,9 +279,9 @@ export function DiscoverPaneTitle(props: {
 }
 
 /**
- * Pane content for the "Discover" tool. Shows the user's authored playlists and
- * annotations plus discovered cross references, study notes, and content for
- * the currently selected reader tab.
+ * Pane content for the "Discover" tool. Shows the user's notes for the current
+ * chapter, playlist history (when there is any), plus discovered cross
+ * references, study notes, and content for the currently selected reader tab.
  *
  * Rendered inside the managed side pane (`SidePane`), so the pane shell supplies
  * the surrounding chrome — the title/close (`PaneHeader`), the docking layout,
@@ -334,21 +333,6 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   return (
     <div className="sb-discover-pane">
-      <PlaylistSection
-        userPlaylists={userPlaylists}
-        playlists={playlists}
-        modals={modals}
-        toast={props.toast}
-      />
-
-      <PlaylistHistorySection
-        history={playlistHistory}
-        userPlaylists={userPlaylists}
-        playlists={playlists}
-        tabs={tabs}
-        toast={props.toast}
-      />
-
       <AnnotationsSection
         tab={selectedTab}
         annotations={annotations}
@@ -359,6 +343,14 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         discover={props.state.discover}
         panes={props.state.panes}
         onReferenceClick={props.state.app.openVerseReference}
+      />
+
+      <PlaylistHistorySection
+        history={playlistHistory}
+        userPlaylists={userPlaylists}
+        playlists={playlists}
+        tabs={tabs}
+        toast={props.toast}
       />
 
       <CrossReferencesSection tab={selectedTab} />
@@ -380,43 +372,6 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         />
       ))}
     </div>
-  );
-}
-
-function PlaylistSection({
-  userPlaylists,
-  playlists,
-  modals,
-  toast,
-}: {
-  userPlaylists: Playlist[];
-  playlists: PlaylistManager;
-  modals: ModalManager;
-  toast: SeedBibleState["app"]["toast"];
-}) {
-  const { t } = useI18n();
-  return (
-    <DiscoverSection title={t("playlists", { defaultValue: "Playlists" })}>
-      {userPlaylists.length === 0 ? (
-        <DiscoverEmpty
-          text={t("discover-playlists-empty", {
-            defaultValue: "You haven't created any playlists yet.",
-          })}
-        />
-      ) : (
-        <ul className="sb-discover-list">
-          {userPlaylists.map((playlist) => (
-            <PlaylistRow
-              key={playlist.id}
-              playlist={playlist}
-              playlists={playlists}
-              modals={modals}
-              toast={toast}
-            />
-          ))}
-        </ul>
-      )}
-    </DiscoverSection>
   );
 }
 
@@ -502,6 +457,10 @@ function PlaylistHistorySection({
   toast: SeedBibleState["app"]["toast"];
 }) {
   const { t, language } = useI18n();
+  if (history.length === 0) {
+    return null;
+  }
+
   const dayGroups = groupPlaylistPlayHistoryByDay(history);
 
   const selectedTab =
@@ -516,118 +475,108 @@ function PlaylistHistorySection({
     <DiscoverSection
       title={t("playlist-history", { defaultValue: "Playlist history" })}
     >
-      {history.length === 0 ? (
-        <DiscoverEmpty
-          text={t("discover-playlist-history-empty", {
-            defaultValue:
-              "Play a saved playlist while signed in and it will show up here.",
-          })}
-        />
-      ) : (
-        dayGroups.map((group) => (
-          <div key={group.dayKey} className="sb-playlist-history-day-group">
-            <h4 className="sb-playlist-history-day">
-              {formatHistoryDayLabel(group.dayKey, language, t)}
-            </h4>
-            <ul className="sb-discover-list">
-              {group.entries.map((entry) => {
-                const percent = Math.round(
-                  playlistPlayHistoryPercent(entry) * 100
-                );
-                const complete = isPlaylistPlayHistoryComplete(entry);
-                const lastLabel = entry.lastItem
-                  ? playlistItemLabel(entry.lastItem, t, resolveBookName)
-                  : null;
-                const sessionTime = formatHistorySessionTime(
-                  entry.startedAtMs,
-                  language
-                );
-                const summary = lastLabel
-                  ? t("playlist-history-session-summary", {
-                      defaultValue:
-                        "{{time}} - {{percent}}% complete - {{item}}",
-                      time: sessionTime,
-                      percent,
-                      item: lastLabel,
-                    })
-                  : t("playlist-history-session-summary-no-item", {
-                      defaultValue: "{{time}} - {{percent}}% complete",
-                      time: sessionTime,
-                      percent,
-                    });
+      {dayGroups.map((group) => (
+        <div key={group.dayKey} className="sb-playlist-history-day-group">
+          <h4 className="sb-playlist-history-day">
+            {formatHistoryDayLabel(group.dayKey, language, t)}
+          </h4>
+          <ul className="sb-discover-list">
+            {group.entries.map((entry) => {
+              const percent = Math.round(
+                playlistPlayHistoryPercent(entry) * 100
+              );
+              const complete = isPlaylistPlayHistoryComplete(entry);
+              const lastLabel = entry.lastItem
+                ? playlistItemLabel(entry.lastItem, t, resolveBookName)
+                : null;
+              const sessionTime = formatHistorySessionTime(
+                entry.startedAtMs,
+                language
+              );
+              const summary = lastLabel
+                ? t("playlist-history-session-summary", {
+                    defaultValue: "{{time}} - {{percent}}% complete - {{item}}",
+                    time: sessionTime,
+                    percent,
+                    item: lastLabel,
+                  })
+                : t("playlist-history-session-summary-no-item", {
+                    defaultValue: "{{time}} - {{percent}}% complete",
+                    time: sessionTime,
+                    percent,
+                  });
 
-                const live = userPlaylists.find(
-                  (p) =>
-                    p.id === entry.playlistId &&
-                    p.recordName === entry.playlistRecordName
-                );
-                const heroUrl =
-                  live?.heroImageUrl ?? entry.playlistHeroImageUrl ?? null;
+              const live = userPlaylists.find(
+                (p) =>
+                  p.id === entry.playlistId &&
+                  p.recordName === entry.playlistRecordName
+              );
+              const heroUrl =
+                live?.heroImageUrl ?? entry.playlistHeroImageUrl ?? null;
 
-                return (
-                  <li
-                    key={entry.id}
-                    className="sb-discover-item sb-discover-item--row sb-playlist-item sb-playlist-history-item"
-                    dir="auto"
-                    onClick={() => playFromHistory(playlists, entry, toast, t)}
+              return (
+                <li
+                  key={entry.id}
+                  className="sb-discover-item sb-discover-item--row sb-playlist-item sb-playlist-history-item"
+                  dir="auto"
+                  onClick={() => playFromHistory(playlists, entry, toast, t)}
+                >
+                  <HeroImageThumb url={heroUrl} />
+                  <div className="sb-discover-item-main">
+                    <span className="sb-discover-item-title">
+                      {playlistTitle(entry, t)}
+                    </span>
+                    <span className="sb-discover-item-description">
+                      {summary}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="sb-discover-item-play"
+                    aria-label={
+                      complete
+                        ? t("playlist-history-replay", {
+                            defaultValue: "Replay",
+                          })
+                        : t("playlist-history-continue", {
+                            defaultValue: "Continue",
+                          })
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      playFromHistory(playlists, entry, toast, t);
+                    }}
                   >
-                    <HeroImageThumb url={heroUrl} />
-                    <div className="sb-discover-item-main">
-                      <span className="sb-discover-item-title">
-                        {playlistTitle(entry, t)}
-                      </span>
-                      <span className="sb-discover-item-description">
-                        {summary}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="sb-discover-item-play"
-                      aria-label={
-                        complete
-                          ? t("playlist-history-replay", {
-                              defaultValue: "Replay",
-                            })
-                          : t("playlist-history-continue", {
-                              defaultValue: "Continue",
-                            })
-                      }
+                    <MaterialIcon>play_arrow</MaterialIcon>
+                  </button>
+                  <ContextMenuWithButton
+                    buttonClassName="sb-discover-item-menu"
+                    aria-label={t("playlist-history-options", {
+                      defaultValue: "Playlist history options",
+                    })}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ContextMenuItem
+                      className="sb-context-menu-item--danger"
                       onClick={(e) => {
                         e.stopPropagation();
-                        playFromHistory(playlists, entry, toast, t);
+                        void playlists.removePlayHistory(entry);
                       }}
                     >
-                      <MaterialIcon>play_arrow</MaterialIcon>
-                    </button>
-                    <ContextMenuWithButton
-                      buttonClassName="sb-discover-item-menu"
-                      aria-label={t("playlist-history-options", {
-                        defaultValue: "Playlist history options",
+                      <MaterialIcon className="sb-context-menu-item-icon">
+                        delete
+                      </MaterialIcon>
+                      {t("playlist-history-remove", {
+                        defaultValue: "Remove from history",
                       })}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ContextMenuItem
-                        className="sb-context-menu-item--danger"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void playlists.removePlayHistory(entry);
-                        }}
-                      >
-                        <MaterialIcon className="sb-context-menu-item-icon">
-                          delete
-                        </MaterialIcon>
-                        {t("playlist-history-remove", {
-                          defaultValue: "Remove from history",
-                        })}
-                      </ContextMenuItem>
-                    </ContextMenuWithButton>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))
-      )}
+                    </ContextMenuItem>
+                  </ContextMenuWithButton>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </DiscoverSection>
   );
 }
