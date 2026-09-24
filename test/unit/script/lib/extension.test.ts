@@ -51,109 +51,18 @@ describe("ExtensionMetaSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts number bounds and a whole-number step, and a string enum", () => {
-    const result = ExtensionMetaSchema.safeParse(
-      meta({
-        repeatCount: {
-          type: "number",
-          default: 1,
-          minimum: 1,
-          maximum: 10,
-          multipleOf: 1,
-        },
-        tone: {
-          type: "string",
-          default: "warm",
-          enum: ["plain", "warm", "bold"],
-        },
-      })
-    );
-
-    expect(result.success).toBe(true);
-    expect(result.data?.settings?.repeatCount).toMatchObject({
-      minimum: 1,
-      maximum: 10,
-      multipleOf: 1,
-    });
-    expect(result.data?.settings?.tone).toMatchObject({
-      enum: ["plain", "warm", "bold"],
-    });
-  });
-
-  const problems = (settings: unknown) => {
-    const result = ExtensionMetaSchema.safeParse(meta(settings));
-    expect(result.success).toBe(false);
-    if (result.success) {
-      return [];
-    }
-    return result.error.issues.map((issue) => issue.message);
-  };
-
-  it("names the constraint a default breaks, instead of a generic failure", () => {
-    expect(
-      problems({
-        repeatCount: { type: "number", default: 11, minimum: 1, maximum: 10 },
-      })
-    ).toContain("default 11 is greater than maximum 10");
-    expect(
-      problems({
-        repeatCount: { type: "number", default: 0, minimum: 1, maximum: 10 },
-      })
-    ).toContain("default 0 is less than minimum 1");
-    expect(
-      problems({
-        repeatCount: { type: "number", default: 1.5, multipleOf: 1 },
-      })
-    ).toContain("default 1.5 is not a multiple of 1");
-    expect(
-      problems({
-        repeatCount: {
-          type: "number",
-          default: 11.5,
-          minimum: 1,
-          maximum: 10,
-          multipleOf: 1,
-        },
-      })
-    ).toEqual([
-      "default 11.5 is greater than maximum 10",
-      "default 11.5 is not a multiple of 1",
-    ]);
-    expect(
-      problems({ tone: { type: "string", default: "loud", enum: ["warm"] } })
-    ).toContain('default "loud" is not one of "warm"');
-  });
-
-  it("names a step, an inverted range, and an empty enum", () => {
-    expect(
-      problems({ repeatCount: { type: "number", multipleOf: 0 } })
-    ).toContain("multipleOf must be a finite number greater than 0 (got 0)");
-    expect(
-      problems({ repeatCount: { type: "number", minimum: 10, maximum: 1 } })
-    ).toContain("minimum 10 is greater than maximum 1");
-    expect(problems({ tone: { type: "string", enum: [] } })).toContain(
-      "enum must list at least one value"
-    );
-  });
-
-  // Unknown keys still ride along, so a setting can carry a field this script
-  // doesn't understand yet without it being stripped from the uploaded meta.
+  // Constraints such as `minimum` are planned but unknown here today; the
+  // uploaded meta has to carry them through rather than drop them.
   it("keeps keys it doesn't know about on a setting", () => {
     const result = ExtensionMetaSchema.safeParse(
-      meta({
-        greetingSize: {
-          type: "number",
-          default: 1.5,
-          markdownDescription: "How large",
-        },
-      })
+      meta({ greetingSize: { type: "number", default: 1.5, minimum: 1 } })
     );
 
     expect(result.success).toBe(true);
     expect(result.data?.settings?.greetingSize).toEqual({
       type: "number",
       default: 1.5,
-      markdownDescription: "How large",
+      minimum: 1,
     });
   });
 });

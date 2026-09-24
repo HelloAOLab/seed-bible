@@ -25,9 +25,10 @@ import {
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
-import {
-  firstAcceptableSettingValue,
-  type ExtensionListEntry,
+import type {
+  ExtensionListEntry,
+  ExtensionSettingDefinition,
+  ExtensionSettingValue,
 } from "../../managers/ExtensionManager";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
@@ -596,6 +597,12 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
   );
 }
 
+/** What a newly overridden setting starts from when it declares no default. */
+const EMPTY_SETTING_VALUES: Record<
+  ExtensionSettingDefinition["type"],
+  ExtensionSettingValue
+> = { string: "", boolean: false, number: 0 };
+
 function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { customizations, extensions } = state;
@@ -675,7 +682,7 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
               customizations.setEditingExtensionSettingDefault(
                 entry.id,
                 key,
-                firstAcceptableSettingValue(definition)
+                definition.default ?? EMPTY_SETTING_VALUES[definition.type]
               );
             },
           }}

@@ -14,29 +14,10 @@ export interface ExtensionTranslationFile {
 export type ExtensionSettingTypeFile = "string" | "boolean" | "number";
 export type ExtensionSettingValueFile = string | boolean | number;
 
-export interface ExtensionStringSettingDefinitionFile {
-  type: "string";
-  default?: string;
-  enum?: string[];
+export interface ExtensionSettingDefinitionFile {
+  type: ExtensionSettingTypeFile;
+  default?: ExtensionSettingValueFile;
 }
-
-export interface ExtensionNumberSettingDefinitionFile {
-  type: "number";
-  default?: number;
-  minimum?: number;
-  maximum?: number;
-  multipleOf?: number;
-}
-
-export interface ExtensionBooleanSettingDefinitionFile {
-  type: "boolean";
-  default?: boolean;
-}
-
-export type ExtensionSettingDefinitionFile =
-  | ExtensionStringSettingDefinitionFile
-  | ExtensionNumberSettingDefinitionFile
-  | ExtensionBooleanSettingDefinitionFile;
 
 export interface ExtensionMetaFile {
   id: string;

@@ -11,7 +11,7 @@ import type {
   StoredAux,
 } from "@casual-simulation/aux-common";
 import { existsSync } from "node:fs";
-import { ExtensionMetaSchema, formatSchemaIssues } from "./extension";
+import { ExtensionMetaSchema } from "./extension";
 import type { ExtensionSet } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 
 declare global {
@@ -372,7 +372,8 @@ export async function loadSeedBible(
       const parseResult = ExtensionMetaSchema.safeParse(extensionData);
       if (!parseResult.success) {
         console.error(
-          `Invalid extension.json for package ${pkg}: ${formatSchemaIssues(parseResult.error)}`
+          `Invalid extension.json for package ${pkg}:`,
+          parseResult.error
         );
       } else {
         availablePackages.extensions.push({

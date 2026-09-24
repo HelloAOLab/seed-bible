@@ -6,7 +6,6 @@ import {
 import type {
   ExtensionListEntry,
   ExtensionManager,
-  ExtensionSettingDefinition,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { CustomizationsManager } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
@@ -50,7 +49,13 @@ describe("ExtensionSettingsManager", () => {
   };
 
   const extensionEntry = (
-    settings: Record<string, ExtensionSettingDefinition>,
+    settings: Record<
+      string,
+      {
+        type: "string" | "boolean" | "number";
+        default?: string | boolean | number;
+      }
+    >,
     id = "ext-1"
   ): ExtensionListEntry => ({
     id,
@@ -176,94 +181,6 @@ describe("ExtensionSettingsManager", () => {
 
     expect(manager.getValue("unknown-ext", "greeting")).toBeUndefined();
     expect(manager.getValue("ext-1", "unknown-key")).toBeUndefined();
-  });
-
-  it("ignores a stored value that breaks a constraint and falls back, without clamping it", async () => {
-    extensionsListSignal.value = [
-      extensionEntry({
-        count: {
-          type: "number",
-          default: 5,
-          minimum: 1,
-          maximum: 10,
-          multipleOf: 1,
-        },
-        tone: {
-          type: "string",
-          default: "warm",
-          enum: ["plain", "warm", "bold"],
-        },
-      }),
-    ];
-    getDataMock.mockResolvedValue({
-      success: true,
-      // Written before the extension tightened these constraints.
-      data: { "ext-1": { count: -40, tone: "loud" } },
-    });
-    const manager = create();
-    await flushPromises();
-
-    expect(manager.getValue("ext-1", "count")).toBe(5);
-    expect(manager.getValue("ext-1", "tone")).toBe("warm");
-
-    // A Customization default that also breaks the constraint is skipped too.
-    activeCustomizationDefault = 2.5;
-    expect(manager.getValue("ext-1", "count")).toBe(5);
-  });
-
-  it("setValue does not store a value that breaks the setting's constraints", async () => {
-    extensionsListSignal.value = [
-      extensionEntry({
-        count: {
-          type: "number",
-          default: 5,
-          minimum: 1,
-          maximum: 10,
-          multipleOf: 1,
-        },
-        tone: {
-          type: "string",
-          default: "warm",
-          enum: ["plain", "warm", "bold"],
-        },
-      }),
-    ];
-    const manager = create();
-    await flushPromises();
-    recordDataMock.mockClear();
-
-    await manager.setValue("ext-1", "count", 2.5);
-    await manager.setValue("ext-1", "count", 11);
-    await manager.setValue("ext-1", "tone", "loud");
-    await manager.setValue("ext-1", "count", "3");
-
-    expect(recordDataMock).not.toHaveBeenCalled();
-    expect(manager.getValue("ext-1", "count")).toBe(5);
-    expect(manager.valuesByExtensionId.value).toEqual({});
-
-    await saved(manager.setValue("ext-1", "count", 3));
-    expect(manager.getValue("ext-1", "count")).toBe(3);
-  });
-
-  it("accepts a decimal that is a multiple of the step, and ignores a step that can't divide", async () => {
-    extensionsListSignal.value = [
-      extensionEntry({
-        ratio: { type: "number", default: 0.1, multipleOf: 0.1 },
-      }),
-    ];
-    const manager = create();
-    await flushPromises();
-
-    await saved(manager.setValue("ext-1", "ratio", 0.3));
-    expect(manager.getValue("ext-1", "ratio")).toBe(0.3);
-
-    extensionsListSignal.value = [
-      extensionEntry({
-        ratio: { type: "number", default: 0.1, multipleOf: 0 },
-      }),
-    ];
-    await saved(manager.setValue("ext-1", "ratio", 0.25));
-    expect(manager.getValue("ext-1", "ratio")).toBe(0.25);
   });
 
   it("setValue persists to its own record and is immediately readable without a reload", async () => {
