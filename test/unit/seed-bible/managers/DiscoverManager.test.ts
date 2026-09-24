@@ -85,6 +85,20 @@ describe("createDiscoverManager", () => {
       expect(results.find((r) => r.providerId === "p2")?.results).toEqual([r2]);
     });
 
+    it("bumps providersVersion on every registration, including a replacement", () => {
+      const manager = createDiscoverManager();
+      expect(manager.providersVersion.value).toBe(0);
+
+      manager.registerDiscoverProvider(makeProvider("p1", []));
+      expect(manager.providersVersion.value).toBe(1);
+
+      manager.registerDiscoverProvider(makeProvider("p1", []));
+      expect(manager.providersVersion.value).toBe(2);
+
+      manager.registerDiscoverProvider(makeProvider("p2", []));
+      expect(manager.providersVersion.value).toBe(3);
+    });
+
     it("replaces an existing provider when re-registered with the same id", async () => {
       const manager = createDiscoverManager();
       const original: DiscoverResult = {

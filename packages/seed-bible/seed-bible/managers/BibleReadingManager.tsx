@@ -3151,6 +3151,11 @@ export function createBibleReadingState(
 
     const stopDiscoverEffect = effect(() => {
       const chapter = chapterData.value;
+      // Subscribed but otherwise unused. Provider registration is not otherwise
+      // observable, and the first chapter often finishes loading before
+      // extensions register. A read inside the async discover loop below would
+      // not subscribe this effect, so those results would never appear.
+      void discoverManager.providersVersion.value;
       if (!chapter) {
         discoveredResults.value = [];
         return;
