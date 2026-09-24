@@ -47,7 +47,7 @@ import type { BibleReadingSession } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
-import { InfoSettingsIcon } from "../../components/icons";
+import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import {
@@ -58,6 +58,7 @@ import {
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
+import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
 
 interface ReaderChapterActionProps {
   state: SeedBibleState;
@@ -1762,7 +1763,9 @@ export function BibleReader(props: BibleReaderProps) {
     () => translation.value?.website.trim() ?? ""
   );
 
-  const isMobile = state?.app.isMobile.value ?? false;
+  const isMinimalEmbed = state?.app.isMinimalEmbed?.value ?? false;
+  const isCompactReader =
+    state?.app.isCompactReader?.value ?? state?.app.isMobile.value ?? false;
 
   // Clicking an annotated verse number jumps straight to its note: on
   // mobile, it also selects the verse (like clicking its text does) and
@@ -1783,7 +1786,7 @@ export function BibleReader(props: BibleReaderProps) {
       return;
     }
 
-    if (isMobile) {
+    if (isCompactReader) {
       selectVerse(verse, event.clientX, event.clientY);
       readingState.pendingAnnotationScrollVerse.value = verseNumber;
       return;
@@ -1985,7 +1988,7 @@ export function BibleReader(props: BibleReaderProps) {
 
   const renderMainContent = () => (
     <>
-      {isMobile &&
+      {isCompactReader &&
         renderMobileChapterTitle(
           currentBookName.value ?? bookId.value ?? "",
           chapterNumber.value ?? ""
@@ -2146,28 +2149,30 @@ export function BibleReader(props: BibleReaderProps) {
   return (
     <div
       className={`sb-bible-reader ${readerFontSizeClass}${
-        isMobile ? " sb-bible-reader-mobile" : ""
+        isCompactReader ? " sb-bible-reader-mobile" : ""
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
-      {isMobile && state ? (
+      {isCompactReader && state ? (
         <Fragment key="mobile">
           <div
             className={`sb-bible-reader-mobile-header${
-              mobileChrome?.isScrolled
+              !isMinimalEmbed && mobileChrome?.isScrolled
                 ? " sb-bible-reader-mobile-header-hidden"
                 : ""
             }`}
           >
             <div className="sb-bible-reader-mobile-header-text">
               <h1 className="sb-bible-reader-mobile-header-title">
-                <span
-                  className="sb-bible-reader-mobile-header-book"
-                  onClick={openBookSelector}
-                >
-                  {currentBookName.value ?? bookId.value ?? ""}{" "}
-                  {chapterNumber.value}
-                </span>
+                {!isMinimalEmbed && (
+                  <span
+                    className="sb-bible-reader-mobile-header-book"
+                    onClick={openBookSelector}
+                  >
+                    {currentBookName.value ?? bookId.value ?? ""}{" "}
+                    {chapterNumber.value}
+                  </span>
+                )}
                 <button
                   type="button"
                   className="sb-bible-reader-mobile-header-translation"
@@ -2181,62 +2186,108 @@ export function BibleReader(props: BibleReaderProps) {
                 </button>
               </h1>
             </div>
-            <ChapterNotesButton
-              state={state}
-              bookId={bookId.value}
-              chapterNumber={chapterNumber.value}
-            />
+            {!isMinimalEmbed && (
+              <ChapterNotesButton
+                state={state}
+                bookId={bookId.value}
+                chapterNumber={chapterNumber.value}
+              />
+            )}
             <div className="sb-bible-reader-mobile-header-actions">
-              {!state.playlists.playing.value && (
+              {isMinimalEmbed ? (
                 <>
-                  <ReaderSaveButton
-                    state={state}
-                    translationId={translationId.value}
-                    bookId={bookId.value}
-                    chapterNumber={chapterNumber.value}
-                  />
-                  {SHOW_BOOKMARK_BUTTON && (
-                    <ReaderBookmarkButton
-                      state={state}
-                      translationId={translationId.value}
-                      bookId={bookId.value}
-                      chapterNumber={chapterNumber.value}
-                    />
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-header-open-tab"
+                    aria-label={t("open-in-new-tab", {
+                      defaultValue: "Open in New Tab",
+                    })}
+                    title={t("open-in-new-tab", {
+                      defaultValue: "Open in New Tab",
+                    })}
+                    onClick={() => {
+                      window.open(
+                        urlWithoutEmbedParam(state.navigation.currentUrl.value)
+                          .href,
+                        "_blank",
+                        "noopener,noreferrer"
+                      );
+                    }}
+                  >
+                    <MaterialIcon>open_in_new</MaterialIcon>
+                  </button>
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-header-settings"
+                    onClick={() => mobileChrome?.onOpenMobileSettings()}
+                    aria-label={t("settings", { defaultValue: "Settings" })}
+                    title={t("settings", { defaultValue: "Settings" })}
+                  >
+                    <InfoSettingsIcon />
+                  </button>
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-header-close"
+                    aria-label={t("close", { defaultValue: "Close" })}
+                    title={t("close", { defaultValue: "Close" })}
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  {!state.playlists.playing.value && (
+                    <>
+                      <ReaderSaveButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                      {SHOW_BOOKMARK_BUTTON && (
+                        <ReaderBookmarkButton
+                          state={state}
+                          translationId={translationId.value}
+                          bookId={bookId.value}
+                          chapterNumber={chapterNumber.value}
+                        />
+                      )}
+                    </>
                   )}
+                  <QuickToolbar
+                    toolsManager={state.tools}
+                    readingState={readingState}
+                    playlists={state.playlists}
+                    annotations={state.annotations}
+                    features={state.features}
+                    sharedSession={sharedSession ?? null}
+                    toast={state.app.toast}
+                    modals={state.modals}
+                    app={state.app}
+                    className="sb-quick-toolbar-mobile-header"
+                  />
+                  {/*
+                   * No account avatar here: "You" is a bottom-bar tab again
+                   * (#1554), and two avatars on one screen made it unclear which
+                   * one was the way to your profile.
+                   */}
+                  {sharedSession ? (
+                    <MobileSessionParticipants
+                      state={state}
+                      session={sharedSession}
+                    />
+                  ) : null}
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-header-settings"
+                    onClick={() => mobileChrome?.onOpenMobileSettings()}
+                    aria-label={t("settings", { defaultValue: "Settings" })}
+                    title={t("settings", { defaultValue: "Settings" })}
+                  >
+                    <InfoSettingsIcon />
+                  </button>
                 </>
               )}
-              <QuickToolbar
-                toolsManager={state.tools}
-                readingState={readingState}
-                playlists={state.playlists}
-                annotations={state.annotations}
-                features={state.features}
-                sharedSession={sharedSession ?? null}
-                toast={state.app.toast}
-                modals={state.modals}
-                app={state.app}
-                className="sb-quick-toolbar-mobile-header"
-              />
-              {/*
-               * No account avatar here: "You" is a bottom-bar tab again
-               * (#1554), and two avatars on one screen made it unclear which
-               * one was the way to your profile.
-               */}
-              {sharedSession ? (
-                <MobileSessionParticipants
-                  state={state}
-                  session={sharedSession}
-                />
-              ) : null}
-              <button
-                type="button"
-                className="sb-bible-reader-mobile-header-settings"
-                onClick={() => mobileChrome?.onOpenMobileSettings()}
-                aria-label={t("settings", { defaultValue: "Settings" })}
-                title={t("settings", { defaultValue: "Settings" })}
-              >
-                <InfoSettingsIcon />
-              </button>
             </div>
           </div>
 

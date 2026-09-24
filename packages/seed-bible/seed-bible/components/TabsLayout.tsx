@@ -69,7 +69,12 @@ function clearSwipeTrackInlineStyles(track: HTMLDivElement | null) {
 export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
-  const isMobile = state?.app.isMobile.value ?? false;
+  // Phone layout, or a compact embed: swipe chapters, mobile header, and
+  // the floating chapter nav. Embed is included so a wide iframe still
+  // gets the minimal reading chrome rather than the full desktop app.
+  const isMinimalEmbed = state?.app.isMinimalEmbed?.value ?? false;
+  const isCompactReader =
+    state?.app.isCompactReader?.value ?? state?.app.isMobile.value ?? false;
 
   const swipeViewportRef = useRef<HTMLDivElement | null>(null);
   const swipeTrackRef = useRef<HTMLDivElement | null>(null);
@@ -94,9 +99,11 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
   // Mirror scroll-direction state to a body class so chrome rendered outside
   // this component (e.g. the global BibleReaderToolbar in app/main.tsx) can
-  // hide/show in sync with the reader header.
+  // hide/show in sync with the reader header. Embed keeps the compact chrome
+  // pinned: translation, open-in-new-tab, and chapter nav are the only
+  // way around the iframe, so they must not slide away on scroll.
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isCompactReader || isMinimalEmbed) return;
     const className = "sb-scroll-hide-bars";
     if (isScrolled) {
       document.body.classList.add(className);
@@ -106,20 +113,20 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     return () => {
       document.body.classList.remove(className);
     };
-  }, [isMobile, isScrolled]);
+  }, [isCompactReader, isMinimalEmbed, isScrolled]);
 
   // When a mobile pane opens (every pane fills the screen there), the verse
   // sheet yields and the default bottom toolbar comes back. Clear scroll-hide
   // so that bar isn't left translated off-screen — e.g. after Locations opens
   // a map from a verse selection while the user had scrolled down.
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isCompactReader) return;
     return effect(() => {
       if ((state.panes?.panes?.value?.length ?? 0) > 0) {
         setIsScrolled(false);
       }
     });
-  }, [isMobile, state]);
+  }, [isCompactReader, state]);
 
   // The element the reader actually scrolls in: the slot itself on desktop, the
   // centre swipe panel on mobile. Held as state rather than a ref so the
@@ -131,20 +138,20 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   // scrolled chapter back to its saved offset.
   const slotScrollerRefCallback = useCallback(
     (element: HTMLDivElement | null) => {
-      if (!isMobile) {
+      if (!isCompactReader) {
         setScroller(element);
       }
     },
-    [isMobile]
+    [isCompactReader]
   );
 
   const currentScrollerRefCallback = useCallback(
     (element: HTMLDivElement | null) => {
-      if (isMobile) {
+      if (isCompactReader) {
         setScroller(element);
       }
     },
-    [isMobile]
+    [isCompactReader]
   );
 
   // Triggered by the *position* changing, not by `chapterData` arriving:
@@ -276,7 +283,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         readingState.scrollPosition.value = scrollTop;
       }
 
-      if (!isMobile) {
+      if (!isCompactReader) {
         return;
       }
 
@@ -302,7 +309,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     return () => {
       scroller.removeEventListener("scroll", handleScroll);
     };
-  }, [scroller, isMobile, readingState]);
+  }, [scroller, isCompactReader, readingState]);
 
   const currentChapterValue = readingState.chapterData.value;
   // Reading `.value` here subscribes this component to playback position, which
@@ -311,7 +318,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     state?.playlists?.playing.value?.currentIndex.value ?? null;
 
   useEffect(() => {
-    if (!isMobile || !state) {
+    if (!isCompactReader || !state) {
       setPrevChapterPreview(null);
       setNextChapterPreview(null);
       return;
@@ -373,7 +380,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       controller.abort();
     };
   }, [
-    isMobile,
+    isCompactReader,
     state,
     currentChapterValue?.translation.id,
     currentChapterValue?.book.id,
@@ -384,7 +391,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   ]);
 
   useEffect(() => {
-    if (!isMobile) {
+    if (!isCompactReader) {
       return;
     }
 
@@ -638,7 +645,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       viewport.removeEventListener("touchend", onTouchEnd);
       viewport.removeEventListener("touchcancel", onTouchCancel);
     };
-  }, [isMobile, readingState]);
+  }, [isCompactReader, readingState]);
 
   // Keyboard chapter navigation for the selected slot. Left/Right move between
   // chapters (respecting text direction, like the swipe gesture and toolbar
@@ -736,7 +743,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }, 50);
   };
 
-  const mobileChrome = isMobile
+  const mobileChrome = isCompactReader
     ? {
         isScrolled,
         prevChapterPreview,
@@ -762,14 +769,14 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   // commit, so on a layout change Preact can reuse that node as desktop
   // content with the leftover translate still on it — the chapter then sits
   // partly offscreen. Strip it here, while the ref still points at the track.
-  if (!isMobile) {
+  if (!isCompactReader) {
     clearSwipeTrackInlineStyles(swipeTrackRef.current);
   }
 
   return (
     <div className="sb-pane-reader-outer">
       <div
-        className={`sb-pane-reader${isMobile ? " sb-pane-reader-mobile" : ""}`}
+        className={`sb-pane-reader${isCompactReader ? " sb-pane-reader-mobile" : ""}`}
         ref={slotScrollerRefCallback}
       >
         <BibleReader
@@ -780,7 +787,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           mobileChrome={mobileChrome}
           sharedSession={tab.sharedSession}
         />
-        {!isMobile && (
+        {!isCompactReader && (
           <BelowReaderToolbar
             toolsManager={state.tools}
             readingState={readingState}

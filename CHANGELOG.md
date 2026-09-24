@@ -5,6 +5,8 @@
 ### ✨ Added
 
 - Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
+- Show a compact reader when Seed Bible is embedded on another site with `?embed=minimal` or `?embed=true`: translation, open in a new tab, quick settings, and chapter navigation, without the Today screen or the bottom tab bar. ([#1843](https://github.com/HelloAOLab/seed-bible/pull/1843))
+  - Quick settings keep scripture and UI size, but hide "Go to all settings".
 
 ### 🔧 Changed
 
