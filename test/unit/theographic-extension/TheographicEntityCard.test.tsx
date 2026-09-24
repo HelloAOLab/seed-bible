@@ -617,16 +617,26 @@ async function expand(
 }
 
 describe("the redesigned card", () => {
-  it("puts the kind of thing right beside the name", () => {
+  it("labels only places beside the name, not people or events", () => {
     renderCard();
 
     const header = expandButton();
     expect(header.querySelector(".sb-theographic-card-name")?.textContent).toBe(
       "Aaron"
     );
-    expect(header.querySelector(".sb-theographic-card-kind")?.textContent).toBe(
-      "Person"
-    );
+    expect(header.querySelector(".sb-theographic-card-kind")).toBeNull();
+
+    render(null, container);
+    renderCard({
+      contentType: "event",
+      entry: {
+        id: "e_1",
+        name: "Creation of all things",
+        apiLink: "/api/d/theographic/events/e_1.json",
+        verses: [1],
+      },
+    });
+    expect(container.querySelector(".sb-theographic-card-kind")).toBeNull();
   });
 
   it("labels a place by its feature type, falling back to 'Place'", () => {

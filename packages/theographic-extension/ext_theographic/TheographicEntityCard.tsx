@@ -250,14 +250,13 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
     (detail.value.status === "loaded" && "place" in detail.value.detail
       ? detail.value.detail.place.featureSubType
       : undefined) ?? place?.featureType;
-  const kind =
-    contentType === PERSON_CONTENT_TYPE
-      ? t("person", { defaultValue: "Person" })
-      : contentType === EVENT_CONTENT_TYPE
-        ? t("event", { defaultValue: "Event" })
-        : placeType
-          ? placeTypeLabel(placeType)
-          : t("place", { defaultValue: "Place" });
+  // Only a place is labelled: "City" or "River" tells the reader something,
+  // while "Person" or "Event" only repeats the filter they picked.
+  const kind = place
+    ? placeType
+      ? placeTypeLabel(placeType)
+      : t("place", { defaultValue: "Place" })
+    : null;
 
   const bookName = (bookId: string) => scripture?.bookName(bookId) ?? bookId;
 
@@ -311,7 +310,9 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
       >
         <span className="sb-theographic-card-title">
           <span className="sb-theographic-card-name">{entry.name}</span>
-          <span className="sb-theographic-card-kind">{kind}</span>
+          {kind ? (
+            <span className="sb-theographic-card-kind">{kind}</span>
+          ) : null}
         </span>
         <MaterialIcon className="sb-theographic-card-chevron">
           {isExpanded.value ? "expand_less" : "expand_more"}

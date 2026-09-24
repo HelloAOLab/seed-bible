@@ -26,8 +26,6 @@
       "duration": "Duration",
       "participants": "Participants",
       "locations": "Locations",
-      "person": "Person",
-      "event": "Event",
       "place": "Place",
       "open-in-map": "Open in map",
       "map-of": "Map of {{place}}",
