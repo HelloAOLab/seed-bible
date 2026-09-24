@@ -1,17 +1,21 @@
 import { useSignal } from "@preact/signals";
 import { MaterialIcon } from "../icons";
-import type {
-  ExtensionSettingDefinition,
-  ExtensionSettingValue,
+import {
+  numberFieldLimits,
+  settingValueSatisfiesDefinition,
+  type ExtensionSettingDefinition,
+  type ExtensionSettingValue,
 } from "../../managers/ExtensionManager";
 import type { I18nHook } from "../../i18n/I18nManager";
 
 function NumberSettingInput(props: {
   id: string;
   value: number | undefined;
+  definition: Extract<ExtensionSettingDefinition, { type: "number" }>;
   onChange: (value: number) => void;
 }) {
-  const { id, value, onChange } = props;
+  const { id, value, definition, onChange } = props;
+  const limits = numberFieldLimits(definition);
   // The text as typed, held while the field is focused. Showing the parsed
   // number instead would rewrite an in-progress "1.0" to "1" on the next
   // render, so a decimal like 1.05 could never be typed.
@@ -22,14 +26,21 @@ function NumberSettingInput(props: {
       id={id}
       className="sb-settings-text-input"
       type="number"
+      min={limits.min}
+      max={limits.max}
+      step={limits.step}
       value={draft.value ?? (value === undefined ? "" : String(value))}
       onInput={(event: Event) => {
         const raw = (event.currentTarget as HTMLInputElement).value;
         draft.value = raw;
         const parsed = Number(raw);
         // An in-progress edit that isn't a number yet (e.g. empty, or a bare
-        // "-") keeps the last valid value rather than clobbering it.
-        if (raw.trim() !== "" && Number.isFinite(parsed)) {
+        // "-"), or one outside the setting's bounds, keeps the last valid
+        // value rather than clobbering it.
+        if (
+          raw.trim() !== "" &&
+          settingValueSatisfiesDefinition(parsed, definition)
+        ) {
           onChange(parsed);
         }
       }}
@@ -37,6 +48,43 @@ function NumberSettingInput(props: {
         draft.value = null;
       }}
     />
+  );
+}
+
+function EnumSettingSelect(props: {
+  id: string;
+  settingKey: string;
+  extensionId: string;
+  choices: string[];
+  value: string | undefined;
+  onChange: (value: string) => void;
+  t: I18nHook["t"];
+}) {
+  const { id, settingKey, extensionId, choices, value, onChange, t } = props;
+  const selected = value !== undefined && choices.includes(value) ? value : "";
+
+  return (
+    <select
+      id={id}
+      className="sb-settings-language-select"
+      value={selected}
+      onChange={(event: Event) => {
+        const next = (event.currentTarget as HTMLSelectElement).value;
+        if (choices.includes(next)) {
+          onChange(next);
+        }
+      }}
+    >
+      {selected === "" && <option value=""></option>}
+      {choices.map((option) => (
+        <option key={option} value={option}>
+          {t(`setting-${settingKey}-option-${option}`, {
+            ns: extensionId,
+            defaultValue: option,
+          })}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -107,9 +155,10 @@ export function ExtensionSettingsForm(props: {
     <div className="sb-extension-settings-fields">
       {entries.map(([key, definition]) => {
         const fieldId = `sb-extension-setting-${extensionId}-${key}`;
-        const title =
-          // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
-          t(`setting-${key}-title`, { ns: extensionId, defaultValue: key });
+        const title = t(`setting-${key}-title`, {
+          ns: extensionId,
+          defaultValue: key,
+        });
         const description = t(`setting-${key}-description`, {
           ns: extensionId,
           defaultValue: "",
@@ -234,8 +283,19 @@ export function ExtensionSettingsForm(props: {
                   (definition.type === "number" ? (
                     <NumberSettingInput
                       id={fieldId}
+                      definition={definition}
                       value={typeof value === "number" ? value : undefined}
                       onChange={(parsed) => onChange(key, parsed)}
+                    />
+                  ) : definition.enum && definition.enum.length > 0 ? (
+                    <EnumSettingSelect
+                      id={fieldId}
+                      settingKey={key}
+                      extensionId={extensionId}
+                      choices={definition.enum}
+                      value={typeof value === "string" ? value : undefined}
+                      onChange={(next) => onChange(key, next)}
+                      t={t}
                     />
                   ) : (
                     <input
