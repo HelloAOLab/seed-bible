@@ -1,4 +1,5 @@
 import "./BibleReader.inline.css";
+import "./BibleReader.css";
 import {
   type TranslationBookChapter,
   type ChapterVerse,
