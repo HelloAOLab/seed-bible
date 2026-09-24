@@ -7,35 +7,9 @@ import {
   type UISize,
 } from "../../managers/SettingsManager";
 import { useI18n } from "../../i18n/I18nManager";
-import { SettingsIcon } from "../icons";
+import { ScriptureLineHeightIcon, SettingsIcon } from "../icons";
 
 const FONT_SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"] as const;
-
-function ScriptureLineHeightIcon({ index }: { index: number }) {
-  const gap = 3.5 + index * 1.5;
-  const startY = 1;
-  return (
-    <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
-      <rect x="0" y={startY} width="20" height="2" rx="1" fill="currentColor" />
-      <rect
-        x="0"
-        y={startY + gap}
-        width="20"
-        height="2"
-        rx="1"
-        fill="currentColor"
-      />
-      <rect
-        x="0"
-        y={startY + 2 * gap}
-        width="20"
-        height="2"
-        rx="1"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
 
 interface MobileSettingsSheetProps {
   state: SeedBibleState;
