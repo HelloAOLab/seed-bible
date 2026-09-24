@@ -1280,6 +1280,110 @@ describe("createReadingPlansManager", () => {
     expect(manager.userReadingPlanProgresses.value).toEqual([progress]);
   });
 
+  describe("clearHeroImage", () => {
+    const COVER = "https://example.com/cover.jpg";
+    const OTHER_COVER = "https://example.com/other.jpg";
+
+    /** Lists both plans' metadata and serves their contents on request. */
+    const seedPlans = (plans: ReadingPlan[]) => {
+      setListData({
+        "publicRead:readingPlanMetadata": [
+          plans.map((plan) => ({
+            address: plan.address,
+            data: metadataOf(plan),
+          })),
+        ],
+      });
+      getDataMock.mockImplementation(
+        async (_record: string, address: string) => {
+          const plan = plans.find((p) => p.address === address);
+          return plan
+            ? { success: true, data: plan }
+            : { success: false, errorCode: "data_not_found" };
+        }
+      );
+    };
+
+    it("saves each plan using the cover without it, in both of its records", async () => {
+      const withCover = makePlan({ heroImageUrl: COVER });
+      const other = makePlan({ address: "plan-2", heroImageUrl: OTHER_COVER });
+      seedPlans([withCover, other]);
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      await manager.clearHeroImage(COVER);
+
+      const saves = recordDataMock.mock.calls.map(
+        (call) => [call[1], call[2]] as [string, ReadingPlan]
+      );
+      expect(saves.map(([address]) => address)).toEqual([
+        "plan-1",
+        "plan-1_metadata",
+      ]);
+      for (const [, data] of saves) {
+        expect(data.heroImageUrl).toBeNull();
+      }
+      const metaByAddress = new Map(
+        manager.userReadingPlans.value.map((p) => [p.address, p])
+      );
+      expect(metaByAddress.get("plan-1")?.heroImageUrl).toBeNull();
+      expect(metaByAddress.get("plan-2")?.heroImageUrl).toBe(OTHER_COVER);
+      expect(
+        manager.fullReadingPlans.value.find((p) => p.address === "plan-1")
+          ?.heroImageUrl
+      ).toBeNull();
+    });
+
+    it("saves nothing when no plan uses the cover", async () => {
+      seedPlans([makePlan({ heroImageUrl: OTHER_COVER })]);
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      await manager.clearHeroImage(COVER);
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("takes the cover off the draft being edited too", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startEditingReadingPlan();
+      manager.updateEditingReadingPlan({ heroImageUrl: COVER });
+
+      await manager.clearHeroImage(COVER);
+
+      expect(manager.editingReadingPlan.value?.plan.heroImageUrl).toBeNull();
+    });
+
+    it("updates the plans that saved and re-throws when one fails", async () => {
+      seedPlans([
+        makePlan({ heroImageUrl: COVER }),
+        makePlan({ address: "plan-2", heroImageUrl: COVER }),
+      ]);
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockImplementation(
+        async (_record: string, address: string) => {
+          if (address.startsWith("plan-2")) {
+            throw new Error("offline");
+          }
+        }
+      );
+
+      await expect(manager.clearHeroImage(COVER)).rejects.toThrow(
+        "Failed to remove the cover image from every reading plan"
+      );
+
+      const metaByAddress = new Map(
+        manager.userReadingPlans.value.map((p) => [p.address, p])
+      );
+      expect(metaByAddress.get("plan-1")?.heroImageUrl).toBeNull();
+      expect(metaByAddress.get("plan-2")?.heroImageUrl).toBe(COVER);
+    });
+  });
+
   it("skips records that fail validation", async () => {
     const metadata = metadataOf(makePlan());
     setListData({

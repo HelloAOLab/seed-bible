@@ -380,6 +380,30 @@ export function CasualOSManager(
       });
     },
 
+    /**
+     * Removes an uploaded file, given the URL `recordFile` returned for it.
+     * The SDK's own result type for this procedure leaves out the success
+     * case, so the shape callers can rely on is spelled out here.
+     */
+    eraseFile: async (
+      recordKey: string,
+      fileUrl: string
+    ): Promise<{
+      success: boolean;
+      errorCode?: string;
+      errorMessage?: string;
+    }> => {
+      const result: unknown = await client.eraseFile({
+        recordKey,
+        fileUrl,
+      });
+      return result as {
+        success: boolean;
+        errorCode?: string;
+        errorMessage?: string;
+      };
+    },
+
     listDataByMarker,
 
     listAllDataByMarker: async (

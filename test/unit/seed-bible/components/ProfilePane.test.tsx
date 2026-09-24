@@ -161,6 +161,7 @@ describe("ProfilePane", () => {
   let onEditPicture: Mock<() => void>;
   let onOpenReadingPlans: Mock<() => void>;
   let onOpenYourContent: Mock<() => void>;
+  let onOpenYourImages: Mock<() => void>;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -169,6 +170,7 @@ describe("ProfilePane", () => {
     onEditPicture = vi.fn(() => {});
     onOpenReadingPlans = vi.fn(() => {});
     onOpenYourContent = vi.fn(() => {});
+    onOpenYourImages = vi.fn(() => {});
   });
 
   afterEach(() => {
@@ -185,6 +187,7 @@ describe("ProfilePane", () => {
           onEditPicture={onEditPicture}
           onOpenReadingPlans={onOpenReadingPlans}
           onOpenYourContent={onOpenYourContent}
+          onOpenYourImages={onOpenYourImages}
         />,
         container
       );
@@ -390,6 +393,25 @@ describe("ProfilePane", () => {
     });
 
     expect(onOpenYourContent).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens Your images from its row", () => {
+    const { state } = createState();
+    renderPane(state);
+
+    const rows = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-profile-row")
+    );
+    const imagesRow = rows.find((row) =>
+      row.textContent?.includes("Your images")
+    );
+    expect(imagesRow).toBeDefined();
+    act(() => {
+      imagesRow!.click();
+    });
+
+    expect(onOpenYourImages).toHaveBeenCalledTimes(1);
+    expect(onOpenYourContent).not.toHaveBeenCalled();
   });
 
   it("signs the user out from the sign out button", () => {
