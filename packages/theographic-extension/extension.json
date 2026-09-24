@@ -43,6 +43,7 @@
       "map-unavailable": "This place can't be shown on the map.",
       "year-bc": "{{year}} BC",
       "year-ad": "{{year}} AD",
+      "date-with-year": "{{date}}, {{year}}",
       "place-type-city": "City",
       "place-type-region": "Region",
       "place-type-water": "Water",

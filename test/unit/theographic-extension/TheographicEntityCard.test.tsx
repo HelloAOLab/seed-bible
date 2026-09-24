@@ -406,6 +406,67 @@ describe("TheographicEntityCard", () => {
     );
   });
 
+  describe("dates", () => {
+    const factValues = () =>
+      Array.from(container.querySelectorAll(".sb-theographic-fact")).map(
+        (fact) => fact.textContent
+      );
+
+    async function expandEvent(startDate: string) {
+      renderCard({
+        contentType: "event",
+        entry: {
+          id: "e_1",
+          name: "An event",
+          apiLink: "/api/d/theographic/events/e_1.json",
+          verses: [1],
+        },
+        getEntity: () =>
+          Promise.resolve({
+            dataset: DATASET,
+            event: { id: "e_1", name: "An event", startDate },
+          }),
+      });
+      click(expandButton());
+      await flush();
+    }
+
+    it("shows a negative year as BC", async () => {
+      await expandEvent("-4003");
+      expect(factValues()).toContain("Date4003 BC");
+    });
+
+    it("shows a positive year as AD, without the dataset's zero padding", async () => {
+      await expandEvent("0056");
+      expect(factValues()).toContain("Date56 AD");
+    });
+
+    it("names the month and day of a full date", async () => {
+      await expandEvent("0045-04-01");
+      expect(factValues()).toContain("DateApril 1, 45 AD");
+    });
+
+    it("shows anything it doesn't recognise as the dataset has it", async () => {
+      await expandEvent("about 30");
+      expect(factValues()).toContain("Dateabout 30");
+    });
+
+    it("formats a person's years the same way", async () => {
+      renderCard({
+        getEntity: () =>
+          Promise.resolve({
+            ...AARON_DETAIL,
+            person: { ...AARON_DETAIL.person, birthYear: -4, deathYear: 12 },
+          }),
+      });
+      click(expandButton());
+      await flush();
+
+      expect(factValues()).toContain("Born4 BC");
+      expect(factValues()).toContain("Died12 AD");
+    });
+  });
+
   it("renders a negative birth year as BC", async () => {
     renderCard();
 

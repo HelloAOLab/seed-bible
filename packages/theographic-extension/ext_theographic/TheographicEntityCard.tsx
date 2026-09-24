@@ -503,26 +503,18 @@ function PersonDetail(props: {
 }) {
   const { person, mentioned } = props;
   const { t } = useI18n("theographic-extension");
-  const formatYear = (year?: number): string | null => {
-    if (year == null) {
-      return null;
-    }
-    // Theographic years are signed, with negatives meaning BC.
-    return year < 0
-      ? t("year-bc", { year: Math.abs(year), defaultValue: "{{year}} BC" })
-      : t("year-ad", { year, defaultValue: "{{year}} AD" });
-  };
+  const formatDate = useFormatDate();
 
   return (
     <>
       <dl className="sb-theographic-facts">
         <Fact
           label={t("born", { defaultValue: "Born" })}
-          value={formatYear(person.birthYear)}
+          value={formatDate(person.birthYear)}
         />
         <Fact
           label={t("died", { defaultValue: "Died" })}
-          value={formatYear(person.deathYear)}
+          value={formatDate(person.deathYear)}
         />
         <Fact
           label={t("birthplace", { defaultValue: "Birthplace" })}
@@ -603,13 +595,14 @@ function EventDetail(props: {
 }) {
   const { event, mentioned } = props;
   const { t } = useI18n("theographic-extension");
+  const formatDate = useFormatDate();
 
   return (
     <>
       <dl className="sb-theographic-facts">
         <Fact
           label={t("start-date", { defaultValue: "Date" })}
-          value={event.startDate}
+          value={formatDate(event.startDate)}
         />
         <Fact
           label={t("duration", { defaultValue: "Duration" })}
@@ -778,5 +771,52 @@ function usePlaceTypeLabel(): (type: string) => string {
       default:
         return type;
     }
+  };
+}
+
+/**
+ * A Theographic date: a signed year, where a negative one is BC ("-4003"),
+ * optionally zero-padded ("0056") and optionally a full day ("0045-04-01").
+ */
+const THEOGRAPHIC_DATE = /^(-?)(\d+)(?:-(\d{1,2})-(\d{1,2}))?$/;
+
+function useFormatDate(): (value?: string | number | null) => string | null {
+  const { t, language } = useI18n("theographic-extension");
+
+  return (value) => {
+    if (value == null || value === "") {
+      return null;
+    }
+    const match = THEOGRAPHIC_DATE.exec(String(value).trim());
+    if (!match) {
+      return String(value);
+    }
+
+    const [, minus, digits, month, day] = match;
+    const year = Number(digits);
+    const yearLabel = minus
+      ? t("year-bc", { year, defaultValue: "{{year}} BC" })
+      : t("year-ad", { year, defaultValue: "{{year}} AD" });
+    if (!month || !day) {
+      return yearLabel;
+    }
+
+    const date = new Date(0);
+    date.setUTCFullYear(minus ? -year : year, Number(month) - 1, Number(day));
+    let monthDay: string;
+    try {
+      monthDay = new Intl.DateTimeFormat(language, {
+        month: "long",
+        day: "numeric",
+        timeZone: "UTC",
+      }).format(date);
+    } catch {
+      return yearLabel;
+    }
+    return t("date-with-year", {
+      date: monthDay,
+      year: yearLabel,
+      defaultValue: "{{date}}, {{year}}",
+    });
   };
 }
