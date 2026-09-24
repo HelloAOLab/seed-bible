@@ -12,7 +12,7 @@ export interface UserPresencePort {
 
   getOwnUserPresence(): ReadingInstance[];
 
-  getRemotesUserPresnece(): Map<string, ReadingInstance[]>;
+  getRemotesUserPresence(): Map<string, ReadingInstance[]>;
 
   getOwnUserSelectedInstance(): ReadingInstance | undefined;
 }

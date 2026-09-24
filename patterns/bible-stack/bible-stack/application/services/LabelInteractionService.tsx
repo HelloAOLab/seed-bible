@@ -6,6 +6,7 @@ import type { SectionInteractionServicePort } from "../ports/in/SectionInteracti
 import type { SectionShadowInteractionPort } from "../ports/in/SectionShadowInteraction";
 import type { TestamentInteractionServicePort } from "../ports/in/TestamentInteraction";
 import type { LabelDataRepositoryPort } from "../ports/out/LabelInteraction";
+import type { LoggerPort } from "../ports/out/Logger";
 
 interface ServiceParams {
   labelDataRepositoryPort: LabelDataRepositoryPort;
@@ -14,6 +15,7 @@ interface ServiceParams {
   sectionShadowInteractionPort: SectionShadowInteractionPort;
   bookInteractionServicePort: BookInteractionServicePort;
   chapterInteractionServicePort: ChapterInteractionServicePort;
+  loggerPort: LoggerPort;
 }
 
 export class LabelInteractionService implements LabelInteractionPort {
@@ -23,6 +25,7 @@ export class LabelInteractionService implements LabelInteractionPort {
   #bookInteractionServicePort: ServiceParams["bookInteractionServicePort"];
   #testamentInteractionServicePort: ServiceParams["testamentInteractionServicePort"];
   #chapterInteractionServicePort: ServiceParams["chapterInteractionServicePort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     labelDataRepositoryPort,
@@ -31,6 +34,7 @@ export class LabelInteractionService implements LabelInteractionPort {
     bookInteractionServicePort,
     testamentInteractionServicePort,
     chapterInteractionServicePort,
+    loggerPort,
   }: ServiceParams) {
     this.#labelDataRepositoryPort = labelDataRepositoryPort;
     this.#sectionInteractionServicePort = sectionInteractionServicePort;
@@ -38,6 +42,7 @@ export class LabelInteractionService implements LabelInteractionPort {
     this.#bookInteractionServicePort = bookInteractionServicePort;
     this.#testamentInteractionServicePort = testamentInteractionServicePort;
     this.#chapterInteractionServicePort = chapterInteractionServicePort;
+    this.#loggerPort = loggerPort;
   }
 
   handleLabelSelected(transformer: Piece<"InfoLabelTransformer">) {
@@ -46,9 +51,10 @@ export class LabelInteractionService implements LabelInteractionPort {
     );
 
     if (!data) {
-      throw new Error(
+      this.#loggerPort.error(
         "LabelInteractionService: data not found at handleLabelSelected."
       );
+      return;
     }
 
     const owner = data.owner;

@@ -14,7 +14,6 @@ import {
   type Piece,
   type SelectionModality,
 } from "../../domain/models/canvas";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import {
@@ -33,6 +32,7 @@ import type { PaintPort } from "../ports/in/Paint";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import { HighlightStates } from "../../domain/models/highlight";
 import { SelectionStates } from "../../domain/models/selection";
+import type { LoggerPort } from "../ports/out/Logger";
 
 interface ServiceParams {
   bookDataRepositoryPort: BookDataRepositoryPort;
@@ -45,6 +45,7 @@ interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
   bookInteractionConfigProviderPort: BookInteractionConfigProviderPort;
   paintPort: PaintPort;
+  loggerPort: LoggerPort;
 }
 
 export class BookInteractionService implements BookInteractionServicePort {
@@ -58,6 +59,7 @@ export class BookInteractionService implements BookInteractionServicePort {
   // #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #bookInteractionConfigProviderPort: ServiceParams["bookInteractionConfigProviderPort"];
   #paintPort: ServiceParams["paintPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     bookDataRepositoryPort,
@@ -70,6 +72,7 @@ export class BookInteractionService implements BookInteractionServicePort {
     // pieceAdapterPort,
     bookInteractionConfigProviderPort,
     paintPort,
+    loggerPort,
   }: ServiceParams) {
     this.#bookDataRepositoryPort = bookDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
@@ -81,6 +84,7 @@ export class BookInteractionService implements BookInteractionServicePort {
     // this.#pieceAdapterPort = pieceAdapterPort;
     this.#bookInteractionConfigProviderPort = bookInteractionConfigProviderPort;
     this.#paintPort = paintPort;
+    this.#loggerPort = loggerPort;
   }
 
   handleBookSelection({
@@ -93,14 +97,22 @@ export class BookInteractionService implements BookInteractionServicePort {
     const bookData = this.#bookDataRepositoryPort.getPieceData(book);
 
     if (!bookData) {
-      throw new Error(
+      this.#loggerPort.error(
         "BookInteractionService: bookData not found at handleBookClick."
       );
+      return;
+    }
+
+    if (!bookData.parentDataIds) {
+      this.#loggerPort.error(
+        "BookInteractionService: bookData.parentDataIds not defined at handleBookClick."
+      );
+      return;
     }
 
     const { bibleData, sectionData } =
       this.#pieceHierarchyServicePort.getParentDataChain(
-        bookData.parentDataIds as StackParentDataIds
+        bookData.parentDataIds
       );
 
     if (bibleData && bibleData.currentState !== BibleStates.Open) {
@@ -185,18 +197,26 @@ export class BookInteractionService implements BookInteractionServicePort {
     const bookData = this.#bookDataRepositoryPort.getPieceData(book);
 
     if (!bookData) {
-      throw new Error(
+      this.#loggerPort.error(
         "BookInteractionService: bookData not found at handleBookFocusBegin."
       );
+      return;
     }
 
     bookData.beginFocus();
 
     if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
 
+    if (!bookData.parentDataIds) {
+      this.#loggerPort.error(
+        "BookInteractionService: bookData.parentDataIds not defined at handleBookFocusBegin."
+      );
+      return;
+    }
+
     const { bibleData, testamentData, sectionData } =
       this.#pieceHierarchyServicePort.getParentDataChain(
-        bookData.parentDataIds as StackParentDataIds
+        bookData.parentDataIds
       );
 
     if (
@@ -221,7 +241,7 @@ export class BookInteractionService implements BookInteractionServicePort {
           if (
             sectionData &&
             !sectionData.isInExplodedView &&
-            bookData?.getParentId("stackTestamentId") &&
+            bookData.getParentId("stackTestamentId") &&
             (!bibleData ||
               bibleData.currentStackVizState ===
                 BibleVisualizationStates.Regular) &&
@@ -262,29 +282,25 @@ export class BookInteractionService implements BookInteractionServicePort {
                 }
               }
               if (testamentData) {
-                const sectionsToCheck = bibleData
-                  ? (bibleData.childrenData
-                      .flatMap((currentTestamentData) => {
+                const isCheckableSection = (
+                  data: StackSectionData | StackSectionBookData
+                ): boolean => {
+                  return (
+                    data.type !== "StackSectionBook" &&
+                    data.id != sectionData?.id &&
+                    data.isActive &&
+                    data.selectionState === SelectionStates.Selected
+                  );
+                };
+                const sectionsToCheck = (
+                  bibleData
+                    ? bibleData.childrenData.flatMap((currentTestamentData) => {
                         return currentTestamentData.childrenData;
                       })
-                      .filter((currentSectionData) => {
-                        return (
-                          currentSectionData.type !== "StackSectionBook" &&
-                          currentSectionData.id != sectionData?.id &&
-                          currentSectionData.isActive &&
-                          currentSectionData.selectionState ===
-                            SelectionStates.Selected
-                        );
-                      }) as StackSectionData[])
-                  : (testamentData.childrenData.filter((currentSectionData) => {
-                      return (
-                        currentSectionData.type !== "StackSectionBook" &&
-                        currentSectionData.id != sectionData?.id &&
-                        currentSectionData.isActive &&
-                        currentSectionData.selectionState ===
-                          SelectionStates.Selected
-                      );
-                    }) as StackSectionData[]);
+                    : testamentData.childrenData
+                ).filter((currentSectionData) =>
+                  isCheckableSection(currentSectionData)
+                ) as StackSectionData[];
                 const unhighlightDelay =
                   this.#bookInteractionConfigProviderPort.getDelay(
                     BookInteractionDelays.UnhighlightOtherSectionBooks
@@ -344,18 +360,26 @@ export class BookInteractionService implements BookInteractionServicePort {
     const bookData = this.#bookDataRepositoryPort.getPieceData(book);
 
     if (!bookData) {
-      throw new Error(
+      this.#loggerPort.error(
         "BookInteractionService: bookData not found at handleBookFocusEnd."
       );
+      return;
     }
 
     bookData.endFocus();
 
     if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
 
+    if (!bookData.parentDataIds) {
+      this.#loggerPort.error(
+        "BookInteractionService: bookData.parentDataIds not defined at handleBookFocusEnd."
+      );
+      return;
+    }
+
     const { bibleData, sectionData } =
       this.#pieceHierarchyServicePort.getParentDataChain(
-        bookData.parentDataIds as StackParentDataIds
+        bookData.parentDataIds
       );
 
     if (

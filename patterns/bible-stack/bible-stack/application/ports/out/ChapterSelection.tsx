@@ -1,7 +1,10 @@
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 import type { StackChapterData } from "../../../domain/entities/StackChapterData";
 import type { Piece } from "../../../domain/models/canvas";
-import type { ShowSequencePacing } from "../../../domain/models/label";
+import type {
+  LabelTranslucencyMode,
+  ShowSequencePacing,
+} from "../../../domain/models/label";
 
 export interface ChapterSelectionParams {
   data: StackChapterData;
@@ -18,6 +21,11 @@ export interface LabelManagerPort {
     piece: Piece<"StackChapter">,
     pacing?: ShowSequencePacing
   ) => Promise<void>;
+  showLabel: (params: {
+    piece: Piece<"StackChapter">;
+    translucencyMode: LabelTranslucencyMode;
+    pacing?: ShowSequencePacing;
+  }) => Promise<void>;
 }
 
 export interface VersesBundleLifecycleAdapterPort {

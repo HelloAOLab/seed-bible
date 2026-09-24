@@ -45,9 +45,7 @@ export class ChapterSelectionService implements ChapterSelectionPort {
     this.#pieceActivityServicePort.tryHideIndicators(data);
   }
 
-  #finalizeDeselection(data: StackChapterData) {
-    this.#pieceActivityServicePort.updateIndicators(data);
-
+  #despawnBundles(data: StackChapterData) {
     for (const bundleData of data.childrenData) {
       const piece = bundleData.clearPiece();
       for (const verseData of bundleData.verses) {
@@ -60,6 +58,11 @@ export class ChapterSelectionService implements ChapterSelectionPort {
         this.#versesBundleLifecycleAdapterPort.despawnVersesBundle(piece);
       }
     }
+  }
+
+  #finalizeDeselection(data: StackChapterData) {
+    this.#pieceActivityServicePort.updateIndicators(data);
+    this.#despawnBundles(data);
   }
 
   async deselectChapter({ data }: DirectSelectionParams): Promise<void> {
@@ -75,12 +78,21 @@ export class ChapterSelectionService implements ChapterSelectionPort {
       this.#loggerPort.warn(
         "ChapterSelectionService: chapter is not deselecting at deselectChapter"
       );
+      return;
     }
 
-    this.#prepareDeselection(data);
-    await this.#chapterSelectionAdapterPort.deselect({ data });
-    this.#finalizeDeselection(data);
-    data.changeSelectionState("SequenceComplete");
+    try {
+      this.#prepareDeselection(data);
+      await this.#chapterSelectionAdapterPort.deselect({ data });
+      this.#finalizeDeselection(data);
+      data.changeSelectionState("SequenceComplete");
+    } catch (error) {
+      this.#loggerPort.error(
+        "ChapterSelectionService: Error at deselectChapter",
+        error
+      );
+      this.#handleDeselectionFail(data);
+    }
   }
 
   async #prepareSelection(data: StackChapterData) {
@@ -93,6 +105,47 @@ export class ChapterSelectionService implements ChapterSelectionPort {
       }
       await this.#labelManagerPort.hideLabel(data.piece!, "Instant");
     }
+  }
+
+  /**
+   * Aborts a selection that never reached its end, walking the chapter out of
+   * the transient `Selecting` state so it stays interactable. Chapters that
+   * already settled keep their state.
+   */
+  async #handleSelectionFail(data: StackChapterData) {
+    if (data.selectionState !== "Selecting") return;
+    data.changeSelectionState("RequestDeselect");
+    data.changeSelectionState("SequenceComplete");
+
+    if (!data.isOnTheGround) return;
+
+    this.#despawnBundles(data);
+    this.#pieceActivityServicePort.updateNotification(data);
+
+    try {
+      await this.#labelManagerPort.showLabel({
+        piece: data.piece!,
+        translucencyMode: "Solid",
+        pacing: "Instant",
+      });
+    } catch (error) {
+      this.#loggerPort.error(
+        "ChapterSelectionService: showLabel failed at handleSelectionFail",
+        error
+      );
+    }
+  }
+
+  /**
+   * Aborts a deselection that never reached its end, walking the chapter back
+   * into `Selected` and restoring the indicators the pre-flight hid. Chapters
+   * that already settled keep their state.
+   */
+  #handleDeselectionFail(data: StackChapterData) {
+    if (data.selectionState !== "Deselecting") return;
+    data.changeSelectionState("RequestSelect");
+    data.changeSelectionState("SequenceComplete");
+    this.#pieceActivityServicePort.updateIndicators(data);
   }
 
   async trySelectChapter(params: TrySelectChapterParams): Promise<void> {
@@ -118,10 +171,18 @@ export class ChapterSelectionService implements ChapterSelectionPort {
       return;
     }
 
-    await this.#prepareSelection(data);
+    try {
+      await this.#prepareSelection(data);
 
-    await this.#chapterSelectionAdapterPort.select({ data });
+      await this.#chapterSelectionAdapterPort.select({ data });
 
-    data.changeSelectionState("SequenceComplete");
+      data.changeSelectionState("SequenceComplete");
+    } catch (error) {
+      this.#loggerPort.error(
+        "ChapterSelectionService: Error at trySelectChapter",
+        error
+      );
+      await this.#handleSelectionFail(data);
+    }
   }
 }

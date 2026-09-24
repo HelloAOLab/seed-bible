@@ -203,7 +203,7 @@ import { VersesBundleConfigProvider } from "../config/versesBundleSelection/Vers
 import { BibleModeService } from "../../application/services/BibleModeService";
 import { BibleModeSequenceAdapter } from "../adapters/sequences/BibleModeSequenceAdapter";
 import { LabelInteractionController } from "../controllers/stack/LabelInteractionController";
-import { LabelInteractionService } from "../../application/services/InteractionLabelService";
+import { LabelInteractionService } from "../../application/services/LabelInteractionService";
 import { SectionShadowInteractionService } from "../../application/services/SectionShadowInteractionService";
 import {
   MESSAGE_TO_EVENT_MAP,
@@ -1085,6 +1085,7 @@ export const bootstrapExtension = () => {
     },
     chapterNavigationServicePort: chapterNavigationService,
     paintPort: paintService,
+    loggerPort: loggerAdapter,
   });
   const versesBundleInteractionService = new VersesBundleInteractionService({
     sequenceStateServicePort: sequenceStateService,
@@ -1161,6 +1162,7 @@ export const bootstrapExtension = () => {
     bookInteractionConfigProviderPort: bookInteractionConfigProvider,
     pieceAdapterPort: pieceAdapter,
     paintPort: paintService,
+    loggerPort: loggerAdapter,
   });
 
   const experienceService = new ExperienceService({

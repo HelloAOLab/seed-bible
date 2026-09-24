@@ -6,12 +6,14 @@ import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 import type { ExplodedViewEventPort } from "../ports/out/ExplodedView";
+import type { LoggerPort } from "../ports/out/Logger";
 
 interface ServiceParams {
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   stackUpdateServicePort: StackUpdateServicePort;
   pieceActivityServicePort: PieceActivityServicePort;
   bibleStackEventPort: ExplodedViewEventPort;
+  loggerPort: LoggerPort;
 }
 
 export class ExplodedViewService implements ExplodedViewServicePort {
@@ -20,17 +22,20 @@ export class ExplodedViewService implements ExplodedViewServicePort {
   #stackUpdateServicePort: ServiceParams["stackUpdateServicePort"];
   #pieceActivityServicePort: ServiceParams["pieceActivityServicePort"];
   #bibleStackEventPort: ServiceParams["bibleStackEventPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     pieceHierarchyServicePort,
     stackUpdateServicePort,
     pieceActivityServicePort,
     bibleStackEventPort,
+    loggerPort,
   }: ServiceParams) {
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#stackUpdateServicePort = stackUpdateServicePort;
     this.#pieceActivityServicePort = pieceActivityServicePort;
     this.#bibleStackEventPort = bibleStackEventPort;
+    this.#loggerPort = loggerPort;
   }
 
   get currentExplodedSection(): StackSectionData | undefined {
@@ -70,16 +75,22 @@ export class ExplodedViewService implements ExplodedViewServicePort {
       id: data.id,
       type: data.type,
     };
-    await this.#stackUpdateServicePort.updateStack(
-      stack.id,
-      stack.type,
-      pacing ?? "Regular"
-    );
+    try {
+      await this.#stackUpdateServicePort.updateStack(
+        stack.id,
+        stack.type,
+        pacing ?? "Regular"
+      );
 
-    this.#pieceActivityServicePort.updateAllNotifications();
+      this.#pieceActivityServicePort.updateAllNotifications();
 
-    this.#bibleStackEventPort.emit("OnStackSectionExploded", {
-      sectionData: data,
-    });
+      this.#bibleStackEventPort.emit("OnStackSectionExploded", {
+        sectionData: data,
+      });
+    } catch (error) {
+      this.#loggerPort.error("ExplodedViewService: Failed to explode section", {
+        error,
+      });
+    }
   }
 }

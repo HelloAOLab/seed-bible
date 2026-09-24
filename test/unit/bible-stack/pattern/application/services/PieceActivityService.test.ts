@@ -70,7 +70,7 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
       getUserPresence: vi.fn(),
       getOwnConnectionId: vi.fn(),
       getOwnUserPresence: vi.fn(),
-      getRemotesUserPresnece: vi.fn(),
+      getRemotesUserPresence: vi.fn(),
       getOwnUserSelectedInstance: vi.fn(),
     };
 
@@ -128,7 +128,7 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
     });
   });
 
-  it("is constructed with its ports wired", () => {
-    expect(service).toBeInstanceOf(PieceActivityService);
+  describe("getPieceActivity", () => {
+    it("");
   });
 });

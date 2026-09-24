@@ -101,15 +101,15 @@ export class ExperienceService implements ExperienceServicePort {
     await this.#awaiterPort.sleep(
       this.#experienceConfigProviderPort.getInitialBibleCreationDelay()
     );
+    const position =
+      this.#experienceConfigProviderPort.getBibleCreationPosition();
+    const { bibleData } = this.#bibleLifecycleServicePort.createBible({
+      position,
+      type: BibleTypes.Default,
+    });
+    this.#cameraAdapterPort.focusOn(position, "bibleSetup");
 
     this.#sequenceStateServicePort.executeAsSequence(async () => {
-      const position =
-        this.#experienceConfigProviderPort.getBibleCreationPosition();
-      const { bibleData } = this.#bibleLifecycleServicePort.createBible({
-        position,
-        type: BibleTypes.Default,
-      });
-      this.#cameraAdapterPort.focusOn(position, "bibleSetup");
       await this.#bibleSequenceServicePort.crackOpenBible(bibleData);
       await this.#stackPresenceNavigationServicePort.update();
       this.#pieceActivityServicePort.updateAllNotifications();

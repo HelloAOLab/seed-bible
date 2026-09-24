@@ -18,6 +18,40 @@ import type { PieceActivityServicePort } from "../../../../../../patterns/bible-
 import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { ScripturePiecesStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ScripturePiecesState";
 import type { StackPresenceNavigationServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackPresenceNavigation";
+import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
+import {
+  BibleTypes,
+  BibleVisualizationStates,
+  CrossPositions,
+} from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { WorldPosition } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/spatial";
+
+const BIBLE_ID = "bible-id";
+const CREATION_DELAY = 750;
+
+const creationPosition: WorldPosition = { x: 1, y: 2, z: 3 };
+
+const makeBibleData = (): StackBibleData =>
+  new StackBibleData({
+    id: BIBLE_ID,
+    childrenData: [],
+    currentCrossPosition: CrossPositions.Top,
+    currentStackVizState: BibleVisualizationStates.Regular,
+    arrangementIndex: 0,
+    bibleType: BibleTypes.Default,
+  });
+
+const makeDeferred = () => {
+  let resolve!: () => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<void>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+};
+
+const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 describe("pattern.bible-stack.application.services.ExperienceService", () => {
   let service: ExperienceService;
@@ -35,8 +69,14 @@ describe("pattern.bible-stack.application.services.ExperienceService", () => {
   let stackPresenceNavigationServicePort: Mocked<StackPresenceNavigationServicePort>;
   let awaiterPort: Mocked<AwaiterPort>;
   let pieceActivityServicePort: Mocked<PieceActivityServicePort>;
+  let bibleData: StackBibleData;
+
+  const orderOf = (mock: { mock: { invocationCallOrder: number[] } }) =>
+    mock.mock.invocationCallOrder[0]!;
 
   beforeEach(() => {
+    bibleData = makeBibleData();
+
     environmentAdapterPort = {
       resetZoomMin: vi.fn(),
     };
@@ -77,12 +117,14 @@ describe("pattern.bible-stack.application.services.ExperienceService", () => {
     };
 
     experienceConfigProviderPort = {
-      getInitialBibleCreationDelay: vi.fn(),
-      getBibleCreationPosition: vi.fn(),
+      getInitialBibleCreationDelay: vi.fn(() => CREATION_DELAY),
+      getBibleCreationPosition: vi.fn(() => creationPosition),
     };
 
     sequenceStateServicePort = {
-      executeAsSequence: vi.fn(),
+      executeAsSequence: vi.fn(async (task: () => Promise<void>) => {
+        await task();
+      }),
     };
 
     cameraAdapterPort = {
@@ -91,7 +133,7 @@ describe("pattern.bible-stack.application.services.ExperienceService", () => {
     };
 
     bibleLifecycleServicePort = {
-      createBible: vi.fn(),
+      createBible: vi.fn(() => ({ bibleData })),
     };
 
     bibleSequenceServicePort = {
@@ -142,7 +184,171 @@ describe("pattern.bible-stack.application.services.ExperienceService", () => {
     });
   });
 
-  it("is constructed with its ports wired", () => {
-    expect(service).toBeInstanceOf(ExperienceService);
+  describe("displayExperience", () => {
+    it("successfully displays the experience", async () => {
+      await service.displayExperience();
+      await flush();
+
+      expect(experienceAdapterPort.displayExperience).toHaveBeenCalledOnce();
+      expect(orderOf(experienceAdapterPort.displayExperience)).toBeLessThan(
+        orderOf(awaiterPort.sleep)
+      );
+      expect(bibleLifecycleServicePort.createBible).toHaveBeenCalledOnce();
+      expect(sequenceStateServicePort.executeAsSequence).toHaveBeenCalledOnce();
+    });
+
+    it("awaits the provided delay after displaying the experience", async () => {
+      const sleeping = makeDeferred();
+      awaiterPort.sleep.mockReturnValue(sleeping.promise);
+
+      const displaying = service.displayExperience();
+      await flush();
+
+      expect(awaiterPort.sleep).toHaveBeenCalledExactlyOnceWith(CREATION_DELAY);
+      expect(experienceAdapterPort.displayExperience).toHaveBeenCalledOnce();
+      expect(bibleLifecycleServicePort.createBible).not.toHaveBeenCalled();
+      expect(cameraAdapterPort.focusOn).not.toHaveBeenCalled();
+
+      sleeping.resolve();
+      await displaying;
+
+      expect(
+        bibleLifecycleServicePort.createBible
+      ).toHaveBeenCalledExactlyOnceWith({
+        position: creationPosition,
+        type: BibleTypes.Default,
+      });
+    });
+
+    it("synchronously performs a camera focus before executing the crack open sequence", async () => {
+      cameraAdapterPort.focusOn.mockReturnValue(makeDeferred().promise);
+
+      void service.displayExperience();
+      await flush();
+
+      expect(cameraAdapterPort.focusOn).toHaveBeenCalledExactlyOnceWith(
+        creationPosition,
+        "bibleSetup"
+      );
+      expect(orderOf(cameraAdapterPort.focusOn)).toBeLessThan(
+        orderOf(sequenceStateServicePort.executeAsSequence)
+      );
+      expect(bibleSequenceServicePort.crackOpenBible).toHaveBeenCalledOnce();
+      expect(
+        pieceActivityServicePort.updateAllNotifications
+      ).toHaveBeenCalledOnce();
+    });
+
+    it("performs the crack open bible animation, presence navigation update and notifications update as a complete sequence", async () => {
+      await service.displayExperience();
+      await flush();
+
+      expect(sequenceStateServicePort.executeAsSequence).toHaveBeenCalledOnce();
+      expect(
+        bibleSequenceServicePort.crackOpenBible
+      ).toHaveBeenCalledExactlyOnceWith(bibleData);
+      expect(stackPresenceNavigationServicePort.update).toHaveBeenCalledOnce();
+      expect(
+        pieceActivityServicePort.updateAllNotifications
+      ).toHaveBeenCalledOnce();
+      expect(orderOf(bibleSequenceServicePort.crackOpenBible)).toBeGreaterThan(
+        orderOf(sequenceStateServicePort.executeAsSequence)
+      );
+      expect(
+        orderOf(stackPresenceNavigationServicePort.update)
+      ).toBeGreaterThan(orderOf(bibleSequenceServicePort.crackOpenBible));
+      expect(
+        orderOf(pieceActivityServicePort.updateAllNotifications)
+      ).toBeGreaterThan(orderOf(stackPresenceNavigationServicePort.update));
+    });
+
+    it("awaits for the crack open bible animation before executing the presence navigation update", async () => {
+      const cracking = makeDeferred();
+      bibleSequenceServicePort.crackOpenBible.mockReturnValue(cracking.promise);
+
+      await service.displayExperience();
+      await flush();
+
+      expect(bibleSequenceServicePort.crackOpenBible).toHaveBeenCalledOnce();
+      expect(stackPresenceNavigationServicePort.update).not.toHaveBeenCalled();
+
+      cracking.resolve();
+      await flush();
+
+      expect(stackPresenceNavigationServicePort.update).toHaveBeenCalledOnce();
+    });
+
+    it("awaits for the presence navigation update before executing the notifications update", async () => {
+      const navigating = makeDeferred();
+      stackPresenceNavigationServicePort.update.mockReturnValue(
+        navigating.promise
+      );
+
+      await service.displayExperience();
+      await flush();
+
+      expect(stackPresenceNavigationServicePort.update).toHaveBeenCalledOnce();
+      expect(
+        pieceActivityServicePort.updateAllNotifications
+      ).not.toHaveBeenCalled();
+
+      navigating.resolve();
+      await flush();
+
+      expect(
+        pieceActivityServicePort.updateAllNotifications
+      ).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("clearExperience", () => {
+    it("resets the minimum camera zoom", () => {
+      service.clearExperience();
+
+      expect(environmentAdapterPort.resetZoomMin).toHaveBeenCalledOnce();
+    });
+
+    it("clears all stacks", () => {
+      service.clearExperience();
+
+      expect(stackManagementServicePort.clearAllStacks).toHaveBeenCalledOnce();
+    });
+
+    it("clears scheduled unhighlights", () => {
+      service.clearExperience();
+
+      expect(
+        pieceHighlightServicePort.clearScheduledUnhighlights
+      ).toHaveBeenCalledOnce();
+    });
+
+    it("clears highlighted pieces", () => {
+      service.clearExperience();
+
+      expect(
+        pieceHighlightServicePort.clearHighlightedPieces
+      ).toHaveBeenCalledOnce();
+      expect(
+        orderOf(pieceHighlightServicePort.clearHighlightedPieces)
+      ).toBeGreaterThan(
+        orderOf(pieceHighlightServicePort.clearScheduledUnhighlights)
+      );
+    });
+
+    it("clears all last interactions", () => {
+      service.clearExperience();
+
+      expect(
+        interactionRegistryServicePort.clearAllLastInteractions
+      ).toHaveBeenCalledOnce();
+    });
+
+    it("resets scripture pieces state to default", () => {
+      service.clearExperience();
+
+      expect(
+        scripturePiecesStateServicePort.resetToDefault
+      ).toHaveBeenCalledOnce();
+    });
   });
 });

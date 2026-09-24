@@ -104,7 +104,7 @@ export class UserPresenceService implements UserPresencePort {
     return this.#userPresence.get(this.#userId) ?? [];
   }
 
-  getRemotesUserPresnece(): Map<string, ReadingInstance[]> {
+  getRemotesUserPresence(): Map<string, ReadingInstance[]> {
     return new Map(
       [...this.#userPresence.entries()].filter(
         ([userId]) => userId !== this.#userId

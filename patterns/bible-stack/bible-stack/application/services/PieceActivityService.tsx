@@ -250,7 +250,7 @@ export class PieceActivityService implements PieceActivityServicePort {
     const readingInstances: ReadingInstance[] =
       this.#userPresenceServicePort.getOwnUserPresence() ?? [];
     const remoteReadingInstances =
-      this.#userPresenceServicePort.getRemotesUserPresnece();
+      this.#userPresenceServicePort.getRemotesUserPresence();
     const allReadingInstances: ReadingInstance[] = [
       ...readingInstances,
       ...[...remoteReadingInstances.values()].flat(),

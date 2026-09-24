@@ -5,7 +5,6 @@ import type {
   UserPresenceServicePort,
 } from "../ports/chapters";
 import type { ChapterInteractionServicePort } from "../ports/in/ChapterInteraction";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import {
   HighlightRequestSources,
@@ -15,6 +14,7 @@ import {
 import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { PaintPort } from "../ports/in/Paint";
+import type { LoggerPort } from "../ports/out/Logger";
 
 interface ServiceParams {
   chapterDataRepositoryPort: ChapterDataRepositoryPort;
@@ -24,6 +24,7 @@ interface ServiceParams {
   chapterNavigationServicePort: ChapterNavigationServicePort;
   userPresenceServicePort: UserPresenceServicePort;
   paintPort: PaintPort;
+  loggerPort: LoggerPort;
 }
 
 export class ChapterInteractionService implements ChapterInteractionServicePort {
@@ -34,6 +35,7 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
   #chapterNavigationServicePort: ServiceParams["chapterNavigationServicePort"];
   #userPresenceServicePort: ServiceParams["userPresenceServicePort"];
   #paintPort: ServiceParams["paintPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     chapterDataRepositoryPort,
@@ -43,6 +45,7 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     chapterNavigationServicePort,
     userPresenceServicePort,
     paintPort,
+    loggerPort,
   }: ServiceParams) {
     this.#chapterDataRepositoryPort = chapterDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
@@ -51,6 +54,7 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     this.#chapterNavigationServicePort = chapterNavigationServicePort;
     this.#userPresenceServicePort = userPresenceServicePort;
     this.#paintPort = paintPort;
+    this.#loggerPort = loggerPort;
   }
 
   handleChapterSelection({
@@ -61,21 +65,30 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     const chapterData = this.#chapterDataRepositoryPort.getPieceData(chapter);
 
     if (!chapterData) {
-      throw new Error(
+      this.#loggerPort.error(
         "ChapterInteractionService: chapterData not found at handleChapterSelection."
       );
+      return;
     }
 
-    const { sectionBookData, bookData } =
-      this.#pieceHierarchyServicePort.getParentDataChain(
-        chapterData.parentDataIds as StackParentDataIds
+    if (!chapterData.parentDataIds) {
+      this.#loggerPort.error(
+        "ChapterInteractionService: chapterData.parentDataIds not defined at handleChapterSelection."
       );
-    const actualData = sectionBookData ?? bookData;
+      return;
+    }
 
     if (this.#paintPort.isActive) {
       this.#paintPort.paint(chapterData);
       return;
     }
+
+    const { sectionBookData, bookData } =
+      this.#pieceHierarchyServicePort.getParentDataChain(
+        chapterData.parentDataIds
+      );
+
+    const actualData = sectionBookData ?? bookData;
 
     if (chapterData.selectionState === "Selected") {
       if (!actualData) {
@@ -103,9 +116,10 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     const chapterData = this.#chapterDataRepositoryPort.getPieceData(chapter);
 
     if (!chapterData) {
-      throw new Error(
+      this.#loggerPort.error(
         "ChapterInteractionService: chapterData not found at handleChapterFocusBegin."
       );
+      return;
     }
 
     chapterData.beginFocus();
@@ -120,9 +134,10 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     const chapterData = this.#chapterDataRepositoryPort.getPieceData(chapter);
 
     if (!chapterData) {
-      throw new Error(
+      this.#loggerPort.error(
         "ChapterInteractionService: chapterData not found at handleChapterFocusEnd."
       );
+      return;
     }
 
     chapterData.endFocus();
