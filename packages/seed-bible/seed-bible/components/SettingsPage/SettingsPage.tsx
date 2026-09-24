@@ -2534,6 +2534,7 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
 
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
+  const { branding } = useAppConfig();
   const { t, language, availableLanguages, setLanguage } = useI18n();
   const isLoggedIn = useComputed(() => state.login.userId.value !== null);
   const isLanguageMenuOpen = useSignal(false);
@@ -2544,6 +2545,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
   const onNavigate = (view: RequestedSettingsView) => {
     state.sidebar.requestedSettingsView.value = view;
   };
+  const disabledSettings = branding?.disabledSettings ?? [];
+
+  const isSettingDisabled = (id: string) => disabledSettings.includes(id);
 
   const currentLangMeta = LANG_META[language] ?? {
     cc: "",
@@ -2692,30 +2696,32 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </button>
             </li>
           )}
-          <li>
-            <button
-              className="sb-settings-nav-item"
-              onClick={() => {
-                state.sidebar.closeSettings();
-                state.navigation.push(
-                  buildStaticPagePath({
-                    language: state.i18n.language.value,
-                    page: "about",
-                  })
-                );
-              }}
-            >
-              <span className="sb-settings-nav-icon">
-                <MaterialIcon>info</MaterialIcon>
-              </span>
-              <span className="sb-settings-nav-label">
-                {t("about-title", { defaultValue: "About Seed Bible" })}
-              </span>
-              <span className="material-symbols-outlined rtl-mirror">
-                chevron_right
-              </span>
-            </button>
-          </li>
+          {!isSettingDisabled("about-seed-bible") && (
+            <li>
+              <button
+                className="sb-settings-nav-item"
+                onClick={() => {
+                  state.sidebar.closeSettings();
+                  state.navigation.push(
+                    buildStaticPagePath({
+                      language: state.i18n.language.value,
+                      page: "about",
+                    })
+                  );
+                }}
+              >
+                <span className="sb-settings-nav-icon">
+                  <MaterialIcon>info</MaterialIcon>
+                </span>
+                <span className="sb-settings-nav-label">
+                  {t("about-title", { defaultValue: "About Seed Bible" })}
+                </span>
+                <span className="material-symbols-outlined rtl-mirror">
+                  chevron_right
+                </span>
+              </button>
+            </li>
+          )}
           <li>
             <div className="sb-settings-field-row">
               <span className="sb-settings-field-label">
