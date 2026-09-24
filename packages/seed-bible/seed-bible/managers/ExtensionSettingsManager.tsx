@@ -2,9 +2,10 @@ import * as z from "zod/v4";
 import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
-import type {
-  ExtensionManager,
-  ExtensionSettingValue,
+import {
+  settingValueSatisfiesDefinition,
+  type ExtensionManager,
+  type ExtensionSettingValue,
 } from "./ExtensionManager";
 import type { CustomizationsManager } from "./CustomizationsManager";
 
@@ -48,7 +49,8 @@ export interface ExtensionSettingsManager {
    * Resolves one setting's effective value: the viewer's own value, else the
    * active Customization's default, else the setting's own `default`, else
    * `undefined`. Returns `undefined` if `extensionId` isn't known or no
-   * longer declares `key` — a stale stored value is never surfaced.
+   * longer declares `key`. A stored value whose type or constraints no longer
+   * match is ignored (not clamped) and the next fallback is used.
    */
   getValue: (
     extensionId: string,
@@ -197,14 +199,20 @@ export function createExtensionSettingsManager(
       return undefined;
     }
     const ownValue = valuesByExtensionId.value[extensionId]?.[key];
-    if (ownValue !== undefined && typeof ownValue === definition.type) {
+    // A stored value whose type or constraints no longer match — an extension
+    // tightened `minimum` in a later version, say — is ignored, the same way
+    // a type mismatch already is. It is not clamped into range.
+    if (
+      ownValue !== undefined &&
+      settingValueSatisfiesDefinition(ownValue, definition)
+    ) {
       return ownValue;
     }
     const customizationDefault =
       customizations.getActiveExtensionSettingDefault(extensionId, key);
     if (
       customizationDefault !== undefined &&
-      typeof customizationDefault === definition.type
+      settingValueSatisfiesDefinition(customizationDefault, definition)
     ) {
       return customizationDefault;
     }
@@ -339,6 +347,11 @@ export function createExtensionSettingsManager(
     const userId = await waitForOwnValues(extensionId);
     const definition = getDefinition(extensionId, key);
     if (!userId || !definition) {
+      return;
+    }
+    // Never store a value the setting's constraints reject. The form already
+    // withholds these; this is what stops any other caller.
+    if (!settingValueSatisfiesDefinition(value, definition)) {
       return;
     }
     await persist(

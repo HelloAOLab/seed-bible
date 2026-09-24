@@ -11,6 +11,7 @@ import {
 } from "./ProfileConfigSync";
 import hash from "hash.js";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
+import type { ExtensionSettingDefinition } from "./extensionSettingConstraints";
 
 const { sha256 } = hash;
 
@@ -47,17 +48,19 @@ export interface ExtensionTranslation {
  */
 export type ExtensionSettingType = "string" | "boolean" | "number";
 
-/** The value a user (or a Customization's defaults) can set for one extension setting. */
-export type ExtensionSettingValue = string | boolean | number;
-
-export interface ExtensionSettingDefinition {
-  type: ExtensionSettingType;
-  /**
-   * Used when nothing else applies: no value the user set themselves, and no
-   * default from the active Customization (see `ExtensionSettingsManager`).
-   */
-  default?: ExtensionSettingValue;
-}
+export type {
+  ExtensionBooleanSettingDefinition,
+  ExtensionNumberSettingDefinition,
+  ExtensionSettingDefinition,
+  ExtensionSettingValue,
+  ExtensionStringSettingDefinition,
+} from "./extensionSettingConstraints";
+export {
+  firstAcceptableSettingValue,
+  isMultipleOf,
+  numberFieldLimits,
+  settingValueSatisfiesDefinition,
+} from "./extensionSettingConstraints";
 
 export interface ExtensionMeta {
   /**
