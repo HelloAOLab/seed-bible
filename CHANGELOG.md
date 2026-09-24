@@ -4,6 +4,7 @@
 
 ### ✨ Added
 
+- See where everyone else is reading in a shared session. Each other participant gets a slim coloured bar beside the text spanning the verses on their screen, with their avatar at the top of it, so you can tell at a glance whether they are with you or still a few verses back. The bars glide along as people move, and people on the same verses stand side by side in a gutter that stays the same width, so the scripture never shifts as they come and go. Scroll past the start of someone's bar and their avatar stays with you at the top of the screen for as long as their verses do; small arrows show when a bar carries on above or below the screen, and a crowd on the same verses collapses into a short avatar stack. Someone who switches to another tab keeps their place in the session but their bar disappears until they come back. Before this, the only clue was watching their highlights appear. ([#1692](https://github.com/HelloAOLab/seed-bible/issues/1692))
 - Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
 
 ### 🔧 Changed
