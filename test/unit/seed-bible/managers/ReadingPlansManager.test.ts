@@ -32,7 +32,6 @@ import {
   createReadingPlansManager,
   draftReadingCount,
   sessionsFromDraft,
-  firstPlanScriptureShareRef,
   buildReadingPlanShareUrl,
   getReadingPlanLocator,
   parseReadingPlanLocator,
@@ -1239,12 +1238,6 @@ describe("reading plan share URLs", () => {
       ],
     });
 
-    expect(firstPlanScriptureShareRef(plan)).toEqual({
-      bookId: "JHN",
-      chapter: 3,
-      translationId: undefined,
-    });
-
     const url = new URL(
       buildReadingPlanShareUrl({
         plan,
@@ -1416,6 +1409,7 @@ describe("reading plan share URLs", () => {
 
 describe("createReadingPlansManager", () => {
   type LoginArg = Parameters<typeof createReadingPlansManager>[1];
+  type TabsArg = Parameters<typeof createReadingPlansManager>[2];
 
   let recordDataMock: Mock;
   let getDataMock: Mock;
@@ -1454,7 +1448,14 @@ describe("createReadingPlansManager", () => {
     return metadata;
   };
 
-  const makeManager = (id: string | null = "user-1") => {
+  // `sharer` is the page and open-tab translation a share link is built from.
+  const makeManager = (
+    id: string | null = "user-1",
+    sharer: { url: string; basePath?: string; translationId: string } = {
+      url: "http://localhost:3000/en/AAB/genesis/1",
+      translationId: "AAB",
+    }
+  ) => {
     userId = signal<string | null>(id);
     const os = CasualOSManager();
 
@@ -1491,7 +1492,20 @@ describe("createReadingPlansManager", () => {
       },
     });
     const login = { userId } as unknown as LoginArg;
-    return createReadingPlansManager(os, login);
+    const tabs = {
+      tabs: signal([
+        {
+          id: "tab-1",
+          readingState: { translationId: signal(sharer.translationId) },
+        },
+      ]),
+      selectedTabId: signal("tab-1"),
+    } as unknown as TabsArg;
+    const navigation = {
+      currentUrl: signal(new URL(sharer.url)),
+      basePath: sharer.basePath ?? "",
+    };
+    return createReadingPlansManager(os, login, tabs, navigation);
   };
 
   beforeEach(() => {
@@ -2472,6 +2486,49 @@ describe("createReadingPlansManager", () => {
     const saved = recordDataMock.mock.calls.at(-1)![2] as ReadingPlanProgress;
     expect(saved.percentComplete).toBeCloseTo(1 / 3, 10);
     expect(saved.totalReadings).toBe(3);
+  });
+
+  describe("getReadingPlanShareUrl", () => {
+    const planOpeningOnJohn3 = () =>
+      makePlan({
+        sessions: [
+          {
+            id: "s1",
+            readings: [
+              {
+                id: "r1",
+                item: {
+                  type: "bible-verse",
+                  ref: { bookId: "JHN", chapter: 3 },
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+    it("builds the link from the app's current URL and deployment base path", () => {
+      const manager = makeManager("user-1", {
+        url: "https://seed.example/app/es/spa_onbv/genesis/1?sessionId=abc",
+        basePath: "/app",
+        translationId: "spa_onbv",
+      });
+
+      expect(manager.getReadingPlanShareUrl(planOpeningOnJohn3())).toBe(
+        "https://seed.example/app/es/spa_onbv/john/3?readingPlan=record-1.plan-1"
+      );
+    });
+
+    it("uses the sharer's open-tab translation when the page is not a chapter", () => {
+      const manager = makeManager("user-1", {
+        url: "http://localhost:3000/",
+        translationId: "NIV",
+      });
+
+      const url = new URL(manager.getReadingPlanShareUrl(planOpeningOnJohn3()));
+
+      expect(url.pathname).toMatch(/\/NIV\/john\/3$/);
+    });
   });
 
   describe("analytics", () => {

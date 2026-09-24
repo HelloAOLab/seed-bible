@@ -5,7 +5,6 @@ import { useI18n } from "../../i18n/I18nManager";
 import {
   cadenceDurationDays,
   estimateReadingMinutes,
-  getReadingPlanShareUrl,
   isReadingChapterComplete,
   readingChapters,
   readingCompletion,
@@ -150,7 +149,9 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
         type="button"
         className="sb-rp-icon-button"
         onClick={() => {
-          void navigator.clipboard.writeText(getReadingPlanShareUrl(plan));
+          void navigator.clipboard.writeText(
+            readingPlans.getReadingPlanShareUrl(plan)
+          );
           toast?.(
             t("reading-plan-url-copied", {
               defaultValue: "Reading plan URL copied to clipboard",

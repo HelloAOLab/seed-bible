@@ -7,7 +7,6 @@ import { useI18n } from "../../i18n/I18nManager";
 import {
   formatReadingPlanId,
   getReadingCalendar,
-  getReadingPlanShareUrl,
   summarizeCalendar,
   type CalendarReadingDay,
   type CalendarSummary,
@@ -98,11 +97,12 @@ function latestProgress(
 }
 
 function copyReadingPlanShareUrl(
+  readingPlans: ReadingPlansManager,
   plan: ReadingPlan,
   toast: ((message: string) => void) | undefined,
   copiedMessage: string
 ) {
-  void navigator.clipboard.writeText(getReadingPlanShareUrl(plan));
+  void navigator.clipboard.writeText(readingPlans.getReadingPlanShareUrl(plan));
   toast?.(copiedMessage);
 }
 
@@ -473,6 +473,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
             className="sb-rp-icon-button"
             onClick={() =>
               copyReadingPlanShareUrl(
+                readingPlans,
                 full,
                 toast,
                 t("reading-plan-url-copied", {

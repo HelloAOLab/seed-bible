@@ -948,7 +948,7 @@ export function createSeedBibleState(
       },
     },
   });
-  const readingPlans = createReadingPlansManager(os, login);
+  const readingPlans = createReadingPlansManager(os, login, tabs, navigation);
   const gallery = createUserGalleryManager(os, login);
   const textToSpeech = createTextToSpeechManager();
 
