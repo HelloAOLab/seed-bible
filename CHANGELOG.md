@@ -4,11 +4,15 @@
 
 ### ✨ Added
 
+- Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
+
 ### 🔧 Changed
 
 - Move the playlists section from the discover panel to the "Your Content" screen. ([#1838](https://github.com/HelloAOLab/seed-bible/pull/1838))
 
 ### 🐛 Fixed
+
+- Open a shared playlist and reading plan on its first scripture chapter instead of the chapter the sharer was reading, so the reader does not load one chapter and then jump to another. ([#1840](https://github.com/HelloAOLab/seed-bible/pull/1840)) ([#1841](https://github.com/HelloAOLab/seed-bible/pull/1841))
 
 ### 🗑️ Removed
 
