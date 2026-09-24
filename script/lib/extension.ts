@@ -6,8 +6,10 @@ import fs from "fs";
 import type {
   ExtensionMeta,
   ExtensionSet,
+  ExtensionSettingDefinition,
   UploadedExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import { settingConstraintProblems } from "../../packages/seed-bible/seed-bible/managers/extensionSettingConstraints";
 import * as z from "zod/v4";
 
 // const downloadRecordName = "testingPublickKey";
@@ -324,20 +326,94 @@ export const ExtensionTranslationSchema = z
  * fields this script doesn't know about yet without them being stripped from
  * the uploaded meta.
  */
+const finiteNumber = z.number().finite();
+
+function rejectDefaultOutsideConstraints(
+  value: ExtensionSettingDefinition,
+  ctx: {
+    addIssue: (issue: {
+      code: "custom";
+      message: string;
+      path: string[];
+    }) => void;
+  }
+) {
+  if (value.default === undefined) {
+    return;
+  }
+  for (const problem of settingConstraintProblems(value.default, value)) {
+    ctx.addIssue({
+      code: "custom",
+      message: `default ${problem}`,
+      path: ["default"],
+    });
+  }
+}
+
 export const ExtensionSettingDefinitionSchema = z.discriminatedUnion("type", [
-  z.looseObject({
-    type: z.literal("string"),
-    default: z.string().optional(),
-  }),
+  z
+    .looseObject({
+      type: z.literal("string"),
+      default: z.string().optional(),
+      enum: z.array(z.string()).optional(),
+    })
+    .superRefine((value, ctx) => {
+      if (value.enum !== undefined && value.enum.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "enum must list at least one value",
+          path: ["enum"],
+        });
+      }
+      rejectDefaultOutsideConstraints(value, ctx);
+    }),
   z.looseObject({
     type: z.literal("boolean"),
     default: z.boolean().optional(),
   }),
-  z.looseObject({
-    type: z.literal("number"),
-    default: z.number().optional(),
-  }),
+  z
+    .looseObject({
+      type: z.literal("number"),
+      default: z.number().finite().optional(),
+      minimum: finiteNumber.optional(),
+      maximum: finiteNumber.optional(),
+      multipleOf: z.number().optional(),
+    })
+    .superRefine((value, ctx) => {
+      if (
+        value.multipleOf !== undefined &&
+        !(Number.isFinite(value.multipleOf) && value.multipleOf > 0)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `multipleOf must be a finite number greater than 0 (got ${value.multipleOf})`,
+          path: ["multipleOf"],
+        });
+      }
+      if (
+        value.minimum !== undefined &&
+        value.maximum !== undefined &&
+        value.minimum > value.maximum
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `minimum ${value.minimum} is greater than maximum ${value.maximum}`,
+          path: ["minimum"],
+        });
+      }
+      rejectDefaultOutsideConstraints(value, ctx);
+    }),
 ]);
+
+/** `settings.repeatCount.default: default 11 is greater than maximum 10` */
+export function formatSchemaIssues(error: z.ZodError): string {
+  return error.issues
+    .map((issue) => {
+      const where = issue.path.join(".");
+      return where ? `${where}: ${issue.message}` : issue.message;
+    })
+    .join("; ");
+}
 
 export const ExtensionMetaSchema = z.looseObject({
   id: z.string(),
@@ -379,12 +455,15 @@ export async function upload(
   );
   const parseResult = ExtensionMetaSchema.safeParse(extensionData);
   if (!parseResult.success) {
+    const details = formatSchemaIssues(parseResult.error);
     console.error(
       "Invalid extension.json for package:",
       directoryName,
-      z.treeifyError(parseResult.error)
+      details
     );
-    throw new Error("Invalid extension.json for package: " + directoryName);
+    throw new Error(
+      `Invalid extension.json for package ${directoryName}: ${details}`
+    );
   }
 
   const extensionId = parseResult.data.id;

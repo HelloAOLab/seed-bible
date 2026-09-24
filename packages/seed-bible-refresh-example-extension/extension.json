@@ -4,7 +4,19 @@
     "greeting": { "type": "string", "default": "Hello, World" },
     "greetingSize": { "type": "number", "default": 1.5 },
     "subtitle": { "type": "string" },
-    "showBanner": { "type": "boolean", "default": true }
+    "showBanner": { "type": "boolean", "default": true },
+    "repeatCount": {
+      "type": "number",
+      "default": 1,
+      "minimum": 1,
+      "maximum": 10,
+      "multipleOf": 1
+    },
+    "tone": {
+      "type": "string",
+      "default": "warm",
+      "enum": ["plain", "warm", "bold"]
+    }
   },
   "translations": {
     "en": {
@@ -25,6 +37,13 @@
       "setting-subtitle-description": "Optional line shown under the greeting. This setting declares no default, so nothing shows until you set one.",
       "setting-showBanner-title": "Show banner",
       "setting-showBanner-description": "Whether to show the example banner.",
+      "setting-repeatCount-title": "Repeat count",
+      "setting-repeatCount-description": "How many times to repeat the greeting. A whole number from 1 to 10.",
+      "setting-tone-title": "Tone",
+      "setting-tone-description": "How the greeting is styled.",
+      "setting-tone-option-plain": "Plain",
+      "setting-tone-option-warm": "Warm",
+      "setting-tone-option-bold": "Bold",
       "example-banner": "This is the example banner. Turn it off in this extension's settings."
     },
     "es": {
