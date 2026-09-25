@@ -1,5 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { batch, computed, signal, type Signal } from "@preact/signals";
 import {
   PANEL_PCT,
@@ -253,7 +254,7 @@ function createMobileState(): SeedBibleState {
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover: createDiscoverManager(),
     playlists: {
       playing: signal(null),
     },
@@ -299,7 +300,7 @@ function createDesktopState(): SeedBibleState {
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover: createDiscoverManager(),
     playlists: {
       playing: signal(null),
     },

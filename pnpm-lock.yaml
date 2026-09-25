@@ -583,6 +583,15 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/theographic-extension:
+    dependencies:
+      '@seed-bible/locations-extension':
+        specifier: workspace:*
+        version: link:../locations-extension
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
   packages/transcript-extension:
     dependencies:
       '@ffmpeg/ffmpeg':

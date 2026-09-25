@@ -1209,4 +1209,9 @@
     flex: 1 1 0;
     min-width: 18rem;
   }
+
+  .sb-bible-reader-content:not(.sb-bible-reader-content--discover-below)
+    > .sb-bible-reader-discover-panel {
+    width: 22.5rem;
+  }
 }
