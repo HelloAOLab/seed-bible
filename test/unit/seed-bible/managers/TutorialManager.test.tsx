@@ -42,12 +42,17 @@ function createPanes(): PanesManager {
   } as unknown as PanesManager;
 }
 
-function createSidebar(): SidebarManager {
+function createSidebar(collapsed = false): SidebarManager {
+  const isSidebarCollapsed = signal(collapsed);
   return {
     closeSearchPanel: vi.fn(),
     closeChatPanel: vi.fn(),
     closeSettings: vi.fn(),
     closeSidebar: vi.fn(),
+    isSidebarCollapsed,
+    setSidebarCollapsed: vi.fn((value: boolean) => {
+      isSidebarCollapsed.value = value;
+    }),
   } as unknown as SidebarManager;
 }
 
@@ -344,5 +349,66 @@ describe("createTutorialManager — reader visibility gate", () => {
     readerVisible.value = true;
 
     expect(tutorial.promptVisible.value).toBe(true);
+  });
+});
+
+describe("createTutorialManager — onboarding start", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("expands a collapsed desktop sidebar so the tour can spotlight it", () => {
+    const sidebar = createSidebar(true);
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      sidebar
+    );
+
+    tutorial.start();
+
+    expect(sidebar.setSidebarCollapsed).toHaveBeenCalledWith(false);
+    expect(sidebar.isSidebarCollapsed.value).toBe(false);
+    expect(tutorial.running.value).toBe(true);
+  });
+
+  it("leaves a collapsed sidebar collapsed on mobile", () => {
+    const sidebar = createSidebar(true);
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(true),
+      createPanes(),
+      sidebar
+    );
+
+    tutorial.start();
+
+    expect(sidebar.setSidebarCollapsed).not.toHaveBeenCalled();
+    expect(sidebar.isSidebarCollapsed.value).toBe(true);
+  });
+
+  it("does not raise the offer card when the tour was started before the reader was visible", () => {
+    const readerVisible = signal(false);
+    const tutorial = createTutorialManager(
+      createLogin(),
+      readerVisible,
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    tutorial.start();
+    readerVisible.value = true;
+
+    expect(tutorial.running.value).toBe(true);
+    expect(tutorial.promptVisible.value).toBe(false);
   });
 });

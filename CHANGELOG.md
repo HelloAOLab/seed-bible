@@ -4,7 +4,16 @@
 
 ### ✨ Added
 
+- See where everyone else is reading in a shared session. Each other participant gets a slim coloured bar beside the text spanning the verses on their screen, with their avatar at the top of it, so you can tell at a glance whether they are with you or still a few verses back. The bars glide along as people move, and people on the same verses stand side by side in a gutter that stays the same width, so the scripture never shifts as they come and go. Scroll past the start of someone's bar and their avatar stays with you at the top of the screen for as long as their verses do; small arrows show when a bar carries on above or below the screen, and a crowd on the same verses collapses into a short avatar stack. Someone who switches to another tab keeps their place in the session but their bar disappears until they come back. Before this, the only clue was watching their highlights appear. ([#1692](https://github.com/HelloAOLab/seed-bible/issues/1692))
 - Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
+- Show the people, places and events a chapter names, from the Theographic Bible Metadata dataset. ([#1744](https://github.com/HelloAOLab/seed-bible/issues/1744))
+  - New People, Places and Events filters in the Discover panel, each listing what the chapter mentions and the verses it appears in. Tap a verse to jump to it.
+  - Open an entry and pick one of the chapter's verses that mention it to read it, quoted in your translation with the name marked.
+  - Each entry also shows its facts — a person's family, a place's other names and what it's called today, an event's date and participants — and its full dictionary entry. Places appear on a map right in the entry, which can be moved into its own window.
+  - Select a verse and the lists narrow to what that verse mentions.
+  - These are left out of the "All" view until you pick one of the three filters, so a chapter with dozens of names doesn't bury your own notes.
+  - Comes as the "People, Places & Events" extension, installed automatically. Uninstall it from Settings ▸ Extensions if you don't want it.
+- Let extensions add their own kinds of content to Discover. Each kind gets its own filter in the Discover panel and its own section in the Discover pane, and can be kept out of the "All" view until it's picked.
 
 ### 🔧 Changed
 
@@ -12,7 +21,8 @@
 
 ### 🐛 Fixed
 
-- Open a shared playlist on its first scripture chapter instead of the chapter the sharer was reading, so the reader does not load one chapter and then jump to another. ([#1840](https://github.com/HelloAOLab/seed-bible/pull/1840))
+- Open a shared playlist and reading plan on its first scripture chapter instead of the chapter the sharer was reading, so the reader does not load one chapter and then jump to another. ([#1840](https://github.com/HelloAOLab/seed-bible/pull/1840)) ([#1841](https://github.com/HelloAOLab/seed-bible/pull/1841))
+- Show an extension's Discover content as soon as the extension is installed, and remove it as soon as it's uninstalled, instead of waiting until you move to another chapter.
 
 ### 🗑️ Removed
 

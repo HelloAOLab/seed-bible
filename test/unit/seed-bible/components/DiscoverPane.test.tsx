@@ -7,6 +7,10 @@ import {
   DiscoverPaneTitle,
 } from "@packages/seed-bible/seed-bible/components/DiscoverPane/DiscoverPane";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
+import {
+  createDiscoverManager,
+  type DiscoverManager,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import type {
   Playlist,
   PlaylistManager,
@@ -337,6 +341,7 @@ function createMockTab(
     discoveredCrossReferences?: unknown[];
     discoveredStudyNotes?: unknown[];
     discoveredContent?: unknown[];
+    selectedVerses?: number[];
     translationId?: string;
     selectTranslationAndChapter?: ReturnType<typeof vi.fn>;
     decorateVerses?: ReturnType<typeof vi.fn>;
@@ -353,6 +358,11 @@ function createMockTab(
       ),
       discoveredStudyNotes: signal(overrides.discoveredStudyNotes ?? []),
       discoveredContent: signal(overrides.discoveredContent ?? []),
+      selectedVerses: signal(
+        (overrides.selectedVerses ?? []).map((verse) => ({
+          verse: { number: verse },
+        }))
+      ),
       translationBooks: signal(null),
       translationId: signal(overrides.translationId ?? "BSB"),
       selectTranslationAndChapter:
@@ -368,6 +378,7 @@ function createMockState(
   overrides: {
     getUserProfile?: ReturnType<typeof vi.fn>;
     openVerseReference?: ReturnType<typeof vi.fn>;
+    discover?: DiscoverManager;
   } = {}
 ): SeedBibleState {
   return {
@@ -388,9 +399,7 @@ function createMockState(
         url: "https://example.com/hero.jpg",
       }),
     },
-    discover: {
-      scrollToVerse: signal(null),
-    },
+    discover: overrides.discover ?? createDiscoverManager(),
     panes: {
       closeFullscreenPanes: vi.fn(),
     },
@@ -1855,6 +1864,83 @@ describe("DiscoverPane", () => {
     expect(container.textContent).toContain("Background");
     expect(container.textContent).toContain("Some context");
     expect(container.textContent).toContain("The full article.");
+  });
+
+  it("folds a hidden-by-default type away until its header is clicked", () => {
+    const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations();
+    const tab = createMockTab({
+      chapterData: { book: { name: "Exodus" }, chapter: { number: 4 } },
+      discoveredContent: [
+        {
+          providerId: "theographic",
+          results: [
+            {
+              type: "content",
+              contentType: "person_profile",
+              verses: [14, 27],
+              title: "Aaron",
+              description: "Male",
+              reference: {
+                book: "EXO",
+                chapter: 4,
+                verse: 14,
+                bookData: { commonName: "Exodus", name: "Exodus" },
+              },
+              content: "Aaron card",
+            },
+          ],
+        },
+      ],
+    });
+    const tabs = createMockTabs(tab);
+    const discover = createDiscoverManager();
+    discover.registerContentType({
+      id: "person_profile",
+      title: "People",
+      hiddenByDefault: true,
+      layout: "custom",
+    });
+    discover.registerContentType({
+      id: "place_profile",
+      title: "Places",
+      hiddenByDefault: true,
+      layout: "custom",
+    });
+    const state = createMockState(false, { discover });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={createModalManager()}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    // The header is there with a count, but the entries behind it are not —
+    // this pane has no filter chips, so collapsing is how they stay out of the
+    // way until asked for.
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toContain("People (1)");
+    expect(sectionTitles).not.toContain("Places");
+    expect(container.textContent).not.toContain("Aaron card");
+
+    const toggle = Array.from(
+      container.querySelectorAll(".sb-discover-section-toggle")
+    ).find((el) => el.textContent === "People (1)") as HTMLButtonElement;
+    act(() => {
+      toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(container.textContent).toContain("Aaron card");
   });
 
   it("renders CreatePlaylistForm when view is create_playlist", () => {

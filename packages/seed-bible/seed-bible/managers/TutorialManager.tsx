@@ -611,7 +611,19 @@ export function createTutorialManager(
     saveProfileConfigValue(login, PROFILE_TUTORIAL_OPTED_OUT, true);
   };
 
+  // Set once the first-run offer has been resolved — either the effect below
+  // decided, or `start()` was called directly (the welcome screen's tour
+  // button) before the reader was visible.
+  let autoStartChecked = false;
+
   const start = () => {
+    // An explicit start resolves the first-run offer. Marking that before
+    // tearing Today down matters: closing the pane is what makes the reader
+    // visible, and the offer effect would otherwise pop the card on top of
+    // the tour it was waiting to show.
+    autoStartChecked = true;
+    promptVisible.value = false;
+
     // Close whatever overlapping UI is up first — coach marks target the
     // normal reader UI, so a fullscreen pane (e.g. the Today screen) or an
     // open sidebar panel left up would hide the very elements being
@@ -622,6 +634,12 @@ export function createTutorialManager(
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
+    // The desktop tour spotlights the tabs header, which the collapsed rail
+    // doesn't render. Open it so those steps have a target. Remembered, so
+    // the sidebar stays open after the tour instead of snapping shut.
+    if (!isMobile.value && sidebar.isSidebarCollapsed.value) {
+      sidebar.setSidebarCollapsed(false);
+    }
 
     // Pick the step set for the current viewport before showing the tour.
     mode.value = isMobile.value ? "onboarding-mobile" : "onboarding-desktop";
@@ -743,7 +761,6 @@ export function createTutorialManager(
   // served HTML doesn't have, which is exactly the divergence `hydrate()`
   // reports. `armAutoStart` is called from `AppState.hydrateFromStorage` after
   // the first commit, so the card appears a moment later instead.
-  let autoStartChecked = false;
   let autoStartArmed = false;
   const armAutoStart = () => {
     if (autoStartArmed) {

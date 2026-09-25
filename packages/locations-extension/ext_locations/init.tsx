@@ -6,9 +6,22 @@ import locations from "./locations.json";
 import geoImporterPattern from "virtual:@pattern/geo-importer";
 import { v4 as uuid } from "uuid";
 
-interface PlaceData {
+export interface PlaceData {
   place: string;
   geojson: string;
+}
+
+/**
+ * What this extension hands to extensions that depend on it (the second
+ * argument of their `init`), keyed under its id, `ext_locations`.
+ */
+export interface LocationsExtensionApi {
+  findLocationsInText(text: string): PlaceData[];
+  findLocationsInVerses(verses: ChapterVerse[]): PlaceData[];
+  /** The entry for one place name, whatever its case, or null. */
+  findLocation(name: string): PlaceData | null;
+  /** Where a place's GeoJSON file lives. */
+  getPlaceGeoJsonUrl(place: PlaceData): string;
 }
 
 export default function initLocationsExtension() {
@@ -51,19 +64,13 @@ export default function initLocationsExtension() {
         return findLocationsInText(text);
       };
 
-      const getPlaceGeoJsonUrl = (place: PlaceData) => {
-        if (place.place === place.geojson) {
-          return [
-            `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${place.geojson}.geojson`,
-            true,
-          ] as const;
-        } else {
-          return [
-            `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${place.geojson}.geojson`,
-            false,
-          ] as const;
-        }
-      };
+      const findLocation = (name: string): PlaceData | null =>
+        (locations as Record<string, PlaceData>)[name.toLowerCase()] ?? null;
+
+      const getPlaceGeoJsonUrl = (place: PlaceData): string =>
+        place.place === place.geojson
+          ? `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${place.geojson}.geojson`
+          : `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${place.geojson}.geojson`;
 
       const foundPlaces = computed(() => {
         const readingState = context.app.currentReadingState.value;
@@ -80,7 +87,7 @@ export default function initLocationsExtension() {
       const showPlaceOnMap = async (place: PlaceData) => {
         console.log("Show place!", place);
 
-        const [url] = getPlaceGeoJsonUrl(place);
+        const url = getPlaceGeoJsonUrl(place);
         const response = await fetch(url);
 
         if (response.status !== 200) {
@@ -144,6 +151,8 @@ export default function initLocationsExtension() {
         findLocationsInText,
         findLocationsInVerses,
         foundPlaces,
+        findLocation,
+        getPlaceGeoJsonUrl,
       };
     },
   });

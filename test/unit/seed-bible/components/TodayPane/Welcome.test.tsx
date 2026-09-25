@@ -3,8 +3,13 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { Welcome } from "@packages/seed-bible/seed-bible/components/TodayPane/Welcome";
+import { TimeProvider } from "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
 import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
-import { todayStub, loginWithName } from "../../testUtils/todayStubs";
+import {
+  todayStub,
+  loginStub,
+  loginWithName,
+} from "../../testUtils/todayStubs";
 
 // The pre-highlighted John 1:1 for `AAB`, straight out of the table Welcome
 // owns. Asserted verbatim so a silent edit to the data shows up here.
@@ -28,6 +33,7 @@ describe("Welcome", () => {
   let container: HTMLDivElement;
   let onOpenBookSelector: Mock;
   let onOpenPassage: Mock;
+  let onTakeTour: Mock;
   let getVerseText: Mock;
   let getDefaultTranslation: Mock;
   let lastTranslationId: Signal<string | undefined>;
@@ -38,6 +44,7 @@ describe("Welcome", () => {
     document.body.appendChild(container);
     onOpenBookSelector = vi.fn();
     onOpenPassage = vi.fn();
+    onTakeTour = vi.fn();
     getVerseText = vi.fn(async () => "raw verse");
     getDefaultTranslation = vi.fn(() => "DEF");
     lastTranslationId = signal<string | undefined>("KJV");
@@ -49,6 +56,7 @@ describe("Welcome", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -74,13 +82,16 @@ describe("Welcome", () => {
     });
     act(() =>
       render(
-        <Welcome
-          today={today}
-          login={loginWithName(options.username)}
-          theme={theme}
-          onOpenBookSelector={onOpenBookSelector}
-          onOpenPassage={onOpenPassage}
-        />,
+        <TimeProvider>
+          <Welcome
+            today={today}
+            login={loginWithName(options.username)}
+            theme={theme}
+            onOpenBookSelector={onOpenBookSelector}
+            onOpenPassage={onOpenPassage}
+            onTakeTour={onTakeTour}
+          />
+        </TimeProvider>,
         container
       )
     );
@@ -94,7 +105,10 @@ describe("Welcome", () => {
     it("uses a personal greeting when a username is present", () => {
       setup({ username: "Gabriel" });
       expect(q(".sb-today-welcome-screen-greeting")!.textContent).toBe(
-        "Welcome, Gabriel!"
+        "Welcome Gabriel"
+      );
+      expect(q(".sb-today-welcome-screen-greeting-name")!.textContent).toBe(
+        "Gabriel"
       );
     });
 
@@ -103,6 +117,102 @@ describe("Welcome", () => {
       expect(q(".sb-today-welcome-screen-greeting")!.textContent).toBe(
         "Welcome!"
       );
+      expect(q(".sb-today-welcome-screen-greeting-name")).toBeNull();
+    });
+
+    it.each(["", "   "])(
+      "uses the cached name when the account record's name is blank (%j)",
+      (blankName) => {
+        const today = todayStub({
+          bookNames: signal(new Map([["JHN", "John"]])),
+          lastTranslationBooks: signal(null),
+          getVerseText,
+          lastTranslationId,
+          getDefaultTranslation,
+        });
+        act(() =>
+          render(
+            <TimeProvider>
+              <Welcome
+                today={today}
+                login={loginStub({
+                  userId: signal("user-1"),
+                  profile: signal({ name: blankName }) as never,
+                  cachedProfile: signal({ name: "John" }) as never,
+                })}
+                theme={theme}
+                onOpenBookSelector={onOpenBookSelector}
+                onOpenPassage={onOpenPassage}
+                onTakeTour={onTakeTour}
+              />
+            </TimeProvider>,
+            container
+          )
+        );
+        expect(q(".sb-today-welcome-screen-greeting")!.textContent).toBe(
+          "Welcome John"
+        );
+        expect(q(".sb-today-welcome-screen-greeting-name")!.textContent).toBe(
+          "John"
+        );
+      }
+    );
+
+    it("shows a name that arrives after the welcome screen is already up", () => {
+      const profile = signal<{ name: string } | null>(null);
+      const cachedProfile = signal<{ name: string } | null>(null);
+      const today = todayStub({
+        bookNames: signal(new Map([["JHN", "John"]])),
+        lastTranslationBooks: signal(null),
+        getVerseText,
+        lastTranslationId,
+        getDefaultTranslation,
+      });
+      act(() =>
+        render(
+          <TimeProvider>
+            <Welcome
+              today={today}
+              login={loginStub({
+                userId: signal("user-1"),
+                profile: profile as never,
+                cachedProfile: cachedProfile as never,
+              })}
+              theme={theme}
+              onOpenBookSelector={onOpenBookSelector}
+              onOpenPassage={onOpenPassage}
+              onTakeTour={onTakeTour}
+            />
+          </TimeProvider>,
+          container
+        )
+      );
+      expect(q(".sb-today-welcome-screen-greeting")!.textContent).toBe(
+        "Welcome!"
+      );
+
+      act(() => {
+        cachedProfile.value = { name: "John" };
+      });
+      expect(q(".sb-today-welcome-screen-greeting")!.textContent).toBe(
+        "Welcome John"
+      );
+      expect(q(".sb-today-welcome-screen-greeting-name")!.textContent).toBe(
+        "John"
+      );
+    });
+
+    it("shows the date above the greeting", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 5, 15, 8, 0, 0));
+      setup();
+      const expectedMonth = new Date(2026, 5, 15)
+        .toLocaleString("en", { month: "short" })
+        .toUpperCase();
+      expect(q(".sb-today-welcome-screen-date")!.textContent).toBe(
+        `15 ${expectedMonth}`
+      );
+      vi.useRealTimers();
     });
   });
 
@@ -397,6 +507,28 @@ describe("Welcome", () => {
         chapter: 1,
         translationId: undefined,
       });
+    });
+  });
+
+  describe("take a tour", () => {
+    it("renders a Take a tour button below the reading actions", () => {
+      setup();
+      const actions = q(".sb-today-welcome-screen-actions")!;
+      const buttons = Array.from(actions.querySelectorAll("button"));
+      expect(buttons.map((button) => button.className)).toEqual([
+        expect.stringContaining("sb-today-book-selector-button"),
+        expect.stringContaining("sb-today-welcome-screen-start-button"),
+        expect.stringContaining("sb-today-welcome-screen-tour-button"),
+      ]);
+      expect(btn(".sb-today-welcome-screen-tour-button").textContent).toBe(
+        "Take a tour"
+      );
+    });
+
+    it("starts the tour when clicked", () => {
+      setup();
+      act(() => btn(".sb-today-welcome-screen-tour-button").click());
+      expect(onTakeTour).toHaveBeenCalledTimes(1);
     });
   });
 });
