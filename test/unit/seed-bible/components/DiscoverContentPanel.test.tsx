@@ -317,4 +317,105 @@ describe("DiscoverContentPanel", () => {
 
     expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
   });
+
+  describe("side panel max height", () => {
+    class MockResizeObserver {
+      constructor(public cb: () => void) {}
+      observe() {}
+      disconnect() {}
+    }
+
+    let scroller: HTMLDivElement;
+    let paneRect: { top: number; bottom: number };
+
+    beforeEach(() => {
+      vi.stubGlobal("ResizeObserver", MockResizeObserver);
+      vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+        cb(0);
+        return 0;
+      });
+      vi.stubGlobal("cancelAnimationFrame", () => {});
+      vi.stubGlobal("innerHeight", 900);
+
+      // Stand-in for `.sb-pane-reader`: the scrolling pane the panel sticks in.
+      scroller = document.createElement("div");
+      scroller.style.overflowY = "auto";
+      paneRect = { top: 60, bottom: 900 };
+      scroller.getBoundingClientRect = () =>
+        ({ top: paneRect.top, bottom: paneRect.bottom }) as DOMRect;
+      container.remove();
+      scroller.appendChild(container);
+      document.body.appendChild(scroller);
+      document.documentElement.style.setProperty(
+        "--sb-reader-bottom-inset",
+        "100px"
+      );
+    });
+
+    afterEach(() => {
+      scroller.remove();
+      document.documentElement.style.removeProperty("--sb-reader-bottom-inset");
+      vi.unstubAllGlobals();
+    });
+
+    function renderPanel() {
+      act(() => {
+        render(
+          <DiscoverContentPanel
+            tab={createMockTab()}
+            state={createMockState({
+              annotationsForChapter: [createAnnotation()],
+            })}
+          />,
+          container
+        );
+      });
+      return container.querySelector(
+        ".sb-discover-content-panel"
+      ) as HTMLElement;
+    }
+
+    it("caps the panel to the pane area between the tab bar and the bottom toolbar", () => {
+      const panel = renderPanel();
+
+      // Pane starts 60px down (tab bar); toolbar covers the bottom 100px.
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "740px"
+      );
+    });
+
+    it("caps the panel to a pane that ends above the bottom of the screen", () => {
+      paneRect = { top: 60, bottom: 400 };
+      const panel = renderPanel();
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "340px"
+      );
+    });
+
+    it("re-measures when the bottom toolbar changes height", async () => {
+      const panel = renderPanel();
+
+      document.documentElement.style.setProperty(
+        "--sb-reader-bottom-inset",
+        "300px"
+      );
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "540px"
+      );
+    });
+
+    it("never shrinks the panel below a usable minimum", () => {
+      paneRect = { top: 60, bottom: 120 };
+      const panel = renderPanel();
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "192px"
+      );
+    });
+  });
 });

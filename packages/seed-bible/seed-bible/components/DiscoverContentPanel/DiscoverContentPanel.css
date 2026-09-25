@@ -16,6 +16,20 @@
   gap: 12px;
 }
 
+/* Beside the scripture the panel sticks while the chapter scrolls, so any
+   part of it past the bottom of the visible pane can never be scrolled into
+   view. Cap it to the on-screen pane height (measured in
+   DiscoverContentPanel.tsx) so its own list scrolls instead. Stacked below
+   the scripture (and on mobile) it scrolls with the page, so the looser
+   base cap is fine there. */
+@media (min-width: 1024px) {
+  .sb-bible-reader-content:not(.sb-bible-reader-content--discover-below)
+    > .sb-bible-reader-discover-panel
+    > .sb-discover-content-panel {
+    max-height: var(--sb-dcp-side-max-height, calc(100vh - 2rem));
+  }
+}
+
 /* ── Header ── */
 
 .sb-dcp-header {
