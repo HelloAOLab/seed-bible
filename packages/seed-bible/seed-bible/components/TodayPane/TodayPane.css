@@ -82,6 +82,7 @@
 
 .sb-today-welcome-screen .sb-today-welcome-screen-greeting {
   margin: 0;
+  text-align: center;
   text-box: auto;
 }
 
