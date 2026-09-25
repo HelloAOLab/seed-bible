@@ -1295,6 +1295,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const handleConfigureExtension = (extensionEntry: ExtensionListEntry) => {
     const settings = extensionEntry.extension?.meta.settings ?? {};
+    const customPanel = extensions.settingsPanels.value[extensionEntry.id];
     state.modals.openModal({
       title: {
         key: "extension-settings-title",
@@ -1328,6 +1329,8 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
               {t("log-in", { defaultValue: "Log in" })}
             </button>
           </div>
+        ) : customPanel ? (
+          customPanel()
         ) : (
           <>
             <ExtensionSettingsForm
@@ -1484,9 +1487,10 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
           <div className="sb-extension-row-actions">
             {installState === "installed" &&
-              extensionEntry.extension?.meta.settings &&
-              Object.keys(extensionEntry.extension.meta.settings).length >
-                0 && (
+              ((extensionEntry.extension?.meta.settings &&
+                Object.keys(extensionEntry.extension.meta.settings).length >
+                  0) ||
+                extensions.settingsPanels.value[id]) && (
                 <button
                   type="button"
                   className="sb-extension-row-action-button"

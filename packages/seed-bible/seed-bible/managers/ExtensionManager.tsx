@@ -1,4 +1,5 @@
-import { effect, signal } from "@preact/signals";
+import { effect, signal, type ReadonlySignal } from "@preact/signals";
+import type { ComponentChildren } from "preact";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { LoginManager } from "../managers/LoginManager";
@@ -91,6 +92,17 @@ export interface ExtensionMeta {
    */
   settings?: Record<string, ExtensionSettingDefinition>;
 }
+
+/**
+ * Renders an extension's own custom content for its "Configure" button in
+ * Settings → Extensions, in place of the generic scalar `ExtensionSettingsForm`
+ * built from `ExtensionMeta.settings`. For settings that can't be expressed as
+ * flat string/boolean/number values (e.g. a repeating list, or a field that
+ * shouldn't round-trip through the shared settings record), an extension
+ * registers one of these via `ExtensionManager.registerSettingsPanel` instead
+ * of declaring `meta.settings`.
+ */
+export type ExtensionSettingsPanelRenderer = () => ComponentChildren;
 
 export type Extension = UploadedExtension | ImportExtension;
 
@@ -599,6 +611,34 @@ export function createExtensionManager(
   const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
   const pendingInstallations = new Map<string, Promise<boolean>>();
+
+  // Custom "Configure" panels extensions register for themselves, keyed by
+  // extension id. Kept here (rather than on `ExtensionSettingsManager`) since
+  // it's a property of the extension itself, like `meta.settings` — not of
+  // any one viewer's saved values.
+  const settingsPanelsSignal = signal<
+    Record<string, ExtensionSettingsPanelRenderer>
+  >({});
+
+  const registerSettingsPanel = (
+    extensionId: string,
+    render: ExtensionSettingsPanelRenderer
+  ): CleanupFunction => {
+    settingsPanelsSignal.value = {
+      ...settingsPanelsSignal.value,
+      [extensionId]: render,
+    };
+    return () => {
+      // A later registration for the same id (e.g. a reinstall) already
+      // replaced this entry — only remove it if it's still the one we added.
+      if (settingsPanelsSignal.value[extensionId] !== render) {
+        return;
+      }
+      const next = { ...settingsPanelsSignal.value };
+      delete next[extensionId];
+      settingsPanelsSignal.value = next;
+    };
+  };
 
   /**
    * The localStorage key under which the IDs of the extensions that the user has
@@ -1488,5 +1528,10 @@ export function createExtensionManager(
     getExtensions,
 
     getAllExtensionsAsSet,
+
+    registerSettingsPanel,
+    settingsPanels: settingsPanelsSignal as ReadonlySignal<
+      Record<string, ExtensionSettingsPanelRenderer>
+    >,
   };
 }
