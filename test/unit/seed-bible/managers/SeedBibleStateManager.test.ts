@@ -13,6 +13,8 @@ import type {
 import {
   createTestSeedBibleState,
   type CreateTestSeedBibleStateOptions,
+  // The local `waitFor` below can't run under fake timers; this one advances them.
+  waitFor as waitForUnderFakeTimers,
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
 import {
@@ -1558,6 +1560,75 @@ describe("createSeedBibleState", () => {
         expect(from).toBeGreaterThanOrEqual(resumedAtSeconds);
         expect(to - from).toBeLessThanOrEqual(10);
       }
+    });
+
+    it("gives a new visitor on Welcome no credit for the chapter loaded behind it", async () => {
+      // The real boot path: a bare URL auto-opens Today over Welcome, and the
+      // reader still loads its default chapter (Genesis 1) underneath.
+      jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+      mockSaveReadingSpan.mockClear();
+      const state = await createStateWithOptions({ todayOpen: "fromUrl" });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await waitForUnderFakeTimers(
+        () => readingState.chapterData.value !== null
+      );
+
+      expect(readingState.chapterData.value!.book.id).toBe("GEN");
+      expect(readingState.chapterData.value!.chapter.number).toBe(1);
+      expect(state.today.isOpen.value).toBe(true);
+      expect(state.today.readingHistory.value.status).toBe("empty");
+
+      vi.advanceTimersByTime(60000);
+
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
+    });
+
+    it("does not credit the chapter behind Today while Today covers it", async () => {
+      const state = await createStateWithOptions({ todayOpen: true });
+      expect(state.today.isOpen.value).toBe(true);
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingSpan.mockClear();
+
+      vi.advanceTimersByTime(60000);
+
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
+    });
+
+    it("starts crediting once Today closes, from the moment it closes", async () => {
+      const state = await createStateWithOptions({ todayOpen: true });
+      setSelectedTabChapter(state, "genesis", 1);
+      vi.advanceTimersByTime(20000);
+      mockSaveReadingSpan.mockClear();
+
+      state.today.close();
+      await Promise.resolve();
+      const closedAtSeconds = Math.floor(Date.now() / 1000);
+
+      vi.advanceTimersByTime(5000);
+
+      expect(mockSaveReadingSpan).toHaveBeenCalledTimes(1);
+      expect(mockSaveReadingSpan).toHaveBeenLastCalledWith(
+        ...anySpanFor("genesis", 1)
+      );
+      const [, , from, to] = mockSaveReadingSpan.mock.calls[0]!;
+      expect(from).toBeGreaterThanOrEqual(closedAtSeconds);
+      expect(to - from).toBe(5);
+    });
+
+    it("stops crediting when Today opens over the chapter being read", async () => {
+      const state = await createState();
+      setSelectedTabChapter(state, "genesis", 1);
+      vi.advanceTimersByTime(15000);
+      expect(mockSaveReadingSpan).toHaveBeenCalled();
+
+      state.today.open();
+      await Promise.resolve();
+      expect(state.today.isOpen.value).toBe(true);
+      mockSaveReadingSpan.mockClear();
+
+      vi.advanceTimersByTime(60000);
+
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
     });
 
     it("credits at most one tick when the app freezes without reporting itself hidden", async () => {

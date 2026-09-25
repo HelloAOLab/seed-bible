@@ -1811,8 +1811,13 @@ export function createSeedBibleState(
 
     const canWatchVisibility =
       typeof document !== "undefined" && !import.meta.env.SSR;
-    const handleReadingVisibility = () => {
-      if (document.visibilityState === "visible") {
+    // A visible tab isn't enough: Today (or any fullscreen pane) can cover the
+    // reader, and a chapter sitting under Welcome would otherwise be credited
+    // every tick — giving a brand-new account history it never read.
+    const syncCrediting = () => {
+      const tabVisible =
+        !canWatchVisibility || document.visibilityState === "visible";
+      if (tabVisible && readerVisible.peek()) {
         startCrediting();
       } else {
         stopCrediting();
@@ -1820,11 +1825,11 @@ export function createSeedBibleState(
     };
 
     if (canWatchVisibility) {
-      document.addEventListener("visibilitychange", handleReadingVisibility);
+      document.addEventListener("visibilitychange", syncCrediting);
     }
-    if (!canWatchVisibility || document.visibilityState === "visible") {
-      startCrediting();
-    }
+    // Subscribed rather than read in this effect, so a pane opening or closing
+    // doesn't re-run it and restart the `user_chapter_read` timer below.
+    const stopWatchingReader = readerVisible.subscribe(syncCrediting);
 
     const posthogTimeoutId = setTimeout(() => {
       captureEvent("user_chapter_read", {
@@ -1836,11 +1841,9 @@ export function createSeedBibleState(
 
     return () => {
       if (canWatchVisibility) {
-        document.removeEventListener(
-          "visibilitychange",
-          handleReadingVisibility
-        );
+        document.removeEventListener("visibilitychange", syncCrediting);
       }
+      stopWatchingReader();
       stopCrediting();
       clearTimeout(posthogTimeoutId);
     };
