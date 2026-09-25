@@ -90,6 +90,9 @@ catalogs:
     preact-render-to-string:
       specifier: ^6.7.0
       version: 6.7.0
+    qrcode:
+      specifier: ^1.5.4
+      version: 1.5.4
     react:
       specifier: npm:@preact/compat@^18.3.2
       version: 18.3.2
@@ -552,6 +555,9 @@ importers:
       preact-iso:
         specifier: 'catalog:'
         version: 2.12.0(preact-render-to-string@6.7.0)(preact@10.29.8)
+      qrcode:
+        specifier: 'catalog:'
+        version: 1.5.4
       react:
         specifier: 'catalog:'
         version: '@preact/compat@18.3.2(preact@10.29.8)'
@@ -570,6 +576,10 @@ importers:
       zod:
         specifier: 4.4.3
         version: 4.4.3
+    devDependencies:
+      '@types/qrcode':
+        specifier: ^1.5.6
+        version: 1.5.6
 
   packages/seed-bible-refresh-example-extension:
     dependencies:
@@ -3458,6 +3468,9 @@ packages:
 
   '@types/prompts@2.4.9':
     resolution: {integrity: sha512-qTxFi6Buiu8+50/+3DGIWLHM6QuWsEKugJnnP6iv2Mc4ncxE4A/OJkjuVOA+5X0X1S/nq5VJRa8Lu+nwcvbrKA==}
+
+  '@types/qrcode@1.5.6':
+    resolution: {integrity: sha512-te7NQcV2BOvdj2b1hCAHzAoMNuj65kNBMz0KBaxM6c3VGBOhU0dURQKOtH8CFNI/dsKkwlv32p26qYQTWoB5bw==}
 
   '@types/qs@6.15.1':
     resolution: {integrity: sha512-GZHUBZR9hckSUhrxmp1nG6NwdpM9fCunJwyThLW1X3AyHgd9IlHb6VANpQQqDr2o/qQp6McZ3y/IA2rVzKzSbw==}
@@ -10763,6 +10776,10 @@ snapshots:
     dependencies:
       '@types/node': 24.10.9
       kleur: 3.0.3
+
+  '@types/qrcode@1.5.6':
+    dependencies:
+      '@types/node': 24.10.9
 
   '@types/qs@6.15.1': {}
 
