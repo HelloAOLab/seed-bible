@@ -178,6 +178,8 @@ import {
 } from "../managers/OnboardingManager";
 import {
   createTutorialManager,
+  parseTutorialLink,
+  mirrorTutorialToUrl,
   type TutorialManager,
 } from "../managers/TutorialManager";
 import { range } from "es-toolkit";
@@ -1113,6 +1115,11 @@ export function createSeedBibleState(
     return true;
   });
 
+  // Client-only: SSR can't run the tour, and launching it there would put
+  // the overlay in the served HTML.
+  const tutorialLink = import.meta.env.SSR
+    ? null
+    : parseTutorialLink(navigation.currentUrl.value.searchParams);
   const tutorial = createTutorialManager(
     login,
     readerVisible,
@@ -1120,8 +1127,13 @@ export function createSeedBibleState(
     isMobile,
     panes,
     sidebar,
-    openedViaContentLink
+    openedViaContentLink,
+    tutorialLink
   );
+
+  if (!import.meta.env.SSR) {
+    mirrorTutorialToUrl(tutorial, navigation, tutorialLink);
+  }
 
   // Once the tutorial has been resolved (seen, skipped, declined, or opted
   // out) and the reader is visible, offer the install prompt — to any
