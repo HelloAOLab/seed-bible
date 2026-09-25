@@ -274,6 +274,46 @@ export const CONTEXTUAL_TUTORIALS: Record<string, TutorialStep[]> = {
   ],
 };
 
+/**
+ * ID of the first-run onboarding tour. Picks the desktop or mobile step list
+ * for the current viewport, so the same link works on both.
+ */
+export const INTRODUCTION_TUTORIAL_ID = "introduction";
+
+/**
+ * Tutorials that can be launched from a `?tutorial=<id>` link. Keep
+ * docs/tutorial-links.md in sync. `mobile-settings` and `offline-download`
+ * are left out: they spotlight a sheet/list that only exists after the user
+ * opens it, so launched cold they would point at nothing.
+ */
+export const LINKABLE_TUTORIAL_IDS: readonly string[] = [
+  INTRODUCTION_TUTORIAL_ID,
+  "pane-layout",
+  "add-tab",
+  "search",
+];
+
+/** A tutorial requested by the page URL (`?tutorial=` / `?tutorialStep=`). */
+export interface TutorialLinkRequest {
+  id: string;
+  step: number;
+}
+
+/**
+ * Reads a tutorial request from `?tutorial=<id>&tutorialStep=<n>`. Returns
+ * null for a missing or unknown id; a missing or malformed step means 0.
+ */
+export function parseTutorialLink(
+  params: URLSearchParams
+): TutorialLinkRequest | null {
+  const id = params.get("tutorial");
+  if (!id || !LINKABLE_TUTORIAL_IDS.includes(id)) {
+    return null;
+  }
+  const step = Number.parseInt(params.get("tutorialStep") ?? "", 10);
+  return { id, step: Number.isFinite(step) && step > 0 ? step : 0 };
+}
+
 function readFlag(key: string): boolean {
   try {
     return window.localStorage.getItem(key) === "true";
@@ -332,6 +372,11 @@ export interface TutorialManager {
   isLast: ReadonlySignal<boolean>;
   /** Whether the tour can step backwards from the active step. */
   canGoBack: ReadonlySignal<boolean>;
+  /**
+   * ID of the running tutorial ({@link INTRODUCTION_TUTORIAL_ID} or a
+   * contextual feature id), or null when none is running.
+   */
+  activeTutorialId: ReadonlySignal<string | null>;
   /** Whether the user has already completed/skipped the onboarding tour. */
   completed: ReadonlySignal<boolean>;
   /** Whether the user has opted out of all future tutorial prompts. */
@@ -357,6 +402,12 @@ export interface TutorialManager {
    * hasn't opted out. Safe to call from event handlers without pre-checking.
    */
   startContextual: (featureId: string) => void;
+  /**
+   * Starts a tutorial by id at `step` (clamped to the tour's length), whether
+   * or not the user has seen it or opted out — this is an explicit request,
+   * e.g. from a link. Returns false for an unknown id.
+   */
+  startTutorial: (id: string, step?: number) => boolean;
   /** Advances to the next step, finishing after the last one. */
   next: () => void;
   /** Goes back one step (no-op on the first). */
@@ -417,7 +468,8 @@ export function createTutorialManager(
   isMobile: ReadonlySignal<boolean>,
   panes: PanesManager,
   sidebar: SidebarManager,
-  joinedViaSessionLink = false
+  joinedViaSessionLink = false,
+  linkedTutorial: TutorialLinkRequest | null = null
 ): TutorialManager {
   const running = signal<boolean>(false);
   const index = signal<number>(0);
@@ -499,6 +551,15 @@ export function createTutorialManager(
       };
     }
     return local;
+  });
+
+  const activeTutorialId = computed<string | null>(() => {
+    if (!running.value) {
+      return null;
+    }
+    return mode.value === "contextual"
+      ? activeFeatureId.value
+      : INTRODUCTION_TUTORIAL_ID;
   });
 
   const currentStep = computed<TutorialStep | null>(() =>
@@ -657,6 +718,31 @@ export function createTutorialManager(
     running.value = true;
   };
 
+  const startTutorial = (id: string, step = 0): boolean => {
+    if (id === INTRODUCTION_TUTORIAL_ID) {
+      start();
+    } else {
+      const steps = CONTEXTUAL_TUTORIALS[id];
+      if (!steps || steps.length === 0) {
+        return false;
+      }
+      mode.value = "contextual";
+      activeFeatureId.value = id;
+      activeSteps.value = steps;
+    }
+    if (activeSteps.value.length === 0) {
+      return false;
+    }
+    batch(() => {
+      index.value = Math.min(
+        Math.max(0, Math.floor(step)),
+        activeSteps.value.length - 1
+      );
+      running.value = true;
+    });
+    return true;
+  };
+
   const finish = () => {
     running.value = false;
     if (mode.value === "contextual") {
@@ -749,6 +835,17 @@ export function createTutorialManager(
       if (autoStartChecked || running.value) {
         return;
       }
+      // A `?tutorial=` link asked for a specific tour: launch it (once the
+      // reader is ready to be pointed at) in place of the offer card. Checked
+      // before the session-link guard because it is an explicit request.
+      if (linkedTutorial) {
+        if (!readerVisible.value) {
+          return;
+        }
+        autoStartChecked = true;
+        startTutorial(linkedTutorial.id, linkedTutorial.step);
+        return;
+      }
       // Opened via a shared-session invite link: don't auto-launch the onboarding
       // tour over the join. We don't record completion, so the tour still
       // auto-starts on a later visit that isn't a session link.
@@ -774,6 +871,7 @@ export function createTutorialManager(
     },
     running,
     index,
+    activeTutorialId,
     currentStep,
     isLast,
     canGoBack,
@@ -784,6 +882,7 @@ export function createTutorialManager(
     featuresSeen,
     start,
     startContextual,
+    startTutorial,
     next,
     prev,
     finish,

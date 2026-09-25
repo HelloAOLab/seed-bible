@@ -1,6 +1,12 @@
 import { signal, type ReadonlySignal } from "@preact/signals";
 
-import { createTutorialManager } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
+import {
+  createTutorialManager,
+  parseTutorialLink,
+  MOBILE_TUTORIAL_STEPS,
+  ONBOARDING_STEPS,
+  type TutorialLinkRequest,
+} from "@packages/seed-bible/seed-bible/managers/TutorialManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
@@ -279,5 +285,132 @@ describe("createTutorialManager — reader visibility gate", () => {
     readerVisible.value = true;
 
     expect(tutorial.promptVisible.value).toBe(true);
+  });
+});
+
+describe("parseTutorialLink", () => {
+  it("reads the tutorial id and step", () => {
+    expect(
+      parseTutorialLink(
+        new URLSearchParams("tutorial=introduction&tutorialStep=3")
+      )
+    ).toEqual({ id: "introduction", step: 3 });
+  });
+
+  it("defaults to the first step when no valid step is given", () => {
+    expect(parseTutorialLink(new URLSearchParams("tutorial=add-tab"))).toEqual({
+      id: "add-tab",
+      step: 0,
+    });
+    expect(
+      parseTutorialLink(new URLSearchParams("tutorial=search&tutorialStep=x"))
+    ).toEqual({ id: "search", step: 0 });
+    expect(
+      parseTutorialLink(new URLSearchParams("tutorial=search&tutorialStep=-2"))
+    ).toEqual({ id: "search", step: 0 });
+  });
+
+  it("ignores a missing, unknown, or unlinkable id", () => {
+    expect(parseTutorialLink(new URLSearchParams(""))).toBeNull();
+    expect(parseTutorialLink(new URLSearchParams("tutorial=nope"))).toBeNull();
+    expect(
+      parseTutorialLink(new URLSearchParams("tutorial=offline-download"))
+    ).toBeNull();
+  });
+});
+
+describe("createTutorialManager — tutorial links", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  function createLinked(
+    link: TutorialLinkRequest,
+    opts: { readerVisible?: ReadonlySignal<boolean>; mobile?: boolean } = {}
+  ) {
+    const tutorial = createTutorialManager(
+      createLogin(),
+      opts.readerVisible ?? createReaderVisible(true),
+      createSelector(),
+      signal(opts.mobile ?? false),
+      createPanes(),
+      createSidebar(),
+      false,
+      link
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+    return tutorial;
+  }
+
+  it("launches the linked introduction at the requested step instead of the offer card", () => {
+    const tutorial = createLinked({ id: "introduction", step: 3 });
+
+    expect(tutorial.promptVisible.value).toBe(false);
+    expect(tutorial.running.value).toBe(true);
+    expect(tutorial.activeTutorialId.value).toBe("introduction");
+    expect(tutorial.currentStep.value?.id).toBe(ONBOARDING_STEPS[3]?.id);
+  });
+
+  it("waits for the reader to be visible before launching", () => {
+    const readerVisible = signal(false);
+    const tutorial = createLinked(
+      { id: "introduction", step: 0 },
+      { readerVisible }
+    );
+    expect(tutorial.running.value).toBe(false);
+
+    readerVisible.value = true;
+
+    expect(tutorial.running.value).toBe(true);
+  });
+
+  it("clamps a step past the end to the last step of the mobile tour", () => {
+    const tutorial = createLinked(
+      { id: "introduction", step: 99 },
+      { mobile: true }
+    );
+
+    expect(tutorial.currentStep.value?.id).toBe(
+      MOBILE_TUTORIAL_STEPS[MOBILE_TUTORIAL_STEPS.length - 1]?.id
+    );
+  });
+
+  it("plays a linked tutorial even after the user opted out", () => {
+    window.localStorage.setItem("sb-tutorial-opted-out", "true");
+    window.localStorage.setItem(
+      "sb-tutorial-features-seen",
+      JSON.stringify({ "add-tab": true })
+    );
+
+    const tutorial = createLinked({ id: "add-tab", step: 0 });
+
+    expect(tutorial.running.value).toBe(true);
+    expect(tutorial.activeTutorialId.value).toBe("add-tab");
+  });
+
+  it("reports no active tutorial once it finishes", () => {
+    const tutorial = createLinked({ id: "search", step: 0 });
+
+    tutorial.next();
+
+    expect(tutorial.running.value).toBe(false);
+    expect(tutorial.activeTutorialId.value).toBeNull();
+  });
+});
+
+describe("createTutorialManager — startTutorial", () => {
+  it("rejects an unknown id", () => {
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+
+    expect(tutorial.startTutorial("nope")).toBe(false);
+    expect(tutorial.running.value).toBe(false);
   });
 });
