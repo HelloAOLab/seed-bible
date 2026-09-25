@@ -814,6 +814,7 @@
   "session-qr-scan-to-join": "Scan to join",
   "session-qr-scan-description": "Opens this passage, in this session, on their phone.",
   "session-qr-save-image": "Save image",
+  "session-qr-error": "Couldn't generate a QR code. Use the Copy button above to share the link instead.",
   "about-title": "About Seed Bible",
   "about-meta-description": "Seed Bible is a free Bible app built for reading Scripture together with your family, friends, and community — free forever, no ads or paywalls.",
   "about-intro-community": "Seed Bible is a Bible for building a life in Scripture with those you actually do life with; your family, your closest friends, your house church. We believe Christian faith is meant to be lived together, and we want Scripture to become part of the ordinary life you already share with the people closest to you.",

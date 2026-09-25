@@ -3,6 +3,7 @@ import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import QRCode from "qrcode";
 import { useI18n } from "../../i18n/I18nManager";
+import { download } from "../../app/utils";
 
 const QR_RENDER_SIZE = 512;
 const QR_FILE_NAME = "seed-bible-session-qr.png";
@@ -45,8 +46,8 @@ export function SessionQRCode(props: { url: string }) {
   const saveImage = async () => {
     const image = dataUrl.value;
     if (!image) return;
+    const blob = await (await fetch(image)).blob();
     try {
-      const blob = await (await fetch(image)).blob();
       const file = new File([blob], QR_FILE_NAME, { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file] });
@@ -57,13 +58,8 @@ export function SessionQRCode(props: { url: string }) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       console.error("Failed to share session QR code.", error);
     }
-    const link = document.createElement("a");
-    link.href = image;
-    link.download = QR_FILE_NAME;
-    link.click();
+    download(blob, QR_FILE_NAME);
   };
-
-  if (failed.value) return null;
 
   return (
     <div className="sb-session-qr">
@@ -77,40 +73,49 @@ export function SessionQRCode(props: { url: string }) {
           })}
         </span>
       </div>
-      <div className="sb-session-qr-card">
-        <div className="sb-session-qr-code">
-          {dataUrl.value && (
-            <img
-              src={dataUrl.value}
-              alt={t("session-qr-alt", {
-                defaultValue: "QR code to join this session",
-              })}
-            />
-          )}
-        </div>
-        <div className="sb-session-qr-info">
-          <span className="sb-session-qr-card-title">
-            {t("session-qr-scan-to-join", { defaultValue: "Scan to join" })}
-          </span>
-          <span className="sb-session-qr-card-description">
-            {t("session-qr-scan-description", {
-              defaultValue:
-                "Opens this passage, in this session, on their phone.",
-            })}
-          </span>
-          <button
-            type="button"
-            className="sb-session-qr-save"
-            onClick={() => void saveImage()}
-            disabled={!dataUrl.value}
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              ios_share
+      {failed.value ? (
+        <span className="sb-session-qr-error" role="status">
+          {t("session-qr-error", {
+            defaultValue:
+              "Couldn't generate a QR code. Use the Copy button above to share the link instead.",
+          })}
+        </span>
+      ) : (
+        <div className="sb-session-qr-card">
+          <div className="sb-session-qr-code">
+            {dataUrl.value && (
+              <img
+                src={dataUrl.value}
+                alt={t("session-qr-alt", {
+                  defaultValue: "QR code to join this session",
+                })}
+              />
+            )}
+          </div>
+          <div className="sb-session-qr-info">
+            <span className="sb-session-qr-card-title">
+              {t("session-qr-scan-to-join", { defaultValue: "Scan to join" })}
             </span>
-            {t("session-qr-save-image", { defaultValue: "Save image" })}
-          </button>
+            <span className="sb-session-qr-card-description">
+              {t("session-qr-scan-description", {
+                defaultValue:
+                  "Opens this passage, in this session, on their phone.",
+              })}
+            </span>
+            <button
+              type="button"
+              className="sb-session-qr-save"
+              onClick={() => void saveImage()}
+              disabled={!dataUrl.value}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                ios_share
+              </span>
+              {t("session-qr-save-image", { defaultValue: "Save image" })}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

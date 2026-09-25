@@ -48,7 +48,7 @@
     "i18next": "catalog:",
     "preact": "catalog:",
     "preact-iso": "catalog:",
-    "qrcode": "^1.5.4",
+    "qrcode": "catalog:",
     "react": "catalog:",
     "react-avatar-editor": "15.1.0",
     "react-dom": "catalog:",

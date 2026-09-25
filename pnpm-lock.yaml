@@ -90,6 +90,9 @@ catalogs:
     preact-render-to-string:
       specifier: ^6.7.0
       version: 6.7.0
+    qrcode:
+      specifier: ^1.5.4
+      version: 1.5.4
     react:
       specifier: npm:@preact/compat@^18.3.2
       version: 18.3.2
@@ -553,7 +556,7 @@ importers:
         specifier: 'catalog:'
         version: 2.12.0(preact-render-to-string@6.7.0)(preact@10.29.8)
       qrcode:
-        specifier: ^1.5.4
+        specifier: 'catalog:'
         version: 1.5.4
       react:
         specifier: 'catalog:'
