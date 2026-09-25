@@ -25,7 +25,10 @@ import {
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
 import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
-import { openCustomizationEditPane } from "../CustomizationEditPane/CustomizationEditPane";
+import {
+  buildCustomizationTutorialSteps,
+  openCustomizationEditPane,
+} from "../CustomizationEditPane/CustomizationEditPane";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { download, translateTitle } from "../../app/utils";
 import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
@@ -2415,6 +2418,12 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
   const handleCreate = async () => {
     const created = await customizations.create();
     openCustomizationEditPane(state, created.id);
+    // First-time-only overview: the customization name and logo, then a
+    // deep-linked tour of the new theme's editor sections.
+    state.tutorial.startContextual(
+      "customization-created",
+      buildCustomizationTutorialSteps(state, created.defaultVariantId)
+    );
   };
 
   const list = customizations.customizations.value;
