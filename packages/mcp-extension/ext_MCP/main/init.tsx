@@ -2,7 +2,10 @@ import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import { createMCPManager, type MCPManager } from "./MCPManager";
-import { openAIChatSettingsModal } from "./AIChatSettingsModal";
+import {
+  openAIChatSettingsModal,
+  AIChatSettingsModalContent,
+} from "./AIChatSettingsModal";
 
 export const MCP_CHAT_CONTEXT_ID = "mcp-servers";
 
@@ -53,8 +56,17 @@ export default function initMCPExtension() {
         );
       });
 
+      // Also surfaces the same server list/add-server UI as a "Configure"
+      // button in Settings → Extensions, for a user who wants to set MCP
+      // servers up without first opening an AI chat.
+      const stopSettingsPanel = context.extensions.registerSettingsPanel(
+        "mcp-extension",
+        () => <AIChatSettingsModalContent mcp={mcp} />
+      );
+
       yield () => {
         stopWiring();
+        stopSettingsPanel();
         context.chats.removeContext(MCP_CHAT_CONTEXT_ID);
         mcp.dispose();
       };

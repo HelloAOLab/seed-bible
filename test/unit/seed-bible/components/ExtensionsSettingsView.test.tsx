@@ -54,6 +54,8 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       loadExtension: vi.fn().mockResolvedValue(undefined),
       unloadExtension: vi.fn(),
       getAllExtensionsAsSet: vi.fn().mockReturnValue(null),
+      registerSettingsPanel: vi.fn().mockReturnValue(vi.fn()),
+      settingsPanels: signal<Record<string, () => ComponentChildren>>({}),
     },
     // No customization is active in these tests — the list renders exactly
     // as it would outside the Customization Center.
@@ -295,6 +297,60 @@ describe("ExtensionsSettingsView", () => {
       expect(modalBody.textContent).not.toContain(
         "Please log in to configure this extension."
       );
+    });
+
+    const panelOnlyEntry = (): ExtensionListEntry => ({
+      ...makeEntry("panel-only", true),
+      extension: {
+        url: "https://example.com/panel-only.js",
+        meta: {
+          id: "panel-only",
+          translations: { en: { title: "Panel Only", description: "" } },
+        },
+      },
+    });
+
+    const registerPanel = (
+      state: SeedBibleState,
+      extensionId: string,
+      render: () => ComponentChildren
+    ) => {
+      act(() => {
+        (
+          state.extensions.settingsPanels as Signal<
+            Record<string, () => ComponentChildren>
+          >
+        ).value = {
+          ...state.extensions.settingsPanels.value,
+          [extensionId]: render,
+        };
+      });
+    };
+
+    it("shows the Configure button for an extension with a registered settings panel, even with no declared settings", () => {
+      const state = renderExtensions([panelOnlyEntry()]);
+
+      registerPanel(state, "panel-only", () => <div>Custom panel</div>);
+
+      expect(
+        container.querySelector('button[aria-label="Configure"]')
+      ).not.toBeNull();
+    });
+
+    it("renders the extension's own registered panel instead of the generic settings form", () => {
+      const state = renderExtensions([panelOnlyEntry()]);
+      registerPanel(state, "panel-only", () => (
+        <div className="sb-custom-panel">Custom panel content</div>
+      ));
+
+      openConfigureModal(state);
+
+      expect(modalBody.querySelector(".sb-custom-panel")?.textContent).toBe(
+        "Custom panel content"
+      );
+      expect(
+        modalBody.querySelector("#sb-extension-setting-panel-only-greeting")
+      ).toBeNull();
     });
   });
 });
