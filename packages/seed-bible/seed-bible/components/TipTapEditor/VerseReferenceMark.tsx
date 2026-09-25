@@ -1,7 +1,7 @@
 import { Mark, mergeAttributes } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { MarkType } from "@tiptap/pm/model";
-import { parseVerseReferences } from "../../managers/BibleDataManager";
+import { scanVerseReferencesInText } from "../../managers/BibleDataManager";
 import { getVerseReferenceLinkHref } from "../../app/verseReferenceLink";
 
 /**
@@ -52,7 +52,7 @@ function verseReferencePlugin(markType: MarkType) {
         }
         const contentFrom = pos + 1;
         const contentTo = contentFrom + node.content.size;
-        const matches = parseVerseReferences(node.textContent);
+        const matches = scanVerseReferencesInText(node.textContent);
 
         tr.removeMark(contentFrom, contentTo, markType);
         for (const match of matches) {

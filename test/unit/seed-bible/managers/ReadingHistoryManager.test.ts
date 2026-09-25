@@ -10,9 +10,20 @@ import {
   getReadingHistorySummary,
   filter,
   flat,
+  mergeReadingEvents,
+  saveReadingHistory,
+  saveReadingHistorySpan,
+  writeReadingEventsToDocument,
   type ReadingEvent,
   clearReadingHistoryDocs,
 } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
+import {
+  createInMemoryReadingHistoryStore,
+  type OfflineReadingHistoryStore,
+} from "@packages/seed-bible/seed-bible/managers/OfflineReadingHistoryStore";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { signal } from "@preact/signals";
+import { Subject } from "rxjs";
 import type { Mock } from "vitest";
 
 describe("ReadingHistoryManager", () => {
@@ -231,6 +242,80 @@ describe("ReadingHistoryManager", () => {
     });
   });
 
+  /**
+   * A stand-in for the Yjs document that actually stores events, rather than
+   * a spy over its methods — these tests are about what ends up in it after a
+   * push, a failed push and a replay, which a call-count assertion can't see.
+   */
+  function createFakeSharedDocument() {
+    const maps: {
+      get: (key: string) => any;
+      set: (key: string, value: any) => void;
+    }[] = [];
+
+    const createMap = () => {
+      const values = new Map<string, any>();
+      return {
+        get: (key: string) => values.get(key),
+        set: (key: string, value: any) => {
+          values.set(key, value);
+        },
+      };
+    };
+
+    const array = {
+      get length() {
+        return maps.length;
+      },
+      push: (map: (typeof maps)[number]) => {
+        maps.push(map);
+      },
+      type: {
+        get length() {
+          return maps.length;
+        },
+        get: (index: number) => maps[index],
+      },
+    };
+
+    // A real document reports its connection here, and a write is only evidence
+    // the server got anything while this says synced.
+    const onStatusUpdated = new Subject<{
+      type: string;
+      synced?: boolean;
+      connected?: boolean;
+    }>();
+
+    return {
+      doc: {
+        getArray: () => array,
+        createMap,
+        onStatusUpdated,
+      } as unknown as SharedDocument,
+
+      /** Reports the connection dropping, the way a real document would. */
+      disconnect: () => {
+        onStatusUpdated.next({ type: "sync", synced: false });
+      },
+      /** Puts an event in the document without going through a save. */
+      seed: (event: ReadingEvent) => {
+        const map = createMap();
+        for (const [key, value] of Object.entries(event)) {
+          map.set(key, value);
+        }
+        maps.push(map);
+      },
+      events: (): ReadingEvent[] =>
+        maps.map((map) => ({
+          userId: map.get("userId"),
+          bookId: map.get("bookId"),
+          chapter: map.get("chapter"),
+          start: map.get("start"),
+          end: map.get("end"),
+        })),
+    };
+  }
+
   describe("createReadingHistoryManager", () => {
     let loginManager: any;
     let os: CasualOSManager;
@@ -424,6 +509,7 @@ describe("ReadingHistoryManager", () => {
         "1970",
         {
           markers: ["publicRead:reading_history/1970"],
+          timeoutMs: 10_000,
         }
       );
     });
@@ -529,6 +615,7 @@ describe("ReadingHistoryManager", () => {
         "2024",
         {
           markers: ["publicRead:reading_history/2024"],
+          timeoutMs: 10_000,
         }
       );
       expect(getSharedDocumentMock).toHaveBeenCalledWith(
@@ -537,6 +624,7 @@ describe("ReadingHistoryManager", () => {
         "2025",
         {
           markers: ["publicRead:reading_history/2025"],
+          timeoutMs: 10_000,
         }
       );
     });
@@ -665,6 +753,951 @@ describe("ReadingHistoryManager", () => {
 
       expect(summary.startTime).toBe(1500);
       expect(summary.endTime).toBe(2500);
+    });
+  });
+
+  describe("durability of recorded reading", () => {
+    /** 2026-06-15T12:00:00Z. */
+    const NOON = Math.floor(Date.UTC(2026, 5, 15, 12) / 1000);
+    const WINDOW_START = Math.floor(Date.UTC(2026, 5, 15) / 1000);
+    const WINDOW_END = Math.floor(Date.UTC(2026, 5, 16) / 1000);
+
+    let os: CasualOSManager;
+    let store: OfflineReadingHistoryStore;
+    let fakeDoc: ReturnType<typeof createFakeSharedDocument>;
+
+    beforeEach(() => {
+      os = CasualOSManager();
+      store = createInMemoryReadingHistoryStore();
+      fakeDoc = createFakeSharedDocument();
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      clearReadingHistoryDocs();
+      vi.restoreAllMocks();
+    });
+
+    const save = (chapter: number, nowSeconds: number) =>
+      saveReadingHistory(os, "user-1", "user-1", "GEN", chapter, {
+        store,
+        nowSeconds,
+      });
+
+    it("records the event locally and pushes it to the document", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+
+      await save(1, NOON);
+
+      expect(fakeDoc.events()).toEqual([
+        {
+          userId: "user-1",
+          bookId: "GEN",
+          chapter: 1,
+          start: NOON,
+          end: NOON,
+        },
+      ]);
+      // Nothing left queued: the document has it.
+      expect(await store.listPending("user-1")).toEqual([]);
+    });
+
+    it("keeps the event when the document can't be reached", async () => {
+      vi.spyOn(os, "getSharedDocument").mockRejectedValue(
+        new Error("no connection")
+      );
+
+      await expect(save(1, NOON)).rejects.toThrow("no connection");
+
+      const pending = await store.listPending("user-1");
+      expect(pending).toHaveLength(1);
+      expect(pending[0]).toMatchObject({
+        bookId: "GEN",
+        chapter: 1,
+        start: NOON,
+      });
+    });
+
+    it("reports reading that never reached the server", async () => {
+      vi.spyOn(os, "getSharedDocument").mockRejectedValue(
+        new Error("no connection")
+      );
+      await expect(save(1, NOON)).rejects.toThrow();
+
+      const events = Array.from(
+        await getReadingHistoryEvents(os, "user-1", WINDOW_START, WINDOW_END, {
+          store,
+        })
+      );
+
+      expect(events).toEqual([
+        {
+          userId: "user-1",
+          bookId: "GEN",
+          chapter: 1,
+          start: NOON,
+          end: NOON,
+        },
+      ]);
+    });
+
+    it("extends one event rather than adding a second while reading continues", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+
+      await save(1, NOON);
+      await save(1, NOON + 5);
+      await save(1, NOON + 10);
+
+      expect(fakeDoc.events()).toEqual([
+        {
+          userId: "user-1",
+          bookId: "GEN",
+          chapter: 1,
+          start: NOON,
+          end: NOON + 10,
+        },
+      ]);
+    });
+
+    it("does not duplicate an event that is replayed into the document", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+      const event: ReadingEvent = {
+        userId: "user-1",
+        bookId: "GEN",
+        chapter: 1,
+        start: NOON,
+        end: NOON + 5,
+      };
+
+      await writeReadingEventsToDocument(os, "user-1", 2026, [event]);
+      await writeReadingEventsToDocument(os, "user-1", 2026, [event]);
+      await writeReadingEventsToDocument(os, "user-1", 2026, [
+        { ...event, end: NOON + 20 },
+      ]);
+
+      expect(fakeDoc.events()).toEqual([{ ...event, end: NOON + 20 }]);
+    });
+
+    it("never moves an event's end backwards", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+      const event: ReadingEvent = {
+        userId: "user-1",
+        bookId: "GEN",
+        chapter: 1,
+        start: NOON,
+        end: NOON + 20,
+      };
+
+      await writeReadingEventsToDocument(os, "user-1", 2026, [event]);
+      await writeReadingEventsToDocument(os, "user-1", 2026, [
+        { ...event, end: NOON + 5 },
+      ]);
+
+      expect(fakeDoc.events()).toEqual([event]);
+    });
+
+    it("counts an event held both locally and on the server only once", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+      await save(1, NOON);
+      await save(1, NOON + 5);
+
+      const events = Array.from(
+        await getReadingHistoryEvents(os, "user-1", WINDOW_START, WINDOW_END, {
+          store,
+        })
+      );
+
+      expect(events).toEqual([
+        {
+          userId: "user-1",
+          bookId: "GEN",
+          chapter: 1,
+          start: NOON,
+          end: NOON + 5,
+        },
+      ]);
+    });
+
+    it("retries the document after one failed sync rather than failing for the rest of the page load", async () => {
+      const stored: ReadingEvent = {
+        userId: "user-1",
+        bookId: "GEN",
+        chapter: 1,
+        start: NOON,
+        end: NOON + 5,
+      };
+      fakeDoc.seed(stored);
+      const getSharedDocument = vi
+        .spyOn(os, "getSharedDocument")
+        .mockRejectedValueOnce(new Error("session expired"))
+        .mockResolvedValue(fakeDoc.doc);
+
+      // The first read can't reach the document, so it has nothing to report.
+      expect(
+        Array.from(
+          await getReadingHistoryEvents(
+            os,
+            "user-1",
+            WINDOW_START,
+            WINDOW_END,
+            { store: null }
+          )
+        )
+      ).toEqual([]);
+
+      const events = Array.from(
+        await getReadingHistoryEvents(os, "user-1", WINDOW_START, WINDOW_END, {
+          store: null,
+        })
+      );
+
+      // The failure was dropped from the cache instead of being left there to
+      // answer every later request, so the second read actually tries again.
+      expect(getSharedDocument).toHaveBeenCalledTimes(2);
+      expect(events).toEqual([stored]);
+    });
+
+    /**
+     * Stands in for a year document that can never be reached.
+     *
+     * `getSharedDocument` gives up after the `timeoutMs` it is handed and rejects
+     * — that is what `awaitDocumentSync` guarantees, and `OsManager.test.ts` is
+     * what pins it. Honouring the deadline here rather than ignoring it is what
+     * makes these tests fail if the manager ever stops asking for one, which would
+     * put every caller back to waiting on a document that never answers.
+     */
+    function neverSyncs() {
+      return vi.spyOn(os, "getSharedDocument").mockImplementation(
+        (_record, _inst, _doc, options) =>
+          new Promise<SharedDocument>((_, reject) => {
+            if (options?.timeoutMs === undefined) {
+              return;
+            }
+            setTimeout(
+              () =>
+                reject(
+                  new Error("The document did not sync before the deadline.")
+                ),
+              options.timeoutMs
+            );
+          })
+      );
+    }
+
+    it("answers from this device when a year's document never syncs", async () => {
+      vi.useFakeTimers();
+      try {
+        neverSyncs();
+        await store.recordReadingSpan({
+          userId: "user-1",
+          bookId: "GEN",
+          chapter: 1,
+          startSeconds: NOON,
+          endSeconds: NOON + 5,
+          joinThresholdSeconds: 30 * 60,
+        });
+
+        const pending = getReadingHistoryEvents(
+          os,
+          "user-1",
+          WINDOW_START,
+          WINDOW_END,
+          { store }
+        );
+        await vi.advanceTimersByTimeAsync(10_000);
+
+        expect(Array.from(await pending)).toEqual([
+          {
+            userId: "user-1",
+            bookId: "GEN",
+            chapter: 1,
+            start: NOON,
+            end: NOON + 5,
+          },
+        ]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("gives up on a document that never syncs and leaves the span queued", async () => {
+      vi.useFakeTimers();
+      try {
+        neverSyncs();
+
+        const push = saveReadingHistorySpan(
+          os,
+          "user-1",
+          "user-1",
+          "GEN",
+          1,
+          NOON,
+          NOON + 5,
+          { store }
+        );
+        // Watched before the clock moves, not after. Advancing the timers is
+        // what rejects the push, and a rejected promise nothing is holding is
+        // an unhandled rejection — which fails the whole run even though every
+        // test passes.
+        const settled = expect(push).rejects.toThrow();
+        await vi.advanceTimersByTimeAsync(10_000);
+
+        // The push has to end for the row to be retried at all; a push still
+        // waiting is a sync manager that can never run another pass.
+        await settled;
+        expect(
+          (await store.listPending("user-1")).map((row) => row.start)
+        ).toEqual([NOON]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("leaves the row queued when the wifi went off and the socket never noticed", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+
+      // Loaded and read while connected, which caches the year document for the
+      // rest of the page load.
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "GEN",
+        1,
+        NOON,
+        NOON + 5,
+        { store }
+      );
+      expect(await store.listPending("user-1")).toEqual([]);
+
+      // Now the wifi goes off. Deliberately *without* the document saying
+      // anything: it only learns it is disconnected when the websocket fires
+      // `close`, and a connection pulled out from under a socket leaves it
+      // half-open with no close event for minutes. The document goes on
+      // reporting the last thing it heard, which was "synced".
+      const onLine = vi
+        .spyOn(navigator, "onLine", "get")
+        .mockReturnValue(false);
+      try {
+        await saveReadingHistorySpan(
+          os,
+          "user-1",
+          "user-1",
+          "EXO",
+          2,
+          NOON + 100,
+          NOON + 105,
+          { store }
+        );
+      } finally {
+        onLine.mockRestore();
+      }
+
+      // The device knows the interface is gone even though the socket doesn't,
+      // and that is enough to refuse to call the write delivered.
+      expect(
+        (await store.listPending("user-1")).map((row) => row.bookId)
+      ).toEqual(["EXO"]);
+    });
+
+    it("leaves the row queued when the connection dropped after the page loaded", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+
+      // Read once while connected, which is what puts the year document in the
+      // cache and keeps it there for the rest of the page load.
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "GEN",
+        1,
+        NOON,
+        NOON + 5,
+        { store }
+      );
+      expect(await store.listPending("user-1")).toEqual([]);
+
+      // Now the connection goes away without the page reloading. The cached
+      // document answers instantly and the write into it still succeeds,
+      // because a CRDT edit is local — nothing throws.
+      fakeDoc.disconnect();
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "EXO",
+        2,
+        NOON + 100,
+        NOON + 105,
+        { store }
+      );
+
+      // So the only thing standing between this and losing the reading is
+      // refusing to call it synced. The row stays queued for the replay.
+      expect(
+        (await store.listPending("user-1")).map((row) => row.bookId)
+      ).toEqual(["EXO"]);
+    });
+
+    it("still records reading when this device can't keep a local store", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+      const broken: OfflineReadingHistoryStore = {
+        ...store,
+        recordReadingSpan: () => Promise.reject(new Error("storage blocked")),
+      };
+
+      await saveReadingHistory(os, "user-1", "user-1", "GEN", 1, {
+        store: broken,
+        nowSeconds: NOON,
+      });
+      await saveReadingHistory(os, "user-1", "user-1", "GEN", 1, {
+        store: broken,
+        nowSeconds: NOON + 5,
+      });
+
+      // One event, extended — the same answer the document-only path always gave.
+      expect(fakeDoc.events()).toEqual([
+        {
+          userId: "user-1",
+          bookId: "GEN",
+          chapter: 1,
+          start: NOON,
+          end: NOON + 5,
+        },
+      ]);
+    });
+
+    it("treats a push that landed as a success even if the local bookkeeping fails", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+      const flaky: OfflineReadingHistoryStore = {
+        ...store,
+        recordReadingSpan: (input) => store.recordReadingSpan(input),
+        markSynced: () => Promise.reject(new Error("storage blocked")),
+      };
+
+      await expect(
+        saveReadingHistory(os, "user-1", "user-1", "GEN", 1, {
+          store: flaky,
+          nowSeconds: NOON,
+        })
+      ).resolves.toBeUndefined();
+
+      expect(fakeDoc.events()).toHaveLength(1);
+    });
+
+    it("keeps a measured stretch that can't be pushed, and still reports it", async () => {
+      vi.spyOn(os, "getSharedDocument").mockRejectedValue(
+        new Error("no connection")
+      );
+
+      await expect(
+        saveReadingHistorySpan(
+          os,
+          "user-1",
+          "user-1",
+          "GEN",
+          1,
+          NOON,
+          NOON + 45 * 60,
+          { store }
+        )
+      ).rejects.toThrow("no connection");
+
+      const pending = await store.listPending("user-1");
+      expect(pending).toHaveLength(1);
+
+      const events = Array.from(
+        await getReadingHistoryEvents(os, "user-1", WINDOW_START, WINDOW_END, {
+          store,
+        })
+      );
+
+      // The whole 45 minutes, not just the moment it was reported.
+      expect(events).toEqual([
+        {
+          userId: "user-1",
+          bookId: "GEN",
+          chapter: 1,
+          start: NOON,
+          end: NOON + 45 * 60,
+        },
+      ]);
+    });
+
+    it("credits one sitting across a run of reader ticks", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+
+      // What the reader does: each tick credits the stretch since the last one.
+      for (let i = 0; i < 4; i++) {
+        await saveReadingHistorySpan(
+          os,
+          "user-1",
+          "user-1",
+          "GEN",
+          1,
+          NOON + i * 5,
+          NOON + (i + 1) * 5,
+          { store, joinThresholdSeconds: 30 }
+        );
+      }
+
+      expect(fakeDoc.events()).toEqual([
+        {
+          userId: "user-1",
+          bookId: "GEN",
+          chapter: 1,
+          start: NOON,
+          end: NOON + 20,
+        },
+      ]);
+      expect(await store.listPending("user-1")).toEqual([]);
+    });
+
+    it("reports another reader's history without mixing in this device's", async () => {
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fakeDoc.doc);
+      await save(1, NOON);
+
+      const events = Array.from(
+        await getReadingHistoryEvents(
+          os,
+          "someone-else",
+          WINDOW_START,
+          WINDOW_END,
+          { store }
+        )
+      );
+
+      // The fake document is shared by every record here, so the pushed event
+      // still shows up — what must not appear is a second, locally-sourced copy.
+      expect(events).toHaveLength(1);
+    });
+  });
+
+  describe("mergeReadingEvents", () => {
+    const base: ReadingEvent = {
+      userId: "user-1",
+      bookId: "GEN",
+      chapter: 1,
+      start: 100,
+      end: 200,
+    };
+
+    it("keeps the more complete copy of a duplicated event", () => {
+      expect(mergeReadingEvents([[base], [{ ...base, end: 300 }]])).toEqual([
+        { ...base, end: 300 },
+      ]);
+      expect(mergeReadingEvents([[{ ...base, end: 300 }], [base]])).toEqual([
+        { ...base, end: 300 },
+      ]);
+    });
+
+    it("treats a different start as a different event", () => {
+      const later = { ...base, start: 500, end: 600 };
+      expect(mergeReadingEvents([[base], [later]])).toEqual([base, later]);
+    });
+
+    it("keeps each reader's and each chapter's events apart", () => {
+      const otherReader = { ...base, userId: "user-2" };
+      const otherChapter = { ...base, chapter: 2 };
+      const otherBook = { ...base, bookId: "EXO" };
+
+      expect(
+        mergeReadingEvents([[base, otherReader, otherChapter, otherBook]])
+      ).toHaveLength(4);
+    });
+  });
+
+  describe("createReadingHistoryManager with a local store", () => {
+    /** 2026-06-15T12:00:00Z. */
+    const NOON_MS = Date.UTC(2026, 5, 15, 12);
+
+    let os: CasualOSManager;
+    let store: OfflineReadingHistoryStore;
+    let login: LoginManager;
+
+    beforeEach(() => {
+      os = CasualOSManager();
+      store = createInMemoryReadingHistoryStore();
+      login = {
+        userId: signal<string | null>("user-1"),
+      } as unknown as LoginManager;
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      vi.useFakeTimers();
+      vi.setSystemTime(NOON_MS);
+    });
+
+    afterEach(() => {
+      clearReadingHistoryDocs();
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    it("keeps the event and stays quiet when the push fails", async () => {
+      vi.spyOn(os, "getSharedDocument").mockRejectedValue(
+        new Error("no connection")
+      );
+      const manager = createReadingHistoryManager(os, login, { store });
+
+      manager.saveReadingHistory("GEN", 1);
+      await vi.advanceTimersByTimeAsync(300);
+      // Let the pending-count refresh the failure schedules settle.
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(await store.listPending("user-1")).toHaveLength(1);
+      expect(manager.sync.pendingCount.value).toBe(1);
+
+      manager.dispose();
+    });
+
+    it("notices a row left queued when the push landed but the note didn't", async () => {
+      const fake = createFakeSharedDocument();
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(fake.doc);
+      const flaky: OfflineReadingHistoryStore = {
+        ...store,
+        recordReadingSpan: (input) => store.recordReadingSpan(input),
+        markSynced: () => Promise.reject(new Error("storage blocked")),
+      };
+      const manager = createReadingHistoryManager(os, login, { store: flaky });
+
+      manager.saveReadingHistory("GEN", 1);
+      await vi.advanceTimersByTimeAsync(300);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // The push reached the document, so nothing here failed from the caller's
+      // side — but the row is still marked pending, and the count has to say so.
+      // Believing the stale zero is what used to leave the straggler sitting
+      // until the next sign-in or `online` event.
+      expect(fake.events()).toHaveLength(1);
+      expect(await flaky.listPending("user-1")).toHaveLength(1);
+      expect(manager.sync.pendingCount.value).toBe(1);
+
+      manager.dispose();
+    });
+
+    it("does not write anything when nobody is signed in", async () => {
+      const getSharedDocument = vi
+        .spyOn(os, "getSharedDocument")
+        .mockRejectedValue(new Error("should not be called"));
+      (login.userId as unknown as { value: string | null }).value = null;
+      const manager = createReadingHistoryManager(os, login, { store });
+
+      manager.saveReadingHistory("GEN", 1);
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(getSharedDocument).not.toHaveBeenCalled();
+      expect(await store.listPending("user-1")).toEqual([]);
+
+      manager.dispose();
+    });
+  });
+
+  describe("saveReadingHistorySpan", () => {
+    let os: CasualOSManager;
+    let storedEvents: ReturnType<typeof makeStoredEvent>[];
+    let eventsArray: any;
+    let createdEvent: { set: Mock };
+
+    /** A stand-in for one event map inside the shared document. */
+    function makeStoredEvent(fields: Record<string, unknown>) {
+      const data = { ...fields };
+      return {
+        data,
+        get: (key: string) => data[key],
+        set: vi.fn((key: string, value: unknown) => {
+          data[key] = value;
+        }),
+      };
+    }
+
+    beforeEach(() => {
+      clearReadingHistoryDocs();
+      os = CasualOSManager();
+      storedEvents = [];
+      createdEvent = { set: vi.fn() };
+      eventsArray = {
+        get length() {
+          return storedEvents.length;
+        },
+        type: {
+          get: (i: number) => storedEvents[i],
+        },
+        push: vi.fn(),
+      };
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue({
+        getArray: vi.fn().mockReturnValue(eventsArray),
+        createMap: vi.fn().mockReturnValue(createdEvent),
+      } as unknown as SharedDocument);
+    });
+
+    afterEach(() => {
+      vi.clearAllMocks();
+      clearReadingHistoryDocs();
+    });
+
+    it("records the whole span as a new event when there is nothing to join", async () => {
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "psalms",
+        23,
+        1_700_000_000,
+        1_700_000_360
+      );
+
+      expect(eventsArray.push).toHaveBeenCalledTimes(1);
+      expect(createdEvent.set).toHaveBeenCalledWith("start", 1_700_000_000);
+      expect(createdEvent.set).toHaveBeenCalledWith("end", 1_700_000_360);
+    });
+
+    it("extends an event the span continues, even one older than the join threshold", async () => {
+      // A listen that ran for 45 minutes: the event was opened when the chapter
+      // was first shown, so by the time the listening is written it sits well
+      // outside a window measured from the clock rather than from the span.
+      const start = 1_700_000_000;
+      const existing = makeStoredEvent({
+        userId: "user-1",
+        bookId: "psalms",
+        chapter: 23,
+        start,
+        end: start + 5,
+      });
+      storedEvents.push(existing);
+
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "psalms",
+        23,
+        start,
+        start + 45 * 60
+      );
+
+      expect(eventsArray.push).not.toHaveBeenCalled();
+      expect(existing.set).toHaveBeenCalledWith("end", start + 45 * 60);
+      expect(existing.data.end).toBe(start + 45 * 60);
+    });
+
+    it("opens a separate event for a span that starts long after the last one ended", async () => {
+      const start = 1_700_000_000;
+      storedEvents.push(
+        makeStoredEvent({
+          userId: "user-1",
+          bookId: "psalms",
+          chapter: 23,
+          start,
+          end: start + 60,
+        })
+      );
+
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "psalms",
+        23,
+        start + 5 * 60 * 60,
+        start + 5 * 60 * 60 + 120
+      );
+
+      expect(eventsArray.push).toHaveBeenCalledTimes(1);
+      expect(createdEvent.set).toHaveBeenCalledWith(
+        "start",
+        start + 5 * 60 * 60
+      );
+    });
+
+    it("never moves an event's end backwards", async () => {
+      const start = 1_700_000_000;
+      const existing = makeStoredEvent({
+        userId: "user-1",
+        bookId: "psalms",
+        chapter: 23,
+        start,
+        end: start + 600,
+      });
+      storedEvents.push(existing);
+
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "psalms",
+        23,
+        start,
+        start + 120
+      );
+
+      expect(existing.data.end).toBe(start + 600);
+      expect(eventsArray.push).not.toHaveBeenCalled();
+    });
+
+    it("leaves another chapter's event alone", async () => {
+      const start = 1_700_000_000;
+      const other = makeStoredEvent({
+        userId: "user-1",
+        bookId: "psalms",
+        chapter: 22,
+        start,
+        end: start + 5,
+      });
+      storedEvents.push(other);
+
+      await saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "psalms",
+        23,
+        start,
+        start + 300
+      );
+
+      expect(other.set).not.toHaveBeenCalled();
+      expect(eventsArray.push).toHaveBeenCalledTimes(1);
+    });
+
+    it("saveReadingSpan does nothing when the user is signed out", async () => {
+      const manager = createReadingHistoryManager(os, {
+        userId: { value: null },
+      } as any);
+
+      manager.saveReadingSpan("psalms", 23, 1_700_000_000, 1_700_000_360);
+      await Promise.resolve();
+
+      expect(os.getSharedDocument).not.toHaveBeenCalled();
+    });
+
+    it("saveReadingSpan starts a new event rather than swallowing the gap before it", async () => {
+      // What a locked phone leaves behind: a sitting that stopped being watched
+      // twenty minutes ago, and measured time that only starts now.
+      const start = 1_700_000_000;
+      const abandoned = makeStoredEvent({
+        userId: "user-1",
+        bookId: "psalms",
+        chapter: 23,
+        start,
+        end: start + 60,
+      });
+      storedEvents.push(abandoned);
+
+      const manager = createReadingHistoryManager(os, {
+        userId: { value: "user-1" },
+      } as any);
+
+      manager.saveReadingSpan(
+        "psalms",
+        23,
+        start + 20 * 60,
+        start + 20 * 60 + 5
+      );
+      await vi.waitFor(() => expect(eventsArray.push).toHaveBeenCalled());
+
+      expect(abandoned.data.end).toBe(start + 60);
+      expect(createdEvent.set).toHaveBeenCalledWith("start", start + 20 * 60);
+    });
+
+    it("saveReadingSpan writes the span for the signed-in user", async () => {
+      const manager = createReadingHistoryManager(os, {
+        userId: { value: "user-1" },
+      } as any);
+
+      manager.saveReadingSpan("psalms", 23, 1_700_000_000, 1_700_000_360);
+      await vi.waitFor(() => expect(eventsArray.push).toHaveBeenCalled());
+
+      expect(createdEvent.set).toHaveBeenCalledWith("bookId", "psalms");
+      expect(createdEvent.set).toHaveBeenCalledWith("chapter", 23);
+      expect(createdEvent.set).toHaveBeenCalledWith("start", 1_700_000_000);
+      expect(createdEvent.set).toHaveBeenCalledWith("end", 1_700_000_360);
+    });
+  });
+
+  describe("the shared local store", () => {
+    /** 2026-06-15T12:00:00Z. */
+    const NOON = Math.floor(Date.UTC(2026, 5, 15, 12) / 1000);
+
+    afterEach(() => {
+      vi.doUnmock(
+        "@packages/seed-bible/seed-bible/managers/OfflineReadingHistoryStore"
+      );
+      vi.resetModules();
+      vi.restoreAllMocks();
+    });
+
+    /**
+     * Loads a fresh copy of the manager with a counting store factory.
+     *
+     * The module-level singleton is memoised for the life of a page load, which
+     * is the behaviour under test — so it has to start unset, and only resetting
+     * the module registry does that.
+     */
+    async function loadWithCountingStore() {
+      vi.resetModules();
+      const created: OfflineReadingHistoryStore[] = [];
+      vi.doMock(
+        "@packages/seed-bible/seed-bible/managers/OfflineReadingHistoryStore",
+        async (importOriginal) => {
+          const actual =
+            (await importOriginal()) as typeof import("@packages/seed-bible/seed-bible/managers/OfflineReadingHistoryStore");
+          return {
+            ...actual,
+            createIndexedDbReadingHistoryStore: () => {
+              const store = actual.createInMemoryReadingHistoryStore();
+              created.push(store);
+              return store;
+            },
+          };
+        }
+      );
+      const manager =
+        await import("@packages/seed-bible/seed-bible/managers/ReadingHistoryManager");
+      return { manager, created };
+    }
+
+    it("builds one store per page load and hands the same one out again", async () => {
+      const { manager, created } = await loadWithCountingStore();
+
+      const first = manager.getSharedReadingHistoryStore();
+      const second = manager.getSharedReadingHistoryStore();
+
+      // One database, one connection to it: `TodayManager` and Scripture Map
+      // both call these functions directly, so a store built per call would
+      // mean a connection per caller.
+      expect(created).toHaveLength(1);
+      expect(first).toBe(created[0]);
+      expect(second).toBe(first);
+    });
+
+    it("records into the shared store when a caller names none", async () => {
+      const { manager } = await loadWithCountingStore();
+      const os = CasualOSManager();
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue({
+        getArray: () => ({
+          length: 0,
+          push: () => {},
+          type: { length: 0, get: () => undefined },
+        }),
+        createMap: () => ({ get: () => undefined, set: () => {} }),
+      } as unknown as SharedDocument);
+
+      // No `store` option at all — the path every production caller takes.
+      await manager.saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "GEN",
+        1,
+        NOON,
+        NOON + 5
+      );
+
+      const shared = manager.getSharedReadingHistoryStore();
+      expect(shared).not.toBeNull();
+      const rows = await shared!.listForWindow("user-1", 0, NOON + 100);
+      expect(rows.map((r) => ({ start: r.start, end: r.end }))).toEqual([
+        { start: NOON, end: NOON + 5 },
+      ]);
     });
   });
 });

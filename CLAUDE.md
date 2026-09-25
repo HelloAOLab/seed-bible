@@ -41,7 +41,6 @@ pnpm format            # Prettier formatting
 
 ```bash
 pnpm vitest run FreeUseBibleAPI.test.ts
->>>>>>> develop
 ```
 
 ## Architecture
@@ -56,7 +55,7 @@ This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader.
 - `LoginManager` — Email-code auth, sessions, and user profile
 - `BibleDataManager` — Bible content and translation loading
 - `BibleReadingManager` — Reading position and navigation
-- `HighlightsManager`, `BookmarksManager`, `AnnotationsManager` — Annotations, persisted via CasualOS records
+- `HighlightsManager`, `SavesManager`, `AnnotationsManager` — Annotations, persisted via CasualOS records
 - `SessionsManager` — Shared/multiplayer sessions (Yjs shared documents)
 - `ThemeManager` — Dark/light mode and color schemes
 - `ExtensionManager` — Extension lifecycle

@@ -1,5 +1,10 @@
 import type { AnimateTagFunctionOptions } from "../../../../pattern-typings/AuxLibraryDefinitions";
-import type { TypedBot } from "../models/casualos";
+import type { PatternMessage, TypedBot } from "../models/casualos";
+
+export function SendEmbedMessage(message: PatternMessage): void {
+  // @ts-expect-error CasualOS typings declare sendEmbedMessage under os.appHooks; at runtime it lives on os.
+  os.sendEmbedMessage(message);
+}
 
 export const SetStrictTag = <
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

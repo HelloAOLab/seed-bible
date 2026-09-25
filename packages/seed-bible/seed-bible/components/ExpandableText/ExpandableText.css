@@ -1,44 +1,35 @@
 .sb-expandable-text {
-  position: relative;
   min-width: 0;
   width: 100%;
+}
+
+/*
+ * Inline-level, so the surrounding `text-align` positions the whole
+ * `text... Read more` group — centred in the profile card, start-aligned in a
+ * Discover row — in the collapsed state as well as the expanded one. Expanded
+ * it stays plain inline content, so the text wraps and "Read less" flows in
+ * after the last word.
+ */
+.sb-expandable-text--clamped .sb-expandable-text-line {
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .sb-expandable-text-body {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-/*
- * Hidden copy used to measure the full pre-wrap height, so a description
- * with line breaks is treated as overflowing even when each line is short.
- */
-.sb-expandable-text-probe {
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  visibility: hidden;
-  pointer-events: none;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-/*
- * Collapsed overflow: `text... Read more` on one baseline. The body can
- * shrink and clip; the ellipsis is a real character so it always shows,
- * even when the first line itself fits.
- */
-.sb-expandable-text--clamped {
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: baseline;
   min-width: 0;
-  width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-.sb-expandable-text-body--clamped {
+/*
+ * The clip that the overflow measurement reads: the line is held to one row
+ * and allowed to shrink, so `scrollWidth` exceeds `clientWidth` by exactly
+ * the amount that does not fit.
+ */
+.sb-expandable-text--clamped .sb-expandable-text-body {
   flex: 0 1 auto;
-  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
 }

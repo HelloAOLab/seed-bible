@@ -5,16 +5,14 @@ import type {
   PieceStatePort,
 } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/out/PieceState";
 import type { ReadingStatePort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/in/readingState";
-import {
-  EXPERIENCE_KEYS,
-  type ExperienceKey,
-} from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/experience";
+import { EXPERIENCE_KEYS } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/domain/models/experience";
+import type { ExperienceServicePort } from "../../../../../../patterns/house-of-the-lord/house-of-the-lord/application/ports/in/experience";
 
 describe("application.services.PieceStateService", () => {
   let pieceState: Mocked<PieceStatePort>;
   let pieceStateConfigProviderPort: Mocked<PieceStateConfigProviderPort>;
   let readingState: Mocked<ReadingStatePort>;
-  let getExperienceKey: Mocked<() => ExperienceKey>;
+  let experienceService: Mocked<ExperienceServicePort>;
   let service: PieceStateService;
   const experience = EXPERIENCE_KEYS.TABERNACLE;
   const reading = { bookId: "MAT", chapterNumber: 15 };
@@ -30,12 +28,12 @@ describe("application.services.PieceStateService", () => {
       getCurrentReading: vi.fn(),
       setCurrentReading: vi.fn(),
     };
-    getExperienceKey = vi.fn(() => experience);
+    experienceService = { experience, tryDisplayExperience: vi.fn() };
     service = new PieceStateService({
       pieceState,
       pieceStateConfigProviderPort,
       readingState,
-      getExperienceKey,
+      experienceService,
     });
   });
 

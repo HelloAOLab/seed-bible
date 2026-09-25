@@ -9,6 +9,7 @@ import {
 } from "../managers/testUtils/mockBibleApiData";
 import type { OfflineTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import type { AppConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
+import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
 // Lazy per-language loaders for the real "seed-bible" locale files, mirroring
@@ -54,6 +55,32 @@ export interface CreateTestSeedBibleStateOptions {
    * heuristic, since an explicit `?today=` short-circuits it.
    */
   todayOpen?: boolean | "fromUrl";
+  /**
+   * Whether the mobile toolbar promotes Chat to the fourth tab via
+   * `?chatFirst=true`. Applied through the real URL param before the state is
+   * built, since `BibleReaderToolbar` reads it from `initialUrl` at boot.
+   * Pass a string to set a non-canonical value (e.g. `"1"`) for edge-case tests.
+   */
+  chatFirst?: boolean | string;
+  /**
+   * Desktop sidebar rail preference seeded before hydration.
+   *
+   * The app collapses the rail for a new visitor who has no saved choice.
+   * This helper models a returning visit (expanded) unless a test asks
+   * otherwise, so suites that aren't about that default keep the expanded
+   * rail they were written against.
+   *
+   * `"unset"` removes any saved choice and lets the new-visitor default run.
+   */
+  sidebarCollapsed?: boolean | "unset";
+  /**
+   * Skips the internal `state.today.hydrateAutoOpen()` call below, leaving
+   * `today.isOpen` at its pre-hydrate seed (`false`) instead of the URL's
+   * real open/closed state. For a test asserting the seed-then-correct
+   * invariant itself; every other test wants the fully-loaded-app behavior
+   * this helper otherwise mirrors, so this defaults to `false`.
+   */
+  skipHydrateAutoOpen?: boolean;
 }
 
 export async function waitFor(
@@ -164,7 +191,10 @@ async function ensureI18nInitialized(): Promise<void> {
           new Error(`No locale file for language: ${language}`)
         );
       }
-      return loader().then((mod) => mod.default);
+      // Let `resourcesToBackend` do the `.default` unwrap itself (see
+      // I18nManager's matching backend) — unwrapping here too double-unwraps
+      // any locale whose JSON has a top-level "default" key.
+      return loader();
     })
   );
 
@@ -207,6 +237,9 @@ if (typeof afterEach === "function") {
     // older manager's (inert) wrapper underneath whenever a test builds two.
     for (const state of liveTestStates.splice(0).reverse()) {
       state.navigation.dispose();
+      // Speech outlives the state that started it, and its listeners sit on
+      // globals every other test shares.
+      state.textToSpeech.dispose();
     }
     // The reading position lives in the URL path, so it outlives the listeners
     // that wrote it: without this the next test starts on whatever chapter —
@@ -228,13 +261,44 @@ export async function createTestSeedBibleState(
   installFreeUseBibleApiMock(globalThis as TestGlobalScope, responses);
   await ensureI18nInitialized();
 
-  // Pin Today's initial state before the state is built: `TodayManager` latches
-  // it from `initialUrl` at construction, so it cannot be set afterwards. Keeps
-  // whatever path the caller already navigated to.
+  // `TodayManager` reads `initialUrl` (captured from `window.location` at
+  // construction) when `hydrateAutoOpen` runs below, so the URL has to be
+  // pinned before the state is built. Keeps whatever path the caller already
+  // navigated to.
   if (typeof window !== "undefined" && options.todayOpen !== "fromUrl") {
     const url = new URL(window.location.href);
     url.searchParams.set("today", options.todayOpen ? "open" : "closed");
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }
+
+  // Same boot-latch pattern for chat-first: the toolbar reads `chatFirst` from
+  // `initialUrl`, so the param has to be on the URL before the state is built.
+  if (typeof window !== "undefined" && options.chatFirst !== undefined) {
+    const url = new URL(window.location.href);
+    if (options.chatFirst === false) {
+      url.searchParams.delete("chatFirst");
+    } else {
+      url.searchParams.set(
+        "chatFirst",
+        options.chatFirst === true ? "true" : options.chatFirst
+      );
+    }
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }
+
+  if (typeof window !== "undefined") {
+    if (options.sidebarCollapsed === "unset") {
+      window.localStorage.removeItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+    } else if (
+      options.sidebarCollapsed !== undefined ||
+      window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === null
+    ) {
+      const collapsed = options.sidebarCollapsed ?? false;
+      window.localStorage.setItem(
+        SIDEBAR_COLLAPSED_STORAGE_KEY,
+        collapsed ? "true" : "false"
+      );
+    }
   }
 
   const { createSeedBibleState } =
@@ -253,11 +317,19 @@ export async function createTestSeedBibleState(
   // represents a fully-loaded app for test purposes, so it should reflect
   // that step too, the same way it already waits for tabs to load below.
   state.login.hydrateLocalConfig();
+  state.theme.hydrateSystemColorScheme();
   // Mirrors the same post-mount sequence's other one-time correction: saved
   // tabs/layout/catalog/selector-mode/tutorial-and-onboarding flags all seed
   // to match SSR and only become real once this runs. Without it, anything
   // gated behind `tutorial.armAutoStart()` (called from here) never arms.
   state.app.hydrateFromStorage();
+  // Mirrors the same post-mount sequence's third one-time correction:
+  // `today.isOpen` seeds `false` to match SSR (which always renders Today
+  // closed), and only reflects the URL's real open/closed state once this
+  // runs.
+  if (!options.skipHydrateAutoOpen) {
+    state.today.hydrateAutoOpen();
+  }
   // Tabs first: awaiting anything else here would let asynchronously-created
   // tabs (e.g. an auto-joined shared session) appear before this runs, and those
   // tabs' reading states are mocked without a `loading` signal.

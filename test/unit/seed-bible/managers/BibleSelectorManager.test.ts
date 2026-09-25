@@ -106,9 +106,9 @@ function createSidebarManagerMock() {
   };
 }
 
-function createBookmarksManagerMock() {
+function createSavesManagerMock() {
   return {
-    bookmarks: signal([]),
+    saves: signal([]),
   };
 }
 
@@ -131,7 +131,7 @@ function createSelectorState(
     tabsLayoutManager,
     createSettingsManagerMock() as any,
     createSidebarManagerMock() as any,
-    createBookmarksManagerMock() as any,
+    createSavesManagerMock() as any,
     createNavigationManager(),
     login as any,
     i18n as any

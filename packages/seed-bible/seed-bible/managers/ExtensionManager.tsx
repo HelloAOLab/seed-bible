@@ -40,6 +40,25 @@ export interface ExtensionTranslation {
   [key: string]: string;
 }
 
+/**
+ * The types a single extension setting can declare. Modeled on VSCode's
+ * `contributes.configuration` (https://code.visualstudio.com/api/references/contribution-points#contributes.configuration),
+ * trimmed to what this app supports today.
+ */
+export type ExtensionSettingType = "string" | "boolean" | "number";
+
+/** The value a user (or a Customization's defaults) can set for one extension setting. */
+export type ExtensionSettingValue = string | boolean | number;
+
+export interface ExtensionSettingDefinition {
+  type: ExtensionSettingType;
+  /**
+   * Used when nothing else applies: no value the user set themselves, and no
+   * default from the active Customization (see `ExtensionSettingsManager`).
+   */
+  default?: ExtensionSettingValue;
+}
+
 export interface ExtensionMeta {
   /**
    * The identifier of this extension, which should be unique across all extensions.
@@ -64,6 +83,13 @@ export interface ExtensionMeta {
    * Defaults to false.
    */
   autoinstall?: boolean;
+
+  /**
+   * The settings this extension supports, keyed by setting name. A setting's
+   * label/description come from the extension's own translations (`t("setting-<key>-title", { ns: id })` /
+   * `t("setting-<key>-description", { ns: id })`), not from this object.
+   */
+  settings?: Record<string, ExtensionSettingDefinition>;
 }
 
 export type Extension = UploadedExtension | ImportExtension;
@@ -1060,7 +1086,8 @@ export function createExtensionManager(
    */
   const loadExtension = async (
     uploaded: Extension,
-    installStack: Set<string> = new Set()
+    installStack: Set<string> = new Set(),
+    options?: { persist?: boolean }
   ) => {
     const extensionId = uploaded.meta.id;
     knownExtensionsById.set(extensionId, uploaded);
@@ -1099,7 +1126,11 @@ export function createExtensionManager(
           return false;
         }
 
-        const loadedDependency = await loadExtension(dependency, installStack);
+        const loadedDependency = await loadExtension(
+          dependency,
+          installStack,
+          options
+        );
         if (!loadedDependency) {
           installStack.delete(extensionId);
           console.error(
@@ -1153,7 +1184,7 @@ export function createExtensionManager(
     refreshExtensionsSignal();
     try {
       const result = await installationPromise;
-      if (result) {
+      if (result && options?.persist !== false) {
         await persistInstalledExtensionId(extensionId);
       }
       return result;
@@ -1198,19 +1229,19 @@ export function createExtensionManager(
   };
 
   /**
-   * Loads the extensions that the user previously installed. The saved set
-   * merges the IDs persisted in local storage with the IDs stored in the
+   * Computes the viewer's true default installed-extension set: the merge
+   * of the IDs persisted in local storage with the IDs stored in the
    * logged-in user's profile config via `mergeInstalledExtensionIds` — so
    * extensions installed while logged out are adopted into the account,
    * extensions installed on another device are installed here, and an
    * extension uninstalled on another device (which already reached the
-   * profile) is not resurrected by a stale local copy, or vice versa (#1454).
-   * The merged set and its sync metadata are written back to whichever
-   * store(s) changed. Extensions that are already installed are skipped, and
-   * IDs that are not part of any known extension set are left in storage (a
-   * later build may reintroduce them) but skipped for now.
+   * profile) is not resurrected by a stale local copy, or vice versa
+   * (#1454). The merged set and its sync metadata are written back to
+   * whichever store(s) changed. Otherwise read-only, so it's safe to call
+   * repeatedly (e.g. from `reconcileInstalledExtensions`) without further
+   * side effects beyond that sync.
    */
-  const loadSavedExtensions = async () => {
+  const computeSavedExtensionIds = async (): Promise<Set<string>> => {
     await awaitProfileLoaded();
     const localIds = readPersistedExtensionIds();
     const profileIds = readProfileExtensionIds();
@@ -1232,6 +1263,18 @@ export function createExtensionManager(
     if (!setsEqual(profileIds, savedIds)) {
       writeProfileExtensionState(savedIds, merged.profileMeta);
     }
+
+    return savedIds;
+  };
+
+  /**
+   * Loads the extensions in the viewer's true default set (see
+   * `computeSavedExtensionIds`). Extensions that are already installed are
+   * skipped, and IDs that are not part of any known extension set are left
+   * in storage (a later build may reintroduce them) but skipped for now.
+   */
+  const loadSavedExtensions = async () => {
+    const savedIds = await computeSavedExtensionIds();
 
     const promises: Promise<boolean>[] = [];
     for (const id of savedIds) {
@@ -1323,17 +1366,56 @@ export function createExtensionManager(
    * Unloads the extension with the given ID by unregistering it and removing it from the set of installed extensions. An "onExtensionUninstalled" event will be shouted with the extension ID as a parameter.
    * @param id The ID of the extension to unload.
    */
-  const unloadExtension = (id: string) => {
+  const unloadExtension = (id: string, options?: { persist?: boolean }) => {
     unregisterExtension(id);
     installedExtensionIds.delete(id);
-    void forgetInstalledExtensionId(id);
-    // Extensions that are only ever force-installed as a dependency (e.g.
-    // `seed-bible-utils`) never carry `autoinstall: true` themselves, so
-    // `loadDefaultExtensions` never records them in the "handled" set. This
-    // is what records their uninstall, so they aren't dragged back in the
-    // next time their dependent gets (re)installed.
-    void persistHandledExtensionId(id);
+    if (options?.persist !== false) {
+      void forgetInstalledExtensionId(id);
+      // Extensions that are only ever force-installed as a dependency (e.g.
+      // `seed-bible-utils`) never carry `autoinstall: true` themselves, so
+      // `loadDefaultExtensions` never records them in the "handled" set.
+      // This is what records their uninstall, so they aren't dragged back
+      // in the next time their dependent gets (re)installed.
+      void persistHandledExtensionId(id);
+    }
     refreshExtensionsSignal();
+  };
+
+  /**
+   * Swaps the currently-installed extension set to exactly `targetIds`,
+   * installing what's missing and uninstalling what's not wanted — all
+   * session-only (`persist: false`), so none of it touches the viewer's
+   * real default-profile storage. Pass `null` to mean "no customization is
+   * active," which reconciles back to the viewer's true default set
+   * (`computeSavedExtensionIds()`) rather than an explicit list.
+   */
+  const reconcileInstalledExtensions = async (
+    targetIds: string[] | null
+  ): Promise<void> => {
+    const target =
+      targetIds === null
+        ? await computeSavedExtensionIds()
+        : new Set(targetIds);
+    const current = new Set(installedExtensionIds);
+
+    for (const id of current) {
+      if (!target.has(id)) {
+        unloadExtension(id, { persist: false });
+      }
+    }
+    for (const id of target) {
+      if (installedExtensionIds.has(id)) {
+        continue;
+      }
+      const extension = knownExtensionsById.get(id);
+      if (!extension) {
+        console.warn(
+          `reconcileInstalledExtensions: unknown extension id '${id}'; skipping.`
+        );
+        continue;
+      }
+      await loadExtension(extension, undefined, { persist: false });
+    }
   };
 
   /**
@@ -1400,6 +1482,7 @@ export function createExtensionManager(
     loadExtensionSet,
     loadExtension,
     unloadExtension,
+    reconcileInstalledExtensions,
 
     extensions: extensionsSignal,
     getExtensions,

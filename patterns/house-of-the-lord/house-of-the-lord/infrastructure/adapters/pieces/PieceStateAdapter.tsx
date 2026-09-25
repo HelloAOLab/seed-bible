@@ -7,11 +7,14 @@ import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinition
 import type { PiecesProvider } from "./PiecesProvider";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import { AnimateStrictTag, SetStrictTag } from "../../functions/casualos";
-import type { PieceBotTags } from "../../models/casualos";
+import type { HitboxBot, PieceBotTags } from "../../models/casualos";
 import type {
   ExperienceKey,
   ExperienceKeyMap,
 } from "../../../domain/models/experience";
+
+const HIDDEN_COLOR = "clear";
+const VISIBLE_COLOR = "#ffffff";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -49,7 +52,7 @@ export class PieceStateAdapter implements PieceStatePort {
     }
 
     const dimension = this.#getDimension();
-    const fromState = (bot.masks.state ??
+    const fromState = (bot.tags.state ??
       PIECE_VISIBILITY_STATES.HIDDEN) as PieceVisibilityState;
     const easing: Easing = { type: "sinusoidal", mode: "inout" };
     const duration = 0.3;
@@ -65,6 +68,7 @@ export class PieceStateAdapter implements PieceStatePort {
 
     if (state === PIECE_VISIBILITY_STATES.HIDDEN) {
       SetStrictTag(bot, "pointable", false);
+      this.#setHitboxEnabled({ pieceId: bot.id, dimension, enabled: false });
       if (fromState !== PIECE_VISIBILITY_STATES.HIDDEN) {
         animations.push(
           AnimateStrictTag(bot, "formOpacity", {
@@ -72,14 +76,14 @@ export class PieceStateAdapter implements PieceStatePort {
             duration,
             easing,
             tagMaskSpace: false,
-          }).then(() =>
-            SetStrictTag(bot, dimension as keyof PieceBotTags, false)
-          )
+          }).then(() => SetStrictTag(bot, "color", HIDDEN_COLOR))
         );
       }
     } else if (state === PIECE_VISIBILITY_STATES.SHOWN) {
       SetStrictTag(bot, "pointable", bot.tags.pointableDefault ?? true);
+      SetStrictTag(bot, "color", VISIBLE_COLOR);
       SetStrictTag(bot, dimension as keyof PieceBotTags, true);
+      this.#setHitboxEnabled({ pieceId: bot.id, dimension, enabled: true });
       if (fromState !== PIECE_VISIBILITY_STATES.SHOWN) {
         if (fromState === PIECE_VISIBILITY_STATES.TRANSLUCENT) {
           animations.push(
@@ -112,6 +116,8 @@ export class PieceStateAdapter implements PieceStatePort {
     } else {
       SetStrictTag(bot, dimension as keyof PieceBotTags, true);
       SetStrictTag(bot, "pointable", false);
+      SetStrictTag(bot, "color", VISIBLE_COLOR);
+      this.#setHitboxEnabled({ pieceId: bot.id, dimension, enabled: false });
       if (fromState !== PIECE_VISIBILITY_STATES.TRANSLUCENT) {
         const targetOpacity = 0.025;
         if (fromState === PIECE_VISIBILITY_STATES.SHOWN) {
@@ -144,7 +150,48 @@ export class PieceStateAdapter implements PieceStatePort {
       }
     }
 
-    setTagMask(bot, "state", state);
+    SetStrictTag(bot, "state", state);
+
     await Promise.allSettled(animations);
+  }
+
+  clearMeshStateAnimations<E extends ExperienceKey>({
+    experience,
+    key,
+  }: {
+    experience: E;
+    key: ExperienceKeyMap[E];
+  }): void {
+    const piece = this.#piecesProvider.getPiece(experience, key);
+    if (!piece) {
+      return;
+    }
+    const bot = this.#pieceMapper.toInfrastructure(piece);
+    if (!bot) {
+      return;
+    }
+
+    const dimension = this.#getDimension();
+    const zTag = `${dimension}Z` as keyof PieceBotTags;
+    clearAnimations(bot, "formOpacity");
+    clearAnimations(bot, zTag);
+  }
+
+  #setHitboxEnabled({
+    pieceId,
+    dimension,
+    enabled,
+  }: {
+    pieceId: string;
+    dimension: string;
+    enabled: boolean;
+  }): void {
+    const hitboxes = getBots(
+      byTag("isPieceHitbox", true),
+      byTag("pieceId", pieceId)
+    ) as HitboxBot[];
+
+    setTag(hitboxes, dimension, enabled);
+    SetStrictTag(hitboxes, "pointable", enabled);
   }
 }

@@ -15,3 +15,9 @@ export type ExperienceKeyMap = {
 };
 
 export type AnyPieceKey = ExperienceKeyMap[ExperienceKey];
+
+const EXPERIENCE_KEY_VALUES: readonly string[] = Object.values(EXPERIENCE_KEYS);
+
+export function isExperienceKey(value: unknown): value is ExperienceKey {
+  return typeof value === "string" && EXPERIENCE_KEY_VALUES.includes(value);
+}

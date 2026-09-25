@@ -32,6 +32,9 @@ import {
   createReadingPlansManager,
   draftReadingCount,
   sessionsFromDraft,
+  buildReadingPlanShareUrl,
+  getReadingPlanLocator,
+  parseReadingPlanLocator,
   type Cadence,
   type ReadingPlanDraft,
   type ReadingPlan,
@@ -144,6 +147,18 @@ describe("ReadingPlansManager schemas", () => {
       sessions: [{ id: "s1", readings: [reading("r1"), reading("r2")] }],
     });
     expect(plan.sessions[0]!.readings).toHaveLength(2);
+  });
+
+  it("parses a plan without a cover image (legacy records)", () => {
+    const plan = makePlan();
+    expect(plan.heroImageUrl).toBeUndefined();
+  });
+
+  it("parses a plan with a cover image", () => {
+    const plan = makePlan({
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
+    expect(plan.heroImageUrl).toBe("https://example.com/plan-cover.jpg");
   });
 
   it("treats an omitted sessionsPerDay as 1", () => {
@@ -1135,13 +1150,272 @@ describe("estimateReadingMinutes", () => {
   });
 });
 
+describe("reading plan share URLs", () => {
+  it("points at the first scripture reading's chapter, not the chapter the sharer is viewing", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "GEN", chapter: 1, verse: 1 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/john/3"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/AAB/genesis/1");
+    expect(url.searchParams.get("readingPlan")).toBe("record-1.plan-1");
+    expect([...url.searchParams.keys()]).toEqual(["readingPlan"]);
+  });
+
+  it("skips leading notes and links, then uses the first bible-verse chapter", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            { id: "r1", item: { type: "html", html: "<p>intro</p>" } },
+            { id: "r2", item: { type: "link", url: "https://example.com" } },
+            {
+              id: "r3",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 3, verse: 16 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/genesis/1"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/AAB/john/3");
+  });
+
+  it("skips a scripture reading whose book does not resolve and uses the next one", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "NOTABOOK", chapter: 9 },
+              },
+            },
+            {
+              id: "r2",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 3 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/genesis/1"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/AAB/john/3");
+  });
+
+  it("uses the start chapter of a cross-chapter scripture reading", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 1, endChapter: 3 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/genesis/1"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/AAB/john/1");
+  });
+
+  it("uses the scripture reading's translation when it names one", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 3 },
+                translationId: "NIV",
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/genesis/1"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/NIV/john/3");
+  });
+
+  it("keeps the UI language the sharer was already reading in", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 3 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/es/spa_onbv/genesis/1"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/es/spa_onbv/john/3");
+  });
+
+  it("does not copy unrelated query params from the current page", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 3 },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL(
+          "http://localhost:3000/en/AAB/genesis/1?sessionId=abc&verse=4"
+        ),
+        basePath: "",
+      })
+    );
+
+    expect(url.searchParams.get("sessionId")).toBeNull();
+    expect(url.searchParams.get("verse")).toBeNull();
+    expect(url.searchParams.get("readingPlan")).toBe("record-1.plan-1");
+  });
+
+  it("keeps the current chapter when the plan has no resolvable scripture", () => {
+    const plan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            { id: "r1", item: { type: "html", html: "<p>notes</p>" } },
+          ],
+        },
+      ],
+    });
+
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: new URL("http://localhost:3000/en/AAB/john/3"),
+        basePath: "",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/AAB/john/3");
+    expect(url.searchParams.get("readingPlan")).toBe("record-1.plan-1");
+  });
+
+  it("round-trips a locator whose recordName contains dots", () => {
+    const locator = getReadingPlanLocator({
+      recordName: "user.name",
+      address: "plan-1",
+    });
+    expect(locator).toBe("user.name.plan-1");
+    expect(parseReadingPlanLocator(locator)).toEqual({
+      recordName: "user.name",
+      address: "plan-1",
+    });
+  });
+});
+
 describe("createReadingPlansManager", () => {
   type LoginArg = Parameters<typeof createReadingPlansManager>[1];
+  type TabsArg = Parameters<typeof createReadingPlansManager>[2];
 
   let recordDataMock: Mock;
   let getDataMock: Mock;
   let listDataByMarkerMock: Mock;
   let eraseDataMock: Mock;
+  let recordFileMock: Mock;
   let warnSpy: Mock;
   let errorSpy: Mock;
   let userId: ReturnType<typeof signal<string | null>>;
@@ -1174,7 +1448,14 @@ describe("createReadingPlansManager", () => {
     return metadata;
   };
 
-  const makeManager = (id: string | null = "user-1") => {
+  // `sharer` is the page and open-tab translation a share link is built from.
+  const makeManager = (
+    id: string | null = "user-1",
+    sharer: { url: string; basePath?: string; translationId: string } = {
+      url: "http://localhost:3000/en/AAB/genesis/1",
+      translationId: "AAB",
+    }
+  ) => {
     userId = signal<string | null>(id);
     const os = CasualOSManager();
 
@@ -1185,6 +1466,7 @@ describe("createReadingPlansManager", () => {
       getData: getDataMock,
       recordData: recordDataMock,
       eraseData: eraseDataMock,
+      recordFile: recordFileMock,
       listDataByMarker: listDataByMarkerMock,
       listAllDataByMarker: async (recordName: string, marker: string) => {
         const items: { address: string; data: unknown }[] = [];
@@ -1210,12 +1492,29 @@ describe("createReadingPlansManager", () => {
       },
     });
     const login = { userId } as unknown as LoginArg;
-    return createReadingPlansManager(os, login);
+    const tabs = {
+      tabs: signal([
+        {
+          id: "tab-1",
+          readingState: { translationId: signal(sharer.translationId) },
+        },
+      ]),
+      selectedTabId: signal("tab-1"),
+    } as unknown as TabsArg;
+    const navigation = {
+      currentUrl: signal(new URL(sharer.url)),
+      basePath: sharer.basePath ?? "",
+    };
+    return createReadingPlansManager(os, login, tabs, navigation);
   };
 
   beforeEach(() => {
     recordDataMock = vi.fn().mockResolvedValue(undefined);
     eraseDataMock = vi.fn().mockResolvedValue({ success: true });
+    recordFileMock = vi.fn().mockResolvedValue({
+      success: true,
+      url: "https://example.com/hero.jpg",
+    });
     getDataMock = vi.fn().mockResolvedValue({ success: false });
     listDataByMarkerMock = vi
       .fn()
@@ -1278,6 +1577,58 @@ describe("createReadingPlansManager", () => {
 
     expect(manager.userReadingPlans.value).toEqual([metadata]);
     expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it("loadByLocator loads and selects the plan from a share locator", async () => {
+    const plan = makePlan();
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+
+    const manager = makeManager("user-1");
+    await flush();
+
+    const loaded = await manager.loadByLocator("record-1.plan-1");
+
+    expect(getDataMock).toHaveBeenCalledWith("record-1", "plan-1");
+    expect(loaded).toEqual(plan);
+    expect(manager.selectedReadingPlan.value).toEqual(plan);
+  });
+
+  it("loadByLocator returns null for a malformed locator", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    expect(await manager.loadByLocator(".plan-1")).toBeNull();
+    expect(await manager.loadByLocator("record-1.")).toBeNull();
+    expect(getDataMock).not.toHaveBeenCalled();
+  });
+
+  it("loadByLocator rejects (and selects nothing) when loading fails", async () => {
+    getDataMock.mockResolvedValue({ success: false, errorCode: "not_found" });
+    const manager = makeManager("user-1");
+    await flush();
+
+    await expect(manager.loadByLocator("record-1.plan-1")).rejects.toThrow(
+      /not_found/
+    );
+
+    expect(manager.selectedReadingPlan.value).toBeNull();
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it("loadByLocator rejects (and selects nothing) when the record fails to parse", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: { not: "a plan" },
+    });
+    const manager = makeManager("user-1");
+    await flush();
+
+    await expect(manager.loadByLocator("record-1.plan-1")).rejects.toThrow(
+      /Error parsing reading plan/
+    );
+
+    expect(manager.selectedReadingPlan.value).toBeNull();
+    expect(errorSpy).toHaveBeenCalled();
   });
 
   it("walks every page of results", async () => {
@@ -1573,6 +1924,9 @@ describe("createReadingPlansManager", () => {
     expect(started.persisted).toBe(false); // nothing written until an edit
 
     manager.updateEditingReadingPlan({ title: "Psalms" });
+    manager.updateEditingReadingPlan({
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
     manager.addReadingToEditingPlan({
       type: "bible-verse",
       ref: { bookId: "PSA", chapter: 23 },
@@ -1586,12 +1940,48 @@ describe("createReadingPlansManager", () => {
 
     const draft = manager.editingReadingPlan.value!;
     expect(draft.plan.title).toBe("Psalms");
+    expect(draft.plan.heroImageUrl).toBe("https://example.com/plan-cover.jpg");
     expect(draft.plan.sessions[0]!.readings).toHaveLength(2);
     expect(draft.plan.sessions[0]!.readings.map((r) => r.item.type)).toEqual([
       "bible-verse",
       "html",
     ]);
     expect(draftReadingCount(draft)).toBe(2);
+  });
+
+  it("uploadHeroImage stores the file and returns its public URL", async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], "cover.jpg", {
+      type: "image/jpeg",
+    });
+    const manager = makeManager("user-1");
+    await flush();
+
+    recordDataMock.mockClear();
+    await expect(manager.uploadHeroImage(file)).resolves.toBe(
+      "https://example.com/hero.jpg"
+    );
+    expect(recordFileMock).toHaveBeenCalledWith("user-1", file, {
+      mimeType: "image/jpeg",
+      marker: "publicRead",
+    });
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      expect.stringMatching(/^photo_/),
+      expect.objectContaining({ url: "https://example.com/hero.jpg" }),
+      { marker: "publicRead:userGallery" }
+    );
+  });
+
+  it("uploadHeroImage throws when signed out", async () => {
+    const manager = makeManager(null);
+    await flush();
+
+    await expect(
+      manager.uploadHeroImage(
+        new File([new Uint8Array([1])], "cover.jpg", { type: "image/jpeg" })
+      )
+    ).rejects.toThrow("Cannot upload a cover image while signed out.");
+    expect(recordFileMock).not.toHaveBeenCalled();
   });
 
   it("saves the draft to the user's account after a change", async () => {
@@ -1883,6 +2273,66 @@ describe("createReadingPlansManager", () => {
     expect(eraseDataMock).not.toHaveBeenCalled();
   });
 
+  it("cover image changes on a published plan persist only on Save changes", async () => {
+    const plan = makePlan({
+      authorUserId: "user-1",
+      recordName: "user-1",
+      status: "complete",
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.editExistingReadingPlan(plan);
+    recordDataMock.mockClear();
+    vi.useFakeTimers();
+    try {
+      manager.updateEditingReadingPlan({ heroImageUrl: null });
+      expect(manager.editingReadingPlan.value!.plan.heroImageUrl).toBeNull();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      // Still only in the editor — the published plan is untouched.
+      expect(recordDataMock).not.toHaveBeenCalled();
+
+      manager.cancelEditingReadingPlan();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(manager.editingReadingPlan.value).toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("finishEditingReadingPlan writes a published plan's new cover image", async () => {
+    const plan = makePlan({
+      authorUserId: "user-1",
+      recordName: "user-1",
+      status: "complete",
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.editExistingReadingPlan(plan);
+    manager.updateEditingReadingPlan({
+      heroImageUrl: "https://example.com/new-cover.jpg",
+    });
+    recordDataMock.mockClear();
+
+    const saved = await manager.finishEditingReadingPlan();
+
+    expect(saved!.heroImageUrl).toBe("https://example.com/new-cover.jpg");
+    const written = recordDataMock.mock.calls.find(
+      (c) => c[3]?.marker === "publicRead:readingPlan"
+    )!;
+    expect((written[2] as ReadingPlan).heroImageUrl).toBe(
+      "https://example.com/new-cover.jpg"
+    );
+  });
+
   it("deleting a plan erases its records and the user's progress through it", async () => {
     const plan = makePlan({ recordName: "user-1", address: "plan-1" });
     const progress = makeProgress({
@@ -2036,6 +2486,49 @@ describe("createReadingPlansManager", () => {
     const saved = recordDataMock.mock.calls.at(-1)![2] as ReadingPlanProgress;
     expect(saved.percentComplete).toBeCloseTo(1 / 3, 10);
     expect(saved.totalReadings).toBe(3);
+  });
+
+  describe("getReadingPlanShareUrl", () => {
+    const planOpeningOnJohn3 = () =>
+      makePlan({
+        sessions: [
+          {
+            id: "s1",
+            readings: [
+              {
+                id: "r1",
+                item: {
+                  type: "bible-verse",
+                  ref: { bookId: "JHN", chapter: 3 },
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+    it("builds the link from the app's current URL and deployment base path", () => {
+      const manager = makeManager("user-1", {
+        url: "https://seed.example/app/es/spa_onbv/genesis/1?sessionId=abc",
+        basePath: "/app",
+        translationId: "spa_onbv",
+      });
+
+      expect(manager.getReadingPlanShareUrl(planOpeningOnJohn3())).toBe(
+        "https://seed.example/app/es/spa_onbv/john/3?readingPlan=record-1.plan-1"
+      );
+    });
+
+    it("uses the sharer's open-tab translation when the page is not a chapter", () => {
+      const manager = makeManager("user-1", {
+        url: "http://localhost:3000/",
+        translationId: "NIV",
+      });
+
+      const url = new URL(manager.getReadingPlanShareUrl(planOpeningOnJohn3()));
+
+      expect(url.pathname).toMatch(/\/NIV\/john\/3$/);
+    });
   });
 
   describe("analytics", () => {
@@ -2802,6 +3295,7 @@ describe("createReadingPlan", () => {
     expect(plan.locale).toBe("en");
     expect(plan.title).toBeNull();
     expect(plan.description).toBeNull();
+    expect(plan.heroImageUrl).toBeNull();
     expect(plan.schemaVersion).toBe(1);
     expect(plan.createdAtMs).toBe(START_MS);
     expect(plan.updatedAtMs).toBe(START_MS);
@@ -2828,12 +3322,14 @@ describe("createReadingPlan", () => {
       locale: "es-MX",
       title: "My Plan",
       description: "A custom plan",
+      heroImageUrl: "https://example.com/plan-cover.jpg",
       cadenceOptions,
     });
 
     expect(plan.locale).toBe("es-MX");
     expect(plan.title).toBe("My Plan");
     expect(plan.description).toBe("A custom plan");
+    expect(plan.heroImageUrl).toBe("https://example.com/plan-cover.jpg");
     expect(plan.cadenceOptions).toEqual(cadenceOptions);
     expect(plan.defaultCadenceId).toBe("weekly"); // first provided option
   });

@@ -15,7 +15,7 @@ import {
   generateV1ConnectionToken,
 } from "@casual-simulation/aux-common";
 import { sha256 } from "hash.js";
-import { first, firstValueFrom } from "rxjs";
+import { first, firstValueFrom, timeout } from "rxjs";
 import { guardRecordsClient } from "./SessionGuard";
 import type { SessionInvalidatedEvent } from "./SessionGuard";
 
@@ -62,6 +62,42 @@ const UNSAFE_HEADERS = new Set([
   "host",
 ]);
 
+/**
+ * Waits for a freshly-connected shared document to report itself synced, and
+ * lets go of it if that never happens.
+ *
+ * The ordinary failures never report anything at all: an expired session or a
+ * refused record turns the status to `authorization: false`, and a dropped
+ * connection turns it to `sync: false`. Neither errors and neither completes the
+ * stream, so with no deadline this waits for the rest of the page load — and so
+ * does whoever asked for the document. A caller that can carry on without it
+ * passes `timeoutMs` to turn that silence into a failure it can handle.
+ *
+ * Either way the document is already connected and watching its branch by the
+ * time this runs, and a document nobody is going to be handed has to be
+ * released: otherwise it keeps that watch for the rest of the page load, and a
+ * caller that retries leaves another one behind on every attempt.
+ */
+export async function awaitDocumentSync(
+  doc: Pick<SharedDocument, "onStatusUpdated" | "unsubscribe">,
+  timeoutMs?: number
+): Promise<void> {
+  const synced = doc.onStatusUpdated.pipe(
+    first((s) => s.type === "sync" && s.synced)
+  );
+
+  try {
+    await firstValueFrom(
+      timeoutMs === undefined
+        ? synced
+        : synced.pipe(timeout({ first: timeoutMs }))
+    );
+  } catch (error) {
+    doc.unsubscribe();
+    throw error;
+  }
+}
+
 export function CasualOSManager(
   endpoint: string = "https://auth.seedbible.org"
 ) {
@@ -88,6 +124,12 @@ export function CasualOSManager(
 
   let instRecordsClient: InstRecordsClient | null = null;
   let authSource: PartitionAuthSource | null = null;
+
+  /** Record sweeps still running, so concurrent callers share one. */
+  const listAllDataInFlight = new Map<
+    string,
+    Promise<{ success: boolean; items: { address: string; data: unknown }[] }>
+  >();
 
   const sessionKey = signal<string | null>(null);
   const connectionKey = signal<string | null>(null);
@@ -219,7 +261,7 @@ export function CasualOSManager(
     recordName: string | null,
     inst: string,
     docName: string,
-    options?: { markers?: string[] }
+    options?: { markers?: string[]; timeoutMs?: number }
   ): Promise<SharedDocument> {
     const client = getInstClient();
     const authSource = getAuthSource();
@@ -238,9 +280,7 @@ export function CasualOSManager(
 
     doc.connect();
 
-    await firstValueFrom(
-      doc.onStatusUpdated.pipe(first((s) => s.type === "sync" && s.synced))
-    );
+    await awaitDocumentSync(doc, options?.timeoutMs);
 
     return doc;
   }
@@ -372,6 +412,70 @@ export function CasualOSManager(
       }
 
       return { success: true, items: allItems };
+    },
+
+    /**
+     * Every data item in a record, paged by address.
+     *
+     * The marker-scoped listing above can't answer "everything of mine",
+     * because some of what the app writes is marked per chapter — annotations
+     * carry `publicRead:annotations/{book}/{chapter}`, so collecting them all
+     * by marker would mean 1,189 requests. `listData` takes no marker and
+     * walks the record itself, which is one paged sweep instead.
+     *
+     * Callers get raw `{ address, data }` and are expected to recognise their
+     * own items, either by an address prefix or by parsing `data` with their
+     * schema. Only items the caller may read come back.
+     *
+     * Concurrent sweeps of the same record share one set of requests: several
+     * callers want different slices of the same items — annotations and
+     * highlights, say — and each doing its own sweep would page the whole
+     * record twice for the same answer.
+     */
+    listAllData: (
+      recordName: string
+    ): Promise<{
+      success: boolean;
+      items: { address: string; data: unknown }[];
+    }> => {
+      const existing = listAllDataInFlight.get(recordName);
+      if (existing) {
+        return existing;
+      }
+
+      const sweep = (async () => {
+        const allItems: { address: string; data: unknown }[] = [];
+        let lastAddress: string | undefined;
+
+        while (true) {
+          const page = await client.listData({
+            recordName,
+            address: lastAddress,
+          });
+
+          if (!page.success) {
+            console.error("Error listing data:", page);
+            throw new Error(`Error listing data: ${page.errorCode}`);
+          }
+
+          if (page.items.length === 0) {
+            break;
+          }
+
+          for (const item of page.items) {
+            allItems.push({ address: item.address, data: item.data });
+          }
+
+          lastAddress = page.items[page.items.length - 1]?.address;
+        }
+
+        return { success: true, items: allItems };
+      })().finally(() => {
+        listAllDataInFlight.delete(recordName);
+      });
+
+      listAllDataInFlight.set(recordName, sweep);
+      return sweep;
     },
 
     recordFile: async (

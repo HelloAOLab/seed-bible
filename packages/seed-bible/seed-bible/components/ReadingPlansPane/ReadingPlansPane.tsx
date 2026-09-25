@@ -21,9 +21,13 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { CasualOSManager } from "../../managers/OsManager";
+import type { LoginManager } from "../../managers/LoginManager";
+import type { UserGalleryManager } from "../../managers/UserGalleryManager";
 import { readingLabel } from "./readingLabel";
 import { ReadingPlanEditor } from "./ReadingPlanEditor";
 import { ReadingPlanDetail } from "./ReadingPlanDetail";
+import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
@@ -31,6 +35,9 @@ interface ReadingPlansPaneProps {
   books: TranslationBook[];
   /** Modals host, for previewing/opening a text or link reading. */
   modals?: ModalManager;
+  os?: Pick<CasualOSManager, "recordFile" | "recordData">;
+  login?: Pick<LoginManager, "userId">;
+  gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   /**
    * Navigates the reader to a scripture reading. Without it a plan's scripture
    * readings can only be ticked off, not opened.
@@ -49,6 +56,8 @@ interface ReadingPlansPaneProps {
     items: PlaylistItemData[],
     startIndex: number
   ) => void;
+  /** Shown after a plan share URL is copied. Optional — copy still works without it. */
+  toast?: (message: string) => void;
 }
 
 type ReadingPlansView = "list" | "edit" | "detail";
@@ -87,6 +96,16 @@ function latestProgress(
   );
 }
 
+function copyReadingPlanShareUrl(
+  readingPlans: ReadingPlansManager,
+  plan: ReadingPlan,
+  toast: ((message: string) => void) | undefined,
+  copiedMessage: string
+) {
+  void navigator.clipboard.writeText(readingPlans.getReadingPlanShareUrl(plan));
+  toast?.(copiedMessage);
+}
+
 /**
  * Opens a plan's detail view. The view only switches once the plan is actually
  * in hand: a plan whose record is missing or unreadable leaves the user on the
@@ -112,6 +131,11 @@ async function openPlanDetail(
     planId
   );
   await readingPlans.selectReadingPlanProgress(progress);
+  readingPlansView.value = "detail";
+}
+
+/** Opens the detail screen for a plan that is already selected. */
+export function showReadingPlanDetailView() {
   readingPlansView.value = "detail";
 }
 
@@ -232,8 +256,17 @@ export function ReadingPlansPaneActions(props: {
  * exports above), so this component renders only the body of each screen.
  */
 export function ReadingPlansPane(props: ReadingPlansPaneProps) {
-  const { readingPlans, books, modals, onOpenScripture, onPlayReadings } =
-    props;
+  const {
+    readingPlans,
+    books,
+    modals,
+    os,
+    login,
+    gallery,
+    onOpenScripture,
+    onPlayReadings,
+    toast,
+  } = props;
   // The view outlives this component, so closing the pane to go read and add a
   // passage brings the user back to the editor they were in, not to the list.
   const view = readingPlansView.value;
@@ -291,6 +324,9 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         readingPlans={readingPlans}
         books={books}
         modals={modals}
+        os={os}
+        login={login}
+        gallery={gallery}
         onCancel={() => backToPlansList(readingPlans)}
         onSaved={closeEditor}
       />
@@ -305,6 +341,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         modals={modals}
         onOpenScripture={onOpenScripture}
         onPlayReadings={onPlayReadings}
+        toast={toast}
         onEdit={() => {
           const plan = readingPlans.selectedReadingPlan.peek();
           if (plan) {
@@ -325,6 +362,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
       onOpen={(plan) => void openPlanDetail(readingPlans, plan)}
       onEdit={(plan) => void editPlan(plan)}
       onRestart={(plan) => void restartPlan(plan)}
+      toast={toast}
     />
   );
 }
@@ -345,10 +383,11 @@ interface ReadingPlansListProps {
   onEdit: (plan: ReadingPlanMetadata) => void;
   /** Starts a completed plan over on a fresh progress, then opens it. */
   onRestart: (plan: ReadingPlanMetadata) => void;
+  toast?: (message: string) => void;
 }
 
 function ReadingPlansList(props: ReadingPlansListProps) {
-  const { readingPlans, books, onOpen, onEdit, onRestart } = props;
+  const { readingPlans, books, onOpen, onEdit, onRestart, toast } = props;
   const { t } = useI18n();
   // Deleting a plan erases it for good, so the button asks once first rather
   // than deleting on the tap that was meant to open it.
@@ -425,8 +464,31 @@ function ReadingPlansList(props: ReadingPlansListProps) {
   const PlanActions = (actionProps: { row: PlanRow }) => {
     const { row } = actionProps;
     const confirming = confirmDeleteId === row.planId;
+    const full = row.full;
     return (
       <div className="sb-rp-card-actions">
+        {full ? (
+          <button
+            type="button"
+            className="sb-rp-icon-button"
+            onClick={() =>
+              copyReadingPlanShareUrl(
+                readingPlans,
+                full,
+                toast,
+                t("reading-plan-url-copied", {
+                  defaultValue: "Reading plan URL copied to clipboard",
+                })
+              )
+            }
+            aria-label={t("share-reading-plan", {
+              defaultValue: "Share plan",
+            })}
+            title={t("share-reading-plan", { defaultValue: "Share plan" })}
+          >
+            <MaterialIcon>share</MaterialIcon>
+          </button>
+        ) : null}
         <button
           type="button"
           className="sb-rp-icon-button"
@@ -499,6 +561,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
               onClick={() => onOpen(hero.meta)}
               disabled={openingId === hero.planId}
             >
+              <HeroImageThumb url={hero.meta.heroImageUrl} />
               <div className="sb-rp-today-text">
                 <span className="sb-rp-today-eyebrow">
                   {t("reading-plan-today-eyebrow", {
@@ -548,9 +611,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                       onClick={() => resumeDraft(meta)}
                       disabled={!full}
                     >
-                      <span className="sb-rp-card-tile" aria-hidden="true">
-                        <MaterialIcon>edit_note</MaterialIcon>
-                      </span>
+                      <HeroImageThumb url={meta.heroImageUrl} />
                       <span className="sb-rp-card-body">
                         <span className="sb-rp-card-title" dir="auto">
                           {planTitle(meta)}
@@ -628,9 +689,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                     onClick={() => onOpen(row.meta)}
                     disabled={openingId === row.planId}
                   >
-                    <span className="sb-rp-card-tile" aria-hidden="true">
-                      <MaterialIcon>menu_book</MaterialIcon>
-                    </span>
+                    <HeroImageThumb url={row.meta.heroImageUrl} />
                     <span className="sb-rp-card-body">
                       <span className="sb-rp-card-title" dir="auto">
                         {planTitle(row.meta)}
@@ -673,12 +732,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                         onClick={() => onOpen(row.meta)}
                         disabled={openingId === row.planId}
                       >
-                        <span
-                          className="sb-rp-card-tile sb-rp-card-tile-done"
-                          aria-hidden="true"
-                        >
-                          <MaterialIcon>check</MaterialIcon>
-                        </span>
+                        <HeroImageThumb url={row.meta.heroImageUrl} />
                         <span className="sb-rp-card-body">
                           <span className="sb-rp-card-title" dir="auto">
                             {planTitle(row.meta)}
@@ -761,9 +815,7 @@ function ActivePlanCard(props: {
       disabled={opening}
     >
       <div className="sb-rp-card-row">
-        <span className="sb-rp-card-tile" aria-hidden="true">
-          <MaterialIcon>menu_book</MaterialIcon>
-        </span>
+        <HeroImageThumb url={row.meta.heroImageUrl} />
         <span className="sb-rp-card-body">
           <span className="sb-rp-card-title" dir="auto">
             {title}

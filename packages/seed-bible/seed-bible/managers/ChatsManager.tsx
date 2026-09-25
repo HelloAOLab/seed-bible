@@ -16,7 +16,7 @@ import {
 import type { TranslatableTitle } from "./BibleToolsManager";
 import { translateTitle } from "../app/utils";
 import type { VerseRef } from "./BibleDataManager";
-import { parseVerseReferences } from "./BibleDataManager";
+import { scanVerseReferencesInText } from "./BibleDataManager";
 import type { TranslationBook } from "./FreeUseBibleAPI";
 import { getConnectedUserVisualKey } from "./SessionsManager";
 import { v4 as uuid } from "uuid";
@@ -421,6 +421,13 @@ export interface ChatSession {
    * a context added to the manager is automatically available here.
    */
   context: ReadonlySignal<LocalChatContext>;
+
+  /**
+   * Unsent text in this chat's compose field. Lives on the session so it
+   * survives ChatView unmounting (clicking a verse closes the floating panel)
+   * and a later Ask AI can append a quote instead of replacing what was typed.
+   */
+  unsentDraft: Signal<string>;
 }
 
 export interface SharedChatSession extends ChatSession {
@@ -482,6 +489,14 @@ export interface ChatsManager {
    * @param id The id of the context to remove.
    */
   removeContext: (id: string) => void;
+
+  /**
+   * Text waiting to be inserted into the chat compose field. ChatView consumes
+   * a non-empty value once (merges it into the draft if the field already has
+   * content, then clears this signal) so callers like the verse toolbar's Ask
+   * AI tool can prefill a question without owning the compose UI.
+   */
+  composerDraft: Signal<string>;
 }
 
 const DEFAULT_LOCAL_PARTICIPANT_ID = "local-user";
@@ -919,7 +934,7 @@ function parseTextMessage(
     });
   }
 
-  for (const { ref, start, end } of parseVerseReferences(text, books)) {
+  for (const { ref, start, end } of scanVerseReferencesInText(text, books)) {
     pending.push({ kind: "verse_ref", start, end, ref });
   }
 
@@ -1751,6 +1766,7 @@ function createSharedChatSession(
         participantIdAliases.value
       ),
     context: chatContext,
+    unsentDraft: signal(""),
     isShared: true,
     session,
   };
@@ -2208,6 +2224,7 @@ function createLocalChatSession(
     },
     getMessageAuthors,
     context: chatContext,
+    unsentDraft: signal(""),
   };
 }
 
@@ -2254,6 +2271,7 @@ export function createChatsManager(
       .peek()
       .filter((c) => c.id !== id);
   };
+  const composerDraft = signal("");
   const selectedChatId = signal<string | null>(null);
   const selectedChat = computed(
     () => chats.value.find((chat) => chat.id === selectedChatId.value) ?? null
@@ -2340,5 +2358,6 @@ export function createChatsManager(
     setContext,
     addContext,
     removeContext,
+    composerDraft,
   };
 }

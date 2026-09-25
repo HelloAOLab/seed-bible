@@ -1,13 +1,25 @@
 import { useSignal, type ReadonlySignal } from "@preact/signals";
-import { useEffect } from "preact/hooks";
+import { useEffect, useMemo } from "preact/hooks";
 import { MaterialIcon, SeedBibleIcon } from "../icons";
 import { useI18n } from "../../i18n";
 import type { LoginManager } from "../../managers/LoginManager";
+import { trimmedOrNull } from "../../managers/Utils";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type {
   TodayManager,
   TodayPassageTarget,
 } from "../../managers/TodayManager";
+import { useTimeContext } from "./TimeContext";
+
+/**
+ * Stands in for the name while the greeting is translated, so the finished
+ * sentence can be split around it. Same trick as the Today header: the name
+ * needs its own element for the accent colour, but where it sits is the
+ * translation's business. A private-use code point, so it can't collide with
+ * anything a translator would write, and the user-supplied name never enters
+ * the translated string as markup.
+ */
+const NAME_PLACEHOLDER = "\uE000";
 
 /** Splits a marked verse on its `<hl>`/`</hl>` boundaries; odd parts were inside. */
 const HIGHLIGHT_MARKERS = /<hl>|<\/hl>/;
@@ -18,53 +30,119 @@ export const Welcome = (props: {
   theme: ReadonlySignal<BibleTheme>;
   onOpenBookSelector: () => void;
   onOpenPassage: (target: TodayPassageTarget) => void;
+  onTakeTour: () => void;
 }) => {
-  const { bookNames, getVerseText, lastTranslationId, getDefaultTranslation } =
-    props.today;
-  const username = props.login.profile.value?.name;
-  const { t } = useI18n();
+  const {
+    bookNames,
+    lastTranslationBooks,
+    getVerseText,
+    lastTranslationId,
+    getDefaultTranslation,
+  } = props.today;
+  // The cached profile is what the sidebar can already show while the account
+  // record is still loading. Prefer a real name from either, so the greeting
+  // doesn't stay on "Welcome!" until that request finishes — and doesn't stay
+  // there if the record arrives with a blank name while the cache has one.
+  // Trim first: `??` treats "" and whitespace as a real name and would skip
+  // the cache.
+  const username =
+    trimmedOrNull(props.login.profile.value?.name) ??
+    trimmedOrNull(props.login.cachedProfile?.value?.name);
+  const { t, language } = useI18n();
+  // `TimeProvider` re-renders this subtree every ten seconds so the date stays
+  // current; without `tick` below it would be fixed at whenever Today opened.
+  const { tick } = useTimeContext();
   // Read here in the render body, which is a reactive scope, so a theme switch
   // recolours the icon immediately (see useReadingHistoryTimeline).
   const theme = props.theme.value;
 
+  const date = useMemo(() => {
+    const now = new Date();
+    const month = now
+      .toLocaleString(language, { month: "short" })
+      .toUpperCase();
+    return `${now.getDate()} ${month}`;
+  }, [language, tick]);
+
+  // `afterName` is undefined when nobody is signed in, or a locale left the
+  // placeholder out — that's what decides whether a name element renders.
+  const greeting = username
+    ? t("personal-greeting", {
+        name: NAME_PLACEHOLDER,
+        defaultValue: "Welcome {{name}}",
+      })
+    : t("anonymous-greeting", { defaultValue: "Welcome!" });
+  const [beforeName, afterName] = greeting.split(NAME_PLACEHOLDER);
+
   const welcomeVerse = useSignal("");
 
+  const johnBookName = bookNames.value.get("JHN");
+  const firstBook = lastTranslationBooks.value?.books[0];
+  // John is the usual welcome passage; translations that lack it (an Old
+  // Testament-only translation, say) fall back to the translation's own
+  // first book (typically Genesis). Both stay `undefined` until book data
+  // loads, rather than guessing, so nothing below renders the wrong book.
+  const welcomeBookId = johnBookName !== undefined ? "JHN" : firstBook?.id;
+  const welcomeBookName = johnBookName ?? firstBook?.name;
+  // Gates the fade-in below: true only once the book is known *and* its
+  // opening verse has come back, so the heading and quote reveal together
+  // instead of the heading beating the async verse fetch.
+  const passageReady =
+    welcomeBookName !== undefined && welcomeVerse.value.length > 0;
+
   useEffect(() => {
+    if (welcomeBookId === undefined) {
+      return;
+    }
+
     let isActive = true;
 
     const translationId =
       lastTranslationId.value ?? getDefaultTranslation() ?? "";
-    const mappedVerse = WELCOME_VERSE_MAP[translationId];
+    // The table only covers John 1:1 -- once the target has fallen back to a
+    // different book, it no longer applies.
+    const mappedVerse =
+      welcomeBookId === "JHN" ? WELCOME_VERSE_MAP[translationId] : undefined;
 
     // The table is the common case and needs no network round trip; the API
     // is only a fallback for a translation the table has not been given yet.
     if (mappedVerse !== undefined) {
       welcomeVerse.value = `"${mappedVerse}"`;
     } else {
-      void getVerseText(translationId, "JHN", 1, 1).then((rawVerseText) => {
-        if (isActive) {
-          welcomeVerse.value = `"${rawVerseText ?? ""}"`;
+      void getVerseText(translationId, welcomeBookId, 1, 1).then(
+        (rawVerseText) => {
+          if (isActive) {
+            welcomeVerse.value = `"${rawVerseText ?? ""}"`;
+          }
         }
-      });
+      );
     }
 
     return () => {
       isActive = false;
     };
-  }, [lastTranslationId.value]);
+  }, [lastTranslationId.value, welcomeBookId]);
 
   return (
     <div className={"sb-today-welcome-screen"}>
-      <h1 className={"sb-today-welcome-screen-greeting"}>
-        {username
-          ? t("personal-greeting", {
-              name: username,
-              defaultValue: "Welcome, {{name}}!",
-            })
-          : t("anonymous-greeting", { defaultValue: "Welcome!" })}
-      </h1>
-      <span className={"sb-today-welcome-screen-book"}>
-        {`${bookNames.value.get("JHN")?.toUpperCase()} 1:1`}
+      <div className="sb-today-welcome-screen-heading">
+        <span className="sb-today-welcome-screen-date">{date}</span>
+        <h1 className={"sb-today-welcome-screen-greeting"}>
+          {beforeName}
+          {afterName === undefined ? null : (
+            <span className="sb-today-welcome-screen-greeting-name">
+              {username}
+            </span>
+          )}
+          {afterName}
+        </h1>
+      </div>
+      <span
+        className={`sb-today-welcome-screen-book${passageReady ? " sb-today-welcome-screen-passage-visible" : ""}`}
+      >
+        <span className="sb-today-welcome-screen-reveal">
+          {welcomeBookName ? `${welcomeBookName.toUpperCase()} 1:1` : ""}
+        </span>
       </span>
       {/*
         Real nodes rather than `dangerouslySetInnerHTML`. The `<hl>` markers are
@@ -72,51 +150,76 @@ export const Welcome = (props: {
         unmapped fallback path renders text straight from the Bible API through
         this same element, and as raw HTML that text was never escaped.
       */}
-      <div className="sb-today-welcome-screen-verse">
-        {welcomeVerse.value.split(HIGHLIGHT_MARKERS).map((part, index) =>
-          index % 2 === 1 ? (
-            <span
-              className="sb-today-welcome-screen-verse-highlight"
-              key={index}
-            >
-              {part}
-            </span>
-          ) : (
-            part
-          )
-        )}
+      <div
+        className={`sb-today-welcome-screen-verse${passageReady ? " sb-today-welcome-screen-passage-visible" : ""}`}
+      >
+        <div className="sb-today-welcome-screen-reveal">
+          {welcomeVerse.value.split(HIGHLIGHT_MARKERS).map((part, index) =>
+            index % 2 === 1 ? (
+              <span
+                className="sb-today-welcome-screen-verse-highlight"
+                key={index}
+              >
+                {part}
+              </span>
+            ) : (
+              part
+            )
+          )}
+        </div>
       </div>
-      <div className={"sb-today-welcome-screen-navigation"}>
-        <button
-          className="sb-today-book-selector-button sb-today-clickable"
-          type="button"
-          onClick={props.onOpenBookSelector}
-        >
-          <SeedBibleIcon
-            className="sb-today-seed-bible-icon"
-            style={{
-              width: "1.25rem",
-              height: "1.25rem",
-              fill: theme.variables.readerFontColor,
+      <div className="sb-today-welcome-screen-actions">
+        <div className={"sb-today-welcome-screen-navigation"}>
+          <button
+            className="sb-today-book-selector-button sb-today-clickable"
+            type="button"
+            onClick={props.onOpenBookSelector}
+          >
+            <SeedBibleIcon
+              className="sb-today-seed-bible-icon"
+              style={{
+                width: "1.25rem",
+                height: "1.25rem",
+                fill: theme.variables.readerFontColor,
+              }}
+            />
+            {t("open-bible", { defaultValue: "Open Bible" })}
+          </button>
+          <button
+            className={
+              "sb-today-welcome-screen-start-button sb-today-clickable"
+            }
+            disabled={welcomeBookId === undefined}
+            onClick={() => {
+              if (welcomeBookId === undefined) {
+                return;
+              }
+              // `onOpenPassage` falls back to the default translation when unset.
+              props.onOpenPassage({
+                bookId: welcomeBookId,
+                chapter: 1,
+                translationId: lastTranslationId.value,
+              });
             }}
-          />
-          {t("open-bible", { defaultValue: "Open Bible" })}
-        </button>
+          >
+            <span className="sb-today-welcome-screen-reveal">
+              {welcomeBookId !== undefined
+                ? t("read-book-chapter-button", {
+                    defaultValue: "Read {{bookName}} {{chapterNumber}}",
+                    bookName: welcomeBookName,
+                    chapterNumber: 1,
+                  })
+                : t("read-the-bible", { defaultValue: "Read the Bible" })}
+              <MaterialIcon>arrow_right_alt</MaterialIcon>
+            </span>
+          </button>
+        </div>
         <button
-          className={"sb-today-welcome-screen-start-button sb-today-clickable"}
-          onClick={() =>
-            // `onOpenPassage` falls back to the default translation when unset.
-            props.onOpenPassage({
-              bookId: "GEN",
-              chapter: 1,
-              translationId: lastTranslationId.value,
-            })
-          }
+          className="sb-today-welcome-screen-tour-button sb-today-clickable"
+          type="button"
+          onClick={props.onTakeTour}
         >
-          {t("read-first-chapter", {
-            defaultValue: "Read the first chapter",
-          })}
-          <MaterialIcon>arrow_right_alt</MaterialIcon>
+          {t("take-a-tour", { defaultValue: "Take a tour" })}
         </button>
       </div>
     </div>

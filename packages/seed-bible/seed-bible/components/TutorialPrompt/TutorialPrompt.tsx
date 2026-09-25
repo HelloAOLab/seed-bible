@@ -12,9 +12,12 @@ import { useAppConfig } from "../../app/appConfig";
 export function TutorialPrompt({
   tutorial,
   className = "",
+  customizationName,
 }: {
   tutorial: TutorialManager;
   className?: string;
+  /** The active Customization's name, if any — overrides the branded app name. */
+  customizationName?: string | null;
 }) {
   const { t } = useI18n();
   const { branding } = useAppConfig();
@@ -36,7 +39,8 @@ export function TutorialPrompt({
             defaultValue: "Welcome to Seed Bible. Would you like a tutorial?",
           }),
           t,
-          branding
+          branding,
+          customizationName
         )}
       </h3>
       <p className="sb-tutorial-prompt-body">
@@ -46,7 +50,8 @@ export function TutorialPrompt({
               "A guided tour is available to help you learn the ins and outs of Seed Bible.",
           }),
           t,
-          branding
+          branding,
+          customizationName
         )}
       </p>
       <div className="sb-tutorial-prompt-actions">
