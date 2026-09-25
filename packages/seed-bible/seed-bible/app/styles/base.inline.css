@@ -310,16 +310,6 @@ html {
   font-size: calc(16px * var(--sb-ui-scale, 1));
 }
 
-/* The reader is what SSR paints, and Today opens only after mount. This
-   keeps that reader from flashing before Welcome. The class is added before
-   the first paint when Welcome is the screen this visit will show, and taken
-   off once Today is up. A signed-in reader who already has history is not
-   held, so their page is unchanged. */
-html.sb-hold-today {
-  visibility: hidden;
-  opacity: 0;
-}
-
 /* Material Symbols icons ship with a fixed `font-size: 24px` from the Google
    Fonts stylesheet (loaded in main.tsx), which ignores the UI Size knob.
    Re-express that base in rem so every icon scales with the chrome by default

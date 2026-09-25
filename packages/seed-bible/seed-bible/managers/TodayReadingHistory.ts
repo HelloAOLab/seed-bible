@@ -171,7 +171,7 @@ const HISTORY_KNOWN_KEY_PREFIX = "sb-today-history-";
 
 type KnownHistory = "ready" | "empty";
 
-export function readKnownHistory(userId: string): KnownHistory | null {
+function readKnownHistory(userId: string): KnownHistory | null {
   if (typeof localStorage === "undefined") {
     return null;
   }

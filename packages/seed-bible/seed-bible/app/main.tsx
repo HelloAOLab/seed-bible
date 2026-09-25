@@ -10,7 +10,6 @@ import { BibleReaderToolbar } from "../components/BibleReaderToolbar/BibleReader
 import { FloatingReaderPanels } from "../components/FloatingReaderPanels/FloatingReaderPanels";
 import { Sidebar, SharedSessionsToasts } from "../components/Tabs/Tabs";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
-import { TODAY_BOOT_HOLD_CLASS } from "../managers/TodayManager";
 import { Suspense } from "preact/compat";
 import { useEffect } from "preact/hooks";
 import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
@@ -222,20 +221,7 @@ function MainBody({
   // once right after mount.
   useEffect(() => {
     state.today.hydrateAutoOpen();
-    // Today stayed closed (a chapter link, a shared session). Nothing is
-    // waiting on Welcome, so the page can show.
-    if (!state.today.isOpen.peek()) {
-      document.documentElement.classList.remove(TODAY_BOOT_HOLD_CLASS);
-    }
   }, []);
-
-  // After the render that actually shows Today, so the first visible frame
-  // is Welcome (or the resume screen) and not the reader underneath.
-  useSignalEffect(() => {
-    if (state.today.isOpen.value) {
-      document.documentElement.classList.remove(TODAY_BOOT_HOLD_CLASS);
-    }
-  });
 
   if (typeof document !== "undefined") {
     useSignalEffect(() => {
