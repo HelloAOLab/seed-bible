@@ -1,8 +1,9 @@
-import { signal, type ReadonlySignal } from "@preact/signals";
+import { effect, signal, type ReadonlySignal } from "@preact/signals";
 
 import {
   createTutorialManager,
   parseTutorialLink,
+  mirrorTutorialToUrl,
   MOBILE_TUTORIAL_STEPS,
   ONBOARDING_STEPS,
   type TutorialLinkRequest,
@@ -308,6 +309,11 @@ describe("parseTutorialLink", () => {
     expect(
       parseTutorialLink(new URLSearchParams("tutorial=search&tutorialStep=-2"))
     ).toEqual({ id: "search", step: 0 });
+    expect(
+      parseTutorialLink(
+        new URLSearchParams("tutorial=search&tutorialStep=3abc")
+      )
+    ).toEqual({ id: "search", step: 0 });
   });
 
   it("ignores a missing, unknown, or unlinkable id", () => {
@@ -389,6 +395,38 @@ describe("createTutorialManager — tutorial links", () => {
     expect(tutorial.activeTutorialId.value).toBe("add-tab");
   });
 
+  it("opens a linked introduction directly at its step, never passing through step 0", () => {
+    // Step 0 drives the book selector open; passing through it on the way to
+    // a later step flashes the selector open then shut.
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    const runningSteps: number[] = [];
+    effect(() => {
+      if (tutorial.running.value) {
+        runningSteps.push(tutorial.index.value);
+      }
+    });
+
+    tutorial.startTutorial("introduction", 3);
+
+    expect(runningSteps).toEqual([3]);
+  });
+
+  it("ignores a desktop-only tutorial link on mobile", () => {
+    const tutorial = createLinked(
+      { id: "pane-layout", step: 0 },
+      { mobile: true }
+    );
+
+    expect(tutorial.running.value).toBe(false);
+  });
+
   it("reports no active tutorial once it finishes", () => {
     const tutorial = createLinked({ id: "search", step: 0 });
 
@@ -412,5 +450,82 @@ describe("createTutorialManager — startTutorial", () => {
 
     expect(tutorial.startTutorial("nope")).toBe(false);
     expect(tutorial.running.value).toBe(false);
+  });
+});
+
+describe("mirrorTutorialToUrl", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  function setup(initialQuery = "", link: TutorialLinkRequest | null = null) {
+    const url = new URL(`https://example.test/?${initialQuery}`);
+    const navigation = {
+      updateQueryParams: (update: Record<string, string | null>) => {
+        for (const [key, value] of Object.entries(update)) {
+          if (value === null) {
+            url.searchParams.delete(key);
+          } else {
+            url.searchParams.set(key, value);
+          }
+        }
+      },
+    };
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    mirrorTutorialToUrl(tutorial, navigation, link);
+    return { tutorial, url };
+  }
+
+  it("writes the current step as the tour advances", () => {
+    const { tutorial, url } = setup();
+
+    tutorial.startTutorial("introduction", 0);
+    expect(url.searchParams.get("tutorial")).toBe("introduction");
+    expect(url.searchParams.get("tutorialStep")).toBe("0");
+
+    tutorial.next();
+    expect(url.searchParams.get("tutorialStep")).toBe("1");
+  });
+
+  it("removes both params when the tour ends", () => {
+    const { tutorial, url } = setup();
+
+    tutorial.startTutorial("search", 0);
+    tutorial.next();
+
+    expect(url.searchParams.has("tutorial")).toBe(false);
+    expect(url.searchParams.has("tutorialStep")).toBe(false);
+  });
+
+  it("never writes an unlinkable contextual tip into the address", () => {
+    const { tutorial, url } = setup();
+
+    tutorial.startContextual("offline-download");
+
+    expect(tutorial.activeTutorialId.value).toBe("offline-download");
+    expect(url.searchParams.has("tutorial")).toBe(false);
+  });
+
+  it("clears stale unlinkable params left over from an earlier visit", () => {
+    const { url } = setup("tutorial=offline-download&tutorialStep=0");
+
+    expect(url.searchParams.has("tutorial")).toBe(false);
+    expect(url.searchParams.has("tutorialStep")).toBe(false);
+  });
+
+  it("keeps a pending linked tutorial's params until it launches", () => {
+    const { url } = setup("tutorial=search&tutorialStep=0", {
+      id: "search",
+      step: 0,
+    });
+
+    expect(url.searchParams.get("tutorial")).toBe("search");
   });
 });

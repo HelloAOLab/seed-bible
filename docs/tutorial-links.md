@@ -17,12 +17,12 @@ A step number past the end of a tutorial opens its last step. An unknown ID is i
 
 ## Available tutorials
 
-| ID             | What it teaches                                                       | Steps                                         |
-| -------------- | --------------------------------------------------------------------- | --------------------------------------------- |
-| `introduction` | The first-run tour: choosing books, translations, tabs, and settings. | 6 on desktop (`0`–`5`), 4 on mobile (`0`–`3`) |
-| `pane-layout`  | Arranging several passages side by side. Desktop only.                | 1 (`0`)                                       |
-| `add-tab`      | Opening more passages in new tabs.                                    | 1 (`0`)                                       |
-| `search`       | Searching by book, chapter, or verse in the book selector.            | 1 (`0`)                                       |
+| ID             | What it teaches                                                           | Steps                                         |
+| -------------- | ------------------------------------------------------------------------- | --------------------------------------------- |
+| `introduction` | The first-run tour: choosing books, translations, tabs, and settings.     | 6 on desktop (`0`–`5`), 4 on mobile (`0`–`3`) |
+| `pane-layout`  | Arranging several passages side by side. Desktop only; ignored on mobile. | 1 (`0`)                                       |
+| `add-tab`      | Opening more passages in new tabs.                                        | 1 (`0`)                                       |
+| `search`       | Searching by book, chapter, or verse in the book selector.                | 1 (`0`)                                       |
 
 The `introduction` tour shows a different set of steps on phones, because some desktop controls are not on the mobile screen. The same link works on both; the step number counts within whichever set is showing.
 

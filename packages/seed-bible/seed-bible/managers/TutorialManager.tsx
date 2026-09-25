@@ -293,6 +293,12 @@ export const LINKABLE_TUTORIAL_IDS: readonly string[] = [
   "search",
 ];
 
+/**
+ * Linkable tutorials whose target is only rendered on desktop. A link to one
+ * of these is ignored on a mobile viewport rather than spotlighting nothing.
+ */
+const DESKTOP_ONLY_TUTORIAL_IDS: readonly string[] = ["pane-layout"];
+
 /** A tutorial requested by the page URL (`?tutorial=` / `?tutorialStep=`). */
 export interface TutorialLinkRequest {
   id: string;
@@ -310,8 +316,47 @@ export function parseTutorialLink(
   if (!id || !LINKABLE_TUTORIAL_IDS.includes(id)) {
     return null;
   }
-  const step = Number.parseInt(params.get("tutorialStep") ?? "", 10);
-  return { id, step: Number.isFinite(step) && step > 0 ? step : 0 };
+  const rawStep = params.get("tutorialStep") ?? "";
+  return { id, step: /^\d+$/.test(rawStep) ? Number(rawStep) : 0 };
+}
+
+/**
+ * Mirrors the running tutorial into `?tutorial=&tutorialStep=` so the page can
+ * be shared or refreshed mid-tour and land back on the same step. Replaces
+ * rather than pushes: stepping through a tour shouldn't fill Back history.
+ * Only linkable tutorials are written; anything else counts as "not running",
+ * so a link never advertises a tour that won't replay. While `linkedTutorial`
+ * is pending its params are kept until it launches; otherwise stale params
+ * (e.g. an unlinkable id) are cleared right away.
+ */
+export function mirrorTutorialToUrl(
+  tutorial: Pick<TutorialManager, "activeTutorialId" | "index">,
+  navigation: {
+    updateQueryParams: (
+      update: Record<string, string | null>,
+      replaceState?: boolean
+    ) => void;
+  },
+  linkedTutorial: TutorialLinkRequest | null
+): () => void {
+  let shouldClear = linkedTutorial === null;
+  return effect(() => {
+    const rawId = tutorial.activeTutorialId.value;
+    const step = tutorial.index.value;
+    const id = rawId && LINKABLE_TUTORIAL_IDS.includes(rawId) ? rawId : null;
+    if (id) {
+      shouldClear = true;
+      navigation.updateQueryParams(
+        { tutorial: id, tutorialStep: String(step) },
+        true
+      );
+    } else if (shouldClear) {
+      navigation.updateQueryParams(
+        { tutorial: null, tutorialStep: null },
+        true
+      );
+    }
+  });
 }
 
 function readFlag(key: string): boolean {
@@ -667,7 +712,7 @@ export function createTutorialManager(
     saveProfileConfigValue(login, PROFILE_TUTORIAL_OPTED_OUT, true);
   };
 
-  const start = () => {
+  const start = (startIndex = 0) => {
     // Close whatever overlapping UI is up first — coach marks target the
     // normal reader UI, so a fullscreen pane (e.g. the Today screen) or an
     // open sidebar panel left up would hide the very elements being
@@ -688,8 +733,15 @@ export function createTutorialManager(
     if (activeSteps.value.length === 0) {
       return;
     }
-    index.value = 0;
-    running.value = true;
+    // Batched so a linked start at step N never briefly runs step 0 (whose
+    // selector-group effect would flash the book selector open).
+    batch(() => {
+      index.value = Math.min(
+        Math.max(0, Math.floor(startIndex)),
+        activeSteps.value.length - 1
+      );
+      running.value = true;
+    });
   };
 
   const startContextual = (featureId: string) => {
@@ -719,25 +771,22 @@ export function createTutorialManager(
   };
 
   const startTutorial = (id: string, step = 0): boolean => {
-    if (id === INTRODUCTION_TUTORIAL_ID) {
-      start();
-    } else {
-      const steps = CONTEXTUAL_TUTORIALS[id];
-      if (!steps || steps.length === 0) {
-        return false;
-      }
-      mode.value = "contextual";
-      activeFeatureId.value = id;
-      activeSteps.value = steps;
+    if (isMobile.value && DESKTOP_ONLY_TUTORIAL_IDS.includes(id)) {
+      return false;
     }
-    if (activeSteps.value.length === 0) {
+    if (id === INTRODUCTION_TUTORIAL_ID) {
+      start(step);
+      return running.value;
+    }
+    const steps = CONTEXTUAL_TUTORIALS[id];
+    if (!steps || steps.length === 0) {
       return false;
     }
     batch(() => {
-      index.value = Math.min(
-        Math.max(0, Math.floor(step)),
-        activeSteps.value.length - 1
-      );
+      mode.value = "contextual";
+      activeFeatureId.value = id;
+      activeSteps.value = steps;
+      index.value = Math.min(Math.max(0, Math.floor(step)), steps.length - 1);
       running.value = true;
     });
     return true;
@@ -880,7 +929,7 @@ export function createTutorialManager(
     promptVisible,
     skipPromptVisible,
     featuresSeen,
-    start,
+    start: () => start(),
     startContextual,
     startTutorial,
     next,

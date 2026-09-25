@@ -179,6 +179,7 @@ import {
 import {
   createTutorialManager,
   parseTutorialLink,
+  mirrorTutorialToUrl,
   type TutorialManager,
 } from "../managers/TutorialManager";
 import { range } from "es-toolkit";
@@ -1114,6 +1115,11 @@ export function createSeedBibleState(
     return true;
   });
 
+  // Client-only: SSR can't run the tour, and launching it there would put
+  // the overlay in the served HTML.
+  const tutorialLink = import.meta.env.SSR
+    ? null
+    : parseTutorialLink(navigation.currentUrl.value.searchParams);
   const tutorial = createTutorialManager(
     login,
     readerVisible,
@@ -1122,37 +1128,11 @@ export function createSeedBibleState(
     panes,
     sidebar,
     openedViaContentLink,
-    // Client-only: SSR can't run the tour, and launching it there would put
-    // the overlay in the served HTML.
-    import.meta.env.SSR
-      ? null
-      : parseTutorialLink(navigation.currentUrl.value.searchParams)
+    tutorialLink
   );
 
-  // Mirror the running tutorial into `?tutorial=&tutorialStep=` so the page can
-  // be shared or refreshed mid-tour and land back on the same step. Replaces
-  // rather than pushes: stepping through a tour shouldn't fill Back history.
-  // Only clears after a tour has actually run, so a linked tutorial's params
-  // survive until it launches.
   if (!import.meta.env.SSR) {
-    let tutorialWasRunning = false;
-    effect(() => {
-      const id = tutorial.activeTutorialId.value;
-      const step = tutorial.index.value;
-      if (id) {
-        tutorialWasRunning = true;
-        navigation.updateQueryParams(
-          { tutorial: id, tutorialStep: String(step) },
-          true
-        );
-      } else if (tutorialWasRunning) {
-        tutorialWasRunning = false;
-        navigation.updateQueryParams(
-          { tutorial: null, tutorialStep: null },
-          true
-        );
-      }
-    });
+    mirrorTutorialToUrl(tutorial, navigation, tutorialLink);
   }
 
   // Once the tutorial has been resolved (seen, skipped, declined, or opted
