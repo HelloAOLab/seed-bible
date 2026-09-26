@@ -511,3 +511,58 @@ img.sb-chat-view-message-avatar {
 .sb-chat-mention.sb-chat-mention-self {
   color: var(--sb-primary-color);
 }
+
+.sb-chat-view-choices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+  max-width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-chat-view-choices-label {
+  margin: 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-chat-view-choices-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.sb-chat-view-choice {
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 72%);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.sb-chat-view-choice:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-chat-view-choice:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  outline-offset: 1px;
+}
+
+.sb-chat-view-choice.is-selected {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
+}
+
+.sb-chat-view-choice:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

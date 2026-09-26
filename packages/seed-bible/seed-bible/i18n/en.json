@@ -304,6 +304,8 @@
   "anonymous": "Anonymous",
   "no-chat-messages": "No messages yet",
   "start-conversation": "Start a conversation",
+  "chat-switch-translation": "Switch translation",
+  "chat-switch-to-translation": "Switch to {{name}}",
   "presence-one-is-here": "{{name}} is here",
   "presence-many-are-here": "{{count}} people are here",
   "unable-to-send-message": "Unable to send message.",

@@ -6,6 +6,7 @@
 
 - Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1", "Gen.1" and "Gen. 1:1" resolve the same as "Gen 1:1", and a trailing abbreviation period ("Gen.") keeps offering suggestions. Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
 - Have AI chat follow the active reader tab's Bible translation, mapping it onto Apologist's supported list (KJV, BSB, and the rest of the Fusion docs) and falling back to BSB when the tab's translation isn't supported. ([#1265](https://github.com/HelloAOLab/seed-bible/issues/1265))
+- Let AI chat look up translations this app actually has and offer them as buttons. Tapping a button switches the open tab to that translation and stays on the same chapter when the translation includes it. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
 
 ### 🔧 Changed
 

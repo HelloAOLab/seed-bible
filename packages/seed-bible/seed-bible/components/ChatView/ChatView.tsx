@@ -6,8 +6,10 @@ import {
   type ChatParticipant,
   type ChatMessage,
   type ChatSession,
+  type ChoicesChatMessage,
   type ParsedChatTextMessage,
 } from "../../managers/ChatsManager";
+import { switchReaderToTranslation } from "../../managers/translationSearch";
 import {
   getUserAnimalVisual,
   type ConnectionSessionUserVisual,
@@ -47,6 +49,13 @@ interface ChatJoinGroup {
 
 type ToolCallChatMessage = Extract<ChatMessage, { type: "tool_call" }>;
 
+/** A choice card. Each card is its own row; they are not grouped with text bubbles. */
+interface ChatChoicesGroup {
+  type: "choices";
+  key: string;
+  message: ChoicesChatMessage;
+}
+
 /** A run of consecutive tool-call messages from the same author(s) collapsed into one notification. */
 interface ChatToolCallGroup {
   type: "tool";
@@ -62,7 +71,11 @@ interface ChatToolCallGroup {
   timeMs: number;
 }
 
-type ChatTimelineGroup = ChatMessageGroup | ChatJoinGroup | ChatToolCallGroup;
+type ChatTimelineGroup =
+  | ChatMessageGroup
+  | ChatJoinGroup
+  | ChatToolCallGroup
+  | ChatChoicesGroup;
 
 interface JoinEvent {
   participant: ChatParticipant;
@@ -136,28 +149,40 @@ function getJoinEvents(
     .map((participant) => ({ participant, timeMs: participant.joinTimeMs }));
 }
 
-const ENTRY_KIND_PRIORITY = { message: 0, tool: 1, join: 2 } as const;
+const ENTRY_KIND_PRIORITY = {
+  message: 0,
+  choices: 1,
+  tool: 2,
+  join: 3,
+} as const;
 
 /**
- * Interleaves messages, tool-call events, and participant join events into a
- * single time-ordered list of render groups. Consecutive messages from the
- * same author(s) are grouped together, consecutive tool calls from the same
- * author(s) collapse into one notification, and consecutive join events
- * collapse into a single notification. A change in entry kind or author
- * breaks the current group.
+ * Interleaves messages, choice cards, tool-call events, and participant join
+ * events into a single time-ordered list of render groups. Consecutive
+ * messages from the same author(s) are grouped together, consecutive tool
+ * calls from the same author(s) collapse into one notification, and
+ * consecutive join events collapse into a single notification. A change in
+ * entry kind or author breaks the current group. Choice cards stay as their
+ * own row.
  */
 function buildTimeline(
   messages: ParsedChatTextMessage[],
   toolCallMessages: ToolCallChatMessage[],
+  choicesMessages: ChoicesChatMessage[],
   participants: ChatParticipant[]
 ): ChatTimelineGroup[] {
-  if (messages.length === 0 && toolCallMessages.length === 0) {
+  if (
+    messages.length === 0 &&
+    toolCallMessages.length === 0 &&
+    choicesMessages.length === 0
+  ) {
     return [];
   }
 
   type Entry =
     | { kind: "message"; timeMs: number; message: ParsedChatTextMessage }
     | { kind: "tool"; timeMs: number; message: ToolCallChatMessage }
+    | { kind: "choices"; timeMs: number; message: ChoicesChatMessage }
     | { kind: "join"; timeMs: number; participant: ChatParticipant };
 
   const entries: Entry[] = [
@@ -175,6 +200,13 @@ function buildTimeline(
         message,
       })
     ),
+    ...choicesMessages.map(
+      (message): Entry => ({
+        kind: "choices",
+        timeMs: message.timeMs,
+        message,
+      })
+    ),
     ...getJoinEvents(messages, participants).map(
       (event): Entry => ({
         kind: "join",
@@ -184,7 +216,8 @@ function buildTimeline(
     ),
   ];
 
-  // Stable sort by time; at equal times, messages come before tool calls, which come before joins.
+  // Stable sort by time; at equal times, messages come before choice cards,
+  // which come before tool calls, which come before joins.
   entries.sort(
     (a, b) =>
       a.timeMs - b.timeMs ||
@@ -216,6 +249,12 @@ function buildTimeline(
           timeMs: entry.timeMs,
         });
       }
+    } else if (entry.kind === "choices") {
+      groups.push({
+        type: "choices",
+        key: `choices-${entry.message.id}`,
+        message: entry.message,
+      });
     } else if (lastGroup?.type === "join") {
       lastGroup.participants.push(entry.participant);
       lastGroup.timeMs = entry.timeMs;
@@ -622,11 +661,17 @@ export function ChatView(props: ChatViewProps) {
   const toolCallMessages = chat.messages.value.filter(
     (m): m is ToolCallChatMessage => m.type === "tool_call"
   );
+  const choicesMessages = chat.messages.value.filter(
+    (m): m is ChoicesChatMessage => m.type === "choices"
+  );
   const timelineGroups = buildTimeline(
     messages,
     toolCallMessages,
+    choicesMessages,
     chat.totalParticipants.value
   );
+  const selectedChoiceIds = useSignal<Record<string, string>>({});
+  const pendingChoiceKey = useSignal<string | null>(null);
   const localDraft = useSignal("");
   // Prefer the session draft so typed text survives ChatView unmounting when
   // the user clicks a verse (that closes the floating panel).
@@ -728,7 +773,7 @@ export function ChatView(props: ChatViewProps) {
       }
       container.scrollTop = container.scrollHeight;
     }
-  }, [messages.length, toolCallMessages.length]);
+  }, [messages.length, toolCallMessages.length, choicesMessages.length]);
 
   useEffect(() => {
     // Don't autofocus on mobile — focusing opens the soft keyboard.
@@ -960,6 +1005,36 @@ export function ChatView(props: ChatViewProps) {
     }
   };
 
+  const chooseTranslation = async (
+    message: ChoicesChatMessage,
+    choiceId: string
+  ) => {
+    if (message.choiceType !== "translation" || pendingChoiceKey.value) {
+      return;
+    }
+    const readingState = state.app.selectedTab.value?.readingState;
+    if (!readingState) {
+      return;
+    }
+    pendingChoiceKey.value = `${message.id}:${choiceId}`;
+    try {
+      const switched = await switchReaderToTranslation({
+        readingState,
+        getTranslationBooks: (translationId) =>
+          state.bibleData.getTranslationBooks(translationId),
+        translationId: choiceId,
+      });
+      if (switched) {
+        selectedChoiceIds.value = {
+          ...selectedChoiceIds.value,
+          [message.id]: choiceId,
+        };
+      }
+    } finally {
+      pendingChoiceKey.value = null;
+    }
+  };
+
   const canSubmit = draft.value.trim().length > 0 && !isSubmitting.value;
 
   const othersPresent = activeParticipants.filter((p) => !p.isSelf);
@@ -1008,6 +1083,57 @@ export function ChatView(props: ChatViewProps) {
                     {getJoinLabel(group.participants, t)}
                   </span>
                   <RelativeDateTime timeMs={group.timeMs} />
+                </div>
+              );
+            }
+
+            if (group.type === "choices") {
+              const message = group.message;
+              const pending = pendingChoiceKey.value?.startsWith(
+                `${message.id}:`
+              );
+              const heading =
+                message.choiceType === "translation"
+                  ? t("chat-switch-translation", {
+                      defaultValue: "Switch translation",
+                    })
+                  : "";
+              return (
+                <div
+                  className="sb-chat-view-choices"
+                  key={group.key}
+                  data-message-id={message.id}
+                  role="group"
+                  aria-label={heading}
+                >
+                  {heading ? (
+                    <p className="sb-chat-view-choices-label">{heading}</p>
+                  ) : null}
+                  <div className="sb-chat-view-choices-list">
+                    {message.choices.map((choice) => {
+                      const selected =
+                        selectedChoiceIds.value[message.id] === choice.id;
+                      return (
+                        <button
+                          key={choice.id}
+                          type="button"
+                          className={`sb-chat-view-choice${selected ? " is-selected" : ""}`}
+                          dir="auto"
+                          aria-pressed={selected}
+                          aria-label={t("chat-switch-to-translation", {
+                            defaultValue: "Switch to {{name}}",
+                            name: choice.label,
+                          })}
+                          disabled={pending}
+                          onClick={() => {
+                            void chooseTranslation(message, choice.id);
+                          }}
+                        >
+                          {choice.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             }

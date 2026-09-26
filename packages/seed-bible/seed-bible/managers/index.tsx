@@ -25,5 +25,6 @@ export * from "./TabsManager";
 export * from "./TabsLayoutManager";
 export * from "./ThemeManager";
 export * from "./translationGrouping";
+export * from "./translationSearch";
 export * from "./TutorialManager";
 export * from "./UserGalleryManager";

@@ -57,13 +57,38 @@ export const toolCallChatMessageSchema = chatMessageBaseSchema.extend({
   name: z.string(),
 });
 
+/**
+ * One tappable option on a {@link choicesChatMessageSchema} card.
+ * `id` is what the choice does (a translation id when `choiceType` is
+ * `"translation"`). `label` is the button text.
+ */
+export const chatChoiceSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+});
+
+/**
+ * A card of buttons in the chat. `choiceType` says what picking one does, so
+ * later kinds (a suggested passage, for example) can reuse this message
+ * instead of adding a new one. Clients that do not know `choiceType` drop the
+ * whole message when they parse the shared log, which hides the card rather
+ * than showing buttons that do nothing.
+ */
+export const choicesChatMessageSchema = chatMessageBaseSchema.extend({
+  type: z.literal("choices"),
+  choiceType: z.enum(["translation"]),
+  choices: z.array(chatChoiceSchema).min(1).max(12),
+});
+
 export const chatMessageSchema = z.discriminatedUnion("type", [
   textChatMessageSchema,
   toolCallChatMessageSchema,
+  choicesChatMessageSchema,
 ]);
 
 export type ChatMessageBase = z.infer<typeof chatMessageBaseSchema>;
 export type TextChatMessage = z.infer<typeof textChatMessageSchema>;
+export type ChoicesChatMessage = z.infer<typeof choicesChatMessageSchema>;
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
 
 export const chatMessageOptionsSchema = z.discriminatedUnion("type", [
@@ -74,6 +99,12 @@ export const chatMessageOptionsSchema = z.discriminatedUnion("type", [
     targets: true,
   }),
   toolCallChatMessageSchema.omit({
+    timeMs: true,
+    id: true,
+    authors: true,
+    targets: true,
+  }),
+  choicesChatMessageSchema.omit({
     timeMs: true,
     id: true,
     authors: true,
@@ -388,6 +419,16 @@ export interface ChatSession {
   markAsRead: (messageId?: string) => void;
   /** Sends a message and notifies the other participants. */
   sendMessage: (message: ChatMessageOptions) => Promise<void>;
+
+  /**
+   * Inserts a message without asking an AI participant to reply.
+   *
+   * Choice cards are posted from inside a tool call, which is already running
+   * inside `generateResponse`. Going through {@link sendMessage} would start
+   * another turn (and, for anything that is not text, still falls back to the
+   * most recent AI participant).
+   */
+  appendMessage: (message: ChatMessageOptions, authors?: string[]) => void;
 
   /** Updates whether the local participant is currently typing. */
   setTypingStatus: (isTyping: boolean) => void;
@@ -1684,6 +1725,13 @@ function createSharedChatSession(
     }
   };
 
+  const appendMessage = (
+    message: ChatMessageOptions,
+    authors: string[] = []
+  ) => {
+    chats.push(createChatMessage(message, authors, []));
+  };
+
   const parsedMessages = computed<ParsedChatTextMessage[]>(() => {
     // Test doubles and partial session mocks may omit reading state; fall back
     // to English-only resolution via getBookId when books are unavailable.
@@ -1714,6 +1762,7 @@ function createSharedChatSession(
     wasMentioned,
     markAsRead,
     sendMessage,
+    appendMessage,
     setTypingStatus: (isTyping: boolean) => {
       localIsTyping.value = isTyping;
     },
@@ -2127,6 +2176,14 @@ function createLocalChatSession(
     }
   };
 
+  const appendMessage = (
+    message: ChatMessageOptions,
+    authors: string[] = []
+  ) => {
+    const nextMessage = createChatMessage(message, authors, []);
+    messages.value = [...messages.value, nextMessage];
+  };
+
   const getMessageAuthors = (message: ChatMessage) =>
     resolveMessageAuthors(
       totalParticipants.value,
@@ -2181,6 +2238,7 @@ function createLocalChatSession(
     wasMentioned,
     markAsRead,
     sendMessage,
+    appendMessage,
     setTypingStatus: (isTyping: boolean) => {
       localIsTyping.value = isTyping;
     },

@@ -1,5 +1,7 @@
 import { type SeedBibleState } from "seed-bible";
+import { formatAvailableTranslationsNote } from "seed-bible/managers";
 import { z } from "zod";
+import { buildBonfireCustomInstructions } from "./bonfireInstructions";
 
 const bonfireSessionStartResponseSchema = z.object({
   session: z.object({
@@ -217,6 +219,22 @@ export function* registerBonfireChatProvider(
       const translationShortName =
         tabTranslation?.shortName ?? tabTranslationId ?? "";
       const uiLanguage = context.i18n.language.value.replace(/_/g, "-");
+      let availableTranslationsNote: string | null = null;
+      try {
+        const catalog = context.bibleData.catalogLoaded.peek()
+          ? context.bibleData.availableTranslations.peek()
+          : await context.bibleData.getTranslations();
+        availableTranslationsNote = formatAvailableTranslationsNote(
+          catalog,
+          context.i18n.language.value,
+          tabTranslation?.language ?? null
+        );
+      } catch (err) {
+        console.warn(
+          "[Bonfire] Could not list translations for the prompt",
+          err
+        );
+      }
       const response = await fetch(
         "https://bonfire.seedbible.io/api/v1/session/chat",
         {
@@ -229,7 +247,14 @@ export function* registerBonfireChatProvider(
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
             },
-            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId.value} ${readingState?.chapterNumber.value}. Prefer the Bible translation ${translationLabel} (${translationShortName}). Reply in ${uiLanguage}.`,
+            custom_instructions: buildBonfireCustomInstructions({
+              bookId: readingState?.bookId.value,
+              chapterNumber: readingState?.chapterNumber.value,
+              translationLabel,
+              translationShortName,
+              uiLanguage,
+              availableTranslationsNote,
+            }),
           }),
           headers,
         }
