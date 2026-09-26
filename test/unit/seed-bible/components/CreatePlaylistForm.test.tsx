@@ -14,7 +14,10 @@ import type {
   TabsManager,
   ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
-import type { TranslationBook } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type {
+  TranslationBook,
+  TranslationBookChapter,
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -745,6 +748,82 @@ describe("CreatePlaylistForm", () => {
     expect(
       container.querySelector(".stub-edit-scripture-text")?.textContent
     ).toBe("Genesis 2");
+  });
+
+  describe("inline item preview", () => {
+    function renderWithItems(items: PlaylistItemData[]) {
+      const { playlists } = createMockPlaylists(createPlaylist({ items }));
+      const tab = createMockTab([book("GEN", "Genesis")]);
+      (
+        tab.readingState as unknown as { translationId: unknown }
+      ).translationId = signal("BSB");
+      const getTranslationBookChapter = vi.fn(
+        async (_translationId: string, _bookId: string, chapter: number) =>
+          ({
+            chapter: {
+              number: chapter,
+              footnotes: [],
+              content: [
+                { type: "verse", number: 1, content: [`Verse of ${chapter}`] },
+              ],
+            },
+          }) as unknown as TranslationBookChapter
+      );
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={createMockTabs(tab)}
+            modals={createModalManager()}
+            bibleData={{ getTranslationBookChapter }}
+          />,
+          container
+        );
+      });
+      return { getTranslationBookChapter };
+    }
+
+    const click = (el: Element | undefined) =>
+      act(() => {
+        el?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    const previews = () =>
+      container.querySelectorAll(".sb-item-inline-preview");
+
+    it("shows the scripture beneath a tapped item in the reader's translation", async () => {
+      const { getTranslationBookChapter } = renderWithItems([
+        verseItem("GEN", 1),
+      ]);
+      click(container.querySelectorAll(".sb-discover-item-button")[0]);
+
+      const row = container.querySelectorAll(".sb-discover-item--row")[0];
+      await vi.waitFor(() =>
+        expect(
+          row?.querySelector(".sb-item-inline-preview")?.textContent
+        ).toContain("Verse of 1")
+      );
+      expect(getTranslationBookChapter).toHaveBeenCalledWith("BSB", "GEN", 1);
+    });
+
+    it("collapses on a second tap and keeps only one item open", () => {
+      renderWithItems([
+        verseItem("GEN", 1),
+        { type: "link", title: "Notes", url: "https://example.com" },
+      ]);
+      const buttons = container.querySelectorAll(".sb-discover-item-button");
+
+      click(buttons[0]);
+      expect(previews()).toHaveLength(1);
+      expect(buttons[0]?.getAttribute("aria-expanded")).toBe("true");
+
+      click(buttons[1]);
+      expect(previews()).toHaveLength(1);
+      expect(previews()[0]?.textContent).toContain("https://example.com");
+      expect(buttons[0]?.getAttribute("aria-expanded")).toBe("false");
+
+      click(buttons[1]);
+      expect(previews()).toHaveLength(0);
+    });
   });
 
   it("adding an item via the input calls addEditingPlaylistItem", () => {

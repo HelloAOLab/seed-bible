@@ -297,6 +297,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         playlists={playlists}
         tabs={tabs}
         modals={modals}
+        bibleData={props.state.bibleData}
         os={props.state.os}
         login={props.state.login}
         gallery={props.state.gallery}
