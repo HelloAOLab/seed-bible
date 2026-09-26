@@ -2,6 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/BibleReaderToolbar/BibleReaderToolbar";
 import { QuickToolbar } from "@packages/seed-bible/seed-bible/components/QuickToolbar/QuickToolbar";
+import { ShareModal } from "@packages/seed-bible/seed-bible/components/ShareModal/shareModal";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
@@ -20,7 +21,6 @@ describe("share button — surface wiring", () => {
   let originalInnerWidth: number;
 
   async function setupState(viewportWidth: number) {
-    originalInnerWidth = window.innerWidth;
     window.innerWidth = viewportWidth;
     window.innerHeight = 800;
 
@@ -32,6 +32,7 @@ describe("share button — surface wiring", () => {
   }
 
   beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -102,5 +103,48 @@ describe("share button — surface wiring", () => {
       (button) => button.getAttribute("aria-label") === "Share"
     );
     expect(shareButton).toBeUndefined();
+  });
+
+  it("hides Share from the quick toolbar in an embed", async () => {
+    window.innerWidth = DESKTOP_VIEWPORT_WIDTH;
+    state = await createTestSeedBibleState({ embed: true });
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    await renderQuickToolbar();
+
+    expect(container.querySelector('[aria-label="Share"]')).toBeNull();
+  });
+
+  async function renderShareSheet(embedded: boolean) {
+    state = await createTestSeedBibleState({ embed: embedded });
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <ShareModal
+            app={state.app}
+            session={null}
+            onShareLink={() => undefined}
+          />
+        </TestHost>,
+        container
+      );
+    });
+  }
+
+  it("offers a shared session from the share sheet", async () => {
+    await renderShareSheet(false);
+
+    expect(container.textContent).toContain("Share a link");
+    expect(container.textContent).toContain("Start and share session");
+  });
+
+  it("drops shared session options from the share sheet in an embed", async () => {
+    await renderShareSheet(true);
+
+    expect(container.textContent).toContain("Share a link");
+    expect(container.textContent).not.toContain("Start and share session");
+    expect(container.textContent).not.toContain("Share current session");
   });
 });

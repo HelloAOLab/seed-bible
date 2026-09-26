@@ -3219,4 +3219,43 @@ describe("BibleReaderToolbar — compact embed", () => {
       container.querySelectorAll(".sb-reader-toolbar-mobile-tab").length
     ).toBeGreaterThan(0);
   });
+
+  it("keeps copy and share on the verse toolbar and drops the other verse actions", async () => {
+    const state = await renderToolbar({
+      width: MOBILE_VIEWPORT_WIDTH,
+      embed: true,
+    });
+    const readingState = state.app.currentReadingState.value!.tab.readingState;
+    const chapter = readingState.chapterData.value!;
+    const firstVerse = chapter.chapter.content.find(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    )!;
+
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: firstVerse,
+          translationId: chapter.translation.id,
+        },
+        10,
+        10
+      );
+    });
+
+    const labels = Array.from(
+      container.querySelectorAll(".sb-verse-toolbar-action")
+    ).map((button) => button.getAttribute("aria-label"));
+
+    expect(labels).toContain("Copy");
+    expect(labels).toContain("Share");
+    expect(labels).not.toContain("Highlight selection");
+    expect(labels).not.toContain("Save");
+    expect(labels).not.toContain("Note");
+    expect(labels).not.toContain("Cancel");
+  });
 });

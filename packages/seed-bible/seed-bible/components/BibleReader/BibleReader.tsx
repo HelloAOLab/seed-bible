@@ -2225,14 +2225,6 @@ export function BibleReader(props: BibleReaderProps) {
                   >
                     <InfoSettingsIcon />
                   </button>
-                  <button
-                    type="button"
-                    className="sb-bible-reader-mobile-header-close"
-                    aria-label={t("close", { defaultValue: "Close" })}
-                    title={t("close", { defaultValue: "Close" })}
-                  >
-                    <span className="material-symbols-outlined">close</span>
-                  </button>
                 </>
               ) : (
                 <>

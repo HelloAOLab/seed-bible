@@ -281,3 +281,41 @@ describe("createTutorialManager — reader visibility gate", () => {
     expect(tutorial.promptVisible.value).toBe(true);
   });
 });
+
+describe("createTutorialManager — compact embed", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  function createEmbeddedTutorial() {
+    return createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar(),
+      false,
+      signal(true)
+    );
+  }
+
+  it("does not offer the tour, start it, or show the skip prompt", () => {
+    const tutorial = createEmbeddedTutorial();
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    expect(tutorial.promptVisible.value).toBe(false);
+    expect(tutorial.running.value).toBe(false);
+    expect(tutorial.skipPromptVisible.value).toBe(false);
+
+    tutorial.start();
+    expect(tutorial.running.value).toBe(false);
+
+    tutorial.startContextual("search");
+    expect(tutorial.running.value).toBe(false);
+
+    tutorial.skip();
+    expect(tutorial.skipPromptVisible.value).toBe(false);
+  });
+});

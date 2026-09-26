@@ -61,6 +61,7 @@ export default function initCompareExtension() {
         // Between Copy (200) and Share (300). "Cancel" is forced last by the
         // toolbar regardless of priority.
         priority: 250,
+        showInEmbedded: true,
         title: {
           key: "compare",
           defaultValue: "Compare",

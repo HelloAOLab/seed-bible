@@ -176,6 +176,13 @@
   }
 }
 
+/* A compact embed hides that bottom bar, so the same inset would leave a
+   strip of the reader showing under a fullscreen pane (Compare, and any
+   other pane). Sit flush with the viewport instead. */
+.sb-embed-minimal .sb-pane-shell-detached[data-placement="fullscreen"] {
+  bottom: 0;
+}
+
 .sb-pane-shell-detached[data-placement="floating"] .sb-pane-header {
   cursor: move;
 }

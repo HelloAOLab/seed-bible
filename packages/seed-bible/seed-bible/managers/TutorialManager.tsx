@@ -417,7 +417,13 @@ export function createTutorialManager(
   isMobile: ReadonlySignal<boolean>,
   panes: PanesManager,
   sidebar: SidebarManager,
-  joinedViaSessionLink = false
+  joinedViaSessionLink = false,
+  /**
+   * Compact partner-site embed. While this is true the offer card, the tour,
+   * and the "turn off tutorials" follow-up never start — an embed has no room
+   * for coach marks aimed at chrome that isn't there.
+   */
+  isMinimalEmbed: ReadonlySignal<boolean> = signal(false)
 ): TutorialManager {
   const running = signal<boolean>(false);
   const index = signal<number>(0);
@@ -607,6 +613,9 @@ export function createTutorialManager(
   };
 
   const start = () => {
+    if (isMinimalEmbed.value) {
+      return;
+    }
     // Close whatever overlapping UI is up first — coach marks target the
     // normal reader UI, so a fullscreen pane (e.g. the Today screen) or an
     // open sidebar panel left up would hide the very elements being
@@ -632,6 +641,9 @@ export function createTutorialManager(
   };
 
   const startContextual = (featureId: string) => {
+    if (isMinimalEmbed.value) {
+      return;
+    }
     if (running.value) {
       return;
     }
@@ -688,6 +700,9 @@ export function createTutorialManager(
   };
 
   const skip = () => {
+    if (isMinimalEmbed.value) {
+      return;
+    }
     finish();
     skipPromptVisible.value = true;
   };
@@ -753,6 +768,10 @@ export function createTutorialManager(
       // tour over the join. We don't record completion, so the tour still
       // auto-starts on a later visit that isn't a session link.
       if (joinedViaSessionLink) {
+        return;
+      }
+      // A partner-site embed has none of the chrome the tour points at.
+      if (isMinimalEmbed.value) {
         return;
       }
       if (!readerVisible.value) {

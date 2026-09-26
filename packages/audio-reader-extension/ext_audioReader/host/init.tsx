@@ -760,7 +760,8 @@ function isChapterListenable(
 
 /**
  * Hidden from the quick toolbar on mobile since the mobile nav bar
- * (BibleReaderToolbar) is its home there.
+ * (BibleReaderToolbar) is its home there. A partner-site embed uses that
+ * same nav, so the quick toolbar stays empty there too.
  *
  * `canSpeakLanguage` is injected rather than read off a manager so this stays
  * a pure function the tests can call directly.
@@ -769,6 +770,9 @@ export function isAudioPlayToolVisible(
   ctx: QuickToolContext,
   canSpeakLanguage: (lang: string | null) => boolean
 ): boolean {
+  if (ctx.surface === "quick-toolbar" && ctx.app?.isMinimalEmbed?.value) {
+    return false;
+  }
   return (
     !ctx.playlists.playing.value &&
     isChapterListenable(ctx.readingState, canSpeakLanguage) &&
@@ -858,6 +862,7 @@ export default function initAudioReaderExtension() {
 
       yield context.tools.registerQuickTool({
         id: "ext_audioReader-play",
+        showInEmbedded: true,
         priority: 250,
         title: {
           key: "toolbarTitle",

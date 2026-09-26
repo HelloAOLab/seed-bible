@@ -73,6 +73,22 @@ describe("isAudioPlayToolVisible (#1607)", () => {
     expect(isAudioPlayToolVisible(ctx, NO_VOICES)).toBe(true);
   });
 
+  it("stays on the floating nav in an embed and off the quick toolbar", () => {
+    const embedded = {
+      app: { isMinimalEmbed: signal(true) },
+    };
+    const quickToolbar = {
+      ...createContext({ surface: "quick-toolbar", isMobile: false }),
+      ...embedded,
+    };
+    const floatingNav = {
+      ...createContext({ surface: "mobile-navigation-bar", isMobile: true }),
+      ...embedded,
+    };
+    expect(isAudioPlayToolVisible(quickToolbar, NO_VOICES)).toBe(false);
+    expect(isAudioPlayToolVisible(floatingNav, NO_VOICES)).toBe(true);
+  });
+
   it("is hidden when the chapter has no audio and the browser cannot speak", () => {
     const ctx = createContext({
       surface: "mobile-navigation-bar",

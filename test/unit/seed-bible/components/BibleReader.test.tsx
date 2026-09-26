@@ -3414,7 +3414,7 @@ describe("BibleReader — compact embed header", () => {
     });
   }
 
-  it("shows only the translation chip, open-in-new-tab, settings, and close", () => {
+  it("shows only the translation chip, open-in-new-tab, and settings", () => {
     renderEmbedHeader(createEmbedState());
 
     expect(
@@ -3430,7 +3430,7 @@ describe("BibleReader — compact embed header", () => {
     ).not.toBeNull();
     expect(
       container.querySelector(".sb-bible-reader-mobile-header-close")
-    ).not.toBeNull();
+    ).toBeNull();
 
     expect(container.querySelector(".sb-bible-reader-save-button")).toBeNull();
     expect(
@@ -3461,22 +3461,6 @@ describe("BibleReader — compact embed header", () => {
     expect(openedUrl.pathname).toBe("/en/BSB/genesis/1");
     expect(openedUrl.searchParams.get("verse")).toBe("2");
     expect(openSpy.mock.calls[0]![1]).toBe("_blank");
-    openSpy.mockRestore();
-  });
-
-  it("does nothing when the close button is clicked", () => {
-    const state = createEmbedState();
-    const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
-    renderEmbedHeader(state);
-
-    const close = container.querySelector<HTMLButtonElement>(
-      ".sb-bible-reader-mobile-header-close"
-    );
-    expect(close).not.toBeNull();
-    act(() => close!.click());
-
-    expect(openSpy).not.toHaveBeenCalled();
-    expect(state.sidebar.openSettings).not.toHaveBeenCalled();
     openSpy.mockRestore();
   });
 });

@@ -2035,3 +2035,121 @@ describe("createBibleToolsManager", () => {
     });
   });
 });
+
+describe("showInEmbedded", () => {
+  function embeddedApp(embedded: boolean) {
+    return { isMinimalEmbed: signal(embedded) } as any;
+  }
+
+  it("hides reader toolbar tools in an embed unless they opt in", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const embedded = signal(false);
+    const context = createContext({
+      app: { isMinimalEmbed: embedded } as any,
+    });
+
+    const resolved = manager.getToolbarTools(context);
+    const visible = (id: string) =>
+      resolved.find((tool) => tool.id === id)?.visible.value;
+
+    expect(visible("open-search")).toBe(true);
+    expect(visible("previous-chapter")).toBe(true);
+    expect(visible("next-chapter")).toBe(true);
+    expect(visible("open-selector")).toBe(true);
+
+    embedded.value = true;
+
+    expect(visible("open-search")).toBe(false);
+    expect(visible("previous-chapter")).toBe(true);
+    expect(visible("next-chapter")).toBe(true);
+    expect(visible("open-selector")).toBe(true);
+  });
+
+  it("keeps only copy and share on the verse toolbar in an embed", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const context = createContext({ app: embeddedApp(true) });
+    context.readingState.selectedVerses.value = [
+      { verse: { number: 1 } },
+    ] as any;
+
+    const tools = manager.getVerseToolbarTools(context);
+    const visible = (id: string) =>
+      tools.find((tool) => tool.id === id)?.visible.value;
+
+    expect(visible("copy-verse")).toBe(true);
+    expect(visible("share-verse")).toBe(true);
+    expect(visible("clear-selection")).toBe(false);
+    expect(visible("annotate-verse")).toBe(false);
+    expect(visible("ask-ai")).toBe(false);
+  });
+
+  it("lets a registered tool opt in, and hides one that does not", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const context = createContext({ app: embeddedApp(true) });
+
+    manager.registerVerseToolbarTool({
+      id: "embed-opt-in",
+      priority: 1,
+      title: "Shown",
+      icon: () => null as any,
+      showInEmbedded: true,
+      onSelect: vi.fn(),
+    });
+    manager.registerVerseToolbarTool({
+      id: "embed-opt-out",
+      priority: 2,
+      title: "Hidden",
+      icon: () => null as any,
+      onSelect: vi.fn(),
+    });
+
+    const tools = manager.getVerseToolbarTools(context);
+    expect(
+      tools.find((tool) => tool.id === "embed-opt-in")?.visible.value
+    ).toBe(true);
+    expect(
+      tools.find((tool) => tool.id === "embed-opt-out")?.visible.value
+    ).toBe(false);
+  });
+
+  it("hides quick toolbar tools in an embed", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const context = createQuickToolContext();
+    context.app = embeddedApp(true);
+    context.modals = {} as any;
+
+    const share = manager
+      .getQuickTools(context)
+      .find((tool) => tool.id === "share");
+
+    expect(share?.visible.value).toBe(false);
+  });
+
+  it("hides below-reader tools in an embed", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const context = {
+      ...createContext({ app: embeddedApp(true) }),
+      currentSlot: {} as any,
+    };
+
+    const poweredBy = manager
+      .getBelowReaderTools(context)
+      .find((tool) => tool.id === "powered-by");
+
+    expect(poweredBy?.visible.value).toBe(false);
+  });
+
+  it("leaves below-reader tools available outside an embed", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const context = {
+      ...createContext({ app: embeddedApp(false) }),
+      currentSlot: {} as any,
+    };
+
+    const poweredBy = manager
+      .getBelowReaderTools(context)
+      .find((tool) => tool.id === "powered-by");
+
+    expect(poweredBy?.visible.value).toBe(true);
+  });
+});

@@ -1135,7 +1135,8 @@ export function createSeedBibleState(
     isMobile,
     panes,
     sidebar,
-    openedViaContentLink
+    openedViaContentLink,
+    isMinimalEmbed
   );
 
   // Once the tutorial has been resolved (seen, skipped, declined, or opted
@@ -1152,6 +1153,14 @@ export function createSeedBibleState(
   let installOfferChecked = false;
   effect(() => {
     if (installOfferChecked) {
+      return;
+    }
+    // A visitor inside someone else's iframe should not be asked to install
+    // our app. Resolve the offer so the offline-download prompt can take its
+    // own turn and refuse for the same reason.
+    if (isMinimalEmbed.value) {
+      installOfferChecked = true;
+      installOfferResolved.value = true;
       return;
     }
     if (openedViaContentLink) {
@@ -1799,6 +1808,10 @@ export function createSeedBibleState(
   let downloadOfferChecked = false;
   effect(() => {
     if (downloadOfferChecked) {
+      return;
+    }
+    if (isMinimalEmbed.value) {
+      downloadOfferChecked = true;
       return;
     }
     if (openedViaContentLink) {

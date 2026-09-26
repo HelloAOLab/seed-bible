@@ -803,6 +803,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
             openChat={state.sidebar.openChatPanel}
             chats={state.chats}
             features={state.features}
+            app={state.app}
           />
         )}
       </div>

@@ -961,17 +961,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return "bible";
   });
 
-  const previousChapterTool = useComputed(
-    () => tools.value.find((tool) => tool.id === "previous-chapter") ?? null
-  );
-  const nextChapterTool = useComputed(
-    () => tools.value.find((tool) => tool.id === "next-chapter") ?? null
-  );
-  const openSelectorTool = useComputed(
-    () => tools.value.find((tool) => tool.id === "open-selector") ?? null
-  );
+  const previousChapterTool = useComputed(() => {
+    const tool =
+      tools.value.find((entry) => entry.id === "previous-chapter") ?? null;
+    return tool?.visible.value ? tool : null;
+  });
+  const nextChapterTool = useComputed(() => {
+    const tool =
+      tools.value.find((entry) => entry.id === "next-chapter") ?? null;
+    return tool?.visible.value ? tool : null;
+  });
+  const openSelectorTool = useComputed(() => {
+    const tool =
+      tools.value.find((entry) => entry.id === "open-selector") ?? null;
+    return tool?.visible.value ? tool : null;
+  });
   // The audio-reader extension's play/pause control, surfaced here instead
-  // of the quick toolbar on mobile.
+  // of the quick toolbar on mobile. `app` is forwarded so `showInEmbedded`
+  // can hide the control in a partner-site embed.
   const audioPlayTool = useComputed(
     () =>
       toolsManager
@@ -981,6 +988,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           annotations: props.state.annotations,
           features: props.state.features,
           surface: "mobile-navigation-bar",
+          app: props.state.app,
         })
         .find((tool) => tool.id === "ext_audioReader-play") ?? null
   );
@@ -2833,33 +2841,38 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   ? t("edit-save", { defaultValue: "Edit save" })
                   : t("save-verses", { defaultValue: "Save" });
 
-                const highlightCard = selectionUI.value.showHighlightColors ? (
-                  <div key="highlight" className="sb-verse-toolbar-action-item">
-                    <button
-                      type="button"
-                      className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
-                      onClick={() => {
-                        isHighlightPickerOpen.value = true;
-                        showHighlightColorSwipeHint.value = true;
-                      }}
-                      aria-label={t("highlight-selection", {
-                        defaultValue: "Highlight selection",
-                      })}
-                      title={highlightLabel}
+                const highlightCard =
+                  !isMinimalEmbed.value &&
+                  selectionUI.value.showHighlightColors ? (
+                    <div
+                      key="highlight"
+                      className="sb-verse-toolbar-action-item"
                     >
-                      <span className="sb-verse-toolbar-action-icon">
-                        <span className="material-symbols-outlined">
-                          format_ink_highlighter
+                      <button
+                        type="button"
+                        className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
+                        onClick={() => {
+                          isHighlightPickerOpen.value = true;
+                          showHighlightColorSwipeHint.value = true;
+                        }}
+                        aria-label={t("highlight-selection", {
+                          defaultValue: "Highlight selection",
+                        })}
+                        title={highlightLabel}
+                      >
+                        <span className="sb-verse-toolbar-action-icon">
+                          <span className="material-symbols-outlined">
+                            format_ink_highlighter
+                          </span>
                         </span>
-                      </span>
-                      <span className="sb-verse-toolbar-action-label">
-                        {highlightLabel}
-                      </span>
-                    </button>
-                  </div>
-                ) : null;
+                        <span className="sb-verse-toolbar-action-label">
+                          {highlightLabel}
+                        </span>
+                      </button>
+                    </div>
+                  ) : null;
 
-                const saveCard = (
+                const saveCard = isMinimalEmbed.value ? null : (
                   <div key="save" className="sb-verse-toolbar-action-item">
                     <button
                       type="button"
