@@ -1,3 +1,4 @@
+import { effect } from "@preact/signals";
 import {
   createDiscoverManager,
   type DiscoverContext,
@@ -294,5 +295,118 @@ describe("createDiscoverManager", () => {
         expect(manager.resolveActualView(true)).toBe(value);
       }
     });
+  });
+});
+
+describe("unregistering providers", () => {
+  it("returns a function that removes the provider again", async () => {
+    const manager = createDiscoverManager();
+    const unregister = manager.registerDiscoverProvider(makeProvider("p1", []));
+
+    unregister();
+
+    expect(manager.providers.value).toEqual([]);
+    expect(await collectAll(manager.discover(context))).toEqual([]);
+  });
+
+  it("does not remove a newer provider that replaced it", () => {
+    // A reinstalled extension replaces its provider; the old install's cleanup
+    // running afterwards must not take the new one down with it.
+    const manager = createDiscoverManager();
+    const unregisterOld = manager.registerDiscoverProvider(
+      makeProvider("p1", [])
+    );
+    const replacement = makeProvider("p1", []);
+    manager.registerDiscoverProvider(replacement);
+
+    unregisterOld();
+
+    expect(manager.providers.value).toEqual([replacement]);
+  });
+
+  it("publishes the provider list as it changes", () => {
+    const manager = createDiscoverManager();
+    const seen: number[] = [];
+    const stop = effect(() => {
+      seen.push(manager.providers.value.length);
+    });
+
+    const unregister = manager.registerDiscoverProvider(makeProvider("p1", []));
+    unregister();
+    stop();
+
+    // Initial read, then one change each way — which is what lets the reader
+    // rediscover the chapter when an extension is installed or removed.
+    expect(seen).toEqual([0, 1, 0]);
+  });
+});
+
+describe("registerContentType", () => {
+  it("starts with no types", () => {
+    expect(createDiscoverManager().contentTypes.value).toEqual([]);
+  });
+
+  it("lists a registered type", () => {
+    const manager = createDiscoverManager();
+    manager.registerContentType({ id: "sermon", title: "Sermons" });
+
+    expect(manager.contentTypes.value.map((type) => type.id)).toEqual([
+      "sermon",
+    ]);
+  });
+
+  it("sorts by priority, keeping registration order for ties", () => {
+    const manager = createDiscoverManager();
+    manager.registerContentType({ id: "late", title: "Late", priority: 900 });
+    manager.registerContentType({ id: "tie-a", title: "Tie A" });
+    manager.registerContentType({ id: "early", title: "Early", priority: 10 });
+    manager.registerContentType({ id: "tie-b", title: "Tie B" });
+
+    expect(manager.contentTypes.value.map((type) => type.id)).toEqual([
+      "early",
+      "tie-a",
+      "tie-b",
+      "late",
+    ]);
+  });
+
+  it("replaces an earlier definition with the same id", () => {
+    const manager = createDiscoverManager();
+    manager.registerContentType({ id: "sermon", title: "Sermons" });
+    manager.registerContentType({
+      id: "sermon",
+      title: "Talks",
+      hiddenByDefault: true,
+    });
+
+    expect(manager.contentTypes.value).toEqual([
+      { id: "sermon", title: "Talks", hiddenByDefault: true },
+    ]);
+  });
+
+  it("returns a function that removes the type again", () => {
+    const manager = createDiscoverManager();
+    const unregister = manager.registerContentType({
+      id: "sermon",
+      title: "Sermons",
+    });
+
+    unregister();
+
+    expect(manager.contentTypes.value).toEqual([]);
+  });
+
+  it("does not remove a newer definition that replaced it", () => {
+    const manager = createDiscoverManager();
+    const unregisterOld = manager.registerContentType({
+      id: "sermon",
+      title: "Sermons",
+    });
+    const replacement = { id: "sermon", title: "Talks" };
+    manager.registerContentType(replacement);
+
+    unregisterOld();
+
+    expect(manager.contentTypes.value).toEqual([replacement]);
   });
 });

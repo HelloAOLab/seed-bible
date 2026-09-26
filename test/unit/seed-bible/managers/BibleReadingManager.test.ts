@@ -2563,6 +2563,67 @@ describe("createBibleReadingState", () => {
       expect(state.discoveredStudyNotes.value).toEqual([]);
     });
 
+    // The provider an extension would register: one result for Genesis 1.
+    const genesisOneProvider = () => ({
+      id: "late-provider",
+      title: "Late provider",
+      description: "Registered after the chapter loaded.",
+      discover: () => [
+        {
+          type: "content" as const,
+          title: "From the extension",
+          description: "desc",
+          reference: { book: "GEN", chapter: 1, verse: 1 },
+        },
+      ],
+    });
+
+    it("shows a provider registered after the chapter loaded, without navigating", async () => {
+      // An extension installed while a chapter is already open.
+      const discoverManager = createDiscoverManager();
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      expect(state.discoveredContent.value).toEqual([]);
+
+      discoverManager.registerDiscoverProvider(genesisOneProvider());
+
+      await waitFor(() => state.discoveredContent.value.length > 0);
+      expect(
+        state.discoveredContent.value.flatMap((group) =>
+          group.results.map((result) => result.title)
+        )
+      ).toEqual(["From the extension"]);
+    });
+
+    it("drops a provider's results once it is unregistered, without navigating", async () => {
+      // An extension uninstalled while its results are on screen.
+      const discoverManager = createDiscoverManager();
+      const unregister =
+        discoverManager.registerDiscoverProvider(genesisOneProvider());
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredContent.value.length > 0);
+
+      unregister();
+
+      await waitFor(() => state.discoveredContent.value.length === 0);
+      expect(state.discoveredContent.value).toEqual([]);
+    });
+
     it("discoveredContent only contains 'content' results for the current chapter", async () => {
       const discoverManager = createDiscoverManagerMock([
         [

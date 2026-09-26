@@ -1,5 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { batch, computed, signal, type Signal } from "@preact/signals";
 import {
   PANEL_PCT,
@@ -7,6 +8,7 @@ import {
 } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import type {
   BibleReadingState,
+  VisibleVerseRange,
   SelectedFootnote,
   VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -182,6 +184,7 @@ function createFixture(): ReaderFixture {
     title: signal<string>(""),
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
+    visibleVerseRange: signal<VisibleVerseRange | null>(null),
   } as BibleReadingState;
 
   const selectorState = {
@@ -251,7 +254,7 @@ function createMobileState(): SeedBibleState {
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover: createDiscoverManager(),
     playlists: {
       playing: signal(null),
     },
@@ -297,7 +300,7 @@ function createDesktopState(): SeedBibleState {
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover: createDiscoverManager(),
     playlists: {
       playing: signal(null),
     },
