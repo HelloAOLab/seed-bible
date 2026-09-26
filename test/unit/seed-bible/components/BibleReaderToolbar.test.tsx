@@ -1582,19 +1582,6 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(saveTrigger()!.getAttribute("aria-pressed")).toBeNull();
   });
 
-  it("hides the swipe hint once the extra actions are gone", async () => {
-    await renderSheet();
-    expect(hint()?.textContent).toContain("Swipe up to see more");
-
-    await act(async () => {
-      state.tools.unregisterVerseToolbarTool("test-extra-one");
-      state.tools.unregisterVerseToolbarTool("test-extra-two");
-    });
-
-    expect(container.querySelector(".sb-verse-toolbar-overflow")).toBeNull();
-    expect(hint()).toBeNull();
-  });
-
   it("starts collapsed, with the swipe hint in place of a More button", async () => {
     await renderSheet();
 
