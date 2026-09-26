@@ -2775,6 +2775,18 @@ export function createBibleReadingState(
     nextChapterNumber: number,
     options?: SelectTranslationAndChapterOptions
   ) => {
+    // Recorded before the catalog fetch so a plain network failure ("Failed
+    // to fetch") is what Reload retries. Rolled back below only when this
+    // translation does not contain the book: that miss can never succeed,
+    // and retrying it would leave the reader stuck off the chapter on screen.
+    const previousAttempt = lastLoadAttempt;
+    lastLoadAttempt = () =>
+      selectTranslationAndChapter(
+        nextTranslationIdOrUrl,
+        nextBookId,
+        nextChapterNumber,
+        options
+      );
     beginRequest();
     try {
       const nextTranslationId = await resolveTranslationInput(
@@ -2784,22 +2796,11 @@ export function createBibleReadingState(
       const books = await dataManager.getTranslationBooks(nextTranslationId);
       const selectedBook = books.books.find((book) => book.id === nextBookId);
       if (!selectedBook) {
+        lastLoadAttempt = previousAttempt;
         throw new Error(
           `Book with ID "${nextBookId}" not available for translation "${nextTranslationId}".`
         );
       }
-
-      // Record the retry only once this translation actually has the book.
-      // The position has not changed yet; recording the attempt first would
-      // make Reload keep asking for a chapter this translation cannot open,
-      // even after the connection comes back.
-      lastLoadAttempt = () =>
-        selectTranslationAndChapter(
-          nextTranslationIdOrUrl,
-          nextBookId,
-          nextChapterNumber,
-          options
-        );
 
       availableTranslations.value = toAvailableTranslations(
         dataManager.availableTranslations.value

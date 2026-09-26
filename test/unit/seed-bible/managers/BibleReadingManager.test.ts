@@ -2430,6 +2430,44 @@ describe("createBibleReadingState", () => {
     expect(state.chapterData.value?.chapter.number).toBe(1);
   });
 
+  it("retryLoad() retries a translation switch that failed because the device was offline", async () => {
+    const responses = createReadingManagerResponseMap();
+    // nivBooks is Matthew only. This catalog includes Genesis so the switch
+    // can finish once the connection is back; a book the translation does
+    // not have is the test above.
+    const nivGenesisBooks: TranslationBooks = {
+      translation: nivTranslation,
+      books: aabBooks.books.filter((book) => book.id === "GEN"),
+    };
+    responses[makeExampleUrl("/api/NIV/books.json")] =
+      createResponse(nivGenesisBooks);
+    responses[makeExampleUrl("/api/NIV/GEN/1.json")] = createResponse(
+      makeChapter(nivGenesisBooks, "GEN", 1)
+    );
+    let offline = false;
+    fetchMock.mockImplementation((url: string) =>
+      offline
+        ? Promise.reject(new TypeError("Failed to fetch"))
+        : Promise.resolve(responses[url]!)
+    );
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    offline = true;
+    await state.selectTranslationAndChapter("NIV", "GEN", 1);
+
+    expect(state.error.value).toBe("Failed to fetch");
+    expect(state.translationId.value).toBe("AAB");
+
+    offline = false;
+    await state.retryLoad();
+
+    expect(state.error.value).toBeNull();
+    expect(state.translationId.value).toBe("NIV");
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+  });
+
   it("retryLoad() repeats the initial load when that is what failed", async () => {
     const responses = createReadingManagerResponseMap();
     // A plain, already-valid translation ID resolves via its own book
