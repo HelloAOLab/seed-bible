@@ -1090,6 +1090,10 @@
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   box-shadow: 0 -8px 24px var(--sb-shadow-color);
+  /* Stay on screen even before the overflow height is measured. The handle
+     lives at the top of this box, so a note taller than the viewport can't
+     push it away. */
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px));
   /* The whole panel is a drag surface for the expand/collapse/dismiss
      gesture (see the pointer handlers on this element), not just the handle
      below. Without this, the browser can win the race against our handler
@@ -1097,7 +1101,8 @@
      which it then follows up with a `pointercancel` — the drag looks like
      it starts, then snaps back to where it began. The color-swatch strip
      opts back into horizontal panning below since it needs its own native
-     scroll. */
+     scroll. Dropped while the notes scroll (`.sb-verse-sheet-scrollable`):
+     an ancestor `none` would block that scroller. */
   touch-action: none;
 
   transition: transform 0.2s ease;
@@ -1146,11 +1151,87 @@
   visibility: hidden;
 }
 
+/* A note taller than the viewport scrolls here. The grab handle, reference,
+   and action row stay outside this element, so they remain on screen. */
+.sb-verse-toolbar-cards
+  .sb-verse-toolbar-overflow.sb-verse-toolbar-overflow-scrollable {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+/* While the notes scroll, the sheet can no longer use `touch-action: none`
+   (that would block the scroller). Put it back on the parts that still drag. */
+.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable {
+  touch-action: auto;
+}
+
+.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable
+  .sb-verse-toolbar-handle-area,
+.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable .sb-verse-toolbar-ref,
+.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable
+  .sb-verse-toolbar-cards
+  > .sb-verse-toolbar-action-item,
+.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable .sb-verse-toolbar-close {
+  touch-action: none;
+}
+
+/* A swipe that starts on Copy, Compare, Share, or another drawer action
+   moves the note. `none` on these would freeze the drawer when the buttons
+   fill the open sheet. */
+.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable
+  .sb-verse-toolbar-overflow
+  .sb-verse-toolbar-action-item {
+  touch-action: pan-y;
+}
+
 .sb-verse-toolbar-overflow-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   padding-top: 0.5rem;
+}
+
+/* The pinned row carries this gap itself. Padding on the row sits above the
+   sticky box, so the first scroll would jump the buttons up by that amount. */
+.sb-verse-toolbar-overflow-row:has(.sb-verse-toolbar-overflow-pinned) {
+  padding-top: 0;
+}
+
+/* Copy, Compare, and Share. Hidden with the rest of the drawer while it is
+   collapsed; once open, they stay under the handle while the note scrolls.
+   The top padding is inside the sticky box so the buttons don't jump when
+   the note starts moving. */
+.sb-verse-toolbar-overflow-pinned {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex: 0 0 100%;
+  align-self: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  background: var(--sb-reader-background);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: -0.5rem;
+}
+
+/* The bar is taller than the open drawer, or it would leave no room to grab
+   the note. It scrolls with the note so every button stays reachable. */
+.sb-verse-toolbar-overflow-pinned-inline {
+  position: static;
+}
+
+/* A jump to a note lands below the pinned actions instead of underneath them.
+   The scroll itself is applied in the toolbar; this covers any native scroll
+   of the same groups. */
+.sb-verse-toolbar-overflow .sb-annotation-group,
+.sb-verse-toolbar-overflow-row > .sb-verse-toolbar-action-item {
+  scroll-margin-top: var(--sb-verse-sheet-pinned-offset, 0px);
 }
 
 /* Same four-per-row sizing as the primary cards, so a revealed action is

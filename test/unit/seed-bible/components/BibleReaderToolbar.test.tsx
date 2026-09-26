@@ -1435,11 +1435,21 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   let state: SeedBibleState;
   let readingState: BibleReadingState;
   let originalScrollHeight: PropertyDescriptor | undefined;
+  let originalOffsetHeight: PropertyDescriptor | undefined;
+  // The overflow row's content height. jsdom does no layout, so tests set
+  // this and the scrollHeight mock below reports it. 120 fits on screen;
+  // individual tests raise it to stand in for a long note.
+  let overflowContentHeight = 120;
+  // Height of the Copy / Compare / Share row. 0 matches jsdom (unmeasured),
+  // which leaves the row pinned. Tests raise it for a bar that can't fit.
+  let pinnedRowHeight = 0;
 
   beforeEach(async () => {
     // Mobile viewport, so the verse toolbar renders as the bottom sheet.
     window.innerWidth = 400;
     window.innerHeight = 800;
+    overflowContentHeight = OVERFLOW_HEIGHT;
+    pinnedRowHeight = 0;
 
     originalScrollHeight = Object.getOwnPropertyDescriptor(
       HTMLElement.prototype,
@@ -1449,7 +1459,20 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       configurable: true,
       get(this: HTMLElement) {
         return this.classList.contains("sb-verse-toolbar-overflow-row")
-          ? OVERFLOW_HEIGHT
+          ? overflowContentHeight
+          : 0;
+      },
+    });
+
+    originalOffsetHeight = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetHeight"
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.classList.contains("sb-verse-toolbar-overflow-pinned")
+          ? pinnedRowHeight
           : 0;
       },
     });
@@ -1461,9 +1484,9 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       responses: createPrivateEndpointResponses(),
     });
 
-    // The default tool set renders exactly one row here (highlight, save,
-    // copy, share), so there would be nothing to drag open. Two extra tools push
-    // it past a row, which is the case the gesture exists for.
+    // The default collapsed row is highlight, save, and note. Copy, Compare,
+    // and Share live in the drawer, so two extra tools are not what makes it
+    // openable — they stand in for actions that scroll with a long note.
     for (const id of ["test-extra-one", "test-extra-two"]) {
       state.tools.registerVerseToolbarTool({
         id,
@@ -1487,6 +1510,13 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
         HTMLElement.prototype,
         "scrollHeight",
         originalScrollHeight
+      );
+    }
+    if (originalOffsetHeight) {
+      Object.defineProperty(
+        HTMLElement.prototype,
+        "offsetHeight",
+        originalOffsetHeight
       );
     }
   });
@@ -1617,6 +1647,179 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(container.querySelector(".sb-verse-toolbar-more-toggle")).toBeNull();
   });
 
+  it("keeps Copy, Compare, and Share out of the collapsed row and pins them once the drawer is open", async () => {
+    state.tools.registerVerseToolbarTool({
+      id: "compare-verses",
+      priority: 250,
+      title: "Compare",
+      icon: () => <span className="material-symbols-outlined">compare</span>,
+      onSelect: () => {},
+    });
+    const handle = await renderSheet();
+
+    const alwaysVisible = () =>
+      [
+        ...container.querySelectorAll(
+          ".sb-verse-toolbar-cards > .sb-verse-toolbar-action-item .sb-verse-toolbar-action-label"
+        ),
+      ].map((el) => el.textContent);
+
+    expect(alwaysVisible()).not.toContain("Copy");
+    expect(alwaysVisible()).not.toContain("Compare");
+    expect(alwaysVisible()).not.toContain("Share");
+
+    const pinnedLabels = () =>
+      [
+        ...container.querySelectorAll(
+          ".sb-verse-toolbar-overflow-pinned .sb-verse-toolbar-action-label"
+        ),
+      ].map((el) => el.textContent);
+
+    // In the drawer, but clipped shut until it opens.
+    expect(pinnedLabels()).toEqual(["Copy", "Compare", "Share"]);
+    expect(overflow()?.className).toContain("sb-verse-toolbar-overflow-closed");
+
+    await press(handle, 500);
+    await release(handle, 500);
+
+    expect(overflow()?.className).not.toContain(
+      "sb-verse-toolbar-overflow-closed"
+    );
+    expect(pinnedLabels()).toEqual(["Copy", "Compare", "Share"]);
+    expect(alwaysVisible()).not.toContain("Copy");
+  });
+
+  it("pins only Copy and Share when Compare is not installed", async () => {
+    await renderSheet();
+
+    const pinnedLabels = [
+      ...container.querySelectorAll(
+        ".sb-verse-toolbar-overflow-pinned .sb-verse-toolbar-action-label"
+      ),
+    ].map((el) => el.textContent);
+
+    expect(pinnedLabels).toEqual(["Copy", "Share"]);
+  });
+
+  it("keeps Copy, Compare, and Share pinned when the note still has room below them", async () => {
+    overflowContentHeight = 2400;
+    pinnedRowHeight = 80;
+    const handle = await renderSheet();
+
+    await press(handle, 400);
+    await release(handle, 400);
+
+    expect(
+      container.querySelector(".sb-verse-toolbar-overflow-pinned")?.className
+    ).not.toContain("sb-verse-toolbar-overflow-pinned-inline");
+    expect(
+      overflow()?.style.getPropertyValue("--sb-verse-sheet-pinned-offset")
+    ).toBe("80px");
+  });
+
+  it("scrolls Copy, Compare, and Share when they are taller than the open drawer", async () => {
+    overflowContentHeight = 2400;
+    pinnedRowHeight = window.innerHeight;
+    const handle = await renderSheet();
+
+    await press(handle, 400);
+    await release(handle, 400);
+
+    expect(
+      container.querySelector(".sb-verse-toolbar-overflow-pinned")?.className
+    ).toContain("sb-verse-toolbar-overflow-pinned-inline");
+    // A jump to a note must not clear a bar that is no longer covering the top.
+    expect(
+      overflow()?.style.getPropertyValue("--sb-verse-sheet-pinned-offset")
+    ).toBe("0px");
+  });
+
+  it("scrolls the pinned actions when they would leave no room to grab the note", async () => {
+    overflowContentHeight = 2400;
+    // The open drawer is the viewport minus the unmeasured chrome (200) and
+    // the 8px gap above the sheet. This bar fits in that cap but leaves less
+    // than a 48px grab below it.
+    const maxReveal = window.innerHeight - 200 - 8;
+    pinnedRowHeight = maxReveal - 47;
+    const handle = await renderSheet();
+
+    await press(handle, 400);
+    await release(handle, 400);
+
+    expect(
+      container.querySelector(".sb-verse-toolbar-overflow-pinned")?.className
+    ).toContain("sb-verse-toolbar-overflow-pinned-inline");
+  });
+
+  it("opens a drawer shorter than the snap distance only when the drag reaches its end", async () => {
+    overflowContentHeight = 40;
+    const handle = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 500 - 39);
+    await release(handle, 500 - 39);
+
+    expect(overflow()?.style.height).toBe("0px");
+
+    await press(handle, 500);
+    await moveTo(handle, 500 - 40);
+    await release(handle, 500 - 40);
+
+    expect(overflow()?.style.height).toBe("40px");
+  });
+
+  it("returns the note to the top when the drawer closes or the verse changes", async () => {
+    const handle = await renderSheet();
+
+    await press(handle, 500);
+    await release(handle, 500);
+
+    const scroller = overflow()!;
+    let scrollTop = 0;
+    Object.defineProperty(scroller, "scrollTop", {
+      configurable: true,
+      get: () => scrollTop,
+      set: (value: number) => {
+        scrollTop = value;
+      },
+    });
+    scrollTop = 180;
+
+    await press(handle, 500);
+    await release(handle, 500);
+
+    expect(scrollTop).toBe(0);
+
+    await press(handle, 500);
+    await release(handle, 500);
+    scrollTop = 180;
+
+    const chapter = readingState.chapterData.value!;
+    const secondVerse = chapter.chapter.content.filter(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    )[1];
+    if (!secondVerse) throw new Error("The chapter has no second verse.");
+
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: secondVerse,
+          translationId: chapter.translation.id,
+        },
+        12,
+        12
+      );
+    });
+
+    expect(scrollTop).toBe(0);
+    expect(overflow()?.style.height).not.toBe("0px");
+  });
+
   it("expands the sheet when the swipe-up hint is tapped", async () => {
     await renderSheet();
     const hintEl = hint()!;
@@ -1660,7 +1863,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(overflow()?.style.height).toBe("40px");
     expect(sheet()?.className).toContain("sb-verse-sheet-dragging");
 
-    // Past halfway, so releasing settles it fully open.
+    // Past the fixed snap distance, so releasing settles it fully open.
     await moveTo(panel, 400);
     await release(panel, 400);
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
@@ -1729,12 +1932,12 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(overflow()?.style.height).toBe("20px");
   });
 
-  it("settles open when released past halfway", async () => {
+  it("settles open when released after a short fixed drag", async () => {
     const handle = await renderSheet();
 
     await press(handle, 500);
-    await moveTo(handle, 500 - OVERFLOW_HEIGHT / 2 - 5);
-    await release(handle, 500 - OVERFLOW_HEIGHT / 2 - 5);
+    await moveTo(handle, 500 - 50);
+    await release(handle, 500 - 50);
 
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
     expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
@@ -1742,12 +1945,12 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(hint()).toBeNull();
   });
 
-  it("falls back closed when released short of halfway", async () => {
+  it("falls back closed when released short of that drag", async () => {
     const handle = await renderSheet();
 
     await press(handle, 500);
-    await moveTo(handle, 480);
-    await release(handle, 480);
+    await moveTo(handle, 500 - 49);
+    await release(handle, 500 - 49);
 
     expect(overflow()?.style.height).toBe("0px");
     expect(hint()).not.toBeNull();
@@ -1898,6 +2101,87 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     });
 
     expect(overflow()?.style.height).toBe("0px");
+  });
+
+  it("opens a tall note after the same short drag, and keeps the drawer on screen", async () => {
+    overflowContentHeight = 2400;
+    const handle = await renderSheet();
+
+    await press(handle, 700);
+    await moveTo(handle, 700 - 50);
+
+    // The drawer grows with the finger, but only up to the viewport — not the
+    // full note.
+    expect(overflow()?.style.height).toBe("50px");
+
+    await moveTo(handle, 700 - 5000);
+    const draggedOpen = parseFloat(overflow()!.style.height);
+    expect(draggedOpen).toBeGreaterThan(50);
+    expect(draggedOpen).toBeLessThan(overflowContentHeight);
+    expect(draggedOpen).toBeLessThanOrEqual(window.innerHeight);
+    // Scrolling waits until the gesture settles, so the drag still owns the finger.
+    expect(overflow()?.className).not.toContain(
+      "sb-verse-toolbar-overflow-scrollable"
+    );
+
+    await release(handle, 700 - 5000);
+
+    const settled = parseFloat(overflow()!.style.height);
+    expect(settled).toBeGreaterThan(50);
+    expect(settled).toBeLessThan(overflowContentHeight);
+    expect(settled).toBeLessThanOrEqual(window.innerHeight);
+    expect(overflow()?.className).toContain(
+      "sb-verse-toolbar-overflow-scrollable"
+    );
+    expect(sheet()?.className).toContain("sb-verse-sheet-scrollable");
+    // The handle stays outside the scrolling region.
+    expect(overflow()!.contains(handle)).toBe(false);
+  });
+
+  it("does not open a tall note when the drag stops short of the fixed distance", async () => {
+    overflowContentHeight = 2400;
+    const handle = await renderSheet();
+
+    await press(handle, 700);
+    await moveTo(handle, 700 - 49);
+    await release(handle, 700 - 49);
+
+    expect(overflow()?.style.height).toBe("0px");
+  });
+
+  it("closes a tall note after the same short downward drag", async () => {
+    overflowContentHeight = 2400;
+    const handle = await renderSheet();
+
+    await press(handle, 400);
+    await release(handle, 400);
+
+    const openHeight = parseFloat(overflow()!.style.height);
+    expect(openHeight).toBeGreaterThan(50);
+    expect(openHeight).toBeLessThan(overflowContentHeight);
+
+    await press(handle, 400);
+    await moveTo(handle, 400 + 50);
+    await release(handle, 400 + 50);
+
+    expect(overflow()?.style.height).toBe("0px");
+  });
+
+  it("lets a tall note scroll instead of dragging the sheet", async () => {
+    overflowContentHeight = 2400;
+    const handle = await renderSheet();
+
+    await press(handle, 400);
+    await release(handle, 400);
+
+    const openHeight = overflow()!.style.height;
+    const notes = overflow()!;
+
+    await press(notes, 400);
+    await moveTo(notes, 250);
+
+    expect(overflow()?.style.height).toBe(openHeight);
+    expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
   });
 });
 
@@ -2073,6 +2357,99 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     await vi.waitFor(() => {
       expect(annotationItems()[0]?.textContent).toContain("Note");
     });
+  });
+
+  it("opens a verse marker's note below the pinned actions instead of underneath them", async () => {
+    const { readingState, chapter, firstVerse } = getFirstVerse();
+    const verses = chapter.chapter.content.filter(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    );
+    const secondVerse = verses[1];
+    if (!secondVerse) throw new Error("The chapter has no second verse.");
+
+    await mockAnnotationsForChapter([
+      {
+        id: "early-note",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: { type: "comment", html: "<p>Earlier</p>" },
+      },
+      {
+        id: "target-note",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: secondVerse.number,
+        data: { type: "comment", html: "<p>Target</p>" },
+      },
+    ]);
+    await renderSheet();
+
+    const scroller = overflow()!;
+    let scrollTop = 0;
+    Object.defineProperty(scroller, "scrollTop", {
+      configurable: true,
+      get: () => scrollTop,
+      set: (value: number) => {
+        scrollTop = value;
+      },
+    });
+    const rect = (top: number): DOMRect =>
+      ({
+        top,
+        left: 0,
+        right: 0,
+        bottom: top,
+        width: 0,
+        height: 0,
+        x: 0,
+        y: top,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    scroller.getBoundingClientRect = () => rect(100);
+
+    const pinned = container.querySelector<HTMLElement>(
+      ".sb-verse-toolbar-overflow-pinned"
+    );
+    if (!pinned) throw new Error("The pinned actions did not render.");
+    Object.defineProperty(pinned, "offsetHeight", {
+      configurable: true,
+      get: () => 80,
+    });
+
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: secondVerse,
+          translationId: chapter.translation.id,
+        },
+        12,
+        12
+      );
+      readingState.pendingAnnotationScrollVerse.value = secondVerse.number;
+    });
+
+    const group = document.getElementById(
+      "sb-verse-toolbar-annotation-group-target-note"
+    );
+    if (!group) throw new Error("The target note did not render.");
+    // 200px below the scrollport: the raw position would tuck the top under
+    // the 80px pinned row. The open scroll has to stop short of that.
+    group.getBoundingClientRect = () => rect(300);
+
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+    });
+
+    expect(scrollTop).toBe(120);
+    expect(overflow()?.style.height).not.toBe("0px");
   });
 
   it("makes the sheet openable from an annotation alone, even with the default tool cards fitting in one row", async () => {
