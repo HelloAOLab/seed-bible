@@ -100,7 +100,6 @@ function createMockState(options: { isMobile?: boolean } = {}): SeedBibleState {
     app: {
       openVerseReference: vi.fn().mockResolvedValue(undefined),
       isMobile: signal(options.isMobile ?? false),
-      selectedTab: signal(null),
     },
     chats: {
       composerDraft: signal(""),

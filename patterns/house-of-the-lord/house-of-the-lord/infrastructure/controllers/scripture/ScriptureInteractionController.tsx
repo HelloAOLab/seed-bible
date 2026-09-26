@@ -1,33 +1,62 @@
-// // import type { TabernacleService } from "../../../application/services/TabernacleService";
-// import type { PieceKey } from "tabernacle.domain.models.piece";
-// import type { VerseMenuClickHandlerPort } from "tabernacle.application.ports.in.scriptureInteraction";
+import type { ReadingStatePort } from "../../../application/ports/in/readingState";
+import type { ScriptureInteractionPort } from "../../../application/ports/in/scriptureInteraction";
+import { ToExperienceKey, ToPieceKeyOf } from "../../../domain/functions/keys";
+import type { ExperienceKey } from "../../../domain/models/experience";
 
-// interface ControllerParams {
-//   verseMenuClickHandlerPort: VerseMenuClickHandlerPort;
-//   // tabernacleService: TabernacleService;
-//   // navigate: (bookId: string, chapter: number) => void;
-// }
+interface ControllerParams {
+  scriptureInteractionPort: ScriptureInteractionPort;
+  readingStatePort: ReadingStatePort;
+}
 
-// export class ScriptureInteractionController {
-//   #verseMenuClickHandlerPort: ControllerParams["verseMenuClickHandlerPort"];
-//   // #tabernacleService: TabernacleService;
-//   // #navigate: (bookId: string, chapter: number) => void;
+export class ScriptureInteractionController {
+  #scriptureInteractionPort: ControllerParams["scriptureInteractionPort"];
+  #readingStatePort: ControllerParams["readingStatePort"];
 
-//   constructor({
-//     // tabernacleService,
-//     // navigate,
-//     verseMenuClickHandlerPort,
-//   }: ControllerParams) {
-//     // this.#tabernacleService = tabernacleService;
-//     // this.#navigate = navigate;
+  constructor({
+    scriptureInteractionPort,
+    readingStatePort,
+  }: ControllerParams) {
+    this.#scriptureInteractionPort = scriptureInteractionPort;
+    this.#readingStatePort = readingStatePort;
+  }
 
-//     this.#verseMenuClickHandlerPort = verseMenuClickHandlerPort;
-//   }
+  handlePieceFocusRequest(experience: ExperienceKey, key: string) {
+    const experienceKey = ToExperienceKey(experience);
 
-//   handleVerseMenuItemClick(key: PieceKey): void {
-//     // this.#tabernacleService.handleGridClick();
-//     // this.#navigate(bookId, chapter);
+    if (!experienceKey) {
+      console.warn(
+        "house-of-the-lord ScriptureInteractionController: experienceKey is not a valid experience key",
+        { experience }
+      );
+      return;
+    }
 
-//     this.#verseMenuClickHandlerPort.handleVerseMenuItemClick(key);
-//   }
-// }
+    // Validated against the requested experience, not the one on stage: the
+    // service may still have to swap to it before the piece can be focused.
+    const pieceKey = ToPieceKeyOf(experienceKey, key);
+    if (!pieceKey) {
+      console.warn(
+        "house-of-the-lord ScriptureInteractionController: key is not a piece of the requested experience",
+        { key }
+      );
+      return;
+    }
+
+    void this.#scriptureInteractionPort.handlePieceFocusRequest(
+      experienceKey,
+      pieceKey
+    );
+  }
+
+  handleReadingChanged(bookId: string, chapterNumber: number) {
+    if (!bookId || !chapterNumber) {
+      console.warn(
+        "house-of-the-lord ScriptureInteractionController: reading changed without bookId or chapterNumber",
+        { bookId, chapterNumber }
+      );
+      return;
+    }
+
+    this.#readingStatePort.setCurrentReading(bookId, chapterNumber);
+  }
+}

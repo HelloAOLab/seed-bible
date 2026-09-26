@@ -3,6 +3,7 @@ import {
   MOBILE_BREAKPOINT,
   type SeedBibleState,
 } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type {
   Translation,
@@ -218,6 +219,9 @@ function createMockSharedSession(id: string) {
       bookId: signal<string | null>(null),
       chapterNumber: signal<number | null>(null),
       chapterData: signal(null),
+      // TabsManager stamps this onto the history entry so Back/Forward can
+      // return the reader to where they were.
+      scrollPosition: signal(0),
       selectedVerses: signal([]),
       translationBooks: signal(null),
       selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),
@@ -641,6 +645,11 @@ describe("createSeedBibleState", () => {
       connectionId: "guest-connection",
       isSelf: true,
     };
+    const otherGuestConnectedUser = {
+      userId: "guest-user-2",
+      connectionId: "guest-connection-2",
+      isSelf: false,
+    };
 
     function createMockHostedSession(id: string) {
       const session = createMockSharedSession(id);
@@ -677,17 +686,23 @@ describe("createSeedBibleState", () => {
         (tab) => tab.sharedSession === session
       )!.id;
 
+      // A real drop clears every entry, our own included — see
+      // `rebuildRemoteClientsSubscription` in SessionsManager.
       session.isSynced.value = false;
-      session.connectedUsers.value = [selfConnectedUser];
+      session.connectedUsers.value = [];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
 
       vi.advanceTimersByTime(20_000);
 
       expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
       expect(originalDispose).not.toHaveBeenCalled();
-      expect(state.app.currentToast.value).toBeNull();
     });
 
-    it("shows a reconnecting toast and closes the tab after the grace period once synced and the host is still gone", async () => {
+    it("shows a host-disconnected toast and closes the tab after the grace period once synced and the host is still gone", async () => {
       const state = await createStateWithTwoTabs();
       const { session, originalDispose } = await joinAsHostedSession(
         state,
@@ -700,7 +715,7 @@ describe("createSeedBibleState", () => {
       session.connectedUsers.value = [selfConnectedUser];
 
       expect(state.app.currentToast.value?.message).toBe(
-        "Reconnecting to the session…"
+        "The host disconnected from the session"
       );
       expect(originalDispose).not.toHaveBeenCalled();
 
@@ -730,7 +745,7 @@ describe("createSeedBibleState", () => {
 
       session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
       expect(state.app.currentToast.value?.message).toBe(
-        "Reconnected to the session"
+        "The host reconnected to the session"
       );
 
       vi.advanceTimersByTime(20_000);
@@ -783,7 +798,7 @@ describe("createSeedBibleState", () => {
       // and arms the timer.
       vi.advanceTimersByTime(1);
       expect(state.app.currentToast.value?.message).toBe(
-        "Reconnecting to the session…"
+        "The host disconnected from the session"
       );
 
       vi.advanceTimersByTime(30_000);
@@ -816,6 +831,250 @@ describe("createSeedBibleState", () => {
       expect(originalDispose).not.toHaveBeenCalled();
       expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
       expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("shows a host-disconnected toast when only the host leaves and other guests remain", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-host-only"
+      );
+
+      session.connectedUsers.value = [
+        selfConnectedUser,
+        hostConnectedUser,
+        otherGuestConnectedUser,
+      ];
+      session.connectedUsers.value = [
+        selfConnectedUser,
+        otherGuestConnectedUser,
+      ];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host disconnected from the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+    });
+
+    it("blames the host, not our own connection, when the other guest leaves first and the host follows", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-all-others-gone"
+      );
+
+      session.connectedUsers.value = [
+        selfConnectedUser,
+        hostConnectedUser,
+        otherGuestConnectedUser,
+      ];
+
+      // The other guest goes first — nothing to announce, the host is here.
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      expect(state.app.currentToast.value).toBeNull();
+
+      // Then the host goes, leaving us alone. We can still see ourselves, so
+      // our own connection is demonstrably fine and the host is who left.
+      session.connectedUsers.value = [selfConnectedUser];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host disconnected from the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+    });
+
+    it("shows a you-rejoined toast when other users reappear after our own connection dropped", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-we-reconnected"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.connectedUsers.value = [
+        selfConnectedUser,
+        hostConnectedUser,
+        otherGuestConnectedUser,
+      ];
+
+      // A real drop takes the whole list with it, our own entry included.
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+
+      session.isSynced.value = true;
+      session.connectedUsers.value = [
+        selfConnectedUser,
+        hostConnectedUser,
+        otherGuestConnectedUser,
+      ];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+
+      vi.advanceTimersByTime(30_000);
+
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+    });
+
+    it("shows you-lost-connection then you-rejoined toasts when this client's own sync drops and recovers", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-sync-drop"
+      );
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+    });
+
+    it("does not show a you-disconnected toast on a remaining host device when another of the host's devices leaves", async () => {
+      const state = await createStateWithTwoTabs();
+      const session = createMockHostedSession("session-host-other-device");
+      const originalDispose = session.dispose;
+      mockSessionsManager.joinSession.mockResolvedValue(session);
+      await state.app.joinSharedSession("session-host-other-device");
+
+      const hostSelfConnectedUser = {
+        userId: HOST_ID,
+        connectionId: "host-connection-this-device",
+        isSelf: true,
+      };
+      const hostOtherDeviceConnectedUser = {
+        userId: HOST_ID,
+        connectionId: "host-connection-other-device",
+        isSelf: false,
+      };
+      session.connectedUsers.value = [
+        hostSelfConnectedUser,
+        hostOtherDeviceConnectedUser,
+      ];
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [hostSelfConnectedUser];
+
+      expect(state.app.currentToast.value).toBeNull();
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      session.isSynced.value = true;
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("shows you-rejoined instead of host-reconnected when the host reappears right after our own connection recovers", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-airplane-rejoin"
+      );
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+
+      // Coming back rebuilds presence from scratch, so we reappear first and
+      // the host lands a beat later.
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+    });
+
+    it("still shows the you-rejoined toast when the connection recovers during the post-resume window", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session } = await joinAsHostedSession(
+        state,
+        "session-resume-rejoin"
+      );
+
+      // We drop while the app is in the foreground, so we are told about it.
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+
+      // The phone is locked and unlocked, which opens the resume window that
+      // suppresses presence toasts.
+      document.dispatchEvent(new Event("visibilitychange"));
+
+      // The connection comes back inside that window. Having already been
+      // told we dropped, we must be told we are back.
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+    });
+
+    it("stays silent on recovery when the drop itself was never announced", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session } = await joinAsHostedSession(
+        state,
+        "session-resume-silent"
+      );
+
+      // Drop detected inside the resume window — no toast is shown.
+      document.dispatchEvent(new Event("visibilitychange"));
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      expect(state.app.currentToast.value).toBeNull();
+
+      // The window closes and the connection recovers. Nothing was ever
+      // announced, so there is nothing to take back.
+      vi.advanceTimersByTime(5000);
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("still shows a host-disconnected toast if the host is still gone after our reconnect presence settles", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-rejoin-host-still-gone"
+      );
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+
+      vi.advanceTimersByTime(2000);
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host disconnected from the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
     });
   });
 
@@ -1792,6 +2051,7 @@ describe("createSeedBibleState", () => {
         createdAt: 0,
         updatedAt: 0,
         extensionSettings: {},
+        extensionSettingDefaults: {},
       };
 
       expect(state.app.title.value).toBe("Genesis 7 - ESV | Grandma's Bible");
@@ -1831,9 +2091,80 @@ describe("createSeedBibleState", () => {
         createdAt: 0,
         updatedAt: 0,
         extensionSettings: {},
+        extensionSettingDefaults: {},
       };
 
       expect(state.app.siteName.value).toBe("Grandma's Bible");
+    });
+  });
+
+  describe("customizationLogoUrl", () => {
+    it("is null with no active customization", async () => {
+      const state = await createState();
+
+      expect(state.app.customizationLogoUrl.value).toBeNull();
+    });
+
+    it("is null when the active customization has no uploaded logo", async () => {
+      const state = await createState();
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            baseTheme: "light",
+            themes: {},
+            highlightColors: {},
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: null,
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+        extensionSettingDefaults: {},
+      };
+
+      expect(state.app.customizationLogoUrl.value).toBeNull();
+    });
+
+    it("is the active customization's logo when one is uploaded", async () => {
+      const state = await createState();
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            baseTheme: "light",
+            themes: {},
+            highlightColors: {},
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: "https://example.com/logo.png",
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+        extensionSettingDefaults: {},
+      };
+
+      expect(state.app.customizationLogoUrl.value).toBe(
+        "https://example.com/logo.png"
+      );
+
+      state.customizations.editingCustomization.value = null;
+
+      expect(state.app.customizationLogoUrl.value).toBeNull();
     });
   });
 
@@ -1860,6 +2191,7 @@ describe("createSeedBibleState", () => {
         createdAt: 0,
         updatedAt: 0,
         extensionSettings: {},
+        extensionSettingDefaults: {},
       };
 
       expect(state.theme.themeCssVariables.value).toContain(
@@ -2540,5 +2872,68 @@ describe("createSeedBibleState", () => {
         parts: ["Ver Génesis 1:1"],
       });
     });
+  });
+});
+
+/**
+ * Today is a fullscreen pane, and `PanesManager` gives fullscreen panes the
+ * whole reader area: opening one closes every other pane, while a *side* pane
+ * only replaces the existing side pane and leaves the rest alone. That second
+ * rule is what let Reading plans and Discover open underneath Today, where
+ * nothing could see them.
+ */
+describe("opening another screen while Today is up", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const paneIds = (state: SeedBibleState) =>
+    state.panes.panes.value.map((pane) => pane.id);
+
+  const openToday = async (state: SeedBibleState) => {
+    state.today.open();
+    await Promise.resolve();
+    expect(paneIds(state)).toContain(TODAY_PANE_ID);
+    expect(state.today.isOpen.value).toBe(true);
+  };
+
+  it("closes Today when a fullscreen pane opens over it", async () => {
+    // A generic pane rather than Profile: this is about Today stepping aside,
+    // and Profile carries its own `?profile=` URL binding whose imperative
+    // setter behaves differently under jsdom than at boot.
+    const state = await createState();
+    await openToday(state);
+
+    state.panes.openPane({
+      id: "test-fullscreen-pane",
+      placement: "fullscreen",
+      title: () => null,
+      component: () => null,
+    });
+    await Promise.resolve();
+
+    expect(paneIds(state)).toEqual(["test-fullscreen-pane"]);
+    expect(state.today.isOpen.value).toBe(false);
+  });
+
+  it("closes Today when a side pane opens, rather than hiding behind it", async () => {
+    const state = await createState();
+    await openToday(state);
+
+    state.panes.openPane({
+      id: "test-side-pane",
+      placement: "side",
+      title: () => null,
+      component: () => null,
+    });
+    await Promise.resolve();
+
+    expect(paneIds(state)).toEqual(["test-side-pane"]);
+    expect(state.today.isOpen.value).toBe(false);
   });
 });

@@ -2,12 +2,41 @@ import { computed, effect, signal } from "@preact/signals";
 
 export type NavigationDestination = number | string | URL;
 
+/** Fields this app stores on `history.state`. Other keys are left untouched. */
+export interface NavigationHistoryStatePatch {
+  scrollPosition?: number;
+}
+
 function toAbsoluteUrl(url: string | URL): string {
   if (typeof window === "undefined") {
     return String(url);
   }
 
   return new URL(String(url), window.location.href).toString();
+}
+
+function asHistoryStateObject(state: unknown): Record<string, unknown> {
+  if (state !== null && typeof state === "object" && !Array.isArray(state)) {
+    return { ...(state as Record<string, unknown>) };
+  }
+  return {};
+}
+
+function mergeHistoryState(
+  state: unknown,
+  patch: NavigationHistoryStatePatch
+): Record<string, unknown> {
+  return { ...asHistoryStateObject(state), ...patch };
+}
+
+function readScrollPositionFromHistoryState(
+  state: unknown
+): number | undefined {
+  const value = asHistoryStateObject(state).scrollPosition;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    return undefined;
+  }
+  return value;
 }
 
 export interface SimpleSignal<T> {
@@ -161,8 +190,19 @@ export function createNavigationManager(
         const destination = new URL(
           event.destination?.url ?? window.location.href
         );
-        if (currentUrl.peek().href !== destination.href) {
-          currentUrl.value = destination;
+        // Back/forward is left to the `popstate` listener above. This event
+        // fires *before* the browser swaps the history entry in, so
+        // `window.location` and `window.history.state` both still describe the
+        // entry being left — and the destination's own classic state is not
+        // readable from here (`destination.getState()` returns the Navigation
+        // API's state, which `pushState` never writes). Publishing the URL now
+        // would run the URL->state effects against the departing entry's
+        // scroll offset, restoring the reader one navigation behind. `popstate`
+        // fires once the entry is current, where both reads are correct.
+        if (event.navigationType !== "traverse") {
+          if (currentUrl.peek().href !== destination.href) {
+            currentUrl.value = destination;
+          }
         }
         event.intercept();
       };
@@ -208,7 +248,7 @@ export function createNavigationManager(
    * any write inside it asked to push, and replaces otherwise.
    *
    * One user action often changes two things that both mirror to the URL: for
-   * example tapping a bookmark in the mobile sidebar moves the reader (a
+   * example tapping a save in the mobile sidebar moves the reader (a
    * `replace`, since it's a tab switch) *and* dismisses the sidebar (a `push`,
    * removing `?sidebar=open`). Left unbatched those are two history writes:
    * the reader's `replace` overwrites the entry that opened the sidebar — so
@@ -261,10 +301,44 @@ export function createNavigationManager(
 
     console.log(isPush ? "Push URL:" : "Replace URL:", url);
     if (isPush) {
-      window.history.pushState(window.history.state, "", href);
+      // A push copies the current entry's state unless we zero scroll here:
+      // `stampCurrentState` just wrote the departing chapter's offset onto
+      // that entry, and the destination should start at the heading.
+      window.history.pushState(
+        mergeHistoryState(window.history.state, { scrollPosition: 0 }),
+        "",
+        href
+      );
     } else {
       window.history.replaceState(window.history.state, "", href);
     }
+  };
+
+  /**
+   * Merges `patch` into the current history entry's state without changing
+   * the URL. Used to remember the chapter's scroll offset on the entry we
+   * are about to leave, so Back can restore it. Must not go through
+   * `writeHistory` / `batchWrites`: those fold URL writes, and a stamp
+   * folded into a later push would land the departing scroll on the
+   * destination instead of the origin.
+   */
+  const stampCurrentState = (patch: NavigationHistoryStatePatch) => {
+    if (disposed || typeof window === "undefined") {
+      return;
+    }
+
+    window.history.replaceState(
+      mergeHistoryState(window.history.state, patch),
+      "",
+      window.location.href
+    );
+  };
+
+  const getCurrentScrollPosition = (): number | undefined => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+    return readScrollPositionFromHistoryState(window.history.state);
   };
 
   const push = (url: string | URL) => {
@@ -438,6 +512,28 @@ export function createNavigationManager(
     return url.toString();
   };
 
+  /**
+   * Like `linkToQuery`, but drops the current URL entirely first, keeping
+   * only the origin and the deployment root (`basePath`, or "/") — for
+   * links that should carry only the parameters passed in (e.g. a
+   * customization share link), not whatever the current page happens to
+   * have. The reading position (language, translation, book, chapter) lives
+   * in the URL *path* now, not the query string — see `ReadingUrlPath.ts` —
+   * so a link that must not leak the sharer's current reading position has
+   * to drop the path too, not just the query.
+   */
+  const linkToBareRoot = (query: Record<string, string | null>) => {
+    const url = new URL(currentUrl.value);
+    url.pathname = basePath || "/";
+    url.search = "";
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== null) {
+        url.searchParams.set(key, value);
+      }
+    }
+    return url.toString();
+  };
+
   return {
     currentUrl: computed(() => currentUrl.value),
     initialUrl,
@@ -445,12 +541,15 @@ export function createNavigationManager(
     go,
     replace,
     push,
+    stampCurrentState,
+    getCurrentScrollPosition,
     batchWrites,
     updateQueryParam,
     updateQueryParams,
     updatePathAndQueryParams,
     syncSignalsToUrl,
     linkToQuery,
+    linkToBareRoot,
     dispose,
   };
 }

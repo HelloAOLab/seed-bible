@@ -3550,7 +3550,10 @@ describe("createBibleReadingState", () => {
       await state.selectChapter("GEN", 5);
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith({ replace: false });
+      expect(listener).toHaveBeenCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("fires once with { replace: false } when selecting a book", async () => {
@@ -3564,7 +3567,10 @@ describe("createBibleReadingState", () => {
       await state.selectBook("EXO");
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith({ replace: false });
+      expect(listener).toHaveBeenCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("fires once with { replace: false } when selecting a translation", async () => {
@@ -3578,7 +3584,10 @@ describe("createBibleReadingState", () => {
       await state.selectTranslation("NIV");
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith({ replace: false });
+      expect(listener).toHaveBeenCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("fires once with { replace: false } when selecting a translation, book, and chapter", async () => {
@@ -3592,7 +3601,10 @@ describe("createBibleReadingState", () => {
       await state.selectTranslationAndChapter("NIV", "MAT", 3);
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith({ replace: false });
+      expect(listener).toHaveBeenCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("replaces rather than pushes for navigations that continue the same gesture", async () => {
@@ -3607,7 +3619,10 @@ describe("createBibleReadingState", () => {
       state.onNavigate(listener);
 
       await state.loadNextChapter();
-      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+      expect(listener).toHaveBeenLastCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
 
       await state.loadPreviousChapter();
       await state.loadNextChapter();
@@ -3630,7 +3645,10 @@ describe("createBibleReadingState", () => {
       state.onNavigate(listener);
 
       await state.loadNextChapter();
-      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+      expect(listener).toHaveBeenLastCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
 
       // Real elapsed time rather than a stubbed clock: `performance.now()` is
       // read by test infrastructure too, so mocking it globally would be a
@@ -3641,7 +3659,10 @@ describe("createBibleReadingState", () => {
 
       await state.loadNextChapter();
       expect(listener).toHaveBeenCalledTimes(2);
-      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+      expect(listener).toHaveBeenLastCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("replaces rather than pushes when the position does not actually change", async () => {
@@ -3695,7 +3716,10 @@ describe("createBibleReadingState", () => {
       await state.loadNextChapter();
 
       expect(listener).toHaveBeenCalledTimes(2);
-      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+      expect(listener).toHaveBeenLastCalledWith({
+        replace: false,
+        departingScrollPosition: 0,
+      });
     });
 
     it("corrects an out-of-range chapter from the URL with a replace, not a push", async () => {
@@ -3898,6 +3922,112 @@ describe("createBibleReadingState", () => {
       expect(state.chapterNumber.value).toBe(1);
       expect(listener).toHaveBeenCalledTimes(1);
       expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+  });
+
+  describe("scroll position on navigation", () => {
+    it("starts at the heading when next then previous returns to a chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      state.scrollPosition.value = 240;
+      await state.loadNextChapter();
+      expect(state.chapterNumber.value).toBe(2);
+      expect(state.scrollPosition.value).toBe(0);
+
+      await state.loadPreviousChapter();
+      expect(state.chapterNumber.value).toBe(1);
+      expect(state.scrollPosition.value).toBe(0);
+    });
+
+    it("starts at the heading when the selector returns to a chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      state.scrollPosition.value = 180;
+      await state.selectChapter("GEN", 5);
+      expect(state.scrollPosition.value).toBe(0);
+
+      await state.selectChapter("GEN", 1);
+      expect(state.scrollPosition.value).toBe(0);
+    });
+
+    it("restores the offset a history navigation hands it", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      state.scrollPosition.value = 240;
+      await state.selectChapter("GEN", 5);
+      expect(state.scrollPosition.value).toBe(0);
+
+      await state.selectTranslationAndChapter("AAB", "GEN", 1, {
+        scrollPosition: 240,
+      });
+
+      expect(state.chapterNumber.value).toBe(1);
+      expect(state.scrollPosition.value).toBe(240);
+    });
+
+    it("honors a stamped offset of zero instead of falling back to an earlier one", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      state.scrollPosition.value = 240;
+      await state.selectChapter("GEN", 5);
+      state.scrollPosition.value = 400;
+
+      await state.selectTranslationAndChapter("AAB", "GEN", 1, {
+        scrollPosition: 0,
+      });
+
+      expect(state.scrollPosition.value).toBe(0);
+    });
+
+    it("starts at the heading when a translation switch stays on the same chapter", async () => {
+      const responses = createReadingManagerResponseMap();
+      responses[makeExampleUrl("/api/NIV/books.json")] = createResponse({
+        ...bsbBooks,
+        translation: nivTranslation,
+      });
+      responses[makeExampleUrl("/api/NIV/GEN/1.json")] = createResponse({
+        ...makeChapter(bsbBooks, "GEN", 1),
+        translation: nivTranslation,
+        book: bsbBooks.books.find((book) => book.id === "GEN")!,
+        thisChapterLink: "/api/NIV/GEN/1.json",
+        nextChapterApiLink: "/api/NIV/GEN/2.json",
+        previousChapterApiLink: null,
+      });
+      setWebResponses(responses);
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      state.scrollPosition.value = 240;
+      await state.selectTranslationAndChapter("NIV", "GEN", 1);
+
+      expect(state.translationId.value).toBe("NIV");
+      expect(state.chapterNumber.value).toBe(1);
+      expect(state.scrollPosition.value).toBe(0);
+    });
+
+    it("lets a linked verse win over an offset a history navigation hands it", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      state.scrollPosition.value = 240;
+      await state.selectChapter("GEN", 5);
+      await state.selectTranslationAndChapter("AAB", "GEN", 1, {
+        scrollToVerse: 1,
+        scrollPosition: 240,
+      });
+
+      expect(state.chapterNumber.value).toBe(1);
+      expect(state.scrollPosition.value).toBe(0);
+      expect(state.scrollToVerse.value).toBe(1);
     });
   });
 

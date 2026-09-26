@@ -53,6 +53,7 @@ const APOLOGIST_BIBLE_ALIASES: Record<string, ApologistCanonicalBible> = {
   KJVA: "kjv",
   KJVCP: "kjv",
   NASB95: "nasb1995",
+  NASB2020: "nasb",
 };
 
 export type SeedTranslationRef = Pick<
