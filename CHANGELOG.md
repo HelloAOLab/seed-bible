@@ -4,7 +4,7 @@
 
 ### ✨ Added
 
-- Offer to switch to a downloaded translation when a chapter fails to load, if another translation in the same language is saved on the device. When more than one matches, they are listed by name (for example "A and B") and you pick one from the same searchable menu Settings uses for language.
+- Offer to switch to a downloaded translation when a chapter fails to load, if another translation in the same language is saved on the device and it contains that book and chapter. When more than one matches, you pick one from the same searchable menu Settings uses for language.
 - Save an annotation with Cmd+Enter on Mac or Ctrl+Enter on Windows and Linux while typing, and keep Enter inserting a new line.
 - Focus the annotation editor when it opens so you can start typing right away, whether you are writing a new note or editing an existing one. ([#1793](https://github.com/HelloAOLab/seed-bible/issues/1793))
 - Edit your profile from the profile screen. The pencil in the corner of the profile card — or tapping your name — opens an Edit profile screen with your name, location and description. Your email address, location and description now show on the profile screen itself. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))

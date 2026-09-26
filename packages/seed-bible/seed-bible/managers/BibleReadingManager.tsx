@@ -2775,13 +2775,6 @@ export function createBibleReadingState(
     nextChapterNumber: number,
     options?: SelectTranslationAndChapterOptions
   ) => {
-    lastLoadAttempt = () =>
-      selectTranslationAndChapter(
-        nextTranslationIdOrUrl,
-        nextBookId,
-        nextChapterNumber,
-        options
-      );
     beginRequest();
     try {
       const nextTranslationId = await resolveTranslationInput(
@@ -2795,6 +2788,18 @@ export function createBibleReadingState(
           `Book with ID "${nextBookId}" not available for translation "${nextTranslationId}".`
         );
       }
+
+      // Record the retry only once this translation actually has the book.
+      // The position has not changed yet; recording the attempt first would
+      // make Reload keep asking for a chapter this translation cannot open,
+      // even after the connection comes back.
+      lastLoadAttempt = () =>
+        selectTranslationAndChapter(
+          nextTranslationIdOrUrl,
+          nextBookId,
+          nextChapterNumber,
+          options
+        );
 
       availableTranslations.value = toAvailableTranslations(
         dataManager.availableTranslations.value

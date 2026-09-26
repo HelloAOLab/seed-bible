@@ -2406,6 +2406,30 @@ describe("createBibleReadingState", () => {
     expect(state.chapterData.value?.chapter.number).toBe(2);
   });
 
+  it("retryLoad() retries the original chapter after a switch that cannot find the book", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeExampleUrl("/api/NIV/books.json")] = createResponse(nivBooks);
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    await state.selectTranslationAndChapter("NIV", "TOB", 3);
+
+    expect(state.error.value).toContain('Book with ID "TOB"');
+    expect(state.translationId.value).toBe("AAB");
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+
+    await state.retryLoad();
+
+    expect(state.error.value).toBeNull();
+    expect(state.translationId.value).toBe("AAB");
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+    expect(state.chapterData.value?.translation.id).toBe("AAB");
+    expect(state.chapterData.value?.chapter.number).toBe(1);
+  });
+
   it("retryLoad() repeats the initial load when that is what failed", async () => {
     const responses = createReadingManagerResponseMap();
     // A plain, already-valid translation ID resolves via its own book

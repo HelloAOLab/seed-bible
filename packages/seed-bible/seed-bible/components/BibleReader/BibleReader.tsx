@@ -121,30 +121,10 @@ function ReaderSaveButton(props: ReaderChapterActionProps) {
 const SHOW_BOOKMARK_BUTTON = false;
 
 /**
- * Joins names the way the UI language writes a list ("A and B", "A, B, and C").
- * Falls back to a spaced comma list if the locale cannot format conjunctions.
- */
-function formatConjunctionList(
-  names: readonly string[],
-  locale: string
-): string {
-  if (names.length <= 1) {
-    return names[0] ?? "";
-  }
-  try {
-    return new Intl.ListFormat(locale, {
-      style: "long",
-      type: "conjunction",
-    }).format(names);
-  } catch {
-    return names.join(", ");
-  }
-}
-
-/**
  * Offers downloaded translations the reader can switch to after a chapter
- * load fails. One match is a single switch; two or more are listed by name
- * and chosen from the same searchable picker Settings uses for language.
+ * load fails. One match is a switch button; two or more are chosen from the
+ * same searchable picker Settings uses for language. The message above this
+ * stays generic. These controls are what name the translations.
  */
 function OfflineFallbackSwitch(props: {
   translations: Translation[];
@@ -182,7 +162,6 @@ function OfflineFallbackSwitch(props: {
       </label>
       <SearchableSelect
         id="sb-reader-error-offline-select"
-        buttonClassName="sb-settings-language-select"
         value={selected.id}
         options={translations.map((item) => ({
           id: item.id,
@@ -2074,6 +2053,11 @@ export function BibleReader(props: BibleReaderProps) {
   const showLoadError = (!!error.value && !loading.value) || retrying;
 
   const offlineRecords = state?.bibleData?.offline?.records.value;
+  // The signal, not `getCachedTranslationBooks`: that helper reads untracked,
+  // so a catalog that arrives after this panel is on screen would never
+  // update the offer. Downloaded copies carry their own book list too; the
+  // cache wins when both exist, because that is the catalog a switch would use.
+  const cachedTranslationBooks = state?.bibleData?.translationBooks?.value;
   const requestedTranslationLanguage =
     translation.value?.language ||
     availableTranslations.value?.translations.find(
@@ -2089,6 +2073,12 @@ export function BibleReader(props: BibleReaderProps) {
           currentTranslationLanguage: requestedTranslationLanguage,
           uiLanguage: language,
           downloaded: Array.from(offlineRecords.values()),
+          bookId: bookId.value,
+          chapterNumber: chapterNumber.value ?? 1,
+          booksFor: (id) =>
+            cachedTranslationBooks?.get(id)?.books ??
+            offlineRecords.get(id)?.books ??
+            null,
         })
       : [];
 
@@ -2175,19 +2165,15 @@ export function BibleReader(props: BibleReaderProps) {
           </p>
           {offlineFallbackTranslations.length > 0 && (
             <p className="sb-reader-error-offline">
-              {offlineFallbackTranslations.length === 1
-                ? t("chapter-unavailable-offline-switch", {
-                    names: offlineFallbackTranslations[0]!.name,
-                    name: offlineFallbackTranslations[0]!.name,
-                    defaultValue: "{{names}} is saved on this device.",
-                  })
-                : t("chapter-unavailable-offline-switch-plural", {
-                    names: formatConjunctionList(
-                      offlineFallbackTranslations.map((item) => item.name),
-                      language
-                    ),
-                    defaultValue: "{{names}} are saved on this device.",
-                  })}
+              {t("chapter-unavailable-offline-switch", {
+                count: offlineFallbackTranslations.length,
+                bookName: currentBookName.value ?? bookId.value ?? "",
+                chapterNumber: chapterNumber.value ?? 1,
+                defaultValue_one:
+                  "You have a translation saved on your device that contains {{bookName}} {{chapterNumber}}.",
+                defaultValue_other:
+                  "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
+              })}
             </p>
           )}
           <div className="sb-reader-error-actions">

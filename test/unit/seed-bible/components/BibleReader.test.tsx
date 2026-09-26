@@ -16,6 +16,7 @@ import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayou
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type {
   Translation,
+  TranslationBook,
   TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { DownloadedTranslation } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
@@ -243,10 +244,31 @@ function createFixture(): ReaderFixture {
   };
 }
 
+function makeBook(
+  id: string,
+  name = id,
+  numberOfChapters = 50
+): TranslationBook {
+  return {
+    id,
+    name,
+    commonName: name,
+    title: null,
+    order: 1,
+    numberOfChapters,
+    firstChapterNumber: 1,
+    firstChapterApiLink: `/api/${id}/1.json`,
+    lastChapterNumber: numberOfChapters,
+    lastChapterApiLink: `/api/${id}/${numberOfChapters}.json`,
+    totalNumberOfVerses: 1,
+  };
+}
+
 function makeDownloadedTranslation(
   id: string,
   language: string,
-  name = id
+  name = id,
+  books: TranslationBook[] = [makeBook("GEN", "Genesis")]
 ): DownloadedTranslation {
   const translation: Translation = {
     id,
@@ -271,7 +293,7 @@ function makeDownloadedTranslation(
     sizeBytes: 100,
     numberOfChapters: 10,
     translation,
-    books: [],
+    books,
   };
 }
 
@@ -593,7 +615,7 @@ describe("BibleReader", () => {
 
     const errorPanel = container.querySelector(".sb-reader-error");
     expect(errorPanel?.textContent).toContain(
-      "Accessible Ancients Bible is saved on this device."
+      "You have a translation saved on your device that contains Genesis 1."
     );
 
     const switchButton = container.querySelector<HTMLButtonElement>(
@@ -639,7 +661,7 @@ describe("BibleReader", () => {
     expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
     expect(
       container.querySelector(".sb-reader-error")?.textContent
-    ).not.toContain("saved on this device");
+    ).not.toContain("saved on your device");
   });
 
   it("does not offer the failed translation even when it is downloaded", () => {
@@ -717,6 +739,38 @@ describe("BibleReader", () => {
     expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
   });
 
+  it("does not offer a downloaded translation that does not contain the current book", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    readingState.translationId.value = "ENGWEB";
+    readingState.bookId.value = "TOB";
+    readingState.chapterNumber.value = 3;
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("BSB", "eng", "Berean Standard Bible"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+    expect(
+      container.querySelector("#sb-reader-error-offline-select")
+    ).toBeNull();
+    expect(
+      container.querySelector(".sb-reader-error")?.textContent
+    ).not.toContain("saved on your device");
+    expect(readingState.selectTranslationAndChapter).not.toHaveBeenCalled();
+  });
+
   it("lets the reader pick among several same-language downloads from a dropdown", () => {
     const { slot, selectorState, readingState } = createFixture();
     readingState.error.value = "Failed to fetch";
@@ -739,7 +793,7 @@ describe("BibleReader", () => {
 
     const errorPanel = container.querySelector(".sb-reader-error");
     expect(errorPanel?.textContent).toContain(
-      "Accessible Ancients Bible and New International Version are saved on this device."
+      "You have 2 translations saved on your device that contain Genesis 1."
     );
 
     const trigger = container.querySelector<HTMLButtonElement>(

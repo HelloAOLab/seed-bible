@@ -1,5 +1,8 @@
 import { findOfflineTranslationFallbacks } from "@packages/seed-bible/seed-bible/managers/offlineTranslationFallback";
-import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type {
+  Translation,
+  TranslationBook,
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 function translation(id: string, language: string, name = id): Translation {
   return {
@@ -24,10 +27,39 @@ function downloaded(id: string, language: string, downloadedAt = 1) {
   return { translation: item, downloadedAt };
 }
 
+function passageBook(
+  id: string,
+  numberOfChapters = 50,
+  firstChapterNumber = 1
+): TranslationBook {
+  const lastChapterNumber = firstChapterNumber + numberOfChapters - 1;
+  return {
+    id,
+    name: id,
+    commonName: id,
+    title: null,
+    order: 1,
+    numberOfChapters,
+    firstChapterNumber,
+    firstChapterApiLink: `/api/${id}/${firstChapterNumber}.json`,
+    lastChapterNumber,
+    lastChapterApiLink: `/api/${id}/${lastChapterNumber}.json`,
+    totalNumberOfVerses: 1,
+  };
+}
+
+type FallbackParams = Parameters<typeof findOfflineTranslationFallbacks>[0];
+
 function idsOf(
-  params: Parameters<typeof findOfflineTranslationFallbacks>[0]
+  params: Omit<FallbackParams, "bookId" | "chapterNumber" | "booksFor"> &
+    Partial<Pick<FallbackParams, "bookId" | "chapterNumber" | "booksFor">>
 ): string[] {
-  return findOfflineTranslationFallbacks(params).map((item) => item.id);
+  return findOfflineTranslationFallbacks({
+    bookId: "GEN",
+    chapterNumber: 1,
+    booksFor: () => [passageBook("GEN")],
+    ...params,
+  }).map((item) => item.id);
 }
 
 describe("findOfflineTranslationFallbacks", () => {
@@ -147,6 +179,63 @@ describe("findOfflineTranslationFallbacks", () => {
         ],
       })
     ).toEqual(["KJV", "NIV"]);
+  });
+
+  it("does not offer a same-language download that does not contain the current book", () => {
+    expect(
+      idsOf({
+        currentTranslationId: "ENGWEB",
+        currentTranslationLanguage: "eng",
+        uiLanguage: "en",
+        bookId: "TOB",
+        chapterNumber: 3,
+        downloaded: [downloaded("BSB", "eng")],
+        booksFor: () => [passageBook("GEN")],
+      })
+    ).toEqual([]);
+  });
+
+  it("does not offer a download when the chapter is outside that book's range", () => {
+    expect(
+      idsOf({
+        currentTranslationId: "ENGWEB",
+        currentTranslationLanguage: "eng",
+        uiLanguage: "en",
+        bookId: "PSA",
+        chapterNumber: 1,
+        downloaded: [downloaded("BSB", "eng")],
+        // Psalms here starts at chapter 3, so chapter 1 would be rewritten
+        // to the first chapter rather than opened.
+        booksFor: () => [passageBook("PSA", 5, 3)],
+      })
+    ).toEqual([]);
+  });
+
+  it("offers a download that contains the current book and chapter", () => {
+    expect(
+      idsOf({
+        currentTranslationId: "ENGWEB",
+        currentTranslationLanguage: "eng",
+        uiLanguage: "en",
+        bookId: "TOB",
+        chapterNumber: 3,
+        downloaded: [downloaded("BSB", "eng"), downloaded("NIV", "eng", 2)],
+        booksFor: (id) =>
+          id === "BSB" ? [passageBook("TOB", 14)] : [passageBook("GEN")],
+      })
+    ).toEqual(["BSB"]);
+  });
+
+  it("does not offer a download whose book list is not available", () => {
+    expect(
+      idsOf({
+        currentTranslationId: "ENGWEB",
+        currentTranslationLanguage: "eng",
+        uiLanguage: "en",
+        downloaded: [downloaded("BSB", "eng")],
+        booksFor: () => null,
+      })
+    ).toEqual([]);
   });
 
   it("matches a regional UI locale to its primary language", () => {
