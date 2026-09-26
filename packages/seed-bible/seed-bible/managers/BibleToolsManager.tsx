@@ -498,7 +498,7 @@ function validateToolActions(
   }
 }
 
-function resolveToolItems<TContext>(
+function resolveToolItems<TContext extends object>(
   getItems:
     | ((context: TContext) => ManagedBibleToolItem<TContext>[])
     | undefined,

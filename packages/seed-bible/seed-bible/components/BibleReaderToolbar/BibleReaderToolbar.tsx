@@ -631,6 +631,9 @@ function VerseToolbarAnnotationGroup(props: {
   );
 }
 
+/** Cards kept on the collapsed mobile verse sheet — one row of the four-per-row grid. */
+const VERSE_SHEET_COLLAPSED_COUNT = 4;
+
 interface BibleReaderToolbarProps {
   state: SeedBibleState;
 }
@@ -893,9 +896,34 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     () => verseSheetDragReveal.value !== null
   );
 
+  /**
+   * Whether the collapsed sheet is hiding something: action cards past the
+   * first row, or notes on the selection. Measured height is not enough —
+   * the overflow row's padding, and a height left behind after that row
+   * unmounts, both read as "more" when the sheet is already showing everything.
+   */
+  const verseSheetHasHiddenContent = useComputed(() => {
+    if (!isSmallScreen.value) return false;
+    const toolCount = verseToolbarTools.value.filter(
+      (tool) => tool.id !== "clear-selection" && tool.visible.value
+    ).length;
+    const highlightCount =
+      !isMinimalEmbed.value &&
+      settings.settings.value.selectionUI.showHighlightColors
+        ? 1
+        : 0;
+    const saveCount = isMinimalEmbed.value ? 0 : 1;
+    const annotationCount =
+      readingState.value?.selectionAnnotations.value.length ?? 0;
+    return (
+      toolCount + highlightCount + saveCount > VERSE_SHEET_COLLAPSED_COUNT ||
+      annotationCount > 0
+    );
+  });
+
   /** Whether there is anything to reveal — no overflow row, nothing to drag to. */
   const hasVerseSheetOverflow = useComputed(
-    () => verseSheetOverflowHeight.value > 0
+    () => verseSheetHasHiddenContent.value && verseSheetOverflowHeight.value > 0
   );
 
   /**
@@ -1199,11 +1227,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     maxTravel: number;
   } | null>(null);
 
-  /** The overflow row, measured so the reveal has a pixel target to animate to. */
-  const measureVerseSheetOverflow = (element: HTMLElement | null) => {
-    if (!element) return;
-    verseSheetOverflowHeight.value = element.scrollHeight;
-  };
+  /** The overflow row, measured so the reveal has a pixel target to animate to.
+   *  A missing row means there is nothing left to reveal — leaving the previous
+   *  height in place would keep "Swipe up to see more" up over an empty sheet.
+   *
+   *  The callback has to stay the same function across renders. A new one each
+   *  time makes Preact detach it (null) and reattach it, which writes height 0
+   *  and then the row's scroll height, which renders again, forever — selecting
+   *  a second verse is enough to start that and freeze the tab. */
+  const measureVerseSheetOverflow = useRef((element: HTMLElement | null) => {
+    const next = element?.scrollHeight ?? 0;
+    if (verseSheetOverflowHeight.peek() !== next) {
+      verseSheetOverflowHeight.value = next;
+    }
+  }).current;
 
   const endVerseSheetDrag = (event: PointerEvent): void => {
     const handle = event.currentTarget as HTMLElement;
@@ -2940,19 +2977,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 // One full row of cards, matching the four-per-row grid below.
                 // Keeping the collapsed sheet to a single row is what makes it
                 // short by default.
-                const COLLAPSED_COUNT = 4;
                 // Annotations on the selection also make the sheet openable,
                 // even when there aren't enough tool cards to overflow on
                 // their own — otherwise there'd be nothing to drag/tap open
                 // to see them.
                 const hasOverflow =
-                  actionCards.length > COLLAPSED_COUNT ||
+                  actionCards.length > VERSE_SHEET_COLLAPSED_COUNT ||
                   selectionAnnotations.value.length > 0;
                 const primaryCards = hasOverflow
-                  ? actionCards.slice(0, COLLAPSED_COUNT)
+                  ? actionCards.slice(0, VERSE_SHEET_COLLAPSED_COUNT)
                   : actionCards;
                 const overflowCards = hasOverflow
-                  ? actionCards.slice(COLLAPSED_COUNT)
+                  ? actionCards.slice(VERSE_SHEET_COLLAPSED_COUNT)
                   : [];
 
                 return (
@@ -3030,7 +3066,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               itself carries the accessible toggle. */}
           {isSmallScreen.value &&
             !isHighlightPickerOpen.value &&
-            hasVerseSheetOverflow.value &&
+            verseSheetHasHiddenContent.value &&
             !isVerseSheetExpanded.value && (
               <div
                 className="sb-verse-toolbar-swipe-hint"

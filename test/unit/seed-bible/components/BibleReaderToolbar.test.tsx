@@ -1582,6 +1582,19 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(saveTrigger()!.getAttribute("aria-pressed")).toBeNull();
   });
 
+  it("hides the swipe hint once the extra actions are gone", async () => {
+    await renderSheet();
+    expect(hint()?.textContent).toContain("Swipe up to see more");
+
+    await act(async () => {
+      state.tools.unregisterVerseToolbarTool("test-extra-one");
+      state.tools.unregisterVerseToolbarTool("test-extra-two");
+    });
+
+    expect(container.querySelector(".sb-verse-toolbar-overflow")).toBeNull();
+    expect(hint()).toBeNull();
+  });
+
   it("starts collapsed, with the swipe hint in place of a More button", async () => {
     await renderSheet();
 
@@ -3257,5 +3270,9 @@ describe("BibleReaderToolbar — compact embed", () => {
     expect(labels).not.toContain("Save");
     expect(labels).not.toContain("Note");
     expect(labels).not.toContain("Cancel");
+    // Copy and Share fit on the first row, so there is nothing the swipe
+    // hint could reveal.
+    expect(container.querySelector(".sb-verse-toolbar-overflow")).toBeNull();
+    expect(container.querySelector(".sb-verse-toolbar-swipe-hint")).toBeNull();
   });
 });

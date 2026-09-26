@@ -75,13 +75,13 @@ describe("isAudioPlayToolVisible (#1607)", () => {
 
   it("stays on the floating nav in an embed and off the quick toolbar", () => {
     const embedded = {
-      app: { isMinimalEmbed: signal(true) },
+      app: { isMinimalEmbed: signal(true) } as QuickToolContext["app"],
     };
-    const quickToolbar = {
+    const quickToolbar: QuickToolContext = {
       ...createContext({ surface: "quick-toolbar", isMobile: false }),
       ...embedded,
     };
-    const floatingNav = {
+    const floatingNav: QuickToolContext = {
       ...createContext({ surface: "mobile-navigation-bar", isMobile: true }),
       ...embedded,
     };
