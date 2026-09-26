@@ -15,9 +15,15 @@ import {
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type {
+  Translation,
+  TranslationBook,
+  TranslationBookChapter,
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { DownloadedTranslation } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import { vi, type Mock } from "vitest";
+import { mockI18nState, resetMockI18n } from "../testUtils/mockI18n";
 import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 
@@ -240,6 +246,77 @@ function createFixture(): ReaderFixture {
   };
 }
 
+function makeBook(
+  id: string,
+  name = id,
+  numberOfChapters = 50
+): TranslationBook {
+  return {
+    id,
+    name,
+    commonName: name,
+    title: null,
+    order: 1,
+    numberOfChapters,
+    firstChapterNumber: 1,
+    firstChapterApiLink: `/api/${id}/1.json`,
+    lastChapterNumber: numberOfChapters,
+    lastChapterApiLink: `/api/${id}/${numberOfChapters}.json`,
+    totalNumberOfVerses: 1,
+  };
+}
+
+function makeDownloadedTranslation(
+  id: string,
+  language: string,
+  name = id,
+  books: TranslationBook[] = [makeBook("GEN", "Genesis")]
+): DownloadedTranslation {
+  const translation: Translation = {
+    id,
+    name,
+    englishName: name,
+    website: "https://example.com",
+    licenseUrl: "https://example.com/license",
+    shortName: id,
+    language,
+    textDirection: "ltr",
+    availableFormats: ["json"],
+    listOfBooksApiLink: `/api/${id}/books.json`,
+    numberOfBooks: 66,
+    totalNumberOfChapters: 1189,
+    totalNumberOfVerses: 31102,
+  };
+  return {
+    translationId: id,
+    endpoint: "https://example.com",
+    sha256: null,
+    downloadedAt: 1,
+    sizeBytes: 100,
+    numberOfChapters: 10,
+    translation,
+    books,
+  };
+}
+
+function createStateWithDownloads(
+  downloads: DownloadedTranslation[]
+): SeedBibleState {
+  return {
+    ...createMobileState(),
+    bibleData: {
+      getPreviousChapter: vi.fn(async () => null),
+      getNextChapter: vi.fn(async () => null),
+      availableTranslations: signal([]),
+      offline: {
+        records: signal(
+          new Map(downloads.map((entry) => [entry.translationId, entry]))
+        ),
+      },
+    },
+  } as unknown as SeedBibleState;
+}
+
 /**
  * @param selectorState Wired in as `state.selector` for the mobile chrome's own
  *   entry points into the Bible selector (the header's translation chip).
@@ -336,6 +413,7 @@ function renderMobileReader(
 beforeEach(() => {
   setupRerender();
   resetLastVersePointerTypeForTests();
+  resetMockI18n();
 });
 
 afterEach(() => {
@@ -515,6 +593,250 @@ describe("BibleReader", () => {
     });
 
     expect(readingState.retryLoad).toHaveBeenCalledTimes(1);
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+  });
+
+  it("offers a downloaded translation in the same language when the chapter fails to load", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("AAB", "eng", "Accessible Ancients Bible"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const errorPanel = container.querySelector(".sb-reader-error");
+    expect(errorPanel?.textContent).toContain(
+      "You have a translation saved on your device that contains Genesis 1."
+    );
+
+    const switchButton = container.querySelector<HTMLButtonElement>(
+      ".sb-reader-error-switch"
+    );
+    expect(switchButton?.textContent).toBe(
+      "Switch to Accessible Ancients Bible"
+    );
+    expect(
+      container.querySelector("#sb-reader-error-offline-select")
+    ).toBeNull();
+
+    act(() => {
+      switchButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(readingState.selectTranslationAndChapter).toHaveBeenCalledWith(
+      "AAB",
+      "GEN",
+      1
+    );
+  });
+
+  it("does not offer a downloaded translation in a different language", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("spa_onbv", "spa", "Nueva Biblia Viva"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+    expect(
+      container.querySelector(".sb-reader-error")?.textContent
+    ).not.toContain("saved on your device");
+  });
+
+  it("does not offer the failed translation even when it is downloaded", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("BSB", "eng", "Berean Standard Bible"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+  });
+
+  it("offers a download matching the UI language when the requested translation's language is unknown", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    chapterData.value = null;
+    readingState.availableTranslations.value = { translations: [] };
+    mockI18nState.language = "es";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("spa_onbv", "spa", "Nueva Biblia Viva"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector<HTMLButtonElement>(".sb-reader-error-switch")
+        ?.textContent
+    ).toBe("Switch to Nueva Biblia Viva");
+  });
+
+  it("does not offer a download that does not match the UI language when the requested language is unknown", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    chapterData.value = null;
+    readingState.availableTranslations.value = { translations: [] };
+    mockI18nState.language = "es";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("AAB", "eng", "Accessible Ancients Bible"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+  });
+
+  it("does not offer a downloaded translation that does not contain the current book", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    readingState.translationId.value = "ENGWEB";
+    readingState.bookId.value = "TOB";
+    readingState.chapterNumber.value = 3;
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("BSB", "eng", "Berean Standard Bible"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+    expect(
+      container.querySelector("#sb-reader-error-offline-select")
+    ).toBeNull();
+    expect(
+      container.querySelector(".sb-reader-error")?.textContent
+    ).not.toContain("saved on your device");
+    expect(readingState.selectTranslationAndChapter).not.toHaveBeenCalled();
+  });
+
+  it("lets the reader pick among several same-language downloads from a dropdown", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("AAB", "eng", "Accessible Ancients Bible"),
+      makeDownloadedTranslation("NIV", "eng", "New International Version"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const errorPanel = container.querySelector(".sb-reader-error");
+    expect(errorPanel?.textContent).toContain(
+      "You have 2 translations saved on your device that contain Genesis 1."
+    );
+
+    const trigger = container.querySelector<HTMLButtonElement>(
+      "#sb-reader-error-offline-select"
+    );
+    expect(trigger).not.toBeNull();
+    expect(trigger?.textContent).toContain("Accessible Ancients Bible");
+
+    act(() => {
+      trigger?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(
+      container.querySelector(".sb-language-picker-search-input")
+    ).not.toBeNull();
+
+    const nivOption = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-language-picker-item")
+    ).find((item) => item.textContent?.includes("New International Version"));
+    expect(nivOption).not.toBeUndefined();
+
+    act(() => {
+      nivOption?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(trigger?.textContent).toContain("New International Version");
+
+    const confirm = container.querySelector<HTMLButtonElement>(
+      ".sb-reader-error-switch"
+    );
+    expect(confirm?.textContent).toBe("Switch");
+
+    act(() => {
+      confirm?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(readingState.selectTranslationAndChapter).toHaveBeenCalledWith(
+      "NIV",
+      "GEN",
+      1
+    );
   });
 
   it("keeps the failure state visible while a retry is in flight", async () => {

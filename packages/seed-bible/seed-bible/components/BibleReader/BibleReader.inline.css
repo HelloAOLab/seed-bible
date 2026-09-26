@@ -771,17 +771,31 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
-.sb-reader-error-retry {
+.sb-reader-error-offline {
+  margin: 0.25rem 0 0;
+  max-width: 26rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--sb-font-color);
+}
+
+.sb-reader-error-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.sb-reader-error-retry,
+.sb-reader-error-switch {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 0.75rem;
   border: none;
   border-radius: 0.625rem;
   padding: 0.625rem 1.5rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
@@ -789,6 +803,11 @@
   transition:
     transform 0.1s ease,
     background-color 0.2s ease;
+}
+
+.sb-reader-error-retry {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
 }
 
 .sb-reader-error-retry:hover {
@@ -802,6 +821,33 @@
 .sb-reader-error-retry:disabled {
   opacity: 0.75;
   cursor: default;
+}
+
+.sb-reader-error-switch {
+  background: transparent;
+  color: var(--sb-font-color);
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+}
+
+.sb-reader-error-switch:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-reader-error-switch:active {
+  transform: translateY(1px);
+}
+
+.sb-reader-error-offline-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.sb-reader-error-offline-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
 }
 
 .sb-reader-error-retry-spinner {

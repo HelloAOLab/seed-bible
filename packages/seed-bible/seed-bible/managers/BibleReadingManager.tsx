@@ -773,7 +773,8 @@ export function resolveTranslationUiLanguage(params: {
   );
 }
 
-function bibleLanguageCodesForUi(uiLanguage: string): string[] {
+/** Bible-API language codes that correspond to a UI locale (e.g. "en" → "eng"). */
+export function bibleLanguageCodesForUi(uiLanguage: string): string[] {
   const mapped = UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage];
   if (mapped?.length) {
     return mapped;
@@ -2789,6 +2790,11 @@ export function createBibleReadingState(
     nextChapterNumber: number,
     options?: SelectTranslationAndChapterOptions
   ) => {
+    // Recorded before the catalog fetch so a plain network failure ("Failed
+    // to fetch") is what Reload retries. Rolled back below only when this
+    // translation does not contain the book: that miss can never succeed,
+    // and retrying it would leave the reader stuck off the chapter on screen.
+    const previousAttempt = lastLoadAttempt;
     lastLoadAttempt = () =>
       selectTranslationAndChapter(
         nextTranslationIdOrUrl,
@@ -2805,6 +2811,7 @@ export function createBibleReadingState(
       const books = await dataManager.getTranslationBooks(nextTranslationId);
       const selectedBook = books.books.find((book) => book.id === nextBookId);
       if (!selectedBook) {
+        lastLoadAttempt = previousAttempt;
         throw new Error(
           `Book with ID "${nextBookId}" not available for translation "${nextTranslationId}".`
         );
