@@ -26,6 +26,10 @@
   opacity: 1;
   transition: opacity 0.25s ease;
 }
+.sb-sidebar-branding-logo {
+  width: 3.0625rem;
+  height: 2.25rem;
+}
 
 .sb-tabs-sidebar-collapsed {
   width: 4.1rem;
