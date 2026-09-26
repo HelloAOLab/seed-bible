@@ -65,6 +65,7 @@ import {
 } from "./FeaturesManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
+import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -943,6 +944,8 @@ export interface OpenReadingPlansPaneOptions {
   panesManager: PanesManager;
   modals?: ModalManager;
   playlists?: PlaylistManager;
+  /** Loads chapter text for the plan editor's inline scripture previews. */
+  bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
   /**
    * Passed straight through to the pane: the plan editor uses them to record
    * and reuse a plan's hero image. Optional there too, so a caller without
@@ -973,11 +976,22 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     panesManager,
     modals,
     playlists,
+    bibleData,
     os,
     login,
     gallery,
     toast,
   } = options;
+
+  // Scripture without a pinned translation previews in the one being read.
+  const loadChapter: ScriptureChapterLoader | undefined = bibleData
+    ? (translationId, bookId, chapter) =>
+        bibleData.getTranslationBookChapter(
+          translationId ?? readingState.translationId.peek(),
+          bookId,
+          chapter
+        )
+    : undefined;
 
   panesManager.openPane({
     id: "reading-plans-pane",
@@ -995,6 +1009,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
         readingPlans={readingPlans}
         books={readingState.translationBooks.value?.books ?? []}
         modals={modals}
+        loadChapter={loadChapter}
         os={os}
         login={login}
         gallery={gallery}
@@ -1162,6 +1177,7 @@ function getDefaultToolbarTools(
           panesManager: context.panesManager,
           modals: context.modals,
           playlists: context.playlists,
+          bibleData: context.data,
           os: context.os,
           login: context.login,
           gallery: context.gallery,
