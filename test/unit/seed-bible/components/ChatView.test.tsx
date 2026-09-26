@@ -6,6 +6,7 @@ import type {
   AIChatParticipant,
   ChatMessage,
   ChatSession,
+  ChoicesChatMessage,
   ParsedChatTextMessage,
   UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
@@ -78,6 +79,8 @@ function createMockChatSession(
     wasMentioned: signal(false),
     markAsRead: vi.fn(),
     sendMessage: vi.fn().mockResolvedValue(undefined),
+    appendMessage: vi.fn(),
+    deferUntilResponseSettled: vi.fn(),
     setTypingStatus: vi.fn(),
     participants: signal([]),
     totalParticipants: signal([]),
@@ -93,11 +96,11 @@ function createMockChatSession(
   };
 }
 
-function createMockState(): SeedBibleState {
+function createMockState(options: { isMobile?: boolean } = {}): SeedBibleState {
   return {
     app: {
       openVerseReference: vi.fn().mockResolvedValue(undefined),
-      isMobile: signal(false),
+      isMobile: signal(options.isMobile ?? false),
     },
     chats: {
       composerDraft: signal(""),
@@ -509,15 +512,7 @@ describe("ChatView", () => {
 
   it("shows a mobile type-hint caret whenever the empty input is blurred", () => {
     const chat = createMockChatSession();
-    const state = {
-      app: {
-        openVerseReference: vi.fn().mockResolvedValue(undefined),
-        isMobile: signal(true),
-      },
-      chats: {
-        composerDraft: signal(""),
-      },
-    } as unknown as SeedBibleState;
+    const state = createMockState({ isMobile: true });
 
     act(() => {
       render(<ChatView chat={chat} state={state} />, container);
@@ -2020,5 +2015,237 @@ describe("ChatView", () => {
     expect(
       container.querySelector<HTMLTextAreaElement>(".sb-chat-view-input")?.value
     ).toBe("");
+  });
+
+  function renderChoiceCard(
+    books: { id: string }[],
+    options: {
+      hasTab?: boolean;
+      booksError?: boolean;
+      selectError?: boolean;
+    } = {}
+  ) {
+    const translationId = signal("eng_bsb");
+    const selectTranslationAndChapter = vi.fn(async () => {
+      if (options.selectError) {
+        throw new Error("offline");
+      }
+      translationId.value = "fra_lsg";
+    });
+    const selectTranslation = vi.fn(async () => {
+      translationId.value = "fra_lsg";
+    });
+    const choice: ChoicesChatMessage = {
+      id: "choices-1",
+      authors: ["provider-1"],
+      timeMs: 2,
+      targets: [],
+      type: "choices",
+      choiceType: "translation",
+      choices: [
+        { id: "fra_lsg", label: "LSG (Louis Segond)" },
+        { id: "fra_ncl", label: "NCL" },
+      ],
+    };
+    const chat = createMockChatSession({
+      messages: signal<ChatMessage[]>([choice]),
+      parsedMessages: signal([]),
+    });
+    const readingState = {
+      translationId,
+      bookId: signal("JHN"),
+      chapterNumber: signal(3),
+      selectTranslation,
+      selectTranslationAndChapter,
+    };
+    const state = {
+      app: {
+        openVerseReference: vi.fn().mockResolvedValue(undefined),
+        isMobile: signal(false),
+        selectedTab: signal(options.hasTab === false ? null : { readingState }),
+      },
+      bibleData: {
+        getTranslationBooks: options.booksError
+          ? vi.fn().mockRejectedValue(new Error("offline"))
+          : vi.fn().mockResolvedValue({ books }),
+      },
+      chats: {
+        composerDraft: signal(""),
+      },
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    return { selectTranslation, selectTranslationAndChapter };
+  }
+
+  it("shows translation choices instead of the empty state", () => {
+    renderChoiceCard([{ id: "JHN" }]);
+
+    expect(container.querySelector(".sb-chat-view-empty")).toBeNull();
+    const buttons = [
+      ...container.querySelectorAll<HTMLButtonElement>(".sb-chat-view-choice"),
+    ].map((button) => button.textContent);
+    expect(buttons).toEqual(["LSG (Louis Segond)", "NCL"]);
+    expect(
+      container.querySelector(".sb-chat-view-choices-label")?.textContent
+    ).toBe("Switch translation");
+  });
+
+  it("switches the open tab to the chosen translation and stays on the same chapter", async () => {
+    const { selectTranslationAndChapter, selectTranslation } = renderChoiceCard(
+      [{ id: "JHN" }]
+    );
+    const button = container.querySelector<HTMLButtonElement>(
+      ".sb-chat-view-choice"
+    )!;
+
+    await act(async () => {
+      button.click();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(selectTranslationAndChapter).toHaveBeenCalledWith(
+      "fra_lsg",
+      "JHN",
+      3
+    );
+    expect(selectTranslation).not.toHaveBeenCalled();
+    expect(
+      container
+        .querySelector(".sb-chat-view-choice")
+        ?.getAttribute("aria-pressed")
+    ).toBe("true");
+  });
+
+  it("opens the translation's first book when the current chapter is not in it", async () => {
+    const { selectTranslation, selectTranslationAndChapter } = renderChoiceCard(
+      [{ id: "MAT" }]
+    );
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-chat-view-choice")!
+        .click();
+    });
+
+    expect(selectTranslation).toHaveBeenCalledWith("fra_lsg");
+    expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+  });
+
+  it("does nothing when there is no open tab to switch", async () => {
+    const { selectTranslation, selectTranslationAndChapter } = renderChoiceCard(
+      [{ id: "JHN" }],
+      { hasTab: false }
+    );
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-chat-view-choice")!
+        .click();
+    });
+
+    expect(selectTranslation).not.toHaveBeenCalled();
+    expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+    expect(
+      container
+        .querySelector(".sb-chat-view-choice")
+        ?.getAttribute("aria-pressed")
+    ).toBe("false");
+    expect(container.querySelector(".sb-chat-view-error")?.textContent).toBe(
+      "Couldn't switch translation."
+    );
+  });
+
+  it("shows an error when switching the translation fails", async () => {
+    renderChoiceCard([{ id: "JHN" }], { booksError: true });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-chat-view-choice")!
+        .click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector(".sb-chat-view-error")?.textContent).toBe(
+      "Couldn't switch translation."
+    );
+    expect(
+      container
+        .querySelector(".sb-chat-view-choice")
+        ?.getAttribute("aria-pressed")
+    ).toBe("false");
+  });
+
+  it("shows an error when the reader throws while switching", async () => {
+    renderChoiceCard([{ id: "JHN" }], { selectError: true });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-chat-view-choice")!
+        .click();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector(".sb-chat-view-error")?.textContent).toBe(
+      "Couldn't switch translation."
+    );
+  });
+
+  it("shows translation choices under the question that offers them", () => {
+    const question = createMockMessage({
+      id: "ai-1",
+      authors: ["provider-1"],
+      timeMs: 30,
+      text: "Which French translation would you like?",
+      parts: ["Which French translation would you like?"],
+    });
+    const choice: ChoicesChatMessage = {
+      id: "choices-1",
+      authors: ["provider-1"],
+      timeMs: 10,
+      targets: [],
+      type: "choices",
+      choiceType: "translation",
+      choices: [{ id: "fra_lsg", label: "LSG" }],
+    };
+    const chat = createMockChatSession({
+      messages: signal<ChatMessage[]>([
+        choice,
+        createMockToolCallMessage({
+          id: "tool-1",
+          authors: ["provider-1"],
+          timeMs: 20,
+        }),
+        question,
+      ]),
+      parsedMessages: signal([question]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const order = [
+      ...container.querySelectorAll(
+        ".sb-chat-view-event, .sb-chat-view-message-group, .sb-chat-view-choices"
+      ),
+    ].map((node) => node.className.split(" ")[0]);
+    expect(order).toEqual([
+      "sb-chat-view-event",
+      "sb-chat-view-message-group",
+      "sb-chat-view-choices",
+    ]);
+    expect(
+      container.querySelector(".sb-chat-view-message-body")?.textContent
+    ).toContain("Which French translation would you like?");
   });
 });

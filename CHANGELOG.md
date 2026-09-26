@@ -14,6 +14,8 @@
   - These are left out of the "All" view until you pick one of the three filters, so a chapter with dozens of names doesn't bury your own notes.
   - Comes as the "People, Places & Events" extension, installed automatically. Uninstall it from Settings ▸ Extensions if you don't want it.
 - Let extensions add their own kinds of content to Discover. Each kind gets its own filter in the Discover panel and its own section in the Discover pane, and can be kept out of the "All" view until it's picked.
+- Have AI chat follow the active reader tab's Bible translation, mapping it onto Apologist's supported list (KJV, BSB, and the rest of the Fusion docs) and falling back to BSB when the tab's translation isn't supported. ([#1265](https://github.com/HelloAOLab/seed-bible/issues/1265))
+- Let AI chat look up translations this app actually has and offer them as buttons. Tapping a button switches the open tab to that translation and stays on the same chapter when the translation includes it. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
 
 ### 🔧 Changed
 

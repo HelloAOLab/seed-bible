@@ -538,6 +538,12 @@ export interface SeedBibleState {
   closeCodeOfConduct: () => void;
 }
 
+// Evaluated before the extension bundle below. Bonfire imports
+// `formatAvailableTranslationsNote` from this module while that bundle is
+// still loading, and a live binding from a half-finished barrel would be
+// unset if this import ran afterwards.
+import { createTranslationAgentTools } from "./translationSearch";
+
 // The extension set is auto-discovered from every extension package under
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
@@ -2669,7 +2675,60 @@ export function createSeedBibleState(
       },
     });
 
-    return [goToReference.tool, searchVerses.tool, createPlaylist.tool];
+    const translationTools = createTranslationAgentTools({
+      loadCatalog: async () => {
+        // A chapter load only merges the one translation being read. Searching
+        // that partial list would hide every other language.
+        if (data.catalogLoaded.peek()) {
+          return data.availableTranslations.peek();
+        }
+        return data.getTranslations();
+      },
+      postTranslationChoices: (choices, call) => {
+        const openChats = chats.chats.peek();
+        const callingChat = call?.chatId
+          ? openChats.find((chat) => chat.id === call.chatId)
+          : undefined;
+        const chat = callingChat ?? chats.selectedChat.peek();
+        if (!chat) {
+          throw new Error("No chat is open.");
+        }
+        const participants = chat.participants.peek();
+        const callingAuthor = call?.providerId
+          ? participants.find(
+              (participant) =>
+                participant.isAI &&
+                !participant.isRemote &&
+                participant.providerId === call.providerId
+            )
+          : undefined;
+        const author =
+          callingAuthor ??
+          participants.find(
+            (participant) => participant.isAI && !participant.isRemote
+          );
+        const authors = author ? [author.id] : [];
+        // The tool runs before the assistant writes its question. Posting now
+        // would put the buttons above that question.
+        chat.deferUntilResponseSettled(() => {
+          chat.appendMessage(
+            {
+              type: "choices",
+              choiceType: "translation",
+              choices,
+            },
+            authors
+          );
+        });
+      },
+    });
+
+    return [
+      goToReference.tool,
+      searchVerses.tool,
+      createPlaylist.tool,
+      ...translationTools,
+    ];
   };
 
   const enableCoreChatContext = () => {
