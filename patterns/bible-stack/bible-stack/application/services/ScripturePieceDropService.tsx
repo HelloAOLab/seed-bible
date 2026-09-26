@@ -20,6 +20,7 @@ import type {
 } from "../ports/in/ScripturePieceDrop";
 import { HighlightRequestSources } from "../../domain/models/pieces";
 import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
+import type { LoggerPort } from "../ports/out/Logger";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
@@ -29,6 +30,7 @@ interface ServiceParams {
   chapterSelectionServicePort: ChapterSelectionPort;
   pieceHighlightServicePort: PieceHighlighterPort;
   pieceDropEventPort: PieceDropEventPort;
+  loggerPort: LoggerPort;
 }
 
 // prettier-ignore
@@ -40,8 +42,10 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
   #chapterSelectionServicePort: ServiceParams["chapterSelectionServicePort"];
   #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
   #pieceDropEventPort: ServiceParams["pieceDropEventPort"];
-
+  #loggerPort: ServiceParams['loggerPort']
+  
   constructor({
+    
     pieceAdapterPort,
     pieceDataRepositoryPort,
     sequenceStateServicePort,
@@ -49,6 +53,7 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
     chapterSelectionServicePort,
     pieceHighlightServicePort,
     pieceDropEventPort,
+    loggerPort
   }: ServiceParams) {
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
@@ -57,6 +62,7 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
     this.#chapterSelectionServicePort = chapterSelectionServicePort;
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
     this.#pieceDropEventPort = pieceDropEventPort;
+    this.#loggerPort = loggerPort;
   }
 
   handlePieceDrop(
@@ -73,13 +79,14 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
     const pieceData = this.#pieceDataRepositoryPort.getPieceData(piece);
 
     if (!pieceData) {
-      throw new Error(
+      this.#loggerPort.error(
         "ScripturePieceDropService: pieceData not found at handlePieceDrop."
       );
+      return;
     }
 
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      pieceData.parentDataIds as StackParentDataIds
+      pieceData.parentDataIds ?? {}
     );
 
     if (

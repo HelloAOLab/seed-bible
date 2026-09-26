@@ -16,6 +16,7 @@ import type {
 } from "../ports/out/PieceLabel";
 import type { LabelDateFormatGetterPort } from "../ports/in/LabelDate";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
+import type { LoggerPort } from "../ports/out/Logger";
 
 export interface LabelStrategy<P extends Piece<StackLabelableBiblePiece>> {
   getLabel: (piece: P) => string;
@@ -31,7 +32,7 @@ export type LabelPropertiesStrategies<T extends StackLabelableBiblePiece> = {
   [K in T]: LabelStrategy<Piece<K>>;
 };
 
-export interface PieceLabelServiceParams<T extends StackLabelableBiblePiece> {
+export interface ServiceParams<T extends StackLabelableBiblePiece> {
   labelAdapterPort: LabelAdapterPort;
   labelDataStorePort: LabelDataStorePort;
   indicatorsUpdaterPort: IndicatorsUpdaterPort;
@@ -40,19 +41,21 @@ export interface PieceLabelServiceParams<T extends StackLabelableBiblePiece> {
   idGeneratorPort: IdGeneratorPort;
   activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
   labelAnimationAdapterPort: LabelFeedbackAdapterPort;
+  loggerPort: LoggerPort;
 }
 
 export class PieceLabelService<
   T extends StackLabelableBiblePiece,
 > implements PieceLabelServicePort<T> {
-  #labelAdapterPort: PieceLabelServiceParams<T>["labelAdapterPort"];
-  #labelDataStorePort: PieceLabelServiceParams<T>["labelDataStorePort"];
-  #indicatorsUpdaterPort: PieceLabelServiceParams<T>["indicatorsUpdaterPort"];
-  #labelPropertiesStrategies: PieceLabelServiceParams<T>["labelPropertiesStrategies"];
-  #dateFormatGetterPort: PieceLabelServiceParams<T>["dateFormatGetterPort"];
-  #idGeneratorPort: PieceLabelServiceParams<T>["idGeneratorPort"];
-  #activityIndicatorsAdapterPort: PieceLabelServiceParams<T>["activityIndicatorsAdapterPort"];
-  #labelAnimationAdapterPort: PieceLabelServiceParams<T>["labelAnimationAdapterPort"];
+  #labelAdapterPort: ServiceParams<T>["labelAdapterPort"];
+  #labelDataStorePort: ServiceParams<T>["labelDataStorePort"];
+  #indicatorsUpdaterPort: ServiceParams<T>["indicatorsUpdaterPort"];
+  #labelPropertiesStrategies: ServiceParams<T>["labelPropertiesStrategies"];
+  #dateFormatGetterPort: ServiceParams<T>["dateFormatGetterPort"];
+  #idGeneratorPort: ServiceParams<T>["idGeneratorPort"];
+  #activityIndicatorsAdapterPort: ServiceParams<T>["activityIndicatorsAdapterPort"];
+  #labelAnimationAdapterPort: ServiceParams<T>["labelAnimationAdapterPort"];
+  #loggerPort: ServiceParams<T>["loggerPort"];
 
   constructor({
     labelAdapterPort,
@@ -63,7 +66,8 @@ export class PieceLabelService<
     idGeneratorPort,
     activityIndicatorsAdapterPort,
     labelAnimationAdapterPort,
-  }: PieceLabelServiceParams<T>) {
+    loggerPort,
+  }: ServiceParams<T>) {
     this.#labelAdapterPort = labelAdapterPort;
     this.#labelDataStorePort = labelDataStorePort;
     this.#indicatorsUpdaterPort = indicatorsUpdaterPort;
@@ -72,6 +76,7 @@ export class PieceLabelService<
     this.#idGeneratorPort = idGeneratorPort;
     this.#activityIndicatorsAdapterPort = activityIndicatorsAdapterPort;
     this.#labelAnimationAdapterPort = labelAnimationAdapterPort;
+    this.#loggerPort = loggerPort;
   }
 
   async showLabel({
@@ -92,7 +97,10 @@ export class PieceLabelService<
           pacing,
         });
       } catch (error) {
-        console.error(error);
+        this.#loggerPort.error(
+          "PieceLabelService: displayShowFeedback failed for existing label at showLabel.",
+          error
+        );
       }
       return;
     }
@@ -100,7 +108,10 @@ export class PieceLabelService<
     const strategy = this.#labelPropertiesStrategies[piece.type];
 
     if (!strategy) {
-      throw new Error(`PieceLabelService: strategy not found at showLabel`);
+      this.#loggerPort.error(
+        `PieceLabelService: strategy not found at showLabel`
+      );
+      return;
     }
 
     const label = strategy.getLabel(piece);
@@ -150,7 +161,10 @@ export class PieceLabelService<
         pacing,
       });
     } catch (error) {
-      console.error(error);
+      this.#loggerPort.error(
+        "PieceLabelService: displayShowFeedback failed for new label at showLabel.",
+        error
+      );
     }
   }
 
@@ -199,7 +213,10 @@ export class PieceLabelService<
       this.#labelAdapterPort.despawnLabel(labelData);
       this.#labelDataStorePort.removeLabelData(labelData);
     } catch (error) {
-      console.error(error);
+      this.#loggerPort.error(
+        "PieceLabelService: displayHideFeedback failed at hideLabel.",
+        error
+      );
     }
   }
 
@@ -208,10 +225,10 @@ export class PieceLabelService<
   }
 
   updateLabelPosition(piece: Piece<T>) {
-    const strategy = this.#labelPropertiesStrategies[piece.type];
-    const labelPositioning = strategy.getLabelPositioning(piece);
     const label = this.getPieceLabel(piece);
     if (!label) return;
+    const strategy = this.#labelPropertiesStrategies[piece.type];
+    const labelPositioning = strategy.getLabelPositioning(piece);
 
     this.#labelAdapterPort.locateLabel({
       positioning: labelPositioning,

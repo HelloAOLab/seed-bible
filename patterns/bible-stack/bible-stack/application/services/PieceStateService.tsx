@@ -6,6 +6,7 @@ import type {
   PieceDataRepositoryPort,
 } from "../ports/out/PieceState";
 import type { BookChaptersManagementServicePort } from "../ports/in/BookChaptersManagement";
+import type { LoggerPort } from "../ports/out/Logger";
 
 function hasTransformChanged(changedProperties: Array<keyof PieceState>) {
   return changedProperties.some((property) => {
@@ -33,6 +34,7 @@ interface ServiceParams {
   bookChaptersManagementServicePort: BookChaptersManagementServicePort;
   activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
   activityNotificationAdapterPort: ActivityNotificationAdapterPort;
+  loggerPort: LoggerPort;
 }
 
 export class PieceStateService {
@@ -41,6 +43,7 @@ export class PieceStateService {
   #bookChaptersManagementServicePort: ServiceParams["bookChaptersManagementServicePort"];
   #activityIndicatorsAdapterPort: ServiceParams["activityIndicatorsAdapterPort"];
   #activityNotificationAdapterPort: ServiceParams["activityNotificationAdapterPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     labelPositionUpdaterPort,
@@ -48,12 +51,14 @@ export class PieceStateService {
     bookChaptersManagementServicePort,
     activityIndicatorsAdapterPort,
     activityNotificationAdapterPort,
+    loggerPort,
   }: ServiceParams) {
     this.#labelPositionUpdaterPort = labelPositionUpdaterPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#bookChaptersManagementServicePort = bookChaptersManagementServicePort;
     this.#activityIndicatorsAdapterPort = activityIndicatorsAdapterPort;
     this.#activityNotificationAdapterPort = activityNotificationAdapterPort;
+    this.#loggerPort = loggerPort;
   }
 
   /**
@@ -126,24 +131,16 @@ export class PieceStateService {
   ) {
     if (!hasTransformChanged(changedProperties)) return;
 
+    this.#labelPositionUpdaterPort.updateLabelPosition(piece);
+
     const data = this.#pieceDataRepositoryPort.getPieceData(piece);
     if (!data) {
-      throw new Error(
+      this.#loggerPort.error(
         "PieceStateService: data not found at handleBookStateChanged"
       );
+      return;
     }
 
-    // const bookId = data.type === "StackBook" ? data.getPieceInfoProperty("bookId") : data.getPieceBookInfoProperty("bookId")
-
-    // if(bookId === "GEN") {
-    //   console.log(`[Debug] PieceStateService.handleBookStateChanged hasTransformChanged`, {
-    //     selectionState: data.selectionState,
-    //     currentShape: data.currentShape,
-    //     isShowingChapters: data.isShowingChapters,
-    //   })
-    // }
-
-    this.#labelPositionUpdaterPort.updateLabelPosition(piece);
     if (
       data.selectionState === "Selected" &&
       data.currentShape === "Selected" &&
@@ -163,9 +160,10 @@ export class PieceStateService {
 
     const data = this.#pieceDataRepositoryPort.getPieceData(piece);
     if (!data) {
-      throw new Error(
+      this.#loggerPort.error(
         "PieceStateService: data not found at handleChapterStateChanged"
       );
+      return;
     }
 
     if (data.activityIndicators.length > 0) {

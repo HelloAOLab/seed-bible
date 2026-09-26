@@ -754,6 +754,7 @@ export const bootstrapExtension = () => {
     verseDataRepository: verseRepository,
     versesBundleDataRepository: versesBundleRepository,
     paintAdapterPort: paintAdapter,
+    loggerPort: loggerAdapter,
   });
   const bibleStackEventManager = new BaseEventManager<BibleStackEvents>();
   const labelDateService = new LabelDateService({
@@ -814,6 +815,8 @@ export const bootstrapExtension = () => {
       labelDateService,
       scripturePiecesStateService,
     }),
+
+    loggerPort: loggerAdapter,
   });
 
   const pieceHierarchyService = new PieceHierarchyService({
@@ -833,6 +836,7 @@ export const bootstrapExtension = () => {
     pieceDataRepositoryPort: pieceDataRepository,
     pieceAdapterPort: pieceAdapter,
     scripturePiecesStateServicePort: scripturePiecesStateService,
+    loggerPort: loggerAdapter,
   });
 
   const chapterSelectionService = new ChapterSelectionService({
@@ -868,6 +872,7 @@ export const bootstrapExtension = () => {
       pieceDataRepositoryPort: pieceDataRepository,
       sequenceStateServicePort: sequenceStateService,
       pieceHierarchyServicePort: pieceHierarchyService,
+      loggerPort: loggerAdapter,
     });
 
   const scriptureService = new ScriptureService(
@@ -893,6 +898,7 @@ export const bootstrapExtension = () => {
     activityNotificationAdapterPort: activityNotificationAdapter,
     pieceActivityServicePort: pieceActivityService,
     pieceLabelServicePort: pieceLabelService,
+    loggerPort: loggerAdapter,
   });
   const tourGuideConfigProvider = new TourGuideConfigProvider();
   const tourGuideAdapter = new TourGuideAdapter({
@@ -936,6 +942,7 @@ export const bootstrapExtension = () => {
     pieceHierarchyServicePort: pieceHierarchyService,
     pieceHighlightServicePort: pieceHighlightService,
     stackStructureServicePort: stackStructureService,
+    loggerPort: loggerAdapter,
   });
   const scripturePieceDropService = new ScripturePieceDropService({
     pieceAdapterPort: pieceAdapter,
@@ -945,6 +952,7 @@ export const bootstrapExtension = () => {
     chapterSelectionServicePort: chapterSelectionService,
     pieceHighlightServicePort: pieceHighlightService,
     pieceDropEventPort: bibleStackEventManager,
+    loggerPort: loggerAdapter,
   });
 
   // Stack updater services (leaf -> composite).
@@ -1100,6 +1108,7 @@ export const bootstrapExtension = () => {
     stackUpdateServicePort: stackUpdateService,
     pieceActivityServicePort: pieceActivityService,
     bibleStackEventPort: bibleStackEventManager,
+    loggerPort: loggerAdapter,
   });
 
   const sectionSelectionService = new SectionSelectionService({
@@ -1149,6 +1158,7 @@ export const bootstrapExtension = () => {
     sectionSelectionServicePort: sectionSelectionService,
     sequenceStateServicePort: sequenceStateService,
     paintPort: paintService,
+    loggerPort: loggerAdapter,
   });
 
   const bookInteractionService = new BookInteractionService({
@@ -1189,6 +1199,7 @@ export const bootstrapExtension = () => {
     bookChaptersManagementServicePort: bookChaptersManagementService,
     activityIndicatorsAdapterPort: activityIndicatorsAdapter,
     activityNotificationAdapterPort: activityNotificationAdapter,
+    loggerPort: loggerAdapter,
   });
   const bibleModeService = new BibleModeService({
     sequenceStateServicePort: sequenceStateService,
@@ -1214,6 +1225,7 @@ export const bootstrapExtension = () => {
     bookInteractionServicePort: bookInteractionService,
     testamentInteractionServicePort: testamentInteractionService,
     chapterInteractionServicePort: chapterInteractionService,
+    loggerPort: loggerAdapter,
   });
 
   // 5. Instantiating controllers
@@ -1236,6 +1248,7 @@ export const bootstrapExtension = () => {
     bibleDataRepositoryPort: bibleDataRepository,
     bibleSequenceServicePort: bibleSequenceService,
     sequenceStateServicePort: sequenceStateService,
+    loggerPort: loggerAdapter,
   });
   const coverInteractionController = new CoverInteractionController({
     coverInteractionServicePort: coverInteractionService,

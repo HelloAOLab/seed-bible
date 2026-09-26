@@ -7,7 +7,6 @@ import {
   type SelectionModality,
 } from "../../domain/models/canvas";
 import type { SectionInteractionServicePort } from "../ports/in/SectionInteraction";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import type { PieceDataRepositoryPort } from "../ports/pieces";
@@ -22,6 +21,7 @@ import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { PaintPort } from "../ports/in/Paint";
+import type { LoggerPort } from "../ports/out/Logger";
 
 type SectionDataRepositoryPort = Pick<PieceDataRepositoryPort, "getPieceData">;
 
@@ -34,6 +34,7 @@ interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
   sectionSelectionServicePort: SectionSelectionServicePort;
   paintPort: PaintPort;
+  loggerPort: LoggerPort;
 }
 
 export class SectionInteractionService implements SectionInteractionServicePort {
@@ -45,6 +46,7 @@ export class SectionInteractionService implements SectionInteractionServicePort 
   #sectionSelectionServicePort: ServiceParams["sectionSelectionServicePort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
   #paintPort: ServiceParams["paintPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     sectionDataRepositoryPort,
@@ -55,6 +57,7 @@ export class SectionInteractionService implements SectionInteractionServicePort 
     sectionSelectionServicePort,
     sequenceStateServicePort,
     paintPort,
+    loggerPort,
   }: ServiceParams) {
     this.#sectionDataRepositoryPort = sectionDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
@@ -65,23 +68,25 @@ export class SectionInteractionService implements SectionInteractionServicePort 
     this.#sectionSelectionServicePort = sectionSelectionServicePort;
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#paintPort = paintPort;
+    this.#loggerPort = loggerPort;
   }
 
   #meetsBaseInteractionConditions(section: Piece<"StackSection">) {
     const sectionData = this.#sectionDataRepositoryPort.getPieceData(section);
 
     if (!sectionData) {
-      throw new Error(
+      this.#loggerPort.error(
         "SectionInteractionService: sectionData not found at meetsBaseInteractionConditions"
       );
+      return false;
     }
 
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      sectionData.parentDataIds as StackParentDataIds
+      sectionData.parentDataIds ?? {}
     );
 
     if (
-      bibleData?.currentState === BibleStates.Closed ||
+      (bibleData && bibleData.currentState === BibleStates.Closed) ||
       this.#tourGuideServicePort.isThereAnOngoingTourGuide()
     )
       return false;
@@ -148,9 +153,10 @@ export class SectionInteractionService implements SectionInteractionServicePort 
     const sectionData = this.#sectionDataRepositoryPort.getPieceData(section);
 
     if (!sectionData) {
-      throw new Error(
+      this.#loggerPort.error(
         "SectionInteractionService: sectionData not found at handleSectionFocusBegin"
       );
+      return;
     }
 
     sectionData.beginFocus();
@@ -169,9 +175,10 @@ export class SectionInteractionService implements SectionInteractionServicePort 
     const sectionData = this.#sectionDataRepositoryPort.getPieceData(section);
 
     if (!sectionData) {
-      throw new Error(
+      this.#loggerPort.error(
         "SectionInteractionService: sectionData not found at handleSectionFocusEnd"
       );
+      return;
     }
 
     sectionData.endFocus();

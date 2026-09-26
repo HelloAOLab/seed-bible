@@ -33,8 +33,9 @@ import {
   HighlightRequestSources,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
+import type { LoggerPort } from "../ports/out/Logger";
 
-interface PieceHighlightServiceParams {
+interface ServiceParams {
   eventPort: PieceHighlightEventPort;
   pieceHighlightAdapterPort: PieceHighlightAdapterPort;
   activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
@@ -45,6 +46,7 @@ interface PieceHighlightServiceParams {
   pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   sequenceStateServicePort: PieceHighlightSequenceStateServicePort;
+  loggerPort: LoggerPort;
 }
 
 export class PieceHighlightService implements PieceHighlighterPort {
@@ -59,6 +61,10 @@ export class PieceHighlightService implements PieceHighlighterPort {
       | "StackChapter"
     >
   > = new Map();
+  // Interrupted adapter sequences resolve instead of rejecting, so a superseded
+  // attempt must check it is still the current one before touching state.
+  #currentHighlightAttemptIds: Map<Piece["id"], number> = new Map();
+  #lastHighlightAttemptId = 0;
   #eventPort: PieceHighlightEventPort;
   #pieceHighlightAdapterPort: PieceHighlightAdapterPort;
   #activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
@@ -69,6 +75,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
   #pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
   #pieceHierarchyServicePort: PieceHierarchyServicePort;
   #sequenceStateServicePort: PieceHighlightSequenceStateServicePort;
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     eventPort,
@@ -81,7 +88,8 @@ export class PieceHighlightService implements PieceHighlighterPort {
     pieceDataRepositoryPort,
     pieceHierarchyServicePort,
     sequenceStateServicePort,
-  }: PieceHighlightServiceParams) {
+    loggerPort,
+  }: ServiceParams) {
     this.#eventPort = eventPort;
     this.#pieceHighlightAdapterPort = pieceHighlightAdapterPort;
     this.#activityNotificationAdapterPort = activityNotificationAdapterPort;
@@ -92,6 +100,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#sequenceStateServicePort = sequenceStateServicePort;
+    this.#loggerPort = loggerPort;
   }
 
   isPieceHighlighted(id: Piece["id"]) {
@@ -120,9 +129,10 @@ export class PieceHighlightService implements PieceHighlighterPort {
   }): Promise<void> {
     const data = this.#pieceDataRepositoryPort.getPieceData(piece);
     if (!data) {
-      throw new Error(
+      this.#loggerPort.error(
         "PieceHighlightService: data not found at tryHighlightPiece."
       );
+      return;
     }
 
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
@@ -158,6 +168,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
       return;
     }
 
+    const attemptId = this.#beginHighlightAttempt(piece);
     data.changeHighlightIntensity(HighlightIntensities.Solid);
 
     this.#highlightedPiecesIds.set(piece.id, piece);
@@ -203,9 +214,10 @@ export class PieceHighlightService implements PieceHighlighterPort {
         const currData =
           this.#pieceDataRepositoryPort.getPieceData(currentPiece);
         if (!currData) {
-          throw new Error(
+          this.#loggerPort.error(
             `PieceHighlightService: data not found at tryHighlightPiece`
           );
+          return false;
         }
 
         return (
@@ -236,6 +248,8 @@ export class PieceHighlightService implements PieceHighlighterPort {
         translucencyMode: "Solid",
       }),
     ]);
+
+    if (!this.#tryEndHighlightAttempt(piece, attemptId)) return;
 
     data.changeHighlightState("SequenceComplete");
 
@@ -312,13 +326,18 @@ export class PieceHighlightService implements PieceHighlighterPort {
   }): Promise<void> {
     const data = this.#pieceDataRepositoryPort.getPieceData(piece);
     if (!data) {
-      throw new Error(
+      this.#loggerPort.error(
         "PieceHighlightService: data not found at tryUnhighlightPiece."
       );
+      return;
+    }
+
+    if (data.highlightState === HighlightStates.Idle) {
+      return;
     }
 
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      data.parentDataIds as StackParentDataIds
+      data.parentDataIds ?? {}
     );
 
     if (
@@ -346,18 +365,21 @@ export class PieceHighlightService implements PieceHighlighterPort {
       }
     }
 
-    if (data.highlightState === HighlightStates.Idle) {
-      return;
-    }
-
-    if (delay) {
-      const timerId = this.#schedulerAdapterPort.schedule(delay, async () => {
-        this.#scheduledUnhighlightsMap.delete(piece.id);
+    try {
+      if (delay) {
+        const timerId = this.#schedulerAdapterPort.schedule(delay, async () => {
+          this.#scheduledUnhighlightsMap.delete(piece.id);
+          await this.#executeUnhighlight(piece, data, pacing);
+        });
+        this.#scheduledUnhighlightsMap.set(piece.id, timerId);
+      } else {
         await this.#executeUnhighlight(piece, data, pacing);
-      });
-      this.#scheduledUnhighlightsMap.set(piece.id, timerId);
-    } else {
-      await this.#executeUnhighlight(piece, data, pacing);
+      }
+    } catch (error) {
+      this.#loggerPort.error(
+        "PieceHighlightService: Error executing unhighlight sequence at tryUnhighlightPiece",
+        { error }
+      );
     }
   }
 
@@ -372,9 +394,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
     data: AnyStackData,
     pacing: HighlightPacing
   ): Promise<void> {
-    if (data.highlightState === HighlightStates.Idle) {
-      return;
-    }
+    const attemptId = this.#beginHighlightAttempt(piece);
     const previousState = data.highlightState;
     data.changeHighlightState(HighlightEvents.RequestUnhighlight);
     if (
@@ -383,15 +403,40 @@ export class PieceHighlightService implements PieceHighlighterPort {
     ) {
       this.#pieceHighlightAdapterPort.interruptSequence(piece);
     }
-    await Promise.all([
-      this.#pieceHighlightAdapterPort.unhighlight(piece, pacing),
-      this.#pieceLabelServicePort.hideLabel(piece, pacing),
-    ]);
-    data.changeHighlightState(HighlightEvents.SequenceComplete);
-    this.#highlightedPiecesIds.delete(piece.id);
-    if (data.type === BiblePieces.StackChapter) {
-      this.#pieceActivityServicePort.updateNotification(data);
+    try {
+      await Promise.all([
+        this.#pieceHighlightAdapterPort.unhighlight(piece, pacing),
+        this.#pieceLabelServicePort.hideLabel(piece, pacing),
+      ]);
+      if (!this.#tryEndHighlightAttempt(piece, attemptId)) return;
+      data.changeHighlightState(HighlightEvents.SequenceComplete);
+      this.#highlightedPiecesIds.delete(piece.id);
+      if (data.type === BiblePieces.StackChapter) {
+        this.#pieceActivityServicePort.updateNotification(data);
+      }
+    } catch (error) {
+      this.#loggerPort.error(
+        "PieceHighlightService: Error executing unhighlight sequence at executeUnhighlight.",
+        { error }
+      );
+      if (!this.#tryEndHighlightAttempt(piece, attemptId)) return;
+      data.changeHighlightState(HighlightEvents.RequestHighlight);
+      data.changeHighlightState(HighlightEvents.SequenceComplete);
     }
+  }
+
+  #beginHighlightAttempt(piece: Piece): number {
+    const attemptId = ++this.#lastHighlightAttemptId;
+    this.#currentHighlightAttemptIds.set(piece.id, attemptId);
+    return attemptId;
+  }
+
+  #tryEndHighlightAttempt(piece: Piece, attemptId: number): boolean {
+    if (this.#currentHighlightAttemptIds.get(piece.id) !== attemptId) {
+      return false;
+    }
+    this.#currentHighlightAttemptIds.delete(piece.id);
+    return true;
   }
 
   isUnhighlightScheduled(piece: Piece): boolean {

@@ -8,7 +8,6 @@ import type {
   ScripturePieceDraggingDataRepositoryPort,
 } from "../ports/scripturePieceDragging";
 import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type {
   TestamentDraggingServicePort,
@@ -62,7 +61,7 @@ export class ScripturePieceDraggingService implements TestamentDraggingServicePo
     if (!pieceData?.isBeingDragged) return;
 
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      pieceData.parentDataIds as StackParentDataIds
+      pieceData.parentDataIds ?? {}
     );
 
     if (bibleData?.currentState !== BibleStates.Open) return;

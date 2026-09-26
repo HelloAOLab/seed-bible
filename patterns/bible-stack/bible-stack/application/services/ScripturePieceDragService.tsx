@@ -11,7 +11,6 @@ import type {
   ScripturePieceDataRepositoryPort,
 } from "../ports/scripturePieceDrag";
 import type { StackStructureServicePort } from "../ports/in/StackStructure";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import {
   HighlightPacings,
@@ -22,6 +21,7 @@ import type {
   TestamentDragServicePort,
   ChapterDragServicePort,
 } from "../ports/in/ScripturePieceDrag";
+import type { LoggerPort } from "../ports/out/Logger";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
@@ -30,6 +30,7 @@ interface ServiceParams {
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   pieceHighlightServicePort: PieceHighlighterPort;
   stackStructureServicePort: StackStructureServicePort;
+  loggerPort: LoggerPort;
 }
 
 type PieceConditionGetter = (params: {
@@ -62,6 +63,7 @@ export class ScripturePieceDragService implements BookDragServicePort, Testament
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
   #stackStructureServicePort: ServiceParams["stackStructureServicePort"];
+  #loggerPort: ServiceParams['loggerPort']
 
   constructor({
     sequenceStateServicePort,
@@ -70,6 +72,7 @@ export class ScripturePieceDragService implements BookDragServicePort, Testament
     pieceHierarchyServicePort,
     pieceHighlightServicePort,
     stackStructureServicePort,
+    loggerPort
   }: ServiceParams) {
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#pieceAdapterPort = pieceAdapterPort;
@@ -77,6 +80,7 @@ export class ScripturePieceDragService implements BookDragServicePort, Testament
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
     this.#stackStructureServicePort = stackStructureServicePort;
+    this.#loggerPort = loggerPort;
   }
 
   async handlePieceDrag(
@@ -87,19 +91,20 @@ export class ScripturePieceDragService implements BookDragServicePort, Testament
       | Piece<"StackSection">
       | Piece<"StackTestament">
   ) {
-    const particularCondition = pieceConditionStrategy[piece.type];
-
     const data = this.#scripturePieceDataRepositoryPort.getPieceData(piece);
 
     if (!data) {
-      throw new Error(
+      this.#loggerPort.error(
         "ScripturePieceDragService: data not found at handlePieceDrag."
       );
+      return;
     }
+
+    const particularCondition = pieceConditionStrategy[piece.type];
 
     const { bibleData, testamentData, sectionData, sectionBookData, bookData } =
       this.#pieceHierarchyServicePort.getParentDataChain(
-        data.parentDataIds as StackParentDataIds
+        data.parentDataIds ?? {}
       );
 
     const pieceConditionFails =
@@ -112,7 +117,7 @@ export class ScripturePieceDragService implements BookDragServicePort, Testament
     if (
       this.#sequenceStateServicePort.isThereAnOngoingSequence() ||
       pieceConditionFails ||
-      bibleData?.currentState !== BibleStates.Open
+      (bibleData && bibleData.currentState !== BibleStates.Open)
     )
       return;
 

@@ -6,6 +6,7 @@ import type {
   InteractabilityUnlockerPort,
 } from "../ports/in/PieceInteractability";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
+import type { LoggerPort } from "../ports/out/Logger";
 import type {
   BibleDataRepositoryPort,
   PieceDataRepositoryPort,
@@ -18,6 +19,7 @@ interface ServiceParams {
   pieceDataRepositoryPort: PieceDataRepositoryPort;
   pieceAdapterPort: PieceAdapterPort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
+  loggerPort: LoggerPort;
 }
 
 export class PieceInteractabilityService
@@ -27,17 +29,20 @@ export class PieceInteractabilityService
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #scripturePiecesStateServicePort: ServiceParams["scripturePiecesStateServicePort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     bibleDataRepositoryPort,
     pieceDataRepositoryPort,
     pieceAdapterPort,
     scripturePiecesStateServicePort,
+    loggerPort,
   }: ServiceParams) {
     this.#bibleDataRepositoryPort = bibleDataRepositoryPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#scripturePiecesStateServicePort = scripturePiecesStateServicePort;
+    this.#loggerPort = loggerPort;
   }
 
   blockAll(): void {
@@ -72,27 +77,25 @@ export class PieceInteractabilityService
         !testamentData.isSplitIntoSections
       ) {
         if (!testamentData.piece) {
-          throw new Error(
+          this.#loggerPort.error(
             "PieceInteractabilityService: testamentData.piece not defined at setTestamentsInteractable"
           );
+          return;
         }
         this.#setPieceInteractable({ piece: testamentData.piece, value });
       }
       if (testamentData.isSplitIntoSections) {
         testamentData.childrenData.forEach((sectionData) => {
           if (
-            !(
-              sectionData.type === "StackSectionBook" &&
-              sectionData.selectionState === "Selected"
-            ) &&
             sectionData.isActive &&
             !sectionData.isBeingDragged &&
             sectionData.selectionState !== "Selected"
           ) {
             if (!sectionData.piece) {
-              throw new Error(
+              this.#loggerPort.error(
                 "PieceInteractabilityService: sectionData.piece not defined at setTestamentsInteractable"
               );
+              return;
             }
             this.#setPieceInteractable({ piece: sectionData.piece, value });
           }
@@ -107,9 +110,10 @@ export class PieceInteractabilityService
                 !bookData.isBeingDragged
               ) {
                 if (!bookData.piece) {
-                  throw new Error(
+                  this.#loggerPort.error(
                     "PieceInteractabilityService: bookData.piece not defined at setTestamentsInteractable"
                   );
+                  return;
                 }
                 this.#setPieceInteractable({ piece: bookData.piece, value });
               }

@@ -49,21 +49,26 @@ interface ServiceParams {
 
 type ActivityStrategyType<T extends BiblePiece = BiblePiece> = (
   piece: PieceTypeMap[T],
-  dataRegistryPort: DataRegistryPort
-) => {
-  key: string;
-  typeOfPiece: BiblePiece;
-};
+  dataRegistryPort: DataRegistryPort,
+  loggerPort: LoggerPort
+) =>
+  | {
+      key: string;
+      typeOfPiece: BiblePiece;
+    }
+  | undefined;
 
 const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
   piece,
-  dataRegistryPort
+  dataRegistryPort,
+  loggerPort
 ) => {
   const data = dataRegistryPort.getPieceData(piece);
   if (!data) {
-    throw new Error(
+    loggerPort.error(
       "PieceActvityService: data not found at testamentActivityStrategy"
     );
+    return undefined;
   }
   const key = data.getPieceInfoProperty("name");
   const typeOfPiece = BiblePieces.StackTestament;
@@ -73,7 +78,7 @@ const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
 
 const sectionActivityStrategy: ActivityStrategyType<
   "StackSection" | "StackSectionShadow"
-> = (piece, dataRegistryPort) => {
+> = (piece, dataRegistryPort, loggerPort) => {
   const data =
     piece.type === "StackSection"
       ? dataRegistryPort.getPieceData(piece)
@@ -83,9 +88,10 @@ const sectionActivityStrategy: ActivityStrategyType<
         });
 
   if (!data) {
-    throw new Error(
+    loggerPort.error(
       "PieceActivityService: data not found at sectionActivityStrategy"
     );
+    return undefined;
   }
   const key = data.getPieceInfoProperty("name");
   const typeOfPiece = BiblePieces.StackSection;
@@ -95,14 +101,16 @@ const sectionActivityStrategy: ActivityStrategyType<
 
 const bookActivityStrategy: ActivityStrategyType<"StackBook"> = (
   piece,
-  dataRegistryPort
+  dataRegistryPort,
+  loggerPort
 ) => {
   const data = dataRegistryPort.getPieceData(piece);
 
   if (!data) {
-    throw new Error(
+    loggerPort.error(
       "PieceActivityService: data not found at bookActivityStrategy"
     );
+    return undefined;
   }
   const key = data.getPieceInfoProperty("bookId");
   const typeOfPiece = BiblePieces.StackBook;
@@ -112,14 +120,16 @@ const bookActivityStrategy: ActivityStrategyType<"StackBook"> = (
 
 const sectionBookActivityStrategy: ActivityStrategyType<"StackSectionBook"> = (
   piece,
-  dataRegistryPort
+  dataRegistryPort,
+  loggerPort
 ) => {
   const data = dataRegistryPort.getPieceData(piece);
 
   if (!data) {
-    throw new Error(
+    loggerPort.error(
       "PieceActivityService: data not found at sectionBookActivityStrategy"
     );
+    return undefined;
   }
   const key = data.getPieceBookInfoProperty("bookId");
   const typeOfPiece = BiblePieces.StackBook;
@@ -129,14 +139,16 @@ const sectionBookActivityStrategy: ActivityStrategyType<"StackSectionBook"> = (
 
 const chapterActivityStrategy: ActivityStrategyType<"StackChapter"> = (
   piece,
-  dataRegistryPort
+  dataRegistryPort,
+  loggerPort
 ) => {
   const data = dataRegistryPort.getPieceData(piece);
 
   if (!data) {
-    throw new Error(
+    loggerPort.error(
       "PieceActivityService: data not found at chapterActivityStrategy"
     );
+    return undefined;
   }
   const key = `${data.getCreationParam("bookId")} ${data.getPieceInfoProperty("number")}`;
   const typeOfPiece = BiblePieces.StackChapter;
@@ -161,9 +173,13 @@ interface IndicatorsStrategyParams<T extends BiblePiece> {
   labelDataStorePort: LabelDataStorePort;
 }
 
+interface IndicatorsStrategyErrorMessage {
+  message: string;
+}
+
 type IndicatorsStrategyType<T extends BiblePiece = BiblePiece> = (
   params: IndicatorsStrategyParams<T>
-) => ActivityIndicatorData[];
+) => ActivityIndicatorData[] | IndicatorsStrategyErrorMessage;
 
 const labelTransformerIndicatorsStrategy: IndicatorsStrategyType<
   "InfoLabelTransformer"
@@ -171,7 +187,7 @@ const labelTransformerIndicatorsStrategy: IndicatorsStrategyType<
   const labelData = labelDataStorePort.getDataByTransformerId(piece.id);
 
   if (!labelData) {
-    throw new Error("PieceActivityService: labelData not found");
+    return { message: "PieceActivityService: labelData not found" };
   }
 
   return labelData.activityIndicators;
@@ -183,7 +199,11 @@ const pieceIndicatorsStrategy: IndicatorsStrategyType<"StackChapter"> = ({
 }) => {
   const pieceData = dataRegistryPort.getPieceData(piece);
 
-  if (!pieceData) return [];
+  if (!pieceData) {
+    return {
+      message: "PieceActivityService: pieceData not found",
+    };
+  }
 
   return pieceData.activityIndicators;
 };
@@ -246,9 +266,20 @@ export class PieceActivityService implements PieceActivityServicePort {
     });
   }
 
-  getPieceActivity({ piece }: { piece: Piece }) {
+  getPieceActivity({ piece }: { piece: Piece }): ReadingInstance[] {
+    const strategy = activityStrategiesMap[piece.type] as
+      | ActivityStrategyType<BiblePiece>
+      | undefined;
+
+    if (!strategy) {
+      this.#loggerPort.error(
+        `PieceActivityService: strategy not found at getPieceActivity`
+      );
+      return [];
+    }
+
     const readingInstances: ReadingInstance[] =
-      this.#userPresenceServicePort.getOwnUserPresence() ?? [];
+      this.#userPresenceServicePort.getOwnUserPresence();
     const remoteReadingInstances =
       this.#userPresenceServicePort.getRemotesUserPresence();
     const allReadingInstances: ReadingInstance[] = [
@@ -286,25 +317,27 @@ export class PieceActivityService implements PieceActivityServicePort {
       }
       if (found) {
         const testament = this.#arrangementServicePort.getTestamentByIndices({
-          testamentIndex: testamentIndex as number,
-          arrangementIndex: arrangementIndex as number,
+          testamentIndex: testamentIndex!,
+          arrangementIndex: arrangementIndex!,
         });
         if (!testament) {
-          throw new Error(
+          this.#loggerPort.error(
             "PieceActivityService: testament not found at getPieceActivity"
           );
+          continue;
         }
         const testamentName = testament.name;
         const section = this.#arrangementServicePort.getSectionByIndices({
-          arrangementIndex: arrangementIndex as number,
-          testamentIndex: testamentIndex as number,
-          sectionIndex: sectionIndex as number,
+          arrangementIndex: arrangementIndex!,
+          testamentIndex: testamentIndex!,
+          sectionIndex: sectionIndex!,
         });
 
         if (!section) {
-          throw new Error(
+          this.#loggerPort.error(
             "PieceActivityService: section not found at getPieceActivity"
           );
+          continue;
         }
 
         const sectionName = section.name;
@@ -331,22 +364,16 @@ export class PieceActivityService implements PieceActivityServicePort {
       }
     }
 
-    const strategy = activityStrategiesMap[piece.type] as
-      | ActivityStrategyType<BiblePiece>
-      | undefined;
-
-    if (!strategy) {
-      this.#loggerPort.error(
-        `PieceActivityService: strategy not found at getPieceActivity`
-      );
-      return [];
-    }
-
     // `strategy` was looked up by `piece.type`, so it matches this piece at runtime.
-    const { key, typeOfPiece } = strategy(
+    const result = strategy(
       piece as PieceTypeMap[keyof PieceTypeMap],
-      this.#dataRegistryPort
+      this.#dataRegistryPort,
+      this.#loggerPort
     );
+
+    if (!result) return [];
+
+    const { key, typeOfPiece } = result;
 
     const activity = allReadingInstances.filter((readingInstance) => {
       const instancePath = instancePathMap.get(readingInstance);
@@ -385,13 +412,18 @@ export class PieceActivityService implements PieceActivityServicePort {
       return [];
     }
 
-    const indicators = strategy({
+    const result = strategy({
       piece,
       dataRegistryPort: this.#dataRegistryPort,
       labelDataStorePort: this.#labelDataStorePort,
     });
 
-    return indicators;
+    if ("message" in result) {
+      this.#loggerPort.error(result.message);
+      return [];
+    }
+
+    return result;
   }
 
   getActivityIndicatorByType(
@@ -564,12 +596,7 @@ export class PieceActivityService implements PieceActivityServicePort {
         activityIndex < pieceActivity.length;
         activityIndex++
       ) {
-        const activity = pieceActivity[activityIndex];
-        if (!activity) {
-          throw new Error(
-            `PieceActivityService: activity not found at activityIndex: ${activityIndex}`
-          );
-        }
+        const activity = pieceActivity[activityIndex]!;
         if (activityIndex >= this.#maxIndicators) {
           const extraCount = pieceActivity.length - this.#maxIndicators;
           const { extraIndicatorContent } =

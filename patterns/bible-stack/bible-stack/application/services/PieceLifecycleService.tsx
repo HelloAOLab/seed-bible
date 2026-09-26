@@ -524,15 +524,16 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     if (piece) {
       this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
       this.clearPiece(piece);
-      this.#pieceLifecycleEventPort.emit("OnTestamentDelete", {
-        dataId: testament.id,
-      });
     }
 
     for (const child of children) {
       if (child instanceof StackSectionData) this.deleteSection(child);
       else this.deleteSectionBook(child);
     }
+
+    this.#pieceLifecycleEventPort.emit("OnTestamentDelete", {
+      dataId: testament.id,
+    });
   }
 
   deleteTestaments(testaments: StackTestamentData[]) {
