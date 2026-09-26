@@ -156,6 +156,87 @@ const ENTRY_KIND_PRIORITY = {
   join: 3,
 } as const;
 
+type TimelineEntry =
+  | { kind: "message"; timeMs: number; message: ParsedChatTextMessage }
+  | { kind: "tool"; timeMs: number; message: ToolCallChatMessage }
+  | { kind: "choices"; timeMs: number; message: ChoicesChatMessage }
+  | { kind: "join"; timeMs: number; participant: ChatParticipant };
+
+function authorKeyOf(entry: TimelineEntry): string {
+  if (entry.kind === "join") {
+    return "";
+  }
+  return entry.message.authors.join(" ");
+}
+
+/**
+ * A choice card is created while the assistant is still deciding what to say,
+ * so its timestamp is earlier than the question it belongs to. Draw it after
+ * that question. Tool-use lines between the card and the question stay put.
+ */
+function placeChoicesAfterAnswer(entries: TimelineEntry[]): TimelineEntry[] {
+  const moved = new Set<number>();
+  const insertAfter = new Map<number, TimelineEntry[]>();
+
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    if (entry?.kind !== "choices") {
+      continue;
+    }
+    const authorKey = authorKeyOf(entry);
+    if (!authorKey) {
+      continue;
+    }
+
+    let target = -1;
+    for (let j = i + 1; j < entries.length; j++) {
+      const next = entries[j];
+      if (!next || next.kind === "tool" || next.kind === "join") {
+        continue;
+      }
+      if (next.kind === "choices") {
+        continue;
+      }
+      if (next.kind === "message" && authorKeyOf(next) === authorKey) {
+        target = j;
+        while (target + 1 < entries.length) {
+          const following = entries[target + 1];
+          if (
+            !following ||
+            following.kind !== "message" ||
+            authorKeyOf(following) !== authorKey
+          ) {
+            break;
+          }
+          target += 1;
+        }
+      }
+      break;
+    }
+
+    if (target === -1) {
+      continue;
+    }
+    moved.add(i);
+    const list = insertAfter.get(target) ?? [];
+    list.push(entry);
+    insertAfter.set(target, list);
+  }
+
+  const placed: TimelineEntry[] = [];
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    if (entry && !moved.has(i)) {
+      placed.push(entry);
+    }
+    const extra = insertAfter.get(i);
+    if (extra) {
+      placed.push(...extra);
+    }
+  }
+  return placed;
+}
+
 /**
  * Interleaves messages, choice cards, tool-call events, and participant join
  * events into a single time-ordered list of render groups. Consecutive
@@ -179,36 +260,30 @@ function buildTimeline(
     return [];
   }
 
-  type Entry =
-    | { kind: "message"; timeMs: number; message: ParsedChatTextMessage }
-    | { kind: "tool"; timeMs: number; message: ToolCallChatMessage }
-    | { kind: "choices"; timeMs: number; message: ChoicesChatMessage }
-    | { kind: "join"; timeMs: number; participant: ChatParticipant };
-
-  const entries: Entry[] = [
+  const entries: TimelineEntry[] = [
     ...messages.map(
-      (message): Entry => ({
+      (message): TimelineEntry => ({
         kind: "message",
         timeMs: message.timeMs,
         message,
       })
     ),
     ...toolCallMessages.map(
-      (message): Entry => ({
+      (message): TimelineEntry => ({
         kind: "tool",
         timeMs: message.timeMs,
         message,
       })
     ),
     ...choicesMessages.map(
-      (message): Entry => ({
+      (message): TimelineEntry => ({
         kind: "choices",
         timeMs: message.timeMs,
         message,
       })
     ),
     ...getJoinEvents(messages, participants).map(
-      (event): Entry => ({
+      (event): TimelineEntry => ({
         kind: "join",
         timeMs: event.timeMs,
         participant: event.participant,
@@ -223,9 +298,10 @@ function buildTimeline(
       a.timeMs - b.timeMs ||
       ENTRY_KIND_PRIORITY[a.kind] - ENTRY_KIND_PRIORITY[b.kind]
   );
+  const ordered = placeChoicesAfterAnswer(entries);
 
   const groups: ChatTimelineGroup[] = [];
-  for (const entry of entries) {
+  for (const entry of ordered) {
     const lastGroup = groups[groups.length - 1];
     if (entry.kind === "message") {
       const key = entry.message.authors.join(" ");
@@ -672,6 +748,7 @@ export function ChatView(props: ChatViewProps) {
   );
   const selectedChoiceIds = useSignal<Record<string, string>>({});
   const pendingChoiceKey = useSignal<string | null>(null);
+  const choiceErrorMessageId = useSignal<string | null>(null);
   const localDraft = useSignal("");
   // Prefer the session draft so typed text survives ChatView unmounting when
   // the user clicks a verse (that closes the floating panel).
@@ -1005,6 +1082,10 @@ export function ChatView(props: ChatViewProps) {
     }
   };
 
+  const reportChoiceError = (messageId: string) => {
+    choiceErrorMessageId.value = messageId;
+  };
+
   const chooseTranslation = async (
     message: ChoicesChatMessage,
     choiceId: string
@@ -1012,8 +1093,10 @@ export function ChatView(props: ChatViewProps) {
     if (message.choiceType !== "translation" || pendingChoiceKey.value) {
       return;
     }
+    choiceErrorMessageId.value = null;
     const readingState = state.app.selectedTab.value?.readingState;
     if (!readingState) {
+      reportChoiceError(message.id);
       return;
     }
     pendingChoiceKey.value = `${message.id}:${choiceId}`;
@@ -1029,7 +1112,11 @@ export function ChatView(props: ChatViewProps) {
           ...selectedChoiceIds.value,
           [message.id]: choiceId,
         };
+      } else {
+        reportChoiceError(message.id);
       }
+    } catch {
+      reportChoiceError(message.id);
     } finally {
       pendingChoiceKey.value = null;
     }
@@ -1108,6 +1195,13 @@ export function ChatView(props: ChatViewProps) {
                 >
                   {heading ? (
                     <p className="sb-chat-view-choices-label">{heading}</p>
+                  ) : null}
+                  {choiceErrorMessageId.value === message.id ? (
+                    <p className="sb-chat-view-error" role="alert">
+                      {t("chat-switch-translation-failed", {
+                        defaultValue: "Couldn't switch translation.",
+                      })}
+                    </p>
                   ) : null}
                   <div className="sb-chat-view-choices-list">
                     {message.choices.map((choice) => {

@@ -12,7 +12,7 @@ describe("buildBonfireCustomInstructions", () => {
         availableTranslationsNote: null,
       })
     ).toBe(
-      "You are chatting with a user who is reading the Bible. They are currently reading: JHN 3. Prefer the Bible translation Berean Standard Bible (BSB). Reply in fr-FR."
+      "You are chatting with a user who is reading the Bible. They are currently reading: JHN 3. User has their UI language set to fr-FR, however when speaking to the user you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to speaking to them in fr-FR. When quoting scripture for the user, use their active Bible translation which is Berean Standard Bible (BSB)."
     );
   });
 
@@ -28,7 +28,11 @@ describe("buildBonfireCustomInstructions", () => {
     });
 
     expect(note).toContain(
-      "Prefer the Bible translation Berean Standard Bible (BSB)."
+      "prioritize replying in the language they are writing in"
+    );
+    expect(note).toContain("speaking to them in fr-FR");
+    expect(note).toContain(
+      "When quoting scripture for the user, use their active Bible translation which is Berean Standard Bible (BSB)."
     );
     expect(note).toContain("LSG (fra_lsg)");
     expect(note).toContain("Only recommend translations from this list.");

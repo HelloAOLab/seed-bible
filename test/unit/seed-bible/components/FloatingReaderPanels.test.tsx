@@ -226,6 +226,7 @@ function createMockChatSession(
     markAsRead: vi.fn(),
     sendMessage: vi.fn().mockResolvedValue(undefined),
     appendMessage: vi.fn(),
+    deferUntilResponseSettled: vi.fn(),
     setTypingStatus: vi.fn(),
     participants: signal([]),
     totalParticipants: signal([]),

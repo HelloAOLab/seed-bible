@@ -6,6 +6,7 @@ export * from "./BibleSelectorManager";
 export * from "./BibleToolsManager";
 export * from "./SavesManager";
 export * from "./ChapterText";
+export * from "./DiscoverManager";
 export * from "./ExtensionManager";
 export * from "./FreeUseBibleAPI";
 export * from "./InvitationsManager";

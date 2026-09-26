@@ -80,6 +80,7 @@ function createMockChatSession(
     markAsRead: vi.fn(),
     sendMessage: vi.fn().mockResolvedValue(undefined),
     appendMessage: vi.fn(),
+    deferUntilResponseSettled: vi.fn(),
     setTypingStatus: vi.fn(),
     participants: signal([]),
     totalParticipants: signal([]),
@@ -2018,10 +2019,17 @@ describe("ChatView", () => {
 
   function renderChoiceCard(
     books: { id: string }[],
-    options: { hasTab?: boolean } = {}
+    options: {
+      hasTab?: boolean;
+      booksError?: boolean;
+      selectError?: boolean;
+    } = {}
   ) {
     const translationId = signal("eng_bsb");
     const selectTranslationAndChapter = vi.fn(async () => {
+      if (options.selectError) {
+        throw new Error("offline");
+      }
       translationId.value = "fra_lsg";
     });
     const selectTranslation = vi.fn(async () => {
@@ -2057,7 +2065,9 @@ describe("ChatView", () => {
         selectedTab: signal(options.hasTab === false ? null : { readingState }),
       },
       bibleData: {
-        getTranslationBooks: vi.fn().mockResolvedValue({ books }),
+        getTranslationBooks: options.booksError
+          ? vi.fn().mockRejectedValue(new Error("offline"))
+          : vi.fn().mockResolvedValue({ books }),
       },
       chats: {
         composerDraft: signal(""),
@@ -2146,5 +2156,96 @@ describe("ChatView", () => {
         .querySelector(".sb-chat-view-choice")
         ?.getAttribute("aria-pressed")
     ).toBe("false");
+    expect(container.querySelector(".sb-chat-view-error")?.textContent).toBe(
+      "Couldn't switch translation."
+    );
+  });
+
+  it("shows an error when switching the translation fails", async () => {
+    renderChoiceCard([{ id: "JHN" }], { booksError: true });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-chat-view-choice")!
+        .click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector(".sb-chat-view-error")?.textContent).toBe(
+      "Couldn't switch translation."
+    );
+    expect(
+      container
+        .querySelector(".sb-chat-view-choice")
+        ?.getAttribute("aria-pressed")
+    ).toBe("false");
+  });
+
+  it("shows an error when the reader throws while switching", async () => {
+    renderChoiceCard([{ id: "JHN" }], { selectError: true });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-chat-view-choice")!
+        .click();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector(".sb-chat-view-error")?.textContent).toBe(
+      "Couldn't switch translation."
+    );
+  });
+
+  it("shows translation choices under the question that offers them", () => {
+    const question = createMockMessage({
+      id: "ai-1",
+      authors: ["provider-1"],
+      timeMs: 30,
+      text: "Which French translation would you like?",
+      parts: ["Which French translation would you like?"],
+    });
+    const choice: ChoicesChatMessage = {
+      id: "choices-1",
+      authors: ["provider-1"],
+      timeMs: 10,
+      targets: [],
+      type: "choices",
+      choiceType: "translation",
+      choices: [{ id: "fra_lsg", label: "LSG" }],
+    };
+    const chat = createMockChatSession({
+      messages: signal<ChatMessage[]>([
+        choice,
+        createMockToolCallMessage({
+          id: "tool-1",
+          authors: ["provider-1"],
+          timeMs: 20,
+        }),
+        question,
+      ]),
+      parsedMessages: signal([question]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const order = [
+      ...container.querySelectorAll(
+        ".sb-chat-view-event, .sb-chat-view-message-group, .sb-chat-view-choices"
+      ),
+    ].map((node) => node.className.split(" ")[0]);
+    expect(order).toEqual([
+      "sb-chat-view-event",
+      "sb-chat-view-message-group",
+      "sb-chat-view-choices",
+    ]);
+    expect(
+      container.querySelector(".sb-chat-view-message-body")?.textContent
+    ).toContain("Which French translation would you like?");
   });
 });

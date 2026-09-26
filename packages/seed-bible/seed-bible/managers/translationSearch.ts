@@ -1,4 +1,4 @@
-import type { AIProviderFunctionTool } from "./AIManager";
+import type { AIProviderFunctionTool, AIToolCallContext } from "./AIManager";
 import { generateFunctionTool } from "./AIManager";
 import {
   DEFAULT_TRANSLATIONS_BY_LANGUAGE,
@@ -20,6 +20,10 @@ const MAX_SUGGESTED_TRANSLATIONS = 8;
  * it is the whole catalog.
  */
 const MAX_PROMPT_LISTED = 24;
+/** Ids the app already treats as the default Bible for a UI language. */
+const DEFAULT_TRANSLATION_IDS = new Set(
+  Array.from(DEFAULT_TRANSLATIONS_BY_LANGUAGE.values(), (entry) => entry.id)
+);
 
 export interface TranslationSearchHit {
   id: string;
@@ -179,6 +183,20 @@ export function searchTranslationCatalog(
     .sort((a, b) => {
       if (b.score !== a.score) {
         return b.score - a.score;
+      }
+      // A language query ties hundreds of rows. Prefer the translation this
+      // app already defaults to for that language, then a complete Bible,
+      // and only then alphabetical order.
+      const byDefault =
+        Number(DEFAULT_TRANSLATION_IDS.has(b.translation.id)) -
+        Number(DEFAULT_TRANSLATION_IDS.has(a.translation.id));
+      if (byDefault !== 0) {
+        return byDefault;
+      }
+      const aComplete = a.translation.numberOfBooks >= 66 ? 0 : 1;
+      const bComplete = b.translation.numberOfBooks >= 66 ? 0 : 1;
+      if (aComplete !== bComplete) {
+        return aComplete - bComplete;
       }
       const byShort = a.translation.shortName.localeCompare(
         b.translation.shortName
@@ -435,11 +453,15 @@ const suggestTranslationsParameters = z.object({
 export function createTranslationAgentTools(deps: {
   loadCatalog: () => Promise<readonly Translation[]>;
   /**
-   * Posts the choice card into the open chat. Throw when there is no chat
-   * to post into; the tool reports that to the agent instead of claiming the
-   * buttons were shown.
+   * Posts the choice card into the chat that called the tool (`call.chatId`),
+   * falling back to the selected chat. Throw when there is no chat to post
+   * into; the tool reports that to the agent instead of claiming the buttons
+   * were shown.
    */
-  postTranslationChoices: (choices: { id: string; label: string }[]) => void;
+  postTranslationChoices: (
+    choices: { id: string; label: string }[],
+    call?: AIToolCallContext
+  ) => void;
 }): AIProviderFunctionTool[] {
   const searchTranslations = generateFunctionTool({
     name: "searchTranslations",
@@ -462,7 +484,7 @@ export function createTranslationAgentTools(deps: {
     description:
       "Shows the reader buttons for translations to switch the open Bible tab to. Pass ids from searchTranslations. Tapping a button stays on the same chapter when that translation includes it. Unknown ids are ignored and reported back. Call this when you want the reader to switch, instead of only naming translations in prose.",
     parameters: suggestTranslationsParameters,
-    function: async (args) => {
+    function: async (args, call) => {
       let catalog: readonly Translation[];
       try {
         catalog = await deps.loadCatalog();
@@ -488,7 +510,7 @@ export function createTranslationAgentTools(deps: {
         label: translationChoiceLabel(translation),
       }));
       try {
-        deps.postTranslationChoices(choices);
+        deps.postTranslationChoices(choices, call);
       } catch (err) {
         return `error: ${err instanceof Error ? err.message : String(err)}`;
       }

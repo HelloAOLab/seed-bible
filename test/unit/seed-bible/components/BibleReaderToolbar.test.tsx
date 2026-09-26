@@ -411,6 +411,31 @@ describe("BibleReaderToolbar — verse selection vs. side panes", () => {
     }
   });
 
+  it("does not clear the verse selection when a tap lands in the Discover panel beside the chapter", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    // Stands in for the compact Discover panel `BibleReader.tsx` renders next
+    // to the chapter, e.g. a tap on one of its filter chips.
+    const discoverPanel = document.createElement("div");
+    discoverPanel.className = "sb-bible-reader-discover-panel";
+    const chip = document.createElement("button");
+    discoverPanel.appendChild(chip);
+    document.body.appendChild(discoverPanel);
+
+    try {
+      await act(async () => {
+        chip.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+    } finally {
+      discoverPanel.remove();
+    }
+  });
+
   it("does not clear the verse selection when a tap lands inside a floating pane", async () => {
     const readingState = await selectFirstVerse();
     await renderToolbar();

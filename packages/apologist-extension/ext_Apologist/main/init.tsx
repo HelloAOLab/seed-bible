@@ -390,7 +390,10 @@ export default function initApologistExtension() {
                 }
 
                 const args = JSON.parse(fn.arguments);
-                const result = await tool.function(args);
+                const result = await tool.function(args, {
+                  chatId: chatContext.chatId,
+                  providerId: PROVIDER_ID,
+                });
 
                 messages.push({
                   role: "tool",

@@ -11,9 +11,13 @@ export function buildBonfireCustomInstructions(options: {
   uiLanguage: string;
   availableTranslationsNote: string | null;
 }): string {
-  const reading = `You are chatting with a user who is reading the Bible. They are currently reading: ${options.bookId} ${options.chapterNumber}. Prefer the Bible translation ${options.translationLabel} (${options.translationShortName}). Reply in ${options.uiLanguage}.`;
-  if (!options.availableTranslationsNote) {
-    return reading;
-  }
-  return `${reading} ${options.availableTranslationsNote}`;
+  const reading = [
+    `You are chatting with a user who is reading the Bible.`,
+    `They are currently reading: ${options.bookId} ${options.chapterNumber}.`,
+    `User has their UI language set to ${options.uiLanguage}, however when speaking to the user you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to speaking to them in ${options.uiLanguage}.`,
+    `When quoting scripture for the user, use their active Bible translation which is ${options.translationLabel} (${options.translationShortName}).`,
+  ].join(" ");
+  return options.availableTranslationsNote
+    ? `${reading} ${options.availableTranslationsNote}`
+    : reading;
 }

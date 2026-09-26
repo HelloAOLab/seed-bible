@@ -4,6 +4,7 @@ import {
   type SeedBibleState,
 } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
+import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/ProfilePane/ProfilePane";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type {
   Translation,
@@ -12,6 +13,8 @@ import type {
 import {
   createTestSeedBibleState,
   type CreateTestSeedBibleStateOptions,
+  // The local `waitFor` below can't run under fake timers; this one advances them.
+  waitFor as waitForUnderFakeTimers,
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
 import {
@@ -1559,6 +1562,75 @@ describe("createSeedBibleState", () => {
       }
     });
 
+    it("gives a new visitor on Welcome no credit for the chapter loaded behind it", async () => {
+      // The real boot path: a bare URL auto-opens Today over Welcome, and the
+      // reader still loads its default chapter (Genesis 1) underneath.
+      jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+      mockSaveReadingSpan.mockClear();
+      const state = await createStateWithOptions({ todayOpen: "fromUrl" });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await waitForUnderFakeTimers(
+        () => readingState.chapterData.value !== null
+      );
+
+      expect(readingState.chapterData.value!.book.id).toBe("GEN");
+      expect(readingState.chapterData.value!.chapter.number).toBe(1);
+      expect(state.today.isOpen.value).toBe(true);
+      expect(state.today.readingHistory.value.status).toBe("empty");
+
+      vi.advanceTimersByTime(60000);
+
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
+    });
+
+    it("does not credit the chapter behind Today while Today covers it", async () => {
+      const state = await createStateWithOptions({ todayOpen: true });
+      expect(state.today.isOpen.value).toBe(true);
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingSpan.mockClear();
+
+      vi.advanceTimersByTime(60000);
+
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
+    });
+
+    it("starts crediting once Today closes, from the moment it closes", async () => {
+      const state = await createStateWithOptions({ todayOpen: true });
+      setSelectedTabChapter(state, "genesis", 1);
+      vi.advanceTimersByTime(20000);
+      mockSaveReadingSpan.mockClear();
+
+      state.today.close();
+      await Promise.resolve();
+      const closedAtSeconds = Math.floor(Date.now() / 1000);
+
+      vi.advanceTimersByTime(5000);
+
+      expect(mockSaveReadingSpan).toHaveBeenCalledTimes(1);
+      expect(mockSaveReadingSpan).toHaveBeenLastCalledWith(
+        ...anySpanFor("genesis", 1)
+      );
+      const [, , from, to] = mockSaveReadingSpan.mock.calls[0]!;
+      expect(from).toBeGreaterThanOrEqual(closedAtSeconds);
+      expect(to - from).toBe(5);
+    });
+
+    it("stops crediting when Today opens over the chapter being read", async () => {
+      const state = await createState();
+      setSelectedTabChapter(state, "genesis", 1);
+      vi.advanceTimersByTime(15000);
+      expect(mockSaveReadingSpan).toHaveBeenCalled();
+
+      state.today.open();
+      await Promise.resolve();
+      expect(state.today.isOpen.value).toBe(true);
+      mockSaveReadingSpan.mockClear();
+
+      vi.advanceTimersByTime(60000);
+
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
+    });
+
     it("credits at most one tick when the app freezes without reporting itself hidden", async () => {
       const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
@@ -2935,5 +3007,115 @@ describe("opening another screen while Today is up", () => {
 
     expect(paneIds(state)).toEqual(["test-side-pane"]);
     expect(state.today.isOpen.value).toBe(false);
+  });
+
+  it("keeps the Profile screen up when it is opened over Today", async () => {
+    const state = await createState();
+    await openToday(state);
+
+    state.openProfile();
+    await Promise.resolve();
+
+    expect(state.isProfileOpen.value).toBe(true);
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
+  });
+});
+
+describe("translation choice cards", () => {
+  const partialOnly: Translation = {
+    id: "partial_only",
+    name: "Only Partial",
+    englishName: "Only Partial",
+    website: "https://example.com",
+    licenseUrl: "https://example.com/license",
+    shortName: "PART",
+    language: "zzz",
+    textDirection: "ltr",
+    availableFormats: ["json"],
+    listOfBooksApiLink: "/api/partial_only/books.json",
+    numberOfBooks: 1,
+    totalNumberOfChapters: 1,
+    totalNumberOfVerses: 1,
+  };
+
+  function toolNamed(state: SeedBibleState, name: string) {
+    const tool = state.chats.context.value.tools?.find(
+      (entry) => entry.name === name
+    );
+    if (!tool) {
+      throw new Error(`${name} was not registered`);
+    }
+    return tool;
+  }
+
+  it("searches the full catalog when a chapter load has only merged one translation", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    state.bibleData.catalogLoaded.value = false;
+    state.bibleData.availableTranslations.value = [partialOnly];
+
+    const result = (await toolNamed(state, "searchTranslations").function({
+      query: "AAB",
+    })) as { translations: { id: string }[] };
+
+    expect(result.translations.map((hit) => hit.id)).toContain("AAB");
+    expect(result.translations.map((hit) => hit.id)).not.toContain(
+      "partial_only"
+    );
+  });
+
+  it("reports an error when no chat can receive the card", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+
+    await expect(
+      toolNamed(state, "suggestTranslations").function(
+        { translationIds: ["AAB"] },
+        { chatId: "missing-chat" }
+      )
+    ).resolves.toBe("error: No chat is open.");
+  });
+
+  it("card posts to the calling chat even when another chat is selected", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    state.chats.registerProvider({
+      id: "ai-first",
+      name: "First",
+      supportsSharedChats: false,
+      generateResponse: async () => null,
+    });
+    state.chats.registerProvider({
+      id: "ai-second",
+      name: "Second",
+      supportsSharedChats: false,
+      generateResponse: async () => null,
+    });
+    const chatA = state.chats.createLocalSession();
+    const chatB = state.chats.createLocalSession();
+    chatA.addParticipant("ai-first");
+    chatA.addParticipant("ai-second");
+    state.chats.selectChat(chatB.id);
+
+    await toolNamed(state, "suggestTranslations").function(
+      { translationIds: ["AAB"] },
+      { chatId: chatA.id, providerId: "ai-second" }
+    );
+
+    expect(
+      chatA.messages.value.find((message) => message.type === "choices")
+    ).toMatchObject({
+      type: "choices",
+      choiceType: "translation",
+      authors: ["ai-second"],
+      choices: [{ id: "AAB", label: "AAB (Accessible Ancients Bible)" }],
+    });
+    expect(
+      chatB.messages.value.filter((message) => message.type === "choices")
+    ).toEqual([]);
   });
 });

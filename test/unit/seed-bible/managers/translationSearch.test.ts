@@ -164,6 +164,38 @@ describe("searchTranslationCatalog", () => {
     expect(result.translations).toHaveLength(2);
     expect(result.total).toBeGreaterThan(2);
   });
+
+  it("prefers the default translation, then a complete Bible, when scores tie", () => {
+    const catalog = [
+      makeTranslation({
+        id: "eng_aaa",
+        shortName: "AAA",
+        language: "eng",
+        languageEnglishName: "English",
+        numberOfBooks: 27,
+      }),
+      makeTranslation({
+        id: "eng_zzz",
+        shortName: "ZZZ",
+        language: "eng",
+        languageEnglishName: "English",
+        numberOfBooks: 66,
+      }),
+      makeTranslation({
+        id: "AAB",
+        shortName: "AAB",
+        language: "eng",
+        languageEnglishName: "English",
+        numberOfBooks: 66,
+      }),
+    ];
+
+    expect(
+      searchTranslationCatalog(catalog, "English").translations.map(
+        (hit) => hit.id
+      )
+    ).toEqual(["AAB", "eng_zzz", "eng_aaa"]);
+  });
 });
 
 describe("resolveSuggestedTranslations", () => {

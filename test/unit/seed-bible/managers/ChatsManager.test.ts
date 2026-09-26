@@ -1493,6 +1493,56 @@ describe("createChatsManager", () => {
     expect(generateResponse).not.toHaveBeenCalled();
   });
 
+  it("deferUntilResponseSettled() posts a choice card after the assistant's reply", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: () => {
+        session.deferUntilResponseSettled(() => {
+          session.appendMessage(
+            {
+              type: "choices",
+              choiceType: "translation",
+              choices: [{ id: "fra_lsg", label: "LSG" }],
+            },
+            ["provider-1"]
+          );
+        });
+        return { type: "text", text: "Which French translation?" };
+      },
+    });
+    session.addParticipant("provider-1");
+
+    await session.sendMessage({
+      type: "text",
+      text: "Is there a French Bible?",
+    });
+
+    await vi.waitFor(() => {
+      expect(session.messages.value.at(-1)?.type).toBe("choices");
+    });
+
+    expect(session.messages.value.map((message) => message.type)).toEqual([
+      "text",
+      "text",
+      "choices",
+    ]);
+    expect(session.messages.value[1]).toMatchObject({
+      text: "Which French translation?",
+    });
+    expect(session.messages.value[2]).toMatchObject({
+      type: "choices",
+      choices: [{ id: "fra_lsg", label: "LSG" }],
+    });
+  });
+
   it("shared chats keep choice cards and drop message types they do not know", () => {
     const { session: sharedSession } = createSharedSessionMock({
       initialChats: [

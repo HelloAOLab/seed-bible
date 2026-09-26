@@ -291,6 +291,7 @@
   "no-chat-messages": "No messages yet",
   "start-conversation": "Start a conversation",
   "chat-switch-translation": "Switch translation",
+  "chat-switch-translation-failed": "Couldn't switch translation.",
   "chat-switch-to-translation": "Switch to {{name}}",
   "presence-one-is-here": "{{name}} is here",
   "presence-many-are-here": "{{count}} people are here",
@@ -645,7 +646,7 @@
   "greeting-night": "Good night!",
   "last-48-hours": "Last 48 hours",
   "open-bible": "Open Bible",
-  "personal-greeting": "Welcome, {{name}}!",
+  "personal-greeting": "Welcome {{name}}",
   "resume-reading": "CONTINUE WHERE YOU LEFT OFF",
   "resume-reading-loading": "Loading your reading history…",
   "selected-year": "Year: {{year}}",
@@ -852,5 +853,15 @@
   "adopt-device-content-kind-both": "highlights and notes",
   "adopt-device-content-add": "Add to account",
   "adopt-device-content-skip": "Don't add",
-  "your-content-empty-saves": "Passages you save will show up here."
+  "your-content-empty-saves": "Passages you save will show up here.",
+  "discover-choose-filter-hint": "Pick a filter above to see more from this chapter.",
+  "take-a-tour": "Take a tour",
+  "share-reading-plan": "Share plan",
+  "reading-plan-url-copied": "Reading plan URL copied to clipboard",
+  "failed-to-load-reading-plan": "Failed to load reading plan",
+  "theme-system": "System",
+  "customization-default-translation": "Default translation",
+  "customization-default-translation-none": "Seed Bible's default",
+  "customization-default-translation-unavailable": "{{id}} (unavailable)",
+  "filter-translations": "Filter translations"
 }

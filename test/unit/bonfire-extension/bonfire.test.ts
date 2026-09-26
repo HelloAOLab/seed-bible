@@ -55,6 +55,18 @@ function textMessage(text: string): ChatMessage {
 async function setUpBonfireChat(options: {
   readingState: MockReadingState | null;
   language?: string;
+  bibleData?: {
+    catalogLoaded: Signal<boolean>;
+    availableTranslations: Signal<
+      Array<
+        CatalogTranslation & {
+          languageEnglishName?: string;
+          numberOfBooks?: number;
+        }
+      >
+    >;
+    getTranslations: () => Promise<unknown>;
+  };
 }) {
   let provider: ChatProvider | null = null;
   const context = {
@@ -64,6 +76,7 @@ async function setUpBonfireChat(options: {
       ),
     },
     i18n: { language: signal(options.language ?? "en") },
+    bibleData: options.bibleData,
     chats: {
       registerProvider: (registered: ChatProvider) => {
         provider = registered;
@@ -124,6 +137,7 @@ describe("registerBonfireChatProvider custom instructions", () => {
   beforeEach(() => {
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -145,8 +159,12 @@ describe("registerBonfireChatProvider custom instructions", () => {
 
     expect(instructions).toContain("They are currently reading: JHN 3.");
     expect(instructions).toContain(
-      "use their active Bible translation which is King James (Authorized) Version (KJAV)."
+      "When quoting scripture for the user, use their active Bible translation which is King James (Authorized) Version (KJAV)."
     );
+    expect(instructions).toContain(
+      "prioritize replying in the language they are writing in"
+    );
+    expect(instructions).not.toContain("Reply in en");
     expect(instructions).not.toContain("BSB");
   });
 
@@ -158,14 +176,16 @@ describe("registerBonfireChatProvider custom instructions", () => {
     const { sendMessage } = await setUpBonfireChat({ readingState });
 
     expect(await sendMessage("First question")).toContain(
-      "which is King James (Authorized) Version (KJAV)."
+      "When quoting scripture for the user, use their active Bible translation which is King James (Authorized) Version (KJAV)."
     );
 
     readingState.translation.value = FRA_LSG;
     readingState.translationId.value = "fra_lsg";
 
     const instructions = await sendMessage("Second question");
-    expect(instructions).toContain("which is Louis Segond 1910 (LSG).");
+    expect(instructions).toContain(
+      "When quoting scripture for the user, use their active Bible translation which is Louis Segond 1910 (LSG)."
+    );
     expect(instructions).not.toContain("King James");
   });
 
@@ -179,7 +199,9 @@ describe("registerBonfireChatProvider custom instructions", () => {
 
     const instructions = await sendMessage("Hello");
 
-    expect(instructions).toContain("which is fra_lsg (fra_lsg).");
+    expect(instructions).toContain(
+      "When quoting scripture for the user, use their active Bible translation which is fra_lsg (fra_lsg)."
+    );
     expect(instructions).not.toContain("unknown");
   });
 
@@ -189,7 +211,7 @@ describe("registerBonfireChatProvider custom instructions", () => {
     const instructions = await sendMessage("Hello");
 
     expect(instructions).toContain(
-      "use their active Bible translation which is unknown"
+      "When quoting scripture for the user, use their active Bible translation which is unknown ()."
     );
   });
 
@@ -205,6 +227,71 @@ describe("registerBonfireChatProvider custom instructions", () => {
     const instructions = await sendMessage("Olá");
 
     expect(instructions).toContain("User has their UI language set to pt-BR,");
+    expect(instructions).toContain("speaking to them in pt-BR");
     expect(instructions).not.toContain("pt_BR");
+    expect(instructions).not.toContain("Reply in pt-BR");
+  });
+
+  it("lists translations the reader can open when the catalog loads", async () => {
+    const getTranslations = vi.fn();
+    const { sendMessage } = await setUpBonfireChat({
+      readingState: createReadingState({
+        translation: FRA_LSG,
+        translationId: "fra_lsg",
+      }),
+      language: "fr",
+      bibleData: {
+        catalogLoaded: signal(true),
+        availableTranslations: signal([
+          {
+            ...FRA_LSG,
+            languageEnglishName: "French",
+            numberOfBooks: 66,
+          },
+          {
+            id: "fra_ncl",
+            name: "Sainte Bible néo-Crampon Libre",
+            englishName: "French néo-Crampon Libre",
+            shortName: "NCL",
+            language: "fra",
+            languageEnglishName: "French",
+            numberOfBooks: 66,
+          },
+        ]),
+        getTranslations,
+      },
+    });
+
+    const instructions = await sendMessage("Y a-t-il une Bible française ?");
+
+    expect(getTranslations).not.toHaveBeenCalled();
+    expect(instructions).toContain("Translations available in French:");
+    expect(instructions).toContain("LSG (fra_lsg)");
+    expect(instructions).toContain("NCL (fra_ncl)");
+    expect(instructions).toContain(
+      "Only recommend translations from this list."
+    );
+  });
+
+  it("still sends the message when the catalog cannot be loaded", async () => {
+    const { sendMessage } = await setUpBonfireChat({
+      readingState: createReadingState({
+        translation: ENG_KJV,
+        translationId: "eng_kjv",
+      }),
+      bibleData: {
+        catalogLoaded: signal(false),
+        availableTranslations: signal([]),
+        getTranslations: () => Promise.reject(new Error("offline")),
+      },
+    });
+
+    const instructions = await sendMessage("Hello");
+
+    expect(instructions).toContain(
+      "When quoting scripture for the user, use their active Bible translation which is King James (Authorized) Version (KJAV)."
+    );
+    expect(instructions).not.toContain("Translations available");
+    expect(console.warn).toHaveBeenCalled();
   });
 });
