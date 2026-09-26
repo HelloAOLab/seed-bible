@@ -2334,6 +2334,99 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     });
   });
 
+  it("opens a verse marker's note below the pinned actions instead of underneath them", async () => {
+    const { readingState, chapter, firstVerse } = getFirstVerse();
+    const verses = chapter.chapter.content.filter(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    );
+    const secondVerse = verses[1];
+    if (!secondVerse) throw new Error("The chapter has no second verse.");
+
+    await mockAnnotationsForChapter([
+      {
+        id: "early-note",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: { type: "comment", html: "<p>Earlier</p>" },
+      },
+      {
+        id: "target-note",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: secondVerse.number,
+        data: { type: "comment", html: "<p>Target</p>" },
+      },
+    ]);
+    await renderSheet();
+
+    const scroller = overflow()!;
+    let scrollTop = 0;
+    Object.defineProperty(scroller, "scrollTop", {
+      configurable: true,
+      get: () => scrollTop,
+      set: (value: number) => {
+        scrollTop = value;
+      },
+    });
+    const rect = (top: number): DOMRect =>
+      ({
+        top,
+        left: 0,
+        right: 0,
+        bottom: top,
+        width: 0,
+        height: 0,
+        x: 0,
+        y: top,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    scroller.getBoundingClientRect = () => rect(100);
+
+    const pinned = container.querySelector<HTMLElement>(
+      ".sb-verse-toolbar-overflow-pinned"
+    );
+    if (!pinned) throw new Error("The pinned actions did not render.");
+    Object.defineProperty(pinned, "offsetHeight", {
+      configurable: true,
+      get: () => 80,
+    });
+
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: secondVerse,
+          translationId: chapter.translation.id,
+        },
+        12,
+        12
+      );
+      readingState.pendingAnnotationScrollVerse.value = secondVerse.number;
+    });
+
+    const group = document.getElementById(
+      "sb-verse-toolbar-annotation-group-target-note"
+    );
+    if (!group) throw new Error("The target note did not render.");
+    // 200px below the scrollport: the raw position would tuck the top under
+    // the 80px pinned row. The open scroll has to stop short of that.
+    group.getBoundingClientRect = () => rect(300);
+
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+    });
+
+    expect(scrollTop).toBe(120);
+    expect(overflow()?.style.height).not.toBe("0px");
+  });
+
   it("makes the sheet openable from an annotation alone, even with the default tool cards fitting in one row", async () => {
     const { chapter, firstVerse } = getFirstVerse();
     // The default verse toolbar tools already overflow one row on their own

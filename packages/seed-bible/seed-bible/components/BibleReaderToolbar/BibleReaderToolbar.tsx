@@ -1396,6 +1396,37 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     scroller.scrollTop = 0;
   };
 
+  /**
+   * Set when a verse marker is opening the drawer onto a specific note.
+   * The selection change would otherwise rewind the scroll after we've
+   * placed that note, hiding its top under the pinned actions.
+   */
+  const verseSheetNoteScrollRef = useRef(false);
+
+  /**
+   * Place a note just below Copy / Compare / Share. `scrollIntoView` aligns
+   * the note with the top of the scrollport, and the pinned row then covers
+   * the top of it.
+   */
+  const alignVerseSheetToNote = (groupEl: HTMLElement) => {
+    const scroller = verseSheetScrollerRef.current;
+    if (!scroller) return;
+    const pinned = scroller.querySelector<HTMLElement>(
+      ".sb-verse-toolbar-overflow-pinned"
+    );
+    const coveredByPinned =
+      pinned &&
+      !pinned.classList.contains("sb-verse-toolbar-overflow-pinned-inline")
+        ? pinned.offsetHeight
+        : 0;
+    const nextTop =
+      groupEl.getBoundingClientRect().top -
+      scroller.getBoundingClientRect().top +
+      scroller.scrollTop -
+      coveredByPinned;
+    scroller.scrollTop = Math.max(0, nextTop);
+  };
+
   const endVerseSheetDrag = (event: PointerEvent): void => {
     const handle = event.currentTarget as HTMLElement;
     handle.releasePointerCapture?.(event.pointerId);
@@ -1679,6 +1710,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   }, [isVerseSheetExpanded.value]);
 
   useEffect(() => {
+    if (verseSheetNoteScrollRef.current) {
+      verseSheetNoteScrollRef.current = false;
+      return;
+    }
     resetVerseSheetScroll();
   }, [verseSheetSelectionKey.value]);
 
@@ -1705,16 +1740,22 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (!group) return;
 
       isVerseSheetExpanded.value = true;
+      verseSheetNoteScrollRef.current = true;
       const groupKey =
         group.annotations[0]?.id ??
         `${group.startVerseNumber}-${group.endVerseNumber}`;
 
       cancelAnimationFrame(frame);
+      // After layout, so the pinned row's height and the note's position
+      // are the ones the open drawer will actually use.
       frame = requestAnimationFrame(() => {
-        frame = 0;
-        document
-          .getElementById(`sb-verse-toolbar-annotation-group-${groupKey}`)
-          ?.scrollIntoView({ block: "nearest" });
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          const groupEl = document.getElementById(
+            `sb-verse-toolbar-annotation-group-${groupKey}`
+          );
+          if (groupEl) alignVerseSheetToNote(groupEl);
+        });
       });
     });
 

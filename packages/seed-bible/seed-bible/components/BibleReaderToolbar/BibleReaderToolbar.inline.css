@@ -1226,8 +1226,10 @@
   position: static;
 }
 
-/* A jump to a note lands below the pinned actions instead of underneath them. */
-.sb-verse-toolbar-overflow .sb-verse-toolbar-annotations,
+/* A jump to a note lands below the pinned actions instead of underneath them.
+   The scroll itself is applied in the toolbar; this covers any native scroll
+   of the same groups. */
+.sb-verse-toolbar-overflow .sb-annotation-group,
 .sb-verse-toolbar-overflow-row > .sb-verse-toolbar-action-item {
   scroll-margin-top: var(--sb-verse-sheet-pinned-offset, 0px);
 }
