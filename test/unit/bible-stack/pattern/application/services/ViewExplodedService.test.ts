@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
-import { ExplodedViewService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ExplodedVIewService";
+import { ExplodedViewService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ViewExplodedService";
 import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
