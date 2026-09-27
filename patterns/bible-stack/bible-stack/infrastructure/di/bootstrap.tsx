@@ -122,7 +122,7 @@ import { PieceHierarchyService } from "../../application/services/PieceHierarchy
 import { ViewportService } from "../../application/services/ViewportService";
 import { TourGuideService } from "../../application/services/TourGuideService";
 import { SequenceStateService } from "../../application/services/SequenceStateService";
-import { ExplodedViewService } from "../../application/services/ViewExplodedService";
+import { ExplodedViewService } from "../../application/services/ExplodedViewService";
 import { TestamentSelectionService } from "../../application/services/TestamentSelectionService";
 import { ScripturePiecesStateService } from "../../application/services/ScripturePiecesStateService";
 import { PieceInteractabilityService } from "../../application/services/PieceInteractabilityService";

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
-import { ExplodedViewService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ViewExplodedService";
+import { ExplodedViewService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ExplodedViewService";
 import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
@@ -19,7 +19,7 @@ import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bi
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import { makePieceActivityServiceDouble } from "../serviceDoubles";
 
-describe("pattern.bible-stack.application.services.ExplodedVIewService", () => {
+describe("pattern.bible-stack.application.services.ExplodedViewService", () => {
   let service: ExplodedViewService;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
