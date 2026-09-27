@@ -10,7 +10,7 @@ import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
 import { GetBotScales } from "../../functions/casualos";
 import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
 import { CrossPositions } from "../../../domain/models/canvas";
-import type { LoggerPort } from "../../../application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/out/Logger";
 import type { TestamentStackUpdaterAdapter } from "./TestamentStackUpdaterAdapter";
 import { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 import type { CrossLineTags } from "../../models/stack";

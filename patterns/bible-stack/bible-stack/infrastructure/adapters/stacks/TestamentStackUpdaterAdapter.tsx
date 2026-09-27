@@ -3,7 +3,7 @@ import type {
   UpdateCommand,
 } from "../../../application/ports/out/StackTestamentUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "../../../application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/out/Logger";
 import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
 import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";

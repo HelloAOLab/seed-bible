@@ -4,7 +4,7 @@ import type {
   BookVisualUpdateResult,
 } from "../../../application/ports/out/StackBookUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "../../../application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/out/Logger";
 import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";

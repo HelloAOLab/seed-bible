@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ChapterSelectionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ChapterSelectionService";
-import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Logger";
+import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
 import type {
   ChapterSelectionAdapterPort,

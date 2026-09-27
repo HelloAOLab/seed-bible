@@ -829,6 +829,7 @@ export const bootstrapExtension = () => {
   });
   const sequenceStateService = new SequenceStateService({
     sequenceEventPort: bibleStackEventManager,
+    loggerPort: loggerAdapter,
   });
 
   const pieceInteractabilityService = new PieceInteractabilityService({
@@ -988,6 +989,7 @@ export const bootstrapExtension = () => {
     testamentStackUpdaterPort: testamentStackUpdaterService,
     sectionStackUpdaterPort: sectionStackUpdaterService,
     bookStackUpdaterPort: bookStackUpdaterService,
+    loggerPort: loggerAdapter,
   });
 
   const testamentSelectionAdapter = new TestamentSelectionAdapter({
@@ -1129,6 +1131,7 @@ export const bootstrapExtension = () => {
     tourGuideServicePort: tourGuideService,
     pieceHierarchyServicePort: pieceHierarchyService,
     eventManager: bibleStackEventManager,
+    loggerPort: loggerAdapter,
   });
 
   const stackPresenceNavigationService = new StackPresenceNavigationService({
@@ -1221,6 +1224,7 @@ export const bootstrapExtension = () => {
     sectionSelectionServicePort: sectionSelectionService,
     sequenceStateServicePort: sequenceStateService,
     tourGuideServicePort: tourGuideService,
+    loggerPort: loggerAdapter,
   });
   const labelInteractionService = new LabelInteractionService({
     labelDataRepositoryPort: labelDataStore,

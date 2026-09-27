@@ -3,7 +3,7 @@ import type { TourGuideAdapterPort } from "../../../application/ports/tourGuide"
 import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type { PieceHighlighterPort } from "../../../application/ports/in/PieceHighlight";
 import type { AudioAdapter } from "../audio/AudioAdapter";
-import type { LoggerPort } from "../../../application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/out/Logger";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { SectionBot } from "../../models/stack";
 import type { TourGuideConfigProvider } from "../../config/tourGuide/TourGuideConfigProvider";

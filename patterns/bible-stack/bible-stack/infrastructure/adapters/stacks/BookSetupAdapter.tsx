@@ -8,7 +8,7 @@ import type { BookStackLayoutAdapter } from "./BookStackLayoutAdapter";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
 
-import type { LoggerPort } from "../../../application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/out/Logger";
 import type { BookSetupConfigProvider } from "../../config/bookSetup/BookSetupConfigProvider";
 import type { LayoutConfigurations } from "../../config/bookSetup/layouts";
 import type { HexString } from "../../../domain/models/commonTypes";

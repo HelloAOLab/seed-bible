@@ -4,7 +4,7 @@ import type {
   DirectSelectionParams,
   TrySelectChapterParams,
 } from "../ports/in/ChapterSelection";
-import type { LoggerPort } from "../ports/in/Logger";
+import type { LoggerPort } from "../ports/out/Logger";
 import type {
   ChapterSelectionAdapterPort,
   LabelManagerPort,

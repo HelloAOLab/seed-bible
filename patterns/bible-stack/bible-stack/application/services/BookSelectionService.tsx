@@ -7,7 +7,7 @@ import type {
 } from "../ports/out/BookSelection";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
-import type { LoggerPort } from "../ports/in/Logger";
+import type { LoggerPort } from "../ports/out/Logger";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 

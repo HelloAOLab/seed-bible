@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BookSelectionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BookSelectionService";
-import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Logger";
+import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
 import type {

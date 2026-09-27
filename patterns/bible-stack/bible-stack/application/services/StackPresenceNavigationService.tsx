@@ -31,7 +31,7 @@ import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
-import type { LoggerPort } from "../ports/in/Logger";
+import type { LoggerPort } from "../ports/out/Logger";
 import type { UserPresencePort } from "../ports/in/UserPresence";
 import type { BaseEventManager } from "./BaseEventManager";
 import type { BibleStackEvents } from "../../domain/models/events";

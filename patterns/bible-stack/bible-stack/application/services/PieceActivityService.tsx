@@ -21,7 +21,7 @@ import type {
   NotifiableContainer,
 } from "../ports/out/PieceActivity";
 import { InfoLabelData } from "../../domain/entities/InfoLabelData";
-import type { LoggerPort } from "../ports/in/Logger";
+import type { LoggerPort } from "../ports/out/Logger";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 import type { PieceTypeMap } from "../../domain/models/pieces";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";

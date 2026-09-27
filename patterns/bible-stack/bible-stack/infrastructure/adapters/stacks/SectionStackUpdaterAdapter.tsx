@@ -1,6 +1,6 @@
 import type { SectionStackUpdaterPort } from "../../../application/ports/out/StackSectionUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "../../../application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/out/Logger";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { StackSectionShadowMapper } from "../../mappers/StackSectionShadowMapper";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
