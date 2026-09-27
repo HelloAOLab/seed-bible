@@ -761,7 +761,7 @@ export const bootstrapExtension = () => {
     eventPort: bibleStackEventManager,
   });
   const userPresenceService = new UserPresenceService({
-    eventMangerPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
     userId: USER_ID,
   });
   const arrangementService = new ArrangementService({
@@ -850,6 +850,7 @@ export const bootstrapExtension = () => {
     pieceLifecycleAdapterPort: stackPieceLifecycleAdapter,
     paintAdapter: paintAdapter,
     selectionAdapterPort: versesBundleSelectionAdapter,
+    loggerPort: loggerAdapter,
   });
   const versesInteractionService = new VersesInteractionService({
     sequenceStateServicePort: sequenceStateService,
@@ -912,7 +913,7 @@ export const bootstrapExtension = () => {
     loggerPort: loggerAdapter,
   });
   const tourGuideService = new TourGuideService({
-    tourGuieAdapterPort: tourGuideAdapter,
+    tourGuideAdapterPort: tourGuideAdapter,
   });
   const pieceLifecycleService = new PieceLifecycleService({
     pieceDataRepositoryPort: pieceDataRepository,
@@ -985,7 +986,7 @@ export const bootstrapExtension = () => {
     bibleDataRepositoryPort: bibleDataRepository,
     pieceDataRepositoryPort: pieceDataRepository,
     testamentStackUpdaterPort: testamentStackUpdaterService,
-    sectiontackUpdaterPort: sectionStackUpdaterService,
+    sectionStackUpdaterPort: sectionStackUpdaterService,
     bookStackUpdaterPort: bookStackUpdaterService,
   });
 
@@ -1020,6 +1021,7 @@ export const bootstrapExtension = () => {
         labelsConfigProvider.getShowAnimationDuration(pacing),
     },
     pieceAdapterPort: pieceAdapter,
+    loggerPort: loggerAdapter,
   });
 
   const bookSelectionService = new BookSelectionService({
@@ -1082,6 +1084,7 @@ export const bootstrapExtension = () => {
     testamentSelectionServicePort: testamentSelectionService,
     pieceHighlightServicePort: pieceHighlightService,
     paintPort: paintService,
+    loggerPort: loggerAdapter,
   });
   const chapterInteractionService = new ChapterInteractionService({
     chapterDataRepositoryPort: pieceDataRepository,
@@ -1101,6 +1104,7 @@ export const bootstrapExtension = () => {
     versesBundleSelectionServicePort: versesBundleSelectionService,
     versesBundleAdapterPort: versesBundleAdapter,
     paintPort: paintService,
+    loggerPort: loggerAdapter,
   });
 
   const explodedViewService = new ExplodedViewService({

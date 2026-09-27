@@ -1,5 +1,7 @@
 import type { VersesBundleData } from "../../domain/entities/VersesBundleData";
+import type { Piece } from "../../domain/models/canvas";
 import type { VersesBundleSelectionServicePort } from "../ports/in/VersesBundleSelection";
+import type { LoggerPort } from "../ports/out/Logger";
 import type {
   PaintAdapterPort,
   PieceLifecycleAdapterPort,
@@ -10,29 +12,34 @@ interface ServiceParams {
   pieceLifecycleAdapterPort: PieceLifecycleAdapterPort;
   paintAdapter: PaintAdapterPort;
   selectionAdapterPort: VersesBundleSelectionAdapterPort;
+  loggerPort: LoggerPort;
 }
 
 export class VersesBundleSelectionService implements VersesBundleSelectionServicePort {
   #pieceLifecycleAdapterPort: ServiceParams["pieceLifecycleAdapterPort"];
   #paintAdapter: ServiceParams["paintAdapter"];
   #selectionAdapterPort: ServiceParams["selectionAdapterPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     pieceLifecycleAdapterPort,
     paintAdapter,
     selectionAdapterPort,
+    loggerPort,
   }: ServiceParams) {
     this.#pieceLifecycleAdapterPort = pieceLifecycleAdapterPort;
     this.#paintAdapter = paintAdapter;
     this.#selectionAdapterPort = selectionAdapterPort;
+    this.#loggerPort = loggerPort;
   }
 
   async selectBundle(data: VersesBundleData): Promise<void> {
     const bundlePiece = data.piece;
     if (!bundlePiece) {
-      throw new Error(
+      this.#loggerPort.error(
         "VersesBundleSelectionService: data.piece not defined at selectBundle"
       );
+      return;
     }
 
     data.select();
@@ -44,19 +51,22 @@ export class VersesBundleSelectionService implements VersesBundleSelectionServic
     await this.#selectionAdapterPort.select({
       bundle: bundlePiece,
       verseStart,
-      verses: data.verses.map((verseData) => {
-        if (!verseData.piece) {
-          throw new Error(
-            "VersesBundleSelectionService: verseData.piece not defined at selectBundle"
-          );
-        }
-        return verseData.piece;
-      }),
+      verses: data.verses
+        .map((verseData) => {
+          if (!verseData.piece) {
+            this.#loggerPort.error(
+              "VersesBundleSelectionService: verseData.piece not defined at selectBundle"
+            );
+            return undefined;
+          }
+          return verseData.piece;
+        })
+        .filter(Boolean) as Piece<"Verse">[],
     });
 
     data.verses.forEach((verseData) => {
-      if (verseData.paintColor) {
-        this.#paintAdapter.paint(verseData.piece!, verseData.paintColor);
+      if (verseData.piece && verseData.paintColor) {
+        this.#paintAdapter.paint(verseData.piece, verseData.paintColor);
       }
     });
   }

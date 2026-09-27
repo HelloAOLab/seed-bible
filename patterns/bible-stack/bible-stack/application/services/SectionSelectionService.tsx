@@ -17,6 +17,7 @@ import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { DomainEventManager } from "../ports/in/EventManager";
+import type { LoggerPort } from "../ports/out/Logger";
 
 interface ServiceParams {
   labelDataStorePort: LabelDataStorePort;
@@ -32,6 +33,7 @@ interface ServiceParams {
   tourGuideServicePort: TourGuideServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   eventManager: DomainEventManager;
+  loggerPort: LoggerPort;
 }
 
 export class SectionSelectionService implements SectionSelectionServicePort {
@@ -49,6 +51,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #selectionNameRegistry: Set<string> = new Set();
   #eventManager: ServiceParams["eventManager"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     labelDataStorePort,
@@ -64,6 +67,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     tourGuideServicePort,
     pieceHierarchyServicePort,
     eventManager,
+    loggerPort,
   }: ServiceParams) {
     this.#labelDataStorePort = labelDataStorePort;
     this.#pieceHighlighterPort = pieceHighlighterPort;
@@ -78,19 +82,20 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     this.#tourGuideServicePort = tourGuideServicePort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#eventManager = eventManager;
+    this.#loggerPort = loggerPort;
   }
 
-  async #prepareSelection(data: StackSectionData): Promise<void> {
+  async #prepareSelection(data: StackSectionData): Promise<boolean> {
+    if (!data.piece) {
+      this.#loggerPort.error(
+        "SectionSelectionService: data.piece not defined at prepareSelection."
+      );
+      return false;
+    }
+    this.#sectionSelectionEventPort.emit("OnSectionBeginSelect", { data });
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
       data.parentDataIds ?? {}
     );
-
-    if (!data.piece) {
-      throw new Error(
-        "SectionSelectionService: data.piece not defined at prepareSelection."
-      );
-    }
-    this.#sectionSelectionEventPort.emit("OnSectionBeginSelect", { data });
 
     this.#pieceLabelServicePort.hideLabel(data.piece, "Instant");
 
@@ -99,7 +104,8 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     if (
       previous &&
       previous.id !== data.id &&
-      bibleData?.currentStackVizState === "Regular"
+      bibleData &&
+      bibleData.currentStackVizState === "Regular"
     ) {
       previous.implode();
       const previousStack = (previous.parentDataIds
@@ -108,11 +114,21 @@ export class SectionSelectionService implements SectionSelectionServicePort {
         id: previous.id,
         type: previous.type,
       };
-      await this.#stackUpdateServicePort.updateStack(
-        previousStack.id,
-        previousStack.type,
-        "Regular"
-      );
+      try {
+        await this.#stackUpdateServicePort.updateStack(
+          previousStack.id,
+          previousStack.type,
+          "Regular"
+        );
+      } catch (error) {
+        this.#loggerPort.error(
+          "SectionSelectionService: Error while updating stack",
+          {
+            error,
+          }
+        );
+        return false;
+      }
     }
 
     // Unhighlight any actively-highlighted books before the section explodes.
@@ -131,11 +147,27 @@ export class SectionSelectionService implements SectionSelectionServicePort {
         );
       }
 
-      await Promise.all(unhighlights);
+      try {
+        await Promise.all(unhighlights);
+      } catch (error) {
+        this.#loggerPort.error(
+          "SectionSelectionService: Error while unhighlighting books",
+          {
+            error,
+          }
+        );
+        return false;
+      }
     }
 
     // Split + explode the section and register it as the current exploded one.
-    data.changeSelectionState("RequestSelect");
+    const changed = data.changeSelectionState("RequestSelect");
+    if (!changed) {
+      this.#loggerPort.error(
+        "SectionSelectionService: section is not idle at prepareSelection."
+      );
+      return false;
+    }
     data.explode();
     this.#explodedViewServicePort.registerExplodedSection(data);
 
@@ -151,6 +183,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
       bookData.setPiece(piece);
       bookData.activate();
     }
+    return true;
   }
 
   #finalizeSelection(data: StackSectionData): void {
@@ -175,12 +208,13 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     pacing?: StackPresenceNavigationPacing;
     makeTourGuide?: boolean;
   }): Promise<void> {
+    const prepared = await this.#prepareSelection(data);
+
+    if (!prepared) return;
+
     const name = data.getPieceInfoProperty("name");
     const isFirstSelection = !this.hasSectionEverBeenSelected(name);
     this.#selectionNameRegistry.add(name);
-
-    await this.#prepareSelection(data);
-
     await this.#sectionSelectionAdapterPort.select(data);
 
     const stack = (data.parentDataIds
@@ -204,10 +238,13 @@ export class SectionSelectionService implements SectionSelectionServicePort {
 
   async deselect(data: StackSectionData): Promise<void> {
     if (!data.shadow) {
-      throw new Error(
+      this.#loggerPort.error(
         "SectionSelectionService: data.shadow not defined at deselect"
       );
+      return;
     }
+
+    this.#eventManager.emit("OnSectionDeselected", { data });
 
     const infoLabelData = this.#labelDataStorePort.getDataByOwnerId(
       data.shadow.id
@@ -215,16 +252,16 @@ export class SectionSelectionService implements SectionSelectionServicePort {
 
     const selectedBooksData = data.getActivelySelectedBooks();
     const highlightedBooks = data.getActivelyHighlightedChildren();
-    this.#eventManager.emit("OnSectionDeselected", { data });
 
     if (highlightedBooks.length > 0) {
       const booksPieces = highlightedBooks.map((bookData) => bookData.piece);
       const unhighlights: Promise<void>[] = [];
       for (const book of booksPieces) {
         if (!book) {
-          throw new Error(
+          this.#loggerPort.error(
             "SectionSelectionService: book not defined at deselect."
           );
+          continue;
         }
         unhighlights.push(
           this.#pieceHighlighterPort.tryUnhighlightPiece({

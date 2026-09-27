@@ -1,5 +1,5 @@
 import type { StackSectionData } from "../../../domain/entities/StackSectionData";
-import type { TourGuieAdapterPort } from "../../../application/ports/tourGuide";
+import type { TourGuideAdapterPort } from "../../../application/ports/tourGuide";
 import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type { PieceHighlighterPort } from "../../../application/ports/in/PieceHighlight";
 import type { AudioAdapter } from "../audio/AudioAdapter";
@@ -29,7 +29,7 @@ interface AdapterParams {
  * architecture port of the legacy `TryMakeTourGuideOnSection` /
  * `StopCurrentTourGuide` bot scripts.
  */
-export class TourGuideAdapter implements TourGuieAdapterPort {
+export class TourGuideAdapter implements TourGuideAdapterPort {
   #getDimension: AdapterParams["getDimension"];
   #sectionMapper: AdapterParams["sectionMapper"];
   #visualStateRegistry: AdapterParams["visualStateRegistry"];

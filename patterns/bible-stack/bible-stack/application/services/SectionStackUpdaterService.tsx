@@ -96,7 +96,7 @@ export class SectionStackUpdaterService implements UpdaterServicePort {
       }
     } catch (error) {
       this.#loggerPort.error(
-        "SectionStackUpdaterService: showLabel failed at finalizeSection",
+        "SectionStackUpdaterService: label sequence failed at finalizeSection",
         error
       );
     }

@@ -111,6 +111,7 @@ describe("application.services.StackPresenceNavigationService", () => {
     eventBus = new BaseEventManager<BibleStackEvents>();
     sequenceStateService = new SequenceStateService({
       sequenceEventPort: eventBus,
+      loggerPort: { log: vi.fn(), warn: vi.fn(), error: vi.fn() },
     });
     selectedInstance = instance("GEN", 1);
     releaseSleep = undefined;

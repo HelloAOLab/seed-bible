@@ -6,22 +6,22 @@ import type { UserPresencePort } from "../ports/in/UserPresence";
 import type { EventManagerPort } from "../ports/out/EventManager";
 
 interface UserPresenceParams {
-  eventMangerPort: EventManagerPort;
+  eventManagerPort: EventManagerPort;
   initialUserPresence?: UserPresence;
   userId: string;
 }
 
 export class UserPresenceService implements UserPresencePort {
   #userPresence: UserPresence = new Map();
-  #eventMangerPort: UserPresenceParams["eventMangerPort"];
+  #eventManagerPort: UserPresenceParams["eventManagerPort"];
   #userId: UserPresenceParams["userId"];
 
   constructor({
-    eventMangerPort,
+    eventManagerPort,
     initialUserPresence = new Map(),
     userId,
   }: UserPresenceParams) {
-    this.#eventMangerPort = eventMangerPort;
+    this.#eventManagerPort = eventManagerPort;
     this.#userId = userId;
     this.update(initialUserPresence);
   }
@@ -84,12 +84,12 @@ export class UserPresenceService implements UserPresencePort {
   update(newPresence: UserPresence) {
     const changed = !this.#isSamePresence(newPresence);
 
-    if (changed) {
-      this.#userPresence = this.#clone(newPresence);
-      this.#eventMangerPort.emit("OnUserPresenceUpdated", {
-        userPresence: this.getUserPresence(),
-      });
-    }
+    if (!changed) return;
+
+    this.#userPresence = this.#clone(newPresence);
+    this.#eventManagerPort.emit("OnUserPresenceUpdated", {
+      userPresence: this.getUserPresence(),
+    });
   }
 
   getUserPresence(): UserPresence {

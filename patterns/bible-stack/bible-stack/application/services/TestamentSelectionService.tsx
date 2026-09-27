@@ -13,6 +13,7 @@ import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 // import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
+import type { LoggerPort } from "../ports/out/Logger";
 
 interface ServiceParams {
   testamentSelectionAdapterPort: TestamentSelectionAdapterPort;
@@ -23,6 +24,7 @@ interface ServiceParams {
   awaiterPort: AwaiterPort;
   labelSequenceConfigProviderPort: LabelSequenceConfigProviderPort;
   pieceAdapterPort: PieceAdapterPort;
+  loggerPort: LoggerPort;
   // pieceLifecycleServicePort: PieceLifecycleServicePort;
 }
 
@@ -35,6 +37,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
   #awaiterPort: ServiceParams["awaiterPort"];
   #labelSequenceConfigProviderPort: ServiceParams["labelSequenceConfigProviderPort"];
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
+  #loggerPort: ServiceParams["loggerPort"];
   // #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
 
   constructor({
@@ -46,6 +49,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     awaiterPort,
     labelSequenceConfigProviderPort,
     pieceAdapterPort,
+    loggerPort,
     // pieceLifecycleServicePort,
   }: ServiceParams) {
     this.#testamentSelectionAdapterPort = testamentSelectionAdapterPort;
@@ -56,23 +60,25 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     this.#awaiterPort = awaiterPort;
     this.#labelSequenceConfigProviderPort = labelSequenceConfigProviderPort;
     this.#pieceAdapterPort = pieceAdapterPort;
+    this.#loggerPort = loggerPort;
     // this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
   }
 
-  async #prepareSelection(data: StackTestamentData): Promise<void> {
+  async #prepareSelection(data: StackTestamentData): Promise<boolean> {
     this.#testamentSelectionEventPort.emit("OnTestamentBeginSelect", { data });
-
-    const bibleId = data.getParentId("stackBibleId");
-    if (data.isInsideBible && bibleId) {
-      await this.#pieceHighlighterPort.unhighlightBiblePieces(bibleId);
-    }
 
     const selecting = data.changeSelectionState("RequestSelect");
 
     if (!selecting) {
-      throw new Error(
+      this.#loggerPort.error(
         "TestamentSelectionService: testament not selecting at prepareSelection."
       );
+      return false;
+    }
+
+    const bibleId = data.getParentId("stackBibleId");
+    if (data.isInsideBible && bibleId) {
+      await this.#pieceHighlighterPort.unhighlightBiblePieces(bibleId);
     }
 
     for (const sectionData of data.childrenData) {
@@ -87,6 +93,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
       }
       sectionData.activate();
     }
+    return true;
   }
 
   async #finalizeSelection(
@@ -96,14 +103,28 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     for (const sectionData of data.childrenData) {
       sectionData.becomeHighlightable();
     }
+
+    if (pacing !== "Instant") await this.#highlightChildren(data, pacing);
+
+    data.childrenData.forEach((sectionData) => {
+      this.#pieceAdapterPort.makeInteractable(sectionData.piece!);
+    });
+
+    this.#testamentSelectionEventPort.emit("OnTestamentEndSelect", { data });
+  }
+
+  async #highlightChildren(
+    data: StackTestamentData,
+    pacing: StackUpdatePacing
+  ): Promise<void> {
     const animations: Promise<void>[] = [];
-    if (pacing === "Instant") return;
 
     for (const sectionData of data.getReversedChildren()) {
       if (!sectionData.piece) {
-        throw new Error(
+        this.#loggerPort.error(
           "TestamentSelectionService: sectionData.piece not found at finalizeSelection"
         );
+        continue;
       }
       animations.push(
         this.#pieceHighlighterPort.tryHighlightPiece({
@@ -126,12 +147,6 @@ export class TestamentSelectionService implements TestamentSelectionPort {
       );
     }
     await Promise.all(animations);
-
-    data.childrenData.forEach((sectionData) => {
-      this.#pieceAdapterPort.makeInteractable(sectionData.piece!);
-    });
-
-    this.#testamentSelectionEventPort.emit("OnTestamentEndSelect", { data });
   }
 
   async select({
@@ -142,7 +157,8 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     pacing?: StackUpdatePacing;
     source: PieceSelectionSource;
   }): Promise<void> {
-    await this.#prepareSelection(data);
+    const prepared = await this.#prepareSelection(data);
+    if (!prepared) return;
 
     await this.#testamentSelectionAdapterPort.select(data);
 
@@ -158,7 +174,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
       pacing
     );
 
-    await this.#finalizeSelection(data);
+    await this.#finalizeSelection(data, pacing);
   }
 
   async deselect(/*data: StackTestamentData*/): Promise<void> {

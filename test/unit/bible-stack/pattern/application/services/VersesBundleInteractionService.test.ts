@@ -7,6 +7,42 @@ import type {
   VersesBundleAdapterPort,
   VersesBundleDataRepositoryPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/versesBundle";
+import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
+import { VersesBundleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/VersesBundleData";
+import type { Piece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+
+const bundlePiece: Piece<"VersesBundle"> = {
+  id: "bundle-piece",
+  type: "VersesBundle",
+};
+
+const makeBundleData = ({
+  isSelected = false,
+  isBeingDragged = false,
+}: {
+  isSelected?: boolean;
+  isBeingDragged?: boolean;
+} = {}): VersesBundleData => {
+  const bundleData = new VersesBundleData({
+    id: "bundle-data",
+    piece: bundlePiece,
+    creationParams: {
+      bookId: "book-id",
+      chapter: 1,
+      start: 1,
+      count: 1,
+    },
+  });
+
+  if (isSelected) {
+    bundleData.select();
+  }
+  if (isBeingDragged) {
+    bundleData.beginDrag();
+  }
+
+  return bundleData;
+};
 
 describe("pattern.bible-stack.application.services.VersesBundleInteractionService", () => {
   let service: VersesBundleInteractionService;
@@ -15,11 +51,14 @@ describe("pattern.bible-stack.application.services.VersesBundleInteractionServic
   let versesBundleSelectionServicePort: Mocked<VersesBundleSelectionServicePort>;
   let versesBundleAdapterPort: Mocked<VersesBundleAdapterPort>;
   let paintPort: Mocked<PaintPort>;
+  let loggerPort: Mocked<LoggerPort>;
 
   beforeEach(() => {
     sequenceStateServicePort = {
-      isThereAnOngoingSequence: vi.fn(),
-      executeAsSequence: vi.fn(),
+      isThereAnOngoingSequence: vi.fn(() => false),
+      executeAsSequence: vi.fn(async (task: () => Promise<void>) => {
+        await task();
+      }),
     };
 
     versesBundleDataRepositoryPort = {
@@ -27,7 +66,7 @@ describe("pattern.bible-stack.application.services.VersesBundleInteractionServic
     };
 
     versesBundleSelectionServicePort = {
-      selectBundle: vi.fn(),
+      selectBundle: vi.fn(async () => {}),
     };
 
     versesBundleAdapterPort = {
@@ -41,8 +80,14 @@ describe("pattern.bible-stack.application.services.VersesBundleInteractionServic
       unpaint: vi.fn(),
       activate: vi.fn(),
       deactivate: vi.fn(),
-      isActive: undefined as unknown as PaintPort["isActive"],
+      isActive: false,
     } as unknown as Mocked<PaintPort>;
+
+    loggerPort = {
+      error: vi.fn(),
+      warn: vi.fn(),
+      log: vi.fn(),
+    };
 
     service = new VersesBundleInteractionService({
       sequenceStateServicePort,
@@ -50,10 +95,206 @@ describe("pattern.bible-stack.application.services.VersesBundleInteractionServic
       versesBundleSelectionServicePort,
       versesBundleAdapterPort,
       paintPort,
+      loggerPort,
     });
   });
 
-  it("is constructed with its ports wired", () => {
-    expect(service).toBeInstanceOf(VersesBundleInteractionService);
+  describe("handleBundleSelection", () => {
+    it("no-ops if there's an ongoing sequence", () => {
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(
+        makeBundleData()
+      );
+      sequenceStateServicePort.isThereAnOngoingSequence.mockReturnValue(true);
+      paintPort.isActive = true;
+
+      service.handleBundleSelection(bundlePiece);
+
+      expect(
+        versesBundleDataRepositoryPort.getBundleData
+      ).not.toHaveBeenCalled();
+      expect(paintPort.paint).not.toHaveBeenCalled();
+      expect(sequenceStateServicePort.executeAsSequence).not.toHaveBeenCalled();
+      expect(
+        versesBundleSelectionServicePort.selectBundle
+      ).not.toHaveBeenCalled();
+    });
+
+    it("logs an error and no-ops if no data found", () => {
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(undefined);
+
+      service.handleBundleSelection(bundlePiece);
+
+      expect(loggerPort.error).toHaveBeenCalledWith(
+        "VersesBundleInteractionService: bundleData not found at handleBundleSelection"
+      );
+      expect(paintPort.paint).not.toHaveBeenCalled();
+      expect(sequenceStateServicePort.executeAsSequence).not.toHaveBeenCalled();
+      expect(
+        versesBundleSelectionServicePort.selectBundle
+      ).not.toHaveBeenCalled();
+    });
+
+    it("paints the bundle if the paint feature is active, even if it is selected", () => {
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(
+        makeBundleData({ isSelected: true })
+      );
+      paintPort.isActive = true;
+
+      service.handleBundleSelection(bundlePiece);
+
+      expect(paintPort.paint).toHaveBeenCalledWith(bundlePiece);
+      expect(sequenceStateServicePort.executeAsSequence).not.toHaveBeenCalled();
+      expect(
+        versesBundleSelectionServicePort.selectBundle
+      ).not.toHaveBeenCalled();
+    });
+
+    it("selects the bundle as a sequence if it is not selected and the paint feature is not active", () => {
+      const bundleData = makeBundleData({ isSelected: false });
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(bundleData);
+
+      service.handleBundleSelection(bundlePiece);
+
+      expect(sequenceStateServicePort.executeAsSequence).toHaveBeenCalledOnce();
+      expect(
+        versesBundleSelectionServicePort.selectBundle
+      ).toHaveBeenCalledWith(bundleData);
+      expect(paintPort.paint).not.toHaveBeenCalled();
+      expect(loggerPort.error).not.toHaveBeenCalled();
+    });
+
+    it("no-ops if the bundle is already selected and the paint feature is not active", () => {
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(
+        makeBundleData({ isSelected: true })
+      );
+
+      service.handleBundleSelection(bundlePiece);
+
+      expect(sequenceStateServicePort.executeAsSequence).not.toHaveBeenCalled();
+      expect(
+        versesBundleSelectionServicePort.selectBundle
+      ).not.toHaveBeenCalled();
+      expect(paintPort.paint).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("handleBundleFocusBegin", () => {
+    it("no-ops if there's an ongoing sequence", () => {
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(
+        makeBundleData()
+      );
+      sequenceStateServicePort.isThereAnOngoingSequence.mockReturnValue(true);
+
+      service.handleBundleFocusBegin(bundlePiece);
+
+      expect(
+        versesBundleDataRepositoryPort.getBundleData
+      ).not.toHaveBeenCalled();
+      expect(versesBundleAdapterPort.highlight).not.toHaveBeenCalled();
+    });
+
+    it("logs an error and no-ops if no data found", () => {
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(undefined);
+
+      service.handleBundleFocusBegin(bundlePiece);
+
+      expect(loggerPort.error).toHaveBeenCalledWith(
+        "VersesBundleInteractionService: bundleData not found at handleBundleFocusBegin"
+      );
+      expect(versesBundleAdapterPort.highlight).not.toHaveBeenCalled();
+    });
+
+    it("no-ops if the bundle is selected or being dragged", () => {
+      const cases = [
+        { isSelected: true, isBeingDragged: false },
+        { isSelected: false, isBeingDragged: true },
+      ] as const;
+
+      for (const testCase of cases) {
+        vi.clearAllMocks();
+
+        versesBundleDataRepositoryPort.getBundleData.mockReturnValue(
+          makeBundleData(testCase)
+        );
+
+        service.handleBundleFocusBegin(bundlePiece);
+
+        expect(versesBundleAdapterPort.highlight).not.toHaveBeenCalled();
+      }
+    });
+
+    it("highlights the bundle if it is neither selected nor being dragged", () => {
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(
+        makeBundleData()
+      );
+
+      service.handleBundleFocusBegin(bundlePiece);
+
+      expect(versesBundleAdapterPort.highlight).toHaveBeenCalledWith(
+        bundlePiece
+      );
+      expect(versesBundleAdapterPort.unhighlight).not.toHaveBeenCalled();
+      expect(loggerPort.error).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("handleBundleFocusEnd", () => {
+    it("no-ops if there's an ongoing sequence", () => {
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(
+        makeBundleData()
+      );
+      sequenceStateServicePort.isThereAnOngoingSequence.mockReturnValue(true);
+
+      service.handleBundleFocusEnd(bundlePiece);
+
+      expect(
+        versesBundleDataRepositoryPort.getBundleData
+      ).not.toHaveBeenCalled();
+      expect(versesBundleAdapterPort.unhighlight).not.toHaveBeenCalled();
+    });
+
+    it("logs an error and no-ops if no data found", () => {
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(undefined);
+
+      service.handleBundleFocusEnd(bundlePiece);
+
+      expect(loggerPort.error).toHaveBeenCalledWith(
+        "VersesBundleInteractionService: bundleData not found at handleBundleFocusEnd"
+      );
+      expect(versesBundleAdapterPort.unhighlight).not.toHaveBeenCalled();
+    });
+
+    it("no-ops if the bundle is selected or being dragged", () => {
+      const cases = [
+        { isSelected: true, isBeingDragged: false },
+        { isSelected: false, isBeingDragged: true },
+      ] as const;
+
+      for (const testCase of cases) {
+        vi.clearAllMocks();
+
+        versesBundleDataRepositoryPort.getBundleData.mockReturnValue(
+          makeBundleData(testCase)
+        );
+
+        service.handleBundleFocusEnd(bundlePiece);
+
+        expect(versesBundleAdapterPort.unhighlight).not.toHaveBeenCalled();
+      }
+    });
+
+    it("unhighlights the bundle if it is neither selected nor being dragged", () => {
+      versesBundleDataRepositoryPort.getBundleData.mockReturnValue(
+        makeBundleData()
+      );
+
+      service.handleBundleFocusEnd(bundlePiece);
+
+      expect(versesBundleAdapterPort.unhighlight).toHaveBeenCalledWith(
+        bundlePiece
+      );
+      expect(versesBundleAdapterPort.highlight).not.toHaveBeenCalled();
+      expect(loggerPort.error).not.toHaveBeenCalled();
+    });
   });
 });

@@ -3,6 +3,7 @@ import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { SectionShadowInteractionPort } from "../ports/in/SectionShadowInteraction";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
+import type { LoggerPort } from "../ports/out/Logger";
 import type { PieceDataRepositoryPort } from "../ports/out/SectionShadowInteraction";
 
 interface ServiceParams {
@@ -10,6 +11,7 @@ interface ServiceParams {
   sectionSelectionServicePort: SectionSelectionServicePort;
   sequenceStateServicePort: SequenceStateServicePort;
   tourGuideServicePort: TourGuideServicePort;
+  loggerPort: LoggerPort;
 }
 
 export class SectionShadowInteractionService implements SectionShadowInteractionPort {
@@ -17,17 +19,20 @@ export class SectionShadowInteractionService implements SectionShadowInteraction
   #sectionSelectionServicePort: ServiceParams["sectionSelectionServicePort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
   #tourGuideServicePort: ServiceParams["tourGuideServicePort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     pieceDataRepositoryPort,
     sectionSelectionServicePort,
     sequenceStateServicePort,
     tourGuideServicePort,
+    loggerPort,
   }: ServiceParams) {
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#sectionSelectionServicePort = sectionSelectionServicePort;
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#tourGuideServicePort = tourGuideServicePort;
+    this.#loggerPort = loggerPort;
   }
 
   handleSectionShadowSelected(shadow: SectionShadow) {
@@ -43,9 +48,10 @@ export class SectionShadowInteractionService implements SectionShadowInteraction
     });
 
     if (!sectionData) {
-      throw new Error(
+      this.#loggerPort.error(
         "SectionShadowInteractionService: sectionData not found at handleSectionShadowSelected."
       );
+      return;
     }
 
     this.#sequenceStateServicePort.executeAsSequence(() =>
