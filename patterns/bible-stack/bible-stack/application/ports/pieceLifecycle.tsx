@@ -1,7 +1,4 @@
 import type { PieceDataRepositoryPort as BasePieceDataRepositoryPort } from "./pieces";
-import type { PieceLabelServicePort as BasePieceLabelServicePort } from "./in/PieceLabel";
-import type { PieceHighlighterPort as BasePieceHighlighterPort } from "./in/PieceHighlight";
-import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 import type {
   BookBot,
   ChapterBot,
@@ -12,14 +9,6 @@ import type {
   VersesBundleBot,
 } from "../../infrastructure/models/stack";
 import type { Piece, SectionShadow } from "../../domain/models/canvas";
-import type {
-  BookPathIndices,
-  SectionPathIndices,
-  TestamentPathIndices,
-  BookInfo,
-  SectionInfo,
-  TestamentInfo,
-} from "../../domain/models/arrangement";
 import type { VersesBundleData } from "../../domain/entities/VersesBundleData";
 
 export type PieceDataRepositoryPort = Pick<
@@ -34,16 +23,6 @@ export type PieceDataRepositoryPort = Pick<
   | "addSectionBookData"
   | "addSectionData"
   | "addTestamentData"
->;
-
-export type PieceLabelServicePort = Pick<
-  BasePieceLabelServicePort<StackLabelableBiblePiece>,
-  "hideLabel" | "showLabel"
->;
-
-export type PieceHighlightServicePort = Pick<
-  BasePieceHighlighterPort,
-  "forgetPiece"
 >;
 
 export interface StackPieceLifecycleAdapterPort {
@@ -66,24 +45,8 @@ export interface StackPieceLifecycleAdapterPort {
   despawn: (piece: Piece) => void;
 }
 
-export interface ArrangementServicePort {
-  getTestamentByIndices: (
-    path: TestamentPathIndices
-  ) => TestamentInfo | undefined;
-  getSectionByIndices: (path: SectionPathIndices) => SectionInfo | undefined;
-  getBookByIndices: (path: BookPathIndices) => BookInfo | undefined;
-}
-
-export interface ScriptureServicePort {
-  getSectionChapterCount: (section: readonly BookInfo[]) => number;
-}
-
 export interface IdGeneratorPort {
   getId: () => string;
-}
-
-export interface StackStructureServicePort {
-  getSectionLevels: (books: readonly BookInfo[]) => BookInfo[][];
 }
 
 export interface VersesBundleDataRepositoryPort {

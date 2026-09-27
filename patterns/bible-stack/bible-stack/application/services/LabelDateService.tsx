@@ -2,16 +2,16 @@ import {
   type LabelDateFormat,
   LabelDateFormats,
 } from "../../domain/models/label";
-import type { LabelDateFormatGetterPort } from "../ports/in/LabelDate";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { LabelDateServicePort } from "../ports/in/LabelDate";
 
 interface LabelDateServiceProps {
   dateFormat?: LabelDateFormat;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
 }
 
-export class LabelDateService implements LabelDateFormatGetterPort {
+export class LabelDateService implements LabelDateServicePort {
   #dateFormat: NonNullable<LabelDateServiceProps["dateFormat"]>;
   #eventManagerPort: LabelDateServiceProps["eventManagerPort"];
 

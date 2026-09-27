@@ -3,16 +3,16 @@ import type { VersesBundleDataRepositoryPort } from "../ports/versesBundle";
 import type { VersesBundleAdapterPort } from "../ports/versesBundle";
 import type { VersesBundleInteractionServicePort } from "../ports/in/VersesBundleInteraction";
 import type { VersesBundleSelectionServicePort } from "../ports/in/VersesBundleSelection";
-import type { PaintPort } from "../ports/in/Paint";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { PaintServicePort } from "../ports/in/Paint";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
   versesBundleDataRepositoryPort: VersesBundleDataRepositoryPort;
   versesBundleSelectionServicePort: VersesBundleSelectionServicePort;
   versesBundleAdapterPort: VersesBundleAdapterPort;
-  paintPort: PaintPort;
+  paintPort: PaintServicePort;
   loggerPort: LoggerPort;
 }
 

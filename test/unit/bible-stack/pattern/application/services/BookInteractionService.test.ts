@@ -3,13 +3,10 @@ import { BookInteractionService } from "../../../../../../patterns/bible-stack/b
 import type {
   BookDataRepositoryPort,
   PieceAdapterPort,
-  SequenceStateServicePort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/books";
 import type { BookSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookSelection";
 import type { ExplodedViewServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ExplodedView";
-import type { PaintPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { TourGuideServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TourGuide";
 import {
   BookInteractionDelays,
@@ -57,6 +54,13 @@ import {
   type SelectionState,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PaintServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
+import {
+  makePieceHighlightServiceDouble,
+  makeSequenceStateServiceDouble,
+} from "../serviceDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -297,12 +301,12 @@ describe("pattern.bible-stack.application.services.BookInteractionService", () =
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let tourGuideServicePort: Mocked<TourGuideServicePort>;
   let bookSelectionServicePort: Mocked<BookSelectionServicePort>;
-  let pieceHighlightServicePort: Mocked<PieceHighlighterPort>;
+  let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
   let explodedViewServicePort: Mocked<ExplodedViewServicePort>;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
   let pieceAdapterPort: Mocked<PieceAdapterPort>;
   let bookInteractionConfigProviderPort: Mocked<BookInteractionConfigProviderPort>;
-  let paintPort: Mocked<PaintPort>;
+  let paintPort: Mocked<PaintServicePort>;
   let loggerPort: Mocked<LoggerPort>;
 
   beforeEach(() => {
@@ -329,16 +333,9 @@ describe("pattern.bible-stack.application.services.BookInteractionService", () =
       deselectBooks: vi.fn(),
     };
 
-    pieceHighlightServicePort = {
-      tryHighlightPiece: vi.fn(),
-      tryUnhighlightPiece: vi.fn(),
+    pieceHighlightServicePort = makePieceHighlightServiceDouble({
       isUnhighlightScheduled: vi.fn(() => false),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    });
 
     explodedViewServicePort = {
       explodeSection: vi.fn(),
@@ -347,12 +344,12 @@ describe("pattern.bible-stack.application.services.BookInteractionService", () =
         undefined as unknown as ExplodedViewServicePort["currentExplodedSection"],
     };
 
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn(() => false),
       executeAsSequence: vi.fn(async (task: () => Promise<void>) => {
         await task();
       }),
-    };
+    });
 
     pieceAdapterPort = {
       isPieceAnchored: vi.fn(),
@@ -369,7 +366,7 @@ describe("pattern.bible-stack.application.services.BookInteractionService", () =
       activate: vi.fn(),
       deactivate: vi.fn(),
       isActive: false,
-    } as unknown as Mocked<PaintPort>;
+    } as unknown as Mocked<PaintServicePort>;
 
     loggerPort = {
       error: vi.fn(),

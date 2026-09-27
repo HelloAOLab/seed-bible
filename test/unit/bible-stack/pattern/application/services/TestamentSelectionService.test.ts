@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { TestamentSelectionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/TestamentSelectionService";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { SectionSpawnerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceSpawn";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
@@ -34,6 +33,8 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import { makePieceHighlightServiceDouble } from "../serviceDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -179,7 +180,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
   let service: TestamentSelectionService;
   let testamentSelectionAdapterPort: Mocked<TestamentSelectionAdapterPort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
-  let pieceHighlighterPort: Mocked<PieceHighlighterPort>;
+  let pieceHighlighterPort: Mocked<PieceHighlightServicePort>;
   let sectionSpawnerPort: Mocked<SectionSpawnerPort>;
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
   let awaiterPort: Mocked<AwaiterPort>;
@@ -246,16 +247,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
       emit: vi.fn(),
     } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
-    pieceHighlighterPort = {
-      tryHighlightPiece: vi.fn(),
-      tryUnhighlightPiece: vi.fn(),
-      isUnhighlightScheduled: vi.fn(),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    pieceHighlighterPort = makePieceHighlightServiceDouble();
 
     sectionSpawnerPort = {
       spawnSectionDomain: vi.fn(() => {

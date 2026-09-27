@@ -1,4 +1,3 @@
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type {
@@ -7,13 +6,10 @@ import type {
   LabelDataRepositoryPort,
   StackPieceLifecycleAdapterPort,
   PieceAdapterPort,
-  BookChaptersManagementServicePort,
   RenderOrderAdapterPort,
-  ScripturePiecesStateServicePort,
 } from "../ports/bibleLifecycle";
 import type { PieceDataRepositoryPort } from "../ports/pieces";
 import type { AwaiterPort } from "../ports/experience";
-import type { PieceLabelServicePort } from "../ports/pieces";
 import {
   HighlightRequestSources,
   UnhighlightRequestSources,
@@ -32,6 +28,11 @@ import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
+import type { BookChaptersManagementServicePort } from "../ports/in/BookChaptersManagement";
+import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 
 interface ServiceParams {
   eventManagerPort: EventManagerPort<BibleStackEvents>;
@@ -39,8 +40,8 @@ interface ServiceParams {
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
   awaiterPort: AwaiterPort;
   configProviderPort: BibleSequenceServiceConfigProviderPort;
-  pieceHighlightServicePort: PieceHighlighterPort;
-  pieceLabelServicePort: PieceLabelServicePort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
+  pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
   labelDataRepositoryPort: LabelDataRepositoryPort;
   pieceAdapterPort: PieceAdapterPort;
   stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;

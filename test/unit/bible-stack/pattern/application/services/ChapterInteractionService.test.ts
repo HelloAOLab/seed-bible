@@ -1,14 +1,7 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ChapterInteractionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ChapterInteractionService";
-import type {
-  ChapterDataRepositoryPort,
-  ChapterNavigationServicePort,
-  UserPresenceServicePort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/chapters";
-import type { ChapterSelectionPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ChapterSelection";
-import type { PaintPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
+import type { ChapterDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/chapters";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
@@ -33,6 +26,11 @@ import {
   type SelectionState,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
 import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
+import type { PaintServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
+import type { ChapterSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ChapterSelection";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import type { ChapterNavigationServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ChapterNavigation";
+import { makePieceHighlightServiceDouble } from "../serviceDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -176,11 +174,10 @@ describe("pattern.bible-stack.application.services.ChapterInteractionService", (
   let service: ChapterInteractionService;
   let chapterDataRepositoryPort: Mocked<ChapterDataRepositoryPort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
-  let chapterSelectionServicePort: Mocked<ChapterSelectionPort>;
-  let pieceHighlighterPort: Mocked<PieceHighlighterPort>;
+  let chapterSelectionServicePort: Mocked<ChapterSelectionServicePort>;
+  let pieceHighlighterPort: Mocked<PieceHighlightServicePort>;
   let chapterNavigationServicePort: Mocked<ChapterNavigationServicePort>;
-  let userPresenceServicePort: Mocked<UserPresenceServicePort>;
-  let paintPort: Mocked<PaintPort>;
+  let paintPort: Mocked<PaintServicePort>;
   let loggerPort: Mocked<LoggerPort>;
 
   beforeEach(() => {
@@ -197,23 +194,12 @@ describe("pattern.bible-stack.application.services.ChapterInteractionService", (
       trySelectChapter: vi.fn(async () => {}),
     };
 
-    pieceHighlighterPort = {
-      tryHighlightPiece: vi.fn(),
-      tryUnhighlightPiece: vi.fn(),
+    pieceHighlighterPort = makePieceHighlightServiceDouble({
       isUnhighlightScheduled: vi.fn(() => false),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    });
 
     chapterNavigationServicePort = {
       openChapter: vi.fn(),
-    };
-
-    userPresenceServicePort = {
-      updateUserPresence: vi.fn(),
     };
 
     paintPort = {
@@ -223,7 +209,7 @@ describe("pattern.bible-stack.application.services.ChapterInteractionService", (
       activate: vi.fn(),
       deactivate: vi.fn(),
       isActive: false,
-    } as unknown as Mocked<PaintPort>;
+    } as unknown as Mocked<PaintServicePort>;
 
     loggerPort = {
       error: vi.fn(),
@@ -237,7 +223,6 @@ describe("pattern.bible-stack.application.services.ChapterInteractionService", (
       chapterSelectionServicePort,
       pieceHighlighterPort,
       chapterNavigationServicePort,
-      userPresenceServicePort,
       paintPort,
       loggerPort,
     });
@@ -377,24 +362,6 @@ describe("pattern.bible-stack.application.services.ChapterInteractionService", (
       expect(
         chapterSelectionServicePort.deselectChapter
       ).not.toHaveBeenCalled();
-    });
-
-    it("updates user presence on chapter selection success", async () => {
-      const chapterData = makeChapterData({
-        selectionState: SelectionStates.Idle,
-        isOnTheGround: true,
-      });
-      chapterDataRepositoryPort.getPieceData.mockReturnValue(chapterData);
-
-      service.handleChapterSelection({ chapter: chapterPiece });
-
-      expect(userPresenceServicePort.updateUserPresence).not.toHaveBeenCalled();
-
-      await vi.waitFor(() =>
-        expect(
-          userPresenceServicePort.updateUserPresence
-        ).toHaveBeenCalledOnce()
-      );
     });
 
     it("opens the chapter if it is idle and stacked", () => {

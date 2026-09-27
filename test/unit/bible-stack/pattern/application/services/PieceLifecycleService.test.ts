@@ -5,12 +5,8 @@ import type {
   VerseDataRepositoryPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceLifecycle";
 import type {
-  ArrangementServicePort,
   IdGeneratorPort,
   PieceDataRepositoryPort,
-  PieceHighlightServicePort,
-  PieceLabelServicePort,
-  ScriptureServicePort,
   StackPieceLifecycleAdapterPort,
   VersesBundleDataRepositoryPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieceLifecycle";
@@ -29,6 +25,17 @@ import type {
 import type { SectionShadow } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
+import type { ArrangementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Arrangement";
+import type { ScriptureServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Scripture";
+import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
+import {
+  makeArrangementServiceDouble,
+  makePieceHighlightServiceDouble,
+  makePieceLabelServiceDouble,
+  makeScriptureServiceDouble,
+} from "../serviceDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const ARRANGEMENT_INDEX = 2;
@@ -279,7 +286,9 @@ const getBundleRanges = (chapter: StackChapterData) =>
 describe("pattern.bible-stack.application.services.PieceLifecycleService", () => {
   let service: PieceLifecycleService;
   let pieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
-  let pieceLabelServicePort: Mocked<PieceLabelServicePort>;
+  let pieceLabelServicePort: Mocked<
+    PieceLabelServicePort<StackLabelableBiblePiece>
+  >;
   let stackPieceLifecycleAdapterPort: Mocked<StackPieceLifecycleAdapterPort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let arrangementServicePort: Mocked<ArrangementServicePort>;
@@ -306,10 +315,9 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       addTestamentData: vi.fn(),
     };
 
-    pieceLabelServicePort = {
+    pieceLabelServicePort = makePieceLabelServiceDouble({
       hideLabel: vi.fn().mockResolvedValue(undefined),
-      showLabel: vi.fn(),
-    };
+    });
 
     stackPieceLifecycleAdapterPort = {
       spawnTestament: vi.fn(),
@@ -331,7 +339,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       despawn: vi.fn(),
     };
 
-    arrangementServicePort = {
+    arrangementServicePort = makeArrangementServiceDouble({
       getTestamentByIndices: vi.fn(({ arrangementIndex, testamentIndex }) =>
         arrangementsTestaments.get(arrangementIndex)?.at(testamentIndex)
       ),
@@ -350,17 +358,17 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
             ?.sections.at(sectionIndex)
             ?.books.at(bookIndex)
       ),
-    };
+    });
 
     idGenerator = {
       getId: vi.fn(() => `generated-id-${generatedIdsCount++}`),
     };
 
-    scriptureServicePort = {
+    scriptureServicePort = makeScriptureServiceDouble({
       getSectionChapterCount: vi.fn((books) =>
         books.reduce((total, book) => total + book.numberOfChapters, 0)
       ),
-    };
+    });
 
     versesBundleDataRepositoryPort = {
       addBundleData: vi.fn(),
@@ -376,9 +384,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       getVersesPerBundle: vi.fn(() => 2),
     };
 
-    pieceHighlightServicePort = {
-      forgetPiece: vi.fn(),
-    };
+    pieceHighlightServicePort = makePieceHighlightServiceDouble();
 
     eventManagerPort = {
       subscribe: vi.fn(),

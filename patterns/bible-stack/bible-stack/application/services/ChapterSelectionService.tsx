@@ -1,26 +1,27 @@
 import type { StackChapterData } from "../../domain/entities/StackChapterData";
 import type {
-  ChapterSelectionPort,
   DirectSelectionParams,
   TrySelectChapterParams,
+  ChapterSelectionServicePort,
 } from "../ports/in/ChapterSelection";
 import type { LoggerPort } from "../ports/out/Logger";
 import type {
   ChapterSelectionAdapterPort,
-  LabelManagerPort,
   VersesBundleLifecycleAdapterPort,
 } from "../ports/out/ChapterSelection";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
+import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 
 interface ServiceParams {
   loggerPort: LoggerPort;
   chapterSelectionAdapterPort: ChapterSelectionAdapterPort;
   pieceActivityServicePort: PieceActivityServicePort;
-  labelManagerPort: LabelManagerPort;
+  labelManagerPort: PieceLabelServicePort<StackLabelableBiblePiece>;
   versesBundleLifecycleAdapterPort: VersesBundleLifecycleAdapterPort;
 }
 
-export class ChapterSelectionService implements ChapterSelectionPort {
+export class ChapterSelectionService implements ChapterSelectionServicePort {
   #loggerPort: ServiceParams["loggerPort"];
   #chapterSelectionAdapterPort: ServiceParams["chapterSelectionAdapterPort"];
   #pieceActivityServicePort: ServiceParams["pieceActivityServicePort"];

@@ -7,13 +7,9 @@ import type {
   PieceAdapterPort,
   ScripturePieceDraggingDataRepositoryPort,
 } from "../ports/scripturePieceDragging";
-import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type {
-  TestamentDraggingServicePort,
-  SectionDraggingServicePort,
-  ChapterDraggingServicePort,
-} from "../ports/in/ScripturePieceDragging";
+import type { ScripturePieceDraggingServicePort } from "../ports/in/ScripturePieceDragging";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
@@ -23,7 +19,7 @@ interface ServiceParams {
 }
 
 // prettier-ignore
-export class ScripturePieceDraggingService implements TestamentDraggingServicePort, SectionDraggingServicePort, ChapterDraggingServicePort {
+export class ScripturePieceDraggingService implements ScripturePieceDraggingServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];

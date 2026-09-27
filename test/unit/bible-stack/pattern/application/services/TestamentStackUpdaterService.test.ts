@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { TestamentStackUpdaterService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/TestamentStackUpdaterService";
-import type { BookStackUpdaterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookStackUpdates";
-import type { SectionStackUpdaterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionStackUpdates";
 import type { TestamentStackUpdaterPort as UpdaterAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackTestamentUpdater";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
@@ -13,6 +11,8 @@ import type {
   TestamentInfo,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/arrangement";
 import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
+import type { BookStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookStackUpdater";
+import type { SectionStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionStackUpdater";
 
 const BIBLE_ID = "bible-id";
 const TESTAMENT_ID = "testament-id";
@@ -165,8 +165,8 @@ const trackSettlement = (promise: Promise<unknown>) => {
 describe("pattern.bible-stack.application.services.TestamentStackUpdaterService", () => {
   let service: TestamentStackUpdaterService;
   let updaterAdapterPort: Mocked<UpdaterAdapterPort>;
-  let sectionUpdaterPort: Mocked<SectionStackUpdaterPort>;
-  let bookStackUpdaterPort: Mocked<BookStackUpdaterPort>;
+  let sectionUpdaterPort: Mocked<SectionStackUpdaterServicePort>;
+  let bookStackUpdaterPort: Mocked<BookStackUpdaterServicePort>;
   let callOrder: string[];
 
   const makeChildren = () => {
@@ -243,6 +243,7 @@ describe("pattern.bible-stack.application.services.TestamentStackUpdaterService"
     bookStackUpdaterPort = {
       prepareBook: vi.fn((command) => {
         callOrder.push(`prepareBook:${command.data.id}`);
+        return true;
       }),
       finalizeBook: vi.fn(async (data) => {
         callOrder.push(`finalizeBook:${data.id}`);

@@ -1,10 +1,5 @@
 import type { InfoLabelData } from "../../../domain/entities/InfoLabelData";
-import type { Piece } from "../../../domain/models/canvas";
 import type { StackSectionData } from "../../../domain/entities/StackSectionData";
-import type {
-  LabelTranslucencyMode,
-  ShowSequencePacing,
-} from "../../../domain/models/label";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 
 export interface LabelDataStorePort {
@@ -17,21 +12,4 @@ export interface SectionSelectionAdapterPort {
     pacing?: StackUpdatePacing | undefined
   ) => Promise<void>;
   deselect: (data: StackSectionData) => Promise<void>;
-}
-
-export interface PieceLabelServicePort {
-  showLabel: (params: {
-    piece: Piece<"StackSectionShadow">;
-    translucencyMode: LabelTranslucencyMode;
-    pacing?: ShowSequencePacing;
-  }) => void;
-  hideLabel: (
-    piece: Piece<"StackSectionShadow" | "StackSection">,
-    pacing?: ShowSequencePacing
-  ) => Promise<void>;
-  changeIntensity: (
-    piece: Piece<"StackSectionShadow">,
-    translucencyMode: LabelTranslucencyMode,
-    pacing?: ShowSequencePacing
-  ) => Promise<void>;
 }

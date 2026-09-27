@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { SectionInteractionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/SectionInteractionService";
-import type { PaintPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { SectionSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionSelection";
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
 import type { TourGuideServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TourGuide";
@@ -36,6 +34,13 @@ import {
   UnhighlightRequestSources,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PaintServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import {
+  makePieceHighlightServiceDouble,
+  makeSectionSelectionServiceDouble,
+  makeSequenceStateServiceDouble,
+} from "../serviceDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -139,11 +144,11 @@ describe("pattern.bible-stack.application.services.SectionInteractionService", (
   >;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let tourGuideServicePort: Mocked<TourGuideServicePort>;
-  let pieceHighlightServicePort: Mocked<PieceHighlighterPort>;
+  let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
   let sectionInteractionConfigProviderPort: Mocked<SectionInteractionConfigProviderPort>;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
   let sectionSelectionServicePort: Mocked<SectionSelectionServicePort>;
-  let paintPort: Mocked<PaintPort>;
+  let paintPort: Mocked<PaintServicePort>;
   let loggerPort: Mocked<LoggerPort>;
 
   beforeEach(() => {
@@ -163,32 +168,25 @@ describe("pattern.bible-stack.application.services.SectionInteractionService", (
       stopTourGuide: vi.fn(),
     };
 
-    pieceHighlightServicePort = {
-      tryHighlightPiece: vi.fn(),
-      tryUnhighlightPiece: vi.fn(),
+    pieceHighlightServicePort = makePieceHighlightServiceDouble({
       isUnhighlightScheduled: vi.fn(() => false),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    });
 
     sectionInteractionConfigProviderPort = {
       getDelay: vi.fn(() => UNHIGHLIGHT_DELAY),
     };
 
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn(() => false),
       executeAsSequence: vi.fn(async (task: () => Promise<void>) => {
         await task();
       }),
-    };
+    });
 
-    sectionSelectionServicePort = {
+    sectionSelectionServicePort = makeSectionSelectionServiceDouble({
       select: vi.fn(async () => {}),
       deselect: vi.fn(async () => {}),
-    };
+    });
 
     paintPort = {
       changeColor: vi.fn(),
@@ -197,7 +195,7 @@ describe("pattern.bible-stack.application.services.SectionInteractionService", (
       activate: vi.fn(),
       deactivate: vi.fn(),
       isActive: false,
-    } as unknown as Mocked<PaintPort>;
+    } as unknown as Mocked<PaintServicePort>;
 
     loggerPort = {
       error: vi.fn(),

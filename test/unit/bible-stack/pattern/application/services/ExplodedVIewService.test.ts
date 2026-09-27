@@ -17,6 +17,7 @@ import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import { makePieceActivityServiceDouble } from "../serviceDoubles";
 
 describe("pattern.bible-stack.application.services.ExplodedVIewService", () => {
   let service: ExplodedViewService;
@@ -103,25 +104,11 @@ describe("pattern.bible-stack.application.services.ExplodedVIewService", () => {
       }),
     };
 
-    pieceActivityServicePort = {
-      getPieceActivity: vi.fn(),
-      getActivityIndicatorsForPiece: vi.fn(),
-      getActivityIndicatorByType: vi.fn(),
-      getExtraActivityIndicatorsForPiece: vi.fn(),
-      getPieceIndicatorByActivityIndex: vi.fn(),
-      getDataActivityIndicatorByType: vi.fn(),
-      getDataExtraActivityIndicators: vi.fn(),
-      getDataIndicatorByActivityIndex: vi.fn(),
-      tryHideIndicators: vi.fn(),
-      updateIndicators: vi.fn(),
-      updateAllIndicators: vi.fn(),
-      tryHideNotification: vi.fn(),
-      updateNotification: vi.fn(),
+    pieceActivityServicePort = makePieceActivityServiceDouble({
       updateAllNotifications: vi.fn(() => {
         executionOrder.push("updateAllNotifications");
       }),
-      updateAllNotificationsDirection: vi.fn(),
-    };
+    });
 
     eventManagerPort = {
       emit: vi.fn(() => {

@@ -5,11 +5,8 @@ import {
   HighlightDelays,
   type HighlightConfigProviderPort,
   type PieceHighlightActivityNotificationAdapterPort,
-  type PieceHighlightActivityServicePort,
   type PieceHighlightAdapterPort,
-  type PieceHighlightLabelServicePort,
   type PieceHighlightPieceDataRepositoryPort,
-  type PieceHighlightSequenceStateServicePort,
   type PieceUnhighlightSchedulerAdapterPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
@@ -40,6 +37,15 @@ import {
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 import type { AnyStackData } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
+import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
+import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
+import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
+import {
+  makePieceActivityServiceDouble,
+  makePieceLabelServiceDouble,
+  makeSequenceStateServiceDouble,
+} from "../serviceDoubles";
 
 type HighlightablePiece = Parameters<
   PieceHighlightService["tryHighlightPiece"]
@@ -181,12 +187,14 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let pieceHighlightAdapterPort: Mocked<PieceHighlightAdapterPort>;
   let activityNotificationAdapterPort: Mocked<PieceHighlightActivityNotificationAdapterPort>;
-  let pieceActivityServicePort: Mocked<PieceHighlightActivityServicePort>;
-  let pieceLabelServicePort: Mocked<PieceHighlightLabelServicePort>;
+  let pieceActivityServicePort: Mocked<PieceActivityServicePort>;
+  let pieceLabelServicePort: Mocked<
+    PieceLabelServicePort<StackLabelableBiblePiece>
+  >;
   let schedulerAdapterPort: Mocked<PieceUnhighlightSchedulerAdapterPort>;
   let configProviderPort: Mocked<HighlightConfigProviderPort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
-  let sequenceStateServicePort: Mocked<PieceHighlightSequenceStateServicePort>;
+  let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
   let pieceDataRepositoryPort: Mocked<PieceHighlightPieceDataRepositoryPort>;
   let loggerPort: Mocked<LoggerPort>;
   let dataByPieceId: Map<string, AnyStackData>;
@@ -252,15 +260,9 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
       hideNotification: vi.fn(),
     };
 
-    pieceActivityServicePort = {
-      updateNotification: vi.fn(),
-    };
+    pieceActivityServicePort = makePieceActivityServiceDouble();
 
-    pieceLabelServicePort = {
-      showLabel: vi.fn(),
-      hideLabel: vi.fn(),
-      changeIntensity: vi.fn(),
-    };
+    pieceLabelServicePort = makePieceLabelServiceDouble();
 
     schedulerAdapterPort = {
       schedule: vi.fn(),
@@ -275,9 +277,7 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
       getParentDataChain: vi.fn(),
     };
 
-    sequenceStateServicePort = {
-      isThereAnOngoingSequence: vi.fn(),
-    };
+    sequenceStateServicePort = makeSequenceStateServiceDouble();
 
     pieceDataRepositoryPort = {
       getPieceData: vi.fn(),

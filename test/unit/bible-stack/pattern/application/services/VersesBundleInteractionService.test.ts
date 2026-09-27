@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { VersesBundleInteractionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/VersesBundleInteractionService";
-import type { PaintPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
 import type { VersesBundleSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/VersesBundleSelection";
 import type {
@@ -10,6 +9,8 @@ import type {
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import { VersesBundleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/VersesBundleData";
 import type { Piece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PaintServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
+import { makeSequenceStateServiceDouble } from "../serviceDoubles";
 
 const bundlePiece: Piece<"VersesBundle"> = {
   id: "bundle-piece",
@@ -50,16 +51,16 @@ describe("pattern.bible-stack.application.services.VersesBundleInteractionServic
   let versesBundleDataRepositoryPort: Mocked<VersesBundleDataRepositoryPort>;
   let versesBundleSelectionServicePort: Mocked<VersesBundleSelectionServicePort>;
   let versesBundleAdapterPort: Mocked<VersesBundleAdapterPort>;
-  let paintPort: Mocked<PaintPort>;
+  let paintPort: Mocked<PaintServicePort>;
   let loggerPort: Mocked<LoggerPort>;
 
   beforeEach(() => {
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn(() => false),
       executeAsSequence: vi.fn(async (task: () => Promise<void>) => {
         await task();
       }),
-    };
+    });
 
     versesBundleDataRepositoryPort = {
       getBundleData: vi.fn(),
@@ -81,7 +82,7 @@ describe("pattern.bible-stack.application.services.VersesBundleInteractionServic
       activate: vi.fn(),
       deactivate: vi.fn(),
       isActive: false,
-    } as unknown as Mocked<PaintPort>;
+    } as unknown as Mocked<PaintServicePort>;
 
     loggerPort = {
       error: vi.fn(),

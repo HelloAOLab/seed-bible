@@ -2,9 +2,7 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { StackManagementService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/StackManagementService";
 import type {
   BibleDataRepositoryPort,
-  BibleLifecycleServicePort,
   PieceDataRepositoryPort,
-  PieceLifecycleServicePort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/stackManagement";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -22,6 +20,12 @@ import {
   BibleVisualizationStates,
   CrossPositions,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PieceLifecycleServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLifecycle";
+import type { BibleLifecycleServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleLifecycle";
+import {
+  makeBibleLifecycleServiceDouble,
+  makePieceLifecycleServiceDouble,
+} from "../serviceDoubles";
 
 const BIBLE_ID = "bible-id";
 
@@ -138,17 +142,9 @@ describe("pattern.bible-stack.application.services.StackManagementService", () =
   let pieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
 
   beforeEach(() => {
-    bibleLifecycleServicePort = {
-      deleteBibles: vi.fn(),
-    };
+    bibleLifecycleServicePort = makeBibleLifecycleServiceDouble();
 
-    pieceLifecycleServicePort = {
-      deleteTestaments: vi.fn(),
-      deleteSections: vi.fn(),
-      deleteSectionBooks: vi.fn(),
-      deleteBooks: vi.fn(),
-      deleteChapters: vi.fn(),
-    };
+    pieceLifecycleServicePort = makePieceLifecycleServiceDouble();
 
     bibleDataRepositoryPort = {
       getAllBiblesData: vi.fn(() => []),

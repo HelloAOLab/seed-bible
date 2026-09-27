@@ -12,6 +12,7 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import type { StackCover } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
 import { StackPresenceNavigationPacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/userPresence";
+import { makeSequenceStateServiceDouble } from "../serviceDoubles";
 
 const BIBLE_ID = "bible-id";
 
@@ -54,12 +55,11 @@ describe("pattern.bible-stack.application.services.CoverInteractionService", () 
       crackOpenBible: vi.fn(),
     };
 
-    sequenceStateServicePort = {
-      isThereAnOngoingSequence: vi.fn(),
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       executeAsSequence: vi.fn(async (task: () => Promise<void>) => {
         await task();
       }),
-    };
+    });
 
     loggerPort = {
       error: vi.fn(),

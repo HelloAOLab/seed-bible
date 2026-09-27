@@ -11,6 +11,10 @@ import type {
   Piece,
   SectionShadow,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import {
+  makeSectionSelectionServiceDouble,
+  makeSequenceStateServiceDouble,
+} from "../serviceDoubles";
 
 const SECTION_ID = "section-id";
 
@@ -67,17 +71,17 @@ describe("pattern.bible-stack.application.services.SectionShadowInteractionServi
       getDataById: vi.fn(),
     } as unknown as Mocked<PieceDataRepositoryPort>;
 
-    sectionSelectionServicePort = {
+    sectionSelectionServicePort = makeSectionSelectionServiceDouble({
       select: vi.fn(async () => {}),
       deselect: vi.fn(async () => {}),
-    };
+    });
 
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn(() => false),
       executeAsSequence: vi.fn(async (task: () => Promise<void>) => {
         await task();
       }),
-    };
+    });
 
     tourGuideServicePort = {
       ongoingTourGuideSectionData:

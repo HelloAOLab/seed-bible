@@ -7,6 +7,7 @@ import type {
 } from "../ports/out/PieceState";
 import type { BookChaptersManagementServicePort } from "../ports/in/BookChaptersManagement";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { PieceStateServicePort } from "../ports/in/PieceState";
 
 function hasTransformChanged(changedProperties: Array<keyof PieceState>) {
   return changedProperties.some((property) => {
@@ -37,7 +38,7 @@ interface ServiceParams {
   loggerPort: LoggerPort;
 }
 
-export class PieceStateService {
+export class PieceStateService implements PieceStateServicePort {
   #labelPositionUpdaterPort: ServiceParams["labelPositionUpdaterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #bookChaptersManagementServicePort: ServiceParams["bookChaptersManagementServicePort"];

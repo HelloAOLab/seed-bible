@@ -3,7 +3,7 @@ import type {
   UserPresence,
 } from "../../../domain/models/userPresence";
 
-export interface UserPresencePort {
+export interface UserPresenceServicePort {
   update(newPresence: UserPresence): void;
 
   getUserPresence(): UserPresence;

@@ -1,8 +1,6 @@
 import type { InfoLabelData } from "../../../domain/entities/InfoLabelData";
-import type { SubsetBookInfo } from "../../../domain/models/arrangement";
 
 import type { HexString } from "../../../domain/models/commonTypes";
-import type { SubsetBookChapter } from "../../../domain/models/arrangement";
 import {
   type Piece,
   type ActivityIndicator,
@@ -49,16 +47,6 @@ export interface LabelDataStorePort {
   removeLabelData: (data: InfoLabelData) => void;
   getAllLabelsData: () => InfoLabelData[];
   getDataByOwnerId: (id: string) => InfoLabelData | undefined;
-}
-
-export interface ScriptureServicePort {
-  mapCompleteToSubsetBook({
-    chapter,
-    subsets,
-  }: {
-    chapter: number;
-    subsets: readonly SubsetBookInfo[];
-  }): SubsetBookChapter;
 }
 
 export interface BaseShowIndicatorCommand<T extends ActivityIndicatorType> {

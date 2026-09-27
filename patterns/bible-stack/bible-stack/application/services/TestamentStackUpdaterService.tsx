@@ -1,14 +1,14 @@
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
-import type { TestamentStackUpdaterPort as UpdaterServicePort } from "../ports/in/TestamentStackUpdater";
 import type { TestamentStackUpdaterPort as UpdaterAdapterPort } from "../ports/out/StackTestamentUpdater";
-import type { SectionStackUpdaterPort } from "../ports/in/SectionStackUpdates";
-import type { BookStackUpdaterPort } from "../ports/in/BookStackUpdates";
+import type { TestamentStackUpdaterServicePort as UpdaterServicePort } from "../ports/in/TestamentStackUpdater";
+import type { BookStackUpdaterServicePort } from "../ports/in/BookStackUpdater";
+import type { SectionStackUpdaterServicePort } from "../ports/in/SectionStackUpdater";
 
 interface ServiceParams {
   updaterAdapterPort: UpdaterAdapterPort;
-  sectionUpdaterPort: SectionStackUpdaterPort;
-  bookStackUpdaterPort: BookStackUpdaterPort;
+  sectionUpdaterPort: SectionStackUpdaterServicePort;
+  bookStackUpdaterPort: BookStackUpdaterServicePort;
 }
 
 export class TestamentStackUpdaterService implements UpdaterServicePort {

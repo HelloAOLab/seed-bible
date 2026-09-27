@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { PieceActivityService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceActivityService";
 import type { ArrangementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Arrangement";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type { UserPresencePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/UserPresence";
 import type {
   ActivityIndicatorLifecyclePort,
   ActivityIndicatorsAdapterPort,
@@ -41,6 +40,8 @@ import type {
   ReadingInstance,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/userPresence";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { UserPresenceServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/UserPresence";
+import { makeArrangementServiceDouble } from "../serviceDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const OWN_CONNECTION_ID = "own-connection";
@@ -295,7 +296,7 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
   let dataRegistryPort: Mocked<DataRegistryPort>;
   let arrangementServicePort: Mocked<ArrangementServicePort>;
   let labelDataStorePort: Mocked<LabelDataStorePort>;
-  let userPresenceServicePort: Mocked<UserPresencePort>;
+  let userPresenceServicePort: Mocked<UserPresenceServicePort>;
   let activityIndicatorsAdapterPort: Mocked<ActivityIndicatorsAdapterPort>;
   let activityIndicatorLifecyclePort: Mocked<ActivityIndicatorLifecyclePort>;
   let activityNotificationAdapterPort: Mocked<ActivityNotificationAdapterPort>;
@@ -386,24 +387,7 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
       getAllPiecesDataByType: vi.fn(),
     } as unknown as Mocked<DataRegistryPort>;
 
-    arrangementServicePort = {
-      getArrangementByIndex: vi.fn(),
-      getAllArrangements: vi.fn(),
-      getCurrentArrangementIndex: vi.fn(),
-      setCurrentArrangementIndex: vi.fn(),
-      setArrangementIndexByName: vi.fn(),
-      getArrangementIndexByName: vi.fn(),
-      getCurrentArrangement: vi.fn(),
-      getCurrentArrangementName: vi.fn(),
-      addCustomArrangement: vi.fn(),
-      removeCustomArrangement: vi.fn(),
-      getBooksNamesBySectionName: vi.fn(),
-      getBookInfoPathById: vi.fn(),
-      getBookByIndices: vi.fn(),
-      getTestamentByIndices: vi.fn(),
-      getBookSubsetByCompleteId: vi.fn(),
-      getSectionByIndices: vi.fn(),
-    };
+    arrangementServicePort = makeArrangementServiceDouble();
 
     labelDataStorePort = {
       getDataByTransformerId: vi.fn(),
@@ -467,7 +451,14 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
     dataRegistryPort.getAllPiecesDataByType.mockReturnValue([]);
 
     arrangementServicePort.getBookInfoPathById.mockImplementation(
-      ({ id }) => BOOK_PATHS[id] ?? { found: false, arrangementIndex: 0 }
+      ({ id }) =>
+        BOOK_PATHS[id] ?? {
+          found: false,
+          arrangementIndex: 0,
+          testamentIndex: undefined,
+          sectionIndex: undefined,
+          bookIndex: undefined,
+        }
     );
     arrangementServicePort.getBookSubsetByCompleteId.mockImplementation(
       ({ id, chapterNumber }) =>

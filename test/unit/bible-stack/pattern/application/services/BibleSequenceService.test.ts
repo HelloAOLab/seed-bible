@@ -10,18 +10,13 @@ import { BibleSequenceService } from "../../../../../../patterns/bible-stack/bib
 import type {
   BibleSequenceAdapterPort,
   BibleSequenceServiceConfigProviderPort,
-  BookChaptersManagementServicePort,
   LabelDataRepositoryPort,
   PieceAdapterPort,
   RenderOrderAdapterPort,
   StackPieceLifecycleAdapterPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/bibleLifecycle";
 import type { AwaiterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/experience";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
-import type {
-  PieceDataRepositoryPort,
-  PieceLabelServicePort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type {
   ActiveBibleHierarchy,
@@ -59,6 +54,16 @@ import type { InfoLabelData } from "../../../../../../patterns/bible-stack/bible
 import { ShowSequencePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/label";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import type { BookChaptersManagementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookChaptersManagement";
+import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
+import {
+  makeBookChaptersManagementServiceDouble,
+  makePieceHighlightServiceDouble,
+  makePieceLabelServiceDouble,
+  makeScripturePiecesStateServiceDouble,
+} from "../serviceDoubles";
 
 interface MockedDataProps {
   id?: string;
@@ -167,8 +172,10 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
   let bibleSequenceAdapterPort: Mocked<BibleSequenceAdapterPort>;
   let awaiterPort: Mocked<AwaiterPort>;
   let configProviderPort: Mocked<BibleSequenceServiceConfigProviderPort>;
-  let pieceHighlightServicePort: Mocked<PieceHighlighterPort>;
-  let pieceLabelServicePort: Mocked<PieceLabelServicePort>;
+  let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
+  let pieceLabelServicePort: Mocked<
+    PieceLabelServicePort<StackLabelableBiblePiece>
+  >;
   let labelDataRepositoryPort: Mocked<LabelDataRepositoryPort>;
   let pieceAdapterPort: Mocked<PieceAdapterPort>;
   let stackPieceLifecycleAdapterPort: Mocked<StackPieceLifecycleAdapterPort>;
@@ -205,20 +212,13 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
       getTestamentHighlightSequenceConfig: vi.fn(),
     } as unknown as Mocked<BibleSequenceServiceConfigProviderPort>;
 
-    pieceHighlightServicePort = {
-      tryHighlightPiece: vi.fn(),
+    pieceHighlightServicePort = makePieceHighlightServiceDouble({
       tryUnhighlightPiece: vi.fn(() => Promise.resolve()),
-      isUnhighlightScheduled: vi.fn(),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    });
 
-    pieceLabelServicePort = {
+    pieceLabelServicePort = makePieceLabelServiceDouble({
       hideLabel: vi.fn(() => Promise.resolve()),
-    };
+    });
 
     labelDataRepositoryPort = {
       getDataByOwnerId: vi.fn(),
@@ -244,10 +244,8 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
       spawnSectionBookDomain: vi.fn(),
     };
 
-    bookChaptersManagementServicePort = {
-      showChapters: vi.fn(),
-      hideChapters: vi.fn(),
-    };
+    bookChaptersManagementServicePort =
+      makeBookChaptersManagementServiceDouble();
 
     renderOrderAdapterPort = {
       setSortedRenderOrder: vi.fn(),
@@ -270,9 +268,9 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
     service = new BibleSequenceService({
       eventManagerPort,
       bibleSequenceAdapterPort,
-      scripturePiecesStateServicePort: {
+      scripturePiecesStateServicePort: makeScripturePiecesStateServiceDouble({
         arePiecesDraggable: false,
-      },
+      }),
       awaiterPort,
       configProviderPort,
       pieceHighlightServicePort,

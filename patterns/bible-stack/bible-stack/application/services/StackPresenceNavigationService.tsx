@@ -3,17 +3,11 @@ import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackChapterData } from "../../domain/entities/StackChapterData";
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import { PieceSelectionSources } from "../../domain/models/canvas";
-import type { ScripturePort } from "../ports/in/Scripture";
 import type { BibleDataRepositoryPort } from "../ports/stacks";
 import type { PieceDataRepositoryPort } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type {
-  PieceAdapterPort,
-  SequenceStateServicePort,
-  AwaiterPort,
-} from "../ports/userPresence";
+import type { PieceAdapterPort, AwaiterPort } from "../ports/userPresence";
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
-import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
 import {
   StackPresenceNavigationPacings,
   type ReadingInstance,
@@ -27,17 +21,20 @@ import type {
 import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
-import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type { LoggerPort } from "../ports/out/Logger";
-import type { UserPresencePort } from "../ports/in/UserPresence";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { ParentDataIds } from "../../domain/models/canvas";
+import type { ScriptureServicePort } from "../ports/in/Scripture";
+import type { ChapterSelectionServicePort } from "../ports/in/ChapterSelection";
+import type { TestamentSelectionServicePort } from "../ports/in/TestamentSelection";
+import type { UserPresenceServicePort } from "../ports/in/UserPresence";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 
 interface ServiceParams {
   loggerPort: LoggerPort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
-  userPresencePort: UserPresencePort;
+  userPresencePort: UserPresenceServicePort;
   pieceAdapterPort: PieceAdapterPort;
   pieceDataRepositoryPort: Pick<
     PieceDataRepositoryPort,
@@ -45,13 +42,13 @@ interface ServiceParams {
   >;
   sequenceStateServicePort: SequenceStateServicePort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
-  chapterSelectionServicePort: ChapterSelectionPort;
+  chapterSelectionServicePort: ChapterSelectionServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
-  scriptureServicePort: ScripturePort;
+  scriptureServicePort: ScriptureServicePort;
   bibleSequenceServicePort: BibleSequenceServicePort;
   bookSelectionServicePort: BookSelectionServicePort;
   awaiterPort: AwaiterPort;
-  testamentSelectionServicePort: TestamentSelectionPort;
+  testamentSelectionServicePort: TestamentSelectionServicePort;
   sectionSelectionServicePort: SectionSelectionServicePort;
   explodedViewServicePort: ExplodedViewServicePort;
   arrangementServicePort: ArrangementServicePort;

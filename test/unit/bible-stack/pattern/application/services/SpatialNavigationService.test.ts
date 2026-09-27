@@ -11,6 +11,7 @@ import {
   BibleVisualizationStates,
   CrossPositions,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import { makeSequenceStateServiceDouble } from "../serviceDoubles";
 
 const makeBibleData = (id: string): StackBibleData =>
   new StackBibleData({
@@ -31,7 +32,7 @@ describe("pattern.bible-stack.application.services.SpatialNavigationService", ()
   beforeEach(() => {
     isInsideSequence = false;
 
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn(() => false),
       executeAsSequence: vi.fn(async (task) => {
         isInsideSequence = true;
@@ -41,7 +42,7 @@ describe("pattern.bible-stack.application.services.SpatialNavigationService", ()
           isInsideSequence = false;
         }
       }),
-    };
+    });
 
     bibleDataRepositoryPort = {
       getAllBiblesData: vi.fn(() => [makeBibleData("bible-id")]),

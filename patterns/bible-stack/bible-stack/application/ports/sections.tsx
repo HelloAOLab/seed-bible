@@ -13,10 +13,6 @@ export interface PieceMapperPort {
   toDomain: (bot: SectionBot) => Piece<"StackSection">;
 }
 
-export interface DragServicePort {
-  handlePieceDrag: (piece: Piece<"StackSection">) => Promise<void>;
-}
-
 export interface DraggingEventMapperPort {
   toDomain: (event: InfrastructureDraggingEvent) => DomainDraggingEvent;
 }

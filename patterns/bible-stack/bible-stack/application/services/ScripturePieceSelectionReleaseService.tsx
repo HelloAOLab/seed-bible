@@ -3,14 +3,10 @@ import type {
   PieceAdapterPort,
   ScripturePieceSelectionReleaseDataRepositoryPort,
 } from "../ports/scripturePieceSelectionRelease";
-import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type {
-  TestamentSelectionReleaseServicePort,
-  SectionSelectionReleaseServicePort,
-  ChapterSelectionReleaseServicePort,
-} from "../ports/in/ScripturePieceSelectionRelease";
+import type { ScripturePieceSelectionReleaseServicePort } from "../ports/in/ScripturePieceSelectionRelease";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
@@ -21,7 +17,7 @@ interface ServiceParams {
 }
 
 // prettier-ignore
-export class ScripturePieceSelectionReleaseService implements TestamentSelectionReleaseServicePort, SectionSelectionReleaseServicePort, ChapterSelectionReleaseServicePort {
+export class ScripturePieceSelectionReleaseService implements ScripturePieceSelectionReleaseServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];

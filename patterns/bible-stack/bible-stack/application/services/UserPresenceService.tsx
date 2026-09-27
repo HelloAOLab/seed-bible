@@ -2,9 +2,9 @@ import type {
   ReadingInstance,
   UserPresence,
 } from "../../domain/models/userPresence";
-import type { UserPresencePort } from "../ports/in/UserPresence";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { UserPresenceServicePort } from "../ports/in/UserPresence";
 
 interface UserPresenceParams {
   eventManagerPort: EventManagerPort<BibleStackEvents>;
@@ -12,7 +12,7 @@ interface UserPresenceParams {
   userId: string;
 }
 
-export class UserPresenceService implements UserPresencePort {
+export class UserPresenceService implements UserPresenceServicePort {
   #userPresence: UserPresence = new Map();
   #eventManagerPort: UserPresenceParams["eventManagerPort"];
   #userId: UserPresenceParams["userId"];

@@ -1,4 +1,3 @@
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import {
   BibleStates,
   type Piece,
@@ -8,34 +7,30 @@ import type {
   PieceAdapterPort,
   ScripturePieceDropDataRepositoryPort,
 } from "../ports/scripturePieceDrop";
-import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type {
-  BookDropServicePort,
-  TestamentDropServicePort,
-  SectionDropServicePort,
-  ChapterDropServicePort,
-} from "../ports/in/ScripturePieceDrop";
+import type { ScripturePieceDropServicePort } from "../ports/in/ScripturePieceDrop";
 import { HighlightRequestSources } from "../../domain/models/pieces";
-import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type { ParentDataIds } from "../../domain/models/canvas";
+import type { ChapterSelectionServicePort } from "../ports/in/ChapterSelection";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
   pieceDataRepositoryPort: ScripturePieceDropDataRepositoryPort;
   sequenceStateServicePort: SequenceStateServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
-  chapterSelectionServicePort: ChapterSelectionPort;
-  pieceHighlightServicePort: PieceHighlighterPort;
+  chapterSelectionServicePort: ChapterSelectionServicePort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
   loggerPort: LoggerPort;
 }
 
 // prettier-ignore
-export class ScripturePieceDropService implements BookDropServicePort, TestamentDropServicePort, SectionDropServicePort, ChapterDropServicePort {
+export class ScripturePieceDropService implements ScripturePieceDropServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];

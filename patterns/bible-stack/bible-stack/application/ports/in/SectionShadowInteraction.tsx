@@ -1,5 +1,5 @@
 import type { SectionShadow } from "../../../domain/models/canvas";
 
-export interface SectionShadowInteractionPort {
+export interface SectionShadowInteractionServicePort {
   handleSectionShadowSelected(shadow: SectionShadow): void;
 }

@@ -22,6 +22,7 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
+import { makePieceLifecycleServiceDouble } from "../serviceDoubles";
 
 const BIBLE_ID = "bible-id";
 const TESTAMENT_ID = "testament-id";
@@ -190,13 +191,7 @@ describe("pattern.bible-stack.application.services.StackStructureService", () =>
       makePieceErasable: vi.fn(),
     };
 
-    pieceLifecycleServicePort = {
-      createTestament: vi.fn(),
-      createSection: vi.fn(),
-      createBook: vi.fn(),
-      createChapter: vi.fn(),
-      clearPiece: vi.fn(),
-    };
+    pieceLifecycleServicePort = makePieceLifecycleServiceDouble();
 
     eventManagerPort = {
       emit: vi.fn(),

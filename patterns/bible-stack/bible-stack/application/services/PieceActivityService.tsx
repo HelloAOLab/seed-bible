@@ -22,7 +22,6 @@ import type { LoggerPort } from "../ports/out/Logger";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 import type { PieceTypeMap } from "../../domain/models/pieces";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
-import type { UserPresencePort } from "../ports/in/UserPresence";
 import type { ReadingInstance } from "../../domain/models/userPresence";
 import type { UserIdentityPort } from "../ports/out/UserIdentity";
 import type { BibleStackEvents } from "../../domain/models/events";
@@ -32,13 +31,14 @@ import type {
   NotifiableContainer,
   ActivityContainerType,
 } from "../../domain/models/activity";
+import type { UserPresenceServicePort } from "../ports/in/UserPresence";
 
 interface ServiceParams {
   dataRegistryPort: DataRegistryPort;
   arrangementServicePort: ArrangementServicePort;
   labelDataStorePort: LabelDataStorePort;
   maxIndicators?: number;
-  userPresenceServicePort: UserPresencePort;
+  userPresenceServicePort: UserPresenceServicePort;
   // readingInstanceProviderPort: ReadingInstanceProviderPort;
   activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
   activityIndicatorLifecyclePort: ActivityIndicatorLifecyclePort;

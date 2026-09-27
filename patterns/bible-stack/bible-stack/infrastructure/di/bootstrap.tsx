@@ -1092,9 +1092,6 @@ export const bootstrapExtension = () => {
     pieceHierarchyServicePort: pieceHierarchyService,
     chapterSelectionServicePort: chapterSelectionService,
     pieceHighlighterPort: pieceHighlightService,
-    userPresenceServicePort: {
-      updateUserPresence: () => {},
-    },
     chapterNavigationServicePort: chapterNavigationService,
     paintPort: paintService,
     loggerPort: loggerAdapter,

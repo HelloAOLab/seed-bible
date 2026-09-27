@@ -1,29 +1,26 @@
 import type { StackUpdatePacing } from "../../domain/models/stacks";
-import type {
-  InteractabilityBlockerPort,
-  InteractabilityUnlockerPort,
-} from "../ports/in/PieceInteractability";
-import type { BibleStackUpdaterPort } from "../ports/in/BibleStackUpdater";
+import type { PieceInteractabilityServicePort } from "../ports/in/PieceInteractability";
 import type {
   BibleDataRepositoryPort,
   PieceDataRepositoryPort,
 } from "../ports/out/StackUpdate";
-import type { TestamentStackUpdaterPort } from "../ports/in/TestamentStackUpdater";
-import type { SectionStackUpdaterPort } from "../ports/in/SectionStackUpdates";
-import type { BookStackUpdaterPort } from "../ports/in/BookStackUpdates";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { StackAncestorType } from "../../domain/models/canvas";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { BibleStackUpdaterServicePort } from "../ports/in/BibleStackUpdater";
+import type { TestamentStackUpdaterServicePort } from "../ports/in/TestamentStackUpdater";
+import type { BookStackUpdaterServicePort } from "../ports/in/BookStackUpdater";
+import type { SectionStackUpdaterServicePort } from "../ports/in/SectionStackUpdater";
 
 interface ServiceParams {
-  pieceInteractabilityPort: InteractabilityBlockerPort &
-    InteractabilityUnlockerPort;
-  bibleStackUpdaterPort: BibleStackUpdaterPort;
-  testamentStackUpdaterPort: TestamentStackUpdaterPort;
+  pieceInteractabilityPort: PieceInteractabilityServicePort &
+    PieceInteractabilityServicePort;
+  bibleStackUpdaterPort: BibleStackUpdaterServicePort;
+  testamentStackUpdaterPort: TestamentStackUpdaterServicePort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   pieceDataRepositoryPort: PieceDataRepositoryPort;
-  sectionStackUpdaterPort: SectionStackUpdaterPort;
-  bookStackUpdaterPort: BookStackUpdaterPort;
+  sectionStackUpdaterPort: SectionStackUpdaterServicePort;
+  bookStackUpdaterPort: BookStackUpdaterServicePort;
   loggerPort: LoggerPort;
 }
 

@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BookChaptersManagementService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BookChaptersManagementService";
 import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
-import type { ScripturePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Scripture";
 import type { ScripturePiecesStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ScripturePiecesState";
 import type {
   BookChaptersManagementAdapterPort,
@@ -28,6 +27,7 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import { SelectionEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
 import type { StackTransformer } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
+import type { ScriptureServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Scripture";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-id";
@@ -176,7 +176,7 @@ const makeBibleData = (transformer?: StackTransformer): StackBibleData =>
 
 describe("pattern.bible-stack.application.services.BookChaptersManagementService", () => {
   let service: BookChaptersManagementService;
-  let biggerChapterProviderPort: Mocked<ScripturePort>;
+  let biggerChapterProviderPort: Mocked<ScriptureServicePort>;
   let chapterSpawnerPort: Mocked<ChapterSpawnerPort>;
   let chaptersManagementAdapterPort: Mocked<BookChaptersManagementAdapterPort>;
   let scripturePiecesStateServicePort: Mocked<ScripturePiecesStateServicePort>;

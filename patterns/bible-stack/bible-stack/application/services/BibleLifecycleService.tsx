@@ -1,6 +1,5 @@
 import { StackBibleData } from "../../domain/entities/StackBibleData";
 import type {
-  PieceLifecycleServicePort,
   PieceLifecycleAdapterPort,
   BibleDataRepositoryPort,
   IdGeneratorPort,
@@ -18,6 +17,8 @@ import type { ArrangementServicePort } from "../ports/in/Arrangement";
 import type { LoggerPort } from "../ports/out/BibleLifecycle";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
+import type { BibleLifecycleServicePort } from "../ports/in/BibleLifecycle";
 
 interface ServiceParams {
   pieceLifecycleAdapterPort: PieceLifecycleAdapterPort;
@@ -31,7 +32,7 @@ interface ServiceParams {
   loggerPort: LoggerPort;
 }
 
-export class BibleLifecycleService {
+export class BibleLifecycleService implements BibleLifecycleServicePort {
   #pieceLifecycleAdapterPort: ServiceParams["pieceLifecycleAdapterPort"];
   #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
   #bibleDataRepositoryPort: ServiceParams["bibleDataRepositoryPort"];

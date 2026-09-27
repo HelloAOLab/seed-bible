@@ -4,7 +4,6 @@ import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-st
 import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
 import type {
   ChapterSelectionAdapterPort,
-  LabelManagerPort,
   VersesBundleLifecycleAdapterPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ChapterSelection";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -19,6 +18,12 @@ import {
   SelectionStates,
   type SelectionState,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
+import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
+import {
+  makePieceActivityServiceDouble,
+  makePieceLabelServiceDouble,
+} from "../serviceDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -173,7 +178,7 @@ describe("pattern.bible-stack.application.services.ChapterSelectionService", () 
   let loggerPort: Mocked<LoggerPort>;
   let chapterSelectionAdapterPort: Mocked<ChapterSelectionAdapterPort>;
   let pieceActivityServicePort: Mocked<PieceActivityServicePort>;
-  let labelManagerPort: Mocked<LabelManagerPort>;
+  let labelManagerPort: Mocked<PieceLabelServicePort<StackLabelableBiblePiece>>;
   let versesBundleLifecycleAdapterPort: Mocked<VersesBundleLifecycleAdapterPort>;
 
   const selectOrders = () =>
@@ -218,28 +223,9 @@ describe("pattern.bible-stack.application.services.ChapterSelectionService", () 
       deselect: vi.fn(),
     };
 
-    pieceActivityServicePort = {
-      getPieceActivity: vi.fn(),
-      getActivityIndicatorsForPiece: vi.fn(),
-      getActivityIndicatorByType: vi.fn(),
-      getExtraActivityIndicatorsForPiece: vi.fn(),
-      getPieceIndicatorByActivityIndex: vi.fn(),
-      getDataActivityIndicatorByType: vi.fn(),
-      getDataExtraActivityIndicators: vi.fn(),
-      getDataIndicatorByActivityIndex: vi.fn(),
-      tryHideIndicators: vi.fn(),
-      updateIndicators: vi.fn(),
-      updateAllIndicators: vi.fn(),
-      tryHideNotification: vi.fn(),
-      updateNotification: vi.fn(),
-      updateAllNotifications: vi.fn(),
-      updateAllNotificationsDirection: vi.fn(),
-    };
+    pieceActivityServicePort = makePieceActivityServiceDouble();
 
-    labelManagerPort = {
-      hideLabel: vi.fn(),
-      showLabel: vi.fn(),
-    };
+    labelManagerPort = makePieceLabelServiceDouble();
 
     versesBundleLifecycleAdapterPort = {
       spawnVersesBundleDomain: vi.fn(),

@@ -3,10 +3,8 @@ import type { PieceSelectionSource } from "../../domain/models/canvas";
 import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
 import type {
   LabelDataStorePort,
-  PieceLabelServicePort,
   SectionSelectionAdapterPort,
 } from "../ports/out/SectionSelection";
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
@@ -18,12 +16,15 @@ import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 
 interface ServiceParams {
   labelDataStorePort: LabelDataStorePort;
-  pieceHighlighterPort: PieceHighlighterPort;
+  pieceHighlighterPort: PieceHighlightServicePort;
   bookSelectionServicePort: BookSelectionServicePort;
-  pieceLabelServicePort: PieceLabelServicePort;
+  pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
   pieceLifecycleServicePort: PieceLifecycleServicePort;
   stackUpdateServicePort: StackUpdateServicePort;
   sectionSelectionAdapterPort: SectionSelectionAdapterPort;

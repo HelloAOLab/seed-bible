@@ -3,7 +3,6 @@ import { SectionSelectionService } from "../../../../../../patterns/bible-stack/
 import type { BookSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookSelection";
 import type { ExplodedViewServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ExplodedView";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { PieceLifecycleServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLifecycle";
 import type { BookSpawnerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceSpawn";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
@@ -11,7 +10,6 @@ import type { TourGuideServicePort } from "../../../../../../patterns/bible-stac
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type {
   LabelDataStorePort,
-  PieceLabelServicePort,
   SectionSelectionAdapterPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SectionSelection";
 import { InfoLabelData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/InfoLabelData";
@@ -50,6 +48,14 @@ import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
+import {
+  makePieceHighlightServiceDouble,
+  makePieceLabelServiceDouble,
+  makePieceLifecycleServiceDouble,
+} from "../serviceDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -245,9 +251,11 @@ const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 describe("pattern.bible-stack.application.services.SectionSelectionService", () => {
   let service: SectionSelectionService;
   let labelDataStorePort: Mocked<LabelDataStorePort>;
-  let pieceHighlighterPort: Mocked<PieceHighlighterPort>;
+  let pieceHighlighterPort: Mocked<PieceHighlightServicePort>;
   let bookSelectionServicePort: Mocked<BookSelectionServicePort>;
-  let pieceLabelServicePort: Mocked<PieceLabelServicePort>;
+  let pieceLabelServicePort: Mocked<
+    PieceLabelServicePort<StackLabelableBiblePiece>
+  >;
   let pieceLifecycleServicePort: Mocked<PieceLifecycleServicePort>;
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
   let sectionSelectionAdapterPort: Mocked<SectionSelectionAdapterPort>;
@@ -299,16 +307,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       getDataByOwnerId: vi.fn(),
     };
 
-    pieceHighlighterPort = {
-      tryHighlightPiece: vi.fn(),
-      tryUnhighlightPiece: vi.fn(),
-      isUnhighlightScheduled: vi.fn(),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    pieceHighlighterPort = makePieceHighlightServiceDouble();
 
     bookSelectionServicePort = {
       selectBook: vi.fn(),
@@ -317,19 +316,9 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       deselectBooks: vi.fn(),
     };
 
-    pieceLabelServicePort = {
-      showLabel: vi.fn(),
-      hideLabel: vi.fn(),
-      changeIntensity: vi.fn(),
-    };
+    pieceLabelServicePort = makePieceLabelServiceDouble();
 
-    pieceLifecycleServicePort = {
-      createTestament: vi.fn(),
-      createSection: vi.fn(),
-      createBook: vi.fn(),
-      createChapter: vi.fn(),
-      clearPiece: vi.fn(),
-    };
+    pieceLifecycleServicePort = makePieceLifecycleServiceDouble();
 
     stackUpdateServicePort = {
       updateAllStacks: vi.fn(),

@@ -1,21 +1,14 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ExperienceService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ExperienceService";
-import type {
-  BibleLifecycleServicePort,
-  BibleSequenceServicePort,
-  CameraAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/bibleLifecycle";
+import type { CameraAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/bibleLifecycle";
 import type {
   AwaiterPort,
   EnvironmentAdapterPort,
   ExperienceAdapterPort,
   ExperienceConfigProviderPort,
   InteractionRegistryServicePort,
-  SequenceStateServicePort,
-  StackManagementService,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/experience";
 import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { ScripturePiecesStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ScripturePiecesState";
 import type { StackPresenceNavigationServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackPresenceNavigation";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
@@ -25,6 +18,18 @@ import {
   CrossPositions,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import type { WorldPosition } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/spatial";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
+import type { BibleSequenceServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleSequence";
+import type { BibleLifecycleServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleLifecycle";
+import type { StackManagementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackManagement";
+import {
+  makeBibleLifecycleServiceDouble,
+  makeBibleSequenceServiceDouble,
+  makePieceActivityServiceDouble,
+  makePieceHighlightServiceDouble,
+  makeSequenceStateServiceDouble,
+} from "../serviceDoubles";
 
 const BIBLE_ID = "bible-id";
 const CREATION_DELAY = 750;
@@ -56,8 +61,8 @@ const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 describe("pattern.bible-stack.application.services.ExperienceService", () => {
   let service: ExperienceService;
   let environmentAdapterPort: Mocked<EnvironmentAdapterPort>;
-  let stackManagementServicePort: Mocked<StackManagementService>;
-  let pieceHighlightServicePort: Mocked<PieceHighlighterPort>;
+  let stackManagementServicePort: Mocked<StackManagementServicePort>;
+  let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
   let interactionRegistryServicePort: Mocked<InteractionRegistryServicePort>;
   let experienceAdapterPort: Mocked<ExperienceAdapterPort>;
   let scripturePiecesStateServicePort: Mocked<ScripturePiecesStateServicePort>;
@@ -85,16 +90,7 @@ describe("pattern.bible-stack.application.services.ExperienceService", () => {
       clearAllStacks: vi.fn(),
     };
 
-    pieceHighlightServicePort = {
-      tryHighlightPiece: vi.fn(),
-      tryUnhighlightPiece: vi.fn(),
-      isUnhighlightScheduled: vi.fn(),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    pieceHighlightServicePort = makePieceHighlightServiceDouble();
 
     interactionRegistryServicePort = {
       clearAllLastInteractions: vi.fn(),
@@ -121,24 +117,22 @@ describe("pattern.bible-stack.application.services.ExperienceService", () => {
       getBibleCreationPosition: vi.fn(() => creationPosition),
     };
 
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       executeAsSequence: vi.fn(async (task: () => Promise<void>) => {
         await task();
       }),
-    };
+    });
 
     cameraAdapterPort = {
       focusOn: vi.fn(),
       cancelFocus: vi.fn(),
     };
 
-    bibleLifecycleServicePort = {
+    bibleLifecycleServicePort = makeBibleLifecycleServiceDouble({
       createBible: vi.fn(() => ({ bibleData })),
-    };
+    });
 
-    bibleSequenceServicePort = {
-      crackOpenBible: vi.fn(),
-    };
+    bibleSequenceServicePort = makeBibleSequenceServiceDouble();
 
     stackPresenceNavigationServicePort = {
       update: vi.fn(),
@@ -148,23 +142,7 @@ describe("pattern.bible-stack.application.services.ExperienceService", () => {
       sleep: vi.fn(),
     };
 
-    pieceActivityServicePort = {
-      getPieceActivity: vi.fn(),
-      getActivityIndicatorsForPiece: vi.fn(),
-      getActivityIndicatorByType: vi.fn(),
-      getExtraActivityIndicatorsForPiece: vi.fn(),
-      getPieceIndicatorByActivityIndex: vi.fn(),
-      getDataActivityIndicatorByType: vi.fn(),
-      getDataExtraActivityIndicators: vi.fn(),
-      getDataIndicatorByActivityIndex: vi.fn(),
-      tryHideIndicators: vi.fn(),
-      updateIndicators: vi.fn(),
-      updateAllIndicators: vi.fn(),
-      tryHideNotification: vi.fn(),
-      updateNotification: vi.fn(),
-      updateAllNotifications: vi.fn(),
-      updateAllNotificationsDirection: vi.fn(),
-    };
+    pieceActivityServicePort = makePieceActivityServiceDouble();
 
     service = new ExperienceService({
       environmentAdapterPort,

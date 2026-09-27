@@ -6,10 +6,6 @@ import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { BibleDataRepositoryPort } from "./stacks";
 import type { HighlightPacing } from "../../domain/models/pieces";
-import type {
-  LabelTranslucencyMode,
-  ShowSequencePacing,
-} from "../../domain/models/label";
 import type { ActivityNotificationAdapterPort } from "./out/PieceActivity";
 
 export interface PieceDataRepositoryPort {
@@ -53,9 +49,6 @@ export type PieceHighlightPieceDataRepositoryPort = Pick<
   PieceDataRepositoryPort,
   "getPieceData"
 >;
-export interface PieceHighlightSequenceStateServicePort {
-  isThereAnOngoingSequence(): boolean;
-}
 type StackPieceUnion = Piece<
   | "StackTestament"
   | "StackSection"
@@ -80,43 +73,6 @@ export type PieceHighlightActivityNotificationAdapterPort = Pick<
   ActivityNotificationAdapterPort,
   "hideNotification"
 >;
-export interface PieceHighlightActivityServicePort {
-  updateNotification(container: StackChapterData): void;
-}
-export interface PieceHighlightLabelServicePort {
-  showLabel(params: {
-    piece: Piece<
-      | "StackTestament"
-      | "StackSection"
-      | "StackSectionBook"
-      | "StackBook"
-      | "StackChapter"
-    >;
-    translucencyMode: LabelTranslucencyMode;
-  }): Promise<void>;
-  hideLabel(
-    piece: Piece<
-      | "StackTestament"
-      | "StackSection"
-      | "StackSectionBook"
-      | "StackBook"
-      | "StackChapter"
-    >,
-    pacing?: HighlightPacing
-  ): Promise<void>;
-  changeIntensity(
-    piece: Piece<
-      | "StackTestament"
-      | "StackSection"
-      | "StackSectionBook"
-      | "StackBook"
-      | "StackChapter"
-    >,
-    translucencyMode: LabelTranslucencyMode,
-    pacing?: HighlightPacing
-  ): Promise<void>;
-}
-
 export type PieceHierarchyStackDataRepositoryPort = Pick<
   BibleDataRepositoryPort,
   "getBibleDataById"
@@ -132,8 +88,4 @@ export type HighlightDelay =
 
 export interface HighlightConfigProviderPort {
   getDelay: (delay: HighlightDelay) => number;
-}
-
-export interface PieceLabelServicePort {
-  hideLabel(piece: Piece, pacing?: ShowSequencePacing): Promise<void>;
 }

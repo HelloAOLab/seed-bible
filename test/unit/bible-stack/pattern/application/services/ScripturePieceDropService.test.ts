@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ScripturePieceDropService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ScripturePieceDropService";
-import type { ChapterSelectionPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ChapterSelection";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/scripturePieceDrag";
 import type {
   PieceAdapterPort,
   ScripturePieceDropDataRepositoryPort,
@@ -31,6 +28,13 @@ import { SelectionEvents } from "../../../../../../patterns/bible-stack/bible-st
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { ChapterSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ChapterSelection";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
+import {
+  makePieceHighlightServiceDouble,
+  makeSequenceStateServiceDouble,
+} from "../serviceDoubles";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-id";
@@ -182,8 +186,8 @@ describe("pattern.bible-stack.application.services.ScripturePieceDropService", (
   let pieceDataRepositoryPort: Mocked<ScripturePieceDropDataRepositoryPort>;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
-  let chapterSelectionServicePort: Mocked<ChapterSelectionPort>;
-  let pieceHighlightServicePort: Mocked<PieceHighlighterPort>;
+  let chapterSelectionServicePort: Mocked<ChapterSelectionServicePort>;
+  let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let loggerPort: Mocked<LoggerPort>;
 
@@ -217,9 +221,9 @@ describe("pattern.bible-stack.application.services.ScripturePieceDropService", (
       getPieceData: vi.fn(),
     } as unknown as Mocked<ScripturePieceDropDataRepositoryPort>;
 
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn().mockReturnValue(false),
-    };
+    });
 
     pieceHierarchyServicePort = {
       getParentDataChain: vi.fn(),
@@ -230,16 +234,9 @@ describe("pattern.bible-stack.application.services.ScripturePieceDropService", (
       trySelectChapter: vi.fn().mockResolvedValue(undefined),
     };
 
-    pieceHighlightServicePort = {
+    pieceHighlightServicePort = makePieceHighlightServiceDouble({
       tryHighlightPiece: vi.fn().mockResolvedValue(undefined),
-      tryUnhighlightPiece: vi.fn(),
-      isUnhighlightScheduled: vi.fn(),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    });
 
     eventManagerPort = {
       emit: vi.fn(),

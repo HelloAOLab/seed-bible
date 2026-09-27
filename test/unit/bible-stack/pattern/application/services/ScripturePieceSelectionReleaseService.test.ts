@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ScripturePieceSelectionReleaseService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ScripturePieceSelectionReleaseService";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/scripturePieceDrag";
 import type {
   PieceAdapterPort,
   ScripturePieceSelectionReleaseDataRepositoryPort,
@@ -19,6 +18,8 @@ import {
   type Piece,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
+import { makeSequenceStateServiceDouble } from "../serviceDoubles";
 
 const BIBLE_ID = "bible-id";
 
@@ -104,9 +105,9 @@ describe("pattern.bible-stack.application.services.ScripturePieceSelectionReleas
       getPieceData: vi.fn(),
     } as unknown as Mocked<ScripturePieceSelectionReleaseDataRepositoryPort>;
 
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn().mockReturnValue(false),
-    };
+    });
 
     pieceHierarchyServicePort = {
       getParentDataChain: vi.fn(),

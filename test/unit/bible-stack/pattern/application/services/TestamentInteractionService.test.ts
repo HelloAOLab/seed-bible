@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { TestamentInteractionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/TestamentInteractionService";
-import type { PaintPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
-import type { TestamentSelectionPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentSelection";
 import type { TourGuideServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TourGuide";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type { TestamentDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/testaments";
@@ -28,6 +25,13 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/highlight";
 import { HighlightRequestSources } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PaintServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
+import type { TestamentSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentSelection";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import {
+  makePieceHighlightServiceDouble,
+  makeSequenceStateServiceDouble,
+} from "../serviceDoubles";
 
 const BIBLE_ID = "bible-id";
 const TESTAMENT_ID = "testament-id";
@@ -116,18 +120,18 @@ describe("pattern.bible-stack.application.services.TestamentInteractionService",
   let testamentDataRepositoryPort: Mocked<TestamentDataRepositoryPort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let tourGuideServicePort: Mocked<TourGuideServicePort>;
-  let testamentSelectionServicePort: Mocked<TestamentSelectionPort>;
-  let pieceHighlightServicePort: Mocked<PieceHighlighterPort>;
-  let paintPort: Mocked<PaintPort>;
+  let testamentSelectionServicePort: Mocked<TestamentSelectionServicePort>;
+  let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
+  let paintPort: Mocked<PaintServicePort>;
   let loggerPort: Mocked<LoggerPort>;
 
   beforeEach(() => {
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn(() => false),
       executeAsSequence: vi.fn(async (task: () => Promise<void>) => {
         await task();
       }),
-    };
+    });
 
     testamentDataRepositoryPort = {
       getPieceData: vi.fn(),
@@ -150,16 +154,9 @@ describe("pattern.bible-stack.application.services.TestamentInteractionService",
       deselect: vi.fn(async () => {}),
     };
 
-    pieceHighlightServicePort = {
-      tryHighlightPiece: vi.fn(),
-      tryUnhighlightPiece: vi.fn(),
+    pieceHighlightServicePort = makePieceHighlightServiceDouble({
       isUnhighlightScheduled: vi.fn(() => false),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    });
 
     paintPort = {
       changeColor: vi.fn(),
@@ -168,7 +165,7 @@ describe("pattern.bible-stack.application.services.TestamentInteractionService",
       activate: vi.fn(),
       deactivate: vi.fn(),
       isActive: false,
-    } as unknown as Mocked<PaintPort>;
+    } as unknown as Mocked<PaintServicePort>;
 
     loggerPort = {
       error: vi.fn(),

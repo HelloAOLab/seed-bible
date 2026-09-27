@@ -1,4 +1,3 @@
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import {
   BiblePieces,
   BibleStates,
@@ -6,7 +5,6 @@ import {
   type Piece,
 } from "../../domain/models/canvas";
 import type {
-  SequenceStateServicePort,
   PieceAdapterPort,
   ScripturePieceDataRepositoryPort,
 } from "../ports/scripturePieceDrag";
@@ -16,19 +14,17 @@ import {
   HighlightPacings,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
-import type {
-  BookDragServicePort,
-  TestamentDragServicePort,
-  ChapterDragServicePort,
-} from "../ports/in/ScripturePieceDrag";
+import type { ScripturePieceDragServicePort } from "../ports/in/ScripturePieceDrag";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
   pieceAdapterPort: PieceAdapterPort;
   scripturePieceDataRepositoryPort: ScripturePieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
-  pieceHighlightServicePort: PieceHighlighterPort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
   stackStructureServicePort: StackStructureServicePort;
   loggerPort: LoggerPort;
 }
@@ -56,7 +52,7 @@ const pieceConditionStrategy: Partial<
 };
 
 // prettier-ignore
-export class ScripturePieceDragService implements BookDragServicePort, TestamentDragServicePort, ChapterDragServicePort {
+export class ScripturePieceDragService implements ScripturePieceDragServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
   #scripturePieceDataRepositoryPort: ServiceParams["scripturePieceDataRepositoryPort"];

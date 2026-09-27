@@ -3,12 +3,12 @@ import type { StackSectionBookData } from "../../domain/entities/StackSectionBoo
 import type { StackAncestor } from "../../domain/models/canvas";
 import type { PieceAdapterPort } from "../ports/out/BookSelection";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
 
 type BookEntity = StackBookData | StackSectionBookData;
 
@@ -16,7 +16,7 @@ interface ServiceParams {
   eventManagerPort: EventManagerPort<BibleStackEvents>;
   pieceAdapterPort: PieceAdapterPort;
   stackUpdateServicePort: StackUpdateServicePort;
-  pieceHighlighterPort: PieceHighlighterPort;
+  pieceHighlighterPort: PieceHighlightServicePort;
   loggerPort: LoggerPort;
 }
 

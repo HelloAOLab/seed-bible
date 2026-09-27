@@ -1,10 +1,10 @@
 import type { SectionShadow } from "../../domain/models/canvas";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
-import type { SectionShadowInteractionPort } from "../ports/in/SectionShadowInteraction";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { PieceDataRepositoryPort } from "../ports/out/SectionShadowInteraction";
+import type { SectionShadowInteractionServicePort } from "../ports/in/SectionShadowInteraction";
 
 interface ServiceParams {
   pieceDataRepositoryPort: PieceDataRepositoryPort;
@@ -14,7 +14,7 @@ interface ServiceParams {
   loggerPort: LoggerPort;
 }
 
-export class SectionShadowInteractionService implements SectionShadowInteractionPort {
+export class SectionShadowInteractionService implements SectionShadowInteractionServicePort {
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sectionSelectionServicePort: ServiceParams["sectionSelectionServicePort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];

@@ -58,10 +58,6 @@ export interface LabelDataStorePort {
   getDataByOwnerId: (id: string) => InfoLabelData | undefined;
 }
 
-export interface IndicatorsUpdaterPort {
-  updateIndicators: (container: InfoLabelData) => ActivityIndicatorData[];
-}
-
 export interface IdGeneratorPort {
   getId: () => string;
 }

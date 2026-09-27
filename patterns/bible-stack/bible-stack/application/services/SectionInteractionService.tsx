@@ -1,4 +1,3 @@
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import {
   BibleStates,
   PieceSelectionSources,
@@ -20,8 +19,9 @@ import { SectionInteractionDelays } from "../ports/out/SectionInteraction";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
-import type { PaintPort } from "../ports/in/Paint";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { PaintServicePort } from "../ports/in/Paint";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
 
 type SectionDataRepositoryPort = Pick<PieceDataRepositoryPort, "getPieceData">;
 
@@ -29,11 +29,11 @@ interface ServiceParams {
   sectionDataRepositoryPort: SectionDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   tourGuideServicePort: TourGuideServicePort;
-  pieceHighlightServicePort: PieceHighlighterPort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
   sectionInteractionConfigProviderPort: SectionInteractionConfigProviderPort;
   sequenceStateServicePort: SequenceStateServicePort;
   sectionSelectionServicePort: SectionSelectionServicePort;
-  paintPort: PaintPort;
+  paintPort: PaintServicePort;
   loggerPort: LoggerPort;
 }
 

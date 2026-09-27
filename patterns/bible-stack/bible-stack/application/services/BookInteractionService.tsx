@@ -1,9 +1,4 @@
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
-import type {
-  BookDataRepositoryPort,
-  PieceAdapterPort,
-  SequenceStateServicePort,
-} from "../ports/books";
+import type { BookDataRepositoryPort, PieceAdapterPort } from "../ports/books";
 import type { BookInteractionServicePort } from "../ports/in/BookInteraction";
 import {
   BibleStates,
@@ -28,23 +23,25 @@ import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import { LabelTranslucencyModes } from "../../domain/models/label";
 import type { BookInteractionConfigProviderPort } from "../ports/out/BookInteraction";
 import { BookInteractionDelays } from "../ports/out/BookInteraction";
-import type { PaintPort } from "../ports/in/Paint";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import { HighlightStates } from "../../domain/models/highlight";
 import { SelectionStates } from "../../domain/models/selection";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { PaintServicePort } from "../ports/in/Paint";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 
 interface ServiceParams {
   bookDataRepositoryPort: BookDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   tourGuideServicePort: TourGuideServicePort;
   bookSelectionServicePort: BookSelectionServicePort;
-  pieceHighlightServicePort: PieceHighlighterPort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
   explodedViewServicePort: ExplodedViewServicePort;
   sequenceStateServicePort: SequenceStateServicePort;
   pieceAdapterPort: PieceAdapterPort;
   bookInteractionConfigProviderPort: BookInteractionConfigProviderPort;
-  paintPort: PaintPort;
+  paintPort: PaintServicePort;
   loggerPort: LoggerPort;
 }
 

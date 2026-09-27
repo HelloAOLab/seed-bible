@@ -9,14 +9,14 @@ import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
 import type {
   LabelAdapterPort,
   LabelDataStorePort,
-  IndicatorsUpdaterPort,
   IdGeneratorPort,
   ActivityIndicatorsAdapterPort,
   LabelFeedbackAdapterPort,
 } from "../ports/out/PieceLabel";
-import type { LabelDateFormatGetterPort } from "../ports/in/LabelDate";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { LabelDateServicePort } from "../ports/in/LabelDate";
+import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 
 export interface LabelStrategy<P extends Piece<StackLabelableBiblePiece>> {
   getLabel: (piece: P) => string;
@@ -35,9 +35,9 @@ export type LabelPropertiesStrategies<T extends StackLabelableBiblePiece> = {
 export interface ServiceParams<T extends StackLabelableBiblePiece> {
   labelAdapterPort: LabelAdapterPort;
   labelDataStorePort: LabelDataStorePort;
-  indicatorsUpdaterPort: IndicatorsUpdaterPort;
+  indicatorsUpdaterPort: PieceActivityServicePort;
   labelPropertiesStrategies: LabelPropertiesStrategies<T>;
-  dateFormatGetterPort: LabelDateFormatGetterPort;
+  dateFormatGetterPort: LabelDateServicePort;
   idGeneratorPort: IdGeneratorPort;
   activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
   labelAnimationAdapterPort: LabelFeedbackAdapterPort;

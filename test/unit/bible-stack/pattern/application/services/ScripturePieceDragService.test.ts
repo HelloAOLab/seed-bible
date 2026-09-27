@@ -1,13 +1,11 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ScripturePieceDragService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ScripturePieceDragService";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { StackStructureServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackStructure";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type {
   PieceAdapterPort,
   ScripturePieceDataRepositoryPort,
-  SequenceStateServicePort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/scripturePieceDrag";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -26,6 +24,12 @@ import {
   UnhighlightRequestSources,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
+import {
+  makePieceHighlightServiceDouble,
+  makeSequenceStateServiceDouble,
+} from "../serviceDoubles";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-id";
@@ -123,7 +127,7 @@ describe("pattern.bible-stack.application.services.ScripturePieceDragService", (
   let pieceAdapterPort: Mocked<PieceAdapterPort>;
   let scripturePieceDataRepositoryPort: Mocked<ScripturePieceDataRepositoryPort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
-  let pieceHighlightServicePort: Mocked<PieceHighlighterPort>;
+  let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
   let stackStructureServicePort: Mocked<StackStructureServicePort>;
   let loggerPort: Mocked<LoggerPort>;
 
@@ -139,9 +143,9 @@ describe("pattern.bible-stack.application.services.ScripturePieceDragService", (
   };
 
   beforeEach(() => {
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn().mockReturnValue(false),
-    };
+    });
 
     pieceAdapterPort = {
       isPieceAnchored: vi.fn().mockReturnValue(false),
@@ -155,16 +159,9 @@ describe("pattern.bible-stack.application.services.ScripturePieceDragService", (
       getParentDataChain: vi.fn(),
     };
 
-    pieceHighlightServicePort = {
-      tryHighlightPiece: vi.fn(),
+    pieceHighlightServicePort = makePieceHighlightServiceDouble({
       tryUnhighlightPiece: vi.fn().mockResolvedValue(undefined),
-      isUnhighlightScheduled: vi.fn(),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    });
 
     stackStructureServicePort = {
       pullOutPieceFromParent: vi.fn(),

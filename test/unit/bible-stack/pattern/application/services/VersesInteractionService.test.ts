@@ -1,20 +1,21 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { VersesInteractionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/VersesInteractionService";
-import type { PaintPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
-import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/verses";
 import type { Piece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PaintServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Paint";
+import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
+import { makeSequenceStateServiceDouble } from "../serviceDoubles";
 
 const versePiece: Piece<"Verse"> = { id: "verse-piece", type: "Verse" };
 
 describe("pattern.bible-stack.application.services.VersesInteractionService", () => {
   let service: VersesInteractionService;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
-  let paintPort: Mocked<PaintPort>;
+  let paintPort: Mocked<PaintServicePort>;
 
   beforeEach(() => {
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn(() => false),
-    };
+    });
 
     paintPort = {
       changeColor: vi.fn(),
@@ -23,7 +24,7 @@ describe("pattern.bible-stack.application.services.VersesInteractionService", ()
       activate: vi.fn(),
       deactivate: vi.fn(),
       isActive: false,
-    } as unknown as Mocked<PaintPort>;
+    } as unknown as Mocked<PaintServicePort>;
 
     service = new VersesInteractionService({
       sequenceStateServicePort,

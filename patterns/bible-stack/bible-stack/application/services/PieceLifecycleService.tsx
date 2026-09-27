@@ -6,13 +6,9 @@ import { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import { StackBibleData } from "../../domain/entities/StackBibleData";
 import type {
   PieceDataRepositoryPort,
-  PieceLabelServicePort,
   StackPieceLifecycleAdapterPort,
-  ArrangementServicePort,
   IdGeneratorPort,
-  ScriptureServicePort,
   VersesBundleDataRepositoryPort,
-  PieceHighlightServicePort,
 } from "../ports/pieceLifecycle";
 import type {
   ChapterCreationParams,
@@ -34,10 +30,15 @@ import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import { GetSectionLevels } from "../../domain/functions/arrangement";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { ArrangementServicePort } from "../ports/in/Arrangement";
+import type { ScriptureServicePort } from "../ports/in/Scripture";
+import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 
 interface ServiceProps {
   pieceDataRepositoryPort: PieceDataRepositoryPort;
-  pieceLabelServicePort: PieceLabelServicePort;
+  pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
   stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
   arrangementServicePort: ArrangementServicePort;

@@ -1,21 +1,20 @@
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
-import type { SectionStackUpdaterPort as UpdaterServicePort } from "../ports/in/SectionStackUpdates";
 import type {
   SectionStackUpdaterPort as UpdaterAdapterPort,
   LoggerPort,
 } from "../ports/out/StackSectionUpdater";
-import type { BookStackUpdaterPort } from "../ports/in/BookStackUpdates";
-import type {
-  PieceLabelServicePort,
-  StackPieceLifecycleAdapterPort,
-} from "../ports/pieceLifecycle";
+import type { StackPieceLifecycleAdapterPort } from "../ports/pieceLifecycle";
+import type { BookStackUpdaterServicePort } from "../ports/in/BookStackUpdater";
+import type { SectionStackUpdaterServicePort as UpdaterServicePort } from "../ports/in/SectionStackUpdater";
+import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 
 interface ServiceParams {
   updaterAdapterPort: UpdaterAdapterPort;
-  bookStackUpdaterPort: BookStackUpdaterPort;
+  bookStackUpdaterPort: BookStackUpdaterServicePort;
   pieceLifecyclePort: StackPieceLifecycleAdapterPort;
-  pieceLabelServicePort: PieceLabelServicePort;
+  pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
   loggerPort: LoggerPort;
 }
 

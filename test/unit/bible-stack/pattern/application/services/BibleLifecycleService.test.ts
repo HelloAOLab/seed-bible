@@ -5,7 +5,6 @@ import type {
   BibleSetupAdapterPort,
   IdGeneratorPort,
   PieceLifecycleAdapterPort,
-  PieceLifecycleServicePort,
   StackPieceLifecycleAdapterPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/bibleLifecycle";
 import type { ArrangementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Arrangement";
@@ -22,6 +21,11 @@ import type { Piece } from "../../../../../../patterns/bible-stack/bible-stack/d
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleLifecycle";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
+import type { PieceLifecycleServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLifecycle";
+import {
+  makeArrangementServiceDouble,
+  makePieceLifecycleServiceDouble,
+} from "../serviceDoubles";
 
 describe("pattern.bible-stack.application.services.BibleLifecycleService", () => {
   let service: BibleLifecycleService;
@@ -84,33 +88,13 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
     pieceLifecycleAdapterPort = {
       despawnPieces: vi.fn(),
     };
-    pieceLifecycleServicePort = {
-      deleteTestaments: vi.fn(),
-      createTestament: vi.fn(),
-    };
+    pieceLifecycleServicePort = makePieceLifecycleServiceDouble();
     eventManagerPort = {
       subscribe: vi.fn(),
       emit: vi.fn(() => {}),
       removeAllListeners: vi.fn(),
     };
-    arrangementServicePort = {
-      getArrangementByIndex: vi.fn(),
-      getAllArrangements: vi.fn(),
-      getCurrentArrangementIndex: vi.fn(),
-      setCurrentArrangementIndex: vi.fn(),
-      setArrangementIndexByName: vi.fn(),
-      getArrangementIndexByName: vi.fn(),
-      getCurrentArrangement: vi.fn(),
-      getCurrentArrangementName: vi.fn(),
-      addCustomArrangement: vi.fn(),
-      removeCustomArrangement: vi.fn(),
-      getBooksNamesBySectionName: vi.fn(),
-      getBookInfoPathById: vi.fn(),
-      getBookByIndices: vi.fn(),
-      getTestamentByIndices: vi.fn(),
-      getBookSubsetByCompleteId: vi.fn(),
-      getSectionByIndices: vi.fn(),
-    };
+    arrangementServicePort = makeArrangementServiceDouble();
     idGeneratorPort = {
       getId: vi.fn(),
     };

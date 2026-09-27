@@ -3,7 +3,6 @@ import { LabelInteractionService } from "../../../../../../patterns/bible-stack/
 import type { BookInteractionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookInteraction";
 import type { ChapterInteractionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ChapterInteraction";
 import type { SectionInteractionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionInteraction";
-import type { SectionShadowInteractionPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionShadowInteraction";
 import type { TestamentInteractionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentInteraction";
 import type { LabelDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelInteraction";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
@@ -16,13 +15,14 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import { LabelPositions } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/label";
 import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
+import type { SectionShadowInteractionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionShadowInteraction";
 
 describe("pattern.bible-stack.application.services.LabelInteractionService", () => {
   let service: LabelInteractionService;
   let labelDataRepositoryPort: Mocked<LabelDataRepositoryPort>;
   let testamentInteractionServicePort: Mocked<TestamentInteractionServicePort>;
   let sectionInteractionServicePort: Mocked<SectionInteractionServicePort>;
-  let sectionShadowInteractionPort: Mocked<SectionShadowInteractionPort>;
+  let sectionShadowInteractionPort: Mocked<SectionShadowInteractionServicePort>;
   let bookInteractionServicePort: Mocked<BookInteractionServicePort>;
   let chapterInteractionServicePort: Mocked<ChapterInteractionServicePort>;
   let loggerPort: Mocked<LoggerPort>;

@@ -6,7 +6,6 @@ import {
 import type {
   ActivityIndicatorsAdapterPort,
   IdGeneratorPort,
-  IndicatorsUpdaterPort,
   LabelAdapterPort,
   LabelDataStorePort,
   LabelFeedbackAdapterPort,
@@ -20,6 +19,11 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/label";
 import { InfoLabelData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/InfoLabelData";
 import { ActivityIndicatorData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/ActivityIndicatorData";
+import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
+import {
+  makeLabelDateServiceDouble,
+  makePieceActivityServiceDouble,
+} from "../serviceDoubles";
 
 type T = StackLabelableBiblePiece;
 
@@ -110,7 +114,7 @@ describe("pattern.bible-stack.application.services.PieceLabelService", () => {
   let service: PieceLabelService<T>;
   let labelAdapterPort: Mocked<LabelAdapterPort>;
   let labelDataStorePort: Mocked<LabelDataStorePort>;
-  let indicatorsUpdaterPort: Mocked<IndicatorsUpdaterPort>;
+  let indicatorsUpdaterPort: Mocked<PieceActivityServicePort>;
   let idGeneratorPort: Mocked<IdGeneratorPort>;
   let activityIndicatorsAdapterPort: Mocked<ActivityIndicatorsAdapterPort>;
   let labelAnimationAdapterPort: Mocked<LabelFeedbackAdapterPort>;
@@ -147,9 +151,9 @@ describe("pattern.bible-stack.application.services.PieceLabelService", () => {
       getDataByOwnerId: vi.fn((id: string) => labelsByOwnerId.get(id)),
     };
 
-    indicatorsUpdaterPort = {
+    indicatorsUpdaterPort = makePieceActivityServiceDouble({
       updateIndicators: vi.fn(() => []),
-    };
+    });
 
     idGeneratorPort = {
       getId: vi.fn(() => "generated-id"),
@@ -183,9 +187,9 @@ describe("pattern.bible-stack.application.services.PieceLabelService", () => {
       labelPropertiesStrategies: {
         StackBook: bookStrategy,
       } as unknown as LabelPropertiesStrategies<T>,
-      dateFormatGetterPort: {
+      dateFormatGetterPort: makeLabelDateServiceDouble({
         dateFormat: "Absolute",
-      },
+      }),
       idGeneratorPort,
       activityIndicatorsAdapterPort,
       labelAnimationAdapterPort,

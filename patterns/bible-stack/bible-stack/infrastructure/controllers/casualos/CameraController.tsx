@@ -1,10 +1,10 @@
 import type { PieceActivityServicePort } from "../../../application/ports/in/PieceActivity";
-import type { ViewportPort } from "../../../application/ports/in/ViewportPort";
 import type { RenderOrderAdapter } from "../../adapters/environment/RenderOrderAdapter";
 import type { UpperCoverOpacityAdapter } from "../../adapters/stacks/UpperCoverOpacityAdapter";
+import type { ViewportServicePort } from "../../../application/ports/in/Viewport";
 
 interface ControllerParams {
-  viewportPort: ViewportPort;
+  viewportPort: ViewportServicePort;
   renderOrderAdapter: RenderOrderAdapter;
   upperCoverOpacityAdapter: UpperCoverOpacityAdapter;
   pieceActivityService: PieceActivityServicePort;

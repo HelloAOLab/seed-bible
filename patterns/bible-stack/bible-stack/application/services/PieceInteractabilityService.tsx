@@ -1,10 +1,7 @@
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import { BibleTypes, type Piece } from "../../domain/models/canvas";
-import type {
-  InteractabilityBlockerPort,
-  InteractabilityUnlockerPort,
-} from "../ports/in/PieceInteractability";
+import type { PieceInteractabilityServicePort } from "../ports/in/PieceInteractability";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
 import type { LoggerPort } from "../ports/out/Logger";
 import type {
@@ -22,9 +19,7 @@ interface ServiceParams {
   loggerPort: LoggerPort;
 }
 
-export class PieceInteractabilityService
-  implements InteractabilityBlockerPort, InteractabilityUnlockerPort
-{
+export class PieceInteractabilityService implements PieceInteractabilityServicePort {
   #bibleDataRepositoryPort: ServiceParams["bibleDataRepositoryPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];

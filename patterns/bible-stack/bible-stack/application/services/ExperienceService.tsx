@@ -1,28 +1,26 @@
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type {
   EnvironmentAdapterPort,
-  StackManagementService,
   InteractionRegistryServicePort,
   ExperienceAdapterPort,
   ExperienceConfigProviderPort,
-  SequenceStateServicePort,
   AwaiterPort,
 } from "../ports/experience";
 import type { StackPresenceNavigationServicePort } from "../ports/in/StackPresenceNavigation";
-import type {
-  CameraAdapterPort,
-  BibleLifecycleServicePort,
-  BibleSequenceServicePort,
-} from "../ports/bibleLifecycle";
+import type { CameraAdapterPort } from "../ports/bibleLifecycle";
 import { BibleTypes } from "../../domain/models/canvas";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
 import type { ExperienceServicePort } from "../ports/in/Experience";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
+import type { BibleLifecycleServicePort } from "../ports/in/BibleLifecycle";
+import type { StackManagementServicePort } from "../ports/in/StackManagement";
 
 interface ExperienceServiceParams {
   environmentAdapterPort: EnvironmentAdapterPort;
-  stackManagementServicePort: StackManagementService;
-  pieceHighlightServicePort: PieceHighlighterPort;
+  stackManagementServicePort: StackManagementServicePort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
   interactionRegistryServicePort: InteractionRegistryServicePort;
   experienceAdapterPort: ExperienceAdapterPort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;

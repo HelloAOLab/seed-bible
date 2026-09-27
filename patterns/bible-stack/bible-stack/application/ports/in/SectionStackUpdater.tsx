@@ -1,7 +1,7 @@
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 import type { StackSectionData } from "../../../domain/entities/StackSectionData";
 
-export interface SectionStackUpdaterPort {
+export interface SectionStackUpdaterServicePort {
   prepareSection(data: StackSectionData): void;
   finalizeSection(data: StackSectionData): Promise<void>;
   update(params: {

@@ -5,20 +5,8 @@ import type { StackTestamentData } from "../../domain/entities/StackTestamentDat
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 
-export interface BibleLifecycleServicePort {
-  deleteBibles: (biblesData: StackBibleData[]) => void;
-}
-
 export interface BibleDataRepositoryPort {
   getAllBiblesData(): StackBibleData[];
-}
-
-export interface PieceLifecycleServicePort {
-  deleteTestaments: (testaments: StackTestamentData[]) => void;
-  deleteSections: (sections: StackSectionData[]) => void;
-  deleteSectionBooks(sectionBooks: StackSectionBookData[]): void;
-  deleteBooks: (books: StackBookData[]) => void;
-  deleteChapters: (chapters: StackChapterData[]) => void;
 }
 
 export interface PieceDataRepositoryPort {

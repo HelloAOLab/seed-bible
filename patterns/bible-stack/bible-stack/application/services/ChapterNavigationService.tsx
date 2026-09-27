@@ -3,6 +3,7 @@ import type { ReaderNavigationPort } from "../ports/out/ReaderNavigation";
 import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
+import type { ChapterNavigationServicePort } from "../ports/in/ChapterNavigation";
 
 interface ServiceParams {
   readerNavigationPort: ReaderNavigationPort;
@@ -11,7 +12,7 @@ interface ServiceParams {
   arrangementPort: ArrangementServicePort;
 }
 
-export class ChapterNavigationService {
+export class ChapterNavigationService implements ChapterNavigationServicePort {
   #readerNavigationPort: ServiceParams["readerNavigationPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #loggerPort: ServiceParams["loggerPort"];

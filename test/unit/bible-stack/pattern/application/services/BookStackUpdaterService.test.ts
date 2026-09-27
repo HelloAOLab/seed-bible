@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BookStackUpdaterService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BookStackUpdaterService";
-import type { BookChaptersManagementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/bibleLifecycle";
 import type {
   BookStackUpdaterPort as UpdaterAdapterPort,
   LoggerPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackBookUpdater";
-import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieceLifecycle";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
@@ -24,6 +22,13 @@ import {
   type SelectionState,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
 import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
+import type { BookChaptersManagementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookChaptersManagement";
+import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
+import {
+  makeBookChaptersManagementServiceDouble,
+  makePieceLabelServiceDouble,
+} from "../serviceDoubles";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-id";
@@ -172,7 +177,9 @@ describe("pattern.bible-stack.application.services.BookStackUpdaterService", () 
   let service: BookStackUpdaterService;
   let updaterAdapterPort: Mocked<UpdaterAdapterPort>;
   let bookChaptersManagementServicePort: Mocked<BookChaptersManagementServicePort>;
-  let pieceLabelServicePort: Mocked<PieceLabelServicePort>;
+  let pieceLabelServicePort: Mocked<
+    PieceLabelServicePort<StackLabelableBiblePiece>
+  >;
   let loggerPort: Mocked<LoggerPort>;
   let callOrder: string[];
 
@@ -185,23 +192,25 @@ describe("pattern.bible-stack.application.services.BookStackUpdaterService", () 
       }),
     };
 
-    bookChaptersManagementServicePort = {
-      showChapters: vi.fn(() => {
-        callOrder.push("showChapters");
-      }),
-      hideChapters: vi.fn(() => {
-        callOrder.push("hideChapters");
-      }),
-    };
+    bookChaptersManagementServicePort = makeBookChaptersManagementServiceDouble(
+      {
+        showChapters: vi.fn(() => {
+          callOrder.push("showChapters");
+        }),
+        hideChapters: vi.fn(() => {
+          callOrder.push("hideChapters");
+        }),
+      }
+    );
 
-    pieceLabelServicePort = {
-      showLabel: vi.fn(() => {
+    pieceLabelServicePort = makePieceLabelServiceDouble({
+      showLabel: vi.fn(async () => {
         callOrder.push("showLabel");
       }),
       hideLabel: vi.fn(async () => {
         callOrder.push("hideLabel");
       }),
-    };
+    });
 
     loggerPort = {
       error: vi.fn(),

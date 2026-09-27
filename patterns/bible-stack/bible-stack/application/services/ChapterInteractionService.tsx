@@ -1,9 +1,5 @@
 import { type Piece } from "../../domain/models/canvas";
-import type {
-  ChapterDataRepositoryPort,
-  ChapterNavigationServicePort,
-  UserPresenceServicePort,
-} from "../ports/chapters";
+import type { ChapterDataRepositoryPort } from "../ports/chapters";
 import type { ChapterInteractionServicePort } from "../ports/in/ChapterInteraction";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import {
@@ -11,19 +7,19 @@ import {
   HighlightPacings,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
-import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
-import type { PaintPort } from "../ports/in/Paint";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { PaintServicePort } from "../ports/in/Paint";
+import type { ChapterSelectionServicePort } from "../ports/in/ChapterSelection";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { ChapterNavigationServicePort } from "../ports/in/ChapterNavigation";
 
 interface ServiceParams {
   chapterDataRepositoryPort: ChapterDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
-  chapterSelectionServicePort: ChapterSelectionPort;
-  pieceHighlighterPort: PieceHighlighterPort;
+  chapterSelectionServicePort: ChapterSelectionServicePort;
+  pieceHighlighterPort: PieceHighlightServicePort;
   chapterNavigationServicePort: ChapterNavigationServicePort;
-  userPresenceServicePort: UserPresenceServicePort;
-  paintPort: PaintPort;
+  paintPort: PaintServicePort;
   loggerPort: LoggerPort;
 }
 
@@ -33,7 +29,6 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
   #chapterSelectionServicePort: ServiceParams["chapterSelectionServicePort"];
   #pieceHighlighterPort: ServiceParams["pieceHighlighterPort"];
   #chapterNavigationServicePort: ServiceParams["chapterNavigationServicePort"];
-  #userPresenceServicePort: ServiceParams["userPresenceServicePort"];
   #paintPort: ServiceParams["paintPort"];
   #loggerPort: ServiceParams["loggerPort"];
 
@@ -43,7 +38,6 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     chapterSelectionServicePort,
     pieceHighlighterPort,
     chapterNavigationServicePort,
-    userPresenceServicePort,
     paintPort,
     loggerPort,
   }: ServiceParams) {
@@ -52,7 +46,6 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     this.#chapterSelectionServicePort = chapterSelectionServicePort;
     this.#pieceHighlighterPort = pieceHighlighterPort;
     this.#chapterNavigationServicePort = chapterNavigationServicePort;
-    this.#userPresenceServicePort = userPresenceServicePort;
     this.#paintPort = paintPort;
     this.#loggerPort = loggerPort;
   }
@@ -99,13 +92,11 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
       }
     } else if (chapterData.selectionState === "Idle") {
       if (chapterData.isOnTheGround) {
-        this.#chapterSelectionServicePort
-          .trySelectChapter({
-            data: chapterData,
-            bookData: actualData,
-            pacing: "Regular",
-          })
-          .then(() => this.#userPresenceServicePort.updateUserPresence());
+        this.#chapterSelectionServicePort.trySelectChapter({
+          data: chapterData,
+          bookData: actualData,
+          pacing: "Regular",
+        });
       } else {
         this.#chapterNavigationServicePort.openChapter(chapter);
       }

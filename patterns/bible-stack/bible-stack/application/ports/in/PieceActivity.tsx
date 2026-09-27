@@ -43,4 +43,5 @@ export interface PieceActivityServicePort {
   updateNotification(container: StackChapterData): void;
   updateAllNotifications(): void;
   updateAllNotificationsDirection(): void;
+  hideAllNotifications(): void;
 }

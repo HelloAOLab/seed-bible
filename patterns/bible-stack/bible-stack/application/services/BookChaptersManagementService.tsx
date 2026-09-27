@@ -2,7 +2,6 @@ import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { Piece } from "../../domain/models/canvas";
 import type { BookChaptersManagementServicePort } from "../ports/in/BookChaptersManagement";
-import type { ScripturePort } from "../ports/in/Scripture";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
 import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
 import type {
@@ -10,9 +9,10 @@ import type {
   ChapterSpawnerPort,
 } from "../ports/out/BookChaptersManagement";
 import type { BibleDataRepositoryPort } from "../ports/out/StackUpdate";
+import type { ScriptureServicePort } from "../ports/in/Scripture";
 
 interface ServiceParams {
-  biggerChapterProviderPort: ScripturePort;
+  biggerChapterProviderPort: ScriptureServicePort;
   chapterSpawnerPort: ChapterSpawnerPort;
   chaptersManagementAdapterPort: BookChaptersManagementAdapterPort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;

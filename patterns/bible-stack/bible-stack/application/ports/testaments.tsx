@@ -14,10 +14,6 @@ export interface PieceMapperPort {
   toDomain: (bot: PieceBot<"StackTestament">) => Piece<"StackTestament">;
 }
 
-export interface SequenceStateServicePort {
-  isThereAnOngoingSequence: () => boolean;
-}
-
 export type TestamentDataRepositoryPort = Pick<
   PieceDataRepositoryPort,
   "getPieceData"

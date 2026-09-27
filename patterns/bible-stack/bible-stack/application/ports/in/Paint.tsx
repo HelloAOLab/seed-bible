@@ -1,6 +1,6 @@
 import type { PaintablePieceData } from "../../../domain/models/pieces";
 
-export interface PaintPort {
+export interface PaintServicePort {
   changeColor(newColor: string): void;
   paint(piece: PaintablePieceData["piece"]): void;
   paint(data: PaintablePieceData): void;

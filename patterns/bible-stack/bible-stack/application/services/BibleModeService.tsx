@@ -5,7 +5,6 @@ import {
   ExplodeStackActions,
   type Piece,
 } from "../../domain/models/canvas";
-import type { BibleStackUpdaterPort } from "../ports/in/BibleStackUpdater";
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
@@ -14,19 +13,20 @@ import type {
   LoggerPort,
   PieceDataRepositoryPort,
 } from "../ports/out/BibleMode";
-import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type { BibleModeServicePort } from "../ports/in/BibleMode";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { TestamentSelectionServicePort } from "../ports/in/TestamentSelection";
+import type { BibleStackUpdaterServicePort } from "../ports/in/BibleStackUpdater";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
   sequenceAdapterPort: BibleModeSequenceAdapterPort;
-  bibleStackUpdaterPort: BibleStackUpdaterPort;
+  bibleStackUpdaterPort: BibleStackUpdaterServicePort;
   explodedViewServicePort: ExplodedViewServicePort;
   pieceDataRepository: PieceDataRepositoryPort;
   sectionSelectionServicePort: SectionSelectionServicePort;
-  testamentSelectionServicePort: TestamentSelectionPort;
+  testamentSelectionServicePort: TestamentSelectionServicePort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
   loggerPort: LoggerPort;
 }

@@ -1,10 +1,8 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BibleModeService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BibleModeService";
-import type { BibleStackUpdaterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleStackUpdater";
 import type { ExplodedViewServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ExplodedView";
 import type { SectionSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionSelection";
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
-import type { TestamentSelectionPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentSelection";
 import type {
   BibleModeSequenceAdapterPort,
   LoggerPort,
@@ -25,6 +23,12 @@ import type { StackTestamentData } from "../../../../../../patterns/bible-stack/
 import type { StackCrossLine } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
+import type { TestamentSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentSelection";
+import type { BibleStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleStackUpdater";
+import {
+  makeSectionSelectionServiceDouble,
+  makeSequenceStateServiceDouble,
+} from "../serviceDoubles";
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -85,11 +89,11 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
   let service: BibleModeService;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
   let sequenceAdapterPort: Mocked<BibleModeSequenceAdapterPort>;
-  let bibleStackUpdaterPort: Mocked<BibleStackUpdaterPort>;
+  let bibleStackUpdaterPort: Mocked<BibleStackUpdaterServicePort>;
   let explodedViewServicePort: Mocked<ExplodedViewServicePort>;
   let pieceDataRepository: Mocked<PieceDataRepositoryPort>;
   let sectionSelectionServicePort: Mocked<SectionSelectionServicePort>;
-  let testamentSelectionServicePort: Mocked<TestamentSelectionPort>;
+  let testamentSelectionServicePort: Mocked<TestamentSelectionServicePort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let loggerPort: Mocked<LoggerPort>;
   let pendingSequences: Promise<void>[];
@@ -122,14 +126,14 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
     pendingSequences = [];
     dataByPieceId = new Map();
 
-    sequenceStateServicePort = {
+    sequenceStateServicePort = makeSequenceStateServiceDouble({
       isThereAnOngoingSequence: vi.fn(() => false),
       executeAsSequence: vi.fn((task: () => Promise<void>) => {
         const running = task();
         pendingSequences.push(running);
         return running;
       }),
-    };
+    });
 
     sequenceAdapterPort = {
       showToggleAttemptFeedback: vi.fn(async () => []),
@@ -152,10 +156,10 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
       getPieceData: vi.fn((piece: Piece) => dataByPieceId.get(piece.id)),
     } as unknown as Mocked<PieceDataRepositoryPort>;
 
-    sectionSelectionServicePort = {
+    sectionSelectionServicePort = makeSectionSelectionServiceDouble({
       select: vi.fn(async () => {}),
       deselect: vi.fn(async () => {}),
-    };
+    });
 
     testamentSelectionServicePort = {
       select: vi.fn(async () => {}),

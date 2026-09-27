@@ -115,6 +115,9 @@ const mockedGetBookInfoPathByIdFactory = (
     return {
       found: false,
       arrangementIndex: 0,
+      testamentIndex: undefined,
+      sectionIndex: undefined,
+      bookIndex: undefined,
     };
   };
 };
@@ -248,6 +251,9 @@ describe("bible-stack.application.services.ChapterNavigationService", () => {
     arrangementPort.getBookInfoPathById.mockReturnValue({
       found: false,
       arrangementIndex: 0,
+      testamentIndex: undefined,
+      sectionIndex: undefined,
+      bookIndex: undefined,
     });
 
     service.openChapter(chapter);

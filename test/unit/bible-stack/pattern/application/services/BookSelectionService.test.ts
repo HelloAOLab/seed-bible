@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BookSelectionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BookSelectionService";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
 import type { PieceAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BookSelection";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -28,6 +27,8 @@ import {
 import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
+import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
+import { makePieceHighlightServiceDouble } from "../serviceDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -195,7 +196,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let pieceAdapterPort: Mocked<PieceAdapterPort>;
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
-  let pieceHighlighterPort: Mocked<PieceHighlighterPort>;
+  let pieceHighlighterPort: Mocked<PieceHighlightServicePort>;
   let loggerPort: Mocked<LoggerPort>;
 
   const recordOnStackUpdate = <T>(read: () => T): T[] => {
@@ -237,16 +238,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
       updateStack: vi.fn(),
     };
 
-    pieceHighlighterPort = {
-      tryHighlightPiece: vi.fn(),
-      tryUnhighlightPiece: vi.fn(),
-      isUnhighlightScheduled: vi.fn(),
-      changeHighlightIntensity: vi.fn(),
-      clearScheduledUnhighlights: vi.fn(),
-      clearHighlightedPieces: vi.fn(),
-      forgetPiece: vi.fn(),
-      unhighlightBiblePieces: vi.fn(),
-    };
+    pieceHighlighterPort = makePieceHighlightServiceDouble();
 
     loggerPort = {
       error: vi.fn(),

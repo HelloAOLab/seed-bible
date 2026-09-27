@@ -1,5 +1,5 @@
 import type { Piece } from "../../../domain/models/canvas";
 
-export interface ViewportPort {
+export interface ViewportServicePort {
   getVisiblePieces(): Piece[];
 }

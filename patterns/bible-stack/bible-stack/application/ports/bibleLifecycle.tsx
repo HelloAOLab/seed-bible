@@ -11,8 +11,6 @@ import type {
 import type { WorldPosition } from "../../domain/models/spatial";
 import type { BibleType } from "../../domain/models/canvas";
 import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
-import type { StackBookData } from "../../domain/entities/StackBookData";
-import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { FocusOnAnimationKey } from "./out/Camera";
 
 export interface BibleSetupAdapterPort {
@@ -23,21 +21,6 @@ export interface BibleSetupAdapterPort {
   }): {
     testamentPiecesMap: Map<StackTestamentData["id"], Piece<"StackTestament">>;
   };
-}
-
-export interface PieceLifecycleServicePort {
-  deleteTestaments: (testaments: StackTestamentData[]) => void;
-  createTestament({
-    arrangementIndex,
-    testamentIndex,
-    bibleDataId,
-    isHidden,
-  }: {
-    arrangementIndex: number;
-    testamentIndex: number;
-    bibleDataId?: string | undefined;
-    isHidden?: boolean | undefined;
-  }): StackTestamentData;
 }
 
 export interface PieceLifecycleAdapterPort {
@@ -76,14 +59,6 @@ export interface CameraAdapterPort {
   cancelFocus(): void;
 }
 
-export interface BibleLifecycleServicePort {
-  createBible(params: {
-    position: WorldPosition;
-    type: BibleType;
-    arrangementIndex?: number;
-  }): { bibleData: StackBibleData };
-}
-
 export interface BibleSequenceAdapterPort {
   displayCrackOpenBibleSequence(
     bibleData: StackBibleData,
@@ -114,10 +89,6 @@ export interface BibleSequenceAdapterPort {
   }): Promise<void>;
 }
 
-export interface BibleSequenceServicePort {
-  crackOpenBible(bibleData: StackBibleData): Promise<void>;
-}
-
 export interface BibleSequenceServiceConfigProviderPort {
   getTestamentHighlightSequenceConfig<
     K extends "initialDelay" | "staggerDelay" | "unhighlightDelay",
@@ -138,13 +109,4 @@ export interface PieceAdapterPort {
 
 export interface RenderOrderAdapterPort {
   setSortedRenderOrder(pieces: Piece[]): void;
-}
-
-export interface ScripturePiecesStateServicePort {
-  readonly arePiecesDraggable: boolean;
-}
-
-export interface BookChaptersManagementServicePort {
-  showChapters(bookData: StackBookData | StackSectionBookData): void;
-  hideChapters(bookData: StackBookData | StackSectionBookData): void;
 }

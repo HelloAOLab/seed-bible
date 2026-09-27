@@ -1,6 +1,5 @@
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { PieceSelectionSource } from "../../domain/models/canvas";
-import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type {
   AwaiterPort,
   LabelSequenceConfigProviderPort,
@@ -11,15 +10,16 @@ import type { SectionSpawnerPort } from "../ports/in/PieceSpawn";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 // import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { TestamentSelectionServicePort } from "../ports/in/TestamentSelection";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
 
 interface ServiceParams {
   testamentSelectionAdapterPort: TestamentSelectionAdapterPort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
-  pieceHighlighterPort: PieceHighlighterPort;
+  pieceHighlighterPort: PieceHighlightServicePort;
   sectionSpawnerPort: SectionSpawnerPort;
   stackUpdateServicePort: StackUpdateServicePort;
   awaiterPort: AwaiterPort;
@@ -29,7 +29,7 @@ interface ServiceParams {
   // pieceLifecycleServicePort: PieceLifecycleServicePort;
 }
 
-export class TestamentSelectionService implements TestamentSelectionPort {
+export class TestamentSelectionService implements TestamentSelectionServicePort {
   #testamentSelectionAdapterPort: ServiceParams["testamentSelectionAdapterPort"];
   #eventManagerPort: ServiceParams["eventManagerPort"];
   #pieceHighlighterPort: ServiceParams["pieceHighlighterPort"];

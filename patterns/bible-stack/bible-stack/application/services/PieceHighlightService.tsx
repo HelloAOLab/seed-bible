@@ -12,16 +12,12 @@ import {
 } from "../../domain/models/highlight";
 import type {
   PieceHighlightPieceDataRepositoryPort,
-  PieceHighlightSequenceStateServicePort,
   PieceHighlightAdapterPort,
   PieceHighlightActivityNotificationAdapterPort,
-  PieceHighlightActivityServicePort,
-  PieceHighlightLabelServicePort,
   PieceUnhighlightSchedulerAdapterPort,
   HighlightConfigProviderPort,
 } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import { HighlightDelays } from "../ports/pieces";
 import {
   type HighlightRequestSource,
@@ -34,22 +30,27 @@ import type { LoggerPort } from "../ports/out/Logger";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type { ParentDataIds, AnyStackData } from "../../domain/models/canvas";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
+import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
+import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 
 interface ServiceParams {
   eventManagerPort: EventManagerPort<BibleStackEvents>;
   pieceHighlightAdapterPort: PieceHighlightAdapterPort;
   activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
-  pieceActivityServicePort: PieceHighlightActivityServicePort;
-  pieceLabelServicePort: PieceHighlightLabelServicePort;
+  pieceActivityServicePort: PieceActivityServicePort;
+  pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
   schedulerAdapterPort: PieceUnhighlightSchedulerAdapterPort;
   configProviderPort: HighlightConfigProviderPort;
   pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
-  sequenceStateServicePort: PieceHighlightSequenceStateServicePort;
+  sequenceStateServicePort: SequenceStateServicePort;
   loggerPort: LoggerPort;
 }
 
-export class PieceHighlightService implements PieceHighlighterPort {
+export class PieceHighlightService implements PieceHighlightServicePort {
   #scheduledUnhighlightsMap: Map<Piece["id"], string> = new Map();
   #highlightedPiecesIds: Map<
     Piece["id"],
@@ -68,13 +69,13 @@ export class PieceHighlightService implements PieceHighlighterPort {
   #eventManagerPort: EventManagerPort<BibleStackEvents>;
   #pieceHighlightAdapterPort: PieceHighlightAdapterPort;
   #activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
-  #pieceActivityServicePort: PieceHighlightActivityServicePort;
-  #pieceLabelServicePort: PieceHighlightLabelServicePort;
+  #pieceActivityServicePort: PieceActivityServicePort;
+  #pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
   #schedulerAdapterPort: PieceUnhighlightSchedulerAdapterPort;
   #configProviderPort: HighlightConfigProviderPort;
   #pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
   #pieceHierarchyServicePort: PieceHierarchyServicePort;
-  #sequenceStateServicePort: PieceHighlightSequenceStateServicePort;
+  #sequenceStateServicePort: SequenceStateServicePort;
   #loggerPort: ServiceParams["loggerPort"];
 
   constructor({

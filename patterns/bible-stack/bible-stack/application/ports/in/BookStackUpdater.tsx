@@ -14,8 +14,8 @@ export interface PrepareSectionBookCommand {
 
 export type PrepareCommand = PrepareBookCommand | PrepareSectionBookCommand;
 
-export interface BookStackUpdaterPort {
-  prepareBook(command: PrepareCommand): void;
+export interface BookStackUpdaterServicePort {
+  prepareBook(command: PrepareCommand): boolean;
   finalizeBook(data: StackSectionBookData | StackBookData): Promise<void>;
   update(params: {
     data: StackSectionBookData | StackBookData;

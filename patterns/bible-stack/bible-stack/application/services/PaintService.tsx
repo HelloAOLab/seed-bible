@@ -1,6 +1,5 @@
 import { GetColorType } from "../../domain/functions/colors";
 import type { PaintablePieceData } from "../../domain/models/pieces";
-import type { PaintPort } from "../ports/in/Paint";
 import type { LoggerPort } from "../ports/out/Logger";
 import type {
   StackDataRepository,
@@ -8,6 +7,7 @@ import type {
   VersesBundleDataRepository,
   PaintAdapterPort,
 } from "../ports/out/Paint";
+import type { PaintServicePort } from "../ports/in/Paint";
 
 interface ServiceParams {
   stackDataRepository: StackDataRepository;
@@ -17,7 +17,7 @@ interface ServiceParams {
   loggerPort: LoggerPort;
 }
 
-export class PaintService implements PaintPort {
+export class PaintService implements PaintServicePort {
   #color = "#efe5c9";
   #active: boolean = false;
   #dataRepository: ServiceParams["stackDataRepository"];

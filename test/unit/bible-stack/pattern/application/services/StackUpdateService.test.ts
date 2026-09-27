@@ -1,13 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { StackUpdateService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/StackUpdateService";
-import type { BibleStackUpdaterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleStackUpdater";
-import type { BookStackUpdaterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookStackUpdates";
-import type {
-  InteractabilityBlockerPort,
-  InteractabilityUnlockerPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceInteractability";
-import type { SectionStackUpdaterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionStackUpdates";
-import type { TestamentStackUpdaterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentStackUpdater";
+import type { PieceInteractabilityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceInteractability";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type {
   BibleDataRepositoryPort,
@@ -19,6 +12,10 @@ import type { StackSectionBookData } from "../../../../../../patterns/bible-stac
 import type { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
 import type { StackTestamentData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackTestamentData";
 import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
+import type { BibleStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleStackUpdater";
+import type { TestamentStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentStackUpdater";
+import type { BookStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookStackUpdater";
+import type { SectionStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionStackUpdater";
 
 const bibleData = { id: "bible-id" } as unknown as StackBibleData;
 const testamentData = { id: "testament-id" } as unknown as StackTestamentData;
@@ -41,14 +38,14 @@ const createDeferred = () => {
 describe("pattern.bible-stack.application.services.StackUpdateService", () => {
   let service: StackUpdateService;
   let pieceInteractabilityPort: Mocked<
-    InteractabilityBlockerPort & InteractabilityUnlockerPort
+    PieceInteractabilityServicePort & PieceInteractabilityServicePort
   >;
-  let bibleStackUpdaterPort: Mocked<BibleStackUpdaterPort>;
-  let testamentStackUpdaterPort: Mocked<TestamentStackUpdaterPort>;
+  let bibleStackUpdaterPort: Mocked<BibleStackUpdaterServicePort>;
+  let testamentStackUpdaterPort: Mocked<TestamentStackUpdaterServicePort>;
   let bibleDataRepositoryPort: Mocked<BibleDataRepositoryPort>;
   let pieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
-  let sectionStackUpdaterPort: Mocked<SectionStackUpdaterPort>;
-  let bookStackUpdaterPort: Mocked<BookStackUpdaterPort>;
+  let sectionStackUpdaterPort: Mocked<SectionStackUpdaterServicePort>;
+  let bookStackUpdaterPort: Mocked<BookStackUpdaterServicePort>;
   let loggerPort: Mocked<LoggerPort>;
 
   beforeEach(() => {

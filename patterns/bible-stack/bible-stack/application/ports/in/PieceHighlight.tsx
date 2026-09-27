@@ -6,7 +6,7 @@ import type {
 import type { Piece } from "../../../domain/models/canvas";
 import type { HighlightIntensity } from "../../../domain/models/highlight";
 
-export interface PieceHighlighterPort {
+export interface PieceHighlightServicePort {
   tryHighlightPiece: (params: {
     piece:
       | Piece<"StackTestament">
@@ -34,10 +34,7 @@ export interface PieceHighlighterPort {
     delay?: number;
   }) => Promise<void>;
   isUnhighlightScheduled: (piece: Piece) => boolean;
-  changeHighlightIntensity: ({
-    piece,
-    intensity,
-  }: {
+  changeHighlightIntensity: (params: {
     piece: Piece<
       | "StackTestament"
       | "StackSection"
@@ -46,10 +43,13 @@ export interface PieceHighlighterPort {
       | "StackChapter"
     >;
     intensity: HighlightIntensity;
+    pacing?: HighlightPacing;
   }) => void;
   clearScheduledUnhighlights(): void;
   clearHighlightedPieces(): void;
   forgetPiece(piece: Piece): void;
+  isPieceHighlighted(id: Piece["id"]): boolean;
+  clearScheduledUnhighlight(piece: Piece): void;
   unhighlightBiblePieces(
     bibleId: string,
     pacing?: HighlightPacing

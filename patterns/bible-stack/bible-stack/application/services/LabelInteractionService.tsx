@@ -1,24 +1,24 @@
 import type { Piece } from "../../domain/models/canvas";
 import type { BookInteractionServicePort } from "../ports/in/BookInteraction";
 import type { ChapterInteractionServicePort } from "../ports/in/ChapterInteraction";
-import type { LabelInteractionPort } from "../ports/in/LabelInteraction";
 import type { SectionInteractionServicePort } from "../ports/in/SectionInteraction";
-import type { SectionShadowInteractionPort } from "../ports/in/SectionShadowInteraction";
 import type { TestamentInteractionServicePort } from "../ports/in/TestamentInteraction";
 import type { LabelDataRepositoryPort } from "../ports/out/LabelInteraction";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { LabelInteractionServicePort } from "../ports/in/LabelInteraction";
+import type { SectionShadowInteractionServicePort } from "../ports/in/SectionShadowInteraction";
 
 interface ServiceParams {
   labelDataRepositoryPort: LabelDataRepositoryPort;
   testamentInteractionServicePort: TestamentInteractionServicePort;
   sectionInteractionServicePort: SectionInteractionServicePort;
-  sectionShadowInteractionPort: SectionShadowInteractionPort;
+  sectionShadowInteractionPort: SectionShadowInteractionServicePort;
   bookInteractionServicePort: BookInteractionServicePort;
   chapterInteractionServicePort: ChapterInteractionServicePort;
   loggerPort: LoggerPort;
 }
 
-export class LabelInteractionService implements LabelInteractionPort {
+export class LabelInteractionService implements LabelInteractionServicePort {
   #labelDataRepositoryPort: ServiceParams["labelDataRepositoryPort"];
   #sectionInteractionServicePort: ServiceParams["sectionInteractionServicePort"];
   #sectionShadowInteractionPort: ServiceParams["sectionShadowInteractionPort"];
