@@ -1,8 +1,13 @@
-import { render } from "preact";
+import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { signal } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
+import type { MockInstance } from "vitest";
 import { SettingsPage } from "@packages/seed-bible/seed-bible/components/SettingsPage/SettingsPage";
-import type { ExtensionListEntry } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import {
+  ExtensionInitalizer,
+  type ExtensionListEntry,
+} from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import type { ModalContentProps } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
 // Match the i18n mock used by the other component tests: return the
@@ -37,6 +42,9 @@ function makeEntry(
 }
 
 function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
+  // Kept as a signal the tests can drive: the Configure modal reads the flags
+  // for the extension it was opened for.
+  const extensionSaveErrors = signal<Record<string, boolean>>({});
   return {
     sidebar: {
       requestedSettingsView: signal<string>("extensions"),
@@ -56,6 +64,22 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       removeExtensionFromActiveCustomization: vi
         .fn()
         .mockResolvedValue(undefined),
+    },
+    login: {
+      userId: signal<string | null>("user-1"),
+      login: vi.fn().mockResolvedValue(null),
+    },
+    modals: {
+      openModal: vi.fn(),
+    },
+    extensionSettings: {
+      valuesByExtensionId: signal({}),
+      saveErrors: extensionSaveErrors,
+      hasSaveError: (extensionId: string) =>
+        extensionSaveErrors.value[extensionId] === true,
+      getValue: vi.fn(),
+      setValue: vi.fn().mockResolvedValue(undefined),
+      clearValue: vi.fn().mockResolvedValue(undefined),
     },
   } as unknown as SeedBibleState;
 }
@@ -161,5 +185,116 @@ describe("ExtensionsSettingsView", () => {
 
     expect(container.querySelector(".sb-extensions-tabs")).toBeNull();
     expect(container.textContent).toContain("No extensions available.");
+  });
+
+  describe("Configure modal", () => {
+    let registeredSpy: MockInstance;
+    let modalBody: HTMLDivElement;
+
+    beforeEach(() => {
+      // The Configure action only shows for an extension that has registered.
+      registeredSpy = vi
+        .spyOn(ExtensionInitalizer.getInstance(), "isExtensionRegistered")
+        .mockReturnValue(true);
+      modalBody = document.createElement("div");
+      document.body.appendChild(modalBody);
+    });
+
+    afterEach(() => {
+      render(null, modalBody);
+      modalBody.remove();
+      registeredSpy.mockRestore();
+    });
+
+    const configurableEntry = (): ExtensionListEntry => ({
+      ...makeEntry("configurable", true),
+      extension: {
+        url: "https://example.com/configurable.js",
+        meta: {
+          id: "configurable",
+          translations: { en: { title: "Configurable", description: "" } },
+          settings: { greeting: { type: "string", default: "Hello" } },
+        },
+      },
+    });
+
+    // Renders the modal body the way ModalHost does, by calling `content`
+    // during a component's render, so the body updates when state changes.
+    const openConfigureModal = (state: SeedBibleState) => {
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>('button[aria-label="Configure"]')
+          ?.click();
+      });
+      const call = vi.mocked(state.modals.openModal).mock.calls[0];
+      if (!call) {
+        throw new Error("Clicking Configure didn't open a modal");
+      }
+      const content = call[0].content as (
+        props: ModalContentProps
+      ) => ComponentChildren;
+      function ModalBody() {
+        return <>{content({ t: (key) => key })}</>;
+      }
+      act(() => {
+        render(<ModalBody />, modalBody);
+      });
+    };
+
+    it("tells the viewer when their settings couldn't be saved, and only for the extension that failed", () => {
+      const state = renderExtensions([configurableEntry()]);
+      openConfigureModal(state);
+      const saveErrors = (
+        state.extensionSettings as unknown as {
+          saveErrors: Signal<Record<string, boolean>>;
+        }
+      ).saveErrors;
+      expect(modalBody.querySelector('[role="alert"]')).toBeNull();
+
+      // A different extension's failed save says nothing about this one.
+      act(() => {
+        saveErrors.value = { "other-extension": true };
+      });
+      expect(modalBody.querySelector('[role="alert"]')).toBeNull();
+
+      act(() => {
+        saveErrors.value = { configurable: true };
+      });
+
+      expect(modalBody.querySelector('[role="alert"]')?.textContent).toBe(
+        "Couldn't save your settings."
+      );
+    });
+
+    it("asks a signed-out viewer to log in, then shows the settings once they have", () => {
+      const state = renderExtensions([configurableEntry()]);
+      const userId = state.login.userId as Signal<string | null>;
+      act(() => {
+        userId.value = null;
+      });
+      openConfigureModal(state);
+      const greetingField = () =>
+        modalBody.querySelector("#sb-extension-setting-configurable-greeting");
+
+      expect(modalBody.textContent).toContain(
+        "Please log in to configure this extension."
+      );
+      expect(greetingField()).toBeNull();
+
+      const logInButton = Array.from(modalBody.querySelectorAll("button")).find(
+        (button) => button.textContent === "Log in"
+      );
+      act(() => logInButton?.click());
+      expect(state.login.login).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        userId.value = "user-1";
+      });
+
+      expect(greetingField()).not.toBeNull();
+      expect(modalBody.textContent).not.toContain(
+        "Please log in to configure this extension."
+      );
+    });
   });
 });

@@ -12,11 +12,15 @@ import type { LoginManager } from "./LoginManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
+import type { ExtensionSettingValue } from "./ExtensionManager";
 import {
   applyHighlightOverrides,
+  DARK_THEME,
   filterValidColorOverrides,
   filterValidFontFamilyOverrides,
+  LIGHT_THEME,
   LIGHT_THEME_FONT_DEFAULTS,
+  SYSTEM_THEME_ID,
   type BibleTheme,
   type HighlightOverrides,
   type ThemeColorKey,
@@ -303,6 +307,14 @@ const customizationSchema = z
     variants: z.array(customizationVariantSchema).min(1),
     defaultVariantId: z.string().min(1),
     logoUrl: z.url().max(1024).optional().nullable(),
+    /**
+     * The translation viewers of this customization should start reading in,
+     * overriding Seed Bible's own per-language default (see
+     * `DEFAULT_TRANSLATIONS_BY_LANGUAGE` in `BibleReadingManager`) the same
+     * way `BrandingConfig.defaultTranslationId` does for a whole deployment.
+     * Absent means "no override — use Seed Bible's normal default."
+     */
+    defaultTranslationId: z.string().min(1).optional(),
     createdAt: z.number(),
     updatedAt: z.number(),
     /**
@@ -315,6 +327,20 @@ const customizationSchema = z
      */
     extensionSettings: z
       .record(z.string(), extensionAvailabilitySchema)
+      .default({}),
+    /**
+     * Default values this customization sets for extension settings
+     * (`ExtensionMeta.settings`), keyed by extension id then setting name.
+     * A viewer's own value (see `ExtensionSettingsManager`) always wins over
+     * this; this only fills in for a viewer who hasn't set one themselves.
+     * Only ever written from the extension settings editor in
+     * `CustomizationEditExtensionsView`.
+     */
+    extensionSettingDefaults: z
+      .record(
+        z.string(),
+        z.record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
+      )
       .default({}),
   })
   .refine((r) => r.variants.some((v) => v.id === r.defaultVariantId), {
@@ -352,10 +378,21 @@ export interface SeedBibleCustomization {
   /** The variant id shown to a viewer who hasn't picked one for this customization yet. Always references an entry in `variants`. */
   defaultVariantId: string;
   logoUrl?: string | null;
+  /**
+   * The translation viewers should start reading in while this
+   * customization is active, overriding Seed Bible's per-language default.
+   * Absent means no override.
+   */
+  defaultTranslationId?: string;
   createdAt: number;
   updatedAt: number;
   /** Per-extension availability while this customization is active. An id with no entry defaults to "available". */
   extensionSettings: Record<string, ExtensionAvailability>;
+  /** Per-extension setting defaults while this customization is active. An extension/key with no entry has no default here. */
+  extensionSettingDefaults: Record<
+    string,
+    Record<string, ExtensionSettingValue>
+  >;
 }
 
 /** Resolves an extension's effective availability for a customization, defaulting to "available" when unset. */
@@ -364,6 +401,15 @@ export function getExtensionAvailability(
   extensionId: string
 ): ExtensionAvailability {
   return customization?.extensionSettings[extensionId] ?? "available";
+}
+
+/** Resolves a customization's default for one extension setting, or undefined if it doesn't set one. */
+export function getExtensionSettingDefault(
+  customization: SeedBibleCustomization | null,
+  extensionId: string,
+  key: string
+): ExtensionSettingValue | undefined {
+  return customization?.extensionSettingDefaults[extensionId]?.[key];
 }
 
 function buildCustomizationLocator(recordName: string, id: string): string {
@@ -575,8 +621,17 @@ export interface CustomizationsManager {
    * was loaded via the URL.
    */
   activeCustomization: ReadonlySignal<SeedBibleCustomization | null>;
-  /** The variant of the active customization currently in effect (viewer's own pick, else the customization's default, else its first variant). */
+  /** The variant of the active customization currently in effect (the device's color scheme when `isFollowingSystemScheme`, else the viewer's own pick, else the customization's default, else its first variant). */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
+  /** Whether the active customization has both a Light-based and a Dark-based variant, and so can follow the device the way the app-wide System theme does. False when nothing is active. */
+  canFollowSystemScheme: ReadonlySignal<boolean>;
+  /**
+   * Whether `activeVariant` is tracking the device right now — the viewer
+   * picked the System card (stored as the `SYSTEM_THEME_ID` sentinel in
+   * their variant selections), or never picked a variant here and their
+   * app-wide theme is System.
+   */
+  isFollowingSystemScheme: ReadonlySignal<boolean>;
   /**
    * The active variant's colors, session-only: layered on top of the
    * rendered theme by `SeedBibleStateManager`, never written to
@@ -689,6 +744,8 @@ export interface CustomizationsManager {
   // Synchronous, draft-only mutators. Each no-ops if `editingCustomization` is
   // null, and otherwise queues a debounced auto-save of the draft.
   updateEditingName: (name: string) => void;
+  /** Sets (or clears, given `null`) the draft's default translation. No-op with no open draft. */
+  updateEditingDefaultTranslationId: (translationId: string | null) => void;
   /** Clears the draft's logo and immediately persists it (unlike every other draft field, which auto-saves only after a short debounce). No-op with no open draft. */
   removeEditingLogo: () => Promise<void>;
   /** Adds a new variant to the draft, based on the viewer's current preset (no overrides of its own yet). */
@@ -763,7 +820,7 @@ export interface CustomizationsManager {
   setEditingDefaultVariant: (variantId: string) => void;
   /** Removes a variant from the draft. No-op if it's the only remaining variant. */
   removeEditingVariant: (variantId: string) => void;
-  /** Persists the viewer's variant choice for the currently active customization. No-op if none is active. */
+  /** Persists the viewer's variant choice for the currently active customization. Pass `SYSTEM_THEME_ID` to follow the device's color scheme instead of pinning one variant. No-op if none is active. */
   selectActiveVariant: (variantId: string) => Promise<void>;
   /** Sets an extension's availability on the draft. No-op with no open draft. */
   setEditingExtensionAvailability: (
@@ -774,6 +831,22 @@ export interface CustomizationsManager {
   getActiveExtensionAvailability: (
     extensionId: string
   ) => ExtensionAvailability;
+  /** Sets an extension setting's default value on the draft. No-op with no open draft. */
+  setEditingExtensionSettingDefault: (
+    extensionId: string,
+    key: string,
+    value: ExtensionSettingValue
+  ) => void;
+  /** Removes an extension setting's default value from the draft. No-op with no open draft. */
+  clearEditingExtensionSettingDefault: (
+    extensionId: string,
+    key: string
+  ) => void;
+  /** The active customization's default for an extension setting, or undefined if nothing is active or it sets no default there. */
+  getActiveExtensionSettingDefault: (
+    extensionId: string,
+    key: string
+  ) => ExtensionSettingValue | undefined;
   /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active or the extension's availability there isn't "available". */
   addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
   /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
@@ -1068,19 +1141,52 @@ export function createCustomizationsManager(
     return Array.from(new Set([...autoInstalled, ...validExtra]));
   });
 
+  const selectedVariantId = computed<string | null>(() => {
+    const locator = activeCustomizationLocator.value;
+    return locator ? variantSelections.getSelectedVariantId(locator) : null;
+  });
+
+  const canFollowSystemScheme = computed<boolean>(() => {
+    const customization = activeCustomization.value;
+    if (!customization) {
+      return false;
+    }
+    return (
+      customization.variants.some((v) => v.baseTheme === LIGHT_THEME.id) &&
+      customization.variants.some((v) => v.baseTheme === DARK_THEME.id)
+    );
+  });
+
+  const isFollowingSystemScheme = computed<boolean>(() => {
+    if (!canFollowSystemScheme.value) {
+      return false;
+    }
+    // An explicit pick wins, including the System card's own sentinel. Only
+    // a viewer who has never picked a variant here inherits their app-wide
+    // System preference.
+    const selectedId = selectedVariantId.value;
+    return selectedId
+      ? selectedId === SYSTEM_THEME_ID
+      : theme.selectedThemeId.value === SYSTEM_THEME_ID;
+  });
+
   const activeVariant = computed<CustomizationThemeVariant | null>(() => {
     const customization = activeCustomization.value;
     if (!customization) {
       return null;
     }
-    const locator = activeCustomizationLocator.value;
-    const selectedId = locator
-      ? variantSelections.getSelectedVariantId(locator)
-      : null;
     const byId = (id: string | null | undefined) =>
       id ? customization.variants.find((v) => v.id === id) : undefined;
+    const bySystemScheme = isFollowingSystemScheme.value
+      ? customization.variants.find(
+          (v) =>
+            v.baseTheme ===
+            (theme.prefersDarkScheme.value ? DARK_THEME.id : LIGHT_THEME.id)
+        )
+      : undefined;
     return (
-      byId(selectedId) ??
+      bySystemScheme ??
+      byId(selectedVariantId.value) ??
       byId(customization.defaultVariantId) ??
       customization.variants[0] ??
       null
@@ -1213,6 +1319,7 @@ export function createCustomizationsManager(
       createdAt: now,
       updatedAt: now,
       extensionSettings: {},
+      extensionSettingDefaults: {},
     };
 
     await persist(userId, record);
@@ -1323,6 +1430,21 @@ export function createCustomizationsManager(
       return;
     }
     editingCustomization.value = { ...current, name, updatedAt: Date.now() };
+    scheduleAutoSave();
+  };
+
+  const updateEditingDefaultTranslationId = (
+    translationId: string | null
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      defaultTranslationId: translationId ?? undefined,
+      updatedAt: Date.now(),
+    };
     scheduleAutoSave();
   };
 
@@ -1775,6 +1897,58 @@ export function createCustomizationsManager(
   ): ExtensionAvailability =>
     getExtensionAvailability(activeCustomization.value, extensionId);
 
+  const setEditingExtensionSettingDefault = (
+    extensionId: string,
+    key: string,
+    value: ExtensionSettingValue
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      extensionSettingDefaults: {
+        ...current.extensionSettingDefaults,
+        [extensionId]: {
+          ...current.extensionSettingDefaults[extensionId],
+          [key]: value,
+        },
+      },
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
+  const clearEditingExtensionSettingDefault = (
+    extensionId: string,
+    key: string
+  ): void => {
+    const current = editingCustomization.value;
+    const currentExtensionDefaults =
+      current?.extensionSettingDefaults[extensionId];
+    if (!current || !currentExtensionDefaults) {
+      return;
+    }
+    const nextExtensionDefaults = { ...currentExtensionDefaults };
+    delete nextExtensionDefaults[key];
+    editingCustomization.value = {
+      ...current,
+      extensionSettingDefaults: {
+        ...current.extensionSettingDefaults,
+        [extensionId]: nextExtensionDefaults,
+      },
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
+  const getActiveExtensionSettingDefault = (
+    extensionId: string,
+    key: string
+  ): ExtensionSettingValue | undefined =>
+    getExtensionSettingDefault(activeCustomization.value, extensionId, key);
+
   const addExtensionToActiveCustomization = async (
     extensionId: string
   ): Promise<void> => {
@@ -1818,6 +1992,8 @@ export function createCustomizationsManager(
     isLoading,
     activeCustomization,
     activeVariant,
+    canFollowSystemScheme,
+    isFollowingSystemScheme,
     activeThemeOverrides,
     activeHighlightOverrides,
     activeResolvedTheme,
@@ -1842,6 +2018,7 @@ export function createCustomizationsManager(
     uploadLogo,
     getShareLink,
     updateEditingName,
+    updateEditingDefaultTranslationId,
     removeEditingLogo,
     addEditingVariant,
     applyPresetToEditingVariant,
@@ -1860,6 +2037,9 @@ export function createCustomizationsManager(
     selectActiveVariant,
     setEditingExtensionAvailability,
     getActiveExtensionAvailability,
+    setEditingExtensionSettingDefault,
+    clearEditingExtensionSettingDefault,
+    getActiveExtensionSettingDefault,
     addExtensionToActiveCustomization,
     removeExtensionFromActiveCustomization,
   };

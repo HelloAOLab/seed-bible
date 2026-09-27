@@ -41,7 +41,9 @@ import {
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
+import { TutorialSkipPrompt } from "../components/TutorialSkipPrompt/TutorialSkipPrompt";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
+import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 
 /**
  * Font `<link>`s, plus the CSS for the active Customization layered on top
@@ -195,9 +197,11 @@ function MainBody({
   // size, toolbar customization, disablePanels, theme, etc. Apply the
   // device's real saved config once, right after mount —
   // `SettingsManager`'s own effect() already re-derives `settings` whenever
-  // `login.localConfig` changes, so no change is needed there.
+  // `login.localConfig` changes, so no change is needed there. The device's
+  // color scheme is deferred the same way: the server always renders Light.
   useEffect(() => {
     state.login.hydrateLocalConfig();
+    state.theme.hydrateSystemColorScheme();
   }, []);
 
   // Deferred real read, same reason as the two above: saved tabs and their slot
@@ -366,10 +370,21 @@ function MainContent(props: {
           className={`${webkitClass}`}
         />
 
+        <OfflineUpdatePrompt
+          offline={state.bibleData.offline}
+          toast={state.app.toast}
+          className={`${webkitClass}`}
+        />
+
         <Tutorial
           tutorial={state.tutorial}
           className={`${webkitClass}`}
           groupFilter="non-selector"
+        />
+
+        <TutorialSkipPrompt
+          tutorial={state.tutorial}
+          className={`${webkitClass}`}
         />
 
         <LanguageUnavailableModal className={`${webkitClass}`} />

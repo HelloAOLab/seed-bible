@@ -17,7 +17,11 @@ import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { TranslationList } from "../TranslationList/TranslationList";
 import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
 import { computed, signal } from "@preact/signals";
-import { computePopover, type Rect } from "../Tutorial/Tutorial";
+import {
+  computePopover,
+  TutorialPopoverContent,
+  type Rect,
+} from "../Tutorial/Tutorial";
 import type { JSX } from "preact";
 import type { BibleDataManager, BookId } from "../../managers/BibleDataManager";
 import {
@@ -101,7 +105,7 @@ export function BibleSelector(props: BibleSelectorProps) {
     className,
     tutorial,
   } = props;
-  const { t, isRtl } = useI18n();
+  const { isRtl } = useI18n();
 
   // The active tour step, but only when it's a selector-group step — otherwise
   // this overlay must stay out of the way (the main tour handles the rest, and
@@ -231,72 +235,14 @@ export function BibleSelector(props: BibleSelectorProps) {
             />
           )}
 
-          <h3 className="sb-tour-popover-title">
-            {t(tourStep.titleKey, { defaultValue: tourStep.titleDefault })}
-          </h3>
-          <p className="sb-tour-popover-body">
-            {t(tourStep.bodyKey, { defaultValue: tourStep.bodyDefault })}
-          </p>
-          <div className="sb-tour-popover-actions">
-            {tutorial && tutorial.steps.length > 1 && (
-              <div
-                className="sb-tour-popover-dots"
-                role="img"
-                aria-label={t("tutorial.stepProgress", {
-                  current: tutorial.index.value + 1,
-                  total: tutorial.steps.length,
-                  defaultValue: "Step {{current}} of {{total}}",
-                })}
-              >
-                {tutorial.steps.map((step, position) => (
-                  <span
-                    key={step.id}
-                    className={`sb-tour-dot${
-                      position === tutorial.index.value
-                        ? " sb-tour-dot-active"
-                        : ""
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-            <button
-              type="button"
-              className="sb-tour-btn sb-tour-btn-text"
-              onClick={() => tutorial?.finish()}
-            >
-              {t("tutorial.skip", { defaultValue: "Skip" })}
-            </button>
-            <button
-              type="button"
-              className="sb-tour-btn sb-tour-btn-text"
-              onClick={() => tutorial?.optOut()}
-            >
-              {t("tutorial.optOut", { defaultValue: "Don't show tutorials" })}
-            </button>
-            <div className="sb-tour-popover-actions-spacer" />
-            {canGoBack && (
-              <button
-                type="button"
-                className="sb-tour-btn sb-tour-btn-back"
-                onClick={() => tutorial?.prev()}
-              >
-                {t("tutorial.back", { defaultValue: "Back" })}
-              </button>
-            )}
-            <button
-              type="button"
-              className="sb-tour-btn sb-tour-btn-next"
-              onClick={() => tutorial?.next()}
-            >
-              {isLastStep
-                ? t("tutorial.done", { defaultValue: "Done" })
-                : t("tutorial.next", { defaultValue: "Next" })}
-              <span className="sb-tour-next-arrow" aria-hidden="true">
-                →
-              </span>
-            </button>
-          </div>
+          {tutorial && (
+            <TutorialPopoverContent
+              step={tourStep}
+              tutorial={tutorial}
+              isLastStep={isLastStep}
+              canGoBack={canGoBack}
+            />
+          )}
         </div>
       )}
     </>

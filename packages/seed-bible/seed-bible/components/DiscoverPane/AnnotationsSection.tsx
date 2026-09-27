@@ -24,7 +24,7 @@ import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
-import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
+import { DiscoverSection } from "./DiscoverSection";
 import { noTabHint } from "./DiscoveredResultsSections";
 import { Avatar } from "../Avatar/Avatar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -569,11 +569,20 @@ export function AnnotationsSection(props: {
         </p>
       ) : null}
       {groups.length === 0 ? (
-        <DiscoverEmpty
-          text={t("discover-annotations-empty", {
-            defaultValue: "You have no annotations",
-          })}
-        />
+        <div className="sb-discover-empty">
+          {t("discover-annotations-empty", {
+            defaultValue: "You don't have any notes for this chapter.",
+          })}{" "}
+          <button
+            type="button"
+            className="sb-discover-empty-action"
+            onClick={() => void annotations.createNewAnnotation()}
+          >
+            {t("discover-annotations-empty-create", {
+              defaultValue: "Create a note",
+            })}
+          </button>
+        </div>
       ) : (
         groups.map((group) => {
           const groupKey = `${group.startVerseNumber ?? "chapter"}-${

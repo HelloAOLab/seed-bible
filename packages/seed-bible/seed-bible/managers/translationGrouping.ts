@@ -96,6 +96,14 @@ export interface FilterTranslationGroupsOptions {
   selectedTranslation?: Translation | null;
   /** Languages counted as popular. Defaults to `DEFAULT_POPULAR_LANGUAGES`. */
   popularLanguages?: string[];
+  /**
+   * Extra language codes (any case) to sort to the top, in priority order —
+   * index 0 highest. Applied by the same sort that runs before `limit` is
+   * sliced off, so a priority language can't be cut from the first page
+   * before it gets a chance to lead it. `selectedTranslation`'s own language
+   * still outranks everything here.
+   */
+  priorityLanguages?: string[];
 }
 
 export interface FilteredTranslationGroups {
@@ -131,11 +139,15 @@ export function filterTranslationGroups(
     limit,
     selectedTranslation = null,
     popularLanguages = DEFAULT_POPULAR_LANGUAGES,
+    priorityLanguages = [],
   } = options;
 
   const selectedLanguageCode = selectedTranslation?.language?.toLowerCase();
   const selectedLanguageName =
     selectedTranslation?.languageEnglishName?.toLowerCase();
+  const priorityLanguageCodes = priorityLanguages.map((code) =>
+    code.toLowerCase()
+  );
 
   const filterByMode = (
     input: TranslationLanguageGroup[]
@@ -263,6 +275,16 @@ export function filterTranslationGroups(
       b.language.toLowerCase() === selectedLanguageName
     ) {
       return 1;
+    }
+
+    if (priorityLanguageCodes.length > 0) {
+      const aIndex = priorityLanguageCodes.indexOf(a.language.toLowerCase());
+      const bIndex = priorityLanguageCodes.indexOf(b.language.toLowerCase());
+      const aRank = aIndex === -1 ? priorityLanguageCodes.length : aIndex;
+      const bRank = bIndex === -1 ? priorityLanguageCodes.length : bIndex;
+      if (aRank !== bRank) {
+        return aRank - bRank;
+      }
     }
 
     return a.language.localeCompare(b.language);

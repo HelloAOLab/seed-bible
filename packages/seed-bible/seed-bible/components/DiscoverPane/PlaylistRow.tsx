@@ -14,10 +14,9 @@ import { MaterialIcon } from "../icons";
  * One playlist in a `sb-discover-list`: cover thumbnail, title, description,
  * a play button, and a menu offering share, edit and delete.
  *
- * Shared by the Discover panel's playlist list and by the profile screen's
- * "Your content", so the same playlist offers the same actions and reads the
- * same in both places. It renders an `<li>`, so a caller has to wrap it in
- * that list.
+ * Used by the profile screen's "Your content", so the same playlist offers the
+ * same actions and reads the same wherever it is listed. It renders an `<li>`,
+ * so a caller has to wrap it in that list.
  */
 export function PlaylistRow(props: {
   playlist: Playlist;

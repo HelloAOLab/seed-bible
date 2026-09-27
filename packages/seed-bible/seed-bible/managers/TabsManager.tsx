@@ -3,8 +3,10 @@ import {
   effect,
   signal,
   untracked,
+  type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import { debounce } from "es-toolkit";
 import type { BibleDataManager, BookId } from "./BibleDataManager";
 import {
   DEFAULT_UI_LANGUAGE,
@@ -24,6 +26,7 @@ import {
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
   type InitialBibleReadingOptions,
+  type ReadingNavigationOptions,
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
@@ -127,6 +130,13 @@ function getInitialFirstTabBookId(url: URL, basePath: string): string {
 // BibleSelectorManager.tsx when the user explicitly picks a translation from
 // the selector; read here to restore it once the profile loads.
 export const PROFILE_TRANSLATION_ID = "translationId";
+
+/**
+ * How long the reader must stop scrolling before the offset is written to the
+ * current history entry. A scroll gesture fires continuously and browsers rate
+ * limit `replaceState`, so this debounces down to one write per gesture.
+ */
+const SCROLL_STAMP_DEBOUNCE_MS = 200;
 
 function getInitialTranslationId(
   url: URL,
@@ -434,7 +444,18 @@ export function createTabs(
   getAnnotationsManager?: () => AnnotationsManager | undefined,
   branding?: BrandingConfig,
   /** Passed through to `createBibleReadingState` — see its parameter of the same name. */
-  settingsManager?: SettingsManager
+  settingsManager?: SettingsManager,
+  /**
+   * The active Customization's chosen default translation (`CustomizationsManager.
+   * activeCustomization.value?.defaultTranslationId`), if any — the same override
+   * `branding?.defaultTranslationId` provides for a whole deployment, but scoped to
+   * whichever Customization is currently active and, unlike branding, only known
+   * asynchronously (a `?customization=...` link resolves over the network, and an
+   * editor draft can change at any time). Passed as a signal, not a plain value,
+   * so the effect below can apply it the moment it becomes available rather than
+   * only at tab-creation time, when it is essentially always still unset.
+   */
+  activeCustomizationDefaultTranslationId?: ReadonlySignal<string | undefined>
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -713,12 +734,16 @@ export function createTabs(
     });
     // This navigation originates from the URL, so pass `updateUrl: false` to
     // keep the reading state from pushing the URL we just read back onto the
-    // history stack.
+    // history stack. Restore the scroll this history entry remembered, if any
+    // — that's what makes Back land where the reader was, not at the heading.
     await readingState.selectTranslationAndChapter(
       requestedTranslation,
       requestedBookId,
       nextChapter,
-      { updateUrl: false }
+      {
+        updateUrl: false,
+        scrollPosition: navigation.getCurrentScrollPosition(),
+      }
     );
   };
 
@@ -751,7 +776,7 @@ export function createTabs(
    * position signals, so one navigation produces exactly one history entry.
    */
   const commitSelectedTabToUrl = (
-    options: { replace?: boolean; leaveStaticPage?: boolean } = {}
+    options: ReadingNavigationOptions & { leaveStaticPage?: boolean } = {}
   ) => {
     // Read all signals untracked: `getUrlQueryParams` touches bookId/chapter/
     // translation/extension signals, and this runs inside a signals effect. If
@@ -778,6 +803,17 @@ export function createTabs(
         )
       ) {
         return;
+      }
+
+      if (
+        !options.replace &&
+        typeof options.departingScrollPosition === "number"
+      ) {
+        // Stamp the chapter we're leaving onto the current entry *before*
+        // pushing the destination, so Back can restore this offset.
+        navigation.stampCurrentState({
+          scrollPosition: options.departingScrollPosition,
+        });
       }
 
       const tab = selectedTab.peek();
@@ -877,6 +913,38 @@ export function createTabs(
   effect(() => {
     void i18nManager.language.value;
     commitSelectedTabToUrl({ replace: true });
+  });
+
+  // Keep the current history entry's offset up to date while the reader
+  // scrolls, so Forward lands where they were just as Back does. A push stamps
+  // the entry it leaves (`departingScrollPosition`), but Back/Forward never
+  // re-stamps the entry it leaves: without this, going back and then forward
+  // again would return to the zero that entry was pushed with.
+  const stampScrollPosition = debounce((offset: number) => {
+    // A static page's entry is not showing this reading position, so it must
+    // not collect the reader's offset.
+    if (
+      parseStaticPagePath(
+        navigation.currentUrl.peek().pathname,
+        navigation.basePath
+      )
+    ) {
+      return;
+    }
+    navigation.stampCurrentState({ scrollPosition: offset });
+  }, SCROLL_STAMP_DEBOUNCE_MS);
+
+  effect(() => {
+    const tab = selectedTab.value;
+    if (!tab) {
+      // Closing the last tab leaves nothing selected. Drop any stamp still
+      // waiting, or it lands the closed tab's offset on whatever entry is
+      // current when it fires.
+      stampScrollPosition.cancel();
+      return;
+    }
+
+    stampScrollPosition(tab.readingState.scrollPosition.value);
   });
 
   // Resolves once `readingState` is no longer in the middle of an operation
@@ -1045,6 +1113,59 @@ export function createTabs(
       }
 
       void applySavedTranslation(readingState, savedTranslationId);
+    });
+  });
+
+  // Applies the active Customization's chosen default translation to the
+  // selected tab once it becomes known — a share link resolves it over the
+  // network, and an editor draft can set/change it at any time. Lower
+  // priority than a signed-in reader's own saved translation (the profile
+  // effect above always wins when present) and never fights an explicit
+  // deep link, matching how `branding?.defaultTranslationId` only ever
+  // stands in for Seed Bible's own per-language default.
+  // `appliedCustomizationDefaultTranslationId` guards against re-applying the
+  // same id after an unrelated draft edit (e.g. renaming the customization)
+  // changes `activeCustomization`'s identity without actually changing this
+  // field — which would otherwise clobber a translation the previewer picked
+  // manually in the meantime.
+  let appliedCustomizationDefaultTranslationId: string | null = null;
+  effect(() => {
+    const targetTranslationId = activeCustomizationDefaultTranslationId?.value;
+    if (!targetTranslationId) {
+      // No active customization default (deactivated, or cleared) — clear
+      // the guard too, so reactivating the same customization (or another
+      // with the same default) re-applies it instead of being mistaken for
+      // an unrelated identity churn of the still-active one.
+      appliedCustomizationDefaultTranslationId = null;
+      return;
+    }
+
+    untracked(() => {
+      if (hadExplicitInitialUrlTranslation) {
+        return;
+      }
+      if (appliedCustomizationDefaultTranslationId === targetTranslationId) {
+        return;
+      }
+
+      const savedTranslationId = getProfileConfigValue(
+        login.profile.value,
+        PROFILE_TRANSLATION_ID
+      );
+      if (typeof savedTranslationId === "string" && savedTranslationId) {
+        return;
+      }
+
+      const readingState = selectedTab.peek()?.readingState;
+      if (!readingState) {
+        return;
+      }
+      appliedCustomizationDefaultTranslationId = targetTranslationId;
+      if (readingState.translationId.peek() === targetTranslationId) {
+        return;
+      }
+
+      void applySavedTranslation(readingState, targetTranslationId);
     });
   });
 

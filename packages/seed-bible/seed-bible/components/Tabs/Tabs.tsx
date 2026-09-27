@@ -18,7 +18,6 @@ import {
 } from "../../components/ContextMenu/ContextMenu";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { MaterialIcon, SettingsIcon, StarIcon } from "../../components/icons";
-import { buildStaticPagePath } from "../../managers/StaticPagePath";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
@@ -46,6 +45,7 @@ import {
 import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 import { trimmedOrNull } from "../../managers/Utils";
+import { useAppConfig } from "../../app/appConfig";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -759,6 +759,7 @@ export function TabsHeader(props: TabsHeaderProps) {
     closeLayoutMenu,
     setLayout,
   } = props;
+  const { branding } = useAppConfig();
   const { sidebar, settings, customizations } = state;
   const isAwake = settings.settings.value.keepScreenAwake;
   const activeLogoUrl = customizations.activeCustomization.value?.logoUrl;
@@ -796,12 +797,28 @@ export function TabsHeader(props: TabsHeaderProps) {
           </span>
         </button>
 
-        {activeLogoUrl && (
+        {activeLogoUrl ? (
           <span
             className="sb-sidebar-logo sb-tab-user-icon sb-tab-user-icon-has-image"
             style={{ backgroundImage: `url(${activeLogoUrl})` }}
             aria-hidden="true"
           />
+        ) : (
+          branding?.logo &&
+          branding?.websiteUrl && (
+            <a
+              href={branding.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={branding.appName || "Brand logo"}
+            >
+              <img
+                src={branding.logo}
+                alt={branding.appName || ""}
+                className="sb-sidebar-branding-logo"
+              />
+            </a>
+          )
         )}
       </div>
 
@@ -2652,38 +2669,19 @@ export function Sidebar(props: SidebarProps) {
             effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
           }`}
         >
-          <div className="sb-sidebar-icon-stack">
-            <button
-              onClick={() => {
-                state.navigation.push(
-                  buildStaticPagePath({
-                    language: state.i18n.language.value,
-                    page: "about",
-                  })
-                );
-              }}
-              className="sb-sidebar-icon-button"
-              aria-label={t("about-title", {
-                defaultValue: "About Seed Bible",
-              })}
-              title={t("about-title", { defaultValue: "About Seed Bible" })}
-            >
-              <MaterialIcon>info</MaterialIcon>
-            </button>
-            <button
-              onClick={sidebar.toggleSettings}
-              data-tutorial="settings"
-              className={`sb-sidebar-icon-button${
-                isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
-              }`}
-              aria-label={t("open-settings", {
-                defaultValue: "Open settings",
-              })}
-              title={t("settings", { defaultValue: "Settings" })}
-            >
-              <SettingsIcon />
-            </button>
-          </div>
+          <button
+            onClick={sidebar.toggleSettings}
+            data-tutorial="settings"
+            className={`sb-sidebar-icon-button${
+              isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+            }`}
+            aria-label={t("open-settings", {
+              defaultValue: "Open settings",
+            })}
+            title={t("settings", { defaultValue: "Settings" })}
+          >
+            <SettingsIcon />
+          </button>
           <SelfAvatarButton state={state} />
         </div>
       </aside>

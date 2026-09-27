@@ -315,6 +315,30 @@ export const ExtensionTranslationSchema = z
   })
   .catchall(z.string());
 
+/**
+ * One setting an extension declares. Discriminated on `type` so a `default` of
+ * the wrong kind — a string default on a `number` setting, say — is caught here
+ * rather than showing up as a blank field when the settings form renders it.
+ *
+ * Unknown keys are kept, like the meta around them, so a setting can carry
+ * fields this script doesn't know about yet without them being stripped from
+ * the uploaded meta.
+ */
+export const ExtensionSettingDefinitionSchema = z.discriminatedUnion("type", [
+  z.looseObject({
+    type: z.literal("string"),
+    default: z.string().optional(),
+  }),
+  z.looseObject({
+    type: z.literal("boolean"),
+    default: z.boolean().optional(),
+  }),
+  z.looseObject({
+    type: z.literal("number"),
+    default: z.number().optional(),
+  }),
+]);
+
 export const ExtensionMetaSchema = z.looseObject({
   id: z.string(),
   translations: z
@@ -325,6 +349,8 @@ export const ExtensionMetaSchema = z.looseObject({
   dependencies: z.array(z.string()).optional(),
 
   autoinstall: z.boolean().optional(),
+
+  settings: z.record(z.string(), ExtensionSettingDefinitionSchema).optional(),
 });
 
 /**

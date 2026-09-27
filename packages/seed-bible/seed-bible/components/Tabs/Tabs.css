@@ -26,6 +26,10 @@
   opacity: 1;
   transition: opacity 0.25s ease;
 }
+.sb-sidebar-branding-logo {
+  width: 3.0625rem;
+  height: 2.25rem;
+}
 
 .sb-tabs-sidebar-collapsed {
   width: 4.1rem;
@@ -81,13 +85,6 @@
 .sb-sidebar-bottom-actions-collapsed {
   flex-direction: column;
   justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.sb-sidebar-icon-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 0.75rem;
 }
 
