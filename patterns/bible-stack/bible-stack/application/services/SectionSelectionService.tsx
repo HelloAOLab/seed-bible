@@ -5,7 +5,6 @@ import type {
   LabelDataStorePort,
   PieceLabelServicePort,
   SectionSelectionAdapterPort,
-  SectionSelectionEventPort,
 } from "../ports/out/SectionSelection";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
@@ -16,8 +15,9 @@ import type { BookSpawnerPort } from "../ports/in/PieceSpawn";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type { DomainEventManager } from "../ports/in/EventManager";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
   labelDataStorePort: LabelDataStorePort;
@@ -28,11 +28,10 @@ interface ServiceParams {
   stackUpdateServicePort: StackUpdateServicePort;
   sectionSelectionAdapterPort: SectionSelectionAdapterPort;
   explodedViewServicePort: ExplodedViewServicePort;
-  sectionSelectionEventPort: SectionSelectionEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   bookSpawnerPort: BookSpawnerPort;
   tourGuideServicePort: TourGuideServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
-  eventManager: DomainEventManager;
   loggerPort: LoggerPort;
 }
 
@@ -45,12 +44,11 @@ export class SectionSelectionService implements SectionSelectionServicePort {
   #stackUpdateServicePort: ServiceParams["stackUpdateServicePort"];
   #sectionSelectionAdapterPort: ServiceParams["sectionSelectionAdapterPort"];
   #explodedViewServicePort: ServiceParams["explodedViewServicePort"];
-  #sectionSelectionEventPort: ServiceParams["sectionSelectionEventPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
   #bookSpawnerPort: ServiceParams["bookSpawnerPort"];
   #tourGuideServicePort: ServiceParams["tourGuideServicePort"];
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #selectionNameRegistry: Set<string> = new Set();
-  #eventManager: ServiceParams["eventManager"];
   #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
@@ -62,11 +60,10 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     stackUpdateServicePort,
     sectionSelectionAdapterPort,
     explodedViewServicePort,
-    sectionSelectionEventPort,
+    eventManagerPort,
     bookSpawnerPort,
     tourGuideServicePort,
     pieceHierarchyServicePort,
-    eventManager,
     loggerPort,
   }: ServiceParams) {
     this.#labelDataStorePort = labelDataStorePort;
@@ -77,11 +74,10 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     this.#stackUpdateServicePort = stackUpdateServicePort;
     this.#sectionSelectionAdapterPort = sectionSelectionAdapterPort;
     this.#explodedViewServicePort = explodedViewServicePort;
-    this.#sectionSelectionEventPort = sectionSelectionEventPort;
+    this.#eventManagerPort = eventManagerPort;
     this.#bookSpawnerPort = bookSpawnerPort;
     this.#tourGuideServicePort = tourGuideServicePort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
-    this.#eventManager = eventManager;
     this.#loggerPort = loggerPort;
   }
 
@@ -92,7 +88,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
       );
       return false;
     }
-    this.#sectionSelectionEventPort.emit("OnSectionBeginSelect", { data });
+    this.#eventManagerPort.emit("OnSectionBeginSelect", { data });
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
       data.parentDataIds ?? {}
     );
@@ -196,7 +192,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
         translucencyMode: "Solid",
       });
     }
-    this.#sectionSelectionEventPort.emit("OnSectionEndSelect", { data });
+    this.#eventManagerPort.emit("OnSectionEndSelect", { data });
   }
 
   async select({
@@ -244,7 +240,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
       return;
     }
 
-    this.#eventManager.emit("OnSectionDeselected", { data });
+    this.#eventManagerPort.emit("OnSectionDeselected", { data });
 
     const infoLabelData = this.#labelDataStorePort.getDataByOwnerId(
       data.shadow.id

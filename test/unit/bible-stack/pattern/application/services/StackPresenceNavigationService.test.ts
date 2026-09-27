@@ -1,15 +1,16 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { StackPresenceNavigationService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/StackPresenceNavigationService";
 import { SequenceStateService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/SequenceStateService";
-import { BaseEventManager } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BaseEventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 import type {
   ReadingInstance,
   UserPresence,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/userPresence";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import { EventManager } from "../../../../../../patterns/bible-stack/bible-stack/infrastructure/utils/EventManager";
 
 describe("application.services.StackPresenceNavigationService", () => {
-  let eventBus: BaseEventManager<BibleStackEvents>;
+  let eventManagerPort: EventManagerPort<BibleStackEvents>;
   let sequenceStateService: SequenceStateService;
   let selectedInstance: ReadingInstance;
   let getOwnUserSelectedInstance: Mock<() => ReadingInstance>;
@@ -52,7 +53,7 @@ describe("application.services.StackPresenceNavigationService", () => {
   }
 
   const emitPresence = () =>
-    eventBus.emit("OnUserPresenceUpdated", {
+    eventManagerPort.emit("OnUserPresenceUpdated", {
       userPresence: new Map() as UserPresence,
     });
 
@@ -80,7 +81,7 @@ describe("application.services.StackPresenceNavigationService", () => {
         getAllSectionBooks: vi.fn(() => []),
       },
       sequenceStateServicePort: sequenceStateService,
-      eventBus,
+      eventManagerPort,
       chapterSelectionServicePort: {
         trySelectChapter,
         deselectChapter: vi.fn(),
@@ -108,9 +109,9 @@ describe("application.services.StackPresenceNavigationService", () => {
   }
 
   beforeEach(() => {
-    eventBus = new BaseEventManager<BibleStackEvents>();
+    eventManagerPort = new EventManager<BibleStackEvents>();
     sequenceStateService = new SequenceStateService({
-      sequenceEventPort: eventBus,
+      eventManagerPort,
       loggerPort: { log: vi.fn(), warn: vi.fn(), error: vi.fn() },
     });
     selectedInstance = instance("GEN", 1);

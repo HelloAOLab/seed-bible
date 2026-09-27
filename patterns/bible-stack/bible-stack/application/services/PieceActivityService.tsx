@@ -28,8 +28,8 @@ import type { ArrangementServicePort } from "../ports/in/Arrangement";
 import type { UserPresencePort } from "../ports/in/UserPresence";
 import type { ReadingInstance } from "../../domain/models/userPresence";
 import type { UserIdentityPort } from "../ports/out/UserIdentity";
-import type { BaseEventManager } from "./BaseEventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { EventManagerPort } from "../ports/out/EventManager";
 
 interface ServiceParams {
   dataRegistryPort: DataRegistryPort;
@@ -44,7 +44,7 @@ interface ServiceParams {
   userIdentityStorePort: UserIdentityPort;
   idGeneratorPort: IdGeneratorPort;
   loggerPort: LoggerPort;
-  eventBus: BaseEventManager<BibleStackEvents>;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
 }
 
 type ActivityStrategyType<T extends BiblePiece = BiblePiece> = (
@@ -227,7 +227,7 @@ export class PieceActivityService implements PieceActivityServicePort {
   #userColorStorePort: ServiceParams["userIdentityStorePort"];
   #idGeneratorPort: ServiceParams["idGeneratorPort"];
   #loggerPort: LoggerPort;
-  #eventBus: ServiceParams["eventBus"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
 
   constructor({
     dataRegistryPort,
@@ -241,7 +241,7 @@ export class PieceActivityService implements PieceActivityServicePort {
     userIdentityStorePort,
     idGeneratorPort,
     loggerPort,
-    eventBus,
+    eventManagerPort,
   }: ServiceParams) {
     this.#dataRegistryPort = dataRegistryPort;
     this.#arrangementServicePort = arrangementServicePort;
@@ -254,14 +254,14 @@ export class PieceActivityService implements PieceActivityServicePort {
     this.#userColorStorePort = userIdentityStorePort;
     this.#idGeneratorPort = idGeneratorPort;
     this.#loggerPort = loggerPort;
-    this.#eventBus = eventBus;
+    this.#eventManagerPort = eventManagerPort;
 
-    this.#eventBus.subscribe("OnStackSequenceEnd", () => {
+    this.#eventManagerPort.subscribe("OnStackSequenceEnd", () => {
       this.updateAllIndicators();
       this.updateAllNotifications();
     });
 
-    this.#eventBus.subscribe("OnStackSequenceStart", () => {
+    this.#eventManagerPort.subscribe("OnStackSequenceStart", () => {
       this.hideAllNotifications();
     });
   }

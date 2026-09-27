@@ -12,7 +12,6 @@ import type {
   VersesBundleBot,
 } from "../../infrastructure/models/stack";
 import type { Piece, SectionShadow } from "../../domain/models/canvas";
-import type { BibleStackEvents } from "../../domain/models/events";
 import type {
   BookPathIndices,
   SectionPathIndices,
@@ -65,15 +64,6 @@ export interface StackPieceLifecycleAdapterPort {
   spawnVerse: () => VerseBot;
   despawnVerse: (piece: Piece<"Verse">) => void;
   despawn: (piece: Piece) => void;
-}
-
-export interface PieceLifecycleEventPort {
-  emit: <K extends "OnTestamentDelete">(
-    eventName: K,
-    ...args: BibleStackEvents[K] extends undefined | void
-      ? [payload?: BibleStackEvents[K]]
-      : [payload: BibleStackEvents[K]]
-  ) => void;
 }
 
 export interface ArrangementServicePort {

@@ -13,7 +13,6 @@ import type {
   LabelTranslucencyMode,
   ShowSequencePacing,
 } from "../../domain/models/label";
-import type { BibleStackEvents } from "../../domain/models/events";
 import type { ActivityNotificationAdapterPort } from "./out/PieceActivity";
 
 export type StackParentDataIds = Pick<
@@ -154,14 +153,6 @@ export interface PieceHighlightLabelServicePort {
   ): Promise<void>;
 }
 
-export interface PieceHighlightEventPort {
-  emit: <K extends "OnScripturePieceHighlighted">(
-    eventName: K,
-    ...args: BibleStackEvents[K] extends undefined | void
-      ? [payload?: BibleStackEvents[K]]
-      : [payload: BibleStackEvents[K]]
-  ) => void;
-}
 export type PieceHierarchyStackDataRepositoryPort = Pick<
   BibleDataRepositoryPort,
   "getBibleDataById"

@@ -5,7 +5,6 @@ import type {
   AwaiterPort,
   LabelSequenceConfigProviderPort,
   TestamentSelectionAdapterPort,
-  TestamentSelectionEventPort,
   PieceAdapterPort,
 } from "../ports/out/TestamentSelection";
 import type { SectionSpawnerPort } from "../ports/in/PieceSpawn";
@@ -14,10 +13,12 @@ import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
   testamentSelectionAdapterPort: TestamentSelectionAdapterPort;
-  testamentSelectionEventPort: TestamentSelectionEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   pieceHighlighterPort: PieceHighlighterPort;
   sectionSpawnerPort: SectionSpawnerPort;
   stackUpdateServicePort: StackUpdateServicePort;
@@ -30,7 +31,7 @@ interface ServiceParams {
 
 export class TestamentSelectionService implements TestamentSelectionPort {
   #testamentSelectionAdapterPort: ServiceParams["testamentSelectionAdapterPort"];
-  #testamentSelectionEventPort: ServiceParams["testamentSelectionEventPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
   #pieceHighlighterPort: ServiceParams["pieceHighlighterPort"];
   #sectionSpawnerPort: ServiceParams["sectionSpawnerPort"];
   #stackUpdateServicePort: ServiceParams["stackUpdateServicePort"];
@@ -42,7 +43,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
 
   constructor({
     testamentSelectionAdapterPort,
-    testamentSelectionEventPort,
+    eventManagerPort,
     pieceHighlighterPort,
     sectionSpawnerPort,
     stackUpdateServicePort,
@@ -53,7 +54,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     // pieceLifecycleServicePort,
   }: ServiceParams) {
     this.#testamentSelectionAdapterPort = testamentSelectionAdapterPort;
-    this.#testamentSelectionEventPort = testamentSelectionEventPort;
+    this.#eventManagerPort = eventManagerPort;
     this.#pieceHighlighterPort = pieceHighlighterPort;
     this.#sectionSpawnerPort = sectionSpawnerPort;
     this.#stackUpdateServicePort = stackUpdateServicePort;
@@ -65,7 +66,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
   }
 
   async #prepareSelection(data: StackTestamentData): Promise<boolean> {
-    this.#testamentSelectionEventPort.emit("OnTestamentBeginSelect", { data });
+    this.#eventManagerPort.emit("OnTestamentBeginSelect", { data });
 
     const selecting = data.changeSelectionState("RequestSelect");
 
@@ -110,7 +111,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
       this.#pieceAdapterPort.makeInteractable(sectionData.piece!);
     });
 
-    this.#testamentSelectionEventPort.emit("OnTestamentEndSelect", { data });
+    this.#eventManagerPort.emit("OnTestamentEndSelect", { data });
   }
 
   async #highlightChildren(

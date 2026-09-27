@@ -33,8 +33,8 @@ import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { UserPresencePort } from "../ports/in/UserPresence";
-import type { BaseEventManager } from "./BaseEventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { EventManagerPort } from "../ports/out/EventManager";
 
 interface ServiceParams {
   loggerPort: LoggerPort;
@@ -46,7 +46,7 @@ interface ServiceParams {
     "getAllChapters" | "getAllBooks" | "getAllSectionBooks"
   >;
   sequenceStateServicePort: SequenceStateServicePort;
-  eventBus: BaseEventManager<BibleStackEvents>;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   chapterSelectionServicePort: ChapterSelectionPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   scriptureServicePort: ScripturePort;
@@ -72,7 +72,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
-  #eventBus: ServiceParams["eventBus"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
   #chapterSelectionServicePort: ServiceParams["chapterSelectionServicePort"];
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #scriptureServicePort: ServiceParams["scriptureServicePort"];
@@ -93,7 +93,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     pieceAdapterPort,
     pieceDataRepositoryPort,
     sequenceStateServicePort,
-    eventBus,
+    eventManagerPort,
     chapterSelectionServicePort,
     pieceHierarchyServicePort,
     scriptureServicePort,
@@ -111,7 +111,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#sequenceStateServicePort = sequenceStateServicePort;
-    this.#eventBus = eventBus;
+    this.#eventManagerPort = eventManagerPort;
     this.#chapterSelectionServicePort = chapterSelectionServicePort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#scriptureServicePort = scriptureServicePort;
@@ -123,20 +123,20 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     this.#explodedViewServicePort = explodedViewServicePort;
     this.#arrangementServicePort = arrangementServicePort;
 
-    this.#eventBus.subscribe("OnUserPresenceUpdated", () => {
+    this.#eventManagerPort.subscribe("OnUserPresenceUpdated", () => {
       this.#isUpdatePending = true;
       this.#tryDrainUpdate();
     });
 
-    this.#eventBus.subscribe("OnStackSectionExploded", (payload) => {
+    this.#eventManagerPort.subscribe("OnStackSectionExploded", (payload) => {
       this.#handleSectionExploded(payload);
     });
 
-    this.#eventBus.subscribe("OnStackSequenceStart", () => {
+    this.#eventManagerPort.subscribe("OnStackSequenceStart", () => {
       this.#didUpdateRunInSequence = false;
     });
 
-    this.#eventBus.subscribe("OnStackSequenceEnd", () => {
+    this.#eventManagerPort.subscribe("OnStackSequenceEnd", () => {
       if (!this.#didUpdateRunInSequence) {
         this.#isUpdatePending = false;
         return;

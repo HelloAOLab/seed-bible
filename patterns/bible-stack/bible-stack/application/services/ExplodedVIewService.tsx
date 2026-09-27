@@ -5,14 +5,15 @@ import { BibleVisualizationStates } from "../../domain/models/canvas";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
-import type { ExplodedViewEventPort } from "../ports/out/ExplodedView";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   stackUpdateServicePort: StackUpdateServicePort;
   pieceActivityServicePort: PieceActivityServicePort;
-  bibleStackEventPort: ExplodedViewEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   loggerPort: LoggerPort;
 }
 
@@ -21,20 +22,20 @@ export class ExplodedViewService implements ExplodedViewServicePort {
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #stackUpdateServicePort: ServiceParams["stackUpdateServicePort"];
   #pieceActivityServicePort: ServiceParams["pieceActivityServicePort"];
-  #bibleStackEventPort: ServiceParams["bibleStackEventPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
   #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     pieceHierarchyServicePort,
     stackUpdateServicePort,
     pieceActivityServicePort,
-    bibleStackEventPort,
+    eventManagerPort,
     loggerPort,
   }: ServiceParams) {
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#stackUpdateServicePort = stackUpdateServicePort;
     this.#pieceActivityServicePort = pieceActivityServicePort;
-    this.#bibleStackEventPort = bibleStackEventPort;
+    this.#eventManagerPort = eventManagerPort;
     this.#loggerPort = loggerPort;
   }
 
@@ -84,7 +85,7 @@ export class ExplodedViewService implements ExplodedViewServicePort {
 
       this.#pieceActivityServicePort.updateAllNotifications();
 
-      this.#bibleStackEventPort.emit("OnStackSectionExploded", {
+      this.#eventManagerPort.emit("OnStackSectionExploded", {
         sectionData: data,
       });
     } catch (error) {

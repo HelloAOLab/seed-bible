@@ -9,7 +9,6 @@ import type {
   LabelSequenceConfigProviderPort,
   PieceAdapterPort,
   TestamentSelectionAdapterPort,
-  TestamentSelectionEventPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/TestamentSelection";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
@@ -33,6 +32,8 @@ import {
   StackUpdatePacings,
   type StackUpdatePacing,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -177,7 +178,7 @@ const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 describe("pattern.bible-stack.application.services.TestamentSelectionService", () => {
   let service: TestamentSelectionService;
   let testamentSelectionAdapterPort: Mocked<TestamentSelectionAdapterPort>;
-  let testamentSelectionEventPort: Mocked<TestamentSelectionEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let pieceHighlighterPort: Mocked<PieceHighlighterPort>;
   let sectionSpawnerPort: Mocked<SectionSpawnerPort>;
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
@@ -206,16 +207,13 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
     read: () => T
   ): { eventName: string; value: T }[] => {
     const records: { eventName: string; value: T }[] = [];
-    testamentSelectionEventPort.emit.mockImplementation(((
-      eventName: string
-    ) => {
+    eventManagerPort.emit.mockImplementation(((eventName: string) => {
       records.push({ eventName, value: read() });
-    }) as TestamentSelectionEventPort["emit"]);
+    }) as EventManagerPort<BibleStackEvents>["emit"]);
     return records;
   };
 
-  const emitOrders = () =>
-    testamentSelectionEventPort.emit.mock.invocationCallOrder;
+  const emitOrders = () => eventManagerPort.emit.mock.invocationCallOrder;
   const highlightOrders = () =>
     pieceHighlighterPort.tryHighlightPiece.mock.invocationCallOrder;
   const interactableOrders = () =>
@@ -244,9 +242,9 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
       select: vi.fn(),
     };
 
-    testamentSelectionEventPort = {
+    eventManagerPort = {
       emit: vi.fn(),
-    } as unknown as Mocked<TestamentSelectionEventPort>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     pieceHighlighterPort = {
       tryHighlightPiece: vi.fn(),
@@ -303,7 +301,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
 
     service = new TestamentSelectionService({
       testamentSelectionAdapterPort,
-      testamentSelectionEventPort,
+      eventManagerPort,
       pieceHighlighterPort,
       sectionSpawnerPort,
       stackUpdateServicePort,
@@ -322,14 +320,14 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
 
       await select(data);
 
-      expect(testamentSelectionEventPort.emit).toHaveBeenNthCalledWith(
+      expect(eventManagerPort.emit).toHaveBeenNthCalledWith(
         1,
         "OnTestamentBeginSelect",
         { data }
       );
-      expect(testamentSelectionEventPort.emit.mock.calls[0]![1]!.data).toBe(
-        data
-      );
+      expect(
+        (eventManagerPort.emit.mock.calls[0]![1] as { data: unknown }).data
+      ).toBe(data);
       expect(emitOrders()[0]!).toBeLessThan(
         pieceHighlighterPort.unhighlightBiblePieces.mock.invocationCallOrder[0]!
       );
@@ -372,7 +370,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
       expect(loggerPort.error).toHaveBeenCalledExactlyOnceWith(
         "TestamentSelectionService: testament not selecting at prepareSelection."
       );
-      expect(testamentSelectionEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnTestamentBeginSelect",
         { data }
       );
@@ -591,7 +589,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
       expect(section.isHighlightable).toBe(false);
       expect(pieceHighlighterPort.tryHighlightPiece).not.toHaveBeenCalled();
       expect(pieceAdapterPort.makeInteractable).not.toHaveBeenCalled();
-      expect(testamentSelectionEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnTestamentBeginSelect",
         { data }
       );
@@ -620,7 +618,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
         testamentSelectionAdapterPort.select.mock.invocationCallOrder[0]!
       );
       expect(pieceHighlighterPort.tryHighlightPiece).not.toHaveBeenCalled();
-      expect(testamentSelectionEventPort.emit).toHaveBeenCalledOnce();
+      expect(eventManagerPort.emit).toHaveBeenCalledOnce();
 
       update.resolve();
       await selection;
@@ -654,7 +652,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
       expect(pieceHighlighterPort.tryHighlightPiece).not.toHaveBeenCalled();
       expect(awaiterPort.sleep).not.toHaveBeenCalled();
       expect(pieceAdapterPort.makeInteractable).not.toHaveBeenCalled();
-      expect(testamentSelectionEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnTestamentBeginSelect",
         { data }
       );
@@ -718,7 +716,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
         [sectionBook.piece],
         [section_2.piece],
       ]);
-      expect(testamentSelectionEventPort.emit.mock.calls).toEqual([
+      expect(eventManagerPort.emit.mock.calls).toEqual([
         ["OnTestamentBeginSelect", { data }],
         ["OnTestamentEndSelect", { data }],
       ]);
@@ -774,7 +772,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
         highlightRequest(section_1.piece),
       ]);
       expect(awaiterPort.sleep).toHaveBeenCalledTimes(2);
-      expect(testamentSelectionEventPort.emit).toHaveBeenLastCalledWith(
+      expect(eventManagerPort.emit).toHaveBeenLastCalledWith(
         "OnTestamentEndSelect",
         { data }
       );
@@ -846,7 +844,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
       await flush();
 
       expect(pieceAdapterPort.makeInteractable).not.toHaveBeenCalled();
-      expect(testamentSelectionEventPort.emit).toHaveBeenCalledOnce();
+      expect(eventManagerPort.emit).toHaveBeenCalledOnce();
 
       highlights[1]!.resolve();
       await selection;
@@ -878,13 +876,13 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
 
       await select(data);
 
-      expect(testamentSelectionEventPort.emit.mock.calls).toEqual([
+      expect(eventManagerPort.emit.mock.calls).toEqual([
         ["OnTestamentBeginSelect", { data }],
         ["OnTestamentEndSelect", { data }],
       ]);
-      expect(testamentSelectionEventPort.emit.mock.calls[1]![1]!.data).toBe(
-        data
-      );
+      expect(
+        (eventManagerPort.emit.mock.calls[1]![1] as { data: unknown }).data
+      ).toBe(data);
       expect(emitOrders()[1]!).toBeGreaterThan(interactableOrders()[0]!);
     });
   });

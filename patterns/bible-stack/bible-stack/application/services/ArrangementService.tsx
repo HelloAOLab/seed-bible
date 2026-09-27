@@ -15,20 +15,21 @@ import type {
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
 import type {
   ArrangementConfigProviderPort,
-  ArrangementEventPort,
   CustomArrangementStorePort,
 } from "../ports/out/Arangement";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ArrangementServiceProps {
   arrangementConfigProviderPort: ArrangementConfigProviderPort;
   customArrangementStorePort: CustomArrangementStorePort;
-  eventManager: ArrangementEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   arrangementIndex?: number;
 }
 
 export class ArrangementService implements ArrangementServicePort {
   #arrangementConfigProviderPort: ArrangementServiceProps["arrangementConfigProviderPort"];
-  #eventManager: ArrangementServiceProps["eventManager"];
+  #eventManagerPort: ArrangementServiceProps["eventManagerPort"];
   #currArrangementIndex: NonNullable<
     ArrangementServiceProps["arrangementIndex"]
   > = 0;
@@ -36,13 +37,13 @@ export class ArrangementService implements ArrangementServicePort {
 
   constructor({
     arrangementConfigProviderPort,
-    eventManager,
+    eventManagerPort,
     arrangementIndex,
     customArrangementStorePort,
   }: ArrangementServiceProps) {
     this.#arrangementConfigProviderPort = arrangementConfigProviderPort;
     this.#customArrangementStorePort = customArrangementStorePort;
-    this.#eventManager = eventManager;
+    this.#eventManagerPort = eventManagerPort;
     if (arrangementIndex !== undefined)
       this.#currArrangementIndex = arrangementIndex;
   }
@@ -63,7 +64,9 @@ export class ArrangementService implements ArrangementServicePort {
     const currentIndex = this.getCurrentArrangementIndex();
     if (index >= 0 && index < arrangementsLength && index !== currentIndex) {
       this.#currArrangementIndex = index;
-      this.#eventManager.emit("OnArrangementIndexChanged", { newIndex: index });
+      this.#eventManagerPort.emit("OnArrangementIndexChanged", {
+        newIndex: index,
+      });
       return true;
     }
     return false;
@@ -105,7 +108,7 @@ export class ArrangementService implements ArrangementServicePort {
       if (currentArrangementName) {
         this.setArrangementIndexByName(currentArrangementName);
       }
-      this.#eventManager.emit("OnCustomArrangementsChanged");
+      this.#eventManagerPort.emit("OnCustomArrangementsChanged");
     }
   }
 
@@ -124,7 +127,7 @@ export class ArrangementService implements ArrangementServicePort {
       } else {
         this.setCurrentArrangementIndex(0);
       }
-      this.#eventManager.emit("OnCustomArrangementsChanged");
+      this.#eventManagerPort.emit("OnCustomArrangementsChanged");
     }
   }
 

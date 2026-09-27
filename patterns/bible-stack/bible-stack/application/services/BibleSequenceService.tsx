@@ -2,7 +2,6 @@ import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type {
-  BibleSequenceEventPort,
   BibleSequenceAdapterPort,
   BibleSequenceServiceConfigProviderPort,
   LabelDataRepositoryPort,
@@ -31,9 +30,11 @@ import type { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
-  eventPort: BibleSequenceEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   bibleSequenceAdapterPort: BibleSequenceAdapterPort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
   awaiterPort: AwaiterPort;
@@ -57,7 +58,7 @@ interface ServiceParams {
 }
 
 export class BibleSequenceService implements BibleSequenceServicePort {
-  #eventPort: ServiceParams["eventPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
   #bibleSequenceAdapterPort: ServiceParams["bibleSequenceAdapterPort"];
   #scripturePiecesStateServicePort: ServiceParams["scripturePiecesStateServicePort"];
   #awaiterPort: ServiceParams["awaiterPort"];
@@ -73,7 +74,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
   #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
-    eventPort,
+    eventManagerPort,
     bibleSequenceAdapterPort,
     scripturePiecesStateServicePort,
     awaiterPort,
@@ -88,7 +89,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     pieceDataRepositoryPort,
     loggerPort,
   }: ServiceParams) {
-    this.#eventPort = eventPort;
+    this.#eventManagerPort = eventManagerPort;
     this.#bibleSequenceAdapterPort = bibleSequenceAdapterPort;
     this.#scripturePiecesStateServicePort = scripturePiecesStateServicePort;
     this.#awaiterPort = awaiterPort;
@@ -111,7 +112,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     bibleData: StackBibleData;
     pacing?: StackPresenceNavigationPacing;
   }): Promise<void> {
-    this.#eventPort.emit("OnBibleResetSequenceStart", { bibleData });
+    this.#eventManagerPort.emit("OnBibleResetSequenceStart", { bibleData });
 
     try {
       await this.closeBible({
@@ -122,7 +123,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
         bibleData,
         pacing,
       });
-      this.#eventPort.emit("OnBibleResetSequenceEnd", { bibleData });
+      this.#eventManagerPort.emit("OnBibleResetSequenceEnd", { bibleData });
     } catch (error) {
       this.#loggerPort.error(
         "BibleSequenceService: Failed to display reset sequence at resetBible.",
@@ -138,7 +139,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     bibleData: StackBibleData;
     pacing?: StackPresenceNavigationPacing;
   }): Promise<void> {
-    this.#eventPort.emit("OnBibleCloseSequenceStart", { bibleData });
+    this.#eventManagerPort.emit("OnBibleCloseSequenceStart", { bibleData });
 
     const { testamentsData, sectionsData, booksData } =
       bibleData.getActiveHierarchy();
@@ -278,7 +279,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
       }
     }
     bibleData.changeState("Closed");
-    this.#eventPort.emit("OnBibleCloseSequenceEnd", { bibleData });
+    this.#eventManagerPort.emit("OnBibleCloseSequenceEnd", { bibleData });
   }
 
   async openBible({
@@ -288,7 +289,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     bibleData: StackBibleData;
     pacing?: StackPresenceNavigationPacing;
   }): Promise<void> {
-    this.#eventPort.emit("OnBibleOpenSequenceStart", { bibleData });
+    this.#eventManagerPort.emit("OnBibleOpenSequenceStart", { bibleData });
 
     const lowerCover = bibleData.getStaticPiece("lowerCover");
     const upperCover = bibleData.getStaticPiece("upperCover");
@@ -413,13 +414,13 @@ export class BibleSequenceService implements BibleSequenceServicePort {
       this.#pieceAdapterPort.makeInteractable(sectionData.piece);
     }
 
-    this.#eventPort.emit("OnBibleOpenSequenceEnd", { bibleData });
+    this.#eventManagerPort.emit("OnBibleOpenSequenceEnd", { bibleData });
 
     return;
   }
 
   async crackOpenBible(bibleData: StackBibleData) {
-    this.#eventPort.emit("OnBibleCrackOpenSequenceStart");
+    this.#eventManagerPort.emit("OnBibleCrackOpenSequenceStart");
     bibleData.changeState("Open");
     bibleData.childrenData.forEach((testamentData) =>
       testamentData.attachToBible()
@@ -438,7 +439,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
       }
     });
 
-    this.#eventPort.emit("OnBibleCrackOpenSequenceEnd");
+    this.#eventManagerPort.emit("OnBibleCrackOpenSequenceEnd");
 
     if (bibleData.bibleType !== BibleTypes.Default) return;
 

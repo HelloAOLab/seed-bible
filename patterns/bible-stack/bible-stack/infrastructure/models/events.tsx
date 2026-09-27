@@ -3,7 +3,7 @@ import type {
   UserPresence,
   UserIdentityMap,
 } from "../../domain/models/userPresence";
-import type { BaseEventManager } from "../../application/services/BaseEventManager";
+import type { EventManager } from "../utils/EventManager";
 
 /**
  * Infrastructure-only event map for the listen-tag bus. Pooled objects emit one
@@ -39,4 +39,4 @@ export const MESSAGE_TO_EVENT_MAP: Record<
 };
 
 export type InfrastructureEventManager =
-  BaseEventManager<BibleStackInfrastructureEvents>;
+  EventManager<BibleStackInfrastructureEvents>;

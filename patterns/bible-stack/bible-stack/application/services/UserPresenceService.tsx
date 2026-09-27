@@ -4,9 +4,10 @@ import type {
 } from "../../domain/models/userPresence";
 import type { UserPresencePort } from "../ports/in/UserPresence";
 import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface UserPresenceParams {
-  eventManagerPort: EventManagerPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   initialUserPresence?: UserPresence;
   userId: string;
 }

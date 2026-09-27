@@ -15,7 +15,6 @@ import type {
   ShowExtraContentIndicatorCommand,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceActivity";
 import type { UserIdentityPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/UserIdentity";
-import type { BaseEventManager } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BaseEventManager";
 import { ActivityIndicatorData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/ActivityIndicatorData";
 import { InfoLabelData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/InfoLabelData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -41,6 +40,7 @@ import type {
   ConnectedUserData,
   ReadingInstance,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/userPresence";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 
 const ARRANGEMENT_NAME = "arrangement";
 const OWN_CONNECTION_ID = "own-connection";
@@ -302,7 +302,7 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
   let userIdentityStorePort: Mocked<UserIdentityPort>;
   let idGeneratorPort: Mocked<IdGeneratorPort>;
   let loggerPort: Mocked<LoggerPort>;
-  let eventBus: Mocked<BaseEventManager<BibleStackEvents>>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let pieceDataById: Map<string, RegisteredData>;
 
   const createService = (maxIndicators = 0) =>
@@ -318,7 +318,7 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
       userIdentityStorePort,
       idGeneratorPort,
       loggerPort,
-      eventBus,
+      eventManagerPort,
     });
 
   const register = <T extends RegisteredData>(data: T): T => {
@@ -456,11 +456,11 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
       log: vi.fn(),
     };
 
-    eventBus = {
+    eventManagerPort = {
       subscribe: vi.fn(),
       emit: vi.fn(),
       removeAllListeners: vi.fn(),
-    } as unknown as Mocked<BaseEventManager<BibleStackEvents>>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     dataRegistryPort.getPieceData.mockImplementation(((piece: Piece) =>
       pieceDataById.get(piece.id)) as GetPieceData);

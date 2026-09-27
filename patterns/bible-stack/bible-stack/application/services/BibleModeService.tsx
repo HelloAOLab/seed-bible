@@ -16,7 +16,8 @@ import type {
 } from "../ports/out/BibleMode";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type { BibleModeServicePort } from "../ports/in/BibleMode";
-import type { DomainEventManager } from "../ports/in/EventManager";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
@@ -26,7 +27,7 @@ interface ServiceParams {
   pieceDataRepository: PieceDataRepositoryPort;
   sectionSelectionServicePort: SectionSelectionServicePort;
   testamentSelectionServicePort: TestamentSelectionPort;
-  eventManager: DomainEventManager;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   loggerPort: LoggerPort;
 }
 
@@ -40,7 +41,7 @@ export class BibleModeService implements BibleModeServicePort {
   #pieceDataRepository: ServiceParams["pieceDataRepository"];
   #sectionSelectionServicePort: ServiceParams["sectionSelectionServicePort"];
   #testamentSelectionServicePort: ServiceParams["testamentSelectionServicePort"];
-  #eventManager: ServiceParams["eventManager"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
   #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
@@ -51,7 +52,7 @@ export class BibleModeService implements BibleModeServicePort {
     pieceDataRepository,
     sectionSelectionServicePort,
     testamentSelectionServicePort,
-    eventManager,
+    eventManagerPort,
     loggerPort,
   }: ServiceParams) {
     this.#sequenceStateServicePort = sequenceStateServicePort;
@@ -61,7 +62,7 @@ export class BibleModeService implements BibleModeServicePort {
     this.#pieceDataRepository = pieceDataRepository;
     this.#sectionSelectionServicePort = sectionSelectionServicePort;
     this.#testamentSelectionServicePort = testamentSelectionServicePort;
-    this.#eventManager = eventManager;
+    this.#eventManagerPort = eventManagerPort;
     this.#loggerPort = loggerPort;
   }
 
@@ -92,7 +93,9 @@ export class BibleModeService implements BibleModeServicePort {
     }
 
     this.#isTryingToToggle = true;
-    this.#eventManager.emit("OnBibleAttemptToggleMode", { data: bibleData });
+    this.#eventManagerPort.emit("OnBibleAttemptToggleMode", {
+      data: bibleData,
+    });
     await this.#sequenceAdapterPort
       .showToggleAttemptFeedback({
         crossHorizontalLine,

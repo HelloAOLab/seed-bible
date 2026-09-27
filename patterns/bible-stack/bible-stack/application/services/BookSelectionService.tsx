@@ -1,20 +1,19 @@
 import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { StackAncestor } from "../../domain/models/canvas";
-import type {
-  BookSelectionEventPort,
-  PieceAdapterPort,
-} from "../ports/out/BookSelection";
+import type { PieceAdapterPort } from "../ports/out/BookSelection";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 type BookEntity = StackBookData | StackSectionBookData;
 
 interface ServiceParams {
-  bookSelectionEventPort: BookSelectionEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   pieceAdapterPort: PieceAdapterPort;
   stackUpdateServicePort: StackUpdateServicePort;
   pieceHighlighterPort: PieceHighlighterPort;
@@ -22,20 +21,20 @@ interface ServiceParams {
 }
 
 export class BookSelectionService implements BookSelectionServicePort {
-  #bookSelectionEventPort: ServiceParams["bookSelectionEventPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #stackUpdateServicePort: ServiceParams["stackUpdateServicePort"];
   #pieceHighlighterPort: ServiceParams["pieceHighlighterPort"];
   #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
-    bookSelectionEventPort,
+    eventManagerPort,
     pieceAdapterPort,
     stackUpdateServicePort,
     pieceHighlighterPort,
     loggerPort,
   }: ServiceParams) {
-    this.#bookSelectionEventPort = bookSelectionEventPort;
+    this.#eventManagerPort = eventManagerPort;
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#stackUpdateServicePort = stackUpdateServicePort;
     this.#pieceHighlighterPort = pieceHighlighterPort;
@@ -78,7 +77,7 @@ export class BookSelectionService implements BookSelectionServicePort {
       return false;
     }
 
-    this.#bookSelectionEventPort.emit("OnBookBeginSelect", { data });
+    this.#eventManagerPort.emit("OnBookBeginSelect", { data });
     await this.#pieceHighlighterPort.tryUnhighlightPiece({
       piece,
       source: "Transition",
@@ -100,7 +99,7 @@ export class BookSelectionService implements BookSelectionServicePort {
 
   #finalizeBookSelection(data: BookEntity): void {
     data.changeSelectionState("SequenceComplete");
-    this.#bookSelectionEventPort.emit("OnBookEndSelect", { data });
+    this.#eventManagerPort.emit("OnBookEndSelect", { data });
   }
 
   /**
@@ -123,7 +122,7 @@ export class BookSelectionService implements BookSelectionServicePort {
   // --- Deselection pre/post-flight ----------------------------------------
 
   #prepareBookDeselection(data: BookEntity): void {
-    this.#bookSelectionEventPort.emit("OnBookBeginDeselect", { data });
+    this.#eventManagerPort.emit("OnBookBeginDeselect", { data });
     data.changeSelectionState("RequestDeselect");
     data.changeChildrenSelectionState("RequestDeselect");
     if (data.piece) {
@@ -134,7 +133,7 @@ export class BookSelectionService implements BookSelectionServicePort {
 
   #finalizeBookDeselection(data: BookEntity): void {
     data.changeSelectionState("SequenceComplete");
-    this.#bookSelectionEventPort.emit("OnBookEndDeselect", { data });
+    this.#eventManagerPort.emit("OnBookEndDeselect", { data });
   }
 
   /**

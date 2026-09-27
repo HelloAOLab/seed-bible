@@ -13,7 +13,6 @@ import {
 import type {
   PieceHighlightPieceDataRepositoryPort,
   PieceHighlightSequenceStateServicePort,
-  PieceHighlightEventPort,
   PieceHighlightAdapterPort,
   PieceHighlightActivityNotificationAdapterPort,
   PieceHighlightActivityServicePort,
@@ -34,9 +33,11 @@ import {
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
-  eventPort: PieceHighlightEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   pieceHighlightAdapterPort: PieceHighlightAdapterPort;
   activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
   pieceActivityServicePort: PieceHighlightActivityServicePort;
@@ -65,7 +66,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
   // attempt must check it is still the current one before touching state.
   #currentHighlightAttemptIds: Map<Piece["id"], number> = new Map();
   #lastHighlightAttemptId = 0;
-  #eventPort: PieceHighlightEventPort;
+  #eventManagerPort: EventManagerPort<BibleStackEvents>;
   #pieceHighlightAdapterPort: PieceHighlightAdapterPort;
   #activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
   #pieceActivityServicePort: PieceHighlightActivityServicePort;
@@ -78,7 +79,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
   #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
-    eventPort,
+    eventManagerPort,
     pieceHighlightAdapterPort,
     activityNotificationAdapterPort,
     pieceActivityServicePort,
@@ -90,7 +91,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
     sequenceStateServicePort,
     loggerPort,
   }: ServiceParams) {
-    this.#eventPort = eventPort;
+    this.#eventManagerPort = eventManagerPort;
     this.#pieceHighlightAdapterPort = pieceHighlightAdapterPort;
     this.#activityNotificationAdapterPort = activityNotificationAdapterPort;
     this.#pieceActivityServicePort = pieceActivityServicePort;
@@ -172,7 +173,9 @@ export class PieceHighlightService implements PieceHighlighterPort {
     data.changeHighlightIntensity(HighlightIntensities.Solid);
 
     this.#highlightedPiecesIds.set(piece.id, piece);
-    this.#eventPort.emit("OnScripturePieceHighlighted", { pieceData: data });
+    this.#eventManagerPort.emit("OnScripturePieceHighlighted", {
+      pieceData: data,
+    });
 
     let highlightAction: Promise<void> | undefined = undefined;
     switch (prevState) {

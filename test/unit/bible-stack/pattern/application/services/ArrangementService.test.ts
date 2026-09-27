@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ArrangementService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ArrangementService";
 import type {
   ArrangementConfigProviderPort,
-  ArrangementEventPort,
   CustomArrangementStorePort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Arangement";
 import type {
@@ -12,11 +11,13 @@ import type {
   CompleteBookInfo,
   SubsetBookInfo,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/arrangement";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 describe("bible-stack.application.services.ArrangementService", () => {
   let service: ArrangementService;
   let arrangementConfigProviderPort: Mocked<ArrangementConfigProviderPort>;
-  let eventManager: Mocked<ArrangementEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let customArrangementStorePort: Mocked<CustomArrangementStorePort>;
   const makeBook = (
     sectionName: string,
@@ -86,8 +87,10 @@ describe("bible-stack.application.services.ArrangementService", () => {
     arrangementConfigProviderPort = {
       getStaticArrangements: vi.fn(() => statics),
     };
-    eventManager = {
+    eventManagerPort = {
+      subscribe: vi.fn(),
       emit: vi.fn(),
+      removeAllListeners: vi.fn(),
     };
     customArrangementStorePort = {
       tryAddArrangement: vi.fn(),
@@ -96,7 +99,7 @@ describe("bible-stack.application.services.ArrangementService", () => {
     };
     service = new ArrangementService({
       arrangementConfigProviderPort,
-      eventManager,
+      eventManagerPort,
       arrangementIndex: index,
       customArrangementStorePort,
     });
@@ -116,7 +119,7 @@ describe("bible-stack.application.services.ArrangementService", () => {
     const result = service.setCurrentArrangementIndex(newIndex);
 
     expect(result).toBe(true);
-    expect(eventManager.emit).toHaveBeenCalledExactlyOnceWith(
+    expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
       "OnArrangementIndexChanged",
       { newIndex }
     );
@@ -128,13 +131,13 @@ describe("bible-stack.application.services.ArrangementService", () => {
       const result = service.setCurrentArrangementIndex(invalidIndex);
 
       expect(result).toBe(false);
-      expect(eventManager.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
     }
 
     const successfulResult = service.setCurrentArrangementIndex(1);
 
     expect(successfulResult).toBe(true);
-    expect(eventManager.emit).toHaveBeenCalledOnce();
+    expect(eventManagerPort.emit).toHaveBeenCalledOnce();
   });
 
   it("changes index by valid arrangement name", () => {
@@ -165,7 +168,7 @@ describe("bible-stack.application.services.ArrangementService", () => {
     service.setArrangementIndexByName("custom-arr-2");
     const currIndex = service.getCurrentArrangementIndex();
     expect(currIndex).toBe(index);
-    expect(eventManager.emit).not.toHaveBeenCalled();
+    expect(eventManagerPort.emit).not.toHaveBeenCalled();
   });
 
   it("provides correct index by name", () => {
@@ -208,7 +211,7 @@ describe("bible-stack.application.services.ArrangementService", () => {
     service.addCustomArrangement(testArr);
     const name = service.getCurrentArrangementName();
     expect(name).toBe("custom-arr-2");
-    expect(eventManager.emit).toHaveBeenCalledExactlyOnceWith(
+    expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
       "OnCustomArrangementsChanged"
     );
   });
@@ -222,7 +225,7 @@ describe("bible-stack.application.services.ArrangementService", () => {
     service.addCustomArrangement(testArr);
     const name = service.getCurrentArrangementName();
     expect(name).toBe("custom-arr-2");
-    expect(eventManager.emit).not.toHaveBeenCalled();
+    expect(eventManagerPort.emit).not.toHaveBeenCalled();
   });
 
   it("preserves name and emits on successful arrangement removal", () => {
@@ -233,7 +236,7 @@ describe("bible-stack.application.services.ArrangementService", () => {
     customArrangementStorePort.tryRemoveArrangement.mockReturnValue(true);
     service.removeCustomArrangement(testArr);
     const name = service.getCurrentArrangementName();
-    expect(eventManager.emit).toHaveBeenCalledExactlyOnceWith(
+    expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
       "OnCustomArrangementsChanged"
     );
     expect(name).toBe("custom-arr-2");
@@ -246,7 +249,7 @@ describe("bible-stack.application.services.ArrangementService", () => {
     };
     customArrangementStorePort.tryRemoveArrangement.mockReturnValue(false);
     service.removeCustomArrangement(testArr);
-    expect(eventManager.emit).not.toHaveBeenCalled();
+    expect(eventManagerPort.emit).not.toHaveBeenCalled();
   });
 
   it("defaults index to 0 if the removed arrangement was the current one", () => {
@@ -458,7 +461,7 @@ describe("bible-stack.application.services.ArrangementService", () => {
       };
       collisionService = new ArrangementService({
         arrangementConfigProviderPort,
-        eventManager,
+        eventManagerPort,
         arrangementIndex: currentIndex,
         customArrangementStorePort,
       });
@@ -559,7 +562,7 @@ describe("bible-stack.application.services.ArrangementService", () => {
       };
       subsetService = new ArrangementService({
         arrangementConfigProviderPort,
-        eventManager,
+        eventManagerPort,
         arrangementIndex: 0,
         customArrangementStorePort,
       });

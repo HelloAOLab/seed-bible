@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { PieceLifecycleService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceLifecycleService";
-import type { DomainEventManager } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/EventManager";
 import type {
   PieceLifecycleConfigProviderPort,
   VerseDataRepositoryPort,
@@ -11,7 +10,6 @@ import type {
   PieceDataRepositoryPort,
   PieceHighlightServicePort,
   PieceLabelServicePort,
-  PieceLifecycleEventPort,
   ScriptureServicePort,
   StackPieceLifecycleAdapterPort,
   VersesBundleDataRepositoryPort,
@@ -29,6 +27,8 @@ import type {
   TestamentInfo,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/arrangement";
 import type { SectionShadow } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 const ARRANGEMENT_NAME = "arrangement";
 const ARRANGEMENT_INDEX = 2;
@@ -281,7 +281,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
   let pieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
   let pieceLabelServicePort: Mocked<PieceLabelServicePort>;
   let stackPieceLifecycleAdapterPort: Mocked<StackPieceLifecycleAdapterPort>;
-  let pieceLifecycleEventPort: Mocked<PieceLifecycleEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let arrangementServicePort: Mocked<ArrangementServicePort>;
   let idGenerator: Mocked<IdGeneratorPort>;
   let scriptureServicePort: Mocked<ScriptureServicePort>;
@@ -289,7 +289,6 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
   let verseDataRepositoryPort: Mocked<VerseDataRepositoryPort>;
   let configProviderPort: Mocked<PieceLifecycleConfigProviderPort>;
   let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
-  let eventManger: Mocked<DomainEventManager>;
 
   beforeEach(() => {
     let generatedIdsCount = 0;
@@ -331,10 +330,6 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       despawnVerse: vi.fn(),
       despawn: vi.fn(),
     };
-
-    pieceLifecycleEventPort = {
-      emit: vi.fn(),
-    } as unknown as Mocked<PieceLifecycleEventPort>;
 
     arrangementServicePort = {
       getTestamentByIndices: vi.fn(({ arrangementIndex, testamentIndex }) =>
@@ -385,17 +380,17 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       forgetPiece: vi.fn(),
     };
 
-    eventManger = {
+    eventManagerPort = {
       subscribe: vi.fn(),
       emit: vi.fn(),
       removeAllListeners: vi.fn(),
-    } as unknown as Mocked<DomainEventManager>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     service = new PieceLifecycleService({
       pieceDataRepositoryPort,
       pieceLabelServicePort,
       stackPieceLifecycleAdapterPort,
-      pieceLifecycleEventPort,
+      eventManagerPort,
       arrangementServicePort,
       idGenerator,
       scriptureServicePort,
@@ -403,7 +398,6 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       verseDataRepositoryPort,
       configProviderPort,
       pieceHighlightServicePort,
-      eventManger,
     });
   });
 
@@ -1047,7 +1041,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       expect(
         pieceDataRepositoryPort.removeTestamentData
       ).toHaveBeenCalledExactlyOnceWith(testament);
-      expect(pieceLifecycleEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnTestamentDelete",
         { dataId: testament.id }
       );
@@ -1101,10 +1095,11 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       expect(
         pieceDataRepositoryPort.removeChapterData
       ).toHaveBeenCalledExactlyOnceWith(chapter);
-      expect(eventManger.emit.mock.calls).toEqual([
+      expect(eventManagerPort.emit.mock.calls).toEqual([
         ["OnBookDelete", { dataId: book.id }],
         ["OnSectionDelete", { dataId: section.id }],
         ["OnSectionBookDelete", { dataId: sectionBook.id }],
+        ["OnTestamentDelete", { dataId: testament.id }],
       ]);
       expect(
         [section, book, sectionBook, chapter].map((data) => data.piece)
@@ -1120,13 +1115,13 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
 
       service.deleteTestament(testament);
 
-      const lastChildEmissionOrder = Math.max(
-        ...eventManger.emit.mock.invocationCallOrder
-      );
-      expect(eventManger.emit).toHaveBeenCalledTimes(2);
       expect(
-        pieceLifecycleEventPort.emit.mock.invocationCallOrder[0]
-      ).toBeGreaterThan(lastChildEmissionOrder);
+        eventManagerPort.emit.mock.calls.map(([eventName]) => eventName)
+      ).toEqual([
+        "OnSectionDelete",
+        "OnSectionBookDelete",
+        "OnTestamentDelete",
+      ]);
     });
   });
 
@@ -1143,7 +1138,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       expect(pieceDataRepositoryPort.removeTestamentData.mock.calls).toEqual(
         testaments.map((testament) => [testament])
       );
-      expect(pieceLifecycleEventPort.emit.mock.calls).toEqual(
+      expect(eventManagerPort.emit.mock.calls).toEqual(
         testaments.map((testament) => [
           "OnTestamentDelete",
           { dataId: testament.id },
@@ -1161,7 +1156,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       expect(
         pieceDataRepositoryPort.removeSectionData
       ).toHaveBeenCalledExactlyOnceWith(section);
-      expect(eventManger.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnSectionDelete",
         { dataId: section.id }
       );
@@ -1268,7 +1263,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       expect(pieceDataRepositoryPort.removeSectionData.mock.calls).toEqual(
         sections.map((section) => [section])
       );
-      expect(eventManger.emit.mock.calls).toEqual(
+      expect(eventManagerPort.emit.mock.calls).toEqual(
         sections.map((section) => ["OnSectionDelete", { dataId: section.id }])
       );
     });
@@ -1285,7 +1280,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       expect(
         pieceDataRepositoryPort.removeSectionBookData
       ).toHaveBeenCalledExactlyOnceWith(sectionBook);
-      expect(eventManger.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnSectionBookDelete",
         { dataId: sectionBook.id }
       );
@@ -1348,7 +1343,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       expect(pieceDataRepositoryPort.removeSectionBookData.mock.calls).toEqual(
         sectionBooks.map((sectionBook) => [sectionBook])
       );
-      expect(eventManger.emit.mock.calls).toEqual(
+      expect(eventManagerPort.emit.mock.calls).toEqual(
         sectionBooks.map((sectionBook) => [
           "OnSectionBookDelete",
           { dataId: sectionBook.id },
@@ -1366,9 +1361,12 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       expect(
         pieceDataRepositoryPort.removeBookData
       ).toHaveBeenCalledExactlyOnceWith(book);
-      expect(eventManger.emit).toHaveBeenCalledExactlyOnceWith("OnBookDelete", {
-        dataId: book.id,
-      });
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
+        "OnBookDelete",
+        {
+          dataId: book.id,
+        }
+      );
       expect(pieceLabelServicePort.hideLabel).not.toHaveBeenCalled();
       expect(stackPieceLifecycleAdapterPort.despawn).not.toHaveBeenCalled();
     });
@@ -1428,7 +1426,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       expect(pieceDataRepositoryPort.removeBookData.mock.calls).toEqual(
         books.map((book) => [book])
       );
-      expect(eventManger.emit.mock.calls).toEqual(
+      expect(eventManagerPort.emit.mock.calls).toEqual(
         books.map((book) => ["OnBookDelete", { dataId: book.id }])
       );
     });
@@ -1443,8 +1441,7 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       expect(
         pieceDataRepositoryPort.removeChapterData
       ).toHaveBeenCalledExactlyOnceWith(chapter);
-      expect(eventManger.emit).not.toHaveBeenCalled();
-      expect(pieceLifecycleEventPort.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
     });
 
     it("deletes every verses bundle", () => {

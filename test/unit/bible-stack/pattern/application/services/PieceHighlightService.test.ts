@@ -8,7 +8,6 @@ import {
   type PieceHighlightActivityNotificationAdapterPort,
   type PieceHighlightActivityServicePort,
   type PieceHighlightAdapterPort,
-  type PieceHighlightEventPort,
   type PieceHighlightLabelServicePort,
   type PieceHighlightPieceDataRepositoryPort,
   type PieceHighlightSequenceStateServicePort,
@@ -39,6 +38,8 @@ import {
   HighlightStates,
   type HighlightState,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/highlight";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 type HighlightablePiece = Parameters<
   PieceHighlightService["tryHighlightPiece"]
@@ -177,7 +178,7 @@ const flushMicrotasks = () =>
 
 describe("pattern.bible-stack.application.services.PieceHighlightService", () => {
   let service: PieceHighlightService;
-  let eventPort: Mocked<PieceHighlightEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let pieceHighlightAdapterPort: Mocked<PieceHighlightAdapterPort>;
   let activityNotificationAdapterPort: Mocked<PieceHighlightActivityNotificationAdapterPort>;
   let pieceActivityServicePort: Mocked<PieceHighlightActivityServicePort>;
@@ -234,9 +235,9 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
   beforeEach(() => {
     dataByPieceId = new Map();
 
-    eventPort = {
+    eventManagerPort = {
       emit: vi.fn(),
-    } as unknown as Mocked<PieceHighlightEventPort>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     pieceHighlightAdapterPort = {
       interruptSequence: vi.fn(),
@@ -307,7 +308,7 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
     pieceLabelServicePort.hideLabel.mockResolvedValue(undefined);
 
     service = new PieceHighlightService({
-      eventPort,
+      eventManagerPort,
       pieceHighlightAdapterPort,
       activityNotificationAdapterPort,
       pieceActivityServicePort,
@@ -346,7 +347,7 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
         "PieceHighlightService: data not found at tryHighlightPiece."
       );
       expect(service.isPieceHighlighted(piece.id)).toBe(false);
-      expect(eventPort.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
       expect(pieceHighlightAdapterPort.highlight).not.toHaveBeenCalled();
       expect(pieceLabelServicePort.showLabel).not.toHaveBeenCalled();
     });
@@ -360,7 +361,7 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
       }) => {
         expect(data.highlightState).toBe(HighlightStates.Idle);
         expect(service.isPieceHighlighted(piece.id)).toBe(false);
-        expect(eventPort.emit).not.toHaveBeenCalled();
+        expect(eventManagerPort.emit).not.toHaveBeenCalled();
         expect(pieceHighlightAdapterPort.highlight).not.toHaveBeenCalled();
         expect(pieceLabelServicePort.showLabel).not.toHaveBeenCalled();
       };
@@ -380,7 +381,7 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
         "Regular"
       );
       sequenceStateServicePort.isThereAnOngoingSequence.mockReturnValue(false);
-      eventPort.emit.mockClear();
+      eventManagerPort.emit.mockClear();
       pieceHighlightAdapterPort.highlight.mockClear();
       pieceLabelServicePort.showLabel.mockClear();
 
@@ -411,14 +412,14 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
     it("omits the rest if the highlight state is not mutated", async () => {
       const { data, piece } = register(makeChapterData("chapter"));
       await highlight(piece);
-      eventPort.emit.mockClear();
+      eventManagerPort.emit.mockClear();
       pieceHighlightAdapterPort.highlight.mockClear();
       pieceLabelServicePort.showLabel.mockClear();
 
       await highlight(piece);
 
       expect(data.highlightState).toBe(HighlightStates.Highlighted);
-      expect(eventPort.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
       expect(pieceHighlightAdapterPort.highlight).not.toHaveBeenCalled();
       expect(pieceHighlightAdapterPort.rehighlight).not.toHaveBeenCalled();
       expect(pieceLabelServicePort.showLabel).not.toHaveBeenCalled();
@@ -503,7 +504,7 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
 
       startHighlighting(piece);
 
-      expect(eventPort.emit).toHaveBeenCalledWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledWith(
         "OnScripturePieceHighlighted",
         { pieceData: data }
       );

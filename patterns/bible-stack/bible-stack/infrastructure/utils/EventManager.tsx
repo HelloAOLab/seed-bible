@@ -1,7 +1,12 @@
-export type EventCallback<TPayload> = (payload: TPayload) => void;
+import type {
+  EventCallback,
+  EventManagerPort,
+} from "../../application/ports/out/EventManager";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class BaseEventManager<TEventMap extends Record<string, any>> {
+export class EventManager<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TEventMap extends Record<string, any>,
+> implements EventManagerPort<TEventMap> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   #listeners: Map<keyof TEventMap, Set<EventCallback<any>>>;
 

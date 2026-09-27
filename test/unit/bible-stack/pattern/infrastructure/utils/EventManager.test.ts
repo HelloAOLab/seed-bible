@@ -1,4 +1,4 @@
-import { BaseEventManager } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BaseEventManager";
+import { EventManager } from "../../../../../../patterns/bible-stack/bible-stack/infrastructure/utils/EventManager";
 // ─── test map ────────────────────────────────────────────────────────────────
 
 type TestEvents = {
@@ -7,7 +7,7 @@ type TestEvents = {
   silent: void;
 };
 
-const makeManager = () => new BaseEventManager<TestEvents>();
+const makeManager = () => new EventManager<TestEvents>();
 
 // ─── subscribe ────────────────────────────────────────────────────────────────
 

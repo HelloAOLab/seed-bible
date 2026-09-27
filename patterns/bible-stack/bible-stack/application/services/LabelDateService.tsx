@@ -2,24 +2,25 @@ import {
   type LabelDateFormat,
   LabelDateFormats,
 } from "../../domain/models/label";
-import type { LabelDateEventPort } from "../ports/out/LabelDate";
 import type { LabelDateFormatGetterPort } from "../ports/in/LabelDate";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface LabelDateServiceProps {
   dateFormat?: LabelDateFormat;
-  eventPort: LabelDateEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
 }
 
 export class LabelDateService implements LabelDateFormatGetterPort {
   #dateFormat: NonNullable<LabelDateServiceProps["dateFormat"]>;
-  #eventPort: LabelDateServiceProps["eventPort"];
+  #eventManagerPort: LabelDateServiceProps["eventManagerPort"];
 
   constructor({
     dateFormat = LabelDateFormats.Absolute,
-    eventPort,
+    eventManagerPort,
   }: LabelDateServiceProps) {
     this.#dateFormat = dateFormat;
-    this.#eventPort = eventPort;
+    this.#eventManagerPort = eventManagerPort;
   }
 
   get dateFormat() {
@@ -29,7 +30,7 @@ export class LabelDateService implements LabelDateFormatGetterPort {
   changeDateFormat(newFormat: LabelDateFormat): void {
     if (this.#dateFormat !== newFormat) {
       this.#dateFormat = newFormat;
-      this.#eventPort.emit("OnLabelDateFormatChange");
+      this.#eventManagerPort.emit("OnLabelDateFormatChange");
     }
   }
 }

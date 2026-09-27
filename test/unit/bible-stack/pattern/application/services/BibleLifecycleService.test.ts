@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BibleLifecycleService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BibleLifecycleService";
 import type {
   BibleDataRepositoryPort,
-  BibleLifecycleEventPort,
   BibleSetupAdapterPort,
   IdGeneratorPort,
   PieceLifecycleAdapterPort,
@@ -21,13 +20,15 @@ import type { TestamentInfo } from "../../../../../../patterns/bible-stack/bible
 import type { StackTestamentData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackTestamentData";
 import type { Piece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleLifecycle";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 describe("pattern.bible-stack.application.services.BibleLifecycleService", () => {
   let service: BibleLifecycleService;
   let bibleDataRepositoryPort: Mocked<BibleDataRepositoryPort>;
   let pieceLifecycleAdapterPort: Mocked<PieceLifecycleAdapterPort>;
   let pieceLifecycleServicePort: Mocked<PieceLifecycleServicePort>;
-  let bibleLifecycleEventPort: Mocked<BibleLifecycleEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let arrangementServicePort: Mocked<ArrangementServicePort>;
   let idGeneratorPort: Mocked<IdGeneratorPort>;
   let stackPieceLifecycleAdapterPort: Mocked<StackPieceLifecycleAdapterPort>;
@@ -87,8 +88,10 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
       deleteTestaments: vi.fn(),
       createTestament: vi.fn(),
     };
-    bibleLifecycleEventPort = {
+    eventManagerPort = {
+      subscribe: vi.fn(),
       emit: vi.fn(() => {}),
+      removeAllListeners: vi.fn(),
     };
     arrangementServicePort = {
       getArrangementByIndex: vi.fn(),
@@ -136,7 +139,7 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
       pieceLifecycleAdapterPort,
       pieceLifecycleServicePort,
       bibleDataRepositoryPort,
-      bibleLifecycleEventPort,
+      eventManagerPort,
       arrangementServicePort,
       idGeneratorPort,
       stackPieceLifecycleAdapterPort,
@@ -177,7 +180,7 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
       expect(
         pieceLifecycleServicePort.deleteTestaments
       ).toHaveBeenCalledExactlyOnceWith(testaments);
-      expect(bibleLifecycleEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnBibleDelete",
         {
           bibleId: bible.id,
@@ -206,7 +209,7 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
       expect(
         pieceLifecycleServicePort.deleteTestaments
       ).toHaveBeenCalledExactlyOnceWith(testaments);
-      expect(bibleLifecycleEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnBibleDelete",
         { bibleId: bible.id }
       );
@@ -224,7 +227,7 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
 
       service.deleteBibles(bibles);
 
-      expect(bibleLifecycleEventPort.emit.mock.calls).toEqual(
+      expect(eventManagerPort.emit.mock.calls).toEqual(
         bibles.map((bible) => ["OnBibleDelete", { bibleId: bible.id }])
       );
       expect(bibleDataRepositoryPort.removeBibleData.mock.calls).toEqual(
@@ -265,7 +268,7 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
             }) as unknown as StackCrossLine
         );
         stackPieceLifecycleAdapterPort.spawnShadow.mockReturnValue(bibleShadow);
-        bibleLifecycleEventPort.emit.mockImplementation((eventName) => {
+        eventManagerPort.emit.mockImplementation((eventName) => {
           executionOrder.push(`emit:${eventName}`);
         });
         bibleDataRepositoryPort.addBibleData.mockImplementation(() => {
@@ -393,14 +396,14 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
         expect(
           bibleDataRepositoryPort.addBibleData
         ).toHaveBeenCalledExactlyOnceWith(bibleData);
-        expect(bibleLifecycleEventPort.emit).toHaveBeenNthCalledWith(
+        expect(eventManagerPort.emit).toHaveBeenNthCalledWith(
           1,
           "OnBibleCreationBegin",
           {
             hasABibleEverBeenCreated: false,
           }
         );
-        expect(bibleLifecycleEventPort.emit).toHaveBeenNthCalledWith(
+        expect(eventManagerPort.emit).toHaveBeenNthCalledWith(
           2,
           "OnBibleCreated",
           { bibleData }
@@ -441,7 +444,7 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
       });
 
       expect(bibleData).toBeInstanceOf(StackBibleData);
-      expect(bibleLifecycleEventPort.emit).toHaveBeenNthCalledWith(
+      expect(eventManagerPort.emit).toHaveBeenNthCalledWith(
         1,
         "OnBibleCreationBegin",
         {
@@ -453,7 +456,7 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
       expect(
         bibleDataRepositoryPort.addBibleData
       ).toHaveBeenCalledExactlyOnceWith(bibleData);
-      expect(bibleLifecycleEventPort.emit).toHaveBeenNthCalledWith(
+      expect(eventManagerPort.emit).toHaveBeenNthCalledWith(
         2,
         "OnBibleCreated",
         { bibleData }
@@ -475,7 +478,7 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
       service.createBible({ position, type: bibleType, arrangementIndex });
       service.createBible({ position, type: bibleType, arrangementIndex });
 
-      const creationBeginCalls = bibleLifecycleEventPort.emit.mock.calls.filter(
+      const creationBeginCalls = eventManagerPort.emit.mock.calls.filter(
         ([eventName]) => eventName === "OnBibleCreationBegin"
       );
 

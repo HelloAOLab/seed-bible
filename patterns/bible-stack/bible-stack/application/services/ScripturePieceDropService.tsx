@@ -6,7 +6,6 @@ import {
 } from "../../domain/models/canvas";
 import type {
   PieceAdapterPort,
-  PieceDropEventPort,
   ScripturePieceDropDataRepositoryPort,
 } from "../ports/scripturePieceDrop";
 import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
@@ -21,6 +20,8 @@ import type {
 import { HighlightRequestSources } from "../../domain/models/pieces";
 import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
@@ -29,7 +30,7 @@ interface ServiceParams {
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   chapterSelectionServicePort: ChapterSelectionPort;
   pieceHighlightServicePort: PieceHighlighterPort;
-  pieceDropEventPort: PieceDropEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   loggerPort: LoggerPort;
 }
 
@@ -41,7 +42,7 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #chapterSelectionServicePort: ServiceParams["chapterSelectionServicePort"];
   #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
-  #pieceDropEventPort: ServiceParams["pieceDropEventPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
   #loggerPort: ServiceParams['loggerPort']
   
   constructor({
@@ -52,7 +53,7 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
     pieceHierarchyServicePort,
     chapterSelectionServicePort,
     pieceHighlightServicePort,
-    pieceDropEventPort,
+    eventManagerPort,
     loggerPort
   }: ServiceParams) {
     this.#pieceAdapterPort = pieceAdapterPort;
@@ -61,7 +62,7 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#chapterSelectionServicePort = chapterSelectionServicePort;
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
-    this.#pieceDropEventPort = pieceDropEventPort;
+    this.#eventManagerPort = eventManagerPort;
     this.#loggerPort = loggerPort;
   }
 
@@ -135,6 +136,6 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
       }
     }
 
-    this.#pieceDropEventPort.emit("OnStackPieceDrop", { data: pieceData });
+    this.#eventManagerPort.emit("OnStackPieceDrop", { data: pieceData });
   }
 }

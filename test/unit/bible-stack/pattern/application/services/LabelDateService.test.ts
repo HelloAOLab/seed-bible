@@ -1,19 +1,20 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { LabelDateService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/LabelDateService";
-import type { LabelDateEventPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelDate";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 describe("pattern.bible-stack.application.services.LabelDateService", () => {
   let service: LabelDateService;
-  let eventPort: Mocked<LabelDateEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
 
   beforeEach(() => {
-    eventPort = {
+    eventManagerPort = {
       emit: vi.fn(),
-    } as unknown as Mocked<LabelDateEventPort>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     service = new LabelDateService({
       dateFormat: "Absolute",
-      eventPort,
+      eventManagerPort,
     });
   });
 

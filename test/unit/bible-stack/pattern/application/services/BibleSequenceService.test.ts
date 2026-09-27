@@ -9,7 +9,6 @@ import {
 import { BibleSequenceService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BibleSequenceService";
 import type {
   BibleSequenceAdapterPort,
-  BibleSequenceEventPort,
   BibleSequenceServiceConfigProviderPort,
   BookChaptersManagementServicePort,
   LabelDataRepositoryPort,
@@ -58,6 +57,8 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
 import type { InfoLabelData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/InfoLabelData";
 import { ShowSequencePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/label";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 interface MockedDataProps {
   id?: string;
@@ -162,7 +163,7 @@ const makeBibleData = ({
 
 describe("pattern.bible-stack.application.services.BibleSequenceService", () => {
   let service: BibleSequenceService;
-  let eventPort: Mocked<BibleSequenceEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let bibleSequenceAdapterPort: Mocked<BibleSequenceAdapterPort>;
   let awaiterPort: Mocked<AwaiterPort>;
   let configProviderPort: Mocked<BibleSequenceServiceConfigProviderPort>;
@@ -186,9 +187,9 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
   >;
 
   beforeEach(() => {
-    eventPort = {
+    eventManagerPort = {
       emit: vi.fn(),
-    } as unknown as Mocked<BibleSequenceEventPort>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     bibleSequenceAdapterPort = {
       displayCrackOpenBibleSequence: vi.fn(),
@@ -267,7 +268,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
     };
 
     service = new BibleSequenceService({
-      eventPort,
+      eventManagerPort,
       bibleSequenceAdapterPort,
       scripturePiecesStateServicePort: {
         arePiecesDraggable: false,
@@ -316,7 +317,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
         bibleData,
         pacing: StackPresenceNavigationPacings.Regular,
       });
-      const emitCalls = eventPort.emit.mock.calls;
+      const emitCalls = eventManagerPort.emit.mock.calls;
       expect(emitCalls[0]).toEqual([
         "OnBibleResetSequenceStart",
         { bibleData },
@@ -357,7 +358,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
             pacing: StackPresenceNavigationPacings.Regular,
           })
         ).resolves.toBeUndefined();
-        expect(eventPort.emit).not.toHaveBeenCalledWith(
+        expect(eventManagerPort.emit).not.toHaveBeenCalledWith(
           "OnBibleResetSequenceEnd",
           { bibleData }
         );
@@ -469,7 +470,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
     it("emits at start, then at end", async () => {
       const bibleData = makeBibleData();
       await service.closeBible({ bibleData });
-      const calls = eventPort.emit.mock.calls;
+      const calls = eventManagerPort.emit.mock.calls;
       expect(calls[0]).toEqual(["OnBibleCloseSequenceStart", { bibleData }]);
       expect(calls[calls.length - 1]).toEqual([
         "OnBibleCloseSequenceEnd",
@@ -748,7 +749,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
       const [sequenceCallOrder] =
         bibleSequenceAdapterPort.displayCloseBibleSequence.mock
           .invocationCallOrder;
-      const eventsCallOrder = eventPort.emit.mock.invocationCallOrder;
+      const eventsCallOrder = eventManagerPort.emit.mock.invocationCallOrder;
 
       expect(
         bibleSequenceAdapterPort.displayCloseBibleSequence
@@ -818,7 +819,8 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
         const [sequenceCallOrder] =
           bibleSequenceAdapterPort.displayCloseBibleSequence.mock
             .invocationCallOrder;
-        const eventEmitCallOrder = eventPort.emit.mock.invocationCallOrder;
+        const eventEmitCallOrder =
+          eventManagerPort.emit.mock.invocationCallOrder;
         const lastEmitCallOrder =
           eventEmitCallOrder[eventEmitCallOrder.length - 1];
 
@@ -1043,7 +1045,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
 
       await service.openBible({ bibleData });
 
-      const calls = eventPort.emit.mock.calls;
+      const calls = eventManagerPort.emit.mock.calls;
       expect(calls[0]).toEqual(["OnBibleOpenSequenceStart", { bibleData }]);
       expect(calls[calls.length - 1]).toEqual([
         "OnBibleOpenSequenceEnd",
@@ -1166,7 +1168,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
       const [sequenceCallOrder] =
         bibleSequenceAdapterPort.displayOpenBibleSequence.mock
           .invocationCallOrder;
-      const eventsCallOrder = eventPort.emit.mock.invocationCallOrder;
+      const eventsCallOrder = eventManagerPort.emit.mock.invocationCallOrder;
 
       expect(
         bibleSequenceAdapterPort.displayOpenBibleSequence
@@ -1197,7 +1199,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
       const [sequenceCallOrder] =
         bibleSequenceAdapterPort.displayOpenBibleSequence.mock
           .invocationCallOrder;
-      const eventsCallOrder = eventPort.emit.mock.invocationCallOrder;
+      const eventsCallOrder = eventManagerPort.emit.mock.invocationCallOrder;
       const lastEmitCallOrder = eventsCallOrder[eventsCallOrder.length - 1];
 
       expect(
@@ -1387,7 +1389,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
 
       await service.crackOpenBible(bibleData);
 
-      const calls = eventPort.emit.mock.calls;
+      const calls = eventManagerPort.emit.mock.calls;
       expect(calls[0]).toEqual(["OnBibleCrackOpenSequenceStart"]);
       expect(calls[calls.length - 1]).toEqual(["OnBibleCrackOpenSequenceEnd"]);
     });
@@ -1422,7 +1424,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
       const [sequenceCallOrder] =
         bibleSequenceAdapterPort.displayCrackOpenBibleSequence.mock
           .invocationCallOrder;
-      const eventsCallOrder = eventPort.emit.mock.invocationCallOrder;
+      const eventsCallOrder = eventManagerPort.emit.mock.invocationCallOrder;
 
       expect(
         bibleSequenceAdapterPort.displayCrackOpenBibleSequence
@@ -1493,7 +1495,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
       await service.crackOpenBible(bibleData);
 
       const [initialDelayOrder] = awaiterPort.sleep.mock.invocationCallOrder;
-      const eventsCallOrder = eventPort.emit.mock.invocationCallOrder;
+      const eventsCallOrder = eventManagerPort.emit.mock.invocationCallOrder;
       const lastEmitCallOrder = eventsCallOrder[eventsCallOrder.length - 1];
 
       expect(awaiterPort.sleep.mock.calls[0]).toEqual([

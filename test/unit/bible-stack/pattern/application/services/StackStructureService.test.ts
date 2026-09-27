@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { StackStructureService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/StackStructureService";
 import type { PieceLifecycleServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLifecycle";
-import type {
-  PieceAdapterPort,
-  StackStructureEventPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/stackStructure";
+import type { PieceAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/stackStructure";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackTestamentData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackTestamentData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
@@ -23,6 +20,8 @@ import {
   type ParentDataIds,
   type Piece,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 const BIBLE_ID = "bible-id";
 const TESTAMENT_ID = "testament-id";
@@ -184,7 +183,7 @@ describe("pattern.bible-stack.application.services.StackStructureService", () =>
   let service: StackStructureService;
   let pieceAdapterPort: Mocked<PieceAdapterPort>;
   let pieceLifecycleServicePort: Mocked<PieceLifecycleServicePort>;
-  let stackStructureEventPort: Mocked<StackStructureEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
 
   beforeEach(() => {
     pieceAdapterPort = {
@@ -199,14 +198,14 @@ describe("pattern.bible-stack.application.services.StackStructureService", () =>
       clearPiece: vi.fn(),
     };
 
-    stackStructureEventPort = {
+    eventManagerPort = {
       emit: vi.fn(),
-    } as unknown as Mocked<StackStructureEventPort>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     service = new StackStructureService({
       pieceAdapterPort,
       pieceLifecycleServicePort,
-      stackStructureEventPort,
+      eventManagerPort,
     });
   });
 
@@ -451,7 +450,7 @@ describe("pattern.bible-stack.application.services.StackStructureService", () =>
       pieceLifecycleServicePort.createTestament.mockReturnValue(testamentCopy);
       let parentDataIdsOnEmit: ParentDataIds | undefined;
       let bibleChildrenIdsOnEmit: string[] = [];
-      stackStructureEventPort.emit.mockImplementation(() => {
+      eventManagerPort.emit.mockImplementation(() => {
         parentDataIdsOnEmit = testamentData.parentDataIds;
         bibleChildrenIdsOnEmit = bibleData.childrenData.map(({ id }) => id);
       });
@@ -465,8 +464,8 @@ describe("pattern.bible-stack.application.services.StackStructureService", () =>
         bookData: undefined,
       });
 
-      expect(stackStructureEventPort.emit).toHaveBeenCalledTimes(1);
-      expect(stackStructureEventPort.emit).toHaveBeenCalledWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledTimes(1);
+      expect(eventManagerPort.emit).toHaveBeenCalledWith(
         "OnStackPiecePulledOut"
       );
       expect(parentDataIdsOnEmit).toEqual(clearedParentDataIds);

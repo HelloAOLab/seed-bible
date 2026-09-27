@@ -8,7 +8,6 @@ import type {
   PieceDataRepositoryPort,
   PieceLabelServicePort,
   StackPieceLifecycleAdapterPort,
-  PieceLifecycleEventPort,
   ArrangementServicePort,
   IdGeneratorPort,
   ScriptureServicePort,
@@ -33,13 +32,14 @@ import type {
 } from "../ports/out/PieceLifecycle";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import { GetSectionLevels } from "../../domain/functions/arrangement";
-import type { DomainEventManager } from "../ports/in/EventManager";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceProps {
   pieceDataRepositoryPort: PieceDataRepositoryPort;
   pieceLabelServicePort: PieceLabelServicePort;
   stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
-  pieceLifecycleEventPort: PieceLifecycleEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   arrangementServicePort: ArrangementServicePort;
   idGenerator: IdGeneratorPort;
   scriptureServicePort: ScriptureServicePort;
@@ -47,14 +47,13 @@ interface ServiceProps {
   verseDataRepositoryPort: VerseDataRepositoryPort;
   configProviderPort: PieceLifecycleConfigProviderPort;
   pieceHighlightServicePort: PieceHighlightServicePort;
-  eventManger: DomainEventManager;
 }
 
 export class PieceLifecycleService implements PieceLifecycleServicePort {
   #pieceDataRepositoryPort: ServiceProps["pieceDataRepositoryPort"];
   #pieceLabelServicePort: ServiceProps["pieceLabelServicePort"];
   #stackPieceLifecycleAdapterPort: ServiceProps["stackPieceLifecycleAdapterPort"];
-  #pieceLifecycleEventPort: ServiceProps["pieceLifecycleEventPort"];
+  #eventManagerPort: ServiceProps["eventManagerPort"];
   #arrangementServicePort: ServiceProps["arrangementServicePort"];
   #idGenerator: ServiceProps["idGenerator"];
   #scriptureServicePort: ServiceProps["scriptureServicePort"];
@@ -62,13 +61,12 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
   #verseDataRepositoryPort: ServiceProps["verseDataRepositoryPort"];
   #configProviderPort: ServiceProps["configProviderPort"];
   #pieceHighlightServicePort: ServiceProps["pieceHighlightServicePort"];
-  #eventManger: ServiceProps["eventManger"];
 
   constructor({
     pieceDataRepositoryPort,
     pieceLabelServicePort,
     stackPieceLifecycleAdapterPort,
-    pieceLifecycleEventPort,
+    eventManagerPort,
     arrangementServicePort,
     idGenerator,
     scriptureServicePort,
@@ -76,12 +74,11 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     verseDataRepositoryPort,
     configProviderPort,
     pieceHighlightServicePort,
-    eventManger,
   }: ServiceProps) {
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#pieceLabelServicePort = pieceLabelServicePort;
     this.#stackPieceLifecycleAdapterPort = stackPieceLifecycleAdapterPort;
-    this.#pieceLifecycleEventPort = pieceLifecycleEventPort;
+    this.#eventManagerPort = eventManagerPort;
     this.#arrangementServicePort = arrangementServicePort;
     this.#idGenerator = idGenerator;
     this.#scriptureServicePort = scriptureServicePort;
@@ -89,7 +86,6 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     this.#verseDataRepositoryPort = verseDataRepositoryPort;
     this.#configProviderPort = configProviderPort;
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
-    this.#eventManger = eventManger;
   }
 
   createTestament({
@@ -531,7 +527,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
       else this.deleteSectionBook(child);
     }
 
-    this.#pieceLifecycleEventPort.emit("OnTestamentDelete", {
+    this.#eventManagerPort.emit("OnTestamentDelete", {
       dataId: testament.id,
     });
   }
@@ -567,7 +563,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
       this.clearPiece(shadow);
     }
 
-    this.#eventManger.emit("OnSectionDelete", { dataId: section.id });
+    this.#eventManagerPort.emit("OnSectionDelete", { dataId: section.id });
   }
 
   deleteSections(sections: StackSectionData[]) {
@@ -591,7 +587,9 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
       this.clearPiece(piece);
     }
 
-    this.#eventManger.emit("OnSectionBookDelete", { dataId: sectionBook.id });
+    this.#eventManagerPort.emit("OnSectionBookDelete", {
+      dataId: sectionBook.id,
+    });
   }
 
   deleteSectionBooks(sectionBooks: StackSectionBookData[]) {
@@ -615,7 +613,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
       this.clearPiece(piece);
     }
 
-    this.#eventManger.emit("OnBookDelete", { dataId: book.id });
+    this.#eventManagerPort.emit("OnBookDelete", { dataId: book.id });
   }
 
   deleteBooks(books: StackBookData[]) {

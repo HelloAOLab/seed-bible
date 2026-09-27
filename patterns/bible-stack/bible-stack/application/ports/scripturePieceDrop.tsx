@@ -1,7 +1,6 @@
 import type { Piece } from "../../domain/models/canvas";
 import type { PieceDataRepositoryPort } from "./pieces";
 import type { HighlightRequestSource } from "../../domain/models/pieces";
-import type { BibleStackEvents } from "../../domain/models/events";
 
 export interface PieceAdapterPort {
   isPieceAnchored: (piece: Piece) => boolean;
@@ -19,13 +18,4 @@ export interface PieceHighlightServicePort {
     piece: Piece;
     source: HighlightRequestSource;
   }) => Promise<void>;
-}
-
-export interface PieceDropEventPort {
-  emit: <K extends "OnStackPieceDrop">(
-    eventName: K,
-    ...args: BibleStackEvents[K] extends undefined | void
-      ? [payload?: BibleStackEvents[K]]
-      : [payload: BibleStackEvents[K]]
-  ) => void;
 }

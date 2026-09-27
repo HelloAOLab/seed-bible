@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BibleModeService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BibleModeService";
 import type { BibleStackUpdaterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleStackUpdater";
-import type { DomainEventManager } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/EventManager";
 import type { ExplodedViewServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ExplodedView";
 import type { SectionSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionSelection";
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
@@ -24,6 +23,8 @@ import type { StackBibleData } from "../../../../../../patterns/bible-stack/bibl
 import type { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
 import type { StackTestamentData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackTestamentData";
 import type { StackCrossLine } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -89,7 +90,7 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
   let pieceDataRepository: Mocked<PieceDataRepositoryPort>;
   let sectionSelectionServicePort: Mocked<SectionSelectionServicePort>;
   let testamentSelectionServicePort: Mocked<TestamentSelectionPort>;
-  let eventManager: Mocked<DomainEventManager>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let loggerPort: Mocked<LoggerPort>;
   let pendingSequences: Promise<void>[];
   let dataByPieceId: Map<string, StackSectionData | StackTestamentData>;
@@ -161,11 +162,11 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
       deselect: vi.fn(async () => {}),
     };
 
-    eventManager = {
+    eventManagerPort = {
       subscribe: vi.fn(),
       emit: vi.fn(),
       removeAllListeners: vi.fn(),
-    } as unknown as Mocked<DomainEventManager>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     loggerPort = {
       error: vi.fn(),
@@ -181,7 +182,7 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
       pieceDataRepository,
       sectionSelectionServicePort,
       testamentSelectionServicePort,
-      eventManager,
+      eventManagerPort,
       loggerPort,
     });
   });
@@ -193,7 +194,7 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
 
       await toggleAndFlush(bibleData);
 
-      expect(eventManager.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
       expect(
         sequenceAdapterPort.showToggleAttemptFeedback
       ).not.toHaveBeenCalled();
@@ -205,7 +206,7 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
 
       await toggleAndFlush(bibleData);
 
-      expect(eventManager.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
       expect(
         sequenceAdapterPort.showToggleAttemptFeedback
       ).not.toHaveBeenCalled();
@@ -221,7 +222,7 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
       expect(
         sequenceAdapterPort.showToggleAttemptFeedback
       ).toHaveBeenCalledOnce();
-      expect(eventManager.emit).toHaveBeenCalledOnce();
+      expect(eventManagerPort.emit).toHaveBeenCalledOnce();
 
       feedback.resolve([]);
       await pending;
@@ -238,7 +239,7 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
       expect(loggerPort.error).toHaveBeenCalledExactlyOnceWith(
         "BibleModeService: crossHorizontalLine not found at tryToggleMode."
       );
-      expect(eventManager.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
       expect(
         sequenceAdapterPort.showToggleAttemptFeedback
       ).not.toHaveBeenCalled();
@@ -254,7 +255,7 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
       expect(loggerPort.error).toHaveBeenCalledExactlyOnceWith(
         "BibleModeService: crossVerticalLine not found at tryToggleMode."
       );
-      expect(eventManager.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
       expect(
         sequenceAdapterPort.showToggleAttemptFeedback
       ).not.toHaveBeenCalled();
@@ -299,7 +300,7 @@ describe("pattern.bible-stack.application.services.BibleModeService", () => {
 
       await toggleAndFlush(bibleData);
 
-      expect(eventManager.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnBibleAttemptToggleMode",
         { data: bibleData }
       );

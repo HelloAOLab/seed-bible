@@ -3,10 +3,7 @@ import { BookSelectionService } from "../../../../../../patterns/bible-stack/bib
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
-import type {
-  BookSelectionEventPort,
-  PieceAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BookSelection";
+import type { PieceAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BookSelection";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
@@ -29,6 +26,8 @@ import {
   type SelectionState,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
 import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -193,7 +192,7 @@ const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 describe("pattern.bible-stack.application.services.BookSelectionService", () => {
   let service: BookSelectionService;
-  let bookSelectionEventPort: Mocked<BookSelectionEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let pieceAdapterPort: Mocked<PieceAdapterPort>;
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
   let pieceHighlighterPort: Mocked<PieceHighlighterPort>;
@@ -211,22 +210,22 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
     read: () => T
   ): { eventName: string; value: T }[] => {
     const records: { eventName: string; value: T }[] = [];
-    bookSelectionEventPort.emit.mockImplementation(((eventName: string) => {
+    eventManagerPort.emit.mockImplementation(((eventName: string) => {
       records.push({ eventName, value: read() });
-    }) as BookSelectionEventPort["emit"]);
+    }) as EventManagerPort<BibleStackEvents>["emit"]);
     return records;
   };
 
-  const emitOrders = () => bookSelectionEventPort.emit.mock.invocationCallOrder;
+  const emitOrders = () => eventManagerPort.emit.mock.invocationCallOrder;
   const updateOrders = () =>
     stackUpdateServicePort.updateStack.mock.invocationCallOrder;
   const unhighlightOrders = () =>
     pieceHighlighterPort.tryUnhighlightPiece.mock.invocationCallOrder;
 
   beforeEach(() => {
-    bookSelectionEventPort = {
+    eventManagerPort = {
       emit: vi.fn(),
-    } as unknown as Mocked<BookSelectionEventPort>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     pieceAdapterPort = {
       makeInteractable: vi.fn(),
@@ -256,7 +255,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
     };
 
     service = new BookSelectionService({
-      bookSelectionEventPort,
+      eventManagerPort,
       pieceAdapterPort,
       stackUpdateServicePort,
       pieceHighlighterPort,
@@ -273,7 +272,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
       expect(loggerPort.error).toHaveBeenCalledExactlyOnceWith(
         "BookSelectionService: data.piece is not defined at selectBook"
       );
-      expect(bookSelectionEventPort.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
       expect(pieceHighlighterPort.tryUnhighlightPiece).not.toHaveBeenCalled();
       expect(stackUpdateServicePort.updateStack).not.toHaveBeenCalled();
       expect(data.selectionState).toBe(SelectionStates.Idle);
@@ -284,7 +283,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
 
       await service.selectBook({ data });
 
-      expect(bookSelectionEventPort.emit.mock.calls).toEqual([
+      expect(eventManagerPort.emit.mock.calls).toEqual([
         ["OnBookBeginSelect", { data }],
         ["OnBookEndSelect", { data }],
       ]);
@@ -355,7 +354,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
       );
       expect(pieceAdapterPort.makeNonInteractable).not.toHaveBeenCalled();
       expect(stackUpdateServicePort.updateStack).not.toHaveBeenCalled();
-      expect(bookSelectionEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnBookBeginSelect",
         { data }
       );
@@ -441,7 +440,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
       expect(pieceAdapterPort.makeInteractable).toHaveBeenCalledExactlyOnceWith(
         bookPiece
       );
-      expect(bookSelectionEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnBookBeginSelect",
         { data }
       );
@@ -511,7 +510,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
       unhighlight.resolve();
       await selection;
 
-      expect(bookSelectionEventPort.emit.mock.calls.slice(0, 2)).toEqual([
+      expect(eventManagerPort.emit.mock.calls.slice(0, 2)).toEqual([
         ["OnBookBeginSelect", { data: book_1 }],
         ["OnBookBeginSelect", { data: book_2 }],
       ]);
@@ -591,12 +590,12 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
         [BIBLE_ID, "StackBible", StackUpdatePacings.Fast],
         [ROOT_BOOK_ID, "StackBook", StackUpdatePacings.Fast],
       ]);
-      expect(bookSelectionEventPort.emit).toHaveBeenCalledTimes(3);
+      expect(eventManagerPort.emit).toHaveBeenCalledTimes(3);
 
       update.resolve();
       await selection;
 
-      expect(bookSelectionEventPort.emit).toHaveBeenCalledTimes(6);
+      expect(eventManagerPort.emit).toHaveBeenCalledTimes(6);
       expect(Math.min(...updateOrders())).toBeGreaterThan(emitOrders()[2]!);
       expect(Math.max(...updateOrders())).toBeLessThan(emitOrders()[3]!);
     });
@@ -640,14 +639,14 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
         piece: makeBookPiece("book-piece-2"),
       });
       const error = new Error("emit threw");
-      bookSelectionEventPort.emit.mockImplementation(((
+      eventManagerPort.emit.mockImplementation(((
         eventName: string,
         payload: { data: StackBookData }
       ) => {
         if (eventName === "OnBookEndSelect" && payload.data === book_2) {
           throw error;
         }
-      }) as BookSelectionEventPort["emit"]);
+      }) as EventManagerPort<BibleStackEvents>["emit"]);
 
       await expect(
         service.selectBooks([book_1, book_2])
@@ -686,7 +685,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
       );
       expect(book.selectionState).toBe(SelectionStates.Selected);
       expect(pieceLessBook.selectionState).toBe(SelectionStates.Idle);
-      expect(bookSelectionEventPort.emit.mock.calls).toEqual([
+      expect(eventManagerPort.emit.mock.calls).toEqual([
         ["OnBookBeginSelect", { data: book }],
         ["OnBookEndSelect", { data: book }],
       ]);
@@ -708,7 +707,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
         SelectionStates.Selected,
         SelectionStates.Selected,
       ]);
-      expect(bookSelectionEventPort.emit.mock.calls.slice(2)).toEqual([
+      expect(eventManagerPort.emit.mock.calls.slice(2)).toEqual([
         ["OnBookEndSelect", { data: book_1 }],
         ["OnBookEndSelect", { data: book_2 }],
       ]);
@@ -721,7 +720,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
 
       await service.deselectBook(data);
 
-      expect(bookSelectionEventPort.emit.mock.calls).toEqual([
+      expect(eventManagerPort.emit.mock.calls).toEqual([
         ["OnBookBeginDeselect", { data }],
         ["OnBookEndDeselect", { data }],
       ]);
@@ -845,7 +844,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
       expect(pieceAdapterPort.makeNonInteractable).toHaveBeenCalledWith(
         bookPiece
       );
-      expect(bookSelectionEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnBookBeginDeselect",
         { data }
       );
@@ -921,7 +920,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
         [piece_1],
         [sectionBookPiece],
       ]);
-      expect(bookSelectionEventPort.emit.mock.calls.slice(0, 2)).toEqual([
+      expect(eventManagerPort.emit.mock.calls.slice(0, 2)).toEqual([
         ["OnBookBeginDeselect", { data: book }],
         ["OnBookBeginDeselect", { data: sectionBook }],
       ]);
@@ -958,12 +957,12 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
         [BIBLE_ID, "StackBible", StackUpdatePacings.Slow],
         [ROOT_BOOK_ID, "StackBook", StackUpdatePacings.Slow],
       ]);
-      expect(bookSelectionEventPort.emit).toHaveBeenCalledTimes(3);
+      expect(eventManagerPort.emit).toHaveBeenCalledTimes(3);
 
       update.resolve();
       await deselection;
 
-      expect(bookSelectionEventPort.emit).toHaveBeenCalledTimes(6);
+      expect(eventManagerPort.emit).toHaveBeenCalledTimes(6);
       expect(Math.min(...updateOrders())).toBeGreaterThan(emitOrders()[2]!);
       expect(Math.max(...updateOrders())).toBeLessThan(emitOrders()[3]!);
     });
@@ -1011,14 +1010,14 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
         selectionState: SelectionStates.Selected,
       });
       const error = new Error("emit threw");
-      bookSelectionEventPort.emit.mockImplementation(((
+      eventManagerPort.emit.mockImplementation(((
         eventName: string,
         payload: { data: StackBookData }
       ) => {
         if (eventName === "OnBookEndDeselect" && payload.data === book_2) {
           throw error;
         }
-      }) as BookSelectionEventPort["emit"]);
+      }) as EventManagerPort<BibleStackEvents>["emit"]);
 
       await expect(
         service.deselectBooks([book_1, book_2])
@@ -1052,7 +1051,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
         SelectionStates.Idle,
         SelectionStates.Idle,
       ]);
-      expect(bookSelectionEventPort.emit.mock.calls.slice(2)).toEqual([
+      expect(eventManagerPort.emit.mock.calls.slice(2)).toEqual([
         ["OnBookEndDeselect", { data: book_1 }],
         ["OnBookEndDeselect", { data: book_2 }],
       ]);

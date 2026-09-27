@@ -5,17 +5,16 @@ import { StackSectionBookData } from "../../domain/entities/StackSectionBookData
 import { StackBookData } from "../../domain/entities/StackBookData";
 import { StackChapterData } from "../../domain/entities/StackChapterData";
 import { StackBibleData } from "../../domain/entities/StackBibleData";
-import type {
-  PieceAdapterPort,
-  StackStructureEventPort,
-} from "../ports/stackStructure";
+import type { PieceAdapterPort } from "../ports/stackStructure";
 import type { StackPieceDataMap } from "../ports/pieces";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
   pieceLifecycleServicePort: PieceLifecycleServicePort;
-  stackStructureEventPort: StackStructureEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
 }
 
 type StrategyContext = {
@@ -171,16 +170,16 @@ function runPieceStrategy<K extends keyof StackPieceDataMap>(
 export class StackStructureService implements PieceDragStackStructureServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
-  #stackStructureEventPort: ServiceParams["stackStructureEventPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
 
   constructor({
     pieceAdapterPort,
     pieceLifecycleServicePort,
-    stackStructureEventPort,
+    eventManagerPort,
   }: ServiceParams) {
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
-    this.#stackStructureEventPort = stackStructureEventPort;
+    this.#eventManagerPort = eventManagerPort;
   }
 
   pullOutPieceFromParent: (params: {
@@ -217,6 +216,6 @@ export class StackStructureService implements PieceDragStackStructureServicePort
     });
     pieceData.clearAllParentIds();
 
-    this.#stackStructureEventPort.emit("OnStackPiecePulledOut");
+    this.#eventManagerPort.emit("OnStackPiecePulledOut");
   };
 }

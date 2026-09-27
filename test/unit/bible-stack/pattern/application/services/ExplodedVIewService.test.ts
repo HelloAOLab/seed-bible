@@ -3,7 +3,6 @@ import { ExplodedViewService } from "../../../../../../patterns/bible-stack/bibl
 import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
-import type { ExplodedViewEventPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ExplodedView";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
@@ -16,13 +15,15 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import type { SectionInfo } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/arrangement";
 import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 describe("pattern.bible-stack.application.services.ExplodedVIewService", () => {
   let service: ExplodedViewService;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
   let pieceActivityServicePort: Mocked<PieceActivityServicePort>;
-  let bibleStackEventPort: Mocked<ExplodedViewEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let loggerPort: Mocked<LoggerPort>;
   let executionOrder: string[];
 
@@ -122,11 +123,11 @@ describe("pattern.bible-stack.application.services.ExplodedVIewService", () => {
       updateAllNotificationsDirection: vi.fn(),
     };
 
-    bibleStackEventPort = {
+    eventManagerPort = {
       emit: vi.fn(() => {
         executionOrder.push("emit");
       }),
-    } as unknown as Mocked<ExplodedViewEventPort>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     loggerPort = {
       error: vi.fn(),
@@ -138,7 +139,7 @@ describe("pattern.bible-stack.application.services.ExplodedVIewService", () => {
       pieceHierarchyServicePort,
       stackUpdateServicePort,
       pieceActivityServicePort,
-      bibleStackEventPort,
+      eventManagerPort,
       loggerPort,
     });
   });
@@ -280,7 +281,7 @@ describe("pattern.bible-stack.application.services.ExplodedVIewService", () => {
 
       await service.explodeSection({ data });
 
-      expect(bibleStackEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnStackSectionExploded",
         { sectionData: data }
       );
@@ -310,7 +311,7 @@ describe("pattern.bible-stack.application.services.ExplodedVIewService", () => {
       expect(
         pieceActivityServicePort.updateAllNotifications
       ).not.toHaveBeenCalled();
-      expect(bibleStackEventPort.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
     });
 
     it("works with consecutive calls", async () => {
@@ -346,7 +347,7 @@ describe("pattern.bible-stack.application.services.ExplodedVIewService", () => {
       expect(
         pieceActivityServicePort.updateAllNotifications
       ).toHaveBeenCalledTimes(2);
-      expect(bibleStackEventPort.emit.mock.calls).toEqual([
+      expect(eventManagerPort.emit.mock.calls).toEqual([
         ["OnStackSectionExploded", { sectionData: firstSection }],
         ["OnStackSectionExploded", { sectionData: secondSection }],
       ]);

@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { SequenceStateService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/SequenceStateService";
-import type { SequenceEventPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/sequence";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 const makeDeferred = () => {
   let resolve!: () => void;
@@ -17,13 +18,13 @@ const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 describe("pattern.bible-stack.application.services.SequenceStateService", () => {
   let service: SequenceStateService;
-  let sequenceEventPort: Mocked<SequenceEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let loggerPort: Mocked<LoggerPort>;
 
   beforeEach(() => {
-    sequenceEventPort = {
+    eventManagerPort = {
       emit: vi.fn(),
-    } as unknown as Mocked<SequenceEventPort>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     loggerPort = {
       error: vi.fn(),
@@ -32,7 +33,7 @@ describe("pattern.bible-stack.application.services.SequenceStateService", () => 
     };
 
     service = new SequenceStateService({
-      sequenceEventPort,
+      eventManagerPort,
       loggerPort,
     });
   });
@@ -45,7 +46,7 @@ describe("pattern.bible-stack.application.services.SequenceStateService", () => 
       service.startSequence();
 
       expect(service.isThereAnOngoingSequence()).toBe(true);
-      expect(sequenceEventPort.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
     });
 
     it("sets isThereAnOngoingSequence to true", () => {
@@ -57,8 +58,8 @@ describe("pattern.bible-stack.application.services.SequenceStateService", () => 
     it("emits", () => {
       service.startSequence();
 
-      expect(sequenceEventPort.emit).toHaveBeenCalledTimes(1);
-      expect(sequenceEventPort.emit).toHaveBeenCalledWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledTimes(1);
+      expect(eventManagerPort.emit).toHaveBeenCalledWith(
         "OnStackSequenceStart"
       );
     });
@@ -69,7 +70,7 @@ describe("pattern.bible-stack.application.services.SequenceStateService", () => 
       service.endSequence();
 
       expect(service.isThereAnOngoingSequence()).toBe(false);
-      expect(sequenceEventPort.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
     });
 
     it("sets isThereAnOngoingSequence to false", () => {
@@ -86,8 +87,8 @@ describe("pattern.bible-stack.application.services.SequenceStateService", () => 
 
       service.endSequence();
 
-      expect(sequenceEventPort.emit).toHaveBeenCalledTimes(1);
-      expect(sequenceEventPort.emit).toHaveBeenCalledWith("OnStackSequenceEnd");
+      expect(eventManagerPort.emit).toHaveBeenCalledTimes(1);
+      expect(eventManagerPort.emit).toHaveBeenCalledWith("OnStackSequenceEnd");
     });
   });
 
@@ -114,7 +115,7 @@ describe("pattern.bible-stack.application.services.SequenceStateService", () => 
       await expect(service.executeAsSequence(task)).resolves.toBeUndefined();
 
       expect(task).not.toHaveBeenCalled();
-      expect(sequenceEventPort.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
       expect(service.isThereAnOngoingSequence()).toBe(true);
     });
 
@@ -123,7 +124,7 @@ describe("pattern.bible-stack.application.services.SequenceStateService", () => 
       let emittedBeforeTask: unknown[][] = [];
       const task = vi.fn(async () => {
         wasOngoingDuringTask = service.isThereAnOngoingSequence();
-        emittedBeforeTask = [...sequenceEventPort.emit.mock.calls];
+        emittedBeforeTask = [...eventManagerPort.emit.mock.calls];
       });
 
       await service.executeAsSequence(task);
@@ -146,7 +147,7 @@ describe("pattern.bible-stack.application.services.SequenceStateService", () => 
 
       expect(settled).toBe(false);
       expect(service.isThereAnOngoingSequence()).toBe(true);
-      expect(sequenceEventPort.emit).not.toHaveBeenCalledWith(
+      expect(eventManagerPort.emit).not.toHaveBeenCalledWith(
         "OnStackSequenceEnd"
       );
 
@@ -160,7 +161,7 @@ describe("pattern.bible-stack.application.services.SequenceStateService", () => 
       await service.executeAsSequence(async () => {});
 
       expect(service.isThereAnOngoingSequence()).toBe(false);
-      expect(sequenceEventPort.emit.mock.calls).toEqual([
+      expect(eventManagerPort.emit.mock.calls).toEqual([
         ["OnStackSequenceStart"],
         ["OnStackSequenceEnd"],
       ]);
@@ -172,7 +173,7 @@ describe("pattern.bible-stack.application.services.SequenceStateService", () => 
       });
 
       expect(service.isThereAnOngoingSequence()).toBe(false);
-      expect(sequenceEventPort.emit.mock.calls).toEqual([
+      expect(eventManagerPort.emit.mock.calls).toEqual([
         ["OnStackSequenceStart"],
         ["OnStackSequenceEnd"],
       ]);

@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { SectionSelectionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/SectionSelectionService";
 import type { BookSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookSelection";
-import type { DomainEventManager } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/EventManager";
 import type { ExplodedViewServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ExplodedView";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
@@ -14,7 +13,6 @@ import type {
   LabelDataStorePort,
   PieceLabelServicePort,
   SectionSelectionAdapterPort,
-  SectionSelectionEventPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SectionSelection";
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import { InfoLabelData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/InfoLabelData";
@@ -50,6 +48,8 @@ import {
   SelectionStates,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
 import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -252,11 +252,10 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
   let sectionSelectionAdapterPort: Mocked<SectionSelectionAdapterPort>;
   let explodedViewServicePort: Mocked<ExplodedViewServicePort>;
-  let sectionSelectionEventPort: Mocked<SectionSelectionEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let bookSpawnerPort: Mocked<BookSpawnerPort>;
   let tourGuideServicePort: Mocked<TourGuideServicePort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
-  let eventManager: Mocked<DomainEventManager>;
   let loggerPort: Mocked<LoggerPort>;
   let currentExplodedSection: StackSectionData | undefined;
   let spawnedPieces: Piece<"StackBook">[];
@@ -272,9 +271,9 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
     read: () => T
   ): { eventName: string; value: T }[] => {
     const records: { eventName: string; value: T }[] = [];
-    sectionSelectionEventPort.emit.mockImplementation(((eventName: string) => {
+    eventManagerPort.emit.mockImplementation(((eventName: string) => {
       records.push({ eventName, value: read() });
-    }) as SectionSelectionEventPort["emit"]);
+    }) as EventManagerPort<BibleStackEvents>["emit"]);
     return records;
   };
 
@@ -286,8 +285,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
     return records;
   };
 
-  const emitOrders = () =>
-    sectionSelectionEventPort.emit.mock.invocationCallOrder;
+  const emitOrders = () => eventManagerPort.emit.mock.invocationCallOrder;
   const updateOrders = () =>
     stackUpdateServicePort.updateStack.mock.invocationCallOrder;
   const unhighlightOrders = () =>
@@ -351,10 +349,6 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       },
     };
 
-    sectionSelectionEventPort = {
-      emit: vi.fn(),
-    } as unknown as Mocked<SectionSelectionEventPort>;
-
     bookSpawnerPort = {
       spawnBookDomain: vi.fn(() => {
         const piece = makeBookPiece(
@@ -378,11 +372,11 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       getParentDataChain: vi.fn(() => makeParentDataChain()),
     };
 
-    eventManager = {
+    eventManagerPort = {
       subscribe: vi.fn(),
       emit: vi.fn(),
       removeAllListeners: vi.fn(),
-    } as unknown as Mocked<DomainEventManager>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     loggerPort = {
       error: vi.fn(),
@@ -399,11 +393,10 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       stackUpdateServicePort,
       sectionSelectionAdapterPort,
       explodedViewServicePort,
-      sectionSelectionEventPort,
+      eventManagerPort,
       bookSpawnerPort,
       tourGuideServicePort,
       pieceHierarchyServicePort,
-      eventManager,
       loggerPort,
     });
   });
@@ -418,7 +411,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       expect(loggerPort.error).toHaveBeenCalledExactlyOnceWith(
         "SectionSelectionService: data.piece not defined at prepareSelection."
       );
-      expect(sectionSelectionEventPort.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
       expect(pieceLabelServicePort.hideLabel).not.toHaveBeenCalled();
       expect(stackUpdateServicePort.updateStack).not.toHaveBeenCalled();
       expect(sectionSelectionAdapterPort.select).not.toHaveBeenCalled();
@@ -434,15 +427,17 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
 
       await select(data);
 
-      expect(sectionSelectionEventPort.emit).toHaveBeenNthCalledWith(
+      expect(eventManagerPort.emit).toHaveBeenNthCalledWith(
         1,
         "OnSectionBeginSelect",
         { data }
       );
-      expect(sectionSelectionEventPort.emit.mock.calls[0]![1]).toStrictEqual({
+      expect(eventManagerPort.emit.mock.calls[0]![1]).toStrictEqual({
         data,
       });
-      expect(sectionSelectionEventPort.emit.mock.calls[0]![1]!.data).toBe(data);
+      expect(
+        (eventManagerPort.emit.mock.calls[0]![1] as { data: unknown }).data
+      ).toBe(data);
       expect(emitOrders()[0]!).toBeLessThan(
         pieceLabelServicePort.hideLabel.mock.invocationCallOrder[0]!
       );
@@ -602,7 +597,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       expect(book.isActive).toBe(false);
       expect(sectionSelectionAdapterPort.select).not.toHaveBeenCalled();
       expect(service.hasSectionEverBeenSelected(SECTION_NAME)).toBe(false);
-      expect(sectionSelectionEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnSectionBeginSelect",
         { data }
       );
@@ -751,7 +746,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       expect(sectionSelectionAdapterPort.select).not.toHaveBeenCalled();
       expect(stackUpdateServicePort.updateStack).not.toHaveBeenCalled();
       expect(service.hasSectionEverBeenSelected(SECTION_NAME)).toBe(false);
-      expect(sectionSelectionEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnSectionBeginSelect",
         { data }
       );
@@ -947,7 +942,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
         "StackBible",
         StackUpdatePacings.Regular
       );
-      expect(sectionSelectionEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnSectionBeginSelect",
         { data }
       );
@@ -958,7 +953,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       update.resolve();
       await selection;
 
-      expect(sectionSelectionEventPort.emit).toHaveBeenLastCalledWith(
+      expect(eventManagerPort.emit).toHaveBeenLastCalledWith(
         "OnSectionEndSelect",
         { data }
       );
@@ -1036,11 +1031,13 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
 
       await select(data);
 
-      expect(sectionSelectionEventPort.emit.mock.calls).toEqual([
+      expect(eventManagerPort.emit.mock.calls).toEqual([
         ["OnSectionBeginSelect", { data }],
         ["OnSectionEndSelect", { data }],
       ]);
-      expect(sectionSelectionEventPort.emit.mock.calls[1]![1]!.data).toBe(data);
+      expect(
+        (eventManagerPort.emit.mock.calls[1]![1] as { data: unknown }).data
+      ).toBe(data);
       expect(emitOrders()[1]!).toBeGreaterThan(updateOrders()[0]!);
     });
 
@@ -1115,7 +1112,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       expect(loggerPort.error).toHaveBeenCalledExactlyOnceWith(
         "SectionSelectionService: data.shadow not defined at deselect"
       );
-      expect(eventManager.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
       expect(labelDataStorePort.getDataByOwnerId).not.toHaveBeenCalled();
       expect(pieceHighlighterPort.tryUnhighlightPiece).not.toHaveBeenCalled();
       expect(bookSelectionServicePort.deselectBooks).not.toHaveBeenCalled();
@@ -1135,11 +1132,11 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
 
       await service.deselect(data);
 
-      expect(eventManager.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnSectionDeselected",
         { data }
       );
-      const emitOrder = eventManager.emit.mock.invocationCallOrder[0]!;
+      const emitOrder = eventManagerPort.emit.mock.invocationCallOrder[0]!;
       expect(emitOrder).toBeLessThan(
         labelDataStorePort.getDataByOwnerId.mock.invocationCallOrder[0]!
       );

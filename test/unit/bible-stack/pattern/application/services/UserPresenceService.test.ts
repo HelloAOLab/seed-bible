@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { UserPresenceService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/UserPresenceService";
-import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type {
   ReadingInstance,
   UserPresence,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/userPresence";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 const OWN_USER_ID = "own-user";
 const REMOTE_USER_ID_1 = "remote-user-1";
@@ -47,7 +48,7 @@ const makePresence = (): UserPresence =>
 
 describe("pattern.bible-stack.application.services.UserPresenceService", () => {
   let service: UserPresenceService;
-  let eventManagerPort: Mocked<EventManagerPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
 
   const makeService = (initialUserPresence?: UserPresence) =>
     new UserPresenceService({
@@ -59,7 +60,7 @@ describe("pattern.bible-stack.application.services.UserPresenceService", () => {
   beforeEach(() => {
     eventManagerPort = {
       emit: vi.fn(),
-    } as unknown as Mocked<EventManagerPort>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     service = new UserPresenceService({
       eventManagerPort,

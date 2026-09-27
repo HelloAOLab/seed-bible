@@ -8,7 +8,6 @@ import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bib
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/scripturePieceDrag";
 import type {
   PieceAdapterPort,
-  PieceDropEventPort,
   ScripturePieceDropDataRepositoryPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/scripturePieceDrop";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
@@ -30,6 +29,8 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import { HighlightRequestSources } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
 import { SelectionEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
+import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
+import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-id";
@@ -183,7 +184,7 @@ describe("pattern.bible-stack.application.services.ScripturePieceDropService", (
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let chapterSelectionServicePort: Mocked<ChapterSelectionPort>;
   let pieceHighlightServicePort: Mocked<PieceHighlighterPort>;
-  let pieceDropEventPort: Mocked<PieceDropEventPort>;
+  let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let loggerPort: Mocked<LoggerPort>;
 
   const arrangeChapter = (
@@ -202,7 +203,7 @@ describe("pattern.bible-stack.application.services.ScripturePieceDropService", (
     expect(pieceAdapterPort.releaseTransformer).not.toHaveBeenCalled();
     expect(chapterSelectionServicePort.deselectChapter).not.toHaveBeenCalled();
     expect(pieceHighlightServicePort.tryHighlightPiece).not.toHaveBeenCalled();
-    expect(pieceDropEventPort.emit).not.toHaveBeenCalled();
+    expect(eventManagerPort.emit).not.toHaveBeenCalled();
   };
 
   beforeEach(() => {
@@ -240,9 +241,9 @@ describe("pattern.bible-stack.application.services.ScripturePieceDropService", (
       unhighlightBiblePieces: vi.fn(),
     };
 
-    pieceDropEventPort = {
+    eventManagerPort = {
       emit: vi.fn(),
-    } as unknown as Mocked<PieceDropEventPort>;
+    } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     loggerPort = {
       error: vi.fn(),
@@ -257,7 +258,7 @@ describe("pattern.bible-stack.application.services.ScripturePieceDropService", (
       pieceHierarchyServicePort,
       chapterSelectionServicePort,
       pieceHighlightServicePort,
-      pieceDropEventPort,
+      eventManagerPort,
       loggerPort,
     });
   });
@@ -287,7 +288,7 @@ describe("pattern.bible-stack.application.services.ScripturePieceDropService", (
       expect(
         pieceHighlightServicePort.tryHighlightPiece
       ).not.toHaveBeenCalled();
-      expect(pieceDropEventPort.emit).not.toHaveBeenCalled();
+      expect(eventManagerPort.emit).not.toHaveBeenCalled();
     });
 
     it("no-ops if the piece is within a not opened bible", () => {
@@ -504,7 +505,7 @@ describe("pattern.bible-stack.application.services.ScripturePieceDropService", (
             hasReleasedTransformer: boolean;
           }
         | undefined;
-      pieceDropEventPort.emit.mockImplementation(() => {
+      eventManagerPort.emit.mockImplementation(() => {
         stateAtEmit = {
           isBeingDragged: chapterData.isBeingDragged,
           isOnTheGround: chapterData.isOnTheGround,
@@ -516,7 +517,7 @@ describe("pattern.bible-stack.application.services.ScripturePieceDropService", (
 
       service.handlePieceDrop(chapterPiece, undefined);
 
-      expect(pieceDropEventPort.emit).toHaveBeenCalledExactlyOnceWith(
+      expect(eventManagerPort.emit).toHaveBeenCalledExactlyOnceWith(
         "OnStackPieceDrop",
         { data: chapterData }
       );

@@ -2,7 +2,6 @@ import type { Piece, SectionShadow } from "../../domain/models/canvas";
 import type { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
-import type { BibleStackEvents } from "../../domain/models/events";
 import type {
   StackCover,
   StackCrossLine,
@@ -50,15 +49,6 @@ export interface BibleDataRepositoryPort {
   addBibleData(data: StackBibleData): void;
 }
 
-export interface BibleLifecycleEventPort {
-  emit: <K extends "OnBibleDelete" | "OnBibleCreationBegin" | "OnBibleCreated">(
-    eventName: K,
-    ...args: BibleStackEvents[K] extends undefined | void
-      ? [payload?: BibleStackEvents[K]]
-      : [payload: BibleStackEvents[K]]
-  ) => void;
-}
-
 export interface IdGeneratorPort {
   getId(): string;
 }
@@ -92,26 +82,6 @@ export interface BibleLifecycleServicePort {
     type: BibleType;
     arrangementIndex?: number;
   }): { bibleData: StackBibleData };
-}
-
-export interface BibleSequenceEventPort {
-  emit: <
-    K extends
-      | "OnBibleOpenSequenceStart"
-      | "OnBibleResetSequenceEnd"
-      | "OnBibleOpenSequenceBegin"
-      | "OnBibleOpenSequenceEnd"
-      | "OnBibleResetSequenceStart"
-      | "OnBibleCloseSequenceStart"
-      | "OnBibleCloseSequenceEnd"
-      | "OnBibleCrackOpenSequenceStart"
-      | "OnBibleCrackOpenSequenceEnd",
-  >(
-    eventName: K,
-    ...args: BibleStackEvents[K] extends undefined | void
-      ? [payload?: BibleStackEvents[K]]
-      : [payload: BibleStackEvents[K]]
-  ) => void;
 }
 
 export interface BibleSequenceAdapterPort {
