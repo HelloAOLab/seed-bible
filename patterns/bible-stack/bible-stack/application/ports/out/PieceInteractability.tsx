@@ -1,7 +1,6 @@
 import type { StackBibleData } from "../../../domain/entities/StackBibleData";
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
-import type { Piece } from "../../../domain/models/canvas";
-import type { StackPieceDataMap } from "../pieces";
+import type { Piece, PieceDataMap } from "../../../domain/models/canvas";
 
 export interface BibleDataRepositoryPort {
   getAllBiblesData(): StackBibleData[];
@@ -18,7 +17,7 @@ export interface PieceDataRepositoryPort {
       | "StackChapter",
   >(
     piece: Piece<K>
-  ): StackPieceDataMap[K] | undefined;
+  ): PieceDataMap[K] | undefined;
 }
 
 export interface PieceAdapterPort {

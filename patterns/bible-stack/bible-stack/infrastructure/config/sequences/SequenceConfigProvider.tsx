@@ -1,7 +1,4 @@
-import {
-  FocusOnAnimations,
-  type FocusOnAnimationKey,
-} from "./focusOnAnimations";
+import { FocusOnAnimations } from "./focusOnAnimations";
 import {
   CrackOpenBibleAnimationDurations,
   CrackOpenBibleAnimationEasing,
@@ -22,6 +19,7 @@ import {
   ToggleBibleAnimationConfigs,
   type ToggleBibleAnimationConfigType,
 } from "./toggleBibleModeAnimation";
+import type { FocusOnAnimationKey } from "../../../application/ports/out/Camera";
 
 export class SequenceConfigProvider implements BibleSequenceServiceConfigProviderPort {
   getFocusOnAnimationConfig(key: FocusOnAnimationKey) {

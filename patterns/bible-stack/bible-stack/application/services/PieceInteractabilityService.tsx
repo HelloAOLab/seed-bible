@@ -12,7 +12,7 @@ import type {
   PieceDataRepositoryPort,
   PieceAdapterPort,
 } from "../ports/out/PieceInteractability";
-import type { StackPieceDataMap } from "../ports/pieces";
+import type { PieceDataMap } from "../../domain/models/canvas";
 
 interface ServiceParams {
   bibleDataRepositoryPort: BibleDataRepositoryPort;
@@ -148,7 +148,7 @@ export class PieceInteractabilityService
       case "StackBook":
       case "StackChapter": {
         const data = this.#pieceDataRepositoryPort.getPieceData(
-          piece as Piece<keyof StackPieceDataMap>
+          piece as Piece<keyof PieceDataMap>
         );
         if (data) {
           if (value) {

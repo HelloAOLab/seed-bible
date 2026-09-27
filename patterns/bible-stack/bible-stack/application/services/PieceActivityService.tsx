@@ -14,11 +14,8 @@ import type {
   ActivityIndicatorsAdapterPort,
   ActivityIndicatorLifecyclePort,
   ActivityNotificationAdapterPort,
-  ActivityContainer,
   AnyShowIndicatorCommand,
-  ActivityContainerType,
   IdGeneratorPort,
-  NotifiableContainer,
 } from "../ports/out/PieceActivity";
 import { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { LoggerPort } from "../ports/out/Logger";
@@ -30,6 +27,11 @@ import type { ReadingInstance } from "../../domain/models/userPresence";
 import type { UserIdentityPort } from "../ports/out/UserIdentity";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type { EventManagerPort } from "../ports/out/EventManager";
+import type {
+  ActivityContainer,
+  NotifiableContainer,
+  ActivityContainerType,
+} from "../../domain/models/activity";
 
 interface ServiceParams {
   dataRegistryPort: DataRegistryPort;

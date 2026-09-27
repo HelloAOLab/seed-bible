@@ -7,7 +7,6 @@ import type {
   PieceDataRepositoryPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceInteractability";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type { StackPieceDataMap } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
@@ -27,8 +26,9 @@ import {
   type Piece,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import { SelectionEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
+import type { PieceDataMap } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 
-type AnyPieceData = StackPieceDataMap[keyof StackPieceDataMap];
+type AnyPieceData = PieceDataMap[keyof PieceDataMap];
 
 interface DataOptions {
   isActive?: boolean;

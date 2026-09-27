@@ -9,7 +9,6 @@ import type {
   ScripturePieceDropDataRepositoryPort,
 } from "../ports/scripturePieceDrop";
 import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type {
   BookDropServicePort,
@@ -22,6 +21,7 @@ import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { ParentDataIds } from "../../domain/models/canvas";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
@@ -116,7 +116,7 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
     ) {
       const { sectionBookData, bookData } =
         this.#pieceHierarchyServicePort.getParentDataChain(
-          pieceData.parentDataIds as StackParentDataIds
+          pieceData.parentDataIds as ParentDataIds
         );
       const actualData = bookData ?? sectionBookData;
       this.#chapterSelectionServicePort

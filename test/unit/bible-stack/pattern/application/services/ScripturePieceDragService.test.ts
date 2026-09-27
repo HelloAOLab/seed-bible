@@ -4,7 +4,6 @@ import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible
 import type { PieceHighlighterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { StackStructureServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackStructure";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import type {
   PieceAdapterPort,
   ScripturePieceDataRepositoryPort,
@@ -26,6 +25,7 @@ import {
   HighlightPacings,
   UnhighlightRequestSources,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
+import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-id";

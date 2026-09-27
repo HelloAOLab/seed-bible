@@ -1,13 +1,12 @@
-import type { Piece } from "../../../domain/models/canvas";
+import type { Piece, PieceDataMap } from "../../../domain/models/canvas";
 import type { PaintablePieceData } from "../../../domain/models/pieces";
-import type { StackPieceDataMap } from "../pieces";
 import type { VerseData } from "../../../domain/entities/VerseData";
 import type { VersesBundleData } from "../../../domain/entities/VersesBundleData";
 
 export interface StackDataRepository {
-  getPieceData: <K extends keyof StackPieceDataMap>(
+  getPieceData: <K extends keyof PieceDataMap>(
     piece: Piece<K>
-  ) => StackPieceDataMap[K] | undefined;
+  ) => PieceDataMap[K] | undefined;
 }
 
 export interface VerseDataRepository {

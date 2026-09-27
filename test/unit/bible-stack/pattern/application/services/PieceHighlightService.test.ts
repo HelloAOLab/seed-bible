@@ -3,7 +3,6 @@ import { PieceHighlightService } from "../../../../../../patterns/bible-stack/bi
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import {
   HighlightDelays,
-  type AnyStackData,
   type HighlightConfigProviderPort,
   type PieceHighlightActivityNotificationAdapterPort,
   type PieceHighlightActivityServicePort,
@@ -40,6 +39,7 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/highlight";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
+import type { AnyStackData } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 
 type HighlightablePiece = Parameters<
   PieceHighlightService["tryHighlightPiece"]

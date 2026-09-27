@@ -20,8 +20,8 @@ import type {
   StackBookCreationParams,
   StackSectionCreationParams,
   StackTestamentCreationParams,
+  ParentDataIds,
 } from "../../domain/models/canvas";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { BookInfo, ChapterInfo } from "../../domain/models/arrangement";
 import { VersesBundleData } from "../../domain/entities/VersesBundleData";
 import { VerseData } from "../../domain/entities/VerseData";
@@ -114,7 +114,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
       arrangementIndex,
       testamentIndex,
     };
-    const parentDataIds: StackParentDataIds = { stackBibleId: bibleDataId };
+    const parentDataIds: ParentDataIds = { stackBibleId: bibleDataId };
     const testamentDataId = this.#idGenerator.getId();
     const sectionsData: (StackSectionData | StackSectionBookData)[] = [];
     for (
@@ -187,7 +187,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
       sectionIndex,
       amountOfChaptersInSection,
     };
-    const parentDataIds: StackParentDataIds = {
+    const parentDataIds: ParentDataIds = {
       stackBibleId: bibleDataId,
       stackTestamentId: testamentDataId,
     };
@@ -326,7 +326,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
       );
     }
 
-    const parentDataIds: StackParentDataIds = {
+    const parentDataIds: ParentDataIds = {
       stackBibleId: bibleDataId,
       stackTestamentId: testamentDataId,
       stackSectionId: sectionDataId,
@@ -394,7 +394,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     chapterInfo: ChapterInfo;
     bookId: BookInfo["bookId"];
   }) {
-    const parentDataIds: StackParentDataIds = {
+    const parentDataIds: ParentDataIds = {
       stackBibleId: bibleDataId,
       stackTestamentId: testamentDataId,
       stackSectionBookId: sectionBookDataId,

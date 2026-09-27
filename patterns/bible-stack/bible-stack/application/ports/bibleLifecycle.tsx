@@ -13,7 +13,7 @@ import type { BibleType } from "../../domain/models/canvas";
 import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
 import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
-import type { FocusOnAnimationKey } from "../../infrastructure/config/sequences/focusOnAnimations";
+import type { FocusOnAnimationKey } from "./out/Camera";
 
 export interface BibleSetupAdapterPort {
   setUp(params: {

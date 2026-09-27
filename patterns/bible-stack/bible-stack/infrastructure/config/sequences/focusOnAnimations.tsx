@@ -1,3 +1,4 @@
+import type { FocusOnAnimationKey } from "../../../application/ports/out/Camera";
 import { BibleSetupAnimationConfigs } from "./bibleSetupAnimation";
 import { TestamentSelectionAnimationConfigs } from "./testamentSelectionAnimation";
 import { SectionSelectionAnimationConfigs } from "./sectionSelectionAnimation";
@@ -8,8 +9,7 @@ export const FocusOnAnimations = {
   testamentSelection: TestamentSelectionAnimationConfigs,
   sectionSelection: SectionSelectionAnimationConfigs,
   tourGuideSection: TourGuideSectionAnimationConfigs,
-} as const;
+} as const satisfies Record<FocusOnAnimationKey, unknown>;
 
-export type FocusOnAnimationKey = keyof typeof FocusOnAnimations;
 export type FocusOnAnimationConfig =
   (typeof FocusOnAnimations)[FocusOnAnimationKey];

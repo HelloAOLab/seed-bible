@@ -5,10 +5,7 @@ import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import { PieceSelectionSources } from "../../domain/models/canvas";
 import type { ScripturePort } from "../ports/in/Scripture";
 import type { BibleDataRepositoryPort } from "../ports/stacks";
-import type {
-  PieceDataRepositoryPort,
-  StackParentDataIds,
-} from "../ports/pieces";
+import type { PieceDataRepositoryPort } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type {
   PieceAdapterPort,
@@ -35,6 +32,7 @@ import type { LoggerPort } from "../ports/out/Logger";
 import type { UserPresencePort } from "../ports/in/UserPresence";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type { EventManagerPort } from "../ports/out/EventManager";
+import type { ParentDataIds } from "../../domain/models/canvas";
 
 interface ServiceParams {
   loggerPort: LoggerPort;
@@ -314,7 +312,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   async #navigateToChapter(chapterToFocus: StackChapterData): Promise<void> {
     const { bibleData, testamentData, sectionData, sectionBookData, bookData } =
       this.#pieceHierarchyServicePort.getParentDataChain(
-        chapterToFocus.parentDataIds as StackParentDataIds
+        chapterToFocus.parentDataIds as ParentDataIds
       );
 
     const shouldResetStack =

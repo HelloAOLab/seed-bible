@@ -7,7 +7,6 @@ import type { SequenceStateServicePort } from "../../../../../../patterns/bible-
 import type { TestamentSelectionPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentSelection";
 import type { TourGuideServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TourGuide";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import type { TestamentDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/testaments";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackTestamentData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackTestamentData";
@@ -28,6 +27,7 @@ import {
   type HighlightState,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/highlight";
 import { HighlightRequestSources } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
+import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 
 const BIBLE_ID = "bible-id";
 const TESTAMENT_ID = "testament-id";

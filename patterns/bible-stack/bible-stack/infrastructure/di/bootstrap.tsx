@@ -34,7 +34,6 @@ import { VersesBundleRepository } from "../adapters/stacks/VersesBundleDataRepos
 import { VerseRepository } from "../adapters/stacks/VerseDataRepository";
 import { VisualStateRegistry } from "../adapters/stacks/VisualStateRegistry";
 import { InteractionRegistry } from "../adapters/stacks/InteractionRegistry";
-import type { AnyStackData } from "../../application/ports/pieces";
 import { BibleSetupAdapter } from "../adapters/stacks/BibleSetupAdapter";
 import { BibleStackUpdaterAdapter } from "../adapters/stacks/BibleStackUpdaterAdapter";
 import { TestamentStackUpdaterAdapter } from "../adapters/stacks/TestamentStackUpdaterAdapter";
@@ -214,6 +213,7 @@ import { ReaderNavigationAdapter } from "../adapters/seed-bible/ReaderNavigation
 import { UserIdentityStore } from "../adapters/userPresence/UserIdentityStore";
 import { UserPresenceController } from "../controllers/seed-bible/ReadingStateController";
 import { EventManager } from "../utils/EventManager";
+import type { AnyStackData } from "../../domain/models/canvas";
 
 let initialized = false;
 

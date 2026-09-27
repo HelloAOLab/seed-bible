@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ScripturePieceDraggingService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ScripturePieceDraggingService";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
-import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/scripturePieceDrag";
 import type {
   PieceAdapterPort,
@@ -19,6 +18,7 @@ import {
   type ParentDataIds,
   type Piece,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-data";

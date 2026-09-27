@@ -1,12 +1,9 @@
 import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackChapterData } from "../../domain/entities/StackChapterData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
-import type { Piece } from "../../domain/models/canvas";
-import type { PieceDataMap } from "./out/PieceActivity";
+import type { Piece, PieceDataMap } from "../../domain/models/canvas";
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
-import type { ParentDataIds } from "../../domain/models/canvas";
-import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type { BibleDataRepositoryPort } from "./stacks";
 import type { HighlightPacing } from "../../domain/models/pieces";
 import type {
@@ -14,39 +11,6 @@ import type {
   ShowSequencePacing,
 } from "../../domain/models/label";
 import type { ActivityNotificationAdapterPort } from "./out/PieceActivity";
-
-export type StackParentDataIds = Pick<
-  ParentDataIds,
-  | "stackBibleId"
-  | "stackBookId"
-  | "stackSectionBookId"
-  | "stackSectionId"
-  | "stackTestamentId"
->;
-
-export type AnyStackData =
-  | StackTestamentData
-  | StackSectionData
-  | StackSectionBookData
-  | StackBookData
-  | StackChapterData;
-
-export type StackPieceDataMap = Pick<
-  PieceDataMap,
-  | "StackTestament"
-  | "StackSection"
-  | "StackSectionBook"
-  | "StackBook"
-  | "StackChapter"
->;
-
-export interface ParentDataChain {
-  bibleData: StackBibleData | undefined;
-  testamentData: StackTestamentData | undefined;
-  sectionData: StackSectionData | undefined;
-  sectionBookData: StackSectionBookData | undefined;
-  bookData: StackBookData | undefined;
-}
 
 export interface PieceDataRepositoryPort {
   addTestamentData: (data: StackTestamentData) => void;
@@ -69,16 +33,16 @@ export interface PieceDataRepositoryPort {
   removeChapterData: (data: StackChapterData) => void;
   clearChaptersData: () => StackChapterData[];
   getAllChapters: () => StackChapterData[];
-  getPieceData: <K extends keyof StackPieceDataMap>(
+  getPieceData: <K extends keyof PieceDataMap>(
     piece: Piece<K>
-  ) => StackPieceDataMap[K] | undefined;
-  getAllPiecesDataByType: <K extends keyof StackPieceDataMap>(
+  ) => PieceDataMap[K] | undefined;
+  getAllPiecesDataByType: <K extends keyof PieceDataMap>(
     type: K
-  ) => StackPieceDataMap[K][];
-  getDataById: <K extends keyof StackPieceDataMap>(params: {
+  ) => PieceDataMap[K][];
+  getDataById: <K extends keyof PieceDataMap>(params: {
     type: K;
-    id: StackPieceDataMap[K]["id"];
-  }) => StackPieceDataMap[K] | undefined;
+    id: PieceDataMap[K]["id"];
+  }) => PieceDataMap[K] | undefined;
 }
 
 export type PieceHierarchyPieceDataRepositoryPort = Pick<

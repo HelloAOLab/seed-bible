@@ -1,6 +1,6 @@
 import type { InfoLabelData } from "../../../domain/entities/InfoLabelData";
 import type { ActivityIndicatorData } from "../../../domain/entities/ActivityIndicatorData";
-import type { Piece } from "../../../domain/models/canvas";
+import type { Piece, PieceDataMap } from "../../../domain/models/canvas";
 import type { HexString } from "../../../domain/models/commonTypes";
 import type {
   LabelDateFormat,
@@ -9,8 +9,8 @@ import type {
   ShowSequencePacing,
 } from "../../../domain/models/label";
 import type { StackLabelableBiblePiece } from "../../../domain/models/pieceLifecycle";
-import type { StackPieceDataMap } from "../pieces";
-import type { ActivityContainer, ShowIndicatorsCommand } from "./PieceActivity";
+import type { ShowIndicatorsCommand } from "./PieceActivity";
+import type { ActivityContainer } from "../../../domain/models/activity";
 
 export type SpawnLabel = (params: {
   piece: Piece<StackLabelableBiblePiece>;
@@ -102,12 +102,12 @@ export interface LabelFeedbackAdapterPort {
 }
 
 export interface PieceDataRepositoryPort {
-  getPieceData<K extends keyof StackPieceDataMap>(
+  getPieceData<K extends keyof PieceDataMap>(
     piece: Piece<K>
-  ): StackPieceDataMap[K] | undefined;
+  ): PieceDataMap[K] | undefined;
 
-  getDataById: <K extends keyof StackPieceDataMap>(params: {
+  getDataById: <K extends keyof PieceDataMap>(params: {
     type: K;
-    id: StackPieceDataMap[K]["id"];
-  }) => StackPieceDataMap[K] | undefined;
+    id: PieceDataMap[K]["id"];
+  }) => PieceDataMap[K] | undefined;
 }

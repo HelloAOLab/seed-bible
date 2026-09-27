@@ -1,8 +1,8 @@
 import type { WorldPosition } from "../../../domain/models/spatial";
-import type { FocusOnAnimationKey } from "../../config/sequences/focusOnAnimations";
 import { GetCamRotationFocusPoint } from "../../functions/casualos";
 import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type { SequenceConfigProvider } from "../../config/sequences/SequenceConfigProvider";
+import type { FocusOnAnimationKey } from "../../../application/ports/out/Camera";
 
 interface CameraAdapterParams {
   sequenceConfigProviderPort: SequenceConfigProvider;

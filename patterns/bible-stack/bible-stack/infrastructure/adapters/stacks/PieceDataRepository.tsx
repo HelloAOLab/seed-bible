@@ -4,13 +4,11 @@ import { StackSectionData } from "../../../domain/entities/StackSectionData";
 import { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
 import { StackBookData } from "../../../domain/entities/StackBookData";
 import { StackChapterData } from "../../../domain/entities/StackChapterData";
-import type {
-  PieceDataRepositoryPort,
-  StackPieceDataMap,
-} from "../../../application/ports/pieces";
+import type { PieceDataRepositoryPort } from "../../../application/ports/pieces";
 import type { PieceDataRepositoryPort as StackManagementPieceDataRepositoryPort } from "../../../application/ports/stackManagement";
 import type { PieceDataRepositoryPort as StackUpdatePieceDataRepositoryPort } from "../../../application/ports/out/StackUpdate";
 import type { PieceDataRepositoryPort as ViewportPieceDataRepositoryPort } from "../../../application/ports/out/ViewportService";
+import type { PieceDataMap } from "../../../domain/models/canvas";
 
 // prettier-ignore
 export class PieceDataRepository implements PieceDataRepositoryPort, StackManagementPieceDataRepositoryPort, StackUpdatePieceDataRepositoryPort, ViewportPieceDataRepositoryPort {
@@ -20,7 +18,7 @@ export class PieceDataRepository implements PieceDataRepositoryPort, StackManage
   #booksData: Set<StackBookData> = new Set();
   #chaptersData: Set<StackChapterData> = new Set();
   #dataStrategy: {
-    [K in keyof StackPieceDataMap]: Set<StackPieceDataMap[K]>;
+    [K in keyof PieceDataMap]: Set<PieceDataMap[K]>;
   } = {
     [BiblePieces.StackTestament]: this.#testamentsData,
     [BiblePieces.StackSection]: this.#sectionsData,
@@ -139,9 +137,9 @@ export class PieceDataRepository implements PieceDataRepositoryPort, StackManage
     return [...this.#chaptersData.values()];
   }
 
-  getPieceData<K extends keyof StackPieceDataMap>(
+  getPieceData<K extends keyof PieceDataMap>(
     piece: Piece<K>
-  ): StackPieceDataMap[K] | undefined {
+  ): PieceDataMap[K] | undefined {
     const targetSet = this.#dataStrategy[piece.type];
 
     if (!targetSet) {
@@ -159,18 +157,18 @@ export class PieceDataRepository implements PieceDataRepositoryPort, StackManage
     return undefined;
   }
 
-  getAllPiecesDataByType<K extends keyof StackPieceDataMap>(
+  getAllPiecesDataByType<K extends keyof PieceDataMap>(
     type: K
-  ): StackPieceDataMap[K][] {
+  ): PieceDataMap[K][] {
     const data = this.#dataStrategy[type];
 
     return Array.from(data);
   }
 
-  getDataById: <K extends keyof StackPieceDataMap>(params: {
+  getDataById: <K extends keyof PieceDataMap>(params: {
     type: K;
-    id: StackPieceDataMap[K]["id"];
-  }) => StackPieceDataMap[K] | undefined = ({ type, id }) => {
+    id: PieceDataMap[K]["id"];
+  }) => PieceDataMap[K] | undefined = ({ type, id }) => {
     const targetSet = this.#dataStrategy[type];
     for (const data of targetSet) {
       if (data.id === id) {

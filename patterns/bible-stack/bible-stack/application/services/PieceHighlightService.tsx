@@ -18,9 +18,7 @@ import type {
   PieceHighlightActivityServicePort,
   PieceHighlightLabelServicePort,
   PieceUnhighlightSchedulerAdapterPort,
-  StackParentDataIds,
   HighlightConfigProviderPort,
-  AnyStackData,
 } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
@@ -35,6 +33,7 @@ import {
 import type { LoggerPort } from "../ports/out/Logger";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { ParentDataIds, AnyStackData } from "../../domain/models/canvas";
 
 interface ServiceParams {
   eventManagerPort: EventManagerPort<BibleStackEvents>;
@@ -137,7 +136,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
     }
 
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      data.parentDataIds as StackParentDataIds
+      data.parentDataIds as ParentDataIds
     );
 
     if (

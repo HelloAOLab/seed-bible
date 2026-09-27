@@ -11,10 +11,7 @@ import {
   SectionInteractionDelays,
   type SectionInteractionConfigProviderPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SectionInteraction";
-import type {
-  ParentDataChain,
-  PieceDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
 import type { SectionInfo } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/arrangement";
@@ -38,6 +35,7 @@ import {
   HighlightRequestSources,
   UnhighlightRequestSources,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
+import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";

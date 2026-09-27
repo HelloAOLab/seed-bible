@@ -5,26 +5,16 @@ import type { HexString } from "../../../domain/models/commonTypes";
 import type { SubsetBookChapter } from "../../../domain/models/arrangement";
 import {
   type Piece,
-  BiblePieces,
   type ActivityIndicator,
   type ActivityIndicatorType,
   type ActivityNotification,
 } from "../../../domain/models/canvas";
 import type { ActivityIndicatorData } from "../../../domain/entities/ActivityIndicatorData";
-import type { StackBookData } from "../../../domain/entities/StackBookData";
-import type { StackChapterData } from "../../../domain/entities/StackChapterData";
-import type { StackSectionData } from "../../../domain/entities/StackSectionData";
-import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
-import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
-
-export interface PieceDataMap {
-  [BiblePieces.StackBook]: StackBookData;
-  [BiblePieces.StackChapter]: StackChapterData;
-  [BiblePieces.StackSection]: StackSectionData;
-  [BiblePieces.StackSectionBook]: StackSectionBookData;
-  [BiblePieces.StackTestament]: StackTestamentData;
-  // [BiblePieces.StackSectionShadow]: StackSectionData;
-}
+import type { PieceDataMap } from "../../../domain/models/canvas";
+import type {
+  ActivityContainer,
+  NotifiableContainer,
+} from "../../../domain/models/activity";
 
 export type GetPieceDataById = <T extends keyof PieceDataMap>(params: {
   type: T;
@@ -70,12 +60,6 @@ export interface ScriptureServicePort {
     subsets: readonly SubsetBookInfo[];
   }): SubsetBookChapter;
 }
-
-export type ActivityContainer = InfoLabelData | StackChapterData;
-
-export type NotifiableContainer = StackChapterData;
-
-export type ActivityContainerType = "label" | "piece";
 
 export interface BaseShowIndicatorCommand<T extends ActivityIndicatorType> {
   type: T;

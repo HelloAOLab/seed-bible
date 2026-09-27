@@ -1,11 +1,11 @@
 import type { StackBibleData } from "../entities/StackBibleData";
-import type { AnyStackData } from "../../application/ports/pieces";
 import type { StackTestamentData } from "../entities/StackTestamentData";
 import type { StackSectionBookData } from "../entities/StackSectionBookData";
 import type { StackBookData } from "../entities/StackBookData";
 import type { StackSectionData } from "../entities/StackSectionData";
 import type { UserPresence } from "./userPresence";
 import type { StackChapterData } from "../entities/StackChapterData";
+import type { AnyStackData } from "./canvas";
 
 export interface BibleStackEvents {
   OnStackSequenceStart: void;

@@ -3,8 +3,7 @@ import type { StackChapterData } from "../../../domain/entities/StackChapterData
 import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
 import type { StackSectionData } from "../../../domain/entities/StackSectionData";
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
-import type { Piece } from "../../../domain/models/canvas";
-import type { StackPieceDataMap } from "../pieces";
+import type { Piece, PieceDataMap } from "../../../domain/models/canvas";
 
 export interface PieceDataRepositoryPort {
   addTestamentData: (data: StackTestamentData) => void;
@@ -27,14 +26,14 @@ export interface PieceDataRepositoryPort {
   removeChapterData: (data: StackChapterData) => void;
   clearChaptersData: () => StackChapterData[];
   getAllChapters: () => StackChapterData[];
-  getPieceData: <K extends keyof StackPieceDataMap>(
+  getPieceData: <K extends keyof PieceDataMap>(
     piece: Piece<K>
-  ) => StackPieceDataMap[K] | undefined;
-  getAllPiecesDataByType: <K extends keyof StackPieceDataMap>(
+  ) => PieceDataMap[K] | undefined;
+  getAllPiecesDataByType: <K extends keyof PieceDataMap>(
     type: K
-  ) => StackPieceDataMap[K][];
-  getDataById: <K extends keyof StackPieceDataMap>(params: {
+  ) => PieceDataMap[K][];
+  getDataById: <K extends keyof PieceDataMap>(params: {
     type: K;
-    id: StackPieceDataMap[K]["id"];
-  }) => StackPieceDataMap[K] | undefined;
+    id: PieceDataMap[K]["id"];
+  }) => PieceDataMap[K] | undefined;
 }

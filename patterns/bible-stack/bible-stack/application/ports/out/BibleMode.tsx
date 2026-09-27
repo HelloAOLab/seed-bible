@@ -1,6 +1,5 @@
-import type { Piece } from "../../../domain/models/canvas";
+import type { Piece, PieceDataMap } from "../../../domain/models/canvas";
 import type { StackCrossLine } from "../../../domain/models/pieces";
-import type { StackPieceDataMap } from "../pieces";
 
 export interface BibleModeSequenceAdapterPort {
   showToggleAttemptFeedback(params: {
@@ -29,5 +28,5 @@ export interface LoggerPort {
 export interface PieceDataRepositoryPort {
   getPieceData<K extends "StackTestament" | "StackSection">(
     piece: Piece<K>
-  ): StackPieceDataMap[K] | undefined;
+  ): PieceDataMap[K] | undefined;
 }

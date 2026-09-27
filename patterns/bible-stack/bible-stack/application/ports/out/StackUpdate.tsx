@@ -3,7 +3,7 @@ import type { StackBookData } from "../../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
 import type { StackSectionData } from "../../../domain/entities/StackSectionData";
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
-import type { StackPieceDataMap } from "../pieces";
+import type { PieceDataMap } from "../../../domain/models/canvas";
 
 export interface BibleDataRepositoryPort {
   getAllBiblesData(): StackBibleData[];
@@ -15,8 +15,8 @@ export interface PieceDataRepositoryPort {
   getStandaloneSections(): StackSectionData[];
   getStandaloneSectionBooks(): StackSectionBookData[];
   getStandaloneBooks(): StackBookData[];
-  getDataById<K extends keyof StackPieceDataMap>(params: {
+  getDataById<K extends keyof PieceDataMap>(params: {
     type: K;
-    id: StackPieceDataMap[K]["id"];
-  }): StackPieceDataMap[K] | undefined;
+    id: PieceDataMap[K]["id"];
+  }): PieceDataMap[K] | undefined;
 }

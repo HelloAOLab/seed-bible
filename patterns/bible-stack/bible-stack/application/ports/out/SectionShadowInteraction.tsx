@@ -1,8 +1,8 @@
-import type { StackPieceDataMap } from "../pieces";
+import type { PieceDataMap } from "../../../domain/models/canvas";
 
 export interface PieceDataRepositoryPort {
   getDataById: <K extends "StackSection">(params: {
     type: K;
-    id: StackPieceDataMap[K]["id"];
-  }) => StackPieceDataMap[K] | undefined;
+    id: PieceDataMap[K]["id"];
+  }) => PieceDataMap[K] | undefined;
 }

@@ -8,7 +8,6 @@ import {
 } from "../../domain/models/canvas";
 import type { TestamentDataRepositoryPort } from "../ports/testaments";
 import type { TestamentInteractionServicePort } from "../ports/in/TestamentInteraction";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import { HighlightRequestSources } from "../../domain/models/pieces";
@@ -17,6 +16,7 @@ import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { ParentDataIds } from "../../domain/models/canvas";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
@@ -61,7 +61,7 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
 
   #meetsBaseInteractionConditions(testamentData: StackTestamentData): boolean {
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      testamentData.parentDataIds as StackParentDataIds
+      testamentData.parentDataIds as ParentDataIds
     );
 
     if (

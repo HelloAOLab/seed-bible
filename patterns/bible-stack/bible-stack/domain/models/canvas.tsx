@@ -241,3 +241,18 @@ export interface PieceDataMap {
   [BiblePieces.StackSectionBook]: StackSectionBookData;
   [BiblePieces.StackTestament]: StackTestamentData;
 }
+
+export type AnyStackData =
+  | StackTestamentData
+  | StackSectionData
+  | StackSectionBookData
+  | StackBookData
+  | StackChapterData;
+
+export interface ParentDataChain {
+  bibleData: StackBibleData | undefined;
+  testamentData: StackTestamentData | undefined;
+  sectionData: StackSectionData | undefined;
+  sectionBookData: StackSectionBookData | undefined;
+  bookData: StackBookData | undefined;
+}
