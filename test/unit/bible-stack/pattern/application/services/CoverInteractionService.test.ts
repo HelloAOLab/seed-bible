@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { CoverInteractionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/CoverInteractionService";
 import type { BibleSequenceServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleSequence";
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
-import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/stacks";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import {
@@ -13,6 +12,7 @@ import {
 import type { StackCover } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
 import { StackPresenceNavigationPacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/userPresence";
 import { makeSequenceStateServiceDouble } from "../serviceDoubles";
+import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleDataRepository";
 
 const BIBLE_ID = "bible-id";
 

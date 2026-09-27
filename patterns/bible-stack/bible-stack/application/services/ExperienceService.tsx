@@ -1,12 +1,5 @@
-import type {
-  EnvironmentAdapterPort,
-  InteractionRegistryServicePort,
-  ExperienceAdapterPort,
-  ExperienceConfigProviderPort,
-  AwaiterPort,
-} from "../ports/experience";
+import type { AwaiterPort } from "../ports/experience";
 import type { StackPresenceNavigationServicePort } from "../ports/in/StackPresenceNavigation";
-import type { CameraAdapterPort } from "../ports/bibleLifecycle";
 import { BibleTypes } from "../../domain/models/canvas";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
 import type { ExperienceServicePort } from "../ports/in/Experience";
@@ -16,17 +9,22 @@ import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { BibleLifecycleServicePort } from "../ports/in/BibleLifecycle";
 import type { StackManagementServicePort } from "../ports/in/StackManagement";
+import type { EnvironmentPort } from "../ports/out/Environment";
+import type { InteractionRegistryPort } from "../ports/out/InteractionRegistry";
+import type { ExperiencePort } from "../ports/out/Experience";
+import type { CameraPort } from "../ports/out/Camera";
+import type { ExperienceConfigProviderPort } from "../ports/out/ExperienceConfigProvider";
 
 interface ExperienceServiceParams {
-  environmentAdapterPort: EnvironmentAdapterPort;
+  environmentAdapterPort: EnvironmentPort;
   stackManagementServicePort: StackManagementServicePort;
   pieceHighlightServicePort: PieceHighlightServicePort;
-  interactionRegistryServicePort: InteractionRegistryServicePort;
-  experienceAdapterPort: ExperienceAdapterPort;
+  interactionRegistryServicePort: InteractionRegistryPort;
+  experienceAdapterPort: ExperiencePort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
   experienceConfigProviderPort: ExperienceConfigProviderPort;
   sequenceStateServicePort: SequenceStateServicePort;
-  cameraAdapterPort: CameraAdapterPort;
+  cameraAdapterPort: CameraPort;
   bibleLifecycleServicePort: BibleLifecycleServicePort;
   bibleSequenceServicePort: BibleSequenceServicePort;
   stackPresenceNavigationServicePort: StackPresenceNavigationServicePort;

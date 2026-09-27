@@ -3,13 +3,13 @@ import type { BookInteractionServicePort } from "../ports/in/BookInteraction";
 import type { ChapterInteractionServicePort } from "../ports/in/ChapterInteraction";
 import type { SectionInteractionServicePort } from "../ports/in/SectionInteraction";
 import type { TestamentInteractionServicePort } from "../ports/in/TestamentInteraction";
-import type { LabelDataRepositoryPort } from "../ports/out/LabelInteraction";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { LabelInteractionServicePort } from "../ports/in/LabelInteraction";
 import type { SectionShadowInteractionServicePort } from "../ports/in/SectionShadowInteraction";
+import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
 
 interface ServiceParams {
-  labelDataRepositoryPort: LabelDataRepositoryPort;
+  labelDataRepositoryPort: LabelDataStorePort;
   testamentInteractionServicePort: TestamentInteractionServicePort;
   sectionInteractionServicePort: SectionInteractionServicePort;
   sectionShadowInteractionPort: SectionShadowInteractionServicePort;

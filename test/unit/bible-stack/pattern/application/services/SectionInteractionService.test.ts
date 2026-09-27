@@ -5,11 +5,6 @@ import type { SectionSelectionServicePort } from "../../../../../../patterns/bib
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
 import type { TourGuideServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TourGuide";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import {
-  SectionInteractionDelays,
-  type SectionInteractionConfigProviderPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SectionInteraction";
-import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
 import type { SectionInfo } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/arrangement";
@@ -41,6 +36,10 @@ import {
   makeSectionSelectionServiceDouble,
   makeSequenceStateServiceDouble,
 } from "../serviceDoubles";
+import { SectionInteractionDelays } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SectionInteractionConfigProvider";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import type { SectionInteractionConfigProviderPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SectionInteractionConfigProvider";
+import { makePieceDataRepositoryDouble } from "../adapterDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -139,9 +138,7 @@ const makeParentDataChain = (
 
 describe("pattern.bible-stack.application.services.SectionInteractionService", () => {
   let service: SectionInteractionService;
-  let sectionDataRepositoryPort: Mocked<
-    Pick<PieceDataRepositoryPort, "getPieceData">
-  >;
+  let sectionDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let tourGuideServicePort: Mocked<TourGuideServicePort>;
   let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
@@ -152,9 +149,7 @@ describe("pattern.bible-stack.application.services.SectionInteractionService", (
   let loggerPort: Mocked<LoggerPort>;
 
   beforeEach(() => {
-    sectionDataRepositoryPort = {
-      getPieceData: vi.fn(),
-    } as unknown as Mocked<Pick<PieceDataRepositoryPort, "getPieceData">>;
+    sectionDataRepositoryPort = makePieceDataRepositoryDouble();
 
     pieceHierarchyServicePort = {
       getParentDataChain: vi.fn(() => makeParentDataChain()),

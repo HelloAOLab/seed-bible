@@ -3,11 +3,6 @@ import { BibleModeService } from "../../../../../../patterns/bible-stack/bible-s
 import type { ExplodedViewServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ExplodedView";
 import type { SectionSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionSelection";
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
-import type {
-  BibleModeSequenceAdapterPort,
-  LoggerPort,
-  PieceDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleMode";
 import {
   BibleStates,
   BibleVisualizationStates,
@@ -29,6 +24,9 @@ import {
   makeSectionSelectionServiceDouble,
   makeSequenceStateServiceDouble,
 } from "../serviceDoubles";
+import type { BibleModeSequencePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleModeSequence";
+import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -88,7 +86,7 @@ type BibleDataDouble = ReturnType<typeof makeBibleData>;
 describe("pattern.bible-stack.application.services.BibleModeService", () => {
   let service: BibleModeService;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
-  let sequenceAdapterPort: Mocked<BibleModeSequenceAdapterPort>;
+  let sequenceAdapterPort: Mocked<BibleModeSequencePort>;
   let bibleStackUpdaterPort: Mocked<BibleStackUpdaterServicePort>;
   let explodedViewServicePort: Mocked<ExplodedViewServicePort>;
   let pieceDataRepository: Mocked<PieceDataRepositoryPort>;

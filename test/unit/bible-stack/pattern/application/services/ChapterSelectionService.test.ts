@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ChapterSelectionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ChapterSelectionService";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
-import type {
-  ChapterSelectionAdapterPort,
-  VersesBundleLifecycleAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ChapterSelection";
+import type { ChapterSelectionPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ChapterSelection";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
 import { VerseData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/VerseData";
@@ -24,6 +21,8 @@ import {
   makePieceActivityServiceDouble,
   makePieceLabelServiceDouble,
 } from "../serviceDoubles";
+import type { StackPieceLifecyclePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackPieceLifecycle";
+import { makeStackPieceLifecycleDouble } from "../adapterDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -176,10 +175,10 @@ const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 describe("pattern.bible-stack.application.services.ChapterSelectionService", () => {
   let service: ChapterSelectionService;
   let loggerPort: Mocked<LoggerPort>;
-  let chapterSelectionAdapterPort: Mocked<ChapterSelectionAdapterPort>;
+  let chapterSelectionAdapterPort: Mocked<ChapterSelectionPort>;
   let pieceActivityServicePort: Mocked<PieceActivityServicePort>;
   let labelManagerPort: Mocked<PieceLabelServicePort<StackLabelableBiblePiece>>;
-  let versesBundleLifecycleAdapterPort: Mocked<VersesBundleLifecycleAdapterPort>;
+  let versesBundleLifecycleAdapterPort: Mocked<StackPieceLifecyclePort>;
 
   const selectOrders = () =>
     chapterSelectionAdapterPort.select.mock.invocationCallOrder;
@@ -227,11 +226,7 @@ describe("pattern.bible-stack.application.services.ChapterSelectionService", () 
 
     labelManagerPort = makePieceLabelServiceDouble();
 
-    versesBundleLifecycleAdapterPort = {
-      spawnVersesBundleDomain: vi.fn(),
-      despawnVersesBundle: vi.fn(),
-      despawnVerse: vi.fn(),
-    };
+    versesBundleLifecycleAdapterPort = makeStackPieceLifecycleDouble();
 
     service = new ChapterSelectionService({
       loggerPort,

@@ -1,14 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { PieceHighlightService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceHighlightService";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
-import {
-  HighlightDelays,
-  type HighlightConfigProviderPort,
-  type PieceHighlightActivityNotificationAdapterPort,
-  type PieceHighlightAdapterPort,
-  type PieceHighlightPieceDataRepositoryPort,
-  type PieceUnhighlightSchedulerAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -46,6 +38,16 @@ import {
   makePieceLabelServiceDouble,
   makeSequenceStateServiceDouble,
 } from "../serviceDoubles";
+import { HighlightDelays } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/HighlightConfigProvider";
+import type { ActivityNotificationPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ActivityNotification";
+import type { PieceHighlightPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceHighlight";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import type { PieceUnhighlightSchedulerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceUnhighlightScheduler";
+import type { HighlightConfigProviderPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/HighlightConfigProvider";
+import {
+  makeActivityNotificationDouble,
+  makeHighlightConfigProviderDouble,
+} from "../adapterDoubles";
 
 type HighlightablePiece = Parameters<
   PieceHighlightService["tryHighlightPiece"]
@@ -185,17 +187,17 @@ const flushMicrotasks = () =>
 describe("pattern.bible-stack.application.services.PieceHighlightService", () => {
   let service: PieceHighlightService;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
-  let pieceHighlightAdapterPort: Mocked<PieceHighlightAdapterPort>;
-  let activityNotificationAdapterPort: Mocked<PieceHighlightActivityNotificationAdapterPort>;
+  let pieceHighlightAdapterPort: Mocked<PieceHighlightPort>;
+  let activityNotificationAdapterPort: Mocked<ActivityNotificationPort>;
   let pieceActivityServicePort: Mocked<PieceActivityServicePort>;
   let pieceLabelServicePort: Mocked<
     PieceLabelServicePort<StackLabelableBiblePiece>
   >;
-  let schedulerAdapterPort: Mocked<PieceUnhighlightSchedulerAdapterPort>;
+  let schedulerAdapterPort: Mocked<PieceUnhighlightSchedulerPort>;
   let configProviderPort: Mocked<HighlightConfigProviderPort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
-  let pieceDataRepositoryPort: Mocked<PieceHighlightPieceDataRepositoryPort>;
+  let pieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
   let loggerPort: Mocked<LoggerPort>;
   let dataByPieceId: Map<string, AnyStackData>;
 
@@ -256,9 +258,7 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
       decreaseIntensity: vi.fn(),
     };
 
-    activityNotificationAdapterPort = {
-      hideNotification: vi.fn(),
-    };
+    activityNotificationAdapterPort = makeActivityNotificationDouble();
 
     pieceActivityServicePort = makePieceActivityServiceDouble();
 
@@ -269,9 +269,7 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
       clear: vi.fn(),
     };
 
-    configProviderPort = {
-      getDelay: vi.fn(),
-    };
+    configProviderPort = makeHighlightConfigProviderDouble();
 
     pieceHierarchyServicePort = {
       getParentDataChain: vi.fn(),
@@ -281,7 +279,7 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
 
     pieceDataRepositoryPort = {
       getPieceData: vi.fn(),
-    } as unknown as Mocked<PieceHighlightPieceDataRepositoryPort>;
+    } as unknown as Mocked<PieceDataRepositoryPort>;
 
     loggerPort = {
       error: vi.fn(),
@@ -290,9 +288,7 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
     };
 
     pieceDataRepositoryPort.getPieceData.mockImplementation(((piece: Piece) =>
-      dataByPieceId.get(
-        piece.id
-      )) as PieceHighlightPieceDataRepositoryPort["getPieceData"]);
+      dataByPieceId.get(piece.id)) as PieceDataRepositoryPort["getPieceData"]);
     pieceHierarchyServicePort.getParentDataChain.mockReturnValue({
       bibleData: undefined,
       testamentData: undefined,
@@ -449,10 +445,9 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
       await highlight(book.piece);
 
       expect(book.data.highlightIntensity).toBe(HighlightIntensities.Solid);
-      expect(pieceHighlightAdapterPort.increaseIntensity).toHaveBeenCalledWith(
-        book.piece,
-        "Regular"
-      );
+      expect(
+        pieceHighlightAdapterPort.increaseIntensity
+      ).toHaveBeenCalledExactlyOnceWith(book.piece);
       expect(pieceLabelServicePort.changeIntensity).toHaveBeenCalledWith(
         book.piece,
         HighlightIntensities.Solid,
@@ -1438,10 +1433,9 @@ describe("pattern.bible-stack.application.services.PieceHighlightService", () =>
       });
 
       expect(data.highlightIntensity).toBe(HighlightIntensities.Solid);
-      expect(pieceHighlightAdapterPort.increaseIntensity).toHaveBeenCalledWith(
-        piece,
-        "Fast"
-      );
+      expect(
+        pieceHighlightAdapterPort.increaseIntensity
+      ).toHaveBeenCalledExactlyOnceWith(piece);
       expect(
         pieceHighlightAdapterPort.decreaseIntensity
       ).not.toHaveBeenCalled();

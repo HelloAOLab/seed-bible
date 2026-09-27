@@ -4,11 +4,6 @@ import type {
   Vector3 as Vector3Type,
 } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 import type { ActivityContainer } from "../../../domain/models/activity";
-import type {
-  ActivityIndicatorsAdapterPort as PieceActivityIndicatorsAdapterPort,
-  ShowIndicatorsCommand,
-} from "../../../application/ports/out/PieceActivity";
-import type { ActivityIndicatorsAdapterPort as LabelActivityIndicatorsAdapterPort } from "../../../application/ports/out/PieceLabel";
 import {
   BiblePieces,
   type ActivityIndicator,
@@ -30,6 +25,10 @@ import type { ObjectPooler } from "../environment/ObjectPooler";
 import type { VisualStateRegistry } from "../stacks/VisualStateRegistry";
 import type { ActivityIndicatorVisualConfig } from "../../config/activityIndicators/visuals";
 import type { BibleStackObjectPoolerMap } from "../../models/objectPooler";
+import type {
+  ShowIndicatorsCommand,
+  ActivityIndicatorsPort,
+} from "../../../application/ports/out/ActivityIndicators";
 
 interface ActivityIndicatorMapperPort {
   toInfrastructure: (
@@ -218,7 +217,7 @@ interface AdapterParams {
 }
 
 // prettier-ignore
-export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapterPort, LabelActivityIndicatorsAdapterPort {
+export class ActivityIndicatorsAdapter implements ActivityIndicatorsPort {
   #objectPooler: AdapterParams["objectPooler"];
   #configProviderPort: AdapterParams["configProviderPort"];
   #activityIndicatorMapperPort: AdapterParams["activityIndicatorMapperPort"];

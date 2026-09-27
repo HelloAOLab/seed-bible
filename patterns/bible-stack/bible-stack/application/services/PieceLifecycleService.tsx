@@ -4,12 +4,7 @@ import { StackSectionBookData } from "../../domain/entities/StackSectionBookData
 import { StackSectionData } from "../../domain/entities/StackSectionData";
 import { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import { StackBibleData } from "../../domain/entities/StackBibleData";
-import type {
-  PieceDataRepositoryPort,
-  StackPieceLifecycleAdapterPort,
-  IdGeneratorPort,
-  VersesBundleDataRepositoryPort,
-} from "../ports/pieceLifecycle";
+import type { IdGeneratorPort } from "../ports/pieceLifecycle";
 import type {
   ChapterCreationParams,
   Piece,
@@ -22,10 +17,6 @@ import type { BookInfo, ChapterInfo } from "../../domain/models/arrangement";
 import { VersesBundleData } from "../../domain/entities/VersesBundleData";
 import { VerseData } from "../../domain/entities/VerseData";
 import { ShowSequencePacings } from "../../domain/models/label";
-import type {
-  PieceLifecycleConfigProviderPort,
-  VerseDataRepositoryPort,
-} from "../ports/out/PieceLifecycle";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import { GetSectionLevels } from "../../domain/functions/arrangement";
 import type { EventManagerPort } from "../ports/out/EventManager";
@@ -35,18 +26,23 @@ import type { ScriptureServicePort } from "../ports/in/Scripture";
 import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
 import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { LayoutConfigProviderPort } from "../ports/out/LayoutConfigProvider";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { VerseDataRepositoryPort } from "../ports/out/VerseDataRepository";
+import type { VersesBundleDataRepositoryPort } from "../ports/out/VersesBundleDataRepository";
 
 interface ServiceProps {
   pieceDataRepositoryPort: PieceDataRepositoryPort;
   pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
-  stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
+  stackPieceLifecycleAdapterPort: StackPieceLifecyclePort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
   arrangementServicePort: ArrangementServicePort;
   idGenerator: IdGeneratorPort;
   scriptureServicePort: ScriptureServicePort;
   versesBundleDataRepositoryPort: VersesBundleDataRepositoryPort;
   verseDataRepositoryPort: VerseDataRepositoryPort;
-  configProviderPort: PieceLifecycleConfigProviderPort;
+  configProviderPort: LayoutConfigProviderPort;
   pieceHighlightServicePort: PieceHighlightServicePort;
 }
 

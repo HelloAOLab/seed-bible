@@ -8,7 +8,7 @@ import type {
   Piece,
 } from "../../domain/models/canvas";
 import type { ChapterBot } from "../../infrastructure/models/stack";
-import type { PieceDataRepositoryPort } from "./pieces";
+import type { PieceDataRepositoryPort } from "./out/PieceDataRepository";
 
 export interface PieceMapperPort {
   toDomain: (bot: ChapterBot) => Piece<"StackChapter">;

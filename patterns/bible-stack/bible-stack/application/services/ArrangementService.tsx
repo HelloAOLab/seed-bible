@@ -6,22 +6,18 @@ import type {
   SectionInfo,
   BookInfo,
   SubsetBookInfo,
-} from "../../domain/models/arrangement";
-import type {
   TestamentPathIndices,
   SectionPathIndices,
   BookPathIndices,
 } from "../../domain/models/arrangement";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
-import type {
-  ArrangementConfigProviderPort,
-  CustomArrangementStorePort,
-} from "../ports/out/Arangement";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
+import type { CustomArrangementStorePort } from "../ports/out/CustomArrangementStore";
+import type { StaticArrangementsProviderPort } from "../ports/out/StaticArrangementsProvider";
 
 interface ArrangementServiceProps {
-  arrangementConfigProviderPort: ArrangementConfigProviderPort;
+  arrangementConfigProviderPort: StaticArrangementsProviderPort;
   customArrangementStorePort: CustomArrangementStorePort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
   arrangementIndex?: number;

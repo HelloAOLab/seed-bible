@@ -8,25 +8,24 @@ import {
 import type { SectionInteractionServicePort } from "../ports/in/SectionInteraction";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
-import type { PieceDataRepositoryPort } from "../ports/pieces";
-import type { SectionInteractionConfigProviderPort } from "../ports/out/SectionInteraction";
 import {
   HighlightRequestSources,
   HighlightPacings,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
-import { SectionInteractionDelays } from "../ports/out/SectionInteraction";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
-
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { PaintServicePort } from "../ports/in/Paint";
 import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import { SectionInteractionDelays } from "../ports/out/SectionInteractionConfigProvider";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { SectionInteractionConfigProviderPort } from "../ports/out/SectionInteractionConfigProvider";
 
 type SectionDataRepositoryPort = Pick<PieceDataRepositoryPort, "getPieceData">;
 
 interface ServiceParams {
-  sectionDataRepositoryPort: SectionDataRepositoryPort;
+  sectionDataRepositoryPort: PieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   tourGuideServicePort: TourGuideServicePort;
   pieceHighlightServicePort: PieceHighlightServicePort;

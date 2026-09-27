@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { StackStructureService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/StackStructureService";
 import type { PieceLifecycleServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLifecycle";
-import type { PieceAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/stackStructure";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackTestamentData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackTestamentData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
@@ -23,6 +22,8 @@ import {
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 import { makePieceLifecycleServiceDouble } from "../serviceDoubles";
+import type { PiecePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Piece";
+import { makePieceDouble } from "../adapterDoubles";
 
 const BIBLE_ID = "bible-id";
 const TESTAMENT_ID = "testament-id";
@@ -182,14 +183,12 @@ const clearedParentDataIds: ParentDataIds = {
 
 describe("pattern.bible-stack.application.services.StackStructureService", () => {
   let service: StackStructureService;
-  let pieceAdapterPort: Mocked<PieceAdapterPort>;
+  let pieceAdapterPort: Mocked<PiecePort>;
   let pieceLifecycleServicePort: Mocked<PieceLifecycleServicePort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
 
   beforeEach(() => {
-    pieceAdapterPort = {
-      makePieceErasable: vi.fn(),
-    };
+    pieceAdapterPort = makePieceDouble();
 
     pieceLifecycleServicePort = makePieceLifecycleServiceDouble();
 

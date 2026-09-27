@@ -2,29 +2,29 @@ import type { StackTestamentData } from "../../domain/entities/StackTestamentDat
 import type { PieceSelectionSource } from "../../domain/models/canvas";
 import type {
   AwaiterPort,
-  LabelSequenceConfigProviderPort,
-  TestamentSelectionAdapterPort,
-  PieceAdapterPort,
+  TestamentSelectionPort,
 } from "../ports/out/TestamentSelection";
-import type { SectionSpawnerPort } from "../ports/in/PieceSpawn";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
-// import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type { TestamentSelectionServicePort } from "../ports/in/TestamentSelection";
 import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { LabelSequenceConfigProviderPort } from "../ports/out/LabelSequenceConfigProvider";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { PiecePort } from "../ports/out/Piece";
+// import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 
 interface ServiceParams {
-  testamentSelectionAdapterPort: TestamentSelectionAdapterPort;
+  testamentSelectionAdapterPort: TestamentSelectionPort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
   pieceHighlighterPort: PieceHighlightServicePort;
-  sectionSpawnerPort: SectionSpawnerPort;
+  sectionSpawnerPort: StackPieceLifecyclePort;
   stackUpdateServicePort: StackUpdateServicePort;
   awaiterPort: AwaiterPort;
   labelSequenceConfigProviderPort: LabelSequenceConfigProviderPort;
-  pieceAdapterPort: PieceAdapterPort;
+  pieceAdapterPort: PiecePort;
   loggerPort: LoggerPort;
   // pieceLifecycleServicePort: PieceLifecycleServicePort;
 }

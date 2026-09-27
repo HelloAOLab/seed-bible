@@ -1,10 +1,6 @@
 import { computeNotificationDirection } from "../../functions/layout";
 import type { StackChapterData } from "../../../domain/entities/StackChapterData";
 import type {
-  ActivityNotificationAdapterPort,
-  ShowNotificationCommand,
-} from "../../../application/ports/out/PieceActivity";
-import type {
   ActivityNotification,
   BiblePiece,
 } from "../../../domain/models/canvas";
@@ -20,6 +16,10 @@ import type { PieceMapperPort } from "../../mappers/PieceMapper";
 import type { ObjectPooler } from "../environment/ObjectPooler";
 import type { PieceBotTags } from "../../models/casualos";
 import type { Vector2 as Vector2Type } from "../../../../../pattern-typings/AuxLibraryDefinitions";
+import type {
+  ShowNotificationCommand,
+  ActivityNotificationPort,
+} from "../../../application/ports/out/ActivityNotification";
 
 interface DimensionProviderPort {
   getDimension(): string;
@@ -46,7 +46,7 @@ const DIRECTION_STRATEGIES: {
   },
 };
 
-export class ActivityNotificationAdapter implements ActivityNotificationAdapterPort {
+export class ActivityNotificationAdapter implements ActivityNotificationPort {
   #objectPooler: AdapterParams["objectPooler"];
   #dimensionProviderPort: DimensionProviderPort;
   #pieceMapperPort: AdapterParams["pieceMapperPort"];

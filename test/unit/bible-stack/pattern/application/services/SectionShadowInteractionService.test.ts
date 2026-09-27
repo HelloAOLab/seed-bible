@@ -4,7 +4,6 @@ import type { SectionSelectionServicePort } from "../../../../../../patterns/bib
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
 import type { TourGuideServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TourGuide";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SectionShadowInteraction";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
 import type { SectionInfo } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/arrangement";
 import type {
@@ -15,6 +14,7 @@ import {
   makeSectionSelectionServiceDouble,
   makeSequenceStateServiceDouble,
 } from "../serviceDoubles";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
 
 const SECTION_ID = "section-id";
 

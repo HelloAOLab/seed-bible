@@ -1,15 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
-import {
-  PieceLabelService,
-  type LabelPropertiesStrategies,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceLabelService";
-import type {
-  ActivityIndicatorsAdapterPort,
-  IdGeneratorPort,
-  LabelAdapterPort,
-  LabelDataStorePort,
-  LabelFeedbackAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceLabel";
+import { PieceLabelService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceLabelService";
+import type { IdGeneratorPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceLabel";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
 import type { Piece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
@@ -24,6 +15,15 @@ import {
   makeLabelDateServiceDouble,
   makePieceActivityServiceDouble,
 } from "../serviceDoubles";
+import type { LabelPropertiesStrategies } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelPropertiesStrategies";
+import type { ActivityIndicatorsPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ActivityIndicators";
+import type { LabelPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Label";
+import type { LabelFeedbackPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelFeedback";
+import type { LabelDataStorePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelDataStore";
+import {
+  makeActivityIndicatorsDouble,
+  makeLabelFeedbackDouble,
+} from "../adapterDoubles";
 
 type T = StackLabelableBiblePiece;
 
@@ -112,12 +112,12 @@ const flushMicrotasks = () =>
 
 describe("pattern.bible-stack.application.services.PieceLabelService", () => {
   let service: PieceLabelService<T>;
-  let labelAdapterPort: Mocked<LabelAdapterPort>;
+  let labelAdapterPort: Mocked<LabelPort>;
   let labelDataStorePort: Mocked<LabelDataStorePort>;
   let indicatorsUpdaterPort: Mocked<PieceActivityServicePort>;
   let idGeneratorPort: Mocked<IdGeneratorPort>;
-  let activityIndicatorsAdapterPort: Mocked<ActivityIndicatorsAdapterPort>;
-  let labelAnimationAdapterPort: Mocked<LabelFeedbackAdapterPort>;
+  let activityIndicatorsAdapterPort: Mocked<ActivityIndicatorsPort>;
+  let labelAnimationAdapterPort: Mocked<LabelFeedbackPort>;
   let loggerPort: Mocked<LoggerPort>;
   let bookStrategy: ReturnType<typeof makeStrategy>;
   let labelsByOwnerId: Map<string, InfoLabelData>;
@@ -159,20 +159,13 @@ describe("pattern.bible-stack.application.services.PieceLabelService", () => {
       getId: vi.fn(() => "generated-id"),
     };
 
-    activityIndicatorsAdapterPort = {
-      showIndicators: vi.fn(),
-      hideIndicators: vi.fn(),
-      hideIndicator: vi.fn(),
-      updateIndicatorsPosition: vi.fn(),
-    };
+    activityIndicatorsAdapterPort = makeActivityIndicatorsDouble();
 
-    labelAnimationAdapterPort = {
-      displayAttentionFeedback: vi.fn(),
-      stopAttentionFeedback: vi.fn(),
+    labelAnimationAdapterPort = makeLabelFeedbackDouble({
       displayShowFeedback: vi.fn().mockResolvedValue(undefined),
       displayHideFeedback: vi.fn().mockResolvedValue(undefined),
       displayChangedIntensityFeedback: vi.fn().mockResolvedValue(undefined),
-    };
+    });
 
     loggerPort = {
       error: vi.fn(),

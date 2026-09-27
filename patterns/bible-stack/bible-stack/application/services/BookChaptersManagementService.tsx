@@ -4,17 +4,15 @@ import type { Piece } from "../../domain/models/canvas";
 import type { BookChaptersManagementServicePort } from "../ports/in/BookChaptersManagement";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
 import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
-import type {
-  BookChaptersManagementAdapterPort,
-  ChapterSpawnerPort,
-} from "../ports/out/BookChaptersManagement";
-import type { BibleDataRepositoryPort } from "../ports/out/StackUpdate";
+import type { BookChaptersManagementPort } from "../ports/out/BookChaptersManagement";
 import type { ScriptureServicePort } from "../ports/in/Scripture";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
 
 interface ServiceParams {
   biggerChapterProviderPort: ScriptureServicePort;
-  chapterSpawnerPort: ChapterSpawnerPort;
-  chaptersManagementAdapterPort: BookChaptersManagementAdapterPort;
+  chapterSpawnerPort: StackPieceLifecyclePort;
+  chaptersManagementAdapterPort: BookChaptersManagementPort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   pieceLabelServicePort: PieceLabelServicePort<"StackChapter">;

@@ -4,10 +4,6 @@ import {
   type BiblePiece,
   type Piece,
 } from "../../domain/models/canvas";
-import type {
-  PieceAdapterPort,
-  ScripturePieceDataRepositoryPort,
-} from "../ports/scripturePieceDrag";
 import type { StackStructureServicePort } from "../ports/in/StackStructure";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import {
@@ -18,11 +14,13 @@ import type { ScripturePieceDragServicePort } from "../ports/in/ScripturePieceDr
 import type { LoggerPort } from "../ports/out/Logger";
 import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { PiecePort } from "../ports/out/Piece";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
-  pieceAdapterPort: PieceAdapterPort;
-  scripturePieceDataRepositoryPort: ScripturePieceDataRepositoryPort;
+  pieceAdapterPort: PiecePort;
+  scripturePieceDataRepositoryPort: PieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   pieceHighlightServicePort: PieceHighlightServicePort;
   stackStructureServicePort: StackStructureServicePort;
@@ -30,7 +28,7 @@ interface ServiceParams {
 }
 
 type PieceConditionGetter = (params: {
-  pieceAdapterPort: PieceAdapterPort;
+  pieceAdapterPort: PiecePort;
   piece: Piece;
 }) => boolean;
 

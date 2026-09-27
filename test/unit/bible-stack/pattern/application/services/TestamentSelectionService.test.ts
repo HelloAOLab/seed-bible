@@ -1,13 +1,10 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { TestamentSelectionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/TestamentSelectionService";
-import type { SectionSpawnerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceSpawn";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type {
   AwaiterPort,
-  LabelSequenceConfigProviderPort,
-  PieceAdapterPort,
-  TestamentSelectionAdapterPort,
+  TestamentSelectionPort,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/TestamentSelection";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
@@ -35,6 +32,13 @@ import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bi
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import { makePieceHighlightServiceDouble } from "../serviceDoubles";
+import type { LabelSequenceConfigProviderPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelSequenceConfigProvider";
+import type { PiecePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Piece";
+import type { StackPieceLifecyclePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackPieceLifecycle";
+import {
+  makePieceDouble,
+  makeStackPieceLifecycleDouble,
+} from "../adapterDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -178,14 +182,14 @@ const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 describe("pattern.bible-stack.application.services.TestamentSelectionService", () => {
   let service: TestamentSelectionService;
-  let testamentSelectionAdapterPort: Mocked<TestamentSelectionAdapterPort>;
+  let testamentSelectionAdapterPort: Mocked<TestamentSelectionPort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let pieceHighlighterPort: Mocked<PieceHighlightServicePort>;
-  let sectionSpawnerPort: Mocked<SectionSpawnerPort>;
+  let sectionSpawnerPort: Mocked<StackPieceLifecyclePort>;
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
   let awaiterPort: Mocked<AwaiterPort>;
   let labelSequenceConfigProviderPort: Mocked<LabelSequenceConfigProviderPort>;
-  let pieceAdapterPort: Mocked<PieceAdapterPort>;
+  let pieceAdapterPort: Mocked<PiecePort>;
   let loggerPort: Mocked<LoggerPort>;
   let spawnedSectionPieces: Piece<"StackSection">[];
   let spawnedSectionBookPieces: Piece<"StackSectionBook">[];
@@ -249,7 +253,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
 
     pieceHighlighterPort = makePieceHighlightServiceDouble();
 
-    sectionSpawnerPort = {
+    sectionSpawnerPort = makeStackPieceLifecycleDouble({
       spawnSectionDomain: vi.fn(() => {
         const piece = makeSectionPiece(
           `spawned-section-piece-${spawnedSectionPieces.length}`
@@ -264,7 +268,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
         spawnedSectionBookPieces.push(piece);
         return piece;
       }),
-    };
+    });
 
     stackUpdateServicePort = {
       updateAllStacks: vi.fn(),
@@ -281,9 +285,7 @@ describe("pattern.bible-stack.application.services.TestamentSelectionService", (
       ),
     };
 
-    pieceAdapterPort = {
-      makeInteractable: vi.fn(),
-    };
+    pieceAdapterPort = makePieceDouble();
 
     loggerPort = {
       error: vi.fn(),

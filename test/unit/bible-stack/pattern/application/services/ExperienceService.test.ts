@@ -1,13 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ExperienceService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ExperienceService";
-import type { CameraAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/bibleLifecycle";
-import type {
-  AwaiterPort,
-  EnvironmentAdapterPort,
-  ExperienceAdapterPort,
-  ExperienceConfigProviderPort,
-  InteractionRegistryServicePort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/experience";
+import type { AwaiterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/experience";
 import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
 import type { ScripturePiecesStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ScripturePiecesState";
 import type { StackPresenceNavigationServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackPresenceNavigation";
@@ -30,6 +23,16 @@ import {
   makePieceHighlightServiceDouble,
   makeSequenceStateServiceDouble,
 } from "../serviceDoubles";
+import type { CameraPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Camera";
+import type { EnvironmentPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Environment";
+import type { ExperiencePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Experience";
+import type { InteractionRegistryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/InteractionRegistry";
+import type { ExperienceConfigProviderPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ExperienceConfigProvider";
+import {
+  makeEnvironmentDouble,
+  makeExperienceConfigProviderDouble,
+  makeInteractionRegistryDouble,
+} from "../adapterDoubles";
 
 const BIBLE_ID = "bible-id";
 const CREATION_DELAY = 750;
@@ -60,15 +63,15 @@ const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 describe("pattern.bible-stack.application.services.ExperienceService", () => {
   let service: ExperienceService;
-  let environmentAdapterPort: Mocked<EnvironmentAdapterPort>;
+  let environmentAdapterPort: Mocked<EnvironmentPort>;
   let stackManagementServicePort: Mocked<StackManagementServicePort>;
   let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
-  let interactionRegistryServicePort: Mocked<InteractionRegistryServicePort>;
-  let experienceAdapterPort: Mocked<ExperienceAdapterPort>;
+  let interactionRegistryServicePort: Mocked<InteractionRegistryPort>;
+  let experienceAdapterPort: Mocked<ExperiencePort>;
   let scripturePiecesStateServicePort: Mocked<ScripturePiecesStateServicePort>;
   let experienceConfigProviderPort: Mocked<ExperienceConfigProviderPort>;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
-  let cameraAdapterPort: Mocked<CameraAdapterPort>;
+  let cameraAdapterPort: Mocked<CameraPort>;
   let bibleLifecycleServicePort: Mocked<BibleLifecycleServicePort>;
   let bibleSequenceServicePort: Mocked<BibleSequenceServicePort>;
   let stackPresenceNavigationServicePort: Mocked<StackPresenceNavigationServicePort>;
@@ -82,9 +85,7 @@ describe("pattern.bible-stack.application.services.ExperienceService", () => {
   beforeEach(() => {
     bibleData = makeBibleData();
 
-    environmentAdapterPort = {
-      resetZoomMin: vi.fn(),
-    };
+    environmentAdapterPort = makeEnvironmentDouble();
 
     stackManagementServicePort = {
       clearAllStacks: vi.fn(),
@@ -92,9 +93,7 @@ describe("pattern.bible-stack.application.services.ExperienceService", () => {
 
     pieceHighlightServicePort = makePieceHighlightServiceDouble();
 
-    interactionRegistryServicePort = {
-      clearAllLastInteractions: vi.fn(),
-    };
+    interactionRegistryServicePort = makeInteractionRegistryDouble();
 
     experienceAdapterPort = {
       displayExperience: vi.fn(),
@@ -112,10 +111,10 @@ describe("pattern.bible-stack.application.services.ExperienceService", () => {
       disableLabelDates: vi.fn(),
     };
 
-    experienceConfigProviderPort = {
+    experienceConfigProviderPort = makeExperienceConfigProviderDouble({
       getInitialBibleCreationDelay: vi.fn(() => CREATION_DELAY),
       getBibleCreationPosition: vi.fn(() => creationPosition),
-    };
+    });
 
     sequenceStateServicePort = makeSequenceStateServiceDouble({
       executeAsSequence: vi.fn(async (task: () => Promise<void>) => {

@@ -1,11 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { PieceInteractabilityService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceInteractabilityService";
 import type { ScripturePiecesStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ScripturePiecesState";
-import type {
-  BibleDataRepositoryPort,
-  PieceAdapterPort,
-  PieceDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceInteractability";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -27,6 +22,13 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import { SelectionEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
 import type { PieceDataMap } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PiecePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Piece";
+import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import {
+  makeBibleDataRepositoryDouble,
+  makePieceDouble,
+} from "../adapterDoubles";
 
 type AnyPieceData = PieceDataMap[keyof PieceDataMap];
 
@@ -108,7 +110,7 @@ describe("pattern.bible-stack.application.services.PieceInteractabilityService",
   let service: PieceInteractabilityService;
   let bibleDataRepositoryPort: Mocked<BibleDataRepositoryPort>;
   let pieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
-  let pieceAdapterPort: Mocked<PieceAdapterPort>;
+  let pieceAdapterPort: Mocked<PiecePort>;
   let scripturePiecesStateServicePort: Mocked<ScripturePiecesStateServicePort>;
   let loggerPort: Mocked<LoggerPort>;
   let arePiecesDraggable: boolean;
@@ -247,7 +249,11 @@ describe("pattern.bible-stack.application.services.PieceInteractabilityService",
     datas.map((data) => data.piece!.id);
 
   const calledPieceIds = (
-    fn: Mocked<PieceAdapterPort>[keyof PieceAdapterPort]
+    fn: Mocked<PiecePort>[
+      | "anchorPiece"
+      | "unanchorPiece"
+      | "makeInteractable"
+      | "makeNonInteractable"]
   ) => fn.mock.calls.map(([piece]) => piece.id);
 
   const touchedPieceIds = () =>
@@ -268,21 +274,14 @@ describe("pattern.bible-stack.application.services.PieceInteractabilityService",
     arePiecesDraggable = true;
     dataByPieceId = new Map();
 
-    bibleDataRepositoryPort = {
-      getAllBiblesData: vi.fn(),
-    };
+    bibleDataRepositoryPort = makeBibleDataRepositoryDouble();
 
     pieceDataRepositoryPort = {
       getStandaloneTestaments: vi.fn(),
       getPieceData: vi.fn(),
     } as unknown as Mocked<PieceDataRepositoryPort>;
 
-    pieceAdapterPort = {
-      anchorPiece: vi.fn(),
-      unanchorPiece: vi.fn(),
-      makeInteractable: vi.fn(),
-      makeNonInteractable: vi.fn(),
-    };
+    pieceAdapterPort = makePieceDouble();
 
     scripturePiecesStateServicePort = {
       get arePiecesDraggable() {

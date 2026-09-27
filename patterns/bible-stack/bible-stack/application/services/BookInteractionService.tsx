@@ -1,4 +1,3 @@
-import type { BookDataRepositoryPort, PieceAdapterPort } from "../ports/books";
 import type { BookInteractionServicePort } from "../ports/in/BookInteraction";
 import {
   BibleStates,
@@ -21,8 +20,6 @@ import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import { LabelTranslucencyModes } from "../../domain/models/label";
-import type { BookInteractionConfigProviderPort } from "../ports/out/BookInteraction";
-import { BookInteractionDelays } from "../ports/out/BookInteraction";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import { HighlightStates } from "../../domain/models/highlight";
 import { SelectionStates } from "../../domain/models/selection";
@@ -30,16 +27,20 @@ import type { LoggerPort } from "../ports/out/Logger";
 import type { PaintServicePort } from "../ports/in/Paint";
 import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import { BookInteractionDelays } from "../ports/out/BookInteractionConfigProvider";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { PiecePort } from "../ports/out/Piece";
+import type { BookInteractionConfigProviderPort } from "../ports/out/BookInteractionConfigProvider";
 
 interface ServiceParams {
-  bookDataRepositoryPort: BookDataRepositoryPort;
+  bookDataRepositoryPort: PieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   tourGuideServicePort: TourGuideServicePort;
   bookSelectionServicePort: BookSelectionServicePort;
   pieceHighlightServicePort: PieceHighlightServicePort;
   explodedViewServicePort: ExplodedViewServicePort;
   sequenceStateServicePort: SequenceStateServicePort;
-  pieceAdapterPort: PieceAdapterPort;
+  pieceAdapterPort: PiecePort;
   bookInteractionConfigProviderPort: BookInteractionConfigProviderPort;
   paintPort: PaintServicePort;
   loggerPort: LoggerPort;

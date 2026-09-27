@@ -1,12 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BibleLifecycleService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BibleLifecycleService";
-import type {
-  BibleDataRepositoryPort,
-  BibleSetupAdapterPort,
-  IdGeneratorPort,
-  PieceLifecycleAdapterPort,
-  StackPieceLifecycleAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/bibleLifecycle";
+import type { IdGeneratorPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/bibleLifecycle";
 import type { ArrangementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Arrangement";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import type {
@@ -18,7 +12,6 @@ import type {
 import type { TestamentInfo } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/arrangement";
 import type { StackTestamentData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackTestamentData";
 import type { Piece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
-import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleLifecycle";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 import type { PieceLifecycleServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLifecycle";
@@ -26,17 +19,25 @@ import {
   makeArrangementServiceDouble,
   makePieceLifecycleServiceDouble,
 } from "../serviceDoubles";
+import type { BibleSetupPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleSetup";
+import type { StackPieceLifecyclePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackPieceLifecycle";
+import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleDataRepository";
+import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
+import {
+  makeBibleDataRepositoryDouble,
+  makeStackPieceLifecycleDouble,
+} from "../adapterDoubles";
 
 describe("pattern.bible-stack.application.services.BibleLifecycleService", () => {
   let service: BibleLifecycleService;
   let bibleDataRepositoryPort: Mocked<BibleDataRepositoryPort>;
-  let pieceLifecycleAdapterPort: Mocked<PieceLifecycleAdapterPort>;
+  let pieceLifecycleAdapterPort: Mocked<StackPieceLifecyclePort>;
   let pieceLifecycleServicePort: Mocked<PieceLifecycleServicePort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let arrangementServicePort: Mocked<ArrangementServicePort>;
   let idGeneratorPort: Mocked<IdGeneratorPort>;
-  let stackPieceLifecycleAdapterPort: Mocked<StackPieceLifecycleAdapterPort>;
-  let bibleSetupAdapterPort: Mocked<BibleSetupAdapterPort>;
+  let stackPieceLifecycleAdapterPort: Mocked<StackPieceLifecyclePort>;
+  let bibleSetupAdapterPort: Mocked<BibleSetupPort>;
   let loggerPort: Mocked<LoggerPort>;
   const makeBible = ({
     id = "bible-id",
@@ -81,13 +82,8 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
   };
 
   beforeEach(() => {
-    bibleDataRepositoryPort = {
-      removeBibleData: vi.fn(),
-      addBibleData: vi.fn(),
-    };
-    pieceLifecycleAdapterPort = {
-      despawnPieces: vi.fn(),
-    };
+    bibleDataRepositoryPort = makeBibleDataRepositoryDouble();
+    pieceLifecycleAdapterPort = makeStackPieceLifecycleDouble();
     pieceLifecycleServicePort = makePieceLifecycleServiceDouble();
     eventManagerPort = {
       subscribe: vi.fn(),
@@ -98,19 +94,7 @@ describe("pattern.bible-stack.application.services.BibleLifecycleService", () =>
     idGeneratorPort = {
       getId: vi.fn(),
     };
-    stackPieceLifecycleAdapterPort = {
-      spawnBibleTransformer: vi.fn(),
-      spawnCover: vi.fn(),
-      spawnCrossLine: vi.fn(),
-      spawnShadow: vi.fn(),
-      despawnSectionShadow: vi.fn(),
-      despawnTestament: vi.fn(),
-      despawnSection: vi.fn(),
-      despawnBook: vi.fn(),
-      despawnSectionBook: vi.fn(),
-      spawnSectionDomain: vi.fn(),
-      spawnSectionBookDomain: vi.fn(),
-    };
+    stackPieceLifecycleAdapterPort = makeStackPieceLifecycleDouble();
     bibleSetupAdapterPort = {
       setUp: vi.fn(),
     };

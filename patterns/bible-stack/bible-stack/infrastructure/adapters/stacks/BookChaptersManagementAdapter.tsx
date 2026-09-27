@@ -1,4 +1,3 @@
-import type { BookChaptersManagementAdapterPort } from "../../../application/ports/out/BookChaptersManagement";
 import type { BookInfo, ChapterInfo } from "../../../domain/models/arrangement";
 import type { Piece } from "../../../domain/models/canvas";
 import type { StackTransformer } from "../../../domain/models/pieces";
@@ -15,6 +14,7 @@ import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMappe
 import type { StackTransformerMapper } from "../../mappers/StackTransformerMapper";
 import type { ChapterTags } from "../../models/stack";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
+import type { BookChaptersManagementPort } from "../../../application/ports/out/BookChaptersManagement";
 
 interface AdapterParams {
   bookMapper: StackBookMapper;
@@ -27,7 +27,7 @@ interface AdapterParams {
   piecesConfigProvider: PiecesConfigProvider;
 }
 
-export class BookChapterManagementAdapter implements BookChaptersManagementAdapterPort {
+export class BookChaptersManagementAdapter implements BookChaptersManagementPort {
   #bookMapper: AdapterParams["bookMapper"];
   #sectionBookMapper: AdapterParams["sectionBookMapper"];
   #layoutConfigProvider: AdapterParams["layoutConfigProvider"];
@@ -70,7 +70,6 @@ export class BookChapterManagementAdapter implements BookChaptersManagementAdapt
     chapterInfo: ChapterInfo;
     bookInfo: BookInfo;
     isMovable: boolean;
-    index: number;
     biggerChapter: number;
   }) {
     const bookBot =

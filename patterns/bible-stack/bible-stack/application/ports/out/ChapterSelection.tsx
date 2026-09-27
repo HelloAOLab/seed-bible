@@ -17,3 +17,8 @@ export interface VersesBundleLifecycleAdapterPort {
   despawnVersesBundle(piece: Piece<"VersesBundle">): void;
   despawnVerse: (piece: Piece<"Verse">) => void;
 }
+
+export interface ChapterSelectionPort {
+  select(params: ChapterSelectionParams): Promise<void>;
+  deselect(params: ChapterSelectionParams): Promise<void>;
+}

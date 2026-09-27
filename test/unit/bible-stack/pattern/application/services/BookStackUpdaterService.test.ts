@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BookStackUpdaterService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BookStackUpdaterService";
-import type {
-  BookStackUpdaterPort as UpdaterAdapterPort,
-  LoggerPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackBookUpdater";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
@@ -29,6 +25,8 @@ import {
   makeBookChaptersManagementServiceDouble,
   makePieceLabelServiceDouble,
 } from "../serviceDoubles";
+import type { BookStackUpdaterPort as UpdaterAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BookStackUpdater";
+import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-id";

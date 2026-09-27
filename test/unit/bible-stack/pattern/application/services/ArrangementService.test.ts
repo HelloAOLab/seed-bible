@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ArrangementService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ArrangementService";
 import type {
-  ArrangementConfigProviderPort,
-  CustomArrangementStorePort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Arangement";
-import type {
   ArrangementInfo,
   TestamentInfo,
   SectionInfo,
@@ -13,10 +9,12 @@ import type {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/arrangement";
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
+import type { CustomArrangementStorePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/CustomArrangementStore";
+import type { StaticArrangementsProviderPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StaticArrangementsProvider";
 
 describe("bible-stack.application.services.ArrangementService", () => {
   let service: ArrangementService;
-  let arrangementConfigProviderPort: Mocked<ArrangementConfigProviderPort>;
+  let arrangementConfigProviderPort: Mocked<StaticArrangementsProviderPort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let customArrangementStorePort: Mocked<CustomArrangementStorePort>;
   const makeBook = (

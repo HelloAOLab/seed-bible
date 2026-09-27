@@ -1,10 +1,8 @@
-import type {
-  BibleDataRepositoryPort,
-  PieceDataRepositoryPort,
-} from "../ports/stackManagement";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { BibleLifecycleServicePort } from "../ports/in/BibleLifecycle";
 import type { StackManagementServicePort } from "../ports/in/StackManagement";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface StackManagementServiceProps {
   bibleLifecycleServicePort: BibleLifecycleServicePort;

@@ -2,16 +2,14 @@ import type { VersesBundleData } from "../../domain/entities/VersesBundleData";
 import type { Piece } from "../../domain/models/canvas";
 import type { VersesBundleSelectionServicePort } from "../ports/in/VersesBundleSelection";
 import type { LoggerPort } from "../ports/out/Logger";
-import type {
-  PaintAdapterPort,
-  PieceLifecycleAdapterPort,
-  VersesBundleSelectionAdapterPort,
-} from "../ports/out/VersesBundleSelection";
+import type { VersesBundleSelectionPort } from "../ports/out/VersesBundleSelection";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { PaintPort } from "../ports/out/Paint";
 
 interface ServiceParams {
-  pieceLifecycleAdapterPort: PieceLifecycleAdapterPort;
-  paintAdapter: PaintAdapterPort;
-  selectionAdapterPort: VersesBundleSelectionAdapterPort;
+  pieceLifecycleAdapterPort: StackPieceLifecyclePort;
+  paintAdapter: PaintPort;
+  selectionAdapterPort: VersesBundleSelectionPort;
   loggerPort: LoggerPort;
 }
 

@@ -1,7 +1,5 @@
-import { BiblePieces, type Piece } from "../../../domain/models/canvas";
+import { BiblePieces } from "../../../domain/models/canvas";
 import type { HighlightPacing } from "../../../domain/models/pieces";
-import type { PieceHighlightAdapterPort } from "../../../application/ports/pieces";
-import type { PieceHighlightPieceDataRepositoryPort } from "../../../application/ports/pieces";
 import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
@@ -17,13 +15,11 @@ import type { HighlightConfigProvider } from "../../config/highlight/HighlightCo
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { ColorLerper } from "../environment/ColorLerper";
 import { ColorParser } from "../../../domain/functions/colors";
-
-type StackPieceUnion =
-  | Piece<"StackTestament">
-  | Piece<"StackSection">
-  | Piece<"StackSectionBook">
-  | Piece<"StackBook">
-  | Piece<"StackChapter">;
+import type {
+  StackPieceUnion,
+  PieceHighlightPort,
+} from "../../../application/ports/out/PieceHighlight";
+import type { PieceDataRepository } from "./PieceDataRepository";
 
 export interface AdapterParams {
   testamentMapperPort: StackTestamentMapper;
@@ -33,11 +29,11 @@ export interface AdapterParams {
   chapterMapperPort: StackChapterMapper;
   visualStatePort: VisualStateRegistry;
   animationConfigProviderPort: HighlightConfigProvider;
-  pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
+  pieceDataRepositoryPort: PieceDataRepository;
   colorLerper: ColorLerper;
 }
 
-export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
+export class PieceHighlightAdapter implements PieceHighlightPort {
   #testamentMapperPort: StackTestamentMapper;
   #sectionMapperPort: StackSectionMapper;
   #sectionBookMapperPort: StackSectionBookMapper;
@@ -45,7 +41,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
   #chapterMapperPort: StackChapterMapper;
   #visualStatePort: VisualStateRegistry;
   #animationConfigProviderPort: HighlightConfigProvider;
-  #pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
+  #pieceDataRepositoryPort: PieceDataRepository;
   #colorLerper: AdapterParams["colorLerper"];
 
   constructor({

@@ -1,11 +1,5 @@
 import { StackBibleData } from "../../domain/entities/StackBibleData";
-import type {
-  PieceLifecycleAdapterPort,
-  BibleDataRepositoryPort,
-  IdGeneratorPort,
-  StackPieceLifecycleAdapterPort,
-  BibleSetupAdapterPort,
-} from "../ports/bibleLifecycle";
+import type { IdGeneratorPort } from "../ports/bibleLifecycle";
 import type { WorldPosition } from "../../domain/models/spatial";
 import {
   BibleVisualizationStates,
@@ -14,21 +8,24 @@ import {
 } from "../../domain/models/canvas";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
-import type { LoggerPort } from "../ports/out/BibleLifecycle";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { BibleLifecycleServicePort } from "../ports/in/BibleLifecycle";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { BibleSetupPort } from "../ports/out/BibleSetup";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
+import type { LoggerPort } from "../ports/out/Logger";
 
 interface ServiceParams {
-  pieceLifecycleAdapterPort: PieceLifecycleAdapterPort;
+  pieceLifecycleAdapterPort: StackPieceLifecyclePort;
   pieceLifecycleServicePort: PieceLifecycleServicePort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
   arrangementServicePort: ArrangementServicePort;
   idGeneratorPort: IdGeneratorPort;
-  stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
-  bibleSetupAdapterPort: BibleSetupAdapterPort;
+  stackPieceLifecycleAdapterPort: StackPieceLifecyclePort;
+  bibleSetupAdapterPort: BibleSetupPort;
   loggerPort: LoggerPort;
 }
 

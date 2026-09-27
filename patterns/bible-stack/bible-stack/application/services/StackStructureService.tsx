@@ -5,14 +5,14 @@ import { StackSectionBookData } from "../../domain/entities/StackSectionBookData
 import { StackBookData } from "../../domain/entities/StackBookData";
 import { StackChapterData } from "../../domain/entities/StackChapterData";
 import { StackBibleData } from "../../domain/entities/StackBibleData";
-import type { PieceAdapterPort } from "../ports/stackStructure";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type { PieceDataMap } from "../../domain/models/canvas";
+import type { PiecePort } from "../ports/out/Piece";
 
 interface ServiceParams {
-  pieceAdapterPort: PieceAdapterPort;
+  pieceAdapterPort: PiecePort;
   pieceLifecycleServicePort: PieceLifecycleServicePort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
 }

@@ -1,11 +1,4 @@
-export const BookInteractionDelays = {
-  UnhighlightOtherSectionBooks: "UnhighlightOtherSectionBooks",
-  UnhighlightBook: "UnhighlightBook",
-} as const;
-
-export type BookInteractionDelay =
-  (typeof BookInteractionDelays)[keyof typeof BookInteractionDelays];
-
+import type { BookInteractionDelay } from "./BookInteractionConfigProvider";
 export interface BookInteractionConfigProviderPort {
   getDelay: (delay: BookInteractionDelay) => number;
 }

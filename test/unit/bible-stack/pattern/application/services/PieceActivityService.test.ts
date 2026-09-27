@@ -3,17 +3,9 @@ import { PieceActivityService } from "../../../../../../patterns/bible-stack/bib
 import type { ArrangementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Arrangement";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type {
-  ActivityIndicatorLifecyclePort,
-  ActivityIndicatorsAdapterPort,
-  ActivityNotificationAdapterPort,
-  AnyShowIndicatorCommand,
-  DataRegistryPort,
   GetPieceData,
   IdGeneratorPort,
-  LabelDataStorePort,
-  ShowExtraContentIndicatorCommand,
 } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceActivity";
-import type { UserIdentityPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/UserIdentity";
 import { ActivityIndicatorData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/ActivityIndicatorData";
 import { InfoLabelData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/InfoLabelData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -42,6 +34,21 @@ import type {
 import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/EventManager";
 import type { UserPresenceServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/UserPresence";
 import { makeArrangementServiceDouble } from "../serviceDoubles";
+import type {
+  ShowExtraContentIndicatorCommand,
+  AnyShowIndicatorCommand,
+  ActivityIndicatorsPort,
+} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ActivityIndicators";
+import type { StackPieceLifecyclePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackPieceLifecycle";
+import type { ActivityNotificationPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ActivityNotification";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import type { UserIdentityStorePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/UserIdentityStore";
+import type { LabelDataStorePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelDataStore";
+import {
+  makeActivityIndicatorsDouble,
+  makeStackPieceLifecycleDouble,
+  makeUserIdentityStoreDouble,
+} from "../adapterDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const OWN_CONNECTION_ID = "own-connection";
@@ -293,14 +300,14 @@ type RegisteredData =
 
 describe("pattern.bible-stack.application.services.PieceActivityService", () => {
   let service: PieceActivityService;
-  let dataRegistryPort: Mocked<DataRegistryPort>;
+  let dataRegistryPort: Mocked<PieceDataRepositoryPort>;
   let arrangementServicePort: Mocked<ArrangementServicePort>;
   let labelDataStorePort: Mocked<LabelDataStorePort>;
   let userPresenceServicePort: Mocked<UserPresenceServicePort>;
-  let activityIndicatorsAdapterPort: Mocked<ActivityIndicatorsAdapterPort>;
-  let activityIndicatorLifecyclePort: Mocked<ActivityIndicatorLifecyclePort>;
-  let activityNotificationAdapterPort: Mocked<ActivityNotificationAdapterPort>;
-  let userIdentityStorePort: Mocked<UserIdentityPort>;
+  let activityIndicatorsAdapterPort: Mocked<ActivityIndicatorsPort>;
+  let activityIndicatorLifecyclePort: Mocked<StackPieceLifecyclePort>;
+  let activityNotificationAdapterPort: Mocked<ActivityNotificationPort>;
+  let userIdentityStorePort: Mocked<UserIdentityStorePort>;
   let idGeneratorPort: Mocked<IdGeneratorPort>;
   let loggerPort: Mocked<LoggerPort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
@@ -385,7 +392,7 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
       getDataById: vi.fn(),
       getPieceData: vi.fn(),
       getAllPiecesDataByType: vi.fn(),
-    } as unknown as Mocked<DataRegistryPort>;
+    } as unknown as Mocked<PieceDataRepositoryPort>;
 
     arrangementServicePort = makeArrangementServiceDouble();
 
@@ -408,16 +415,9 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
       getOwnUserSelectedInstance: vi.fn(),
     };
 
-    activityIndicatorsAdapterPort = {
-      showIndicators: vi.fn(),
-      hideIndicators: vi.fn(),
-      hideIndicator: vi.fn(),
-      updateIndicatorsPosition: vi.fn(),
-    };
+    activityIndicatorsAdapterPort = makeActivityIndicatorsDouble();
 
-    activityIndicatorLifecyclePort = {
-      spawnActivityIndicatorDomain: vi.fn(),
-    };
+    activityIndicatorLifecyclePort = makeStackPieceLifecycleDouble();
 
     activityNotificationAdapterPort = {
       hideNotification: vi.fn(),
@@ -426,9 +426,7 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
       updateNotificationDirection: vi.fn(),
     };
 
-    userIdentityStorePort = {
-      getUserDataByIds: vi.fn(),
-    };
+    userIdentityStorePort = makeUserIdentityStoreDouble();
 
     idGeneratorPort = {
       getId: vi.fn(),

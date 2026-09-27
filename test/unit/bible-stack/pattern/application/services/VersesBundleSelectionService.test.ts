@@ -1,14 +1,16 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { VersesBundleSelectionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/VersesBundleSelectionService";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type {
-  PaintAdapterPort,
-  PieceLifecycleAdapterPort,
-  VersesBundleSelectionAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/VersesBundleSelection";
 import { VerseData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/VerseData";
 import { VersesBundleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/VersesBundleData";
 import type { Piece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PaintPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Paint";
+import type { StackPieceLifecyclePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackPieceLifecycle";
+import type { VersesBundleSelectionPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/VersesBundleSelection";
+import {
+  makePaintDouble,
+  makeStackPieceLifecycleDouble,
+} from "../adapterDoubles";
 
 const VERSE_START = 4;
 
@@ -61,16 +63,16 @@ const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 describe("pattern.bible-stack.application.services.VersesBundleSelectionService", () => {
   let service: VersesBundleSelectionService;
-  let pieceLifecycleAdapterPort: Mocked<PieceLifecycleAdapterPort>;
-  let paintAdapter: Mocked<PaintAdapterPort>;
-  let selectionAdapterPort: Mocked<VersesBundleSelectionAdapterPort>;
+  let pieceLifecycleAdapterPort: Mocked<StackPieceLifecyclePort>;
+  let paintAdapter: Mocked<PaintPort>;
+  let selectionAdapterPort: Mocked<VersesBundleSelectionPort>;
   let loggerPort: Mocked<LoggerPort>;
   let spawnedPieces: Piece<"Verse">[];
 
   beforeEach(() => {
     spawnedPieces = [];
 
-    pieceLifecycleAdapterPort = {
+    pieceLifecycleAdapterPort = makeStackPieceLifecycleDouble({
       spawnVerseDomain: vi.fn(() => {
         const piece: Piece<"Verse"> = {
           id: `spawned-verse-piece-${spawnedPieces.length}`,
@@ -79,11 +81,9 @@ describe("pattern.bible-stack.application.services.VersesBundleSelectionService"
         spawnedPieces.push(piece);
         return piece;
       }),
-    };
+    });
 
-    paintAdapter = {
-      paint: vi.fn(),
-    };
+    paintAdapter = makePaintDouble();
 
     selectionAdapterPort = {
       select: vi.fn(),

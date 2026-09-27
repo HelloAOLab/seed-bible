@@ -1,4 +1,3 @@
-import type { InteractionRegistryServicePort } from "../../../application/ports/experience";
 import type { StackBibleData } from "../../../domain/entities/StackBibleData";
 import type { StackBookData } from "../../../domain/entities/StackBookData";
 import type { StackChapterData } from "../../../domain/entities/StackChapterData";
@@ -6,6 +5,7 @@ import type { StackSectionBookData } from "../../../domain/entities/StackSection
 import { StackSectionData } from "../../../domain/entities/StackSectionData";
 import { StackTestamentData } from "../../../domain/entities/StackTestamentData";
 import { BiblePieces } from "../../../domain/models/canvas";
+import type { InteractionRegistryPort } from "../../../application/ports/out/InteractionRegistry";
 
 export type RegistryMap = {
   [BiblePieces.StackTestament]: StackTestamentData | undefined;
@@ -15,7 +15,7 @@ export type RegistryMap = {
   StackBible: StackBibleData | undefined;
 };
 
-export class InteractionRegistry implements InteractionRegistryServicePort {
+export class InteractionRegistry implements InteractionRegistryPort {
   #registryMap: RegistryMap = {
     [BiblePieces.StackTestament]: undefined,
     [BiblePieces.StackSection]: undefined,

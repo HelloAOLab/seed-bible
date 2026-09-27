@@ -3,8 +3,8 @@ import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import type { LoggerPort } from "../ports/out/Logger";
-import type { PieceDataRepositoryPort } from "../ports/out/SectionShadowInteraction";
 import type { SectionShadowInteractionServicePort } from "../ports/in/SectionShadowInteraction";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   pieceDataRepositoryPort: PieceDataRepositoryPort;

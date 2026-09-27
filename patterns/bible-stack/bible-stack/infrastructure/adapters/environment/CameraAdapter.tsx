@@ -1,14 +1,16 @@
 import type { WorldPosition } from "../../../domain/models/spatial";
 import { GetCamRotationFocusPoint } from "../../functions/casualos";
-import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type { SequenceConfigProvider } from "../../config/sequences/SequenceConfigProvider";
-import type { FocusOnAnimationKey } from "../../../application/ports/out/Camera";
+import type {
+  FocusOnAnimationKey,
+  CameraPort,
+} from "../../../application/ports/out/Camera";
 
 interface CameraAdapterParams {
   sequenceConfigProviderPort: SequenceConfigProvider;
 }
 
-export class CameraAdapter implements CameraAdapterPort {
+export class CameraAdapter implements CameraPort {
   #sequenceConfigProviderPort: CameraAdapterParams["sequenceConfigProviderPort"];
 
   constructor({ sequenceConfigProviderPort }: CameraAdapterParams) {

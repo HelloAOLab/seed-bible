@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { SpatialNavigationService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/SpatialNavigationService";
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
-import type {
-  BibleDataRepositoryPort,
-  BibleRecenterAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SpatialNavigation";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import {
   BibleTypes,
@@ -12,6 +8,9 @@ import {
   CrossPositions,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import { makeSequenceStateServiceDouble } from "../serviceDoubles";
+import type { BibleRecenterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleRecenter";
+import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleDataRepository";
+import { makeBibleDataRepositoryDouble } from "../adapterDoubles";
 
 const makeBibleData = (id: string): StackBibleData =>
   new StackBibleData({
@@ -26,7 +25,7 @@ describe("pattern.bible-stack.application.services.SpatialNavigationService", ()
   let service: SpatialNavigationService;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
   let bibleDataRepositoryPort: Mocked<BibleDataRepositoryPort>;
-  let bibleRecenterAdapterPort: Mocked<BibleRecenterAdapterPort>;
+  let bibleRecenterAdapterPort: Mocked<BibleRecenterPort>;
   let isInsideSequence: boolean;
 
   beforeEach(() => {
@@ -44,9 +43,9 @@ describe("pattern.bible-stack.application.services.SpatialNavigationService", ()
       }),
     });
 
-    bibleDataRepositoryPort = {
+    bibleDataRepositoryPort = makeBibleDataRepositoryDouble({
       getAllBiblesData: vi.fn(() => [makeBibleData("bible-id")]),
-    };
+    });
 
     bibleRecenterAdapterPort = {
       isBibleOffScreen: vi.fn(async () => true),

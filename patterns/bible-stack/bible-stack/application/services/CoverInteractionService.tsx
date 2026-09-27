@@ -4,7 +4,7 @@ import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { CoverInteractionServicePort } from "../ports/in/CoverInteraction";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { LoggerPort } from "../ports/out/Logger";
-import type { BibleDataRepositoryPort } from "../ports/stacks";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
 
 interface ServiceParams {
   bibleDataRepositoryPort: BibleDataRepositoryPort;

@@ -2,10 +2,6 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { StackUpdateService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/StackUpdateService";
 import type { PieceInteractabilityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceInteractability";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type {
-  BibleDataRepositoryPort,
-  PieceDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackUpdate";
 import type { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import type { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
@@ -16,6 +12,9 @@ import type { BibleStackUpdaterServicePort } from "../../../../../../patterns/bi
 import type { TestamentStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentStackUpdater";
 import type { BookStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookStackUpdater";
 import type { SectionStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionStackUpdater";
+import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import { makeBibleDataRepositoryDouble } from "../adapterDoubles";
 
 const bibleData = { id: "bible-id" } as unknown as StackBibleData;
 const testamentData = { id: "testament-id" } as unknown as StackTestamentData;
@@ -64,10 +63,9 @@ describe("pattern.bible-stack.application.services.StackUpdateService", () => {
       update: vi.fn(async () => {}),
     };
 
-    bibleDataRepositoryPort = {
+    bibleDataRepositoryPort = makeBibleDataRepositoryDouble({
       getAllBiblesData: vi.fn(() => [bibleData]),
-      getBibleDataById: vi.fn(),
-    };
+    });
 
     pieceDataRepositoryPort = {
       getStandaloneTestaments: vi.fn(() => [testamentData]),

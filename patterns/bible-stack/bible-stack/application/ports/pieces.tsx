@@ -4,9 +4,10 @@ import type { StackSectionBookData } from "../../domain/entities/StackSectionBoo
 import type { Piece, PieceDataMap } from "../../domain/models/canvas";
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
-import type { BibleDataRepositoryPort } from "./stacks";
 import type { HighlightPacing } from "../../domain/models/pieces";
-import type { ActivityNotificationAdapterPort } from "./out/PieceActivity";
+import type { HighlightDelay } from "./out/HighlightConfigProvider";
+import type { ActivityNotificationPort } from "./out/ActivityNotification";
+import type { BibleDataRepositoryPort } from "./out/BibleDataRepository";
 
 export interface PieceDataRepositoryPort {
   addTestamentData: (data: StackTestamentData) => void;
@@ -70,21 +71,13 @@ export interface PieceUnhighlightSchedulerAdapterPort {
   clear(id: string): void;
 }
 export type PieceHighlightActivityNotificationAdapterPort = Pick<
-  ActivityNotificationAdapterPort,
+  ActivityNotificationPort,
   "hideNotification"
 >;
 export type PieceHierarchyStackDataRepositoryPort = Pick<
   BibleDataRepositoryPort,
   "getBibleDataById"
 >;
-
-export const HighlightDelays = {
-  UserFocusUnhighlightDelay: "UserFocusUnhighlightDelay",
-  TransitionUnhighlightDelay: "TransitionUnhighlightDelay",
-} as const;
-
-export type HighlightDelay =
-  (typeof HighlightDelays)[keyof typeof HighlightDelays];
 
 export interface HighlightConfigProviderPort {
   getDelay: (delay: HighlightDelay) => number;

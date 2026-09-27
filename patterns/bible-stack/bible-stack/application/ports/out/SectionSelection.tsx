@@ -13,3 +13,8 @@ export interface SectionSelectionAdapterPort {
   ) => Promise<void>;
   deselect: (data: StackSectionData) => Promise<void>;
 }
+
+export interface SectionSelectionPort {
+  select(data: StackSectionData, pacing?: StackUpdatePacing): Promise<void>;
+  deselect(data: StackSectionData): Promise<void>;
+}

@@ -1,9 +1,5 @@
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { PieceInteractabilityServicePort } from "../ports/in/PieceInteractability";
-import type {
-  BibleDataRepositoryPort,
-  PieceDataRepositoryPort,
-} from "../ports/out/StackUpdate";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { StackAncestorType } from "../../domain/models/canvas";
 import type { LoggerPort } from "../ports/out/Logger";
@@ -11,6 +7,8 @@ import type { BibleStackUpdaterServicePort } from "../ports/in/BibleStackUpdater
 import type { TestamentStackUpdaterServicePort } from "../ports/in/TestamentStackUpdater";
 import type { BookStackUpdaterServicePort } from "../ports/in/BookStackUpdater";
 import type { SectionStackUpdaterServicePort } from "../ports/in/SectionStackUpdater";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   pieceInteractabilityPort: PieceInteractabilityServicePort &

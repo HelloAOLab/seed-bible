@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { PieceHierarchyService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceHierarchyService";
-import type {
-  PieceHierarchyPieceDataRepositoryPort,
-  PieceHierarchyStackDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
@@ -19,6 +15,9 @@ import {
   BibleVisualizationStates,
   CrossPositions,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleDataRepository";
+import { makeBibleDataRepositoryDouble } from "../adapterDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 
@@ -121,8 +120,8 @@ type RegisteredData =
 
 describe("pattern.bible-stack.application.services.PieceHierarchyService", () => {
   let service: PieceHierarchyService;
-  let pieceDataRepositoryPort: Mocked<PieceHierarchyPieceDataRepositoryPort>;
-  let bibleDataRepositoryPort: Mocked<PieceHierarchyStackDataRepositoryPort>;
+  let pieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
+  let bibleDataRepositoryPort: Mocked<BibleDataRepositoryPort>;
   let biblesById: Map<string, StackBibleData>;
   let dataByTypeAndId: Map<string, RegisteredData>;
 
@@ -142,16 +141,14 @@ describe("pattern.bible-stack.application.services.PieceHierarchyService", () =>
 
     pieceDataRepositoryPort = {
       getDataById: vi.fn(),
-    } as unknown as Mocked<PieceHierarchyPieceDataRepositoryPort>;
+    } as unknown as Mocked<PieceDataRepositoryPort>;
 
-    bibleDataRepositoryPort = {
-      getBibleDataById: vi.fn(),
-    };
+    bibleDataRepositoryPort = makeBibleDataRepositoryDouble();
 
     pieceDataRepositoryPort.getDataById.mockImplementation((({ type, id }) =>
       dataByTypeAndId.get(
         `${type}:${id}`
-      )) as PieceHierarchyPieceDataRepositoryPort["getDataById"]);
+      )) as PieceDataRepositoryPort["getDataById"]);
     bibleDataRepositoryPort.getBibleDataById.mockImplementation((id) =>
       biblesById.get(id)
     );

@@ -1,36 +1,15 @@
 import type { InfoLabelData } from "../../../domain/entities/InfoLabelData";
 import type { ActivityIndicatorData } from "../../../domain/entities/ActivityIndicatorData";
 import type { Piece, PieceDataMap } from "../../../domain/models/canvas";
-import type { HexString } from "../../../domain/models/commonTypes";
 import type {
-  LabelDateFormat,
   LabelPosition,
   LabelTranslucencyMode,
   ShowSequencePacing,
 } from "../../../domain/models/label";
 import type { StackLabelableBiblePiece } from "../../../domain/models/pieceLifecycle";
-import type { ShowIndicatorsCommand } from "./PieceActivity";
 import type { ActivityContainer } from "../../../domain/models/activity";
-
-export type SpawnLabel = (params: {
-  piece: Piece<StackLabelableBiblePiece>;
-  label: string;
-  date?: string;
-  color: HexString;
-  labelColor: HexString;
-  labelPositioning: LabelPosition;
-  translucencyMode: LabelTranslucencyMode;
-  isInteractable?: boolean;
-  dateFormat: LabelDateFormat;
-  makesAttentionFeedback: boolean;
-}) => {
-  transformer: Piece<"InfoLabelTransformer">;
-  tail: Piece<"InfoLabelTail">;
-  label: Piece<"InfoLabelText">;
-  date?: Piece<"InfoLabelDate">;
-};
-
-export type DespawnLabel = (data: InfoLabelData) => void;
+import type { ShowIndicatorsCommand } from "./ActivityIndicators";
+import type { SpawnLabel, DespawnLabel } from "./Label";
 
 export interface LabelAdapterPort {
   spawnLabel: SpawnLabel;

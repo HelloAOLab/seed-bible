@@ -22,3 +22,7 @@ export type UpdateReturnValue = Promise<{
 export interface BibleStackUpdaterAdapterPort {
   update(command: UpdateCommand): UpdateReturnValue;
 }
+
+export interface BibleStackUpdaterPort {
+  update(params: UpdateCommand): UpdateReturnValue;
+}

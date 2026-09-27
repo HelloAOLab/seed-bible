@@ -5,7 +5,6 @@ import {
   type Piece,
   type SelectionModality,
 } from "../../domain/models/canvas";
-import type { TestamentDataRepositoryPort } from "../ports/testaments";
 import type { TestamentInteractionServicePort } from "../ports/in/TestamentInteraction";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
@@ -17,10 +16,11 @@ import type { ParentDataIds } from "../../domain/models/canvas";
 import type { PaintServicePort } from "../ports/in/Paint";
 import type { TestamentSelectionServicePort } from "../ports/in/TestamentSelection";
 import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
-  testamentDataRepositoryPort: TestamentDataRepositoryPort;
+  testamentDataRepositoryPort: PieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   tourGuideServicePort: TourGuideServicePort;
   testamentSelectionServicePort: TestamentSelectionServicePort;

@@ -1,4 +1,3 @@
-import type { PieceDataRepositoryPort as BasePieceDataRepositoryPort } from "./pieces";
 import type {
   BookBot,
   ChapterBot,
@@ -10,6 +9,7 @@ import type {
 } from "../../infrastructure/models/stack";
 import type { Piece, SectionShadow } from "../../domain/models/canvas";
 import type { VersesBundleData } from "../../domain/entities/VersesBundleData";
+import type { PieceDataRepositoryPort as BasePieceDataRepositoryPort } from "./out/PieceDataRepository";
 
 export type PieceDataRepositoryPort = Pick<
   BasePieceDataRepositoryPort,

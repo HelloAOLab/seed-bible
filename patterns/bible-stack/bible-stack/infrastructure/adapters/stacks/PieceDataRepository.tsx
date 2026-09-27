@@ -4,14 +4,11 @@ import { StackSectionData } from "../../../domain/entities/StackSectionData";
 import { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
 import { StackBookData } from "../../../domain/entities/StackBookData";
 import { StackChapterData } from "../../../domain/entities/StackChapterData";
-import type { PieceDataRepositoryPort } from "../../../application/ports/pieces";
-import type { PieceDataRepositoryPort as StackManagementPieceDataRepositoryPort } from "../../../application/ports/stackManagement";
-import type { PieceDataRepositoryPort as StackUpdatePieceDataRepositoryPort } from "../../../application/ports/out/StackUpdate";
-import type { PieceDataRepositoryPort as ViewportPieceDataRepositoryPort } from "../../../application/ports/out/ViewportService";
 import type { PieceDataMap } from "../../../domain/models/canvas";
+import type { PieceDataRepositoryPort } from "../../../application/ports/out/PieceDataRepository";
 
 // prettier-ignore
-export class PieceDataRepository implements PieceDataRepositoryPort, StackManagementPieceDataRepositoryPort, StackUpdatePieceDataRepositoryPort, ViewportPieceDataRepositoryPort {
+export class PieceDataRepository implements PieceDataRepositoryPort {
   #testamentsData: Set<StackTestamentData> = new Set();
   #sectionsData: Set<StackSectionData> = new Set();
   #sectionBooksData: Set<StackSectionBookData> = new Set();

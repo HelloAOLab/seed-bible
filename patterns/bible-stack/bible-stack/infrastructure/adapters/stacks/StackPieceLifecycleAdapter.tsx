@@ -1,5 +1,3 @@
-import type { StackPieceLifecycleAdapterPort as PieceLifecycleAdapterPort } from "../../../application/ports/pieceLifecycle";
-import type { StackPieceLifecycleAdapterPort as BibleLifecycleAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type {
   ActivityIndicatorBot,
   BookBot,
@@ -38,7 +36,7 @@ import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
 import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
 import type { StackShadowMapper } from "../../mappers/StackShadowMapper";
 import type { ActivityIndicatorMapper } from "../../mappers/ActivityIndicatorMapper";
-import type { PieceLifecycleAdapterPort as BibleLifecyclePieceLifecycleAdapterPort } from "../../../application/ports/bibleLifecycle";
+import type { StackPieceLifecyclePort } from "../../../application/ports/out/StackPieceLifecycle";
 
 export interface StackPieceLifecycleAdapterParams {
   objectPoolerPort: ObjectPooler<BibleStackObjectPoolerMap>;
@@ -58,7 +56,7 @@ export interface StackPieceLifecycleAdapterParams {
 }
 
 // prettier-ignore
-export class StackPieceLifecycleAdapter implements PieceLifecycleAdapterPort, BibleLifecycleAdapterPort, BibleLifecyclePieceLifecycleAdapterPort {
+export class StackPieceLifecycleAdapter implements StackPieceLifecyclePort {
   #objectPoolerPort: StackPieceLifecycleAdapterParams["objectPoolerPort"];
   #testamentMapperPort: StackPieceLifecycleAdapterParams["testamentMapperPort"];
   #sectionMapperPort: StackPieceLifecycleAdapterParams["sectionMapperPort"];

@@ -1,14 +1,5 @@
 import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
-import type {
-  BibleSequenceAdapterPort,
-  BibleSequenceServiceConfigProviderPort,
-  LabelDataRepositoryPort,
-  StackPieceLifecycleAdapterPort,
-  PieceAdapterPort,
-  RenderOrderAdapterPort,
-} from "../ports/bibleLifecycle";
-import type { PieceDataRepositoryPort } from "../ports/pieces";
 import type { AwaiterPort } from "../ports/experience";
 import {
   HighlightRequestSources,
@@ -33,20 +24,27 @@ import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiece
 import type { BookChaptersManagementServicePort } from "../ports/in/BookChaptersManagement";
 import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
+import type { BibleSequencePort } from "../ports/out/BibleSequence";
+import type { SequenceConfigProviderPort } from "../ports/out/SequenceConfigProvider";
+import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
+import type { PiecePort } from "../ports/out/Piece";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { RenderOrderPort } from "../ports/out/RenderOrder";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   eventManagerPort: EventManagerPort<BibleStackEvents>;
-  bibleSequenceAdapterPort: BibleSequenceAdapterPort;
+  bibleSequenceAdapterPort: BibleSequencePort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
   awaiterPort: AwaiterPort;
-  configProviderPort: BibleSequenceServiceConfigProviderPort;
+  configProviderPort: SequenceConfigProviderPort;
   pieceHighlightServicePort: PieceHighlightServicePort;
   pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
-  labelDataRepositoryPort: LabelDataRepositoryPort;
-  pieceAdapterPort: PieceAdapterPort;
-  stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
+  labelDataRepositoryPort: LabelDataStorePort;
+  pieceAdapterPort: PiecePort;
+  stackPieceLifecycleAdapterPort: StackPieceLifecyclePort;
   bookChaptersManagementServicePort: BookChaptersManagementServicePort;
-  renderOrderAdapterPort: RenderOrderAdapterPort;
+  renderOrderAdapterPort: RenderOrderPort;
   pieceDataRepositoryPort: Pick<
     PieceDataRepositoryPort,
     | "getAllTestaments"

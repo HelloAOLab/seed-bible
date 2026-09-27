@@ -1,10 +1,7 @@
 import type { InfoLabelData } from "../../../domain/entities/InfoLabelData";
-
-import type { HexString } from "../../../domain/models/commonTypes";
 import {
   type Piece,
   type ActivityIndicator,
-  type ActivityIndicatorType,
   type ActivityNotification,
 } from "../../../domain/models/canvas";
 import type { ActivityIndicatorData } from "../../../domain/entities/ActivityIndicatorData";
@@ -13,6 +10,8 @@ import type {
   ActivityContainer,
   NotifiableContainer,
 } from "../../../domain/models/activity";
+import type { ShowIndicatorsCommand } from "./ActivityIndicators";
+import type { ShowNotificationCommand } from "./ActivityNotification";
 
 export type GetPieceDataById = <T extends keyof PieceDataMap>(params: {
   type: T;
@@ -49,33 +48,6 @@ export interface LabelDataStorePort {
   getDataByOwnerId: (id: string) => InfoLabelData | undefined;
 }
 
-export interface BaseShowIndicatorCommand<T extends ActivityIndicatorType> {
-  type: T;
-  index: number;
-  indicator: ActivityIndicatorData;
-}
-
-export interface ShowRegularIndicatorCommand extends BaseShowIndicatorCommand<"regular"> {
-  isSelected: boolean;
-  isOwnUser: boolean;
-  color: HexString;
-  pictureUrl?: string | null | undefined;
-  icon: string;
-}
-
-export interface ShowExtraContentIndicatorCommand extends BaseShowIndicatorCommand<"extraContent"> {
-  extraUsers: number;
-}
-
-export type AnyShowIndicatorCommand =
-  | ShowRegularIndicatorCommand
-  | ShowExtraContentIndicatorCommand;
-
-export interface ShowIndicatorsCommand {
-  container: ActivityContainer;
-  command: AnyShowIndicatorCommand | AnyShowIndicatorCommand[];
-}
-
 export interface ActivityIndicatorsAdapterPort {
   showIndicators: (command: ShowIndicatorsCommand) => void;
   hideIndicators: (indicators: ActivityIndicatorData[]) => void;
@@ -89,16 +61,6 @@ export interface ActivityIndicatorLifecyclePort {
 
 export interface IdGeneratorPort {
   getId: () => string;
-}
-
-export interface ShowNotificationCommand {
-  isOwnUserInPiece: boolean;
-  activityCount: number;
-  color: HexString;
-  notification?: ActivityNotification | undefined;
-  container: NotifiableContainer;
-  offset?: number;
-  scales?: { x: number; y: number };
 }
 
 export interface ActivityNotificationAdapterPort {

@@ -4,17 +4,15 @@ import { BibleTypes, type Piece } from "../../domain/models/canvas";
 import type { PieceInteractabilityServicePort } from "../ports/in/PieceInteractability";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
 import type { LoggerPort } from "../ports/out/Logger";
-import type {
-  BibleDataRepositoryPort,
-  PieceDataRepositoryPort,
-  PieceAdapterPort,
-} from "../ports/out/PieceInteractability";
 import type { PieceDataMap } from "../../domain/models/canvas";
+import type { PiecePort } from "../ports/out/Piece";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   pieceDataRepositoryPort: PieceDataRepositoryPort;
-  pieceAdapterPort: PieceAdapterPort;
+  pieceAdapterPort: PiecePort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
   loggerPort: LoggerPort;
 }

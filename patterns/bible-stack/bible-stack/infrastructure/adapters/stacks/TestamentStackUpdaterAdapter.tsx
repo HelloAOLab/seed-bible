@@ -1,9 +1,4 @@
-import type {
-  TestamentStackUpdaterPort,
-  UpdateCommand,
-} from "../../../application/ports/out/StackTestamentUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "../../../application/ports/out/Logger";
 import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
 import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
@@ -15,6 +10,11 @@ import type { SectionStackUpdaterAdapter } from "./SectionStackUpdaterAdapter";
 import type { BookStackUpdaterAdapter } from "./BookStackUpdaterAdapter";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
+import type {
+  UpdateCommand,
+  TestamentStackUpdaterPort,
+} from "../../../application/ports/out/TestamentStackUpdater";
+import type { LoggerAdapter } from "../environment/LoggerAdapter";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -25,7 +25,7 @@ interface AdapterParams {
   sectionStackUpdaterAdapter: SectionStackUpdaterAdapter;
   bookStackUpdaterAdapter: BookStackUpdaterAdapter;
   visualStateRegistry: VisualStateRegistry;
-  loggerPort: LoggerPort;
+  loggerPort: LoggerAdapter;
 }
 
 interface TestamentUpdateContext {

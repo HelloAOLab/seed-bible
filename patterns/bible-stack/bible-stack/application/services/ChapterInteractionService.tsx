@@ -1,5 +1,4 @@
 import { type Piece } from "../../domain/models/canvas";
-import type { ChapterDataRepositoryPort } from "../ports/chapters";
 import type { ChapterInteractionServicePort } from "../ports/in/ChapterInteraction";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import {
@@ -12,9 +11,10 @@ import type { PaintServicePort } from "../ports/in/Paint";
 import type { ChapterSelectionServicePort } from "../ports/in/ChapterSelection";
 import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
 import type { ChapterNavigationServicePort } from "../ports/in/ChapterNavigation";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
-  chapterDataRepositoryPort: ChapterDataRepositoryPort;
+  chapterDataRepositoryPort: PieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   chapterSelectionServicePort: ChapterSelectionServicePort;
   pieceHighlighterPort: PieceHighlightServicePort;

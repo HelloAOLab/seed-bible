@@ -1,15 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { PieceLifecycleService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceLifecycleService";
-import type {
-  PieceLifecycleConfigProviderPort,
-  VerseDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceLifecycle";
-import type {
-  IdGeneratorPort,
-  PieceDataRepositoryPort,
-  StackPieceLifecycleAdapterPort,
-  VersesBundleDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieceLifecycle";
+import type { IdGeneratorPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieceLifecycle";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
@@ -36,6 +27,17 @@ import {
   makePieceLabelServiceDouble,
   makeScriptureServiceDouble,
 } from "../serviceDoubles";
+import type { LayoutConfigProviderPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LayoutConfigProvider";
+import type { StackPieceLifecyclePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackPieceLifecycle";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import type { VerseDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/VerseDataRepository";
+import type { VersesBundleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/VersesBundleDataRepository";
+import {
+  makePieceDataRepositoryDouble,
+  makeVerseDataRepositoryDouble,
+  makeVersesBundleDataRepositoryDouble,
+  makeStackPieceLifecycleDouble,
+} from "../adapterDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const ARRANGEMENT_INDEX = 2;
@@ -289,55 +291,26 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
   let pieceLabelServicePort: Mocked<
     PieceLabelServicePort<StackLabelableBiblePiece>
   >;
-  let stackPieceLifecycleAdapterPort: Mocked<StackPieceLifecycleAdapterPort>;
+  let stackPieceLifecycleAdapterPort: Mocked<StackPieceLifecyclePort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
   let arrangementServicePort: Mocked<ArrangementServicePort>;
   let idGenerator: Mocked<IdGeneratorPort>;
   let scriptureServicePort: Mocked<ScriptureServicePort>;
   let versesBundleDataRepositoryPort: Mocked<VersesBundleDataRepositoryPort>;
   let verseDataRepositoryPort: Mocked<VerseDataRepositoryPort>;
-  let configProviderPort: Mocked<PieceLifecycleConfigProviderPort>;
+  let configProviderPort: Mocked<LayoutConfigProviderPort>;
   let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
 
   beforeEach(() => {
     let generatedIdsCount = 0;
 
-    pieceDataRepositoryPort = {
-      removeTestamentData: vi.fn(),
-      removeSectionData: vi.fn(),
-      removeSectionBookData: vi.fn(),
-      removeBookData: vi.fn(),
-      removeChapterData: vi.fn(),
-      addChapterData: vi.fn(),
-      addBookData: vi.fn(),
-      addSectionBookData: vi.fn(),
-      addSectionData: vi.fn(),
-      addTestamentData: vi.fn(),
-    };
+    pieceDataRepositoryPort = makePieceDataRepositoryDouble();
 
     pieceLabelServicePort = makePieceLabelServiceDouble({
       hideLabel: vi.fn().mockResolvedValue(undefined),
     });
 
-    stackPieceLifecycleAdapterPort = {
-      spawnTestament: vi.fn(),
-      despawnTestament: vi.fn(),
-      spawnSection: vi.fn(),
-      despawnSection: vi.fn(),
-      spawnBook: vi.fn(),
-      despawnBook: vi.fn(),
-      spawnChapter: vi.fn(),
-      despawnChapter: vi.fn(),
-      spawnSectionShadow: vi.fn(),
-      spawnSectionShadowDomain: vi.fn(),
-      despawnSectionShadow: vi.fn(),
-      despawnSectionBook: vi.fn(),
-      spawnVersesBundle: vi.fn(),
-      despawnVersesBundle: vi.fn(),
-      spawnVerse: vi.fn(),
-      despawnVerse: vi.fn(),
-      despawn: vi.fn(),
-    };
+    stackPieceLifecycleAdapterPort = makeStackPieceLifecycleDouble();
 
     arrangementServicePort = makeArrangementServiceDouble({
       getTestamentByIndices: vi.fn(({ arrangementIndex, testamentIndex }) =>
@@ -370,15 +343,9 @@ describe("pattern.bible-stack.application.services.PieceLifecycleService", () =>
       ),
     });
 
-    versesBundleDataRepositoryPort = {
-      addBundleData: vi.fn(),
-      removeBundleData: vi.fn(),
-    };
+    versesBundleDataRepositoryPort = makeVersesBundleDataRepositoryDouble();
 
-    verseDataRepositoryPort = {
-      addVerseData: vi.fn(),
-      removeVerseData: vi.fn(),
-    };
+    verseDataRepositoryPort = makeVerseDataRepositoryDouble();
 
     configProviderPort = {
       getVersesPerBundle: vi.fn(() => 2),

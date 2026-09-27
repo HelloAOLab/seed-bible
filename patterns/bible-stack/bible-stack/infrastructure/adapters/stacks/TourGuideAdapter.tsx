@@ -1,8 +1,5 @@
 import type { StackSectionData } from "../../../domain/entities/StackSectionData";
-import type { TourGuideAdapterPort } from "../../../application/ports/tourGuide";
-import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type { AudioAdapter } from "../audio/AudioAdapter";
-import type { LoggerPort } from "../../../application/ports/out/Logger";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { SectionBot } from "../../models/stack";
 import type { TourGuideConfigProvider } from "../../config/tourGuide/TourGuideConfigProvider";
@@ -10,16 +7,19 @@ import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { WorldPosition } from "../../../domain/models/spatial";
 import { MakePortalFree, MakePortalRestrict } from "../../functions/casualos";
 import type { PieceHighlightServicePort } from "../../../application/ports/in/PieceHighlight";
+import type { TourGuidePort } from "../../../application/ports/out/TourGuide";
+import type { CameraAdapter } from "../environment/CameraAdapter";
+import type { LoggerAdapter } from "../environment/LoggerAdapter";
 
 interface AdapterParams {
   getDimension: () => string;
   sectionMapper: StackSectionMapper;
   visualStateRegistry: VisualStateRegistry;
-  cameraAdapterPort: CameraAdapterPort;
+  cameraAdapterPort: CameraAdapter;
   pieceHighlighterPort: PieceHighlightServicePort;
   audioAdapter: AudioAdapter;
   tourGuideConfigProvider: TourGuideConfigProvider;
-  loggerPort: LoggerPort;
+  loggerPort: LoggerAdapter;
 }
 
 /**
@@ -29,7 +29,7 @@ interface AdapterParams {
  * architecture port of the legacy `TryMakeTourGuideOnSection` /
  * `StopCurrentTourGuide` bot scripts.
  */
-export class TourGuideAdapter implements TourGuideAdapterPort {
+export class TourGuideAdapter implements TourGuidePort {
   #getDimension: AdapterParams["getDimension"];
   #sectionMapper: AdapterParams["sectionMapper"];
   #visualStateRegistry: AdapterParams["visualStateRegistry"];

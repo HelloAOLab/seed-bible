@@ -4,7 +4,6 @@ import type { BookInteractionServicePort } from "../../../../../../patterns/bibl
 import type { ChapterInteractionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ChapterInteraction";
 import type { SectionInteractionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionInteraction";
 import type { TestamentInteractionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentInteraction";
-import type { LabelDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelInteraction";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import { InfoLabelData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/InfoLabelData";
 import {
@@ -16,10 +15,12 @@ import {
 import { LabelPositions } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/label";
 import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
 import type { SectionShadowInteractionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionShadowInteraction";
+import type { LabelDataStorePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelDataStore";
+import { makeLabelDataStoreDouble } from "../adapterDoubles";
 
 describe("pattern.bible-stack.application.services.LabelInteractionService", () => {
   let service: LabelInteractionService;
-  let labelDataRepositoryPort: Mocked<LabelDataRepositoryPort>;
+  let labelDataRepositoryPort: Mocked<LabelDataStorePort>;
   let testamentInteractionServicePort: Mocked<TestamentInteractionServicePort>;
   let sectionInteractionServicePort: Mocked<SectionInteractionServicePort>;
   let sectionShadowInteractionPort: Mocked<SectionShadowInteractionServicePort>;
@@ -62,9 +63,7 @@ describe("pattern.bible-stack.application.services.LabelInteractionService", () 
   ];
 
   beforeEach(() => {
-    labelDataRepositoryPort = {
-      getDataByTransformerId: vi.fn(),
-    };
+    labelDataRepositoryPort = makeLabelDataStoreDouble();
 
     testamentInteractionServicePort = {
       handleTestamentSelection: vi.fn(),

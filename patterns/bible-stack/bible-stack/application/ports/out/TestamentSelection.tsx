@@ -14,10 +14,10 @@ export interface AwaiterPort {
   sleep(ms: number): Promise<void>;
 }
 
-export interface LabelSequenceConfigProviderPort {
-  getShowSequenceDurationSeconds(pacing: StackUpdatePacing): number;
-}
-
 export interface PieceAdapterPort {
   makeInteractable(piece: Piece): void;
+}
+
+export interface TestamentSelectionPort {
+  select(data: StackTestamentData, pacing?: StackUpdatePacing): Promise<void>;
 }

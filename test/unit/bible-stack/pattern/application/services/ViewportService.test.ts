@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ViewportService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ViewportService";
-import type {
-  BibleDataRepositoryPort,
-  PieceDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ViewportService";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
@@ -20,6 +16,12 @@ import {
   CrossPositions,
   type Piece,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
+import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import {
+  makeBibleDataRepositoryDouble,
+  makePieceDataRepositoryDouble,
+} from "../adapterDoubles";
 
 const bookInfo: BookInfo = {
   type: "complete",
@@ -206,16 +208,16 @@ describe("pattern.bible-stack.application.services.ViewportService", () => {
   let pieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
 
   beforeEach(() => {
-    bibleDataRepositoryPort = {
+    bibleDataRepositoryPort = makeBibleDataRepositoryDouble({
       getAllBiblesData: vi.fn(() => []),
-    };
+    });
 
-    pieceDataRepositoryPort = {
+    pieceDataRepositoryPort = makePieceDataRepositoryDouble({
       getStandaloneTestaments: vi.fn(() => []),
       getStandaloneSections: vi.fn(() => []),
       getStandaloneSectionBooks: vi.fn(() => []),
       getStandaloneBooks: vi.fn(() => []),
-    };
+    });
 
     service = new ViewportService({
       bibleDataRepositoryPort,

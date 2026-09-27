@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { TestamentStackUpdaterService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/TestamentStackUpdaterService";
-import type { TestamentStackUpdaterPort as UpdaterAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackTestamentUpdater";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
@@ -13,6 +12,7 @@ import type {
 import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
 import type { BookStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookStackUpdater";
 import type { SectionStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionStackUpdater";
+import type { TestamentStackUpdaterPort as UpdaterAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/TestamentStackUpdater";
 
 const BIBLE_ID = "bible-id";
 const TESTAMENT_ID = "testament-id";

@@ -1,14 +1,15 @@
-import type { BiblePiece, Piece } from "../../domain/models/canvas";
-import type { PieceDataRepositoryPort } from "./pieces";
+import type {
+  BiblePiece,
+  Piece,
+  DraggingEvent as DomainDraggingEvent,
+  DropEvent as DomainDropEvent,
+} from "../../domain/models/canvas";
 import type {
   DraggingEvent as InfrastructureDraggingEvent,
   DropEvent as InfrastructureDropEvent,
   PieceBot,
 } from "../../infrastructure/models/casualos";
-import type {
-  DraggingEvent as DomainDraggingEvent,
-  DropEvent as DomainDropEvent,
-} from "../../domain/models/canvas";
+import type { PieceDataRepositoryPort } from "./out/PieceDataRepository";
 
 export interface DraggingEventMapperPort {
   toDomain: (event: InfrastructureDraggingEvent) => DomainDraggingEvent;

@@ -1,10 +1,4 @@
-import type {
-  BookStackUpdaterPort,
-  UpdateCommand,
-  BookVisualUpdateResult,
-} from "../../../application/ports/out/StackBookUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "../../../application/ports/out/Logger";
 import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
@@ -20,12 +14,17 @@ import type { StackSectionData } from "../../../domain/entities/StackSectionData
 import type { StackBookData } from "../../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
-import type { BookBot } from "../../models/stack";
+import type { BookBot, BookVisualUpdateResult } from "../../models/stack";
 import { BookShapes } from "../../../domain/models/canvas";
 import { SelectionStates } from "../../../domain/models/selection";
-// import { FindPreviousValidGroupBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/scripture";
 import { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 import { FindPreviousValidGroupBookData } from "../../functions/arrangement";
+import type {
+  UpdateCommand,
+  BookStackUpdaterPort,
+} from "../../../application/ports/out/BookStackUpdater";
+import type { LoggerAdapter } from "../environment/LoggerAdapter";
+// import { FindPreviousValidGroupBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/scripture";
 
 type BookEntity = StackBookData | StackSectionBookData;
 
@@ -41,7 +40,7 @@ interface AdapterParams {
   selectedBookLayoutAdapter: SelectedBookLayoutAdapter;
   visualStateRegistry: VisualStateRegistry;
   bookSetupConfigProvider: BookSetupConfigProvider;
-  loggerPort: LoggerPort;
+  loggerPort: LoggerAdapter;
 }
 
 interface BaseBookComputeParams {

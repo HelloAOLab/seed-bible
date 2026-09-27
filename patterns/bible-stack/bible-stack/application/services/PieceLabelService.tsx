@@ -1,46 +1,30 @@
 import { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type {
-  LabelPosition,
   LabelTranslucencyMode,
   ShowSequencePacing,
 } from "../../domain/models/label";
 import type { Piece } from "../../domain/models/canvas";
 import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
-import type {
-  LabelAdapterPort,
-  LabelDataStorePort,
-  IdGeneratorPort,
-  ActivityIndicatorsAdapterPort,
-  LabelFeedbackAdapterPort,
-} from "../ports/out/PieceLabel";
+import type { IdGeneratorPort } from "../ports/out/PieceLabel";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { LabelDateServicePort } from "../ports/in/LabelDate";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
-
-export interface LabelStrategy<P extends Piece<StackLabelableBiblePiece>> {
-  getLabel: (piece: P) => string;
-  getDate?: undefined | ((piece: P) => string | undefined);
-  getColor: (piece: P) => string;
-  getLabelColor: (piece: P) => string;
-  getLabelPositioning: (piece: P) => LabelPosition;
-  isInteractable: (piece: P) => boolean;
-  makesAttentionFeedback: (piece: P) => boolean;
-}
-
-export type LabelPropertiesStrategies<T extends StackLabelableBiblePiece> = {
-  [K in T]: LabelStrategy<Piece<K>>;
-};
+import type { LabelPropertiesStrategies } from "../ports/out/LabelPropertiesStrategies";
+import type { LabelPort } from "../ports/out/Label";
+import type { ActivityIndicatorsPort } from "../ports/out/ActivityIndicators";
+import type { LabelFeedbackPort } from "../ports/out/LabelFeedback";
+import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
 
 export interface ServiceParams<T extends StackLabelableBiblePiece> {
-  labelAdapterPort: LabelAdapterPort;
+  labelAdapterPort: LabelPort;
   labelDataStorePort: LabelDataStorePort;
   indicatorsUpdaterPort: PieceActivityServicePort;
   labelPropertiesStrategies: LabelPropertiesStrategies<T>;
   dateFormatGetterPort: LabelDateServicePort;
   idGeneratorPort: IdGeneratorPort;
-  activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
-  labelAnimationAdapterPort: LabelFeedbackAdapterPort;
+  activityIndicatorsAdapterPort: ActivityIndicatorsPort;
+  labelAnimationAdapterPort: LabelFeedbackPort;
   loggerPort: LoggerPort;
 }
 

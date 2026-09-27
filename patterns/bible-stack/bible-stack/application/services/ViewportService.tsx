@@ -1,9 +1,7 @@
 import type { Piece } from "../../domain/models/canvas";
-import type {
-  BibleDataRepositoryPort,
-  PieceDataRepositoryPort,
-} from "../ports/out/ViewportService";
 import type { ViewportServicePort } from "../ports/in/Viewport";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   bibleDataRepositoryPort: BibleDataRepositoryPort;

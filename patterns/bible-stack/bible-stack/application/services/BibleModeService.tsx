@@ -8,20 +8,18 @@ import {
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
-import type {
-  BibleModeSequenceAdapterPort,
-  LoggerPort,
-  PieceDataRepositoryPort,
-} from "../ports/out/BibleMode";
 import type { BibleModeServicePort } from "../ports/in/BibleMode";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type { TestamentSelectionServicePort } from "../ports/in/TestamentSelection";
 import type { BibleStackUpdaterServicePort } from "../ports/in/BibleStackUpdater";
+import type { BibleModeSequencePort } from "../ports/out/BibleModeSequence";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
-  sequenceAdapterPort: BibleModeSequenceAdapterPort;
+  sequenceAdapterPort: BibleModeSequencePort;
   bibleStackUpdaterPort: BibleStackUpdaterServicePort;
   explodedViewServicePort: ExplodedViewServicePort;
   pieceDataRepository: PieceDataRepositoryPort;

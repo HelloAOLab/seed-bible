@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { SectionStackUpdaterService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/SectionStackUpdaterService";
-import type {
-  LoggerPort,
-  SectionStackUpdaterPort as UpdaterAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackSectionUpdater";
-import type { StackPieceLifecycleAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieceLifecycle";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
 import type {
@@ -20,6 +15,10 @@ import type { BookStackUpdaterServicePort } from "../../../../../../patterns/bib
 import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
 import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
 import { makePieceLabelServiceDouble } from "../serviceDoubles";
+import type { SectionStackUpdaterPort as UpdaterAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SectionStackUpdater";
+import type { StackPieceLifecyclePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackPieceLifecycle";
+import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
+import { makeStackPieceLifecycleDouble } from "../adapterDoubles";
 
 const BIBLE_ID = "bible-id";
 const SECTION_ID = "section-id";
@@ -149,7 +148,7 @@ describe("pattern.bible-stack.application.services.SectionStackUpdaterService", 
   let service: SectionStackUpdaterService;
   let updaterAdapterPort: Mocked<UpdaterAdapterPort>;
   let bookStackUpdaterPort: Mocked<BookStackUpdaterServicePort>;
-  let pieceLifecyclePort: Mocked<StackPieceLifecycleAdapterPort>;
+  let pieceLifecyclePort: Mocked<StackPieceLifecyclePort>;
   let pieceLabelServicePort: Mocked<
     PieceLabelServicePort<StackLabelableBiblePiece>
   >;
@@ -176,28 +175,12 @@ describe("pattern.bible-stack.application.services.SectionStackUpdaterService", 
       update: vi.fn(),
     };
 
-    pieceLifecyclePort = {
-      spawnTestament: vi.fn(),
-      despawnTestament: vi.fn(),
-      spawnSection: vi.fn(),
-      despawnSection: vi.fn(),
-      spawnBook: vi.fn(),
-      despawnBook: vi.fn(),
-      spawnChapter: vi.fn(),
-      despawnChapter: vi.fn(),
-      spawnSectionShadow: vi.fn(),
+    pieceLifecyclePort = makeStackPieceLifecycleDouble({
       spawnSectionShadowDomain: vi.fn(() => {
         callOrder.push("spawnSectionShadowDomain");
         return sectionShadow;
       }),
-      despawnSectionShadow: vi.fn(),
-      despawnSectionBook: vi.fn(),
-      spawnVersesBundle: vi.fn(),
-      despawnVersesBundle: vi.fn(),
-      spawnVerse: vi.fn(),
-      despawnVerse: vi.fn(),
-      despawn: vi.fn(),
-    };
+    });
 
     pieceLabelServicePort = makePieceLabelServiceDouble({
       showLabel: vi.fn(async () => {

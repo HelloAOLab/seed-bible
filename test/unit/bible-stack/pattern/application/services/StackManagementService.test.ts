@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { StackManagementService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/StackManagementService";
-import type {
-  BibleDataRepositoryPort,
-  PieceDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/stackManagement";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
@@ -26,6 +22,12 @@ import {
   makeBibleLifecycleServiceDouble,
   makePieceLifecycleServiceDouble,
 } from "../serviceDoubles";
+import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import {
+  makeBibleDataRepositoryDouble,
+  makePieceDataRepositoryDouble,
+} from "../adapterDoubles";
 
 const BIBLE_ID = "bible-id";
 
@@ -146,17 +148,17 @@ describe("pattern.bible-stack.application.services.StackManagementService", () =
 
     pieceLifecycleServicePort = makePieceLifecycleServiceDouble();
 
-    bibleDataRepositoryPort = {
+    bibleDataRepositoryPort = makeBibleDataRepositoryDouble({
       getAllBiblesData: vi.fn(() => []),
-    };
+    });
 
-    pieceDataRepositoryPort = {
+    pieceDataRepositoryPort = makePieceDataRepositoryDouble({
       getAllTestaments: vi.fn(() => []),
       getAllSections: vi.fn(() => []),
       getAllBooks: vi.fn(() => []),
       getAllChapters: vi.fn(() => []),
       getAllSectionBooks: vi.fn(() => []),
-    };
+    });
 
     service = new StackManagementService({
       bibleLifecycleServicePort,

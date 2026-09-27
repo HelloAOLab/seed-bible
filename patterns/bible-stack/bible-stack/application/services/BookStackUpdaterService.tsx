@@ -1,10 +1,6 @@
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
-import type {
-  BookStackUpdaterPort as UpdaterAdapterPort,
-  LoggerPort,
-} from "../ports/out/StackBookUpdater";
 import { BookShapes } from "../../domain/models/canvas";
 import type {
   BookStackUpdaterServicePort as UpdaterServicePort,
@@ -15,11 +11,13 @@ import type {
 import type { BookChaptersManagementServicePort } from "../ports/in/BookChaptersManagement";
 import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
+import type { BookStackUpdaterPort } from "../ports/out/BookStackUpdater";
+import type { LoggerPort } from "../ports/out/Logger";
 
 type BookEntity = StackBookData | StackSectionBookData;
 
 interface ServiceParams {
-  updaterAdapterPort: UpdaterAdapterPort;
+  updaterAdapterPort: BookStackUpdaterPort;
   bookChaptersManagementServicePort: BookChaptersManagementServicePort;
   pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
   loggerPort: LoggerPort;

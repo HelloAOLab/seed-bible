@@ -314,3 +314,22 @@ export interface BotTypeMap {
   [BiblePieces.InfoLabelTail]: InfoLabelTailBot;
   [BiblePieces.InfoLabelDate]: InfoLabelDateBot;
 }
+
+/** Selected-book grid layout produced by the SelectedBookLayoutService. */
+export interface SelectedBookLayout {
+  columns?: number;
+  rows?: number;
+  height?: number;
+}
+
+/**
+ * Result the (future) section render loop consumes from a per-book layout pass —
+ * the same shape the legacy `HandleBookDataInStack` returned.
+ */
+export interface BookVisualUpdateResult {
+  absBookDesiredPosition: { x: number; y: number } | undefined;
+  halfInitialBookScales: { x: number; y: number } | undefined;
+  selectedBookHeight: number | undefined;
+  marginToAdd: number;
+  computedAnimations: Array<Promise<void>>;
+}

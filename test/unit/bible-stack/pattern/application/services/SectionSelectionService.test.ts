@@ -4,14 +4,10 @@ import type { BookSelectionServicePort } from "../../../../../../patterns/bible-
 import type { ExplodedViewServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ExplodedView";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import type { PieceLifecycleServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLifecycle";
-import type { BookSpawnerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceSpawn";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
 import type { TourGuideServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TourGuide";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type {
-  LabelDataStorePort,
-  SectionSelectionAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SectionSelection";
+import type { SectionSelectionPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SectionSelection";
 import { InfoLabelData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/InfoLabelData";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -56,6 +52,12 @@ import {
   makePieceLabelServiceDouble,
   makePieceLifecycleServiceDouble,
 } from "../serviceDoubles";
+import type { LabelDataStorePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelDataStore";
+import type { StackPieceLifecyclePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackPieceLifecycle";
+import {
+  makeLabelDataStoreDouble,
+  makeStackPieceLifecycleDouble,
+} from "../adapterDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -258,10 +260,10 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
   >;
   let pieceLifecycleServicePort: Mocked<PieceLifecycleServicePort>;
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
-  let sectionSelectionAdapterPort: Mocked<SectionSelectionAdapterPort>;
+  let sectionSelectionAdapterPort: Mocked<SectionSelectionPort>;
   let explodedViewServicePort: Mocked<ExplodedViewServicePort>;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
-  let bookSpawnerPort: Mocked<BookSpawnerPort>;
+  let bookSpawnerPort: Mocked<StackPieceLifecyclePort>;
   let tourGuideServicePort: Mocked<TourGuideServicePort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let loggerPort: Mocked<LoggerPort>;
@@ -303,9 +305,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
     currentExplodedSection = undefined;
     spawnedPieces = [];
 
-    labelDataStorePort = {
-      getDataByOwnerId: vi.fn(),
-    };
+    labelDataStorePort = makeLabelDataStoreDouble();
 
     pieceHighlighterPort = makePieceHighlightServiceDouble();
 
@@ -338,7 +338,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
       },
     };
 
-    bookSpawnerPort = {
+    bookSpawnerPort = makeStackPieceLifecycleDouble({
       spawnBookDomain: vi.fn(() => {
         const piece = makeBookPiece(
           `spawned-book-piece-${spawnedPieces.length}`
@@ -346,8 +346,7 @@ describe("pattern.bible-stack.application.services.SectionSelectionService", () 
         spawnedPieces.push(piece);
         return piece;
       }),
-      despawnBook: vi.fn(),
-    };
+    });
 
     tourGuideServicePort = {
       ongoingTourGuideSectionData:

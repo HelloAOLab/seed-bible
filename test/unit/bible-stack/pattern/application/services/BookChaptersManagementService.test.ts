@@ -2,11 +2,7 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BookChaptersManagementService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BookChaptersManagementService";
 import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
 import type { ScripturePiecesStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ScripturePiecesState";
-import type {
-  BookChaptersManagementAdapterPort,
-  ChapterSpawnerPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BookChaptersManagement";
-import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackUpdate";
+import type { BookChaptersManagementPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BookChaptersManagement";
 import {
   StackBibleData,
   type StaticBiblePieces,
@@ -28,6 +24,12 @@ import {
 import { SelectionEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
 import type { StackTransformer } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
 import type { ScriptureServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Scripture";
+import type { StackPieceLifecyclePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackPieceLifecycle";
+import type { BibleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleDataRepository";
+import {
+  makeBibleDataRepositoryDouble,
+  makeStackPieceLifecycleDouble,
+} from "../adapterDoubles";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-id";
@@ -177,8 +179,8 @@ const makeBibleData = (transformer?: StackTransformer): StackBibleData =>
 describe("pattern.bible-stack.application.services.BookChaptersManagementService", () => {
   let service: BookChaptersManagementService;
   let biggerChapterProviderPort: Mocked<ScriptureServicePort>;
-  let chapterSpawnerPort: Mocked<ChapterSpawnerPort>;
-  let chaptersManagementAdapterPort: Mocked<BookChaptersManagementAdapterPort>;
+  let chapterSpawnerPort: Mocked<StackPieceLifecyclePort>;
+  let chaptersManagementAdapterPort: Mocked<BookChaptersManagementPort>;
   let scripturePiecesStateServicePort: Mocked<ScripturePiecesStateServicePort>;
   let bibleDataRepositoryPort: Mocked<BibleDataRepositoryPort>;
   let pieceLabelServicePort: Mocked<PieceLabelServicePort<"StackChapter">>;
@@ -195,10 +197,7 @@ describe("pattern.bible-stack.application.services.BookChaptersManagementService
       getBookChapterCount: vi.fn(),
     };
 
-    chapterSpawnerPort = {
-      spawnChapterDomain: vi.fn(),
-      despawnChapter: vi.fn(),
-    };
+    chapterSpawnerPort = makeStackPieceLifecycleDouble();
 
     chaptersManagementAdapterPort = {
       setUpChapter: vi.fn(),
@@ -218,10 +217,7 @@ describe("pattern.bible-stack.application.services.BookChaptersManagementService
       disableLabelDates: vi.fn(),
     };
 
-    bibleDataRepositoryPort = {
-      getAllBiblesData: vi.fn(),
-      getBibleDataById: vi.fn(),
-    };
+    bibleDataRepositoryPort = makeBibleDataRepositoryDouble();
 
     pieceLabelServicePort = {
       showLabel: vi.fn(),

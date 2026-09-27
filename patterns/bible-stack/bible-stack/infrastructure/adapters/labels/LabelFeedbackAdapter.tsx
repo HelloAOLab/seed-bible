@@ -28,6 +28,7 @@ import type {
 } from "../../config/labels/showAnimation";
 import { AnimateStrictTag, SetStrictTag } from "../../functions/casualos";
 import type { VisualStateRegistry } from "../stacks/VisualStateRegistry";
+import type { LabelFeedbackPort } from "../../../application/ports/out/LabelFeedback";
 
 interface LabelFeedbackConfigProviderPort {
   getShowAnimationDuration: <P extends ShowSequencePacing>(
@@ -128,7 +129,7 @@ const shakeBackwardConstructor = ({
   });
 };
 
-export class LabelFeedbackAdapter {
+export class LabelFeedbackAdapter implements LabelFeedbackPort {
   #shakeAnimationsMap: Map<InfoLabelData["id"], number> = new Map();
   #dimensionProvider: AdapterProps["dimensionProvider"];
   #labelFeedbackConfigProviderPort: AdapterProps["labelFeedbackConfigProviderPort"];

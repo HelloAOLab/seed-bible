@@ -23,3 +23,19 @@ export interface BookChaptersManagementAdapterPort {
     bibleTransformer: StackTransformer | null;
   }): void;
 }
+
+export interface BookChaptersManagementPort {
+  setUpChapter(params: {
+    chapter: Piece<"StackChapter">;
+    book: Piece<"StackBook"> | Piece<"StackSectionBook">;
+    chapterInfo: ChapterInfo;
+    bookInfo: BookInfo;
+    isMovable: boolean;
+    biggerChapter: number;
+  }): void;
+  updateChaptersPosition(params: {
+    book: Piece<"StackBook"> | Piece<"StackSectionBook">;
+    chapters: { piece: Piece<"StackChapter">; isSelected: boolean }[];
+    bibleTransformer: StackTransformer | null;
+  }): void;
+}

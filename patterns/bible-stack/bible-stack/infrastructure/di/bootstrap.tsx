@@ -30,8 +30,6 @@ import { ExperienceAdapter } from "../adapters/experience/ExperienceAdapter";
 import { BibleSequenceAdapter } from "../adapters/sequences/BibleSequenceAdapter";
 import { BibleDataRepository } from "../adapters/stacks/BibleDataRepository";
 import { PieceDataRepository } from "../adapters/stacks/PieceDataRepository";
-import { VersesBundleRepository } from "../adapters/stacks/VersesBundleDataRepository";
-import { VerseRepository } from "../adapters/stacks/VerseDataRepository";
 import { VisualStateRegistry } from "../adapters/stacks/VisualStateRegistry";
 import { InteractionRegistry } from "../adapters/stacks/InteractionRegistry";
 import { BibleSetupAdapter } from "../adapters/stacks/BibleSetupAdapter";
@@ -194,7 +192,6 @@ import type { BotListenerParametersMap, Message } from "../models/casualos";
 import { ObjectPoolerConfigProvider } from "../config/objectPool/ObjectPoolConfigProvider";
 import { PaintService } from "../../application/services/PaintService";
 import { PaintAdapter } from "../adapters/stacks/PaintAdapter";
-import { BookChapterManagementAdapter } from "../adapters/stacks/BookChaptersManagementAdapter";
 import { TestamentSelectionConfigProvider } from "../config/testamentSelection/TestamentSelectionConfigProvider";
 import { VersesBundleSelectionAdapter } from "../adapters/stacks/VersesBundleSelectionAdapter";
 import { VersesBundleConfigProvider } from "../config/versesBundleSelection/VersesBundleConfigProvider";
@@ -214,6 +211,9 @@ import { UserIdentityStore } from "../adapters/userPresence/UserIdentityStore";
 import { UserPresenceController } from "../controllers/seed-bible/ReadingStateController";
 import { EventManager } from "../utils/EventManager";
 import type { AnyStackData } from "../../domain/models/canvas";
+import { VerseDataRepository } from "../adapters/stacks/VerseDataRepository";
+import { VersesBundleDataRepository } from "../adapters/stacks/VersesBundleDataRepository";
+import { BookChaptersManagementAdapter } from "../adapters/stacks/BookChaptersManagementAdapter";
 
 let initialized = false;
 
@@ -428,8 +428,8 @@ export const bootstrapExtension = () => {
   });
   const bibleDataRepository = new BibleDataRepository();
   const pieceDataRepository = new PieceDataRepository();
-  const versesBundleRepository = new VersesBundleRepository();
-  const verseRepository = new VerseRepository();
+  const versesBundleRepository = new VersesBundleDataRepository();
+  const verseRepository = new VerseDataRepository();
   const interactionRegistry = new InteractionRegistry();
 
   // The scripture arrangement and per-book static info are bundled inside the
@@ -718,7 +718,7 @@ export const bootstrapExtension = () => {
     pieceMapper,
     visualStateRegistry,
   });
-  const bookChapterManagementAdapter = new BookChapterManagementAdapter({
+  const bookChapterManagementAdapter = new BookChaptersManagementAdapter({
     bookMapper: stackBookMapper,
     sectionBookMapper: stackSectionBookMapper,
     layoutConfigProvider,

@@ -3,10 +3,6 @@ import {
   type Piece,
   type DropEvent,
 } from "../../domain/models/canvas";
-import type {
-  PieceAdapterPort,
-  ScripturePieceDropDataRepositoryPort,
-} from "../ports/scripturePieceDrop";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { ScripturePieceDropServicePort } from "../ports/in/ScripturePieceDrop";
 import { HighlightRequestSources } from "../../domain/models/pieces";
@@ -17,10 +13,12 @@ import type { ParentDataIds } from "../../domain/models/canvas";
 import type { ChapterSelectionServicePort } from "../ports/in/ChapterSelection";
 import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { PiecePort } from "../ports/out/Piece";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
-  pieceAdapterPort: PieceAdapterPort;
-  pieceDataRepositoryPort: ScripturePieceDropDataRepositoryPort;
+  pieceAdapterPort: PiecePort;
+  pieceDataRepositoryPort: PieceDataRepositoryPort;
   sequenceStateServicePort: SequenceStateServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   chapterSelectionServicePort: ChapterSelectionServicePort;

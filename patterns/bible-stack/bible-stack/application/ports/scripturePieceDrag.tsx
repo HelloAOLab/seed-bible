@@ -1,5 +1,5 @@
 import type { Piece } from "../../domain/models/canvas";
-import type { PieceDataRepositoryPort } from "./pieces";
+import type { PieceDataRepositoryPort } from "./out/PieceDataRepository";
 
 export interface PieceAdapterPort {
   isPieceAnchored: (piece: Piece) => boolean;

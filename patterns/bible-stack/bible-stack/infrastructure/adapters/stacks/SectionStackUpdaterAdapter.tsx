@@ -1,6 +1,4 @@
-import type { SectionStackUpdaterPort } from "../../../application/ports/out/StackSectionUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "../../../application/ports/out/Logger";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { StackSectionShadowMapper } from "../../mappers/StackSectionShadowMapper";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
@@ -19,6 +17,8 @@ import {
   ApplyStrictMod,
   AnimateStrictTag,
 } from "../../functions/casualos";
+import type { SectionStackUpdaterPort } from "../../../application/ports/out/SectionStackUpdater";
+import type { LoggerAdapter } from "../environment/LoggerAdapter";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -29,7 +29,7 @@ interface AdapterParams {
   bookStackUpdaterAdapter: BookStackUpdaterAdapter;
   visualStateRegistry: VisualStateRegistry;
   getBotScales: (bot: PieceBot) => Scales;
-  loggerPort: LoggerPort;
+  loggerPort: LoggerAdapter;
 }
 
 /**

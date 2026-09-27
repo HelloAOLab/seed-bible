@@ -1,12 +1,12 @@
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
-import type { BibleStackUpdaterAdapterPort } from "../ports/out/BibleStackUpdater";
+import type { BibleStackUpdaterPort } from "../ports/out/BibleStackUpdater";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { BibleStackUpdaterServicePort } from "../ports/in/BibleStackUpdater";
 import type { TestamentStackUpdaterServicePort } from "../ports/in/TestamentStackUpdater";
 
 interface ServiceParams {
-  updaterAdapterPort: BibleStackUpdaterAdapterPort;
+  updaterAdapterPort: BibleStackUpdaterPort;
   testamentUpdaterPort: TestamentStackUpdaterServicePort;
   loggerPort: LoggerPort;
 }

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ChapterInteractionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ChapterInteractionService";
-import type { ChapterDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/chapters";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -31,6 +30,7 @@ import type { ChapterSelectionServicePort } from "../../../../../../patterns/bib
 import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { ChapterNavigationServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ChapterNavigation";
 import { makePieceHighlightServiceDouble } from "../serviceDoubles";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -172,7 +172,7 @@ const makeParentDataChain = (
 
 describe("pattern.bible-stack.application.services.ChapterInteractionService", () => {
   let service: ChapterInteractionService;
-  let chapterDataRepositoryPort: Mocked<ChapterDataRepositoryPort>;
+  let chapterDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let chapterSelectionServicePort: Mocked<ChapterSelectionServicePort>;
   let pieceHighlighterPort: Mocked<PieceHighlightServicePort>;
@@ -183,7 +183,7 @@ describe("pattern.bible-stack.application.services.ChapterInteractionService", (
   beforeEach(() => {
     chapterDataRepositoryPort = {
       getPieceData: vi.fn(),
-    } as unknown as Mocked<ChapterDataRepositoryPort>;
+    } as unknown as Mocked<PieceDataRepositoryPort>;
 
     pieceHierarchyServicePort = {
       getParentDataChain: vi.fn(() => makeParentDataChain()),

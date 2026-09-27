@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ScripturePieceDraggingService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ScripturePieceDraggingService";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
-import type {
-  PieceAdapterPort,
-  ScripturePieceDraggingDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/scripturePieceDragging";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
 import {
@@ -20,6 +16,9 @@ import {
 import type { ParentDataChain } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import type { SequenceStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
 import { makeSequenceStateServiceDouble } from "../serviceDoubles";
+import type { PiecePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Piece";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import { makePieceDouble } from "../adapterDoubles";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-data";
@@ -90,20 +89,19 @@ const makeParentDataChain = (
 
 describe("pattern.bible-stack.application.services.ScripturePieceDraggingService", () => {
   let service: ScripturePieceDraggingService;
-  let pieceAdapterPort: Mocked<PieceAdapterPort>;
-  let pieceDataRepositoryPort: Mocked<ScripturePieceDraggingDataRepositoryPort>;
+  let pieceAdapterPort: Mocked<PiecePort>;
+  let pieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
 
   beforeEach(() => {
-    pieceAdapterPort = {
-      updatePosition: vi.fn(),
+    pieceAdapterPort = makePieceDouble({
       isPieceAnchored: vi.fn(() => false),
-    };
+    });
 
     pieceDataRepositoryPort = {
       getPieceData: vi.fn(),
-    } as unknown as Mocked<ScripturePieceDraggingDataRepositoryPort>;
+    } as unknown as Mocked<PieceDataRepositoryPort>;
     pieceDataRepositoryPort.getPieceData.mockReturnValue(makeChapterData());
 
     sequenceStateServicePort = makeSequenceStateServiceDouble({

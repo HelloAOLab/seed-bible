@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { TourGuideService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/TourGuideService";
-import type { TourGuideAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/tourGuide";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
+import type { TourGuidePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/TourGuide";
 
 const makeSectionData = (id: string): StackSectionData =>
   new StackSectionData({
@@ -54,7 +54,7 @@ const trackSettlement = (promise: Promise<unknown>) => {
 
 describe("pattern.bible-stack.application.services.TourGuideService", () => {
   let service: TourGuideService;
-  let tourGuideAdapterPort: Mocked<TourGuideAdapterPort>;
+  let tourGuideAdapterPort: Mocked<TourGuidePort>;
 
   beforeEach(() => {
     tourGuideAdapterPort = {

@@ -3,11 +3,6 @@ import { PieceStateService } from "../../../../../../patterns/bible-stack/bible-
 import type { BookChaptersManagementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookChaptersManagement";
 import type { PieceLabelServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type {
-  ActivityIndicatorsAdapterPort,
-  ActivityNotificationAdapterPort,
-  PieceDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceState";
 import { ActivityIndicatorData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/ActivityIndicatorData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
@@ -23,6 +18,13 @@ import {
   type PieceState,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import { SelectionEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/selection";
+import type { ActivityIndicatorsPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ActivityIndicators";
+import type { ActivityNotificationPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/ActivityNotification";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import {
+  makeActivityIndicatorsDouble,
+  makeActivityNotificationDouble,
+} from "../adapterDoubles";
 
 const BOOK_ERROR_MESSAGE =
   "PieceStateService: data not found at handleBookStateChanged";
@@ -191,8 +193,8 @@ describe("pattern.bible-stack.application.services.PieceStateService", () => {
   >;
   let pieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
   let bookChaptersManagementServicePort: Mocked<BookChaptersManagementServicePort>;
-  let activityIndicatorsAdapterPort: Mocked<ActivityIndicatorsAdapterPort>;
-  let activityNotificationAdapterPort: Mocked<ActivityNotificationAdapterPort>;
+  let activityIndicatorsAdapterPort: Mocked<ActivityIndicatorsPort>;
+  let activityNotificationAdapterPort: Mocked<ActivityNotificationPort>;
   let loggerPort: Mocked<LoggerPort>;
 
   const expectNoPortCalled = () => {
@@ -229,13 +231,9 @@ describe("pattern.bible-stack.application.services.PieceStateService", () => {
       updateChaptersPosition: vi.fn(),
     };
 
-    activityIndicatorsAdapterPort = {
-      updateIndicatorsPosition: vi.fn(),
-    };
+    activityIndicatorsAdapterPort = makeActivityIndicatorsDouble();
 
-    activityNotificationAdapterPort = {
-      updateNotificationPosition: vi.fn(),
-    };
+    activityNotificationAdapterPort = makeActivityNotificationDouble();
 
     loggerPort = {
       error: vi.fn(),

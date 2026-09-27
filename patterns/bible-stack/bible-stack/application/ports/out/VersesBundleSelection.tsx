@@ -23,3 +23,11 @@ export interface VersesBundleSelectionAdapterPort {
     verses: Piece<"Verse">[];
   }): Promise<void>;
 }
+
+export interface VersesBundleSelectionPort {
+  select(params: {
+    bundle: Piece<"VersesBundle">;
+    verseStart: number;
+    verses: Piece<"Verse">[];
+  }): Promise<void>;
+}

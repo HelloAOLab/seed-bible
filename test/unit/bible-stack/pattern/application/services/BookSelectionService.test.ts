@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BookSelectionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BookSelectionService";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
-import type { PieceAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BookSelection";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
@@ -29,6 +28,8 @@ import type { EventManagerPort } from "../../../../../../patterns/bible-stack/bi
 import type { BibleStackEvents } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/events";
 import type { PieceHighlightServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import { makePieceHighlightServiceDouble } from "../serviceDoubles";
+import type { PiecePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Piece";
+import { makePieceDouble } from "../adapterDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -194,7 +195,7 @@ const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 describe("pattern.bible-stack.application.services.BookSelectionService", () => {
   let service: BookSelectionService;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
-  let pieceAdapterPort: Mocked<PieceAdapterPort>;
+  let pieceAdapterPort: Mocked<PiecePort>;
   let stackUpdateServicePort: Mocked<StackUpdateServicePort>;
   let pieceHighlighterPort: Mocked<PieceHighlightServicePort>;
   let loggerPort: Mocked<LoggerPort>;
@@ -228,10 +229,7 @@ describe("pattern.bible-stack.application.services.BookSelectionService", () => 
       emit: vi.fn(),
     } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
-    pieceAdapterPort = {
-      makeInteractable: vi.fn(),
-      makeNonInteractable: vi.fn(),
-    };
+    pieceAdapterPort = makePieceDouble();
 
     stackUpdateServicePort = {
       updateAllStacks: vi.fn(),

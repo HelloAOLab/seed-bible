@@ -3,10 +3,6 @@ import { ScripturePieceDragService } from "../../../../../../patterns/bible-stac
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import type { StackStructureServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackStructure";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type {
-  PieceAdapterPort,
-  ScripturePieceDataRepositoryPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/scripturePieceDrag";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
@@ -30,6 +26,9 @@ import {
   makePieceHighlightServiceDouble,
   makeSequenceStateServiceDouble,
 } from "../serviceDoubles";
+import type { PiecePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Piece";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import { makePieceDouble } from "../adapterDoubles";
 
 const BIBLE_ID = "bible-id";
 const BOOK_ID = "book-id";
@@ -124,8 +123,8 @@ const flushMicrotasks = () => new Promise((resolve) => setTimeout(resolve, 0));
 describe("pattern.bible-stack.application.services.ScripturePieceDragService", () => {
   let service: ScripturePieceDragService;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
-  let pieceAdapterPort: Mocked<PieceAdapterPort>;
-  let scripturePieceDataRepositoryPort: Mocked<ScripturePieceDataRepositoryPort>;
+  let pieceAdapterPort: Mocked<PiecePort>;
+  let scripturePieceDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
   let stackStructureServicePort: Mocked<StackStructureServicePort>;
@@ -147,13 +146,13 @@ describe("pattern.bible-stack.application.services.ScripturePieceDragService", (
       isThereAnOngoingSequence: vi.fn().mockReturnValue(false),
     });
 
-    pieceAdapterPort = {
+    pieceAdapterPort = makePieceDouble({
       isPieceAnchored: vi.fn().mockReturnValue(false),
-    };
+    });
 
     scripturePieceDataRepositoryPort = {
       getPieceData: vi.fn(),
-    } as unknown as Mocked<ScripturePieceDataRepositoryPort>;
+    } as unknown as Mocked<PieceDataRepositoryPort>;
 
     pieceHierarchyServicePort = {
       getParentDataChain: vi.fn(),

@@ -8,22 +8,13 @@ import {
 } from "../../domain/models/canvas";
 import { ActivityIndicatorData } from "../../domain/entities/ActivityIndicatorData";
 import { HighlightStates } from "../../domain/models/highlight";
-import type { LabelDataStorePort } from "../ports/out/PieceActivity";
-import type {
-  DataRegistryPort,
-  ActivityIndicatorsAdapterPort,
-  ActivityIndicatorLifecyclePort,
-  ActivityNotificationAdapterPort,
-  AnyShowIndicatorCommand,
-  IdGeneratorPort,
-} from "../ports/out/PieceActivity";
+import type { IdGeneratorPort } from "../ports/out/PieceActivity";
 import { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 import type { PieceTypeMap } from "../../domain/models/pieces";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
 import type { ReadingInstance } from "../../domain/models/userPresence";
-import type { UserIdentityPort } from "../ports/out/UserIdentity";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type { EventManagerPort } from "../ports/out/EventManager";
 import type {
@@ -32,18 +23,27 @@ import type {
   ActivityContainerType,
 } from "../../domain/models/activity";
 import type { UserPresenceServicePort } from "../ports/in/UserPresence";
+import type {
+  AnyShowIndicatorCommand,
+  ActivityIndicatorsPort,
+} from "../ports/out/ActivityIndicators";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { ActivityNotificationPort } from "../ports/out/ActivityNotification";
+import type { UserIdentityStorePort } from "../ports/out/UserIdentityStore";
+import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
 
 interface ServiceParams {
-  dataRegistryPort: DataRegistryPort;
+  dataRegistryPort: PieceDataRepositoryPort;
   arrangementServicePort: ArrangementServicePort;
   labelDataStorePort: LabelDataStorePort;
   maxIndicators?: number;
   userPresenceServicePort: UserPresenceServicePort;
   // readingInstanceProviderPort: ReadingInstanceProviderPort;
-  activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
-  activityIndicatorLifecyclePort: ActivityIndicatorLifecyclePort;
-  activityNotificationAdapterPort: ActivityNotificationAdapterPort;
-  userIdentityStorePort: UserIdentityPort;
+  activityIndicatorsAdapterPort: ActivityIndicatorsPort;
+  activityIndicatorLifecyclePort: StackPieceLifecyclePort;
+  activityNotificationAdapterPort: ActivityNotificationPort;
+  userIdentityStorePort: UserIdentityStorePort;
   idGeneratorPort: IdGeneratorPort;
   loggerPort: LoggerPort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
@@ -51,7 +51,7 @@ interface ServiceParams {
 
 type ActivityStrategyType<T extends BiblePiece = BiblePiece> = (
   piece: PieceTypeMap[T],
-  dataRegistryPort: DataRegistryPort,
+  dataRegistryPort: PieceDataRepositoryPort,
   loggerPort: LoggerPort
 ) =>
   | {
@@ -171,7 +171,7 @@ const activityStrategiesMap: {
 
 interface IndicatorsStrategyParams<T extends BiblePiece> {
   piece: Piece<T>;
-  dataRegistryPort: DataRegistryPort;
+  dataRegistryPort: PieceDataRepositoryPort;
   labelDataStorePort: LabelDataStorePort;
 }
 
@@ -218,7 +218,7 @@ const indicatorsStrategiesMap: {
 };
 
 export class PieceActivityService implements PieceActivityServicePort {
-  #dataRegistryPort: DataRegistryPort;
+  #dataRegistryPort: PieceDataRepositoryPort;
   #arrangementServicePort: ArrangementServicePort;
   #labelDataStorePort: LabelDataStorePort;
   #maxIndicators: NonNullable<ServiceParams["maxIndicators"]>;

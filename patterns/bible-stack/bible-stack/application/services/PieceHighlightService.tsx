@@ -10,15 +10,7 @@ import {
   HighlightStates,
   type HighlightIntensity,
 } from "../../domain/models/highlight";
-import type {
-  PieceHighlightPieceDataRepositoryPort,
-  PieceHighlightAdapterPort,
-  PieceHighlightActivityNotificationAdapterPort,
-  PieceUnhighlightSchedulerAdapterPort,
-  HighlightConfigProviderPort,
-} from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import { HighlightDelays } from "../ports/pieces";
 import {
   type HighlightRequestSource,
   type HighlightPacing,
@@ -35,16 +27,22 @@ import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
+import { HighlightDelays } from "../ports/out/HighlightConfigProvider";
+import type { PieceHighlightPort } from "../ports/out/PieceHighlight";
+import type { ActivityNotificationPort } from "../ports/out/ActivityNotification";
+import type { PieceUnhighlightSchedulerPort } from "../ports/out/PieceUnhighlightScheduler";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { HighlightConfigProviderPort } from "../ports/out/HighlightConfigProvider";
 
 interface ServiceParams {
   eventManagerPort: EventManagerPort<BibleStackEvents>;
-  pieceHighlightAdapterPort: PieceHighlightAdapterPort;
-  activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
+  pieceHighlightAdapterPort: PieceHighlightPort;
+  activityNotificationAdapterPort: ActivityNotificationPort;
   pieceActivityServicePort: PieceActivityServicePort;
   pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
-  schedulerAdapterPort: PieceUnhighlightSchedulerAdapterPort;
+  schedulerAdapterPort: PieceUnhighlightSchedulerPort;
   configProviderPort: HighlightConfigProviderPort;
-  pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
+  pieceDataRepositoryPort: PieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   sequenceStateServicePort: SequenceStateServicePort;
   loggerPort: LoggerPort;
@@ -67,13 +65,13 @@ export class PieceHighlightService implements PieceHighlightServicePort {
   #currentHighlightAttemptIds: Map<Piece["id"], number> = new Map();
   #lastHighlightAttemptId = 0;
   #eventManagerPort: EventManagerPort<BibleStackEvents>;
-  #pieceHighlightAdapterPort: PieceHighlightAdapterPort;
-  #activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
+  #pieceHighlightAdapterPort: PieceHighlightPort;
+  #activityNotificationAdapterPort: ActivityNotificationPort;
   #pieceActivityServicePort: PieceActivityServicePort;
   #pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
-  #schedulerAdapterPort: PieceUnhighlightSchedulerAdapterPort;
+  #schedulerAdapterPort: PieceUnhighlightSchedulerPort;
   #configProviderPort: HighlightConfigProviderPort;
-  #pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
+  #pieceDataRepositoryPort: PieceDataRepositoryPort;
   #pieceHierarchyServicePort: PieceHierarchyServicePort;
   #sequenceStateServicePort: SequenceStateServicePort;
   #loggerPort: ServiceParams["loggerPort"];
@@ -459,7 +457,7 @@ export class PieceHighlightService implements PieceHighlightServicePort {
     const changed = data?.changeHighlightIntensity(intensity);
     if (!changed) return;
     if (intensity === HighlightIntensities.Solid) {
-      this.#pieceHighlightAdapterPort.increaseIntensity(piece, pacing);
+      this.#pieceHighlightAdapterPort.increaseIntensity(piece);
     } else {
       this.#pieceHighlightAdapterPort.decreaseIntensity(piece);
     }

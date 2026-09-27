@@ -1,15 +1,11 @@
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import type { PieceSelectionSource } from "../../domain/models/canvas";
 import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
-import type {
-  LabelDataStorePort,
-  SectionSelectionAdapterPort,
-} from "../ports/out/SectionSelection";
+import type { SectionSelectionPort } from "../ports/out/SectionSelection";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
-import type { BookSpawnerPort } from "../ports/in/PieceSpawn";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
@@ -19,6 +15,8 @@ import type { BibleStackEvents } from "../../domain/models/events";
 import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
 import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
 
 interface ServiceParams {
   labelDataStorePort: LabelDataStorePort;
@@ -27,10 +25,10 @@ interface ServiceParams {
   pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
   pieceLifecycleServicePort: PieceLifecycleServicePort;
   stackUpdateServicePort: StackUpdateServicePort;
-  sectionSelectionAdapterPort: SectionSelectionAdapterPort;
+  sectionSelectionAdapterPort: SectionSelectionPort;
   explodedViewServicePort: ExplodedViewServicePort;
   eventManagerPort: EventManagerPort<BibleStackEvents>;
-  bookSpawnerPort: BookSpawnerPort;
+  bookSpawnerPort: StackPieceLifecyclePort;
   tourGuideServicePort: TourGuideServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   loggerPort: LoggerPort;

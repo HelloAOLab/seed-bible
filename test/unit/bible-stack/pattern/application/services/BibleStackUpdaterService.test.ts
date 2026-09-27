@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BibleStackUpdaterService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BibleStackUpdaterService";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type { BibleStackUpdaterAdapterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleStackUpdater";
 import {
   StackBibleData,
   type StaticBiblePieces,
@@ -15,10 +14,11 @@ import {
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import { StackUpdatePacings } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/stacks";
 import type { TestamentStackUpdaterServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentStackUpdater";
+import type { BibleStackUpdaterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleStackUpdater";
 
 describe("pattern.bible-stack.application.services.BibleStackUpdaterService", () => {
   let service: BibleStackUpdaterService;
-  let updaterAdapterPort: Mocked<BibleStackUpdaterAdapterPort>;
+  let updaterAdapterPort: Mocked<BibleStackUpdaterPort>;
   let testamentUpdaterPort: Mocked<TestamentStackUpdaterServicePort>;
   let loggerPort: Mocked<LoggerPort>;
   let executionOrder: string[];

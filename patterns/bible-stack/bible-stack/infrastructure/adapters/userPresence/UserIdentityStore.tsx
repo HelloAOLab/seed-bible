@@ -1,4 +1,3 @@
-import type { UserIdentityPort } from "../../../application/ports/out/UserIdentity";
 import type {
   UserIds,
   ConnectedUserData,
@@ -6,12 +5,13 @@ import type {
   UserProfile,
 } from "../../../domain/models/userPresence";
 import type { InfrastructureEventManager } from "../../models/events";
+import type { UserIdentityStorePort } from "../../../application/ports/out/UserIdentityStore";
 
 interface StoreParams {
   eventBus: InfrastructureEventManager;
 }
 
-export class UserIdentityStore implements UserIdentityPort {
+export class UserIdentityStore implements UserIdentityStorePort {
   #userDataList: ConnectedUserData[];
   #eventBus: StoreParams["eventBus"];
 

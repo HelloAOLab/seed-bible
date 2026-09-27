@@ -8,7 +8,7 @@ import type {
   DropEvent as DomainDropEvent,
   Piece,
 } from "../../domain/models/canvas";
-import type { PieceDataRepositoryPort } from "./pieces";
+import type { PieceDataRepositoryPort } from "./out/PieceDataRepository";
 
 export interface PieceMapperPort {
   toDomain: (bot: PieceBot<"StackTestament">) => Piece<"StackTestament">;

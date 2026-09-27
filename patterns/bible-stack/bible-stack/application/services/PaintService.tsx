@@ -1,19 +1,17 @@
 import { GetColorType } from "../../domain/functions/colors";
 import type { PaintablePieceData } from "../../domain/models/pieces";
 import type { LoggerPort } from "../ports/out/Logger";
-import type {
-  StackDataRepository,
-  VerseDataRepository,
-  VersesBundleDataRepository,
-  PaintAdapterPort,
-} from "../ports/out/Paint";
+import type { PaintPort } from "../ports/out/Paint";
 import type { PaintServicePort } from "../ports/in/Paint";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { VerseDataRepositoryPort } from "../ports/out/VerseDataRepository";
+import type { VersesBundleDataRepositoryPort } from "../ports/out/VersesBundleDataRepository";
 
 interface ServiceParams {
-  stackDataRepository: StackDataRepository;
-  verseDataRepository: VerseDataRepository;
-  versesBundleDataRepository: VersesBundleDataRepository;
-  paintAdapterPort: PaintAdapterPort;
+  stackDataRepository: PieceDataRepositoryPort;
+  verseDataRepository: VerseDataRepositoryPort;
+  versesBundleDataRepository: VersesBundleDataRepositoryPort;
+  paintAdapterPort: PaintPort;
   loggerPort: LoggerPort;
 }
 

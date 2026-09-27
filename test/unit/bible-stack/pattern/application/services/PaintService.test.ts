@@ -1,11 +1,6 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { PaintService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PaintService";
-import type {
-  PaintAdapterPort,
-  StackDataRepository,
-  VerseDataRepository,
-  VersesBundleDataRepository,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Paint";
+import type { PaintPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Paint";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
 import { VerseData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/VerseData";
@@ -15,13 +10,20 @@ import type {
   Piece,
 } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
 import type { PaintablePieceData } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieces";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import type { VerseDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/VerseDataRepository";
+import type { VersesBundleDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/VersesBundleDataRepository";
+import {
+  makeVerseDataRepositoryDouble,
+  makeVersesBundleDataRepositoryDouble,
+} from "../adapterDoubles";
 
 describe("pattern.bible-stack.application.services.PaintService", () => {
   let service: PaintService;
-  let stackDataRepository: Mocked<StackDataRepository>;
-  let verseDataRepository: Mocked<VerseDataRepository>;
-  let versesBundleDataRepository: Mocked<VersesBundleDataRepository>;
-  let paintAdapterPort: Mocked<PaintAdapterPort>;
+  let stackDataRepository: Mocked<PieceDataRepositoryPort>;
+  let verseDataRepository: Mocked<VerseDataRepositoryPort>;
+  let versesBundleDataRepository: Mocked<VersesBundleDataRepositoryPort>;
+  let paintAdapterPort: Mocked<PaintPort>;
   let loggerPort: Mocked<LoggerPort>;
 
   const DEFAULT_COLOR = "#efe5c9";
@@ -145,15 +147,11 @@ describe("pattern.bible-stack.application.services.PaintService", () => {
   beforeEach(() => {
     stackDataRepository = {
       getPieceData: vi.fn(),
-    } as unknown as Mocked<StackDataRepository>;
+    } as unknown as Mocked<PieceDataRepositoryPort>;
 
-    verseDataRepository = {
-      getVerseData: vi.fn(),
-    };
+    verseDataRepository = makeVerseDataRepositoryDouble();
 
-    versesBundleDataRepository = {
-      getBundleData: vi.fn(),
-    };
+    versesBundleDataRepository = makeVersesBundleDataRepositoryDouble();
 
     paintAdapterPort = {
       paint: vi.fn(),

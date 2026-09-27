@@ -1,17 +1,9 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BookInteractionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BookInteractionService";
-import type {
-  BookDataRepositoryPort,
-  PieceAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/books";
 import type { BookSelectionServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookSelection";
 import type { ExplodedViewServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ExplodedView";
 import type { PieceHierarchyServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import type { TourGuideServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/TourGuide";
-import {
-  BookInteractionDelays,
-  type BookInteractionConfigProviderPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BookInteraction";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -61,6 +53,11 @@ import {
   makePieceHighlightServiceDouble,
   makeSequenceStateServiceDouble,
 } from "../serviceDoubles";
+import { BookInteractionDelays } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BookInteractionConfigProvider";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import type { PiecePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Piece";
+import type { BookInteractionConfigProviderPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BookInteractionConfigProvider";
+import { makePieceDouble } from "../adapterDoubles";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";
@@ -297,14 +294,14 @@ const makeParentDataChain = (
 
 describe("pattern.bible-stack.application.services.BookInteractionService", () => {
   let service: BookInteractionService;
-  let bookDataRepositoryPort: Mocked<BookDataRepositoryPort>;
+  let bookDataRepositoryPort: Mocked<PieceDataRepositoryPort>;
   let pieceHierarchyServicePort: Mocked<PieceHierarchyServicePort>;
   let tourGuideServicePort: Mocked<TourGuideServicePort>;
   let bookSelectionServicePort: Mocked<BookSelectionServicePort>;
   let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
   let explodedViewServicePort: Mocked<ExplodedViewServicePort>;
   let sequenceStateServicePort: Mocked<SequenceStateServicePort>;
-  let pieceAdapterPort: Mocked<PieceAdapterPort>;
+  let pieceAdapterPort: Mocked<PiecePort>;
   let bookInteractionConfigProviderPort: Mocked<BookInteractionConfigProviderPort>;
   let paintPort: Mocked<PaintServicePort>;
   let loggerPort: Mocked<LoggerPort>;
@@ -312,7 +309,7 @@ describe("pattern.bible-stack.application.services.BookInteractionService", () =
   beforeEach(() => {
     bookDataRepositoryPort = {
       getPieceData: vi.fn(),
-    } as unknown as Mocked<BookDataRepositoryPort>;
+    } as unknown as Mocked<PieceDataRepositoryPort>;
 
     pieceHierarchyServicePort = {
       getParentDataChain: vi.fn(() => makeParentDataChain()),
@@ -351,9 +348,7 @@ describe("pattern.bible-stack.application.services.BookInteractionService", () =
       }),
     });
 
-    pieceAdapterPort = {
-      isPieceAnchored: vi.fn(),
-    };
+    pieceAdapterPort = makePieceDouble();
 
     bookInteractionConfigProviderPort = {
       getDelay: vi.fn(() => UNHIGHLIGHT_DELAY),

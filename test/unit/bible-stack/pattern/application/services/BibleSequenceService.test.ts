@@ -7,16 +7,7 @@ import {
   type Mock,
 } from "vitest";
 import { BibleSequenceService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BibleSequenceService";
-import type {
-  BibleSequenceAdapterPort,
-  BibleSequenceServiceConfigProviderPort,
-  LabelDataRepositoryPort,
-  PieceAdapterPort,
-  RenderOrderAdapterPort,
-  StackPieceLifecycleAdapterPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/bibleLifecycle";
 import type { AwaiterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/experience";
-import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieces";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type {
   ActiveBibleHierarchy,
@@ -64,6 +55,18 @@ import {
   makePieceLabelServiceDouble,
   makeScripturePiecesStateServiceDouble,
 } from "../serviceDoubles";
+import type { BibleSequencePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/BibleSequence";
+import type { SequenceConfigProviderPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/SequenceConfigProvider";
+import type { LabelDataStorePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/LabelDataStore";
+import type { PiecePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Piece";
+import type { RenderOrderPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/RenderOrder";
+import type { StackPieceLifecyclePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/StackPieceLifecycle";
+import type { PieceDataRepositoryPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceDataRepository";
+import {
+  makeLabelDataStoreDouble,
+  makePieceDouble,
+  makeStackPieceLifecycleDouble,
+} from "../adapterDoubles";
 
 interface MockedDataProps {
   id?: string;
@@ -169,18 +172,18 @@ const makeBibleData = ({
 describe("pattern.bible-stack.application.services.BibleSequenceService", () => {
   let service: BibleSequenceService;
   let eventManagerPort: Mocked<EventManagerPort<BibleStackEvents>>;
-  let bibleSequenceAdapterPort: Mocked<BibleSequenceAdapterPort>;
+  let bibleSequenceAdapterPort: Mocked<BibleSequencePort>;
   let awaiterPort: Mocked<AwaiterPort>;
-  let configProviderPort: Mocked<BibleSequenceServiceConfigProviderPort>;
+  let configProviderPort: Mocked<SequenceConfigProviderPort>;
   let pieceHighlightServicePort: Mocked<PieceHighlightServicePort>;
   let pieceLabelServicePort: Mocked<
     PieceLabelServicePort<StackLabelableBiblePiece>
   >;
-  let labelDataRepositoryPort: Mocked<LabelDataRepositoryPort>;
-  let pieceAdapterPort: Mocked<PieceAdapterPort>;
-  let stackPieceLifecycleAdapterPort: Mocked<StackPieceLifecycleAdapterPort>;
+  let labelDataRepositoryPort: Mocked<LabelDataStorePort>;
+  let pieceAdapterPort: Mocked<PiecePort>;
+  let stackPieceLifecycleAdapterPort: Mocked<StackPieceLifecyclePort>;
   let bookChaptersManagementServicePort: Mocked<BookChaptersManagementServicePort>;
-  let renderOrderAdapterPort: Mocked<RenderOrderAdapterPort>;
+  let renderOrderAdapterPort: Mocked<RenderOrderPort>;
   let loggerPort: Mocked<LoggerPort>;
   let pieceDataRepositoryPort: Mocked<
     Pick<
@@ -210,7 +213,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
 
     configProviderPort = {
       getTestamentHighlightSequenceConfig: vi.fn(),
-    } as unknown as Mocked<BibleSequenceServiceConfigProviderPort>;
+    } as unknown as Mocked<SequenceConfigProviderPort>;
 
     pieceHighlightServicePort = makePieceHighlightServiceDouble({
       tryUnhighlightPiece: vi.fn(() => Promise.resolve()),
@@ -220,29 +223,11 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
       hideLabel: vi.fn(() => Promise.resolve()),
     });
 
-    labelDataRepositoryPort = {
-      getDataByOwnerId: vi.fn(),
-    };
+    labelDataRepositoryPort = makeLabelDataStoreDouble();
 
-    pieceAdapterPort = {
-      makeNonInteractable: vi.fn(),
-      makeInteractable: vi.fn(),
-      isPieceBeingUsed: vi.fn(),
-    };
+    pieceAdapterPort = makePieceDouble();
 
-    stackPieceLifecycleAdapterPort = {
-      spawnBibleTransformer: vi.fn(),
-      spawnCover: vi.fn(),
-      spawnCrossLine: vi.fn(),
-      spawnShadow: vi.fn(),
-      despawnSectionShadow: vi.fn(),
-      despawnTestament: vi.fn(),
-      despawnSection: vi.fn(),
-      despawnBook: vi.fn(),
-      despawnSectionBook: vi.fn(),
-      spawnSectionDomain: vi.fn(),
-      spawnSectionBookDomain: vi.fn(),
-    };
+    stackPieceLifecycleAdapterPort = makeStackPieceLifecycleDouble();
 
     bookChaptersManagementServicePort =
       makeBookChaptersManagementServiceDouble();
@@ -447,7 +432,7 @@ describe("pattern.bible-stack.application.services.BibleSequenceService", () => 
 
     interface DespawnCase {
       despawn: keyof Pick<
-        StackPieceLifecycleAdapterPort,
+        StackPieceLifecyclePort,
         | "despawnTestament"
         | "despawnSection"
         | "despawnSectionBook"

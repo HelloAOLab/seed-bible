@@ -3,10 +3,8 @@ import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackChapterData } from "../../domain/entities/StackChapterData";
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import { PieceSelectionSources } from "../../domain/models/canvas";
-import type { BibleDataRepositoryPort } from "../ports/stacks";
-import type { PieceDataRepositoryPort } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type { PieceAdapterPort, AwaiterPort } from "../ports/userPresence";
+import type { AwaiterPort } from "../ports/userPresence";
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import {
   StackPresenceNavigationPacings,
@@ -30,12 +28,15 @@ import type { ChapterSelectionServicePort } from "../ports/in/ChapterSelection";
 import type { TestamentSelectionServicePort } from "../ports/in/TestamentSelection";
 import type { UserPresenceServicePort } from "../ports/in/UserPresence";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { PiecePort } from "../ports/out/Piece";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   loggerPort: LoggerPort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   userPresencePort: UserPresenceServicePort;
-  pieceAdapterPort: PieceAdapterPort;
+  pieceAdapterPort: PiecePort;
   pieceDataRepositoryPort: Pick<
     PieceDataRepositoryPort,
     "getAllChapters" | "getAllBooks" | "getAllSectionBooks"
