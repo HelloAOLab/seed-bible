@@ -1,11 +1,11 @@
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
 
-export interface UpdateCommand {
+export interface TestamentStackUpdateCommand {
   data: StackTestamentData;
   pacing: StackUpdatePacing;
 }
 
 export interface TestamentStackUpdaterPort {
-  update(params: UpdateCommand): Promise<void>;
+  update(params: TestamentStackUpdateCommand): Promise<void>;
 }

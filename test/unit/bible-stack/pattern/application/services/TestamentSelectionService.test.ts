@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { TestamentSelectionService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/TestamentSelectionService";
 import type { StackUpdateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackUpdate";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type {
-  AwaiterPort,
-  TestamentSelectionPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/TestamentSelection";
+import type { TestamentSelectionPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/TestamentSelection";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
 import { StackSectionData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionData";
 import { StackTestamentData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackTestamentData";
@@ -39,6 +36,7 @@ import {
   makePieceDouble,
   makeStackPieceLifecycleDouble,
 } from "../adapterDoubles";
+import type { AwaiterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Awaiter";
 
 const ARRANGEMENT_NAME = "arrangement";
 const BIBLE_ID = "bible-id";

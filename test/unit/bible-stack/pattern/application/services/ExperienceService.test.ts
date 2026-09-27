@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { ExperienceService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/ExperienceService";
-import type { AwaiterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/experience";
 import type { PieceActivityServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
 import type { ScripturePiecesStateServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/ScripturePiecesState";
 import type { StackPresenceNavigationServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/StackPresenceNavigation";
@@ -33,6 +32,7 @@ import {
   makeExperienceConfigProviderDouble,
   makeInteractionRegistryDouble,
 } from "../adapterDoubles";
+import type { AwaiterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Awaiter";
 
 const BIBLE_ID = "bible-id";
 const CREATION_DELAY = 750;

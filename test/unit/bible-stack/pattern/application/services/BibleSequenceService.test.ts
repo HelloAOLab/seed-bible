@@ -7,7 +7,6 @@ import {
   type Mock,
 } from "vitest";
 import { BibleSequenceService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BibleSequenceService";
-import type { AwaiterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/experience";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type {
   ActiveBibleHierarchy,
@@ -67,6 +66,7 @@ import {
   makePieceDouble,
   makeStackPieceLifecycleDouble,
 } from "../adapterDoubles";
+import type { AwaiterPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Awaiter";
 
 interface MockedDataProps {
   id?: string;

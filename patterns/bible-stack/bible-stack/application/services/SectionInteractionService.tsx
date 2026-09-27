@@ -22,8 +22,6 @@ import { SectionInteractionDelays } from "../ports/out/SectionInteractionConfigP
 import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 import type { SectionInteractionConfigProviderPort } from "../ports/out/SectionInteractionConfigProvider";
 
-type SectionDataRepositoryPort = Pick<PieceDataRepositoryPort, "getPieceData">;
-
 interface ServiceParams {
   sectionDataRepositoryPort: PieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;

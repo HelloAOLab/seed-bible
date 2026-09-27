@@ -8,7 +8,6 @@ import {
 } from "../../domain/models/canvas";
 import { ActivityIndicatorData } from "../../domain/entities/ActivityIndicatorData";
 import { HighlightStates } from "../../domain/models/highlight";
-import type { IdGeneratorPort } from "../ports/out/PieceActivity";
 import { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
@@ -32,6 +31,7 @@ import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
 import type { ActivityNotificationPort } from "../ports/out/ActivityNotification";
 import type { UserIdentityStorePort } from "../ports/out/UserIdentityStore";
 import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
+import type { IdGeneratorPort } from "../ports/out/IdGenerator";
 
 interface ServiceParams {
   dataRegistryPort: PieceDataRepositoryPort;

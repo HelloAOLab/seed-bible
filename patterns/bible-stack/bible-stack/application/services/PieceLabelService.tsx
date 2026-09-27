@@ -5,7 +5,6 @@ import type {
 } from "../../domain/models/label";
 import type { Piece } from "../../domain/models/canvas";
 import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
-import type { IdGeneratorPort } from "../ports/out/PieceLabel";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 import type { LoggerPort } from "../ports/out/Logger";
 import type { LabelDateServicePort } from "../ports/in/LabelDate";
@@ -15,6 +14,7 @@ import type { LabelPort } from "../ports/out/Label";
 import type { ActivityIndicatorsPort } from "../ports/out/ActivityIndicators";
 import type { LabelFeedbackPort } from "../ports/out/LabelFeedback";
 import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
+import type { IdGeneratorPort } from "../ports/out/IdGenerator";
 
 export interface ServiceParams<T extends StackLabelableBiblePiece> {
   labelAdapterPort: LabelPort;

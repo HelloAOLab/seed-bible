@@ -1,6 +1,5 @@
 import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
-import type { AwaiterPort } from "../ports/experience";
 import {
   HighlightRequestSources,
   UnhighlightRequestSources,
@@ -31,6 +30,7 @@ import type { PiecePort } from "../ports/out/Piece";
 import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
 import type { RenderOrderPort } from "../ports/out/RenderOrder";
 import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { AwaiterPort } from "../ports/out/Awaiter";
 
 interface ServiceParams {
   eventManagerPort: EventManagerPort<BibleStackEvents>;

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { BibleLifecycleService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/BibleLifecycleService";
-import type { IdGeneratorPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/bibleLifecycle";
 import type { ArrangementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Arrangement";
 import { StackBibleData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBibleData";
 import type {
@@ -27,6 +26,7 @@ import {
   makeBibleDataRepositoryDouble,
   makeStackPieceLifecycleDouble,
 } from "../adapterDoubles";
+import type { IdGeneratorPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/IdGenerator";
 
 describe("pattern.bible-stack.application.services.BibleLifecycleService", () => {
   let service: BibleLifecycleService;

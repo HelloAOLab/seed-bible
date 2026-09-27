@@ -2,10 +2,6 @@ import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { PieceActivityService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceActivityService";
 import type { ArrangementServicePort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/in/Arrangement";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
-import type {
-  GetPieceData,
-  IdGeneratorPort,
-} from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceActivity";
 import { ActivityIndicatorData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/ActivityIndicatorData";
 import { InfoLabelData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/InfoLabelData";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
@@ -49,6 +45,7 @@ import {
   makeStackPieceLifecycleDouble,
   makeUserIdentityStoreDouble,
 } from "../adapterDoubles";
+import type { IdGeneratorPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/IdGenerator";
 
 const ARRANGEMENT_NAME = "arrangement";
 const OWN_CONNECTION_ID = "own-connection";
@@ -445,7 +442,7 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
     } as unknown as Mocked<EventManagerPort<BibleStackEvents>>;
 
     dataRegistryPort.getPieceData.mockImplementation(((piece: Piece) =>
-      pieceDataById.get(piece.id)) as GetPieceData);
+      pieceDataById.get(piece.id)) as PieceDataRepositoryPort["getPieceData"]);
     dataRegistryPort.getAllPiecesDataByType.mockReturnValue([]);
 
     arrangementServicePort.getBookInfoPathById.mockImplementation(

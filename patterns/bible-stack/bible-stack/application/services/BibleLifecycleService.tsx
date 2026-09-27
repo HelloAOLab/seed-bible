@@ -1,5 +1,4 @@
 import { StackBibleData } from "../../domain/entities/StackBibleData";
-import type { IdGeneratorPort } from "../ports/bibleLifecycle";
 import type { WorldPosition } from "../../domain/models/spatial";
 import {
   BibleVisualizationStates,
@@ -16,6 +15,7 @@ import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
 import type { BibleSetupPort } from "../ports/out/BibleSetup";
 import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
 import type { LoggerPort } from "../ports/out/Logger";
+import type { IdGeneratorPort } from "../ports/out/IdGenerator";
 
 interface ServiceParams {
   pieceLifecycleAdapterPort: StackPieceLifecyclePort;

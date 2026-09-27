@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { PieceLifecycleService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceLifecycleService";
-import type { IdGeneratorPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/pieceLifecycle";
 import { StackBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackBookData";
 import { StackChapterData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackChapterData";
 import { StackSectionBookData } from "../../../../../../patterns/bible-stack/bible-stack/domain/entities/StackSectionBookData";
@@ -38,6 +37,7 @@ import {
   makeVersesBundleDataRepositoryDouble,
   makeStackPieceLifecycleDouble,
 } from "../adapterDoubles";
+import type { IdGeneratorPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/IdGenerator";
 
 const ARRANGEMENT_NAME = "arrangement";
 const ARRANGEMENT_INDEX = 2;

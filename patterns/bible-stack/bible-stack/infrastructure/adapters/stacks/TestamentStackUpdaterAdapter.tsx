@@ -11,8 +11,8 @@ import type { BookStackUpdaterAdapter } from "./BookStackUpdaterAdapter";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 import type {
-  UpdateCommand,
   TestamentStackUpdaterPort,
+  TestamentStackUpdateCommand,
 } from "../../../application/ports/out/TestamentStackUpdater";
 import type { LoggerAdapter } from "../environment/LoggerAdapter";
 
@@ -74,7 +74,7 @@ export class TestamentStackUpdaterAdapter implements TestamentStackUpdaterPort {
     this.#loggerPort = loggerPort;
   }
 
-  async update({ data, pacing }: UpdateCommand): Promise<void> {
+  async update({ data, pacing }: TestamentStackUpdateCommand): Promise<void> {
     const dimension = this.#getDimension();
     const duration = this.#stackUpdateConfigProvider.getDuration(pacing);
     const easing = this.#stackUpdateConfigProvider.getEasing();

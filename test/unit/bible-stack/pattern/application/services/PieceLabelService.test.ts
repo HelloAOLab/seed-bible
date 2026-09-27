@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, type Mocked } from "vitest";
 import { PieceLabelService } from "../../../../../../patterns/bible-stack/bible-stack/application/services/PieceLabelService";
-import type { IdGeneratorPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/PieceLabel";
 import type { LoggerPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/Logger";
 import type { StackLabelableBiblePiece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
 import type { Piece } from "../../../../../../patterns/bible-stack/bible-stack/domain/models/canvas";
@@ -24,6 +23,7 @@ import {
   makeActivityIndicatorsDouble,
   makeLabelFeedbackDouble,
 } from "../adapterDoubles";
+import type { IdGeneratorPort } from "../../../../../../patterns/bible-stack/bible-stack/application/ports/out/IdGenerator";
 
 type T = StackLabelableBiblePiece;
 

@@ -20,8 +20,8 @@ import { SelectionStates } from "../../../domain/models/selection";
 import { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 import { FindPreviousValidGroupBookData } from "../../functions/arrangement";
 import type {
-  UpdateCommand,
   BookStackUpdaterPort,
+  BookStackUpdateCommand,
 } from "../../../application/ports/out/BookStackUpdater";
 import type { LoggerAdapter } from "../environment/LoggerAdapter";
 // import { FindPreviousValidGroupBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/scripture";
@@ -132,7 +132,7 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
   }
 
   /** Standalone book update: derive position from the book's own bot position. */
-  async update({ data, pacing }: UpdateCommand): Promise<void> {
+  async update({ data, pacing }: BookStackUpdateCommand): Promise<void> {
     const dimension = this.#getDimension();
     const duration = this.#stackUpdateConfigProvider.getDuration(pacing);
     const easing = this.#stackUpdateConfigProvider.getEasing();

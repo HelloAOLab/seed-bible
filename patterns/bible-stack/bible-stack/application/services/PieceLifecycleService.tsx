@@ -4,7 +4,6 @@ import { StackSectionBookData } from "../../domain/entities/StackSectionBookData
 import { StackSectionData } from "../../domain/entities/StackSectionData";
 import { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import { StackBibleData } from "../../domain/entities/StackBibleData";
-import type { IdGeneratorPort } from "../ports/pieceLifecycle";
 import type {
   ChapterCreationParams,
   Piece,
@@ -31,6 +30,7 @@ import type { LayoutConfigProviderPort } from "../ports/out/LayoutConfigProvider
 import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 import type { VerseDataRepositoryPort } from "../ports/out/VerseDataRepository";
 import type { VersesBundleDataRepositoryPort } from "../ports/out/VersesBundleDataRepository";
+import type { IdGeneratorPort } from "../ports/out/IdGenerator";
 
 interface ServiceProps {
   pieceDataRepositoryPort: PieceDataRepositoryPort;

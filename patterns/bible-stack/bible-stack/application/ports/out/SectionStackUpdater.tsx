@@ -1,14 +1,11 @@
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 import type { StackSectionData } from "../../../domain/entities/StackSectionData";
 
-export interface UpdateCommand {
+export interface SectionStackUpdateCommand {
   data: StackSectionData;
   pacing: StackUpdatePacing;
 }
 
 export interface SectionStackUpdaterPort {
-  update(params: {
-    data: StackSectionData;
-    pacing: StackUpdatePacing;
-  }): Promise<void>;
+  update(params: SectionStackUpdateCommand): Promise<void>;
 }

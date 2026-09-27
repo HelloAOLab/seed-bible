@@ -1,4 +1,3 @@
-import type { AwaiterPort } from "../ports/experience";
 import type { StackPresenceNavigationServicePort } from "../ports/in/StackPresenceNavigation";
 import { BibleTypes } from "../../domain/models/canvas";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
@@ -14,6 +13,7 @@ import type { InteractionRegistryPort } from "../ports/out/InteractionRegistry";
 import type { ExperiencePort } from "../ports/out/Experience";
 import type { CameraPort } from "../ports/out/Camera";
 import type { ExperienceConfigProviderPort } from "../ports/out/ExperienceConfigProvider";
+import type { AwaiterPort } from "../ports/out/Awaiter";
 
 interface ExperienceServiceParams {
   environmentAdapterPort: EnvironmentPort;

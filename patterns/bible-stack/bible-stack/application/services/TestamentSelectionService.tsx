@@ -1,9 +1,6 @@
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { PieceSelectionSource } from "../../domain/models/canvas";
-import type {
-  AwaiterPort,
-  TestamentSelectionPort,
-} from "../ports/out/TestamentSelection";
+import type { TestamentSelectionPort } from "../ports/out/TestamentSelection";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { LoggerPort } from "../ports/out/Logger";
@@ -14,6 +11,7 @@ import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
 import type { LabelSequenceConfigProviderPort } from "../ports/out/LabelSequenceConfigProvider";
 import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
 import type { PiecePort } from "../ports/out/Piece";
+import type { AwaiterPort } from "../ports/out/Awaiter";
 // import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 
 interface ServiceParams {

@@ -1,7 +1,7 @@
 import type {
-  UpdateCommand,
   UpdateReturnValue,
   BibleStackUpdaterPort,
+  BibleStackUpdateCommand,
 } from "../../../application/ports/out/BibleStackUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
 import type { StackLowerCoverMapper } from "../../mappers/StackLowerCoverMapper";
@@ -69,7 +69,7 @@ export class BibleStackUpdaterAdapter implements BibleStackUpdaterPort {
     shouldCrossGoInMiddle,
     activeTestaments,
     currentCrossPosition,
-  }: UpdateCommand): UpdateReturnValue {
+  }: BibleStackUpdateCommand): UpdateReturnValue {
     const dimension = this.#getDimension();
     const duration = this.#stackUpdateConfigProvider.getDuration(pacing);
     const easing = this.#stackUpdateConfigProvider.getEasing();

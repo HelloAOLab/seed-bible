@@ -4,7 +4,6 @@ import type { StackChapterData } from "../../domain/entities/StackChapterData";
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import { PieceSelectionSources } from "../../domain/models/canvas";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type { AwaiterPort } from "../ports/userPresence";
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import {
   StackPresenceNavigationPacings,
@@ -31,6 +30,7 @@ import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { PiecePort } from "../ports/out/Piece";
 import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
 import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { AwaiterPort } from "../ports/out/Awaiter";
 
 interface ServiceParams {
   loggerPort: LoggerPort;
