@@ -335,6 +335,18 @@ describe("pattern.bible-stack.application.services.StackPresenceNavigationServic
     );
   };
 
+  /** Runs a sequence the service didn't start; resolves it when the returned function is called. */
+  const holdForeignSequence = () => {
+    let release: () => void = () => {};
+    void sequenceStateService.executeAsSequence(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        })
+    );
+    return () => release();
+  };
+
   const chapterId = (params: TrySelectChapterParams) =>
     "data" in params ? params.data.id : undefined;
 
@@ -793,22 +805,39 @@ describe("pattern.bible-stack.application.services.StackPresenceNavigationServic
       expect(selectedChapterIds()).toEqual(["GEN-1"]);
     });
 
-    it("discards a position that arrived during someone else's sequence", async () => {
+    it("discards an update that arrived during someone else's sequence when the user's own position didn't change", async () => {
       chapters = [makeChapter({ bookId: "GEN", number: 1 })];
-      let releaseForeign: (() => void) | undefined;
-      void sequenceStateService.executeAsSequence(
-        () =>
-          new Promise<void>((resolve) => {
-            releaseForeign = resolve;
-          })
-      );
+      emitPresence();
+      await flush();
+      const releaseForeign = holdForeignSequence();
 
       emitPresence();
       await flush();
-      releaseForeign?.();
+      releaseForeign();
       await flush();
 
-      expect(steps).toEqual([]);
+      expect(selectedChapterIds()).toEqual(["GEN-1"]);
+    });
+
+    it("navigates to the user's new position once someone else's sequence ends", async () => {
+      chapters = [
+        makeChapter({ bookId: "GEN", number: 1 }),
+        makeChapter({ bookId: "EXO", number: 25 }),
+      ];
+      emitPresence();
+      await flush();
+      const releaseForeign = holdForeignSequence();
+
+      ownInstance = readingInstance("EXO", 25);
+      emitPresence();
+      await flush();
+
+      expect(selectedChapterIds()).toEqual(["GEN-1"]);
+
+      releaseForeign();
+      await flush();
+
+      expect(selectedChapterIds()).toEqual(["GEN-1", "EXO-25"]);
     });
   });
 

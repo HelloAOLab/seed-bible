@@ -80,6 +80,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   #explodedViewServicePort: ServiceParams["explodedViewServicePort"];
   #isUpdatePending: boolean = false;
   #didUpdateRunInSequence: boolean = false;
+  #lastNavigatedInstance: ReadingInstance | undefined;
   #arrangementServicePort: ServiceParams["arrangementServicePort"];
 
   constructor({
@@ -132,13 +133,29 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
       this.#didUpdateRunInSequence = false;
     });
 
+    // A sequence this service didn't start (the user driving the stack) keeps a
+    // pending update only when the user's own position moved: presence also
+    // changes when a peer moves, and following that would undo the user's
+    // browsing.
     this.#eventManagerPort.subscribe("OnStackSequenceEnd", () => {
       if (!this.#didUpdateRunInSequence) {
-        this.#isUpdatePending = false;
-        return;
+        this.#isUpdatePending =
+          this.#isUpdatePending && this.#hasOwnPositionChanged();
       }
       this.#tryDrainUpdate();
     });
+  }
+
+  #hasOwnPositionChanged(): boolean {
+    const current = this.#userPresencePort.getOwnUserSelectedInstance();
+    const last = this.#lastNavigatedInstance;
+    if (!current) return false;
+    return (
+      !last ||
+      last.id !== current.id ||
+      last.bookId !== current.bookId ||
+      last.chapter !== current.chapter
+    );
   }
 
   #handleSectionExploded(payload: { sectionData: StackSectionData }): void {
@@ -176,6 +193,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
         return;
       }
 
+      this.#lastNavigatedInstance = selectedInstance;
       try {
         await this.#runUpdatePass(selectedInstance);
       } catch (error) {
