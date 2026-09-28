@@ -109,14 +109,17 @@ export const bootstrapExtension = () => {
                             })
                         );
                       }
-                      instances.push({
-                        bookId: readingState.bookId.value,
-                        chapter: readingState.chapterNumber.value,
-                        id: `${context.login.connectionId}:${tab.id}`,
-                        selected: context.tabs.selectedTabId.value === tab.id,
-                        translation: readingState.translationId.value,
-                        connectionId: context.login.connectionId,
-                      });
+                      const bookId = readingState.bookId.value;
+                      if (bookId) {
+                        instances.push({
+                          bookId,
+                          chapter: readingState.chapterNumber.value,
+                          id: `${context.login.connectionId}:${tab.id}`,
+                          selected: context.tabs.selectedTabId.value === tab.id,
+                          translation: readingState.translationId.value,
+                          connectionId: context.login.connectionId,
+                        });
+                      }
                       return instances;
                     })
                     .flat();

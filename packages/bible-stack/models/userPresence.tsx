@@ -4,11 +4,11 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers";
 
 export interface ReadingInstance {
-  bookId?: string | null;
-  chapter?: number;
+  bookId: string;
+  chapter: number;
   id: string;
   selected: boolean;
-  translation?: string;
+  translation: string;
   connectionId: string;
 }
 

@@ -15,10 +15,11 @@ function isReadingInstance(value: unknown): value is ReadingInstance {
 
 export function ToUserPresence(value: unknown): UserPresence | null {
   if (!(value instanceof Map)) return null;
+  const presence: UserPresence = new Map();
   for (const [connectionId, instances] of value) {
-    if (typeof connectionId !== "string") return null;
-    if (!Array.isArray(instances)) return null;
-    if (!instances.every(isReadingInstance)) return null;
+    if (typeof connectionId !== "string" || !Array.isArray(instances)) continue;
+    const validInstances = instances.filter(isReadingInstance);
+    if (validInstances.length > 0) presence.set(connectionId, validInstances);
   }
-  return value as UserPresence;
+  return presence;
 }
