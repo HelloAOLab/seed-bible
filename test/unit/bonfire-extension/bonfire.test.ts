@@ -168,6 +168,22 @@ describe("registerBonfireChatProvider custom instructions", () => {
     expect(instructions).not.toContain("BSB");
   });
 
+  it("sends the full reading note when no catalog list is available", async () => {
+    const { sendMessage } = await setUpBonfireChat({
+      readingState: createReadingState({
+        translation: ENG_KJV,
+        translationId: "eng_kjv",
+        bookId: "JHN",
+        chapterNumber: 3,
+      }),
+      language: "fr_FR",
+    });
+
+    expect(await sendMessage("Bonjour")).toBe(
+      "You are chatting with a user who is reading the Bible. They are currently reading: JHN 3. User has their UI language set to fr-FR, however when speaking to the user you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to speaking to them in fr-FR. When quoting scripture for the user, use their active Bible translation which is King James (Authorized) Version (KJAV)."
+    );
+  });
+
   it("follows a translation change on the tab between messages", async () => {
     const readingState = createReadingState({
       translation: ENG_KJV,
@@ -265,7 +281,9 @@ describe("registerBonfireChatProvider custom instructions", () => {
     const instructions = await sendMessage("Y a-t-il une Bible française ?");
 
     expect(getTranslations).not.toHaveBeenCalled();
-    expect(instructions).toContain("Translations available in French:");
+    expect(instructions).toMatch(
+      /^You are chatting with a user who is reading the Bible\. .*Louis Segond 1910 \(LSG\)\. Translations available in French:/
+    );
     expect(instructions).toContain("LSG (fra_lsg)");
     expect(instructions).toContain("NCL (fra_ncl)");
     expect(instructions).toContain(
