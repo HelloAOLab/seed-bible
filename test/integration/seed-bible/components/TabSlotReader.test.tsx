@@ -1457,6 +1457,63 @@ describe("TabSlotReader integration", () => {
     expect(offsets.every((offset) => Math.abs(offset) <= 14)).toBe(true);
   });
 
+  describe("bottom toolbar returning when something covers the reader", () => {
+    function renderScrolledDownMobileReader(state: SeedBibleState) {
+      const { slot, readingState } = createFixture();
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const scroller = container.querySelector(
+        ".sb-reader-swipe-panel-current"
+      ) as HTMLDivElement;
+      act(() => {
+        scroller.scrollTop = 200;
+        scroller.dispatchEvent(new Event("scroll"));
+      });
+    }
+
+    afterEach(() => {
+      document.body.classList.remove("sb-scroll-hide-bars");
+    });
+
+    it("hides the bottom toolbar while the user scrolls down the chapter", () => {
+      renderScrolledDownMobileReader(createMobileState());
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        true
+      );
+    });
+
+    it("brings the bottom toolbar back when the AI chat opens", () => {
+      const state = createMobileState();
+      const isChatPanelOpen = signal(false);
+      (state.sidebar as any).isChatPanelOpen = isChatPanelOpen;
+      renderScrolledDownMobileReader(state);
+
+      act(() => {
+        isChatPanelOpen.value = true;
+      });
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        false
+      );
+    });
+
+    it("brings the bottom toolbar back when a pane opens", () => {
+      const state = createMobileState();
+      const panes = signal<unknown[]>([]);
+      (state as any).panes = { panes };
+      renderScrolledDownMobileReader(state);
+
+      act(() => {
+        panes.value = [{ id: "compare" }];
+      });
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        false
+      );
+    });
+  });
+
   describe("discover content panel placement", () => {
     const crossReferenceFixture = [
       {
