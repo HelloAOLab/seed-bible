@@ -209,6 +209,7 @@ import { ChapterNavigationService } from "../../application/services/ChapterNavi
 import { ReaderNavigationAdapter } from "../adapters/seed-bible/ReaderNavigationAdapter";
 import { UserIdentityStore } from "../adapters/userPresence/UserIdentityStore";
 import { UserPresenceController } from "../controllers/seed-bible/ReadingStateController";
+import { UserIdentityController } from "../controllers/seed-bible/UserIdentityController";
 import { EventManager } from "../utils/EventManager";
 import type { AnyStackData } from "../../domain/models/canvas";
 import { VerseDataRepository } from "../adapters/stacks/VerseDataRepository";
@@ -1305,6 +1306,9 @@ export const bootstrapExtension = () => {
   const readingInstanceController = new UserPresenceController({
     userPresenceService,
   });
+  const userIdentityController = new UserIdentityController({
+    userIdentityStore,
+  });
   const pieceActivityController = new PieceActivityController({
     pieceActivityService,
   });
@@ -1679,7 +1683,7 @@ export const bootstrapExtension = () => {
   infrastructureEventManager.subscribe(
     "OnUserIdentityChangedMessage",
     (payload) => {
-      userIdentityStore.tryUpdate(payload.identity);
+      userIdentityController.handleUserIdentityChanged(payload.identity);
     }
   );
 

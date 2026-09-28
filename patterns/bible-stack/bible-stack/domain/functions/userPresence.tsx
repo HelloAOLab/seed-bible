@@ -1,4 +1,9 @@
-import type { ReadingInstance, UserPresence } from "../models/userPresence";
+import type {
+  ConnectedUserData,
+  ReadingInstance,
+  UserIdentityMap,
+  UserPresence,
+} from "../models/userPresence";
 
 function isReadingInstance(value: unknown): value is ReadingInstance {
   if (typeof value !== "object" || value === null) return false;
@@ -22,4 +27,37 @@ export function ToUserPresence(value: unknown): UserPresence | null {
     if (validInstances.length > 0) presence.set(connectionId, validInstances);
   }
   return presence;
+}
+
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || typeof value === "string";
+}
+
+function isConnectedUserData(value: unknown): value is ConnectedUserData {
+  if (typeof value !== "object" || value === null) return false;
+  const data = value as Record<string, unknown>;
+  const visual = data.visual as Record<string, unknown> | null | undefined;
+  return (
+    typeof visual === "object" &&
+    visual !== null &&
+    typeof visual.defaultIcon === "string" &&
+    typeof visual.color === "string" &&
+    typeof visual.colorName === "string" &&
+    isOptionalString(data.connectionId) &&
+    isOptionalString(data.userId) &&
+    (data.profile === undefined ||
+      (typeof data.profile === "object" && data.profile !== null))
+  );
+}
+
+export function ToUserIdentityMap(value: unknown): UserIdentityMap | null {
+  if (!(value instanceof Map)) return null;
+  const identity: UserIdentityMap = new Map();
+  for (const [connectionId, data] of value) {
+    if (typeof connectionId !== "string" || !isConnectedUserData(data)) {
+      continue;
+    }
+    identity.set(connectionId, data);
+  }
+  return identity;
 }
