@@ -958,6 +958,7 @@ export interface OpenReadingPlansPaneOptions {
    * panel behind it.
    */
   placement?: PanePlacement;
+  toast?: (message: string) => void;
 }
 
 /**
@@ -975,6 +976,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     os,
     login,
     gallery,
+    toast,
   } = options;
 
   panesManager.openPane({
@@ -1019,6 +1021,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
             { history: false }
           );
         }}
+        toast={toast}
       />
     ),
   });
@@ -1162,6 +1165,7 @@ function getDefaultToolbarTools(
           os: context.os,
           login: context.login,
           gallery: context.gallery,
+          toast: context.toast,
         });
       },
     },

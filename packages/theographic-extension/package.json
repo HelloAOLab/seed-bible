@@ -1,0 +1,22 @@
+{
+  "name": "@seed-bible/theographic-extension",
+  "version": "1.0.0",
+  "description": "People, places and events from the Theographic Bible Metadata dataset, surfaced in Discover.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.ts"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "dependencies": {
+    "seed-bible": "workspace:*",
+    "@seed-bible/locations-extension": "workspace:*"
+  },
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1"
+}

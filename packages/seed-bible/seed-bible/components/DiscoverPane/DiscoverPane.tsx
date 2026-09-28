@@ -37,6 +37,7 @@ import {
   CrossReferencesSection,
   StudyNotesSection,
   ContentSection,
+  ContentTypeSection,
 } from "./DiscoveredResultsSections";
 import {
   AnnotationsSection,
@@ -354,7 +355,22 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
       <CrossReferencesSection tab={selectedTab} />
       <StudyNotesSection tab={selectedTab} />
-      <ContentSection tab={selectedTab} />
+      <ContentSection
+        tab={selectedTab}
+        contentTypes={props.state.discover.contentTypes.value}
+      />
+
+      {/* This pane has no filter chips, so registered types get collapsible
+          sections instead — folded to start with when they're hidden by
+          default, which is how they stay out of the way until asked for. */}
+      {props.state.discover.contentTypes.value.map((definition) => (
+        <ContentTypeSection
+          key={definition.id}
+          tab={selectedTab}
+          definition={definition}
+          collapsible
+        />
+      ))}
     </div>
   );
 }

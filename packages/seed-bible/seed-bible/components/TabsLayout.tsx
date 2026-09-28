@@ -31,7 +31,7 @@ const BOTTOM_REVEAL_MARGIN = 4;
 
 // The swipe track is three panels wide — previous preview | current | next
 // preview — so one panel is a third of it. Keep in sync with
-// `.sb-reader-swipe-track` / `.sb-reader-swipe-panel` in BibleReader.css.
+// `.sb-reader-swipe-track` / `.sb-reader-swipe-panel` in BibleReader.inline.css.
 export const PANEL_PCT = 100 / 3;
 
 // How long the track takes to slide over to a neighbouring panel.
