@@ -62,14 +62,12 @@
   color: var(--rp-muted);
 }
 
-/* On a wide pane these buttons would stretch edge to edge. Cap the list and
-   centre it so each plan stays a readable length; narrower panes still fill
-   the width. */
 .sb-reading-plans-scroll {
   flex: 1;
-  align-self: center;
-  width: 100%;
-  max-width: 42rem;
+  /* Centre the list with padding rather than a max-width, so this scroll
+     container still spans the pane: the scrollbar stays at the edge and
+     wheel/trackpad scrolling works over the side gutters. */
+  padding-inline: max(0px, calc((100% - 42rem) / 2));
   min-height: 0;
   overflow-y: auto;
   display: flex;
