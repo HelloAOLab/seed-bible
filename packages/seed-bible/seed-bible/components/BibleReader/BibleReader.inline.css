@@ -478,6 +478,10 @@
 }
 
 .sb-bible-reader-mobile-content-title-tappable {
+  /* Shrink to the text so only the words are tappable, not the full row. */
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
