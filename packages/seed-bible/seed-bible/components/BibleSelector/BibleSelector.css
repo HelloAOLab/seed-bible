@@ -46,6 +46,28 @@
   transform: translateY(0);
 }
 
+/* Keep these overrides in this file, directly after the rules above, for the
+   same reason as the docked-pane override in PaneLayout.css: same selectors,
+   and cross-file order follows Vite's import traversal, not intent. */
+@media (max-width: 480px) {
+  .sb-selector-panel {
+    width: 100%;
+    height: 100dvh;
+    bottom: 0;
+    padding: 1rem 0 0.625rem;
+    border-radius: 0;
+    border: none;
+    transition: none;
+    transform: none;
+  }
+
+  /* Override the desktop translateY animation — on mobile the selector
+   * behaves like a tab swap (instant), not a sheet that slides up. */
+  .sb-selector-overlay.open .sb-selector-panel {
+    transform: none;
+  }
+}
+
 @media only screen and (min-width: 481px) {
   .sb-selector-panel {
     /* Cap to the viewport (minus the overlay's 1.25rem padding each side) so
