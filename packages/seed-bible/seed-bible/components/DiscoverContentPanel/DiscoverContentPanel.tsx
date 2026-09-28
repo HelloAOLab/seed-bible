@@ -32,9 +32,10 @@ interface DiscoverContentPanelProps {
  * Automatically-visible discover content — the reader's own notes
  * (annotations) plus discovered cross references/study notes/content — for
  * one reading tab. Rendered once per visible tab. Hides itself entirely when
- * there's no tab or there's nothing to show for the chapter; otherwise always
- * renders — the "discover-content-panel" quick tool only controls whether the
- * caller places it beside the scripture text or below it (see BibleReader).
+ * there's no tab or there's nothing to show for the chapter, and omits the
+ * notes section when the chapter has no notes. Otherwise it always renders —
+ * the "discover-content-panel" quick tool only controls whether the caller
+ * places it beside the scripture text or below it (see BibleReader).
  */
 export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const { tab, state } = props;
@@ -172,7 +173,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         )}
 
         <div className="sb-discover-content-panel-scroll">
-          {(f === "all" || f === "annotations") && (
+          {(f === "all" || f === "annotations") && hasAnnotations && (
             <AnnotationsSection
               tab={tab}
               annotations={state.annotations}

@@ -145,6 +145,27 @@ describe("DiscoverContentPanel", () => {
     expect(container.textContent).toContain("Exodus 5:3");
   });
 
+  it("hides the notes section when the chapter has no notes", () => {
+    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+    const state = createMockState({ annotationsForChapter: [] });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-discover-content-panel")
+    ).not.toBeNull();
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).not.toContain("Notes");
+    expect(container.textContent).not.toContain(
+      "You don't have any notes for this chapter."
+    );
+    expect(container.textContent).toContain("Exodus 5:3");
+  });
+
   it("renders the tab's notes (annotations) even when there are no other discovered results", () => {
     const tab = createMockTab();
     const state = createMockState({
