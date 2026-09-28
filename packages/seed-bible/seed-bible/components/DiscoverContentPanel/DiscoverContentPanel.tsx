@@ -8,9 +8,14 @@ import {
   CrossReferencesSection,
   StudyNotesSection,
   ContentSection,
+  ContentTypeSection,
+  contentTypeResultsFor,
+  hasRegisteredContentType,
 } from "../DiscoverPane/DiscoveredResultsSections";
 import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
+import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
 import { MaterialIcon } from "../icons";
+import { translateTitle } from "../../app/utils";
 import {
   getReadingPlansForChapter,
   ReadingPlansSection,
@@ -21,7 +26,8 @@ type FilterKey =
   | "annotations"
   | "cross-references"
   | "study-notes"
-  | "content";
+  | "content"
+  | `type:${string}`;
 
 interface DiscoverContentPanelProps {
   tab: ReaderTab | null;
@@ -77,9 +83,24 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     tab.readingState.discoveredStudyNotes.value.flatMap(
       (group) => group.results
     ).length > 0;
+  const contentTypes = state.discover.contentTypes.value;
   const hasContent =
-    tab.readingState.discoveredContent.value.flatMap((group) => group.results)
+    tab.readingState.discoveredContent.value
+      .flatMap((group) => group.results)
+      .filter((result) => !hasRegisteredContentType(result, contentTypes))
       .length > 0;
+
+  const typesWithResults = contentTypes.filter(
+    (definition) => contentTypeResultsFor(tab, definition.id).length > 0
+  );
+
+  const hasVisibleUnderAll =
+    hasAnnotations ||
+    hasCrossReferences ||
+    hasStudyNotes ||
+    hasContent ||
+    plans.length > 0 ||
+    typesWithResults.some((definition) => !definition.hiddenByDefault);
 
   const filters: { key: FilterKey; label: string }[] = [
     { key: "all", label: t("all", { defaultValue: "All" }) },
@@ -115,7 +136,15 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
           },
         ]
       : []),
+    ...typesWithResults.map((definition) => ({
+      key: `type:${definition.id}` as const,
+      label: translateTitle(t, definition.title),
+    })),
   ];
+
+  const showFilters =
+    filters.length > 2 ||
+    typesWithResults.some((definition) => definition.hiddenByDefault);
 
   // Falls back to "all" when the previously-active filter's content type is
   // no longer available (e.g. the user filtered to "Cross Refs" then
@@ -152,7 +181,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
           </button>
         </div>
 
-        {filters.length > 2 && (
+        {showFilters && (
           <div style={{ display: "contents" }}>
             <div className="sb-dcp-filters" role="tablist">
               {filters.map(({ key, label }) => (
@@ -191,12 +220,32 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
           {(f === "all" || f === "study-notes") && (
             <StudyNotesSection tab={tab} />
           )}
-          {(f === "all" || f === "content") && <ContentSection tab={tab} />}
+          {(f === "all" || f === "content") && (
+            <ContentSection tab={tab} contentTypes={contentTypes} />
+          )}
+          {typesWithResults.map((definition) =>
+            f === `type:${definition.id}` ||
+            (f === "all" && !definition.hiddenByDefault) ? (
+              <ContentTypeSection
+                key={definition.id}
+                tab={tab}
+                definition={definition}
+              />
+            ) : null
+          )}
           {f === "all" && plans.length > 0 && (
             <ReadingPlansSection
               readingState={tab.readingState}
               state={state}
               plans={plans}
+            />
+          )}
+          {f === "all" && !hasVisibleUnderAll && (
+            <DiscoverEmpty
+              text={t("discover-choose-filter-hint", {
+                defaultValue:
+                  "Pick a filter above to see more from this chapter.",
+              })}
             />
           )}
         </div>
