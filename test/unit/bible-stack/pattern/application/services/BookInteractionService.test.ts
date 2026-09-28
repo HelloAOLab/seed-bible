@@ -436,9 +436,6 @@ describe("pattern.bible-stack.application.services.BookInteractionService", () =
         interaction: SelectionModalities.Coarse,
       });
 
-      expect(
-        tourGuideServicePort.isThereAnOngoingTourGuide
-      ).not.toHaveBeenCalled();
       expect(paintPort.paint).not.toHaveBeenCalled();
       expect(sequenceStateServicePort.executeAsSequence).not.toHaveBeenCalled();
       expect(

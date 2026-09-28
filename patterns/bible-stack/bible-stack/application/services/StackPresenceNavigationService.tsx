@@ -320,8 +320,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
           sectionBookData.selectionState === "Selected"
         : (!sectionData?.isActive || sectionData.isSplitIntoBooks) &&
           (!bookData?.isActive || bookData.selectionState === "Selected")) &&
-      !chapterToFocus.isActive &&
-      !chapterToFocus.getParentId("stackBibleId");
+      !chapterToFocus.isActive;
 
     const pacingConditions = [!testamentData?.isSplitIntoSections];
     if (sectionBookData) {

@@ -3,8 +3,12 @@ import type { ArrangementServicePort } from "../../../../../patterns/bible-stack
 import type { BibleLifecycleServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleLifecycle";
 import type { BibleSequenceServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/BibleSequence";
 import type { BookChaptersManagementServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookChaptersManagement";
+import type { BookSelectionServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/BookSelection";
+import type { ChapterSelectionServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/ChapterSelection";
+import type { ExplodedViewServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/ExplodedView";
 import type { LabelDateServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/LabelDate";
 import type { PieceActivityServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceActivity";
+import type { PieceHierarchyServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHierarchy";
 import type { PieceHighlightServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceHighlight";
 import type { PieceLabelServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLabel";
 import type { PieceLifecycleServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/PieceLifecycle";
@@ -12,6 +16,8 @@ import type { ScriptureServicePort } from "../../../../../patterns/bible-stack/b
 import type { ScripturePiecesStateServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/ScripturePiecesState";
 import type { SectionSelectionServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/SectionSelection";
 import type { SequenceStateServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/SequenceState";
+import type { TestamentSelectionServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/TestamentSelection";
+import type { UserPresenceServicePort } from "../../../../../patterns/bible-stack/bible-stack/application/ports/in/UserPresence";
 import type { StackLabelableBiblePiece } from "../../../../../patterns/bible-stack/bible-stack/domain/models/pieceLifecycle";
 
 export const makeArrangementServiceDouble = (
@@ -66,6 +72,33 @@ export const makeBookChaptersManagementServiceDouble = (
   ...overrides,
 });
 
+export const makeBookSelectionServiceDouble = (
+  overrides: Partial<Mocked<BookSelectionServicePort>> = {}
+): Mocked<BookSelectionServicePort> => ({
+  selectBook: vi.fn(),
+  deselectBook: vi.fn(),
+  selectBooks: vi.fn(),
+  deselectBooks: vi.fn(),
+  ...overrides,
+});
+
+export const makeChapterSelectionServiceDouble = (
+  overrides: Partial<Mocked<ChapterSelectionServicePort>> = {}
+): Mocked<ChapterSelectionServicePort> => ({
+  deselectChapter: vi.fn(),
+  trySelectChapter: vi.fn(),
+  ...overrides,
+});
+
+export const makeExplodedViewServiceDouble = (
+  overrides: Partial<Mocked<ExplodedViewServicePort>> = {}
+): Mocked<ExplodedViewServicePort> => ({
+  explodeSection: vi.fn(),
+  registerExplodedSection: vi.fn(),
+  currentExplodedSection: undefined,
+  ...overrides,
+});
+
 export const makeLabelDateServiceDouble = (
   overrides: Partial<Mocked<LabelDateServicePort>> = {}
 ): Mocked<LabelDateServicePort> => ({
@@ -93,6 +126,13 @@ export const makePieceActivityServiceDouble = (
   updateAllNotifications: vi.fn(),
   updateAllNotificationsDirection: vi.fn(),
   hideAllNotifications: vi.fn(),
+  ...overrides,
+});
+
+export const makePieceHierarchyServiceDouble = (
+  overrides: Partial<Mocked<PieceHierarchyServicePort>> = {}
+): Mocked<PieceHierarchyServicePort> => ({
+  getParentDataChain: vi.fn(),
   ...overrides,
 });
 
@@ -190,5 +230,25 @@ export const makeSequenceStateServiceDouble = (
   executeAsSequence: vi.fn(),
   startSequence: vi.fn(),
   endSequence: vi.fn(),
+  ...overrides,
+});
+
+export const makeTestamentSelectionServiceDouble = (
+  overrides: Partial<Mocked<TestamentSelectionServicePort>> = {}
+): Mocked<TestamentSelectionServicePort> => ({
+  select: vi.fn(),
+  deselect: vi.fn(),
+  ...overrides,
+});
+
+export const makeUserPresenceServiceDouble = (
+  overrides: Partial<Mocked<UserPresenceServicePort>> = {}
+): Mocked<UserPresenceServicePort> => ({
+  update: vi.fn(),
+  getUserPresence: vi.fn(),
+  getOwnConnectionId: vi.fn(),
+  getOwnUserPresence: vi.fn(),
+  getRemotesUserPresence: vi.fn(),
+  getOwnUserSelectedInstance: vi.fn(),
   ...overrides,
 });

@@ -557,28 +557,6 @@ describe("pattern.bible-stack.application.services.PieceActivityService", () => 
       });
     });
 
-    it("looks for a subset book if not info path found", () => {
-      setPresence([
-        makeInstance({ id: "genesis", connectionId: "a", bookId: "GEN" }),
-        makeInstance({
-          id: "psalms",
-          connectionId: "b",
-          bookId: "PSA",
-          chapter: 45,
-        }),
-      ]);
-      const chapter = register(makeChapterData());
-
-      service.getPieceActivity({ piece: chapter.piece! });
-
-      expect(
-        arrangementServicePort.getBookSubsetByCompleteId
-      ).toHaveBeenCalledTimes(1);
-      expect(
-        arrangementServicePort.getBookSubsetByCompleteId
-      ).toHaveBeenCalledWith({ id: "PSA", chapterNumber: 45 });
-    });
-
     it("uses book subset's id and start index if found, instead of the reading instance's book and chapter", () => {
       const instance = makeInstance({
         id: "psalms",

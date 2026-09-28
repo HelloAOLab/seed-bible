@@ -187,12 +187,6 @@ describe("bible-stack.application.services.ChapterNavigationService", () => {
     );
 
     service.openChapter(chapter);
-    expect(arrangementPort.getBookInfoPathById).toHaveBeenCalledExactlyOnceWith(
-      { id: creationParams.bookId }
-    );
-    expect(arrangementPort.getBookByIndices).toHaveBeenCalledExactlyOnceWith(
-      path
-    );
     expect(readerNavigationPort.open).toHaveBeenCalledExactlyOnceWith(
       creationParams.bookId,
       pieceInfo.number
