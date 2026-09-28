@@ -4287,7 +4287,7 @@ describe("BibleReader", () => {
 
     chapterData.value = {
       ...chapterData.value!,
-      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      nextChapterApiLink: null,
       previousChapterApiLink: null,
     };
 
@@ -4306,17 +4306,40 @@ describe("BibleReader", () => {
     expect(selectorState.selectingTranslation.value).toBe(false);
   });
 
-  it("makes only the current chapter title tappable on mobile", () => {
-    const { slot, selectorState, readingState, chapterData } = createFixture();
-    const state = createMobileState();
+  it("makes only the current chapter title tappable on mobile", async () => {
+    const { slot, selectorState, readingState, chapterData, setOpen } =
+      createFixture();
+    const state = createMobileState(selectorState);
 
+    const current = chapterData.value!;
     chapterData.value = {
-      ...chapterData.value!,
-      nextChapterApiLink: null,
-      previousChapterApiLink: null,
+      ...current,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
     };
+    vi.mocked(readingState.getAdjacentChapter).mockImplementation(
+      async (direction) => ({
+        ...current,
+        chapter: { ...current.chapter, number: direction === "next" ? 2 : 0 },
+      })
+    );
 
     renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const sideTitles = container.querySelectorAll(
+      ".sb-reader-swipe-panel-side .sb-bible-reader-mobile-content-title"
+    );
+    expect(sideTitles).toHaveLength(2);
+
+    act(() => {
+      sideTitles.forEach((title) =>
+        title.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      );
+    });
+    expect(setOpen).not.toHaveBeenCalled();
 
     const tappable = container.querySelectorAll(
       ".sb-bible-reader-mobile-content-title-tappable"
