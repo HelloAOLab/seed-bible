@@ -2673,15 +2673,39 @@ export function BibleReader(props: BibleReaderProps) {
     }
   };
 
+  // Only the current panel's title opens the selector; the side panels are
+  // non-interactive previews for the swipe transition.
   const renderMobileChapterTitle = (
     bookName: string,
-    chapter: number | string
-  ) => (
-    <h2 className="sb-bible-reader-mobile-content-title">
-      <span className="sb-bible-reader-book">{bookName}</span>
-      <span className="sb-bible-reader-chapter">{chapter}</span>
-    </h2>
-  );
+    chapter: number | string,
+    interactive = false
+  ) => {
+    const spans = (
+      <>
+        <span className="sb-bible-reader-book">{bookName}</span>
+        <span className="sb-bible-reader-chapter">{chapter}</span>
+      </>
+    );
+    return (
+      <h2 className="sb-bible-reader-mobile-content-title">
+        {interactive ? (
+          <button
+            type="button"
+            className="sb-bible-reader-mobile-content-title-button"
+            aria-label={t("change-book-chapter", {
+              defaultValue: "Change book or chapter ({{reference}})",
+              reference: `${bookName} ${chapter}`,
+            })}
+            {...flingSafeTapHandlers(openBookSelector)}
+          >
+            {spans}
+          </button>
+        ) : (
+          spans
+        )}
+      </h2>
+    );
+  };
 
   /**
    * Placeholder shown in place of the verses while the chapter the reader has
@@ -2727,7 +2751,8 @@ export function BibleReader(props: BibleReaderProps) {
       {isMobile &&
         renderMobileChapterTitle(
           currentBookName.value ?? bookId.value ?? "",
-          chapterNumber.value ?? ""
+          chapterNumber.value ?? "",
+          true
         )}
 
       {bookNotFound.value && (

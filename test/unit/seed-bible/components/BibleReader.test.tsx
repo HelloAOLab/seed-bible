@@ -4279,6 +4279,53 @@ describe("BibleReader", () => {
     );
   });
 
+  it("opens the book selector when the mobile content title is tapped", () => {
+    const { slot, selectorState, readingState, chapterData, setOpen } =
+      createFixture();
+    const state = createMobileState(selectorState);
+    selectorState.selectingTranslation.value = true;
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      previousChapterApiLink: null,
+    };
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const button = container.querySelector<HTMLButtonElement>(
+      ".sb-reader-swipe-panel-current .sb-bible-reader-mobile-content-title button"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe("Genesis1");
+
+    act(() => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(false);
+  });
+
+  it("leaves the swipe preview titles on mobile non-interactive", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    expect(
+      container.querySelector(
+        ".sb-reader-swipe-panel-side .sb-bible-reader-mobile-content-title button"
+      )
+    ).toBeNull();
+  });
+
   it("swiping left on mobile loads the next chapter", async () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();

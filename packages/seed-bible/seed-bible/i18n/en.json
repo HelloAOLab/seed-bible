@@ -859,6 +859,7 @@
   "choose-image": "Choose an image",
   "set-logo": "Set logo",
   "change-translation": "Change translation ({{name}})",
+  "change-book-chapter": "Change book or chapter ({{reference}})",
   "hero-image": "Cover image",
   "hero-image-hint": "Optional. Recommended size: 1024×768",
   "no-hero-image": "No image",
