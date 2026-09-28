@@ -69,21 +69,43 @@ export const bootstrapExtension = () => {
                       if (sharedSession) {
                         const connectedUsers =
                           sharedSession.connectedUsers.value;
+                        const positions =
+                          sharedSession.participantPositions.value;
                         instances.push(
                           ...connectedUsers
                             .filter(
                               (user) =>
                                 user.connectionId !== context.login.connectionId
                             )
-                            .map((user) => {
-                              return {
+                            .flatMap((user) => {
+                              // `readingState` is the local reader's position,
+                              // so it only stands in until the peer broadcasts
+                              // one of their own.
+                              const position = positions.get(
+                                user.connectionId
+                              ) ?? {
                                 bookId: readingState.bookId.value,
-                                chapter: readingState.chapterNumber.value,
-                                id: `${user.connectionId}:${tab.id}`,
-                                selected: true,
-                                translation: readingState.translationId.value,
-                                connectionId: user.connectionId,
-                              } satisfies ReadingInstance;
+                                chapterNumber: readingState.chapterNumber.value,
+                              };
+                              if (
+                                !position.bookId ||
+                                position.chapterNumber <= 0
+                              ) {
+                                return [];
+                              }
+                              return [
+                                {
+                                  bookId: position.bookId,
+                                  chapter: position.chapterNumber,
+                                  id: `${user.connectionId}:${tab.id}`,
+                                  // Always selected on purpose: which tab a
+                                  // remote user has selected isn't published,
+                                  // so it can't be determined here.
+                                  selected: true,
+                                  translation: readingState.translationId.value,
+                                  connectionId: user.connectionId,
+                                } satisfies ReadingInstance,
+                              ];
                             })
                         );
                       }
