@@ -248,13 +248,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
             tempBookPathMap.set(bookId, bookPath);
           }
         }
-        if (!bookPath) {
-          return {
-            chaptersToDeselect: [],
-            chaptersToSelectDirectly: [],
-            chapterToFocus: undefined,
-          };
-        }
+        if (!bookPath) continue;
         const tempInfo =
           this.#arrangementServicePort.getBookByIndices(bookPath);
         if (tempInfo) {
@@ -263,13 +257,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
         }
       }
 
-      if (!bookInfo) {
-        return {
-          chaptersToDeselect: [],
-          chaptersToSelectDirectly: [],
-          chapterToFocus: undefined,
-        };
-      }
+      if (!bookInfo) continue;
 
       if (bookInfo.type === "subset") {
         ({ bookId, chapter } =

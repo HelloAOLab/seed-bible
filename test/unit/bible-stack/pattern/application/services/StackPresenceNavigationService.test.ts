@@ -708,6 +708,18 @@ describe("pattern.bible-stack.application.services.StackPresenceNavigationServic
       expect(steps).toEqual([]);
     });
 
+    it("skips a chapter whose book isn't in the arrangement and still navigates to the reader's", async () => {
+      chapters = [
+        makeChapter({ bookId: "REV", number: 1 }),
+        makeChapter({ bookId: "GEN", number: 1 }),
+      ];
+
+      emitPresence();
+      await flush();
+
+      expect(selectedChapterIds()).toEqual(["GEN-1"]);
+    });
+
     it("logs a navigation that fails and leaves the service ready for the next one", async () => {
       chapters = [makeChapter({ bookId: "GEN", number: 1 })];
       chapterSelectionServicePort.trySelectChapter.mockRejectedValueOnce(
