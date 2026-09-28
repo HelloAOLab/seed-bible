@@ -652,6 +652,7 @@
   "resume-reading-loading": "Loading your reading history…",
   "selected-year": "Year: {{year}}",
   "this-month": "This month",
+  "notes-for-verse": "Notes for verse {{verse}}",
   "this-week": "This week",
   "profile": "Profile",
   "open-profile": "Open profile",

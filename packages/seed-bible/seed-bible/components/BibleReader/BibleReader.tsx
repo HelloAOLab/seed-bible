@@ -1342,6 +1342,15 @@ const CHAPTER_SKELETON_PARAGRAPHS = [
   ["95%", "96%", "98%", "89%", "68%"],
 ] as const;
 
+/** A note marker in the mobile gutter, placed against a measured line box. */
+interface NoteMarker {
+  verseNumber: number;
+  /** Offset from the top of the chapter content box, in px. */
+  top: number;
+  /** Height of the verse's first line box, so the icon centres on it. */
+  height: number;
+}
+
 /**
  * One other participant's place in this chapter, ready to draw: the verses
  * they can see plus what identifies them. Built in the reader from the shared
@@ -1755,6 +1764,11 @@ interface ChapterContentProps {
    */
   isStale?: boolean;
   /**
+   * Mobile has no Discover panel to read notes alongside the text, so the
+   * note markers move out into a gutter beside the scripture there (#1691).
+   */
+  isMobile?: boolean;
+  /**
    * Other participants reading this same chapter in a shared session, drawn as
    * bars beside the text. Undefined outside a session, which closes the gutter
    * altogether; inside one the gutter stays open even while the list is empty,
@@ -1783,10 +1797,12 @@ function ChapterContent(props: ChapterContentProps) {
     justConvertedSelectionRef,
     scriptureElements,
     onAnnotationVerseClick,
+    isMobile = false,
     presence,
     onVisibleVersesChange,
   } = props;
 
+  const { t } = useI18n();
   const currentChapter = chapterData.value;
   const chapterAnnotations =
     currentChapter && annotations
@@ -2159,7 +2175,71 @@ function ChapterContent(props: ChapterContentProps) {
     setPresenceMarkers(next);
   };
 
-  // Both measurements re-run after every render, and the ResizeObserver below
+  // The verse each note starts at, deduplicated: two notes on the same verse
+  // get one marker, and a note spanning 3-6 marks verse 3 only.
+  const noteVerseNumbers = Array.from(
+    new Set(
+      chapterAnnotations
+        .map((annotation) => {
+          const verses = annotationVerseNumbers(annotation);
+          return verses.length > 0 ? Math.min(...verses) : null;
+        })
+        .filter((verseNumber): verseNumber is number => verseNumber !== null)
+    )
+  ).sort((a, b) => a - b);
+  // Open on every mobile chapter, notes or not: the gutter's indent narrows
+  // the text, so opening it only where there are notes would reflow the page
+  // each time the reader flips between an annotated chapter and a bare one.
+  const showNoteGutter = isMobile;
+
+  const [noteMarkers, setNoteMarkers] = useState<NoteMarker[]>([]);
+  // Signature of the last markers written to state, so the measure -> setState
+  // -> re-render -> measure cycle settles instead of looping.
+  const noteMarkerSignatureRef = useRef("");
+
+  // Where each note marker sits vertically. Markers live in a gutter beside
+  // the text rather than in the flow, so their position has to be measured:
+  // it is the verse's *first* visual line box, which is the line carrying
+  // the verse number.
+  const measureNoteMarkers = () => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const next: NoteMarker[] = [];
+    if (showNoteGutter) {
+      const box = content.getBoundingClientRect();
+      for (const verseNumber of noteVerseNumbers) {
+        const verseEl = content.querySelector<HTMLElement>(
+          `.sb-verse[data-verse-number="${verseNumber}"]`
+        );
+        if (!verseEl) continue;
+        // A verse containing poetry is block-level (so is each of its lines),
+        // which makes its own client rect the whole multi-line column —
+        // centring on that drops the marker halfway down the verse.
+        // `collectLineRects` walks past the block lines and reports one rect
+        // per *visual* line, so [0] is the line carrying the verse number
+        // whether the verse is prose or poetry.
+        const line = collectLineRects(verseEl, box.left, box.top)[0];
+        if (!line) continue;
+        next.push({
+          verseNumber,
+          top: line.top,
+          height: line.bottom - line.top,
+        });
+      }
+    }
+
+    const signature = next
+      .map(
+        (m) => `${m.verseNumber}:${Math.round(m.top)}:${Math.round(m.height)}`
+      )
+      .join("|");
+    if (signature === noteMarkerSignatureRef.current) return;
+    noteMarkerSignatureRef.current = signature;
+    setNoteMarkers(next);
+  };
+
+  // The measurements re-run after every render, and the ResizeObserver below
   // reaches them through this ref instead of closing over them. Registered
   // once at mount, that callback kept the very first render's `presence` —
   // the empty list a reader has before any peer position arrives — so every
@@ -2172,9 +2252,11 @@ function ChapterContent(props: ChapterContentProps) {
     remeasureRef.current = () => {
       measureRibbons();
       measurePresence();
+      measureNoteMarkers();
     };
     measureRibbons();
     measurePresence();
+    measureNoteMarkers();
     syncVersesRef.current();
   });
 
@@ -2215,13 +2297,27 @@ function ChapterContent(props: ChapterContentProps) {
     .map((d) => d.containerClassName)
     .join(" ");
 
+  // verse number -> full ChapterVerse, so a gutter marker can select its verse
+  // the same way tapping the verse itself does.
+  const verseByNumber = new Map<number, ChapterVerse>();
+  for (const entry of chapterData.value.chapter.content) {
+    if (
+      entry &&
+      typeof entry === "object" &&
+      entry.type === "verse" &&
+      typeof entry.number === "number"
+    ) {
+      verseByNumber.set(entry.number, entry as ChapterVerse);
+    }
+  }
+
   return (
     <div
       ref={contentRef}
       className={`sb-chapter-content${
         props.isStale ? " sb-chapter-content-stale" : ""
-      }${
-        presence !== undefined ? " sb-chapter-content-presence" : ""
+      }${presence !== undefined ? " sb-chapter-content-presence" : ""}${
+        showNoteGutter ? " sb-chapter-content-note-gutter" : ""
       } ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
@@ -2250,6 +2346,38 @@ function ChapterContent(props: ChapterContentProps) {
           />
         ))}
       </svg>
+      {showNoteGutter && (
+        <div className="sb-note-gutter" aria-hidden={noteMarkers.length === 0}>
+          {noteMarkers.map((marker) => (
+            <button
+              key={marker.verseNumber}
+              type="button"
+              className="sb-note-gutter-marker"
+              style={{ top: `${marker.top}px`, height: `${marker.height}px` }}
+              aria-label={t("notes-for-verse", {
+                verse: marker.verseNumber,
+                defaultValue: "Notes for verse {{verse}}",
+              })}
+              onClick={(event: MouseEvent) => {
+                const value = verseByNumber.get(marker.verseNumber);
+                if (!value || !chapterData.value) return;
+                onAnnotationVerseClick(
+                  {
+                    bookId: chapterData.value.book.id,
+                    chapterNumber: chapterData.value.chapter.number,
+                    verse: value,
+                    translationId: chapterData.value.translation.id,
+                  },
+                  marker.verseNumber,
+                  event
+                );
+              }}
+            >
+              <span className="material-symbols-outlined">sticky_note_2</span>
+            </button>
+          ))}
+        </div>
+      )}
       {presence !== undefined && (
         <PresenceGutter
           markers={presenceMarkers}
@@ -2597,7 +2725,9 @@ export function BibleReader(props: BibleReaderProps) {
   const renderChapterSkeleton = () => (
     <SkeletonContainer
       label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
-      className="sb-chapter-content sb-chapter-skeleton"
+      className={`sb-chapter-content sb-chapter-skeleton${
+        isMobile ? " sb-chapter-content-note-gutter" : ""
+      }`}
     >
       <Skeleton shape="block" width="42%" />
       {CHAPTER_SKELETON_PARAGRAPHS.map((widths, paragraph) => (
@@ -2741,6 +2871,7 @@ export function BibleReader(props: BibleReaderProps) {
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
               onAnnotationVerseClick={handleAnnotationVerseClick}
+              isMobile={isMobile}
               presence={sharedSession ? presence : undefined}
               onVisibleVersesChange={reportVisibleVerses}
             />
@@ -2901,7 +3032,7 @@ export function BibleReader(props: BibleReaderProps) {
                     mobileChrome.prevChapterPreview.book.name,
                     mobileChrome.prevChapterPreview.chapter.number
                   )}
-                <div className="sb-chapter-content">
+                <div className="sb-chapter-content sb-chapter-content-note-gutter">
                   {renderStaticChapterContent(
                     mobileChrome?.prevChapterPreview ?? null,
                     scriptureElements
@@ -2924,7 +3055,7 @@ export function BibleReader(props: BibleReaderProps) {
                     mobileChrome.nextChapterPreview.book.name,
                     mobileChrome.nextChapterPreview.chapter.number
                   )}
-                <div className="sb-chapter-content">
+                <div className="sb-chapter-content sb-chapter-content-note-gutter">
                   {renderStaticChapterContent(
                     mobileChrome?.nextChapterPreview ?? null,
                     scriptureElements
