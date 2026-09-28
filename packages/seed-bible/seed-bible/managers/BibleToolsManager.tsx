@@ -303,6 +303,8 @@ export interface BibleReaderVerseToolbarTool extends ResolvedBibleTool {
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the tool. */
   onSelect: () => void;
+  /** True when the action needs the selected verses to remain active. */
+  preserveSelection?: boolean;
   /** Optional context-menu items for this tool. */
   getItems?: () => ResolvedBibleToolItem[];
 }
@@ -316,6 +318,8 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool<BibleToolContext
   isDisabled?: ToolPredicate<BibleToolContext>;
   /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<BibleToolContext>;
+  /** True when the action needs the selected verses to remain active. */
+  preserveSelection?: boolean;
   /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
   onSelect?: (context: BibleToolContext) => void;
   /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
@@ -1331,6 +1335,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
     {
       id: "annotate-verse",
       priority: 150,
+      preserveSelection: true,
       title: { key: "note", defaultValue: "Note" },
       icon: () => <MaterialIcon>note_add</MaterialIcon>,
       isVisible: (context) =>
@@ -1386,14 +1391,13 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
-
         const verseTexts = formatSelectedVerses(context.readingState);
-
         try {
-          navigator.clipboard.writeText(verseTexts);
+          await navigator.clipboard.writeText(verseTexts);
           context.toast(i18n.t("copied", { defaultValue: "Copied" }));
         } catch (err) {
           console.error("Failed to copy verse:", err);
+          throw err;
         }
       },
     },
@@ -1775,6 +1779,7 @@ export function createBibleToolsManager(
       priority: resolveToolPriority(tool.priority, context),
       title: tool.title,
       icon: () => tool.icon(context),
+      preserveSelection: tool.preserveSelection,
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),

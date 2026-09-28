@@ -881,6 +881,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    * dismisses the selection or springs it back to 0.
    */
   const verseSheetDismissOffset = useSignal(0);
+  /** Runs a verse toolbar action and clears the selection after it succeeds. */
+  const handleVerseAction = async (
+    action: () => void | Promise<void>,
+    preserveSelection = false
+  ): Promise<void> => {
+    try {
+      await action();
+      if (!preserveSelection) {
+        readingState.value?.clearSelectedVerses();
+      }
+    } catch (error) {
+      console.error("Verse toolbar action failed:", error);
+    }
+  };
 
   /** True while a finger is on the handle, so the settle animations stand down. */
   const isVerseSheetDragging = useComputed(
@@ -2720,7 +2734,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           }
 
                           selectedVerseToolId.value = null;
-                          tool.onSelect();
+                          void handleVerseAction(
+                            tool.onSelect,
+                            tool.preserveSelection
+                          );
                         }}
                         className="sb-verse-toolbar-action"
                         aria-label={label}
