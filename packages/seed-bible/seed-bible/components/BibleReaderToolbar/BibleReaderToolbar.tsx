@@ -2778,8 +2778,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                     key={item.id}
                                     disabled={item.disabled.value}
                                     onClick={() => {
-                                      item.onSelect();
                                       selectedVerseToolId.value = null;
+                                      void handleVerseAction(
+                                        item.onSelect,
+                                        tool.preserveSelection
+                                      );
                                     }}
                                     className="sb-tool-context-menu-item"
                                     role="menuitem"
@@ -2887,6 +2890,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           chapterNumber,
                           verse: verseTarget,
                         });
+                        rs.clearSelectedVerses();
                       }}
                       aria-label={saveLabel}
                       title={saveLabel}
