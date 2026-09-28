@@ -1213,8 +1213,10 @@
 
 /* On mobile the panel is a plain block inside the swipe panel's own scroll
    (not a flex child), so it otherwise sits flush against the screen edges
-   and the bottom of the reader. Give it the same breathing room as the rest
-   of the mobile chrome.
+   and the bottom of the reader. Side and bottom margins match the rest of
+   the mobile chrome. The top margin is much taller on purpose: the panel
+   follows the chapter, and a short gap leaves it in view while you're still
+   reading the last verses. A tall gap keeps it a deliberate scroll away.
 
    `justify-self: flex-end` above (needed on desktop, to hug the end of the
    `.sb-bible-reader-content` row) also applies to plain block boxes per the
@@ -1225,7 +1227,7 @@
    fit-content width is wider than the screen, so the box's left edge renders
    off-screen; reset back to the normal stretch-to-fill behavior here. */
 .sb-bible-reader-mobile .sb-bible-reader-discover-panel {
-  margin: 6rem 1rem 2rem;
+  margin: 20rem 1rem 2rem;
   justify-self: auto;
 }
 
