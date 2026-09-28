@@ -4293,21 +4293,20 @@ describe("BibleReader", () => {
 
     renderMobileReader({ slot, selectorState, readingState }, state, container);
 
-    const button = container.querySelector<HTMLButtonElement>(
-      ".sb-reader-swipe-panel-current .sb-bible-reader-mobile-content-title button"
+    const title = container.querySelector(
+      ".sb-reader-swipe-panel-current .sb-bible-reader-mobile-content-title"
     );
-    expect(button).not.toBeNull();
-    expect(button?.textContent).toBe("Genesis1");
+    expect(title).not.toBeNull();
 
     act(() => {
-      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      title?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     expect(setOpen).toHaveBeenCalledWith(true, slot);
     expect(selectorState.selectingTranslation.value).toBe(false);
   });
 
-  it("leaves the swipe preview titles on mobile non-interactive", () => {
+  it("makes only the current chapter title tappable on mobile", () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
@@ -4319,11 +4318,13 @@ describe("BibleReader", () => {
 
     renderMobileReader({ slot, selectorState, readingState }, state, container);
 
+    const tappable = container.querySelectorAll(
+      ".sb-bible-reader-mobile-content-title-tappable"
+    );
+    expect(tappable).toHaveLength(1);
     expect(
-      container.querySelector(
-        ".sb-reader-swipe-panel-side .sb-bible-reader-mobile-content-title button"
-      )
-    ).toBeNull();
+      tappable[0]?.closest(".sb-reader-swipe-panel-current")
+    ).not.toBeNull();
   });
 
   it("swiping left on mobile loads the next chapter", async () => {

@@ -2679,33 +2679,17 @@ export function BibleReader(props: BibleReaderProps) {
     bookName: string,
     chapter: number | string,
     interactive = false
-  ) => {
-    const spans = (
-      <>
-        <span className="sb-bible-reader-book">{bookName}</span>
-        <span className="sb-bible-reader-chapter">{chapter}</span>
-      </>
-    );
-    return (
-      <h2 className="sb-bible-reader-mobile-content-title">
-        {interactive ? (
-          <button
-            type="button"
-            className="sb-bible-reader-mobile-content-title-button"
-            aria-label={t("change-book-chapter", {
-              defaultValue: "Change book or chapter ({{reference}})",
-              reference: `${bookName} ${chapter}`,
-            })}
-            {...flingSafeTapHandlers(openBookSelector)}
-          >
-            {spans}
-          </button>
-        ) : (
-          spans
-        )}
-      </h2>
-    );
-  };
+  ) => (
+    <h2
+      className={`sb-bible-reader-mobile-content-title${
+        interactive ? " sb-bible-reader-mobile-content-title-tappable" : ""
+      }`}
+      {...(interactive ? flingSafeTapHandlers(openBookSelector) : {})}
+    >
+      <span className="sb-bible-reader-book">{bookName}</span>
+      <span className="sb-bible-reader-chapter">{chapter}</span>
+    </h2>
+  );
 
   /**
    * Placeholder shown in place of the verses while the chapter the reader has
