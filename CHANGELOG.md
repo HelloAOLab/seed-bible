@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.11.0 — 2026-09-28
+
+### ✨ Added
+
 - Show a note icon beside each verse that has a note when reading on a phone. ([#1776](https://github.com/HelloAOLab/seed-bible/pull/1776))
   - Tap the icon to select the verse and open its note.
   - Before, the only sign of a note was a box around the verse number.
@@ -43,8 +53,6 @@
 - Fix gaps above and below the chat on phones; it now fills the screen above the tab bar. ([#1857](https://github.com/HelloAOLab/seed-bible/pull/1857))
 - Fix the bottom toolbar staying hidden when Ask AI opens the chat after you've scrolled down on a phone. ([#1857](https://github.com/HelloAOLab/seed-bible/pull/1857))
 - Fix the book and chapter picker on phones showing desktop rounded corners and a border and sliding up slowly, instead of opening flat and full-screen instantly. ([#1898](https://github.com/HelloAOLab/seed-bible/pull/1898))
-
-### 🗑️ Removed
 
 ## v1.10.0 — 2026-09-21
 
