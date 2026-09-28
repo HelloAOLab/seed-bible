@@ -218,14 +218,16 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     return (
       <div className="sb-rpd">
         <div className="sb-rpd-scroll">
-          <HeroImageBanner
-            url={plan.heroImageUrl}
-            alt={
-              plan.title ??
-              t("untitled-reading-plan", { defaultValue: "Untitled plan" })
-            }
-            className="sb-hero-banner--bleed"
-          />
+          {plan.heroImageUrl ? (
+            <HeroImageBanner
+              url={plan.heroImageUrl}
+              alt={
+                plan.title ??
+                t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+              }
+              className="sb-hero-banner--bleed"
+            />
+          ) : null}
           <div className="sb-rpd-body">
             {plan.description ? (
               <p className="sb-rpd-subtitle" dir="auto">
@@ -492,14 +494,16 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
   return (
     <div className="sb-rpd">
       <div className="sb-rpd-scroll">
-        <HeroImageBanner
-          url={plan.heroImageUrl}
-          alt={
-            plan.title ??
-            t("untitled-reading-plan", { defaultValue: "Untitled plan" })
-          }
-          className="sb-hero-banner--bleed"
-        />
+        {plan.heroImageUrl ? (
+          <HeroImageBanner
+            url={plan.heroImageUrl}
+            alt={
+              plan.title ??
+              t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+            }
+            className="sb-hero-banner--bleed"
+          />
+        ) : null}
         <header className="sb-rpd-hero-header">
           <p className="sb-rpd-subtitle">
             {selfPaced
