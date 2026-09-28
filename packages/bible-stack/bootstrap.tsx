@@ -184,10 +184,10 @@ export const bootstrapExtension = () => {
                   ref={portalRef}
                   onMessage={(inbound: unknown) => {
                     const message = inbound as {
-                      id: string;
+                      type: string;
                       data: { bookId: string; chapter?: number };
                     };
-                    switch (message.id) {
+                    switch (message.type) {
                       case "reader-navigation":
                         {
                           const tab = context.app.selectedTab.value;
@@ -222,7 +222,7 @@ export const bootstrapExtension = () => {
                       Object.fromEntries(bookNames.value)
                     ),
                     language: context.i18n.language.value,
-                    userId: context.login.connectionId,
+                    connectionId: context.login.connectionId,
                   }}
                 />
               );

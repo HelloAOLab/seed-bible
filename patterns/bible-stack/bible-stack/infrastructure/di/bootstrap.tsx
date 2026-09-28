@@ -231,12 +231,12 @@ export const bootstrapExtension = () => {
   }
   const getDimension = () => DIMENSION;
 
-  let USER_ID = configBot.tags.userId;
-  if (!USER_ID) {
+  let CONNECTION_ID = configBot.tags.connectionId;
+  if (!CONNECTION_ID) {
     console.error(
-      "bible-stack pattern bootstrap: USER_ID not defined at bootstrapExtension"
+      "bible-stack pattern bootstrap: CONNECTION_ID not defined at bootstrapExtension"
     );
-    USER_ID = uuid();
+    CONNECTION_ID = uuid();
   }
 
   // 1. Instantiating mappers
@@ -763,7 +763,7 @@ export const bootstrapExtension = () => {
   });
   const userPresenceService = new UserPresenceService({
     eventManagerPort: bibleStackEventManager,
-    userId: USER_ID,
+    connectionId: CONNECTION_ID,
   });
   const arrangementService = new ArrangementService({
     arrangementConfigProviderPort: {
@@ -1763,7 +1763,7 @@ export const bootstrapExtension = () => {
     interactionRegistry.handleSectionInteracted(data);
   });
 
-  SendEmbedMessage({ id: "ready" });
+  SendEmbedMessage({ type: "ready" });
 
   // 7. Disposers
 

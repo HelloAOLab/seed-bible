@@ -54,7 +54,7 @@ describe("pattern.bible-stack.application.services.UserPresenceService", () => {
     new UserPresenceService({
       eventManagerPort,
       initialUserPresence,
-      userId: OWN_USER_ID,
+      connectionId: OWN_USER_ID,
     });
 
   beforeEach(() => {
@@ -64,7 +64,7 @@ describe("pattern.bible-stack.application.services.UserPresenceService", () => {
 
     service = new UserPresenceService({
       eventManagerPort,
-      userId: OWN_USER_ID,
+      connectionId: OWN_USER_ID,
     });
   });
 
@@ -238,7 +238,7 @@ describe("pattern.bible-stack.application.services.UserPresenceService", () => {
       expect(
         new UserPresenceService({
           eventManagerPort,
-          userId: REMOTE_USER_ID_1,
+          connectionId: REMOTE_USER_ID_1,
         }).getOwnConnectionId()
       ).toBe(REMOTE_USER_ID_1);
     });

@@ -9,6 +9,10 @@ type TestEvents = {
 
 const makeManager = () => new EventManager<TestEvents>();
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 // ─── subscribe ────────────────────────────────────────────────────────────────
 
 describe("subscribe", () => {
@@ -97,13 +101,15 @@ describe("unsubscribe", () => {
     expect(() => unsub()).not.toThrow();
   });
 
-  it("removing the last listener for an event cleans up — emit is a no-op afterwards", () => {
+  it("a stale unsubscribe does not remove a listener subscribed later", () => {
     const mgr = makeManager();
-    const cb = vi.fn();
-    const unsub = mgr.subscribe("ping", cb);
-    unsub();
-    mgr.emit("ping", "gone");
-    expect(cb).not.toHaveBeenCalled();
+    const unsubFirst = mgr.subscribe("ping", vi.fn());
+    unsubFirst();
+    const later = vi.fn();
+    mgr.subscribe("ping", later);
+    unsubFirst();
+    mgr.emit("ping", "still here");
+    expect(later).toHaveBeenCalledWith("still here");
   });
 });
 
@@ -134,7 +140,6 @@ describe("emit", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     mgr.emit("ping", "test");
     expect(good).toHaveBeenCalledWith("test");
-    vi.restoreAllMocks();
   });
 
   it("logs console.error when a callback throws", () => {
@@ -148,7 +153,6 @@ describe("emit", () => {
       expect.stringContaining("ping"),
       expect.any(Error)
     );
-    errorSpy.mockRestore();
   });
 
   it("can emit with no payload for void events", () => {

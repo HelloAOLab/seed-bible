@@ -9,21 +9,21 @@ import type { UserPresenceServicePort } from "../ports/in/UserPresence";
 interface UserPresenceParams {
   eventManagerPort: EventManagerPort<BibleStackEvents>;
   initialUserPresence?: UserPresence;
-  userId: string;
+  connectionId: string;
 }
 
 export class UserPresenceService implements UserPresenceServicePort {
   #userPresence: UserPresence = new Map();
   #eventManagerPort: UserPresenceParams["eventManagerPort"];
-  #userId: UserPresenceParams["userId"];
+  #connectionId: UserPresenceParams["connectionId"];
 
   constructor({
     eventManagerPort,
     initialUserPresence = new Map(),
-    userId,
+    connectionId,
   }: UserPresenceParams) {
     this.#eventManagerPort = eventManagerPort;
-    this.#userId = userId;
+    this.#connectionId = connectionId;
     this.update(initialUserPresence);
   }
 
@@ -36,9 +36,9 @@ export class UserPresenceService implements UserPresenceServicePort {
 
       if (firstMap.size !== secondMap.size) return false;
 
-      for (const [userId, firstInstances] of firstEntries) {
-        if (secondMap.has(userId)) {
-          const secondInstances = secondMap.get(userId)!;
+      for (const [connectionId, firstInstances] of firstEntries) {
+        if (secondMap.has(connectionId)) {
+          const secondInstances = secondMap.get(connectionId)!;
           if (firstInstances.length !== secondInstances.length) {
             return false;
           }
@@ -71,9 +71,9 @@ export class UserPresenceService implements UserPresenceServicePort {
 
   #clone(presence: UserPresence): UserPresence {
     return new Map(
-      [...presence.entries()].map(([userId, instances]) => {
+      [...presence.entries()].map(([connectionId, instances]) => {
         return [
-          userId,
+          connectionId,
           instances.map((instance) => {
             return { ...instance };
           }),
@@ -98,17 +98,17 @@ export class UserPresenceService implements UserPresenceServicePort {
   }
 
   getOwnConnectionId(): string {
-    return this.#userId;
+    return this.#connectionId;
   }
 
   getOwnUserPresence() {
-    return this.#userPresence.get(this.#userId) ?? [];
+    return this.#userPresence.get(this.#connectionId) ?? [];
   }
 
   getRemotesUserPresence(): Map<string, ReadingInstance[]> {
     return new Map(
       [...this.#userPresence.entries()].filter(
-        ([userId]) => userId !== this.#userId
+        ([connectionId]) => connectionId !== this.#connectionId
       )
     );
   }

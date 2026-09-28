@@ -156,15 +156,14 @@ export interface UserIdentityChangedMessage {
 export type Message = UserPresenceChangedMessage | UserIdentityChangedMessage;
 
 export interface ReadyMessage {
-  id: "ready";
+  type: "ready";
 }
 
 export interface ReaderNavigationMessage {
-  id: "reader-navigation";
+  type: "reader-navigation";
   data: {
     bookId: string;
     chapter?: number;
-    verse?: number;
   };
 }
 
