@@ -2,6 +2,8 @@ import {
   applyBrowserThemeColor,
   applyHighlightOverrides,
   createTheme as createThemeManager,
+  DARK_THEME,
+  LIGHT_THEME,
   filterValidFontFamilyOverrides,
   composeThemeStyleText,
   parseThemeBackgroundColor,
@@ -11,6 +13,7 @@ import {
   type BibleTheme,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { stubColorScheme } from "../testUtils/stubColorScheme";
 import {
   createSettings,
   type SettingsManager,
@@ -358,7 +361,7 @@ describe("ThemeManager storage (via SettingsManager)", () => {
 
     theme.setTheme("not-a-real-theme");
 
-    expect(theme.selectedThemeId.value).toBe("light");
+    expect(theme.selectedThemeId.value).toBe("system");
   });
 
   it("an anonymous theme choice survives a simulated page refresh", () => {
@@ -426,14 +429,11 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     ).toBe("#0a0a0a");
   });
 
-  it("does not clobber a dark #sb-theme-styles tag with the light default on boot", () => {
-    // Boot order on a returning visitor whose saved theme is dark: the server
-    // renders the light default into the tag, then the pre-hydration inline
-    // script in index.html reads localStorage and patches it to dark, and only
-    // then does the bundle run createSeedBibleState() -> createTheme(). At that
-    // point `localConfig` is still the empty SSR-matching seed, so `themeId` is
-    // "light" — writing it here would flash the page light until
-    // `hydrateLocalConfig()` restores the real id post-mount.
+  it("does not clobber a dark #sb-theme-styles tag with the system default on boot", () => {
+    // Returning visitor who pinned dark: the server renders Light, the inline
+    // script in index.html patches the tag to dark, then createTheme() runs
+    // with the saved id and device scheme still unread (both post-mount), so
+    // it resolves to Light — writing that here would flash the page Light.
     const darkCss = THEME_PRESET_STYLE_TEXT.dark ?? "";
     expect(darkCss).toContain("--sb-background: #0a0a0a;");
 
@@ -447,7 +447,7 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     const settings = makeSettings(login);
     const theme = createThemeManager(settings);
 
-    expect(theme.selectedThemeId.value).toBe("light");
+    expect(theme.selectedThemeId.value).toBe("system");
     expect(document.getElementById("sb-theme-styles")?.textContent).toBe(
       darkCss
     );
@@ -645,5 +645,131 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
       "#00ff00"
     );
+  });
+});
+
+describe("system theme", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("reads the device's scheme only once hydrated, so the first render matches the server's Light", () => {
+    stubColorScheme(true);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.setTheme("dark");
+    theme.setTheme("system");
+
+    expect(theme.prefersDarkScheme.value).toBe(false);
+    expect(theme.basePresetTheme.value.id).toBe("light");
+
+    theme.hydrateSystemColorScheme();
+
+    expect(theme.prefersDarkScheme.value).toBe(true);
+    expect(theme.basePresetTheme.value.id).toBe("dark");
+  });
+
+  it("tracks device changes only once, however many times it is hydrated", () => {
+    const listeners: unknown[] = [];
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: false,
+        addEventListener: (_: string, cb: unknown) => listeners.push(cb),
+        removeEventListener: () => {},
+      }))
+    );
+    const theme = createThemeManager(makeSettings(makeFakeLogin(null)));
+
+    theme.hydrateSystemColorScheme();
+    theme.hydrateSystemColorScheme();
+
+    expect(listeners).toHaveLength(1);
+  });
+
+  it("resolves to the dark preset when the device prefers dark", () => {
+    stubColorScheme(true);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.hydrateSystemColorScheme();
+    theme.setTheme("light");
+
+    theme.setTheme("system");
+
+    expect(theme.selectedThemeId.value).toBe("system");
+    expect(theme.basePresetTheme.value.id).toBe("dark");
+  });
+
+  it("resolves to the light preset when the device prefers light", () => {
+    stubColorScheme(false);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.hydrateSystemColorScheme();
+    theme.setTheme("dark");
+
+    theme.setTheme("system");
+
+    expect(theme.selectedThemeId.value).toBe("system");
+    expect(theme.basePresetTheme.value.id).toBe("light");
+  });
+
+  it("follows the device switching to dark while the app is open", () => {
+    const emitChange = stubColorScheme(false);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.hydrateSystemColorScheme();
+    theme.setTheme("dark");
+    theme.setTheme("system");
+    expect(theme.basePresetTheme.value.id).toBe("light");
+
+    emitChange(true);
+
+    expect(theme.basePresetTheme.value.id).toBe("dark");
+    expect(theme.currentTheme.value.variables.background).toBe(
+      DARK_THEME.variables.background
+    );
+  });
+
+  it("uses a white-label deployment's own dark theme when it reuses the dark id", () => {
+    stubColorScheme(true);
+    const brandedDark: BibleTheme = {
+      ...DARK_THEME,
+      variables: { ...DARK_THEME.variables, background: "#101820" },
+    };
+    const theme = createThemeManager(makeSettings(makeFakeLogin(null)), [
+      { ...LIGHT_THEME },
+      brandedDark,
+    ]);
+    theme.hydrateSystemColorScheme();
+    theme.setTheme("light");
+
+    theme.setTheme("system");
+
+    expect(theme.currentTheme.value.variables.background).toBe("#101820");
+  });
+
+  it("falls back to the built-in dark theme when a white-label deployment has no dark id", () => {
+    stubColorScheme(true);
+    const theme = createThemeManager(makeSettings(makeFakeLogin(null)), [
+      { ...LIGHT_THEME, id: "brand-day" },
+      { ...DARK_THEME, id: "brand-night" },
+    ]);
+    theme.hydrateSystemColorScheme();
+    theme.setTheme("brand-day");
+
+    theme.setTheme("system");
+
+    expect(theme.basePresetTheme.value).toBe(DARK_THEME);
+  });
+
+  it("ignores the device preference once a preset is picked explicitly", () => {
+    stubColorScheme(true);
+    const settings = makeSettings(makeFakeLogin(null));
+    const theme = createThemeManager(settings);
+    theme.hydrateSystemColorScheme();
+
+    theme.setTheme("light");
+
+    expect(theme.basePresetTheme.value.id).toBe("light");
   });
 });

@@ -32,6 +32,8 @@ export interface TodayScreenProps {
   onOpenPassage: (target: TodayPassageTarget) => void;
   /** Opens the book selector over the reader. */
   onOpenBookSelector: () => void;
+  /** Closes Today and starts the onboarding tour. */
+  onTakeTour: () => void;
 }
 
 export const TodayPane = memo<(props: TodayScreenProps) => preact.JSX.Element>(
@@ -71,6 +73,7 @@ function TodayContainer(props: TodayScreenProps) {
           theme={props.theme}
           onOpenBookSelector={props.onOpenBookSelector}
           onOpenPassage={props.onOpenPassage}
+          onTakeTour={props.onTakeTour}
         />
       ) : (
         <TodayContent {...props} />

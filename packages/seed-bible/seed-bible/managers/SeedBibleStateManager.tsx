@@ -16,6 +16,7 @@ import {
   TODAY_PANE_ID,
   createTodayManager,
   openTodayPassage,
+  todayWillAutoOpenForUrl,
   type TodayManager,
   type TodayPassageTarget,
 } from "../managers/TodayManager";
@@ -37,6 +38,7 @@ import {
   EditProfilePaneTitle,
 } from "../components/ProfilePane/EditProfilePane";
 import { openProfilePictureModal } from "../components/ProfilePictureModal/openProfilePictureModal";
+import { showReadingPlanDetailView } from "../components/ReadingPlansPane/ReadingPlansPane";
 import {
   YOUR_CONTENT_PANE_ID,
   YourContentPane,
@@ -182,6 +184,7 @@ import {
 import { range } from "es-toolkit";
 import {
   createReadingPlansManager,
+  type ReadingPlan,
   type ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
 import {
@@ -634,6 +637,7 @@ export function createSeedBibleState(
     basePath: options.config?.basePath,
   });
   const branding = options.config?.branding;
+  const brandingThemes = branding?.whiteLabelThemes;
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
@@ -673,7 +677,7 @@ export function createSeedBibleState(
   });
 
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
-  const themeManager = createTheme(settings);
+  const themeManager = createTheme(settings, brandingThemes);
   const customizationVariantSelections =
     createCustomizationVariantSelectionsManager(os, login);
   const customizationExtensionPreferences =
@@ -686,6 +690,13 @@ export function createSeedBibleState(
     customizationVariantSelections,
     customizationExtensionPreferences,
     options.initialCustomizationSeed
+  );
+  // The active Customization's chosen default translation, if any — see
+  // `createTabs`'s `activeCustomizationDefaultTranslationId` parameter for how
+  // it overrides Seed Bible's per-language default the same way
+  // `branding.defaultTranslationId` does for a whole deployment.
+  const activeCustomizationDefaultTranslationId = computed(
+    () => customizations.activeCustomization.value?.defaultTranslationId
   );
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
@@ -706,7 +717,8 @@ export function createSeedBibleState(
     readingExtensions,
     () => annotations,
     branding,
-    settings
+    settings,
+    activeCustomizationDefaultTranslationId
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -785,15 +797,17 @@ export function createSeedBibleState(
   const search = createSearchManager();
 
   // When the app is opened via a content link — a shared-session invite
-  // (`?sessionId=...`) or a shared playlist (`?playlist=...`) — the user came to
-  // view that content, not to onboard, so we skip the welcome screen and the
-  // auto-starting tutorial for this visit. This is derived from the current URL
-  // rather than persisted, so it only affects this tab/load: revisiting without
-  // either param shows onboarding and tutorials as usual.
+  // (`?sessionId=...`), a shared playlist (`?playlist=...`), or a shared
+  // reading plan (`?readingPlan=...`) — the user came to view that content,
+  // not to onboard, so we skip the welcome screen and the auto-starting
+  // tutorial for this visit. This is derived from the current URL rather
+  // than persisted, so it only affects this tab/load: revisiting without
+  // those params shows onboarding and tutorials as usual.
   const openedViaContentLink =
     typeof window !== "undefined" &&
     (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
-      !!navigation.currentUrl.value.searchParams.get("playlist"));
+      !!navigation.currentUrl.value.searchParams.get("playlist") ||
+      !!navigation.currentUrl.value.searchParams.get("readingPlan"));
 
   const onboarding = createOnboardingManager(login);
 
@@ -864,6 +878,15 @@ export function createSeedBibleState(
   );
   const isProfileOpen = computed(() => profileOpen.value);
   const openProfile = () => {
+    // Close Today before the profile flag flips. Opening the profile pane
+    // displaces Today's pane, but Today's URL binding is still `?today=open`
+    // until its own effect runs — and that binding turns Today straight back
+    // on, which removes the profile pane and closes the profile again. Closing
+    // first drops `?today=` before `?profile=open` is written, so the profile
+    // screen stays up (including over the welcome screen).
+    if (today.isOpen.peek()) {
+      today.close();
+    }
     profileOpen.value = true;
   };
   const closeProfile = () => {
@@ -935,7 +958,7 @@ export function createSeedBibleState(
       },
     },
   });
-  const readingPlans = createReadingPlansManager(os, login);
+  const readingPlans = createReadingPlansManager(os, login, tabs, navigation);
   const gallery = createUserGalleryManager(os, login);
   const textToSpeech = createTextToSpeechManager();
 
@@ -979,16 +1002,6 @@ export function createSeedBibleState(
     return [...names];
   });
 
-  // Theme is the source of truth for text colors. When the user switches
-  // theme presets, drop any per-section color override from the text editor
-  // so verse / book title / heading pick up the new theme's colors.
-  let prevPresetId = themeManager.selectedThemeId.peek();
-  effect(() => {
-    const id = themeManager.selectedThemeId.value;
-    if (id === prevPresetId) return;
-    prevPresetId = id;
-    settings.resetTextColors();
-  });
   const selectedTab = computed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
@@ -1083,18 +1096,27 @@ export function createSeedBibleState(
     panes.closeFullscreenPanes();
   });
 
-  // The reader is visible when a chapter is loaded and no fullscreen pane
-  // covers it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on
-  // mobile any open pane covers the reader).
-  //
-  // Today needs no special case here even though it auto-opens over the reader:
-  // its pane opens synchronously while this state is being built, whereas a
-  // chapter can only arrive from an async fetch afterwards. So by the time
-  // `chapterLoaded` can turn true, Today's pane is already in `panes` and the
-  // check below sees it. While Today was an extension that was not true — panes
-  // loaded in a later `useEffect`, leaving a window where the chapter had
-  // loaded and nothing covered it yet, which a `todayHasOpened` latch papered
-  // over. `todayCoversReader.test.ts` guards the ordering this now relies on.
+  // Today opens only after mount (`hydrateAutoOpen`, so the client's first
+  // render matches the server's), but the chapter can already be loaded from
+  // the server's API snapshot and the tutorial offer armed before then. For
+  // that gap the reader would read as visible with Welcome about to cover it,
+  // so until Today's pane has opened once on a load where it will auto-open,
+  // the reader doesn't count as visible.
+  const todayWillAutoOpen = todayWillAutoOpenForUrl(
+    navigation.initialUrl,
+    navigation.basePath
+  );
+  const todayHasOpened = signal(false);
+  effect(() => {
+    if (panes.panes.value.some((pane) => pane.id === TODAY_PANE_ID)) {
+      todayHasOpened.value = true;
+    }
+  });
+
+  // The reader is visible when a chapter is loaded, no fullscreen pane covers
+  // it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on mobile
+  // any open pane covers the reader), and Today isn't about to auto-open over
+  // it. `todayCoversReader.test.ts` guards both orderings.
   const readerVisible = computed<boolean>(() => {
     const chapterLoaded =
       selectedTab.value?.readingState.chapterData.value != null;
@@ -1105,6 +1127,9 @@ export function createSeedBibleState(
       (pane) => pane.placement === "fullscreen" || isMobile.value
     );
     if (coveredByPane) {
+      return false;
+    }
+    if (todayWillAutoOpen && !todayHasOpened.value) {
       return false;
     }
     return true;
@@ -1220,6 +1245,65 @@ export function createSeedBibleState(
       sidebar.isSidebarCollapsed.value = true;
     }
   });
+
+  // New visitors on desktop — signed in or not — start with the rail
+  // collapsed, so the welcome screen isn't competing with an open sidebar.
+  // A saved choice wins, and it is applied after mount (via
+  // `hydrateFromStorage`) so the first render still matches the expanded rail
+  // the server painted. The local tour flags are enough to decide; waiting
+  // on the account profile left signed-in visitors on the open rail until
+  // that request returned.
+  //
+  // Left unarmed until then on purpose: reading `localStorage` at construction
+  // would collapse the client tree and not the SSR HTML. The default itself
+  // is not stored — only a toggle is — and a phone visit doesn't mark the
+  // decision done, so resizing up to desktop still gets the new-user collapse.
+  let sidebarCollapsedArmed = false;
+  let sidebarCollapsedHydrated = false;
+  const armSidebarCollapsed = () => {
+    if (sidebarCollapsedArmed) {
+      return;
+    }
+    sidebarCollapsedArmed = true;
+    effect(() => {
+      if (sidebarCollapsedHydrated) {
+        return;
+      }
+      if (typeof window === "undefined") {
+        sidebarCollapsedHydrated = true;
+        return;
+      }
+
+      const storedApplied = sidebar.hydrateStoredCollapsed();
+      const mobile = isMobile.value;
+
+      if (
+        !storedApplied &&
+        !mobile &&
+        !openedViaContentLink &&
+        !tutorial.completed.value &&
+        !tutorial.optedOut.value
+      ) {
+        // The signal only. Writing it would turn the default into a saved
+        // choice, so a later change to that default would never reach a
+        // visitor who never toggled the rail.
+        sidebar.isSidebarCollapsed.value = true;
+      }
+
+      // Applying a saved "expanded" choice undoes the band collapse the
+      // effects above already did at startup. Put it back without writing
+      // storage — the band is a viewport constraint, not a preference.
+      if (isCompactDesktop.value || isMobileLandscape.value) {
+        sidebar.isSidebarCollapsed.value = true;
+      }
+
+      if (!storedApplied && mobile) {
+        return;
+      }
+
+      sidebarCollapsedHydrated = true;
+    });
+  };
 
   const effectiveSlots = computed(() => {
     if (!panelsEnabled.value) {
@@ -1449,6 +1533,9 @@ export function createSeedBibleState(
     // Deliberately outside the batch: this can set `promptVisible`, and it must
     // observe the settled reader state rather than a half-applied one.
     tutorial.armAutoStart();
+    // After the tutorial flags, so "new user" sees the stored seen/opted-out
+    // state rather than the empty SSR seed.
+    armSidebarCollapsed();
   };
 
   const title = computed(() => {
@@ -1739,8 +1826,13 @@ export function createSeedBibleState(
 
     const canWatchVisibility =
       typeof document !== "undefined" && !import.meta.env.SSR;
-    const handleReadingVisibility = () => {
-      if (document.visibilityState === "visible") {
+    // A visible tab isn't enough: Today (or any fullscreen pane) can cover the
+    // reader, and a chapter sitting under Welcome would otherwise be credited
+    // every tick — giving a brand-new account history it never read.
+    const syncCrediting = () => {
+      const tabVisible =
+        !canWatchVisibility || document.visibilityState === "visible";
+      if (tabVisible && readerVisible.peek()) {
         startCrediting();
       } else {
         stopCrediting();
@@ -1748,11 +1840,11 @@ export function createSeedBibleState(
     };
 
     if (canWatchVisibility) {
-      document.addEventListener("visibilitychange", handleReadingVisibility);
+      document.addEventListener("visibilitychange", syncCrediting);
     }
-    if (!canWatchVisibility || document.visibilityState === "visible") {
-      startCrediting();
-    }
+    // Subscribed rather than read in this effect, so a pane opening or closing
+    // doesn't re-run it and restart the `user_chapter_read` timer below.
+    const stopWatchingReader = readerVisible.subscribe(syncCrediting);
 
     const posthogTimeoutId = setTimeout(() => {
       captureEvent("user_chapter_read", {
@@ -1764,11 +1856,9 @@ export function createSeedBibleState(
 
     return () => {
       if (canWatchVisibility) {
-        document.removeEventListener(
-          "visibilitychange",
-          handleReadingVisibility
-        );
+        document.removeEventListener("visibilitychange", syncCrediting);
       }
+      stopWatchingReader();
       stopCrediting();
       clearTimeout(posthogTimeoutId);
     };
@@ -2633,6 +2723,68 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
+  // A shared `?readingPlan=` link loads the plan, then opens the pane once a
+  // reading tab is actually there. The tab is usually ready after the network
+  // round-trip, but if it isn't yet this waits rather than selecting the plan
+  // and leaving the pane closed with no explanation.
+  const pendingSharedPlan = signal<ReadingPlan | null>(null);
+  effect(() => {
+    const plan = pendingSharedPlan.value;
+    if (!plan) {
+      return;
+    }
+    const readingState = selectedTab.value?.readingState;
+    if (!readingState) {
+      return;
+    }
+    pendingSharedPlan.value = null;
+    openReadingPlansPane({
+      readingPlans,
+      readingState,
+      panesManager: panes,
+      modals,
+      playlists,
+      os,
+      login,
+      gallery,
+      toast,
+    });
+    showReadingPlanDetailView();
+  });
+
+  const setupInitialReadingPlan = async () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const locator = navigation.currentUrl.value.searchParams.get("readingPlan");
+    if (!locator) {
+      return;
+    }
+    // Destructured rather than called as `i18n.t(...)`: the translation lint
+    // rules only recognise calls made through a bare `t`.
+    const { t } = i18n;
+    try {
+      const plan = await readingPlans.loadByLocator(locator);
+      if (!plan) {
+        toast(
+          t("failed-to-load-reading-plan", {
+            defaultValue: "Failed to load reading plan",
+          })
+        );
+        return;
+      }
+      pendingSharedPlan.value = plan;
+    } catch (error) {
+      console.error("Failed to load reading plan from URL:", error);
+      toast(
+        t("failed-to-load-reading-plan", {
+          defaultValue: "Failed to load reading plan",
+        })
+      );
+    }
+  };
+  void setupInitialReadingPlan();
+
   // Constructed here rather than beside the other managers because it needs
   // `currentReadingState`, which is defined well below them.
   const today = createTodayManager({
@@ -2840,6 +2992,7 @@ export function createSeedBibleState(
       isMobile={isMobile}
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
+      onTakeTour={() => tutorial.acceptPrompt()}
     />
   );
   const renderTodayPaneTitle = () => <TodayPaneTitle />;
@@ -2914,6 +3067,7 @@ export function createSeedBibleState(
       login,
       gallery,
       placement: "fullscreen",
+      toast,
     });
   };
   const renderProfilePane = () => (

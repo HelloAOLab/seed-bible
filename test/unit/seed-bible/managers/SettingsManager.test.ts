@@ -340,7 +340,7 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.fontSize).toBe("M");
     expect(settings.settings.value.disablePanels).toBe(false);
     expect(settings.settings.value.bookOrientation).toBe("traditional");
-    expect(settings.settings.value.themeId).toBe("light");
+    expect(settings.settings.value.themeId).toBe("system");
     expect(settings.settings.value.customTheme).toEqual({});
     expect(settings.settings.value.customHighlights).toEqual({});
     expect(settings.settings.value.discoverContentPanelInline).toBe(true);
