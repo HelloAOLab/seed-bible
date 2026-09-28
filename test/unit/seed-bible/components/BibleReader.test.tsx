@@ -2589,17 +2589,40 @@ describe("BibleReader", () => {
       );
     });
 
-    it("leaves the gutter out of a chapter with no notes", () => {
+    // The gutter's indent narrows the text, so a gutter that only opened on
+    // annotated chapters reflowed the page on every flip to a bare one.
+    it("keeps the gutter open in a chapter with no notes", () => {
       stubLineBoxes({ 1: [40] });
       const fixture = createFixture();
       renderReader(annotatedState([]), fixture);
 
-      expect(container.querySelector(".sb-note-gutter")).toBeNull();
-      expect(
-        container
-          .querySelector(".sb-chapter-content")
-          ?.classList.contains("sb-chapter-content-noted")
-      ).toBe(false);
+      expect(container.querySelector(".sb-note-gutter")).not.toBeNull();
+      expect(container.querySelector(".sb-note-gutter-marker")).toBeNull();
+    });
+
+    // The previous and next chapters sit either side of the current one in
+    // the swipe track. Narrower or wider than it, their text would reflow the
+    // moment a swipe lands and the preview is swapped for the real chapter.
+    it("indents every chapter in the swipe track alike", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([]), fixture);
+
+      const panels = container.querySelectorAll(".sb-chapter-content");
+      expect(panels).toHaveLength(3);
+      for (const panel of panels) {
+        expect(panel.classList).toContain("sb-chapter-content-note-gutter");
+      }
+    });
+
+    it("indents the loading placeholder like the chapter it stands in for", () => {
+      const fixture = createFixture();
+      fixture.chapterData.value = null;
+      renderReader(annotatedState([]), fixture);
+
+      const skeleton = container.querySelector(".sb-chapter-skeleton");
+      expect(skeleton).not.toBeNull();
+      expect(skeleton?.classList).toContain("sb-chapter-content-note-gutter");
     });
 
     // Desktop reads its notes in the Discover panel beside the text, so a
@@ -2610,6 +2633,9 @@ describe("BibleReader", () => {
       renderReader(annotatedState([note()], false), fixture);
 
       expect(container.querySelector(".sb-note-gutter")).toBeNull();
+      expect(
+        container.querySelector(".sb-chapter-content-note-gutter")
+      ).toBeNull();
     });
 
     // The note gutter on the end edge and the presence gutter on the start
@@ -2639,9 +2665,9 @@ describe("BibleReader", () => {
       // The swipe track also renders the neighbouring chapters, which are
       // never in the session, so find the one on screen by its presence class.
       const content = container.querySelector(".sb-chapter-content-presence");
-      expect(content?.classList.contains("sb-chapter-content-noted")).toBe(
-        true
-      );
+      expect(
+        content?.classList.contains("sb-chapter-content-note-gutter")
+      ).toBe(true);
       expect(container.querySelector(".sb-presence-gutter")).not.toBeNull();
       expect(container.querySelectorAll(".sb-note-gutter-marker")).toHaveLength(
         1

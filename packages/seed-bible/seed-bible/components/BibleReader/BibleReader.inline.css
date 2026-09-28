@@ -718,18 +718,20 @@
 /*
  * Mobile note markers (#1691). Desktop reads its notes in the Discover panel
  * beside the text; mobile has no such panel, so the markers move into a gutter
- * at the end edge of the reader. The gutter only appears when the chapter
- * actually has notes, so an unannotated chapter keeps its full text width.
+ * at the end edge of the reader. The gutter is open on every mobile chapter,
+ * with or without notes, and on the loading placeholder and the neighbouring
+ * chapters shown mid-swipe, so the text keeps one width as the reader flips
+ * between chapters.
  */
 
 /*
  * The reader has two gutters: the session presence bars down the start edge
  * (`-presence`, BibleReader.css) and the note markers down the end edge
- * (`-noted`). Whichever is open, both edges reserve the same width, so the
- * text stays centred on the page with either gutter, both, or neither.
+ * (`-note-gutter`). Whichever is open, both edges reserve the same width, so
+ * the text stays centred on the page with either gutter, both, or neither.
  */
 .sb-chapter-content.sb-chapter-content-presence,
-.sb-chapter-content.sb-chapter-content-noted {
+.sb-chapter-content.sb-chapter-content-note-gutter {
   --sb-reader-gutter-width: 1.75rem;
 
   padding-inline: calc(var(--sb-reader-gutter-width) + 0.25rem);
@@ -737,7 +739,7 @@
 
 /* With a marker in the gutter, the inline one (shown when verse numbers are
    turned off) would be the same note flagged twice on the same line. */
-.sb-chapter-content-noted .sb-verse-annotation-icon {
+.sb-chapter-content-note-gutter .sb-verse-annotation-icon {
   display: none;
 }
 

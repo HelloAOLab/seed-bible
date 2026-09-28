@@ -2187,7 +2187,10 @@ function ChapterContent(props: ChapterContentProps) {
         .filter((verseNumber): verseNumber is number => verseNumber !== null)
     )
   ).sort((a, b) => a - b);
-  const showNoteGutter = isMobile && noteVerseNumbers.length > 0;
+  // Open on every mobile chapter, notes or not: the gutter's indent narrows
+  // the text, so opening it only where there are notes would reflow the page
+  // each time the reader flips between an annotated chapter and a bare one.
+  const showNoteGutter = isMobile;
 
   const [noteMarkers, setNoteMarkers] = useState<NoteMarker[]>([]);
   // Signature of the last markers written to state, so the measure -> setState
@@ -2314,7 +2317,7 @@ function ChapterContent(props: ChapterContentProps) {
       className={`sb-chapter-content${
         props.isStale ? " sb-chapter-content-stale" : ""
       }${presence !== undefined ? " sb-chapter-content-presence" : ""}${
-        showNoteGutter ? " sb-chapter-content-noted" : ""
+        showNoteGutter ? " sb-chapter-content-note-gutter" : ""
       } ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
@@ -2722,7 +2725,9 @@ export function BibleReader(props: BibleReaderProps) {
   const renderChapterSkeleton = () => (
     <SkeletonContainer
       label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
-      className="sb-chapter-content sb-chapter-skeleton"
+      className={`sb-chapter-content sb-chapter-skeleton${
+        isMobile ? " sb-chapter-content-note-gutter" : ""
+      }`}
     >
       <Skeleton shape="block" width="42%" />
       {CHAPTER_SKELETON_PARAGRAPHS.map((widths, paragraph) => (
@@ -3027,7 +3032,7 @@ export function BibleReader(props: BibleReaderProps) {
                     mobileChrome.prevChapterPreview.book.name,
                     mobileChrome.prevChapterPreview.chapter.number
                   )}
-                <div className="sb-chapter-content">
+                <div className="sb-chapter-content sb-chapter-content-note-gutter">
                   {renderStaticChapterContent(
                     mobileChrome?.prevChapterPreview ?? null,
                     scriptureElements
@@ -3050,7 +3055,7 @@ export function BibleReader(props: BibleReaderProps) {
                     mobileChrome.nextChapterPreview.book.name,
                     mobileChrome.nextChapterPreview.chapter.number
                   )}
-                <div className="sb-chapter-content">
+                <div className="sb-chapter-content sb-chapter-content-note-gutter">
                   {renderStaticChapterContent(
                     mobileChrome?.nextChapterPreview ?? null,
                     scriptureElements
