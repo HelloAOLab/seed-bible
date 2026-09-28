@@ -1,110 +1,596 @@
-.sb-references-pane {
-  container-type: inline-size;
-  min-height: 100%;
-  padding: 0.75rem;
+/* Header: the pane title is the verse, with the reference count beside it. */
+.sb-references-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.sb-references-title-reference {
+  font-family: var(--sb-reader-font-family);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.sb-references-title-count {
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+/* The header's buttons are round in this pane. The close button belongs to the
+   shared pane chrome, so it's only restyled in headers carrying this pane's
+   own button. */
+.sb-references-header-button,
+.sb-pane-header:has(.sb-references-header-button) .sb-pane-header-close-button {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+/* Two classes, to outrank the app-wide `body .material-symbols-outlined`
+   size. A line-height of 1 makes the glyph's box its own size, so centering
+   the box centers the icon. */
+.sb-references-header-button.material-symbols-outlined,
+.sb-pane-header:has(.sb-references-header-button)
+  .sb-pane-header-close-button
+  .material-symbols-outlined {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+@media (hover: hover) {
+  .sb-references-header-button:hover,
+  .sb-pane-header:has(.sb-references-header-button)
+    .sb-pane-header-close-button:hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  }
+}
+
+.sb-references-root {
+  --sb-references-control-size: 2rem;
+  --sb-references-motion-duration: 240ms;
+  --sb-references-motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --sb-references-accent-text: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    var(--sb-font-color) 40%
+  );
+  height: 100%;
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
 }
 
-.sb-references-list {
+.sb-references-root .material-symbols-outlined {
+  line-height: 1;
+}
+
+/* Scrolls without showing a scrollbar. The outer scroller is the shared pane
+   body, so it's only changed while it holds this pane. */
+.sb-pane-detached-body:has(.sb-references-root),
+.sb-references-index,
+.sb-references-detail-scroll {
+  scrollbar-width: none;
+}
+
+.sb-pane-detached-body:has(.sb-references-root)::-webkit-scrollbar,
+.sb-references-index::-webkit-scrollbar,
+.sb-references-detail-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.sb-references-pane {
+  min-height: 100%;
+  padding: 0.5rem 0.5rem 1rem;
+}
+
+/* ── Narrow layout: sections of rows that open in place ── */
+
+.sb-references-section + .sb-references-section {
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+.sb-references-section-title {
+  margin: 0;
+  padding: 0.875rem 0.75rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-references-rows {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.sb-references-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.25rem 0.5rem;
-  align-items: start;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: 0.5rem;
+.sb-references-row {
+  position: relative;
+  border-top: 1px solid transparent;
+  transition:
+    background-color var(--sb-references-motion-duration)
+      var(--sb-references-motion-ease),
+    border-top-color var(--sb-references-motion-duration)
+      var(--sb-references-motion-ease),
+    margin var(--sb-references-motion-duration) var(--sb-references-motion-ease);
 }
 
-.sb-references-item-label {
-  grid-area: 1 / 1;
-  align-self: center;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
-  cursor: pointer;
+.sb-references-row + .sb-references-row {
+  border-top-color: var(--sb-divider-color);
 }
 
-.sb-references-item-label-pending {
-  display: flex;
+.sb-references-row.is-expanded,
+.sb-references-row.is-expanded + .sb-references-row {
+  border-top-color: transparent;
 }
 
-.sb-references-item-body {
-  grid-area: 2 / 1 / 3 / 3;
-  min-width: 0;
+.sb-references-row.is-expanded {
+  margin: 0.125rem 0;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
+  border-radius: 0.75rem;
 }
 
-.sb-references-item-open {
-  grid-area: 1 / 2;
+.sb-references-row-head {
   display: flex;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  width: 1.75rem;
-  height: 1.75rem;
-  padding: 0;
-  border: none;
-  border-radius: 0.375rem;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
   cursor: pointer;
-  transition:
-    background-color 120ms ease,
-    color 120ms ease;
 }
 
-.sb-references-item-open .material-symbols-outlined {
-  font-size: 1.125rem;
+/* Only as wide as the reference itself, so a click beside it still toggles
+   the row rather than opening the verse. */
+.sb-references-row-heading > .sb-references-title-link {
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.sb-references-row-heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  transition: margin-right var(--sb-references-motion-duration)
+    var(--sb-references-motion-ease);
+}
+
+/* Leaves room for the "go to chapter" button beside the chevron. */
+.sb-references-row.is-expanded .sb-references-row-heading {
+  margin-right: calc(var(--sb-references-control-size) + 0.5rem);
+}
+
+.sb-references-row-reference {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.sb-references-row-preview {
+  display: block;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-references-row-preview .sb-skeleton {
+  margin-top: 0.25rem;
+}
+
+.sb-references-round-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: var(--sb-references-control-size);
+  height: var(--sb-references-control-size);
+  border-radius: 999px;
+}
+
+.sb-references-row-chevron .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.sb-references-row-chevron {
+  display: flex;
+  padding: 0;
+  border: none;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  color: var(--sb-font-color);
+  cursor: pointer;
+  transition:
+    background-color var(--sb-references-motion-duration)
+      var(--sb-references-motion-ease),
+    color var(--sb-references-motion-duration) var(--sb-references-motion-ease),
+    transform var(--sb-references-motion-duration)
+      var(--sb-references-motion-ease);
 }
 
 @media (hover: hover) {
-  .sb-references-item-open:hover {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-    color: var(--sb-font-color);
+  .sb-references-row-head:hover .sb-references-row-chevron {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
   }
 }
 
-.sb-references-item-open:focus-visible {
+.sb-references-row-chevron:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+.sb-references-row.is-expanded .sb-references-row-chevron {
+  background: var(--sb-primary-color);
+  color: #fff;
+  display: flex;
+  transform: rotate(180deg);
+}
+
+.sb-references-row-open {
+  position: absolute;
+  top: 0.625rem;
+  right: calc(0.75rem + var(--sb-references-control-size) + 0.5rem);
+  padding: 0;
+  border: none;
+  background: var(--sb-reader-background);
+  color: var(--sb-references-accent-text);
+  box-shadow: 0 1px 2px color-mix(in srgb, #000, transparent 88%);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.6);
+  transition:
+    opacity var(--sb-references-motion-duration)
+      var(--sb-references-motion-ease),
+    transform var(--sb-references-motion-duration)
+      var(--sb-references-motion-ease),
+    visibility 0s linear var(--sb-references-motion-duration);
+}
+
+/* Pops in just after the row starts opening, so it doesn't land on a row
+   that's still changing colour. */
+.sb-references-row.is-expanded .sb-references-row-open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 60ms, 60ms, 0s;
+}
+
+.sb-references-row-open .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+/* Opens and closes by animating its single grid row between 0fr and 1fr,
+   which (unlike `height`) can animate to the content's natural height. Once
+   closed, `visibility` takes the content out of the tab order and away from
+   screen readers; it switches only after the animation, so the fade shows. */
+.sb-references-collapsible {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows var(--sb-references-motion-duration)
+      var(--sb-references-motion-ease),
+    opacity var(--sb-references-motion-duration)
+      var(--sb-references-motion-ease),
+    visibility 0s;
+}
+
+.sb-references-collapsible > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sb-references-row-body-wrap,
+.sb-references-row.is-expanded .sb-references-row-preview-wrap {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition-delay: 0s, 0s, var(--sb-references-motion-duration);
+}
+
+.sb-references-row.is-expanded .sb-references-row-body-wrap {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.sb-references-row-open:focus-visible {
   outline: 2px solid var(--sb-primary-color);
   outline-offset: 1px;
 }
 
-.sb-references-item-open:disabled {
-  cursor: default;
-  opacity: 0.5;
+/* Bottom spacing is a spacer rather than padding: padding can't shrink below
+   its own size, so it would stop the body from closing all the way. */
+.sb-references-row-body {
+  padding: 0 0.75rem;
 }
 
-.sb-references-item-text {
+.sb-references-row-body::after {
+  content: "";
+  display: block;
+  height: 0.75rem;
+}
+
+.sb-references-row-pending {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 0.75rem;
+}
+
+.sb-references-row-pending + .sb-references-row-pending {
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+/* ── Wide layout: list beside the selected reference ── */
+
+.sb-references-pane--split {
+  display: grid;
+  grid-template-columns: minmax(10.5rem, 13rem) minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+.sb-references-index {
+  overflow-y: auto;
+  padding: 0.5rem;
+  border-right: 1px solid var(--sb-divider-color);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+  scrollbar-width: none;
+}
+
+.sb-references-index-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-references-index-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  border-radius: 0.625rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--sb-references-motion-duration)
+      var(--sb-references-motion-ease),
+    box-shadow var(--sb-references-motion-duration)
+      var(--sb-references-motion-ease);
+}
+
+.sb-references-index-item .sb-references-row-reference {
+  font-size: 0.875rem;
+}
+
+.sb-references-index-item .sb-references-row-preview {
+  font-size: 0.75rem;
+}
+
+@media (hover: hover) {
+  .sb-references-index-item:hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  }
+}
+
+.sb-references-index-item[aria-current="true"] {
+  background: var(--sb-reader-background);
+  box-shadow: 0 1px 3px color-mix(in srgb, #000, transparent 90%);
+}
+
+.sb-references-index-item[aria-current="true"] .sb-references-row-preview {
+  color: var(--sb-references-accent-text);
+}
+
+.sb-references-index-item:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: -2px;
+}
+
+.sb-references-detail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.sb-references-detail-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.sb-references-detail-content {
+  animation: sb-references-enter-forward var(--sb-references-motion-duration)
+    var(--sb-references-motion-ease) both;
+}
+
+.sb-references-detail-content[data-direction="backward"] {
+  animation-name: sb-references-enter-backward;
+}
+
+@keyframes sb-references-enter-forward {
+  from {
+    opacity: 0;
+    transform: translateX(0.75rem);
+  }
+}
+
+@keyframes sb-references-enter-backward {
+  from {
+    opacity: 0;
+    transform: translateX(-0.75rem);
+  }
+}
+
+.sb-references-detail-eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sb-references-accent-text);
+}
+
+.sb-references-detail-title {
+  margin: 0 0 0.875rem;
+  font-family: var(--sb-reader-font-family);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.sb-references-title-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+  transition: text-decoration-color var(--sb-references-motion-duration)
+    var(--sb-references-motion-ease);
+}
+
+@media (hover: hover) {
+  .sb-references-title-link:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.sb-references-title-link:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+.sb-references-detail-footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+.sb-references-pager-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sb-references-control-size);
+  height: var(--sb-references-control-size);
+  padding: 0;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.sb-references-pager-button .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.sb-references-pager-button--next {
+  border-color: var(--sb-font-color);
+  background: var(--sb-font-color);
+  color: var(--sb-reader-background);
+}
+
+.sb-references-pager-button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.sb-references-pager-button:focus-visible,
+.sb-references-go-to-chapter:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+.sb-references-pager-position {
+  margin-left: 0.25rem;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-references-go-to-chapter {
+  margin-left: auto;
+  padding: 0.375rem 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-references-go-to-chapter:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ── Shared ── */
+
+.sb-references-text {
   margin: 0;
   font-family: var(--sb-reader-font-family);
-  font-size: 0.9375rem;
-  line-height: 1.6;
+  font-size: 0.8rem;
+  line-height: 1.5;
   overflow-wrap: break-word;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 12%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 8%);
 }
 
-.sb-references-item-note {
+.sb-references-verse-number {
+  margin-right: 0.25em;
+  font-family: var(--sb-font-family);
+  font-size: 0.7em;
+  font-weight: 700;
+  vertical-align: 0.15em;
+  color: var(--sb-primary-color);
+}
+
+.sb-references-verse-number:not(:first-child) {
+  margin-left: 0.125em;
+}
+
+.sb-references-note {
   margin: 0;
   font-size: 0.8125rem;
   font-style: italic;
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
 
-.sb-references-item-placeholder {
+.sb-references-text-placeholder {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
-  padding: 0.3125rem 0;
+  gap: 0.5rem;
+  padding: 0.375rem 0;
 }
 
 .sb-references-more {
@@ -142,20 +628,6 @@
   outline-offset: 2px;
 }
 
-@media (pointer: coarse) {
-  .sb-references-more {
-    width: 2.875rem;
-    height: 2.875rem;
-    margin-top: 0.75rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sb-references-more {
-    transition: none;
-  }
-}
-
 .sb-references-pane--empty {
   display: flex;
   flex-direction: column;
@@ -180,63 +652,37 @@
 }
 
 @media (pointer: coarse) {
-  .sb-references-list {
-    gap: 0.625rem;
+  .sb-references-root {
+    --sb-references-control-size: 2.5rem;
   }
 
-  .sb-references-item {
-    padding: 0.75rem 0.875rem;
+  .sb-references-row-head {
+    padding: 0.75rem;
   }
 
-  .sb-references-item-text {
-    font-size: 1rem;
+  .sb-references-row-open {
+    top: 0.75rem;
   }
 
-  .sb-references-item-open {
-    width: 2.25rem;
-    height: 2.25rem;
-  }
-
-  .sb-references-item-open .material-symbols-outlined {
-    font-size: 1.25rem;
+  .sb-references-more {
+    width: 2.875rem;
+    height: 2.875rem;
+    margin-top: 0.75rem;
   }
 }
 
-@container (min-width: 34rem) {
-  .sb-references-pane {
-    padding: 1rem;
+@media (prefers-reduced-motion: reduce) {
+  .sb-references-row,
+  .sb-references-row-heading,
+  .sb-references-row-chevron,
+  .sb-references-row-open,
+  .sb-references-collapsible,
+  .sb-references-index-item,
+  .sb-references-more {
+    transition: none;
   }
 
-  .sb-references-item {
-    grid-template-columns: 9.5rem 1fr auto;
-    gap: 0.25rem 1rem;
-    padding: 0.75rem 1rem;
-  }
-
-  .sb-references-item-label {
-    align-self: start;
-    padding-top: 0.0625rem;
-    text-align: right;
-  }
-
-  .sb-references-item-label-pending {
-    justify-content: flex-end;
-  }
-
-  .sb-references-item-body {
-    grid-area: 1 / 2;
-  }
-
-  .sb-references-item-open {
-    grid-area: 1 / 3;
-  }
-
-  .sb-references-item-text {
-    max-width: 36rem;
-  }
-
-  .sb-references-item-placeholder {
-    padding-top: 0;
-    max-width: 36rem;
+  .sb-references-detail-content {
+    animation: none;
   }
 }

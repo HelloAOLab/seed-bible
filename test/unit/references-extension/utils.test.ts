@@ -13,8 +13,12 @@ const {
   createRefsWithText,
   downloadReferences,
   estimateReferencesSizeBytes,
+  formatReference,
   getVerseReferences,
+  groupReferencesBySection,
   loadReferenceDatasetIndex,
+  loadReferencePassage,
+  referenceSectionOf,
   selectTopReferences,
 } = await import("@packages/references-extension/references/manager/utils");
 
@@ -309,6 +313,171 @@ describe("createRefsWithText()", () => {
     });
 
     expect(withText.map((entry) => entry.text)).toEqual(["strongest"]);
+  });
+
+  it("keeps the other references' text when one chapter can't be loaded", async () => {
+    // An NT-only translation asked for an Old Testament passage: that one
+    // reference goes without text, and the rest still load.
+    const dataManager = dataManagerWith({
+      "JHN.1": [{ type: "verse", number: 1, content: ["In the beginning"] }],
+    });
+
+    const withText = await createRefsWithText({
+      references: [
+        ref({ book: "JHN", chapter: 1, verse: 1, score: 9 }),
+        ref({ book: "GEN", chapter: 1, verse: 1, score: 5 }),
+      ],
+      limit: 5,
+      dataManager,
+      translationId: "WEB",
+    });
+
+    expect(withText.map((entry) => [entry.book, entry.text])).toEqual([
+      ["JHN", "In the beginning"],
+      ["GEN", ""],
+    ]);
+  });
+
+  it("keeps each verse of a range separate for numbering", async () => {
+    const dataManager = dataManagerWith({
+      "ROM.8": [
+        { type: "verse", number: 38, content: ["For I am persuaded"] },
+        { type: "verse", number: 39, content: ["nor height"] },
+      ],
+    });
+
+    const [withText] = await createRefsWithText({
+      references: [
+        ref({ book: "ROM", chapter: 8, verse: 38, endVerse: 39, score: 1 }),
+      ],
+      limit: 5,
+      dataManager,
+      translationId: "WEB",
+    });
+
+    expect(withText!.verses).toEqual([
+      { number: 38, text: "For I am persuaded" },
+      { number: 39, text: "nor height" },
+    ]);
+  });
+});
+
+describe("loadReferencePassage()", () => {
+  it("names the translation the text came from", async () => {
+    const dataManager = {
+      getTranslationBookChapter: async () => ({
+        chapter: { content: [{ type: "verse", number: 1, content: ["x"] }] },
+        translation: { shortName: "BSB" },
+      }),
+    } as unknown as BibleDataManager;
+
+    const passage = await loadReferencePassage({
+      reference: ref(),
+      dataManager,
+      translationId: "bsb-id",
+    });
+
+    expect(passage.translation).toBe("BSB");
+  });
+
+  it("falls back to the translation id when the chapter has no short name", async () => {
+    const passage = await loadReferencePassage({
+      reference: ref(),
+      dataManager: dataManagerWith({
+        "GEN.1": [{ type: "verse", number: 1, content: ["x"] }],
+      }),
+      translationId: "WEB",
+    });
+
+    expect(passage.translation).toBe("WEB");
+  });
+
+  it("fails when the chapter can't be loaded, for the caller to handle", async () => {
+    await expect(
+      loadReferencePassage({
+        reference: ref({ book: "GEN" }),
+        dataManager: dataManagerWith({}),
+        translationId: "WEB",
+      })
+    ).rejects.toThrow();
+  });
+});
+
+describe("formatReference()", () => {
+  it("labels a single verse", () => {
+    expect(formatReference(ref({ chapter: 15, verse: 7 }), "Genesis")).toBe(
+      "Genesis 15:7"
+    );
+  });
+
+  it("labels a range with an en dash", () => {
+    expect(
+      formatReference(ref({ chapter: 15, verse: 4, endVerse: 5 }), "Genesis")
+    ).toBe("Genesis 15:4–5");
+  });
+
+  it("treats a range that ends where it starts as one verse", () => {
+    expect(
+      formatReference(ref({ chapter: 15, verse: 4, endVerse: 4 }), "Genesis")
+    ).toBe("Genesis 15:4");
+  });
+});
+
+describe("referenceSectionOf()", () => {
+  it.each([
+    ["GEN", "law"],
+    ["DEU", "law"],
+    ["JOS", "history"],
+    ["EST", "history"],
+    ["PSA", "wisdom"],
+    ["ISA", "prophets"],
+    ["MAL", "prophets"],
+    ["MAT", "new-testament"],
+    ["REV", "new-testament"],
+  ])("files %s under %s", (bookId, section) => {
+    expect(referenceSectionOf(bookId)).toBe(section);
+  });
+
+  it("matches book ids regardless of case", () => {
+    expect(referenceSectionOf("gen")).toBe("law");
+  });
+
+  it("files books outside the Protestant canon under other", () => {
+    expect(referenceSectionOf("TOB")).toBe("other");
+  });
+});
+
+describe("groupReferencesBySection()", () => {
+  it("orders sections canonically and keeps the ranking within each", () => {
+    const romans = ref({ book: "ROM", score: 9 });
+    const genesis = ref({ book: "GEN", score: 8 });
+    const john = ref({ book: "JHN", score: 7 });
+    const exodus = ref({ book: "EXO", score: 6 });
+
+    const groups = groupReferencesBySection([romans, genesis, john, exodus]);
+
+    expect(
+      groups.map((group) => [
+        group.section,
+        group.references.map((entry) => entry.book),
+      ])
+    ).toEqual([
+      ["law", ["GEN", "EXO"]],
+      ["new-testament", ["ROM", "JHN"]],
+    ]);
+  });
+
+  it("puts unrecognised books last", () => {
+    const groups = groupReferencesBySection([
+      ref({ book: "TOB" }),
+      ref({ book: "GEN" }),
+    ]);
+
+    expect(groups.map((group) => group.section)).toEqual(["law", "other"]);
+  });
+
+  it("returns no sections for no references", () => {
+    expect(groupReferencesBySection([])).toEqual([]);
   });
 });
 

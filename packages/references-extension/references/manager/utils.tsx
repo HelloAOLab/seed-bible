@@ -11,6 +11,8 @@ import type {
   ChapterReferences,
   CrossReference,
   DownloadSummary,
+  ReferenceSection,
+  ReferenceVerseText,
   VerseReferences,
 } from "./interfaces";
 
@@ -170,6 +172,121 @@ export const selectTopReferences = (
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
     .slice(0, limit);
 
+/** Sections in canonical order, with the USFM book ids each one covers. */
+const SECTION_BOOKS: [ReferenceSection, string[]][] = [
+  ["law", ["GEN", "EXO", "LEV", "NUM", "DEU"]],
+  [
+    "history",
+    [
+      "JOS",
+      "JDG",
+      "RUT",
+      "1SA",
+      "2SA",
+      "1KI",
+      "2KI",
+      "1CH",
+      "2CH",
+      "EZR",
+      "NEH",
+      "EST",
+    ],
+  ],
+  ["wisdom", ["JOB", "PSA", "PRO", "ECC", "SNG"]],
+  [
+    "prophets",
+    [
+      "ISA",
+      "JER",
+      "LAM",
+      "EZK",
+      "DAN",
+      "HOS",
+      "JOL",
+      "AMO",
+      "OBA",
+      "JON",
+      "MIC",
+      "NAM",
+      "HAB",
+      "ZEP",
+      "HAG",
+      "ZEC",
+      "MAL",
+    ],
+  ],
+  [
+    "new-testament",
+    [
+      "MAT",
+      "MRK",
+      "LUK",
+      "JHN",
+      "ACT",
+      "ROM",
+      "1CO",
+      "2CO",
+      "GAL",
+      "EPH",
+      "PHP",
+      "COL",
+      "1TH",
+      "2TH",
+      "1TI",
+      "2TI",
+      "TIT",
+      "PHM",
+      "HEB",
+      "JAS",
+      "1PE",
+      "2PE",
+      "1JN",
+      "2JN",
+      "3JN",
+      "JUD",
+      "REV",
+    ],
+  ],
+];
+
+const SECTION_BY_BOOK = new Map(
+  SECTION_BOOKS.flatMap(([section, books]) =>
+    books.map((book) => [book, section] as const)
+  )
+);
+
+const SECTION_ORDER: ReferenceSection[] = [
+  ...SECTION_BOOKS.map(([section]) => section),
+  "other",
+];
+
+export const referenceSectionOf = (bookId: string): ReferenceSection =>
+  SECTION_BY_BOOK.get(bookId.toUpperCase()) ?? "other";
+
+/**
+ * Files references under their section, sections in canonical order. Within a
+ * section the incoming order is kept, so a ranked list stays ranked.
+ */
+export const groupReferencesBySection = <T extends CrossReference>(
+  references: T[]
+): { section: ReferenceSection; references: T[] }[] => {
+  const bySection = new Map<ReferenceSection, T[]>();
+  for (const reference of references) {
+    const section = referenceSectionOf(reference.book);
+    const group = bySection.get(section);
+    if (group) {
+      group.push(reference);
+    } else {
+      bySection.set(section, [reference]);
+    }
+  }
+
+  return SECTION_ORDER.flatMap((section) => {
+    const group = bySection.get(section);
+    return group ? [{ section, references: group }] : [];
+  });
+};
+
 export const createRefsWithText = async (props: {
   references: CrossReference[];
   limit: number;
@@ -182,39 +299,101 @@ export const createRefsWithText = async (props: {
 
   const refsWithText = await Promise.all(
     limitedReferences.map(async (ref) => {
-      const verseText = await dataManager.getTranslationBookChapter(
-        translationId,
-        ref.book,
-        ref.chapter
-      );
-
-      const verseTexts: string[] = [];
-      verseText.chapter.content.forEach((content) => {
-        if (
-          content.type === "verse" &&
-          content.number >= ref.verse &&
-          content.number <= (ref.endVerse ?? ref.verse)
-        ) {
-          let verseContent = "";
-          content.content.forEach((verseContentItem) => {
-            if (typeof verseContentItem === "string") {
-              verseContent += verseContentItem;
-            } else if ("text" in verseContentItem) {
-              verseContent += verseContentItem.text;
-            }
-          });
-          verseTexts.push(verseContent.trim());
-        }
-      });
+      // One chapter missing from the translation (an NT-only Bible asked for
+      // an OT passage) leaves just that reference without text, rather than
+      // failing the batch and blanking every reference with it.
+      let verses: ReferenceVerseText[] = [];
+      try {
+        ({ verses } = await loadReferencePassage({
+          reference: ref,
+          dataManager,
+          translationId,
+        }));
+      } catch (error) {
+        console.warn(
+          `Could not load the text of ${ref.book} ${ref.chapter}:${ref.verse}`,
+          error
+        );
+      }
       return {
         ...ref,
-        text: verseTexts.filter(Boolean).join(" "),
+        text: verses.map((verse) => verse.text).join(" "),
+        verses,
       };
     })
   );
 
   return refsWithText;
 };
+
+/**
+ * A reference's text in `translationId`, one entry per verse, along with the
+ * translation's short name for attributing it ("BSB").
+ */
+export const loadReferencePassage = async (props: {
+  reference: CrossReference;
+  dataManager: BibleDataManager;
+  translationId: string;
+}): Promise<{ verses: ReferenceVerseText[]; translation: string }> => {
+  const { reference, dataManager, translationId } = props;
+  const chapterData = await dataManager.getTranslationBookChapter(
+    translationId,
+    reference.book,
+    reference.chapter
+  );
+
+  const verses: ReferenceVerseText[] = [];
+  chapterData.chapter.content.forEach((content) => {
+    if (
+      content.type === "verse" &&
+      content.number >= reference.verse &&
+      content.number <= (reference.endVerse ?? reference.verse)
+    ) {
+      let verseContent = "";
+      content.content.forEach((verseContentItem) => {
+        if (typeof verseContentItem === "string") {
+          verseContent += verseContentItem;
+        } else if ("text" in verseContentItem) {
+          verseContent += verseContentItem.text;
+        }
+      });
+      const trimmed = verseContent.trim();
+      if (trimmed) {
+        verses.push({ number: content.number, text: trimmed });
+      }
+    }
+  });
+
+  return {
+    verses,
+    translation: chapterData.translation?.shortName ?? translationId,
+  };
+};
+
+/** "Genesis 15:7", or "Genesis 15:4–5" for a range. */
+export function formatReference(
+  reference: CrossReference,
+  bookName: string
+): string {
+  const { chapter, verse, endVerse } = reference;
+  const verses = endVerse && endVerse > verse ? `${verse}–${endVerse}` : verse;
+  return `${bookName} ${chapter}:${verses}`;
+}
+
+export function referenceKey(reference: CrossReference): string {
+  return `${reference.book}-${reference.chapter}-${reference.verse}-${reference.endVerse ?? ""}`;
+}
+
+/** Book id → display name, from whatever the translation has cached. */
+export function buildBookNames(
+  dataManager: BibleDataManager,
+  translationId: string
+): Map<string, string> {
+  const books = dataManager.getCachedTranslationBooks(translationId);
+  return new Map(
+    books?.books.map((book) => [book.id, book.commonName || book.name]) ?? []
+  );
+}
 
 /**
  * What one stored cross-reference costs on disk, in bytes.

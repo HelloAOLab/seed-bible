@@ -7,9 +7,26 @@ export interface CrossReference {
   score?: number;
 }
 
-export interface CrossReferenceWithText extends CrossReference {
+/** One verse's text within a cross-reference that may span several verses. */
+export interface ReferenceVerseText {
+  number: number;
   text: string;
 }
+
+export interface CrossReferenceWithText extends CrossReference {
+  text: string;
+  /** The same text split per verse; empty when none of it could be found. */
+  verses: ReferenceVerseText[];
+}
+
+/** A group of books a cross-reference is filed under in the reference list. */
+export type ReferenceSection =
+  | "law"
+  | "history"
+  | "wisdom"
+  | "prophets"
+  | "new-testament"
+  | "other";
 
 /** Identifies the verse whose cross-references are wanted. */
 export interface ReferenceId {
