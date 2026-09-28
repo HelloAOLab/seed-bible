@@ -59,13 +59,15 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   return (
     <div className="sb-discover-pane sb-play-playlist">
       <div className="sb-play-playlist-body">
-        <HeroImageBanner
-          url={heroImageUrl}
-          alt={
-            playing.playlists.value[0]?.title ??
-            t("untitled-playlist", { defaultValue: "Untitled playlist" })
-          }
-        />
+        {heroImageUrl ? (
+          <HeroImageBanner
+            url={heroImageUrl}
+            alt={
+              playing.playlists.value[0]?.title ??
+              t("untitled-playlist", { defaultValue: "Untitled playlist" })
+            }
+          />
+        ) : null}
         <DiscoverSection title={t("queue", { defaultValue: "Queue" })}>
           <ul className="sb-discover-list">
             {queue.map((item, index) => (
