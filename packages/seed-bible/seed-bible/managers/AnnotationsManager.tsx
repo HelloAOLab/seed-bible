@@ -4,6 +4,7 @@ import {
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
@@ -12,8 +13,29 @@ import type { CasualOSManager } from "./OsManager";
 import type { DiscoverManager } from "./DiscoverManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import type { TranslationBookChapter } from "./FreeUseBibleAPI";
+import {
+  createRecordSyncManager,
+  type CreateRecordSyncManagerOptions,
+  type RecordSyncManager,
+} from "./RecordSyncManager";
+import {
+  canonicalize,
+  createIndexedDbRecordStore,
+  LOCAL_OWNER,
+  pendingRow,
+  type OfflineRecordStore,
+  type StoredRecord,
+  type SyncDomain,
+} from "./OfflineRecordStore";
 
 export interface AnnotationQuery {
+  /**
+   * The record to read/write against: either a bare record name or an
+   * actual record key. Both `os.recordData`/`os.eraseData` and
+   * `os.listDataByMarker` resolve this through the records server's
+   * `recordKeyOrRecordName` handling, so a real key works for listing too,
+   * not just for writes.
+   */
   recordName?: string;
   group?: string;
 }
@@ -34,11 +56,20 @@ export interface AnnotationsManager {
   ) => Promise<Annotation[]>;
 
   /**
-   * Reactive view of the signed-in account's annotations for one chapter,
-   * sorted the same way `listAnnotationsForChapter` sorts. Loads lazily on
-   * first access, keyed by account + bookId/chapterNumber; empty (not
-   * loading) when signed out. Stays live-updated by
-   * `saveEditingAnnotation`/`deleteAnnotationAndRefresh` below.
+   * Every annotation in the effective record, across the whole Bible, for the
+   * "Your content" screen. Unsorted — callers order it themselves. Empty when
+   * the user is signed out and no record override is in play.
+   */
+  listAllAnnotations: () => Promise<Annotation[]>;
+
+  /**
+   * Reactive view of one chapter's annotations, sorted the same way
+   * `listAnnotationsForChapter` sorts: from the record override when one was
+   * passed to `createAnnotationsManager`, otherwise from the signed-in
+   * account's own record. Loads lazily on first access, keyed by the
+   * effective record id + bookId/chapterNumber; empty (not loading) only
+   * when there's no override and the user is signed out. Stays live-updated
+   * by `saveEditingAnnotation`/`deleteAnnotationAndRefresh` below.
    */
   getAnnotationsForChapter: (
     bookId: string,
@@ -94,6 +125,25 @@ export interface AnnotationsManager {
    * draft if it was the one being edited. Rethrows on failure.
    */
   deleteAnnotationAndRefresh: (annotation: Annotation) => Promise<void>;
+
+  /**
+   * True when a `recordOverride` was passed to `createAnnotationsManager`,
+   * so annotations are being read/written against that record instead of
+   * the signed-in account's own. The UI uses this to show a banner letting
+   * the visitor know where their notes are actually being saved.
+   */
+  hasRecordOverride: boolean;
+
+  /**
+   * Pushes locally-recorded changes to the server and surfaces conflicts.
+   *
+   * Exposed so the UI can show how much is still waiting to sync and prompt for
+   * a decision when a note changed in two places at once.
+   */
+  sync: RecordSyncManager<Annotation>;
+
+  /** How many of a chapter's notes are still waiting to reach the server. */
+  pendingCountForChapter(bookId: string, chapterNumber: number): number;
 }
 
 export const commentAnnotationSchema = z.object({
@@ -126,6 +176,53 @@ export const annotationSchema = z.object({
   order: z.number().nullable().optional(),
   data: annotationDataSchema,
 });
+
+/** The collection a chapter's annotations are grouped under in the local store. */
+export function annotationCollection(
+  bookId: string,
+  chapterNumber: number
+): string {
+  return `${bookId}/${chapterNumber}`;
+}
+
+/**
+ * A stable fingerprint of an annotation's content, excluding `updatedAtMs`.
+ * Used to answer "is the server's copy still the one I edited?" for records
+ * written before timestamps existed.
+ */
+export function annotationFingerprint(annotation: Annotation): string {
+  const { updatedAtMs: _updatedAtMs, ...data } = annotation.data;
+  return canonicalize({ ...annotation, data });
+}
+
+function annotationUpdatedAtMs(annotation: Annotation): number | null {
+  return typeof annotation.data.updatedAtMs === "number"
+    ? annotation.data.updatedAtMs
+    : null;
+}
+
+export const annotationSyncDomain: SyncDomain<Annotation> = {
+  dbName: "seed-bible-annotations",
+  parse: (value) => {
+    const parsed = annotationSchema.safeParse(value);
+    return parsed.success ? parsed.data : null;
+  },
+  // Timestamps when both sides have one; content otherwise, because records
+  // written through the raw save path may carry no timestamp at all.
+  sameVersion: (a, b) => {
+    const ta = annotationUpdatedAtMs(a);
+    const tb = annotationUpdatedAtMs(b);
+    return ta !== null && tb !== null
+      ? ta === tb
+      : annotationFingerprint(a) === annotationFingerprint(b);
+  },
+  collection: (_address, a) => annotationCollection(a.bookId, a.chapterNumber),
+  marker: (_address, a) => getAnnotationMarker(a.bookId, a.chapterNumber),
+  duplicate: (a) => {
+    const copy: Annotation = { ...a, id: `annotation_${uuid()}` };
+    return { address: copy.id, payload: copy };
+  },
+};
 
 /**
  * Resolves the verse numbers an annotation targets: `verseNumbers` when
@@ -176,6 +273,27 @@ export function findAnnotationChapterData(
           c?.chapter.number === annotation.chapterNumber
       ) ?? null
   );
+}
+
+/**
+ * True when any comment in the list was written by someone other than the
+ * current user. Used to decide whether author avatars need the animal+color
+ * combo so people can tell each other apart.
+ */
+export function annotationListHasOtherAuthors(
+  annotations: readonly Annotation[],
+  selfUserId: string | null | undefined
+): boolean {
+  for (const annotation of annotations) {
+    if (annotation.data.type !== "comment") {
+      continue;
+    }
+    const authorId = annotation.data.userId;
+    if (authorId && authorId !== selfUserId) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function formatAnnotationVerseNumbers(verseNumbers: number[]): string {
@@ -317,7 +435,7 @@ function verseNumbersEqual(a: number[] | null, b: number[] | null): boolean {
   return a.length === b.length && a.every((n, i) => n === b[i]);
 }
 
-function getAnnotationMarker(
+export function getAnnotationMarker(
   bookId: string,
   chapterNumber: number,
   group: string = "annotations"
@@ -343,12 +461,28 @@ export function sortAnnotations(annotations: Annotation[]): Annotation[] {
 }
 
 type AnnotationsEntry = {
-  /** Account these annotations belong to. */
-  userId: string;
-  /** Latest known annotations for this account + chapter. */
+  /**
+   * Effective record id these annotations belong to: the override, the
+   * signed-in account, or the signed-out bucket.
+   */
+  recordId: string;
+  /** The chapter these annotations belong to, so a retry knows what to reload. */
+  bookId: string;
+  chapterNumber: number;
+  /** Latest known annotations for this record + chapter. */
   data: Signal<Annotation[]>;
   /** True once a load or a mutation has put real annotations in `data`. */
   settled: boolean;
+  /**
+   * True when the last load failed.
+   *
+   * Kept separate from `settled` so a failure is not mistaken for "this chapter
+   * has no annotations" — but it still stops the load being retried, because
+   * reads happen inside a `computed` and retrying on every read would spin.
+   * Cleared when the connection returns, which is the point at which a retry
+   * could actually succeed.
+   */
+  loadFailed: boolean;
   /** In-flight load, shared by concurrent readers. */
   load: Promise<void> | null;
   /**
@@ -364,56 +498,172 @@ type AnnotationsEntry = {
   explicit: boolean;
 };
 
-function entryKey(userId: string, address: string): string {
-  return `${userId} ${address}`;
+function entryKey(recordId: string, address: string): string {
+  return `${recordId} ${address}`;
 }
 
+export interface CreateAnnotationsManagerOptions {
+  /**
+   * Where changes are recorded before they reach the server.
+   *
+   * Defaults to IndexedDB. Pass an explicit store to inject a fake in tests, or
+   * null to switch offline support off — which is also what happens on its own
+   * during SSR and wherever the browser blocks storage, since the IndexedDB
+   * factory returns null there.
+   */
+  store?: OfflineRecordStore<Annotation> | null;
+  /** See {@link CreateRecordSyncManagerOptions.confirmAdoption}. */
+  confirmAdoption?: CreateRecordSyncManagerOptions<Annotation>["confirmAdoption"];
+}
+
+/**
+ * Creates a new AnnotationsManager instance.
+ * @param recordOverride The name of the record or record key to use for annotations, overriding the default behavior of using the signed-in user's ID.
+ */
 export function createAnnotationsManager(
   os: CasualOSManager,
   login: LoginManager,
   tabs: TabsManager,
-  discover: DiscoverManager
+  discover: DiscoverManager,
+  recordOverride?: string,
+  options: CreateAnnotationsManagerOptions = {}
 ): AnnotationsManager {
-  const resolveRecordName = async (recordName?: string): Promise<string> => {
-    if (recordName) {
-      return recordName;
-    }
+  const store =
+    options.store === undefined
+      ? createIndexedDbRecordStore<Annotation>(annotationSyncDomain.dbName)
+      : options.store;
 
-    if (!login.userId.value) {
-      await login.login();
-    }
+  /**
+   * The record a query targets, or null when only the local store can answer.
+   *
+   * Deliberately does not prompt for login. Prompting mid-save would be wrong
+   * offline (the request cannot succeed) and wrong for a signed-out draft (there
+   * is a local bucket to write to instead). The prompt lives in
+   * `createNewAnnotation`, where the user is present and expecting it.
+   *
+   * `recordOverride` wins over the signed-in account whenever the query
+   * itself doesn't name a record, since it means every annotation for this
+   * manager instance should be read from and written to that record.
+   */
+  const resolveRecordName = (recordName?: string): string | null =>
+    recordName ?? recordOverride ?? login.userId.value ?? null;
 
-    const userId = login.userId.value;
-    if (!userId) {
-      throw new Error(
-        "Unable to resolve annotation record. User is not authenticated."
-      );
-    }
+  /**
+   * The bucket local rows belong to: the signed-in account, or the signed-out
+   * one. Never null, so a note can always be written somewhere.
+   */
+  const localOwner = (): string => login.userId.value ?? LOCAL_OWNER;
 
-    return userId;
-  };
+  /**
+   * True when a query targets somebody else's record or a different group,
+   * or when this manager instance itself was created with a `recordOverride`
+   * — annotations then always belong to that record, never to the local
+   * offline queue.
+   */
+  const isForeignQuery = (query?: AnnotationQuery): boolean =>
+    Boolean(query?.recordName || query?.group || recordOverride);
 
-  const saveAnnotation = async (
-    annotation: Annotation,
+  const saveToServer = async (
+    recordName: string,
+    parsed: Annotation,
     query?: AnnotationQuery
-  ): Promise<Annotation> => {
-    const parsed = annotationSchema.parse(annotation);
-    const recordName = await resolveRecordName(query?.recordName);
-    const marker = getAnnotationMarker(
-      parsed.bookId,
-      parsed.chapterNumber,
-      query?.group
-    );
-
+  ): Promise<void> => {
     const result = await os.recordData(recordName, parsed.id, parsed, {
-      marker,
+      marker: getAnnotationMarker(
+        parsed.bookId,
+        parsed.chapterNumber,
+        query?.group
+      ),
     });
 
     if (!result.success) {
       console.error("Error saving annotation:", result);
       throw new Error(`Error saving annotation: ${result.errorCode}`);
     }
+  };
 
+  /**
+   * The record a direct write targets, for a note that has no local row: one
+   * belonging to another account, or a device whose local store can't hold it.
+   */
+  const directRecordName = (query?: AnnotationQuery): string => {
+    const recordName = resolveRecordName(query?.recordName);
+    if (!recordName) {
+      throw new Error(
+        "Unable to resolve annotation record. User is not authenticated."
+      );
+    }
+    return recordName;
+  };
+
+  const saveDirectToServer = async (
+    parsed: Annotation,
+    query?: AnnotationQuery
+  ): Promise<Annotation> => {
+    await saveToServer(directRecordName(query), parsed, query);
+    return parsed;
+  };
+
+  const eraseDirectlyOnServer = async (
+    annotationId: string,
+    query?: AnnotationQuery
+  ): Promise<void> => {
+    const result = await os.eraseData(directRecordName(query), annotationId);
+    if (!result.success) {
+      console.error("Error deleting annotation:", result);
+      throw new Error(`Error deleting annotation: ${result.errorCode}`);
+    }
+  };
+
+  const saveAnnotation = async (
+    annotation: Annotation,
+    query?: AnnotationQuery
+  ): Promise<Annotation> => {
+    const now = Date.now();
+    // Stamped here rather than only in `saveEditingAnnotation` so every path
+    // that persists an annotation gets timestamps — the sync engine's conflict
+    // check has nothing to compare without them.
+    const parsed = annotationSchema.parse({
+      ...annotation,
+      data: {
+        ...annotation.data,
+        createdAtMs: annotation.data.createdAtMs ?? now,
+        updatedAtMs: now,
+      },
+    });
+
+    // Writing into somebody else's record is a direct operation with no local
+    // mirror: it isn't this device's note to queue.
+    if (isForeignQuery(query) || !store) {
+      return saveDirectToServer(parsed, query);
+    }
+
+    const owner = localOwner();
+    try {
+      const existing = await store.get(owner, parsed.id);
+      await store.put(
+        pendingRow({
+          owner,
+          address: parsed.id,
+          collection: annotationCollection(parsed.bookId, parsed.chapterNumber),
+          payload: parsed,
+          base: existing?.base ?? null,
+          updatedAtMs: now,
+        })
+      );
+    } catch (error) {
+      // The local database can become unusable for the rest of this tab's life
+      // — another tab upgrading it closes this connection and every reopen at
+      // the old version is rejected. Failing every save until the user reloads
+      // is worse than giving up the queue and writing straight to the server.
+      console.warn("Failed to record an annotation locally.", error);
+      return saveDirectToServer(parsed, query);
+    }
+
+    // Resolves once the local write lands, so the composer closes cleanly with
+    // no connection instead of reporting a failure the user can do nothing
+    // about. The push is the sync engine's job from here.
+    sync?.notifyLocalChange();
     return parsed;
   };
 
@@ -421,21 +671,51 @@ export function createAnnotationsManager(
     annotationId: string,
     query?: AnnotationQuery
   ): Promise<void> => {
-    const recordName = await resolveRecordName(query?.recordName);
-    const result = await os.eraseData(recordName, annotationId);
-
-    if (!result.success) {
-      console.error("Error deleting annotation:", result);
-      throw new Error(`Error deleting annotation: ${result.errorCode}`);
+    if (isForeignQuery(query) || !store) {
+      await eraseDirectlyOnServer(annotationId, query);
+      return;
     }
+
+    const owner = localOwner();
+    try {
+      const existing = await store.get(owner, annotationId);
+
+      // Never reached the server, so there is nothing to tombstone — including
+      // the create-then-delete-while-offline case, which now costs no requests
+      // at all.
+      if (existing && existing.base === null) {
+        await store.delete(owner, annotationId);
+        sync?.notifyLocalChange();
+        return;
+      }
+
+      await store.put(
+        pendingRow({
+          owner,
+          address: annotationId,
+          collection: existing?.collection ?? "",
+          payload: null,
+          base: existing?.base ?? null,
+        })
+      );
+    } catch (error) {
+      // See `saveAnnotation`: a dead local database must not stop a deletion
+      // the server can carry out perfectly well.
+      console.warn("Failed to record an annotation deletion locally.", error);
+      await eraseDirectlyOnServer(annotationId, query);
+      return;
+    }
+
+    sync?.notifyLocalChange();
   };
 
-  const listAnnotationsForChapter = async (
+  /** Reads every annotation a chapter's marker holds, following pagination. */
+  const listFromServer = async (
+    recordName: string,
     bookId: string,
     chapterNumber: number,
     query?: AnnotationQuery
   ): Promise<Annotation[]> => {
-    const recordName = await resolveRecordName(query?.recordName);
     const marker = getAnnotationMarker(bookId, chapterNumber, query?.group);
 
     const annotations: Annotation[] = [];
@@ -466,6 +746,137 @@ export function createAnnotationsManager(
     }
 
     return sortAnnotations(annotations);
+  };
+
+  /**
+   * Every annotation the user has, across the whole Bible.
+   *
+   * Annotations are marked per chapter, so there is no marker that means "all
+   * of mine" — collecting them by marker would take one request per chapter.
+   * This sweeps the record instead and keeps the items that parse as an
+   * annotation; anything else stored there (highlights, bookmarks, playlists)
+   * simply fails the schema and is skipped.
+   *
+   * Returns an empty list for a signed-out user, who has no record to read.
+   */
+  const listAllAnnotations = async (): Promise<Annotation[]> => {
+    const recordName = resolveRecordName();
+    if (!recordName) {
+      return [];
+    }
+
+    const result = await os.listAllData(recordName);
+    const annotations: Annotation[] = [];
+    for (const item of result.items) {
+      const parsed = annotationSchema.safeParse(item.data);
+      if (parsed.success) {
+        annotations.push(parsed.data);
+      }
+    }
+    return annotations;
+  };
+
+  /** The annotations a chapter's local rows represent, tombstones removed. */
+  const readLocalChapter = async (
+    owner: string,
+    bookId: string,
+    chapterNumber: number
+  ): Promise<Annotation[]> => {
+    if (!store) {
+      return [];
+    }
+    const rows = await store.listForCollection(
+      owner,
+      annotationCollection(bookId, chapterNumber)
+    );
+    return sortAnnotations(
+      rows
+        .filter(
+          (row): row is StoredRecord<Annotation> & { payload: Annotation } =>
+            Boolean(!row.deleted && row.payload)
+        )
+        .map((row) => row.payload)
+    );
+  };
+
+  /** Whether the local mirror holds a complete list for a chapter. */
+  const hasLocalChapter = async (
+    owner: string,
+    bookId: string,
+    chapterNumber: number
+  ): Promise<boolean> => {
+    if (!store) {
+      return false;
+    }
+    return (
+      (await store.getListed(
+        owner,
+        annotationCollection(bookId, chapterNumber)
+      )) !== null
+    );
+  };
+
+  /**
+   * Loads a chapter's annotations for one specific account, refreshing the
+   * mirror from the server when there's a connection.
+   *
+   * Pinned to an `owner` rather than reading `login.userId` itself, so a load
+   * that started under one account can never fold its results into another's
+   * rows if the user signs out mid-request.
+   */
+  const loadChapterForOwner = async (
+    owner: string,
+    bookId: string,
+    chapterNumber: number
+  ): Promise<Annotation[]> => {
+    // Signed out with nowhere to store anything locally: there are no
+    // annotations to show, and `LOCAL_OWNER` is not a record name to ask about.
+    if (!store && owner === LOCAL_OWNER) {
+      return [];
+    }
+    if (!store) {
+      return listFromServer(owner, bookId, chapterNumber);
+    }
+
+    // Signed-out drafts have no server side, and offline there's nothing to ask.
+    const canReachServer =
+      owner !== LOCAL_OWNER && sync?.isOnline.value !== false;
+
+    if (canReachServer) {
+      try {
+        const fromServer = await listFromServer(owner, bookId, chapterNumber);
+        await store.reconcileCollection(
+          owner,
+          annotationCollection(bookId, chapterNumber),
+          fromServer.map((a) => ({ address: a.id, payload: a })),
+          Date.now()
+        );
+      } catch (error) {
+        // Couldn't refresh. The mirror still holds whatever we last knew, which
+        // is strictly better than reporting the chapter as empty.
+        console.warn("Failed to refresh annotations from the server.", error);
+      }
+    }
+
+    return readLocalChapter(owner, bookId, chapterNumber);
+  };
+
+  const listAnnotationsForChapter = async (
+    bookId: string,
+    chapterNumber: number,
+    query?: AnnotationQuery
+  ): Promise<Annotation[]> => {
+    if (isForeignQuery(query) || !store) {
+      const recordName = resolveRecordName(query?.recordName);
+      if (!recordName) {
+        throw new Error(
+          "Unable to resolve annotation record. User is not authenticated."
+        );
+      }
+      return listFromServer(recordName, bookId, chapterNumber, query);
+    }
+
+    return loadChapterForOwner(localOwner(), bookId, chapterNumber);
   };
 
   // --- Reactive per-chapter cache, mirroring HighlightsManager's pattern ---
@@ -501,17 +912,24 @@ export function createAnnotationsManager(
   const userViews = new Map<string, ReadonlySignal<Annotation[]>>();
 
   const getOrCreateEntry = (
-    userId: string,
-    address: string,
+    recordId: string,
+    bookId: string,
+    chapterNumber: number,
     explicit = false
   ): AnnotationsEntry => {
-    const key = entryKey(userId, address);
+    const key = entryKey(
+      recordId,
+      annotationsCacheAddress(bookId, chapterNumber)
+    );
     let entry = entries.get(key);
     if (!entry) {
       entry = {
-        userId,
+        recordId,
+        bookId,
+        chapterNumber,
         data: signal<Annotation[]>([]),
         settled: false,
+        loadFailed: false,
         load: null,
         explicit,
       };
@@ -526,42 +944,60 @@ export function createAnnotationsManager(
   };
 
   const loadEntry = async (
-    userId: string,
+    recordId: string,
     bookId: string,
     chapterNumber: number,
     entry: AnnotationsEntry
   ): Promise<void> => {
     try {
-      const loaded = await listAnnotationsForChapter(bookId, chapterNumber, {
-        recordName: userId,
-      });
+      // A record override always reads straight from that record — it has no
+      // local mirror to fall back on. Otherwise `loadChapterForOwner` covers
+      // both the signed-in account and the signed-out local bucket.
+      // Another account's annotations (someone the user follows) are read
+      // straight from the server too: the local mirror only holds the
+      // signed-in account's own rows for the sync engine.
+      const isOtherAccount =
+        entry.explicit && recordId !== untracked(effectiveRecordId);
+      const serverOnly = recordOverride ?? (isOtherAccount ? recordId : null);
+      const loaded = serverOnly
+        ? await listFromServer(serverOnly, bookId, chapterNumber)
+        : await loadChapterForOwner(recordId, bookId, chapterNumber);
       // A mutation that settled the entry while this request was in the air
       // holds newer annotations than this response does.
       if (entry.settled) {
         return;
       }
       entry.data.value = loaded;
-      entry.settled = true;
+      entry.loadFailed = false;
+      // Only authoritative once we know the list is complete: either the server
+      // answered, or the mirror has a record of having listed this chapter
+      // before. Settling on a guess is what used to make an offline visit stick
+      // as "you have no annotations" for the rest of the page's life.
+      entry.settled =
+        loaded.length > 0 ||
+        isOtherAccount ||
+        (!recordOverride &&
+          (await hasLocalChapter(recordId, bookId, chapterNumber)));
+      entry.loadFailed = !entry.settled;
     } catch (error) {
       console.error("Failed to load annotations for chapter:", error);
-      if (!entry.settled) {
-        entry.data.value = [];
-        entry.settled = true;
-      }
+      // `settled` is deliberately left alone, so this is never mistaken for an
+      // empty chapter — `loadFailed` is what stops it retrying on every read.
+      entry.loadFailed = true;
     }
   };
 
   const ensureLoaded = (
-    userId: string,
+    recordId: string,
     bookId: string,
     chapterNumber: number,
     entry: AnnotationsEntry
   ): Promise<void> | null => {
-    if (entry.settled) {
+    if (entry.settled || entry.loadFailed) {
       return entry.load;
     }
     if (!entry.load) {
-      entry.load = loadEntry(userId, bookId, chapterNumber, entry).finally(
+      entry.load = loadEntry(recordId, bookId, chapterNumber, entry).finally(
         () => {
           entry.load = null;
         }
@@ -569,6 +1005,16 @@ export function createAnnotationsManager(
     }
     return entry.load;
   };
+
+  // The record id the reactive cache keys off: the override when one was
+  // passed to `createAnnotationsManager`, otherwise the signed-in account, or
+  // the signed-out bucket so drafts written before signing in are still
+  // shown. `??` short-circuits before reading `login.userId.value` whenever
+  // an override is set, so callers of this from inside a computed()/effect()
+  // never subscribe to sign-in state in that case - the override can't
+  // change, so there's nothing to react to.
+  const effectiveRecordId = (): string =>
+    recordOverride ?? login.userId.value ?? LOCAL_OWNER;
 
   const getOrCreateView = (
     bookId: string,
@@ -578,12 +1024,9 @@ export function createAnnotationsManager(
     let view = views.get(address);
     if (!view) {
       view = computed(() => {
-        const userId = login.userId.value; // keeps this view following the signed-in account
-        if (!userId) {
-          return [];
-        }
-        const entry = getOrCreateEntry(userId, address);
-        void ensureLoaded(userId, bookId, chapterNumber, entry);
+        const recordId = effectiveRecordId();
+        const entry = getOrCreateEntry(recordId, bookId, chapterNumber);
+        void ensureLoaded(recordId, bookId, chapterNumber, entry);
         return entry.data.value;
       });
       views.set(address, view);
@@ -599,12 +1042,14 @@ export function createAnnotationsManager(
     bookId: string,
     chapterNumber: number
   ): ReadonlySignal<Annotation[]> => {
-    const address = annotationsCacheAddress(bookId, chapterNumber);
-    const key = entryKey(userId, address);
+    const key = entryKey(
+      userId,
+      annotationsCacheAddress(bookId, chapterNumber)
+    );
     let view = userViews.get(key);
     if (!view) {
       view = computed(() => {
-        const entry = getOrCreateEntry(userId, address, true);
+        const entry = getOrCreateEntry(userId, bookId, chapterNumber, true);
         void ensureLoaded(userId, bookId, chapterNumber, entry);
         return entry.data.value;
       });
@@ -613,21 +1058,23 @@ export function createAnnotationsManager(
     return view;
   };
 
-  // Drops every cached entry that no longer belongs to the signed-in
-  // account, so signing back in re-reads from the server instead of serving
-  // a stale entry left over from a previous session as that same account.
-  let cachedUserId: string | null | undefined;
+  // Drops every cached entry that no longer belongs to the current record,
+  // so signing back in re-reads from the server instead of serving a stale
+  // entry left over from a previous session as that same account. A no-op
+  // (and never re-runs after the first pass) when a record override is set,
+  // since `effectiveRecordId` then never depends on sign-in state.
+  let cachedRecordId: string | undefined;
   effect(() => {
-    const userId = login.userId.value;
-    if (userId === cachedUserId) {
+    const recordId = effectiveRecordId();
+    if (recordId === cachedRecordId) {
       return;
     }
-    cachedUserId = userId;
+    cachedRecordId = recordId;
     for (const [key, entry] of entries) {
       // Entries for an explicitly named account (a followed user's
       // annotations) aren't the signed-in account's data and were never at
       // risk of leaking across a switch, so the sweep leaves them alone.
-      if (entry.userId !== userId && !entry.explicit) {
+      if (entry.recordId !== recordId && !entry.explicit) {
         entries.delete(key);
       }
     }
@@ -643,7 +1090,6 @@ export function createAnnotationsManager(
     bookId: string,
     chapterNumber: number
   ): ReadonlySignal<Annotation[]> => {
-    const address = annotationsCacheAddress(bookId, chapterNumber);
     const view = getOrCreateUserView(userId, bookId, chapterNumber);
 
     // Kick the load eagerly, same as `getAnnotationsForChapter`, so callers
@@ -652,41 +1098,102 @@ export function createAnnotationsManager(
       userId,
       bookId,
       chapterNumber,
-      getOrCreateEntry(userId, address, true)
+      getOrCreateEntry(userId, bookId, chapterNumber, true)
     );
 
     return view;
   };
 
-  const upsertIntoCache = (annotation: Annotation): void => {
-    const userId = login.userId.peek();
-    if (!userId) {
-      return;
-    }
-    const address = annotationsCacheAddress(
+  const upsertIntoCache = (annotation: Annotation, recordId?: string): void => {
+    const cacheRecordId = recordId ?? effectiveRecordId();
+    const entry = getOrCreateEntry(
+      cacheRecordId,
       annotation.bookId,
       annotation.chapterNumber
     );
-    const entry = getOrCreateEntry(userId, address);
     entry.data.value = upsertAnnotation(entry.data.value, annotation);
     entry.settled = true;
   };
 
-  const removeFromCache = (annotation: Annotation): void => {
-    const userId = login.userId.peek();
-    if (!userId) {
-      return;
-    }
+  const removeFromCache = (
+    annotation: Pick<Annotation, "id" | "bookId" | "chapterNumber">,
+    recordId?: string
+  ): void => {
+    const cacheRecordId = recordId ?? effectiveRecordId();
     const address = annotationsCacheAddress(
       annotation.bookId,
       annotation.chapterNumber
     );
-    const entry = entries.get(entryKey(userId, address));
+    const entry = entries.get(entryKey(cacheRecordId, address));
     if (!entry) {
       return;
     }
     entry.data.value = removeAnnotationById(entry.data.value, annotation.id);
   };
+
+  /**
+   * Removes an annotation from whichever cached chapter holds it.
+   *
+   * The sync engine knows only the id — a tombstone it pushed carries no
+   * chapter, and the annotation it referred to may never have been loaded here —
+   * so the chapter has to be found rather than computed.
+   */
+  const removeFromCacheById = (annotationId: string, owner: string): void => {
+    for (const entry of entries.values()) {
+      if (entry.recordId !== owner) {
+        continue;
+      }
+      if (entry.data.value.some((a) => a.id === annotationId)) {
+        entry.data.value = removeAnnotationById(entry.data.value, annotationId);
+      }
+    }
+  };
+
+  // Created here, rather than by the caller, so it can be handed the cache
+  // helpers below — which is also what keeps the dependency one-way and
+  // avoids the two modules importing each other.
+  const sync = createRecordSyncManager<Annotation>({
+    os,
+    login,
+    store,
+    domain: annotationSyncDomain,
+    onSynced: (_address, annotation, owner) =>
+      upsertIntoCache(annotation, owner),
+    onRemoved: (address, owner) => removeFromCacheById(address, owner),
+    confirmAdoption: options.confirmAdoption,
+  });
+
+  // A chapter whose load failed is retried once there's a connection — the
+  // moment a retry could actually work. Waiting for it is what keeps the retry
+  // off the read path, where it would re-fire on every read.
+  let wasOnline = sync.isOnline.value;
+  effect(() => {
+    const online = sync.isOnline.value;
+    const recovered = online && !wasOnline;
+    wasOnline = online;
+    if (!recovered) {
+      return;
+    }
+    for (const entry of entries.values()) {
+      // Anything not yet settled is worth another go, whether it failed or was
+      // never loaded. Checking `settled` rather than `loadFailed` also covers
+      // the case where the connection returned while a failing load was still
+      // in flight, which would otherwise leave the entry stuck.
+      if (entry.settled || entry.load) {
+        continue;
+      }
+      entry.loadFailed = false;
+      // Reloaded rather than just re-armed: clearing the flag alone changes no
+      // signal, so a view already showing the failed (empty) result would never
+      // notice.
+      void ensureLoaded(
+        entry.recordId,
+        entry.bookId,
+        entry.chapterNumber,
+        entry
+      );
+    }
+  });
 
   // --- Editing/view-transition state, mirroring PlaylistManager's pattern ---
 
@@ -743,13 +1250,22 @@ export function createAnnotationsManager(
 
   const createNewAnnotation = async (): Promise<void> => {
     let userId = login.userId.value;
-    if (!userId) {
+
+    // Offer a sign-in, but don't insist on one: with a local store the note is
+    // kept on the device and adopted when the user does sign in. Skipped when
+    // a record override is set (no sign-in needed at all) and while offline,
+    // where signing in cannot succeed — including when there is no local
+    // store, since a prompt that can only fail is worse than saying so.
+    if (!userId && !recordOverride && sync.isOnline.value) {
       const userInfo = await login.login();
-      if (!userInfo) {
-        console.warn("Cannot create an annotation while signed out.");
-        return;
-      }
-      userId = userInfo.id;
+      userId = userInfo?.id ?? null;
+    }
+
+    // No account, no record override, and nowhere local to put it: nothing
+    // can be written.
+    if (!userId && !recordOverride && !store) {
+      console.warn("Cannot create an annotation while signed out.");
+      return;
     }
 
     const tab = activeTab.value;
@@ -795,17 +1311,17 @@ export function createAnnotationsManager(
     if (!current) {
       return;
     }
-    const now = Date.now();
-    const next: Annotation = {
-      ...current,
-      data: {
-        ...current.data,
-        updatedAtMs: now,
-        createdAtMs: current.data.createdAtMs ?? now,
-      },
-    };
-    const saved = await saveAnnotation(next);
-    upsertIntoCache(saved);
+    // Captured before awaiting, and passed through explicitly. `saveAnnotation`
+    // resolves the same owner synchronously, but it then awaits two IndexedDB
+    // round trips — long enough for the account to change. Letting the cache
+    // update re-read the *current* login instead would file this note under
+    // whichever account happens to be signed in by then, so the next reader sees
+    // one account's writing as their own.
+    const recordId = effectiveRecordId();
+    // `saveAnnotation` stamps the timestamps now, so every path that persists an
+    // annotation gets them — not just this one.
+    const saved = await saveAnnotation(current);
+    upsertIntoCache(saved, recordId);
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = null;
@@ -822,8 +1338,10 @@ export function createAnnotationsManager(
   const deleteAnnotationAndRefresh = async (
     annotation: Annotation
   ): Promise<void> => {
+    // Captured before awaiting, for the same reason as `saveEditingAnnotation`.
+    const recordId = effectiveRecordId();
     await deleteAnnotation(annotation.id);
-    removeFromCache(annotation);
+    removeFromCache(annotation, recordId);
     if (editingAnnotation.peek()?.id === annotation.id) {
       cancelEditingAnnotation();
     }
@@ -833,6 +1351,7 @@ export function createAnnotationsManager(
     saveAnnotation,
     deleteAnnotation,
     listAnnotationsForChapter,
+    listAllAnnotations,
     getAnnotationsForChapter,
     getUserAnnotationsForChapter,
     editingAnnotation,
@@ -841,5 +1360,11 @@ export function createAnnotationsManager(
     saveEditingAnnotation,
     cancelEditingAnnotation,
     deleteAnnotationAndRefresh,
+    hasRecordOverride: !!recordOverride,
+    sync,
+    pendingCountForChapter: (bookId, chapterNumber) =>
+      sync.pendingCountForCollection(
+        annotationCollection(bookId, chapterNumber)
+      ),
   };
 }

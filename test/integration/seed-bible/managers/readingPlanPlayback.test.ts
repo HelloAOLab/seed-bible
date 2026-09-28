@@ -157,7 +157,10 @@ function setup() {
     createModalManager(),
     i18n,
     readingExtensionManager,
-    discover
+    discover,
+    {
+      removeContext: vi.fn(),
+    } as any
   );
 
   // What TabsManager does in the real app: each navigation writes the reading

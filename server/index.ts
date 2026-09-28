@@ -65,6 +65,7 @@ import {
   withSpan,
   type Telemetry,
 } from "./telemetry";
+import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const PORT = Number(process.env.PORT ?? 3002);
@@ -98,6 +99,7 @@ const DEFAULT_SSR_BRANCH = (process.env.DEFAULT_SSR_BRANCH ?? "").trim();
 
 interface ClientConfig {
   renderedAsMobile: boolean;
+  renderedAsWebKit: boolean;
   acceptedLanguages: string[];
 }
 
@@ -107,7 +109,9 @@ export type RenderFn = (opts: {
     basePath: string;
     assetHost: string;
     renderedAsMobile: boolean;
+    renderedAsWebKit: boolean;
     acceptedLanguages: string[];
+    branding?: BrandingConfig;
   };
   html: string;
 }) => Promise<
@@ -116,16 +120,32 @@ export type RenderFn = (opts: {
   | string
 >;
 
-/** Derives per-client render config (mobile, languages) from request headers. */
+/**
+ * Matches the client's own (former) `isWebKit()` check in `app/main.tsx`, so
+ * moving the check server-side doesn't change which requests it flags. Every
+ * iOS browser reports as WebKit regardless of its own UA string (Chrome on
+ * iOS included), which the `iPad|iPhone|iPod` branch below catches even when
+ * the `AppleWebKit`-without-`Chrome` branch wouldn't.
+ */
+function isWebKitUserAgent(userAgent: string): boolean {
+  return (
+    (/AppleWebKit/.test(userAgent) && !/Chrome/.test(userAgent)) ||
+    /\b(iPad|iPhone|iPod)\b/.test(userAgent)
+  );
+}
+
+/** Derives per-client render config (mobile, WebKit, languages) from request headers. */
 export function clientConfigFromHeaders(
   headers: IncomingHttpHeaders
 ): ClientConfig {
-  const browser = Bowser.getParser(headers["user-agent"]!);
+  const userAgent = headers["user-agent"] ?? "";
+  const browser = Bowser.getParser(userAgent);
   const renderedAsMobile = browser.getPlatformType(true) === "mobile";
+  const renderedAsWebKit = isWebKitUserAgent(userAgent);
   const acceptedLanguages = headers["accept-language"]
     ? parseAcceptLanguages(headers["accept-language"])
     : [];
-  return { renderedAsMobile, acceptedLanguages };
+  return { renderedAsMobile, renderedAsWebKit, acceptedLanguages };
 }
 
 // ─── Gzip compression ────────────────────────────────────────────────────────
@@ -382,9 +402,8 @@ export async function renderAndRespond(
   route: Route,
   preRenderedHtml: string
 ): Promise<void> {
-  const { renderedAsMobile, acceptedLanguages } = clientConfigFromHeaders(
-    req.headers
-  );
+  const { renderedAsMobile, renderedAsWebKit, acceptedLanguages } =
+    clientConfigFromHeaders(req.headers);
 
   let result: Awaited<ReturnType<RenderFn>>;
   const renderStart = performance.now();
@@ -405,6 +424,7 @@ export async function renderAndRespond(
             basePath: route.basePath,
             assetHost: ASSET_HOST,
             renderedAsMobile,
+            renderedAsWebKit,
             acceptedLanguages,
           },
           html: preRenderedHtml,
@@ -913,9 +933,8 @@ async function startDevServer(): Promise<void> {
         "/standalone/entry-ssr.tsx"
       )) as { render: RenderFn };
 
-      const { renderedAsMobile, acceptedLanguages } = clientConfigFromHeaders(
-        req.headers
-      );
+      const { renderedAsMobile, renderedAsWebKit, acceptedLanguages } =
+        clientConfigFromHeaders(req.headers);
 
       // 4. Render the app HTML.
       const renderStart = performance.now();
@@ -936,6 +955,7 @@ async function startDevServer(): Promise<void> {
                 basePath: "",
                 assetHost: "",
                 renderedAsMobile,
+                renderedAsWebKit,
                 acceptedLanguages,
               },
               html: transformed,

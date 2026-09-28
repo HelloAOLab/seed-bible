@@ -5,6 +5,7 @@ import {
   type CallExpression,
   type Identifier,
   type Node,
+  type ObjectLiteralExpression,
 } from "ts-morph";
 
 export interface TranslationKeyUsage {
@@ -177,6 +178,24 @@ function getObjectPropertyStaticString(
   return null;
 }
 
+function hasObjectProperty(
+  objectLiteral: ObjectLiteralExpression,
+  propertyName: string
+): boolean {
+  for (const property of objectLiteral.getProperties()) {
+    if (
+      property.isKind(SyntaxKind.PropertyAssignment) ||
+      property.isKind(SyntaxKind.ShorthandPropertyAssignment)
+    ) {
+      if (property.getName() === propertyName) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 function getToolTitleTranslationKey(node: Node): {
   key: string;
   namespace: string | null;
@@ -211,6 +230,42 @@ function getToolTitleTranslationKey(node: Node): {
 
   const namespace = getObjectPropertyStaticString(titleObject, "ns");
   return { key, namespace };
+}
+
+/**
+ * The paired properties every `TutorialStep` carries for its localized text. An
+ * object literal has to have all four to count as a step, so unrelated objects
+ * that happen to name a `titleKey` are left alone.
+ */
+export const TUTORIAL_STEP_TEXT_PROPERTIES = [
+  { keyProperty: "titleKey", defaultProperty: "titleDefault" },
+  { keyProperty: "bodyKey", defaultProperty: "bodyDefault" },
+] as const;
+
+/**
+ * Tutorial steps carry their translation keys as `titleKey`/`bodyKey` data and
+ * the tour component resolves them at render time, so there is no literal
+ * `t("...")` call to find. Read them off the step objects instead.
+ *
+ * Exported for tests.
+ */
+export function getTutorialStepTranslationKeys(node: Node): string[] {
+  if (!node.isKind(SyntaxKind.ObjectLiteralExpression)) {
+    return [];
+  }
+
+  const keys: string[] = [];
+  for (const {
+    keyProperty,
+    defaultProperty,
+  } of TUTORIAL_STEP_TEXT_PROPERTIES) {
+    const key = getObjectPropertyStaticString(node, keyProperty);
+    if (!key || !hasObjectProperty(node, defaultProperty)) {
+      return [];
+    }
+    keys.push(key);
+  }
+  return keys;
 }
 
 /**
@@ -273,6 +328,17 @@ export function getTranslationUsageStats(
     for (const node of sourceFile.getDescendantsOfKind(
       SyntaxKind.ObjectLiteralExpression
     )) {
+      for (const key of getTutorialStepTranslationKeys(node)) {
+        totalTranslationCalls += 1;
+        recordTranslationUsage(
+          usage,
+          translationKeysByNamespace,
+          key,
+          null,
+          filePath
+        );
+      }
+
       const titleTranslation = getToolTitleTranslationKey(node);
       if (!titleTranslation) {
         continue;

@@ -23,10 +23,12 @@
 
 import type {
   ChapterData,
+  CompleteTranslationChapterAudioTimings,
   Translation,
   TranslationBook,
   TranslationBookChapterAudioLinks,
 } from "./FreeUseBibleAPI";
+import { requestToPromise, transactionToPromise } from "./indexedDbUtils";
 
 export const OFFLINE_DB_NAME = "seed-bible-offline";
 export const OFFLINE_DB_VERSION = 1;
@@ -87,6 +89,15 @@ export interface StoredChapter {
 
   /** The audio readings available for the chapter. */
   thisChapterAudioLinks: TranslationBookChapterAudioLinks;
+
+  /**
+   * Per-reader audio timings for the chapter, inlined by the complete-
+   * translation download the same way {@link CompleteTranslationChapterAudioTimings}
+   * is. Storing the values themselves (rather than a link to fetch, which is
+   * all the per-chapter endpoint gives) is what lets the audio reader's
+   * verse-highlight sync work with no connection.
+   */
+  thisChapterAudioTimings: CompleteTranslationChapterAudioTimings;
 
   /** The chapter's number, content, and footnotes. */
   chapter: ChapterData;
@@ -169,24 +180,6 @@ function chapterKey(
   chapterNumber: number
 ): string {
   return `${translationId}/${bookId}/${chapterNumber}`;
-}
-
-function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () =>
-      reject(request.error ?? new Error("IndexedDB request failed."));
-  });
-}
-
-function transactionToPromise(transaction: IDBTransaction): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () =>
-      reject(transaction.error ?? new Error("IndexedDB transaction failed."));
-    transaction.onabort = () =>
-      reject(transaction.error ?? new Error("IndexedDB transaction aborted."));
-  });
 }
 
 /** A stored chapter record, i.e. a chapter plus its lookup columns. */
@@ -293,9 +286,18 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
     if (!record) {
       return null;
     }
-    const { numberOfVerses, thisChapterAudioLinks, chapter } =
-      record as ChapterRecord;
-    return { numberOfVerses, thisChapterAudioLinks, chapter };
+    const {
+      numberOfVerses,
+      thisChapterAudioLinks,
+      thisChapterAudioTimings,
+      chapter,
+    } = record as ChapterRecord;
+    return {
+      numberOfVerses,
+      thisChapterAudioLinks,
+      thisChapterAudioTimings,
+      chapter,
+    };
   };
 
   const deleteTranslation = async (translationId: string): Promise<void> => {
@@ -354,6 +356,7 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
           chapterNumber: entry.chapter,
           numberOfVerses: entry.data.numberOfVerses,
           thisChapterAudioLinks: entry.data.thisChapterAudioLinks,
+          thisChapterAudioTimings: entry.data.thisChapterAudioTimings,
           chapter: entry.data.chapter,
         };
         store.put(chapterRecord);

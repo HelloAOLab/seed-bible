@@ -1,4 +1,4 @@
-import { Tooltip } from "./Tooltip";
+import { ScriptureMapTooltip } from "./ScriptureMapTooltip";
 import { useBook } from "../../hooks/useBook";
 import { Chapter, type ChapterProps } from "./Chapter";
 import type {
@@ -126,7 +126,7 @@ export const Book = memo(
             (isReadingHistoryEnabled || isUserPresenceEnabled) &&
             tooltipAnchor &&
             tooltipContentsData?.length > 0 ? (
-              <Tooltip
+              <ScriptureMapTooltip
                 anchor={tooltipAnchor}
                 contentsData={tooltipContentsData}
                 offsetY={tooltipOffsetY}

@@ -1,0 +1,38 @@
+/* On mobile, panes always render fullscreen (see app.effectivePanes), so
+   .sb-pane-side-shell never renders there. */
+
+.sb-pane-shell {
+  min-width: 0;
+  min-height: 0;
+  background: var(--sb-reader-background);
+  overflow: hidden;
+  scrollbar-width: none;
+  border-radius: 0.75rem;
+}
+
+.sb-panes-layout {
+  height: 100%;
+  width: 100%;
+  display: grid;
+  align-items: stretch;
+  overflow: hidden;
+  position: relative;
+  padding: 0.3125rem;
+  /* padding-left: 0px; */
+  margin-left: -0.625rem;
+}
+
+.sb-pane-component,
+.sb-pane-reader,
+.sb-pane-empty {
+  height: 100%;
+  position: relative;
+}
+
+.sb-pane-reader {
+  scrollbar-width: none;
+  flex-direction: column;
+  height: 100%;
+  display: flex;
+  overflow: auto;
+}

@@ -80,6 +80,30 @@ describe("clientConfigFromHeaders", () => {
     });
     expect(config.renderedAsMobile).toBe(false);
   });
+
+  it("detects Safari as WebKit", () => {
+    const config = clientConfigFromHeaders({
+      "user-agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    });
+    expect(config.renderedAsWebKit).toBe(true);
+  });
+
+  it("does not flag Chrome on desktop as WebKit", () => {
+    const config = clientConfigFromHeaders({
+      "user-agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    });
+    expect(config.renderedAsWebKit).toBe(false);
+  });
+
+  it("flags Chrome on iOS as WebKit, since iOS forces every browser onto WebKit", () => {
+    const config = clientConfigFromHeaders({
+      "user-agent":
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.0.0 Mobile/15E148 Safari/604.1",
+    });
+    expect(config.renderedAsWebKit).toBe(true);
+  });
 });
 
 describe("renderAndRespond", () => {
@@ -184,6 +208,7 @@ describe("renderAndRespond", () => {
     expect(receivedConfig).toMatchObject({
       basePath: ROUTE.basePath,
       renderedAsMobile: true,
+      renderedAsWebKit: true,
       acceptedLanguages: ["es-ES"],
     });
   });

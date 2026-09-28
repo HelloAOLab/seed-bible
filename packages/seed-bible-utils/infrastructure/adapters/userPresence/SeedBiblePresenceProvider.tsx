@@ -49,14 +49,30 @@ export class SeedBiblePresenceProvider implements UserPresenceProviderPort {
         tabId: tab.id,
       };
     });
+    const currUserId = this.getCurrUserId();
     const userPresence: UserPresence = new Map();
     for (const { session, tabId } of sharedSessions) {
       if (session) {
+        const positions = session.participantPositions.value;
         const connectedUsers = session.connectedUsers.value;
         for (const user of connectedUsers) {
+          // Our own position comes from the selected tab, not from here.
+          if (user.connectionId === currUserId) {
+            continue;
+          }
+          // A session tab's `readingState` is the local reader's own state, so
+          // it reports where *we* are — usable only until a peer broadcasts a
+          // position of their own, where it still beats showing nothing.
+          const position = positions.get(user.connectionId) ?? {
+            bookId: session.readingState.bookId.value,
+            chapterNumber: session.readingState.chapterNumber.value,
+          };
+          if (!position.bookId || !position.chapterNumber) {
+            continue;
+          }
           userPresence.set(user.connectionId, {
-            bookId: session.readingState.bookId.value!,
-            chapter: session.readingState.chapterNumber.value!,
+            bookId: position.bookId,
+            chapter: position.chapterNumber,
             readingInstanceId: tabId,
           });
         }

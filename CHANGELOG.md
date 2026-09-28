@@ -4,9 +4,6 @@
 
 ### ✨ Added
 
-- Add the ability to write notes on one or more verses. A noted verse gets a border around its verse number so you can spot it while reading, and tapping that number opens the note. A button in the chapter header shows how many notes the current chapter has and opens the Discover pane to browse them, grouped by verse with each note's author, avatar, and last-updated time. ([#1593](https://github.com/HelloAOLab/seed-bible/pull/1593))
-- Verse references typed inside a note (like "see John 3:16") automatically turn into clickable links to that verse. ([#1593](https://github.com/HelloAOLab/seed-bible/pull/1593))
-- On mobile, add, edit, and delete notes directly from the verse selection toolbar, with the verses the note covers shown alongside it as you write. ([#1593](https://github.com/HelloAOLab/seed-bible/pull/1593))
 - Follow other people and see what they are reading. Share your follow link, or tap Follow next to someone in a shared session, and their reading activity joins yours in the Today screen's Community section and on the scripture map. Following needs no approval and the other person isn't notified — the highlights, playlists, and reading history it shows have always been public to anyone with your link. A new Following panel lists everyone you follow and lets you unfollow at any time.
 - Shared sessions hosted by people you follow now appear as joinable invitations again. Previously this listed sessions from every user in the app, so it was switched off; it now only surfaces the people you have chosen to follow.
 
@@ -14,9 +11,309 @@
 
 ### 🐛 Fixed
 
-- Fix an issue where switching apps on a mobile device would always kick you out of a shared session upon returning. ([#1468](https://github.com/HelloAOLab/seed-bible/pull/1468))
+### 🗑️ Removed
+
+## v1.11.0 — 2026-09-28
+
+### ✨ Added
+
+- Show a note icon beside each verse that has a note when reading on a phone. ([#1776](https://github.com/HelloAOLab/seed-bible/pull/1776))
+  - Tap the icon to select the verse and open its note.
+  - Before, the only sign of a note was a box around the verse number.
+- Show where everyone else is reading in a shared session. ([#1775](https://github.com/HelloAOLab/seed-bible/pull/1775))
+  - Each participant gets a coloured bar beside the verses on their screen, topped with their avatar.
+  - People on the same verses appear side by side, and a crowd collapses into an avatar stack.
+  - A person's bar is hidden while they're in another tab.
+- Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
+- Show the people, places and events a chapter mentions in the Discover panel, from the Theographic Bible Metadata dataset. ([#1839](https://github.com/HelloAOLab/seed-bible/pull/1839))
+  - Pick the new People, Places or Events filter to list them with the verses they appear in; select a verse to narrow the list.
+  - Open an entry to see its facts, its dictionary entry and the verses that mention it. Places also show a map.
+  - They stay out of the "All" view until you pick one of these filters.
+  - Installed automatically as the "People, Places & Events" extension, which you can uninstall from Settings ▸ Extensions.
+- Let extensions add their own kinds of content to Discover. ([#1839](https://github.com/HelloAOLab/seed-bible/pull/1839))
+  - Each kind gets its own filter in the Discover panel and its own section in the Discover pane.
+  - An extension can keep its content out of the "All" view until its filter is picked.
+- Add a System theme in Settings ▸ Display & Theme that follows your device's light or dark mode, and use it by default. ([#1805](https://github.com/HelloAOLab/seed-bible/pull/1805))
+  - A Customization with both a light and a dark variant also offers System.
+  - Theme cards wrap into a two-column grid instead of scrolling sideways.
+- Let a deployment supply its own theme presets and a sidebar logo that links to its website. ([#1834](https://github.com/HelloAOLab/seed-bible/pull/1834), [#1837](https://github.com/HelloAOLab/seed-bible/pull/1837))
+  - A Customization's own logo still takes precedence over the deployment's.
+
+### 🔧 Changed
+
+- Move the playlists section from the discover panel to the "Your Content" screen. ([#1838](https://github.com/HelloAOLab/seed-bible/pull/1838))
+- Simplify the Welcome screen that new and signed-out visitors see. ([#1855](https://github.com/HelloAOLab/seed-bible/pull/1855))
+  - Shows today's date above the greeting and adds a "Take a tour" button.
+  - The tour no longer offers itself on top of Welcome; it waits until you close it.
+  - On desktop the sidebar starts collapsed for new visitors, and it remembers whether you left it open or collapsed.
+- Limit the reading plans list to a readable width on large screens instead of stretching it across the whole window. ([#1895](https://github.com/HelloAOLab/seed-bible/pull/1895))
+
+### 🐛 Fixed
+
+- Open a shared playlist and reading plan on its first scripture chapter instead of the chapter the sharer was reading, so the reader does not load one chapter and then jump to another. ([#1840](https://github.com/HelloAOLab/seed-bible/pull/1840)) ([#1841](https://github.com/HelloAOLab/seed-bible/pull/1841))
+- Show an extension's Discover content as soon as the extension is installed, and remove it as soon as it's uninstalled, instead of waiting until you move to another chapter. ([#1839](https://github.com/HelloAOLab/seed-bible/pull/1839))
+- Stop counting reading time for a chapter hidden behind Today or another full-screen pane, so a new account no longer gets reading history for a chapter it never read. ([#1855](https://github.com/HelloAOLab/seed-bible/pull/1855))
+- Fix gaps above and below the chat on phones; it now fills the screen above the tab bar. ([#1857](https://github.com/HelloAOLab/seed-bible/pull/1857))
+- Fix the bottom toolbar staying hidden when Ask AI opens the chat after you've scrolled down on a phone. ([#1857](https://github.com/HelloAOLab/seed-bible/pull/1857))
+- Fix the book and chapter picker on phones showing desktop rounded corners and a border and sliding up slowly, instead of opening flat and full-screen instantly. ([#1898](https://github.com/HelloAOLab/seed-bible/pull/1898))
+
+## v1.10.0 — 2026-09-21
+
+### ✨ Added
+
+- Focus the annotation editor when it opens so you can start typing right away, whether you are writing a new note or editing an existing one. ([#1826](https://github.com/HelloAOLab/seed-bible/pull/1826))
+- Listen to translations that have no narrated audio; the Listen button now reads the chapter aloud with your device's built-in voice when it has one for that language. ([#1803](https://github.com/HelloAOLab/seed-bible/pull/1803))
+  - The rest of the chapter dims so the verse being read stands out.
+- Show House of the Lord's 3D exhibits in Discover for chapters that mention them, with a button to explore the exhibit and a shortcut to each piece the chapter mentions. ([#1791](https://github.com/HelloAOLab/seed-bible/pull/1791))
+  - An Explore menu inside the exhibit lists its pieces and the verses that mention each one; picking a verse opens it in the reader.
+  - The exhibit follows the reader's light or dark theme.
+- Add a Seed Bible Default Content extension, installed from Settings → Extensions, that shows Bible Project and other hand-picked videos in Discover for the chapter you're reading. ([#1717](https://github.com/HelloAOLab/seed-bible/pull/1717))
+  - Videos are grouped by creator, show a preview image, and play in a window when you tap them.
+- Let extensions offer their own settings, which you change with Configure in Settings → Extensions. ([#1747](https://github.com/HelloAOLab/seed-bible/pull/1747))
+  - Customization authors can set defaults for everyone using their customization with "Configure default overrides".
+  - Changing extension settings requires signing in.
+- Use a customization's logo as the tab icon, home screen icon and link preview image when opening its share link. ([#1759](https://github.com/HelloAOLab/seed-bible/pull/1759))
+
+### 🔧 Changed
+
+- Show "The host disconnected from the session" and "The host reconnected to the session" when the host of a shared session you've joined drops out and comes back, instead of "Reconnecting to the session…" and "Reconnected to the session". ([#1727](https://github.com/HelloAOLab/seed-bible/pull/1727))
+  - You now also see "You lost connection to the session" and "You rejoined the session" when your own connection drops and returns.
+- Update a downloaded translation automatically when a newer version is available, instead of waiting for you to tap it in the translation list. ([#1752](https://github.com/HelloAOLab/seed-bible/pull/1752))
+  - With data saver turned on, you're asked first.
+- Ask whether to turn off all tutorials or skip just this one when you press Skip, instead of showing a "Don't show tutorials" button on every tutorial step. ([#1832](https://github.com/HelloAOLab/seed-bible/pull/1832))
+  - Back and Next now stay in the same corners on every step.
+- Reuse an open House of the Lord exhibit when you pick another piece from a verse's tools, instead of opening a new pane each time. ([#1791](https://github.com/HelloAOLab/seed-bible/pull/1791))
+
+### 🐛 Fixed
+
+- Fix the reader sitting partly offscreen after swiping between chapters on mobile and then rotating to a larger layout. ([#1828](https://github.com/HelloAOLab/seed-bible/pull/1828))
+- Lift the mobile Search verses field off the scripture with a box shadow so it no longer blends into the verse text. ([#1827](https://github.com/HelloAOLab/seed-bible/pull/1827))
+- Restore your place in a chapter when you go back to it with the browser's back or forward button, instead of always landing at the top. Going back means "take me to where I was", so it now returns you to the spot you were reading. Opening a chapter any other way — Next/Previous, the Bible Selector, or switching translation — still starts you at the chapter heading, so you can see which chapter you have landed on. ([#1825](https://github.com/HelloAOLab/seed-bible/pull/1825))
+- Fix the installed Android app's status bar staying white; it now matches the app's background in light, dark and custom themes. ([#1817](https://github.com/HelloAOLab/seed-bible/pull/1817))
+- Fix House of the Lord pieces inside the tent, such as the menorah and the ark, being impossible to select while the walls or curtains were showing. ([#1791](https://github.com/HelloAOLab/seed-bible/pull/1791))
+- Fix the House of the Lord camera cutting off large pieces when you select them; each piece is now framed to fit its size. ([#1791](https://github.com/HelloAOLab/seed-bible/pull/1791))
 
 ### 🗑️ Removed
+
+- Remove the About button from the desktop sidebar; About Seed Bible is still in the settings menu. ([#1833](https://github.com/HelloAOLab/seed-bible/pull/1833))
+
+## v1.9.0 — 2026-09-14
+
+### ✨ Added
+
+- Add a profile screen for managing your content, opened from the new "You" tab on mobile or the avatar at the bottom of the sidebar on desktop. ([#1721](https://github.com/HelloAOLab/seed-bible/pull/1721))
+  - Shows your picture, email, location and description, which you can change from an Edit profile screen.
+  - "Your content" lists your notes, highlights, saves and playlists, searchable by reference or by highlighted verse text.
+  - Clear a highlight, or edit and remove a save, right from Your content.
+- Save a note with Cmd+Enter on Mac or Ctrl+Enter on Windows and Linux, while Enter still starts a new line. ([#1789](https://github.com/HelloAOLab/seed-bible/pull/1789))
+- Ask before adding highlights and notes made while signed out to the account you sign in to, so a shared device doesn't hand one person's content to the next. ([#1735](https://github.com/HelloAOLab/seed-bible/pull/1735))
+- Accept period-separated references like "Gen 1.1", "Gen.1.1" and "Gen. 1:1" when adding entries to a playlist or reading plan. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+- Let extensions choose a pane's starting size when opening it, instead of always opening at 480x320. ([#1804](https://github.com/HelloAOLab/seed-bible/pull/1804))
+
+### 🔧 Changed
+
+- Allow highlighting while signed out or offline instead of asking you to sign in first; highlights sync to your account once you're signed in and online. ([#1735](https://github.com/HelloAOLab/seed-bible/pull/1735))
+- Rename bookmarks to saves, including the default folder, which becomes "My Saves" instead of "My Bookmarks". Existing bookmarks carry over with their folders intact. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+- Show a star on save buttons, outlined until a passage is saved and filled once it is, instead of a bookmark icon. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+- Open a saved passage's folders for editing when you press its save button again, instead of removing the save. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+- Show "You" in the mobile bottom bar instead of Bookmarks, so the tabs read Today, You, Bible, Search, More. ([#1721](https://github.com/HelloAOLab/seed-bible/pull/1721))
+  - Saves and Chat now live in the More menu, including with `?chatFirst=true`.
+- Replace the browser's built-in color picker with an in-app one for highlight, theme and customization colors, which only applies a color once you confirm it. ([#1756](https://github.com/HelloAOLab/seed-bible/pull/1756))
+  - Theme and customization colors preview live while you adjust them.
+- Title the profile picture editor "Change profile picture" instead of "Update picture". ([#1721](https://github.com/HelloAOLab/seed-bible/pull/1721))
+- Combine the profile picture editor's "Choose from gallery" and "Upload a file" into one "Upload from device" option, and only offer "Take a photo" where the device can open a camera. ([#1721](https://github.com/HelloAOLab/seed-bible/pull/1721))
+
+### 🐛 Fixed
+
+- Close the Today screen when another screen opens over it. Opening Discover or Reading plans while Today was up left them behind it, with nothing on screen to say they had opened — Today fills the reader area, and only a pane that fills it too would displace one. Today now steps aside for anything else that opens. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Stop linking an ambiguous chapter-to-verse range in prose. "John 1-2:3" mixes a whole-chapter start with a verse end, and used to link as John 1–2 with the ":3" silently dropped; it now links nothing rather than a reference the reader did not write. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+- Fix "Read more" appearing on a playlist's description in the Discover panel however short the description is, for some fonts. Whether it fitted on one line was worked out from a guessed line height (1.2 times the font size) rather than a real one, and whether that guess came out too small depended on the font in use — with the default font it behaved correctly, but with a taller one, such as the fallbacks used for Chinese and Thai text, even a three-word description got a "Read more" that expanded to nothing. It now compares the line's real width against the space it has, which does not depend on the font. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Fix the last chapters of a reading session going missing from reading history when the tab closed, the page reloaded, or the phone froze the app. ([#1762](https://github.com/HelloAOLab/seed-bible/pull/1762))
+  - Reading is now recorded on the device first and synced to the server once a connection is available.
+  - Today's reading shows up right away, even with no connection.
+- Fix one failed reading-history sync breaking every later reading-history load and save until the page reloaded. ([#1762](https://github.com/HelloAOLab/seed-bible/pull/1762))
+- Fix Discover and Reading plans opening hidden behind the Today screen; Today now closes when another screen opens over it. ([#1721](https://github.com/HelloAOLab/seed-bible/pull/1721))
+- Fix "Read more" appearing on short playlist descriptions in the Discover panel with some fonts, such as those used for Chinese and Thai text. ([#1721](https://github.com/HelloAOLab/seed-bible/pull/1721))
+- Fix chapter references in notes, like "Jonah 2", linking to the note's own verse number instead of the whole chapter. ([#1772](https://github.com/HelloAOLab/seed-bible/pull/1772))
+- Stop linking an ambiguous range like "John 1-2:3" as John 1-2 with the ":3" silently dropped. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+- Fix a customization's share link including the page you were reading; it now links to just the customization. ([#1764](https://github.com/HelloAOLab/seed-bible/pull/1764))
+- Fix long toolbar menus running off the screen; they now scroll, and open downward when there isn't room above. ([#1801](https://github.com/HelloAOLab/seed-bible/pull/1801))
+- Fix floating panes appearing behind the toolbar. ([#1801](https://github.com/HelloAOLab/seed-bible/pull/1801))
+- Fix a reading plan's hero image crowding out its reading list on short mobile screens; it now scrolls away with the content. ([#1795](https://github.com/HelloAOLab/seed-bible/pull/1795))
+- Fix a save made while saves were still loading being lost. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+- Fix the reader's save and share buttons appearing in a different order on desktop than on mobile. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+- Fix the mobile tab drawer's "Add new tab" button being cut off by the bottom toolbar. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+
+### 🗑️ Removed
+
+- Remove the bookmarks section from the Today screen. ([#1763](https://github.com/HelloAOLab/seed-bible/pull/1763))
+
+## v1.8.0 — 2026-09-08
+
+### ✨ Added
+
+- Make the previous/next chapter controls real links instead of buttons only wired to JavaScript, so search engine crawlers can follow them from chapter to chapter instead of relying solely on the sitemap; clicking still navigates in-app, and middle-click or ctrl-click opens the target chapter in a new tab. ([#1618](https://github.com/HelloAOLab/seed-bible/pull/1618))
+- Add an About page (`/{lang}/about`), reachable from a new icon in the sidebar and a Settings entry, with its own SEO meta tags and sitemap entries. It opens as a fullscreen pane alongside the sidebar and toolbar instead of replacing the whole app shell, and closes automatically when you select another tab. ([#1654](https://github.com/HelloAOLab/seed-bible/pull/1654))
+- Add a Customization Center for building your own color-theme presets (colors, fonts, highlight colors) from Settings, with a live preview, autosave, and a share link so others can view your theme. ([#1686](https://github.com/HelloAOLab/seed-bible/pull/1686))
+- Add a cover image picker for playlists and reading plans: upload and crop your own photo, or choose one from a gallery of your previously uploaded images. ([#1720](https://github.com/HelloAOLab/seed-bible/pull/1720))
+- Highlight the verse currently being read in the Audio Reader, timed to the audio's own playback position so the highlight pauses and resumes along with the audio. ([#1751](https://github.com/HelloAOLab/seed-bible/pull/1751))
+
+### 🔧 Changed
+
+- Change the playlist cover image's remove button from a trash-can icon labeled "Delete" to an X icon labeled "Remove cover image". ([#1771](https://github.com/HelloAOLab/seed-bible/pull/1771))
+- Hide the "Customize" entry in Settings when signed out, instead of showing a link to a feature that requires an account. ([#1761](https://github.com/HelloAOLab/seed-bible/pull/1761))
+- Show the desktop reader header's translation name as a real, keyboard-reachable pill button matching mobile, instead of plain text after the chapter title, and open the translation picker directly instead of the book list. ([#1741](https://github.com/HelloAOLab/seed-bible/pull/1741))
+- Set the server-rendered page's `<html lang>` attribute to the detected page language, instead of relying only on a `content-language` meta tag that browsers, search engines, and screen readers no longer honor. ([#1746](https://github.com/HelloAOLab/seed-bible/pull/1746))
+
+### 🐛 Fixed
+
+- Stop reading time from accruing while the app is in the background. A phone locked in a pocket with the reader open could rack up half an hour of reading nobody did; reading now pauses when the app backgrounds and resumes as a new sitting when it comes back. ([#1738](https://github.com/HelloAOLab/seed-bible/pull/1738))
+- Count Audio Reader listening time even when the phone is locked. Listening was tracked with a timer that stops once the screen turns off, so an hour of narration during chores could log as a few seconds; it's now tracked by audio playback position instead. ([#1738](https://github.com/HelloAOLab/seed-bible/pull/1738))
+- Fix a short book's chapter list in the Bible Selector always aligning to the left regardless of which grid column its book falls in; it now aligns to match that column (left in the first column, right in the last, centered in a middle column). ([#1595](https://github.com/HelloAOLab/seed-bible/pull/1595))
+- Fix picking a theme variant on someone else's customization doing nothing while signed out, and persist that choice across a refresh, carrying it into your profile if you sign up afterward, instead of losing it. ([#1760](https://github.com/HelloAOLab/seed-bible/pull/1760))
+- Fix the collapsed sidebar's tab list overflowing instead of scrolling once there are more tabs than fit. ([#1758](https://github.com/HelloAOLab/seed-bible/pull/1758))
+- Fix chapter verse counts (used to find a chapter's last verse) being AI-estimated numbers that could be wrong for chapters that skip verse numbers; they're now generated from the actual Bible API data. ([#1753](https://github.com/HelloAOLab/seed-bible/pull/1753))
+- Fix dismissing the sign-in prompt throwing an error out of whatever action opened it instead of letting that action handle the cancellation, which kept the annotation editor from opening, left the bookmark modal stuck open, and crashed the transcript view. ([#1736](https://github.com/HelloAOLab/seed-bible/pull/1736))
+- Fix a shared `?customization=` link's colors only appearing after the page loaded and briefly flashing the default theme; the server now waits for the customization to load before rendering the page. ([#1739](https://github.com/HelloAOLab/seed-bible/pull/1739))
+- Fix a chapter's dimmed verses re-brightening early when a second dim effect started before the first one's fixed-length animation finished, instead of holding dimmed for as long as any dim effect is active. ([#1755](https://github.com/HelloAOLab/seed-bible/pull/1755))
+
+## v1.7.1 — 2026-09-02
+
+### ✨ Added
+
+- Add an Ask AI action to the verse toolbar: select verses, pick an agent when more than one is available, and open (or reuse) a chat with those verses already in the input.
+- Add `?chatFirst=true` so mobile shows Chat as the fourth toolbar tab instead of Bookmarks (Bookmarks moves into More), and desktop/laptop keeps Chat visible and prominent in the labeled toolbar. ([#1694](https://github.com/HelloAOLab/seed-bible/pull/1694))
+
+### 🔧 Changed
+
+- Add selected verses to a playlist as one item per contiguous range (for example Exodus 26:1-11) instead of one item per verse. ([#1728](https://github.com/HelloAOLab/seed-bible/pull/1728))
+- Ask AI from the verse toolbar now always starts a new chat instead of reusing an existing chat with the same AI agent. ([#1673](https://github.com/HelloAOLab/seed-bible/pull/1673))
+- Grow the chat compose field to fit up to 8 lines before it scrolls, instead of 5, including when text is inserted programmatically (such as an Ask AI verse quote) and not just while typing. ([#1673](https://github.com/HelloAOLab/seed-bible/pull/1673))
+- Cache one shared app shell for every page instead of a separate cache entry per URL, so a repeat visit loads instantly from the service worker cache and refreshes in the background; the new service worker only takes over once that shared shell is confirmed to match the new build, instead of risking an offline app right after a deploy. ([#1732](https://github.com/HelloAOLab/seed-bible/pull/1732))
+- Point the Today screen's welcome call-to-action at John 1 instead of Genesis 1, falling back to whichever book a translation lists first when neither is available. ([#1714](https://github.com/HelloAOLab/seed-bible/pull/1714))
+- Always show the discover panel (compact by default) beside the chapter instead of only on demand, folding the "this reading belongs to a plan" card into it, and wrap it below the reader instead of squeezing it beside it when there isn't enough width. ([#1693](https://github.com/HelloAOLab/seed-bible/pull/1693))
+- Rename the "Scripture Margins" setting to "Scripture Width", which sets the reading column's max width directly in characters (default 68ch) instead of a percentage margin that could make lines too long or too short depending on screen width. ([#1693](https://github.com/HelloAOLab/seed-bible/pull/1693))
+- Show the compact discover panel instead of the full discover panel, and stop selecting the verse, when clicking a verse-number marker that has a note on desktop. ([#1693](https://github.com/HelloAOLab/seed-bible/pull/1693))
+- Show the full session URL instead of just the session ID in session settings. ([#1712](https://github.com/HelloAOLab/seed-bible/pull/1712))
+
+### 🐛 Fixed
+
+- Fix the back button and back gesture after opening a bookmark on mobile. Tapping a bookmark used to leave the reader on the bookmarks screen and record two browser history entries for the same chapter — so going back appeared to do nothing. Tapping a bookmark now closes the bookmarks screen and lands on the chapter, and going back returns to the bookmarks list, then to the chapter you were reading before. ([#1338](https://github.com/HelloAOLab/seed-bible/issues/1338), [#1665](https://github.com/HelloAOLab/seed-bible/pull/1665))
+- Keep the verses a playlist item points at at full brightness when you tap it, instead of dimming the whole chapter including those verses. ([#1729](https://github.com/HelloAOLab/seed-bible/pull/1729))
+- Keep your unsent chat text after clicking a verse closes the floating chat panel, instead of losing it, and merge a new Ask AI verse quote into what you've already typed instead of overwriting it. ([#1673](https://github.com/HelloAOLab/seed-bible/pull/1673))
+- Fix opening the app with `?today=open` corrupting the page instead of correctly opening Today after the page loads, caused by the client and server disagreeing about whether Today should start open. ([#1733](https://github.com/HelloAOLab/seed-bible/pull/1733))
+- Fix the welcome screen's book heading, quote, and read-chapter button flashing a guessed placeholder before the translation's real book data arrived; they now stay hidden until resolved, then reveal with a fade and grow instead of popping in. ([#1714](https://github.com/HelloAOLab/seed-bible/pull/1714))
+- Fix hydrating onto the wrong page when a branch's SSR output actually came from a different branch's build (for branches outside the allow-list); the app now detects the mismatch and re-renders cleanly instead of hydrating onto markup produced by different component code. ([#1731](https://github.com/HelloAOLab/seed-bible/pull/1731))
+- Fix Bible reference auto-linking (in chat and notes) rejecting valid verses in translations that don't follow Protestant versification, while still catching genuinely out-of-range references like a nonexistent chapter number. ([#1695](https://github.com/HelloAOLab/seed-bible/pull/1695))
+- Fix several Today screen elements (the resume card, section headers, search box, and timespan filter) using the wrong theme tokens, so they didn't correctly follow the light/dark color scheme. ([#1710](https://github.com/HelloAOLab/seed-bible/pull/1710))
+- Pin the session settings modal's action buttons to the bottom instead of letting them scroll out of view. ([#1712](https://github.com/HelloAOLab/seed-bible/pull/1712))
+
+## v1.7.0 — 2026-08-31
+
+### ✨ Added
+
+- Add support for the `annotationRecordKey` query parameter, so a deployment can save all annotations to a specific record instead of each user's own, letting translations published from Codex be annotated and viewed there directly. ([#1662](https://github.com/HelloAOLab/seed-bible/pull/1662))
+- Automatically prompt to download the current translation for offline reading, after the welcome screen on first load and again after dismissing the Today screen if you have no downloaded translations. ([#1663](https://github.com/HelloAOLab/seed-bible/pull/1663))
+- Prompt to switch your UI language when you choose a translation written in a different language. ([#1677](https://github.com/HelloAOLab/seed-bible/pull/1677))
+- Add the ability to edit a playlist's description from the playlist editor. ([#1679](https://github.com/HelloAOLab/seed-bible/pull/1679))
+- Add a branding option to set which translation new readers start with. ([#1682](https://github.com/HelloAOLab/seed-bible/pull/1682))
+
+### 🔧 Changed
+
+- Applying or clearing a highlight now clears the verse selection and closes the verse toolbar automatically, instead of leaving the selection and toolbar open after every highlight action. ([#1725](https://github.com/HelloAOLab/seed-bible/pull/1725))
+- Split the Extensions settings list into separate Installed and Available sections, each with its own empty-state message, instead of one flat list. ([#1667](https://github.com/HelloAOLab/seed-bible/pull/1667))
+- Show a generic profile icon instead of a randomly generated avatar and color when you're signed out or have no profile picture and aren't in a shared session. ([#1672](https://github.com/HelloAOLab/seed-bible/pull/1672))
+- Give the dark theme the same orange accent colors as the light theme for its primary and secondary colors, instead of a mismatched dark theme accent. ([#1690](https://github.com/HelloAOLab/seed-bible/pull/1690))
+- Rename anonymous, signed-out readers from "Guest" to "Anonymous" throughout the app (Today's reader list, the sidebar avatar tooltip, and Scripture Map), including in locales where "Guest" had always shown in English regardless of the selected language. ([#1697](https://github.com/HelloAOLab/seed-bible/pull/1697))
+- Stop naming anonymous readers in the Today greeting, showing "Good morning!" instead of "Good morning, Guest!". ([#1697](https://github.com/HelloAOLab/seed-bible/pull/1697))
+- Show the branded app name in onboarding, settings, and the tutorial prompt, instead of only in a few places. ([#1701](https://github.com/HelloAOLab/seed-bible/pull/1701))
+- Configure branding (app name, logo, icon, website, hidden toolbar tools, and default translation) with a `seed-bible.branding.json` file at build time, instead of injecting the config directly into the code. ([#1718](https://github.com/HelloAOLab/seed-bible/pull/1718))
+- Give the mobile verse toolbar's Clear (highlight) button the app's error color instead of the default font color, and keep its hover feedback and icon consistent across screen sizes. ([#1724](https://github.com/HelloAOLab/seed-bible/pull/1724))
+
+### 🐛 Fixed
+
+- Fix the tabs, quick toolbar, below-reader toolbar, and mobile layout briefly showing unstyled before the page's full CSS finished loading, by keeping them hidden until it does.
+- Fix the Bible Stack extension, which had stopped working after an earlier core-app refactor. ([#1635](https://github.com/HelloAOLab/seed-bible/pull/1635))
+- Fix the Tabernacle extension (renamed House of the Lord), which had stopped working after an earlier core-app refactor. ([#1661](https://github.com/HelloAOLab/seed-bible/pull/1661))
+- Fix the Settings close button being hidden on the mobile Account page, and make the "Settings" heading render the same plain style there as on every other settings page. ([#1675](https://github.com/HelloAOLab/seed-bible/pull/1675))
+- Fix the Today screen crashing for some readers when their community reading-history entry hadn't finished loading yet. ([#1676](https://github.com/HelloAOLab/seed-bible/pull/1676))
+- Fix the reading-history timeline's column widths stretching under wide month labels in some locales (notably Arabic and Bengali), which also affected Scripture Map. ([#1676](https://github.com/HelloAOLab/seed-bible/pull/1676))
+- Tapping the Bible icon on mobile now opens the book selector when the Bible text is already shown, instead of doing nothing. ([#1678](https://github.com/HelloAOLab/seed-bible/pull/1678))
+- Fix the mobile highlight color picker's layout shifting down when the "swipe to see more" hint disappears after you touch it. ([#1684](https://github.com/HelloAOLab/seed-bible/pull/1684))
+- Fix the verse toolbar staying open when tapping empty space within the chapter (padding, gaps between verses, section headings), instead of only closing on taps entirely outside the chapter. ([#1723](https://github.com/HelloAOLab/seed-bible/pull/1723))
+- Fix the Today screen appearing and then immediately closing when the app opens without a link to a specific chapter and restores your saved reading position or saved translation. ([#1726](https://github.com/HelloAOLab/seed-bible/pull/1726))
+
+## v1.6.0 — 2026-08-24
+
+### ✨ Added
+
+- Analytics for common playlist actions like creating and finishing playlists. ([#1643](https://github.com/HelloAOLab/seed-bible/pull/1643))
+- Write, edit and delete your notes with no internet connection. Notes used to go straight to the server, so with no connection saving failed and whatever you had typed was lost — and opening a chapter offline reported "You have no annotations" and kept saying so even after the connection came back. Now notes are kept on your device first and sent to the server when you are back online, with a count of what is still waiting. Notes written before you sign in are kept too, and become part of your account the first time you do.
+- Ask which version to keep when a note changed in two places at once — edited on your phone while your laptop was offline, say. Previously whichever change was saved last silently replaced the other. Now the two versions are shown side by side with when each was written, and you choose: keep yours, keep the other one, or keep both (yours is saved as a second note, so nothing you wrote is thrown away). Nothing is overwritten until you decide.
+- Add a bookmark to more than one category at once, create a new category while doing so, and remove a bookmark from a single category or from all of them in one step. ([#1612](https://github.com/HelloAOLab/seed-bible/pull/1612))
+- Add support for two-way messaging between the app and embedded pattern portals, so a pattern can send messages to the app and receive replies back instead of only sending one way. ([#1644](https://github.com/HelloAOLab/seed-bible/pull/1644))
+- Add support for multi-line chat messages. On desktop, Shift+Enter now inserts a line break while Enter still sends; on mobile, Enter inserts a line break and the send button submits. The compose box grows with your message, up to five lines, before it scrolls. ([#1639](https://github.com/HelloAOLab/seed-bible/pull/1639))
+
+### 🔧 Changed
+
+- Show Share in the chapter header instead of the reader toolbar, so it is always visible without opening a menu.
+- Open the share sheet for the current tab from the tabs screen instead of immediately starting a shared session.
+- Dragging the expanded mobile verse toolbar down now closes it directly, instead of needing to drag it closed halfway, release, and drag again. ([#1671](https://github.com/HelloAOLab/seed-bible/pull/1671))
+- Turn on reading history and presence (seeing who else is viewing) by default instead of leaving them off. ([#1638](https://github.com/HelloAOLab/seed-bible/pull/1638))
+- Tapping a verse reference in chat on mobile now closes the chat panel before jumping to that verse, instead of leaving the chat open over it. ([#1640](https://github.com/HelloAOLab/seed-bible/pull/1640))
+- Reuse the Bible content the server already fetched to render the page instead of the client re-fetching those same translations, book catalogs, and chapters, for a faster initial load. ([#1617](https://github.com/HelloAOLab/seed-bible/pull/1617))
+- Automatically open the login screen after a forced sign-out, such as an invalidated session, instead of leaving you signed out with no prompt to sign back in. ([#1641](https://github.com/HelloAOLab/seed-bible/pull/1641))
+
+### 🗑️ Removed
+
+- Fix a bookmark's first tap sometimes not registering on mobile, requiring a second tap. ([#1664](https://github.com/HelloAOLab/seed-bible/pull/1664))
+- Fix tapping a toolbar button on Android sometimes only stopping the page's scroll instead of registering as a tap, requiring a second tap to activate it. ([#1642](https://github.com/HelloAOLab/seed-bible/pull/1642))
+- Fix toast notifications appearing behind other UI elements. ([#1641](https://github.com/HelloAOLab/seed-bible/pull/1641))
+- Fix guest reading presence not staying in sync with the guest's actual reading position. ([#1638](https://github.com/HelloAOLab/seed-bible/pull/1638))
+- Fix a visible scrollbar in the mobile chat panel. ([#1639](https://github.com/HelloAOLab/seed-bible/pull/1639))
+- Fix layout and mirroring issues for right-to-left languages such as Arabic across Settings, Tabs, the Tutorial, the Share modal, and session participants. ([#1615](https://github.com/HelloAOLab/seed-bible/pull/1615))
+- Fix Safari/WebKit-specific behavior being detected incorrectly on the initial server-rendered page, since the check ran on the server where it could never correctly identify WebKit. ([#1617](https://github.com/HelloAOLab/seed-bible/pull/1617))
+
+## v1.5.0 — 2026-08-17
+
+### ✨ Added
+
+- Add the ability to write notes on one or more verses. A noted verse gets a border around its verse number so you can spot it while reading, and tapping that number opens the note. A button in the chapter header shows how many notes the current chapter has and opens the Discover pane to browse them, grouped by verse with each note's author, avatar, and last-updated time. ([#1593](https://github.com/HelloAOLab/seed-bible/pull/1593))
+- Verse references typed inside a note (like "see John 3:16") automatically turn into clickable links to that verse. ([#1593](https://github.com/HelloAOLab/seed-bible/pull/1593))
+- On mobile, add, edit, and delete notes directly from the verse selection toolbar, with the verses the note covers shown alongside it as you write. ([#1593](https://github.com/HelloAOLab/seed-bible/pull/1593))
+- Ask the AI in chat to build a Bible reading playlist; it opens the playlist editor pre-filled with a title, description, and items for you to review, instead of saving or playing the playlist on its own. ([#1562](https://github.com/HelloAOLab/seed-bible/pull/1562))
+- Add an AI button to the playlist editor that opens a chat scoped to that playlist, where the AI can insert, reorder, update, or delete items and edit the title and description as you ask. ([#1562](https://github.com/HelloAOLab/seed-bible/pull/1562))
+- The AI in chat can now jump you to a specific book, chapter, or verse, briefly highlighting the verse it took you to. ([#1562](https://github.com/HelloAOLab/seed-bible/pull/1562))
+- The AI in chat can now search the Bible for verses matching what you ask, and use the results to answer or build a playlist. ([#1562](https://github.com/HelloAOLab/seed-bible/pull/1562))
+- Add an icon with a count badge to the chat header showing which AI contexts are currently active and how many tools each one gives the AI. ([#1562](https://github.com/HelloAOLab/seed-bible/pull/1562))
+- Show AI actions like searching, navigating, or editing a playlist as a visible entry in the chat timeline instead of happening silently. ([#1562](https://github.com/HelloAOLab/seed-bible/pull/1562))
+- Add a branding option that lets a deployment hide specific tools from the reader toolbar. ([#1610](https://github.com/HelloAOLab/seed-bible/pull/1610))
+- Reading Plans can now be deleted from both the plan list and the plan detail view, clearing that plan's progress. ([#1518](https://github.com/HelloAOLab/seed-bible/pull/1518))
+
+### 🔧 Changed
+
+- AI chat replies now stream in as they're generated instead of appearing all at once when complete. ([#1562](https://github.com/HelloAOLab/seed-bible/pull/1562))
+- Only show the AI context icon and AI-assisted buttons when a connected AI provider actually supports tool calling, instead of always showing them. ([#1562](https://github.com/HelloAOLab/seed-bible/pull/1562))
+- Verse references typed in chat (e.g. "John 3:16") are now matched against the book names of whichever translation is currently open, including localized names, falling back to English/USFM names when there's no match, instead of only recognizing English names regardless of translation. ([#1606](https://github.com/HelloAOLab/seed-bible/pull/1606))
+- Reading Plan progress is now tracked per chapter instead of per whole reading, so finishing part of a multi-chapter reading credits just those chapters and shows partial progress. ([#1518](https://github.com/HelloAOLab/seed-bible/pull/1518))
+- Tapping a reading now opens it at the first unfinished chapter, and a whole day's readings can be played straight through with next/previous stepping between them. ([#1518](https://github.com/HelloAOLab/seed-bible/pull/1518))
+- Creating and editing a Reading Plan now uses one combined screen for its name, readings, and pace instead of a 3-step wizard, and that same screen is reused to edit an existing plan. ([#1518](https://github.com/HelloAOLab/seed-bible/pull/1518))
+- Rework the Today screen's Bookmarks section on mobile: bookmarks now scroll horizontally in their own row, and a "View More" button in the section header opens the full bookmarks list, appearing only when there are more bookmarks than fit on screen. ([#1502](https://github.com/HelloAOLab/seed-bible/pull/1502))
+- Chapter page descriptions and social-share link previews now quote an excerpt of the actual chapter text instead of a generic templated sentence, and pages with no chapter loaded show a real descriptive sentence instead of just "Seed Bible"; also adds Twitter card tags and fixes the Open Graph locale/site-name tags to use the correct attribute. ([#1620](https://github.com/HelloAOLab/seed-bible/pull/1620))
+
+### 🐛 Fixed
+
+- Fix an issue where switching apps on a mobile device would always kick you out of a shared session upon returning. ([#1468](https://github.com/HelloAOLab/seed-bible/pull/1468))
+- Fix removing a Reading Plan session before the selected one shifting the selection to the wrong session. ([#1518](https://github.com/HelloAOLab/seed-bible/pull/1518))
+- Fix a Reading Plan that fails to load leaving the user on a blank "Untitled plan" screen; it now shows an error on the list instead. ([#1518](https://github.com/HelloAOLab/seed-bible/pull/1518))
+- Fix opening an already-cached Reading Plan always re-fetching it; it now opens instantly with visible tap feedback. ([#1518](https://github.com/HelloAOLab/seed-bible/pull/1518))
+- Reading Plan reading-time estimates are now based on the actual verse count per book instead of a flat 3 minutes per chapter. ([#1518](https://github.com/HelloAOLab/seed-bible/pull/1518))
+- Fix a wording bug on the reading plan's "self-paced" cadence option, and align each reading's checkbox consistently on the left of its card. ([#1518](https://github.com/HelloAOLab/seed-bible/pull/1518))
+- Fix a rendering issue with the mobile sidebar. ([#1502](https://github.com/HelloAOLab/seed-bible/pull/1502))
+- Fix mobile swipe-to-change-chapter getting stuck off-center when the browser takes over the gesture mid-swipe, such as an edge-swipe-back conflict or a second finger touching down. ([#1605](https://github.com/HelloAOLab/seed-bible/pull/1605))
+- Swipe navigation between chapters now goes through the same path as the chevron buttons, so the browser Back button behaves the same after a swipe as after tapping a chevron. ([#1605](https://github.com/HelloAOLab/seed-bible/pull/1605))
+- Fix the Install App prompt and Settings entry never reappearing after uninstalling the PWA, since install status was saved permanently instead of tracked only for the current session. ([#1614](https://github.com/HelloAOLab/seed-bible/pull/1614))
+- Fix the social preview image (used by Facebook, Twitter, etc. when sharing a link) pointing to a URL that didn't exist in production, showing a broken image instead of the Seed Bible logo. ([#1619](https://github.com/HelloAOLab/seed-bible/pull/1619))
 
 ## v1.4.0 — 2026-08-10
 

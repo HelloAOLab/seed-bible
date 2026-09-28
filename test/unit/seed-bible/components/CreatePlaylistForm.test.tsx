@@ -17,17 +17,8 @@ import type {
 import type { TranslationBook } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
-      language: "en",
-    }),
-  };
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
 });
 
 interface StubPlaylistItemInputProps {
@@ -122,6 +113,9 @@ interface MockPlaylistsResult {
   playlists: PlaylistManager;
   cancelEditingPlaylist: ReturnType<typeof vi.fn>;
   saveEditingPlaylist: ReturnType<typeof vi.fn>;
+  isEditingPlaylistDirty: ReturnType<typeof vi.fn>;
+  updateEditingPlaylistMetadata: ReturnType<typeof vi.fn>;
+  uploadHeroImage: ReturnType<typeof vi.fn>;
   addEditingPlaylistItem: ReturnType<typeof vi.fn>;
   updateEditingPlaylistItem: ReturnType<typeof vi.fn>;
   removeEditingPlaylistItem: ReturnType<typeof vi.fn>;
@@ -132,6 +126,18 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
   const editingPlaylist = signal(editing);
   const cancelEditingPlaylist = vi.fn();
   const saveEditingPlaylist = vi.fn().mockResolvedValue(undefined);
+  const updateEditingPlaylistMetadata = vi.fn(
+    (
+      updates: Partial<Pick<Playlist, "title" | "description" | "heroImageUrl">>
+    ) => {
+      const current = editingPlaylist.value;
+      if (!current) return;
+      editingPlaylist.value = { ...current, ...updates };
+    }
+  );
+  const uploadHeroImage = vi
+    .fn()
+    .mockResolvedValue("https://example.com/hero.jpg");
   const addEditingPlaylistItem = vi.fn();
   const updateEditingPlaylistItem = vi.fn();
   const removeEditingPlaylistItem = vi.fn((index: number) => {
@@ -152,10 +158,14 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
     editingPlaylist.value = { ...current, items };
   });
 
+  const isEditingPlaylistDirty = vi.fn(() => false);
   const playlists = {
     editingPlaylist,
     cancelEditingPlaylist,
     saveEditingPlaylist,
+    isEditingPlaylistDirty,
+    updateEditingPlaylistMetadata,
+    uploadHeroImage,
     addEditingPlaylistItem,
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
@@ -166,6 +176,9 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
     playlists,
     cancelEditingPlaylist,
     saveEditingPlaylist,
+    isEditingPlaylistDirty,
+    updateEditingPlaylistMetadata,
+    uploadHeroImage,
     addEditingPlaylistItem,
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
@@ -214,6 +227,233 @@ describe("CreatePlaylistForm", () => {
   // The title input and the header back button now live in the pane header
   // (`DiscoverPaneTitle`), covered by the DiscoverPane test suite.
 
+  it("shows the current description and writes edits back to the draft", () => {
+    const { playlists, updateEditingPlaylistMetadata } = createMockPlaylists(
+      createPlaylist({ description: "Evening study" })
+    );
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    const input = container.querySelector(
+      ".sb-playlist-description-input"
+    ) as HTMLTextAreaElement;
+    expect(input.tagName).toBe("TEXTAREA");
+    expect(input.value).toBe("Evening study");
+
+    act(() => {
+      input.value = "Morning devotion";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    expect(updateEditingPlaylistMetadata).toHaveBeenCalledWith({
+      description: "Morning devotion",
+    });
+    expect(playlists.editingPlaylist.value?.description).toBe(
+      "Morning devotion"
+    );
+  });
+
+  it("stores a whitespace-only description as null", () => {
+    const { playlists } = createMockPlaylists(
+      createPlaylist({ description: "Something" })
+    );
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    const input = container.querySelector(
+      ".sb-playlist-description-input"
+    ) as HTMLTextAreaElement;
+    act(() => {
+      input.value = "   ";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    expect(playlists.editingPlaylist.value?.description).toBeNull();
+  });
+
+  it("offers an add-cover-image control when the draft has no cover", () => {
+    const { playlists } = createMockPlaylists(createPlaylist());
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-hero-field-placeholder")?.textContent
+    ).toContain("Add cover image");
+    expect(container.querySelector(".sb-hero-field-preview")).toBeNull();
+
+    act(() => {
+      (
+        container.querySelector(
+          ".sb-hero-field-placeholder"
+        ) as HTMLButtonElement
+      ).click();
+    });
+    expect(modals.modals.value).toHaveLength(1);
+    const modalContainer = document.createElement("div");
+    document.body.appendChild(modalContainer);
+    act(() => {
+      render(
+        modals.modals.value[0]!.content({
+          t: (key, options) => (options?.defaultValue as string) ?? key,
+        }),
+        modalContainer
+      );
+    });
+    const labels = Array.from(modalContainer.querySelectorAll("button")).map(
+      (button) => button.textContent ?? ""
+    );
+    expect(labels.some((label) => label.includes("Choose from gallery"))).toBe(
+      true
+    );
+    expect(labels.some((label) => label.includes("Upload a picture"))).toBe(
+      true
+    );
+    render(null, modalContainer);
+    modalContainer.remove();
+  });
+
+  it("shows the cover preview and removes it when asked", () => {
+    const { playlists, updateEditingPlaylistMetadata } = createMockPlaylists(
+      createPlaylist({ heroImageUrl: "https://example.com/cover.jpg" })
+    );
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    const preview = container.querySelector(
+      ".sb-hero-field-preview img"
+    ) as HTMLImageElement;
+    expect(preview.src).toBe("https://example.com/cover.jpg");
+    expect(container.querySelector(".sb-hero-field-preview")?.tagName).toBe(
+      "BUTTON"
+    );
+    expect(
+      Array.from(container.querySelectorAll("button")).some(
+        (button) => button.textContent === "Remove cover image"
+      )
+    ).toBe(false);
+
+    const remove = container.querySelector(
+      ".sb-hero-field-clear"
+    ) as HTMLButtonElement;
+    expect(remove).not.toBeNull();
+    expect(remove.getAttribute("aria-label")).toBe("Remove cover image");
+    expect(remove.textContent).toContain("close");
+    act(() => {
+      remove.click();
+    });
+
+    expect(updateEditingPlaylistMetadata).toHaveBeenCalledWith({
+      heroImageUrl: null,
+    });
+    expect(playlists.editingPlaylist.value?.heroImageUrl).toBeNull();
+  });
+
+  it("saves a playlist that has no cover image", async () => {
+    const { playlists, saveEditingPlaylist } =
+      createMockPlaylists(createPlaylist());
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-hero-field-hint")?.textContent
+    ).toContain("Optional");
+    expect(playlists.editingPlaylist.value?.heroImageUrl ?? null).toBeNull();
+
+    const saveButton = container.querySelector(
+      ".sb-settings-save-button"
+    ) as HTMLButtonElement;
+    await act(async () => {
+      saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps line breaks when editing a description", () => {
+    const { playlists } = createMockPlaylists(createPlaylist());
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    const input = container.querySelector(
+      ".sb-playlist-description-input"
+    ) as HTMLTextAreaElement;
+    act(() => {
+      input.value = "Line one\nLine two";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    expect(playlists.editingPlaylist.value?.description).toBe(
+      "Line one\nLine two"
+    );
+  });
+
   it("shows the empty-items message for a fresh playlist", () => {
     const { playlists } = createMockPlaylists(createPlaylist());
     const tabs = createMockTabs();
@@ -259,6 +499,166 @@ describe("CreatePlaylistForm", () => {
       cancelButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks before leaving when the playlist has unsaved changes", () => {
+    const { playlists, cancelEditingPlaylist, saveEditingPlaylist } =
+      createMockPlaylists(createPlaylist({ title: "Draft" }));
+    playlists.isEditingPlaylistDirty = vi.fn(() => true);
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    const cancelButton = Array.from(
+      container.querySelectorAll(".sb-reading-plans-back")
+    ).find((el) => el.textContent === "Cancel") as HTMLButtonElement;
+    act(() => {
+      cancelButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(cancelEditingPlaylist).not.toHaveBeenCalled();
+    expect(modals.modals.value).toHaveLength(1);
+    expect(modals.modals.value[0]!.title).toEqual({
+      key: "unsaved-changes",
+      defaultValue: "Unsaved changes",
+    });
+
+    const modalContainer = document.createElement("div");
+    document.body.appendChild(modalContainer);
+    act(() => {
+      render(
+        modals.modals.value[0]!.content({
+          t: (key, options) => (options?.defaultValue as string) ?? key,
+        }),
+        modalContainer
+      );
+    });
+    const labels = Array.from(modalContainer.querySelectorAll("button")).map(
+      (button) => button.textContent ?? ""
+    );
+    expect(labels).toEqual(["Confirm", "Go back", "Save & exit"]);
+
+    act(() => {
+      (
+        Array.from(modalContainer.querySelectorAll("button")).find(
+          (button) => button.textContent === "Go back"
+        ) as HTMLButtonElement
+      ).click();
+    });
+    expect(cancelEditingPlaylist).not.toHaveBeenCalled();
+    expect(saveEditingPlaylist).not.toHaveBeenCalled();
+    expect(modals.modals.value).toHaveLength(0);
+
+    render(null, modalContainer);
+    modalContainer.remove();
+  });
+
+  it("Confirm discards unsaved playlist changes", () => {
+    const { playlists, cancelEditingPlaylist, saveEditingPlaylist } =
+      createMockPlaylists(createPlaylist({ title: "Draft" }));
+    playlists.isEditingPlaylistDirty = vi.fn(() => true);
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+    act(() => {
+      (
+        Array.from(container.querySelectorAll(".sb-reading-plans-back")).find(
+          (el) => el.textContent === "Cancel"
+        ) as HTMLButtonElement
+      ).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const modalContainer = document.createElement("div");
+    document.body.appendChild(modalContainer);
+    act(() => {
+      render(
+        modals.modals.value[0]!.content({
+          t: (key, options) => (options?.defaultValue as string) ?? key,
+        }),
+        modalContainer
+      );
+    });
+    act(() => {
+      (
+        Array.from(modalContainer.querySelectorAll("button")).find(
+          (button) => button.textContent === "Confirm"
+        ) as HTMLButtonElement
+      ).click();
+    });
+    expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
+    expect(saveEditingPlaylist).not.toHaveBeenCalled();
+    expect(modals.modals.value).toHaveLength(0);
+    render(null, modalContainer);
+    modalContainer.remove();
+  });
+
+  it("Save & exit persists the playlist and leaves the editor", () => {
+    const { playlists, cancelEditingPlaylist, saveEditingPlaylist } =
+      createMockPlaylists(createPlaylist({ title: "Draft" }));
+    playlists.isEditingPlaylistDirty = vi.fn(() => true);
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+    act(() => {
+      (
+        Array.from(container.querySelectorAll(".sb-reading-plans-back")).find(
+          (el) => el.textContent === "Cancel"
+        ) as HTMLButtonElement
+      ).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const modalContainer = document.createElement("div");
+    document.body.appendChild(modalContainer);
+    act(() => {
+      render(
+        modals.modals.value[0]!.content({
+          t: (key, options) => (options?.defaultValue as string) ?? key,
+        }),
+        modalContainer
+      );
+    });
+    act(() => {
+      (
+        Array.from(modalContainer.querySelectorAll("button")).find(
+          (button) => button.textContent === "Save & exit"
+        ) as HTMLButtonElement
+      ).click();
+    });
+    expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+    expect(cancelEditingPlaylist).not.toHaveBeenCalled();
+    expect(modals.modals.value).toHaveLength(0);
+    render(null, modalContainer);
+    modalContainer.remove();
   });
 
   it("lists items using their resolved label and falls back to the raw book id", () => {

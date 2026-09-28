@@ -2,7 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   createI18nManager,
+  getBrandedAppText,
   getPreferredSupportedLanguage,
+  getUrlLanguage,
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -11,6 +13,7 @@ import {
   type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { signal, type Signal } from "@preact/signals";
+import type { Mock } from "vitest";
 
 const i18nFolder = path.resolve(
   __dirname,
@@ -55,10 +58,14 @@ describe("I18nManager getInitialLanguage()", () => {
       go: vi.fn(),
       replace: vi.fn(),
       push: vi.fn(),
+      batchWrites: vi.fn((fn: () => unknown) => fn()),
       updateQueryParam: vi.fn(),
       linkToQuery: vi.fn(),
+      linkToBareRoot: vi.fn(),
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
+      stampCurrentState: vi.fn(),
+      getCurrentScrollPosition: vi.fn(),
       dispose: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ssrLanguages);
@@ -186,10 +193,14 @@ describe("I18nManager language fallback prompt", () => {
       go: vi.fn(),
       replace: vi.fn(),
       push: vi.fn(),
+      batchWrites: vi.fn((fn: () => unknown) => fn()),
       updateQueryParam: vi.fn(),
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
+      stampCurrentState: vi.fn(),
+      getCurrentScrollPosition: vi.fn(),
       linkToQuery: vi.fn(),
+      linkToBareRoot: vi.fn(),
       dispose: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);
@@ -224,6 +235,119 @@ describe("I18nManager language fallback prompt", () => {
   });
 });
 
+describe("I18nManager UI language switch prompt", () => {
+  let nav: NavigationManager;
+  let manager: I18nManager;
+  let currentUrl: Signal<URL>;
+  let persistLanguage: Mock<(language: string) => void>;
+  let askEnabled: boolean;
+
+  beforeEach(async () => {
+    window.sessionStorage.clear();
+    currentUrl = signal(new URL("https://example.com/"));
+    nav = {
+      currentUrl,
+      initialUrl: currentUrl.peek(),
+      basePath: "",
+      syncSignalsToUrl: vi.fn(),
+      go: vi.fn(),
+      replace: vi.fn(),
+      push: vi.fn(),
+      updateQueryParam: vi.fn(),
+      updateQueryParams: vi.fn(),
+      updatePathAndQueryParams: vi.fn(),
+      stampCurrentState: vi.fn(),
+      getCurrentScrollPosition: vi.fn(),
+      linkToQuery: vi.fn(),
+      linkToBareRoot: vi.fn(),
+      dispose: vi.fn(),
+      batchWrites: vi.fn((fn: () => unknown) => fn()),
+    } as NavigationManager;
+    manager = createI18nManager(nav, ["en"]);
+    // The i18next instance is a module singleton shared across tests, so pin
+    // the starting UI language rather than inheriting whatever ran last.
+    await manager.changeLanguage("en");
+
+    persistLanguage = vi.fn<(language: string) => void>();
+    manager.setLanguagePersister(persistLanguage);
+    manager.setBibleTranslationApplicator(vi.fn(), () => null, null);
+
+    askEnabled = true;
+    manager.setUiLanguagePromptPreference({
+      isEnabled: () => askEnabled,
+      disable: () => {
+        askEnabled = false;
+      },
+    });
+  });
+
+  it("prompts to switch the UI when the picked translation is in another supported language", () => {
+    manager.maybePromptUiLanguageSwitch("spa");
+
+    expect(manager.uiLanguageSwitchPrompt.value?.targetLanguage).toBe("es");
+  });
+
+  it("stays silent when the translation is already in the current UI language", () => {
+    manager.maybePromptUiLanguageSwitch("eng");
+
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+
+  it("stays silent for a Bible language with no supported UI language", () => {
+    manager.maybePromptUiLanguageSwitch("zzz");
+
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+
+  it("only prompts once per session, even after being dismissed", () => {
+    manager.maybePromptUiLanguageSwitch("spa");
+    manager.dismissUiLanguageSwitch();
+
+    manager.maybePromptUiLanguageSwitch("fra");
+
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+
+  it("switches and persists the UI language when confirmed, leaving the Bible translation alone", async () => {
+    const applyTranslation = vi.fn();
+    manager.setBibleTranslationApplicator(applyTranslation, () => null, null);
+
+    manager.maybePromptUiLanguageSwitch("spa");
+    await manager.confirmUiLanguageSwitch();
+
+    expect(manager.language.value).toBe("es");
+    expect(persistLanguage).toHaveBeenCalledWith("es");
+    // The user just picked this translation; confirming must not swap it for
+    // the new UI language's default.
+    expect(applyTranslation).not.toHaveBeenCalled();
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+
+  it("leaves the UI language unchanged when dismissed", () => {
+    manager.maybePromptUiLanguageSwitch("spa");
+    manager.dismissUiLanguageSwitch();
+
+    expect(manager.language.value).toBe("en");
+    expect(persistLanguage).not.toHaveBeenCalled();
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+
+  it("stops asking in later sessions once 'never ask again' is chosen", () => {
+    manager.maybePromptUiLanguageSwitch("spa");
+    manager.neverAskUiLanguageSwitch();
+
+    expect(askEnabled).toBe(false);
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+
+    // A fresh session (new tab) would clear the once-per-session marker, but
+    // the stored preference must still keep the prompt away.
+    window.sessionStorage.clear();
+    manager.maybePromptUiLanguageSwitch("spa");
+
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+});
+
 describe("I18nManager URL <-> language sync", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
@@ -251,5 +375,79 @@ describe("I18nManager URL <-> language sync", () => {
     expect(manager.language.value).toBe("fr");
     expect(nav.currentUrl.value.search).toBe("");
     expect(nav.currentUrl.value.pathname).toBe("/");
+  });
+});
+
+describe("getUrlLanguage", () => {
+  it("resolves the language segment of a reading path", () => {
+    expect(
+      getUrlLanguage(new URL("https://x.example/es/spa_onbv/john/3"), "")
+    ).toBe("es");
+  });
+
+  it("resolves the language segment of a static page path", () => {
+    expect(getUrlLanguage(new URL("https://x.example/es/about"), "")).toBe(
+      "es"
+    );
+  });
+
+  it("falls back to the legacy ?lang= param for anything else", () => {
+    expect(getUrlLanguage(new URL("https://x.example/?lang=fr"), "")).toBe(
+      "fr"
+    );
+  });
+
+  it("returns null when nothing in the URL names a language", () => {
+    expect(getUrlLanguage(new URL("https://x.example/"), "")).toBeNull();
+  });
+});
+
+describe("getBrandedAppText", () => {
+  const t = (key: string, options?: Record<string, unknown>) =>
+    (options?.defaultValue as string | undefined) ?? key;
+
+  it("uses the default app name when no branding or customization name is given", () => {
+    expect(getBrandedAppText("Welcome to Seed Bible", t)).toBe(
+      "Welcome to Seed Bible"
+    );
+  });
+
+  it("substitutes the branding config's app name when set", () => {
+    expect(
+      getBrandedAppText("Welcome to Seed Bible", t, {
+        appName: "Acme Bible",
+      } as any)
+    ).toBe("Welcome to Acme Bible");
+  });
+
+  it("prefers the active customization's name over the branding config's app name", () => {
+    expect(
+      getBrandedAppText(
+        "Welcome to Seed Bible",
+        t,
+        { appName: "Acme Bible" } as any,
+        "Grandma's Bible"
+      )
+    ).toBe("Welcome to Grandma's Bible");
+  });
+
+  it("uses the customization name even when there is no branding config at all", () => {
+    expect(
+      getBrandedAppText(
+        "Welcome to Seed Bible",
+        t,
+        undefined,
+        "Grandma's Bible"
+      )
+    ).toBe("Welcome to Grandma's Bible");
+  });
+
+  it("falls back to branding/default when the customization name is null or undefined", () => {
+    expect(getBrandedAppText("Welcome to Seed Bible", t, undefined, null)).toBe(
+      "Welcome to Seed Bible"
+    );
+    expect(
+      getBrandedAppText("Welcome to Seed Bible", t, undefined, undefined)
+    ).toBe("Welcome to Seed Bible");
   });
 });

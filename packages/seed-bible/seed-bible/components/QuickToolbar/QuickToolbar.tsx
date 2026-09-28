@@ -1,3 +1,4 @@
+import "./QuickToolbar.inline.css";
 import "./QuickToolbar.css";
 import { type ToolsManager } from "../../managers/BibleToolsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
@@ -7,19 +8,29 @@ import { handleHorizontalListKeyNav } from "../../app/keyboardNav";
 import { useState } from "preact/hooks";
 import type { PlaylistManager } from "../../managers/PlaylistManager";
 import type { FeaturesManager } from "../../managers/FeaturesManager";
+import type { AnnotationsManager } from "../../managers/AnnotationsManager";
+import type { BibleReadingSession } from "../../managers/SessionsManager";
+import type { ModalManager } from "../../managers/ModalManager";
+import type { AppState } from "../../managers/SeedBibleStateManager";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;
   readingState: BibleReadingState;
   playlists: PlaylistManager;
+  annotations: AnnotationsManager;
   features: FeaturesManager;
   /** Extra class for layout differences (e.g. desktop vs mobile header). */
   className?: string;
+  /** Shared session for the current reader surface, if any. Used by Share. */
+  sharedSession?: BibleReadingSession | null;
+  toast?: (message: string) => void;
+  modals?: ModalManager;
+  app?: AppState;
 }
 
 /**
  * Compact toolbar shown at the top of the reader, beside the chapter
- * bookmark button. Renders whatever tools extensions have registered via
+ * save and bookmark buttons. Renders whatever tools extensions have registered via
  * `toolsManager.registerQuickTool`, mirroring the other reader toolbars
  * (icon buttons, optional getItems() context menus). Renders nothing when
  * no quick tool is currently visible.
@@ -32,8 +43,13 @@ export function QuickToolbar(props: QuickToolbarProps) {
   const tools = toolsManager.getQuickTools({
     readingState,
     playlists,
+    annotations: props.annotations,
     features: props.features,
     surface: "quick-toolbar",
+    sharedSession: props.sharedSession ?? null,
+    toast: props.toast,
+    modals: props.modals,
+    app: props.app,
   });
   const visibleTools = tools.filter((tool) => tool.visible.value);
 

@@ -1,6 +1,9 @@
 import { signal, type ReadonlySignal } from "@preact/signals";
 
-import { createTutorialManager } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
+import {
+  createTutorialManager,
+  type TutorialStep,
+} from "@packages/seed-bible/seed-bible/managers/TutorialManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
@@ -13,6 +16,7 @@ function createLogin(): LoginManager {
     userId: signal(null),
     profile: signal(null),
     localConfig: signal({}),
+    hydrateLocalConfig: vi.fn(),
     updateProfile: vi.fn(),
   } as unknown as LoginManager;
 }
@@ -38,12 +42,17 @@ function createPanes(): PanesManager {
   } as unknown as PanesManager;
 }
 
-function createSidebar(): SidebarManager {
+function createSidebar(collapsed = false): SidebarManager {
+  const isSidebarCollapsed = signal(collapsed);
   return {
     closeSearchPanel: vi.fn(),
     closeChatPanel: vi.fn(),
     closeSettings: vi.fn(),
     closeSidebar: vi.fn(),
+    isSidebarCollapsed,
+    setSidebarCollapsed: vi.fn((value: boolean) => {
+      isSidebarCollapsed.value = value;
+    }),
   } as unknown as SidebarManager;
 }
 
@@ -68,6 +77,13 @@ describe("createTutorialManager — session-link joins", () => {
       /* joinedViaSessionLink */ true
     );
 
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
     expect(tutorial.promptVisible.value).toBe(false);
     expect(tutorial.running.value).toBe(false);
   });
@@ -83,6 +99,13 @@ describe("createTutorialManager — session-link joins", () => {
       createPanes(),
       createSidebar()
     );
+
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
 
     expect(tutorial.promptVisible.value).toBe(true);
   });
@@ -102,6 +125,13 @@ describe("createTutorialManager — session-link joins", () => {
       /* joinedViaSessionLink */ true
     );
 
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
     tutorial.startContextual("search");
 
     expect(tutorial.running.value).toBe(false);
@@ -119,9 +149,154 @@ describe("createTutorialManager — session-link joins", () => {
       createSidebar()
     );
 
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
     tutorial.startContextual("search");
 
     expect(tutorial.running.value).toBe(true);
+  });
+});
+
+describe("createTutorialManager — startContextual with inline steps", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  function makeStep(id: string): TutorialStep {
+    return {
+      id,
+      target: `.${id}`,
+      titleKey: `${id}.title`,
+      titleDefault: id,
+      bodyKey: `${id}.body`,
+      bodyDefault: id,
+    };
+  }
+
+  it("runs the steps passed in, instead of the CONTEXTUAL_TUTORIALS registry lookup", () => {
+    window.localStorage.setItem("sb-tutorial-seen", "true");
+
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    // Not a registered CONTEXTUAL_TUTORIALS key, so a plain
+    // `startContextual("a-brand-new-feature")` would no-op.
+    tutorial.startContextual("a-brand-new-feature", [makeStep("step-1")]);
+
+    expect(tutorial.running.value).toBe(true);
+    expect(tutorial.currentStep.value?.id).toBe("step-1");
+  });
+
+  it("still tracks the seen flag under featureId, so it won't replay once finished", () => {
+    window.localStorage.setItem("sb-tutorial-seen", "true");
+
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    tutorial.startContextual("a-brand-new-feature", [makeStep("step-1")]);
+    tutorial.finish();
+
+    expect(tutorial.featuresSeen.value["a-brand-new-feature"]).toBe(true);
+
+    tutorial.startContextual("a-brand-new-feature", [makeStep("step-1")]);
+    expect(tutorial.running.value).toBe(false);
+  });
+});
+
+describe("createTutorialManager — skip flow", () => {
+  beforeEach(() => {
+    // The onboarding tour's own "seen" flag persists in localStorage; start
+    // clean so it doesn't mask what startContextual() decides.
+    window.localStorage.clear();
+    window.localStorage.setItem("sb-tutorial-seen", "true");
+  });
+
+  it("raises the skip prompt and ends the tour, without opting out", () => {
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.startContextual("search");
+    expect(tutorial.running.value).toBe(true);
+
+    tutorial.skip();
+
+    expect(tutorial.running.value).toBe(false);
+    expect(tutorial.skipPromptVisible.value).toBe(true);
+    expect(tutorial.optedOut.value).toBe(false);
+  });
+
+  it("keepTutorials() dismisses the prompt and leaves future tutorials enabled", () => {
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.startContextual("search");
+    tutorial.skip();
+
+    tutorial.keepTutorials();
+
+    expect(tutorial.skipPromptVisible.value).toBe(false);
+    expect(tutorial.optedOut.value).toBe(false);
+
+    // A different contextual tutorial can still pop later — opting out wasn't
+    // recorded just because the user skipped one tour.
+    tutorial.startContextual("pane-layout");
+    expect(tutorial.running.value).toBe(true);
+  });
+
+  it("optOut() from the skip prompt records the opt-out and hides the prompt", () => {
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.startContextual("search");
+    tutorial.skip();
+
+    tutorial.optOut();
+
+    expect(tutorial.skipPromptVisible.value).toBe(false);
+    expect(tutorial.optedOut.value).toBe(true);
+
+    // Opted out — a different contextual tutorial no longer pops.
+    tutorial.startContextual("pane-layout");
+    expect(tutorial.running.value).toBe(false);
   });
 });
 
@@ -140,6 +315,13 @@ describe("createTutorialManager — reader visibility gate", () => {
       createSidebar()
     );
 
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
     expect(tutorial.promptVisible.value).toBe(false);
   });
 
@@ -155,10 +337,78 @@ describe("createTutorialManager — reader visibility gate", () => {
       createSidebar()
     );
 
+    // `createTutorialManager` no longer reads storage or watches for the
+    // offer-card moment at construction — both would put the card in the
+    // client's first render but not the SSR HTML. The real app makes these two
+    // calls from a post-mount effect via `app.hydrateFromStorage()`.
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
     expect(tutorial.promptVisible.value).toBe(false);
 
     readerVisible.value = true;
 
     expect(tutorial.promptVisible.value).toBe(true);
+  });
+});
+
+describe("createTutorialManager — onboarding start", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("expands a collapsed desktop sidebar so the tour can spotlight it", () => {
+    const sidebar = createSidebar(true);
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      sidebar
+    );
+
+    tutorial.start();
+
+    expect(sidebar.setSidebarCollapsed).toHaveBeenCalledWith(false);
+    expect(sidebar.isSidebarCollapsed.value).toBe(false);
+    expect(tutorial.running.value).toBe(true);
+  });
+
+  it("leaves a collapsed sidebar collapsed on mobile", () => {
+    const sidebar = createSidebar(true);
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(true),
+      createPanes(),
+      sidebar
+    );
+
+    tutorial.start();
+
+    expect(sidebar.setSidebarCollapsed).not.toHaveBeenCalled();
+    expect(sidebar.isSidebarCollapsed.value).toBe(true);
+  });
+
+  it("does not raise the offer card when the tour was started before the reader was visible", () => {
+    const readerVisible = signal(false);
+    const tutorial = createTutorialManager(
+      createLogin(),
+      readerVisible,
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    tutorial.start();
+    readerVisible.value = true;
+
+    expect(tutorial.running.value).toBe(true);
+    expect(tutorial.promptVisible.value).toBe(false);
   });
 });

@@ -1,7 +1,16 @@
 import "./PortalComponent.css";
-import { useRef } from "preact/hooks";
+import { useEffect, useImperativeHandle, useRef } from "preact/hooks";
+import { forwardRef } from "preact/compat";
 
 export type CasualOSPattern = { name: string } | { aux: string };
+
+/** The origin of every `ao.bot` portal iframe — the only origin trusted for postMessage traffic in or out. */
+const AO_BOT_ORIGIN = "https://ao.bot";
+
+export interface PortalComponentHandle {
+  /** Sends a message into the portal's CasualOS instance via `postMessage`. */
+  sendMessage: (message: unknown) => void;
+}
 
 export interface PortalComponentProps {
   /** Grid/map portal identifier to load in the iframe. */
@@ -18,12 +27,14 @@ export interface PortalComponentProps {
   pattern: CasualOSPattern | null;
   /** Query parameters for the portal's content. */
   query?: Record<string, string> | null;
+  /** Called with each message the portal's CasualOS instance sends via `os.sendEmbedMessage`. */
+  onMessage?: (message: unknown) => void;
 }
 
 /** Builds the `ao.bot` iframe URL for a portal from its props. */
 function buildIframeUrl(props: PortalComponentProps): string {
   const { portal, portalType, pattern, inst } = props;
-  const iframeUrl = new URL("https://ao.bot/");
+  const iframeUrl = new URL(AO_BOT_ORIGIN);
 
   iframeUrl.searchParams.set("inst", inst);
 
@@ -54,7 +65,10 @@ function buildIframeUrl(props: PortalComponentProps): string {
  * Renders a CasualOS grid or map portal as a cross-origin `ao.bot` iframe.
  * Intended to be used as a pane's `component` (see `PanesManager.openPane`).
  */
-export function PortalComponent(props: PortalComponentProps) {
+export const PortalComponent = forwardRef<
+  PortalComponentHandle,
+  PortalComponentProps
+>(function PortalComponent(props, ref) {
   const { portal, portalType } = props;
   const portalTitle = portalType === "map" ? "Map Portal" : "Grid Portal";
 
@@ -74,6 +88,41 @@ export function PortalComponent(props: PortalComponentProps) {
     iframeSrcRef.current = buildIframeUrl(props);
   }
 
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Kept fresh on every render but never used to resubscribe the listener
+  // below — see the effect's empty dependency array for why.
+  const onMessageRef = useRef(props.onMessage);
+  onMessageRef.current = props.onMessage;
+
+  useImperativeHandle(ref, () => ({
+    sendMessage: (message: unknown) => {
+      iframeRef.current?.contentWindow?.postMessage(message, AO_BOT_ORIGIN);
+    },
+  }));
+
+  // Registered once for the life of the mounted instance, matching the
+  // "compute once" approach used for iframeSrcRef above: `onMessage` is read
+  // through `onMessageRef` so a caller passing a fresh function identity each
+  // render doesn't tear down and recreate the listener.
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // The origin check alone isn't enough — more than one PortalComponent
+      // (and its own ao.bot iframe) can be mounted at once via floating
+      // panes, so the source check ensures this instance only reacts to
+      // messages from its own iframe, not a sibling portal's.
+      if (
+        event.origin !== AO_BOT_ORIGIN ||
+        event.source !== iframeRef.current?.contentWindow
+      ) {
+        return;
+      }
+      onMessageRef.current?.(event.data);
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
   let allow = "";
 
   if (import.meta.env.DEV) {
@@ -87,6 +136,7 @@ export function PortalComponent(props: PortalComponentProps) {
         <div className="sb-grid-portal-pane-name">{portal}</div>
       </div>
       <iframe
+        ref={iframeRef}
         className="sb-grid-portal-pane-iframe"
         src={iframeSrcRef.current}
         referrerPolicy={"origin-when-cross-origin"}
@@ -94,4 +144,4 @@ export function PortalComponent(props: PortalComponentProps) {
       ></iframe>
     </>
   );
-}
+});

@@ -219,6 +219,47 @@ function sharedUserProfileEntriesMatch(
 }
 
 /**
+ * Where one participant's own reader is, as published into the session's
+ * `reading_positions` map.
+ *
+ * Broadcast per connection because `reading_state` holds a single position for
+ * the whole session, which cannot answer "where is each participant": someone
+ * outside `allowedNavigators` moves their own reader without ever publishing,
+ * and everyone else trails a navigation by the publish debounce. Reading the
+ * session position instead reports every peer wherever the *local* reader is.
+ */
+export interface ParticipantReadingPosition {
+  bookId: string;
+  chapterNumber: number;
+  /**
+   * The lowest and highest verse numbers on screen in that participant's
+   * reader, when they have reported them. Absent for a participant whose
+   * reader hasn't measured a range yet (and for entries written before this
+   * existed), so callers must treat the position as chapter-only.
+   */
+  firstVerse?: number;
+  lastVerse?: number;
+}
+
+function parseParticipantReadingPosition(
+  value: unknown
+): ParticipantReadingPosition | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const bookId = toStringOrNull(record.bookId);
+  const chapterNumber = toPositiveIntOrNull(record.chapterNumber);
+  if (!bookId || chapterNumber === null) return null;
+  const firstVerse = toPositiveIntOrNull(record.firstVerse);
+  const lastVerse = toPositiveIntOrNull(record.lastVerse);
+  // A half-written range says nothing, so both ends have to be there and in
+  // order before it is reported.
+  if (firstVerse === null || lastVerse === null || lastVerse < firstVerse) {
+    return { bookId, chapterNumber };
+  }
+  return { bookId, chapterNumber, firstVerse, lastVerse };
+}
+
+/**
  * How long to wait after a local navigation before publishing it to peers.
  *
  * Navigation is instant and unthrottled, so skimming ten chapters fires ten
@@ -230,6 +271,17 @@ function sharedUserProfileEntriesMatch(
  * feels immediate to everyone else.
  */
 const PUBLISH_DEBOUNCE_MS = 150;
+
+/**
+ * How long to wait after the visible verse range settles before publishing it.
+ *
+ * Longer than the navigation debounce because scrolling changes the range
+ * continuously: a flick through a chapter would otherwise write an entry for
+ * every verse it passed into a document that never shrinks. Half a second
+ * turns a scroll gesture into one write of where the reader stopped, which is
+ * all a presence marker needs.
+ */
+const RANGE_PUBLISH_DEBOUNCE_MS = 500;
 
 const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   allowedNavigators: null,
@@ -453,7 +505,7 @@ function canLoadSessionData(sessionData: SessionData): sessionData is {
  * One function, one rule: a given user key always maps to the same
  * `(icon, color)` pair — everywhere on every client. No list context, no
  * walk-forward. Used for:
- *   - The sidebar self-avatar (bottom-right)
+ *   - The sidebar self-avatar (bottom-right), when other people are present
  *   - The connected-users list inside a shared tab
  *   - The "Shared with you" toasts
  *
@@ -546,6 +598,16 @@ export interface BibleReadingSession {
   currentUser: ReadonlySignal<ConnectedSessionUser | null>;
 
   /**
+   * Each still-connected participant's own reading position, keyed by
+   * connectionId. A peer who hasn't broadcast one yet is absent rather than
+   * guessed at, so callers that must show something should fall back to
+   * `readingState` themselves.
+   */
+  participantPositions: ReadonlySignal<
+    ReadonlyMap<string, ParticipantReadingPosition>
+  >;
+
+  /**
    * Whether this client's own connection to the shared document is
    * currently synced. False while resyncing (e.g. right after a mobile
    * device resumes from the background) — during that window, this
@@ -585,6 +647,23 @@ export interface BibleReadingSession {
    * is null or empty every participant may decorate.
    */
   userCanDecorate: (sessionId: string) => boolean;
+}
+
+/**
+ * Builds the canonical URL for joining the given shared session — the
+ * current page's URL with `sessionId` set and everything else stripped
+ * (aside from `pattern`, which stays if present so a pattern-embedded
+ * reader keeps working after a join).
+ */
+export function getSessionUrl(session: BibleReadingSession): URL {
+  const url = new URL(window.location.href);
+  const pattern = url.searchParams.get("pattern");
+  url.search = "";
+  url.searchParams.set("sessionId", session.id);
+  if (pattern) {
+    url.searchParams.set("pattern", pattern);
+  }
+  return url;
 }
 
 function createSessionId(): string {
@@ -642,9 +721,17 @@ async function createBibleReadingSession(
   // `connectedUsers`.
   const userProfilesMap =
     document.getMap<SharedUserProfileEntry>("user_profiles");
+  // Per-connection reading position, written only by its own client. See
+  // `ParticipantReadingPosition` for why the session-wide position can't stand
+  // in for this.
+  const readingPositionsMap =
+    document.getMap<ParticipantReadingPosition>("reading_positions");
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
   const allUsers = signal<ConnectedSessionUser[]>([]);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
+  const participantPositions = signal<
+    ReadonlyMap<string, ParticipantReadingPosition>
+  >(new Map());
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
   const localConnectionId = os.connectionId;
@@ -695,6 +782,32 @@ async function createBibleReadingSession(
   let remoteSyncDrain: Promise<void> | null = null;
   /** Armed while a local navigation is waiting to be published to peers. */
   let publishTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Armed while our own reading position is waiting to be broadcast. */
+  let positionBroadcastTimer: ReturnType<typeof setTimeout> | null = null;
+  // The chapter the last broadcast actually went out for, so a chapter change
+  // can be told apart from a scroll within the same chapter and given the
+  // shorter window. Updated when the broadcast fires, not when a change is
+  // noticed.
+  let publishedBookId: string | null = null;
+  let publishedChapter = 0;
+  let publishedTabVisible = true;
+  /**
+   * Set while a change waiting to go out was (or followed) one that peers
+   * should see promptly: a navigation, or the tab going into or out of the
+   * background. A scroll on its own waits the longer window.
+   */
+  let pendingIsPrompt = false;
+  // Whether this tab is in the foreground. Somebody whose tab is hidden isn't
+  // looking at any verses, so their range is withheld while it is and peers
+  // drop their bar. The chapter-only entry is kept, so they stay a participant
+  // at their chapter rather than vanishing from the session.
+  const browserDocument =
+    typeof globalThis.document !== "undefined" ? globalThis.document : null;
+  const tabVisible = signal(browserDocument?.visibilityState !== "hidden");
+  const syncTabVisibility = () => {
+    tabVisible.value = browserDocument?.visibilityState !== "hidden";
+  };
+  browserDocument?.addEventListener("visibilitychange", syncTabVisibility);
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
   let applyingRemoteExtensions = false;
@@ -795,6 +908,26 @@ async function createBibleReadingSession(
     }
   };
 
+  const syncParticipantPositions = () => {
+    const next = new Map<string, ParticipantReadingPosition>();
+    readingPositionsMap.forEach((value, connectionId) => {
+      if (typeof connectionId !== "string") {
+        return;
+      }
+      // A client that vanished without disposing leaves its entry behind and
+      // the document never shrinks, so connectivity — not the map — decides
+      // who still counts as present.
+      if (!connectedClients.has(connectionId)) {
+        return;
+      }
+      const position = parseParticipantReadingPosition(value);
+      if (position) {
+        next.set(connectionId, position);
+      }
+    });
+    participantPositions.value = next;
+  };
+
   const syncConnectedUsers = async (version: number) => {
     const clients = Array.from(connectedClients.values());
     const nextUsers = await Promise.all(
@@ -891,6 +1024,10 @@ async function createBibleReadingSession(
     });
 
     allUsers.value = Array.from(nextUsersByConnectionId.values());
+
+    // Connectivity gates which position entries count, so the positions have
+    // to be rebuilt whenever the connected set changes.
+    syncParticipantPositions();
   };
 
   // When the translation isn't shared, keep the local reader on their own
@@ -1065,6 +1202,94 @@ async function createBibleReadingSession(
       // still see whatever was last published (possibly stale).
     }
   });
+
+  const broadcastLocalPosition = () => {
+    const bookId = readingState.bookId.value;
+    const chapterNumber = readingState.chapterNumber.value;
+    if (!bookId || chapterNumber <= 0) {
+      return;
+    }
+    const range = tabVisible.value
+      ? readingState.visibleVerseRange.value
+      : null;
+    const next: ParticipantReadingPosition = range
+      ? {
+          bookId,
+          chapterNumber,
+          firstVerse: range.first,
+          lastVerse: range.last,
+        }
+      : { bookId, chapterNumber };
+    const currentEntry = parseParticipantReadingPosition(
+      readingPositionsMap.get(localConnectionId)
+    );
+    if (
+      currentEntry &&
+      currentEntry.bookId === next.bookId &&
+      currentEntry.chapterNumber === next.chapterNumber &&
+      currentEntry.firstVerse === next.firstVerse &&
+      currentEntry.lastVerse === next.lastVerse
+    ) {
+      return;
+    }
+    try {
+      document.transact(() => {
+        readingPositionsMap.set(localConnectionId, next);
+      });
+    } catch {
+      // Best-effort — peers keep the last position we managed to publish.
+    }
+  };
+
+  // Deliberately not gated on `userCanNavigate` the way `stopSync` is: this
+  // says where we are, which a participant who may not move the session is
+  // still entitled to report. Debounced so skimming chapters leaves one entry
+  // rather than one per chapter in a document that never shrinks.
+  //
+  // A scroll gets the longer window: the visible verse range changes far more
+  // often than the chapter does, and peers only need where the reader came to
+  // rest. A navigation, or the tab being hidden or shown, gets the short one.
+  const stopBroadcastLocalPosition = effect(() => {
+    const bookId = readingState.bookId.value;
+    const chapterNumber = readingState.chapterNumber.value;
+    const visible = tabVisible.value;
+    void readingState.visibleVerseRange.value;
+
+    // A navigation is always chased by range changes — the old chapter's
+    // verses leave the screen and the new one's are measured — so whether this
+    // particular run was the navigation is the wrong question to ask. What
+    // matters is whether anything still waiting to go out was one. Asking per
+    // run, those follow-ups re-armed the timer on the scroll window and a
+    // chapter change reached peers at the scroll cadence instead of the
+    // navigation one.
+    if (
+      publishedBookId !== bookId ||
+      publishedChapter !== chapterNumber ||
+      publishedTabVisible !== visible
+    ) {
+      pendingIsPrompt = true;
+    }
+    if (positionBroadcastTimer !== null) {
+      clearTimeout(positionBroadcastTimer);
+    }
+    positionBroadcastTimer = setTimeout(
+      () => {
+        positionBroadcastTimer = null;
+        pendingIsPrompt = false;
+        publishedBookId = readingState.bookId.peek();
+        publishedChapter = readingState.chapterNumber.peek();
+        publishedTabVisible = tabVisible.peek();
+        broadcastLocalPosition();
+      },
+      pendingIsPrompt ? PUBLISH_DEBOUNCE_MS : RANGE_PUBLISH_DEBOUNCE_MS
+    );
+  });
+
+  const readingPositionsSubscription = readingPositionsMap.changes.subscribe(
+    () => {
+      syncParticipantPositions();
+    }
+  );
 
   const subscribeToRemoteClients = () =>
     document.remoteClients.subscribe((event) => {
@@ -1534,17 +1759,27 @@ async function createBibleReadingSession(
     decorationsSubscription.unsubscribe();
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
+    readingPositionsSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     statusUpdatedSubscription.unsubscribe();
     stopSync();
     stopDecorationSync();
     stopExtensionSync?.();
     stopBroadcastLocalIdentity();
-    // Drop our identity entry so peers' lookup for this connection no
-    // longer resolves once we're gone.
+    // Stopped before the delete below, so a broadcast still sitting on the
+    // debounce can't re-add the entry we are about to remove.
+    stopBroadcastLocalPosition();
+    if (positionBroadcastTimer !== null) {
+      clearTimeout(positionBroadcastTimer);
+      positionBroadcastTimer = null;
+    }
+    browserDocument?.removeEventListener("visibilitychange", syncTabVisibility);
+    // Drop our identity and position entries so peers' lookups for this
+    // connection no longer resolve once we're gone.
     try {
       document.transact(() => {
         userProfilesMap.delete(localConnectionId);
+        readingPositionsMap.delete(localConnectionId);
       });
     } catch {
       // Best-effort — the entry will simply linger in the CRDT.
@@ -1570,6 +1805,7 @@ async function createBibleReadingSession(
     allUsers,
     connectedUsers,
     currentUser,
+    participantPositions,
     isSynced,
     removeSharedDecoration,
     dispose,

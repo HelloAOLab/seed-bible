@@ -116,3 +116,17 @@
   color: var(--sb-font-color);
   border-color: var(--sb-secondary-color);
 }
+
+/* For an opt-out that should stay reachable without competing with the real
+   choice above it. */
+.sb-onboarding-btn-tertiary {
+  background: transparent;
+  color: var(--sb-font-color);
+  font-weight: 500;
+  opacity: 0.75;
+  text-decoration: underline;
+}
+
+.sb-onboarding-btn-tertiary:hover {
+  opacity: 1;
+}

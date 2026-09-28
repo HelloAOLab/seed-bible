@@ -1,4 +1,10 @@
-import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "@preact/signals";
 import type { LoginManager } from "../managers/LoginManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import type { PanesManager } from "../managers/PanesManager";
@@ -14,7 +20,7 @@ const TUTORIAL_SEEN_KEY = "sb-tutorial-seen";
 const TUTORIAL_OPTED_OUT_KEY = "sb-tutorial-opted-out";
 const TUTORIAL_FEATURES_KEY = "sb-tutorial-features-seen";
 
-// Stored unprefixed on profile.config (matching `fontSize`, `appInstalled`,
+// Stored unprefixed on profile.config (matching `fontSize`, `lang`,
 // etc.) — the backend record that the user has completed/skipped the tour.
 const PROFILE_TUTORIAL_SEEN = "tutorialSeen";
 const PROFILE_TUTORIAL_OPTED_OUT = "tutorialOptedOut";
@@ -51,6 +57,14 @@ export interface TutorialStep {
    * instead of behind it. Used by contextual tips that fire while a panel is up.
    */
   elevated?: boolean;
+  /**
+   * How the target is picked out. `"spotlight"` (the default) dims the whole
+   * UI around it, which suits a tour that has taken over the screen.
+   * `"glow"` leaves the page alone and rings the target in the accent colour
+   * instead — for a one-off tip about a single small control, where blacking
+   * out the page says more than the tip is worth.
+   */
+  highlight?: "spotlight" | "glow";
 }
 
 /**
@@ -94,9 +108,9 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     id: "tabs",
     target: ".sb-sidebar-tabs-header",
     titleKey: "tutorial.tabsTitle",
-    titleDefault: "Tabs and bookmarks",
+    titleDefault: "Tabs and saves",
     bodyKey: "tutorial.tabsBody",
-    bodyDefault: "Your open passages and bookmarks live here.",
+    bodyDefault: "Your open passages and saves live here.",
     placement: "right",
   },
   {
@@ -228,6 +242,24 @@ export const CONTEXTUAL_TUTORIALS: Record<string, TutorialStep[]> = {
       placement: "left",
     },
   ],
+  "offline-download": [
+    {
+      id: "offline-download",
+      // Fired when the translation list opens, which is the only place the
+      // download control exists. Grouped as "selector" so the selector draws
+      // it: its nodes live in a CasualOS shadow root the generic overlay can't
+      // measure.
+      target: ".sb-offline-btn",
+      titleKey: "tutorial.offlineDownloadTitle",
+      titleDefault: "Tap to keep it on your device",
+      bodyKey: "tutorial.offlineDownloadBody",
+      bodyDefault:
+        "Any translation with this icon can be saved for offline reading.",
+      placement: "bottom",
+      group: "selector",
+      highlight: "glow",
+    },
+  ],
   search: [
     {
       id: "selector-search",
@@ -310,6 +342,12 @@ export interface TutorialManager {
    * tour unannounced. Resolved by {@link acceptPrompt} / {@link dismissPrompt}.
    */
   promptVisible: ReadonlySignal<boolean>;
+  /**
+   * Whether the "turn off all tutorials?" follow-up dialog is showing. Raised
+   * by {@link skip} once the tour it interrupted has ended, and resolved by
+   * {@link keepTutorials} / {@link optOut}.
+   */
+  skipPromptVisible: ReadonlySignal<boolean>;
   /** Per-feature contextual tutorial completion flags. */
   featuresSeen: ReadonlySignal<Record<string, boolean>>;
   /** Starts (or restarts) the onboarding tour from the first step. */
@@ -317,8 +355,13 @@ export interface TutorialManager {
   /**
    * Starts a contextual single-feature tour, if not already seen and the user
    * hasn't opted out. Safe to call from event handlers without pre-checking.
+   *
+   * `steps` overrides the `CONTEXTUAL_TUTORIALS[featureId]` lookup — for a
+   * tour whose steps need instance state (e.g. the id of the record a step's
+   * `onEnter` should open) that isn't available at module load. The "seen"
+   * flag is still tracked under `featureId` either way.
    */
-  startContextual: (featureId: string) => void;
+  startContextual: (featureId: string, steps?: TutorialStep[]) => void;
   /** Advances to the next step, finishing after the last one. */
   next: () => void;
   /** Goes back one step (no-op on the first). */
@@ -326,8 +369,17 @@ export interface TutorialManager {
   /** Ends the tour, recording completion for the active tour type. */
   finish: () => void;
   /**
-   * Ends the current tour and records that the user does not want future
-   * tutorial prompts. Marks the onboarding tour completed too.
+   * Ends the current tour (like {@link finish}) and raises the "turn off all
+   * tutorials?" follow-up dialog, rather than asking that question on the
+   * tour dialog itself.
+   */
+  skip: () => void;
+  /** Dismisses the skip follow-up dialog, leaving future tutorials enabled. */
+  keepTutorials: () => void;
+  /**
+   * Confirms the skip follow-up dialog: records that the user does not want
+   * future tutorial prompts. Also usable directly (e.g. from Settings) to opt
+   * out without going through the skip flow.
    */
   optOut: () => void;
   /** Accepts the first-run offer card: hides it and starts the onboarding tour. */
@@ -337,6 +389,24 @@ export interface TutorialManager {
    * as seen (still replayable from Settings).
    */
   dismissPrompt: () => void;
+
+  /**
+   * Applies the device's real "seen" / "opted out" / per-feature flags from
+   * `localStorage`. They seed to their SSR values (false / false / empty), so
+   * call this once from a post-mount effect — via `AppState.hydrateFromStorage`
+   * — rather than reading at construction, where it would make a returning
+   * visitor's first render disagree with the served HTML.
+   */
+  hydrateStoredFlags: () => void;
+
+  /**
+   * Starts watching for the moment the first-run offer card should appear.
+   * Deliberately separate from construction: the condition it waits on is
+   * already true before the client's first render, so arming it eagerly would
+   * put the card in the client tree but not in the SSR HTML. Call once from a
+   * post-mount effect (via `AppState.hydrateFromStorage`). Idempotent.
+   */
+  armAutoStart: () => void;
 }
 
 /**
@@ -358,6 +428,9 @@ export function createTutorialManager(
   const index = signal<number>(0);
   // First-run offer card visibility (see `promptVisible` in the interface).
   const promptVisible = signal<boolean>(false);
+  // "Turn off all tutorials?" follow-up dialog visibility (see
+  // `skipPromptVisible` in the interface).
+  const skipPromptVisible = signal<boolean>(false);
 
   // The active step set is chosen at `start()` / `startContextual()` time
   // (snapshotted so a resize mid-tour doesn't swap the steps out from under us).
@@ -375,11 +448,26 @@ export function createTutorialManager(
     "selector-search",
   ]);
 
-  const seenLocally = signal<boolean>(readFlag(TUTORIAL_SEEN_KEY));
-  const optedOutLocally = signal<boolean>(readFlag(TUTORIAL_OPTED_OUT_KEY));
-  const featuresSeenLocal = signal<Record<string, boolean>>(
-    readFeaturesFlag(TUTORIAL_FEATURES_KEY)
-  );
+  // Seeded to the values SSR sees (it has no `localStorage`) rather than read
+  // eagerly, so the client's first render matches the served HTML.
+  // `hydrateStoredFlags` applies the device's real flags after the first commit
+  // — see `AppState.hydrateFromStorage`.
+  const seenLocally = signal<boolean>(false);
+  const optedOutLocally = signal<boolean>(false);
+  const featuresSeenLocal = signal<Record<string, boolean>>({});
+
+  const hydrateStoredFlags = () => {
+    batch(() => {
+      seenLocally.value = readFlag(TUTORIAL_SEEN_KEY);
+      optedOutLocally.value = readFlag(TUTORIAL_OPTED_OUT_KEY);
+      // Merged UNDER the current value so a flag set in the brief window before
+      // this runs isn't clobbered by the now-stale disk snapshot.
+      featuresSeenLocal.value = {
+        ...readFeaturesFlag(TUTORIAL_FEATURES_KEY),
+        ...featuresSeenLocal.value,
+      };
+    });
+  };
 
   const completed = computed<boolean>(() => {
     if (seenLocally.value) {
@@ -523,7 +611,19 @@ export function createTutorialManager(
     saveProfileConfigValue(login, PROFILE_TUTORIAL_OPTED_OUT, true);
   };
 
+  // Set once the first-run offer has been resolved — either the effect below
+  // decided, or `start()` was called directly (the welcome screen's tour
+  // button) before the reader was visible.
+  let autoStartChecked = false;
+
   const start = () => {
+    // An explicit start resolves the first-run offer. Marking that before
+    // tearing Today down matters: closing the pane is what makes the reader
+    // visible, and the offer effect would otherwise pop the card on top of
+    // the tour it was waiting to show.
+    autoStartChecked = true;
+    promptVisible.value = false;
+
     // Close whatever overlapping UI is up first — coach marks target the
     // normal reader UI, so a fullscreen pane (e.g. the Today screen) or an
     // open sidebar panel left up would hide the very elements being
@@ -534,6 +634,12 @@ export function createTutorialManager(
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
+    // The desktop tour spotlights the tabs header, which the collapsed rail
+    // doesn't render. Open it so those steps have a target. Remembered, so
+    // the sidebar stays open after the tour instead of snapping shut.
+    if (!isMobile.value && sidebar.isSidebarCollapsed.value) {
+      sidebar.setSidebarCollapsed(false);
+    }
 
     // Pick the step set for the current viewport before showing the tour.
     mode.value = isMobile.value ? "onboarding-mobile" : "onboarding-desktop";
@@ -548,7 +654,7 @@ export function createTutorialManager(
     running.value = true;
   };
 
-  const startContextual = (featureId: string) => {
+  const startContextual = (featureId: string, steps?: TutorialStep[]) => {
     if (running.value) {
       return;
     }
@@ -563,13 +669,13 @@ export function createTutorialManager(
     if (featuresSeen.value[featureId]) {
       return;
     }
-    const steps = CONTEXTUAL_TUTORIALS[featureId];
-    if (!steps || steps.length === 0) {
+    const resolvedSteps = steps ?? CONTEXTUAL_TUTORIALS[featureId];
+    if (!resolvedSteps || resolvedSteps.length === 0) {
       return;
     }
     mode.value = "contextual";
     activeFeatureId.value = featureId;
-    activeSteps.value = steps;
+    activeSteps.value = resolvedSteps;
     index.value = 0;
     running.value = true;
   };
@@ -601,6 +707,16 @@ export function createTutorialManager(
     }
     running.value = false;
     activeFeatureId.value = null;
+    skipPromptVisible.value = false;
+  };
+
+  const skip = () => {
+    finish();
+    skipPromptVisible.value = true;
+  };
+
+  const keepTutorials = () => {
+    skipPromptVisible.value = false;
   };
 
   const acceptPrompt = () => {
@@ -635,28 +751,44 @@ export function createTutorialManager(
   // could see the offer flash before their recorded completion arrives.
   // Rather than launching the tour unannounced we surface the offer card;
   // accepting it starts the tour. One-shot via `autoStartChecked`.
-  let autoStartChecked = false;
-  effect(() => {
-    if (autoStartChecked || running.value) {
+  //
+  // Deliberately NOT armed at construction. `readerVisible` derives from the
+  // chapter data, which the client entry (`app/init.tsx`) already awaits before
+  // it calls `hydrate()` — so an eager effect flips `promptVisible` true during
+  // the client's *first* render while the SSR pass captured it as false
+  // (`renderToStringAsync` only re-renders the subtree that threw, and the offer
+  // card renders before it). That puts an element in the client tree that the
+  // served HTML doesn't have, which is exactly the divergence `hydrate()`
+  // reports. `armAutoStart` is called from `AppState.hydrateFromStorage` after
+  // the first commit, so the card appears a moment later instead.
+  let autoStartArmed = false;
+  const armAutoStart = () => {
+    if (autoStartArmed) {
       return;
     }
-    // Opened via a shared-session invite link: don't auto-launch the onboarding
-    // tour over the join. We don't record completion, so the tour still
-    // auto-starts on a later visit that isn't a session link.
-    if (joinedViaSessionLink) {
-      return;
-    }
-    if (!readerVisible.value) {
-      return;
-    }
-    if (login.userId.value && login.profile.value === null) {
-      return;
-    }
-    autoStartChecked = true;
-    if (!completed.value && !optedOut.value) {
-      promptVisible.value = true;
-    }
-  });
+    autoStartArmed = true;
+    effect(() => {
+      if (autoStartChecked || running.value) {
+        return;
+      }
+      // Opened via a shared-session invite link: don't auto-launch the onboarding
+      // tour over the join. We don't record completion, so the tour still
+      // auto-starts on a later visit that isn't a session link.
+      if (joinedViaSessionLink) {
+        return;
+      }
+      if (!readerVisible.value) {
+        return;
+      }
+      if (login.userId.value && login.profile.value === null) {
+        return;
+      }
+      autoStartChecked = true;
+      if (!completed.value && !optedOut.value) {
+        promptVisible.value = true;
+      }
+    });
+  };
 
   return {
     get steps() {
@@ -670,14 +802,19 @@ export function createTutorialManager(
     completed,
     optedOut,
     promptVisible,
+    skipPromptVisible,
     featuresSeen,
     start,
     startContextual,
     next,
     prev,
     finish,
+    skip,
+    keepTutorials,
     optOut,
     acceptPrompt,
     dismissPrompt,
+    hydrateStoredFlags,
+    armAutoStart,
   };
 }

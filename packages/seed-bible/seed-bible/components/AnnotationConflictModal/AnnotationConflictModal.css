@@ -1,0 +1,136 @@
+.sb-annotation-conflict {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 17.5rem;
+  max-width: 30rem;
+  color: var(--sb-font-color);
+}
+
+.sb-annotation-conflict-message {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sb-annotation-conflict-progress {
+  margin: 0;
+  font-size: 0.8125rem;
+  opacity: 0.75;
+}
+
+.sb-annotation-conflict-versions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-annotation-conflict-version {
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  /* A long note scrolls inside its own box rather than pushing the buttons off
+     the bottom of the dialog. */
+  max-height: 9rem;
+  overflow-y: auto;
+  cursor: pointer;
+}
+
+.sb-annotation-conflict-version:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+.sb-annotation-conflict-version-selected {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-annotation-conflict-version-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+}
+
+.sb-annotation-conflict-checkbox {
+  position: relative;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.25rem;
+}
+
+.sb-annotation-conflict-version-selected .sb-annotation-conflict-checkbox {
+  background-color: var(--sb-primary-color);
+  border-color: var(--sb-primary-color);
+}
+
+.sb-annotation-conflict-version-selected
+  .sb-annotation-conflict-checkbox::after {
+  content: "";
+  position: absolute;
+  left: 0.3125rem;
+  top: 0.125rem;
+  width: 0.3125rem;
+  height: 0.5rem;
+  border: solid var(--sb-primary-font-color);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.sb-annotation-conflict-version-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0.8;
+}
+
+.sb-annotation-conflict-version-time {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.sb-annotation-conflict-body {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.sb-annotation-conflict-empty {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.sb-annotation-conflict-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.sb-annotation-conflict-confirm {
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.sb-annotation-conflict-confirm:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.sb-annotation-conflict-confirm:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

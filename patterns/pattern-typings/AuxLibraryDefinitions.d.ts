@@ -15699,6 +15699,13 @@ interface Os {
      * @param defaultValue The value.
      */
     createContext<T>(defaultValue: T): PreactContext<T>;
+
+    /**
+     * Sends an embed message to the parent window. This is useful for communicating with the parent window when running inside an iframe.
+     * @param message The message to send.
+     * @param targetOrigin The target origin that the message should be sent to. Defaults to "*", which means that the message will be sent to any origin.
+     */
+    sendEmbedMessage(message: any, targetOrigin?: string): void;
   };
 
   appCompat: {

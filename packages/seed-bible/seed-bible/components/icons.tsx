@@ -302,25 +302,6 @@ export const MarginIcon = (props: any) => (
     />
   </svg>
 );
-export const BookMarkIcon = (props: any) => (
-  <svg
-    width={14}
-    height={20}
-    viewBox="0 0 14 20"
-    fill="none"
-    stroke="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
-    {...props}
-  >
-    <path
-      d="M13 5V19L7 15L1 19V5C1 3.93913 1.42143 2.92172 2.17157 2.17157C2.92172 1.42143 3.93913 1 5 1H9C10.0609 1 11.0783 1.42143 11.8284 2.17157C12.5786 2.92172 13 3.93913 13 5Z"
-      stroke="currentColor"
-      strokeWidth={1}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 export const Eraser = (props: any) => (
   <svg
     width={14}
@@ -1361,7 +1342,19 @@ const BibleIcon = (props: any) => (
   </svg>
 );
 
-export const MaterialIcon = ({ children, className, ...props }: any) => (
+export interface MaterialIconProps extends Omit<
+  preact.JSX.HTMLAttributes<HTMLSpanElement>,
+  "children"
+> {
+  /** The Material Symbols glyph name, e.g. `arrow_right_alt`. */
+  children: string;
+}
+
+export const MaterialIcon = ({
+  children,
+  className,
+  ...props
+}: MaterialIconProps) => (
   <span className={`material-symbols-outlined ${className ?? ""}`} {...props}>
     {children}
   </span>
@@ -1556,6 +1549,16 @@ const MinusIcon = (props: any) => {
   );
 };
 
+/**
+ * Bookmark glyph, drawn as an outline by default. `fill`, `stroke` and
+ * `stroke-width` sit on the `<svg>` rather than the `<path>` so a caller can
+ * pass its own -- all three are inherited SVG properties, so whatever lands
+ * here reaches the path. That is what lets one glyph serve both Today's
+ * outline chip and the sidebar's filled category row.
+ *
+ * No `stroke-linecap`: the path is a single closed subpath, so it has no ends
+ * for a cap to draw.
+ */
 const BookmarkIcon = (props: any) => {
   return (
     <svg
@@ -1563,14 +1566,44 @@ const BookmarkIcon = (props: any) => {
       height="24"
       viewBox="0 0 24 24"
       fill="none"
+      stroke="currentColor"
+      stroke-width="2"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
       <path
         d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  );
+};
+
+/**
+ * Star glyph for Saves, drawn as an outline by default. Like `BookmarkIcon`,
+ * `fill`, `stroke` and `stroke-width` sit on the `<svg>` so a caller can pass
+ * its own and have them inherit down to the path — that is what lets one glyph
+ * serve both the unsaved outline and the filled "already saved" state.
+ *
+ * Drawn rather than taken from Material Symbols because that font only fills a
+ * star through its variable `FILL` axis, and the app requests the font with
+ * that axis pinned (see the Google Fonts link in `app/main.tsx`), so a filled
+ * variant is not available without shipping a much larger font file.
+ */
+const StarIcon = (props: any) => {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M12 2.5L15.09 8.76L22 9.77L17 14.64L18.18 21.52L12 18.27L5.82 21.52L7 14.64L2 9.77L8.91 8.76L12 2.5Z"
         stroke-linejoin="round"
       />
     </svg>
@@ -1695,6 +1728,33 @@ const ChatParticipantsIcon = (props: any) => {
   );
 };
 
+/** Three stacked rules whose spacing grows with `index`, one per line-height option. */
+export function ScriptureLineHeightIcon({ index }: { index: number }) {
+  const gap = 3.5 + index * 1.5;
+  const startY = 1;
+  return (
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
+      <rect x="0" y={startY} width="20" height="2" rx="1" fill="currentColor" />
+      <rect
+        x="0"
+        y={startY + gap}
+        width="20"
+        height="2"
+        rx="1"
+        fill="currentColor"
+      />
+      <rect
+        x="0"
+        y={startY + 2 * gap}
+        width="20"
+        height="2"
+        rx="1"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 export function StopIcon() {
   return (
     <svg
@@ -1742,6 +1802,7 @@ export {
   AddIcon,
   MinusIcon,
   BookmarkIcon,
+  StarIcon,
   SbTabsIcon,
   BookOutlineIcon,
   AddTab,

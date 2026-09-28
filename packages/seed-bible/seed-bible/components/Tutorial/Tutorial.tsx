@@ -4,10 +4,11 @@ import { useI18n } from "../../i18n/I18nManager";
 import type {
   TutorialManager,
   TutorialPlacement,
+  TutorialStep,
 } from "../../managers/TutorialManager";
 import { useEffect, useRef } from "preact/hooks";
 
-interface Rect {
+export interface Rect {
   top: number;
   left: number;
   width: number;
@@ -41,7 +42,6 @@ export function Tutorial({
    */
   groupFilter?: "selector" | "non-selector";
 }) {
-  const { t } = useI18n();
   const running = tutorial.running.value;
   const step = tutorial.currentStep.value;
   const canGoBack = tutorial.canGoBack.value;
@@ -71,6 +71,12 @@ export function Tutorial({
       return;
     }
 
+    // Scrolled into view (if needed) at most once per step — set the first
+    // time the target is found, so the poll below doesn't keep re-triggering
+    // `scrollIntoView` (fighting the user, or its own settling animation) on
+    // every tick.
+    let scrolledIntoView = false;
+
     const measure = () => {
       const el = document.querySelector(step.target);
       if (!el) {
@@ -81,6 +87,27 @@ export function Tutorial({
       if (r.width === 0 && r.height === 0) {
         rect.value = null;
         return;
+      }
+      // A step's target can sit inside a scrollable panel (e.g. a theme
+      // editor section further down the list) and not be on screen at all
+      // when the step starts. Scroll it into view so both it and the
+      // popover pinned next to it are visible, instead of spotlighting
+      // something the user has to go hunting for. The 150ms poll below picks
+      // up the settled position once the (possibly smooth) scroll finishes.
+      if (!scrolledIntoView) {
+        scrolledIntoView = true;
+        const outOfView =
+          r.top < 0 ||
+          r.left < 0 ||
+          r.bottom > window.innerHeight ||
+          r.right > window.innerWidth;
+        if (outOfView) {
+          el.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "nearest",
+          });
+        }
       }
       // Subtract the overlay's own offset so coordinates are relative to it
       // (getBoundingClientRect is always viewport-relative for both).
@@ -191,53 +218,100 @@ export function Tutorial({
           />
         )}
 
+        <TutorialPopoverContent
+          step={step}
+          tutorial={tutorial}
+          isLastStep={isLast}
+          canGoBack={canGoBack}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Shared card body (title + skip, description, back/progress/next) for a tour
+ * step's popover. Used both here and by the book selector's own popover: its
+ * nodes live in a shadow-root portal this component can't reach, so it renders
+ * the card itself but reuses this markup so the two layouts can't drift apart.
+ */
+export function TutorialPopoverContent({
+  step,
+  tutorial,
+  isLastStep,
+  canGoBack,
+}: {
+  step: TutorialStep;
+  tutorial: TutorialManager;
+  isLastStep: boolean;
+  canGoBack: boolean;
+}) {
+  const { t } = useI18n();
+  return (
+    <>
+      <div className="sb-tour-popover-header">
         <h3 className="sb-tour-popover-title">
           {t(step.titleKey, { defaultValue: step.titleDefault })}
         </h3>
-        <p className="sb-tour-popover-body">
-          {t(step.bodyKey, { defaultValue: step.bodyDefault })}
-        </p>
-
-        <div className="sb-tour-popover-actions">
-          <button
-            type="button"
-            className="sb-tour-btn sb-tour-btn-text"
-            onClick={tutorial.finish}
-          >
-            {t("tutorial.skip", { defaultValue: "Skip" })}
-          </button>
-          <button
-            type="button"
-            className="sb-tour-btn sb-tour-btn-text"
-            onClick={tutorial.optOut}
-          >
-            {t("tutorial.optOut", { defaultValue: "Don't show tutorials" })}
-          </button>
-          <div className="sb-tour-popover-actions-spacer" />
-          {canGoBack && (
-            <button
-              type="button"
-              className="sb-tour-btn sb-tour-btn-back"
-              onClick={tutorial.prev}
-            >
-              {t("tutorial.back", { defaultValue: "Back" })}
-            </button>
-          )}
-          <button
-            type="button"
-            className="sb-tour-btn sb-tour-btn-next"
-            onClick={tutorial.next}
-          >
-            {isLast
-              ? t("tutorial.done", { defaultValue: "Done" })
-              : t("tutorial.next", { defaultValue: "Next" })}
-            <span className="sb-tour-next-arrow" aria-hidden="true">
-              →
-            </span>
-          </button>
-        </div>
+        <button
+          type="button"
+          className="sb-tour-btn sb-tour-btn-text sb-tour-btn-skip"
+          onClick={tutorial.skip}
+        >
+          {t("tutorial.skip", { defaultValue: "Skip" })}
+        </button>
       </div>
-    </div>
+      <p className="sb-tour-popover-body">
+        {t(step.bodyKey, { defaultValue: step.bodyDefault })}
+      </p>
+
+      <div className="sb-tour-popover-actions">
+        {canGoBack && (
+          <button
+            type="button"
+            className="sb-tour-btn sb-tour-btn-back"
+            onClick={tutorial.prev}
+          >
+            {t("tutorial.back", { defaultValue: "Back" })}
+          </button>
+        )}
+        {tutorial.steps.length > 1 && (
+          <div
+            className="sb-tour-popover-dots"
+            role="img"
+            aria-label={t("tutorial.stepProgress", {
+              current: tutorial.index.value + 1,
+              total: tutorial.steps.length,
+              defaultValue: "Step {{current}} of {{total}}",
+            })}
+          >
+            {tutorial.steps.map((tourStep, position) => (
+              <span
+                key={tourStep.id}
+                className={`sb-tour-dot${
+                  position === tutorial.index.value ? " sb-tour-dot-active" : ""
+                }`}
+              />
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          className="sb-tour-btn sb-tour-btn-next"
+          onClick={tutorial.next}
+        >
+          {isLastStep
+            ? t("tutorial.done", { defaultValue: "Done" })
+            : t("tutorial.next", { defaultValue: "Next" })}
+          {/* `dir="ltr"` isolates the glyph from the surrounding RTL run so
+              Arabic-capable fallback fonts can't mirror it — the arrow points
+              right in every language. */}
+          <span className="sb-tour-next-arrow" dir="ltr" aria-hidden="true">
+            →
+          </span>
+        </button>
+      </div>
+    </>
   );
 }
 
@@ -273,12 +347,18 @@ function intersects(a: Rect, b: Rect): boolean {
  * if that means clipping a viewport edge — covering the element is worse than
  * running off the edge. Uses the popover's measured size when available so a
  * tall, wrapped popover doesn't creep back over the target.
+ *
+ * Exported because the book selector positions its own popover with this: its
+ * nodes live in a shadow root this component can't reach, so it renders the
+ * card itself but wants the same placement behaviour.
  */
-function computePopover(
+export function computePopover(
   spotlight: Rect | null,
   placement: TutorialPlacement = "bottom",
   frame: { w: number; h: number } | null = null,
-  measured: { w: number; h: number } | null = null
+  measured: { w: number; h: number } | null = null,
+  /** Distance from the target. Tips on small controls want less than a tour. */
+  gap: number = GAP
 ): PopoverLayout {
   if (typeof window === "undefined" || !spotlight) {
     return { style: {}, side: null, arrowStyle: {} };
@@ -291,15 +371,15 @@ function computePopover(
 
   // Effective popover size. Width is capped to the viewport so it can't overflow
   // a narrow screen; height comes from the real measurement once we have it.
-  const pw = Math.min(POPOVER_WIDTH, Math.max(0, vw - GAP * 2));
+  const pw = Math.min(POPOVER_WIDTH, Math.max(0, vw - gap * 2));
   const ph = measured?.h || 180;
 
   // Free space in the gap on each side of the spotlight.
   const space: Record<TutorialPlacement, number> = {
-    bottom: vh - (spotlight.top + spotlight.height) - GAP,
-    top: spotlight.top - GAP,
-    right: vw - (spotlight.left + spotlight.width) - GAP,
-    left: spotlight.left - GAP,
+    bottom: vh - (spotlight.top + spotlight.height) - gap,
+    top: spotlight.top - gap,
+    right: vw - (spotlight.left + spotlight.width) - gap,
+    left: spotlight.left - gap,
   };
   const fits: Record<TutorialPlacement, boolean> = {
     bottom: space.bottom >= ph,
@@ -332,31 +412,31 @@ function computePopover(
   if (vertical) {
     left = clampValue(
       targetCenterX - pw / 2,
-      GAP,
-      Math.max(GAP, vw - pw - GAP)
+      gap,
+      Math.max(gap, vw - pw - gap)
     );
     // Flush against the gap on the chosen side — never clamped back toward the
     // spotlight, so the box can't ride over the target (it clips the viewport
     // edge instead, which only happens on cramped screens).
     top =
       side === "bottom"
-        ? spotlight.top + spotlight.height + GAP
-        : spotlight.top - GAP - ph;
+        ? spotlight.top + spotlight.height + gap
+        : spotlight.top - gap - ph;
   } else {
-    top = clampValue(targetCenterY - ph / 2, GAP, Math.max(GAP, vh - ph - GAP));
+    top = clampValue(targetCenterY - ph / 2, gap, Math.max(gap, vh - ph - gap));
     left =
       side === "right"
-        ? spotlight.left + spotlight.width + GAP
-        : spotlight.left - GAP - pw;
+        ? spotlight.left + spotlight.width + gap
+        : spotlight.left - gap - pw;
   }
 
   // Final guard: if the box still intersects the spotlight (clamping pulled it
   // back over the target on a cramped screen), push it flush off the chosen side.
   if (intersects({ top, left, width: pw, height: ph }, spotlight)) {
-    if (side === "bottom") top = spotlight.top + spotlight.height + GAP;
-    else if (side === "top") top = spotlight.top - GAP - ph;
-    else if (side === "right") left = spotlight.left + spotlight.width + GAP;
-    else left = spotlight.left - GAP - pw;
+    if (side === "bottom") top = spotlight.top + spotlight.height + gap;
+    else if (side === "top") top = spotlight.top - gap - ph;
+    else if (side === "right") left = spotlight.left + spotlight.width + gap;
+    else left = spotlight.left - gap - pw;
   }
 
   // Point the arrow at the target's center along the facing edge.

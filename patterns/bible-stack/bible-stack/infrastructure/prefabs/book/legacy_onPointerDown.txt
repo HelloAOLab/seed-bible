@@ -1,0 +1,33 @@
+const playingTrophy = getBot(byTag("isPlaying",true),byTag("isTrophy",true));
+const isCreatingGame = getBot(byTag("isCreateGameButton",true),byTag("isActive",true));
+InstanceManager.TryClearVideoTimeout();
+thisBot.TryToLerp();
+if(playingTrophy?.tags.isPlaying || thisBot.tags.isClone || isCreatingGame) return;
+setTag(thisBot,"grabbing","wait");
+globalThis.videoShowTimer = setTimeout(()=>{ InstanceManager.RenderVideo({botType: globalThis.CONSTANTS.BOT_TYPE.BOOK, botRank: thisBot.tags.bookRank , lerpedObject: thisBot }); clearTimeout(globalThis.videoShowTimer); },1200);
+
+return;
+
+if(!thisBot.tags.isBookAsSection || (thisBot.tags.isBookAsSection && thisBot.masks.hasBeenScaledAsBook))
+{
+    if(thisBot.masks.isOnTheGround)
+    {
+        // if(thisBot.masks.highlighted)
+        // {
+        //     await thisBot.forceUnhighlight({isInstantaneous: true}).then(() => {
+        //         thisBot.tryToExpand();
+        //     })
+        // }
+        // else
+        // {
+        //     thisBot.tryToExpand();
+        // }
+    }
+    else if(thisBot.masks.isInsideBible)
+    {
+        if(thisBot.masks.highlighted)
+        {
+            thisBot.tryToEjectFromTheBible();
+        }
+    }
+}

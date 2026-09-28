@@ -237,6 +237,67 @@ describe("FreeUseBibleAPI", () => {
     );
   });
 
+  it("fetches a reader's audio timings from a chapter's link", async () => {
+    const payload = {
+      translationId: "AAB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      reader: "david",
+      audioLink:
+        "https://audio.bible.helloao.org/api/BSB/GEN/1/audio/david.mp3",
+      thisChapterLink: "/api/AAB/GEN/1.json",
+      nextChapterLink: "/api/AAB/GEN/2.json",
+      previousChapterLink: null,
+      thisChapterAudioTimingsLink: "/api/AAB/GEN/1.david.audioTimings.json",
+      nextChapterAudioTimingsLink: "/api/AAB/GEN/2.david.audioTimings.json",
+      previousChapterAudioTimingsLink: null,
+      verses: [8.056, 11.288, 19.514],
+    };
+    fetchMock.mockResolvedValue(createResponse(payload));
+
+    const api = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
+    const result = await api.getAudioTimings(
+      "/api/AAB/GEN/1.david.audioTimings.json"
+    );
+
+    expect(result).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://bible.helloao.org/api/AAB/GEN/1.david.audioTimings.json",
+      expect.anything()
+    );
+  });
+
+  it("uses endpoint override for audio timings links", async () => {
+    const payload = {
+      translationId: "AAB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      reader: "david",
+      audioLink:
+        "https://audio.bible.helloao.org/api/BSB/GEN/1/audio/david.mp3",
+      thisChapterLink: "/api/AAB/GEN/1.json",
+      nextChapterLink: "/api/AAB/GEN/2.json",
+      previousChapterLink: null,
+      thisChapterAudioTimingsLink: "/api/AAB/GEN/1.david.audioTimings.json",
+      nextChapterAudioTimingsLink: "/api/AAB/GEN/2.david.audioTimings.json",
+      previousChapterAudioTimingsLink: null,
+      verses: [8.056, 11.288, 19.514],
+    };
+    fetchMock.mockResolvedValue(createResponse(payload));
+
+    const api = new FreeUseBibleAPI("https://default.example/");
+    const result = await api.getAudioTimings(
+      "/api/AAB/GEN/1.david.audioTimings.json",
+      "https://override.example"
+    );
+
+    expect(result).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://override.example/api/AAB/GEN/1.david.audioTimings.json",
+      expect.anything()
+    );
+  });
+
   it("caches in-flight requests by URL", async () => {
     const payload = { translations: [{ id: "eng_kjv" }] };
     fetchMock.mockResolvedValue(createResponse(payload));
@@ -303,6 +364,66 @@ describe("FreeUseBibleAPI", () => {
 
     expect(refreshed.translations[0]?.sha256).toBe("two");
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  describe("snapshotResponseCache() / seedResponseCache()", () => {
+    it("snapshots only successfully resolved responses", async () => {
+      const payload = { translations: [{ id: "eng_kjv" }] };
+      fetchMock.mockResolvedValue(createResponse(payload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      expect(api.snapshotResponseCache()).toEqual({});
+
+      await api.getAvailableTranslations();
+
+      expect(api.snapshotResponseCache()).toEqual({
+        "https://example.com/api/available_translations.json": payload,
+      });
+    });
+
+    it("does not snapshot a request that failed", async () => {
+      fetchMock.mockResolvedValue(
+        createResponse({ error: true }, 500, "Server Error")
+      );
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      await expect(api.getAvailableTranslations()).rejects.toThrow();
+
+      expect(api.snapshotResponseCache()).toEqual({});
+    });
+
+    it("seeds a fresh instance so a matching request resolves without fetching", async () => {
+      const payload = { translations: [{ id: "eng_kjv" }] };
+      const seededApi = new FreeUseBibleAPI("https://example.com/");
+      seededApi.seedResponseCache({
+        "https://example.com/api/available_translations.json": payload,
+      });
+
+      const result = await seededApi.getAvailableTranslations();
+
+      expect(result).toEqual(payload);
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(seededApi.snapshotResponseCache()).toEqual({
+        "https://example.com/api/available_translations.json": payload,
+      });
+    });
+
+    it("does not let a seeded value override an already-cached response", async () => {
+      const fetchedPayload = { translations: [{ id: "fetched" }] };
+      fetchMock.mockResolvedValue(createResponse(fetchedPayload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      await api.getAvailableTranslations();
+
+      api.seedResponseCache({
+        "https://example.com/api/available_translations.json": {
+          translations: [{ id: "stale-seed" }],
+        },
+      });
+
+      const result = await api.getAvailableTranslations();
+      expect(result).toEqual(fetchedPayload);
+    });
   });
 
   describe("getCompleteTranslation()", () => {

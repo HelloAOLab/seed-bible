@@ -1,5 +1,5 @@
 import "./TutorialPrompt.css";
-import { useI18n } from "../../i18n/I18nManager";
+import { getBrandedAppText, useI18n } from "../../i18n/I18nManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
 import { useAppConfig } from "../../app/appConfig";
 
@@ -12,9 +12,12 @@ import { useAppConfig } from "../../app/appConfig";
 export function TutorialPrompt({
   tutorial,
   className = "",
+  customizationName,
 }: {
   tutorial: TutorialManager;
   className?: string;
+  /** The active Customization's name, if any — overrides the branded app name. */
+  customizationName?: string | null;
 }) {
   const { t } = useI18n();
   const { branding } = useAppConfig();
@@ -31,17 +34,25 @@ export function TutorialPrompt({
       aria-labelledby="sb-tutorial-prompt-title"
     >
       <h3 className="sb-tutorial-prompt-title" id="sb-tutorial-prompt-title">
-        {t("tutorial.promptTitle", {
-          appName: branding?.appName ?? "Seed Bible",
-          defaultValue: "Welcome to Seed Bible. Would you like a tutorial?",
-        })}
+        {getBrandedAppText(
+          t("tutorial.promptTitle", {
+            defaultValue: "Welcome to Seed Bible. Would you like a tutorial?",
+          }),
+          t,
+          branding,
+          customizationName
+        )}
       </h3>
       <p className="sb-tutorial-prompt-body">
-        {t("tutorial.promptBody", {
-          appName: branding?.appName ?? "Seed Bible",
-          defaultValue:
-            "A guided tour is available to help you learn the ins and outs of Seed Bible.",
-        })}
+        {getBrandedAppText(
+          t("tutorial.promptBody", {
+            defaultValue:
+              "A guided tour is available to help you learn the ins and outs of Seed Bible.",
+          }),
+          t,
+          branding,
+          customizationName
+        )}
       </p>
       <div className="sb-tutorial-prompt-actions">
         <button

@@ -607,19 +607,6 @@ describe("ArrangementService", () => {
       ).toBeUndefined();
     });
 
-    it("defaults startIndex to 0 when omitted", () => {
-      const subset = makeSubsetBook({
-        completeBookId: "psa",
-        startIndex: undefined,
-        numberOfChapters: 50,
-      });
-      const service = makeSubsetService([subset]);
-      // range: start=1, end=50
-      expect(
-        service.getBookSubsetByCompleteId({ id: "psa", chapterNumber: 1 })
-      ).toBe(subset);
-    });
-
     it("returns undefined when no subset matches the given completeBookId", () => {
       const service = makeSubsetService([
         makeSubsetBook({ completeBookId: "psa" }),

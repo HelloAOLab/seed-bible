@@ -3,7 +3,6 @@ import {
   CHAPTER_SKELETON_DELAY_MS,
 } from "./BibleReader/BibleReader";
 import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
-import { ReadingPlanBelongsCard } from "./ReadingPlanBelongsCard/ReadingPlanBelongsCard";
 import type {
   ApiRequestOptions,
   TranslationBookChapter,
@@ -32,7 +31,7 @@ const BOTTOM_REVEAL_MARGIN = 4;
 
 // The swipe track is three panels wide — previous preview | current | next
 // preview — so one panel is a third of it. Keep in sync with
-// `.sb-reader-swipe-track` / `.sb-reader-swipe-panel` in BibleReader.css.
+// `.sb-reader-swipe-track` / `.sb-reader-swipe-panel` in BibleReader.inline.css.
 export const PANEL_PCT = 100 / 3;
 
 // How long the track takes to slide over to a neighbouring panel.
@@ -49,6 +48,23 @@ const SWIPE_LOCK_THRESHOLD_PX = 10;
  * chapter falls back to dimmed text before the placeholder appears.
  */
 const SWIPE_SETTLE_BUDGET_MS = CHAPTER_SKELETON_DELAY_MS / 2;
+
+// The discover panel scrolls its own filter chip row horizontally and its own
+// content vertically — a touch that starts there must not be claimed by the
+// chapter-swipe gesture below, or the gesture's preventDefault() steals the
+// filter row's native horizontal scroll.
+const DISCOVER_PANEL_SELECTOR = ".sb-bible-reader-discover-panel";
+
+const isInsideDiscoverPanel = (target: EventTarget | null) =>
+  target instanceof Element && target.closest(DISCOVER_PANEL_SELECTOR) !== null;
+
+function clearSwipeTrackInlineStyles(track: HTMLDivElement | null) {
+  if (!track) {
+    return;
+  }
+  track.style.removeProperty("transition");
+  track.style.removeProperty("transform");
+}
 
 export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
@@ -92,14 +108,17 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
   }, [isMobile, isScrolled]);
 
-  // When a mobile pane opens (every pane fills the screen there), the verse
-  // sheet yields and the default bottom toolbar comes back. Clear scroll-hide
-  // so that bar isn't left translated off-screen — e.g. after Locations opens
-  // a map from a verse selection while the user had scrolled down.
+  // When a mobile pane or the chat panel opens (both fill the screen above the
+  // bottom toolbar there), the verse sheet yields and the default bottom
+  // toolbar comes back. Clear scroll-hide so that bar isn't left translated
+  // off-screen — e.g. after Locations opens a map, or Ask AI opens the chat,
+  // from a verse selection while the user had scrolled down.
   useEffect(() => {
     if (!isMobile) return;
     return effect(() => {
-      if ((state.panes?.panes?.value?.length ?? 0) > 0) {
+      const hasPane = (state.panes?.panes?.value?.length ?? 0) > 0;
+      const isChatOpen = state.sidebar?.isChatPanelOpen?.value ?? false;
+      if (hasPane || isChatOpen) {
         setIsScrolled(false);
       }
     });
@@ -132,21 +151,73 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   );
 
   // Triggered by the *position* changing, not by `chapterData` arriving:
-  // `applyPosition` has already zeroed `scrollPosition`, so this is what puts
-  // the reader at the chapter heading while the placeholder shows. Kept
-  // separate from the listener effect below — attaching a listener must never
-  // move the reader, or every re-render that re-attaches it repeats this write.
+  // `applyPosition` has already set `scrollPosition` (zero for every ordinary
+  // navigation, the stamped offset when Back/Forward restored an entry), so
+  // this is what puts the reader there while the placeholder or outgoing
+  // chapter still shows. Kept separate from the listener effect below —
+  // attaching a listener must never move the reader, or every re-render that
+  // re-attaches it repeats this write.
+  //
+  // When matching chapter text later arrives, a restored offset that was
+  // clamped against the shorter placeholder is applied once more. Later
+  // `chapterData` identity changes (content settling, a preview resolving)
+  // must not rewrite `scrollTop`, or a partly scrolled chapter gets yanked.
   useEffect(() => {
     if (!scroller) {
       return;
     }
 
-    return effect(() => {
-      void readingState.translationId.value;
-      void readingState.bookId.value;
-      void readingState.chapterNumber.value;
-      scroller.scrollTop = readingState.scrollPosition.peek();
+    let lastPositionKey = "";
+    let appliedForMatchingContent = false;
+    let frame = 0;
+
+    const dispose = effect(() => {
+      const translationId = readingState.translationId.value;
+      const bookId = readingState.bookId.value;
+      const chapterNumber = readingState.chapterNumber.value;
+      const chapter = readingState.chapterData.value;
+      const positionKey = `${translationId}:${bookId}:${chapterNumber}`;
+
+      if (positionKey !== lastPositionKey) {
+        lastPositionKey = positionKey;
+        appliedForMatchingContent = false;
+        cancelAnimationFrame(frame);
+        frame = 0;
+        scroller.scrollTop = readingState.scrollPosition.peek();
+      }
+
+      const contentMatches =
+        !!chapter &&
+        chapter.translation.id === translationId &&
+        chapter.book.id === bookId &&
+        chapter.chapter.number === chapterNumber;
+
+      if (!contentMatches || appliedForMatchingContent) {
+        return;
+      }
+
+      appliedForMatchingContent = true;
+      // A linked verse owns the scroller once content is on screen.
+      if (readingState.scrollToVerse.peek() !== null) {
+        return;
+      }
+
+      const offset = readingState.scrollPosition.peek();
+      if (offset === 0) {
+        return;
+      }
+
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        scroller.scrollTop = offset;
+      });
     });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      dispose();
+    };
   }, [scroller, readingState]);
 
   // Bring a linked verse into view once its chapter is on screen.
@@ -333,6 +404,16 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     const onTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0];
       if (!touch) {
+        return;
+      }
+
+      if (isInsideDiscoverPanel(event.target)) {
+        // Leave the start coordinates unset — `onTouchMove` bails out on that
+        // for the rest of this gesture, so the panel's own scrolling proceeds
+        // untouched.
+        swipeTouchStartX.current = null;
+        swipeTouchStartY.current = null;
+        swipeDirectionLocked.current = null;
         return;
       }
 
@@ -554,6 +635,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       // bump stops a settled one writing to a track this effect no longer owns.
       window.clearTimeout(swipeCommitTimer.current);
       swipeCommitToken.current += 1;
+      clearSwipeTrackInlineStyles(swipeTrackRef.current);
       viewport.removeEventListener("touchstart", onTouchStart);
       viewport.removeEventListener("touchmove", onTouchMove);
       viewport.removeEventListener("touchend", onTouchEnd);
@@ -640,7 +722,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           return;
         }
 
-        track.style.removeProperty("transform");
+        clearSwipeTrackInlineStyles(track);
       }),
     [readingState]
   );
@@ -657,17 +739,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }, 50);
   };
 
-  // On mobile the reader's chapter panel is the scroll container, so the card
-  // goes inside it (via `belowContent`) and is reached by scrolling to the end
-  // of the passage. On desktop the pane itself scrolls, so it stays a sibling
-  // rendered after the reader.
-  const belongsCard = (
-    <ReadingPlanBelongsCard state={state} readingState={readingState} />
-  );
-
   const mobileChrome = isMobile
     ? {
-        belowContent: belongsCard,
         isScrolled,
         prevChapterPreview,
         nextChapterPreview,
@@ -688,38 +761,47 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }
     : undefined;
 
+  // Swipe writes `transform` as an inline style. Effects run after the DOM
+  // commit, so on a layout change Preact can reuse that node as desktop
+  // content with the leftover translate still on it — the chapter then sits
+  // partly offscreen. Strip it here, while the ref still points at the track.
+  if (!isMobile) {
+    clearSwipeTrackInlineStyles(swipeTrackRef.current);
+  }
+
   return (
-    <div
-      className={`sb-pane-reader${isMobile ? " sb-pane-reader-mobile" : ""}`}
-      ref={slotScrollerRefCallback}
-    >
-      <BibleReader
-        currentSlot={slot}
-        readingState={readingState}
-        selectorState={state.selector}
-        state={state}
-        mobileChrome={mobileChrome}
-        sharedSession={tab.sharedSession}
-      />
-      {!isMobile && belongsCard}
-      {!isMobile && (
-        <BelowReaderToolbar
-          toolsManager={state.tools}
-          readingState={readingState}
-          sharedSession={tab.sharedSession}
-          selectorState={state.selector}
-          tabsManager={state.tabs}
-          panesManager={state.panes}
-          tabsLayoutManager={state.tabsLayout}
-          openSidebar={state.sidebar.openSidebar}
-          openSearch={state.sidebar.openSearch}
+    <div className="sb-pane-reader-outer">
+      <div
+        className={`sb-pane-reader${isMobile ? " sb-pane-reader-mobile" : ""}`}
+        ref={slotScrollerRefCallback}
+      >
+        <BibleReader
           currentSlot={slot}
-          toast={state.app.toast}
-          openChat={state.sidebar.openChatPanel}
-          chats={state.chats}
-          features={state.features}
+          readingState={readingState}
+          selectorState={state.selector}
+          state={state}
+          mobileChrome={mobileChrome}
+          sharedSession={tab.sharedSession}
         />
-      )}
+        {!isMobile && (
+          <BelowReaderToolbar
+            toolsManager={state.tools}
+            readingState={readingState}
+            sharedSession={tab.sharedSession}
+            selectorState={state.selector}
+            tabsManager={state.tabs}
+            panesManager={state.panes}
+            tabsLayoutManager={state.tabsLayout}
+            openSidebar={state.sidebar.openSidebar}
+            openSearch={state.sidebar.openSearch}
+            currentSlot={slot}
+            toast={state.app.toast}
+            openChat={state.sidebar.openChatPanel}
+            chats={state.chats}
+            features={state.features}
+          />
+        )}
+      </div>
     </div>
   );
 }

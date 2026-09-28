@@ -8,17 +8,8 @@ import type { TranslationBook } from "@packages/seed-bible/seed-bible/managers/F
 import type { PlaylistItemData } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
-      language: "en",
-    }),
-  };
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
 });
 
 function book(
@@ -181,6 +172,52 @@ describe("ScriptureItemInput", () => {
     expect(input().value).toBe("");
     expect(container.querySelector(".sb-scripture-suggestions")).toBeNull();
   });
+
+  it.each(["Gen 1", "Gen.1", "Gen. 1"])(
+    "submits %s as Genesis chapter 1",
+    (value) => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+        input().focus();
+        setValue(input(), value);
+      });
+
+      act(() => {
+        input().dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+        );
+      });
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1 },
+      } satisfies PlaylistItemData);
+    }
+  );
+
+  it.each(["Gen 1.1", "Gen.1.1", "Gen. 1.1"])(
+    "submits %s as Genesis 1:1",
+    (value) => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+        input().focus();
+        setValue(input(), value);
+      });
+
+      act(() => {
+        input().dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+        );
+      });
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1, verse: 1 },
+      } satisfies PlaylistItemData);
+    }
+  );
 
   it("shows an error and does not call onAdd when the reference can't be resolved", () => {
     const onAdd = vi.fn();

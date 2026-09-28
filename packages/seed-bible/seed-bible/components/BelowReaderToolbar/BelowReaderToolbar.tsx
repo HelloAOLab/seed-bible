@@ -1,3 +1,4 @@
+import "./BelowReaderToolbar.inline.css";
 import "./BelowReaderToolbar.css";
 import { type ToolsManager } from "../../managers/BibleToolsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";

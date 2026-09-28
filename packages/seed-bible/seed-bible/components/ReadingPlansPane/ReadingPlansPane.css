@@ -64,6 +64,10 @@
 
 .sb-reading-plans-scroll {
   flex: 1;
+  /* Centre the list with padding rather than a max-width, so this scroll
+     container still spans the pane: the scrollbar stays at the edge and
+     wheel/trackpad scrolling works over the side gutters. */
+  padding-inline: max(0px, calc((100% - 42rem) / 2));
   min-height: 0;
   overflow-y: auto;
   display: flex;
@@ -268,27 +272,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.sb-rp-card-tile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--rp-accent) 18%, transparent);
-  color: var(--rp-accent);
-}
-
-.sb-rp-card-tile-done {
-  background: color-mix(in srgb, var(--rp-success) 15%, transparent);
-  color: var(--rp-success);
-}
-
-.sb-rp-card-tile .material-symbols-outlined {
-  font-size: 24px;
 }
 
 .sb-rp-card-body {

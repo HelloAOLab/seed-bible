@@ -2,12 +2,41 @@ import { computed, effect, signal } from "@preact/signals";
 
 export type NavigationDestination = number | string | URL;
 
+/** Fields this app stores on `history.state`. Other keys are left untouched. */
+export interface NavigationHistoryStatePatch {
+  scrollPosition?: number;
+}
+
 function toAbsoluteUrl(url: string | URL): string {
   if (typeof window === "undefined") {
     return String(url);
   }
 
   return new URL(String(url), window.location.href).toString();
+}
+
+function asHistoryStateObject(state: unknown): Record<string, unknown> {
+  if (state !== null && typeof state === "object" && !Array.isArray(state)) {
+    return { ...(state as Record<string, unknown>) };
+  }
+  return {};
+}
+
+function mergeHistoryState(
+  state: unknown,
+  patch: NavigationHistoryStatePatch
+): Record<string, unknown> {
+  return { ...asHistoryStateObject(state), ...patch };
+}
+
+function readScrollPositionFromHistoryState(
+  state: unknown
+): number | undefined {
+  const value = asHistoryStateObject(state).scrollPosition;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    return undefined;
+  }
+  return value;
 }
 
 export interface SimpleSignal<T> {
@@ -161,8 +190,19 @@ export function createNavigationManager(
         const destination = new URL(
           event.destination?.url ?? window.location.href
         );
-        if (currentUrl.peek().href !== destination.href) {
-          currentUrl.value = destination;
+        // Back/forward is left to the `popstate` listener above. This event
+        // fires *before* the browser swaps the history entry in, so
+        // `window.location` and `window.history.state` both still describe the
+        // entry being left — and the destination's own classic state is not
+        // readable from here (`destination.getState()` returns the Navigation
+        // API's state, which `pushState` never writes). Publishing the URL now
+        // would run the URL->state effects against the departing entry's
+        // scroll offset, restoring the reader one navigation behind. `popstate`
+        // fires once the entry is current, where both reads are correct.
+        if (event.navigationType !== "traverse") {
+          if (currentUrl.peek().href !== destination.href) {
+            currentUrl.value = destination;
+          }
         }
         event.intercept();
       };
@@ -195,30 +235,118 @@ export function createNavigationManager(
     }
   };
 
-  const push = (url: string | URL) => {
+  // Non-zero while a `batchWrites()` call is in progress. Writes made inside
+  // one are folded into `pendingHref` and land as a single history operation
+  // when the outermost batch ends.
+  let batchDepth = 0;
+  let pendingHref: string | null = null;
+  let pendingIsPush = false;
+
+  /**
+   * Runs `fn`, collapsing every URL write it makes — directly or through the
+   * signal effects it triggers — into one history entry. The batch pushes if
+   * any write inside it asked to push, and replaces otherwise.
+   *
+   * One user action often changes two things that both mirror to the URL: for
+   * example tapping a save in the mobile sidebar moves the reader (a
+   * `replace`, since it's a tab switch) *and* dismisses the sidebar (a `push`,
+   * removing `?sidebar=open`). Left unbatched those are two history writes:
+   * the reader's `replace` overwrites the entry that opened the sidebar — so
+   * "back" no longer leads where the user came from — and the sidebar's `push`
+   * adds a second entry for the same destination, which makes pressing back
+   * look like it does nothing.
+   */
+  const batchWrites = <T,>(fn: () => T): T => {
+    // Where the URL stood before the outermost batch opened. Each write inside
+    // the batch is only checked for changes against the live, mid-batch URL, so
+    // a value that is set and then reverted looks like two real changes — and
+    // would flush a history write for a URL identical to the one already shown.
+    const startHref = batchDepth === 0 ? currentUrl.peek().href : null;
+    batchDepth++;
+    try {
+      return fn();
+    } finally {
+      batchDepth--;
+      if (batchDepth === 0) {
+        const href = pendingHref;
+        const isPush = pendingIsPush;
+        pendingHref = null;
+        pendingIsPush = false;
+        if (href !== null && href !== startHref) {
+          writeHistory(href, isPush);
+        }
+      }
+    }
+  };
+
+  const writeHistory = (url: string | URL, isPush: boolean) => {
     if (disposed || typeof window === "undefined") {
       return;
     }
 
-    console.log("Push URL:", url);
-    window.history.pushState(
-      window.history.state,
+    const href = toAbsoluteUrl(applyBasePath(url));
+
+    if (batchDepth > 0) {
+      pendingHref = href;
+      pendingIsPush = pendingIsPush || isPush;
+      // Publish the write immediately even though history hasn't been touched
+      // yet. Everything downstream — later writes in the same batch, and the
+      // URL -> state effects in `syncSignalsToUrl` — reads `currentUrl`, and if
+      // it still showed the pre-batch URL those effects would revert the very
+      // state changes being batched (a closed sidebar would reopen because the
+      // URL still said `?sidebar=open`).
+      currentUrl.value = new URL(href);
+      return;
+    }
+
+    console.log(isPush ? "Push URL:" : "Replace URL:", url);
+    if (isPush) {
+      // A push copies the current entry's state unless we zero scroll here:
+      // `stampCurrentState` just wrote the departing chapter's offset onto
+      // that entry, and the destination should start at the heading.
+      window.history.pushState(
+        mergeHistoryState(window.history.state, { scrollPosition: 0 }),
+        "",
+        href
+      );
+    } else {
+      window.history.replaceState(window.history.state, "", href);
+    }
+  };
+
+  /**
+   * Merges `patch` into the current history entry's state without changing
+   * the URL. Used to remember the chapter's scroll offset on the entry we
+   * are about to leave, so Back can restore it. Must not go through
+   * `writeHistory` / `batchWrites`: those fold URL writes, and a stamp
+   * folded into a later push would land the departing scroll on the
+   * destination instead of the origin.
+   */
+  const stampCurrentState = (patch: NavigationHistoryStatePatch) => {
+    if (disposed || typeof window === "undefined") {
+      return;
+    }
+
+    window.history.replaceState(
+      mergeHistoryState(window.history.state, patch),
       "",
-      toAbsoluteUrl(applyBasePath(url))
+      window.location.href
     );
   };
 
-  const replace = (url: string | URL) => {
-    if (disposed || typeof window === "undefined") {
-      return;
+  const getCurrentScrollPosition = (): number | undefined => {
+    if (typeof window === "undefined") {
+      return undefined;
     }
+    return readScrollPositionFromHistoryState(window.history.state);
+  };
 
-    console.log("Replace URL:", url);
-    window.history.replaceState(
-      window.history.state,
-      "",
-      toAbsoluteUrl(applyBasePath(url))
-    );
+  const push = (url: string | URL) => {
+    writeHistory(url, true);
+  };
+
+  const replace = (url: string | URL) => {
+    writeHistory(url, false);
   };
 
   const go = (destination: NavigationDestination) => {
@@ -384,6 +512,28 @@ export function createNavigationManager(
     return url.toString();
   };
 
+  /**
+   * Like `linkToQuery`, but drops the current URL entirely first, keeping
+   * only the origin and the deployment root (`basePath`, or "/") — for
+   * links that should carry only the parameters passed in (e.g. a
+   * customization share link), not whatever the current page happens to
+   * have. The reading position (language, translation, book, chapter) lives
+   * in the URL *path* now, not the query string — see `ReadingUrlPath.ts` —
+   * so a link that must not leak the sharer's current reading position has
+   * to drop the path too, not just the query.
+   */
+  const linkToBareRoot = (query: Record<string, string | null>) => {
+    const url = new URL(currentUrl.value);
+    url.pathname = basePath || "/";
+    url.search = "";
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== null) {
+        url.searchParams.set(key, value);
+      }
+    }
+    return url.toString();
+  };
+
   return {
     currentUrl: computed(() => currentUrl.value),
     initialUrl,
@@ -391,11 +541,15 @@ export function createNavigationManager(
     go,
     replace,
     push,
+    stampCurrentState,
+    getCurrentScrollPosition,
+    batchWrites,
     updateQueryParam,
     updateQueryParams,
     updatePathAndQueryParams,
     syncSignalsToUrl,
     linkToQuery,
+    linkToBareRoot,
     dispose,
   };
 }

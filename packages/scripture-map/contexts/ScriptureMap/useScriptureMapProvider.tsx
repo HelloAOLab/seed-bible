@@ -300,7 +300,7 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
     initialShowSectionLabels
   );
   const [isUserPresenceEnabled, setIsUserPresenceEnabled] =
-    useState<boolean>(false);
+    useState<boolean>(true);
   const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] =
     useState<boolean>(initialIsReadingHistoryEnabled);
 

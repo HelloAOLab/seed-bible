@@ -34,9 +34,10 @@ state.tutorial.registerTour("highlights", [
 state.tutorial.startContextual("highlights"); // auto-shows once per user
 ```
 
-That's it — you get Back / Next / Done buttons, smart popover placement that
-never covers the highlighted element, Skip / "Don't show tutorials", and
-per-tour "already seen" tracking, all for free.
+That's it — you get Back / Next / Done buttons anchored to fixed corners of
+the dialog, smart popover placement that never covers the highlighted
+element, a Skip button (which offers to turn off all tutorials once the user
+skips one), and per-tour "already seen" tracking, all for free.
 
 ---
 
@@ -280,18 +281,21 @@ function HighlightButton({ state }: { state: SeedBibleState }) {
 
 `state.tutorial` (`TutorialManager`):
 
-| Member                                    | Type    | Purpose                                                        |
-| ----------------------------------------- | ------- | -------------------------------------------------------------- |
-| `registerTour(id, steps, opts?)`          | method  | Register a custom tour. `opts.once` (default `true`).          |
-| `startContextual(id)`                     | method  | Auto-show once; respects opt-out & seen flag. Use in handlers. |
-| `startTour(id)`                           | method  | Force-start now (ignores seen flag & opt-out). For replay.     |
-| `start()`                                 | method  | Restart the first-run onboarding tour.                         |
-| `next()` / `prev()` / `finish()`          | method  | Manual navigation / end (the popover buttons call these).      |
-| `optOut()`                                | method  | End and record "don't show tutorials again".                   |
-| `running`                                 | signal  | Whether a tour is showing.                                     |
-| `currentStep`                             | signal  | The active `TutorialStep` or `null`.                           |
-| `index` / `isLast` / `canGoBack`          | signals | Position helpers for custom UI.                                |
-| `completed` / `optedOut` / `featuresSeen` | signals | Onboarding done / opted out / per-tour seen map.               |
+| Member                                    | Type    | Purpose                                                                                              |
+| ----------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `registerTour(id, steps, opts?)`          | method  | Register a custom tour. `opts.once` (default `true`).                                                |
+| `startContextual(id)`                     | method  | Auto-show once; respects opt-out & seen flag. Use in handlers.                                       |
+| `startTour(id)`                           | method  | Force-start now (ignores seen flag & opt-out). For replay.                                           |
+| `start()`                                 | method  | Restart the first-run onboarding tour.                                                               |
+| `next()` / `prev()` / `finish()`          | method  | Manual navigation / end (the popover buttons call these).                                            |
+| `skip()`                                  | method  | End the tour (like `finish()`) and raise the "turn off tutorials?" follow-up dialog.                 |
+| `keepTutorials()`                         | method  | Dismiss that follow-up dialog, leaving future tutorials enabled.                                     |
+| `optOut()`                                | method  | End and record "don't show tutorials again" — also what the follow-up dialog's confirm button calls. |
+| `running`                                 | signal  | Whether a tour is showing.                                                                           |
+| `currentStep`                             | signal  | The active `TutorialStep` or `null`.                                                                 |
+| `index` / `isLast` / `canGoBack`          | signals | Position helpers for custom UI.                                                                      |
+| `completed` / `optedOut` / `featuresSeen` | signals | Onboarding done / opted out / per-tour seen map.                                                     |
+| `skipPromptVisible`                       | signal  | Whether the "turn off tutorials?" follow-up dialog is showing.                                       |
 
 Helpers (exported from `../managers/TutorialManager`):
 

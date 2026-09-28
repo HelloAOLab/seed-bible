@@ -7,6 +7,7 @@ import i18nUnusedKeysRule from "./script/eslint/i18nUnusedKeysRule";
 import i18nIncompleteTranslationsRule from "./script/eslint/i18nIncompleteTranslationsRule";
 import i18nExtensionIncompleteTranslationsRule from "./script/eslint/i18nExtensionIncompleteTranslationsRule";
 import i18nUntranslatedContentRule from "./script/eslint/i18nUntranslatedContentRule";
+import noImmediateStorageAccessRule from "./script/eslint/noImmediateStorageAccessRule";
 import json from "@eslint/json";
 
 import { defineConfig, globalIgnores } from "eslint/config";
@@ -17,6 +18,12 @@ const i18nPlugin = {
   rules: {
     "translation-missing-keys": i18nMissingKeysRule,
     "i18n-untranslated-content": i18nUntranslatedContentRule,
+  },
+} as unknown as Record<string, unknown>;
+
+const hydrationPlugin = {
+  rules: {
+    "no-immediate-storage-access": noImmediateStorageAccessRule,
   },
 } as unknown as Record<string, unknown>;
 
@@ -206,6 +213,19 @@ export default defineConfig([
     },
     rules: {
       "seed-bible-i18n/translation-extension-incomplete-translations": "warn",
+    },
+  },
+  {
+    files: [
+      "packages/seed-bible/seed-bible/managers/**/*.{ts,tsx}",
+      "packages/seed-bible/seed-bible/components/**/*.{ts,tsx}",
+      "packages/seed-bible/seed-bible/app/**/*.{ts,tsx}",
+    ],
+    plugins: {
+      "seed-bible-hydration": hydrationPlugin,
+    },
+    rules: {
+      "seed-bible-hydration/no-immediate-storage-access": "error",
     },
   },
   {

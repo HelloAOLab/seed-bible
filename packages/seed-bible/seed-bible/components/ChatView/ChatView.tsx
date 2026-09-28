@@ -1,11 +1,12 @@
 import "./ChatView.css";
-import { useSignal } from "@preact/signals";
+import { effect, useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
-import type {
-  ChatParticipant,
-  ChatMessage,
-  ChatSession,
-  ParsedChatTextMessage,
+import {
+  chatHasOtherPeople,
+  type ChatParticipant,
+  type ChatMessage,
+  type ChatSession,
+  type ParsedChatTextMessage,
 } from "../../managers/ChatsManager";
 import {
   getUserAnimalVisual,
@@ -44,11 +45,74 @@ interface ChatJoinGroup {
   timeMs: number;
 }
 
-type ChatTimelineGroup = ChatMessageGroup | ChatJoinGroup;
+type ToolCallChatMessage = Extract<ChatMessage, { type: "tool_call" }>;
+
+/** A run of consecutive tool-call messages from the same author(s) collapsed into one notification. */
+interface ChatToolCallGroup {
+  type: "tool";
+  /** A stable key for the group, set once at creation. */
+  key: string;
+  /** A key identifying the author(s) of every message in the group, used to detect contiguous runs. */
+  authorKey: string;
+  /** The first tool-call message in the run, used to resolve the author. */
+  message: ToolCallChatMessage;
+  /** The number of tool calls in the run. */
+  count: number;
+  /** The time of the most recent tool call in the group. */
+  timeMs: number;
+}
+
+type ChatTimelineGroup = ChatMessageGroup | ChatJoinGroup | ChatToolCallGroup;
 
 interface JoinEvent {
   participant: ChatParticipant;
   timeMs: number;
+}
+
+/** Compose field grows with content, then scrolls past this many lines. */
+const COMPOSE_INPUT_MAX_LINES = 8;
+
+/**
+ * Combines an incoming Ask AI verse prefill with whatever is already in the
+ * compose field. The verse quote is appended after the user's typed text so a
+ * second Ask AI cannot wipe an unsent draft.
+ */
+function mergeComposerDraft(existing: string, incoming: string): string {
+  if (!existing.trim()) {
+    return incoming;
+  }
+  const prefix = existing.replace(/\n+$/, "") + "\n\n";
+  return `${prefix}${incoming}`;
+}
+
+/**
+ * Sizes the compose textarea to its content, capped at
+ * {@link COMPOSE_INPUT_MAX_LINES} lines (overflow then scrolls).
+ */
+function resizeComposeInput(el: HTMLTextAreaElement) {
+  if (!el.value) {
+    el.style.height = "";
+    return;
+  }
+  el.style.height = "auto";
+  const style = getComputedStyle(el);
+  const lineHeight = parseFloat(style.lineHeight);
+  const paddingTop = parseFloat(style.paddingTop) || 0;
+  const paddingBottom = parseFloat(style.paddingBottom) || 0;
+  const borderTop = parseFloat(style.borderTopWidth) || 0;
+  const borderBottom = parseFloat(style.borderBottomWidth) || 0;
+  // Fall back to font-size * typical line-height if line-height is "normal".
+  const resolvedLineHeight =
+    Number.isFinite(lineHeight) && lineHeight > 0
+      ? lineHeight
+      : (parseFloat(style.fontSize) || 14) * 1.2;
+  const maxHeight =
+    resolvedLineHeight * COMPOSE_INPUT_MAX_LINES +
+    paddingTop +
+    paddingBottom +
+    borderTop +
+    borderBottom;
+  el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
 }
 
 /**
@@ -72,28 +136,41 @@ function getJoinEvents(
     .map((participant) => ({ participant, timeMs: participant.joinTimeMs }));
 }
 
+const ENTRY_KIND_PRIORITY = { message: 0, tool: 1, join: 2 } as const;
+
 /**
- * Interleaves messages and participant join events into a single time-ordered
- * list of render groups. Consecutive messages from the same author(s) are grouped
- * together (a join event between them breaks the group), and consecutive join
- * events collapse into a single notification.
+ * Interleaves messages, tool-call events, and participant join events into a
+ * single time-ordered list of render groups. Consecutive messages from the
+ * same author(s) are grouped together, consecutive tool calls from the same
+ * author(s) collapse into one notification, and consecutive join events
+ * collapse into a single notification. A change in entry kind or author
+ * breaks the current group.
  */
 function buildTimeline(
   messages: ParsedChatTextMessage[],
+  toolCallMessages: ToolCallChatMessage[],
   participants: ChatParticipant[]
 ): ChatTimelineGroup[] {
-  if (messages.length === 0) {
+  if (messages.length === 0 && toolCallMessages.length === 0) {
     return [];
   }
 
   type Entry =
     | { kind: "message"; timeMs: number; message: ParsedChatTextMessage }
+    | { kind: "tool"; timeMs: number; message: ToolCallChatMessage }
     | { kind: "join"; timeMs: number; participant: ChatParticipant };
 
   const entries: Entry[] = [
     ...messages.map(
       (message): Entry => ({
         kind: "message",
+        timeMs: message.timeMs,
+        message,
+      })
+    ),
+    ...toolCallMessages.map(
+      (message): Entry => ({
+        kind: "tool",
         timeMs: message.timeMs,
         message,
       })
@@ -107,11 +184,11 @@ function buildTimeline(
     ),
   ];
 
-  // Stable sort by time; at equal times, messages come before joins.
+  // Stable sort by time; at equal times, messages come before tool calls, which come before joins.
   entries.sort(
     (a, b) =>
       a.timeMs - b.timeMs ||
-      (a.kind === b.kind ? 0 : a.kind === "message" ? -1 : 1)
+      ENTRY_KIND_PRIORITY[a.kind] - ENTRY_KIND_PRIORITY[b.kind]
   );
 
   const groups: ChatTimelineGroup[] = [];
@@ -123,6 +200,21 @@ function buildTimeline(
         lastGroup.messages.push(entry.message);
       } else {
         groups.push({ type: "messages", key, messages: [entry.message] });
+      }
+    } else if (entry.kind === "tool") {
+      const authorKey = entry.message.authors.join(" ");
+      if (lastGroup?.type === "tool" && lastGroup.authorKey === authorKey) {
+        lastGroup.count += 1;
+        lastGroup.timeMs = entry.timeMs;
+      } else {
+        groups.push({
+          type: "tool",
+          key: `tool-${entry.message.id}`,
+          authorKey,
+          message: entry.message,
+          count: 1,
+          timeMs: entry.timeMs,
+        });
       }
     } else if (lastGroup?.type === "join") {
       lastGroup.participants.push(entry.participant);
@@ -228,6 +320,30 @@ function getAuthorLabel(
   return authors.join(", ");
 }
 
+/**
+ * Builds the label for a tool-use notification, e.g. "Alice used a tool" or
+ * "Alice used 3 tools".
+ */
+function getToolUseLabel(
+  name: string,
+  count: number,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  if (count === 1) {
+    return t("chat-tool-used", {
+      defaultValue: "{{name}} used a tool",
+      name,
+      count,
+    });
+  }
+
+  return t("chat-tool-used", {
+    defaultValue: "{{name}} used {{count}} tools",
+    name,
+    count,
+  });
+}
+
 function RelativeDateTime({ timeMs }: { timeMs: number }) {
   const { language } = useI18n();
   const refreshTick = useSignal(0);
@@ -260,9 +376,11 @@ export function getMessageAvatar(
   label: string;
   visual: ConnectionSessionUserVisual;
   isSelf: boolean;
+  genericFallback: boolean;
 } {
   const authors = chat.getMessageAuthors(message);
   const primaryAuthor = authors[0] ?? null;
+  const otherPeoplePresent = chatHasOtherPeople(chat);
 
   if (!primaryAuthor) {
     const anonymous = t("anonymous", { defaultValue: "Anonymous" });
@@ -271,20 +389,23 @@ export function getMessageAvatar(
       label: anonymous,
       visual: getUserAnimalVisual(message.id),
       isSelf: false,
+      genericFallback: false,
     };
   }
 
-  return getParticipantAvatar(primaryAuthor, t);
+  return getParticipantAvatar(primaryAuthor, t, { otherPeoplePresent });
 }
 
 export function getParticipantAvatar(
   participant: ChatParticipant,
-  t: (key: string, options?: Record<string, unknown>) => string
+  t: (key: string, options?: Record<string, unknown>) => string,
+  options?: { otherPeoplePresent?: boolean }
 ): {
   imageUrl: string | null;
   label: string;
   visual: ConnectionSessionUserVisual;
   isSelf: boolean;
+  genericFallback: boolean;
 } {
   const label = getParticipantDisplayLabel(participant, t);
   const imageUrl = participant.isAI
@@ -298,6 +419,8 @@ export function getParticipantAvatar(
     label,
     visual: getParticipantVisual(participant),
     isSelf: participant.isSelf,
+    genericFallback:
+      participant.isSelf && !participant.isAI && !options?.otherPeoplePresent,
   };
 }
 
@@ -465,7 +588,9 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
         data-count={totalVisible}
       >
         {avatarsToShow.map((participant) => {
-          const av = getParticipantAvatar(participant, t);
+          const av = getParticipantAvatar(participant, t, {
+            otherPeoplePresent: true,
+          });
           return (
             <Avatar
               key={participant.id}
@@ -473,6 +598,7 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
               visual={av.visual}
               title={av.label}
               isSelf={av.isSelf}
+              genericFallback={av.genericFallback}
             />
           );
         })}
@@ -493,13 +619,24 @@ export function ChatView(props: ChatViewProps) {
   const { chat, state } = props;
   const { t } = useI18n();
   const messages = chat.parsedMessages.value;
-  const timelineGroups = buildTimeline(messages, chat.totalParticipants.value);
-  const draft = useSignal("");
+  const toolCallMessages = chat.messages.value.filter(
+    (m): m is ToolCallChatMessage => m.type === "tool_call"
+  );
+  const timelineGroups = buildTimeline(
+    messages,
+    toolCallMessages,
+    chat.totalParticipants.value
+  );
+  const localDraft = useSignal("");
+  // Prefer the session draft so typed text survives ChatView unmounting when
+  // the user clicks a verse (that closes the floating panel).
+  const draft = chat.unsentDraft ?? localDraft;
+  const draftText = draft.value;
   const cursorPosition = useSignal(0);
   const isSubmitting = useSignal(false);
   const submitError = useSignal<string | null>(null);
   const messagesRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const isFirstRenderRef = useRef(true);
   const wasAtBottomRef = useRef(true);
   // Mobile-only: while the field is blurred and empty, blink a fake caret
@@ -591,7 +728,7 @@ export function ChatView(props: ChatViewProps) {
       }
       container.scrollTop = container.scrollHeight;
     }
-  }, [messages.length]);
+  }, [messages.length, toolCallMessages.length]);
 
   useEffect(() => {
     // Don't autofocus on mobile — focusing opens the soft keyboard.
@@ -603,11 +740,59 @@ export function ChatView(props: ChatViewProps) {
     inputRef.current?.focus();
   }, []);
 
+  // Verse-toolbar Ask AI (and similar) stash text on `chats.composerDraft`.
+  // Merge it into the local draft once, then clear the signal so a later
+  // chat switch doesn't replay the same prefill.
+  useEffect(() => {
+    const composerDraft = state.chats?.composerDraft;
+    if (!composerDraft) {
+      return;
+    }
+    return effect(() => {
+      const value = composerDraft.value;
+      if (!value) {
+        return;
+      }
+      const merged = mergeComposerDraft(draft.value, value);
+      draft.value = merged;
+      composerDraft.value = "";
+      window.queueMicrotask(() => {
+        const input = inputRef.current;
+        if (!input) {
+          return;
+        }
+        const caret = merged.length;
+        input.setSelectionRange(caret, caret);
+        cursorPosition.value = caret;
+        if (!state.app.isMobile.value) {
+          input.focus();
+        }
+      });
+    });
+  }, []);
+
   useEffect(() => {
     return () => {
       chat.setTypingStatus(false);
     };
   }, []);
+
+  // Grow the field after programmatic draft changes (Ask AI prefill) as well
+  // as typing. Measuring in render is too early: the textarea still has the
+  // previous value, so it would stay one line tall when verses are inserted.
+  // An empty draft clears the inline height so the original one-line `rows={1}`
+  // layout is unchanged.
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+    if (!draftText) {
+      input.style.height = "";
+      return;
+    }
+    resizeComposeInput(input);
+  }, [draftText]);
 
   useEffect(() => {
     const container = messagesRef.current;
@@ -660,6 +845,7 @@ export function ChatView(props: ChatViewProps) {
       input.focus();
       input.setSelectionRange(nextCursor, nextCursor);
       cursorPosition.value = nextCursor;
+      resizeComposeInput(input);
     });
   };
 
@@ -672,48 +858,8 @@ export function ChatView(props: ChatViewProps) {
   };
 
   const handleInputPositionUpdate = (event: Event) => {
-    const target = event.currentTarget as HTMLInputElement;
+    const target = event.currentTarget as HTMLTextAreaElement;
     cursorPosition.value = target.selectionStart ?? target.value.length;
-  };
-
-  const handleMentionKeyDown = (event: KeyboardEvent) => {
-    if (!isMentionPickerOpen) {
-      return;
-    }
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      mentionActiveIndex.value =
-        (mentionActiveIndex.value + 1) % totalMentionCount;
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      mentionActiveIndex.value =
-        (mentionActiveIndex.value - 1 + totalMentionCount) % totalMentionCount;
-      return;
-    }
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      if (showEveryoneSuggestion && mentionActiveIndex.value === 0) {
-        selectEveryoneMention();
-      } else {
-        const participantIndex =
-          mentionActiveIndex.value - (showEveryoneSuggestion ? 1 : 0);
-        const suggestion = allMentionSuggestions[participantIndex];
-        if (suggestion) {
-          selectMention(suggestion);
-        }
-      }
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      cursorPosition.value = 0;
-    }
   };
 
   const handleSubmit = async (event: Event) => {
@@ -734,7 +880,16 @@ export function ChatView(props: ChatViewProps) {
       });
       draft.value = "";
       chat.setTypingStatus(false);
-      inputRef.current?.focus();
+      // Defer until Preact has cleared the textarea DOM value, otherwise
+      // resizeComposeInput measures the still-tall content and leaves the
+      // empty field expanded.
+      window.queueMicrotask(() => {
+        const input = inputRef.current;
+        if (input) {
+          input.focus();
+          resizeComposeInput(input);
+        }
+      });
     } catch (error) {
       submitError.value =
         error instanceof Error
@@ -744,6 +899,64 @@ export function ChatView(props: ChatViewProps) {
             });
     } finally {
       isSubmitting.value = false;
+    }
+  };
+
+  const handleComposeKeyDown = (event: KeyboardEvent) => {
+    if (isMentionPickerOpen) {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        mentionActiveIndex.value =
+          (mentionActiveIndex.value + 1) % totalMentionCount;
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        mentionActiveIndex.value =
+          (mentionActiveIndex.value - 1 + totalMentionCount) %
+          totalMentionCount;
+        return;
+      }
+
+      if (event.key === "Enter") {
+        // Don't steal Enter while an IME is confirming a candidate.
+        if (event.isComposing || event.keyCode === 229) {
+          return;
+        }
+        event.preventDefault();
+        if (showEveryoneSuggestion && mentionActiveIndex.value === 0) {
+          selectEveryoneMention();
+        } else {
+          const participantIndex =
+            mentionActiveIndex.value - (showEveryoneSuggestion ? 1 : 0);
+          const suggestion = allMentionSuggestions[participantIndex];
+          if (suggestion) {
+            selectMention(suggestion);
+          }
+        }
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        cursorPosition.value = 0;
+        return;
+      }
+    }
+
+    // Desktop: Enter submits; Shift+Enter inserts a newline.
+    // Mobile: Enter inserts a newline; submit is via the send button.
+    // Skip while an IME is composing (CJK candidate confirmation, etc.).
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !event.isComposing &&
+      event.keyCode !== 229 &&
+      !state.app.isMobile.value
+    ) {
+      event.preventDefault();
+      void handleSubmit(event);
     }
   };
 
@@ -759,7 +972,7 @@ export function ChatView(props: ChatViewProps) {
         role="log"
         aria-live="polite"
       >
-        {messages.length === 0 ? (
+        {timelineGroups.length === 0 ? (
           <div className="sb-chat-view-empty">
             <AskIcon className="sb-chat-view-empty-icon" />
             <p className="sb-chat-view-empty-title">
@@ -776,7 +989,9 @@ export function ChatView(props: ChatViewProps) {
                 <div className="sb-chat-view-event" key={group.key}>
                   <div className="sb-chat-view-event-avatar-shell">
                     {group.participants.slice(0, 3).map((p) => {
-                      const avatar = getParticipantAvatar(p, t);
+                      const avatar = getParticipantAvatar(p, t, {
+                        otherPeoplePresent: chatHasOtherPeople(chat),
+                      });
                       return (
                         <Avatar
                           key={p.id}
@@ -784,12 +999,38 @@ export function ChatView(props: ChatViewProps) {
                           visual={avatar.visual}
                           title={avatar.label}
                           isSelf={avatar.isSelf}
+                          genericFallback={avatar.genericFallback}
                         />
                       );
                     })}
                   </div>
                   <span className="sb-chat-view-event-text">
                     {getJoinLabel(group.participants, t)}
+                  </span>
+                  <RelativeDateTime timeMs={group.timeMs} />
+                </div>
+              );
+            }
+
+            if (group.type === "tool") {
+              const avatar = getMessageAvatar(chat, group.message, t);
+              return (
+                <div className="sb-chat-view-event" key={group.key}>
+                  <div className="sb-chat-view-event-avatar-shell">
+                    <Avatar
+                      imageUrl={avatar.imageUrl}
+                      visual={avatar.visual}
+                      title={avatar.label}
+                      isSelf={avatar.isSelf}
+                      genericFallback={avatar.genericFallback}
+                    />
+                  </div>
+                  <span className="sb-chat-view-event-text">
+                    {getToolUseLabel(
+                      getAuthorLabel(chat, group.message, t),
+                      group.count,
+                      t
+                    )}
                   </span>
                   <RelativeDateTime timeMs={group.timeMs} />
                 </div>
@@ -826,6 +1067,7 @@ export function ChatView(props: ChatViewProps) {
                       visual={avatar.visual}
                       title={avatar.label}
                       isSelf={avatar.isSelf}
+                      genericFallback={avatar.genericFallback}
                     />
                   </div>
                 </div>
@@ -974,22 +1216,23 @@ export function ChatView(props: ChatViewProps) {
               className="sb-chat-view-input-hint-caret"
               aria-hidden="true"
             />
-            <input
+            <textarea
               ref={inputRef}
-              type="text"
               className="sb-chat-view-input"
+              rows={1}
               placeholder={t("type-a-message", {
                 defaultValue: "Type a message...",
               })}
               value={draft.value}
               onInput={(event) => {
-                const input = event.currentTarget as HTMLInputElement;
+                const input = event.currentTarget as HTMLTextAreaElement;
                 draft.value = input.value;
                 cursorPosition.value =
                   input.selectionStart ?? input.value.length;
                 chat.setTypingStatus(input.value.trim().length > 0);
+                resizeComposeInput(input);
               }}
-              onKeyDown={handleMentionKeyDown}
+              onKeyDown={handleComposeKeyDown}
               onClick={handleInputPositionUpdate}
               onKeyUp={handleInputPositionUpdate}
               onSelect={handleInputPositionUpdate}
@@ -1004,6 +1247,9 @@ export function ChatView(props: ChatViewProps) {
               aria-autocomplete="list"
               aria-expanded={isMentionPickerOpen}
               aria-haspopup="listbox"
+              aria-label={t("type-a-message", {
+                defaultValue: "Type a message...",
+              })}
             />
           </div>
           <button
@@ -1048,7 +1294,12 @@ function ChatMessage({
       <p className="sb-chat-view-message-body">
         <MessageBody
           message={message}
-          onVerseReferenceClick={(ref) => state.app.openVerseReference(ref)}
+          onVerseReferenceClick={(ref) => {
+            if (state.app.isMobile.value) {
+              state.sidebar.closeChatPanel();
+            }
+            void state.app.openVerseReference(ref);
+          }}
         />
       </p>
       {showTimestamp && (

@@ -7,7 +7,11 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import { PlaylistItem, type PlaylistItemData } from "./PlaylistManager";
+import {
+  buildScriptureShareUrl,
+  PlaylistItem,
+  type PlaylistItemData,
+} from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { omit } from "es-toolkit";
@@ -20,6 +24,10 @@ import {
 } from "./civilDate";
 import { CasualOSManager } from "./OsManager";
 import { v4 as uuid } from "uuid";
+import { captureEvent } from "./Utils";
+import { savePhotoToGallery } from "./UserGalleryManager";
+import type { NavigationManager } from "./NavigationManager";
+import type { TabsManager } from "./TabsManager";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -110,6 +118,11 @@ export const ReadingPlanMetadataSchema = z.object({
   locale: z.string(),
   title: z.string().nullable(),
   description: z.string().nullable(),
+  /**
+   * Public URL of a 4:3 cover image. Optional so plans saved before this field
+   * existed still parse.
+   */
+  heroImageUrl: z.url().max(2048).nullable().optional(),
   // Every pace the author offers for reading this plan. A plan has no single
   // duration — how long it takes follows from whichever cadence the reader
   // picks (see `cadenceDurationDays`).
@@ -126,6 +139,53 @@ export const ReadingPlanSchema = ReadingPlanMetadataSchema.extend({
   sessions: z.array(ReadingPlanSessionSchema),
 });
 export type ReadingPlan = z.infer<typeof ReadingPlanSchema>;
+
+export function getReadingPlanLocator(plan: {
+  recordName: string;
+  address: string;
+}): string {
+  return `${plan.recordName}.${plan.address}`;
+}
+
+export function parseReadingPlanLocator(
+  locator: string | null | undefined
+): { recordName: string; address: string } | null {
+  if (!locator) {
+    return null;
+  }
+  const lastDot = locator.lastIndexOf(".");
+  if (lastDot <= 0 || lastDot === locator.length - 1) {
+    console.error("Invalid reading plan locator:", locator);
+    return null;
+  }
+  return {
+    recordName: locator.slice(0, lastDot),
+    address: locator.slice(lastDot + 1),
+  };
+}
+
+/**
+ * Builds a shareable reading-plan URL, opening on the plan's first scripture
+ * chapter the same way a shared playlist does.
+ */
+export function buildReadingPlanShareUrl(params: {
+  plan: Pick<ReadingPlan, "recordName" | "address" | "sessions">;
+  currentUrl: URL;
+  basePath: string;
+  activeTranslationId?: string;
+}): string {
+  const { plan, currentUrl, basePath, activeTranslationId } = params;
+  return buildScriptureShareUrl({
+    items: plan.sessions.flatMap((session) =>
+      session.readings.map((reading) => reading.item)
+    ),
+    currentUrl,
+    basePath,
+    activeTranslationId,
+    param: "readingPlan",
+    locator: getReadingPlanLocator(plan),
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Progress
@@ -190,6 +250,20 @@ export function formatReadingPlanId(
   address: string
 ): string {
   return `rp_${recordName}_${address}`;
+}
+
+/** Session/reading totals for analytics, counted as the plan currently stands. */
+function readingPlanCounts(plan: ReadingPlan): {
+  totalSessions: number;
+  totalReadings: number;
+} {
+  return {
+    totalSessions: plan.sessions.length,
+    totalReadings: plan.sessions.reduce(
+      (sum, session) => sum + session.readings.length,
+      0
+    ),
+  };
 }
 
 /**
@@ -331,6 +405,7 @@ export function createReadingPlan(
     locale?: string;
     title?: string | null;
     description?: string | null;
+    heroImageUrl?: string | null;
     cadenceOptions?: CadenceOption[];
     defaultCadenceId?: string | null;
     status?: ReadingPlanStatus;
@@ -348,6 +423,7 @@ export function createReadingPlan(
     locale: options.locale ?? "en",
     title: options.title ?? null,
     description: options.description ?? null,
+    heroImageUrl: options.heroImageUrl ?? null,
     cadenceOptions,
     defaultCadenceId: options.defaultCadenceId ?? cadenceOptions[0]?.id ?? null,
     status: options.status ?? "complete",
@@ -1359,9 +1435,55 @@ export function summarizeCalendar(
   };
 }
 
+/**
+ * Fires the session/plan "finished" analytics events for whatever completion
+ * transitions happened between `previous` and `next`. Called from every path
+ * that persists progress, so a session completed via marking the whole
+ * session, the whole day, or its last individual reading is reported the same
+ * way. Only the incomplete -> complete direction fires: undoing progress, or
+ * re-saving a session that was already complete, must not re-emit.
+ */
+function captureProgressCompletionEvents(
+  plan: ReadingPlan | undefined,
+  previous: ReadingPlanProgress | undefined,
+  next: ReadingPlanProgress
+): void {
+  const previousSessions = new Map(
+    (previous?.sessions ?? []).map((s) => [s.sessionId, s])
+  );
+  for (const session of next.sessions) {
+    if (
+      session.completedAtMs &&
+      !previousSessions.get(session.sessionId)?.completedAtMs
+    ) {
+      captureEvent("reading_plan_session_finished", {
+        planId: next.planId,
+        progressId: next.id,
+        sessionId: session.sessionId,
+      });
+    }
+  }
+  if (!plan) {
+    return;
+  }
+  const previousPercent = previous
+    ? withProgressStats(plan, previous).percentComplete
+    : 0;
+  if (previousPercent < 1 && next.percentComplete === 1) {
+    captureEvent("reading_plan_finished", {
+      planId: next.planId,
+      progressId: next.id,
+      totalSessions: next.totalSessions,
+      totalReadings: next.totalReadings,
+    });
+  }
+}
+
 export function createReadingPlansManager(
   os: CasualOSManager,
-  login: LoginManager
+  login: LoginManager,
+  tabs: Pick<TabsManager, "tabs" | "selectedTabId">,
+  navigation: Pick<NavigationManager, "currentUrl" | "basePath">
 ) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
   const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
@@ -1419,6 +1541,35 @@ export function createReadingPlansManager(
     }
 
     return parsed.data;
+  };
+
+  /**
+   * Loads a plan from a `recordName.address` share locator and selects it.
+   * Returns null when the locator is malformed.
+   */
+  const loadByLocator = async (
+    locator: string
+  ): Promise<ReadingPlan | null> => {
+    const parsed = parseReadingPlanLocator(locator);
+    if (!parsed) {
+      return null;
+    }
+    const plan = await getReadingPlan(parsed.recordName, parsed.address);
+    selectedReadingPlan.value = plan;
+    return plan;
+  };
+
+  /** Gets a shareable URL for the given plan. */
+  const getReadingPlanShareUrl = (plan: ReadingPlan): string => {
+    const selectedTab = tabs.tabs
+      .peek()
+      .find((tab) => tab.id === tabs.selectedTabId.peek());
+    return buildReadingPlanShareUrl({
+      plan,
+      currentUrl: navigation.currentUrl.peek(),
+      basePath: navigation.basePath,
+      activeTranslationId: selectedTab?.readingState.translationId.peek(),
+    });
   };
 
   // A plan lives in two records: the plan itself and a `_metadata` companion
@@ -1813,16 +1964,24 @@ export function createReadingPlansManager(
   // recomputing the derived stats against the selected plan when it matches.
   const updateSelectedProgress = async (updated: ReadingPlanProgress) => {
     const plan = selectedReadingPlan.value;
-    const next =
+    const matchingPlan =
       plan &&
       formatReadingPlanId(plan.recordName, plan.address) === updated.planId
-        ? withProgressStats(plan, updated)
-        : updated;
+        ? plan
+        : undefined;
+    const previous =
+      selectedReadingPlanProgress.value?.id === updated.id
+        ? selectedReadingPlanProgress.value
+        : undefined;
+    const next = matchingPlan
+      ? withProgressStats(matchingPlan, updated)
+      : updated;
     selectedReadingPlanProgress.value = next;
     userReadingPlanProgresses.value = userReadingPlanProgresses.value.map(
       (p) => (p.id === next.id ? next : p)
     );
     await saveReadingPlanProgress(next);
+    captureProgressCompletionEvents(matchingPlan, previous, next);
   };
 
   const requireSelectedProgress = () => {
@@ -1865,9 +2024,25 @@ export function createReadingPlansManager(
   /** Marks an entire calendar day (all sessions and readings) complete/incomplete and saves. */
   const markDayComplete = async (day: CalendarReadingDay, complete = true) => {
     const current = requireSelectedProgress();
+    // Day completion is calendar information (which sessions fall on this day)
+    // that isn't visible from a plain progress diff, so it's checked here
+    // rather than centrally alongside session/plan completion.
+    const wasAlreadyComplete = day.sessions.every((cs) =>
+      isSessionComplete(
+        cs.session,
+        current.sessions.find((s) => s.sessionId === cs.session.id)
+      )
+    );
     await updateSelectedProgress(
       markDayCompleteInProgress(current, day, Date.now(), complete)
     );
+    if (complete && !wasAlreadyComplete) {
+      captureEvent("reading_plan_day_finished", {
+        planId: current.planId,
+        progressId: current.id,
+        dayOffset: day.dayOffset,
+      });
+    }
   };
 
   /** Marks one chapter of one reading complete/incomplete and saves. */
@@ -1900,6 +2075,9 @@ export function createReadingPlansManager(
     const plan = fullReadingPlans.value.find(
       (p) => formatReadingPlanId(p.recordName, p.address) === updated.planId
     );
+    const previous = userReadingPlanProgresses.value.find(
+      (p) => p.id === updated.id
+    );
     const next = plan ? withProgressStats(plan, updated) : updated;
     userReadingPlanProgresses.value = userReadingPlanProgresses.value.map(
       (p) => (p.id === next.id ? next : p)
@@ -1908,6 +2086,7 @@ export function createReadingPlansManager(
       selectedReadingPlanProgress.value = next;
     }
     await saveReadingPlanProgress(next);
+    captureProgressCompletionEvents(plan, previous, next);
   };
 
   /**
@@ -2007,6 +2186,12 @@ export function createReadingPlansManager(
       ...userReadingPlanProgresses.value,
       progress,
     ];
+    captureEvent("reading_plan_started", {
+      planId: progress.planId,
+      progressId: progress.id,
+      selfPaced: progress.selfPaced,
+      cadenceId: progress.selectedCadenceId,
+    });
     return progress;
   };
 
@@ -2055,6 +2240,22 @@ export function createReadingPlansManager(
           : [...userReadingPlans.value, metadata];
       });
       editingReadingPlanSaveError.value = false;
+      // Published-plan edits are not written here — they wait for
+      // `finishEditingReadingPlan` so Cancel/back can walk away cleanly.
+      if (draft.isNew) {
+        captureEvent(
+          draft.persisted
+            ? "reading_plan_draft_updated"
+            : "reading_plan_draft_created",
+          {
+            planId: formatReadingPlanId(
+              draft.plan.recordName,
+              draft.plan.address
+            ),
+            ...readingPlanCounts(draft.plan),
+          }
+        );
+      }
     } catch (error) {
       console.error("Failed to save reading plan draft:", error);
       editingReadingPlanSaveError.value = true;
@@ -2080,7 +2281,9 @@ export function createReadingPlansManager(
       draftSaveTimer = null;
     }
     const draft = editingReadingPlan.peek();
-    if (!draft) {
+    // New drafts autosave so the author can leave and resume. Edits to an
+    // already-published plan stay in memory until Save changes.
+    if (!draft || !draft.isNew) {
       editingReadingPlanSaving.value = false;
       return;
     }
@@ -2109,7 +2312,9 @@ export function createReadingPlansManager(
       ...patch,
       plan: { ...update(current.plan), updatedAtMs: Date.now() },
     };
-    scheduleDraftSave();
+    if (current.isNew) {
+      scheduleDraftSave();
+    }
   };
 
   /**
@@ -2150,9 +2355,10 @@ export function createReadingPlansManager(
 
   /**
    * Opens an already-published plan in the same editor used to create one, so
-   * there is one screen for both. Edits autosave exactly as a draft's do, and
-   * the plan keeps its `"complete"` status throughout so it never drops out of
-   * the reader's list mid-edit.
+   * there is one screen for both. Edits stay in memory until Save changes —
+   * backing out (Cancel/back) drops them and leaves the published plan as it
+   * was. The plan keeps its `"complete"` status throughout so it never drops
+   * out of the reader's list mid-edit.
    */
   const editExistingReadingPlan = (plan: ReadingPlan) => {
     editingReadingPlan.value = {
@@ -2168,26 +2374,46 @@ export function createReadingPlansManager(
   };
 
   /**
-   * Steps out of the wizard, flushing any pending change first. The draft
-   * itself is kept — that is the whole point of drafts — and stays in the
-   * plans list to be resumed or discarded.
+   * Steps out of the wizard. A new draft flushes any pending change first and
+   * is kept — that is the whole point of drafts — so it stays in the plans
+   * list to be resumed or discarded. An edit of a published plan is dropped
+   * without writing, so Cancel/back does not commit the cover image (or
+   * anything else) the author never saved.
    */
   const cancelEditingReadingPlan = () => {
     const draft = editingReadingPlan.peek();
-    if (draft && (draft.persisted || draftSaveTimer !== null)) {
+    if (draft?.isNew && (draft.persisted || draftSaveTimer !== null)) {
       void flushDraftSave().then(() => {
         editingReadingPlan.value = null;
       });
       return;
     }
+    if (draftSaveTimer !== null) {
+      clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+    }
+    editingReadingPlanSaving.value = false;
     editingReadingPlan.value = null;
   };
 
-  /** Merges a title/description change into the draft. */
+  /** Merges a title/description/cover-image change into the draft. */
   const updateEditingReadingPlan = (
-    patch: Partial<Pick<ReadingPlan, "title" | "description">>
+    patch: Partial<Pick<ReadingPlan, "title" | "description" | "heroImageUrl">>
   ) => {
     mutateDraft((plan) => ({ ...plan, ...patch }));
+  };
+
+  /**
+   * Uploads a cover image to the current user's record and returns its public
+   * URL. The caller attaches that URL via `updateEditingReadingPlan`. Throws
+   * when signed out.
+   */
+  const uploadHeroImage = async (file: File): Promise<string> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Cannot upload a cover image while signed out.");
+    }
+    return (await savePhotoToGallery(os, userId, file)).url;
   };
 
   /** Points new readings at a session of the draft. */
@@ -2363,6 +2589,13 @@ export function createReadingPlansManager(
     });
     editingReadingPlan.value = null;
     editingReadingPlanSaving.value = false;
+    captureEvent(
+      draft.isNew ? "reading_plan_created" : "reading_plan_updated",
+      {
+        planId: formatReadingPlanId(plan.recordName, plan.address),
+        ...readingPlanCounts(plan),
+      }
+    );
     return plan;
   };
 
@@ -2376,6 +2609,7 @@ export function createReadingPlansManager(
   const deleteReadingPlan = async (plan: {
     recordName: string;
     address: string;
+    status: ReadingPlanStatus;
   }) => {
     const planId = formatReadingPlanId(plan.recordName, plan.address);
     const ownProgresses = userReadingPlanProgresses.value.filter(
@@ -2383,6 +2617,12 @@ export function createReadingPlansManager(
     );
     await os.eraseData(plan.recordName, `${plan.address}_metadata`);
     await os.eraseData(plan.recordName, plan.address);
+    // A draft that was never finished never fired `reading_plan_created`, so
+    // discarding it here (see `discardEditingReadingPlan`) must not count as a
+    // delete — only a plan that actually got published is one.
+    if (plan.status === "complete") {
+      captureEvent("reading_plan_deleted", { planId });
+    }
     // Best effort: a progress that fails to erase leaves nothing broken behind
     // (it simply stops matching a plan), so it must not fail the delete.
     await Promise.all(
@@ -2430,6 +2670,10 @@ export function createReadingPlansManager(
     }
     try {
       await deleteReadingPlan(draft.plan);
+      captureEvent("reading_plan_draft_discarded", {
+        planId: formatReadingPlanId(draft.plan.recordName, draft.plan.address),
+        ...readingPlanCounts(draft.plan),
+      });
     } catch (error) {
       console.error("Failed to discard reading plan draft:", error);
     }
@@ -2476,6 +2720,7 @@ export function createReadingPlansManager(
     cancelEditingReadingPlan,
     discardEditingReadingPlan,
     updateEditingReadingPlan,
+    uploadHeroImage,
     selectEditingPlanSession,
     setEditingPlanCadenceOptions,
     addSessionToEditingPlan,
@@ -2483,6 +2728,8 @@ export function createReadingPlansManager(
     addReadingToEditingPlan,
     removeReadingFromEditingPlan,
     finishEditingReadingPlan,
+    loadByLocator,
+    getReadingPlanShareUrl,
   };
 }
 

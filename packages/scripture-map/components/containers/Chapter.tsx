@@ -1,6 +1,6 @@
-import { Tooltip } from "./Tooltip";
+import { ScriptureMapTooltip } from "./ScriptureMapTooltip";
 import { useChapter } from "../../hooks/useChapter";
-import type { TooltipContentData } from "./Tooltip";
+import type { TooltipContentData } from "./ScriptureMapTooltip";
 
 import { memo } from "preact/compat";
 
@@ -59,7 +59,7 @@ export const Chapter = memo(
         {(isReadingHistoryEnabled || isUserPresenceEnabled) &&
           tooltipAnchor &&
           tooltipContentsData?.length > 0 && (
-            <Tooltip
+            <ScriptureMapTooltip
               anchor={tooltipAnchor}
               contentsData={tooltipContentsData}
               offsetY={tooltipOffsetY}

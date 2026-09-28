@@ -2,7 +2,10 @@ import "./shareModal.css";
 import { useEffect } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
-import { type BibleReadingSession } from "../../managers/SessionsManager";
+import {
+  getSessionUrl,
+  type BibleReadingSession,
+} from "../../managers/SessionsManager";
 
 export interface ShareModalProps {
   /** Called when the sheet should close (Cancel or Escape). */
@@ -132,7 +135,7 @@ export const ShareModal = (props: ShareModalProps) => {
                 {action.subtitle}
               </span>
             </span>
-            <span className="sb-share-action-chevron material-symbols-outlined">
+            <span className="sb-share-action-chevron material-symbols-outlined rtl-mirror">
               chevron_right
             </span>
           </button>
@@ -141,14 +144,3 @@ export const ShareModal = (props: ShareModalProps) => {
     </div>
   );
 };
-
-function getSessionUrl(session: BibleReadingSession) {
-  const url = new URL(window.location.href);
-  const pattern = url.searchParams.get("pattern");
-  url.search = "";
-  url.searchParams.set("sessionId", session.id);
-  if (pattern) {
-    url.searchParams.set("pattern", pattern);
-  }
-  return url;
-}

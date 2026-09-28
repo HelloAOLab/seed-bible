@@ -1,0 +1,14 @@
+{
+  "name": "@seed-bible/house-of-the-lord",
+  "version": "1.0.0",
+  "description": "Interactive 3D experiences of things the Bible describes, tied to the verses that mention them.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.ts"
+    }
+  },
+  "dependencies": {
+    "seed-bible": "workspace:*"
+  }
+}

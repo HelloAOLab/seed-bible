@@ -1,6 +1,17 @@
-import { InterpolateHexColors } from "@packages/seed-bible-utils/domain/functions/colors";
-import type { HexString } from "@packages/seed-bible-utils/domain/models/commonTypes";
+import {
+  getColorByReadingTime as computeColorByReadingTime,
+  getColorByRecency as computeColorByRecency,
+} from "@packages/seed-bible/seed-bible/managers/ReadingHistoryColors";
+import type { HexString } from "@packages/seed-bible/seed-bible/managers/Colors";
 
+/**
+ * Thin wrapper over the core colour functions, holding the one piece of state
+ * they don't: the mutable recency threshold. The colour maths itself lives in
+ * `managers/ReadingHistoryColors` so the core package can use it directly.
+ *
+ * The methods stay arrow-function properties — consumers destructure them off
+ * the instance, so they must keep their `this` binding.
+ */
 export class ReadingHistoryService {
   #recencyThresholdTimeSeconds: number;
 
@@ -15,27 +26,7 @@ export class ReadingHistoryService {
     fullColorTimeSeconds?: number;
     step?: number;
     stepColors?: HexString[];
-  }): HexString => {
-    const {
-      readingTimeSeconds,
-      fullColorTimeSeconds = 900,
-      baseColor,
-      userColor,
-      step,
-      stepColors,
-    } = params;
-
-    const progress = Math.min(1, readingTimeSeconds / fullColorTimeSeconds);
-
-    if (step && stepColors) {
-      const steppedProgress =
-        Math.round(Math.max(progress, step) / step) * step;
-      const index = steppedProgress / step;
-      return stepColors[index] || baseColor;
-    }
-
-    return InterpolateHexColors(baseColor, userColor, progress, step);
-  };
+  }): HexString => computeColorByReadingTime(params);
 
   getColorByRecency = (params: {
     recencyTimeSeconds: number;
@@ -43,28 +34,11 @@ export class ReadingHistoryService {
     userColor: HexString;
     step?: number;
     now?: Date;
-  }): HexString => {
-    const {
-      recencyTimeSeconds,
-      baseColor,
-      userColor,
-      now = new Date(),
-    } = params;
-
-    const threshold = this.#recencyThresholdTimeSeconds;
-    const nowSeconds = Math.floor(now.getTime() / 1000);
-    const timeFrameSeconds = nowSeconds - threshold;
-    const elapsedRecencySeconds = Math.max(recencyTimeSeconds - threshold, 0);
-
-    const progress = Math.min(elapsedRecencySeconds / timeFrameSeconds, 1);
-
-    const defaultStep =
-      1 /
-      Math.floor((now.getTime() - threshold * 1000) / (1000 * 60 * 60 * 24));
-    const finalStep = params.step ?? defaultStep;
-
-    return InterpolateHexColors(baseColor, userColor, progress, finalStep);
-  };
+  }): HexString =>
+    computeColorByRecency({
+      ...params,
+      recencyThresholdTimeSeconds: this.#recencyThresholdTimeSeconds,
+    });
 
   getRecencyThresholdTimeSeconds = () => {
     return this.#recencyThresholdTimeSeconds;
