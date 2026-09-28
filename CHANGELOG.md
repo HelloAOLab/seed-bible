@@ -4,26 +4,45 @@
 
 ### ✨ Added
 
-- See your notes at a glance while reading on a phone. Every verse a note starts on now gets a small note icon beside the text, lined up with its verse number; tapping it selects the verse and opens the note. Previously the only sign a verse had a note was a box around its number, and there was no way to read the note without hunting for it. ([#1691](https://github.com/HelloAOLab/seed-bible/issues/1691))
-- See where everyone else is reading in a shared session. Each other participant gets a slim coloured bar beside the text spanning the verses on their screen, with their avatar at the top of it, so you can tell at a glance whether they are with you or still a few verses back. The bars glide along as people move, and people on the same verses stand side by side in a gutter that stays the same width, so the scripture never shifts as they come and go. Scroll past the start of someone's bar and their avatar stays with you at the top of the screen for as long as their verses do; small arrows show when a bar carries on above or below the screen, and a crowd on the same verses collapses into a short avatar stack. Someone who switches to another tab keeps their place in the session but their bar disappears until they come back. Before this, the only clue was watching their highlights appear. ([#1692](https://github.com/HelloAOLab/seed-bible/issues/1692))
+- Show a note icon beside each verse that has a note when reading on a phone. ([#1776](https://github.com/HelloAOLab/seed-bible/pull/1776))
+  - Tap the icon to select the verse and open its note.
+  - Before, the only sign of a note was a box around the verse number.
+- Show where everyone else is reading in a shared session. ([#1775](https://github.com/HelloAOLab/seed-bible/pull/1775))
+  - Each participant gets a coloured bar beside the verses on their screen, topped with their avatar.
+  - People on the same verses appear side by side, and a crowd collapses into an avatar stack.
+  - A person's bar is hidden while they're in another tab.
 - Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
-- Show the people, places and events a chapter names, from the Theographic Bible Metadata dataset. ([#1744](https://github.com/HelloAOLab/seed-bible/issues/1744))
-  - New People, Places and Events filters in the Discover panel, each listing what the chapter mentions and the verses it appears in. Tap a verse to jump to it.
-  - Open an entry and pick one of the chapter's verses that mention it to read it, quoted in your translation with the name marked.
-  - Each entry also shows its facts — a person's family, a place's other names and what it's called today, an event's date and participants — and its full dictionary entry. Places appear on a map right in the entry, which can be moved into its own window.
-  - Select a verse and the lists narrow to what that verse mentions.
-  - These are left out of the "All" view until you pick one of the three filters, so a chapter with dozens of names doesn't bury your own notes.
-  - Comes as the "People, Places & Events" extension, installed automatically. Uninstall it from Settings ▸ Extensions if you don't want it.
-- Let extensions add their own kinds of content to Discover. Each kind gets its own filter in the Discover panel and its own section in the Discover pane, and can be kept out of the "All" view until it's picked.
+- Show the people, places and events a chapter mentions in the Discover panel, from the Theographic Bible Metadata dataset. ([#1839](https://github.com/HelloAOLab/seed-bible/pull/1839))
+  - Pick the new People, Places or Events filter to list them with the verses they appear in; select a verse to narrow the list.
+  - Open an entry to see its facts, its dictionary entry and the verses that mention it. Places also show a map.
+  - They stay out of the "All" view until you pick one of these filters.
+  - Installed automatically as the "People, Places & Events" extension, which you can uninstall from Settings ▸ Extensions.
+- Let extensions add their own kinds of content to Discover. ([#1839](https://github.com/HelloAOLab/seed-bible/pull/1839))
+  - Each kind gets its own filter in the Discover panel and its own section in the Discover pane.
+  - An extension can keep its content out of the "All" view until its filter is picked.
+- Add a System theme in Settings ▸ Display & Theme that follows your device's light or dark mode, and use it by default. ([#1805](https://github.com/HelloAOLab/seed-bible/pull/1805))
+  - A Customization with both a light and a dark variant also offers System.
+  - Theme cards wrap into a two-column grid instead of scrolling sideways.
+- Let a deployment supply its own theme presets and a sidebar logo that links to its website. ([#1834](https://github.com/HelloAOLab/seed-bible/pull/1834), [#1837](https://github.com/HelloAOLab/seed-bible/pull/1837))
+  - A Customization's own logo still takes precedence over the deployment's.
 
 ### 🔧 Changed
 
 - Move the playlists section from the discover panel to the "Your Content" screen. ([#1838](https://github.com/HelloAOLab/seed-bible/pull/1838))
+- Simplify the Welcome screen that new and signed-out visitors see. ([#1855](https://github.com/HelloAOLab/seed-bible/pull/1855))
+  - Shows today's date above the greeting and adds a "Take a tour" button.
+  - The tour no longer offers itself on top of Welcome; it waits until you close it.
+  - On desktop the sidebar starts collapsed for new visitors, and it remembers whether you left it open or collapsed.
+- Limit the reading plans list to a readable width on large screens instead of stretching it across the whole window. ([#1895](https://github.com/HelloAOLab/seed-bible/pull/1895))
 
 ### 🐛 Fixed
 
 - Open a shared playlist and reading plan on its first scripture chapter instead of the chapter the sharer was reading, so the reader does not load one chapter and then jump to another. ([#1840](https://github.com/HelloAOLab/seed-bible/pull/1840)) ([#1841](https://github.com/HelloAOLab/seed-bible/pull/1841))
-- Show an extension's Discover content as soon as the extension is installed, and remove it as soon as it's uninstalled, instead of waiting until you move to another chapter.
+- Show an extension's Discover content as soon as the extension is installed, and remove it as soon as it's uninstalled, instead of waiting until you move to another chapter. ([#1839](https://github.com/HelloAOLab/seed-bible/pull/1839))
+- Stop counting reading time for a chapter hidden behind Today or another full-screen pane, so a new account no longer gets reading history for a chapter it never read. ([#1855](https://github.com/HelloAOLab/seed-bible/pull/1855))
+- Fix gaps above and below the chat on phones; it now fills the screen above the tab bar. ([#1857](https://github.com/HelloAOLab/seed-bible/pull/1857))
+- Fix the bottom toolbar staying hidden when Ask AI opens the chat after you've scrolled down on a phone. ([#1857](https://github.com/HelloAOLab/seed-bible/pull/1857))
+- Fix the book and chapter picker on phones showing desktop rounded corners and a border and sliding up slowly, instead of opening flat and full-screen instantly. ([#1898](https://github.com/HelloAOLab/seed-bible/pull/1898))
 
 ### 🗑️ Removed
 
