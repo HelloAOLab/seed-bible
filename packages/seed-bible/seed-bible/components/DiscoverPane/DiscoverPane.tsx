@@ -505,7 +505,7 @@ function PlaylistHistorySection({
                   dir="auto"
                   onClick={() => playFromHistory(playlists, entry, toast, t)}
                 >
-                  <HeroImageThumb url={heroUrl} />
+                  {heroUrl ? <HeroImageThumb url={heroUrl} /> : null}
                   <div className="sb-discover-item-main">
                     <span className="sb-discover-item-title">
                       {playlistTitle(entry, t)}

@@ -191,7 +191,7 @@ describe("PlayPlaylistView", () => {
     expect(container.querySelector(".sb-hero-banner--empty")).toBeNull();
   });
 
-  it("shows a No image placeholder when the playlist has no cover", () => {
+  it("hides the cover when the playlist has no image", () => {
     const playlist = createPlaylist({ items: [verseItem()] });
     const playing = createPlayingState([playlist]);
     const { playlists } = createMockPlaylists(playing);
@@ -209,10 +209,9 @@ describe("PlayPlaylistView", () => {
       );
     });
 
-    const placeholder = container.querySelector(".sb-hero-banner--empty");
-    expect(placeholder).not.toBeNull();
-    expect(placeholder?.textContent).toContain("No image");
-    expect(container.querySelector(".sb-hero-banner img")).toBeNull();
+    expect(container.querySelector(".sb-hero-banner")).toBeNull();
+    expect(container.querySelector(".sb-hero-banner--empty")).toBeNull();
+    expect(container.textContent).not.toContain("No image");
   });
 
   it("resolves bible-verse item labels using the selected tab's translation books", () => {

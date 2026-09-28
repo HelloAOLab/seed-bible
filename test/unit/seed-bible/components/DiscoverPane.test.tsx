@@ -2515,9 +2515,8 @@ describe("DiscoverPaneTitle", () => {
     expect(item.querySelector(".sb-discover-item-title")?.textContent).toBe(
       "Shared Study"
     );
-    expect(item.querySelector(".sb-hero-thumb--empty")?.textContent).toContain(
-      "No image"
-    );
+    expect(item.querySelector(".sb-hero-thumb")).toBeNull();
+    expect(item.textContent).not.toContain("No image");
     expect(
       item.querySelector(".sb-discover-item-description")?.textContent
     ).toMatch(/50% complete/);
