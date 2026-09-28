@@ -103,6 +103,17 @@ export default function initExampleExtension() {
                   "example-extension",
                   "showBanner"
                 ) === true;
+              // `repeatCount` is a whole number from 1 to 10. A stored value
+              // outside that range is ignored, so this is always 1–10 or the
+              // default once the definition is in place.
+              const repeatCount = context.extensionSettings.getValue(
+                "example-extension",
+                "repeatCount"
+              );
+              const tone = context.extensionSettings.getValue(
+                "example-extension",
+                "tone"
+              );
               return (
                 <div
                   style={{
@@ -130,9 +141,13 @@ export default function initExampleExtension() {
                           typeof greetingSize === "number"
                             ? `${greetingSize}rem`
                             : undefined,
+                        fontWeight: tone === "bold" ? 700 : undefined,
+                        fontStyle: tone === "plain" ? "normal" : "italic",
                       }}
                     >
-                      {greeting}
+                      {typeof repeatCount === "number"
+                        ? greeting.repeat(repeatCount)
+                        : greeting}
                     </p>
                   )}
                   {typeof subtitle === "string" && subtitle && (
