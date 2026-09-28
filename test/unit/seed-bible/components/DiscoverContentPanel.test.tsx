@@ -56,6 +56,7 @@ function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
 function createMockTab(
   overrides: {
     discoveredCrossReferences?: unknown[];
+    discoveredContent?: unknown[];
   } = {}
 ): ReaderTab {
   return {
@@ -69,13 +70,16 @@ function createMockTab(
         overrides.discoveredCrossReferences ?? []
       ),
       discoveredStudyNotes: signal([]),
-      discoveredContent: signal([]),
+      discoveredContent: signal(overrides.discoveredContent ?? []),
     },
   } as unknown as ReaderTab;
 }
 
 function createMockState(
-  overrides: { annotationsForChapter?: Annotation[] } = {}
+  overrides: {
+    annotationsForChapter?: Annotation[];
+    pendingCountForChapter?: number;
+  } = {}
 ): SeedBibleState {
   return {
     app: {
@@ -97,7 +101,9 @@ function createMockState(
       ),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
       hasRecordOverride: false,
-      pendingCountForChapter: vi.fn(() => 0),
+      pendingCountForChapter: vi.fn(
+        () => overrides.pendingCountForChapter ?? 0
+      ),
       sync: {
         pendingCount: signal(0),
       },
@@ -164,6 +170,30 @@ describe("DiscoverContentPanel", () => {
       "You don't have any notes for this chapter."
     );
     expect(container.textContent).toContain("Exodus 5:3");
+  });
+
+  it("keeps the notes section when a deletion is still waiting to sync", () => {
+    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+    const state = createMockState({
+      annotationsForChapter: [],
+      pendingCountForChapter: 1,
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toContain("Notes");
+    expect(
+      container.querySelector(".sb-annotations-pending-sync")?.textContent
+    ).toContain("waiting to sync");
+    const chipLabels = Array.from(
+      container.querySelectorAll(".sb-dcp-chip")
+    ).map((el) => el.textContent);
+    expect(chipLabels).toEqual(["All", "Notes", "Cross Refs"]);
   });
 
   it("renders the tab's notes (annotations) even when there are no other discovered results", () => {
@@ -293,6 +323,52 @@ describe("DiscoverContentPanel", () => {
 
     expect(container.querySelector(".sb-dcp-filters")).toBeNull();
     expect(container.textContent).toContain("A helpful note.");
+  });
+
+  it("falls back to the 'all' filter when the last note goes away", () => {
+    const tab = createMockTab({
+      discoveredCrossReferences: RESULTS_FIXTURE,
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [{ title: "A related article" }],
+        },
+      ],
+    });
+    const annotationsForChapter = signal<Annotation[]>([createAnnotation()]);
+    const state = createMockState();
+    state.annotations.getAnnotationsForChapter = vi.fn(
+      () => annotationsForChapter
+    );
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    const getChip = (label: string) =>
+      Array.from(container.querySelectorAll(".sb-dcp-chip")).find(
+        (el) => el.textContent === label
+      ) as HTMLButtonElement | undefined;
+
+    act(() => {
+      getChip("Notes")!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    expect(getChip("Notes")!.getAttribute("aria-selected")).toBe("true");
+
+    // A second content type stays so the chip row remains; with only cross
+    // references left the row would hide because a single kind of content
+    // does not get filter chips.
+    act(() => {
+      annotationsForChapter.value = [];
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    expect(getChip("All")!.getAttribute("aria-selected")).toBe("true");
+    expect(getChip("Notes")).toBeUndefined();
+    expect(container.textContent).toContain("Exodus 5:3");
+    expect(container.textContent).toContain("A related article");
   });
 
   it("clicking '+ Create' calls createNewAnnotation", () => {

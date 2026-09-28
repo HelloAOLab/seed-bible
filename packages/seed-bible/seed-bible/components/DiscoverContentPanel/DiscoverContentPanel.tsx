@@ -33,7 +33,8 @@ interface DiscoverContentPanelProps {
  * (annotations) plus discovered cross references/study notes/content — for
  * one reading tab. Rendered once per visible tab. Hides itself entirely when
  * there's no tab or there's nothing to show for the chapter, and omits the
- * notes section when the chapter has no notes. Otherwise it always renders —
+ * notes section when the chapter has no notes and nothing waiting to sync.
+ * Otherwise it always renders —
  * the "discover-content-panel" quick tool only controls whether the caller
  * places it beside the scripture text or below it (see BibleReader).
  */
@@ -54,10 +55,18 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
       .length > 0
   );
+  // A note deleted offline is no longer in the chapter list, but it is still
+  // a change that has to reach the server. Keep the section (and its chip)
+  // up so that pending sync stays visible.
+  const pendingAnnotationChanges =
+    bookId && chapterNumber
+      ? state.annotations.pendingCountForChapter(bookId, chapterNumber)
+      : 0;
+  const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
   const plans = getReadingPlansForChapter(state, tab.readingState);
 
   if (
-    !hasAnnotations &&
+    !showAnnotations &&
     !hasAnyDiscoverResults(tab.readingState) &&
     plans.length === 0
   ) {
@@ -84,7 +93,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   const filters: { key: FilterKey; label: string }[] = [
     { key: "all", label: t("all", { defaultValue: "All" }) },
-    ...(hasAnnotations
+    ...(showAnnotations
       ? [
           {
             key: "annotations" as const,
@@ -173,7 +182,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         )}
 
         <div className="sb-discover-content-panel-scroll">
-          {(f === "all" || f === "annotations") && hasAnnotations && (
+          {(f === "all" || f === "annotations") && showAnnotations && (
             <AnnotationsSection
               tab={tab}
               annotations={state.annotations}
