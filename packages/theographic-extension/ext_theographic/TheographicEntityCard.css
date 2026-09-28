@@ -125,6 +125,7 @@
 }
 
 .sb-theographic-quote-text {
+  margin: 0;
   font-family: var(--sb-reader-font-family, inherit);
   font-size: 0.875rem;
   line-height: 1.55;
