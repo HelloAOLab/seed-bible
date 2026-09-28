@@ -324,7 +324,8 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
       (sectionBookData
         ? !sectionBookData.isActive ||
           sectionBookData.selectionState === "Selected"
-        : (!sectionData?.isActive || sectionData.isSplitIntoBooks) &&
+        : (!sectionData?.isActive ||
+            (sectionData.isSplitIntoBooks && sectionData.isInExplodedView)) &&
           (!bookData?.isActive || bookData.selectionState === "Selected")) &&
       !chapterToFocus.isActive;
 

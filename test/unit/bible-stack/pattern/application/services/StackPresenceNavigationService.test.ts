@@ -612,6 +612,23 @@ describe("pattern.bible-stack.application.services.StackPresenceNavigationServic
       });
     });
 
+    it("re-explodes an imploded section to rebuild its selected book's chapters instead of resetting", async () => {
+      chain = {
+        ...makeOpenChain(makeBook({ isSelected: true })),
+        sectionData: makeSection({ isSplitIntoBooks: true }),
+      };
+      chapters = [makeChapter({ bookId: "GEN", number: 1, isActive: false })];
+
+      emitPresence();
+      await flush();
+
+      expect(steps).toEqual(["explode", "chapter"]);
+      expect(explodedViewServicePort.explodeSection).toHaveBeenCalledWith({
+        data: chain.sectionData,
+        pacing: "Regular",
+      });
+    });
+
     it("opens a present, closed ancestor instead of resetting the stack", async () => {
       chain = {
         ...makeOpenChain(makeBook({ isActive: false })),
