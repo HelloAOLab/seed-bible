@@ -62,8 +62,14 @@
   color: var(--rp-muted);
 }
 
+/* On a wide pane these buttons would stretch edge to edge. Cap the list and
+   centre it so each plan stays a readable length; narrower panes still fill
+   the width. */
 .sb-reading-plans-scroll {
   flex: 1;
+  align-self: center;
+  width: 100%;
+  max-width: 42rem;
   min-height: 0;
   overflow-y: auto;
   display: flex;
