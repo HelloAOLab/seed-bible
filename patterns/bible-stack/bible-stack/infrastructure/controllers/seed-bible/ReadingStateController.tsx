@@ -1,10 +1,9 @@
 import type { UserPresenceService } from "../../../application/services/UserPresenceService";
-import type { UserPresence } from "../../../domain/models/userPresence";
 import { ToUserPresence } from "../../../domain/functions/userPresence";
 
-function countInstances(presence: Map<unknown, unknown>): number {
+function countInstances(instancesLists: Iterable<unknown>): number {
   let count = 0;
-  for (const instances of presence.values()) {
+  for (const instances of instancesLists) {
     if (Array.isArray(instances)) count += instances.length;
   }
   return count;
@@ -20,7 +19,7 @@ export class UserPresenceController {
   constructor({ userPresenceService }: ControllerParams) {
     this.#userPresenceService = userPresenceService;
   }
-  handleUserPresenceChanged(presence: UserPresence) {
+  handleUserPresenceChanged(presence: unknown) {
     const userPresence = ToUserPresence(presence);
     if (!userPresence) {
       console.warn(
@@ -29,9 +28,10 @@ export class UserPresenceController {
       );
       return;
     }
+    const received = Object.values(presence as Record<string, unknown>);
     if (
-      userPresence.size !== presence.size ||
-      countInstances(userPresence) !== countInstances(presence)
+      userPresence.size !== received.length ||
+      countInstances(userPresence.values()) !== countInstances(received)
     ) {
       console.warn(
         "bible-stack UserPresenceController: dropped invalid reading instances",

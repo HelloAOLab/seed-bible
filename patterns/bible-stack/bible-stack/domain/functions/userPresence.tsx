@@ -18,11 +18,15 @@ function isReadingInstance(value: unknown): value is ReadingInstance {
   );
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export function ToUserPresence(value: unknown): UserPresence | null {
-  if (!(value instanceof Map)) return null;
+  if (!isPlainRecord(value)) return null;
   const presence: UserPresence = new Map();
-  for (const [connectionId, instances] of value) {
-    if (typeof connectionId !== "string" || !Array.isArray(instances)) continue;
+  for (const [connectionId, instances] of Object.entries(value)) {
+    if (!Array.isArray(instances)) continue;
     const validInstances = instances.filter(isReadingInstance);
     if (validInstances.length > 0) presence.set(connectionId, validInstances);
   }
@@ -51,13 +55,10 @@ function isConnectedUserData(value: unknown): value is ConnectedUserData {
 }
 
 export function ToUserIdentityMap(value: unknown): UserIdentityMap | null {
-  if (!(value instanceof Map)) return null;
+  if (!isPlainRecord(value)) return null;
   const identity: UserIdentityMap = new Map();
-  for (const [connectionId, data] of value) {
-    if (typeof connectionId !== "string" || !isConnectedUserData(data)) {
-      continue;
-    }
-    identity.set(connectionId, data);
+  for (const [connectionId, data] of Object.entries(value)) {
+    if (isConnectedUserData(data)) identity.set(connectionId, data);
   }
   return identity;
 }

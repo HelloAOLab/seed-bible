@@ -21,7 +21,10 @@ export class UserIdentityController {
       );
       return;
     }
-    if (identity instanceof Map && userIdentity.size !== identity.size) {
+    if (
+      userIdentity.size !==
+      Object.keys(identity as Record<string, unknown>).length
+    ) {
       console.warn(
         "bible-stack UserIdentityController: dropped invalid user identity entries",
         { identity, userIdentity }

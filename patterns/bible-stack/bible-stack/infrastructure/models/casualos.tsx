@@ -8,10 +8,6 @@ import type {
   BotTags,
 } from "../../../../pattern-typings/AuxLibraryDefinitions";
 import type { BiblePiece } from "../../domain/models/canvas";
-import type {
-  UserPresence,
-  UserIdentityMap,
-} from "../../domain/models/userPresence";
 
 export interface BaseTagData<T> {
   bot: Bot;
@@ -149,12 +145,12 @@ export interface BotListenerParametersMap<B extends PieceBot> {
 
 export interface UserPresenceChangedMessage {
   type?: "OnUserPresenceChanged";
-  presence?: UserPresence;
+  presence?: unknown;
 }
 
 export interface UserIdentityChangedMessage {
   type?: "OnUserIdentityChanged";
-  identity?: UserIdentityMap;
+  identity?: unknown;
 }
 
 export type Message = UserPresenceChangedMessage | UserIdentityChangedMessage;

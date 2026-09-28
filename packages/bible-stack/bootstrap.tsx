@@ -169,14 +169,14 @@ export const bootstrapExtension = () => {
                 if (!isReady.value) return;
                 portalRef.current?.sendMessage({
                   type: "OnUserPresenceChanged",
-                  presence: userPresence.value,
+                  presence: Object.fromEntries(userPresence.value),
                 });
               });
               useSignalEffect(() => {
                 if (!isReady.value) return;
                 portalRef.current?.sendMessage({
                   type: "OnUserIdentityChanged",
-                  identity: userIdentityMap.value,
+                  identity: Object.fromEntries(userIdentityMap.value),
                 });
               });
               return (

@@ -1,8 +1,4 @@
 import type { BotListenerParametersMap, PieceBot } from "./casualos";
-import type {
-  UserPresence,
-  UserIdentityMap,
-} from "../../domain/models/userPresence";
 import type { EventManager } from "../utils/EventManager";
 
 /**
@@ -21,8 +17,8 @@ export type ListenTagEventMap = {
 
 export interface BibleStackInfrastructureEvents {
   OnPieceBotReleased: { pieceBot: PieceBot };
-  OnUserPresenceChangedMessage: { presence: UserPresence };
-  OnUserIdentityChangedMessage: { identity: UserIdentityMap };
+  OnUserPresenceChangedMessage: { presence: unknown };
+  OnUserIdentityChangedMessage: { identity: unknown };
   UserColorStoreChanged: void;
   OnUserIdentityChanged: void;
 }
