@@ -576,4 +576,166 @@ describe("DiscoverContentPanel", () => {
 
     expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
   });
+
+  describe("side panel max height", () => {
+    let observedElements: Map<Element, () => void>;
+
+    class MockResizeObserver {
+      constructor(public cb: () => void) {}
+      observe(element: Element) {
+        observedElements.set(element, this.cb);
+      }
+      disconnect() {
+        for (const [element, cb] of observedElements) {
+          if (cb === this.cb) observedElements.delete(element);
+        }
+      }
+    }
+
+    let scroller: HTMLDivElement;
+    let paneRect: { top: number; bottom: number };
+
+    beforeEach(() => {
+      observedElements = new Map();
+      vi.stubGlobal("ResizeObserver", MockResizeObserver);
+      vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+        cb(0);
+        return 0;
+      });
+      vi.stubGlobal("cancelAnimationFrame", () => {});
+      vi.stubGlobal("innerHeight", 900);
+
+      // Stand-in for `.sb-pane-reader`: the scrolling pane the panel sticks in.
+      scroller = document.createElement("div");
+      scroller.style.overflowY = "auto";
+      paneRect = { top: 60, bottom: 900 };
+      scroller.getBoundingClientRect = () =>
+        ({ top: paneRect.top, bottom: paneRect.bottom }) as DOMRect;
+      container.remove();
+      scroller.appendChild(container);
+      document.body.appendChild(scroller);
+      document.documentElement.style.setProperty(
+        "--sb-reader-bottom-inset",
+        "100px"
+      );
+    });
+
+    afterEach(() => {
+      scroller.remove();
+      document.documentElement.style.removeProperty("--sb-reader-bottom-inset");
+      vi.unstubAllGlobals();
+    });
+
+    function renderPanel() {
+      act(() => {
+        render(
+          <DiscoverContentPanel
+            tab={createMockTab()}
+            state={createMockState({
+              annotationsForChapter: [createAnnotation()],
+            })}
+          />,
+          container
+        );
+      });
+      return container.querySelector(
+        ".sb-discover-content-panel"
+      ) as HTMLElement;
+    }
+
+    it("caps the panel to the pane area between the tab bar and the bottom toolbar", () => {
+      const panel = renderPanel();
+
+      // Pane starts 60px down (tab bar); toolbar covers the bottom 100px.
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "740px"
+      );
+    });
+
+    it("caps the panel to a pane that ends above the bottom of the screen", () => {
+      paneRect = { top: 60, bottom: 400 };
+      const panel = renderPanel();
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "340px"
+      );
+    });
+
+    it("re-measures when the bottom toolbar changes height", async () => {
+      const panel = renderPanel();
+
+      document.documentElement.style.setProperty(
+        "--sb-reader-bottom-inset",
+        "300px"
+      );
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "540px"
+      );
+    });
+
+    it("leaves room for the panel's sticky top offset", () => {
+      const panel = renderPanel();
+
+      // jsdom doesn't apply the stylesheet's `top: 1rem`, so set it inline and
+      // let the pane resize trigger the re-measure.
+      panel.style.top = "16px";
+      act(() => observedElements.get(scroller)?.());
+
+      // 900 − 100 (toolbar) − 60 (pane top) − 16 (sticky top)
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "724px"
+      );
+    });
+
+    it("re-measures when the pane is resized", () => {
+      const panel = renderPanel();
+
+      paneRect = { top: 60, bottom: 500 };
+      act(() => observedElements.get(scroller)?.());
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "440px"
+      );
+    });
+
+    it("re-measures when the window is resized", () => {
+      const panel = renderPanel();
+
+      vi.stubGlobal("innerHeight", 700);
+      paneRect = { top: 60, bottom: 700 };
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "540px"
+      );
+    });
+
+    it("stops measuring once the panel unmounts", () => {
+      const panel = renderPanel();
+
+      act(() => render(null, container));
+
+      expect(observedElements.size).toBe(0);
+      vi.stubGlobal("innerHeight", 700);
+      window.dispatchEvent(new Event("resize"));
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "740px"
+      );
+    });
+
+    it("never shrinks the panel below a usable minimum", () => {
+      paneRect = { top: 60, bottom: 120 };
+      const panel = renderPanel();
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "192px"
+      );
+    });
+  });
 });
