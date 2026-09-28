@@ -146,6 +146,64 @@ export function stripNullOptionalArgs(
   return cleaned;
 }
 
+/**
+ * Converts an arbitrary string into a camelCase, alphanumeric-only tool
+ * function name. A server's name is whatever the user typed, and an MCP
+ * tool's name is whatever its server chose (snake_case, kebab-case, dotted,
+ * spaced, etc.) — neither is guaranteed to be a valid function name for an
+ * AI provider's tool-calling API, which is why the combined
+ * `${server.name}:${tool.name}` gets run through this before it's exposed.
+ */
+export function toCamelCaseAlphanumeric(input: string): string {
+  const words = input
+    // Break an existing camelCase/PascalCase word at each internal
+    // uppercase letter so casing normalizes instead of compounding
+    // (e.g. "getUserInfo" stays three words, not one long lowercase run).
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean);
+
+  if (words.length === 0) {
+    return "tool";
+  }
+
+  const camelCased = words
+    .map((word, index) => {
+      const lower = word.toLowerCase();
+      return index === 0
+        ? lower
+        : lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join("");
+
+  // A name that starts with a digit (e.g. from a server named "123 API")
+  // isn't a valid identifier-style tool name.
+  return /^[a-zA-Z]/.test(camelCased) ? camelCased : `tool${camelCased}`;
+}
+
+/**
+ * Renames any tool past the first with a given name by appending an
+ * incrementing numeric suffix, so two tools that sanitize to the same
+ * camelCase name (from different servers, or a server and tool name that
+ * collide once special characters are stripped) don't silently shadow each
+ * other in the combined tool list handed to an AI provider.
+ */
+export function dedupeToolNames(
+  tools: AIProviderFunctionTool[]
+): AIProviderFunctionTool[] {
+  const usedNames = new Set<string>();
+  return tools.map((tool) => {
+    let name = tool.name;
+    let suffix = 2;
+    while (usedNames.has(name)) {
+      name = `${tool.name}${suffix}`;
+      suffix++;
+    }
+    usedNames.add(name);
+    return name === tool.name ? tool : { ...tool, name };
+  });
+}
+
 function makeServerId(): string {
   if (
     typeof crypto !== "undefined" &&
@@ -334,7 +392,7 @@ export function createMCPManager(
             : []
         );
         return {
-          name: `${server.name}:${tool.name}`,
+          name: toCamelCaseAlphanumeric(`${server.name}:${tool.name}`),
           type: "function",
           description: tool.description ?? "",
           parameters: toStrictJsonSchema(
@@ -438,7 +496,9 @@ export function createMCPManager(
     // non-serializable client handles; `toolsVersion` is the reactive proxy
     // that tells this computed when to re-derive from it.
     void toolsVersion.value;
-    return [...liveConnections.values()].flatMap((c) => c.tools);
+    return dedupeToolNames(
+      [...liveConnections.values()].flatMap((c) => c.tools)
+    );
   });
 
   const addServer: MCPManager["addServer"] = async (input) => {

@@ -1,5 +1,6 @@
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
 import { signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 
@@ -35,6 +36,8 @@ vi.mock("@modelcontextprotocol/client", () => {
 let createMCPManager: typeof import("@packages/mcp-extension/ext_MCP/main/MCPManager").createMCPManager;
 let toStrictJsonSchema: typeof import("@packages/mcp-extension/ext_MCP/main/MCPManager").toStrictJsonSchema;
 let stripNullOptionalArgs: typeof import("@packages/mcp-extension/ext_MCP/main/MCPManager").stripNullOptionalArgs;
+let toCamelCaseAlphanumeric: typeof import("@packages/mcp-extension/ext_MCP/main/MCPManager").toCamelCaseAlphanumeric;
+let dedupeToolNames: typeof import("@packages/mcp-extension/ext_MCP/main/MCPManager").dedupeToolNames;
 
 interface McpMock {
   Client: Mock;
@@ -105,8 +108,13 @@ describe("createMCPManager", () => {
   let warnSpy: Mock;
 
   beforeAll(async () => {
-    ({ createMCPManager, toStrictJsonSchema, stripNullOptionalArgs } =
-      await import("@packages/mcp-extension/ext_MCP/main/MCPManager"));
+    ({
+      createMCPManager,
+      toStrictJsonSchema,
+      stripNullOptionalArgs,
+      toCamelCaseAlphanumeric,
+      dedupeToolNames,
+    } = await import("@packages/mcp-extension/ext_MCP/main/MCPManager"));
   });
 
   beforeEach(async () => {
@@ -256,7 +264,7 @@ describe("createMCPManager", () => {
     await waitForCondition(() => manager.tools.value.length > 0);
 
     expect(manager.tools.value).toHaveLength(1);
-    expect(manager.tools.value[0]!.name).toBe("MyServer:search");
+    expect(manager.tools.value[0]!.name).toBe("myServerSearch");
     expect(manager.tools.value[0]!.description).toBe("Searches things");
 
     const result = await manager.tools.value[0]!.function({ q: "hi" });
@@ -605,6 +613,93 @@ describe("createMCPManager", () => {
 
     it("passes through undefined args unchanged", () => {
       expect(stripNullOptionalArgs(undefined, new Set())).toBeUndefined();
+    });
+  });
+
+  describe("toCamelCaseAlphanumeric", () => {
+    it("joins a server name and tool name into camelCase, dropping the separator", () => {
+      expect(toCamelCaseAlphanumeric("MyServer:search")).toBe("myServerSearch");
+    });
+
+    it("strips spaces, punctuation, and other special characters", () => {
+      expect(toCamelCaseAlphanumeric("My Cool Server! : get-weather.now")).toBe(
+        "myCoolServerGetWeatherNow"
+      );
+    });
+
+    it("treats an existing snake_case or kebab-case name as separate words", () => {
+      expect(toCamelCaseAlphanumeric("get_user_info")).toBe("getUserInfo");
+      expect(toCamelCaseAlphanumeric("get-user-info")).toBe("getUserInfo");
+    });
+
+    it("normalizes an already-PascalCase or camelCase name instead of compounding it", () => {
+      expect(toCamelCaseAlphanumeric("GetUserInfo")).toBe("getUserInfo");
+      expect(toCamelCaseAlphanumeric("getUserInfo")).toBe("getUserInfo");
+    });
+
+    it("prefixes a name that would otherwise start with a digit", () => {
+      expect(toCamelCaseAlphanumeric("123-server:search")).toBe(
+        "tool123ServerSearch"
+      );
+    });
+
+    it("falls back to a non-empty name when nothing alphanumeric remains", () => {
+      expect(toCamelCaseAlphanumeric("::: !!!")).toBe("tool");
+    });
+
+    it("never returns a name containing a special character", () => {
+      expect(toCamelCaseAlphanumeric("Weird Name #1 (beta)!!")).toMatch(
+        /^[a-zA-Z0-9]+$/
+      );
+    });
+  });
+
+  describe("dedupeToolNames", () => {
+    function makeTool(name: string): AIProviderFunctionTool {
+      return {
+        name,
+        type: "function",
+        description: "",
+        parameters: {} as AIProviderFunctionTool["parameters"],
+        function: async () => undefined,
+      };
+    }
+
+    it("leaves tool names untouched when none collide", () => {
+      const result = dedupeToolNames([makeTool("search"), makeTool("fetch")]);
+      expect(result.map((t) => t.name)).toEqual(["search", "fetch"]);
+    });
+
+    it("appends an incrementing numeric suffix to later tools with the same name", () => {
+      const result = dedupeToolNames([
+        makeTool("search"),
+        makeTool("search"),
+        makeTool("search"),
+      ]);
+      expect(result.map((t) => t.name)).toEqual([
+        "search",
+        "search2",
+        "search3",
+      ]);
+    });
+
+    it("does not rename a tool onto a name another tool already used", () => {
+      const result = dedupeToolNames([
+        makeTool("search"),
+        makeTool("search2"),
+        makeTool("search"),
+      ]);
+      expect(result.map((t) => t.name)).toEqual([
+        "search",
+        "search2",
+        "search3",
+      ]);
+    });
+
+    it("keeps every other field of the renamed tool unchanged", () => {
+      const original = makeTool("search");
+      const result = dedupeToolNames([makeTool("search"), original]);
+      expect(result[1]).toEqual({ ...original, name: "search2" });
     });
   });
 });
