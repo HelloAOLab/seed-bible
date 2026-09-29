@@ -1,17 +1,15 @@
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
-import type { SpatialNavigationPort } from "../ports/in/SpatialNavigation";
-import type {
-  BibleDataRepositoryPort,
-  BibleRecenterAdapterPort,
-} from "../ports/out/SpatialNavigation";
+import type { SpatialNavigationServicePort } from "../ports/in/SpatialNavigation";
+import type { BibleRecenterPort } from "../ports/out/BibleRecenter";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
-  bibleRecenterAdapterPort: BibleRecenterAdapterPort;
+  bibleRecenterAdapterPort: BibleRecenterPort;
 }
 
-export class SpatialNavigationService implements SpatialNavigationPort {
+export class SpatialNavigationService implements SpatialNavigationServicePort {
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
   #bibleDataRepositoryPort: ServiceParams["bibleDataRepositoryPort"];
   #bibleRecenterAdapterPort: ServiceParams["bibleRecenterAdapterPort"];

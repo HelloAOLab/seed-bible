@@ -1,4 +1,7 @@
 export const ActivityIndicatorVisualConfigs = {
+  BorderScaleFactor: 1.1,
+  GroundedBorderDepth: 0.03,
+  LabelBorderDepth: 0,
   ChapterOffset: {
     x: 0.075,
     y: 0.075,
@@ -27,7 +30,7 @@ export const ActivityIndicatorVisualConfigs = {
   },
   LabelForm: "circle",
   LabelOffset: {
-    x: 0.25,
+    x: 0.4,
     y: 0,
     z: 0.1,
   },
