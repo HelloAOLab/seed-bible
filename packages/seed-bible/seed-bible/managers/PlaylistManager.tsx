@@ -28,8 +28,17 @@ import {
   type GeneratedPlaylist,
 } from "./AIManager";
 import type { DiscoverManager } from "./DiscoverManager";
-import { emphasizeVerses } from "./BibleReadingManager";
-import { BOOK_SLUGS, type BookId } from "./BibleDataManager";
+import {
+  emphasizeVerses,
+  getDefaultTranslationForLanguage,
+  uiLocaleForDefaultTranslation,
+} from "./BibleReadingManager";
+import { BOOK_SLUGS, getBookId, type BookId } from "./BibleDataManager";
+import {
+  buildReadingUrl,
+  DEFAULT_UI_LANGUAGE,
+  parseReadingPath,
+} from "./ReadingUrlPath";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
 
@@ -147,6 +156,80 @@ function isRecordedPlaylist(
 }
 export type PlaylistItemData = z.infer<typeof PlaylistItem>;
 export type VerseRef = z.infer<typeof VerseRefSchema>;
+
+/**
+ * The chapter a share link should open on: the first scripture item whose
+ * book actually resolves. An unresolvable book is skipped so a later valid
+ * item can still set the path. Null when none resolve, so the share URL can
+ * keep the page the sharer is already on.
+ */
+function firstScriptureShareRef(items: readonly PlaylistItemData[]): {
+  bookId: BookId;
+  chapter: number;
+  translationId?: string;
+} | null {
+  for (const item of items) {
+    if (item.type !== "bible-verse") {
+      continue;
+    }
+    const bookId = getBookId(item.ref.bookId);
+    if (!bookId) {
+      continue;
+    }
+    return {
+      bookId,
+      chapter: item.ref.chapter,
+      translationId: item.translationId,
+    };
+  }
+  return null;
+}
+
+/**
+ * Builds a share URL for content made of `items` (a playlist, a reading
+ * plan). The path is the first resolvable scripture item's chapter so opening
+ * the link does not load the chapter the sharer happened to be reading and
+ * then jump to the shared content. The query string is replaced by
+ * `param=locator` alone.
+ */
+export function buildScriptureShareUrl(params: {
+  items: readonly PlaylistItemData[];
+  currentUrl: URL;
+  basePath: string;
+  /** The sharer's open tab's translation, used when neither the item nor the current path names one. */
+  activeTranslationId: string | undefined;
+  param: string;
+  locator: string;
+}): string {
+  const { items, basePath, activeTranslationId, param, locator } = params;
+  const current = new URL(params.currentUrl);
+  const scripture = firstScriptureShareRef(items);
+
+  let shareUrl: URL;
+  if (scripture) {
+    const parsed = parseReadingPath(current.pathname, basePath);
+    const translationId =
+      scripture.translationId ??
+      parsed?.translationId ??
+      activeTranslationId ??
+      getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id;
+    shareUrl = buildReadingUrl({
+      currentUrl: current,
+      basePath,
+      translationId,
+      bookId: scripture.bookId,
+      chapter: scripture.chapter,
+      fallbackLanguage:
+        uiLocaleForDefaultTranslation(translationId) ?? undefined,
+    });
+  } else {
+    shareUrl = current;
+  }
+
+  shareUrl.search = "";
+  shareUrl.searchParams.set(param, locator);
+  return shareUrl.toString();
+}
 
 /**
  * One verse or whole-chapter selection to collapse into playlist items.
@@ -1617,15 +1700,16 @@ export function createPlaylistManager(
     }
   };
 
-  /**
-   * Gets a shareable URL for the given playlist, which opens the app with that
-   */
-  const getPlaylistUrl = (playlist: Playlist): string => {
-    const shareUrl = new URL(navigation.currentUrl.value);
-    shareUrl.search = "";
-    shareUrl.searchParams.set("playlist", getPlaylistLocator(playlist));
-    return shareUrl.toString();
-  };
+  /** Gets a shareable URL for the given playlist. */
+  const getPlaylistUrl = (playlist: Playlist): string =>
+    buildScriptureShareUrl({
+      items: playlist.items,
+      currentUrl: navigation.currentUrl.value,
+      basePath: navigation.basePath,
+      activeTranslationId: activeTab.peek()?.readingState.translationId.peek(),
+      param: "playlist",
+      locator: getPlaylistLocator(playlist),
+    });
 
   const goBackFromPlayingView = () => {
     if (isMobile.value) {

@@ -564,7 +564,7 @@ export function composeThemeStyleText(theme: BibleTheme): string {
   return css.replace(/</g, "");
 }
 
-const LIGHT_THEME: BibleTheme = {
+export const LIGHT_THEME: BibleTheme = {
   id: "light",
   name: "Light",
   variables: {
@@ -753,7 +753,7 @@ export const LIGHT_THEME_FONT_DEFAULTS: Record<ThemeFontFamilyKey, string> = {
   hebrewSubtitleFontFamily: LIGHT_THEME.variables.hebrewSubtitleFontFamily!,
 };
 
-const DARK_THEME: BibleTheme = {
+export const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
   variables: {
@@ -947,6 +947,41 @@ export const THEME_PRESET_STYLE_TEXT: Record<string, string> = {
   [LIGHT_THEME.id]: composeThemeStyleText(LIGHT_THEME),
   [DARK_THEME.id]: composeThemeStyleText(DARK_THEME),
 };
+
+/**
+ * Resolves to `LIGHT_THEME`/`DARK_THEME` at read time, so it is not a preset and
+ * stays out of `themes` (the presets a customization variant can be based on).
+ * The pre-hydration script in `index.html` special-cases the same id.
+ */
+export const SYSTEM_THEME_ID = "system";
+
+/**
+ * Returns a function that seeds `prefersDarkScheme` from the OS setting and
+ * keeps it in sync. Meant to run post-mount: the server always renders Light,
+ * and the theme `<style>` tags only repaint on a *change*, so reading a dark
+ * device before `hydrate()` would leave it painted Light. Same
+ * seed-then-correct pattern as `LoginManager.hydrateLocalConfig`.
+ */
+function watchSystemColorScheme(
+  prefersDarkScheme: Signal<boolean>
+): () => void {
+  let hydrated = false;
+  return () => {
+    if (
+      hydrated ||
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return;
+    }
+    hydrated = true;
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    prefersDarkScheme.value = query.matches;
+    query.addEventListener("change", (event) => {
+      prefersDarkScheme.value = event.matches;
+    });
+  };
+}
 
 /**
  * Keys of `BibleThemeVariables` that represent a plain color value and are
@@ -1186,6 +1221,18 @@ export interface ThemeManager {
   currentTheme: ReadonlySignal<BibleTheme>;
   /** The base preset for `selectedThemeId`, without custom overrides. */
   basePresetTheme: ReadonlySignal<BibleTheme>;
+  /**
+   * The device's color scheme, tracked whatever theme is selected, so a
+   * Customization with a light and a dark variant can follow it without
+   * going through `selectedThemeId`.
+   */
+  prefersDarkScheme: ReadonlySignal<boolean>;
+  /**
+   * Reads the device's color scheme into `prefersDarkScheme` and starts
+   * tracking it. Call once, post-mount — it stays `false` (matching SSR)
+   * until then. Repeat calls are no-ops.
+   */
+  hydrateSystemColorScheme: () => void;
   /** User color overrides layered on top of the selected preset. */
   customOverrides: ReadonlySignal<ThemeOverrides>;
   /** User highlight color overrides layered on top of the preset highlights. */
@@ -1232,6 +1279,8 @@ export function createTheme(
   const themes = signal<BibleTheme[]>(
     brandingThemes?.length ? brandingThemes : DEFAULT_THEMES
   );
+  const prefersDarkScheme = signal(false);
+  const hydrateSystemColorScheme = watchSystemColorScheme(prefersDarkScheme);
 
   const selectedThemeId = computed(() => settings.settings.value.themeId);
   const customOverrides = computed(() =>
@@ -1251,12 +1300,19 @@ export function createTheme(
   const previewOverrides = signal<ThemeOverrides>({});
   const previewHighlightOverrides = signal<HighlightOverrides>({});
 
-  const basePresetTheme = computed<BibleTheme>(
-    () =>
+  const basePresetTheme = computed<BibleTheme>(() => {
+    if (selectedThemeId.value === SYSTEM_THEME_ID) {
+      // A white-label deployment's own light/dark themes win when they reuse
+      // the built-in ids; otherwise System falls back to the built-ins.
+      const fallback = prefersDarkScheme.value ? DARK_THEME : LIGHT_THEME;
+      return themes.value.find((theme) => theme.id === fallback.id) ?? fallback;
+    }
+    return (
       themes.value.find((theme) => theme.id === selectedThemeId.value) ??
       themes.value[0] ??
       LIGHT_THEME
-  );
+    );
+  });
 
   const currentTheme = computed<BibleTheme>(() => {
     const withColorOverrides = applyOverrides(
@@ -1289,18 +1345,13 @@ export function createTheme(
   // in index.html carries, and the same id the pre-hydration inline script
   // writes to. All three converge on one element.
   //
-  // The first run does NOT write, though, whenever that element already
-  // holds real theme CSS. Being outside the diffed tree means no
-  // *mismatch* risk, but it does not exempt this from the *flash* the
-  // deferred `localConfig` seed creates: at `createTheme()` time
-  // `login.localConfig` is still empty (see LoginManager), so `themeId` is
-  // the default "light" even for a visitor whose saved theme is dark, and
-  // writing it here would clobber the dark CSS the pre-hydration inline
-  // script just put in that tag — painting light until
-  // `hydrateLocalConfig()` restores the real id post-mount. Whatever is
-  // already in the tag (server-rendered, then corrected by that inline
-  // script from `localStorage`) is the better answer until then, so this
-  // takes over only from the first real *change* onwards.
+  // The first run does NOT write when that element already holds real theme
+  // CSS. At `createTheme()` time the saved `themeId` and the device's color
+  // scheme are both still unread (they arrive post-mount via
+  // `hydrateLocalConfig()` / `hydrateSystemColorScheme()`), so this would
+  // resolve to Light and clobber the dark CSS the inline script may have
+  // just written. The tag's existing CSS is the better answer until the
+  // first real *change*.
   if (typeof document !== "undefined") {
     let skipWrite = hasRenderedThemeStyles();
     effect(() => {
@@ -1338,9 +1389,19 @@ export function createTheme(
   }
 
   const setTheme = (themeId: string) => {
-    if (themes.value.some((theme) => theme.id === themeId)) {
-      settings.setThemeId(themeId);
+    if (
+      themeId !== SYSTEM_THEME_ID &&
+      !themes.value.some((theme) => theme.id === themeId)
+    ) {
+      return;
     }
+    // Picking a theme drops per-section text colors. Tied to this call, not
+    // the resolved preset, so a device flip under System never wipes a saved
+    // color (`resetTextColors` writes through to the profile).
+    if (themeId !== selectedThemeId.value) {
+      settings.resetTextColors();
+    }
+    settings.setThemeId(themeId);
   };
 
   const writeOverrides = (next: ThemeOverrides) => {
@@ -1438,6 +1499,8 @@ export function createTheme(
     selectedThemeId,
     currentTheme,
     basePresetTheme,
+    prefersDarkScheme,
+    hydrateSystemColorScheme,
     customOverrides,
     customHighlightOverrides,
     setTheme,

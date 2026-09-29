@@ -1,5 +1,9 @@
 import { batch, computed, effect, signal, untracked } from "@preact/signals";
-import { PlaylistItem, type PlaylistItemData } from "./PlaylistManager";
+import {
+  buildScriptureShareUrl,
+  PlaylistItem,
+  type PlaylistItemData,
+} from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { omit } from "es-toolkit";
@@ -14,6 +18,8 @@ import { CasualOSManager } from "./OsManager";
 import { v4 as uuid } from "uuid";
 import { captureEvent } from "./Utils";
 import { savePhotoToGallery } from "./UserGalleryManager";
+import type { NavigationManager } from "./NavigationManager";
+import type { TabsManager } from "./TabsManager";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -125,6 +131,53 @@ export const ReadingPlanSchema = ReadingPlanMetadataSchema.extend({
   sessions: z.array(ReadingPlanSessionSchema),
 });
 export type ReadingPlan = z.infer<typeof ReadingPlanSchema>;
+
+export function getReadingPlanLocator(plan: {
+  recordName: string;
+  address: string;
+}): string {
+  return `${plan.recordName}.${plan.address}`;
+}
+
+export function parseReadingPlanLocator(
+  locator: string | null | undefined
+): { recordName: string; address: string } | null {
+  if (!locator) {
+    return null;
+  }
+  const lastDot = locator.lastIndexOf(".");
+  if (lastDot <= 0 || lastDot === locator.length - 1) {
+    console.error("Invalid reading plan locator:", locator);
+    return null;
+  }
+  return {
+    recordName: locator.slice(0, lastDot),
+    address: locator.slice(lastDot + 1),
+  };
+}
+
+/**
+ * Builds a shareable reading-plan URL, opening on the plan's first scripture
+ * chapter the same way a shared playlist does.
+ */
+export function buildReadingPlanShareUrl(params: {
+  plan: Pick<ReadingPlan, "recordName" | "address" | "sessions">;
+  currentUrl: URL;
+  basePath: string;
+  activeTranslationId?: string;
+}): string {
+  const { plan, currentUrl, basePath, activeTranslationId } = params;
+  return buildScriptureShareUrl({
+    items: plan.sessions.flatMap((session) =>
+      session.readings.map((reading) => reading.item)
+    ),
+    currentUrl,
+    basePath,
+    activeTranslationId,
+    param: "readingPlan",
+    locator: getReadingPlanLocator(plan),
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Progress
@@ -1397,7 +1450,9 @@ function captureProgressCompletionEvents(
 
 export function createReadingPlansManager(
   os: CasualOSManager,
-  login: LoginManager
+  login: LoginManager,
+  tabs: Pick<TabsManager, "tabs" | "selectedTabId">,
+  navigation: Pick<NavigationManager, "currentUrl" | "basePath">
 ) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
   const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
@@ -1455,6 +1510,35 @@ export function createReadingPlansManager(
     }
 
     return parsed.data;
+  };
+
+  /**
+   * Loads a plan from a `recordName.address` share locator and selects it.
+   * Returns null when the locator is malformed.
+   */
+  const loadByLocator = async (
+    locator: string
+  ): Promise<ReadingPlan | null> => {
+    const parsed = parseReadingPlanLocator(locator);
+    if (!parsed) {
+      return null;
+    }
+    const plan = await getReadingPlan(parsed.recordName, parsed.address);
+    selectedReadingPlan.value = plan;
+    return plan;
+  };
+
+  /** Gets a shareable URL for the given plan. */
+  const getReadingPlanShareUrl = (plan: ReadingPlan): string => {
+    const selectedTab = tabs.tabs
+      .peek()
+      .find((tab) => tab.id === tabs.selectedTabId.peek());
+    return buildReadingPlanShareUrl({
+      plan,
+      currentUrl: navigation.currentUrl.peek(),
+      basePath: navigation.basePath,
+      activeTranslationId: selectedTab?.readingState.translationId.peek(),
+    });
   };
 
   // A plan lives in two records: the plan itself and a `_metadata` companion
@@ -2393,6 +2477,8 @@ export function createReadingPlansManager(
     addReadingToEditingPlan,
     removeReadingFromEditingPlan,
     finishEditingReadingPlan,
+    loadByLocator,
+    getReadingPlanShareUrl,
   };
 }
 

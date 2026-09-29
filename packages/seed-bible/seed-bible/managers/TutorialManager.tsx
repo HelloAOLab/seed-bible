@@ -355,8 +355,13 @@ export interface TutorialManager {
   /**
    * Starts a contextual single-feature tour, if not already seen and the user
    * hasn't opted out. Safe to call from event handlers without pre-checking.
+   *
+   * `steps` overrides the `CONTEXTUAL_TUTORIALS[featureId]` lookup — for a
+   * tour whose steps need instance state (e.g. the id of the record a step's
+   * `onEnter` should open) that isn't available at module load. The "seen"
+   * flag is still tracked under `featureId` either way.
    */
-  startContextual: (featureId: string) => void;
+  startContextual: (featureId: string, steps?: TutorialStep[]) => void;
   /** Advances to the next step, finishing after the last one. */
   next: () => void;
   /** Goes back one step (no-op on the first). */
@@ -606,7 +611,19 @@ export function createTutorialManager(
     saveProfileConfigValue(login, PROFILE_TUTORIAL_OPTED_OUT, true);
   };
 
+  // Set once the first-run offer has been resolved — either the effect below
+  // decided, or `start()` was called directly (the welcome screen's tour
+  // button) before the reader was visible.
+  let autoStartChecked = false;
+
   const start = () => {
+    // An explicit start resolves the first-run offer. Marking that before
+    // tearing Today down matters: closing the pane is what makes the reader
+    // visible, and the offer effect would otherwise pop the card on top of
+    // the tour it was waiting to show.
+    autoStartChecked = true;
+    promptVisible.value = false;
+
     // Close whatever overlapping UI is up first — coach marks target the
     // normal reader UI, so a fullscreen pane (e.g. the Today screen) or an
     // open sidebar panel left up would hide the very elements being
@@ -617,6 +634,12 @@ export function createTutorialManager(
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
+    // The desktop tour spotlights the tabs header, which the collapsed rail
+    // doesn't render. Open it so those steps have a target. Remembered, so
+    // the sidebar stays open after the tour instead of snapping shut.
+    if (!isMobile.value && sidebar.isSidebarCollapsed.value) {
+      sidebar.setSidebarCollapsed(false);
+    }
 
     // Pick the step set for the current viewport before showing the tour.
     mode.value = isMobile.value ? "onboarding-mobile" : "onboarding-desktop";
@@ -631,7 +654,7 @@ export function createTutorialManager(
     running.value = true;
   };
 
-  const startContextual = (featureId: string) => {
+  const startContextual = (featureId: string, steps?: TutorialStep[]) => {
     if (running.value) {
       return;
     }
@@ -646,13 +669,13 @@ export function createTutorialManager(
     if (featuresSeen.value[featureId]) {
       return;
     }
-    const steps = CONTEXTUAL_TUTORIALS[featureId];
-    if (!steps || steps.length === 0) {
+    const resolvedSteps = steps ?? CONTEXTUAL_TUTORIALS[featureId];
+    if (!resolvedSteps || resolvedSteps.length === 0) {
       return;
     }
     mode.value = "contextual";
     activeFeatureId.value = featureId;
-    activeSteps.value = steps;
+    activeSteps.value = resolvedSteps;
     index.value = 0;
     running.value = true;
   };
@@ -738,7 +761,6 @@ export function createTutorialManager(
   // served HTML doesn't have, which is exactly the divergence `hydrate()`
   // reports. `armAutoStart` is called from `AppState.hydrateFromStorage` after
   // the first commit, so the card appears a moment later instead.
-  let autoStartChecked = false;
   let autoStartArmed = false;
   const armAutoStart = () => {
     if (autoStartArmed) {

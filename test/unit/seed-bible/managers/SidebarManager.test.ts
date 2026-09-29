@@ -2,7 +2,10 @@ import {
   createNavigationManager,
   type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
-import { createSidebar } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
+import {
+  createSidebar,
+  SIDEBAR_COLLAPSED_STORAGE_KEY,
+} from "@packages/seed-bible/seed-bible/managers/SidebarManager";
 import { signal } from "@preact/signals";
 
 function createChatsManagerMock() {
@@ -16,6 +19,7 @@ describe("createSidebar", () => {
 
   beforeEach(() => {
     navigation = createNavigationManager();
+    window.localStorage.clear();
   });
 
   afterEach(() => {
@@ -105,9 +109,42 @@ describe("createSidebar", () => {
 
     sidebar.toggleSidebarCollapsed();
     expect(sidebar.isSidebarCollapsed.value).toBe(true);
+    expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY)).toBe(
+      "true"
+    );
 
     sidebar.toggleSidebarCollapsed();
     expect(sidebar.isSidebarCollapsed.value).toBe(false);
+    expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY)).toBe(
+      "false"
+    );
+  });
+
+  it("hydrateStoredCollapsed() restores a saved choice and reports when nothing is saved", () => {
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, "true");
+    const collapsed = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
+
+    expect(collapsed.hydrateStoredCollapsed()).toBe(true);
+    expect(collapsed.isSidebarCollapsed.value).toBe(true);
+
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, "false");
+    const expanded = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
+    expect(expanded.hydrateStoredCollapsed()).toBe(true);
+    expect(expanded.isSidebarCollapsed.value).toBe(false);
+
+    window.localStorage.removeItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+    const unset = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
+    expect(unset.hydrateStoredCollapsed()).toBe(false);
+    expect(unset.isSidebarCollapsed.value).toBe(false);
   });
 
   it("openSidebar() and closeSidebar() control mobile open state", () => {
@@ -274,6 +311,7 @@ describe("createSidebar", () => {
   });
 
   it("collapseSidebarOverlay() closes settings and collapses the sidebar when the Customization Center isn't open", () => {
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, "false");
     const sidebar = createSidebar({
       navigation,
       chatsManager: createChatsManagerMock(),
@@ -286,6 +324,11 @@ describe("createSidebar", () => {
     expect(sidebar.requestedSettingsView.value).toBeNull();
     expect(sidebar.isMobileOpen.value).toBe(false);
     expect(sidebar.isSidebarCollapsed.value).toBe(true);
+    // The scrim only exists in the compact band, so dismissing it must not
+    // replace a wide-desktop preference.
+    expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY)).toBe(
+      "false"
+    );
   });
 
   it.each(["customizations"] as const)(

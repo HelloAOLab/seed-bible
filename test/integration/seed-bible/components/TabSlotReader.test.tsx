@@ -1,5 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { batch, computed, signal, type Signal } from "@preact/signals";
 import {
   PANEL_PCT,
@@ -7,6 +8,7 @@ import {
 } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import type {
   BibleReadingState,
+  VisibleVerseRange,
   SelectedFootnote,
   VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -182,6 +184,7 @@ function createFixture(): ReaderFixture {
     title: signal<string>(""),
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
+    visibleVerseRange: signal<VisibleVerseRange | null>(null),
   } as BibleReadingState;
 
   const selectorState = {
@@ -219,11 +222,13 @@ function createSavesStub() {
 }
 
 function createMobileState(): SeedBibleState {
+  const discover = createDiscoverManager();
   return {
     app: {
       isMobile: signal(true),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
+      isDiscoverOpen: discover.isDiscoverOpen,
     },
     selector: {
       selectingTranslation: signal(false),
@@ -251,7 +256,7 @@ function createMobileState(): SeedBibleState {
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover,
     playlists: {
       playing: signal(null),
     },
@@ -269,11 +274,13 @@ function createMobileState(): SeedBibleState {
 }
 
 function createDesktopState(): SeedBibleState {
+  const discover = createDiscoverManager();
   return {
     app: {
       isMobile: signal(false),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
+      isDiscoverOpen: discover.isDiscoverOpen,
     },
     selector: {
       selectingTranslation: signal(false),
@@ -297,7 +304,7 @@ function createDesktopState(): SeedBibleState {
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover,
     playlists: {
       playing: signal(null),
     },
@@ -1454,6 +1461,63 @@ describe("TabSlotReader integration", () => {
     expect(offsets.every((offset) => Math.abs(offset) <= 14)).toBe(true);
   });
 
+  describe("bottom toolbar returning when something covers the reader", () => {
+    function renderScrolledDownMobileReader(state: SeedBibleState) {
+      const { slot, readingState } = createFixture();
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const scroller = container.querySelector(
+        ".sb-reader-swipe-panel-current"
+      ) as HTMLDivElement;
+      act(() => {
+        scroller.scrollTop = 200;
+        scroller.dispatchEvent(new Event("scroll"));
+      });
+    }
+
+    afterEach(() => {
+      document.body.classList.remove("sb-scroll-hide-bars");
+    });
+
+    it("hides the bottom toolbar while the user scrolls down the chapter", () => {
+      renderScrolledDownMobileReader(createMobileState());
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        true
+      );
+    });
+
+    it("brings the bottom toolbar back when the AI chat opens", () => {
+      const state = createMobileState();
+      const isChatPanelOpen = signal(false);
+      (state.sidebar as any).isChatPanelOpen = isChatPanelOpen;
+      renderScrolledDownMobileReader(state);
+
+      act(() => {
+        isChatPanelOpen.value = true;
+      });
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        false
+      );
+    });
+
+    it("brings the bottom toolbar back when a pane opens", () => {
+      const state = createMobileState();
+      const panes = signal<unknown[]>([]);
+      (state as any).panes = { panes };
+      renderScrolledDownMobileReader(state);
+
+      act(() => {
+        panes.value = [{ id: "compare" }];
+      });
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        false
+      );
+    });
+  });
+
   describe("discover content panel placement", () => {
     const crossReferenceFixture = [
       {
@@ -1505,6 +1569,29 @@ describe("TabSlotReader integration", () => {
       renderTabSlotReader(slot, readingState, state, container);
 
       expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+    });
+
+    it("hides the panel while the full Discover pane is open and brings it back when it closes", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+      expect(
+        container.querySelector(".sb-discover-content-panel")
+      ).not.toBeNull();
+
+      act(() => {
+        state.discover.view.value = "discover";
+      });
+      expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+
+      act(() => {
+        state.discover.view.value = null;
+      });
+      expect(
+        container.querySelector(".sb-discover-content-panel")
+      ).not.toBeNull();
     });
 
     it("lets a touch gesture starting inside the panel scroll it instead of swiping the chapter", () => {
@@ -1600,6 +1687,27 @@ describe("TabSlotReader integration", () => {
           Node.DOCUMENT_POSITION_FOLLOWING
         )
       ).toBe(true);
+    });
+
+    it("hides the tool while the full Discover pane is open and brings it back when it closes", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState();
+      const findTool = () =>
+        container.querySelector('button[aria-label="Discover content"]');
+
+      renderTabSlotReader(slot, readingState, state, container);
+      expect(findTool()).not.toBeNull();
+
+      act(() => {
+        state.discover.view.value = "discover";
+      });
+      expect(findTool()).toBeNull();
+
+      act(() => {
+        state.discover.view.value = null;
+      });
+      expect(findTool()).not.toBeNull();
     });
   });
 });

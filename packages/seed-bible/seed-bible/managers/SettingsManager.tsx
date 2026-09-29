@@ -8,7 +8,7 @@ import {
 import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
-import type { ThemeHighlightColor } from "./ThemeManager";
+import { SYSTEM_THEME_ID, type ThemeHighlightColor } from "./ThemeManager";
 import { parseNumber } from "./Utils";
 
 export type BookOrientation = "traditional" | "tanakh";
@@ -386,7 +386,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   askToSwitchUiLanguage: true,
   customHighlightColors: [],
   scriptureWidth: DEFAULT_SCRIPTURE_WIDTH,
-  themeId: "light",
+  themeId: SYSTEM_THEME_ID,
   customTheme: {},
   customHighlights: {},
   discoverContentPanelInline: true,
