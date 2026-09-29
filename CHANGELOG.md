@@ -9,6 +9,7 @@
   - Opening a shared playlist link shows the playlist's cover, author and description, with "Start Playlist" and "Close" buttons. Before, the link opened straight onto a chapter with no sign it was a playlist.
   - Link previews and search results now show "{playlist} by {author}", the playlist's description and its cover image.
   - A link to a playlist that no longer exists answers "not found".
+  - Old `?playlist=` share links permanently redirect (301) to the playlist's page. A link that also has `?playlistStep=`, which is what the address bar shows while a playlist plays, still resumes playback instead.
   - The "Would you like a tutorial?" offer stays hidden for a visit that starts on a playlist link, including after the playlist is started. Closing the playlist without starting it goes to the home screen, where the offer can appear as usual.
 - Give each shared reading plan its own page at `/{lang}/reading-plan/{id}/{title}`. ([#1786](https://github.com/HelloAOLab/seed-bible/issues/1786))
   - Opening a shared reading plan link shows the plan's cover, author, description and number of sessions, with "Start Reading Plan" and "Close" buttons. Before, the link opened straight onto a chapter with the plans panel beside it.
