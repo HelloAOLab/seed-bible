@@ -87,3 +87,39 @@ export function PlaylistNotFoundModalContent(props: { onClose: () => void }) {
     </div>
   );
 }
+
+/**
+ * What a playlist link opens on when the playlist couldn't be loaded (a
+ * network or server error, not a missing playlist): a retry, or home.
+ */
+export function PlaylistLoadFailedModalContent(props: {
+  retrying: boolean;
+  onRetry: () => void;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+
+  return (
+    <div className="sb-playlist-page-modal sb-playlist-page-modal--load-failed">
+      <p className="sb-playlist-page-modal-description">
+        {t("playlist-load-failed-message", {
+          defaultValue:
+            "Something went wrong loading this playlist. Check your internet connection and try again.",
+        })}
+      </p>
+      <div className="sb-playlist-page-modal-actions">
+        <button type="button" onClick={props.onClose}>
+          {t("close", { defaultValue: "Close" })}
+        </button>
+        <button
+          type="button"
+          className="sb-playlist-page-modal-start"
+          onClick={props.onRetry}
+          disabled={props.retrying}
+        >
+          {t("try-again", { defaultValue: "Try again" })}
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -148,6 +148,65 @@ describe("tutorial offer on a playlist link", () => {
     expect(new URL(window.location.href).pathname).not.toContain("/playlist/");
   });
 
+  describe("when the playlist fails to load", () => {
+    const CALL_PROCEDURE_URL =
+      "https://auth.seedbible.org/api/v3/callProcedure";
+
+    // No seed and no records-server response: the client's own load fails
+    // the way it would offline.
+    async function openFailingPlaylistPage() {
+      window.history.replaceState(
+        null,
+        "",
+        "/en/playlist/owner.playlist_shared/exodus-stories"
+      );
+      const mockedResponses: Record<string, unknown> = responses();
+      const state = await createTestSeedBibleState({
+        responses: mockedResponses as ReturnType<typeof responses>,
+        todayOpen: "fromUrl",
+      });
+      await waitFor(() => state.playlists.playlistPageLoadFailed.value, 2000);
+      return { state, mockedResponses };
+    }
+
+    const openModal = (state: Awaited<ReturnType<typeof openPlaylistPage>>) =>
+      state.modals.modals.value.find((m) => m.id === PLAYLIST_PAGE_MODAL_ID);
+
+    it("says so and offers to try again", async () => {
+      const { state } = await openFailingPlaylistPage();
+
+      expect(openModal(state)?.title).toBe("Couldn't load playlist");
+      expect(state.app.title.value).toContain("Couldn't load playlist");
+      expect(state.tutorial.promptVisible.value).toBe(false);
+    });
+
+    it("shows the playlist once trying again succeeds", async () => {
+      const { state, mockedResponses } = await openFailingPlaylistPage();
+
+      mockedResponses[CALL_PROCEDURE_URL] = createResponse({
+        success: true,
+        data: SEED.playlist,
+      });
+      await state.playlists.retryPlaylistPage();
+
+      expect(openModal(state)?.title).toBe("Exodus Stories");
+      expect(state.playlists.playlistPage.value?.playlist.id).toBe(
+        "playlist_shared"
+      );
+    });
+
+    it("goes home when closed", async () => {
+      const { state } = await openFailingPlaylistPage();
+
+      state.modals.closeModal(PLAYLIST_PAGE_MODAL_ID);
+
+      expect(state.today.isOpen.value).toBe(true);
+      expect(new URL(window.location.href).pathname).not.toContain(
+        "/playlist/"
+      );
+    });
+  });
+
   it("offers the tutorial from the home screen after the playlist is closed", async () => {
     const state = await openPlaylistPage();
 

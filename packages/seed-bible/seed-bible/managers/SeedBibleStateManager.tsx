@@ -24,6 +24,7 @@ import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import {
+  PlaylistLoadFailedModalContent,
   PlaylistNotFoundModalContent,
   PlaylistPageModalContent,
 } from "../components/PlaylistPageModal/PlaylistPageModal";
@@ -1657,6 +1658,10 @@ export function createSeedBibleState(
 
       if (playlists.playlistPageNotFound.value) {
         return `${t("playlist-not-found-title", { defaultValue: "Playlist not found" })} | ${seedBibleTitle}`;
+      }
+
+      if (playlists.playlistPageLoadFailed.value) {
+        return `${t("playlist-load-failed-title", { defaultValue: "Couldn't load playlist" })} | ${seedBibleTitle}`;
       }
 
       if (!selectedTab.value) {
@@ -3372,9 +3377,28 @@ export function createSeedBibleState(
   // A shared playlist link opens on a modal describing the playlist. Start
   // plays it; closing it any other way (Close, the header's X, the backdrop)
   // leaves for the home screen. A link to a playlist that doesn't exist opens
-  // a "not found" modal in the same place, and closing that goes home too.
+  // a "not found" modal in the same place, and one that failed to load opens
+  // a "try again" modal there; closing either goes home too.
   effect(() => {
     const page = playlists.playlistPage.value;
+    if (!page && playlists.playlistPageLoadFailed.value) {
+      const retrying = playlists.playlistPageRetrying.value;
+      modals.openModal({
+        id: PLAYLIST_PAGE_MODAL_ID,
+        title: i18n.t("playlist-load-failed-title", {
+          defaultValue: "Couldn't load playlist",
+        }),
+        useCasualOSApp: false,
+        content: () => (
+          <PlaylistLoadFailedModalContent
+            retrying={retrying}
+            onRetry={() => void playlists.retryPlaylistPage()}
+            onClose={() => modals.closeModal(PLAYLIST_PAGE_MODAL_ID)}
+          />
+        ),
+      });
+      return;
+    }
     if (!page && playlists.playlistPageNotFound.value) {
       modals.openModal({
         id: PLAYLIST_PAGE_MODAL_ID,
@@ -3432,7 +3456,11 @@ export function createSeedBibleState(
     );
     if (
       modalOpen ||
-      !(playlists.playlistPage.peek() || playlists.playlistPageNotFound.peek())
+      !(
+        playlists.playlistPage.peek() ||
+        playlists.playlistPageNotFound.peek() ||
+        playlists.playlistPageLoadFailed.peek()
+      )
     ) {
       return;
     }

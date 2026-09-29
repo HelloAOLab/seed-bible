@@ -2198,13 +2198,58 @@ export function createPlaylistManager(
   /** The locator most recently requested, so a URL effect re-run doesn't re-fetch it. */
   let requestedPlaylistPageLocator: string | null = null;
 
+  /**
+   * The locator whose latest load failed for a reason other than "not
+   * found" (a network error, a server error). Only set on the client: a
+   * server render that couldn't load the playlist embeds no seed, so the
+   * client tries again itself, and showing the failure in the server's HTML
+   * would contradict whatever that retry finds.
+   */
+  const failedPlaylistPageLocator = signal<string | null>(null);
+  /** True while a "Try again" reload of a failed playlist page is in flight. */
+  const playlistPageRetrying = signal(false);
+
   const requestPlaylistPage = (locator: string): Promise<void> => {
     requestedPlaylistPageLocator = locator;
     return fetchPlaylistPage(locator).then((result) => {
-      if (result && requestedPlaylistPageLocator === locator) {
+      if (requestedPlaylistPageLocator !== locator) {
+        return;
+      }
+      if (result) {
         playlistPageResult.value = result;
+        failedPlaylistPageLocator.value = null;
+      } else if (!import.meta.env.SSR) {
+        failedPlaylistPageLocator.value = locator;
       }
     });
+  };
+
+  /**
+   * True when the current playlist page's playlist couldn't be loaded for a
+   * reason other than it not existing, so the visitor can be offered a retry
+   * rather than being told it's gone.
+   */
+  const playlistPageLoadFailed = computed<boolean>(() => {
+    const locator = playlistPageLocator.value;
+    return (
+      !!locator &&
+      failedPlaylistPageLocator.value === locator &&
+      playlistPageResult.value?.locator !== locator
+    );
+  });
+
+  /** Loads the current playlist page's playlist again after a failed load. */
+  const retryPlaylistPage = async (): Promise<void> => {
+    const locator = playlistPageLocator.peek();
+    if (!locator || playlistPageRetrying.peek()) {
+      return;
+    }
+    playlistPageRetrying.value = true;
+    try {
+      await requestPlaylistPage(locator);
+    } finally {
+      playlistPageRetrying.value = false;
+    }
   };
 
   if (initialPlaylistPageLocator) {
@@ -2511,6 +2556,9 @@ export function createPlaylistManager(
     getPlaylistUrl,
     playlistPage,
     playlistPageNotFound,
+    playlistPageLoadFailed,
+    playlistPageRetrying,
+    retryPlaylistPage,
     initialPlaylistPageLoadPromise,
     getPlaylistPageSeed,
     startPlaylistPage,
