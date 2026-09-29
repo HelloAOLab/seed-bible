@@ -17,6 +17,8 @@ if (
     onFeatureFlags: () => {},
     identify: () => {},
     setPersonProperties: () => {},
+    register: () => {},
+    unregister: () => {},
   };
 } else {
   console.log("[app] Initializing PostHog for error reporting...");
