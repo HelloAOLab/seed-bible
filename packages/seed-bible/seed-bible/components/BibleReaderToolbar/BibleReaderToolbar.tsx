@@ -25,7 +25,7 @@ import {
   SbTabsIcon,
   StopIcon,
 } from "../../components/icons";
-import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import {
   SaveStarIcon,
   SelfAvatarVisual,
@@ -1363,45 +1363,44 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const stopOverflowMeasure = useRef<(() => void) | null>(null);
   /** The scrolling overflow box (parent of the measured row), so it can be rewound. */
   const verseSheetScrollerRef = useRef<HTMLElement | null>(null);
-  const measureVerseSheetOverflow = (element: HTMLElement | null) => {
-    stopOverflowMeasure.current?.();
-    stopOverflowMeasure.current = null;
-    // A new callback identity calls this with null before the next element.
-    // Don't write the pinned-height signal here — that would re-render in a loop.
-    verseSheetScrollerRef.current = element?.parentElement ?? null;
-    if (!element) return;
-    const measure = () => {
-      const next = element.scrollHeight;
-      if (next !== verseSheetOverflowHeight.peek()) {
-        verseSheetOverflowHeight.value = next;
-      }
-      const pinned = element.querySelector<HTMLElement>(
-        ".sb-verse-toolbar-overflow-pinned"
-      );
-      const pinnedHeight = Math.round(pinned?.offsetHeight ?? 0);
-      if (pinnedHeight !== verseSheetPinnedHeight.peek()) {
-        verseSheetPinnedHeight.value = pinnedHeight;
-      }
-    };
-    measure();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    stopOverflowMeasure.current = () => observer.disconnect();
-  };
+  // A fresh function each render makes Preact detach and reattach the ref,
+  // which tears down the ResizeObserver and builds another — once per frame
+  // while the handle is dragged.
+  const measureVerseSheetOverflow = useCallback(
+    (element: HTMLElement | null) => {
+      stopOverflowMeasure.current?.();
+      stopOverflowMeasure.current = null;
+      verseSheetScrollerRef.current = element?.parentElement ?? null;
+      // Unmount passes null. Writing the pinned-height signal here would
+      // re-render and call this again.
+      if (!element) return;
+      const measure = () => {
+        const next = element.scrollHeight;
+        if (next !== verseSheetOverflowHeight.peek()) {
+          verseSheetOverflowHeight.value = next;
+        }
+        const pinned = element.querySelector<HTMLElement>(
+          ".sb-verse-toolbar-overflow-pinned"
+        );
+        const pinnedHeight = Math.round(pinned?.offsetHeight ?? 0);
+        if (pinnedHeight !== verseSheetPinnedHeight.peek()) {
+          verseSheetPinnedHeight.value = pinnedHeight;
+        }
+      };
+      measure();
+      if (typeof ResizeObserver === "undefined") return;
+      const observer = new ResizeObserver(measure);
+      observer.observe(element);
+      stopOverflowMeasure.current = () => observer.disconnect();
+    },
+    []
+  );
 
   const resetVerseSheetScroll = () => {
     const scroller = verseSheetScrollerRef.current;
     if (!scroller || scroller.scrollTop === 0) return;
     scroller.scrollTop = 0;
   };
-
-  /**
-   * Set when a verse marker is opening the drawer onto a specific note.
-   * The selection change would otherwise rewind the scroll after we've
-   * placed that note, hiding its top under the pinned actions.
-   */
-  const verseSheetNoteScrollRef = useRef(false);
 
   /**
    * Place a note just below Copy / Compare / Share. `scrollIntoView` aligns
@@ -1692,8 +1691,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   }, [hasVerseSelection.value]);
 
   // A scrolled note should not be where the next open — or the next verse —
-  // starts. Copy, Compare, and Share live at the top of that scroll, and a
-  // jump to a specific note (below) runs on the next frame, after this reset.
+  // starts. Copy, Compare, and Share live at the top of that scroll. A jump
+  // to a specific note (below) opts that selection out of the rewind: in a
+  // browser the rewind can run after the jump has already placed the note.
   const verseSheetSelectionKey = useComputed(() => {
     const verses = readingState.value?.selectedVerses.value ?? [];
     return verses
@@ -1709,9 +1709,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     resetVerseSheetScroll();
   }, [isVerseSheetExpanded.value]);
 
+  /**
+   * Selection a verse-marker jump has already placed in view.
+   * Kept as the key, not a flag: a jump that doesn't change the selection
+   * would otherwise stay set and skip the next verse's rewind.
+   */
+  const verseSheetNoteScrollKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (verseSheetNoteScrollRef.current) {
-      verseSheetNoteScrollRef.current = false;
+    const placedSelection = verseSheetNoteScrollKeyRef.current;
+    verseSheetNoteScrollKeyRef.current = null;
+    if (
+      placedSelection !== null &&
+      placedSelection === verseSheetSelectionKey.value
+    ) {
       return;
     }
     resetVerseSheetScroll();
@@ -1740,7 +1751,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (!group) return;
 
       isVerseSheetExpanded.value = true;
-      verseSheetNoteScrollRef.current = true;
+      verseSheetNoteScrollKeyRef.current = verseSheetSelectionKey.peek();
       const groupKey =
         group.annotations[0]?.id ??
         `${group.startVerseNumber}-${group.endVerseNumber}`;

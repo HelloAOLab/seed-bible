@@ -2158,6 +2158,40 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(overflow()?.style.height).toBe(openHeight);
     expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
   });
+
+  it("does not rebuild the overflow measure on every drag frame", async () => {
+    const originalResizeObserver = globalThis.ResizeObserver;
+    let constructions = 0;
+    class CountingResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      constructor() {
+        constructions += 1;
+      }
+    }
+    globalThis.ResizeObserver =
+      CountingResizeObserver as unknown as typeof ResizeObserver;
+
+    try {
+      const handle = await renderSheet();
+      const afterMount = constructions;
+      expect(afterMount).toBeGreaterThan(0);
+
+      await press(handle, 500);
+      await moveTo(handle, 460);
+      await moveTo(handle, 420);
+      await moveTo(handle, 380);
+
+      expect(constructions).toBe(afterMount);
+    } finally {
+      if (originalResizeObserver) {
+        globalThis.ResizeObserver = originalResizeObserver;
+      } else {
+        delete globalThis.ResizeObserver;
+      }
+    }
+  });
 });
 
 describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
@@ -2334,6 +2368,48 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     });
   });
 
+  function rectAt(top: number): DOMRect {
+    return {
+      top,
+      left: 0,
+      right: 0,
+      bottom: top,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: top,
+      toJSON: () => ({}),
+    } as DOMRect;
+  }
+
+  function trackScrollTop(scroller: HTMLElement) {
+    let scrollTop = 0;
+    Object.defineProperty(scroller, "scrollTop", {
+      configurable: true,
+      get: () => scrollTop,
+      set: (value: number) => {
+        scrollTop = value;
+      },
+    });
+    scroller.getBoundingClientRect = () => rectAt(100);
+    return {
+      get value() {
+        return scrollTop;
+      },
+      set value(next: number) {
+        scrollTop = next;
+      },
+    };
+  }
+
+  async function flushAnimationFrames() {
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+    });
+  }
+
   it("opens a verse marker's note below the pinned actions instead of underneath them", async () => {
     const { readingState, chapter, firstVerse } = getFirstVerse();
     const verses = chapter.chapter.content.filter(
@@ -2363,29 +2439,7 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     ]);
     await renderSheet();
 
-    const scroller = overflow()!;
-    let scrollTop = 0;
-    Object.defineProperty(scroller, "scrollTop", {
-      configurable: true,
-      get: () => scrollTop,
-      set: (value: number) => {
-        scrollTop = value;
-      },
-    });
-    const rect = (top: number): DOMRect =>
-      ({
-        top,
-        left: 0,
-        right: 0,
-        bottom: top,
-        width: 0,
-        height: 0,
-        x: 0,
-        y: top,
-        toJSON: () => ({}),
-      }) as DOMRect;
-    scroller.getBoundingClientRect = () => rect(100);
-
+    const scroll = trackScrollTop(overflow()!);
     const pinned = container.querySelector<HTMLElement>(
       ".sb-verse-toolbar-overflow-pinned"
     );
@@ -2415,16 +2469,247 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     if (!group) throw new Error("The target note did not render.");
     // 200px below the scrollport: the raw position would tuck the top under
     // the 80px pinned row. The open scroll has to stop short of that.
-    group.getBoundingClientRect = () => rect(300);
+    group.getBoundingClientRect = () => rectAt(300);
 
+    await flushAnimationFrames();
+
+    expect(scroll.value).toBe(120);
+    expect(overflow()?.style.height).not.toBe("0px");
+  });
+
+  it("keeps that note in place when the verse change lands after the jump", async () => {
+    const { readingState, chapter, firstVerse } = getFirstVerse();
+    const verses = chapter.chapter.content.filter(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    );
+    const secondVerse = verses[1];
+    if (!secondVerse) throw new Error("The chapter has no second verse.");
+
+    await mockAnnotationsForChapter([
+      {
+        id: "early-note",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: { type: "comment", html: "<p>Earlier</p>" },
+      },
+      {
+        id: "target-note",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: secondVerse.number,
+        data: { type: "comment", html: "<p>Target</p>" },
+      },
+    ]);
+    await renderSheet();
+
+    // The note has to already be in the document. The jump looks it up on
+    // the animation frames, and those frames run before the selection
+    // change re-renders.
     await act(async () => {
-      await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-      });
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: secondVerse,
+          translationId: chapter.translation.id,
+        },
+        12,
+        12
+      );
     });
 
-    expect(scrollTop).toBe(120);
+    const scroll = trackScrollTop(overflow()!);
+    const pinned = container.querySelector<HTMLElement>(
+      ".sb-verse-toolbar-overflow-pinned"
+    );
+    if (!pinned) throw new Error("The pinned actions did not render.");
+    Object.defineProperty(pinned, "offsetHeight", {
+      configurable: true,
+      get: () => 80,
+    });
+    const group = document.getElementById(
+      "sb-verse-toolbar-annotation-group-target-note"
+    );
+    if (!group) throw new Error("The target note did not render.");
+    group.getBoundingClientRect = () => rectAt(300);
+
+    // jsdom flushes the selection effect inside act(), before a real
+    // animation frame, so waiting on frames never lets the rewind land on
+    // the jump. Running the frames as the signal updates — and only then
+    // flushing the effect — is the order a browser can hit.
+    const raf = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback: FrameRequestCallback) => {
+        callback(0);
+        return 0;
+      });
+    try {
+      await act(async () => {
+        readingState.selectVerse(
+          {
+            bookId: chapter.book.id,
+            chapterNumber: chapter.chapter.number,
+            verse: firstVerse,
+            translationId: chapter.translation.id,
+          },
+          10,
+          10
+        );
+        readingState.pendingAnnotationScrollVerse.value = secondVerse.number;
+      });
+    } finally {
+      raf.mockRestore();
+    }
+
+    expect(scroll.value).toBe(120);
     expect(overflow()?.style.height).not.toBe("0px");
+  });
+
+  it("lines a verse marker's note up with the top of the drawer when the pinned actions scroll with it", async () => {
+    const originalOffsetHeight = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetHeight"
+    );
+    // Taller than the open drawer, so Copy / Compare / Share render inline
+    // and scroll with the note instead of covering the top of it.
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.classList.contains("sb-verse-toolbar-overflow-pinned")
+          ? window.innerHeight
+          : 0;
+      },
+    });
+
+    try {
+      const { readingState, chapter, firstVerse } = getFirstVerse();
+      const verses = chapter.chapter.content.filter(
+        (entry): entry is ChapterVerse =>
+          !!entry &&
+          typeof entry === "object" &&
+          (entry as { type?: string }).type === "verse"
+      );
+      const secondVerse = verses[1];
+      if (!secondVerse) throw new Error("The chapter has no second verse.");
+
+      await mockAnnotationsForChapter([
+        {
+          id: "early-note",
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verseNumber: firstVerse.number,
+          data: { type: "comment", html: "<p>Earlier</p>" },
+        },
+        {
+          id: "target-note",
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verseNumber: secondVerse.number,
+          data: { type: "comment", html: "<p>Target</p>" },
+        },
+      ]);
+      await renderSheet();
+
+      const pinned = container.querySelector<HTMLElement>(
+        ".sb-verse-toolbar-overflow-pinned"
+      );
+      if (!pinned) throw new Error("The pinned actions did not render.");
+      expect(pinned.className).toContain(
+        "sb-verse-toolbar-overflow-pinned-inline"
+      );
+      expect(pinned.offsetHeight).toBeGreaterThan(0);
+
+      const scroll = trackScrollTop(overflow()!);
+
+      await act(async () => {
+        readingState.selectVerse(
+          {
+            bookId: chapter.book.id,
+            chapterNumber: chapter.chapter.number,
+            verse: secondVerse,
+            translationId: chapter.translation.id,
+          },
+          12,
+          12
+        );
+        readingState.pendingAnnotationScrollVerse.value = secondVerse.number;
+      });
+
+      const group = document.getElementById(
+        "sb-verse-toolbar-annotation-group-target-note"
+      );
+      if (!group) throw new Error("The target note did not render.");
+      // Same 200px gap as the sticky case. Nothing is subtracted, because
+      // the pinned row is not covering the top of the scrollport.
+      group.getBoundingClientRect = () => rectAt(300);
+
+      await flushAnimationFrames();
+
+      expect(scroll.value).toBe(200);
+    } finally {
+      if (originalOffsetHeight) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "offsetHeight",
+          originalOffsetHeight
+        );
+      }
+    }
+  });
+
+  it("returns the drawer to the top on the next verse after a marker jump that left the selection unchanged", async () => {
+    const { readingState, chapter, firstVerse } = getFirstVerse();
+    const verses = chapter.chapter.content.filter(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    );
+    const secondVerse = verses[1];
+    if (!secondVerse) throw new Error("The chapter has no second verse.");
+
+    await mockAnnotationsForChapter([
+      {
+        id: "only-note",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: { type: "comment", html: "<p>Note</p>" },
+      },
+    ]);
+    await renderSheet();
+
+    const scroll = trackScrollTop(overflow()!);
+    const group = document.getElementById(
+      "sb-verse-toolbar-annotation-group-only-note"
+    );
+    if (!group) throw new Error("The note did not render.");
+    group.getBoundingClientRect = () => rectAt(300);
+
+    await act(async () => {
+      readingState.pendingAnnotationScrollVerse.value = firstVerse.number;
+    });
+    await flushAnimationFrames();
+    expect(scroll.value).toBe(200);
+
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: secondVerse,
+          translationId: chapter.translation.id,
+        },
+        12,
+        12
+      );
+    });
+
+    expect(scroll.value).toBe(0);
   });
 
   it("makes the sheet openable from an annotation alone, even with the default tool cards fitting in one row", async () => {
