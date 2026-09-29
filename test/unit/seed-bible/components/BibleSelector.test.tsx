@@ -5,6 +5,7 @@ import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/manager
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { MOBILE_BREAKPOINT } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   createTestSeedBibleState,
   waitFor,
@@ -20,6 +21,7 @@ import {
   makeCompleteTranslation,
   createDefaultSelectorManagerResponseMap,
   aabBooks,
+  edgeCaseBooks,
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
 import {
@@ -602,7 +604,6 @@ describe("BibleSelector", () => {
         ...aabBooks.books.filter((book) => book.id === "MAT"),
       ],
     };
-
     const responses = {
       ...createDefaultManagerResponseMap(),
       [makeUrl("/api/AAB/books.json")]: createResponse(psalmsBooks),
@@ -724,12 +725,25 @@ describe("BibleSelector", () => {
   });
   it("desktop All Books keeps OT and NT visible when an Apocrypha book is expanded", async () => {
     const { selectorState, bibleDataManager, state } =
-      await createSelectorFixture();
+      await createSelectorFixture({
+        responses: {
+          [makeUrl("/api/AAB/books.json")]: createResponse({
+            ...aabBooks,
+            books: [
+              ...aabBooks.books,
+              edgeCaseBooks.books.find((book) => book.id === "TOB")!,
+            ],
+          }),
+        },
+      });
     // All Books
     selectorState.localSelectedTestament.value = 2;
 
     // Expand the Apocrypha book TOB (Tobit)
     selectorState.expandedBookId.value = "TOB";
+
+    // Make sure Tobit was actually loaded.
+    await waitFor(() => selectorState.bookData.value?.id === "TOB");
 
     act(() => {
       render(
@@ -756,6 +770,47 @@ describe("BibleSelector", () => {
 
     // No chapter panel should be open for the Apocrypha book.
     expect(container.querySelector(".show-sidebar-chapter")).toBeNull();
+  });
+  it("mobile All Books shows the Apocrypha section after the New Testament", async () => {
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture({
+        responses: {
+          [makeUrl("/api/AAB/books.json")]: createResponse({
+            ...aabBooks,
+            books: [
+              ...aabBooks.books,
+              edgeCaseBooks.books.find((book) => book.id === "TOB")!,
+            ],
+          }),
+        },
+      });
+
+    (state.app.viewportWidth as unknown as { value: number }).value =
+      MOBILE_BREAKPOINT;
+
+    selectorState.localSelectedTestament.value = 2;
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={vi.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".books-container")));
+
+    const text = container.textContent ?? "";
+
+    expect(text).toContain("Old Testament");
+    expect(text).toContain("New Testament");
+    expect(text).toContain("Apocrypha");
+    expect(text).not.toContain("Extrabiblical Writings");
   });
 
   it("desktop Apocrypha filter shows the info button and opens the About Apocrypha popup", async () => {
@@ -847,6 +902,114 @@ describe("BibleSelector", () => {
     await waitFor(() => !container.querySelector("#apocrypha-info"));
 
     expect(container.querySelector("#apocrypha-info")).toBeNull();
+  });
+  it("keeps the Apocrypha info popup open when clicking inside the popup content", async () => {
+    const onClose = vi.fn();
+
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
+
+    selectorState.localSelectedTestament.value = 3;
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={onClose}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() =>
+      Boolean(
+        container.querySelector('button[aria-label="About the Apocrypha"]')
+      )
+    );
+
+    const infoButton = container.querySelector(
+      'button[aria-label="About the Apocrypha"]'
+    ) as HTMLButtonElement | null;
+
+    expect(infoButton).not.toBeNull();
+
+    act(() => {
+      infoButton?.click();
+    });
+
+    await waitFor(() => Boolean(container.querySelector("#apocrypha-info")));
+
+    const content = container.querySelector(
+      ".sb-apocrypha-info-content"
+    ) as HTMLElement | null;
+
+    expect(content).not.toBeNull();
+
+    act(() => {
+      content?.click();
+    });
+
+    expect(container.querySelector("#apocrypha-info")).not.toBeNull();
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+  it("closes only the Apocrypha info popup when clicking the backdrop", async () => {
+    const onClose = vi.fn();
+
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
+
+    selectorState.localSelectedTestament.value = 3;
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={onClose}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() =>
+      Boolean(
+        container.querySelector('button[aria-label="About the Apocrypha"]')
+      )
+    );
+
+    const infoButton = container.querySelector(
+      'button[aria-label="About the Apocrypha"]'
+    ) as HTMLButtonElement | null;
+
+    expect(infoButton).not.toBeNull();
+
+    act(() => {
+      infoButton?.click();
+    });
+
+    await waitFor(() => Boolean(container.querySelector("#apocrypha-info")));
+
+    const backdrop = container.querySelector(
+      ".sb-apocrypha-info-backdrop"
+    ) as HTMLElement | null;
+
+    expect(backdrop).not.toBeNull();
+
+    act(() => {
+      backdrop?.click();
+    });
+
+    await waitFor(() => !container.querySelector("#apocrypha-info"));
+
+    expect(container.querySelector("#apocrypha-info")).toBeNull();
+
+    expect(onClose).not.toHaveBeenCalled();
   });
 });
 

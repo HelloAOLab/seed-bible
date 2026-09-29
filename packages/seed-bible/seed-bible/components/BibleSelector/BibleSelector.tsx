@@ -16,7 +16,7 @@ import {
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { TranslationList } from "../TranslationList/TranslationList";
 import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
-import { computed, signal } from "@preact/signals";
+import { computed, Signal, signal } from "@preact/signals";
 import {
   computePopover,
   TutorialPopoverContent,
@@ -711,18 +711,7 @@ const SideBarBooks = (props: {
               >
                 <span class="testament-title">
                   {t("apocrypha", { defaultValue: "Apocrypha" })}
-                  <button
-                    type="button"
-                    class="material-symbols-outlined"
-                    aria-label={t("about-apocrypha", {
-                      defaultValue: "About the Apocrypha",
-                    })}
-                    onClick={() => {
-                      showApocryphaInfo.value = true;
-                    }}
-                  >
-                    info
-                  </button>
+                  <ApocryphaInfoButton showApocryphaInfo={showApocryphaInfo} />
                 </span>
                 {renderBooksGrid(APBooks, ntColumns, 2, undefined, true)}
               </div>
@@ -777,18 +766,7 @@ const SideBarBooks = (props: {
               {config.title}
 
               {lst === 3 && (
-                <button
-                  type="button"
-                  class="material-symbols-outlined apocrypha-info-button"
-                  aria-label={t("about-apocrypha", {
-                    defaultValue: "About the Apocrypha",
-                  })}
-                  onClick={() => {
-                    showApocryphaInfo.value = true;
-                  }}
-                >
-                  info
-                </button>
+                <ApocryphaInfoButton showApocryphaInfo={showApocryphaInfo} />
               )}
             </span>
           )}
@@ -1822,6 +1800,13 @@ const TranslationInfo = (props: {
 const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
   const { showApocryphaInfo } = props.bibleSelectorState;
   const { t } = useI18n();
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") showApocryphaInfo.value = false;
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
     <>
@@ -1832,8 +1817,14 @@ const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
           showApocryphaInfo.value = false;
         }}
       />
-
-      <div id="apocrypha-info" class="sb-apocrypha-info-overlay">
+      <div
+        id="apocrypha-info"
+        class="sb-apocrypha-info-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="apocrypha-info-title"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div class="sb-apocrypha-info">
           <div class="sb-apocrypha-info-header">
             <h2 class="sb-apocrypha-info-title">
@@ -1864,6 +1855,31 @@ const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
         </div>
       </div>
     </>
+  );
+};
+const ApocryphaInfoButton = (props: { showApocryphaInfo: Signal<boolean> }) => {
+  const { t } = useI18n();
+
+  return (
+    <button
+      class="material-symbols-outlined apocrypha-info-button"
+      role="button"
+      tabindex={0}
+      aria-label={t("about-apocrypha", {
+        defaultValue: "About the Apocrypha",
+      })}
+      onClick={() => {
+        props.showApocryphaInfo.value = true;
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          props.showApocryphaInfo.value = true;
+        }
+      }}
+    >
+      info
+    </button>
   );
 };
 
