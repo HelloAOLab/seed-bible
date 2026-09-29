@@ -1331,8 +1331,6 @@
   .sb-panes-layout {
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: none !important;
-    padding: 0 !important;
-    margin-left: 0 !important;
   }
 
   .sb-panes-layout .sb-pane-shell {

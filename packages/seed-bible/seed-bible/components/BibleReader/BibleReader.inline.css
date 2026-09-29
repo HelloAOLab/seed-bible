@@ -1,5 +1,6 @@
 .sb-bible-reader {
-  padding: 1.875rem 1.5rem 6rem 1.5rem;
+  width: 100%;
+  padding: 1.875rem 1% 6rem;
   margin: 0 auto;
   box-sizing: border-box;
   position: relative;
@@ -54,23 +55,16 @@
   color: var(--sb-primary-color);
 }
 
-/* Force a tight 1% reader margin in mobile view, regardless of the
-   user's saved scriptureMargin setting. Breakpoint mirrors `isMobile`
-   in SeedBibleStateManager (viewportWidth <= 480). */
-@media (max-width: 480px) {
-  .sb-bible-reader {
-    width: 100%;
-    padding-right: 1%;
-    padding-left: 1%;
+/* The rule above is the phone reader's tight 1% margin, which a compact embed
+   also uses at any frame width. Only the desktop layout widens it. `:where()`
+   keeps this at the base rule's specificity, so more specific reader rules
+   still win as they did before. Breakpoint mirrors `isMobile` in
+   SeedBibleStateManager (viewportWidth <= 480). */
+@media (min-width: 481px) {
+  :where(.sb-app-root:not(.sb-embed-minimal)) .sb-bible-reader {
+    width: auto;
+    padding-inline: 1.5rem;
   }
-}
-
-/* Same tight margin as the phone reader when the page is a compact embed
-   in a wider iframe, where the 480px query would not apply. */
-.sb-embed-minimal .sb-bible-reader {
-  width: 100%;
-  padding-right: 1%;
-  padding-left: 1%;
 }
 
 /* Reader header: lays the chapter title and the right-hand action cluster
@@ -543,6 +537,7 @@
   line-height: var(--text-verse-line-height, 1.7);
   font-family: var(--sb-verse-font-family);
   font-size: 1em;
+  padding-inline: 0.625rem;
 
   /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
      Short enough to read as immediate rather than as an animation.
@@ -625,14 +620,13 @@
   }
 }
 
-@media (max-width: 480px) {
-  .sb-chapter-content {
-    padding-inline: 0.625rem;
+/* Desktop drops the phone/embed side padding set on `.sb-chapter-content`.
+   `:where()` keeps this at the base rule's specificity so the gutter rules
+   (`-presence`, `-note-gutter`) still override it. */
+@media (min-width: 481px) {
+  :where(.sb-app-root:not(.sb-embed-minimal)) .sb-chapter-content {
+    padding-inline: 0;
   }
-}
-
-.sb-embed-minimal .sb-chapter-content {
-  padding-inline: 0.625rem;
 }
 
 .sb-chapter-heading {
