@@ -1,4 +1,4 @@
-import { signal } from "@preact/signals";
+import { signal, type ReadonlySignal } from "@preact/signals";
 
 vi.mock("@packages/seed-bible/seed-bible/components/icons", () => ({
   MaterialIcon: () => null,
@@ -113,6 +113,7 @@ function createQuickToolContext(
     discoverContentPanelInline?: boolean;
     annotationsForChapter?: unknown[];
     isMobile?: boolean;
+    isDiscoverOpen?: ReadonlySignal<boolean>;
   } = {}
 ): QuickToolContext {
   return {
@@ -143,6 +144,7 @@ function createQuickToolContext(
     surface: "quick-toolbar",
     app: {
       isMobile: signal(overrides.isMobile ?? false),
+      isDiscoverOpen: overrides.isDiscoverOpen ?? signal(false),
     } as any,
   };
 }
@@ -1576,6 +1578,26 @@ describe("createBibleToolsManager", () => {
         .find((t) => t.id === "discover-content-panel");
 
       expect(tool?.visible.value).toBe(false);
+    });
+
+    it("is hidden while the full Discover pane is open and returns when it closes", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const isDiscoverOpen = signal(true);
+      const context = createQuickToolContext({
+        discoveredCrossReferences: [{ providerId: "p1", results: [{}] }],
+        annotationsForChapter: [{ id: "ann-1" }],
+        isDiscoverOpen,
+      });
+
+      const resolveTool = () =>
+        manager
+          .getQuickTools(context)
+          .find((t) => t.id === "discover-content-panel");
+
+      expect(resolveTool()?.visible.value).toBe(false);
+
+      isDiscoverOpen.value = false;
+      expect(resolveTool()?.visible.value).toBe(true);
     });
 
     it("flips the tab's discoverContentPanelInline signal when selected", () => {
