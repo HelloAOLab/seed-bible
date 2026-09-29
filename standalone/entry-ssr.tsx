@@ -25,7 +25,7 @@ import {
   THEME_PRESET_STYLE_TEXT,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { ssrTranslationsCache } from "./ssrTranslationsCache";
-import { buildPlaylistPagePath } from "@packages/seed-bible/seed-bible/managers/PlaylistPagePath";
+import { buildSharedPagePath } from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -354,7 +354,8 @@ export function playlistQueryRedirect(
   }
   const query = remainingParams.toString();
 
-  return `${basePath}${buildPlaylistPagePath({
+  return `${basePath}${buildSharedPagePath({
+    kind: "playlist",
     language,
     locator,
     title: null,
