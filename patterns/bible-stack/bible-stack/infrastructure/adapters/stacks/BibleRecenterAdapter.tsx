@@ -1,13 +1,13 @@
-import { GetCamRotationFocusPoint } from "../../functions/casualos";
 import {
+  GetCamRotationFocusPoint,
   MakePortalFree,
   MakePortalRestrict,
-} from "../../../infrastructure/functions/casualos";
-import type { BibleRecenterAdapterPort } from "../../../application/ports/out/SpatialNavigation";
+} from "../../functions/casualos";
 import type { StackBibleData } from "../../../domain/entities/StackBibleData";
 import type { StackTransformerMapper } from "../../mappers/StackTransformerMapper";
 import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
 import { DirectionToPolar } from "../../../domain/functions/Geometry";
+import type { BibleRecenterPort } from "../../../application/ports/out/BibleRecenter";
 
 interface AdapterParams {
   getDimension(): string;
@@ -15,7 +15,7 @@ interface AdapterParams {
   coverMapper: StackCoverMapper;
 }
 
-export class BibleRecenterAdapter implements BibleRecenterAdapterPort {
+export class BibleRecenterAdapter implements BibleRecenterPort {
   #getDimension: AdapterParams["getDimension"];
   #transformerMapper: AdapterParams["transformerMapper"];
   #coverMapper: AdapterParams["coverMapper"];

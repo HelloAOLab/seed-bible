@@ -1,5 +1,8 @@
-import type { ParentDataChain, StackParentDataIds } from "../pieces";
+import type {
+  ParentDataIds,
+  ParentDataChain,
+} from "../../../domain/models/canvas";
 
 export interface PieceHierarchyServicePort {
-  getParentDataChain: (parentDataIds: StackParentDataIds) => ParentDataChain;
+  getParentDataChain: (parentDataIds: ParentDataIds) => ParentDataChain;
 }

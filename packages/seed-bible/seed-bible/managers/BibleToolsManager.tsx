@@ -870,7 +870,7 @@ function getDefaultQuickToolbarTools(
         </MaterialIcon>
       ),
       isVisible: (c) => {
-        if (c.app?.isMobile?.value) {
+        if (c.app?.isMobile?.value || c.app?.isDiscoverOpen?.value) {
           return false;
         }
         if (hasAnyDiscoverResults(c.readingState)) {
