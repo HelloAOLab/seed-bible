@@ -111,6 +111,11 @@ describe("tutorial offer on a playlist link", () => {
     );
 
     expect(modalOpen(state)).toBe(false);
+    // The address bar has left the playlist page for the playing chapter.
+    const url = new URL(window.location.href);
+    expect(url.pathname).toBe("/en/AAB/exodus/2");
+    expect(url.searchParams.get("playlist")).toBe("owner.playlist_shared");
+    expect(url.searchParams.get("playlistStep")).toBe("0");
     expect(state.tutorial.promptVisible.value).toBe(false);
   });
 
