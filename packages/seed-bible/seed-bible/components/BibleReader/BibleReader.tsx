@@ -2673,11 +2673,19 @@ export function BibleReader(props: BibleReaderProps) {
     }
   };
 
+  // Only the current panel's title opens the selector; the side panels are
+  // non-interactive previews for the swipe transition.
   const renderMobileChapterTitle = (
     bookName: string,
-    chapter: number | string
+    chapter: number | string,
+    interactive = false
   ) => (
-    <h2 className="sb-bible-reader-mobile-content-title">
+    <h2
+      className={`sb-bible-reader-mobile-content-title${
+        interactive ? " sb-bible-reader-mobile-content-title-tappable" : ""
+      }`}
+      {...(interactive ? flingSafeTapHandlers(openBookSelector) : {})}
+    >
       <span className="sb-bible-reader-book">{bookName}</span>
       <span className="sb-bible-reader-chapter">{chapter}</span>
     </h2>
@@ -2727,7 +2735,8 @@ export function BibleReader(props: BibleReaderProps) {
       {isMobile &&
         renderMobileChapterTitle(
           currentBookName.value ?? bookId.value ?? "",
-          chapterNumber.value ?? ""
+          chapterNumber.value ?? "",
+          true
         )}
 
       {bookNotFound.value && (
