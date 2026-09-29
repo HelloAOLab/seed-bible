@@ -394,6 +394,33 @@ describe("DiscoverContentPanel", () => {
     act(() => {
       render(<DiscoverContentPanel tab={tab} state={state} />, container);
     });
+
+    const getChip = (label: string) =>
+      Array.from(container.querySelectorAll(".sb-dcp-chip")).find(
+        (el) => el.textContent === label
+      ) as HTMLButtonElement | undefined;
+
+    act(() => {
+      getChip("Notes")!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    expect(getChip("Notes")!.getAttribute("aria-selected")).toBe("true");
+
+    // A second content type stays so the chip row remains; with only cross
+    // references left the row would hide because a single kind of content
+    // does not get filter chips.
+    act(() => {
+      annotationsForChapter.value = [];
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    expect(getChip("All")!.getAttribute("aria-selected")).toBe("true");
+    expect(getChip("Notes")).toBeUndefined();
+    expect(container.textContent).toContain("Exodus 5:3");
+    expect(container.textContent).toContain("A related article");
+  });
+
   describe("registered content types", () => {
     // The three an extension like Theographic registers: hidden from "All",
     // and each result's `content` is the whole card.
@@ -432,27 +459,6 @@ describe("DiscoverContentPanel", () => {
     const getChip = (label: string) =>
       Array.from(container.querySelectorAll(".sb-dcp-chip")).find(
         (el) => el.textContent === label
-      ) as HTMLButtonElement | undefined;
-
-    act(() => {
-      getChip("Notes")!.dispatchEvent(
-        new MouseEvent("click", { bubbles: true })
-      );
-    });
-    expect(getChip("Notes")!.getAttribute("aria-selected")).toBe("true");
-
-    // A second content type stays so the chip row remains; with only cross
-    // references left the row would hide because a single kind of content
-    // does not get filter chips.
-    act(() => {
-      annotationsForChapter.value = [];
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
-    });
-
-    expect(getChip("All")!.getAttribute("aria-selected")).toBe("true");
-    expect(getChip("Notes")).toBeUndefined();
-    expect(container.textContent).toContain("Exodus 5:3");
-    expect(container.textContent).toContain("A related article");
       ) as HTMLButtonElement;
 
     function renderPanel(
