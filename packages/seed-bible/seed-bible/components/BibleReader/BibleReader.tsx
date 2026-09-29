@@ -2881,9 +2881,10 @@ export function BibleReader(props: BibleReaderProps) {
   // const extraContent = discoverPanel ? (
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
-  const extraContent = state ? (
-    <DiscoverContentPanel tab={currentSlot.tab} state={state} />
-  ) : null;
+  const extraContent =
+    state && !state.app.isDiscoverOpen.value ? (
+      <DiscoverContentPanel tab={currentSlot.tab} state={state} />
+    ) : null;
 
   return (
     <div

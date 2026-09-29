@@ -251,6 +251,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       isMobile: signal(true),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
+      isDiscoverOpen: signal(false),
       openDiscover: vi.fn(),
       toast: vi.fn(),
     },
@@ -3729,6 +3730,7 @@ describe("BibleReader", () => {
     const state = {
       app: {
         isMobile: signal(false),
+        isDiscoverOpen: signal(false),
         openVerseReference,
       },
       tools: createBibleToolsManager(testBranding),
