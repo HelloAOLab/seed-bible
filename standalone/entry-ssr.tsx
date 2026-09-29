@@ -25,6 +25,7 @@ import {
   THEME_PRESET_STYLE_TEXT,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { ssrTranslationsCache } from "./ssrTranslationsCache";
+import { buildPlaylistPagePath } from "@packages/seed-bible/seed-bible/managers/PlaylistPagePath";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -178,6 +179,15 @@ export function stripDefaultFaviconLinks(html: string): string {
   return html.replace(LINK_TAG_RE, (tag) => (isFaviconLinkTag(tag) ? "" : tag));
 }
 
+/** Query params that only ever described a reading position. */
+const READING_POSITION_PARAMS = [
+  "book",
+  "chapter",
+  "translation",
+  "translationId",
+  "lang",
+];
+
 /**
  * Detects a URL that isn't already the canonical
  * `/{lang}/{translationId}/{bookSlug}/{chapter}` form, for requests that
@@ -291,18 +301,63 @@ export function legacyReadingUrlRedirect(
   });
 
   const remainingParams = new URLSearchParams(url.search);
-  for (const key of [
-    "book",
-    "chapter",
-    "translation",
-    "translationId",
-    "lang",
-  ]) {
+  for (const key of READING_POSITION_PARAMS) {
     remainingParams.delete(key);
   }
   const query = remainingParams.toString();
 
   return `${basePath}${readingPath}${query ? `?${query}` : ""}`;
+}
+
+/**
+ * Sends an old-style playlist share link (`?playlist={locator}`, on whatever
+ * chapter the sharer's page happened to be) to the playlist's own page,
+ * `/{lang}/playlist/{locator}`. A 301: the target depends only on the URL.
+ *
+ * Only links without `?playlistStep=` redirect. The app writes both params
+ * into the address bar while a playlist plays, so a reload mid-playback has
+ * to keep resuming the playlist rather than land on its intro modal. Share
+ * links never carried a step.
+ *
+ * The language is the one the link names (its path segment or `?lang=`),
+ * else the translation's own, else `DEFAULT_UI_LANGUAGE`. The title slug is
+ * left off, since adding it would mean fetching the playlist before
+ * responding; the page's canonical URL carries it instead. Unrelated query
+ * params are kept, and the ones that only placed the reader are dropped.
+ */
+export function playlistQueryRedirect(
+  path: string,
+  basePath: string
+): string | null {
+  const url = new URL(path, "http://ssr.local");
+  const locator = url.searchParams.get("playlist");
+  if (!locator || url.searchParams.has("playlistStep")) {
+    return null;
+  }
+
+  const parsed = parseReadingPath(url.pathname, basePath);
+  const translationId =
+    parsed?.translationId ??
+    url.searchParams.get("translationId") ??
+    url.searchParams.get("translation");
+  const language =
+    parsed?.language?.toLowerCase() ??
+    url.searchParams.get("lang") ??
+    (translationId ? uiLocaleForDefaultTranslation(translationId) : null) ??
+    DEFAULT_UI_LANGUAGE;
+
+  const remainingParams = new URLSearchParams(url.search);
+  remainingParams.delete("playlist");
+  for (const key of READING_POSITION_PARAMS) {
+    remainingParams.delete(key);
+  }
+  const query = remainingParams.toString();
+
+  return `${basePath}${buildPlaylistPagePath({
+    language,
+    locator,
+    title: null,
+  })}${query ? `?${query}` : ""}`;
 }
 
 /**
@@ -438,13 +493,7 @@ export function acceptLanguageRedirect(
   }
 
   const remainingParams = new URLSearchParams(url.search);
-  for (const key of [
-    "book",
-    "chapter",
-    "translation",
-    "translationId",
-    "lang",
-  ]) {
+  for (const key of READING_POSITION_PARAMS) {
     remainingParams.delete(key);
   }
   const query = remainingParams.toString();
@@ -469,6 +518,16 @@ export async function render(
   | string
 > {
   const { config: injectedConfig } = options;
+
+  // Before the reading-path redirects: the target isn't a reading path, and
+  // correcting the chapter first would only add a second hop.
+  const playlistRedirectTo = playlistQueryRedirect(
+    options.path,
+    injectedConfig.basePath
+  );
+  if (playlistRedirectTo) {
+    return { redirectTo: playlistRedirectTo };
+  }
 
   const redirectTo = legacyReadingUrlRedirect(
     options.path,
