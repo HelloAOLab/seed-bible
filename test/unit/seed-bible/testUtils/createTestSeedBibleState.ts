@@ -9,6 +9,7 @@ import {
 } from "../managers/testUtils/mockBibleApiData";
 import type { OfflineTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import type { AppConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
+import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
 // Lazy per-language loaders for the real "seed-bible" locale files, mirroring
@@ -61,6 +62,17 @@ export interface CreateTestSeedBibleStateOptions {
    * Pass a string to set a non-canonical value (e.g. `"1"`) for edge-case tests.
    */
   chatFirst?: boolean | string;
+  /**
+   * Desktop sidebar rail preference seeded before hydration.
+   *
+   * The app collapses the rail for a new visitor who has no saved choice.
+   * This helper models a returning visit (expanded) unless a test asks
+   * otherwise, so suites that aren't about that default keep the expanded
+   * rail they were written against.
+   *
+   * `"unset"` removes any saved choice and lets the new-visitor default run.
+   */
+  sidebarCollapsed?: boolean | "unset";
   /**
    * Skips the internal `state.today.hydrateAutoOpen()` call below, leaving
    * `today.isOpen` at its pre-hydrate seed (`false`) instead of the URL's
@@ -274,6 +286,21 @@ export async function createTestSeedBibleState(
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
   }
 
+  if (typeof window !== "undefined") {
+    if (options.sidebarCollapsed === "unset") {
+      window.localStorage.removeItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+    } else if (
+      options.sidebarCollapsed !== undefined ||
+      window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === null
+    ) {
+      const collapsed = options.sidebarCollapsed ?? false;
+      window.localStorage.setItem(
+        SIDEBAR_COLLAPSED_STORAGE_KEY,
+        collapsed ? "true" : "false"
+      );
+    }
+  }
+
   const { createSeedBibleState } =
     await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");
   const state = createSeedBibleState({
@@ -290,6 +317,7 @@ export async function createTestSeedBibleState(
   // represents a fully-loaded app for test purposes, so it should reflect
   // that step too, the same way it already waits for tabs to load below.
   state.login.hydrateLocalConfig();
+  state.theme.hydrateSystemColorScheme();
   // Mirrors the same post-mount sequence's other one-time correction: saved
   // tabs/layout/catalog/selector-mode/tutorial-and-onboarding flags all seed
   // to match SSR and only become real once this runs. Without it, anything

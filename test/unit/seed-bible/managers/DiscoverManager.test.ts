@@ -1,3 +1,4 @@
+import { effect } from "@preact/signals";
 import {
   createDiscoverManager,
   type DiscoverContext,
@@ -85,18 +86,21 @@ describe("createDiscoverManager", () => {
       expect(results.find((r) => r.providerId === "p2")?.results).toEqual([r2]);
     });
 
-    it("bumps providersVersion on every registration, including a replacement", () => {
+    it("publishes each registration on the providers signal, including a replacement", () => {
       const manager = createDiscoverManager();
-      expect(manager.providersVersion.value).toBe(0);
+      expect(manager.providers.value).toEqual([]);
 
-      manager.registerDiscoverProvider(makeProvider("p1", []));
-      expect(manager.providersVersion.value).toBe(1);
+      const first = makeProvider("p1", []);
+      manager.registerDiscoverProvider(first);
+      expect(manager.providers.value).toEqual([first]);
 
-      manager.registerDiscoverProvider(makeProvider("p1", []));
-      expect(manager.providersVersion.value).toBe(2);
+      const replacement = makeProvider("p1", []);
+      manager.registerDiscoverProvider(replacement);
+      expect(manager.providers.value).toEqual([replacement]);
 
-      manager.registerDiscoverProvider(makeProvider("p2", []));
-      expect(manager.providersVersion.value).toBe(3);
+      const second = makeProvider("p2", []);
+      manager.registerDiscoverProvider(second);
+      expect(manager.providers.value).toEqual([replacement, second]);
     });
 
     it("replaces an existing provider when re-registered with the same id", async () => {
@@ -343,7 +347,7 @@ describe("createDiscoverManager", () => {
       expect(results).toEqual([{ providerId: "p1", results: [replacement] }]);
     });
 
-    it("tries a provider again after a failed lookup", async () => {
+    it("retries a failed provider and still returns the others", async () => {
       const manager = createDiscoverManager();
       const result: DiscoverResult = {
         type: "study-note",
@@ -351,10 +355,11 @@ describe("createDiscoverManager", () => {
         content: null as any,
       };
       let calls = 0;
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       manager.registerDiscoverProvider({
-        id: "p1",
-        title: "P1",
-        description: "D1",
+        id: "bad",
+        title: "Bad",
+        description: "Fails once",
         discover: () => {
           calls += 1;
           if (calls === 1) {
@@ -363,16 +368,92 @@ describe("createDiscoverManager", () => {
           return [result];
         },
       });
+      manager.registerDiscoverProvider(makeProvider("ok", [result]));
 
-      await expect(collectAll(manager.discover(context))).rejects.toThrow(
-        "fail"
+      const first = await collectAll(manager.discover(context));
+
+      expect(first.find((item) => item.providerId === "bad")?.results).toEqual(
+        []
       );
-      expect(manager.cachedResults(context)).toEqual([]);
+      expect(first.find((item) => item.providerId === "ok")?.results).toEqual([
+        result,
+      ]);
+      expect(manager.cachedResults(context)).toEqual([
+        { providerId: "ok", results: [result] },
+      ]);
 
-      const results = await collectAll(manager.discover(context));
+      const second = await collectAll(manager.discover(context));
 
       expect(calls).toBe(2);
-      expect(results).toEqual([{ providerId: "p1", results: [result] }]);
+      expect(second.find((item) => item.providerId === "bad")?.results).toEqual(
+        [result]
+      );
+      expect(second.find((item) => item.providerId === "ok")?.results).toEqual([
+        result,
+      ]);
+      errorSpy.mockRestore();
+    });
+
+    it("calls providers again after the UI language changes", async () => {
+      const manager = createDiscoverManager();
+      let calls = 0;
+      const result: DiscoverResult = {
+        type: "study-note",
+        reference: { book: "GEN", chapter: 1 },
+        content: null as any,
+      };
+      manager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "D1",
+        discover: () => {
+          calls += 1;
+          return [result];
+        },
+      });
+      manager.setUiLanguage("en");
+
+      await collectAll(manager.discover(context));
+      await collectAll(manager.discover(context));
+      expect(calls).toBe(1);
+
+      manager.setUiLanguage("es");
+      expect(manager.cachedResults(context)).toEqual([]);
+
+      await collectAll(manager.discover(context));
+      expect(calls).toBe(2);
+
+      await collectAll(manager.discover(context));
+      expect(calls).toBe(2);
+    });
+
+    it("forgets the least recently visited chapters once 50 are cached", async () => {
+      const manager = createDiscoverManager();
+      const calls: number[] = [];
+      manager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "D1",
+        discover: (ctx) => {
+          calls.push(ctx.chapter);
+          return [];
+        },
+      });
+
+      for (let chapter = 1; chapter <= 51; chapter++) {
+        await collectAll(manager.discover({ ...context, chapter }));
+      }
+      expect(calls).toEqual(
+        Array.from({ length: 51 }, (_, index) => index + 1)
+      );
+
+      await collectAll(manager.discover({ ...context, chapter: 1 }));
+      await collectAll(manager.discover({ ...context, chapter: 51 }));
+
+      expect(calls).toEqual([
+        ...Array.from({ length: 51 }, (_, index) => index + 1),
+        1,
+      ]);
     });
   });
 
@@ -449,5 +530,118 @@ describe("createDiscoverManager", () => {
         expect(manager.resolveActualView(true)).toBe(value);
       }
     });
+  });
+});
+
+describe("unregistering providers", () => {
+  it("returns a function that removes the provider again", async () => {
+    const manager = createDiscoverManager();
+    const unregister = manager.registerDiscoverProvider(makeProvider("p1", []));
+
+    unregister();
+
+    expect(manager.providers.value).toEqual([]);
+    expect(await collectAll(manager.discover(context))).toEqual([]);
+  });
+
+  it("does not remove a newer provider that replaced it", () => {
+    // A reinstalled extension replaces its provider; the old install's cleanup
+    // running afterwards must not take the new one down with it.
+    const manager = createDiscoverManager();
+    const unregisterOld = manager.registerDiscoverProvider(
+      makeProvider("p1", [])
+    );
+    const replacement = makeProvider("p1", []);
+    manager.registerDiscoverProvider(replacement);
+
+    unregisterOld();
+
+    expect(manager.providers.value).toEqual([replacement]);
+  });
+
+  it("publishes the provider list as it changes", () => {
+    const manager = createDiscoverManager();
+    const seen: number[] = [];
+    const stop = effect(() => {
+      seen.push(manager.providers.value.length);
+    });
+
+    const unregister = manager.registerDiscoverProvider(makeProvider("p1", []));
+    unregister();
+    stop();
+
+    // Initial read, then one change each way — which is what lets the reader
+    // rediscover the chapter when an extension is installed or removed.
+    expect(seen).toEqual([0, 1, 0]);
+  });
+});
+
+describe("registerContentType", () => {
+  it("starts with no types", () => {
+    expect(createDiscoverManager().contentTypes.value).toEqual([]);
+  });
+
+  it("lists a registered type", () => {
+    const manager = createDiscoverManager();
+    manager.registerContentType({ id: "sermon", title: "Sermons" });
+
+    expect(manager.contentTypes.value.map((type) => type.id)).toEqual([
+      "sermon",
+    ]);
+  });
+
+  it("sorts by priority, keeping registration order for ties", () => {
+    const manager = createDiscoverManager();
+    manager.registerContentType({ id: "late", title: "Late", priority: 900 });
+    manager.registerContentType({ id: "tie-a", title: "Tie A" });
+    manager.registerContentType({ id: "early", title: "Early", priority: 10 });
+    manager.registerContentType({ id: "tie-b", title: "Tie B" });
+
+    expect(manager.contentTypes.value.map((type) => type.id)).toEqual([
+      "early",
+      "tie-a",
+      "tie-b",
+      "late",
+    ]);
+  });
+
+  it("replaces an earlier definition with the same id", () => {
+    const manager = createDiscoverManager();
+    manager.registerContentType({ id: "sermon", title: "Sermons" });
+    manager.registerContentType({
+      id: "sermon",
+      title: "Talks",
+      hiddenByDefault: true,
+    });
+
+    expect(manager.contentTypes.value).toEqual([
+      { id: "sermon", title: "Talks", hiddenByDefault: true },
+    ]);
+  });
+
+  it("returns a function that removes the type again", () => {
+    const manager = createDiscoverManager();
+    const unregister = manager.registerContentType({
+      id: "sermon",
+      title: "Sermons",
+    });
+
+    unregister();
+
+    expect(manager.contentTypes.value).toEqual([]);
+  });
+
+  it("does not remove a newer definition that replaced it", () => {
+    const manager = createDiscoverManager();
+    const unregisterOld = manager.registerContentType({
+      id: "sermon",
+      title: "Sermons",
+    });
+    const replacement = { id: "sermon", title: "Talks" };
+    manager.registerContentType(replacement);
+
+    unregisterOld();
+
+    expect(manager.contentTypes.value).toEqual([replacement]);
   });
 });

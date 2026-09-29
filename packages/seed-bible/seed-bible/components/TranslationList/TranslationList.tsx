@@ -46,6 +46,13 @@ export interface TranslationListProps {
   onShowInfo?: (translation: Translation, event: MouseEvent) => void;
   /** Called when the list is scrolled — used to dismiss anchored popovers. */
   onScroll?: () => void;
+  /**
+   * An extra row rendered above every language group, inside the same
+   * scrollable list — e.g. the customization picker's "Seed Bible's
+   * default" option, which isn't a real `Translation` and so can't be a
+   * language group entry itself. Shown regardless of search/view mode.
+   */
+  leadingItem?: ComponentChild;
 }
 
 /**
@@ -73,6 +80,7 @@ export function TranslationList(props: TranslationListProps) {
     renderActions,
     onShowInfo,
     onScroll,
+    leadingItem,
   } = props;
   const { t } = useI18n();
 
@@ -84,6 +92,7 @@ export function TranslationList(props: TranslationListProps) {
     if (viewMode === "complete" || viewMode === "popular") {
       return (
         <div className="sb-translation-list sb-translation-list-empty">
+          {leadingItem}
           <span>
             {t("no-translation-results-found", {
               defaultValue:
@@ -104,6 +113,7 @@ export function TranslationList(props: TranslationListProps) {
 
     return (
       <div className="sb-translation-list sb-translation-list-empty">
+        {leadingItem}
         <span>
           {t("no-results-found", { defaultValue: "No results found." })}
         </span>
@@ -113,6 +123,7 @@ export function TranslationList(props: TranslationListProps) {
 
   return (
     <div className="sb-translation-list" onScroll={onScroll}>
+      {leadingItem}
       {groups.map((group) => (
         <TranslationLanguageSection
           key={group.language}
