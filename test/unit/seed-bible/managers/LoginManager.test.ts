@@ -1,6 +1,9 @@
 import {
   createLoginManager,
+  OPEN_ID_LOGIN_TIMEOUT_MS,
+  OPEN_ID_POLL_INTERVAL_MS,
   userProfileSchema,
+  YOUVERSION_OPEN_ID_PROVIDER,
   type LoginManager,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { saveProfileConfigValue } from "@packages/seed-bible/seed-bible/managers/ProfileConfigSync";
@@ -18,12 +21,18 @@ const {
   getUserInfoMock,
   replaceSessionMock,
   revokeSessionMock,
+  listOpenIDProvidersMock,
+  requestOpenIDLoginMock,
+  completeOAuthLoginMock,
 } = vi.hoisted(() => ({
   requestLoginMock: vi.fn(),
   completeLoginMock: vi.fn(),
   getUserInfoMock: vi.fn(),
   replaceSessionMock: vi.fn(),
   revokeSessionMock: vi.fn(),
+  listOpenIDProvidersMock: vi.fn(),
+  requestOpenIDLoginMock: vi.fn(),
+  completeOAuthLoginMock: vi.fn(),
 }));
 
 vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
@@ -34,6 +43,9 @@ vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
     getUserInfo: getUserInfoMock,
     replaceSession: replaceSessionMock,
     revokeSession: revokeSessionMock,
+    listOpenIDProviders: listOpenIDProvidersMock,
+    requestOpenIDLogin: requestOpenIDLoginMock,
+    completeOAuthLogin: completeOAuthLoginMock,
   })),
 }));
 
@@ -240,6 +252,301 @@ describe("createLoginManager", () => {
       await expect(loginPromise).resolves.toBeNull();
       await waitFor(() => manager.isLoginOpen.value === false);
       expect(getUserInfoMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("OpenID login", () => {
+    const AUTHORIZATION_URL = "https://login.youversion.com/authorize?state=1";
+
+    /** Stands in for the sign-in window the manager opens. */
+    interface FakePopup {
+      closed: boolean;
+      close: () => void;
+      location: { href: string };
+    }
+
+    let popup: FakePopup;
+    let openSpy: Mock;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+
+      listOpenIDProvidersMock.mockReset();
+      requestOpenIDLoginMock.mockReset();
+      completeOAuthLoginMock.mockReset();
+
+      popup = {
+        closed: false,
+        close() {
+          this.closed = true;
+        },
+        location: { href: "" },
+      };
+      openSpy = vi
+        .spyOn(window, "open")
+        .mockImplementation(() => popup as unknown as Window) as Mock;
+
+      listOpenIDProvidersMock.mockResolvedValue({
+        success: true,
+        providers: [{ id: YOUVERSION_OPEN_ID_PROVIDER, name: "YouVersion" }],
+      });
+      requestOpenIDLoginMock.mockResolvedValue({
+        success: true,
+        authorizationUrl: AUTHORIZATION_URL,
+        requestId: "oid-request-1",
+      });
+      completeOAuthLoginMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_completed",
+        errorMessage: "The login request has not been completed.",
+      });
+    });
+
+    afterEach(() => {
+      openSpy.mockRestore();
+      vi.useRealTimers();
+    });
+
+    function completeSuccessfully() {
+      completeOAuthLoginMock.mockResolvedValue({
+        success: true,
+        userId: USER_ID,
+        sessionKey: SESSION_KEY,
+        connectionKey: "connection-key-1",
+        expireTimeMs: Date.now() + 1000 * 60 * 60,
+        metadata: {},
+      });
+    }
+
+    it("lists the providers the auth server offers", async () => {
+      const manager = createLoginManager({ os });
+      expect(manager.openIDProviders.value).toBeNull();
+
+      await expect(manager.loadOpenIDProviders()).resolves.toEqual([
+        { id: YOUVERSION_OPEN_ID_PROVIDER, name: "YouVersion" },
+      ]);
+      expect(manager.openIDProviders.value).toEqual([
+        { id: YOUVERSION_OPEN_ID_PROVIDER, name: "YouVersion" },
+      ]);
+
+      // Asked once per page load, however often the login screen opens.
+      await manager.loadOpenIDProviders();
+      expect(listOpenIDProvidersMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("tries listing the providers again after a failure", async () => {
+      listOpenIDProvidersMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "A server error occurred.",
+      });
+      const manager = createLoginManager({ os });
+
+      await expect(manager.loadOpenIDProviders()).rejects.toThrow(
+        "server_error"
+      );
+      expect(manager.openIDProviders.value).toBeNull();
+
+      await expect(manager.loadOpenIDProviders()).resolves.toHaveLength(1);
+      expect(manager.openIDProviders.value).toHaveLength(1);
+    });
+
+    it("signs in once the user finishes with the provider", async () => {
+      const manager = createLoginManager({ os });
+      const loginPromise = manager.login();
+
+      const resultPromise = manager.loginWithOpenID(
+        YOUVERSION_OPEN_ID_PROVIDER
+      );
+      // Opened synchronously so the browser counts it as part of the click.
+      expect(openSpy).toHaveBeenCalledTimes(1);
+      expect(requestOpenIDLoginMock).toHaveBeenCalledWith({
+        provider: YOUVERSION_OPEN_ID_PROVIDER,
+      });
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(popup.location.href).toBe(AUTHORIZATION_URL);
+
+      // Still signing in with the provider.
+      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
+      expect(completeOAuthLoginMock).toHaveBeenCalledWith({
+        requestId: "oid-request-1",
+      });
+      expect(manager.userId.value).toBeNull();
+
+      completeSuccessfully();
+      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
+
+      await expect(resultPromise).resolves.toMatchObject({ success: true });
+      await expect(loginPromise).resolves.toEqual({
+        id: USER_ID,
+        email: EMAIL,
+      });
+      expect(manager.userId.value).toBe(USER_ID);
+      expect(os.client.sessionKey).toBe(SESSION_KEY);
+      expect(localStorage.getItem("sessionKey")).toBe(SESSION_KEY);
+      expect(manager.isLoginOpen.value).toBe(false);
+      expect(popup.closed).toBe(true);
+    });
+
+    it("still signs in when the window closes right after the user finishes", async () => {
+      const manager = createLoginManager({ os });
+      const resultPromise = manager.loginWithOpenID(
+        YOUVERSION_OPEN_ID_PROVIDER
+      );
+      await vi.advanceTimersByTimeAsync(0);
+
+      popup.close();
+      completeSuccessfully();
+      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
+
+      await expect(resultPromise).resolves.toMatchObject({ success: true });
+      expect(manager.userId.value).toBe(USER_ID);
+    });
+
+    it("reports a blocked sign-in window without contacting the server", async () => {
+      openSpy.mockImplementation(() => null);
+      const manager = createLoginManager({ os });
+
+      await expect(
+        manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
+      ).resolves.toMatchObject({ success: false, errorCode: "popup_blocked" });
+      expect(requestOpenIDLoginMock).not.toHaveBeenCalled();
+    });
+
+    it("reports a provider the server refuses and closes the window", async () => {
+      requestOpenIDLoginMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_supported",
+        errorMessage: "The given provider is not supported.",
+      });
+      const manager = createLoginManager({ os });
+
+      await expect(
+        manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
+      ).resolves.toMatchObject({ success: false, errorCode: "not_supported" });
+      expect(popup.closed).toBe(true);
+      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+    });
+
+    it("is cancelled when the user closes the sign-in window", async () => {
+      const manager = createLoginManager({ os });
+      const resultPromise = manager.loginWithOpenID(
+        YOUVERSION_OPEN_ID_PROVIDER
+      );
+      await vi.advanceTimersByTimeAsync(0);
+
+      popup.close();
+      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
+
+      await expect(resultPromise).resolves.toMatchObject({
+        success: false,
+        errorCode: "cancelled",
+      });
+      expect(manager.userId.value).toBeNull();
+
+      // No more checks once the attempt is over.
+      const calls = completeOAuthLoginMock.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS * 3);
+      expect(completeOAuthLoginMock).toHaveBeenCalledTimes(calls);
+    });
+
+    it("is cancelled, and the window closed, when the login screen is dismissed", async () => {
+      const manager = createLoginManager({ os });
+      const loginPromise = manager.login();
+      const resultPromise = manager.loginWithOpenID(
+        YOUVERSION_OPEN_ID_PROVIDER
+      );
+      await vi.advanceTimersByTimeAsync(0);
+
+      await manager.cancelLogin();
+      expect(popup.closed).toBe(true);
+
+      // Even a login finishing in the meantime isn't applied.
+      completeSuccessfully();
+      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
+
+      await expect(resultPromise).resolves.toMatchObject({
+        success: false,
+        errorCode: "cancelled",
+      });
+      await expect(loginPromise).resolves.toBeNull();
+      expect(manager.userId.value).toBeNull();
+      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+    });
+
+    it("reports an existing email account instead of linking to it", async () => {
+      const manager = createLoginManager({ os });
+      const resultPromise = manager.loginWithOpenID(
+        YOUVERSION_OPEN_ID_PROVIDER
+      );
+      await vi.advanceTimersByTimeAsync(0);
+
+      completeOAuthLoginMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_key_required_for_openid",
+        errorMessage:
+          "A valid session key is required to link this OpenID account to an existing user.",
+      });
+      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
+
+      await expect(resultPromise).resolves.toMatchObject({
+        success: false,
+        errorCode: "session_key_required_for_openid",
+      });
+      expect(manager.userId.value).toBeNull();
+      expect(popup.closed).toBe(true);
+    });
+
+    it("gives up once the login request can no longer complete", async () => {
+      const manager = createLoginManager({ os });
+      const resultPromise = manager.loginWithOpenID(
+        YOUVERSION_OPEN_ID_PROVIDER
+      );
+
+      await vi.advanceTimersByTimeAsync(
+        OPEN_ID_LOGIN_TIMEOUT_MS + OPEN_ID_POLL_INTERVAL_MS
+      );
+
+      await expect(resultPromise).resolves.toMatchObject({
+        success: false,
+        errorCode: "timed_out",
+      });
+      expect(popup.closed).toBe(true);
+    });
+
+    it("closes the window when the server can't be reached", async () => {
+      requestOpenIDLoginMock.mockRejectedValue(
+        new TypeError("Failed to fetch")
+      );
+      const manager = createLoginManager({ os });
+
+      await expect(
+        manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
+      ).rejects.toThrow("Failed to fetch");
+      expect(popup.closed).toBe(true);
+    });
+
+    it("abandons an earlier attempt when a new one starts", async () => {
+      const manager = createLoginManager({ os });
+      const firstPopup = popup;
+      const first = manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER);
+      await vi.advanceTimersByTimeAsync(0);
+
+      popup = {
+        closed: false,
+        close() {
+          this.closed = true;
+        },
+        location: { href: "" },
+      };
+      const second = manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER);
+      expect(firstPopup.closed).toBe(true);
+      await expect(first).resolves.toMatchObject({ errorCode: "cancelled" });
+
+      completeSuccessfully();
+      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
+      await expect(second).resolves.toMatchObject({ success: true });
     });
   });
 

@@ -6,7 +6,11 @@ import { useI18n } from "../../i18n/I18nManager";
 import SeedBibleTitleIcon from "../../img/SeedBibleLogoWithTitleBlack.png";
 import { MaterialIcon } from "../icons";
 import type { NavigationManager } from "../../managers/NavigationManager";
-import type { LoginManager } from "../../managers/LoginManager";
+import {
+  YOUVERSION_OPEN_ID_PROVIDER,
+  type LoginManager,
+  type OpenIDLoginResult,
+} from "../../managers/LoginManager";
 
 type LoginStep = "email" | "code";
 
@@ -20,6 +24,9 @@ const LOGO_SRC = SeedBibleTitleIcon;
  * Walks the user through two screens:
  *  1. Enter an email address (sends a login code).
  *  2. Enter the code that was emailed to them (completes the login).
+ *
+ * The first screen also offers signing in with YouVersion when the auth
+ * server has that provider configured.
  *
  * The flow is driven entirely by the OS manager: requesting a code, submitting
  * it, and cancelling all delegate to {@link CasualOSManager}. When the login
@@ -41,6 +48,7 @@ export function LoginModal({
   const agreed = useSignal(false);
   const error = useSignal<string | null>(null);
   const isSubmitting = useSignal(false);
+  const isAwaitingOpenID = useSignal(false);
 
   // The login request returned by `requestLoginByEmail`. Needed to complete the
   // login on the code screen. Kept in a ref because it's not rendered directly.
@@ -78,8 +86,13 @@ export function LoginModal({
         agreed.value = false;
         error.value = null;
         isSubmitting.value = false;
+        isAwaitingOpenID.value = false;
       });
       requestRef.current = null;
+      login.loadOpenIDProviders().catch((err) => {
+        // Email login still works, so the provider buttons just stay hidden.
+        console.warn("Failed to load OpenID login providers.", err);
+      });
     }
     wasOpenRef.current = open;
   });
@@ -192,6 +205,74 @@ export function LoginModal({
       isSubmitting.value = false;
     }
   };
+
+  const openIDErrorMessage = (result: OpenIDLoginResult): string | null => {
+    if (result.success) {
+      return null;
+    }
+    switch (result.errorCode) {
+      case "cancelled":
+        return null;
+      case "popup_blocked":
+        return t("login-error-popup-blocked", {
+          defaultValue:
+            "Your browser blocked the sign-in window. Please allow pop-ups for this site and try again.",
+        });
+      case "timed_out":
+        return t("login-error-openid-timed-out", {
+          defaultValue: "Sign-in took too long. Please try again.",
+        });
+      case "session_key_required_for_openid":
+        return t("login-error-openid-account-exists", {
+          defaultValue:
+            "An account with this email address already exists. Please log in with your email address instead.",
+        });
+      default:
+        return t("login-error-generic", {
+          defaultValue: "Something went wrong. Please try again.",
+        });
+    }
+  };
+
+  const loginWithYouVersion = async () => {
+    if (isSubmitting.value) {
+      return;
+    }
+
+    if (!agreed.value) {
+      error.value = t("login-error-terms-required", {
+        defaultValue: "Please agree to the terms of service to continue.",
+      });
+      return;
+    }
+
+    error.value = null;
+    isSubmitting.value = true;
+    isAwaitingOpenID.value = true;
+    try {
+      // Called before any await so the browser still counts the sign-in
+      // window as opened by this click.
+      const result = await login.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER);
+      // On success the login manager closes the login UI, which unmounts
+      // this component.
+      error.value = openIDErrorMessage(result);
+    } catch (err) {
+      console.error("Failed to log in with YouVersion.", err);
+      error.value = t("login-error-generic", {
+        defaultValue: "Something went wrong. Please try again.",
+      });
+    } finally {
+      batch(() => {
+        isSubmitting.value = false;
+        isAwaitingOpenID.value = false;
+      });
+    }
+  };
+
+  const hasYouVersion =
+    login.openIDProviders.value?.some(
+      (provider) => provider.id === YOUVERSION_OPEN_ID_PROVIDER
+    ) ?? false;
 
   const backToEmail = () => {
     batch(() => {
@@ -422,6 +503,31 @@ export function LoginModal({
                     : t("log-in", { defaultValue: "Log in" })}
                 </button>
               </div>
+
+              {hasYouVersion && (
+                <>
+                  <div className="sb-login-divider" role="separator">
+                    <span>{t("login-or", { defaultValue: "or" })}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="sb-login-provider"
+                    onClick={loginWithYouVersion}
+                    disabled={isSubmitting.value}
+                  >
+                    <MaterialIcon className="sb-login-provider-icon">
+                      menu_book
+                    </MaterialIcon>
+                    {isAwaitingOpenID.value
+                      ? t("login-with-youversion-waiting", {
+                          defaultValue: "Waiting for YouVersion…",
+                        })
+                      : t("login-with-youversion", {
+                          defaultValue: "Continue with YouVersion",
+                        })}
+                  </button>
+                </>
+              )}
             </form>
           )}
 
