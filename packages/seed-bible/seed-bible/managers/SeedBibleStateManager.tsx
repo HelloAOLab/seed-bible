@@ -23,7 +23,10 @@ import {
 import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
-import { PlaylistPageModalContent } from "../components/PlaylistPageModal/PlaylistPageModal";
+import {
+  PlaylistNotFoundModalContent,
+  PlaylistPageModalContent,
+} from "../components/PlaylistPageModal/PlaylistPageModal";
 import {
   buildPlaylistPagePath,
   parsePlaylistPagePath,
@@ -1650,6 +1653,10 @@ export function createSeedBibleState(
 
       if (playlistPageTitle.value) {
         return `${playlistPageTitle.value} | ${seedBibleTitle}`;
+      }
+
+      if (playlists.playlistPageNotFound.value) {
+        return `${t("playlist-not-found-title", { defaultValue: "Playlist not found" })} | ${seedBibleTitle}`;
       }
 
       if (!selectedTab.value) {
@@ -3364,9 +3371,25 @@ export function createSeedBibleState(
 
   // A shared playlist link opens on a modal describing the playlist. Start
   // plays it; closing it any other way (Close, the header's X, the backdrop)
-  // leaves for the home screen.
+  // leaves for the home screen. A link to a playlist that doesn't exist opens
+  // a "not found" modal in the same place, and closing that goes home too.
   effect(() => {
     const page = playlists.playlistPage.value;
+    if (!page && playlists.playlistPageNotFound.value) {
+      modals.openModal({
+        id: PLAYLIST_PAGE_MODAL_ID,
+        title: i18n.t("playlist-not-found-title", {
+          defaultValue: "Playlist not found",
+        }),
+        useCasualOSApp: false,
+        content: () => (
+          <PlaylistNotFoundModalContent
+            onClose={() => modals.closeModal(PLAYLIST_PAGE_MODAL_ID)}
+          />
+        ),
+      });
+      return;
+    }
     if (!page) {
       if (
         modals.modals
@@ -3407,7 +3430,10 @@ export function createSeedBibleState(
     const modalOpen = modals.modals.value.some(
       (modal) => modal.id === PLAYLIST_PAGE_MODAL_ID
     );
-    if (modalOpen || !playlists.playlistPage.peek()) {
+    if (
+      modalOpen ||
+      !(playlists.playlistPage.peek() || playlists.playlistPageNotFound.peek())
+    ) {
       return;
     }
     const home = new URL(navigation.initialUrl.href);

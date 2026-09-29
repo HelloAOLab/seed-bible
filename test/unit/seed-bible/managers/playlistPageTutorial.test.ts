@@ -114,6 +114,35 @@ describe("tutorial offer on a playlist link", () => {
     expect(state.tutorial.promptVisible.value).toBe(false);
   });
 
+  it("shows a not-found modal for a playlist that doesn't exist, and goes home from it", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/en/playlist/owner.playlist_missing/gone"
+    );
+    const state = await createTestSeedBibleState({
+      responses: responses(),
+      todayOpen: "fromUrl",
+      initialPlaylistPageSeed: {
+        locator: "owner.playlist_missing",
+        playlist: null,
+        authorName: null,
+      },
+    });
+
+    const modal = state.modals.modals.value.find(
+      (m) => m.id === PLAYLIST_PAGE_MODAL_ID
+    );
+    expect(modal?.title).toBe("Playlist not found");
+    expect(state.app.title.value).toContain("Playlist not found");
+    expect(state.today.isOpen.value).toBe(false);
+
+    state.modals.closeModal(PLAYLIST_PAGE_MODAL_ID);
+
+    expect(state.today.isOpen.value).toBe(true);
+    expect(new URL(window.location.href).pathname).not.toContain("/playlist/");
+  });
+
   it("offers the tutorial from the home screen after the playlist is closed", async () => {
     const state = await openPlaylistPage();
 

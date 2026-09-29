@@ -59,3 +59,31 @@ export function PlaylistPageModalContent(props: {
     </div>
   );
 }
+
+/**
+ * What a link to a playlist that doesn't exist (deleted, or a mistyped link)
+ * opens on, in place of the playlist modal. Closing it goes home.
+ */
+export function PlaylistNotFoundModalContent(props: { onClose: () => void }) {
+  const { t } = useI18n();
+
+  return (
+    <div className="sb-playlist-page-modal sb-playlist-page-modal--not-found">
+      <p className="sb-playlist-page-modal-description">
+        {t("playlist-not-found-message", {
+          defaultValue:
+            "This playlist doesn't exist, or it has been deleted. Check the link, or ask the person who shared it for a new one.",
+        })}
+      </p>
+      <div className="sb-playlist-page-modal-actions">
+        <button
+          type="button"
+          className="sb-playlist-page-modal-start"
+          onClick={props.onClose}
+        >
+          {t("close", { defaultValue: "Close" })}
+        </button>
+      </div>
+    </div>
+  );
+}

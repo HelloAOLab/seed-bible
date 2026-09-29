@@ -1535,7 +1535,10 @@ describe("render() server-rendered meta tags", () => {
       const { html, notFound } = await renderResult(PAGE_PATH);
 
       expect(notFound).toBe(true);
-      expect(html).not.toContain("sb-playlist-page-modal");
+      expect(html).toContain("<title>Playlist not found | Seed Bible</title>");
+      expect(html).toContain("sb-playlist-page-modal--not-found");
+      expect(html).toContain("This playlist doesn't exist");
+      expect(html).not.toContain("Start Playlist");
       expect(readEmbeddedPlaylistSeed(html)).toEqual({
         locator: "owner.playlist_shared",
         playlist: null,
