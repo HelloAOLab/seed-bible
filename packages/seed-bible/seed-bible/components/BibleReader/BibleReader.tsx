@@ -2696,7 +2696,7 @@ export function BibleReader(props: BibleReaderProps) {
     <SkeletonContainer
       label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
       className={`sb-chapter-content sb-chapter-skeleton${
-        isMobile ? " sb-chapter-content-note-gutter" : ""
+        isCompactReader ? " sb-chapter-content-note-gutter" : ""
       }`}
     >
       <Skeleton shape="block" width="42%" />
@@ -2841,7 +2841,7 @@ export function BibleReader(props: BibleReaderProps) {
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
               onAnnotationVerseClick={handleAnnotationVerseClick}
-              isMobile={isMobile}
+              isMobile={isCompactReader}
               presence={sharedSession ? presence : undefined}
               onVisibleVersesChange={reportVisibleVerses}
             />
