@@ -5,6 +5,7 @@
 ### ✨ Added
 
 - Link someone straight into a tutorial with `?tutorial=<id>`, optionally at a given step with `&tutorialStep=<n>`. The main tour's ID is `introduction`; all IDs are listed in `docs/tutorial-links.md`. The address now tracks the tutorial's current step, so refreshing mid-tutorial picks up where you left off instead of losing it. ([#1808](https://github.com/HelloAOLab/seed-bible/issues/1808))
+- Sign in with your YouVersion account. The login screen now offers "Continue with YouVersion" below the email form, which opens YouVersion's sign-in page in a new window. ([#1252](https://github.com/HelloAOLab/seed-bible/issues/1252))
 
 ### 🔧 Changed
 
