@@ -2519,7 +2519,11 @@ describe("BibleReader", () => {
       const state = createMobileState();
       return {
         ...state,
-        app: { ...state.app, isMobile: signal(isMobile) },
+        app: {
+          ...state.app,
+          isMobile: signal(isMobile),
+          isCompactReader: signal(isMobile),
+        },
         annotations: {
           getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
         },
