@@ -321,7 +321,7 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool<BibleToolContext
   /** True when the action needs the selected verses to remain active. */
   preserveSelection?: boolean;
   /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
-  onSelect?: (context: BibleToolContext) => void;
+  onSelect?: (context: BibleToolContext) => void | Promise<void>;
   /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
   getItems?: (context: BibleToolContext) => ManagedBibleVerseToolbarToolItem[];
 }
@@ -761,9 +761,7 @@ function openAskAiForSelectedVerses(
   // Clearing the selection unmounts the mobile verse sheet under the finger.
   // Defer so a retargeted pointerdown after that unmount cannot land "outside"
   // the chat panel and dismiss the panel we just opened.
-  queueMicrotask(() => {
-    context.readingState.clearSelectedVerses();
-  });
+  //by the await in handleVerseAction
 }
 
 function OpenInSelectorIcon() {
@@ -1268,8 +1266,6 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
             ),
           ],
         };
-
-        context.readingState.clearSelectedVerses();
       },
     },
     {
@@ -1329,7 +1325,6 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
             session: draft.selectedSessionIndex + 1,
           })
         );
-        context.readingState.clearSelectedVerses();
       },
     },
     {

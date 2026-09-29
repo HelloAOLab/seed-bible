@@ -920,7 +920,6 @@ describe("createBibleToolsManager", () => {
       expect(chats.composerDraft.value).toBe(
         `${formatSelectedVerses(context.readingState)}\n\n`
       );
-      expect(context.readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("does nothing when the single-agent shortcut is invoked with no selected verses", () => {
@@ -1062,7 +1061,6 @@ describe("createBibleToolsManager", () => {
       expect(chats.createLocalSession).not.toHaveBeenCalled();
       expect(addParticipant).toHaveBeenCalledWith("apologist");
       expect(chats.selectChat).toHaveBeenCalledWith("recent-apologist-chat");
-      expect(context.readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("does not reuse a shared chat or a local chat for a different agent", async () => {
@@ -1928,12 +1926,11 @@ describe("createBibleToolsManager", () => {
 
     it("adds one playlist item for a contiguous verse run", async () => {
       const manager = createBibleToolsManager(testBranding);
-      const { context, editingPlaylist, clearSelectedVerses } =
-        createPlaylistContext({
-          verses: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n) =>
-            selectedVerse("EXO", 26, n)
-          ),
-        });
+      const { context, editingPlaylist } = createPlaylistContext({
+        verses: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n) =>
+          selectedVerse("EXO", 26, n)
+        ),
+      });
 
       const tool = manager
         .getVerseToolbarTools(context)
@@ -1947,7 +1944,6 @@ describe("createBibleToolsManager", () => {
           ref: { bookId: "EXO", chapter: 26, verse: 1, endVerse: 11 },
         },
       ]);
-      expect(clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("adds one playlist item per gapped range", async () => {
