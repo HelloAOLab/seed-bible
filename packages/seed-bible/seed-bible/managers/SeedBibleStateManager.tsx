@@ -20,6 +20,7 @@ import {
   type TodayManager,
   type TodayPassageTarget,
 } from "../managers/TodayManager";
+import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import {
@@ -288,6 +289,17 @@ export interface AppState {
 
   /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
+  /**
+   * Compact partner-site embed (`?embed=minimal` or `?embed=true`). The
+   * reader keeps a phone-like chrome and drops Today, the bottom tab bar,
+   * and the sidebar so the passage is easy to read inside an iframe.
+   */
+  isMinimalEmbed: ReadonlySignal<boolean>;
+  /**
+   * Phone layout, or a compact embed. Drives the swipe reader, mobile
+   * header, and floating chapter nav — not pane placement or the sidebar.
+   */
+  isCompactReader: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
   /**
@@ -1025,6 +1037,12 @@ export function createSeedBibleState(
   const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
   const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
+  const isMinimalEmbed = computed(() =>
+    isMinimalEmbedUrl(navigation.currentUrl.value)
+  );
+  const isCompactReader = computed(
+    () => isMobile.value || isMinimalEmbed.value
+  );
 
   // Created after `isMobile` so panes can enforce a single fullscreen pane:
   // on mobile every pane is displayed fullscreen, so opening one closes the
@@ -1142,7 +1160,8 @@ export function createSeedBibleState(
     isMobile,
     panes,
     sidebar,
-    openedViaContentLink
+    openedViaContentLink,
+    isMinimalEmbed
   );
 
   // Once the tutorial has been resolved (seen, skipped, declined, or opted
@@ -1159,6 +1178,14 @@ export function createSeedBibleState(
   let installOfferChecked = false;
   effect(() => {
     if (installOfferChecked) {
+      return;
+    }
+    // A visitor inside someone else's iframe should not be asked to install
+    // our app. Resolve the offer so the offline-download prompt can take its
+    // own turn and refuse for the same reason.
+    if (isMinimalEmbed.value) {
+      installOfferChecked = true;
+      installOfferResolved.value = true;
       return;
     }
     if (openedViaContentLink) {
@@ -1871,6 +1898,10 @@ export function createSeedBibleState(
   let downloadOfferChecked = false;
   effect(() => {
     if (downloadOfferChecked) {
+      return;
+    }
+    if (isMinimalEmbed.value) {
+      downloadOfferChecked = true;
       return;
     }
     if (openedViaContentLink) {
@@ -2870,6 +2901,8 @@ export function createSeedBibleState(
       applyViewport,
       hydrateFromStorage,
       isMobile,
+      isMinimalEmbed,
+      isCompactReader,
       isMobileLandscape,
       isCompactDesktop,
       currentReadingState,
