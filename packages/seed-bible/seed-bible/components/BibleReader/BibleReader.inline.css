@@ -498,7 +498,11 @@
 }
 
 .sb-bible-reader-mobile-content-title {
-  margin: 2rem 0 2rem;
+  /* Shrink to the text, so the tappable title's hit area is the words and not
+     the full row. Applied to the previews too so they stay identical. */
+  width: fit-content;
+  max-width: 100%;
+  margin: 2rem auto;
   text-align: center;
   font-family: var(--text-bookTitle-font);
   color: var(--sb-book-title-font-color);
@@ -506,6 +510,11 @@
   font-style: var(--text-bookTitle-font-style);
   text-decoration: var(--text-bookTitle-text-decoration);
   letter-spacing: 0;
+}
+
+.sb-bible-reader-mobile-content-title-tappable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .sb-bible-reader-mobile-content-title .sb-bible-reader-book {
