@@ -2871,14 +2871,105 @@ describe("createBibleReadingState", () => {
       ).toBe(true);
     });
 
+    it("calls each provider once when extensions register one after another on the open chapter", async () => {
+      const discoverManager = createDiscoverManager();
+      const calls: string[] = [];
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+
+      for (const id of ["p1", "p2", "p3"]) {
+        discoverManager.registerDiscoverProvider({
+          id,
+          title: id,
+          description: id,
+          discover: (context) => {
+            calls.push(id);
+            return contentFor(context, id);
+          },
+        });
+        await waitFor(() =>
+          state.discoveredContent.value.some((group) => group.providerId === id)
+        );
+      }
+
+      expect(calls).toEqual(["p1", "p2", "p3"]);
+      expect(
+        state.discoveredContent.value.map((group) => group.providerId)
+      ).toEqual(["p1", "p2", "p3"]);
+      expect(
+        state.discoveredContent.value.every(
+          (group) => group.results.length === 1
+        )
+      ).toBe(true);
+    });
+
+    it("does not call a provider again while its lookup for this chapter is still in flight", async () => {
+      const discoverManager = createDiscoverManager();
+      const calls: string[] = [];
+      let releaseFirst: (() => void) | undefined;
+      const firstGate = new Promise<void>((resolve) => {
+        releaseFirst = resolve;
+      });
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+
+      discoverManager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "slow",
+        discover: (context) => {
+          calls.push("p1");
+          return firstGate.then(() => contentFor(context, "From first"));
+        },
+      });
+      await waitFor(() => calls.length === 1);
+
+      discoverManager.registerDiscoverProvider({
+        id: "p2",
+        title: "P2",
+        description: "fast",
+        discover: (context) => {
+          calls.push("p2");
+          return contentFor(context, "From second");
+        },
+      });
+
+      expect(calls).toEqual(["p1", "p2"]);
+      releaseFirst!();
+      await waitFor(() => state.discoveredContent.value.length === 2);
+      expect(calls).toEqual(["p1", "p2"]);
+      expect(
+        state.discoveredContent.value.map((group) => group.providerId).sort()
+      ).toEqual(["p1", "p2"]);
+    });
+
     it("refreshes results when navigating and does not keep or duplicate the previous chapter", async () => {
       const discoverManager = createDiscoverManager();
+      const calls: string[] = [];
       discoverManager.registerDiscoverProvider({
         id: "p1",
         title: "P1",
         description: "Chapter-specific",
-        discover: (context) =>
-          contentFor(context, `${context.book} ${context.chapter}`),
+        discover: (context) => {
+          calls.push(`${context.book} ${context.chapter}`);
+          return contentFor(context, `${context.book} ${context.chapter}`);
+        },
       });
 
       setWebResponses(createReadingManagerResponseMap());
@@ -2893,6 +2984,7 @@ describe("createBibleReadingState", () => {
       await waitFor(
         () => state.discoveredContent.value[0]?.results[0]?.title === "GEN 1"
       );
+      expect(calls).toEqual(["GEN 1"]);
 
       await state.selectChapter("GEN", 2);
       await waitFor(
@@ -2902,6 +2994,7 @@ describe("createBibleReadingState", () => {
       );
       expect(state.discoveredContent.value).toHaveLength(1);
       expect(state.discoveredContent.value[0]!.results).toHaveLength(1);
+      expect(calls).toEqual(["GEN 1", "GEN 2"]);
 
       await state.selectChapter("GEN", 1);
       await waitFor(
@@ -2912,6 +3005,7 @@ describe("createBibleReadingState", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(state.discoveredContent.value).toHaveLength(1);
       expect(state.discoveredContent.value[0]!.results).toHaveLength(1);
+      expect(calls).toEqual(["GEN 1", "GEN 2"]);
     });
 
     it("stays empty when providers have no results for the current chapter", async () => {

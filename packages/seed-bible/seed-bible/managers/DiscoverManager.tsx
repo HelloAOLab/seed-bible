@@ -91,6 +91,12 @@ export interface DiscoverManager {
   discover: (
     context: DiscoverContext
   ) => AsyncIterable<DiscoverProviderResults>;
+  /**
+   * Providers that have already answered for this chapter, in registration
+   * order. Does not start a lookup. An empty `results` array means that
+   * provider answered and had nothing; a lookup still in flight is omitted.
+   */
+  cachedResults: (context: DiscoverContext) => DiscoverProviderResults[];
   /** Which sub-view of the discover pane is shown, or null when closed. */
   view: Signal<DiscoverView>;
   /** True whenever `view` is non-null, i.e. the discover pane is open. */
@@ -109,12 +115,30 @@ export interface DiscoverManager {
   scrollToVerse: Signal<DiscoverScrollTarget | null>;
 }
 
+function discoverContextKey(context: DiscoverContext): string {
+  return JSON.stringify([
+    context.translationId,
+    context.book,
+    context.chapter,
+    context.language,
+  ]);
+}
+
+interface DiscoverCacheEntry {
+  promise: Promise<DiscoverResult[]>;
+  /** Set once `promise` resolves. Absent while the lookup is in flight. */
+  results?: DiscoverResult[];
+}
+
 export function createDiscoverManager(): DiscoverManager {
   const providers: DiscoverProvider[] = [];
   const providersVersion = signal(0);
   const view = signal<DiscoverView>(null);
   const isDiscoverOpen = computed(() => !!view.value);
   const scrollToVerse = signal<DiscoverScrollTarget | null>(null);
+  // One answer per provider per chapter. Later registrations and a return
+  // visit reuse it; a failed lookup is dropped so the next visit can retry.
+  const resultsByProvider = new Map<string, Map<string, DiscoverCacheEntry>>();
 
   function resolveActualView(isPlaying: boolean): DiscoverView {
     if (view.value === "play_playlist" && !isPlaying) {
@@ -123,11 +147,67 @@ export function createDiscoverManager(): DiscoverManager {
     return view.value;
   }
 
+  function loadProvider(
+    provider: DiscoverProvider,
+    context: DiscoverContext
+  ): DiscoverCacheEntry {
+    let byChapter = resultsByProvider.get(provider.id);
+    if (!byChapter) {
+      byChapter = new Map();
+      resultsByProvider.set(provider.id, byChapter);
+    }
+    const key = discoverContextKey(context);
+    const existing = byChapter.get(key);
+    if (existing) {
+      return existing;
+    }
+
+    const chapterCache = byChapter;
+    const produced = provider.discover(context);
+    const entry: DiscoverCacheEntry = {
+      promise: Promise.resolve(produced),
+    };
+    // The callbacks run after this function stores `entry`, so they can tell
+    // a later replacement of this provider from the lookup they belong to.
+    entry.promise = entry.promise.then(
+      (results) => {
+        if (chapterCache.get(key) === entry) {
+          entry.results = results;
+        }
+        return results;
+      },
+      (error: unknown) => {
+        if (chapterCache.get(key) === entry) {
+          chapterCache.delete(key);
+        }
+        throw error;
+      }
+    );
+    chapterCache.set(key, entry);
+    return entry;
+  }
+
+  function cachedResults(context: DiscoverContext): DiscoverProviderResults[] {
+    const key = discoverContextKey(context);
+    const ready: DiscoverProviderResults[] = [];
+    for (const provider of providers) {
+      const entry = resultsByProvider.get(provider.id)?.get(key);
+      if (!entry || entry.results === undefined) {
+        continue;
+      }
+      ready.push({ providerId: provider.id, results: entry.results });
+    }
+    return ready;
+  }
+
   return {
     registerDiscoverProvider(provider: DiscoverProvider): void {
       const existingIndex = providers.findIndex((p) => p.id === provider.id);
       if (existingIndex >= 0) {
         providers[existingIndex] = provider;
+        // The replacement can answer differently, including for chapters
+        // this id has already been asked about.
+        resultsByProvider.delete(provider.id);
       } else {
         providers.push(provider);
       }
@@ -135,6 +215,7 @@ export function createDiscoverManager(): DiscoverManager {
     },
 
     providersVersion,
+    cachedResults,
     view,
     isDiscoverOpen,
     resolveActualView,
@@ -153,7 +234,7 @@ export function createDiscoverManager(): DiscoverManager {
       const remaining = new Map<Promise<DiscoverResult[]>, Tagged>();
 
       for (const provider of providers) {
-        const promise = Promise.resolve(provider.discover(context));
+        const promise = loadProvider(provider, context).promise;
         const tagged: Tagged = (async () => {
           const results = await promise;
           return {

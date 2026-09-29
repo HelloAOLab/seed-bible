@@ -36,6 +36,7 @@ import type {
   DiscoverContentResult,
   DiscoverCrossReferenceResult,
   DiscoverManager,
+  DiscoverProviderResults,
   DiscoverReference,
   DiscoverStudyNoteResult,
 } from "../managers/DiscoverManager";
@@ -3162,7 +3163,6 @@ export function createBibleReadingState(
       }
 
       const generation = ++discoverGeneration;
-      discoveredResults.value = [];
 
       const context = {
         translationId: chapter.translation.id,
@@ -3172,39 +3172,60 @@ export function createBibleReadingState(
       };
       const currentBookData = chapter.book;
 
+      const enrich = (
+        result: DiscoverProviderResults
+      ): DiscoverResultWithBookData[] =>
+        result.results.map((entry) => {
+          const refBookData =
+            translationBooks.value?.books.find(
+              (b) => b.id === entry.reference.book
+            ) ?? currentBookData;
+
+          if (entry.type === "cross-reference") {
+            const crossRefBookData =
+              translationBooks.value?.books.find(
+                (b) => b.id === entry.crossReference.book
+              ) ?? currentBookData;
+
+            return {
+              ...entry,
+              reference: withBookData(entry.reference, refBookData),
+              crossReference: withBookData(
+                entry.crossReference,
+                crossRefBookData
+              ),
+            };
+          }
+
+          return {
+            ...entry,
+            reference: withBookData(entry.reference, refBookData),
+          };
+        });
+
+      // Paint answers this chapter already has in this same turn, so coming
+      // back doesn't blank the panel while the cached lookup is replayed.
+      // `untracked` matters: enrich reads the book catalog, and a tracked
+      // read would re-run this effect when the catalog arrives.
+      const cached = discoverManager.cachedResults(context);
+      const alreadyFetched = new Set(cached.map((result) => result.providerId));
+      discoveredResults.value = untracked(() =>
+        cached.flatMap((result) => {
+          const enrichedResults = enrich(result);
+          return enrichedResults.length > 0
+            ? [{ providerId: result.providerId, results: enrichedResults }]
+            : [];
+        })
+      );
+
       void (async () => {
         for await (const result of discoverManager.discover(context)) {
           if (generation !== discoverGeneration) return;
+          if (alreadyFetched.has(result.providerId)) continue;
 
-          const enrichedResults: DiscoverResultWithBookData[] =
-            result.results.map((entry) => {
-              const refBookData =
-                translationBooks.value?.books.find(
-                  (b) => b.id === entry.reference.book
-                ) ?? currentBookData;
+          const enrichedResults = untracked(() => enrich(result));
 
-              if (entry.type === "cross-reference") {
-                const crossRefBookData =
-                  translationBooks.value?.books.find(
-                    (b) => b.id === entry.crossReference.book
-                  ) ?? currentBookData;
-
-                return {
-                  ...entry,
-                  reference: withBookData(entry.reference, refBookData),
-                  crossReference: withBookData(
-                    entry.crossReference,
-                    crossRefBookData
-                  ),
-                };
-              }
-
-              return {
-                ...entry,
-                reference: withBookData(entry.reference, refBookData),
-              };
-            });
-
+          if (generation !== discoverGeneration) return;
           if (enrichedResults.length > 0) {
             discoveredResults.value = [
               ...discoveredResults.value,

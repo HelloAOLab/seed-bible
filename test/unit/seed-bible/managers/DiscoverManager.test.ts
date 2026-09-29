@@ -233,6 +233,147 @@ describe("createDiscoverManager", () => {
 
       expect(first).toEqual(second);
     });
+
+    it("calls each provider once per chapter, including after another provider registers and after returning to that chapter", async () => {
+      const manager = createDiscoverManager();
+      const calls: string[] = [];
+      const provider = (id: string): DiscoverProvider => ({
+        id,
+        title: id,
+        description: id,
+        discover: (ctx) => {
+          calls.push(`${id}:${ctx.chapter}`);
+          return [];
+        },
+      });
+
+      manager.registerDiscoverProvider(provider("p1"));
+      await collectAll(manager.discover(context));
+
+      manager.registerDiscoverProvider(provider("p2"));
+      await collectAll(manager.discover(context));
+      await collectAll(manager.discover(context));
+      await collectAll(manager.discover({ ...context, chapter: 2 }));
+      await collectAll(manager.discover(context));
+
+      expect(calls).toEqual(["p1:1", "p2:1", "p1:2", "p2:2"]);
+      expect(
+        manager.cachedResults(context).map((result) => result.providerId)
+      ).toEqual(["p1", "p2"]);
+    });
+
+    it("reuses an in-flight lookup instead of calling the provider twice", async () => {
+      const manager = createDiscoverManager();
+      const result: DiscoverResult = {
+        type: "study-note",
+        reference: { book: "GEN", chapter: 1 },
+        content: null as any,
+      };
+      let calls = 0;
+      let resolveLookup: ((results: DiscoverResult[]) => void) | undefined;
+      manager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "D1",
+        discover: () => {
+          calls += 1;
+          return new Promise((resolve) => {
+            resolveLookup = resolve;
+          });
+        },
+      });
+
+      const pending = Promise.all([
+        collectAll(manager.discover(context)),
+        collectAll(manager.discover(context)),
+      ]);
+      expect(calls).toBe(1);
+      expect(manager.cachedResults(context)).toEqual([]);
+
+      resolveLookup!([result]);
+      const [first, second] = await pending;
+
+      expect(first).toEqual([{ providerId: "p1", results: [result] }]);
+      expect(second).toEqual(first);
+      expect(calls).toBe(1);
+      expect(manager.cachedResults(context)).toEqual([
+        { providerId: "p1", results: [result] },
+      ]);
+    });
+
+    it("calls a replaced provider again and forgets the previous answer", async () => {
+      const manager = createDiscoverManager();
+      const original: DiscoverResult = {
+        type: "study-note",
+        reference: { book: "GEN", chapter: 1 },
+        content: null as any,
+      };
+      const replacement: DiscoverResult = {
+        type: "study-note",
+        reference: { book: "GEN", chapter: 2 },
+        content: null as any,
+      };
+      let calls = 0;
+
+      manager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "D1",
+        discover: () => {
+          calls += 1;
+          return [original];
+        },
+      });
+      await collectAll(manager.discover(context));
+
+      manager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "D1",
+        discover: () => {
+          calls += 1;
+          return [replacement];
+        },
+      });
+      expect(manager.cachedResults(context)).toEqual([]);
+
+      const results = await collectAll(manager.discover(context));
+
+      expect(calls).toBe(2);
+      expect(results).toEqual([{ providerId: "p1", results: [replacement] }]);
+    });
+
+    it("tries a provider again after a failed lookup", async () => {
+      const manager = createDiscoverManager();
+      const result: DiscoverResult = {
+        type: "study-note",
+        reference: { book: "GEN", chapter: 1 },
+        content: null as any,
+      };
+      let calls = 0;
+      manager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "D1",
+        discover: () => {
+          calls += 1;
+          if (calls === 1) {
+            return Promise.reject(new Error("fail"));
+          }
+          return [result];
+        },
+      });
+
+      await expect(collectAll(manager.discover(context))).rejects.toThrow(
+        "fail"
+      );
+      expect(manager.cachedResults(context)).toEqual([]);
+
+      const results = await collectAll(manager.discover(context));
+
+      expect(calls).toBe(2);
+      expect(results).toEqual([{ providerId: "p1", results: [result] }]);
+    });
   });
 
   describe("view", () => {
