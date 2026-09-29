@@ -2188,6 +2188,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       if (originalResizeObserver) {
         globalThis.ResizeObserver = originalResizeObserver;
       } else {
+        // @ts-expect-error -- restore absence; jsdom has no ResizeObserver
         delete globalThis.ResizeObserver;
       }
     }
