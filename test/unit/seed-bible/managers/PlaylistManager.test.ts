@@ -2567,7 +2567,7 @@ describe("createPlaylistManager", () => {
       expect(manager.getPlaylistPageSeed()).toBeNull();
     });
 
-    it("starting plays the playlist from its first item and leaves the page", async () => {
+    it("starting plays the playlist from its first item", async () => {
       const playlist = makePlaylist({
         items: [
           { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
@@ -2592,9 +2592,57 @@ describe("createPlaylistManager", () => {
         23,
         undefined
       );
-      expect(
-        (tabs as unknown as { leaveStaticPage: Mock }).leaveStaticPage
-      ).toHaveBeenCalled();
+    });
+
+    it("loads a playlist page the app navigates to after startup", async () => {
+      const playlist = makePlaylist();
+      respondWith({ "user-1/playlist-1": { success: true, data: playlist } });
+      const manager = makeManager(
+        null,
+        undefined,
+        "http://localhost:3000/en/AAB/john/3"
+      );
+      await manager.initialPlaylistPageLoadPromise;
+      expect(getDataMock).not.toHaveBeenCalledWith("user-1", "playlist-1");
+
+      const url = new URL(lastNavigation.currentUrl.value);
+      url.pathname = "/en/playlist/user-1.playlist-1/my-playlist";
+      lastNavigation.push(url.toString());
+      await flush();
+
+      expect(manager.playlistPage.value?.item).toEqual(playlist);
+    });
+
+    describe("during a server render", () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+        import.meta.env.SSR = true;
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+        delete import.meta.env.SSR;
+      });
+
+      it("stops waiting on a load that never answers after 5 seconds, without calling the playlist missing", async () => {
+        getDataMock.mockImplementation(() => new Promise(() => {}));
+        const manager = makeManager(null, undefined, PAGE_HREF);
+        let released = false;
+        void manager.initialPlaylistPageLoadPromise.then(() => {
+          released = true;
+        });
+
+        await vi.advanceTimersByTimeAsync(4999);
+        expect(released).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(1);
+        expect(released).toBe(true);
+        // Seeding "not found" here would tell the client a playlist that
+        // might exist doesn't, so there is no seed at all.
+        expect(manager.getPlaylistPageSeed()).toBeNull();
+        expect(manager.playlistPageNotFound.value).toBe(false);
+        expect(manager.playlistPage.value).toBeNull();
+      });
     });
   });
 

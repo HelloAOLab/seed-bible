@@ -180,6 +180,10 @@ describe.each(PAGES)(
       );
 
       expect(modalOpen(state)).toBe(false);
+      // The address bar has left the shared page for the playing chapter.
+      const url = new URL(window.location.href);
+      expect(url.pathname).toBe("/en/AAB/exodus/2");
+      expect(url.searchParams.get("playlistStep")).toBe("0");
       expect(state.playlists.playing.value?.currentIndex.value).toBe(0);
       expect(state.tutorial.promptVisible.value).toBe(false);
     });

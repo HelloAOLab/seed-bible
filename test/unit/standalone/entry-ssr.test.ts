@@ -1491,6 +1491,20 @@ describe("render() server-rendered meta tags", () => {
       );
     });
 
+    it("opens a link whose title slug is out of date, pointing the canonical URL at the current title", async () => {
+      mockRecords({ "owner/playlist_shared": PLAYLIST });
+
+      const { html, notFound } = await renderResult(
+        "/en/playlist/owner.playlist_shared/an-old-title?useFreeBibleAPI=true"
+      );
+
+      expect(notFound).toBeUndefined();
+      expect(html).toContain("Start Playlist");
+      expect(html).toContain(
+        '<link rel="canonical" href="/en/playlist/owner.playlist_shared/psalms-for-hard-days"'
+      );
+    });
+
     it("uses the playlist's cover as the only og:image", async () => {
       mockRecords({ "owner/playlist_shared": PLAYLIST });
 
