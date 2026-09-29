@@ -291,7 +291,7 @@ export async function createTestSeedBibleState(
     }
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
   }
-  
+
   // Same boot-latch pattern for compact embed: `isMinimalEmbed` is read from
   // the URL at construction, so the param has to be on the URL before the
   // state is built.

@@ -896,6 +896,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     () => verseSheetDragReveal.value !== null
   );
 
+  // Which cards the verse toolbar shows. The render and the overflow check
+  // below both read these, so the swipe hint can't disagree with the cards
+  // actually on screen. Highlight and Save are built in rather than registered
+  // tools, which is why they get their own flags.
+  const showHighlightCard = useComputed(
+    () =>
+      !isMinimalEmbed.value &&
+      settings.settings.value.selectionUI.showHighlightColors
+  );
+  const showSaveCard = useComputed(() => !isMinimalEmbed.value);
+  const nonCancelVerseTools = useComputed(() =>
+    verseToolbarTools.value.filter((tool) => tool.id !== "clear-selection")
+  );
+
   /**
    * Whether the collapsed sheet is hiding something: action cards past the
    * first row, or notes on the selection. Measured height is not enough —
@@ -904,21 +918,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    */
   const verseSheetHasHiddenContent = useComputed(() => {
     if (!isSmallScreen.value) return false;
-    const toolCount = verseToolbarTools.value.filter(
-      (tool) => tool.id !== "clear-selection" && tool.visible.value
-    ).length;
-    const highlightCount =
-      !isMinimalEmbed.value &&
-      settings.settings.value.selectionUI.showHighlightColors
-        ? 1
-        : 0;
-    const saveCount = isMinimalEmbed.value ? 0 : 1;
+    const cardCount =
+      nonCancelVerseTools.value.filter((tool) => tool.visible.value).length +
+      (showHighlightCard.value ? 1 : 0) +
+      (showSaveCard.value ? 1 : 0);
     const annotationCount =
       readingState.value?.selectionAnnotations.value.length ?? 0;
-    return (
-      toolCount + highlightCount + saveCount > VERSE_SHEET_COLLAPSED_COUNT ||
-      annotationCount > 0
-    );
+    return cardCount > VERSE_SHEET_COLLAPSED_COUNT || annotationCount > 0;
   });
 
   /** Whether there is anything to reveal — no overflow row, nothing to drag to. */
@@ -1376,7 +1382,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const customHighlightColors = useComputed(
     () => settings.settings.value.customHighlightColors
   );
-  const selectionUI = useComputed(() => settings.settings.value.selectionUI);
 
   const applyCustomColor = (color: string) => {
     settings.addCustomHighlightColor(color);
@@ -2843,9 +2848,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   ) : null;
                 };
 
-                const nonCancel = verseToolbarTools.value.filter(
-                  (tool) => tool.id !== "clear-selection"
-                );
+                const nonCancel = nonCancelVerseTools.value;
                 const cancelTools = verseToolbarTools.value.filter(
                   (tool) => tool.id === "clear-selection"
                 );
@@ -2879,38 +2882,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   ? t("edit-save", { defaultValue: "Edit save" })
                   : t("save-verses", { defaultValue: "Save" });
 
-                const highlightCard =
-                  !isMinimalEmbed.value &&
-                  selectionUI.value.showHighlightColors ? (
-                    <div
-                      key="highlight"
-                      className="sb-verse-toolbar-action-item"
+                const highlightCard = showHighlightCard.value ? (
+                  <div key="highlight" className="sb-verse-toolbar-action-item">
+                    <button
+                      type="button"
+                      className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
+                      onClick={() => {
+                        isHighlightPickerOpen.value = true;
+                        showHighlightColorSwipeHint.value = true;
+                      }}
+                      aria-label={t("highlight-selection", {
+                        defaultValue: "Highlight selection",
+                      })}
+                      title={highlightLabel}
                     >
-                      <button
-                        type="button"
-                        className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
-                        onClick={() => {
-                          isHighlightPickerOpen.value = true;
-                          showHighlightColorSwipeHint.value = true;
-                        }}
-                        aria-label={t("highlight-selection", {
-                          defaultValue: "Highlight selection",
-                        })}
-                        title={highlightLabel}
-                      >
-                        <span className="sb-verse-toolbar-action-icon">
-                          <span className="material-symbols-outlined">
-                            format_ink_highlighter
-                          </span>
+                      <span className="sb-verse-toolbar-action-icon">
+                        <span className="material-symbols-outlined">
+                          format_ink_highlighter
                         </span>
-                        <span className="sb-verse-toolbar-action-label">
-                          {highlightLabel}
-                        </span>
-                      </button>
-                    </div>
-                  ) : null;
+                      </span>
+                      <span className="sb-verse-toolbar-action-label">
+                        {highlightLabel}
+                      </span>
+                    </button>
+                  </div>
+                ) : null;
 
-                const saveCard = isMinimalEmbed.value ? null : (
+                const saveCard = !showSaveCard.value ? null : (
                   <div key="save" className="sb-verse-toolbar-action-item">
                     <button
                       type="button"
@@ -2978,13 +2976,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 // One full row of cards, matching the four-per-row grid below.
                 // Keeping the collapsed sheet to a single row is what makes it
                 // short by default.
-                // Annotations on the selection also make the sheet openable,
-                // even when there aren't enough tool cards to overflow on
-                // their own — otherwise there'd be nothing to drag/tap open
-                // to see them.
-                const hasOverflow =
-                  actionCards.length > VERSE_SHEET_COLLAPSED_COUNT ||
-                  selectionAnnotations.value.length > 0;
+                const hasOverflow = verseSheetHasHiddenContent.value;
                 const primaryCards = hasOverflow
                   ? actionCards.slice(0, VERSE_SHEET_COLLAPSED_COUNT)
                   : actionCards;

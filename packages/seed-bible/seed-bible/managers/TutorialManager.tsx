@@ -667,7 +667,7 @@ export function createTutorialManager(
     if (isMinimalEmbed.value) {
       return;
     }
-    
+
     if (running.value) {
       return;
     }
