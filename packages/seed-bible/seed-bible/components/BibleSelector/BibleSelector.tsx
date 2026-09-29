@@ -196,6 +196,9 @@ export function BibleSelector(props: BibleSelectorProps) {
             tutorial={tutorial}
           />
         </div>
+        {selectorState.showApocryphaInfo.value && (
+          <ApocryphaInfo bibleSelectorState={selectorState} />
+        )}
       </div>
 
       {tourStep && (
@@ -266,7 +269,6 @@ const SearchBar = (props: {
     selectedTranslationBooks,
     selectedTranslation,
     openTabs,
-    showApocryphaInfo,
   } = bibleSelectorState;
 
   const selectedTestament = bibleSelectorState.selectedTestament;
@@ -419,9 +421,6 @@ const SearchBar = (props: {
           />
         )}
       </div>
-      {showApocryphaInfo.value && (
-        <ApocryphaInfo bibleSelectorState={bibleSelectorState} />
-      )}
     </>
   );
 };
@@ -669,11 +668,8 @@ const SideBarBooks = (props: {
       const OTBooks = ghostArray(oldTestament, otColumns);
       const NTBooks = ghostArray(newTestament, ntColumns);
       const APBooks = ghostArray(apocrypha, ntColumns);
-      // Hint 2 is reserved for apocrypha so its chapter panel doesn't collide
-      // with the NT grid (hint 1). On desktop All Books there is no apocrypha
-      // column, so when the expanded book is apocrypha we short-circuit to the
-      // apocrypha-only grid (same layout as the Apocrypha filter).
-
+      // Hint 2 is reserved for the Apocrypha.
+      // On desktop, an expanded Apocrypha book simply shows no open chapters under All Books.
       return (
         <div
           class="books-container flex-gap-md"
@@ -715,14 +711,18 @@ const SideBarBooks = (props: {
               >
                 <span class="testament-title">
                   {t("apocrypha", { defaultValue: "Apocrypha" })}
-                  <span
+                  <button
+                    type="button"
                     class="material-symbols-outlined"
+                    aria-label={t("about-apocrypha", {
+                      defaultValue: "About the Apocrypha",
+                    })}
                     onClick={() => {
                       showApocryphaInfo.value = true;
                     }}
                   >
                     info
-                  </span>
+                  </button>
                 </span>
                 {renderBooksGrid(APBooks, ntColumns, 2, undefined, true)}
               </div>
@@ -773,14 +773,13 @@ const SideBarBooks = (props: {
           style={{ width: "100%" }}
         >
           {(config.alwaysShowTitle || ws > MOBILE_BREAKPOINT) && (
-            <span class="testament-title apocrypha-title">
+            <span class="testament-title testament-title--with-action">
               {config.title}
 
               {lst === 3 && (
-                <span
-                  class="material-symbols-outlined"
-                  role="button"
-                  tabindex={0}
+                <button
+                  type="button"
+                  class="material-symbols-outlined apocrypha-info-button"
                   aria-label={t("about-apocrypha", {
                     defaultValue: "About the Apocrypha",
                   })}
@@ -789,7 +788,7 @@ const SideBarBooks = (props: {
                   }}
                 >
                   info
-                </span>
+                </button>
               )}
             </span>
           )}
@@ -1825,33 +1824,46 @@ const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
   const { t } = useI18n();
 
   return (
-    <div id="apocrypha-info" class="sb-apocrypha-info-overlay">
-      <button
-        type="button"
-        class="sb-apocrypha-info-close"
-        aria-label={t("close", { defaultValue: "Close" })}
-        onClick={() => {
+    <>
+      <div
+        class="sb-apocrypha-info-backdrop"
+        onClick={(event) => {
+          event.stopPropagation();
           showApocryphaInfo.value = false;
         }}
-      >
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      />
 
-      <div class="sb-apocrypha-info">
-        <h2 class="sb-apocrypha-info-title">
-          {t("about-apocrypha", {
-            defaultValue: "About the Apocrypha",
-          })}
-        </h2>
+      <div id="apocrypha-info" class="sb-apocrypha-info-overlay">
+        <div class="sb-apocrypha-info">
+          <div class="sb-apocrypha-info-header">
+            <h2 class="sb-apocrypha-info-title">
+              {t("about-apocrypha", {
+                defaultValue: "About the Apocrypha",
+              })}
+            </h2>
 
-        <div class="sb-apocrypha-info-content">
-          {t("apocrypha-info-text", {
-            defaultValue:
-              "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
-          })}
+            <button
+              type="button"
+              class="sb-apocrypha-info-close"
+              aria-label={t("close", { defaultValue: "Close" })}
+              onClick={(event) => {
+                event.stopPropagation();
+                showApocryphaInfo.value = false;
+              }}
+            >
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <div class="sb-apocrypha-info-content">
+            {t("apocrypha-info-text", {
+              defaultValue:
+                "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
