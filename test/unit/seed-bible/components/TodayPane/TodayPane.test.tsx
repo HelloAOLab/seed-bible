@@ -180,7 +180,7 @@ describe("TodayPane", () => {
     const propsOf = (component: unknown) =>
       (component as Mock).mock.calls[0]![0] as Record<string, unknown>;
 
-    it("hands Welcome its managers and both handlers", () => {
+    it("hands Welcome its managers and handlers", () => {
       const props = setup({ status: "empty" });
       expect(propsOf(Welcome)).toMatchObject({
         today: props.today,
@@ -188,6 +188,7 @@ describe("TodayPane", () => {
         theme: props.theme,
         onOpenBookSelector: props.onOpenBookSelector,
         onOpenPassage: props.onOpenPassage,
+        onTakeTour: props.onTakeTour,
       });
     });
 

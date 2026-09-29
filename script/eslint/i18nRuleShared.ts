@@ -2,8 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ESLintUtils, type TSESLint } from "@typescript-eslint/utils";
 import { getTranslationUsageStats } from "../getTranslationUsageStats";
-import { ExtensionMetaSchema } from "../lib/extension";
-import * as z from "zod/v4";
+import { ExtensionMetaSchema, formatSchemaIssues } from "../lib/extension";
 
 type TranslationObject = Record<string, unknown>;
 
@@ -98,7 +97,7 @@ function getExtensionEnglishKeys(
     const parseResult = ExtensionMetaSchema.safeParse(extensionConfig);
 
     if (!parseResult.success) {
-      console.warn(z.treeifyError(parseResult.error));
+      console.warn(formatSchemaIssues(parseResult.error));
       continue;
     }
 

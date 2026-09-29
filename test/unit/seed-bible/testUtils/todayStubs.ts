@@ -48,6 +48,7 @@ export function todayScreenPropsStub(
     isMobile: signal(false),
     onOpenPassage: vi.fn(),
     onOpenBookSelector: vi.fn(),
+    onTakeTour: vi.fn(),
     ...overrides,
   };
 }

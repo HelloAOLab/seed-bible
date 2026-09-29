@@ -11,8 +11,9 @@ import {
 import { MaterialIcon } from "../icons";
 
 /**
- * One playlist in a `sb-discover-list`: cover thumbnail, title, description,
- * a play button, and a menu offering share, edit and delete.
+ * One playlist in a `sb-discover-list`: title, description, a play button,
+ * and a menu offering share, edit and delete. A cover thumbnail is shown
+ * only when the playlist has one.
  *
  * Used by the profile screen's "Your content", so the same playlist offers the
  * same actions and reads the same wherever it is listed. It renders an `<li>`,
@@ -47,7 +48,9 @@ export function PlaylistRow(props: {
       dir="auto"
       onClick={() => play(playlist)}
     >
-      <HeroImageThumb url={playlist.heroImageUrl} />
+      {playlist.heroImageUrl ? (
+        <HeroImageThumb url={playlist.heroImageUrl} />
+      ) : null}
       <div className="sb-discover-item-main">
         <span className="sb-discover-item-title">
           {playlist.title ??

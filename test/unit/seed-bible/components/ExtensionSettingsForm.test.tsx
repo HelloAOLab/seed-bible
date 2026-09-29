@@ -268,6 +268,99 @@ describe("ExtensionSettingsForm fields", () => {
     expect(onOverrideChange).toHaveBeenCalledWith("greeting", false);
   });
 
+  it("bounds a number field and withholds a value outside those bounds", () => {
+    const onChange = vi.fn();
+    renderForm({
+      settings: {
+        count: {
+          type: "number",
+          default: 1,
+          minimum: 1,
+          maximum: 10,
+          multipleOf: 1,
+        },
+      },
+      getValue: () => 1,
+      onChange,
+    });
+    const input = field("count");
+    if (!input) {
+      throw new Error("No number input rendered for the count setting");
+    }
+    expect(input.min).toBe("1");
+    expect(input.max).toBe("10");
+    expect(input.step).toBe("1");
+
+    act(() => {
+      input.value = "2.5";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      input.value = "4";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(onChange).toHaveBeenCalledWith("count", 4);
+  });
+
+  it("aligns a number field's bounds onto its step so the spinner stays in range", () => {
+    renderForm({
+      settings: {
+        count: {
+          type: "number",
+          default: 2,
+          minimum: 1,
+          maximum: 10,
+          multipleOf: 2,
+        },
+      },
+      getValue: () => 2,
+    });
+    const input = field("count");
+    expect(input?.min).toBe("2");
+    expect(input?.max).toBe("10");
+    expect(input?.step).toBe("2");
+  });
+
+  it("renders an enum setting as a dropdown of its choices", () => {
+    const onChange = vi.fn();
+    const t = vi.fn((key: string, options?: { defaultValue?: string }) => {
+      if (key === "setting-tone-option-warm") return "Warm";
+      return options?.defaultValue ?? key;
+    });
+    renderForm({
+      settings: {
+        tone: {
+          type: "string",
+          default: "warm",
+          enum: ["plain", "warm", "bold"],
+        },
+      },
+      getValue: () => "warm",
+      onChange,
+      t,
+    });
+    const select = container.querySelector<HTMLSelectElement>(
+      "#sb-extension-setting-ext-1-tone"
+    );
+    if (!select) {
+      throw new Error("No dropdown rendered for the tone setting");
+    }
+    expect(select.value).toBe("warm");
+    expect([...select.options].map((option) => option.textContent)).toEqual([
+      "plain",
+      "Warm",
+      "bold",
+    ]);
+
+    act(() => {
+      select.value = "bold";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(onChange).toHaveBeenCalledWith("tone", "bold");
+  });
+
   it("names the default a field would leave in place, including when there is none", () => {
     renderForm({
       settings: {
