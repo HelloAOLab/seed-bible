@@ -79,7 +79,7 @@ describe("createTutorialManager — session-link joins", () => {
       signal(false),
       createPanes(),
       createSidebar(),
-      /* joinedViaSessionLink */ true
+      /* openedViaContentLink */ signal(true)
     );
 
     // `createTutorialManager` no longer reads storage or watches for the
@@ -127,7 +127,7 @@ describe("createTutorialManager — session-link joins", () => {
       signal(false),
       createPanes(),
       createSidebar(),
-      /* joinedViaSessionLink */ true
+      /* openedViaContentLink */ signal(true)
     );
 
     // `createTutorialManager` no longer reads storage or watches for the
@@ -409,7 +409,7 @@ describe("createTutorialManager — tutorial links", () => {
       signal(opts.mobile ?? false),
       createPanes(),
       createSidebar(),
-      false,
+      signal(false),
       signal(false),
       link
     );
@@ -673,7 +673,7 @@ describe("createTutorialManager — compact embed", () => {
       signal(false),
       createPanes(),
       createSidebar(),
-      false,
+      signal(false),
       signal(true)
     );
   }

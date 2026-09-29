@@ -24,7 +24,10 @@ import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import { PlaylistPageModalContent } from "../components/PlaylistPageModal/PlaylistPageModal";
-import { buildPlaylistPagePath } from "../managers/PlaylistPagePath";
+import {
+  buildPlaylistPagePath,
+  parsePlaylistPagePath,
+} from "../managers/PlaylistPagePath";
 import type { PlaylistPageSeed } from "../managers/PlaylistManager";
 import {
   buildStaticPagePath,
@@ -829,17 +832,27 @@ export function createSeedBibleState(
   const search = createSearchManager();
 
   // When the app is opened via a content link — a shared-session invite
-  // (`?sessionId=...`), a shared playlist (`?playlist=...`), or a shared
-  // reading plan (`?readingPlan=...`) — the user came to view that content,
-  // not to onboard, so we skip the welcome screen and the auto-starting
-  // tutorial for this visit. This is derived from the current URL rather
-  // than persisted, so it only affects this tab/load: revisiting without
-  // those params shows onboarding and tutorials as usual.
-  const openedViaContentLink =
+  // (`?sessionId=...`), a shared playlist (`?playlist=...` or a
+  // `/{lang}/playlist/...` page), or a shared reading plan
+  // (`?readingPlan=...`) — the user came to view that content, not to
+  // onboard, so we skip the welcome screen and the auto-starting tutorial for
+  // this visit. This is derived from the current URL rather than persisted,
+  // so it only affects this tab/load: revisiting without those params shows
+  // onboarding and tutorials as usual. Closing a playlist page without
+  // starting it lifts this (see the playlist page effects below).
+  const openedViaPlaylistPage =
     typeof window !== "undefined" &&
-    (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
-      !!navigation.currentUrl.value.searchParams.get("playlist") ||
-      !!navigation.currentUrl.value.searchParams.get("readingPlan"));
+    parsePlaylistPagePath(
+      navigation.currentUrl.value.pathname,
+      navigation.basePath
+    ) !== null;
+  const openedViaContentLink = signal(
+    typeof window !== "undefined" &&
+      (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
+        !!navigation.currentUrl.value.searchParams.get("playlist") ||
+        !!navigation.currentUrl.value.searchParams.get("readingPlan") ||
+        openedViaPlaylistPage)
+  );
 
   const onboarding = createOnboardingManager(login);
 
@@ -1219,7 +1232,7 @@ export function createSeedBibleState(
       installOfferResolved.value = true;
       return;
     }
-    if (openedViaContentLink) {
+    if (openedViaContentLink.value) {
       return;
     }
     if (login.userId.value && login.profile.value === null) {
@@ -1338,7 +1351,7 @@ export function createSeedBibleState(
       if (
         !storedApplied &&
         !mobile &&
-        !openedViaContentLink &&
+        !openedViaContentLink.peek() &&
         !tutorial.completed.value &&
         !tutorial.optedOut.value
       ) {
@@ -1992,7 +2005,7 @@ export function createSeedBibleState(
       downloadOfferChecked = true;
       return;
     }
-    if (openedViaContentLink) {
+    if (openedViaContentLink.value) {
       return;
     }
     if (!installOfferResolved.value) {
@@ -3382,10 +3395,14 @@ export function createSeedBibleState(
     });
   });
 
+  /** Set when a visit that began on a playlist page closed it for home. */
+  const closedPlaylistPageForHome = signal(false);
+
   // Starting leaves the playlist page before the modal closes, so this only
   // sees a close that should go home. Going home is what a fresh visit to "/"
-  // would do: the reader takes the address bar back, and Today opens over it
-  // when a visit to "/" would open it.
+  // would do: the reader takes the address bar back, Today opens over it
+  // when a visit to "/" would open it, and a visit that began on this page
+  // stops counting as a content link, so the tutorial offer can appear.
   effect(() => {
     const modalOpen = modals.modals.value.some(
       (modal) => modal.id === PLAYLIST_PAGE_MODAL_ID
@@ -3399,6 +3416,26 @@ export function createSeedBibleState(
     if (todayWillAutoOpenForUrl(home, navigation.basePath)) {
       today.open();
     }
+    if (openedViaPlaylistPage) {
+      closedPlaylistPageForHome.value = true;
+    }
+  });
+
+  // Lifts the content-link suppression only once Today's pane is actually
+  // covering the reader. Lifting it in the same update as `today.open()`
+  // would let the tutorial offer see a visible reader in the moment before
+  // the pane opens, and show itself underneath Today.
+  effect(() => {
+    if (!closedPlaylistPageForHome.value) {
+      return;
+    }
+    const todayPaneOpen = panes.panes.value.some(
+      (pane) => pane.id === TODAY_PANE_ID
+    );
+    if (today.isOpen.value && !todayPaneOpen) {
+      return;
+    }
+    openedViaContentLink.value = false;
   });
 
   // Settings UI language changes also select the nearest available Bible
