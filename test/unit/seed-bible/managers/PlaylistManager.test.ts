@@ -11,7 +11,6 @@ import {
 import {
   PlaylistItem,
   PlaylistSchema,
-  buildScriptureShareUrl,
   PlaylistPlayHistorySchema,
   createPlaylistManager,
   createPlayingState,
@@ -2396,155 +2395,6 @@ describe("createPlaylistManager", () => {
     expect(manager.playing.value).toBeNull();
   });
 
-  describe("buildScriptureShareUrl", () => {
-    const shareUrl = (playlist: Playlist, currentUrl: URL) =>
-      buildScriptureShareUrl({
-        items: playlist.items,
-        currentUrl,
-        basePath: "",
-        activeTranslationId: "BSB",
-        param: "playlist",
-        locator: `${playlist.recordName}.${playlist.id}`,
-      });
-
-    it("points at the first scripture item's chapter, not the chapter the sharer is viewing", () => {
-      const currentUrl = new URL("http://localhost:3000/en/AAB/john/3");
-      const playlist = makePlaylist({
-        items: [
-          {
-            type: "bible-verse",
-            ref: { bookId: "GEN", chapter: 1, verse: 1 },
-          },
-        ],
-      });
-
-      const url = new URL(shareUrl(playlist, currentUrl));
-
-      expect(url.pathname).toBe("/en/AAB/genesis/1");
-      expect(url.searchParams.get("playlist")).toBe("user-1.playlist-1");
-      expect([...url.searchParams.keys()]).toEqual(["playlist"]);
-    });
-
-    it("skips leading non-scripture items and uses the first bible-verse chapter", () => {
-      const currentUrl = new URL("http://localhost:3000/en/AAB/genesis/1");
-      const playlist = makePlaylist({
-        items: [
-          { type: "html", html: "<p>intro</p>" },
-          { type: "link", url: "https://example.com" },
-          {
-            type: "bible-verse",
-            ref: { bookId: "JHN", chapter: 3, verse: 16 },
-          },
-        ],
-      });
-
-      const url = new URL(shareUrl(playlist, currentUrl));
-
-      expect(url.pathname).toBe("/en/AAB/john/3");
-    });
-
-    it("skips a scripture item whose book cannot be resolved and uses the next one", () => {
-      const currentUrl = new URL("http://localhost:3000/en/AAB/genesis/1");
-      const playlist = makePlaylist({
-        items: [
-          {
-            type: "bible-verse",
-            ref: { bookId: "NOTABOOK", chapter: 9 },
-          },
-          {
-            type: "bible-verse",
-            ref: { bookId: "JHN", chapter: 3, verse: 16 },
-          },
-        ],
-      });
-
-      const url = new URL(shareUrl(playlist, currentUrl));
-
-      expect(url.pathname).toBe("/en/AAB/john/3");
-    });
-
-    it("uses the start chapter of a cross-chapter scripture item", () => {
-      const currentUrl = new URL("http://localhost:3000/en/AAB/genesis/1");
-      const playlist = makePlaylist({
-        items: [
-          {
-            type: "bible-verse",
-            ref: { bookId: "JHN", chapter: 1, endChapter: 3 },
-          },
-        ],
-      });
-
-      const url = new URL(shareUrl(playlist, currentUrl));
-
-      expect(url.pathname).toBe("/en/AAB/john/1");
-    });
-
-    it("uses the scripture item's translation when it names one", () => {
-      const currentUrl = new URL("http://localhost:3000/en/AAB/genesis/1");
-      const playlist = makePlaylist({
-        items: [
-          {
-            type: "bible-verse",
-            ref: { bookId: "JHN", chapter: 3 },
-            translationId: "NIV",
-          },
-        ],
-      });
-
-      const url = new URL(shareUrl(playlist, currentUrl));
-
-      expect(url.pathname).toBe("/en/NIV/john/3");
-    });
-
-    it("keeps the UI language the sharer was already reading in", () => {
-      const currentUrl = new URL("http://localhost:3000/es/spa_onbv/genesis/1");
-      const playlist = makePlaylist({
-        items: [
-          {
-            type: "bible-verse",
-            ref: { bookId: "JHN", chapter: 3 },
-          },
-        ],
-      });
-
-      const url = new URL(shareUrl(playlist, currentUrl));
-
-      expect(url.pathname).toBe("/es/spa_onbv/john/3");
-    });
-
-    it("does not copy unrelated query params from the current page", () => {
-      const currentUrl = new URL(
-        "http://localhost:3000/en/AAB/genesis/1?sessionId=abc&verse=4"
-      );
-      const playlist = makePlaylist({
-        items: [
-          {
-            type: "bible-verse",
-            ref: { bookId: "JHN", chapter: 3 },
-          },
-        ],
-      });
-
-      const url = new URL(shareUrl(playlist, currentUrl));
-
-      expect(url.searchParams.get("sessionId")).toBeNull();
-      expect(url.searchParams.get("verse")).toBeNull();
-      expect(url.searchParams.get("playlist")).toBe("user-1.playlist-1");
-    });
-
-    it("keeps the current chapter when the playlist has no scripture items", () => {
-      const currentUrl = new URL("http://localhost:3000/en/AAB/john/3");
-      const playlist = makePlaylist({
-        items: [{ type: "html", html: "<p>notes</p>" }],
-      });
-
-      const url = new URL(shareUrl(playlist, currentUrl));
-
-      expect(url.pathname).toBe("/en/AAB/john/3");
-      expect(url.searchParams.get("playlist")).toBe("user-1.playlist-1");
-    });
-  });
-
   describe("getPlaylistUrl", () => {
     it("links to the playlist's own page, named after its title", async () => {
       const manager = makeManager(
@@ -2609,13 +2459,13 @@ describe("createPlaylistManager", () => {
 
       expect(manager.playlistPage.value).toEqual({
         locator: "user-1.playlist-1",
-        playlist,
+        item: playlist,
         authorName: "Ruth",
       });
       expect(manager.playlistPageNotFound.value).toBe(false);
       expect(manager.getPlaylistPageSeed()).toEqual({
         locator: "user-1.playlist-1",
-        playlist,
+        item: playlist,
         authorName: "Ruth",
       });
     });
@@ -2627,7 +2477,7 @@ describe("createPlaylistManager", () => {
       const manager = makeManager("user-1", undefined, PAGE_HREF);
       await manager.initialPlaylistPageLoadPromise;
 
-      expect(manager.playlistPage.value?.playlist).toEqual(playlist);
+      expect(manager.playlistPage.value?.item).toEqual(playlist);
       expect(manager.playlistPage.value?.authorName).toBeNull();
     });
 
@@ -2641,7 +2491,7 @@ describe("createPlaylistManager", () => {
       expect(manager.playlistPageNotFound.value).toBe(true);
       expect(manager.getPlaylistPageSeed()).toEqual({
         locator: "user-1.playlist-1",
-        playlist: null,
+        item: null,
         authorName: null,
       });
     });
@@ -2663,13 +2513,13 @@ describe("createPlaylistManager", () => {
       const playlist = makePlaylist();
       const manager = makeManager(null, undefined, PAGE_HREF, {
         locator: "user-1.playlist-1",
-        playlist,
+        item: playlist,
         authorName: "Ruth",
       });
 
       expect(manager.playlistPage.value).toEqual({
         locator: "user-1.playlist-1",
-        playlist,
+        item: playlist,
         authorName: "Ruth",
       });
       await flush();
@@ -2682,12 +2532,12 @@ describe("createPlaylistManager", () => {
 
       const manager = makeManager(null, undefined, PAGE_HREF, {
         locator: "user-1.playlist-1",
-        playlist: { title: "not a playlist" } as unknown as Playlist,
+        item: { title: "not a playlist" } as unknown as Playlist,
         authorName: "Ruth",
       });
       await manager.initialPlaylistPageLoadPromise;
 
-      expect(manager.playlistPage.value?.playlist).toEqual(playlist);
+      expect(manager.playlistPage.value?.item).toEqual(playlist);
     });
 
     it("ignores a seed for a different playlist", async () => {
@@ -2696,12 +2546,12 @@ describe("createPlaylistManager", () => {
 
       const manager = makeManager(null, undefined, PAGE_HREF, {
         locator: "user-2.playlist-9",
-        playlist: makePlaylist({ id: "playlist-9", recordName: "user-2" }),
+        item: makePlaylist({ id: "playlist-9", recordName: "user-2" }),
         authorName: null,
       });
       await manager.initialPlaylistPageLoadPromise;
 
-      expect(manager.playlistPage.value?.playlist).toEqual(playlist);
+      expect(manager.playlistPage.value?.item).toEqual(playlist);
     });
 
     it("loads nothing off a playlist page", async () => {
@@ -2727,7 +2577,7 @@ describe("createPlaylistManager", () => {
       const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
       const manager = makeManager(null, tabs, PAGE_HREF, {
         locator: "user-1.playlist-1",
-        playlist,
+        item: playlist,
         authorName: null,
       });
 

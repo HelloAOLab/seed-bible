@@ -10,6 +10,10 @@
   - Link previews and search results now show "{playlist} by {author}", the playlist's description and its cover image.
   - A link to a playlist that no longer exists answers "not found".
   - The "Would you like a tutorial?" offer stays hidden for a visit that starts on a playlist link, including after the playlist is started. Closing the playlist without starting it goes to the home screen, where the offer can appear as usual.
+- Give each shared reading plan its own page at `/{lang}/reading-plan/{id}/{title}`. ([#1786](https://github.com/HelloAOLab/seed-bible/issues/1786))
+  - Opening a shared reading plan link shows the plan's cover, author, description and number of sessions, with "Start Reading Plan" and "Close" buttons. Before, the link opened straight onto a chapter with the plans panel beside it.
+  - "Start Reading Plan" plays the plan's first session in the reader. The plans panel then opens on the plan, ready to pick a pace.
+  - Link previews, search results, the 404 for a deleted plan and the hidden tutorial offer work the same way as for shared playlists.
 
 ### 🔧 Changed
 

@@ -1,9 +1,12 @@
-import { batch, computed, effect, signal, untracked } from "@preact/signals";
 import {
-  buildScriptureShareUrl,
-  PlaylistItem,
-  type PlaylistItemData,
-} from "./PlaylistManager";
+  batch,
+  computed,
+  effect,
+  signal,
+  untracked,
+  type ReadonlySignal,
+} from "@preact/signals";
+import { PlaylistItem, type PlaylistItemData } from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { omit } from "es-toolkit";
@@ -20,6 +23,13 @@ import { captureEvent } from "./Utils";
 import { savePhotoToGallery } from "./UserGalleryManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { TabsManager } from "./TabsManager";
+import { buildSharedPagePath } from "./SharedPagePath";
+import {
+  createSharedPageLoader,
+  type SharedPage,
+  type SharedPageSeed,
+} from "./SharedPageLoader";
+import { DEFAULT_UI_LANGUAGE } from "./ReadingUrlPath";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -157,27 +167,32 @@ export function parseReadingPlanLocator(
 }
 
 /**
- * Builds a shareable reading-plan URL, opening on the plan's first scripture
- * chapter the same way a shared playlist does.
+ * Builds a shareable reading-plan URL: the plan's own
+ * `/{lang}/reading-plan/{locator}/{title}` page, which shows the plan before
+ * the reader starts it.
  */
 export function buildReadingPlanShareUrl(params: {
-  plan: Pick<ReadingPlan, "recordName" | "address" | "sessions">;
+  plan: Pick<ReadingPlan, "recordName" | "address" | "title">;
   currentUrl: URL;
   basePath: string;
-  activeTranslationId?: string;
+  language: string;
 }): string {
-  const { plan, currentUrl, basePath, activeTranslationId } = params;
-  return buildScriptureShareUrl({
-    items: plan.sessions.flatMap((session) =>
-      session.readings.map((reading) => reading.item)
-    ),
-    currentUrl,
-    basePath,
-    activeTranslationId,
-    param: "readingPlan",
-    locator: getReadingPlanLocator(plan),
-  });
+  const { plan, currentUrl, basePath, language } = params;
+  return new URL(
+    `${basePath}${buildSharedPagePath({
+      kind: "readingPlan",
+      language,
+      locator: getReadingPlanLocator(plan),
+      title: plan.title,
+    })}`,
+    currentUrl
+  ).toString();
 }
+
+/** A shared `/{lang}/reading-plan/...` page's plan and its author. */
+export type ReadingPlanPage = SharedPage<ReadingPlan>;
+/** A completed reading-plan-page load, embedded by SSR — see `SharedPageSeed`. */
+export type ReadingPlanPageSeed = SharedPageSeed<ReadingPlan>;
 
 // ---------------------------------------------------------------------------
 // Progress
@@ -1452,7 +1467,13 @@ export function createReadingPlansManager(
   os: CasualOSManager,
   login: LoginManager,
   tabs: Pick<TabsManager, "tabs" | "selectedTabId">,
-  navigation: Pick<NavigationManager, "currentUrl" | "basePath">
+  navigation: Pick<NavigationManager, "currentUrl" | "initialUrl" | "basePath">,
+  options: {
+    /** UI language for the links this hands out. */
+    language?: ReadonlySignal<string>;
+    /** A prior SSR render's reading-plan-page load, so it isn't re-fetched. */
+    initialReadingPlanPageSeed?: ReadingPlanPageSeed;
+  } = {}
 ) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
   const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
@@ -1529,17 +1550,22 @@ export function createReadingPlansManager(
   };
 
   /** Gets a shareable URL for the given plan. */
-  const getReadingPlanShareUrl = (plan: ReadingPlan): string => {
-    const selectedTab = tabs.tabs
-      .peek()
-      .find((tab) => tab.id === tabs.selectedTabId.peek());
-    return buildReadingPlanShareUrl({
+  const getReadingPlanShareUrl = (plan: ReadingPlan): string =>
+    buildReadingPlanShareUrl({
       plan,
       currentUrl: navigation.currentUrl.peek(),
       basePath: navigation.basePath,
-      activeTranslationId: selectedTab?.readingState.translationId.peek(),
+      language: options.language?.peek() ?? DEFAULT_UI_LANGUAGE,
     });
-  };
+
+  const readingPlanPageLoader = createSharedPageLoader({
+    os,
+    navigation,
+    kind: "readingPlan",
+    schema: ReadingPlanSchema,
+    authorUserId: (plan) => plan.authorUserId,
+    initialSeed: options.initialReadingPlanPageSeed,
+  });
 
   // A plan lives in two records: the plan itself and a `_metadata` companion
   // the list reads so it can render without loading every plan's contents.
@@ -2479,6 +2505,10 @@ export function createReadingPlansManager(
     finishEditingReadingPlan,
     loadByLocator,
     getReadingPlanShareUrl,
+    readingPlanPage: readingPlanPageLoader.page,
+    readingPlanPageNotFound: readingPlanPageLoader.notFound,
+    initialReadingPlanPageLoadPromise: readingPlanPageLoader.initialLoadPromise,
+    getReadingPlanPageSeed: readingPlanPageLoader.getSeed,
   };
 }
 

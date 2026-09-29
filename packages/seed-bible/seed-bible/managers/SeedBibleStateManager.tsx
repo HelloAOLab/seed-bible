@@ -23,12 +23,14 @@ import {
 import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
-import { PlaylistPageModalContent } from "../components/PlaylistPageModal/PlaylistPageModal";
+import { SharedPageModalContent } from "../components/SharedPageModal/SharedPageModal";
 import {
-  buildPlaylistPagePath,
-  parsePlaylistPagePath,
-} from "../managers/PlaylistPagePath";
+  buildSharedPagePath,
+  parseSharedPagePath,
+  type SharedPageKind,
+} from "../managers/SharedPagePath";
 import type { PlaylistPageSeed } from "../managers/PlaylistManager";
+import type { ReadingPlanPageSeed } from "../managers/ReadingPlansManager";
 import {
   buildStaticPagePath,
   parseStaticPagePath,
@@ -65,6 +67,7 @@ import type { OfflineTranslationStore } from "../managers/OfflineTranslationStor
 import {
   createBibleToolsManager,
   openReadingPlansPane,
+  readingPlanDayPlaylist,
 } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
@@ -237,7 +240,7 @@ const APP_META_DESCRIPTION =
 
 /** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
 export const ABOUT_PANE_ID = "about-page-pane";
-export const PLAYLIST_PAGE_MODAL_ID = "playlist-page";
+export const SHARED_PAGE_MODAL_ID = "shared-page";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -388,6 +391,12 @@ export interface AppState {
 
   /** Whether the current URL is the static "/{lang}/about" page. */
   isAboutPage: ReadonlySignal<boolean>;
+
+  /**
+   * Starts the shared playlist or reading plan the current page shows (its
+   * modal's Start button) and leaves the page for the reader. No-op off one.
+   */
+  startSharedPage: () => void;
 
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<{ id: number; message: string } | null>;
@@ -647,6 +656,9 @@ export interface CreateSeedBibleStateOptions {
    * in `app/playlistPageSeed.ts`.
    */
   initialPlaylistPageSeed?: PlaylistPageSeed;
+
+  /** Same as `initialPlaylistPageSeed`, for a shared reading plan page. */
+  initialReadingPlanPageSeed?: ReadingPlanPageSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -833,16 +845,17 @@ export function createSeedBibleState(
 
   // When the app is opened via a content link — a shared-session invite
   // (`?sessionId=...`), a shared playlist (`?playlist=...` or a
-  // `/{lang}/playlist/...` page), or a shared reading plan
-  // (`?readingPlan=...`) — the user came to view that content, not to
-  // onboard, so we skip the welcome screen and the auto-starting tutorial for
-  // this visit. This is derived from the current URL rather than persisted,
-  // so it only affects this tab/load: revisiting without those params shows
-  // onboarding and tutorials as usual. Closing a playlist page without
-  // starting it lifts this (see the playlist page effects below).
-  const openedViaPlaylistPage =
+  // `/{lang}/playlist/...` page), or a shared reading plan (`?readingPlan=...`
+  // or a `/{lang}/reading-plan/...` page) — the user came to view that
+  // content, not to onboard, so we skip the welcome screen and the
+  // auto-starting tutorial for this visit. This is derived from the current
+  // URL rather than persisted, so it only affects this tab/load: revisiting
+  // without those params shows onboarding and tutorials as usual. Closing a
+  // shared page without starting it lifts this (see the shared page effects
+  // below).
+  const openedViaSharedPage =
     typeof window !== "undefined" &&
-    parsePlaylistPagePath(
+    parseSharedPagePath(
       navigation.currentUrl.value.pathname,
       navigation.basePath
     ) !== null;
@@ -851,7 +864,7 @@ export function createSeedBibleState(
       (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
         !!navigation.currentUrl.value.searchParams.get("playlist") ||
         !!navigation.currentUrl.value.searchParams.get("readingPlan") ||
-        openedViaPlaylistPage)
+        openedViaSharedPage)
   );
 
   const onboarding = createOnboardingManager(login);
@@ -1003,7 +1016,10 @@ export function createSeedBibleState(
       },
     },
   });
-  const readingPlans = createReadingPlansManager(os, login, tabs, navigation);
+  const readingPlans = createReadingPlansManager(os, login, tabs, navigation, {
+    language: i18n.language,
+    initialReadingPlanPageSeed: options.initialReadingPlanPageSeed,
+  });
   const gallery = createUserGalleryManager(os, login);
   const textToSpeech = createTextToSpeechManager();
 
@@ -1609,24 +1625,71 @@ export function createSeedBibleState(
     armSidebarCollapsed();
   };
 
-  /** "{playlist} by {author}" while on a playlist page, else null. */
-  const playlistPageTitle = computed<string | null>(() => {
-    const page = playlists.playlistPage.value;
+  /** The shared playlist or reading plan page the URL is on, once it has loaded. */
+  const sharedPage = computed<{
+    kind: SharedPageKind;
+    locator: string;
+    title: string | null;
+    description: string | null;
+    heroImageUrl: string | null | undefined;
+    authorName: string | null;
+  } | null>(() => {
+    const playlistPage = playlists.playlistPage.value;
+    if (playlistPage) {
+      return {
+        kind: "playlist",
+        locator: playlistPage.locator,
+        title: playlistPage.item.title,
+        description: playlistPage.item.description,
+        heroImageUrl: playlistPage.item.heroImageUrl,
+        authorName: playlistPage.authorName,
+      };
+    }
+    const planPage = readingPlans.readingPlanPage.value;
+    if (planPage) {
+      return {
+        kind: "readingPlan",
+        locator: planPage.locator,
+        title: planPage.item.title,
+        description: planPage.item.description,
+        heroImageUrl: planPage.item.heroImageUrl,
+        authorName: planPage.authorName,
+      };
+    }
+    return null;
+  });
+
+  /** The shared page's title, falling back to "Untitled …" for its kind. */
+  const sharedPageName = computed<string | null>(() => {
+    const page = sharedPage.value;
     if (!page) {
       return null;
     }
     void i18n.language.value;
     const { t } = i18n;
-    const playlistTitle =
-      page.playlist.title ||
-      t("untitled-playlist", { defaultValue: "Untitled playlist" });
+    return (
+      page.title ||
+      (page.kind === "playlist"
+        ? t("untitled-playlist", { defaultValue: "Untitled playlist" })
+        : t("untitled-reading-plan", { defaultValue: "Untitled plan" }))
+    );
+  });
+
+  /** "{title} by {author}" while on a shared page, else null. */
+  const sharedPageTitle = computed<string | null>(() => {
+    const page = sharedPage.value;
+    const name = sharedPageName.value;
+    if (!page || !name) {
+      return null;
+    }
+    const { t } = i18n;
     return page.authorName
-      ? t("playlist-page-title", {
-          title: playlistTitle,
+      ? t("shared-page-title", {
+          title: name,
           author: page.authorName,
           defaultValue: "{{title}} by {{author}}",
         })
-      : playlistTitle;
+      : name;
   });
 
   const title = computed(() => {
@@ -1648,8 +1711,8 @@ export function createSeedBibleState(
         return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
       }
 
-      if (playlistPageTitle.value) {
-        return `${playlistPageTitle.value} | ${seedBibleTitle}`;
+      if (sharedPageTitle.value) {
+        return `${sharedPageTitle.value} | ${seedBibleTitle}`;
       }
 
       if (!selectedTab.value) {
@@ -1676,13 +1739,17 @@ export function createSeedBibleState(
       );
     }
 
-    const playlistPage = playlists.playlistPage.value;
-    if (playlistPage) {
+    const page = sharedPage.value;
+    if (page) {
       return truncateForMeta(
-        playlistPage.playlist.description?.trim() ||
-          t("playlist-page-meta-description", {
-            defaultValue: "A Bible reading playlist on Seed Bible.",
-          }),
+        page.description?.trim() ||
+          (page.kind === "playlist"
+            ? t("playlist-page-meta-description", {
+                defaultValue: "A Bible reading playlist on Seed Bible.",
+              })
+            : t("reading-plan-page-meta-description", {
+                defaultValue: "A Bible reading plan on Seed Bible.",
+              })),
         META_DESCRIPTION_MAX_GRAPHEMES
       );
     }
@@ -1759,9 +1826,9 @@ export function createSeedBibleState(
   );
 
   const socialImage = computed<{ url: string; alt: string } | null>(() => {
-    const heroImageUrl = playlists.playlistPage.value?.playlist.heroImageUrl;
+    const heroImageUrl = sharedPage.value?.heroImageUrl;
     if (heroImageUrl) {
-      return { url: heroImageUrl, alt: playlistPageTitle.value ?? "" };
+      return { url: heroImageUrl, alt: sharedPageTitle.value ?? "" };
     }
     const logoUrl = customizationLogoUrl.value;
     return logoUrl ? { url: logoUrl, alt: siteName.value } : null;
@@ -1791,8 +1858,8 @@ export function createSeedBibleState(
       return t("about-title", { defaultValue: "About the Seed Bible" });
     }
 
-    if (playlistPageTitle.value) {
-      return playlistPageTitle.value;
+    if (sharedPageTitle.value) {
+      return sharedPageTitle.value;
     }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
@@ -1846,12 +1913,13 @@ export function createSeedBibleState(
       })}`;
     }
 
-    const playlistPage = playlists.playlistPage.value;
-    if (playlistPage) {
-      return `${navigation.basePath}${buildPlaylistPagePath({
+    const page = sharedPage.value;
+    if (page) {
+      return `${navigation.basePath}${buildSharedPagePath({
+        kind: page.kind,
         language: i18n.language.value,
-        locator: playlistPage.locator,
-        title: playlistPage.playlist.title,
+        locator: page.locator,
+        title: page.title,
       })}`;
     }
 
@@ -3023,6 +3091,7 @@ export function createSeedBibleState(
       canonicalUrl,
       socialTitle,
       isAboutPage,
+      startSharedPage,
       currentToast,
       toast,
       isDiscoverOpen: playlists.isDiscoverOpen,
@@ -3362,52 +3431,119 @@ export function createSeedBibleState(
     }
   });
 
-  // A shared playlist link opens on a modal describing the playlist. Start
-  // plays it; closing it any other way (Close, the header's X, the backdrop)
-  // leaves for the home screen.
-  effect(() => {
-    const page = playlists.playlistPage.value;
+  /**
+   * Starts the current reading plan page's plan at its first session with
+   * readings, handing them to the reader's playback queue the same way the
+   * plan's own "play this day" does, then leaves the reading plan page for
+   * the reader. The plan is also selected, so opening the plans pane shows
+   * it, ready to pick a pace and track progress. The pane isn't opened here:
+   * playback's own side pane would replace it straight away.
+   */
+  const startReadingPlanPage = (): void => {
+    const page = readingPlans.readingPlanPage.peek();
     if (!page) {
+      return;
+    }
+    const plan = page.item;
+    const firstSession = plan.sessions.find(
+      (session) => session.readings.length > 0
+    );
+    readingPlans.selectedReadingPlan.value = plan;
+    showReadingPlanDetailView();
+    if (firstSession) {
+      playlists.startPlaying(
+        readingPlanDayPlaylist(
+          plan,
+          firstSession.readings.map((reading) => reading.item)
+        ),
+        0,
+        { history: false }
+      );
+    }
+    tabs.leaveStaticPage();
+  };
+
+  // A function declaration so the `state` object above can refer to it.
+  function startSharedPage(): void {
+    if (playlists.playlistPage.peek()) {
+      playlists.startPlaylistPage();
+    } else {
+      startReadingPlanPage();
+    }
+  }
+
+  // A shared playlist or reading plan link opens on a modal describing it.
+  // Start begins it; closing it any other way (Close, the header's X, the
+  // backdrop) leaves for the home screen.
+  effect(() => {
+    const page = sharedPage.value;
+    const name = sharedPageName.value;
+    if (!page || !name) {
       if (
-        modals.modals
-          .peek()
-          .some((modal) => modal.id === PLAYLIST_PAGE_MODAL_ID)
+        modals.modals.peek().some((modal) => modal.id === SHARED_PAGE_MODAL_ID)
       ) {
-        modals.closeModal(PLAYLIST_PAGE_MODAL_ID);
+        modals.closeModal(SHARED_PAGE_MODAL_ID);
       }
       return;
     }
+    const { t } = i18n;
+    const playlistPage = playlists.playlistPage.value;
+    const planPage = readingPlans.readingPlanPage.value;
+    const details = playlistPage
+      ? {
+          lengthLabel: t("playlist-page-item-count", {
+            count: playlistPage.item.items.length,
+            defaultValue: "{{count}} items",
+          }),
+          startLabel: t("playlist-page-start", {
+            defaultValue: "Start Playlist",
+          }),
+          canStart: playlistPage.item.items.length > 0,
+        }
+      : {
+          lengthLabel: t("reading-plan-session-count-sessions", {
+            count: planPage?.item.sessions.length ?? 0,
+            defaultValue: "{{count}} sessions",
+          }),
+          startLabel: t("reading-plan-page-start", {
+            defaultValue: "Start Reading Plan",
+          }),
+          canStart: !!planPage?.item.sessions.some(
+            (session) => session.readings.length > 0
+          ),
+        };
     modals.openModal({
-      id: PLAYLIST_PAGE_MODAL_ID,
-      title:
-        page.playlist.title ||
-        i18n.t("untitled-playlist", { defaultValue: "Untitled playlist" }),
+      id: SHARED_PAGE_MODAL_ID,
+      title: name,
       // Rendered in place rather than in a CasualOS app iframe so the server
       // render includes it.
       useCasualOSApp: false,
       content: () => (
-        <PlaylistPageModalContent
-          page={page}
-          onStart={playlists.startPlaylistPage}
-          onClose={() => modals.closeModal(PLAYLIST_PAGE_MODAL_ID)}
+        <SharedPageModalContent
+          heroImageUrl={page.heroImageUrl}
+          authorName={page.authorName}
+          description={page.description}
+          {...details}
+          onStart={startSharedPage}
+          onClose={() => modals.closeModal(SHARED_PAGE_MODAL_ID)}
         />
       ),
     });
   });
 
-  /** Set when a visit that began on a playlist page closed it for home. */
-  const closedPlaylistPageForHome = signal(false);
+  /** Set when a visit that began on a shared page closed it for home. */
+  const closedSharedPageForHome = signal(false);
 
-  // Starting leaves the playlist page before the modal closes, so this only
+  // Starting leaves the shared page before the modal closes, so this only
   // sees a close that should go home. Going home is what a fresh visit to "/"
   // would do: the reader takes the address bar back, Today opens over it
   // when a visit to "/" would open it, and a visit that began on this page
   // stops counting as a content link, so the tutorial offer can appear.
   effect(() => {
     const modalOpen = modals.modals.value.some(
-      (modal) => modal.id === PLAYLIST_PAGE_MODAL_ID
+      (modal) => modal.id === SHARED_PAGE_MODAL_ID
     );
-    if (modalOpen || !playlists.playlistPage.peek()) {
+    if (modalOpen || !sharedPage.peek()) {
       return;
     }
     const home = new URL(navigation.initialUrl.href);
@@ -3416,8 +3552,8 @@ export function createSeedBibleState(
     if (todayWillAutoOpenForUrl(home, navigation.basePath)) {
       today.open();
     }
-    if (openedViaPlaylistPage) {
-      closedPlaylistPageForHome.value = true;
+    if (openedViaSharedPage) {
+      closedSharedPageForHome.value = true;
     }
   });
 
@@ -3426,7 +3562,7 @@ export function createSeedBibleState(
   // would let the tutorial offer see a visible reader in the moment before
   // the pane opens, and show itself underneath Today.
   effect(() => {
-    if (!closedPlaylistPageForHome.value) {
+    if (!closedSharedPageForHome.value) {
       return;
     }
     const todayPaneOpen = panes.panes.value.some(
