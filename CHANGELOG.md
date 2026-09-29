@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Link someone straight into a tutorial with `?tutorial=<id>`, optionally at a given step with `&tutorialStep=<n>`. The main tour's ID is `introduction`; all IDs are listed in `docs/tutorial-links.md`. The address now tracks the tutorial's current step, so refreshing mid-tutorial picks up where you left off instead of losing it. ([#1808](https://github.com/HelloAOLab/seed-bible/issues/1808))
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
