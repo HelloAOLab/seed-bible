@@ -55,6 +55,8 @@ export interface RenderOptions {
    * - `<!--CUSTOMIZATION_JSON-->` where the JSON-serialized
    *   `?customization=...` load result should be injected, so the client can
    *   skip re-fetching a customization record the server already resolved.
+   * - `<!--PLAYLIST_PAGE_JSON-->` where the JSON-serialized playlist-page
+   *   load result should be injected, likewise for a shared playlist link.
    * - `<!--THEME_STYLE_TAG-->` where the active theme's composed CSS text
    *   should be injected, inside a `<style id="sb-theme-styles">` tag.
    * - `<!--THEME_PRESETS_JSON-->` where the built-in theme presets' composed
@@ -547,6 +549,10 @@ export async function render(
   await Promise.all([
     state.i18n.ready,
     state.app.selectedTab.value?.readingState.chapterDataPromise,
+    // So the title, meta and modal describe a shared playlist link's
+    // playlist. Awaited here with the chapter, not suspended on during the
+    // render, for the reason above.
+    state.playlists.initialPlaylistPageLoadPromise,
   ]);
 
   const [appHtml] = await Promise.all([
@@ -559,6 +565,7 @@ export async function render(
   // `options.html`'s default `og:image` tags need stripping first (see
   // `stripDefaultOgImageMeta`).
   const customizationLogoUrl = state.app.customizationLogoUrl.value;
+  const socialImage = state.app.socialImage.value;
 
   const metaHtml = await renderToStringAsync(
     <>
@@ -573,8 +580,10 @@ export async function render(
       <meta property="og:description" content={state.app.description.value} />
       <meta property="og:url" content={state.app.canonicalUrl.value} />
       <meta property="og:site_name" content={state.app.siteName.value} />
-      {/* Only emitted when a customization with an uploaded logo is active.
-          `stripDefaultOgImageMeta` has already removed index.html's own
+      {/* Only emitted for a shared playlist with a cover image, or when a
+          customization with an uploaded logo is active (see
+          `state.app.socialImage`). `stripDefaultOgImageMeta` has already
+          removed index.html's own
           `og:image`/`:type`/`:width`/`:height`/`:alt` from `baseHtml` below in
           that case, so there is exactly one set of these tags either way —
           unlike the favicon `<link>`, a crawler can't be relied on to prefer
@@ -582,11 +591,11 @@ export async function render(
           first, or treat multiple as a gallery), so an override here has to
           replace the default rather than merely follow it. No explicit
           `:type`/`:width`/`:height`: those described the default JPG's fixed
-          1200x630 crop and would misdescribe an arbitrary uploaded logo. */}
-      {customizationLogoUrl && (
+          1200x630 crop and would misdescribe an arbitrary uploaded image. */}
+      {socialImage && (
         <>
-          <meta property="og:image" content={customizationLogoUrl} />
-          <meta property="og:image:alt" content={state.app.siteName.value} />
+          <meta property="og:image" content={socialImage.url} />
+          <meta property="og:image:alt" content={socialImage.alt} />
         </>
       )}
       {/* `twitter:*` really is `name=`, unlike `og:*`. No `twitter:image`: it
@@ -661,6 +670,10 @@ export async function render(
     JSON.stringify(state.customizations.getInitialCustomizationSeed())
   );
 
+  const playlistPageSeedJson = escapeForScript(
+    JSON.stringify(state.playlists.getPlaylistPageSeed())
+  );
+
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
     ["<!-- HTML_LANG -->", escapeForHtmlAttribute(state.i18n.language.value)],
@@ -672,12 +685,20 @@ export async function render(
     ["<!-- CONFIG_JSON -->", configJson],
     ["<!-- SEED_JSON -->", seedJson],
     ["<!-- CUSTOMIZATION_JSON -->", customizationSeedJson],
+    ["<!-- PLAYLIST_PAGE_JSON -->", playlistPageSeedJson],
     ["<!-- APP_HTML -->", appHtml],
   ];
 
-  const baseHtml = customizationLogoUrl
-    ? stripDefaultFaviconLinks(stripDefaultOgImageMeta(options.html))
+  const withSocialImage = socialImage
+    ? stripDefaultOgImageMeta(options.html)
     : options.html;
+  const baseHtml = customizationLogoUrl
+    ? stripDefaultFaviconLinks(withSocialImage)
+    : withSocialImage;
+
+  // A shared playlist link whose playlist doesn't exist is a 404 like an
+  // unknown book is. One whose load merely failed or timed out is not.
+  const playlistNotFound = state.playlists.playlistPageNotFound.value;
 
   return {
     html: substitutions.reduce(
@@ -685,6 +706,6 @@ export async function render(
         replacePlaceholder(html, placeholder, value),
       baseHtml
     ),
-    ...(notFound ? { notFound: true as const } : {}),
+    ...(notFound || playlistNotFound ? { notFound: true as const } : {}),
   };
 }

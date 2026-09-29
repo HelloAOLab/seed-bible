@@ -468,6 +468,7 @@ describe("render() server-rendered meta tags", () => {
     '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
     '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
     '<script type="application/json" id="app-customization-seed"><!-- CUSTOMIZATION_JSON --></script>',
+    '<script type="application/json" id="app-playlist-page-seed"><!-- PLAYLIST_PAGE_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -510,6 +511,20 @@ describe("render() server-rendered meta tags", () => {
     globalThis.fetch = originalFetch;
     delete import.meta.env.SSR;
   });
+
+  const renderResult = async (
+    path: string
+  ): Promise<{ html: string; notFound?: true }> => {
+    const result = (await render({
+      path,
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
+      html: TEMPLATE,
+    })) as { html: string; notFound?: true; redirectTo?: string };
+    if ("redirectTo" in result) {
+      throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
+    }
+    return result;
+  };
 
   const renderHtml = async (
     path: string,
@@ -1288,6 +1303,175 @@ describe("render() server-rendered meta tags", () => {
         locator: "owner.customization_missing",
         customization: null,
       });
+    });
+  });
+
+  describe("shared playlist page", () => {
+    const CALL_PROCEDURE_URL =
+      "https://auth.seedbible.org/api/v3/callProcedure";
+    const PAGE_PATH =
+      "/en/playlist/owner.playlist_shared/psalms-for-hard-days?useFreeBibleAPI=true";
+
+    const PLAYLIST = {
+      id: "playlist_shared",
+      recordName: "owner",
+      authorUserId: "author-1",
+      title: "Psalms for Hard Days",
+      description: "Five psalms to read slowly.",
+      heroImageUrl: "https://files.example/hero.jpg",
+      items: [{ type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } }],
+      createdAtMs: 1,
+      updatedAtMs: 1,
+    };
+
+    /** Answers `getData` calls by `{recordName}/{address}`; anything else is "not found". */
+    function mockRecords(records: Record<string, unknown>) {
+      const responses = createDefaultManagerResponseMap();
+      globalThis.fetch = (async (url: string, init?: RequestInit) => {
+        if (url === CALL_PROCEDURE_URL) {
+          const body = JSON.parse(String(init?.body));
+          const key = `${body.input?.recordName}/${body.input?.address}`;
+          if (body.procedure === "getData" && key in records) {
+            return createResponse({ success: true, data: records[key] });
+          }
+          return createResponse({
+            success: false,
+            errorCode: "data_not_found",
+            errorMessage: "Data not found",
+          });
+        }
+        const response = responses[url];
+        if (!response) {
+          throw new Error(`No mocked response for ${url}`);
+        }
+        return response;
+      }) as typeof globalThis.fetch;
+    }
+
+    function readEmbeddedPlaylistSeed(html: string): unknown {
+      const match = /id="app-playlist-page-seed">([\s\S]*?)<\/script>/.exec(
+        html
+      );
+      if (!match) {
+        throw new Error("app-playlist-page-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("titles and describes the page after the playlist and its author", async () => {
+      mockRecords({
+        "owner/playlist_shared": PLAYLIST,
+        "author-1/profile": { name: "Ruth" },
+      });
+
+      const { html, notFound } = await renderResult(PAGE_PATH);
+
+      expect(notFound).toBeUndefined();
+      expect(html).toContain(
+        "<title>Psalms for Hard Days by Ruth | Seed Bible</title>"
+      );
+      expect(html).toContain(
+        '<meta name="description" content="Five psalms to read slowly."'
+      );
+      expect(html).toContain(
+        '<meta property="og:title" content="Psalms for Hard Days by Ruth"'
+      );
+      expect(html).toContain(
+        '<meta property="og:description" content="Five psalms to read slowly."'
+      );
+      expect(html).toContain(
+        '<link rel="canonical" href="/en/playlist/owner.playlist_shared/psalms-for-hard-days"'
+      );
+    });
+
+    it("uses the playlist's cover as the only og:image", async () => {
+      mockRecords({ "owner/playlist_shared": PLAYLIST });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:image" content="https://files.example/hero.jpg"'
+      );
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      expect(html).not.toContain('property="og:image:width"');
+      // The cover is a social image, not a favicon.
+      expect(html).toContain(
+        '<link rel="icon" href="/standalone/img/favicon.ico"'
+      );
+    });
+
+    it("keeps the default og:image for a playlist without a cover", async () => {
+      mockRecords({
+        "owner/playlist_shared": { ...PLAYLIST, heroImageUrl: null },
+      });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+    });
+
+    it("renders the playlist modal with Start and Close", async () => {
+      mockRecords({
+        "owner/playlist_shared": PLAYLIST,
+        "author-1/profile": { name: "Ruth" },
+      });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(html).toContain("sb-playlist-page-modal");
+      expect(html).toContain("By Ruth");
+      expect(html).toContain("Start Playlist");
+      expect(html).toContain("1 item");
+    });
+
+    it("leaves the author out of the title when they have no profile", async () => {
+      mockRecords({ "owner/playlist_shared": PLAYLIST });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(html).toContain(
+        "<title>Psalms for Hard Days | Seed Bible</title>"
+      );
+    });
+
+    it("embeds the loaded playlist as a seed for the client to reuse", async () => {
+      mockRecords({
+        "owner/playlist_shared": PLAYLIST,
+        "author-1/profile": { name: "Ruth" },
+      });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(readEmbeddedPlaylistSeed(html)).toEqual({
+        locator: "owner.playlist_shared",
+        playlist: PLAYLIST,
+        authorName: "Ruth",
+      });
+    });
+
+    it("answers 404 when the playlist doesn't exist", async () => {
+      mockRecords({});
+
+      const { html, notFound } = await renderResult(PAGE_PATH);
+
+      expect(notFound).toBe(true);
+      expect(html).not.toContain("sb-playlist-page-modal");
+      expect(readEmbeddedPlaylistSeed(html)).toEqual({
+        locator: "owner.playlist_shared",
+        playlist: null,
+        authorName: null,
+      });
+    });
+
+    it("is not mistaken for a reading path when the title slug is a number", async () => {
+      mockRecords({ "owner/playlist_shared": { ...PLAYLIST, title: "2024" } });
+
+      const { notFound, html } = await renderResult(
+        "/en/playlist/owner.playlist_shared/2024?useFreeBibleAPI=true"
+      );
+
+      expect(notFound).toBeUndefined();
+      expect(html).toContain("<title>2024 | Seed Bible</title>");
     });
   });
 

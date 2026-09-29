@@ -14,7 +14,7 @@ import {
   parseReadingPath,
   stripBasePath,
 } from "./ReadingUrlPath";
-import { parseStaticPagePath } from "./StaticPagePath";
+import { isNonReadingPagePath } from "./StaticPagePath";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
@@ -797,7 +797,7 @@ export function createTabs(
       // effect below, the only caller that ever passes it.
       if (
         !options.leaveStaticPage &&
-        parseStaticPagePath(
+        isNonReadingPagePath(
           navigation.currentUrl.peek().pathname,
           navigation.basePath
         )
@@ -924,7 +924,7 @@ export function createTabs(
     // A static page's entry is not showing this reading position, so it must
     // not collect the reader's offset.
     if (
-      parseStaticPagePath(
+      isNonReadingPagePath(
         navigation.currentUrl.peek().pathname,
         navigation.basePath
       )

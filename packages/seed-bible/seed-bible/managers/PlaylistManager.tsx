@@ -41,6 +41,11 @@ import {
 } from "./ReadingUrlPath";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
+import {
+  buildPlaylistPagePath,
+  parsePlaylistPagePath,
+} from "./PlaylistPagePath";
+import { userProfileSchema } from "./LoginManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -145,6 +150,28 @@ export type SimplePlaylist = Pick<
 >;
 
 /**
+ * The playlist a `/{lang}/playlist/{locator}` page shows, with its author's
+ * display name (null when they have none, or their profile couldn't be read).
+ */
+export interface PlaylistPage {
+  locator: string;
+  playlist: Playlist;
+  authorName: string | null;
+}
+
+/**
+ * A completed playlist-page load, embedded by SSR so the client can skip
+ * re-fetching it — see `PlaylistManager.getPlaylistPageSeed`. `playlist` is
+ * null when the load found nothing. It crossed a server/client boundary as
+ * JSON, so it is re-validated before use.
+ */
+export interface PlaylistPageSeed {
+  locator: string;
+  playlist: Playlist | null;
+  authorName: string | null;
+}
+
+/**
  * True when a playlist is backed by a record, so a play-history row can reload
  * it later by `{recordName, id}`. Ad-hoc queues (a reading plan's day, say)
  * carry no record name and so can't be resumed from history.
@@ -186,7 +213,7 @@ function firstScriptureShareRef(items: readonly PlaylistItemData[]): {
 }
 
 /**
- * Builds a share URL for content made of `items` (a playlist, a reading
+ * Builds a share URL for content made of `items` (e.g. a reading
  * plan). The path is the first resolvable scripture item's chapter so opening
  * the link does not load the chapter the sharer happened to be reading and
  * then jump to the shared content. The query string is replaced by
@@ -930,7 +957,8 @@ export function createPlaylistManager(
   i18n: I18nManager,
   readingExtensionManager: BibleReadingExtensionManager,
   discover: DiscoverManager,
-  chats: ChatsManager
+  chats: ChatsManager,
+  initialPlaylistPageSeed?: PlaylistPageSeed
 ) {
   const initialPlaylistLocator = signal(
     navigation.currentUrl.value.searchParams.get("playlist")
@@ -1700,16 +1728,20 @@ export function createPlaylistManager(
     }
   };
 
-  /** Gets a shareable URL for the given playlist. */
+  /**
+   * Gets a shareable URL for the given playlist: its own
+   * `/{lang}/playlist/{locator}/{title}` page, which shows the playlist before
+   * anything starts playing.
+   */
   const getPlaylistUrl = (playlist: Playlist): string =>
-    buildScriptureShareUrl({
-      items: playlist.items,
-      currentUrl: navigation.currentUrl.value,
-      basePath: navigation.basePath,
-      activeTranslationId: activeTab.peek()?.readingState.translationId.peek(),
-      param: "playlist",
-      locator: getPlaylistLocator(playlist),
-    });
+    new URL(
+      `${navigation.basePath}${buildPlaylistPagePath({
+        language: i18n.language.peek(),
+        locator: getPlaylistLocator(playlist),
+        title: playlist.title,
+      })}`,
+      navigation.currentUrl.value
+    ).toString();
 
   const goBackFromPlayingView = () => {
     if (isMobile.value) {
@@ -2046,6 +2078,205 @@ export function createPlaylistManager(
     },
   });
 
+  /** The locator of the playlist page the URL is on, or null when it isn't on one. */
+  const playlistPageLocator = computed<string | null>(
+    () =>
+      parsePlaylistPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )?.locator ?? null
+  );
+
+  /**
+   * The latest playlist-page load that actually completed, found or not. A
+   * load that errored for any other reason than "not found" leaves this
+   * untouched, so it is never mistaken for a missing playlist.
+   */
+  const playlistPageResult = signal<PlaylistPageSeed | null>(null);
+
+  /** The playlist the current playlist page shows, once it has loaded. */
+  const playlistPage = computed<PlaylistPage | null>(() => {
+    const locator = playlistPageLocator.value;
+    const result = playlistPageResult.value;
+    if (!locator || result?.locator !== locator || !result.playlist) {
+      return null;
+    }
+    return {
+      locator,
+      playlist: result.playlist,
+      authorName: result.authorName,
+    };
+  });
+
+  /** True when the current playlist page's playlist was looked up and doesn't exist. */
+  const playlistPageNotFound = computed<boolean>(() => {
+    const locator = playlistPageLocator.value;
+    const result = playlistPageResult.value;
+    return !!locator && result?.locator === locator && !result.playlist;
+  });
+
+  const loadAuthorName = async (userId: string): Promise<string | null> => {
+    try {
+      const result = await os.getData(userId, "profile");
+      if (!result.success) {
+        return null;
+      }
+      const parsed = userProfileSchema.safeParse(result.data);
+      return parsed.success ? parsed.data.name.trim() || null : null;
+    } catch (err) {
+      console.warn("Failed to load playlist author profile:", err);
+      return null;
+    }
+  };
+
+  /** Resolves to null when the load failed for a reason other than "not found". */
+  const fetchPlaylistPage = async (
+    locator: string
+  ): Promise<PlaylistPageSeed | null> => {
+    const parsed = parsePlaylistLocator(locator);
+    if (!parsed) {
+      return { locator, playlist: null, authorName: null };
+    }
+    try {
+      const result = await os.getData(parsed.recordName, parsed.id);
+      if (!result.success) {
+        if (result.errorCode === "data_not_found") {
+          return { locator, playlist: null, authorName: null };
+        }
+        console.error("Failed to load playlist page:", result.errorCode);
+        return null;
+      }
+      const playlistResult = PlaylistSchema.safeParse(result.data);
+      if (!playlistResult.success) {
+        console.warn("Invalid playlist record for locator:", locator);
+        return { locator, playlist: null, authorName: null };
+      }
+      const playlist = playlistResult.data;
+      return {
+        locator,
+        playlist,
+        authorName: await loadAuthorName(playlist.authorUserId),
+      };
+    } catch (err) {
+      console.error("Failed to load playlist page:", err);
+      return null;
+    }
+  };
+
+  const initialPlaylistPageLocator =
+    parsePlaylistPagePath(navigation.initialUrl.pathname, navigation.basePath)
+      ?.locator ?? null;
+
+  /** Whether the initial page's own playlist load actually finished (unlike the promise below, never forced by the SSR timeout). */
+  let initialPlaylistPageLoadCompleted = false;
+  let resolveInitialPlaylistPageLoad: () => void = () => {};
+  /**
+   * Settles once the initial playlist page's playlist has loaded (or during
+   * SSR, once a timeout gives up on it). SSR waits on this so the page's
+   * title, meta and modal describe the playlist. Resolved immediately when
+   * the page didn't start on a playlist page.
+   */
+  const initialPlaylistPageLoadPromise = new Promise<void>((resolve) => {
+    resolveInitialPlaylistPageLoad = resolve;
+  });
+
+  const validateSeed = (seed: PlaylistPageSeed): PlaylistPageSeed | null => {
+    if (seed.playlist === null) {
+      return { locator: seed.locator, playlist: null, authorName: null };
+    }
+    const parsed = PlaylistSchema.safeParse(seed.playlist);
+    if (!parsed.success) {
+      return null;
+    }
+    return {
+      locator: seed.locator,
+      playlist: parsed.data,
+      authorName: typeof seed.authorName === "string" ? seed.authorName : null,
+    };
+  };
+
+  /** The locator most recently requested, so a URL effect re-run doesn't re-fetch it. */
+  let requestedPlaylistPageLocator: string | null = null;
+
+  const requestPlaylistPage = (locator: string): Promise<void> => {
+    requestedPlaylistPageLocator = locator;
+    return fetchPlaylistPage(locator).then((result) => {
+      if (result && requestedPlaylistPageLocator === locator) {
+        playlistPageResult.value = result;
+      }
+    });
+  };
+
+  if (initialPlaylistPageLocator) {
+    const seed =
+      initialPlaylistPageSeed?.locator === initialPlaylistPageLocator
+        ? validateSeed(initialPlaylistPageSeed)
+        : null;
+    if (seed) {
+      requestedPlaylistPageLocator = initialPlaylistPageLocator;
+      playlistPageResult.value = seed;
+      initialPlaylistPageLoadCompleted = true;
+      resolveInitialPlaylistPageLoad();
+    } else {
+      void requestPlaylistPage(initialPlaylistPageLocator).then(() => {
+        initialPlaylistPageLoadCompleted = true;
+        resolveInitialPlaylistPageLoad();
+      });
+      // Backstop so an `os.getData()` that never answers can't hold an SSR
+      // request open; the client never waits on this promise.
+      if (import.meta.env.SSR) {
+        const SSR_PLAYLIST_PAGE_TIMEOUT_MS = 5000;
+        const timer = setTimeout(() => {
+          console.warn(
+            "Timed out waiting for playlist page load:",
+            initialPlaylistPageLocator
+          );
+          resolveInitialPlaylistPageLoad();
+        }, SSR_PLAYLIST_PAGE_TIMEOUT_MS);
+        void initialPlaylistPageLoadPromise.then(() => clearTimeout(timer));
+      }
+    }
+  } else {
+    resolveInitialPlaylistPageLoad();
+  }
+
+  // Later in-app navigations onto a playlist page load it the same way.
+  effect(() => {
+    const locator = playlistPageLocator.value;
+    if (locator && locator !== requestedPlaylistPageLocator) {
+      void requestPlaylistPage(locator);
+    }
+  });
+
+  /**
+   * The initial playlist page's completed load, for `entry-ssr.tsx` to embed
+   * in the page. Null when the page isn't a playlist page or the load hadn't
+   * finished (the SSR timeout fired first) — seeding "not found" for a load
+   * that merely timed out would hide a playlist that exists.
+   */
+  const getPlaylistPageSeed = (): PlaylistPageSeed | null => {
+    if (!initialPlaylistPageLocator || !initialPlaylistPageLoadCompleted) {
+      return null;
+    }
+    const result = playlistPageResult.peek();
+    return result?.locator === initialPlaylistPageLocator ? result : null;
+  };
+
+  /**
+   * Starts the current playlist page's playlist from its first item and
+   * leaves the playlist page for the reader.
+   */
+  const startPlaylistPage = (): void => {
+    const page = playlistPage.peek();
+    if (!page) {
+      return;
+    }
+    startPlaying(page.playlist, 0);
+    // The reader doesn't write its position over a playlist page's URL, so
+    // it has to be told to take the address bar back.
+    tabs.leaveStaticPage();
+  };
+
   // Inbound (URL -> state) half of the `playlist`/`playlistStep` sync. Reads
   // both params together so pasting a link with a nonzero step while
   // something else is playing resolves to the right playlist *and* step in
@@ -2278,6 +2509,11 @@ export function createPlaylistManager(
     replayFromHistory,
     removePlayHistory,
     getPlaylistUrl,
+    playlistPage,
+    playlistPageNotFound,
+    initialPlaylistPageLoadPromise,
+    getPlaylistPageSeed,
+    startPlaylistPage,
     isDiscoverOpen,
     goBackFromPlayingView,
     isMobile,

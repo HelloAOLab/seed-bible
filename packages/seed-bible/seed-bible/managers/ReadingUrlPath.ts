@@ -13,6 +13,14 @@ import {
  */
 export const DEFAULT_UI_LANGUAGE = "en";
 
+/**
+ * Second path segment of a shared playlist page (see `PlaylistPagePath.ts`).
+ * Lives here because `parseReadingPath` has to reject it: a 4-segment playlist
+ * path whose title slug is a number would otherwise read as
+ * `/{lang}/{translationId}/{book}/{chapter}`.
+ */
+export const PLAYLIST_PATH_SEGMENT = "playlist";
+
 /** How the book segment was resolved to a `BookId`. */
 export type BookMatchKind = "exact" | "fuzzy" | "unresolved";
 
@@ -100,6 +108,9 @@ export function parseReadingPath(
 
   if (segments.length === 4) {
     [language, translationId, bookSeg, chapterSeg] = segments;
+    if (translationId?.toLowerCase() === PLAYLIST_PATH_SEGMENT) {
+      return null;
+    }
   } else if (segments.length === 3) {
     language = null;
     [translationId, bookSeg, chapterSeg] = segments;

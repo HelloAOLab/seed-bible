@@ -5,6 +5,10 @@
 ### ✨ Added
 
 - Link someone straight into a tutorial with `?tutorial=<id>`, optionally at a given step with `&tutorialStep=<n>`. The main tour's ID is `introduction`; all IDs are listed in `docs/tutorial-links.md`. The address now tracks the tutorial's current step, so refreshing mid-tutorial picks up where you left off instead of losing it. ([#1808](https://github.com/HelloAOLab/seed-bible/issues/1808))
+- Give each shared playlist its own page at `/{lang}/playlist/{id}/{title}`. ([#1785](https://github.com/HelloAOLab/seed-bible/issues/1785))
+  - Opening a shared playlist link shows the playlist's cover, author and description, with "Start Playlist" and "Close" buttons. Before, the link opened straight onto a chapter with no sign it was a playlist.
+  - Link previews and search results now show "{playlist} by {author}", the playlist's description and its cover image.
+  - A link to a playlist that no longer exists answers "not found".
 
 ### 🔧 Changed
 

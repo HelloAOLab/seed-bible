@@ -23,6 +23,9 @@ import {
 import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
+import { PlaylistPageModalContent } from "../components/PlaylistPageModal/PlaylistPageModal";
+import { buildPlaylistPagePath } from "../managers/PlaylistPagePath";
+import type { PlaylistPageSeed } from "../managers/PlaylistManager";
 import {
   buildStaticPagePath,
   parseStaticPagePath,
@@ -231,6 +234,7 @@ const APP_META_DESCRIPTION =
 
 /** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
 export const ABOUT_PANE_ID = "about-page-pane";
+export const PLAYLIST_PAGE_MODAL_ID = "playlist-page";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -371,6 +375,13 @@ export interface AppState {
    * defaults already in index.html.
    */
   customizationLogoUrl: ReadonlySignal<string | null>;
+
+  /**
+   * The `og:image` this page should advertise instead of index.html's
+   * default: a shared playlist's cover, else the active customization's logo.
+   * Null keeps the default.
+   */
+  socialImage: ReadonlySignal<{ url: string; alt: string } | null>;
 
   /** Whether the current URL is the static "/{lang}/about" page. */
   isAboutPage: ReadonlySignal<boolean>;
@@ -626,6 +637,13 @@ export interface CreateSeedBibleStateOptions {
    * `readInjectedCustomizationSeed` in `app/customizationSeed.ts`.
    */
   initialCustomizationSeed?: InitialCustomizationSeed;
+
+  /**
+   * A prior SSR render's completed playlist-page load, so the new
+   * `PlaylistManager` doesn't re-fetch it — see `readInjectedPlaylistPageSeed`
+   * in `app/playlistPageSeed.ts`.
+   */
+  initialPlaylistPageSeed?: PlaylistPageSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -1060,7 +1078,8 @@ export function createSeedBibleState(
     i18n,
     readingExtensions,
     discover,
-    chats
+    chats,
+    options.initialPlaylistPageSeed
   );
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
@@ -1577,6 +1596,26 @@ export function createSeedBibleState(
     armSidebarCollapsed();
   };
 
+  /** "{playlist} by {author}" while on a playlist page, else null. */
+  const playlistPageTitle = computed<string | null>(() => {
+    const page = playlists.playlistPage.value;
+    if (!page) {
+      return null;
+    }
+    void i18n.language.value;
+    const { t } = i18n;
+    const playlistTitle =
+      page.playlist.title ||
+      t("untitled-playlist", { defaultValue: "Untitled playlist" });
+    return page.authorName
+      ? t("playlist-page-title", {
+          title: playlistTitle,
+          author: page.authorName,
+          defaultValue: "{{title}} by {{author}}",
+        })
+      : playlistTitle;
+  });
+
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
     void i18n.language.value;
@@ -1594,6 +1633,10 @@ export function createSeedBibleState(
     const getTitle = () => {
       if (isAboutPage.value) {
         return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
+      }
+
+      if (playlistPageTitle.value) {
+        return `${playlistPageTitle.value} | ${seedBibleTitle}`;
       }
 
       if (!selectedTab.value) {
@@ -1616,6 +1659,17 @@ export function createSeedBibleState(
           defaultValue:
             "Seed Bible is a free Bible app with dozens of translations, reading plans, notes, highlights, and study tools.",
         }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
+
+    const playlistPage = playlists.playlistPage.value;
+    if (playlistPage) {
+      return truncateForMeta(
+        playlistPage.playlist.description?.trim() ||
+          t("playlist-page-meta-description", {
+            defaultValue: "A Bible reading playlist on Seed Bible.",
+          }),
         META_DESCRIPTION_MAX_GRAPHEMES
       );
     }
@@ -1691,6 +1745,15 @@ export function createSeedBibleState(
     () => customizations.activeCustomization.value?.logoUrl ?? null
   );
 
+  const socialImage = computed<{ url: string; alt: string } | null>(() => {
+    const heroImageUrl = playlists.playlistPage.value?.playlist.heroImageUrl;
+    if (heroImageUrl) {
+      return { url: heroImageUrl, alt: playlistPageTitle.value ?? "" };
+    }
+    const logoUrl = customizationLogoUrl.value;
+    return logoUrl ? { url: logoUrl, alt: siteName.value } : null;
+  });
+
   /**
    * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
    * along with `description`.
@@ -1713,6 +1776,10 @@ export function createSeedBibleState(
 
     if (isAboutPage.value) {
       return t("about-title", { defaultValue: "About the Seed Bible" });
+    }
+
+    if (playlistPageTitle.value) {
+      return playlistPageTitle.value;
     }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
@@ -1763,6 +1830,15 @@ export function createSeedBibleState(
       return `${navigation.basePath}${buildStaticPagePath({
         language: i18n.language.value,
         page: "about",
+      })}`;
+    }
+
+    const playlistPage = playlists.playlistPage.value;
+    if (playlistPage) {
+      return `${navigation.basePath}${buildPlaylistPagePath({
+        language: i18n.language.value,
+        locator: playlistPage.locator,
+        title: playlistPage.playlist.title,
       })}`;
     }
 
@@ -2930,6 +3006,7 @@ export function createSeedBibleState(
       description,
       siteName,
       customizationLogoUrl,
+      socialImage,
       canonicalUrl,
       socialTitle,
       isAboutPage,
@@ -3269,6 +3346,58 @@ export function createSeedBibleState(
     );
     if (!paneOpen && isAboutPage.peek()) {
       tabs.leaveStaticPage();
+    }
+  });
+
+  // A shared playlist link opens on a modal describing the playlist. Start
+  // plays it; closing it any other way (Close, the header's X, the backdrop)
+  // leaves for the home screen.
+  effect(() => {
+    const page = playlists.playlistPage.value;
+    if (!page) {
+      if (
+        modals.modals
+          .peek()
+          .some((modal) => modal.id === PLAYLIST_PAGE_MODAL_ID)
+      ) {
+        modals.closeModal(PLAYLIST_PAGE_MODAL_ID);
+      }
+      return;
+    }
+    modals.openModal({
+      id: PLAYLIST_PAGE_MODAL_ID,
+      title:
+        page.playlist.title ||
+        i18n.t("untitled-playlist", { defaultValue: "Untitled playlist" }),
+      // Rendered in place rather than in a CasualOS app iframe so the server
+      // render includes it.
+      useCasualOSApp: false,
+      content: () => (
+        <PlaylistPageModalContent
+          page={page}
+          onStart={playlists.startPlaylistPage}
+          onClose={() => modals.closeModal(PLAYLIST_PAGE_MODAL_ID)}
+        />
+      ),
+    });
+  });
+
+  // Starting leaves the playlist page before the modal closes, so this only
+  // sees a close that should go home. Going home is what a fresh visit to "/"
+  // would do: the reader takes the address bar back, and Today opens over it
+  // when a visit to "/" would open it.
+  effect(() => {
+    const modalOpen = modals.modals.value.some(
+      (modal) => modal.id === PLAYLIST_PAGE_MODAL_ID
+    );
+    if (modalOpen || !playlists.playlistPage.peek()) {
+      return;
+    }
+    const home = new URL(navigation.initialUrl.href);
+    home.pathname = `${navigation.basePath}/`;
+    tabs.leaveStaticPage();
+    if (todayWillAutoOpenForUrl(home, navigation.basePath)) {
+      today.open();
     }
   });
 
