@@ -53,3 +53,29 @@ export function SharedPageModalContent(props: {
     </div>
   );
 }
+
+/**
+ * What a link to a playlist or reading plan that doesn't exist (deleted, or
+ * a mistyped link) opens on, in place of its modal. Closing it goes home.
+ */
+export function SharedPageNotFoundModalContent(props: {
+  message: string;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+
+  return (
+    <div className="sb-shared-page-modal sb-shared-page-modal--not-found">
+      <p className="sb-shared-page-modal-description">{props.message}</p>
+      <div className="sb-shared-page-modal-actions">
+        <button
+          type="button"
+          className="sb-shared-page-modal-start"
+          onClick={props.onClose}
+        >
+          {t("close", { defaultValue: "Close" })}
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -39,17 +39,31 @@ const EXODUS_2 = {
 };
 
 /** Both kinds of shared page, each opening on something that starts at Exodus 2. */
+type Seeds = Pick<
+  CreateTestSeedBibleStateOptions,
+  "initialPlaylistPageSeed" | "initialReadingPlanPageSeed"
+>;
+
 const PAGES: {
   kind: string;
   path: string;
-  seed: Pick<
-    CreateTestSeedBibleStateOptions,
-    "initialPlaylistPageSeed" | "initialReadingPlanPageSeed"
-  >;
+  seed: Seeds;
+  missingPath: string;
+  missingSeed: Seeds;
+  notFoundTitle: string;
 }[] = [
   {
     kind: "playlist",
     path: "/en/playlist/owner.playlist_shared/exodus-stories",
+    missingPath: "/en/playlist/owner.playlist_missing/gone",
+    missingSeed: {
+      initialPlaylistPageSeed: {
+        locator: "owner.playlist_missing",
+        item: null,
+        authorName: null,
+      },
+    },
+    notFoundTitle: "Playlist not found",
     seed: {
       initialPlaylistPageSeed: {
         locator: "owner.playlist_shared",
@@ -70,6 +84,15 @@ const PAGES: {
   {
     kind: "reading plan",
     path: "/en/reading-plan/owner.plan_shared/exodus-stories",
+    missingPath: "/en/reading-plan/owner.plan_missing/gone",
+    missingSeed: {
+      initialReadingPlanPageSeed: {
+        locator: "owner.plan_missing",
+        item: null,
+        authorName: null,
+      },
+    },
+    notFoundTitle: "Reading plan not found",
     seed: {
       initialReadingPlanPageSeed: {
         locator: "owner.plan_shared",
@@ -113,65 +136,91 @@ const PAGES: {
  * isn't a pane, so nothing else hides the reader from the tutorial: without
  * the suppression the offer appears as soon as the chapter loads.
  */
-describe.each(PAGES)("a shared $kind link", ({ path, seed }) => {
-  async function openSharedPage() {
-    window.history.replaceState(null, "", path);
-    const state = await createTestSeedBibleState({
-      responses: responses(),
-      todayOpen: "fromUrl",
-      ...seed,
+describe.each(PAGES)(
+  "a shared $kind link",
+  ({ path, seed, missingPath, missingSeed, notFoundTitle }) => {
+    async function openSharedPage() {
+      window.history.replaceState(null, "", path);
+      const state = await createTestSeedBibleState({
+        responses: responses(),
+        todayOpen: "fromUrl",
+        ...seed,
+      });
+      await waitFor(
+        () =>
+          state.app.currentReadingState.value?.tab.readingState.chapterData
+            .value != null,
+        2000
+      );
+      return state;
+    }
+
+    const modalOpen = (state: Awaited<ReturnType<typeof openSharedPage>>) =>
+      state.modals.modals.value.some(
+        (modal) => modal.id === SHARED_PAGE_MODAL_ID
+      );
+
+    it("does not offer the tutorial over the modal", async () => {
+      const state = await openSharedPage();
+
+      expect(modalOpen(state)).toBe(true);
+      expect(state.today.isOpen.value).toBe(false);
+      expect(state.tutorial.promptVisible.value).toBe(false);
     });
-    await waitFor(
-      () =>
-        state.app.currentReadingState.value?.tab.readingState.chapterData
-          .value != null,
-      2000
-    );
-    return state;
+
+    it("starting goes to the first reading and keeps the offer back", async () => {
+      const state = await openSharedPage();
+
+      state.app.startSharedPage();
+      await waitFor(
+        () =>
+          state.app.currentReadingState.value?.tab.readingState.chapterData
+            .value?.book.id === "EXO",
+        2000
+      );
+
+      expect(modalOpen(state)).toBe(false);
+      expect(state.playlists.playing.value?.currentIndex.value).toBe(0);
+      expect(state.tutorial.promptVisible.value).toBe(false);
+    });
+
+    it("shows a not-found modal when it doesn't exist, and goes home from it", async () => {
+      window.history.replaceState(null, "", missingPath);
+      const state = await createTestSeedBibleState({
+        responses: responses(),
+        todayOpen: "fromUrl",
+        ...missingSeed,
+      });
+
+      const modal = state.modals.modals.value.find(
+        (m) => m.id === SHARED_PAGE_MODAL_ID
+      );
+      expect(modal?.title).toBe(notFoundTitle);
+      expect(state.app.title.value).toContain(notFoundTitle);
+      expect(state.today.isOpen.value).toBe(false);
+
+      state.modals.closeModal(SHARED_PAGE_MODAL_ID);
+
+      expect(state.today.isOpen.value).toBe(true);
+      expect(new URL(window.location.href).pathname).not.toMatch(
+        /\/(playlist|reading-plan)\//
+      );
+    });
+
+    it("offers the tutorial from the home screen after the modal is closed", async () => {
+      const state = await openSharedPage();
+
+      state.modals.closeModal(SHARED_PAGE_MODAL_ID);
+
+      // Home is Today, which covers the reader, so the offer waits for Today
+      // like it does on any visit to "/".
+      expect(state.today.isOpen.value).toBe(true);
+      expect(state.tutorial.promptVisible.value).toBe(false);
+
+      state.today.close();
+
+      await waitFor(() => state.tutorial.promptVisible.value, 2000);
+      expect(state.tutorial.promptVisible.value).toBe(true);
+    });
   }
-
-  const modalOpen = (state: Awaited<ReturnType<typeof openSharedPage>>) =>
-    state.modals.modals.value.some(
-      (modal) => modal.id === SHARED_PAGE_MODAL_ID
-    );
-
-  it("does not offer the tutorial over the modal", async () => {
-    const state = await openSharedPage();
-
-    expect(modalOpen(state)).toBe(true);
-    expect(state.today.isOpen.value).toBe(false);
-    expect(state.tutorial.promptVisible.value).toBe(false);
-  });
-
-  it("starting goes to the first reading and keeps the offer back", async () => {
-    const state = await openSharedPage();
-
-    state.app.startSharedPage();
-    await waitFor(
-      () =>
-        state.app.currentReadingState.value?.tab.readingState.chapterData.value
-          ?.book.id === "EXO",
-      2000
-    );
-
-    expect(modalOpen(state)).toBe(false);
-    expect(state.playlists.playing.value?.currentIndex.value).toBe(0);
-    expect(state.tutorial.promptVisible.value).toBe(false);
-  });
-
-  it("offers the tutorial from the home screen after the modal is closed", async () => {
-    const state = await openSharedPage();
-
-    state.modals.closeModal(SHARED_PAGE_MODAL_ID);
-
-    // Home is Today, which covers the reader, so the offer waits for Today
-    // like it does on any visit to "/".
-    expect(state.today.isOpen.value).toBe(true);
-    expect(state.tutorial.promptVisible.value).toBe(false);
-
-    state.today.close();
-
-    await waitFor(() => state.tutorial.promptVisible.value, 2000);
-    expect(state.tutorial.promptVisible.value).toBe(true);
-  });
-});
+);

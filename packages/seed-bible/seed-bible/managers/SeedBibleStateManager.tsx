@@ -23,7 +23,10 @@ import {
 import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
-import { SharedPageModalContent } from "../components/SharedPageModal/SharedPageModal";
+import {
+  SharedPageModalContent,
+  SharedPageNotFoundModalContent,
+} from "../components/SharedPageModal/SharedPageModal";
 import {
   buildSharedPagePath,
   parseSharedPagePath,
@@ -1659,6 +1662,30 @@ export function createSeedBibleState(
     return null;
   });
 
+  /** The kind of shared page the URL is on when its record was looked up and doesn't exist. */
+  const sharedPageNotFoundKind = computed<SharedPageKind | null>(() =>
+    playlists.playlistPageNotFound.value
+      ? "playlist"
+      : readingPlans.readingPlanPageNotFound.value
+        ? "readingPlan"
+        : null
+  );
+
+  /** "Playlist not found" / "Reading plan not found", or null. */
+  const sharedPageNotFoundTitle = computed<string | null>(() => {
+    const kind = sharedPageNotFoundKind.value;
+    if (!kind) {
+      return null;
+    }
+    void i18n.language.value;
+    const { t } = i18n;
+    return kind === "playlist"
+      ? t("playlist-not-found-title", { defaultValue: "Playlist not found" })
+      : t("reading-plan-not-found-title", {
+          defaultValue: "Reading plan not found",
+        });
+  });
+
   /** The shared page's title, falling back to "Untitled …" for its kind. */
   const sharedPageName = computed<string | null>(() => {
     const page = sharedPage.value;
@@ -1713,6 +1740,10 @@ export function createSeedBibleState(
 
       if (sharedPageTitle.value) {
         return `${sharedPageTitle.value} | ${seedBibleTitle}`;
+      }
+
+      if (sharedPageNotFoundTitle.value) {
+        return `${sharedPageNotFoundTitle.value} | ${seedBibleTitle}`;
       }
 
       if (!selectedTab.value) {
@@ -3474,10 +3505,39 @@ export function createSeedBibleState(
 
   // A shared playlist or reading plan link opens on a modal describing it.
   // Start begins it; closing it any other way (Close, the header's X, the
-  // backdrop) leaves for the home screen.
+  // backdrop) leaves for the home screen. A link to one that doesn't exist
+  // opens a "not found" modal in the same place, and closing that goes home
+  // too.
   effect(() => {
     const page = sharedPage.value;
     const name = sharedPageName.value;
+    const notFoundKind = sharedPageNotFoundKind.value;
+    const notFoundTitle = sharedPageNotFoundTitle.value;
+    if (!page && notFoundKind && notFoundTitle) {
+      const { t } = i18n;
+      modals.openModal({
+        id: SHARED_PAGE_MODAL_ID,
+        title: notFoundTitle,
+        useCasualOSApp: false,
+        content: () => (
+          <SharedPageNotFoundModalContent
+            message={
+              notFoundKind === "playlist"
+                ? t("playlist-not-found-message", {
+                    defaultValue:
+                      "This playlist doesn't exist, or it has been deleted. Check the link, or ask the person who shared it for a new one.",
+                  })
+                : t("reading-plan-not-found-message", {
+                    defaultValue:
+                      "This reading plan doesn't exist, or it has been deleted. Check the link, or ask the person who shared it for a new one.",
+                  })
+            }
+            onClose={() => modals.closeModal(SHARED_PAGE_MODAL_ID)}
+          />
+        ),
+      });
+      return;
+    }
     if (!page || !name) {
       if (
         modals.modals.peek().some((modal) => modal.id === SHARED_PAGE_MODAL_ID)
@@ -3543,7 +3603,7 @@ export function createSeedBibleState(
     const modalOpen = modals.modals.value.some(
       (modal) => modal.id === SHARED_PAGE_MODAL_ID
     );
-    if (modalOpen || !sharedPage.peek()) {
+    if (modalOpen || !(sharedPage.peek() || sharedPageNotFoundKind.peek())) {
       return;
     }
     const home = new URL(navigation.initialUrl.href);
