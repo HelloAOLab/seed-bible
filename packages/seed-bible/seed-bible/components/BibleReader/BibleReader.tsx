@@ -54,7 +54,7 @@ import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
-import { InfoSettingsIcon } from "../../components/icons";
+import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import {
@@ -65,6 +65,8 @@ import {
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
+import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
+import { findScrollContainer, readBottomChromeInset } from "./readerViewport";
 
 interface ReaderChapterActionProps {
   state: SeedBibleState;
@@ -1342,6 +1344,15 @@ const CHAPTER_SKELETON_PARAGRAPHS = [
   ["95%", "96%", "98%", "89%", "68%"],
 ] as const;
 
+/** A note marker in the mobile gutter, placed against a measured line box. */
+interface NoteMarker {
+  verseNumber: number;
+  /** Offset from the top of the chapter content box, in px. */
+  top: number;
+  /** Height of the verse's first line box, so the icon centres on it. */
+  height: number;
+}
+
 /**
  * One other participant's place in this chapter, ready to draw: the verses
  * they can see plus what identifies them. Built in the reader from the shared
@@ -1535,40 +1546,6 @@ function placePresenceArrows(
   return arrows;
 }
 
-/** The nearest ancestor that scrolls, or null when the page itself does. */
-function findScrollContainer(element: HTMLElement): HTMLElement | null {
-  for (
-    let node = element.parentElement;
-    node && node !== document.body;
-    node = node.parentElement
-  ) {
-    const { overflowY } = getComputedStyle(node);
-    if (overflowY === "auto" || overflowY === "scroll") {
-      return node;
-    }
-  }
-  return null;
-}
-
-/**
- * How much of the bottom of the reader the fixed bottom chrome covers, read
- * from the variable BibleReaderToolbar keeps up to date. Written in px at
- * runtime; the stylesheet fallback is in rem.
- */
-function readBottomChromeInset(): number {
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue("--sb-reader-bottom-inset")
-    .trim();
-  const value = parseFloat(raw);
-  if (!Number.isFinite(value)) return 0;
-  if (raw.endsWith("rem")) {
-    return (
-      value * parseFloat(getComputedStyle(document.documentElement).fontSize)
-    );
-  }
-  return raw.endsWith("px") ? value : 0;
-}
-
 /**
  * Where the screen is over the chapter content, in the content's own
  * coordinates. Accounts for the mobile header floating over the top of the
@@ -1755,6 +1732,11 @@ interface ChapterContentProps {
    */
   isStale?: boolean;
   /**
+   * Mobile has no Discover panel to read notes alongside the text, so the
+   * note markers move out into a gutter beside the scripture there (#1691).
+   */
+  isMobile?: boolean;
+  /**
    * Other participants reading this same chapter in a shared session, drawn as
    * bars beside the text. Undefined outside a session, which closes the gutter
    * altogether; inside one the gutter stays open even while the list is empty,
@@ -1783,10 +1765,12 @@ function ChapterContent(props: ChapterContentProps) {
     justConvertedSelectionRef,
     scriptureElements,
     onAnnotationVerseClick,
+    isMobile = false,
     presence,
     onVisibleVersesChange,
   } = props;
 
+  const { t } = useI18n();
   const currentChapter = chapterData.value;
   const chapterAnnotations =
     currentChapter && annotations
@@ -2159,7 +2143,71 @@ function ChapterContent(props: ChapterContentProps) {
     setPresenceMarkers(next);
   };
 
-  // Both measurements re-run after every render, and the ResizeObserver below
+  // The verse each note starts at, deduplicated: two notes on the same verse
+  // get one marker, and a note spanning 3-6 marks verse 3 only.
+  const noteVerseNumbers = Array.from(
+    new Set(
+      chapterAnnotations
+        .map((annotation) => {
+          const verses = annotationVerseNumbers(annotation);
+          return verses.length > 0 ? Math.min(...verses) : null;
+        })
+        .filter((verseNumber): verseNumber is number => verseNumber !== null)
+    )
+  ).sort((a, b) => a - b);
+  // Open on every mobile chapter, notes or not: the gutter's indent narrows
+  // the text, so opening it only where there are notes would reflow the page
+  // each time the reader flips between an annotated chapter and a bare one.
+  const showNoteGutter = isMobile;
+
+  const [noteMarkers, setNoteMarkers] = useState<NoteMarker[]>([]);
+  // Signature of the last markers written to state, so the measure -> setState
+  // -> re-render -> measure cycle settles instead of looping.
+  const noteMarkerSignatureRef = useRef("");
+
+  // Where each note marker sits vertically. Markers live in a gutter beside
+  // the text rather than in the flow, so their position has to be measured:
+  // it is the verse's *first* visual line box, which is the line carrying
+  // the verse number.
+  const measureNoteMarkers = () => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const next: NoteMarker[] = [];
+    if (showNoteGutter) {
+      const box = content.getBoundingClientRect();
+      for (const verseNumber of noteVerseNumbers) {
+        const verseEl = content.querySelector<HTMLElement>(
+          `.sb-verse[data-verse-number="${verseNumber}"]`
+        );
+        if (!verseEl) continue;
+        // A verse containing poetry is block-level (so is each of its lines),
+        // which makes its own client rect the whole multi-line column —
+        // centring on that drops the marker halfway down the verse.
+        // `collectLineRects` walks past the block lines and reports one rect
+        // per *visual* line, so [0] is the line carrying the verse number
+        // whether the verse is prose or poetry.
+        const line = collectLineRects(verseEl, box.left, box.top)[0];
+        if (!line) continue;
+        next.push({
+          verseNumber,
+          top: line.top,
+          height: line.bottom - line.top,
+        });
+      }
+    }
+
+    const signature = next
+      .map(
+        (m) => `${m.verseNumber}:${Math.round(m.top)}:${Math.round(m.height)}`
+      )
+      .join("|");
+    if (signature === noteMarkerSignatureRef.current) return;
+    noteMarkerSignatureRef.current = signature;
+    setNoteMarkers(next);
+  };
+
+  // The measurements re-run after every render, and the ResizeObserver below
   // reaches them through this ref instead of closing over them. Registered
   // once at mount, that callback kept the very first render's `presence` —
   // the empty list a reader has before any peer position arrives — so every
@@ -2172,9 +2220,11 @@ function ChapterContent(props: ChapterContentProps) {
     remeasureRef.current = () => {
       measureRibbons();
       measurePresence();
+      measureNoteMarkers();
     };
     measureRibbons();
     measurePresence();
+    measureNoteMarkers();
     syncVersesRef.current();
   });
 
@@ -2215,13 +2265,27 @@ function ChapterContent(props: ChapterContentProps) {
     .map((d) => d.containerClassName)
     .join(" ");
 
+  // verse number -> full ChapterVerse, so a gutter marker can select its verse
+  // the same way tapping the verse itself does.
+  const verseByNumber = new Map<number, ChapterVerse>();
+  for (const entry of chapterData.value.chapter.content) {
+    if (
+      entry &&
+      typeof entry === "object" &&
+      entry.type === "verse" &&
+      typeof entry.number === "number"
+    ) {
+      verseByNumber.set(entry.number, entry as ChapterVerse);
+    }
+  }
+
   return (
     <div
       ref={contentRef}
       className={`sb-chapter-content${
         props.isStale ? " sb-chapter-content-stale" : ""
-      }${
-        presence !== undefined ? " sb-chapter-content-presence" : ""
+      }${presence !== undefined ? " sb-chapter-content-presence" : ""}${
+        showNoteGutter ? " sb-chapter-content-note-gutter" : ""
       } ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
@@ -2250,6 +2314,38 @@ function ChapterContent(props: ChapterContentProps) {
           />
         ))}
       </svg>
+      {showNoteGutter && (
+        <div className="sb-note-gutter" aria-hidden={noteMarkers.length === 0}>
+          {noteMarkers.map((marker) => (
+            <button
+              key={marker.verseNumber}
+              type="button"
+              className="sb-note-gutter-marker"
+              style={{ top: `${marker.top}px`, height: `${marker.height}px` }}
+              aria-label={t("notes-for-verse", {
+                verse: marker.verseNumber,
+                defaultValue: "Notes for verse {{verse}}",
+              })}
+              onClick={(event: MouseEvent) => {
+                const value = verseByNumber.get(marker.verseNumber);
+                if (!value || !chapterData.value) return;
+                onAnnotationVerseClick(
+                  {
+                    bookId: chapterData.value.book.id,
+                    chapterNumber: chapterData.value.chapter.number,
+                    verse: value,
+                    translationId: chapterData.value.translation.id,
+                  },
+                  marker.verseNumber,
+                  event
+                );
+              }}
+            >
+              <span className="material-symbols-outlined">sticky_note_2</span>
+            </button>
+          ))}
+        </div>
+      )}
       {presence !== undefined && (
         <PresenceGutter
           markers={presenceMarkers}
@@ -2350,7 +2446,9 @@ export function BibleReader(props: BibleReaderProps) {
     () => translation.value?.website.trim() ?? ""
   );
 
-  const isMobile = state?.app.isMobile.value ?? false;
+  const isMinimalEmbed = state?.app.isMinimalEmbed?.value ?? false;
+  const isCompactReader =
+    state?.app.isCompactReader?.value ?? state?.app.isMobile.value ?? false;
 
   // Where the other people in this session are (#1692). Only participants
   // reading the same chapter can be placed against verses on this page, and
@@ -2425,7 +2523,7 @@ export function BibleReader(props: BibleReaderProps) {
       return;
     }
 
-    if (isMobile) {
+    if (isCompactReader) {
       selectVerse(verse, event.clientX, event.clientY);
       readingState.pendingAnnotationScrollVerse.value = verseNumber;
       return;
@@ -2578,11 +2676,19 @@ export function BibleReader(props: BibleReaderProps) {
     }
   };
 
+  // Only the current panel's title opens the selector; the side panels are
+  // non-interactive previews for the swipe transition.
   const renderMobileChapterTitle = (
     bookName: string,
-    chapter: number | string
+    chapter: number | string,
+    interactive = false
   ) => (
-    <h2 className="sb-bible-reader-mobile-content-title">
+    <h2
+      className={`sb-bible-reader-mobile-content-title${
+        interactive ? " sb-bible-reader-mobile-content-title-tappable" : ""
+      }`}
+      {...(interactive ? flingSafeTapHandlers(openBookSelector) : {})}
+    >
       <span className="sb-bible-reader-book">{bookName}</span>
       <span className="sb-bible-reader-chapter">{chapter}</span>
     </h2>
@@ -2597,7 +2703,9 @@ export function BibleReader(props: BibleReaderProps) {
   const renderChapterSkeleton = () => (
     <SkeletonContainer
       label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
-      className="sb-chapter-content sb-chapter-skeleton"
+      className={`sb-chapter-content sb-chapter-skeleton${
+        isCompactReader ? " sb-chapter-content-note-gutter" : ""
+      }`}
     >
       <Skeleton shape="block" width="42%" />
       {CHAPTER_SKELETON_PARAGRAPHS.map((widths, paragraph) => (
@@ -2627,10 +2735,11 @@ export function BibleReader(props: BibleReaderProps) {
 
   const renderMainContent = () => (
     <>
-      {isMobile &&
+      {isCompactReader &&
         renderMobileChapterTitle(
           currentBookName.value ?? bookId.value ?? "",
-          chapterNumber.value ?? ""
+          chapterNumber.value ?? "",
+          true
         )}
 
       {bookNotFound.value && (
@@ -2741,6 +2850,7 @@ export function BibleReader(props: BibleReaderProps) {
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
               onAnnotationVerseClick={handleAnnotationVerseClick}
+              isMobile={isCompactReader}
               presence={sharedSession ? presence : undefined}
               onVisibleVersesChange={reportVisibleVerses}
             />
@@ -2783,35 +2893,38 @@ export function BibleReader(props: BibleReaderProps) {
   // const extraContent = discoverPanel ? (
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
-  const extraContent = state ? (
-    <DiscoverContentPanel tab={currentSlot.tab} state={state} />
-  ) : null;
+  const extraContent =
+    state && !state.app.isDiscoverOpen.value ? (
+      <DiscoverContentPanel tab={currentSlot.tab} state={state} />
+    ) : null;
 
   return (
     <div
       className={`sb-bible-reader ${readerFontSizeClass}${
-        isMobile ? " sb-bible-reader-mobile" : ""
+        isCompactReader ? " sb-bible-reader-mobile" : ""
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
-      {isMobile && state ? (
+      {isCompactReader && state ? (
         <Fragment key="mobile">
           <div
             className={`sb-bible-reader-mobile-header${
-              mobileChrome?.isScrolled
+              !isMinimalEmbed && mobileChrome?.isScrolled
                 ? " sb-bible-reader-mobile-header-hidden"
                 : ""
             }`}
           >
             <div className="sb-bible-reader-mobile-header-text">
               <h1 className="sb-bible-reader-mobile-header-title">
-                <span
-                  className="sb-bible-reader-mobile-header-book"
-                  onClick={openBookSelector}
-                >
-                  {currentBookName.value ?? bookId.value ?? ""}{" "}
-                  {chapterNumber.value}
-                </span>
+                {!isMinimalEmbed && (
+                  <span
+                    className="sb-bible-reader-mobile-header-book"
+                    onClick={openBookSelector}
+                  >
+                    {currentBookName.value ?? bookId.value ?? ""}{" "}
+                    {chapterNumber.value}
+                  </span>
+                )}
                 <button
                   type="button"
                   className="sb-bible-reader-mobile-header-translation"
@@ -2825,62 +2938,100 @@ export function BibleReader(props: BibleReaderProps) {
                 </button>
               </h1>
             </div>
-            <ChapterNotesButton
-              state={state}
-              bookId={bookId.value}
-              chapterNumber={chapterNumber.value}
-            />
+            {!isMinimalEmbed && (
+              <ChapterNotesButton
+                state={state}
+                bookId={bookId.value}
+                chapterNumber={chapterNumber.value}
+              />
+            )}
             <div className="sb-bible-reader-mobile-header-actions">
-              {!state.playlists.playing.value && (
+              {isMinimalEmbed ? (
                 <>
-                  <ReaderSaveButton
-                    state={state}
-                    translationId={translationId.value}
-                    bookId={bookId.value}
-                    chapterNumber={chapterNumber.value}
-                  />
-                  {SHOW_BOOKMARK_BUTTON && (
-                    <ReaderBookmarkButton
-                      state={state}
-                      translationId={translationId.value}
-                      bookId={bookId.value}
-                      chapterNumber={chapterNumber.value}
-                    />
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-header-open-tab"
+                    aria-label={t("open-in-new-tab", {
+                      defaultValue: "Open in New Tab",
+                    })}
+                    title={t("open-in-new-tab", {
+                      defaultValue: "Open in New Tab",
+                    })}
+                    onClick={() => {
+                      window.open(
+                        urlWithoutEmbedParam(state.navigation.currentUrl.value)
+                          .href,
+                        "_blank",
+                        "noopener,noreferrer"
+                      );
+                    }}
+                  >
+                    <MaterialIcon>open_in_new</MaterialIcon>
+                  </button>
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-header-settings"
+                    onClick={() => mobileChrome?.onOpenMobileSettings()}
+                    aria-label={t("settings", { defaultValue: "Settings" })}
+                    title={t("settings", { defaultValue: "Settings" })}
+                  >
+                    <InfoSettingsIcon />
+                  </button>
+                </>
+              ) : (
+                <>
+                  {!state.playlists.playing.value && (
+                    <>
+                      <ReaderSaveButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                      {SHOW_BOOKMARK_BUTTON && (
+                        <ReaderBookmarkButton
+                          state={state}
+                          translationId={translationId.value}
+                          bookId={bookId.value}
+                          chapterNumber={chapterNumber.value}
+                        />
+                      )}
+                    </>
                   )}
+                  <QuickToolbar
+                    toolsManager={state.tools}
+                    readingState={readingState}
+                    playlists={state.playlists}
+                    annotations={state.annotations}
+                    features={state.features}
+                    sharedSession={sharedSession ?? null}
+                    toast={state.app.toast}
+                    modals={state.modals}
+                    app={state.app}
+                    className="sb-quick-toolbar-mobile-header"
+                  />
+                  {/*
+                   * No account avatar here: "You" is a bottom-bar tab again
+                   * (#1554), and two avatars on one screen made it unclear which
+                   * one was the way to your profile.
+                   */}
+                  {sharedSession ? (
+                    <MobileSessionParticipants
+                      state={state}
+                      session={sharedSession}
+                    />
+                  ) : null}
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-header-settings"
+                    onClick={() => mobileChrome?.onOpenMobileSettings()}
+                    aria-label={t("settings", { defaultValue: "Settings" })}
+                    title={t("settings", { defaultValue: "Settings" })}
+                  >
+                    <InfoSettingsIcon />
+                  </button>
                 </>
               )}
-              <QuickToolbar
-                toolsManager={state.tools}
-                readingState={readingState}
-                playlists={state.playlists}
-                annotations={state.annotations}
-                features={state.features}
-                sharedSession={sharedSession ?? null}
-                toast={state.app.toast}
-                modals={state.modals}
-                app={state.app}
-                className="sb-quick-toolbar-mobile-header"
-              />
-              {/*
-               * No account avatar here: "You" is a bottom-bar tab again
-               * (#1554), and two avatars on one screen made it unclear which
-               * one was the way to your profile.
-               */}
-              {sharedSession ? (
-                <MobileSessionParticipants
-                  state={state}
-                  session={sharedSession}
-                />
-              ) : null}
-              <button
-                type="button"
-                className="sb-bible-reader-mobile-header-settings"
-                onClick={() => mobileChrome?.onOpenMobileSettings()}
-                aria-label={t("settings", { defaultValue: "Settings" })}
-                title={t("settings", { defaultValue: "Settings" })}
-              >
-                <InfoSettingsIcon />
-              </button>
             </div>
           </div>
 
@@ -2901,7 +3052,7 @@ export function BibleReader(props: BibleReaderProps) {
                     mobileChrome.prevChapterPreview.book.name,
                     mobileChrome.prevChapterPreview.chapter.number
                   )}
-                <div className="sb-chapter-content">
+                <div className="sb-chapter-content sb-chapter-content-note-gutter">
                   {renderStaticChapterContent(
                     mobileChrome?.prevChapterPreview ?? null,
                     scriptureElements
@@ -2924,7 +3075,7 @@ export function BibleReader(props: BibleReaderProps) {
                     mobileChrome.nextChapterPreview.book.name,
                     mobileChrome.nextChapterPreview.chapter.number
                   )}
-                <div className="sb-chapter-content">
+                <div className="sb-chapter-content sb-chapter-content-note-gutter">
                   {renderStaticChapterContent(
                     mobileChrome?.nextChapterPreview ?? null,
                     scriptureElements

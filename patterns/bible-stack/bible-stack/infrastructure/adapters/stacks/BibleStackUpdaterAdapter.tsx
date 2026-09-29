@@ -1,19 +1,22 @@
 import type {
-  BibleStackUpdaterAdapterPort,
-  UpdateCommand,
   UpdateReturnValue,
+  BibleStackUpdaterPort,
+  BibleStackUpdateCommand,
 } from "../../../application/ports/out/BibleStackUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
 import type { StackLowerCoverMapper } from "../../mappers/StackLowerCoverMapper";
 import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
 import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
-import { GetBotScales } from "../../functions/casualos";
+import {
+  GetBotScales,
+  SetStrictTag,
+  AnimateStrictTag,
+} from "../../functions/casualos";
 import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
 import { CrossPositions } from "../../../domain/models/canvas";
-import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { TestamentStackUpdaterAdapter } from "./TestamentStackUpdaterAdapter";
-import { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 import type { CrossLineTags } from "../../models/stack";
+import type { LoggerAdapter } from "../environment/LoggerAdapter";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -22,11 +25,11 @@ interface AdapterParams {
   defaultCoverMapper: StackCoverMapper;
   crossLineMapper: StackCrossLineMapper;
   layoutConfigProvider: LayoutConfigProvider;
-  loggerPort: LoggerPort;
+  loggerPort: LoggerAdapter;
   testamentStackUpdaterAdapter: TestamentStackUpdaterAdapter;
 }
 
-export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
+export class BibleStackUpdaterAdapter implements BibleStackUpdaterPort {
   #getDimension: AdapterParams["getDimension"];
   #stackUpdateConfigProvider: AdapterParams["stackUpdateConfigProvider"];
   #lowerCoverMapper: AdapterParams["lowerCoverMapper"];
@@ -66,7 +69,7 @@ export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
     shouldCrossGoInMiddle,
     activeTestaments,
     currentCrossPosition,
-  }: UpdateCommand): UpdateReturnValue {
+  }: BibleStackUpdateCommand): UpdateReturnValue {
     const dimension = this.#getDimension();
     const duration = this.#stackUpdateConfigProvider.getDuration(pacing);
     const easing = this.#stackUpdateConfigProvider.getEasing();

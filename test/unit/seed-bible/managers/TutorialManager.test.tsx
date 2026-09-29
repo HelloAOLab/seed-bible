@@ -7,6 +7,7 @@ import {
   MOBILE_TUTORIAL_STEPS,
   ONBOARDING_STEPS,
   type TutorialLinkRequest,
+  type TutorialStep,
 } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
@@ -46,12 +47,17 @@ function createPanes(): PanesManager {
   } as unknown as PanesManager;
 }
 
-function createSidebar(): SidebarManager {
+function createSidebar(collapsed = false): SidebarManager {
+  const isSidebarCollapsed = signal(collapsed);
   return {
     closeSearchPanel: vi.fn(),
     closeChatPanel: vi.fn(),
     closeSettings: vi.fn(),
     closeSidebar: vi.fn(),
+    isSidebarCollapsed,
+    setSidebarCollapsed: vi.fn((value: boolean) => {
+      isSidebarCollapsed.value = value;
+    }),
   } as unknown as SidebarManager;
 }
 
@@ -158,6 +164,68 @@ describe("createTutorialManager — session-link joins", () => {
     tutorial.startContextual("search");
 
     expect(tutorial.running.value).toBe(true);
+  });
+});
+
+describe("createTutorialManager — startContextual with inline steps", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  function makeStep(id: string): TutorialStep {
+    return {
+      id,
+      target: `.${id}`,
+      titleKey: `${id}.title`,
+      titleDefault: id,
+      bodyKey: `${id}.body`,
+      bodyDefault: id,
+    };
+  }
+
+  it("runs the steps passed in, instead of the CONTEXTUAL_TUTORIALS registry lookup", () => {
+    window.localStorage.setItem("sb-tutorial-seen", "true");
+
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    // Not a registered CONTEXTUAL_TUTORIALS key, so a plain
+    // `startContextual("a-brand-new-feature")` would no-op.
+    tutorial.startContextual("a-brand-new-feature", [makeStep("step-1")]);
+
+    expect(tutorial.running.value).toBe(true);
+    expect(tutorial.currentStep.value?.id).toBe("step-1");
+  });
+
+  it("still tracks the seen flag under featureId, so it won't replay once finished", () => {
+    window.localStorage.setItem("sb-tutorial-seen", "true");
+
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    tutorial.startContextual("a-brand-new-feature", [makeStep("step-1")]);
+    tutorial.finish();
+
+    expect(tutorial.featuresSeen.value["a-brand-new-feature"]).toBe(true);
+
+    tutorial.startContextual("a-brand-new-feature", [makeStep("step-1")]);
+    expect(tutorial.running.value).toBe(false);
   });
 });
 
@@ -342,6 +410,7 @@ describe("createTutorialManager — tutorial links", () => {
       createPanes(),
       createSidebar(),
       false,
+      signal(false),
       link
     );
     tutorial.hydrateStoredFlags();
@@ -527,5 +596,107 @@ describe("mirrorTutorialToUrl", () => {
     });
 
     expect(url.searchParams.get("tutorial")).toBe("search");
+  });
+});
+
+describe("createTutorialManager — onboarding start", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("expands a collapsed desktop sidebar so the tour can spotlight it", () => {
+    const sidebar = createSidebar(true);
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      sidebar
+    );
+
+    tutorial.start();
+
+    expect(sidebar.setSidebarCollapsed).toHaveBeenCalledWith(false);
+    expect(sidebar.isSidebarCollapsed.value).toBe(false);
+    expect(tutorial.running.value).toBe(true);
+  });
+
+  it("leaves a collapsed sidebar collapsed on mobile", () => {
+    const sidebar = createSidebar(true);
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(true),
+      createPanes(),
+      sidebar
+    );
+
+    tutorial.start();
+
+    expect(sidebar.setSidebarCollapsed).not.toHaveBeenCalled();
+    expect(sidebar.isSidebarCollapsed.value).toBe(true);
+  });
+
+  it("does not raise the offer card when the tour was started before the reader was visible", () => {
+    const readerVisible = signal(false);
+    const tutorial = createTutorialManager(
+      createLogin(),
+      readerVisible,
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    tutorial.start();
+    readerVisible.value = true;
+
+    expect(tutorial.running.value).toBe(true);
+    expect(tutorial.promptVisible.value).toBe(false);
+  });
+});
+
+describe("createTutorialManager — compact embed", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  function createEmbeddedTutorial() {
+    return createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar(),
+      false,
+      signal(true)
+    );
+  }
+
+  it("does not offer the tour, start it, or show the skip prompt", () => {
+    const tutorial = createEmbeddedTutorial();
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+
+    expect(tutorial.promptVisible.value).toBe(false);
+    expect(tutorial.running.value).toBe(false);
+    expect(tutorial.skipPromptVisible.value).toBe(false);
+
+    tutorial.start();
+    expect(tutorial.running.value).toBe(false);
+
+    tutorial.startContextual("search");
+    expect(tutorial.running.value).toBe(false);
+
+    expect(tutorial.startTutorial("search")).toBe(false);
+    expect(tutorial.running.value).toBe(false);
+
+    tutorial.skip();
+    expect(tutorial.skipPromptVisible.value).toBe(false);
   });
 });

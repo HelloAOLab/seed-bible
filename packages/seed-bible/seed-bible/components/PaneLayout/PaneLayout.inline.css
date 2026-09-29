@@ -17,9 +17,16 @@
   align-items: stretch;
   overflow: hidden;
   position: relative;
-  padding: 0.3125rem;
-  /* padding-left: 0px; */
-  margin-left: -0.625rem;
+}
+
+/* Desktop only: the gutter around the reader slots, pulled left to tuck
+   against the docked sidebar. Phones and compact embeds (which render the
+   phone reader at any frame width, with no sidebar) stay flush. */
+@media (min-width: 481px) {
+  .sb-app-root:not(.sb-embed-minimal) .sb-panes-layout {
+    padding: 0.3125rem;
+    margin-left: -0.625rem;
+  }
 }
 
 .sb-pane-component,

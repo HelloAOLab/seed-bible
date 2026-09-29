@@ -28,6 +28,7 @@ import type {
 } from "../../config/labels/showAnimation";
 import { AnimateStrictTag, SetStrictTag } from "../../functions/casualos";
 import type { VisualStateRegistry } from "../stacks/VisualStateRegistry";
+import type { LabelFeedbackPort } from "../../../application/ports/out/LabelFeedback";
 
 interface LabelFeedbackConfigProviderPort {
   getShowAnimationDuration: <P extends ShowSequencePacing>(
@@ -128,7 +129,7 @@ const shakeBackwardConstructor = ({
   });
 };
 
-export class LabelFeedbackAdapter {
+export class LabelFeedbackAdapter implements LabelFeedbackPort {
   #shakeAnimationsMap: Map<InfoLabelData["id"], number> = new Map();
   #dimensionProvider: AdapterProps["dimensionProvider"];
   #labelFeedbackConfigProviderPort: AdapterProps["labelFeedbackConfigProviderPort"];
@@ -219,12 +220,27 @@ export class LabelFeedbackAdapter {
           }
         : undefined,
       ...data.activityIndicators.map((indicator) => ({
-        pieceBot: this.#activityIndicatorMapperPort.toInfrastructure(indicator),
+        pieceBot: this.#activityIndicatorMapperPort.toInfrastructure(
+          indicator.piece
+        ),
         initialPosition: this.#visualStateRegistryPort.getStateProperty({
-          piece: indicator,
+          piece: indicator.piece,
           property: "initialPosition",
         }),
       })),
+      ...data.activityIndicators.map((indicator) =>
+        indicator.background
+          ? {
+              pieceBot: this.#activityIndicatorMapperPort.toInfrastructure(
+                indicator.background
+              ),
+              initialPosition: this.#visualStateRegistryPort.getStateProperty({
+                piece: indicator.background,
+                property: "initialPosition",
+              }),
+            }
+          : undefined
+      ),
     ];
 
     const animations = piecesBotData.map(async (pieceBotData) => {
@@ -317,7 +333,7 @@ export class LabelFeedbackAdapter {
       this.#labelFeedbackConfigProviderPort.getShowAnimationDuration(pacing);
     this.stopOpacityTransition(data);
 
-    const { text, tail, activityIndicators, date } =
+    const { text, tail, activityIndicators, activityBackgrounds, date } =
       this.#unpackLabelData(data);
 
     const labelTargetOpacity = this.#visualStateRegistryPort.getStateProperty({
@@ -361,6 +377,20 @@ export class LabelFeedbackAdapter {
             tagMaskSpace: false,
           });
         }) ?? []),
+        ...activityBackgrounds.map((background) => {
+          return AnimateStrictTag(background, "formOpacity", {
+            toValue: this.#visualStateRegistryPort.getStateProperty({
+              piece: { id: background.id, type: background.tags.type },
+              property: "targetOpacity",
+            }),
+            duration,
+            easing:
+              this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+                "easing"
+              ),
+            tagMaskSpace: false,
+          });
+        }),
         AnimateStrictTag(activityIndicators, {
           fromValue: { labelOpacity: 0 },
           toValue: { labelOpacity: labelTargetOpacity },
@@ -398,12 +428,13 @@ export class LabelFeedbackAdapter {
     const duration =
       this.#labelFeedbackConfigProviderPort.getShowAnimationDuration(pacing);
     this.stopOpacityTransition(data);
-    const { text, tail, activityIndicators, date } =
+    const { text, tail, activityIndicators, activityBackgrounds, date } =
       this.#unpackLabelData(data);
 
     try {
       const botsToAnimateOpacity: TypedBot[] = [
         ...activityIndicators,
+        ...activityBackgrounds,
         tail,
         text,
       ];
@@ -516,6 +547,7 @@ export class LabelFeedbackAdapter {
     text: InfoLabelTextBot;
     tail: InfoLabelTailBot;
     activityIndicators: ActivityIndicatorBot[];
+    activityBackgrounds: ActivityIndicatorBot[];
     date: InfoLabelDateBot | undefined;
   } {
     const transformer = this.#infoLabelTransformerMapperPort.toInfrastructure(
@@ -539,8 +571,9 @@ export class LabelFeedbackAdapter {
       );
     }
     const activityIndicators = data.activityIndicators.map((indicator) => {
-      const indicatorBot =
-        this.#activityIndicatorMapperPort.toInfrastructure(indicator);
+      const indicatorBot = this.#activityIndicatorMapperPort.toInfrastructure(
+        indicator.piece
+      );
       if (!indicatorBot) {
         throw new Error(
           `LabelFeedbackAdapter: indicatorBot not found at displayShowFeedback`
@@ -548,6 +581,16 @@ export class LabelFeedbackAdapter {
       }
       return indicatorBot;
     });
+    const activityBackgrounds = data.activityIndicators
+      .map((indicator) => indicator.background)
+      .filter(
+        (background): background is ActivityIndicator =>
+          background !== undefined
+      )
+      .map((background) =>
+        this.#activityIndicatorMapperPort.toInfrastructure(background)
+      )
+      .filter((bot): bot is ActivityIndicatorBot => bot !== undefined);
     let date: InfoLabelDateBot | undefined = undefined;
     if (data.date) {
       date = this.#infoLabelDateMapperPort.toInfrastructure(data.date);
@@ -558,6 +601,7 @@ export class LabelFeedbackAdapter {
       text,
       tail,
       activityIndicators,
+      activityBackgrounds,
       date,
     };
   }
@@ -573,11 +617,23 @@ export class LabelFeedbackAdapter {
       bots.push(tail);
     }
     const activityIndicators = data.activityIndicators.map((indicator) =>
-      this.#activityIndicatorMapperPort.toInfrastructure(indicator)
+      this.#activityIndicatorMapperPort.toInfrastructure(indicator.piece)
     );
     for (const indicator of activityIndicators) {
       if (indicator) {
         bots.push(indicator);
+      }
+    }
+    const activityBackgrounds = data.activityIndicators.map((indicator) =>
+      indicator.background
+        ? this.#activityIndicatorMapperPort.toInfrastructure(
+            indicator.background
+          )
+        : undefined
+    );
+    for (const background of activityBackgrounds) {
+      if (background) {
+        bots.push(background);
       }
     }
     if (data.date) {

@@ -28,12 +28,10 @@ export class ScripturePiecesStateService implements ScripturePiecesStateServiceP
 
   makePiecesDraggable() {
     this.#arePiecesDraggable = true;
-    // TODO: Call an OnPiecesBecomeDraggable event?
   }
 
   makePiecesNotDraggable() {
     this.#arePiecesDraggable = false;
-    // TODO: Call an OnPiecesBecomeUndraggable event?
   }
 
   get arePiecesDraggable() {

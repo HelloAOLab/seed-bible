@@ -1,13 +1,4 @@
 import { StackBibleData } from "../../domain/entities/StackBibleData";
-import type {
-  PieceLifecycleServicePort,
-  PieceLifecycleAdapterPort,
-  BibleDataRepositoryPort,
-  BibleLifecycleEventPort,
-  IdGeneratorPort,
-  StackPieceLifecycleAdapterPort,
-  BibleSetupAdapterPort,
-} from "../ports/bibleLifecycle";
 import type { WorldPosition } from "../../domain/models/spatial";
 import {
   BibleVisualizationStates,
@@ -16,47 +7,60 @@ import {
 } from "../../domain/models/canvas";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
+import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
+import type { BibleLifecycleServicePort } from "../ports/in/BibleLifecycle";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { BibleSetupPort } from "../ports/out/BibleSetup";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { IdGeneratorPort } from "../ports/out/IdGenerator";
 
 interface ServiceParams {
-  pieceLifecycleAdapterPort: PieceLifecycleAdapterPort;
+  pieceLifecycleAdapterPort: StackPieceLifecyclePort;
   pieceLifecycleServicePort: PieceLifecycleServicePort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
-  bibleLifecycleEventPort: BibleLifecycleEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
   arrangementServicePort: ArrangementServicePort;
   idGeneratorPort: IdGeneratorPort;
-  stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
-  bibleSetupAdapterPort: BibleSetupAdapterPort;
+  stackPieceLifecycleAdapterPort: StackPieceLifecyclePort;
+  bibleSetupAdapterPort: BibleSetupPort;
+  loggerPort: LoggerPort;
 }
 
-export class BibleLifecycleService {
+export class BibleLifecycleService implements BibleLifecycleServicePort {
   #pieceLifecycleAdapterPort: ServiceParams["pieceLifecycleAdapterPort"];
   #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
   #bibleDataRepositoryPort: ServiceParams["bibleDataRepositoryPort"];
-  #bibleLifecycleEventPort: ServiceParams["bibleLifecycleEventPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
   #arrangementServicePort: ServiceParams["arrangementServicePort"];
   #idGeneratorPort: ServiceParams["idGeneratorPort"];
   #hasABibleEverBeenCreated: boolean = false;
   #stackPieceLifecycleAdapterPort: ServiceParams["stackPieceLifecycleAdapterPort"];
   #bibleSetupAdapterPort: ServiceParams["bibleSetupAdapterPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     pieceLifecycleAdapterPort,
     pieceLifecycleServicePort,
     bibleDataRepositoryPort,
-    bibleLifecycleEventPort,
+    eventManagerPort,
     arrangementServicePort,
     idGeneratorPort,
     stackPieceLifecycleAdapterPort,
     bibleSetupAdapterPort,
+    loggerPort,
   }: ServiceParams) {
     this.#pieceLifecycleAdapterPort = pieceLifecycleAdapterPort;
     this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
     this.#bibleDataRepositoryPort = bibleDataRepositoryPort;
-    this.#bibleLifecycleEventPort = bibleLifecycleEventPort;
+    this.#eventManagerPort = eventManagerPort;
     this.#arrangementServicePort = arrangementServicePort;
     this.#idGeneratorPort = idGeneratorPort;
     this.#stackPieceLifecycleAdapterPort = stackPieceLifecycleAdapterPort;
     this.#bibleSetupAdapterPort = bibleSetupAdapterPort;
+    this.#loggerPort = loggerPort;
   }
 
   deleteBible(bibleData: StackBibleData) {
@@ -68,9 +72,9 @@ export class BibleLifecycleService {
     const children = bibleData.clearChildren();
     this.#pieceLifecycleServicePort.deleteTestaments(children);
 
-    this.#bibleLifecycleEventPort.emit("OnBibleDelete", {
+    this.#eventManagerPort.emit("OnBibleDelete", {
       bibleId: bibleData.id,
-    }); // TODO: Wire this event to the InteractionRegistryService to check if the deleted bible is the last interacted
+    });
   }
 
   deleteBibles(biblesData: StackBibleData[]) {
@@ -88,7 +92,7 @@ export class BibleLifecycleService {
     type: BibleType;
     arrangementIndex?: number;
   }) {
-    this.#bibleLifecycleEventPort.emit("OnBibleCreationBegin", {
+    this.#eventManagerPort.emit("OnBibleCreationBegin", {
       hasABibleEverBeenCreated: this.#hasABibleEverBeenCreated,
     });
     this.#hasABibleEverBeenCreated = true;
@@ -148,7 +152,7 @@ export class BibleLifecycleService {
     });
 
     this.#bibleDataRepositoryPort.addBibleData(bibleData);
-    this.#bibleLifecycleEventPort.emit("OnBibleCreated", { bibleData }); // TODO: Make the interaction registry service listen to this to register this bible as the last interacted.
+    this.#eventManagerPort.emit("OnBibleCreated", { bibleData });
 
     const { testamentPiecesMap } = this.#bibleSetupAdapterPort.setUp({
       bibleData,
@@ -161,10 +165,15 @@ export class BibleLifecycleService {
 
     for (const testamentData of bibleData.childrenData) {
       const piece = testamentPiecesMap.get(testamentData.id);
-      if (piece) {
-        testamentData.setPiece(piece);
-        testamentData.activate();
+      if (!piece) {
+        this.#loggerPort.error(
+          "BibleLifecycleService: testament piece not found at createBible.",
+          { testamentDataId: testamentData.id }
+        );
+        continue;
       }
+      testamentData.setPiece(piece);
+      testamentData.activate();
     }
 
     // if (displayJarvisSpawnPieceAnimation)

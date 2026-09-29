@@ -9,7 +9,7 @@ import type {
   CompleteBookChapter,
   SubsetBookChapter,
 } from "../../domain/models/arrangement";
-import type { ScripturePort } from "../ports/in/Scripture";
+import type { ScriptureServicePort } from "../ports/in/Scripture";
 
 interface DataRepositoryPort {
   getBookStaticInfo: (bookId: string) =>
@@ -20,7 +20,7 @@ interface DataRepositoryPort {
     | undefined;
 }
 
-export class ScriptureService implements ScripturePort {
+export class ScriptureService implements ScriptureServicePort {
   #dataRepositoryPort: DataRepositoryPort;
   #biggerChapter: number | undefined;
   #arrangement: ArrangementInfo;

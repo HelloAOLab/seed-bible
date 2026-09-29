@@ -411,6 +411,31 @@ describe("BibleReaderToolbar — verse selection vs. side panes", () => {
     }
   });
 
+  it("does not clear the verse selection when a tap lands in the Discover panel beside the chapter", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    // Stands in for the compact Discover panel `BibleReader.tsx` renders next
+    // to the chapter, e.g. a tap on one of its filter chips.
+    const discoverPanel = document.createElement("div");
+    discoverPanel.className = "sb-bible-reader-discover-panel";
+    const chip = document.createElement("button");
+    discoverPanel.appendChild(chip);
+    document.body.appendChild(discoverPanel);
+
+    try {
+      await act(async () => {
+        chip.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+    } finally {
+      discoverPanel.remove();
+    }
+  });
+
   it("does not clear the verse selection when a tap lands inside a floating pane", async () => {
     const readingState = await selectFirstVerse();
     await renderToolbar();
@@ -1436,9 +1461,9 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       responses: createPrivateEndpointResponses(),
     });
 
-    // The default tool set renders exactly one row here (highlight, save,
-    // copy, share), so there would be nothing to drag open. Two extra tools push
-    // it past a row, which is the case the gesture exists for.
+    // The default cards (highlight, save, note, copy, share) already spill
+    // one card past the first row; two extra tools make sure the overflow row
+    // is there for the drag tests regardless of which defaults are on.
     for (const id of ["test-extra-one", "test-extra-two"]) {
       state.tools.registerVerseToolbarTool({
         id,
@@ -1580,6 +1605,22 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
 
     expect(saveTrigger()!.getAttribute("aria-label")).toBe("Edit save");
     expect(saveTrigger()!.getAttribute("aria-pressed")).toBeNull();
+  });
+
+  it("hides the swipe hint once the extra actions are gone", async () => {
+    // With highlight colors off, the remaining defaults (save, note, copy,
+    // share) fit on one row once the two extra tools are unregistered.
+    state.settings.setSelectionUI({ showHighlightColors: false });
+    await renderSheet();
+    expect(hint()?.textContent).toContain("Swipe up to see more");
+
+    await act(async () => {
+      state.tools.unregisterVerseToolbarTool("test-extra-one");
+      state.tools.unregisterVerseToolbarTool("test-extra-two");
+    });
+
+    expect(overflow()).toBeNull();
+    expect(hint()).toBeNull();
   });
 
   it("starts collapsed, with the swipe hint in place of a More button", async () => {
@@ -3140,5 +3181,126 @@ describe("BibleReaderToolbar chapter navigation links", () => {
     const parsed = await renderToolbarOnServer({ holdCatalog: true });
 
     expect(chapterLinks(parsed)).toContain("/en/AAB/genesis/2");
+  });
+});
+
+describe("BibleReaderToolbar — compact embed", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function renderToolbar(options: {
+    width: number;
+    embed?: boolean | string;
+  }) {
+    window.innerWidth = options.width;
+    const state = await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+      embed: options.embed,
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    return state;
+  }
+
+  it.each([
+    ["embed=true", true],
+    ["embed=minimal", "minimal"],
+  ] as const)(
+    "shows the floating chapter nav and hides the bottom tabs for %s",
+    async (_label, embed) => {
+      await renderToolbar({ width: MOBILE_VIEWPORT_WIDTH, embed });
+
+      expect(container.querySelector(".sb-reader-floating-nav")).not.toBeNull();
+      expect(
+        container.querySelector(".sb-reader-floating-nav-label")
+      ).not.toBeNull();
+      expect(
+        container.querySelector(".sb-reader-toolbar-mobile-tab")
+      ).toBeNull();
+      expect(container.querySelector(".sb-reader-toolbar")).toBeNull();
+    }
+  );
+
+  it("reuses the compact chapter nav on a wide viewport too", async () => {
+    await renderToolbar({ width: 1000, embed: true });
+
+    expect(container.querySelector(".sb-reader-floating-nav")).not.toBeNull();
+    expect(container.querySelector(".sb-reader-toolbar-labeled")).toBeNull();
+    expect(container.querySelector(".sb-reader-toolbar-mobile-tab")).toBeNull();
+  });
+
+  it("leaves the full toolbar alone when embed is a non-canonical value", async () => {
+    await renderToolbar({ width: MOBILE_VIEWPORT_WIDTH, embed: "1" });
+
+    expect(
+      container.querySelectorAll(".sb-reader-toolbar-mobile-tab").length
+    ).toBeGreaterThan(0);
+  });
+
+  it("keeps copy and share on the verse toolbar and drops the other verse actions", async () => {
+    const state = await renderToolbar({
+      width: MOBILE_VIEWPORT_WIDTH,
+      embed: true,
+    });
+    const readingState = state.app.currentReadingState.value!.tab.readingState;
+    const chapter = readingState.chapterData.value!;
+    const firstVerse = chapter.chapter.content.find(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    )!;
+
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: firstVerse,
+          translationId: chapter.translation.id,
+        },
+        10,
+        10
+      );
+    });
+
+    const labels = Array.from(
+      container.querySelectorAll(".sb-verse-toolbar-action")
+    ).map((button) => button.getAttribute("aria-label"));
+
+    expect(labels).toContain("Copy");
+    expect(labels).toContain("Share");
+    expect(labels).not.toContain("Highlight selection");
+    expect(labels).not.toContain("Save");
+    expect(labels).not.toContain("Note");
+    expect(labels).not.toContain("Cancel");
+    // Copy and Share fit on the first row, so there is nothing the swipe
+    // hint could reveal.
+    expect(container.querySelector(".sb-verse-toolbar-overflow")).toBeNull();
+    expect(container.querySelector(".sb-verse-toolbar-swipe-hint")).toBeNull();
   });
 });

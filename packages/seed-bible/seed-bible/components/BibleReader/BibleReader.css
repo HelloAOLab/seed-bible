@@ -7,24 +7,24 @@
  * and open for the whole of a shared session, whether or not anyone else is in
  * this chapter, so the text never shifts as people arrive, leave, or move on
  * to the same verses. Outside a session there is no gutter at all.
+ *
+ * The indent that makes room for it is shared with the note gutter and set in
+ * BibleReader.inline.css (`--sb-reader-gutter-width`).
  */
 .sb-chapter-content.sb-chapter-content-presence {
-  --sb-presence-gutter-width: 1.75rem;
   /* Mirrored by PRESENCE_AVATAR_PX / PRESENCE_STACK_STEP_PX in BibleReader.tsx,
      which places the avatar stacks against measured verse positions. */
   --sb-presence-avatar-size: 20px;
   --sb-presence-stack-step: 12px;
   /* One bar's width plus the gap to the next. Three fit, centred. */
   --sb-presence-lane-pitch: 6px;
-
-  padding-inline-start: calc(var(--sb-presence-gutter-width) + 0.25rem);
 }
 
 .sb-presence-gutter {
   position: absolute;
   inset-block: 0;
   inset-inline-start: 0;
-  width: var(--sb-presence-gutter-width);
+  width: var(--sb-reader-gutter-width);
   pointer-events: none;
 }
 

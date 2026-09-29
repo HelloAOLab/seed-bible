@@ -445,8 +445,13 @@ export interface TutorialManager {
   /**
    * Starts a contextual single-feature tour, if not already seen and the user
    * hasn't opted out. Safe to call from event handlers without pre-checking.
+   *
+   * `steps` overrides the `CONTEXTUAL_TUTORIALS[featureId]` lookup — for a
+   * tour whose steps need instance state (e.g. the id of the record a step's
+   * `onEnter` should open) that isn't available at module load. The "seen"
+   * flag is still tracked under `featureId` either way.
    */
-  startContextual: (featureId: string) => void;
+  startContextual: (featureId: string, steps?: TutorialStep[]) => void;
   /**
    * Starts a tutorial by id at `step` (clamped to the tour's length), whether
    * or not the user has seen it or opted out — this is an explicit request,
@@ -514,6 +519,12 @@ export function createTutorialManager(
   panes: PanesManager,
   sidebar: SidebarManager,
   joinedViaSessionLink = false,
+  /**
+   * Compact partner-site embed. While this is true the offer card, the tour,
+   * and the "turn off tutorials" follow-up never start — an embed has no room
+   * for coach marks aimed at chrome that isn't there.
+   */
+  isMinimalEmbed: ReadonlySignal<boolean> = signal(false),
   linkedTutorial: TutorialLinkRequest | null = null
 ): TutorialManager {
   const running = signal<boolean>(false);
@@ -712,7 +723,22 @@ export function createTutorialManager(
     saveProfileConfigValue(login, PROFILE_TUTORIAL_OPTED_OUT, true);
   };
 
+  // Set once the first-run offer has been resolved — either the effect below
+  // decided, or `start()` was called directly (the welcome screen's tour
+  // button) before the reader was visible.
+  let autoStartChecked = false;
+
   const start = (startIndex = 0) => {
+    if (isMinimalEmbed.value) {
+      return;
+    }
+    // An explicit start resolves the first-run offer. Marking that before
+    // tearing Today down matters: closing the pane is what makes the reader
+    // visible, and the offer effect would otherwise pop the card on top of
+    // the tour it was waiting to show.
+    autoStartChecked = true;
+    promptVisible.value = false;
+
     // Close whatever overlapping UI is up first — coach marks target the
     // normal reader UI, so a fullscreen pane (e.g. the Today screen) or an
     // open sidebar panel left up would hide the very elements being
@@ -723,6 +749,12 @@ export function createTutorialManager(
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
+    // The desktop tour spotlights the tabs header, which the collapsed rail
+    // doesn't render. Open it so those steps have a target. Remembered, so
+    // the sidebar stays open after the tour instead of snapping shut.
+    if (!isMobile.value && sidebar.isSidebarCollapsed.value) {
+      sidebar.setSidebarCollapsed(false);
+    }
 
     // Pick the step set for the current viewport before showing the tour.
     mode.value = isMobile.value ? "onboarding-mobile" : "onboarding-desktop";
@@ -744,7 +776,11 @@ export function createTutorialManager(
     });
   };
 
-  const startContextual = (featureId: string) => {
+  const startContextual = (featureId: string, steps?: TutorialStep[]) => {
+    if (isMinimalEmbed.value) {
+      return;
+    }
+
     if (running.value) {
       return;
     }
@@ -759,18 +795,21 @@ export function createTutorialManager(
     if (featuresSeen.value[featureId]) {
       return;
     }
-    const steps = CONTEXTUAL_TUTORIALS[featureId];
-    if (!steps || steps.length === 0) {
+    const resolvedSteps = steps ?? CONTEXTUAL_TUTORIALS[featureId];
+    if (!resolvedSteps || resolvedSteps.length === 0) {
       return;
     }
     mode.value = "contextual";
     activeFeatureId.value = featureId;
-    activeSteps.value = steps;
+    activeSteps.value = resolvedSteps;
     index.value = 0;
     running.value = true;
   };
 
   const startTutorial = (id: string, step = 0): boolean => {
+    if (isMinimalEmbed.value) {
+      return false;
+    }
     if (isMobile.value && DESKTOP_ONLY_TUTORIAL_IDS.includes(id)) {
       return false;
     }
@@ -823,6 +862,9 @@ export function createTutorialManager(
   };
 
   const skip = () => {
+    if (isMinimalEmbed.value) {
+      return;
+    }
     finish();
     skipPromptVisible.value = true;
   };
@@ -873,7 +915,6 @@ export function createTutorialManager(
   // served HTML doesn't have, which is exactly the divergence `hydrate()`
   // reports. `armAutoStart` is called from `AppState.hydrateFromStorage` after
   // the first commit, so the card appears a moment later instead.
-  let autoStartChecked = false;
   let autoStartArmed = false;
   const armAutoStart = () => {
     if (autoStartArmed) {
@@ -899,6 +940,10 @@ export function createTutorialManager(
       // tour over the join. We don't record completion, so the tour still
       // auto-starts on a later visit that isn't a session link.
       if (joinedViaSessionLink) {
+        return;
+      }
+      // A partner-site embed has none of the chrome the tour points at.
+      if (isMinimalEmbed.value) {
         return;
       }
       if (!readerVisible.value) {
