@@ -1340,6 +1340,7 @@ describe("BibleReaderToolbar — verse tool actions", () => {
 
     // Successful copy → selection clears.
     expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(state.app.currentToast.value?.message).toBe("Copied");
 
     // Toolbar closes because there is no longer a selection.
     expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
@@ -1375,7 +1376,7 @@ describe("BibleReaderToolbar — verse tool actions", () => {
     expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
 
     // There should be no Copied toast.
-    expect(document.body.textContent?.includes("Copied")).toBe(false);
+    expect(state.app.currentToast.value).toBeNull();
   });
 
   it("clears the verse selection after clicking Save", async () => {

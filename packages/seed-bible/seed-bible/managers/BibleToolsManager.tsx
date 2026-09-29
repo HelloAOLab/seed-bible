@@ -117,7 +117,7 @@ export interface ManagedBibleToolItem<TContext> extends Omit<
   /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<TContext>;
   /** Optional action callback for item activation. */
-  onSelect?: (context: TContext) => void;
+  onSelect?: (context: TContext) => void | Promise<void>;
   /** Nested menu items are not supported for context menu entries. */
   getItems?: never;
 }
@@ -149,7 +149,7 @@ export interface ResolvedBibleToolItem extends Omit<
   /** Visibility state signal resolved for current context. */
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the menu item. */
-  onSelect: () => void;
+  onSelect: () => void | Promise<void>;
 }
 
 /** Window metrics provided to tools when available. */
@@ -302,7 +302,7 @@ export interface BibleReaderVerseToolbarTool extends ResolvedBibleTool {
   /** Visibility state signal resolved for current context. */
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the tool. */
-  onSelect: () => void;
+  onSelect: () => void | Promise<void>;
   /** True when the action needs the selected verses to remain active. */
   preserveSelection?: boolean;
   /** Optional context-menu items for this tool. */
@@ -758,10 +758,6 @@ function openAskAiForSelectedVerses(
   chat.addParticipant(providerId);
   context.chats.selectChat(chat.id);
   context.openChat?.();
-  // Clearing the selection unmounts the mobile verse sheet under the finger.
-  // Defer so a retargeted pointerdown after that unmount cannot land "outside"
-  // the chat panel and dismiss the panel we just opened.
-  //by the await in handleVerseAction
 }
 
 function OpenInSelectorIcon() {

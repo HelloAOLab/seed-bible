@@ -887,6 +887,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     preserveSelection = false
   ): Promise<void> => {
     try {
+      // The clear must run after a microtask, not synchronously. Clearing the
+      // selection unmounts the mobile verse sheet under the finger, and a
+      // retargeted pointerdown could otherwise land "outside" a pane the action
+      // just opened (e.g. Ask AI's chat panel) and dismiss it.
       await action();
       if (!preserveSelection) {
         readingState.value?.clearSelectedVerses();
