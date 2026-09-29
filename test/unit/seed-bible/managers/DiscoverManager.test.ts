@@ -559,6 +559,83 @@ describe("unregistering providers", () => {
     expect(manager.providers.value).toEqual([replacement]);
   });
 
+  it("asks a reinstalled provider again instead of replaying the old install's cards", async () => {
+    const manager = createDiscoverManager();
+    const oldCard: DiscoverResult = {
+      type: "study-note",
+      reference: { book: "GEN", chapter: 1 },
+      content: null as any,
+    };
+    const newCard: DiscoverResult = {
+      type: "study-note",
+      reference: { book: "GEN", chapter: 2 },
+      content: null as any,
+    };
+    let oldCalls = 0;
+    const unregister = manager.registerDiscoverProvider({
+      id: "p1",
+      title: "P1",
+      description: "Old install",
+      discover: () => {
+        oldCalls += 1;
+        return [oldCard];
+      },
+    });
+    await collectAll(manager.discover(context));
+
+    unregister();
+
+    let newCalls = 0;
+    manager.registerDiscoverProvider({
+      id: "p1",
+      title: "P1",
+      description: "New install",
+      discover: () => {
+        newCalls += 1;
+        return [newCard];
+      },
+    });
+    const results = await collectAll(manager.discover(context));
+
+    expect(oldCalls).toBe(1);
+    expect(newCalls).toBe(1);
+    expect(results).toEqual([{ providerId: "p1", results: [newCard] }]);
+  });
+
+  it("keeps the replacement's cached answer when the old install unregisters late", async () => {
+    const manager = createDiscoverManager();
+    const card: DiscoverResult = {
+      type: "study-note",
+      reference: { book: "GEN", chapter: 1 },
+      content: null as any,
+    };
+    const unregisterOld = manager.registerDiscoverProvider({
+      id: "p1",
+      title: "P1",
+      description: "Old install",
+      discover: () => [card],
+    });
+    await collectAll(manager.discover(context));
+
+    let replacementCalls = 0;
+    manager.registerDiscoverProvider({
+      id: "p1",
+      title: "P1",
+      description: "New install",
+      discover: () => {
+        replacementCalls += 1;
+        return [card];
+      },
+    });
+    await collectAll(manager.discover(context));
+    expect(replacementCalls).toBe(1);
+
+    unregisterOld();
+    await collectAll(manager.discover(context));
+
+    expect(replacementCalls).toBe(1);
+  });
+
   it("publishes the provider list as it changes", () => {
     const manager = createDiscoverManager();
     const seen: number[] = [];
