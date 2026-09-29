@@ -2727,6 +2727,295 @@ describe("BibleReader", () => {
     expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
   });
 
+  // #1691: mobile has no Discover panel, so notes are flagged in a gutter
+  // beside the text. jsdom does no layout, so the line boxes the markers are
+  // placed against are stubbed here.
+  describe("note gutter", () => {
+    const LINE_HEIGHT = 24;
+    let undoStubs: Array<() => void> = [];
+
+    afterEach(() => {
+      for (const undo of undoStubs) undo();
+      undoStubs = [];
+    });
+
+    const rectAt = (top: number, height = LINE_HEIGHT) =>
+      ({
+        top,
+        bottom: top + height,
+        left: 0,
+        right: 100,
+        width: 100,
+        height,
+        x: 0,
+        y: top,
+        toJSON() {},
+      }) as DOMRect;
+
+    /**
+     * jsdom does no layout, so the line boxes the markers are placed against
+     * are stubbed: `lines` gives the top of every visual line of a verse, in
+     * order. Poetry lines are block-level in the real stylesheet, and that is
+     * what makes a poetry verse's own rect one tall box covering the whole
+     * verse rather than a box per line — so the block display and both shapes
+     * of rect are reproduced here, or the markers would measure nothing like
+     * they do in a browser.
+     */
+    function stubLineBoxes(lines: Record<number, number[]>) {
+      const style = document.createElement("style");
+      style.textContent =
+        ".sb-verse-poetry, .sb-verse-line { display: block; }";
+      document.head.appendChild(style);
+      undoStubs.push(() => style.remove());
+
+      const elementOf = (node: Node | null) =>
+        (node?.nodeType === 1
+          ? (node as Element)
+          : (node?.parentElement ?? null)) as HTMLElement | null;
+      const verseOf = (node: Node | null) =>
+        elementOf(node)?.closest<HTMLElement>("[data-verse-number]") ?? null;
+      const topsOf = (verse: HTMLElement | null) =>
+        lines[Number(verse?.dataset.verseNumber ?? NaN)];
+
+      // A range over inline content reports one rect per visual line — for a
+      // poetry verse that means one rect per poetry line element.
+      const rangeProto = Range.prototype as unknown as {
+        getClientRects?: (this: Range) => DOMRectList;
+      };
+      // jsdom has no Range.getClientRects at all, so there is usually
+      // nothing to put back.
+      const previousRangeRects = rangeProto.getClientRects;
+      rangeProto.getClientRects = function (this: Range) {
+        const verse = verseOf(this.startContainer);
+        const tops = topsOf(verse);
+        if (!verse || !tops) return [] as unknown as DOMRectList;
+        const lineEl = elementOf(this.startContainer)?.closest(
+          ".sb-verse-line"
+        );
+        if (!lineEl)
+          return tops.map((top) => rectAt(top)) as unknown as DOMRectList;
+        const index = Array.from(
+          verse.querySelectorAll(".sb-verse-line")
+        ).indexOf(lineEl);
+        const top = tops[index];
+        return (top === undefined
+          ? []
+          : [rectAt(top)]) as unknown as DOMRectList;
+      };
+      undoStubs.push(() => {
+        if (previousRangeRects) rangeProto.getClientRects = previousRangeRects;
+        else delete rangeProto.getClientRects;
+      });
+
+      // The verse element's own rects: one per line for prose, but a single
+      // full-height column box for poetry, whose lines are blocks.
+      const elementRects = vi
+        .spyOn(Element.prototype, "getClientRects")
+        .mockImplementation(function (this: Element) {
+          const tops = topsOf(this as HTMLElement);
+          if (!tops || !(this as HTMLElement).dataset?.verseNumber) {
+            return [] as unknown as DOMRectList;
+          }
+          if (!this.classList.contains("sb-verse-poetry")) {
+            return tops.map((top) => rectAt(top)) as unknown as DOMRectList;
+          }
+          const first = tops[0]!;
+          const last = tops[tops.length - 1]! + LINE_HEIGHT;
+          return [rectAt(first, last - first)] as unknown as DOMRectList;
+        });
+      undoStubs.push(() => elementRects.mockRestore());
+    }
+
+    /** A state whose chapter carries the given annotations. */
+    function annotatedState(
+      annotations: Array<Record<string, unknown>>,
+      isMobile = true
+    ): SeedBibleState {
+      const chapterAnnotations = signal(annotations);
+      const state = createMobileState();
+      return {
+        ...state,
+        app: { ...state.app, isMobile: signal(isMobile) },
+        annotations: {
+          getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+        },
+      } as any as SeedBibleState;
+    }
+
+    function renderReader(state: SeedBibleState, fixture: ReaderFixture) {
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+    }
+
+    const note = (extra: Record<string, unknown> = {}) => ({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+      data: { type: "comment", html: "<p>Note</p>" },
+      ...extra,
+    });
+
+    it("marks an annotated verse in the gutter, level with its first line", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note()]), fixture);
+
+      const markers = container.querySelectorAll(".sb-note-gutter-marker");
+      expect(markers).toHaveLength(1);
+      expect((markers[0] as HTMLElement).style.top).toBe("40px");
+      expect(markers[0]?.textContent).toBe("sticky_note_2");
+    });
+
+    // A verse of poetry is a block of its own lines, so its element rect is
+    // the whole verse: measuring that put the marker halfway down verses like
+    // Genesis 1:27 instead of beside the verse number.
+    it("marks a poetry verse level with its first line, not its middle", () => {
+      stubLineBoxes({ 2: [40, 64, 88] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note({ verseNumber: 2 })]), fixture);
+
+      const marker = container.querySelector(
+        ".sb-note-gutter-marker"
+      ) as HTMLElement;
+      expect(marker).not.toBeNull();
+      expect(marker.style.top).toBe("40px");
+      expect(marker.style.height).toBe("24px");
+    });
+    it("marks only the first verse of a note that spans several", () => {
+      stubLineBoxes({ 1: [40], 2: [70, 94] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note({ endVerseNumber: 2 })]), fixture);
+
+      const markers = container.querySelectorAll(".sb-note-gutter-marker");
+      expect(markers).toHaveLength(1);
+      expect((markers[0] as HTMLElement).style.top).toBe("40px");
+    });
+
+    it("shows one marker when a verse carries several notes", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note(), note({ id: "a2" })]), fixture);
+
+      expect(container.querySelectorAll(".sb-note-gutter-marker")).toHaveLength(
+        1
+      );
+    });
+
+    // The gutter's indent narrows the text, so a gutter that only opened on
+    // annotated chapters reflowed the page on every flip to a bare one.
+    it("keeps the gutter open in a chapter with no notes", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([]), fixture);
+
+      expect(container.querySelector(".sb-note-gutter")).not.toBeNull();
+      expect(container.querySelector(".sb-note-gutter-marker")).toBeNull();
+    });
+
+    // The previous and next chapters sit either side of the current one in
+    // the swipe track. Narrower or wider than it, their text would reflow the
+    // moment a swipe lands and the preview is swapped for the real chapter.
+    it("indents every chapter in the swipe track alike", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([]), fixture);
+
+      const panels = container.querySelectorAll(".sb-chapter-content");
+      expect(panels).toHaveLength(3);
+      for (const panel of panels) {
+        expect(panel.classList).toContain("sb-chapter-content-note-gutter");
+      }
+    });
+
+    it("indents the loading placeholder like the chapter it stands in for", () => {
+      const fixture = createFixture();
+      fixture.chapterData.value = null;
+      renderReader(annotatedState([]), fixture);
+
+      const skeleton = container.querySelector(".sb-chapter-skeleton");
+      expect(skeleton).not.toBeNull();
+      expect(skeleton?.classList).toContain("sb-chapter-content-note-gutter");
+    });
+
+    // Desktop reads its notes in the Discover panel beside the text, so a
+    // second column of markers there would be the same information twice.
+    it("leaves the gutter out on desktop", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note()], false), fixture);
+
+      expect(container.querySelector(".sb-note-gutter")).toBeNull();
+      expect(
+        container.querySelector(".sb-chapter-content-note-gutter")
+      ).toBeNull();
+    });
+
+    // The note gutter on the end edge and the presence gutter on the start
+    // edge share one indent rule, which needs both classes on the content box.
+    it("opens beside the presence gutter in a shared session", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={annotatedState([note()])}
+            sharedSession={
+              {
+                connectedUsers: signal([]),
+                participantPositions: signal(new Map()),
+                options: signal({ hostUserId: null, allowedNavigators: [] }),
+              } as any
+            }
+          />,
+          container
+        );
+      });
+
+      // The swipe track also renders the neighbouring chapters, which are
+      // never in the session, so find the one on screen by its presence class.
+      const content = container.querySelector(".sb-chapter-content-presence");
+      expect(
+        content?.classList.contains("sb-chapter-content-note-gutter")
+      ).toBe(true);
+      expect(container.querySelector(".sb-presence-gutter")).not.toBeNull();
+      expect(container.querySelectorAll(".sb-note-gutter-marker")).toHaveLength(
+        1
+      );
+    });
+
+    it("selects the verse and asks the toolbar to scroll to the note", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note()]), fixture);
+
+      act(() => {
+        (
+          container.querySelector(".sb-note-gutter-marker") as HTMLButtonElement
+        ).click();
+      });
+
+      expect(fixture.selectVerse).toHaveBeenCalledTimes(1);
+      expect(fixture.selectVerse.mock.calls[0]?.[0]).toMatchObject({
+        bookId: "GEN",
+        chapterNumber: 1,
+      });
+      expect(fixture.readingState.pendingAnnotationScrollVerse.value).toBe(1);
+    });
+  });
+
   // #1692: in a shared session, each other participant gets a bar down the
   // side of the reader spanning the verses they can see. jsdom does no layout,
   // so the line boxes those bars are measured against are stubbed here.

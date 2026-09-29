@@ -1,5 +1,6 @@
 import "./DiscoverContentPanel.css";
 import { useSignal } from "@preact/signals";
+import { useCallback, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { hasAnyDiscoverResults } from "../../managers/BibleReadingManager";
@@ -20,6 +21,10 @@ import {
   getReadingPlansForChapter,
   ReadingPlansSection,
 } from "../ReadingPlansSection/ReadingPlansSection";
+import {
+  findScrollContainer,
+  readBottomChromeInset,
+} from "../BibleReader/readerViewport";
 
 type FilterKey =
   | "all"
@@ -28,6 +33,77 @@ type FilterKey =
   | "study-notes"
   | "content"
   | `type:${string}`;
+
+/**
+ * Keeps the panel from shrinking into an unusable sliver in very short
+ * windows, even if that means its bottom edge dips under the toolbar.
+ */
+const MIN_SIDE_PANEL_HEIGHT_PX = 192;
+
+/**
+ * Publishes `--sb-dcp-side-max-height` on the panel: the height of the part of
+ * its pane that's actually on screen, below the panel's sticky `top` and above
+ * the fixed bottom toolbar. A plain `100vh` cap ignores the tab bar above the
+ * pane, the toolbar floating over its bottom and split-pane layouts, so the
+ * bottom of a long panel (and its last items) ended up out of reach.
+ */
+function useSidePanelMaxHeight() {
+  const cleanupRef = useRef<(() => void) | null>(null);
+
+  return useCallback((panel: HTMLElement | null) => {
+    cleanupRef.current?.();
+    cleanupRef.current = null;
+    if (!panel || typeof ResizeObserver === "undefined") return;
+
+    const scroller = findScrollContainer(panel);
+    let frame = 0;
+
+    const measure = () => {
+      const viewportBottom = window.innerHeight - readBottomChromeInset();
+      const rect = scroller?.getBoundingClientRect();
+      const top = rect ? Math.max(rect.top, 0) : 0;
+      const bottom = rect
+        ? Math.min(rect.bottom, viewportBottom)
+        : viewportBottom;
+      const stickyTop = parseFloat(getComputedStyle(panel).top) || 0;
+      const available = Math.max(
+        bottom - top - stickyTop,
+        MIN_SIDE_PANEL_HEIGHT_PX
+      );
+      panel.style.setProperty(
+        "--sb-dcp-side-max-height",
+        `${Math.floor(available)}px`
+      );
+    };
+
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+
+    const resizeObserver = new ResizeObserver(scheduleMeasure);
+    if (scroller) resizeObserver.observe(scroller);
+    // BibleReaderToolbar rewrites `--sb-reader-bottom-inset` inline on the
+    // root whenever the bottom chrome changes size.
+    const insetObserver =
+      typeof MutationObserver !== "undefined"
+        ? new MutationObserver(scheduleMeasure)
+        : null;
+    insetObserver?.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["style"],
+    });
+    window.addEventListener("resize", scheduleMeasure);
+    scheduleMeasure();
+
+    cleanupRef.current = () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      insetObserver?.disconnect();
+      window.removeEventListener("resize", scheduleMeasure);
+    };
+  }, []);
+}
 
 interface DiscoverContentPanelProps {
   tab: ReaderTab | null;
@@ -46,6 +122,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const { tab, state } = props;
   const { t } = useI18n();
   const activeFilter = useSignal<FilterKey>("all");
+  const panelRef = useSidePanelMaxHeight();
 
   if (!tab) {
     return null;
@@ -157,6 +234,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   return (
     <div className="sb-bible-reader-discover-panel">
       <div
+        ref={panelRef}
         className="sb-discover-content-panel"
         aria-label={t("discover-content-panel", {
           defaultValue: "Discover content",

@@ -64,6 +64,10 @@
 
 .sb-reading-plans-scroll {
   flex: 1;
+  /* Centre the list with padding rather than a max-width, so this scroll
+     container still spans the pane: the scrollbar stays at the edge and
+     wheel/trackpad scrolling works over the side gutters. */
+  padding-inline: max(0px, calc((100% - 42rem) / 2));
   min-height: 0;
   overflow-y: auto;
   display: flex;

@@ -108,14 +108,17 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
   }, [isMobile, isScrolled]);
 
-  // When a mobile pane opens (every pane fills the screen there), the verse
-  // sheet yields and the default bottom toolbar comes back. Clear scroll-hide
-  // so that bar isn't left translated off-screen — e.g. after Locations opens
-  // a map from a verse selection while the user had scrolled down.
+  // When a mobile pane or the chat panel opens (both fill the screen above the
+  // bottom toolbar there), the verse sheet yields and the default bottom
+  // toolbar comes back. Clear scroll-hide so that bar isn't left translated
+  // off-screen — e.g. after Locations opens a map, or Ask AI opens the chat,
+  // from a verse selection while the user had scrolled down.
   useEffect(() => {
     if (!isMobile) return;
     return effect(() => {
-      if ((state.panes?.panes?.value?.length ?? 0) > 0) {
+      const hasPane = (state.panes?.panes?.value?.length ?? 0) > 0;
+      const isChatOpen = state.sidebar?.isChatPanelOpen?.value ?? false;
+      if (hasPane || isChatOpen) {
         setIsScrolled(false);
       }
     });
