@@ -25,7 +25,10 @@ import {
   THEME_PRESET_STYLE_TEXT,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { ssrTranslationsCache } from "./ssrTranslationsCache";
-import { buildSharedPagePath } from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
+import {
+  buildSharedPagePath,
+  type SharedPageKind,
+} from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -311,28 +314,46 @@ export function legacyReadingUrlRedirect(
 }
 
 /**
- * Sends an old-style playlist share link (`?playlist={locator}`, on whatever
- * chapter the sharer's page happened to be) to the playlist's own page,
- * `/{lang}/playlist/{locator}`. A 301: the target depends only on the URL.
+ * Sends an old-style share link — `?playlist={locator}` or
+ * `?readingPlan={locator}`, on whatever chapter the sharer's page happened to
+ * be — to that content's own page, `/{lang}/playlist/{locator}` or
+ * `/{lang}/reading-plan/{locator}`. A 301: the target depends only on the URL.
  *
- * Only links without `?playlistStep=` redirect. The app writes both params
- * into the address bar while a playlist plays, so a reload mid-playback has
- * to keep resuming the playlist rather than land on its intro modal. Share
- * links never carried a step.
+ * A `?playlist=` link with `?playlistStep=` doesn't redirect. The app writes
+ * both params into the address bar while a playlist plays, so a reload
+ * mid-playback has to keep resuming the playlist rather than land on its
+ * intro modal. Share links never carried a step. `?readingPlan=` is only
+ * ever a share link, so it always redirects.
  *
  * The language is the one the link names (its path segment or `?lang=`),
  * else the translation's own, else `DEFAULT_UI_LANGUAGE`. The title slug is
- * left off, since adding it would mean fetching the playlist before
+ * left off, since adding it would mean fetching the record before
  * responding; the page's canonical URL carries it instead. Unrelated query
  * params are kept, and the ones that only placed the reader are dropped.
  */
-export function playlistQueryRedirect(
+export function sharedPageQueryRedirect(
   path: string,
   basePath: string
 ): string | null {
   const url = new URL(path, "http://ssr.local");
-  const locator = url.searchParams.get("playlist");
-  if (!locator || url.searchParams.has("playlistStep")) {
+
+  const playlistLocator = url.searchParams.get("playlist");
+  const readingPlanLocator = url.searchParams.get("readingPlan");
+  const target: {
+    kind: SharedPageKind;
+    param: string;
+    locator: string;
+  } | null =
+    playlistLocator && !url.searchParams.has("playlistStep")
+      ? { kind: "playlist", param: "playlist", locator: playlistLocator }
+      : readingPlanLocator
+        ? {
+            kind: "readingPlan",
+            param: "readingPlan",
+            locator: readingPlanLocator,
+          }
+        : null;
+  if (!target) {
     return null;
   }
 
@@ -348,16 +369,16 @@ export function playlistQueryRedirect(
     DEFAULT_UI_LANGUAGE;
 
   const remainingParams = new URLSearchParams(url.search);
-  remainingParams.delete("playlist");
+  remainingParams.delete(target.param);
   for (const key of READING_POSITION_PARAMS) {
     remainingParams.delete(key);
   }
   const query = remainingParams.toString();
 
   return `${basePath}${buildSharedPagePath({
-    kind: "playlist",
+    kind: target.kind,
     language,
-    locator,
+    locator: target.locator,
     title: null,
   })}${query ? `?${query}` : ""}`;
 }
@@ -523,12 +544,12 @@ export async function render(
 
   // Before the reading-path redirects: the target isn't a reading path, and
   // correcting the chapter first would only add a second hop.
-  const playlistRedirectTo = playlistQueryRedirect(
+  const sharedPageRedirectTo = sharedPageQueryRedirect(
     options.path,
     injectedConfig.basePath
   );
-  if (playlistRedirectTo) {
-    return { redirectTo: playlistRedirectTo };
+  if (sharedPageRedirectTo) {
+    return { redirectTo: sharedPageRedirectTo };
   }
 
   const redirectTo = legacyReadingUrlRedirect(

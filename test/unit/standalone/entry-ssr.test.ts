@@ -1,7 +1,7 @@
 import {
   acceptLanguageRedirect,
   legacyReadingUrlRedirect,
-  playlistQueryRedirect,
+  sharedPageQueryRedirect,
   render,
   stripDefaultOgImageMeta,
 } from "../../../standalone/entry-ssr";
@@ -16,10 +16,10 @@ import {
 import { buildChapterUrl } from "../../../script/lib/sitemap";
 import { resetSsrTranslationsCacheForTests } from "../../../standalone/ssrTranslationsCache";
 
-describe("playlistQueryRedirect", () => {
-  it("sends an old share link to the playlist's own page", () => {
+describe("sharedPageQueryRedirect", () => {
+  it("sends an old playlist share link to the playlist's own page", () => {
     expect(
-      playlistQueryRedirect(
+      sharedPageQueryRedirect(
         "/en/AAB/genesis/1?playlist=user-1.playlist_abc",
         ""
       )
@@ -27,32 +27,32 @@ describe("playlistQueryRedirect", () => {
   });
 
   it("keeps the language the link was shared in", () => {
-    expect(playlistQueryRedirect("/es/spa_onbv/john/3?playlist=u.p", "")).toBe(
-      "/es/playlist/u.p"
-    );
+    expect(
+      sharedPageQueryRedirect("/es/spa_onbv/john/3?playlist=u.p", "")
+    ).toBe("/es/playlist/u.p");
   });
 
   it("uses the translation's language when the path names none", () => {
-    expect(playlistQueryRedirect("/spa_onbv/john/3?playlist=u.p", "")).toBe(
+    expect(sharedPageQueryRedirect("/spa_onbv/john/3?playlist=u.p", "")).toBe(
       "/es/playlist/u.p"
     );
   });
 
   it("falls back to English for a bare root link", () => {
-    expect(playlistQueryRedirect("/?playlist=u.p", "")).toBe(
+    expect(sharedPageQueryRedirect("/?playlist=u.p", "")).toBe(
       "/en/playlist/u.p"
     );
   });
 
   it("uses ?lang= on a legacy query-param link", () => {
     expect(
-      playlistQueryRedirect("/?book=JHN&chapter=3&lang=fr&playlist=u.p", "")
+      sharedPageQueryRedirect("/?book=JHN&chapter=3&lang=fr&playlist=u.p", "")
     ).toBe("/fr/playlist/u.p");
   });
 
   it("keeps the deployment prefix and unrelated params, dropping reading-position ones", () => {
     expect(
-      playlistQueryRedirect(
+      sharedPageQueryRedirect(
         "/b/dev/en/AAB/genesis/1?playlist=u.p&customization=o.c&translation=NIV",
         "/b/dev"
       )
@@ -61,13 +61,27 @@ describe("playlistQueryRedirect", () => {
 
   it("leaves a playing playlist's own URL alone, so a reload resumes it", () => {
     expect(
-      playlistQueryRedirect("/en/AAB/exodus/2?playlist=u.p&playlistStep=3", "")
+      sharedPageQueryRedirect(
+        "/en/AAB/exodus/2?playlist=u.p&playlistStep=3",
+        ""
+      )
     ).toBeNull();
   });
 
-  it("leaves a URL without ?playlist= alone", () => {
-    expect(playlistQueryRedirect("/en/AAB/genesis/1", "")).toBeNull();
-    expect(playlistQueryRedirect("/en/AAB/genesis/1?playlist=", "")).toBeNull();
+  it("sends an old reading plan share link to the plan's own page", () => {
+    expect(
+      sharedPageQueryRedirect("/es/spa_onbv/john/3?readingPlan=u.plan_1", "")
+    ).toBe("/es/reading-plan/u.plan_1");
+  });
+
+  it("leaves a URL without ?playlist= or ?readingPlan= alone", () => {
+    expect(sharedPageQueryRedirect("/en/AAB/genesis/1", "")).toBeNull();
+    expect(
+      sharedPageQueryRedirect("/en/AAB/genesis/1?playlist=", "")
+    ).toBeNull();
+    expect(
+      sharedPageQueryRedirect("/en/AAB/genesis/1?readingPlan=", "")
+    ).toBeNull();
   });
 });
 
@@ -448,6 +462,18 @@ describe("render() redirect wiring", () => {
 
     expect(result).toEqual({
       redirectTo: "/en/playlist/owner.playlist_shared",
+    });
+  });
+
+  it("returns a plain 301 from an old ?readingPlan= share link to the plan page", async () => {
+    const result = await render({
+      path: "/en/AAB/genesis/1?readingPlan=owner.plan_shared",
+      config: DEFAULT_APP_CONFIG,
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/en/reading-plan/owner.plan_shared",
     });
   });
 
