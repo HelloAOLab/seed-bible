@@ -32,6 +32,19 @@ export interface SharedPageLoader<T> {
   /** True when the current page's record was looked up and doesn't exist. */
   notFound: ReadonlySignal<boolean>;
   /**
+   * True when the current page's record couldn't be loaded for a reason
+   * other than it not existing (a network or server error), so the visitor
+   * can be offered a retry rather than being told it's gone. Only ever set
+   * on the client: a server render that couldn't load the record embeds no
+   * seed, so the client loads it again itself, and putting the error in the
+   * server's HTML would contradict whatever that load finds.
+   */
+  loadFailed: ReadonlySignal<boolean>;
+  /** True while a {@link retry} is in flight. */
+  retrying: ReadonlySignal<boolean>;
+  /** Loads the current page's record again, e.g. after a failed load. */
+  retry: () => Promise<void>;
+  /**
    * Settles once the initial page's record has loaded (or during SSR, once a
    * timeout gives up on it). SSR waits on this so the page's title, meta and
    * modal describe the record. Resolved immediately when the page didn't
@@ -179,13 +192,45 @@ export function createSharedPageLoader<T>(options: {
   /** The locator most recently requested, so a URL effect re-run doesn't re-fetch it. */
   let requestedLocator: string | null = null;
 
+  /** The locator whose latest load failed for a reason other than "not found". */
+  const failedLocator = signal<string | null>(null);
+  const retrying = signal(false);
+
   const request = (locator: string): Promise<void> => {
     requestedLocator = locator;
     return fetchPage(locator).then((loaded) => {
-      if (loaded && requestedLocator === locator) {
+      if (requestedLocator !== locator) {
+        return;
+      }
+      if (loaded) {
         result.value = loaded;
+        failedLocator.value = null;
+      } else if (!import.meta.env.SSR) {
+        failedLocator.value = locator;
       }
     });
+  };
+
+  const loadFailed = computed<boolean>(() => {
+    const locator = pageLocator.value;
+    return (
+      !!locator &&
+      failedLocator.value === locator &&
+      result.value?.locator !== locator
+    );
+  });
+
+  const retry = async (): Promise<void> => {
+    const locator = pageLocator.peek();
+    if (!locator || retrying.peek()) {
+      return;
+    }
+    retrying.value = true;
+    try {
+      await request(locator);
+    } finally {
+      retrying.value = false;
+    }
   };
 
   const initialLocator = locatorFor(navigation.initialUrl);
@@ -244,5 +289,13 @@ export function createSharedPageLoader<T>(options: {
     return current?.locator === initialLocator ? current : null;
   };
 
-  return { page, notFound, initialLoadPromise, getSeed };
+  return {
+    page,
+    notFound,
+    loadFailed,
+    retrying,
+    retry,
+    initialLoadPromise,
+    getSeed,
+  };
 }

@@ -2507,6 +2507,9 @@ export function createReadingPlansManager(
     getReadingPlanShareUrl,
     readingPlanPage: readingPlanPageLoader.page,
     readingPlanPageNotFound: readingPlanPageLoader.notFound,
+    readingPlanPageLoadFailed: readingPlanPageLoader.loadFailed,
+    readingPlanPageRetrying: readingPlanPageLoader.retrying,
+    retryReadingPlanPage: readingPlanPageLoader.retry,
     initialReadingPlanPageLoadPromise: readingPlanPageLoader.initialLoadPromise,
     getReadingPlanPageSeed: readingPlanPageLoader.getSeed,
   };

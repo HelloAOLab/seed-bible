@@ -2506,7 +2506,39 @@ describe("createPlaylistManager", () => {
 
       expect(manager.playlistPage.value).toBeNull();
       expect(manager.playlistPageNotFound.value).toBe(false);
+      expect(manager.playlistPageLoadFailed.value).toBe(true);
       expect(manager.getPlaylistPageSeed()).toBeNull();
+    });
+
+    it("loads the playlist when trying again after a failed load", async () => {
+      respondWith({
+        "user-1/playlist-1": { success: false, errorCode: "server_error" },
+      });
+      const manager = makeManager(null, undefined, PAGE_HREF);
+      await manager.initialPlaylistPageLoadPromise;
+      expect(manager.playlistPageLoadFailed.value).toBe(true);
+
+      const playlist = makePlaylist();
+      respondWith({ "user-1/playlist-1": { success: true, data: playlist } });
+      const retry = manager.retryPlaylistPage();
+      expect(manager.playlistPageRetrying.value).toBe(true);
+      await retry;
+
+      expect(manager.playlistPageRetrying.value).toBe(false);
+      expect(manager.playlistPageLoadFailed.value).toBe(false);
+      expect(manager.playlistPage.value?.item).toEqual(playlist);
+    });
+
+    it("stays failed when trying again fails again", async () => {
+      getDataMock.mockRejectedValue(new Error("offline"));
+      const manager = makeManager(null, undefined, PAGE_HREF);
+      await manager.initialPlaylistPageLoadPromise;
+
+      await manager.retryPlaylistPage();
+
+      expect(manager.playlistPageLoadFailed.value).toBe(true);
+      expect(manager.playlistPageNotFound.value).toBe(false);
+      expect(manager.playlistPageRetrying.value).toBe(false);
     });
 
     it("uses a matching seed instead of fetching", async () => {
@@ -2642,6 +2674,18 @@ describe("createPlaylistManager", () => {
         expect(manager.getPlaylistPageSeed()).toBeNull();
         expect(manager.playlistPageNotFound.value).toBe(false);
         expect(manager.playlistPage.value).toBeNull();
+      });
+
+      it("doesn't show a failed load in the server's HTML, since the client retries it", async () => {
+        respondWith({
+          "user-1/playlist-1": { success: false, errorCode: "server_error" },
+        });
+        const manager = makeManager(null, undefined, PAGE_HREF);
+        await vi.advanceTimersByTimeAsync(0);
+        await manager.initialPlaylistPageLoadPromise;
+
+        expect(manager.playlistPageLoadFailed.value).toBe(false);
+        expect(manager.getPlaylistPageSeed()).toBeNull();
       });
     });
   });

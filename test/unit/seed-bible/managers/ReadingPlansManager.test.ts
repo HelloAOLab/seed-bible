@@ -2359,7 +2359,7 @@ describe("createReadingPlansManager", () => {
       expect(manager.readingPlanPageNotFound.value).toBe(true);
     });
 
-    it("does not call a failed load not found", async () => {
+    it("does not call a failed load not found, and can try again", async () => {
       respondWith({
         "record-1/plan-1": { success: false, errorCode: "server_error" },
       });
@@ -2368,7 +2368,15 @@ describe("createReadingPlansManager", () => {
       await manager.initialReadingPlanPageLoadPromise;
 
       expect(manager.readingPlanPageNotFound.value).toBe(false);
+      expect(manager.readingPlanPageLoadFailed.value).toBe(true);
       expect(manager.getReadingPlanPageSeed()).toBeNull();
+
+      const plan = makePlan();
+      respondWith({ "record-1/plan-1": { success: true, data: plan } });
+      await manager.retryReadingPlanPage();
+
+      expect(manager.readingPlanPageLoadFailed.value).toBe(false);
+      expect(manager.readingPlanPage.value?.item).toEqual(plan);
     });
 
     it("uses a matching seed instead of fetching", async () => {

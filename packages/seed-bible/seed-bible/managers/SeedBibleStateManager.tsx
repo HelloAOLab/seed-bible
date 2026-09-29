@@ -24,6 +24,7 @@ import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import {
+  SharedPageLoadFailedModalContent,
   SharedPageModalContent,
   SharedPageNotFoundModalContent,
 } from "../components/SharedPageModal/SharedPageModal";
@@ -1686,6 +1687,32 @@ export function createSeedBibleState(
         });
   });
 
+  /** The kind of shared page the URL is on when its record failed to load (not "not found"). */
+  const sharedPageLoadFailedKind = computed<SharedPageKind | null>(() =>
+    playlists.playlistPageLoadFailed.value
+      ? "playlist"
+      : readingPlans.readingPlanPageLoadFailed.value
+        ? "readingPlan"
+        : null
+  );
+
+  /** "Couldn't load playlist" / "Couldn't load reading plan", or null. */
+  const sharedPageLoadFailedTitle = computed<string | null>(() => {
+    const kind = sharedPageLoadFailedKind.value;
+    if (!kind) {
+      return null;
+    }
+    void i18n.language.value;
+    const { t } = i18n;
+    return kind === "playlist"
+      ? t("playlist-load-failed-title", {
+          defaultValue: "Couldn't load playlist",
+        })
+      : t("reading-plan-load-failed-title", {
+          defaultValue: "Couldn't load reading plan",
+        });
+  });
+
   /** The shared page's title, falling back to "Untitled …" for its kind. */
   const sharedPageName = computed<string | null>(() => {
     const page = sharedPage.value;
@@ -1744,6 +1771,10 @@ export function createSeedBibleState(
 
       if (sharedPageNotFoundTitle.value) {
         return `${sharedPageNotFoundTitle.value} | ${seedBibleTitle}`;
+      }
+
+      if (sharedPageLoadFailedTitle.value) {
+        return `${sharedPageLoadFailedTitle.value} | ${seedBibleTitle}`;
       }
 
       if (!selectedTab.value) {
@@ -3506,12 +3537,49 @@ export function createSeedBibleState(
   // A shared playlist or reading plan link opens on a modal describing it.
   // Start begins it; closing it any other way (Close, the header's X, the
   // backdrop) leaves for the home screen. A link to one that doesn't exist
-  // opens a "not found" modal in the same place, and closing that goes home
-  // too.
+  // opens a "not found" modal in the same place, and one that failed to load
+  // opens a "try again" modal there; closing either goes home too.
   effect(() => {
     const page = sharedPage.value;
     const name = sharedPageName.value;
     const notFoundKind = sharedPageNotFoundKind.value;
+    const failedKind = sharedPageLoadFailedKind.value;
+    const failedTitle = sharedPageLoadFailedTitle.value;
+    if (!page && failedKind && failedTitle) {
+      const { t } = i18n;
+      const retrying =
+        failedKind === "playlist"
+          ? playlists.playlistPageRetrying.value
+          : readingPlans.readingPlanPageRetrying.value;
+      modals.openModal({
+        id: SHARED_PAGE_MODAL_ID,
+        title: failedTitle,
+        useCasualOSApp: false,
+        content: () => (
+          <SharedPageLoadFailedModalContent
+            message={
+              failedKind === "playlist"
+                ? t("playlist-load-failed-message", {
+                    defaultValue:
+                      "Something went wrong loading this playlist. Check your internet connection and try again.",
+                  })
+                : t("reading-plan-load-failed-message", {
+                    defaultValue:
+                      "Something went wrong loading this reading plan. Check your internet connection and try again.",
+                  })
+            }
+            retrying={retrying}
+            onRetry={() =>
+              void (failedKind === "playlist"
+                ? playlists.retryPlaylistPage()
+                : readingPlans.retryReadingPlanPage())
+            }
+            onClose={() => modals.closeModal(SHARED_PAGE_MODAL_ID)}
+          />
+        ),
+      });
+      return;
+    }
     const notFoundTitle = sharedPageNotFoundTitle.value;
     if (!page && notFoundKind && notFoundTitle) {
       const { t } = i18n;
@@ -3603,7 +3671,14 @@ export function createSeedBibleState(
     const modalOpen = modals.modals.value.some(
       (modal) => modal.id === SHARED_PAGE_MODAL_ID
     );
-    if (modalOpen || !(sharedPage.peek() || sharedPageNotFoundKind.peek())) {
+    if (
+      modalOpen ||
+      !(
+        sharedPage.peek() ||
+        sharedPageNotFoundKind.peek() ||
+        sharedPageLoadFailedKind.peek()
+      )
+    ) {
       return;
     }
     const home = new URL(navigation.initialUrl.href);

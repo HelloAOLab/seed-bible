@@ -79,3 +79,35 @@ export function SharedPageNotFoundModalContent(props: {
     </div>
   );
 }
+
+/**
+ * What a playlist or reading plan link opens on when it couldn't be loaded
+ * (a network or server error, not a missing record): a retry, or home.
+ */
+export function SharedPageLoadFailedModalContent(props: {
+  message: string;
+  retrying: boolean;
+  onRetry: () => void;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+
+  return (
+    <div className="sb-shared-page-modal sb-shared-page-modal--load-failed">
+      <p className="sb-shared-page-modal-description">{props.message}</p>
+      <div className="sb-shared-page-modal-actions">
+        <button type="button" onClick={props.onClose}>
+          {t("close", { defaultValue: "Close" })}
+        </button>
+        <button
+          type="button"
+          className="sb-shared-page-modal-start"
+          onClick={props.onRetry}
+          disabled={props.retrying}
+        >
+          {t("try-again", { defaultValue: "Try again" })}
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -9,6 +9,7 @@ import {
   makeUrl,
   translations,
 } from "./testUtils/mockBibleApiData";
+import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { SHARED_PAGE_MODAL_ID } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { PlaylistSchema } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { ReadingPlanSchema } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
@@ -51,6 +52,11 @@ const PAGES: {
   missingPath: string;
   missingSeed: Seeds;
   notFoundTitle: string;
+  failedTitle: string;
+  /** The raw record the records server returns once it's reachable again. */
+  record: unknown;
+  loadFailed: (state: SeedBibleState) => boolean;
+  retry: (state: SeedBibleState) => Promise<void>;
 }[] = [
   {
     kind: "playlist",
@@ -64,6 +70,10 @@ const PAGES: {
       },
     },
     notFoundTitle: "Playlist not found",
+    failedTitle: "Couldn't load playlist",
+    record: null,
+    loadFailed: (state) => state.playlists.playlistPageLoadFailed.value,
+    retry: (state) => state.playlists.retryPlaylistPage(),
     seed: {
       initialPlaylistPageSeed: {
         locator: "owner.playlist_shared",
@@ -93,6 +103,10 @@ const PAGES: {
       },
     },
     notFoundTitle: "Reading plan not found",
+    failedTitle: "Couldn't load reading plan",
+    record: null,
+    loadFailed: (state) => state.readingPlans.readingPlanPageLoadFailed.value,
+    retry: (state) => state.readingPlans.retryReadingPlanPage(),
     seed: {
       initialReadingPlanPageSeed: {
         locator: "owner.plan_shared",
@@ -125,6 +139,14 @@ const PAGES: {
   },
 ];
 
+for (const page of PAGES) {
+  page.record =
+    page.seed.initialPlaylistPageSeed?.item ??
+    page.seed.initialReadingPlanPageSeed?.item;
+}
+
+const CALL_PROCEDURE_URL = "https://auth.seedbible.org/api/v3/callProcedure";
+
 /**
  * A visitor who opens a shared playlist or reading plan link came for that
  * content, so the first-run tutorial offer must not appear over it — and must
@@ -138,7 +160,17 @@ const PAGES: {
  */
 describe.each(PAGES)(
   "a shared $kind link",
-  ({ path, seed, missingPath, missingSeed, notFoundTitle }) => {
+  ({
+    path,
+    seed,
+    missingPath,
+    missingSeed,
+    notFoundTitle,
+    failedTitle,
+    record,
+    loadFailed,
+    retry,
+  }) => {
     async function openSharedPage() {
       window.history.replaceState(null, "", path);
       const state = await createTestSeedBibleState({
@@ -209,6 +241,56 @@ describe.each(PAGES)(
       expect(new URL(window.location.href).pathname).not.toMatch(
         /\/(playlist|reading-plan)\//
       );
+    });
+
+    describe("when it fails to load", () => {
+      // No seed and no records-server response: the client's own load fails
+      // the way it would offline.
+      async function openFailingPage() {
+        window.history.replaceState(null, "", path);
+        const mockedResponses: Record<string, unknown> = responses();
+        const state = await createTestSeedBibleState({
+          responses: mockedResponses as ReturnType<typeof responses>,
+          todayOpen: "fromUrl",
+        });
+        await waitFor(() => loadFailed(state), 2000);
+        return { state, mockedResponses };
+      }
+
+      const openModal = (state: SeedBibleState) =>
+        state.modals.modals.value.find((m) => m.id === SHARED_PAGE_MODAL_ID);
+
+      it("says so and offers to try again", async () => {
+        const { state } = await openFailingPage();
+
+        expect(openModal(state)?.title).toBe(failedTitle);
+        expect(state.app.title.value).toContain(failedTitle);
+        expect(state.tutorial.promptVisible.value).toBe(false);
+      });
+
+      it("shows it once trying again succeeds", async () => {
+        const { state, mockedResponses } = await openFailingPage();
+
+        mockedResponses[CALL_PROCEDURE_URL] = createResponse({
+          success: true,
+          data: record,
+        });
+        await retry(state);
+
+        expect(loadFailed(state)).toBe(false);
+        expect(openModal(state)?.title).toBe("Exodus Stories");
+      });
+
+      it("goes home when closed", async () => {
+        const { state } = await openFailingPage();
+
+        state.modals.closeModal(SHARED_PAGE_MODAL_ID);
+
+        expect(state.today.isOpen.value).toBe(true);
+        expect(new URL(window.location.href).pathname).not.toMatch(
+          /\/(playlist|reading-plan)\//
+        );
+      });
     });
 
     it("offers the tutorial from the home screen after the modal is closed", async () => {

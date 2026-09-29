@@ -9,12 +9,13 @@
   - Opening a shared playlist link shows the playlist's cover, author and description, with "Start Playlist" and "Close" buttons. Before, the link opened straight onto a chapter with no sign it was a playlist.
   - Link previews and search results now show "{playlist} by {author}", the playlist's description and its cover image.
   - A link to a playlist that no longer exists answers "not found", and shows a "Playlist not found" message whose Close button goes to the home screen.
+  - If a playlist can't be loaded (for example, the connection drops), a "Couldn't load playlist" message offers "Try again" or "Close" instead of leaving the reader stuck on the link.
   - Old `?playlist=` share links permanently redirect (301) to the playlist's page. A link that also has `?playlistStep=`, which is what the address bar shows while a playlist plays, still resumes playback instead.
   - The "Would you like a tutorial?" offer stays hidden for a visit that starts on a playlist link, including after the playlist is started. Closing the playlist without starting it goes to the home screen, where the offer can appear as usual.
 - Give each shared reading plan its own page at `/{lang}/reading-plan/{id}/{title}`. ([#1786](https://github.com/HelloAOLab/seed-bible/issues/1786))
   - Opening a shared reading plan link shows the plan's cover, author, description and number of sessions, with "Start Reading Plan" and "Close" buttons. Before, the link opened straight onto a chapter with the plans panel beside it.
   - "Start Reading Plan" plays the plan's first session in the reader. The plans panel then opens on the plan, ready to pick a pace.
-  - Link previews, search results, the 404 and "Reading plan not found" message for a deleted plan, and the hidden tutorial offer work the same way as for shared playlists.
+  - Link previews, search results, the 404 and "Reading plan not found" message for a deleted plan, the "Couldn't load reading plan" message with "Try again", and the hidden tutorial offer work the same way as for shared playlists.
   - Old `?readingPlan=` share links permanently redirect (301) to the plan's page.
 
 ### 🔧 Changed
