@@ -2308,6 +2308,59 @@ export function createPlaylistManager(
   };
 
   /**
+   * Author names already looked up, by user id, so playback doesn't re-read
+   * a profile every time it starts. A lookup that found no name isn't kept,
+   * so a later playback can try again.
+   */
+  const authorNameCache = new Map<string, Promise<string | null>>();
+  const getAuthorName = (userId: string): Promise<string | null> => {
+    const cached = authorNameCache.get(userId);
+    if (cached) {
+      return cached;
+    }
+    const lookup = loadAuthorName(userId).then((name) => {
+      if (!name) {
+        authorNameCache.delete(userId);
+      }
+      return name;
+    });
+    authorNameCache.set(userId, lookup);
+    return lookup;
+  };
+
+  /**
+   * The display name of whoever made the playlist that's playing, for the
+   * player. Null while it loads, and for queues no one authored (a reading
+   * plan's day) or whose author has no name.
+   */
+  const playingAuthorName = signal<string | null>(null);
+  effect(() => {
+    const first = playing.value?.playlists.value[0] as
+      | Partial<Playlist>
+      | undefined;
+    const userId = first?.authorUserId;
+    playingAuthorName.value = null;
+    if (!userId) {
+      return;
+    }
+    // Started from a playlist page, the name is already loaded.
+    const page = playlistPage.peek();
+    if (page?.playlist.authorUserId === userId && page.authorName) {
+      playingAuthorName.value = page.authorName;
+      return;
+    }
+    let current = true;
+    void getAuthorName(userId).then((name) => {
+      if (current) {
+        playingAuthorName.value = name;
+      }
+    });
+    return () => {
+      current = false;
+    };
+  });
+
+  /**
    * Starts the current playlist page's playlist from its first item and
    * leaves the playlist page for the reader.
    */
@@ -2555,6 +2608,7 @@ export function createPlaylistManager(
     removePlayHistory,
     getPlaylistUrl,
     playlistPage,
+    playingAuthorName,
     playlistPageNotFound,
     playlistPageLoadFailed,
     playlistPageRetrying,

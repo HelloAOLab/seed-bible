@@ -10,6 +10,7 @@
   - Link previews and search results now show "{playlist} by {author}", the playlist's description and its cover image.
   - A link to a playlist that no longer exists answers "not found", and shows a "Playlist not found" message whose Close button goes to the home screen.
   - If a playlist can't be loaded (for example, the connection drops), a "Couldn't load playlist" message offers "Try again" or "Close" instead of leaving the reader stuck on the link.
+  - While a playlist plays, the player shows who made it and its description above the queue.
   - Old `?playlist=` share links permanently redirect (301) to the playlist's page. A link that also has `?playlistStep=`, which is what the address bar shows while a playlist plays, still resumes playback instead.
   - The "Would you like a tutorial?" offer stays hidden for a visit that starts on a playlist link, including after the playlist is started. Closing the playlist without starting it goes to the home screen, where the offer can appear as usual.
 
