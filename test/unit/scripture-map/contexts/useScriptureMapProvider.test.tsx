@@ -21,6 +21,9 @@ function makeSeedBibleState(overrides: Record<string, unknown> = {}) {
       userId: { value: "user-1" },
       profile: { value: null },
       updateProfile: vi.fn(),
+      localConfig: {
+        value: {},
+      },
     },
     ...overrides,
   };
@@ -205,6 +208,9 @@ describe("useScriptureMapProvider", () => {
           value: profileConfig ? { name: "", config: profileConfig } : null,
         },
         updateProfile: vi.fn(),
+        localConfig: {
+          value: {},
+        },
       };
     }
 
@@ -258,6 +264,9 @@ describe("useScriptureMapProvider", () => {
           value: profileConfig ? { name: "", config: profileConfig } : null,
         },
         updateProfile: vi.fn(),
+        localConfig: {
+          value: {},
+        },
       };
     }
 
@@ -280,7 +289,12 @@ describe("useScriptureMapProvider", () => {
     });
 
     it("falls back to an empty map when the saved value is malformed", () => {
-      const login = makeLogin({ scriptureMapOpenBooks: "not-an-object" });
+      const login = makeLogin({
+        scriptureMapOpenBooks: "not-an-object",
+        localConfig: {
+          value: {},
+        },
+      });
       const result = setup(
         makeConfig({ seedBibleState: makeSeedBibleState({ login }) })
       );
@@ -325,6 +339,9 @@ describe("useScriptureMapProvider", () => {
           value: profileConfig ? { name: "", config: profileConfig } : null,
         },
         updateProfile: vi.fn(),
+        localConfig: {
+          value: {},
+        },
       };
     }
 
