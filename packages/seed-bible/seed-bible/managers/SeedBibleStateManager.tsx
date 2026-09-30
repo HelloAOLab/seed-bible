@@ -27,6 +27,7 @@ import {
   SharedPageLoadFailedModalContent,
   SharedPageModalContent,
   SharedPageNotFoundModalContent,
+  type SharedPageModalAction,
 } from "../components/SharedPageModal/SharedPageModal";
 import {
   buildSharedPagePath,
@@ -34,7 +35,11 @@ import {
   type SharedPageKind,
 } from "../managers/SharedPagePath";
 import type { PlaylistPageSeed } from "../managers/PlaylistManager";
-import type { ReadingPlanPageSeed } from "../managers/ReadingPlansManager";
+import {
+  averageSessionMinutes,
+  type ReadingPlanPageSeed,
+  type ReadingPlanProgress,
+} from "../managers/ReadingPlansManager";
 import {
   buildStaticPagePath,
   parseStaticPagePath,
@@ -71,7 +76,6 @@ import type { OfflineTranslationStore } from "../managers/OfflineTranslationStor
 import {
   createBibleToolsManager,
   openReadingPlansPane,
-  readingPlanDayPlaylist,
 } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
@@ -401,6 +405,12 @@ export interface AppState {
    * modal's Start button) and leaves the page for the reader. No-op off one.
    */
   startSharedPage: () => void;
+
+  /**
+   * Resumes the reading plan the current page shows where the signed-in
+   * reader left off, in the plans pane. No-op when they haven't started it.
+   */
+  resumeSharedPage: () => void;
 
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<{ id: number; message: string } | null>;
@@ -3154,6 +3164,7 @@ export function createSeedBibleState(
       socialTitle,
       isAboutPage,
       startSharedPage,
+      resumeSharedPage,
       currentToast,
       toast,
       isDiscoverOpen: playlists.isDiscoverOpen,
@@ -3494,35 +3505,24 @@ export function createSeedBibleState(
   });
 
   /**
-   * Starts the current reading plan page's plan at its first session with
-   * readings, handing them to the reader's playback queue the same way the
-   * plan's own "play this day" does, then leaves the reading plan page for
-   * the reader. The plan is also selected, so opening the plans pane shows
-   * it, ready to pick a pace and track progress. The pane isn't opened here:
-   * playback's own side pane would replace it straight away.
+   * Leaves the reading plan page for the plan in the plans pane: its pace
+   * picker when `progress` is null (a fresh start), else the reader's place
+   * in that progress, ready to read the day or session they're on.
    */
-  const startReadingPlanPage = (): void => {
+  const openReadingPlanPageInPane = (
+    progress: ReadingPlanProgress | null
+  ): void => {
     const page = readingPlans.readingPlanPage.peek();
     if (!page) {
       return;
     }
-    const plan = page.item;
-    const firstSession = plan.sessions.find(
-      (session) => session.readings.length > 0
-    );
-    readingPlans.selectedReadingPlan.value = plan;
-    showReadingPlanDetailView();
-    if (firstSession) {
-      playlists.startPlaying(
-        readingPlanDayPlaylist(
-          plan,
-          firstSession.readings.map((reading) => reading.item)
-        ),
-        0,
-        { history: false }
-      );
-    }
+    readingPlans.selectedReadingPlan.value = page.item;
+    void readingPlans.selectReadingPlanProgress(progress);
+    // Leave the page first. Moving the address bar onto a chapter closes
+    // fullscreen panes (every pane is fullscreen on a phone), so a pane
+    // opened before it would close again straight away.
     tabs.leaveStaticPage();
+    pendingSharedPlan.value = page.item;
   };
 
   // A function declaration so the `state` object above can refer to it.
@@ -3530,7 +3530,15 @@ export function createSeedBibleState(
     if (playlists.playlistPage.peek()) {
       playlists.startPlaylistPage();
     } else {
-      startReadingPlanPage();
+      openReadingPlanPageInPane(null);
+    }
+  }
+
+  // Same reason as `startSharedPage` for being a function declaration.
+  function resumeSharedPage(): void {
+    const place = readingPlans.readingPlanPageProgress.peek();
+    if (place) {
+      openReadingPlanPageInPane(place.progress);
     }
   }
 
@@ -3617,29 +3625,103 @@ export function createSeedBibleState(
     const { t } = i18n;
     const playlistPage = playlists.playlistPage.value;
     const planPage = readingPlans.readingPlanPage.value;
-    const details = playlistPage
-      ? {
-          lengthLabel: t("playlist-page-item-count", {
-            count: playlistPage.item.items.length,
-            defaultValue: "{{count}} items",
-          }),
-          startLabel: t("playlist-page-start", {
-            defaultValue: "Start Playlist",
-          }),
-          canStart: playlistPage.item.items.length > 0,
-        }
-      : {
-          lengthLabel: t("reading-plan-session-count-sessions", {
-            count: planPage?.item.sessions.length ?? 0,
-            defaultValue: "{{count}} sessions",
-          }),
-          startLabel: t("reading-plan-page-start", {
-            defaultValue: "Start Reading Plan",
-          }),
-          canStart: !!planPage?.item.sessions.some(
-            (session) => session.readings.length > 0
-          ),
-        };
+    let lengthLabel: string;
+    let status: string | null = null;
+    let actions: SharedPageModalAction[];
+    if (playlistPage) {
+      lengthLabel = t("playlist-page-item-count", {
+        count: playlistPage.item.items.length,
+        defaultValue: "{{count}} items",
+      });
+      actions = [
+        {
+          label: t("playlist-page-start", { defaultValue: "Start Playlist" }),
+          primary: true,
+          disabled: playlistPage.item.items.length === 0,
+          onClick: startSharedPage,
+        },
+      ];
+    } else {
+      const plan = planPage?.item;
+      const sessionCount = t("reading-plan-session-count-sessions", {
+        count: plan?.sessions.length ?? 0,
+        defaultValue: "{{count}} sessions",
+      });
+      // Estimated at the loaded translation's own chapter lengths when its
+      // catalog is there, else at a typical chapter length.
+      const books =
+        selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+      const minutes = plan
+        ? averageSessionMinutes(plan, (bookId) =>
+            books.find((book) => book.id === bookId)
+          )
+        : null;
+      lengthLabel =
+        minutes != null
+          ? `${sessionCount} · ${t("reading-plan-page-minutes-per-session", {
+              count: minutes,
+              defaultValue: "About {{count}} min per session",
+            })}`
+          : sessionCount;
+
+      const startFresh = {
+        label: t("reading-plan-page-start", {
+          defaultValue: "Start Reading Plan",
+        }),
+        primary: true,
+        disabled: minutes == null,
+        onClick: startSharedPage,
+      };
+      const place = readingPlans.readingPlanPageProgress.value;
+      if (!place) {
+        actions = [startFresh];
+      } else if (place.resumeAt == null) {
+        status = t("reading-plan-page-finished", {
+          defaultValue: "You've finished this plan.",
+        });
+        actions = [
+          {
+            ...startFresh,
+            label: t("reading-plan-page-start-over", {
+              defaultValue: "Start from beginning",
+            }),
+          },
+        ];
+      } else {
+        const isDay = place.unit === "day";
+        status = isDay
+          ? t("reading-plan-page-on-day", {
+              day: place.resumeAt,
+              defaultValue: "You're on day {{day}}",
+            })
+          : t("reading-plan-page-on-session", {
+              session: place.resumeAt,
+              defaultValue: "You're on session {{session}}",
+            });
+        actions = [
+          {
+            ...startFresh,
+            primary: false,
+            label: t("reading-plan-page-start-over", {
+              defaultValue: "Start from beginning",
+            }),
+          },
+          {
+            label: isDay
+              ? t("reading-plan-page-resume-day", {
+                  day: place.resumeAt,
+                  defaultValue: "Resume day {{day}}",
+                })
+              : t("reading-plan-page-resume-session", {
+                  session: place.resumeAt,
+                  defaultValue: "Resume session {{session}}",
+                }),
+            primary: true,
+            onClick: resumeSharedPage,
+          },
+        ];
+      }
+    }
     modals.openModal({
       id: SHARED_PAGE_MODAL_ID,
       title: name,
@@ -3651,8 +3733,9 @@ export function createSeedBibleState(
           heroImageUrl={page.heroImageUrl}
           authorName={page.authorName}
           description={page.description}
-          {...details}
-          onStart={startSharedPage}
+          lengthLabel={lengthLabel}
+          status={status}
+          actions={actions}
           onClose={() => modals.closeModal(SHARED_PAGE_MODAL_ID)}
         />
       ),

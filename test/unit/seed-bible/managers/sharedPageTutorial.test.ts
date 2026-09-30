@@ -12,7 +12,14 @@ import {
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { SHARED_PAGE_MODAL_ID } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { PlaylistSchema } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
-import { ReadingPlanSchema } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
+import {
+  ReadingPlanSchema,
+  createReadingPlanProgress,
+  markSessionCompleteInProgress,
+} from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
+import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import { h, render } from "preact";
+import { act } from "preact/test-utils";
 import type { CreateTestSeedBibleStateOptions } from "../testUtils/createTestSeedBibleState";
 
 /** The app defaults to the private API endpoint, so responses key on it. */
@@ -57,6 +64,8 @@ const PAGES: {
   record: unknown;
   loadFailed: (state: SeedBibleState) => boolean;
   retry: (state: SeedBibleState) => Promise<void>;
+  /** What "Start" leads to for this kind. */
+  expectStarted: (state: SeedBibleState) => Promise<void>;
 }[] = [
   {
     kind: "playlist",
@@ -74,6 +83,19 @@ const PAGES: {
     record: null,
     loadFailed: (state) => state.playlists.playlistPageLoadFailed.value,
     retry: (state) => state.playlists.retryPlaylistPage(),
+    // A playlist plays from its first item.
+    expectStarted: async (state) => {
+      await waitFor(
+        () =>
+          state.app.currentReadingState.value?.tab.readingState.chapterData
+            .value?.book.id === "EXO",
+        2000
+      );
+      const url = new URL(window.location.href);
+      expect(url.pathname).toBe("/en/AAB/exodus/2");
+      expect(url.searchParams.get("playlistStep")).toBe("0");
+      expect(state.playlists.playing.value?.currentIndex.value).toBe(0);
+    },
     seed: {
       initialPlaylistPageSeed: {
         locator: "owner.playlist_shared",
@@ -107,6 +129,18 @@ const PAGES: {
     record: null,
     loadFailed: (state) => state.readingPlans.readingPlanPageLoadFailed.value,
     retry: (state) => state.readingPlans.retryReadingPlanPage(),
+    // A reading plan opens on its pace picker: the plans pane on the plan,
+    // with no progress selected, and nothing playing yet.
+    expectStarted: async (state) => {
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === READING_PLANS_PANE)
+      ).toBe(true);
+      expect(state.readingPlans.selectedReadingPlan.value?.address).toBe(
+        "plan_shared"
+      );
+      expect(state.readingPlans.selectedReadingPlanProgress.value).toBeNull();
+      expect(state.playlists.playing.value).toBeNull();
+    },
     seed: {
       initialReadingPlanPageSeed: {
         locator: "owner.plan_shared",
@@ -146,6 +180,7 @@ for (const page of PAGES) {
 }
 
 const CALL_PROCEDURE_URL = "https://auth.seedbible.org/api/v3/callProcedure";
+const READING_PLANS_PANE = "reading-plans-pane";
 
 /**
  * A visitor who opens a shared playlist or reading plan link came for that
@@ -163,6 +198,7 @@ describe.each(PAGES)(
   ({
     path,
     seed,
+    expectStarted,
     missingPath,
     missingSeed,
     notFoundTitle,
@@ -200,23 +236,16 @@ describe.each(PAGES)(
       expect(state.tutorial.promptVisible.value).toBe(false);
     });
 
-    it("starting goes to the first reading and keeps the offer back", async () => {
+    it("starting leaves the page and keeps the offer back", async () => {
       const state = await openSharedPage();
 
       state.app.startSharedPage();
-      await waitFor(
-        () =>
-          state.app.currentReadingState.value?.tab.readingState.chapterData
-            .value?.book.id === "EXO",
-        2000
-      );
 
       expect(modalOpen(state)).toBe(false);
-      // The address bar has left the shared page for the playing chapter.
-      const url = new URL(window.location.href);
-      expect(url.pathname).toBe("/en/AAB/exodus/2");
-      expect(url.searchParams.get("playlistStep")).toBe("0");
-      expect(state.playlists.playing.value?.currentIndex.value).toBe(0);
+      expect(new URL(window.location.href).pathname).not.toMatch(
+        /\/(playlist|reading-plan)\//
+      );
+      await expectStarted(state);
       expect(state.tutorial.promptVisible.value).toBe(false);
     });
 
@@ -310,3 +339,167 @@ describe.each(PAGES)(
     });
   }
 );
+
+/**
+ * What a reading plan link offers depends on whether the visitor has already
+ * started that plan. These render the modal's content, since the in-progress
+ * wording only appears once the reader's progress has loaded in the browser.
+ */
+describe("a shared reading plan link, for someone who has started it", () => {
+  const PLAN = ReadingPlanSchema.parse({
+    address: "plan_started",
+    recordName: "owner",
+    authorUserId: "author-1",
+    locale: "en",
+    title: "Three Days",
+    description: null,
+    cadenceOptions: [
+      {
+        id: "daily",
+        label: "Daily",
+        cadence: { segments: [{ type: "read", days: 1 }] },
+      },
+    ],
+    sessions: [1, 2, 3].map((n) => ({
+      id: `s${n}`,
+      readings: [{ id: `r${n}`, item: EXODUS_2 }],
+    })),
+    createdAtMs: 1,
+    updatedAtMs: 1,
+  });
+
+  async function openStartedPlan(options: {
+    selfPaced?: boolean;
+    done: number;
+  }) {
+    window.history.replaceState(
+      null,
+      "",
+      "/en/reading-plan/owner.plan_started/three-days"
+    );
+    const state = await createTestSeedBibleState({
+      responses: responses(),
+      todayOpen: "fromUrl",
+      initialReadingPlanPageSeed: {
+        locator: "owner.plan_started",
+        item: PLAN,
+        authorName: null,
+      },
+    });
+    let progress = createReadingPlanProgress(
+      PLAN,
+      "reader-1",
+      "progress-1",
+      Date.now(),
+      { selfPaced: options.selfPaced }
+    );
+    for (const session of PLAN.sessions.slice(0, options.done)) {
+      progress = markSessionCompleteInProgress(progress, session, Date.now());
+    }
+    // What a signed-in reader's progress sync would have loaded.
+    state.readingPlans.userReadingPlanProgresses.value = [progress];
+    return { state, progress };
+  }
+
+  function renderModal(state: SeedBibleState) {
+    const modal = state.modals.modals.value.find(
+      (m) => m.id === SHARED_PAGE_MODAL_ID
+    );
+    const container = document.createElement("div");
+    act(() => {
+      render(
+        h(I18nProvider, {
+          i18n: state.i18n,
+          children: modal?.content({ t: state.i18n.i18n.t }),
+        }),
+        container
+      );
+    });
+    return {
+      text: container.textContent ?? "",
+      buttons: [...container.querySelectorAll("button")].map(
+        (b) => b.textContent
+      ),
+    };
+  }
+
+  it("offers to start a plan nobody has started, with its reading time", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/en/reading-plan/owner.plan_started/three-days"
+    );
+    const state = await createTestSeedBibleState({
+      responses: responses(),
+      todayOpen: "fromUrl",
+      initialReadingPlanPageSeed: {
+        locator: "owner.plan_started",
+        item: PLAN,
+        authorName: null,
+      },
+    });
+
+    const { text, buttons } = renderModal(state);
+
+    expect(text).toMatch(/3 sessions · About \d+ min per session/);
+    expect(buttons).toEqual(["Close", "Start Reading Plan"]);
+  });
+
+  it("says which day a scheduled reader is on, and offers to resume it or start over", async () => {
+    const { state } = await openStartedPlan({ done: 1 });
+
+    const { text, buttons } = renderModal(state);
+
+    expect(text).toContain("You're on day 2");
+    expect(buttons).toEqual(["Close", "Start from beginning", "Resume day 2"]);
+  });
+
+  it("counts in sessions for a self-paced reader", async () => {
+    const { state } = await openStartedPlan({ selfPaced: true, done: 2 });
+
+    const { text, buttons } = renderModal(state);
+
+    expect(text).toContain("You're on session 3");
+    expect(buttons).toEqual([
+      "Close",
+      "Start from beginning",
+      "Resume session 3",
+    ]);
+  });
+
+  it("offers only a fresh start once the plan is finished", async () => {
+    const { state } = await openStartedPlan({ done: 3 });
+
+    const { text, buttons } = renderModal(state);
+
+    expect(text).toContain("You've finished this plan.");
+    expect(buttons).toEqual(["Close", "Start from beginning"]);
+  });
+
+  it("resuming opens the plan on the reader's own progress", async () => {
+    const { state, progress } = await openStartedPlan({ done: 1 });
+
+    state.app.resumeSharedPage();
+
+    expect(
+      state.panes.panes.value.some((pane) => pane.id === READING_PLANS_PANE)
+    ).toBe(true);
+    expect(state.readingPlans.selectedReadingPlanProgress.value?.id).toBe(
+      progress.id
+    );
+    expect(new URL(window.location.href).pathname).not.toContain(
+      "/reading-plan/"
+    );
+  });
+
+  it("starting over opens the pace picker instead of the existing progress", async () => {
+    const { state } = await openStartedPlan({ done: 1 });
+
+    state.app.startSharedPage();
+
+    expect(state.readingPlans.selectedReadingPlan.value?.address).toBe(
+      "plan_started"
+    );
+    expect(state.readingPlans.selectedReadingPlanProgress.value).toBeNull();
+  });
+});

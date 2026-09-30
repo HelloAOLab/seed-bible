@@ -1709,7 +1709,7 @@ describe("render() server-rendered meta tags", () => {
 
       expect(html).toContain("sb-shared-page-modal");
       expect(html).toContain("By Ruth");
-      expect(html).toContain("2 sessions");
+      expect(html).toMatch(/2 sessions · About \d+ min per session/);
       expect(html).toContain("Start Reading Plan");
     });
 
