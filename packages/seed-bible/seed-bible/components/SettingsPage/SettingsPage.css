@@ -128,6 +128,8 @@
   align-items: center;
   gap: 0.625rem;
   flex: 1;
+  /* Lets a one-line description shrink to the row instead of widening it. */
+  min-width: 0;
 }
 
 .sb-extension-row-actions {
