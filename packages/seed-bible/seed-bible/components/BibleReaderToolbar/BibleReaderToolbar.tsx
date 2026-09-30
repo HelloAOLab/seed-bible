@@ -1116,7 +1116,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   if (lastSelectedAtRef.current !== currentSelectedAt) {
     lastSelectedAtRef.current = currentSelectedAt;
     verseToolbarOffset.value = { dx: 0, dy: 0 };
-    selectedVerseToolId.value = null;
   }
 
   // Keep the measured height current as the picker expands/collapses.
@@ -1490,6 +1489,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     if (!hasVerseSelection.value) {
       isHighlightPickerOpen.value = false;
       isVerseSheetExpanded.value = false;
+      selectedVerseToolId.value = null;
       verseSheetDragReveal.value = null;
       verseSheetDismissOffset.value = 0;
     }
