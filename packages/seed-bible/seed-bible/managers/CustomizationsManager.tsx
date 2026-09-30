@@ -1127,6 +1127,9 @@ export function createCustomizationsManager(
   // A super property rides on every later event (pageviews, chapter reads,
   // …), which is what lets analytics be split per customization; the person
   // property only remembers the latest one a signed-in viewer arrived through.
+  // Session-scoped (sessionStorage, one tab) rather than `register`'s
+  // persistent storage, which would leak the tag into a later plain visit's
+  // events, or another tab's, until this effect got round to clearing it.
   // Keyed on the share link rather than `activeCustomizationLocator` so an
   // owner previewing their own draft isn't counted as a visit to it.
   effect(() => {
@@ -1136,10 +1139,10 @@ export function createCustomizationsManager(
       return;
     }
     if (!locator) {
-      posthog.unregister(POSTHOG_CUSTOMIZATION_PROPERTY);
+      posthog.unregister_for_session(POSTHOG_CUSTOMIZATION_PROPERTY);
       return;
     }
-    posthog.register({ [POSTHOG_CUSTOMIZATION_PROPERTY]: locator });
+    posthog.register_for_session({ [POSTHOG_CUSTOMIZATION_PROPERTY]: locator });
     if (userId) {
       posthog.identify(userId, { [POSTHOG_CUSTOMIZATION_PROPERTY]: locator });
     }

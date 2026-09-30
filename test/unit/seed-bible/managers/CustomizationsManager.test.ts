@@ -2023,15 +2023,15 @@ describe("CustomizationsManager", () => {
     const linkedHref =
       "http://localhost/?customization=other-user.customization_shared";
     let posthogMock: {
-      register: Mock;
-      unregister: Mock;
+      register_for_session: Mock;
+      unregister_for_session: Mock;
       identify: Mock;
     };
 
     beforeEach(() => {
       posthogMock = {
-        register: vi.fn(),
-        unregister: vi.fn(),
+        register_for_session: vi.fn(),
+        unregister_for_session: vi.fn(),
         identify: vi.fn(),
       };
       (globalThis as any).posthog = posthogMock;
@@ -2049,7 +2049,7 @@ describe("CustomizationsManager", () => {
       );
       await manager.initialCustomizationLoadPromise;
 
-      expect(posthogMock.register).toHaveBeenLastCalledWith({
+      expect(posthogMock.register_for_session).toHaveBeenLastCalledWith({
         customization_id: "other-user.customization_shared",
       });
       expect(posthogMock.identify).toHaveBeenLastCalledWith("user-1", {
@@ -2066,7 +2066,7 @@ describe("CustomizationsManager", () => {
       );
       await manager.initialCustomizationLoadPromise;
 
-      expect(posthogMock.register).toHaveBeenLastCalledWith({
+      expect(posthogMock.register_for_session).toHaveBeenLastCalledWith({
         customization_id: "other-user.customization_shared",
       });
       expect(posthogMock.identify).not.toHaveBeenCalled();
@@ -2081,9 +2081,11 @@ describe("CustomizationsManager", () => {
     it("leaves events untagged when there is no ?customization= link", () => {
       createManager();
 
-      expect(posthogMock.register).not.toHaveBeenCalled();
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
       expect(posthogMock.identify).not.toHaveBeenCalled();
-      expect(posthogMock.unregister).toHaveBeenCalledWith("customization_id");
+      expect(posthogMock.unregister_for_session).toHaveBeenCalledWith(
+        "customization_id"
+      );
     });
 
     it("leaves events untagged when the linked customization can't be found", async () => {
@@ -2092,7 +2094,7 @@ describe("CustomizationsManager", () => {
       );
       await manager.initialCustomizationLoadPromise;
 
-      expect(posthogMock.register).not.toHaveBeenCalled();
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
       expect(posthogMock.identify).not.toHaveBeenCalled();
     });
 
@@ -2102,7 +2104,7 @@ describe("CustomizationsManager", () => {
       manager.startEditing(created.id);
 
       expect(manager.activeCustomization.value?.id).toBe(created.id);
-      expect(posthogMock.register).not.toHaveBeenCalled();
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
     });
   });
 
