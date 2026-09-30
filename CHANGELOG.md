@@ -18,6 +18,7 @@
   - "Start Reading Plan" plays the plan's first session in the reader. The plans panel then opens on the plan, ready to pick a pace.
   - Link previews, search results, the 404 and "Reading plan not found" message for a deleted plan, the "Couldn't load reading plan" message with "Try again", and the hidden tutorial offer work the same way as for shared playlists.
   - Old `?readingPlan=` share links permanently redirect (301) to the plan's page.
+  - Playing a day of a reading plan shows who made the plan in the player, like a playlist does.
 
 ### 🔧 Changed
 

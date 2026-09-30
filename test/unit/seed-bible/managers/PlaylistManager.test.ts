@@ -29,6 +29,7 @@ import {
   type PlaylistReadingData,
   type PlaylistReadingExtensionInstance,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
@@ -2655,7 +2656,36 @@ describe("createPlaylistManager", () => {
       ).toHaveLength(1);
     });
 
-    it("has no author for a queue nobody authored, such as a reading plan's day", async () => {
+    it("looks up the author of a reading plan day's queue", async () => {
+      respondWith({
+        "author-1/profile": { success: true, data: { name: "Ruth" } },
+      });
+      const manager = makeManager(
+        null,
+        undefined,
+        "http://localhost:3000/en/AAB/john/3"
+      );
+
+      manager.startPlaying(
+        readingPlanDayPlaylist(
+          {
+            address: "plan-1",
+            title: "Advent",
+            description: null,
+            heroImageUrl: null,
+            authorUserId: "author-1",
+          },
+          [{ type: "bible-verse", ref: { bookId: "JHN", chapter: 3 } }]
+        ),
+        0,
+        { history: false }
+      );
+      await flush();
+
+      expect(manager.playingAuthorName.value).toBe("Ruth");
+    });
+
+    it("has no author for a queue nobody authored", async () => {
       const manager = makeManager(
         null,
         undefined,
@@ -2821,6 +2851,31 @@ describe("createPlaylistManager", () => {
         playlistLocator: `${playlist.recordName}.${playlist.id}`,
         isCreator: true,
       });
+    });
+
+    it("reports a reading plan day as not the viewer's own when someone else wrote the plan", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      manager.startPlaying(
+        readingPlanDayPlaylist(
+          {
+            address: "plan-1",
+            title: "Advent",
+            description: null,
+            heroImageUrl: null,
+            authorUserId: "user-2",
+          },
+          [{ type: "bible-verse", ref: { bookId: "JHN", chapter: 3 } }]
+        ),
+        0,
+        { history: false }
+      );
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith(
+        "playlist_played",
+        expect.objectContaining({ playlistId: "plan-1", isCreator: false })
+      );
     });
 
     it("captures playlist_played with isCreator false for a playlist shared by someone else", async () => {

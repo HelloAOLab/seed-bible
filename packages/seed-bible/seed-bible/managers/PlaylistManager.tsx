@@ -140,7 +140,13 @@ export type Playlist = z.infer<typeof PlaylistSchema>;
 export type SimplePlaylist = Pick<
   Playlist,
   "id" | "items" | "title" | "description" | "heroImageUrl"
->;
+> &
+  /**
+   * Who made it, when someone did: a saved playlist, or the reading plan a
+   * day's queue came from. Absent for a queue no one authored, such as an
+   * AI-generated playlist played before it's saved.
+   */
+  Partial<Pick<Playlist, "authorUserId">>;
 
 /** A shared `/{lang}/playlist/...` page's playlist and its author. */
 export type PlaylistPage = SharedPage<Playlist>;
@@ -1236,7 +1242,7 @@ export function createPlaylistManager(
     }
     const userId = login.userId.peek();
     for (const playlist of playlists) {
-      const authorUserId = (playlist as Partial<Playlist>).authorUserId;
+      const authorUserId = playlist.authorUserId;
       posthog.capture(eventName, {
         playlistId: playlist.id,
         playlistLocator: getPlaylistLocator(playlist),
@@ -2013,16 +2019,13 @@ export function createPlaylistManager(
   };
 
   /**
-   * The display name of whoever made the playlist that's playing, for the
-   * player. Null while it loads, and for queues no one authored (a reading
-   * plan's day) or whose author has no name.
+   * The display name of whoever made the playlist (or reading plan) that's
+   * playing, for the player. Null while it loads, and for queues no one
+   * authored or whose author has no name.
    */
   const playingAuthorName = signal<string | null>(null);
   effect(() => {
-    const first = playing.value?.playlists.value[0] as
-      | Partial<Playlist>
-      | undefined;
-    const userId = first?.authorUserId;
+    const userId = playing.value?.playlists.value[0]?.authorUserId;
     playingAuthorName.value = null;
     if (!userId) {
       return;
