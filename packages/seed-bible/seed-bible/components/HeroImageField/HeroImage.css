@@ -103,7 +103,7 @@
   object-fit: cover;
 }
 
-.sb-hero-field-delete {
+.sb-hero-field-clear {
   position: absolute;
   top: 8px;
   left: 8px;
@@ -121,16 +121,16 @@
   cursor: pointer;
 }
 
-.sb-hero-field-delete:hover:not(:disabled) {
+.sb-hero-field-clear:hover:not(:disabled) {
   background: rgba(0, 0, 0, 0.8);
 }
 
-.sb-hero-field-delete:disabled {
+.sb-hero-field-clear:disabled {
   opacity: 0.65;
   cursor: default;
 }
 
-.sb-hero-field-delete .material-symbols-outlined {
+.sb-hero-field-clear .material-symbols-outlined {
   font-size: 1.125rem;
 }
 

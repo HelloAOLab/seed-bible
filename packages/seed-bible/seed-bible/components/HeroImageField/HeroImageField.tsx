@@ -10,12 +10,31 @@ import {
   type PhotoChooserPhotos,
 } from "../PhotoChooser/PhotoChooser";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import type { PhotoCropTarget } from "../PhotoCropModal/photoCrop";
 
-const HeroImageCropModalContent = lazy(() =>
-  import("./HeroImageCropModal").then((m) => ({
-    default: m.HeroImageCropModalContent,
+// Deferred because it pulls in `react-avatar-editor`, which is only needed
+// once the user actually picks a file to crop.
+const PhotoCropModalContent = lazy(() =>
+  import("../PhotoCropModal/PhotoCropModal").then((m) => ({
+    default: m.PhotoCropModalContent,
   }))
 );
+
+/**
+ * A 4:3 landscape cover, matching the YouVersion-style hero. Stored as JPEG:
+ * covers are photographic and 1024x768 of lossless PNG is far larger than the
+ * quality difference is worth.
+ */
+const COVER_IMAGE_TARGET: PhotoCropTarget = {
+  width: 1024,
+  height: 768,
+  previewWidth: 288,
+  previewHeight: 216,
+  borderRadius: 8,
+  mimeType: "image/jpeg",
+  quality: 0.85,
+  fileName: "hero-image.jpg",
+};
 
 function heroClassName(base: string, extra?: string): string {
   return extra ? `${base} ${extra}` : base;
@@ -126,8 +145,13 @@ export function HeroImageField(props: {
             </SkeletonContainer>
           }
         >
-          <HeroImageCropModalContent
+          <PhotoCropModalContent
             image={file}
+            target={COVER_IMAGE_TARGET}
+            title={t("crop-hero-image", { defaultValue: "Crop your image" })}
+            confirmLabel={t("set-hero-image", {
+              defaultValue: "Set cover image",
+            })}
             onClose={() => modals.closeModal(modalId)}
             onUpload={async (cropped) => {
               isUploading.value = true;
@@ -185,12 +209,14 @@ export function HeroImageField(props: {
           </button>
           <button
             type="button"
-            className="sb-hero-field-delete"
+            className="sb-hero-field-clear"
             onClick={onRemove}
             disabled={busy}
-            aria-label={t("delete", { defaultValue: "Delete" })}
+            aria-label={t("remove-hero-image", {
+              defaultValue: "Remove cover image",
+            })}
           >
-            <MaterialIcon>delete</MaterialIcon>
+            <MaterialIcon>close</MaterialIcon>
           </button>
         </div>
       ) : (

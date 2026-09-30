@@ -30,7 +30,7 @@ interface QuickToolbarProps {
 
 /**
  * Compact toolbar shown at the top of the reader, beside the chapter
- * bookmark button. Renders whatever tools extensions have registered via
+ * save and bookmark buttons. Renders whatever tools extensions have registered via
  * `toolsManager.registerQuickTool`, mirroring the other reader toolbars
  * (icon buttons, optional getItems() context menus). Renders nothing when
  * no quick tool is currently visible.

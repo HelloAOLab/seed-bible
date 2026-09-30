@@ -49,6 +49,7 @@ describe("application.service.HitboxLifecycleService", () => {
     };
     hitboxSpawnerPort = {
       spawn: vi.fn(),
+      despawn: vi.fn(),
     };
     service = new HitboxLifecycleService({
       piecesProviderPort,
@@ -71,9 +72,9 @@ describe("application.service.HitboxLifecycleService", () => {
     hitboxProviderPort.getHitboxData.mockImplementation(
       (experience, pieceKey) => {
         if (pieceKey === "bronze-laver") {
-          return null;
+          return [];
         }
-        return {} as HitboxData;
+        return [{} as HitboxData];
       }
     );
     hitboxSpawnerPort.spawn.mockImplementation(() => {
@@ -131,7 +132,8 @@ describe("application.service.HitboxLifecycleService", () => {
 
     piecesProviderPort.getPieces.mockImplementation(() => pieces);
     hitboxProviderPort.getHitboxData.mockImplementation((_, pieceKey) => {
-      return dataList[pieceKey] ?? null;
+      const data = dataList[pieceKey];
+      return data ? [data] : [];
     });
     hitboxSpawnerPort.spawn.mockImplementation(() => ({}) as Hitbox);
 

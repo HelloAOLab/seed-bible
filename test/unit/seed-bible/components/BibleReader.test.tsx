@@ -8,6 +8,7 @@ import {
 import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   type BibleReadingState,
+  type VisibleVerseRange,
   type SelectedFootnote,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -85,10 +86,13 @@ function createFixture(): ReaderFixture {
     },
     thisChapterLink: "/api/BSB/GEN/1.json",
     thisChapterAudioLinks: {},
+    thisChapterAudioTimings: {},
     nextChapterApiLink: "/api/BSB/GEN/2.json",
     nextChapterAudioLinks: {},
+    nextChapterAudioTimings: {},
     previousChapterApiLink: null,
     previousChapterAudioLinks: null,
+    previousChapterAudioTimings: null,
     numberOfVerses: 2,
     chapter: {
       number: 1,
@@ -176,11 +180,14 @@ function createFixture(): ReaderFixture {
     loadNextChapter: vi.fn(async () => undefined),
     hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
     hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
+    nextChapterPosition: computed(() => null),
+    previousChapterPosition: computed(() => null),
     getAdjacentChapter: vi.fn(async () => null),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialLoadSettled: computed(() => true),
     initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(
       () => contentStale.value ?? chapterData.value === null
@@ -204,10 +211,12 @@ function createFixture(): ReaderFixture {
     title: signal<string>("title"),
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
+    visibleVerseRange: signal<VisibleVerseRange | null>(null),
   } as BibleReadingState;
 
   const selectorState = {
     setOpen,
+    selectingTranslation: signal(false),
   } as any as BibleSelectorState;
 
   const slot: TabSlot = {
@@ -231,13 +240,22 @@ function createFixture(): ReaderFixture {
   };
 }
 
-function createMobileState(): SeedBibleState {
+/**
+ * @param selectorState Wired in as `state.selector` for the mobile chrome's own
+ *   entry points into the Bible selector (the header's translation chip).
+ */
+function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
   return {
+    selector: selectorState,
     app: {
       isMobile: signal(true),
+      isMinimalEmbed: signal(false),
+      isCompactReader: signal(true),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
+      isDiscoverOpen: signal(false),
       openDiscover: vi.fn(),
+      toast: vi.fn(),
     },
     bibleData: {
       getPreviousChapter: vi.fn(async () => null),
@@ -248,9 +266,10 @@ function createMobileState(): SeedBibleState {
       openSidebar: vi.fn(),
       openSettingsToView: vi.fn(),
     },
-    bookmarks: {
-      isLocationBookmarked: vi.fn(() => false),
-      toggleBookmarkAtLocation: vi.fn(async () => {}),
+    saves: {
+      isLocationSaved: vi.fn(() => false),
+      getSaveForLocation: vi.fn(() => undefined),
+      addSave: vi.fn(async () => {}),
     },
     login: {
       userId: signal<string | null>(null),
@@ -273,9 +292,9 @@ function createMobileState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
-        pendingCountForChapter: vi.fn(() => 0),
       },
     },
   } as any as SeedBibleState;
@@ -369,6 +388,59 @@ describe("BibleReader", () => {
     });
 
     expect(setOpen).toHaveBeenCalledWith(true, slot);
+  });
+
+  it("opens the selector on the book list when the title is clicked, even after the translation picker was left open", () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+    selectorState.selectingTranslation.value = true;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-bible-reader-title")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(false);
+  });
+
+  it("opens the translation picker from the header's translation button", async () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const button = container.querySelector<HTMLButtonElement>(
+      "button.sb-bible-reader-translation"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe("BSB");
+
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(true);
   });
 
   it("shows a not-found state and lets the user jump to the translation's first book when the requested book isn't in the book list", () => {
@@ -2091,7 +2163,11 @@ describe("BibleReader", () => {
     const state = createMobileState();
     return {
       ...state,
-      app: { ...state.app, isMobile: signal(isMobile) },
+      app: {
+        ...state.app,
+        isMobile: signal(isMobile),
+        isCompactReader: signal(isMobile),
+      },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
       },
@@ -2334,6 +2410,1015 @@ describe("BibleReader", () => {
 
     expect(state.discover.scrollToVerse.value).toBeNull();
     expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
+  });
+
+  // #1691: mobile has no Discover panel, so notes are flagged in a gutter
+  // beside the text. jsdom does no layout, so the line boxes the markers are
+  // placed against are stubbed here.
+  describe("note gutter", () => {
+    const LINE_HEIGHT = 24;
+    let undoStubs: Array<() => void> = [];
+
+    afterEach(() => {
+      for (const undo of undoStubs) undo();
+      undoStubs = [];
+    });
+
+    const rectAt = (top: number, height = LINE_HEIGHT) =>
+      ({
+        top,
+        bottom: top + height,
+        left: 0,
+        right: 100,
+        width: 100,
+        height,
+        x: 0,
+        y: top,
+        toJSON() {},
+      }) as DOMRect;
+
+    /**
+     * jsdom does no layout, so the line boxes the markers are placed against
+     * are stubbed: `lines` gives the top of every visual line of a verse, in
+     * order. Poetry lines are block-level in the real stylesheet, and that is
+     * what makes a poetry verse's own rect one tall box covering the whole
+     * verse rather than a box per line — so the block display and both shapes
+     * of rect are reproduced here, or the markers would measure nothing like
+     * they do in a browser.
+     */
+    function stubLineBoxes(lines: Record<number, number[]>) {
+      const style = document.createElement("style");
+      style.textContent =
+        ".sb-verse-poetry, .sb-verse-line { display: block; }";
+      document.head.appendChild(style);
+      undoStubs.push(() => style.remove());
+
+      const elementOf = (node: Node | null) =>
+        (node?.nodeType === 1
+          ? (node as Element)
+          : (node?.parentElement ?? null)) as HTMLElement | null;
+      const verseOf = (node: Node | null) =>
+        elementOf(node)?.closest<HTMLElement>("[data-verse-number]") ?? null;
+      const topsOf = (verse: HTMLElement | null) =>
+        lines[Number(verse?.dataset.verseNumber ?? NaN)];
+
+      // A range over inline content reports one rect per visual line — for a
+      // poetry verse that means one rect per poetry line element.
+      const rangeProto = Range.prototype as unknown as {
+        getClientRects?: (this: Range) => DOMRectList;
+      };
+      // jsdom has no Range.getClientRects at all, so there is usually
+      // nothing to put back.
+      const previousRangeRects = rangeProto.getClientRects;
+      rangeProto.getClientRects = function (this: Range) {
+        const verse = verseOf(this.startContainer);
+        const tops = topsOf(verse);
+        if (!verse || !tops) return [] as unknown as DOMRectList;
+        const lineEl = elementOf(this.startContainer)?.closest(
+          ".sb-verse-line"
+        );
+        if (!lineEl)
+          return tops.map((top) => rectAt(top)) as unknown as DOMRectList;
+        const index = Array.from(
+          verse.querySelectorAll(".sb-verse-line")
+        ).indexOf(lineEl);
+        const top = tops[index];
+        return (top === undefined
+          ? []
+          : [rectAt(top)]) as unknown as DOMRectList;
+      };
+      undoStubs.push(() => {
+        if (previousRangeRects) rangeProto.getClientRects = previousRangeRects;
+        else delete rangeProto.getClientRects;
+      });
+
+      // The verse element's own rects: one per line for prose, but a single
+      // full-height column box for poetry, whose lines are blocks.
+      const elementRects = vi
+        .spyOn(Element.prototype, "getClientRects")
+        .mockImplementation(function (this: Element) {
+          const tops = topsOf(this as HTMLElement);
+          if (!tops || !(this as HTMLElement).dataset?.verseNumber) {
+            return [] as unknown as DOMRectList;
+          }
+          if (!this.classList.contains("sb-verse-poetry")) {
+            return tops.map((top) => rectAt(top)) as unknown as DOMRectList;
+          }
+          const first = tops[0]!;
+          const last = tops[tops.length - 1]! + LINE_HEIGHT;
+          return [rectAt(first, last - first)] as unknown as DOMRectList;
+        });
+      undoStubs.push(() => elementRects.mockRestore());
+    }
+
+    /** A state whose chapter carries the given annotations. */
+    function annotatedState(
+      annotations: Array<Record<string, unknown>>,
+      isMobile = true
+    ): SeedBibleState {
+      const chapterAnnotations = signal(annotations);
+      const state = createMobileState();
+      return {
+        ...state,
+        app: {
+          ...state.app,
+          isMobile: signal(isMobile),
+          isCompactReader: signal(isMobile),
+        },
+        annotations: {
+          getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+        },
+      } as any as SeedBibleState;
+    }
+
+    function renderReader(state: SeedBibleState, fixture: ReaderFixture) {
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+    }
+
+    const note = (extra: Record<string, unknown> = {}) => ({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+      data: { type: "comment", html: "<p>Note</p>" },
+      ...extra,
+    });
+
+    it("marks an annotated verse in the gutter, level with its first line", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note()]), fixture);
+
+      const markers = container.querySelectorAll(".sb-note-gutter-marker");
+      expect(markers).toHaveLength(1);
+      expect((markers[0] as HTMLElement).style.top).toBe("40px");
+      expect(markers[0]?.textContent).toBe("sticky_note_2");
+    });
+
+    // A verse of poetry is a block of its own lines, so its element rect is
+    // the whole verse: measuring that put the marker halfway down verses like
+    // Genesis 1:27 instead of beside the verse number.
+    it("marks a poetry verse level with its first line, not its middle", () => {
+      stubLineBoxes({ 2: [40, 64, 88] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note({ verseNumber: 2 })]), fixture);
+
+      const marker = container.querySelector(
+        ".sb-note-gutter-marker"
+      ) as HTMLElement;
+      expect(marker).not.toBeNull();
+      expect(marker.style.top).toBe("40px");
+      expect(marker.style.height).toBe("24px");
+    });
+    it("marks only the first verse of a note that spans several", () => {
+      stubLineBoxes({ 1: [40], 2: [70, 94] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note({ endVerseNumber: 2 })]), fixture);
+
+      const markers = container.querySelectorAll(".sb-note-gutter-marker");
+      expect(markers).toHaveLength(1);
+      expect((markers[0] as HTMLElement).style.top).toBe("40px");
+    });
+
+    it("shows one marker when a verse carries several notes", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note(), note({ id: "a2" })]), fixture);
+
+      expect(container.querySelectorAll(".sb-note-gutter-marker")).toHaveLength(
+        1
+      );
+    });
+
+    // The gutter's indent narrows the text, so a gutter that only opened on
+    // annotated chapters reflowed the page on every flip to a bare one.
+    it("keeps the gutter open in a chapter with no notes", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([]), fixture);
+
+      expect(container.querySelector(".sb-note-gutter")).not.toBeNull();
+      expect(container.querySelector(".sb-note-gutter-marker")).toBeNull();
+    });
+
+    // The previous and next chapters sit either side of the current one in
+    // the swipe track. Narrower or wider than it, their text would reflow the
+    // moment a swipe lands and the preview is swapped for the real chapter.
+    it("indents every chapter in the swipe track alike", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([]), fixture);
+
+      const panels = container.querySelectorAll(".sb-chapter-content");
+      expect(panels).toHaveLength(3);
+      for (const panel of panels) {
+        expect(panel.classList).toContain("sb-chapter-content-note-gutter");
+      }
+    });
+
+    it("indents the loading placeholder like the chapter it stands in for", () => {
+      const fixture = createFixture();
+      fixture.chapterData.value = null;
+      renderReader(annotatedState([]), fixture);
+
+      const skeleton = container.querySelector(".sb-chapter-skeleton");
+      expect(skeleton).not.toBeNull();
+      expect(skeleton?.classList).toContain("sb-chapter-content-note-gutter");
+    });
+
+    // Desktop reads its notes in the Discover panel beside the text, so a
+    // second column of markers there would be the same information twice.
+    it("leaves the gutter out on desktop", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note()], false), fixture);
+
+      expect(container.querySelector(".sb-note-gutter")).toBeNull();
+      expect(
+        container.querySelector(".sb-chapter-content-note-gutter")
+      ).toBeNull();
+    });
+
+    // The note gutter on the end edge and the presence gutter on the start
+    // edge share one indent rule, which needs both classes on the content box.
+    it("opens beside the presence gutter in a shared session", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={annotatedState([note()])}
+            sharedSession={
+              {
+                connectedUsers: signal([]),
+                participantPositions: signal(new Map()),
+                options: signal({ hostUserId: null, allowedNavigators: [] }),
+              } as any
+            }
+          />,
+          container
+        );
+      });
+
+      // The swipe track also renders the neighbouring chapters, which are
+      // never in the session, so find the one on screen by its presence class.
+      const content = container.querySelector(".sb-chapter-content-presence");
+      expect(
+        content?.classList.contains("sb-chapter-content-note-gutter")
+      ).toBe(true);
+      expect(container.querySelector(".sb-presence-gutter")).not.toBeNull();
+      expect(container.querySelectorAll(".sb-note-gutter-marker")).toHaveLength(
+        1
+      );
+    });
+
+    it("selects the verse and asks the toolbar to scroll to the note", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      renderReader(annotatedState([note()]), fixture);
+
+      act(() => {
+        (
+          container.querySelector(".sb-note-gutter-marker") as HTMLButtonElement
+        ).click();
+      });
+
+      expect(fixture.selectVerse).toHaveBeenCalledTimes(1);
+      expect(fixture.selectVerse.mock.calls[0]?.[0]).toMatchObject({
+        bookId: "GEN",
+        chapterNumber: 1,
+      });
+      expect(fixture.readingState.pendingAnnotationScrollVerse.value).toBe(1);
+    });
+  });
+
+  // #1692: in a shared session, each other participant gets a bar down the
+  // side of the reader spanning the verses they can see. jsdom does no layout,
+  // so the line boxes those bars are measured against are stubbed here.
+  describe("session presence", () => {
+    let clientRectsSpy: { mockRestore: () => void } | null = null;
+
+    afterEach(() => {
+      clientRectsSpy?.mockRestore();
+      clientRectsSpy = null;
+      vi.unstubAllGlobals();
+    });
+
+    /** One 24px line box per verse, at the given offsets. */
+    function stubLineBoxes(tops: Record<number, number>) {
+      clientRectsSpy = vi
+        .spyOn(Element.prototype, "getClientRects")
+        .mockImplementation(function (this: Element) {
+          const verseNumber = Number(
+            (this as HTMLElement).dataset?.verseNumber ?? NaN
+          );
+          const top = tops[verseNumber];
+          if (top === undefined) {
+            return [] as unknown as DOMRectList;
+          }
+          const rect = {
+            top,
+            bottom: top + 24,
+            left: 0,
+            right: 100,
+            width: 100,
+            height: 24,
+            x: 0,
+            y: top,
+            toJSON() {},
+          } as DOMRect;
+          return [rect] as unknown as DOMRectList;
+        });
+    }
+
+    const visual = {
+      defaultIcon: "pets",
+      color: "rgb(10, 20, 30)",
+      colorName: "blue",
+    };
+
+    function createSession(
+      users: Array<{
+        connectionId: string;
+        isSelf?: boolean;
+        name?: string;
+        pictureUrl?: string | null;
+      }>,
+      positions: Record<
+        string,
+        {
+          bookId: string;
+          chapterNumber: number;
+          firstVerse?: number;
+          lastVerse?: number;
+        }
+      >
+    ) {
+      return {
+        connectedUsers: signal(
+          users.map((user) => ({
+            connectionId: user.connectionId,
+            userId: user.connectionId,
+            isSelf: user.isSelf ?? false,
+            isActive: true,
+            joinedAtMs: 0,
+            profile: {
+              name: user.name ?? user.connectionId,
+              pictureUrl: user.pictureUrl ?? null,
+            },
+            visual,
+          }))
+        ),
+        participantPositions: signal(new Map(Object.entries(positions))),
+        options: signal({ hostUserId: null, allowedNavigators: [] }),
+      } as any;
+    }
+
+    function renderReader(session: unknown, fixture: ReaderFixture) {
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={createMobileState()}
+            sharedSession={session as any}
+          />,
+          container
+        );
+      });
+    }
+
+    it("draws a bar spanning the verses another participant can see", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "peer", name: "Mary" },
+          ],
+          {
+            peer: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 1,
+              lastVerse: 2,
+            },
+          }
+        ),
+        fixture
+      );
+
+      const markers = container.querySelectorAll(".sb-presence-marker");
+      expect(markers).toHaveLength(1);
+      const marker = markers[0] as HTMLElement;
+      // From the top of verse 1's first line to the bottom of verse 2's last.
+      expect(marker.style.top).toBe("40px");
+      expect(marker.style.height).toBe("54px");
+      expect(marker.style.background).toBe("rgb(10, 20, 30)");
+      // The avatar sits at the top of the bar.
+      const stack = container.querySelector(
+        ".sb-presence-avatars"
+      ) as HTMLElement;
+      expect(stack.style.top).toBe("40px");
+      expect(
+        stack.querySelector(".sb-tab-user-icon")?.getAttribute("title")
+      ).toBe("Mary");
+    });
+
+    // The gutter used to open only once somebody else arrived in the chapter,
+    // and grew a column per overlapping bar, so the scripture jumped sideways
+    // under the reader whenever a peer came, went, or caught up with another.
+    it("keeps a fixed gutter open for the whole session, even with nobody else in the chapter", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession([{ connectionId: "me", isSelf: true }], {}),
+        fixture
+      );
+
+      const content = container.querySelector(
+        ".sb-chapter-content-presence"
+      ) as HTMLElement;
+      expect(content).not.toBeNull();
+      expect(container.querySelector(".sb-presence-gutter")).not.toBeNull();
+      expect(container.querySelector(".sb-presence-marker")).toBeNull();
+      // Nothing per-bar is written to the content box, so its indent can't
+      // change with the number of people in it.
+      expect(content.getAttribute("style")).toBeNull();
+    });
+
+    // Two people on the same verses used to be drawn in the same 2px column,
+    // so only whoever was painted last could be seen.
+    it("puts participants reading the same verses in side-by-side lanes", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+          ],
+          {
+            mary: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 1,
+              lastVerse: 2,
+            },
+            john: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 1,
+              lastVerse: 2,
+            },
+          }
+        ),
+        fixture
+      );
+
+      const lanes = [...container.querySelectorAll(".sb-presence-marker")].map(
+        (marker) =>
+          (marker as HTMLElement).style.getPropertyValue(
+            "--sb-presence-lane-offset"
+          )
+      );
+
+      // Both are on the same verses, so neither may be drawn over the other:
+      // one on the centre line, the other beside it.
+      expect(lanes.sort()).toEqual(["0", "1"]);
+      // Their avatars would land on the same spot, so they share one stack.
+      expect(container.querySelectorAll(".sb-presence-avatars")).toHaveLength(
+        1
+      );
+      const stack = container.querySelector(
+        ".sb-presence-avatars"
+      ) as HTMLElement;
+      expect(
+        [...stack.querySelectorAll(".sb-tab-user-icon")]
+          .map((icon) => icon.getAttribute("title"))
+          .sort()
+      ).toEqual(["John", "Mary"]);
+      expect(stack.querySelector(".sb-presence-avatars-more")).toBeNull();
+    });
+
+    // The gutter has room for three bars. Anyone past that keeps their avatar
+    // in the stack but has no bar drawn, rather than the gutter growing and
+    // pushing the text over.
+    it("collapses a crowd on the same verses into three bars and a +N stack", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const crowd = ["ann", "bob", "cid", "dee", "eve"];
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            ...crowd.map((id) => ({ connectionId: id, name: id })),
+          ],
+          Object.fromEntries(
+            crowd.map((id) => [
+              id,
+              { bookId: "GEN", chapterNumber: 1, firstVerse: 1, lastVerse: 2 },
+            ])
+          )
+        ),
+        fixture
+      );
+
+      expect(container.querySelectorAll(".sb-presence-marker")).toHaveLength(3);
+      expect(container.querySelectorAll(".sb-presence-avatars")).toHaveLength(
+        1
+      );
+      const stack = container.querySelector(
+        ".sb-presence-avatars"
+      ) as HTMLElement;
+      expect(stack.querySelectorAll(".sb-tab-user-icon")).toHaveLength(3);
+      expect(
+        stack.querySelector(".sb-presence-avatars-more")?.textContent
+      ).toBe("+2");
+    });
+
+    // Bars that never overlap share the one lane, so a session spread through a
+    // chapter doesn't push the text aside for columns nobody is standing in.
+    it("keeps participants in separate parts of the chapter in one lane", () => {
+      // Verse 1 ends at 64, verse 2 starts at 70: the two bars never meet.
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+          ],
+          {
+            mary: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 1,
+              lastVerse: 1,
+            },
+            john: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 2,
+              lastVerse: 2,
+            },
+          }
+        ),
+        fixture
+      );
+
+      const lanes = [...container.querySelectorAll(".sb-presence-marker")].map(
+        (marker) =>
+          (marker as HTMLElement).style.getPropertyValue(
+            "--sb-presence-lane-offset"
+          )
+      );
+
+      expect(lanes).toEqual(["0", "0"]);
+      // Far enough apart that each keeps their own avatar.
+      expect(container.querySelectorAll(".sb-presence-avatars")).toHaveLength(
+        2
+      );
+    });
+
+    it("never draws the reader's own position", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession([{ connectionId: "me", isSelf: true }], {
+          me: { bookId: "GEN", chapterNumber: 1, firstVerse: 1, lastVerse: 2 },
+        }),
+        fixture
+      );
+
+      expect(container.querySelector(".sb-presence-marker")).toBeNull();
+      expect(container.querySelector(".sb-presence-avatars")).toBeNull();
+    });
+
+    // A peer in another chapter has no verses on this page to point at.
+    it("leaves out a participant reading a different chapter", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession([{ connectionId: "peer", name: "Mary" }], {
+          peer: {
+            bookId: "GEN",
+            chapterNumber: 2,
+            firstVerse: 1,
+            lastVerse: 2,
+          },
+        }),
+        fixture
+      );
+
+      expect(container.querySelector(".sb-presence-marker")).toBeNull();
+      expect(container.querySelector(".sb-presence-avatars")).toBeNull();
+    });
+
+    // Positions written before verse ranges existed carry the chapter only.
+    it("leaves out a participant who has not reported a verse range", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession([{ connectionId: "peer", name: "Mary" }], {
+          peer: { bookId: "GEN", chapterNumber: 1 },
+        }),
+        fixture
+      );
+
+      expect(container.querySelector(".sb-presence-marker")).toBeNull();
+      expect(container.querySelector(".sb-presence-avatars")).toBeNull();
+    });
+
+    // The avatar starts at the top of its owner's bar. Once that scrolls off
+    // the top of the screen the avatar is held there, following the reader for
+    // as long as the bar does, and arrows at both edges say the bar carries on
+    // past them.
+    it("pins a participant's avatar to the top of the screen while their verses run past it", () => {
+      // The reader is scrolled 200px into the content, and the screen is 300px
+      // tall. jsdom does no layout, so the boxes are stubbed per element. Line
+      // boxes are in screen coordinates: a long range, verse 1 at 40 and verse
+      // 2 way down at 600 within the content.
+      stubLineBoxes({ 1: 40 - 200, 2: 600 - 200 });
+      const rectSpy = vi
+        .spyOn(Element.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: Element) {
+          const rect = { left: 0, right: 100, width: 100, x: 0, toJSON() {} };
+          if (this === container) {
+            return {
+              ...rect,
+              top: 0,
+              bottom: 300,
+              height: 300,
+              y: 0,
+            } as DOMRect;
+          }
+          if (this.classList.contains("sb-chapter-content")) {
+            return {
+              ...rect,
+              top: -200,
+              bottom: 800,
+              height: 1000,
+              y: -200,
+            } as DOMRect;
+          }
+          return { ...rect, top: 0, bottom: 0, height: 0, y: 0 } as DOMRect;
+        });
+      // Makes the test container the scroller the gutter follows.
+      container.style.overflowY = "auto";
+      const rafSpy = vi
+        .spyOn(window, "requestAnimationFrame")
+        .mockImplementation((callback: FrameRequestCallback) => {
+          callback(0);
+          return 0;
+        });
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "peer", name: "Mary" },
+            ],
+            {
+              peer: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+        act(() => {
+          container.dispatchEvent(new Event("scroll"));
+        });
+
+        // The bar still spans the whole range...
+        const marker = container.querySelector(
+          ".sb-presence-marker"
+        ) as HTMLElement;
+        expect(marker.style.top).toBe("40px");
+        expect(marker.style.height).toBe("584px");
+
+        // ...but the avatar is held just inside the top of the screen (200px
+        // into the content), leaving room for the arrow above it.
+        const stack = container.querySelector(
+          ".sb-presence-avatars"
+        ) as HTMLElement;
+        expect(stack.classList.contains("sb-presence-avatars-pinned")).toBe(
+          true
+        );
+        expect(stack.style.top).toBe("214px");
+
+        // The bar runs off both edges of the screen (200px to 500px).
+        const arrows = [...container.querySelectorAll(".sb-presence-arrow")];
+        expect(
+          arrows.map((arrow) =>
+            arrow.classList.contains("sb-presence-arrow-up") ? "up" : "down"
+          )
+        ).toEqual(["up", "down"]);
+        expect((arrows[0] as HTMLElement).style.top).toBe("204px");
+        expect((arrows[1] as HTMLElement).style.top).toBe("490px");
+        expect(
+          (arrows[0] as HTMLElement).style.getPropertyValue(
+            "--sb-presence-arrow-color"
+          )
+        ).toBe("rgb(10, 20, 30)");
+      } finally {
+        rectSpy.mockRestore();
+        rafSpy.mockRestore();
+        container.style.overflowY = "";
+      }
+    });
+
+    it("lets a pinned avatar go at the bottom of its bar instead of leaving the verses", () => {
+      // Verse 1 at 40, verse 2 at 300 within the content: the bar ends at 324,
+      // and the screen starts 310px into the content, so there is no room to
+      // pin. Line boxes are stubbed in screen coordinates.
+      stubLineBoxes({ 1: 40 - 310, 2: 300 - 310 });
+      const rectSpy = vi
+        .spyOn(Element.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: Element) {
+          const rect = { left: 0, right: 100, width: 100, x: 0, toJSON() {} };
+          if (this === container) {
+            return {
+              ...rect,
+              top: 0,
+              bottom: 300,
+              height: 300,
+              y: 0,
+            } as DOMRect;
+          }
+          if (this.classList.contains("sb-chapter-content")) {
+            return {
+              ...rect,
+              top: -310,
+              bottom: 690,
+              height: 1000,
+              y: -310,
+            } as DOMRect;
+          }
+          return { ...rect, top: 0, bottom: 0, height: 0, y: 0 } as DOMRect;
+        });
+      container.style.overflowY = "auto";
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "peer", name: "Mary" },
+            ],
+            {
+              peer: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+
+        const stack = container.querySelector(
+          ".sb-presence-avatars"
+        ) as HTMLElement;
+        // Bar bottom (324) minus the avatar's own height (20).
+        expect(stack.style.top).toBe("304px");
+        expect(stack.classList.contains("sb-presence-avatars-pinned")).toBe(
+          false
+        );
+      } finally {
+        rectSpy.mockRestore();
+        container.style.overflowY = "";
+      }
+    });
+
+    it("draws no gutter outside a shared session", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={createMobileState()}
+          />,
+          container
+        );
+      });
+
+      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+    });
+
+    // Joining a session hands the already-mounted reader a session it didn't
+    // have: the tab it is rendered in keeps its slot, so the same component
+    // instance goes from no session to one full of people.
+    it("draws the gutter when a reader that started outside a session is given one", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(null, fixture);
+
+      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "peer", name: "Mary" },
+          ],
+          {
+            peer: {
+              bookId: "GEN",
+              chapterNumber: 1,
+              firstVerse: 1,
+              lastVerse: 2,
+            },
+          }
+        ),
+        fixture
+      );
+
+      expect(container.querySelectorAll(".sb-presence-marker")).toHaveLength(1);
+      expect(
+        container
+          .querySelector(".sb-presence-avatars .sb-tab-user-icon")
+          ?.getAttribute("title")
+      ).toBe("Mary");
+    });
+
+    it("reports the verses on screen so peers can be shown where it is", () => {
+      const observed: Element[] = [];
+      let fire: ((entries: unknown[]) => void) | null = null;
+      vi.stubGlobal(
+        "IntersectionObserver",
+        class {
+          constructor(callback: IntersectionObserverCallback) {
+            fire = (entries) =>
+              callback(
+                entries as IntersectionObserverEntry[],
+                this as unknown as IntersectionObserver
+              );
+          }
+          observe(el: Element) {
+            observed.push(el);
+          }
+          unobserve() {}
+          disconnect() {}
+          takeRecords() {
+            return [];
+          }
+        }
+      );
+
+      const fixture = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={createMobileState()}
+          />,
+          container
+        );
+      });
+
+      expect(observed.length).toBeGreaterThan(0);
+      act(() => {
+        fire?.([
+          { target: observed[0], isIntersecting: true },
+          { target: observed[1], isIntersecting: true },
+        ]);
+      });
+
+      expect(fixture.readingState.visibleVerseRange.value).toEqual({
+        first: 1,
+        last: 2,
+      });
+
+      // Scrolling verse 1 off the top narrows the range rather than keeping a
+      // verse nobody can see any more.
+      act(() => {
+        fire?.([{ target: observed[0], isIntersecting: false }]);
+      });
+      expect(fixture.readingState.visibleVerseRange.value).toEqual({
+        first: 2,
+        last: 2,
+      });
+    });
+
+    // Highlighting a verse re-parents its span into a run wrapper, so Preact
+    // throws away the element the observer was watching and builds a new one.
+    // The reader used to keep watching the detached element — which duly
+    // reports that it has left the screen — and never watch its replacement,
+    // so every highlighted verse dropped out of the range it told peers
+    // about: someone looking at verses 1-19 with 1-10 highlighted was shown
+    // to their session as reading 11-19.
+    it("keeps reporting a verse whose element is replaced when it is highlighted", () => {
+      const observed = new Set<Element>();
+      let fire: ((entries: unknown[]) => void) | null = null;
+      vi.stubGlobal(
+        "IntersectionObserver",
+        class {
+          constructor(callback: IntersectionObserverCallback) {
+            fire = (entries) =>
+              callback(
+                entries as IntersectionObserverEntry[],
+                this as unknown as IntersectionObserver
+              );
+          }
+          observe(el: Element) {
+            observed.add(el);
+          }
+          unobserve(el: Element) {
+            observed.delete(el);
+          }
+          disconnect() {
+            observed.clear();
+          }
+          takeRecords() {
+            return [];
+          }
+        }
+      );
+
+      const fixture = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={createMobileState()}
+          />,
+          container
+        );
+      });
+
+      const verseOne = () =>
+        container.querySelector('.sb-verse[data-verse-number="1"]')!;
+      const firstElement = verseOne();
+
+      act(() => {
+        fire?.(
+          [...observed].map((target) => ({ target, isIntersecting: true }))
+        );
+      });
+      expect(fixture.readingState.visibleVerseRange.value).toEqual({
+        first: 1,
+        last: 2,
+      });
+
+      act(() => {
+        fixture.highlights.value = {
+          highlights: [{ verse: 1, colorId: "yellow" }],
+        };
+      });
+
+      // The premise of the bug: this really is a different element now.
+      const replacement = verseOne();
+      expect(replacement).not.toBe(firstElement);
+      expect(firstElement.isConnected).toBe(false);
+
+      // What a real observer does with the element that was taken out of the
+      // page, and with the one that took its place.
+      act(() => {
+        fire?.([{ target: firstElement, isIntersecting: false }]);
+      });
+      expect(observed.has(replacement)).toBe(true);
+      act(() => {
+        fire?.([{ target: replacement, isIntersecting: true }]);
+      });
+
+      expect(fixture.readingState.visibleVerseRange.value).toEqual({
+        first: 1,
+        last: 2,
+      });
+    });
   });
 
   it("separates adjacent verses with a space when verse numbers are hidden", () => {
@@ -2655,6 +3740,7 @@ describe("BibleReader", () => {
     const state = {
       app: {
         isMobile: signal(false),
+        isDiscoverOpen: signal(false),
         openVerseReference,
       },
       tools: createBibleToolsManager(testBranding),
@@ -2664,8 +3750,8 @@ describe("BibleReader", () => {
       features: {
         isFeatureEnabled: vi.fn(() => true),
       },
-      bookmarks: {
-        isLocationBookmarked: vi.fn(() => false),
+      saves: {
+        isLocationSaved: vi.fn(() => false),
       },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
@@ -2719,6 +3805,123 @@ describe("BibleReader", () => {
     });
   });
 
+  describe("the header's save button", () => {
+    const renderHeader = (state: SeedBibleState) => {
+      const { slot, selectorState, readingState } = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={slot}
+            selectorState={selectorState}
+            readingState={readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+    };
+
+    const saveButton = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".sb-bible-reader-save-button"
+      );
+    const bookmarkButton = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".sb-bible-reader-bookmark-button"
+      );
+
+    it("opens the folder picker for the whole chapter", () => {
+      const state = createMobileState();
+      renderHeader(state);
+
+      expect(saveButton()).not.toBeNull();
+      act(() => saveButton()!.click());
+
+      expect(state.modals.openModal).toHaveBeenCalledTimes(1);
+      const opened = (state.modals.openModal as Mock).mock.calls[0]![0];
+      // The chapter-level id — a verse-scoped save would carry the verse
+      // numbers instead.
+      expect(opened.id).toBe("save-category-BSB-GEN-1-chapter");
+      expect(opened.title).toMatchObject({ key: "add-save-modal" });
+    });
+
+    /** The star renders as an SVG, so "filled" is its fill, not a font axis. */
+    const starFill = () =>
+      saveButton()!.querySelector("svg")!.getAttribute("fill");
+
+    it("edits the existing save when the chapter is already saved", () => {
+      // Add mode would be a dead end: addSave ignores a location it already
+      // holds, so the folders the user picked were silently discarded.
+      const state = createMobileState();
+      (state.saves.isLocationSaved as Mock).mockReturnValue(true);
+      (state.saves.getSaveForLocation as Mock).mockReturnValue({
+        id: "save-7",
+      });
+      renderHeader(state);
+
+      act(() => saveButton()!.click());
+
+      const opened = (state.modals.openModal as Mock).mock.calls[0]![0];
+      expect(opened.id).toBe("save-edit-save-7");
+      expect(opened.title).toMatchObject({ key: "edit-save" });
+      // Still never a toggle, so aria-pressed would mislead.
+      expect(saveButton()!.getAttribute("aria-pressed")).toBeNull();
+    });
+
+    it("fills its star only once the chapter is saved", () => {
+      const unsaved = createMobileState();
+      renderHeader(unsaved);
+      expect(starFill()).toBe("none");
+      expect(saveButton()!.className).not.toContain("saved");
+
+      const saved = createMobileState();
+      (saved.saves.isLocationSaved as Mock).mockReturnValue(true);
+      (saved.saves.getSaveForLocation as Mock).mockReturnValue({ id: "s1" });
+      renderHeader(saved);
+      expect(starFill()).toBe("currentColor");
+      expect(saveButton()!.className).toContain(
+        "sb-bible-reader-save-button-saved"
+      );
+    });
+
+    // Hidden behind SHOW_BOOKMARK_BUTTON until #1658. The placeholder and its
+    // "coming soon" toast are still in the file, just not rendered — flipping
+    // the flag is what brings them back.
+    it("shows no bookmark button beside it while bookmarks are off", () => {
+      renderHeader(createMobileState());
+
+      expect(saveButton()).not.toBeNull();
+      expect(bookmarkButton()).toBeNull();
+    });
+
+    // The two header clusters are built separately, and they had drifted:
+    // desktop rendered the extension quick tools first, so Save sat to the
+    // right of Share there and to the left of it on mobile. Asserting the
+    // chapter actions lead in both keeps them from parting again — and holds
+    // whether or not any quick tool is currently visible.
+    it.each([
+      ["desktop", false, ".sb-bible-reader-actions"],
+      ["mobile", true, ".sb-bible-reader-mobile-header-actions"],
+    ] as const)(
+      "puts the save button ahead of the quick tools on %s",
+      (_label, isMobile, clusterSelector) => {
+        const base = createMobileState();
+        renderHeader({
+          ...base,
+          app: {
+            ...base.app,
+            isMobile: signal(isMobile),
+            isCompactReader: signal(isMobile),
+          },
+        } as any as SeedBibleState);
+
+        const cluster = container.querySelector(clusterSelector);
+        expect(cluster).not.toBeNull();
+        expect(cluster!.firstElementChild).toBe(saveButton());
+      }
+    );
+  });
+
   it("shows translation license notice and website when licenseNotice is present", () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
 
@@ -2758,20 +3961,43 @@ describe("BibleReader", () => {
     );
   });
 
-  it("shows a generic account icon in the mobile header when the user is alone", () => {
+  // The account avatar moved out of the reader header and back into the
+  // bottom bar as the "You" tab (#1554), so the header must not show one.
+  it("does not show an account button in the mobile header", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createMobileState();
 
     renderMobileReader({ slot, selectorState, readingState }, state, container);
 
-    const accountButton = container.querySelector(
-      ".sb-bible-reader-mobile-header-account"
-    );
-    expect(accountButton).not.toBeNull();
     expect(
-      accountButton?.querySelector(".sb-tab-user-icon-generic")
-    ).not.toBeNull();
-    expect(accountButton?.textContent).toContain("account_circle");
+      container.querySelector(".sb-bible-reader-mobile-header-account")
+    ).toBeNull();
+  });
+
+  it("opens the translation picker from the mobile header's translation button", async () => {
+    const { slot, selectorState, readingState, setOpen } = createFixture();
+    const state = createMobileState(selectorState);
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const button = container.querySelector<HTMLButtonElement>(
+      "button.sb-bible-reader-mobile-header-translation"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe("BSB");
+    expect(button?.getAttribute("aria-label")).toBe(
+      "Change translation (Berean Standard Bible)"
+    );
+
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ id: "slot-1" })
+    );
+    expect(selectorState.selectingTranslation.value).toBe(true);
   });
 
   it("updates readingState.scrollPosition when the chapter scroller scrolls", () => {
@@ -3069,6 +4295,77 @@ describe("BibleReader", () => {
     );
   });
 
+  it("opens the book selector when the mobile content title is tapped", () => {
+    const { slot, selectorState, readingState, chapterData, setOpen } =
+      createFixture();
+    const state = createMobileState(selectorState);
+    selectorState.selectingTranslation.value = true;
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const title = container.querySelector(
+      ".sb-reader-swipe-panel-current .sb-bible-reader-mobile-content-title"
+    );
+    expect(title).not.toBeNull();
+
+    act(() => {
+      title?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(false);
+  });
+
+  it("makes only the current chapter title tappable on mobile", async () => {
+    const { slot, selectorState, readingState, chapterData, setOpen } =
+      createFixture();
+    const state = createMobileState(selectorState);
+
+    const current = chapterData.value!;
+    chapterData.value = {
+      ...current,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+    };
+    vi.mocked(readingState.getAdjacentChapter).mockImplementation(
+      async (direction) => ({
+        ...current,
+        chapter: { ...current.chapter, number: direction === "next" ? 2 : 0 },
+      })
+    );
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const sideTitles = container.querySelectorAll(
+      ".sb-reader-swipe-panel-side .sb-bible-reader-mobile-content-title"
+    );
+    expect(sideTitles).toHaveLength(2);
+
+    act(() => {
+      sideTitles.forEach((title) =>
+        title.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      );
+    });
+    expect(setOpen).not.toHaveBeenCalled();
+
+    const tappable = container.querySelectorAll(
+      ".sb-bible-reader-mobile-content-title-tappable"
+    );
+    expect(tappable).toHaveLength(1);
+    expect(
+      tappable[0]?.closest(".sb-reader-swipe-panel-current")
+    ).not.toBeNull();
+  });
+
   it("swiping left on mobile loads the next chapter", async () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
@@ -3153,5 +4450,101 @@ describe("BibleReader", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("BibleReader — compact embed header", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function createEmbedState(): SeedBibleState {
+    const base = createMobileState();
+    return {
+      ...base,
+      app: {
+        ...base.app,
+        isMinimalEmbed: signal(true),
+        isCompactReader: signal(true),
+      },
+      navigation: {
+        currentUrl: signal(
+          new URL("http://localhost:3000/en/BSB/genesis/1?embed=true&verse=2")
+        ),
+      },
+    } as any as SeedBibleState;
+  }
+
+  function renderEmbedHeader(state: SeedBibleState) {
+    const { slot, selectorState, readingState } = createFixture();
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+  }
+
+  it("shows only the translation chip, open-in-new-tab, and settings", () => {
+    renderEmbedHeader(createEmbedState());
+
+    expect(
+      container.querySelector(
+        "button.sb-bible-reader-mobile-header-translation"
+      )
+    ).not.toBeNull();
+    expect(
+      container.querySelector(".sb-bible-reader-mobile-header-open-tab")
+    ).not.toBeNull();
+    expect(
+      container.querySelector(".sb-bible-reader-mobile-header-settings")
+    ).not.toBeNull();
+    expect(
+      container.querySelector(".sb-bible-reader-mobile-header-close")
+    ).toBeNull();
+
+    expect(container.querySelector(".sb-bible-reader-save-button")).toBeNull();
+    expect(
+      container.querySelector(".sb-bible-reader-mobile-header-notes")
+    ).toBeNull();
+    expect(
+      container.querySelector(".sb-bible-reader-mobile-header-book")
+    ).toBeNull();
+    expect(
+      container.querySelector(".sb-quick-toolbar-mobile-header")
+    ).toBeNull();
+  });
+
+  it("opens the current chapter in a new tab without the embed param", () => {
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+    renderEmbedHeader(createEmbedState());
+
+    const button = container.querySelector<HTMLButtonElement>(
+      ".sb-bible-reader-mobile-header-open-tab"
+    );
+    expect(button).not.toBeNull();
+    act(() => button!.click());
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const opened = openSpy.mock.calls[0]![0] as string;
+    const openedUrl = new URL(opened);
+    expect(openedUrl.searchParams.has("embed")).toBe(false);
+    expect(openedUrl.pathname).toBe("/en/BSB/genesis/1");
+    expect(openedUrl.searchParams.get("verse")).toBe("2");
+    expect(openSpy.mock.calls[0]![1]).toBe("_blank");
+    openSpy.mockRestore();
   });
 });

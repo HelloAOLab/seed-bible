@@ -1,4 +1,4 @@
-import type { PieceKey } from "../../domain/models/piece";
+import type { PieceKey, PieceVisibilityState } from "../../domain/models/piece";
 import type { Piece } from "../../domain/models/piece";
 import type {
   BotLinks,
@@ -6,6 +6,7 @@ import type {
   BotVars,
 } from "../../../../pattern-typings/AuxLibraryDefinitions";
 import type { VFXPieceKey } from "../../domain/models/vfx";
+import type { ExperienceKey } from "../../domain/models/experience";
 
 export interface TypedBot<T = BotTags, M = BotTags> {
   id: string;
@@ -45,6 +46,7 @@ export interface PieceBotTags<
   pointable: boolean;
   formRenderOrder: number;
   formDepthWrite?: boolean;
+  state: PieceVisibilityState;
 }
 
 export interface VFXBotTags<
@@ -78,6 +80,7 @@ export interface HitboxBotTags {
   transformer: string;
   pieceId: Piece["id"];
   pieceKey: PieceKey;
+  isPieceHitbox: true;
 }
 
 export type HitboxBot = TypedBot<HitboxBotTags>;
@@ -103,3 +106,54 @@ export interface PieceBotTypeMap {
   ground: PieceBot<"ground">;
   fence: PieceBot<"fence">;
 }
+
+// Wire shape, not a promise: this arrives from the reader through postMessage,
+// so `key` stays a plain string until it is narrowed against the keys of the
+// experience on stage.
+export interface HighlightPieceMessage {
+  type?: "highlight-piece";
+  key?: string;
+  experience?: string;
+}
+
+export interface ReadingChangedMessage {
+  type?: "reading-changed";
+  bookId?: string;
+  chapterNumber?: number;
+}
+
+export interface ThemeChangedMessage {
+  type?: "theme-changed";
+  css?: string;
+}
+
+export type Message =
+  | HighlightPieceMessage
+  | ReadingChangedMessage
+  | ThemeChangedMessage;
+
+export interface ReadyMessage {
+  id: "ready";
+}
+
+export interface ScriptureNavigationMessage {
+  id: "reader-navigation";
+  data: {
+    bookId: string;
+    chapter: number;
+    verse: number;
+    endVerse: number;
+  };
+}
+
+export interface ExperienceChangedMessage {
+  id: "experience-changed";
+  data: {
+    experience: ExperienceKey | null;
+  };
+}
+
+export type PatternMessage =
+  | ReadyMessage
+  | ScriptureNavigationMessage
+  | ExperienceChangedMessage;

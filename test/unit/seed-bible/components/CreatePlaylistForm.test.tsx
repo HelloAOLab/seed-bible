@@ -377,10 +377,11 @@ describe("CreatePlaylistForm", () => {
     ).toBe(false);
 
     const remove = container.querySelector(
-      ".sb-hero-field-delete"
+      ".sb-hero-field-clear"
     ) as HTMLButtonElement;
     expect(remove).not.toBeNull();
-    expect(remove.getAttribute("aria-label")).toBe("Delete");
+    expect(remove.getAttribute("aria-label")).toBe("Remove cover image");
+    expect(remove.textContent).toContain("close");
     act(() => {
       remove.click();
     });

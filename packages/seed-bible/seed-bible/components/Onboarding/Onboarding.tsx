@@ -27,11 +27,14 @@ export function OnboardingModals({
   os,
   toast,
   className = "",
+  customizationName,
 }: {
   onboarding: OnboardingManager;
   os: CasualOSManager;
   toast: (message: string) => void;
   className?: string;
+  /** The active Customization's name, if any — overrides the branded app name. */
+  customizationName?: string | null;
 }) {
   const step = onboarding.step.value;
 
@@ -58,7 +61,14 @@ export function OnboardingModals({
     return null;
   }
 
-  return card(<InstallContent onboarding={onboarding} os={os} toast={toast} />);
+  return card(
+    <InstallContent
+      onboarding={onboarding}
+      os={os}
+      toast={toast}
+      customizationName={customizationName}
+    />
+  );
 }
 
 /**
@@ -228,10 +238,12 @@ function InstallContent({
   onboarding,
   os,
   toast,
+  customizationName,
 }: {
   onboarding: OnboardingManager;
   os: CasualOSManager;
   toast: (message: string) => void;
+  customizationName?: string | null;
 }) {
   const { t } = useI18n();
   const { branding } = useAppConfig();
@@ -286,7 +298,8 @@ function InstallContent({
             defaultValue: "Add Seed Bible to your ",
           }),
           t,
-          branding
+          branding,
+          customizationName
         )}
         <strong>{target}</strong>
         {t("onboarding.installBodyPost", {

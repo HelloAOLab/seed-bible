@@ -1,3 +1,6 @@
-export interface ExperienceDisplayerPort {
-  tryDisplayExperience(): Promise<boolean>;
+import type { ExperienceKey } from "../../../domain/models/experience";
+
+export interface ExperienceServicePort {
+  tryDisplayExperience(experience: ExperienceKey): Promise<boolean>;
+  experience: ExperienceKey | null;
 }

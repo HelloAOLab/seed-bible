@@ -23,7 +23,7 @@ import {
   makeExampleUrl,
   translations,
 } from "./testUtils/mockBibleApiData";
-import { signal } from "@preact/signals";
+import { signal, type ReadonlySignal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
@@ -168,9 +168,11 @@ describe("parseVerseSelection", () => {
 function createTabsManager({
   dataManager: data,
   i18nManager: i18n,
+  activeCustomizationDefaultTranslationId,
 }: {
   dataManager?: ReturnType<typeof createDataManager>;
   i18nManager?: ReturnType<typeof createI18nManager>;
+  activeCustomizationDefaultTranslationId?: ReadonlySignal<string | undefined>;
 } = {}) {
   const navigation = createNavigationManager();
   const dataManager = data || createDataManager();
@@ -183,7 +185,13 @@ function createTabsManager({
     highlightsManager,
     {} as any,
     i18nManager,
-    login
+    login,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    activeCustomizationDefaultTranslationId
   );
 
   return {
@@ -1176,6 +1184,124 @@ describe("createTabs", () => {
     expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
+  it("applies the active customization's default translation once it becomes known, overriding Seed Bible's own default", async () => {
+    // No `?translation=` in the URL and no signed-in profile, so this
+    // mirrors following a `?customization=...` share link: the customization
+    // resolves over the network well after the initial (default) tab exists.
+    setWebResponses(createExampleManagerResponseMap());
+    const activeCustomizationDefaultTranslationId = signal<string | undefined>(
+      undefined
+    );
+
+    const { tabs: manager } = createTabsManager({
+      activeCustomizationDefaultTranslationId,
+    });
+    const firstTab = manager.tabs.value[0]!;
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    activeCustomizationDefaultTranslationId.value = "NIV";
+
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("does not let a customization's default translation override an explicit URL translation", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "?translation=NIV&book=MAT&chapter=1"
+    );
+    setWebResponses(createExampleManagerResponseMap());
+    const activeCustomizationDefaultTranslationId = signal<string | undefined>(
+      undefined
+    );
+
+    const { tabs: manager } = createTabsManager({
+      activeCustomizationDefaultTranslationId,
+    });
+    await waitForTabsToLoad(manager.tabs.value);
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+
+    activeCustomizationDefaultTranslationId.value = "AAB";
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("does not let a customization default override an already-loaded profile translation", async () => {
+    // Ordering matters here: the profile must already be loaded and applied
+    // *before* the customization default resolves — the realistic case of a
+    // signed-in reader opening a `?customization=...` link — so this
+    // actually exercises the customization effect's own profile guard
+    // (`if (savedTranslationId) return;`), rather than merely relying on the
+    // profile-restore effect running again afterward and winning regardless.
+    setWebResponses(createExampleManagerResponseMap());
+    const activeCustomizationDefaultTranslationId = signal<string | undefined>(
+      undefined
+    );
+
+    const { tabs: manager, login } = createTabsManager({
+      activeCustomizationDefaultTranslationId,
+    });
+    const firstTab = manager.tabs.value[0]!;
+    await waitForInitialLoad(firstTab.readingState);
+
+    // Signed-in reader whose saved translation is NIV, loaded BEFORE the
+    // customization default resolves.
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+
+    // Customization default (AAB, different) now resolves over the network.
+    activeCustomizationDefaultTranslationId.value = "AAB";
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await waitForInitialLoad(firstTab.readingState);
+
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("re-applies a customization's default translation when reactivated after being manually overridden", async () => {
+    // Reproduces a real gap: the previewer activates a customization, picks
+    // a different translation by hand, then switches away and back to the
+    // same customization. The guard exists to stop an *unrelated* draft
+    // edit (e.g. a rename, which changes `activeCustomization`'s identity
+    // without changing its default) from clobbering that manual pick — but
+    // it must not also survive a full deactivate/reactivate cycle, which is
+    // a deliberate "preview this customization again" action.
+    setWebResponses(createExampleManagerResponseMap());
+    const activeCustomizationDefaultTranslationId = signal<string | undefined>(
+      undefined
+    );
+
+    const { tabs: manager } = createTabsManager({
+      activeCustomizationDefaultTranslationId,
+    });
+    const firstTab = manager.tabs.value[0]!;
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    // Activate customization A, whose default is NIV.
+    activeCustomizationDefaultTranslationId.value = "NIV";
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+
+    // Previewer manually picks a different translation.
+    await firstTab.readingState.selectTranslationAndChapter("AAB", "GEN", 1);
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    // Deactivate, then reactivate the same customization.
+    activeCustomizationDefaultTranslationId.value = undefined;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    activeCustomizationDefaultTranslationId.value = "NIV";
+
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
   it("falls back to the saved translation's first book when it doesn't contain the current book", async () => {
     // No `?book=` param, so the initial tab is on the default book (GEN),
     // which AAB has but NIV (mocked with a single book, MAT) does not.
@@ -1414,7 +1540,10 @@ describe("createTabs", () => {
     await waitFor(() => readingState.chapterNumber.value === 5);
 
     expect(pushSpy).toHaveBeenCalledTimes(1);
-    expect(replaceSpy).toHaveBeenCalledTimes(3);
+    // The extra replace stamps the origin chapter's scroll onto the history
+    // entry the skim is leaving; the other three overwrite the skim's
+    // destination as each next-chapter lands.
+    expect(replaceSpy).toHaveBeenCalledTimes(4);
 
     const url = new URL(window.location.href);
     expect(url.pathname).toBe("/en/AAB/genesis/5");
@@ -1466,6 +1595,70 @@ describe("createTabs", () => {
     expect(pushSpy).not.toHaveBeenCalled();
   });
 
+  it("restores the previous chapter's scroll position when the browser goes back", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    readingState.scrollPosition.value = 240;
+
+    await readingState.selectChapter("GEN", 2);
+    await waitFor(() => readingState.chapterNumber.value === 2);
+    expect(readingState.scrollPosition.value).toBe(0);
+
+    window.history.back();
+    await waitFor(() => readingState.chapterNumber.value === 1);
+
+    expect(readingState.scrollPosition.value).toBe(240);
+  });
+
+  it("restores where the reader was when the browser goes forward again", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    readingState.scrollPosition.value = 240;
+
+    await readingState.selectChapter("GEN", 2);
+    await waitFor(() => readingState.chapterNumber.value === 2);
+
+    // Reading down the second chapter. Nothing pushes here, so only the
+    // debounced stamp records this offset on the entry the reader is on.
+    readingState.scrollPosition.value = 500;
+    await waitFor(() => window.history.state?.scrollPosition === 500);
+
+    window.history.back();
+    await waitFor(() => readingState.chapterNumber.value === 1);
+    expect(readingState.scrollPosition.value).toBe(240);
+
+    window.history.forward();
+    await waitFor(() => readingState.chapterNumber.value === 2);
+
+    expect(readingState.scrollPosition.value).toBe(500);
+  });
+
+  it("does not stamp a closed tab's scroll offset onto the entry that outlives it", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const onlyTab = manager.tabs.value[0]!;
+    // Scroll, then close the only tab before the debounced stamp can land.
+    onlyTab.readingState.scrollPosition.value = 400;
+    manager.removeTab(onlyTab.id);
+    expect(manager.tabs.value).toHaveLength(0);
+
+    // Well past the debounce window. The assertion is on the offset itself
+    // rather than "unchanged", because managers built by earlier cases in this
+    // file are never disposed and keep stamping their own (zero) offsets; 400
+    // is this tab's alone, and must never reach an entry that outlives it.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(window.history.state?.scrollPosition).not.toBe(400);
+  });
+
   it("decorates initial verses from the verse URL param on the initial tab", async () => {
     window.history.replaceState(null, "", "?book=GEN&chapter=1&verse=3,5-6");
     setWebResponses(createExampleManagerResponseMap());
@@ -1514,5 +1707,88 @@ describe("createTabs", () => {
     } finally {
       createBibleReadingStateSpy.mockRestore();
     }
+  });
+
+  // Regression: a static page's URL (e.g. "/en/about") has no reading
+  // position of its own, but a reading tab is still created underneath it
+  // with default content. Without an explicit guard in
+  // `commitSelectedTabToUrl`, the effect that runs on mount would
+  // unconditionally rewrite the address bar to that default reading path,
+  // clobbering the static page's own URL the instant the app hydrates.
+  it("does not overwrite a static page's URL with the reading position on mount", async () => {
+    window.history.replaceState(null, "", "/en/about");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+  });
+
+  // Regression: the guard above must not block a genuine tab-focus change.
+  // Selecting a different (pre-existing) tab while viewing a static page is
+  // an explicit "go look at this tab" action — like a sidebar tab click —
+  // and should leave the static page for the position now being shown,
+  // rather than leaving the URL stuck on "/en/about" underneath it.
+  it("leaves a static page's URL when the user selects a different tab", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/en/about");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    manager.hydrateStoredTabs();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    // Mount alone must still respect the guard.
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+
+    manager.selectTab("tab-2");
+
+    await waitFor(() => new URL(window.location.href).pathname !== "/en/about");
+    expect(new URL(window.location.href).pathname).toBe("/en/NIV/matthew/1");
+  });
+
+  // `leaveStaticPage()` is the public escape hatch for callers outside the
+  // tab-focus effect itself (e.g. the About page's pane closing) that need
+  // to force the same "leave a static page" commit on demand, rather than
+  // waiting for the selected tab to actually change.
+  it("leaveStaticPage() writes the selected tab's position even with no tab-selection change", async () => {
+    window.history.replaceState(null, "", "/en/about");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+
+    manager.leaveStaticPage();
+
+    expect(new URL(window.location.href).pathname).toBe("/en/AAB/genesis/1");
   });
 });

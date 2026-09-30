@@ -52,12 +52,17 @@ export interface RenderOptions {
    * - `<!--SEED_JSON-->` where the JSON-serialized API response snapshot
    *   should be injected, so the client can seed its own API cache with data
    *   the server already fetched instead of re-fetching it.
+   * - `<!--CUSTOMIZATION_JSON-->` where the JSON-serialized
+   *   `?customization=...` load result should be injected, so the client can
+   *   skip re-fetching a customization record the server already resolved.
    * - `<!--THEME_STYLE_TAG-->` where the active theme's composed CSS text
    *   should be injected, inside a `<style id="sb-theme-styles">` tag.
    * - `<!--THEME_PRESETS_JSON-->` where the built-in theme presets' composed
    *   CSS text should be injected, for the pre-hydration script that applies
    *   a returning visitor's saved theme before first paint.
    * - `<!--META-->` where any additional meta tags should be injected (optional).
+   * - `<!-- HTML_LANG -->` inside the root `<html lang="...">` attribute,
+   *   where the detected page language should be injected.
    *
    * The host server loads this from disk at startup and passes it to the render function on each request, allowing it to be customized or overridden per request if needed.
    * By default, it is just the contents of `index.html` in the project root.
@@ -66,6 +71,17 @@ export interface RenderOptions {
 }
 
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
+
+/**
+ * Unlike the `<meta>`/`<link>` values above (rendered through Preact, which
+ * escapes attribute values automatically), `HTML_LANG` lands inside a
+ * `lang="..."` attribute via a raw string substitution into the static
+ * template — and the language it carries can trace back to an unvalidated
+ * `?lang=` query param (see `getUrlLanguage`). Escape it explicitly so a
+ * crafted value can't break out of the attribute.
+ */
+const escapeForHtmlAttribute = (value: string): string =>
+  value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
 /**
  * Excludes the full multi-translation catalog from what gets embedded in the
@@ -111,6 +127,53 @@ function replacePlaceholder(
   value: string
 ): string {
   return source.split(placeholder).join(value);
+}
+
+/** Matches one `<meta ...>` tag; `[^>]*` spans newlines since some of these tags (see index.html) have their attributes on separate lines. */
+const META_TAG_RE = /<meta\b[^>]*>/gi;
+
+/** Whether a `<meta>` tag's `property` attribute is one of the `og:image` family. */
+function isOgImageMetaTag(tag: string): boolean {
+  return /\bproperty\s*=\s*"og:image(?::type|:width|:height|:alt)?"/i.test(tag);
+}
+
+/**
+ * Removes index.html's default `og:image`/`:type`/`:width`/`:height`/`:alt`
+ * meta tags. Called only when a customization's own logo is about to replace
+ * them (see the meta block in `render()`) — a crawler can't be relied on to
+ * prefer the *last* of two conflicting `og:image` tags (many just take the
+ * first, or treat multiple as a gallery), so the default has to be removed
+ * rather than merely followed by an override. See `stripDefaultFaviconLinks`
+ * below for the same problem, one level down the page, for the tab icon.
+ */
+export function stripDefaultOgImageMeta(html: string): string {
+  return html.replace(META_TAG_RE, (tag) => (isOgImageMetaTag(tag) ? "" : tag));
+}
+
+/** Matches one `<link ...>` tag. */
+const LINK_TAG_RE = /<link\b[^>]*>/gi;
+
+/** Whether a `<link>` tag's `rel` attribute is the favicon or the apple-touch-icon. */
+function isFaviconLinkTag(tag: string): boolean {
+  return /\brel\s*=\s*"(?:icon|apple-touch-icon)"/i.test(tag);
+}
+
+/**
+ * Removes index.html's default `<link rel="icon">`/
+ * `<link rel="apple-touch-icon">` tags. Called only when a customization's
+ * own logo is about to replace them (see the meta block in `render()`).
+ * Browsers do not reliably prefer the *last* declared icon link when there
+ * are two of the same `rel` — some use whichever they fetch or parse first,
+ * or pick by `type`/`sizes` rather than document order — so, exactly like
+ * `stripDefaultOgImageMeta` above, the default has to be removed rather than
+ * merely followed by a second tag. That also means the client never has two
+ * to choose from either: `useCustomizationLinkOverrides`
+ * (`app/customizationLinkOverrides.ts`) finds the one tag by its `rel` and
+ * changes its `href` in place, the same invariant this function establishes
+ * for the initial SSR response.
+ */
+export function stripDefaultFaviconLinks(html: string): string {
+  return html.replace(LINK_TAG_RE, (tag) => (isFaviconLinkTag(tag) ? "" : tag));
 }
 
 /**
@@ -465,8 +528,26 @@ export async function render(
 
   // Block until the detected language's translations are loaded so the
   // server-rendered HTML (and og:locale meta below) is in the right language
-  // rather than the bundled "en" fallback.
-  await state.i18n.ready;
+  // rather than the bundled "en" fallback. Also block on the initial tab's
+  // own chapter load: it starts fetching synchronously at state creation and
+  // has always finished by the time rendering below actually reaches
+  // `BibleReader`/`BibleReaderToolbar` — but only because nothing here used
+  // to make that first render wait on anything else. Any additional
+  // SSR-blocking wait added above this (the `?customization=` load, most
+  // notably) delays when that render is reached without slowing the chapter
+  // fetch down to match, so the two can now race — and if the chapter load
+  // loses, `BibleReader` suspends on its own `chapterDataPromise` for real,
+  // which `preact-render-to-string` cannot actually resolve: it never calls
+  // `options._catchError` for a component that throws to suspend, so
+  // `@preact/signals`' render-tracking cleanup for that component never
+  // runs, and every later signal write "queued" behind it — including the
+  // one that would resolve `chapterDataPromise` — never flushes. Waiting for
+  // it here, before any suspending render is attempted, keeps that race from
+  // being reachable at all.
+  await Promise.all([
+    state.i18n.ready,
+    state.app.selectedTab.value?.readingState.chapterDataPromise,
+  ]);
 
   const [appHtml] = await Promise.all([
     renderToStringAsync(
@@ -474,19 +555,15 @@ export async function render(
     ),
   ]);
 
+  // Read once — used both in the meta block below and to decide whether
+  // `options.html`'s default `og:image` tags need stripping first (see
+  // `stripDefaultOgImageMeta`).
+  const customizationLogoUrl = state.app.customizationLogoUrl.value;
+
   const metaHtml = await renderToStringAsync(
     <>
-      <meta
-        name="theme-color"
-        content="#FFFFFF"
-        media="(prefers-color-scheme: light)"
-      />
-      <meta
-        name="theme-color"
-        content="#000000"
-        media="(prefers-color-scheme: dark)"
-      />
       <meta name="description" content={state.app.description.value} />
+      <meta httpEquiv="content-language" content={state.i18n.language.value} />
       <meta property="og:locale" content={state.i18n.language.value} />
       <meta
         property="og:locale:alternate"
@@ -496,13 +573,43 @@ export async function render(
       <meta property="og:description" content={state.app.description.value} />
       <meta property="og:url" content={state.app.canonicalUrl.value} />
       <meta property="og:site_name" content={state.app.siteName.value} />
+      {/* Only emitted when a customization with an uploaded logo is active.
+          `stripDefaultOgImageMeta` has already removed index.html's own
+          `og:image`/`:type`/`:width`/`:height`/`:alt` from `baseHtml` below in
+          that case, so there is exactly one set of these tags either way —
+          unlike the favicon `<link>`, a crawler can't be relied on to prefer
+          the *last* of two conflicting `og:image` tags (many just take the
+          first, or treat multiple as a gallery), so an override here has to
+          replace the default rather than merely follow it. No explicit
+          `:type`/`:width`/`:height`: those described the default JPG's fixed
+          1200x630 crop and would misdescribe an arbitrary uploaded logo. */}
+      {customizationLogoUrl && (
+        <>
+          <meta property="og:image" content={customizationLogoUrl} />
+          <meta property="og:image:alt" content={state.app.siteName.value} />
+        </>
+      )}
       {/* `twitter:*` really is `name=`, unlike `og:*`. No `twitter:image`: it
-          would fall back to `og:image`, which is root-relative in index.html
-          and so unresolvable by most scrapers either way. */}
+          would fall back to `og:image`, which is root-relative in
+          index.html's default (unresolvable by most scrapers either way) but
+          always a proper absolute URL when a customization's logo replaces
+          it above. */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={state.app.socialTitle.value} />
       <meta name="twitter:description" content={state.app.description.value} />
       <link rel="canonical" href={state.app.canonicalUrl.value} />
+      {/* Only emitted when a customization with an uploaded logo is active.
+          `stripDefaultFaviconLinks` has already removed index.html's own
+          `<link rel="icon">`/`<link rel="apple-touch-icon">` from `baseHtml`
+          below in that case, so there is exactly one tag of each `rel`
+          either way — see that function for why an override can't just be
+          appended after the default. */}
+      {customizationLogoUrl && (
+        <>
+          <link rel="icon" href={customizationLogoUrl} />
+          <link rel="apple-touch-icon" href={customizationLogoUrl} />
+        </>
+      )}
       <title>{state.app.title.value}</title>
     </>
   );
@@ -545,9 +652,18 @@ export async function render(
       )
     )
   );
+  // Null whenever there was no `?customization=` link, or its load hadn't
+  // actually completed by now (the SSR-only timeout backstop fired first) —
+  // see `getInitialCustomizationSeed`. Either way `JSON.stringify(null)` is a
+  // harmless "nothing to seed" the client's `readInjectedCustomizationSeed`
+  // already treats as absent.
+  const customizationSeedJson = escapeForScript(
+    JSON.stringify(state.customizations.getInitialCustomizationSeed())
+  );
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
+    ["<!-- HTML_LANG -->", escapeForHtmlAttribute(state.i18n.language.value)],
     [
       "<!-- THEME_STYLE_TAG -->",
       composeThemeStyleText(state.theme.currentTheme.value),
@@ -555,14 +671,19 @@ export async function render(
     ["<!-- THEME_PRESETS_JSON -->", themePresetsJson],
     ["<!-- CONFIG_JSON -->", configJson],
     ["<!-- SEED_JSON -->", seedJson],
+    ["<!-- CUSTOMIZATION_JSON -->", customizationSeedJson],
     ["<!-- APP_HTML -->", appHtml],
   ];
+
+  const baseHtml = customizationLogoUrl
+    ? stripDefaultFaviconLinks(stripDefaultOgImageMeta(options.html))
+    : options.html;
 
   return {
     html: substitutions.reduce(
       (html, [placeholder, value]) =>
         replacePlaceholder(html, placeholder, value),
-      options.html
+      baseHtml
     ),
     ...(notFound ? { notFound: true as const } : {}),
   };

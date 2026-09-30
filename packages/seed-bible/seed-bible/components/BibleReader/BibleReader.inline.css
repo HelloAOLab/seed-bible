@@ -1,5 +1,6 @@
 .sb-bible-reader {
-  padding: 1.875rem 1.5rem 6rem 1.5rem;
+  width: 100%;
+  padding: 1.875rem 1% 6rem;
   margin: 0 auto;
   box-sizing: border-box;
   position: relative;
@@ -10,7 +11,8 @@
   flex: 1;
 }
 
-.sb-bible-reader-bookmark-button {
+.sb-bible-reader-bookmark-button,
+.sb-bible-reader-save-button {
   position: relative;
   width: 2.25rem;
   height: 2.25rem;
@@ -28,40 +30,46 @@
   z-index: 1;
 }
 
-.sb-bible-reader-bookmark-button:hover {
+.sb-bible-reader-bookmark-button:hover,
+.sb-bible-reader-save-button:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
 }
 
-.sb-bible-reader-bookmark-button-active,
-.sb-bible-reader-bookmark-button-active:hover {
-  color: var(--sb-primary-color);
-}
-
-.sb-bible-reader-bookmark-button:disabled {
+.sb-bible-reader-bookmark-button:disabled,
+.sb-bible-reader-save-button:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.sb-bible-reader-bookmark-button svg {
+.sb-bible-reader-bookmark-button svg,
+.sb-bible-reader-save-button svg {
   width: 1.375rem; /* 22px */
   height: 1.375rem;
 }
 
-/* Force a tight 1% reader margin in mobile view, regardless of the
-   user's saved scriptureMargin setting. Breakpoint mirrors `isMobile`
-   in SeedBibleStateManager (viewportWidth <= 480). */
-@media (max-width: 480px) {
-  .sb-bible-reader {
-    width: 100%;
-    padding-right: 1%;
-    padding-left: 1%;
+/* A filled star already reads as "saved"; the tint is what keeps it legible
+ * against the outlined bookmark sitting next to it. */
+.sb-bible-reader-save-button-saved,
+.sb-bible-reader-save-button-saved:hover {
+  color: var(--sb-primary-color);
+}
+
+/* The rule above is the phone reader's tight 1% margin, which a compact embed
+   also uses at any frame width. Only the desktop layout widens it. `:where()`
+   keeps this at the base rule's specificity, so more specific reader rules
+   still win as they did before. Breakpoint mirrors `isMobile` in
+   SeedBibleStateManager (viewportWidth <= 480). */
+@media (min-width: 481px) {
+  :where(.sb-app-root:not(.sb-embed-minimal)) .sb-bible-reader {
+    width: auto;
+    padding-inline: 1.5rem;
   }
 }
 
 /* Reader header: lays the chapter title and the right-hand action cluster
-   (quick toolbar + bookmark button) in a flex row so the buttons can never
-   overlap the title, regardless of how many quick tools are registered. */
+   (quick toolbar + save and bookmark buttons) in a flex row so the buttons can
+   never overlap the title, regardless of how many quick tools are registered. */
 .sb-bible-reader-header {
   display: flex;
   align-items: flex-start;
@@ -71,8 +79,19 @@
   border-bottom: 1px solid var(--sb-divider-color);
 }
 
-.sb-bible-reader-title {
+/* Chapter title and translation chip sit on one row so the chip stays beside
+   the chapter number instead of drifting over to the action cluster. */
+.sb-bible-reader-heading {
   flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.sb-bible-reader-title {
+  flex: 0 1 auto;
   min-width: 0;
   font-family: var(--text-bookTitle-font);
   /* color: var(--text-bookTitle-color); */
@@ -104,15 +123,37 @@
   color: inherit;
 }
 
+/* The translation chip is the same muted pill on both layouts; only its size
+   changes, to suit each header's title. Keep the two in step. */
+.sb-bible-reader-translation,
+.sb-bible-reader-mobile-header-translation {
+  display: inline-block;
+  cursor: pointer;
+  border: none;
+  font-family: var(--text-bookTitle-font);
+  font-weight: 500;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
 .sb-bible-reader-translation {
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 1.5rem;
-  font-weight: 600;
+  flex-shrink: 0;
+  border-radius: 62.4375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 1.25rem;
   line-height: 1;
   letter-spacing: 0;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-  margin-inline-start: 0.4em;
-  vertical-align: 0.15em;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-bible-reader-translation:hover,
+.sb-bible-reader-translation:focus-visible,
+.sb-bible-reader-mobile-header-translation:active,
+.sb-bible-reader-mobile-header-translation:focus-visible {
+  color: var(--sb-font-color);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
 }
 
 .sb-bible-reader-meta {
@@ -214,13 +255,29 @@
 
 .sb-bible-reader-mobile-header-translation {
   font-size: 1rem;
-  font-weight: 400;
-  cursor: pointer;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  display: inline-flex;
   padding: 0.3125rem 0.625rem;
   border-radius: 0.9375rem;
+}
+
+/* A line box reserves room for descenders that an all-caps abbreviation never
+   uses, so it sits high in an evenly padded chip — badly so in Newsreader,
+   which leaves 0.265em below the baseline but only 0.065em above the caps.
+   Trimming the box to the caps centres the letters themselves, whichever font
+   the reader has chosen. The padding grows to hold the chip's size once the
+   box shrinks from the full 1em to the cap height. */
+@supports (text-box: trim-both cap alphabetic) {
+  .sb-bible-reader-translation,
+  .sb-bible-reader-mobile-header-translation {
+    text-box: trim-both cap alphabetic;
+  }
+
+  .sb-bible-reader-translation {
+    padding-block: 0.5625rem;
+  }
+
+  .sb-bible-reader-mobile-header-translation {
+    padding-block: 0.475rem;
+  }
 }
 
 .sb-bible-reader-mobile-header-play {
@@ -250,9 +307,9 @@
   margin-inline-start: 0.125rem;
 }
 
-/* The chapter-bookmark toggle joins the header's right-hand icon cluster on
- * mobile. The cluster wrapper consumes the free space so bookmark, share,
- * account, and settings stay together on the right even when bookmark is
+/* The chapter save and bookmark buttons join the header's right-hand icon
+ * cluster on mobile. The cluster wrapper consumes the free space so they,
+ * share, account, and settings stay together on the right even when the pair is
  * hidden during playlist playback. */
 .sb-bible-reader-mobile-header-actions {
   display: flex;
@@ -262,7 +319,8 @@
   margin-inline-start: auto;
 }
 
-.sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button {
+.sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button,
+.sb-bible-reader-mobile-header .sb-bible-reader-save-button {
   position: static;
   flex-shrink: 0;
   width: 2rem;
@@ -270,7 +328,7 @@
   border-radius: 50%;
 }
 
-/* Match the 2rem circular header buttons (bookmark, account, settings)
+/* Match the 2rem circular header buttons (save, bookmark, account, settings)
  * rather than the desktop quick-toolbar's 2.25rem size. */
 .sb-bible-reader-mobile-header .sb-quick-toolbar-button {
   width: 2rem;
@@ -295,6 +353,29 @@
 
 .sb-bible-reader-mobile-header-settings:active {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-bible-reader-mobile-header-open-tab {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--sb-reader-floating-nav-play-background);
+  color: var(--sb-reader-floating-nav-play-glyph);
+  cursor: pointer;
+  padding: 0;
+}
+
+.sb-bible-reader-mobile-header-open-tab:active {
+  filter: brightness(0.95);
+}
+
+.sb-bible-reader-mobile-header-open-tab .material-symbols-outlined {
+  font-size: 1.125rem;
 }
 
 .sb-bible-reader-mobile-header-notes {
@@ -411,7 +492,11 @@
 }
 
 .sb-bible-reader-mobile-content-title {
-  margin: 2rem 0 2rem;
+  /* Shrink to the text, so the tappable title's hit area is the words and not
+     the full row. Applied to the previews too so they stay identical. */
+  width: fit-content;
+  max-width: 100%;
+  margin: 2rem auto;
   text-align: center;
   font-family: var(--text-bookTitle-font);
   color: var(--sb-book-title-font-color);
@@ -419,6 +504,11 @@
   font-style: var(--text-bookTitle-font-style);
   text-decoration: var(--text-bookTitle-text-decoration);
   letter-spacing: 0;
+}
+
+.sb-bible-reader-mobile-content-title-tappable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .sb-bible-reader-mobile-content-title .sb-bible-reader-book {
@@ -447,9 +537,18 @@
   line-height: var(--text-verse-line-height, 1.7);
   font-family: var(--sb-verse-font-family);
   font-size: 1em;
+  padding-inline: 0.625rem;
 
   /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
-     Short enough to read as immediate rather than as an animation. */
+     Short enough to read as immediate rather than as an animation.
+
+     The session presence gutter's indent (`.sb-chapter-content-presence`) is
+     deliberately NOT transitioned. The highlight ribbons behind the text are
+     measured in JavaScript from the live line boxes, and an animated indent
+     reflows the text for a third of a second after the measurement is taken,
+     leaving every ribbon sitting a gutter's width to the side of the words it
+     belongs to. Opening the gutter in one step means the text is in its final
+     place by the time the ribbons are measured. */
   transition: opacity 0.1s ease;
 
   /* Positioning context + own stacking context so the highlight ribbon layer
@@ -521,9 +620,12 @@
   }
 }
 
-@media (max-width: 480px) {
-  .sb-chapter-content {
-    padding-inline: 0.625rem;
+/* Desktop drops the phone/embed side padding set on `.sb-chapter-content`.
+   `:where()` keeps this at the base rule's specificity so the gutter rules
+   (`-presence`, `-note-gutter`) still override it. */
+@media (min-width: 481px) {
+  :where(.sb-app-root:not(.sb-embed-minimal)) .sb-chapter-content {
+    padding-inline: 0;
   }
 }
 
@@ -541,6 +643,7 @@
   margin-right: var(--text-heading-margin-right);
   font-size: 1.125em;
   line-height: 1;
+  transition: opacity 0.3s ease-in-out;
 }
 
 .sb-line-break {
@@ -571,10 +674,10 @@
   transition:
     background-color 0.2s ease,
     background 0.3s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    opacity 0.3s ease-in-out;
 
   &:has(.sb-verse-decoration-diminish) {
-    animation: none;
     opacity: 1;
   }
 }
@@ -646,6 +749,67 @@
 
 .sb-verse-annotation-icon {
   cursor: pointer;
+}
+
+/* ------------------------------------------------------------ note gutter */
+
+/*
+ * Mobile note markers (#1691). Desktop reads its notes in the Discover panel
+ * beside the text; mobile has no such panel, so the markers move into a gutter
+ * at the end edge of the reader. The gutter is open on every mobile chapter,
+ * with or without notes, and on the loading placeholder and the neighbouring
+ * chapters shown mid-swipe, so the text keeps one width as the reader flips
+ * between chapters.
+ */
+
+/*
+ * The reader has two gutters: the session presence bars down the start edge
+ * (`-presence`, BibleReader.css) and the note markers down the end edge
+ * (`-note-gutter`). Whichever is open, both edges reserve the same width, so
+ * the text stays centred on the page with either gutter, both, or neither.
+ */
+.sb-chapter-content.sb-chapter-content-presence,
+.sb-chapter-content.sb-chapter-content-note-gutter {
+  --sb-reader-gutter-width: 1.75rem;
+
+  padding-inline: calc(var(--sb-reader-gutter-width) + 0.25rem);
+}
+
+/* With a marker in the gutter, the inline one (shown when verse numbers are
+   turned off) would be the same note flagged twice on the same line. */
+.sb-chapter-content-note-gutter .sb-verse-annotation-icon {
+  display: none;
+}
+
+.sb-note-gutter {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: var(--sb-reader-gutter-width);
+  pointer-events: none;
+}
+
+/*
+ * Placed against a measured line box: `top` and `height` come from the first
+ * line rect of the verse the note starts at, which is the line carrying the
+ * verse number — so the icon lines up with it however the text wraps.
+ */
+.sb-note-gutter-marker {
+  position: absolute;
+  inset-inline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sb-primary-color);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.sb-note-gutter-marker .material-symbols-outlined {
+  font-size: 1.125rem;
 }
 
 .sb-verse-number .material-symbols-outlined {
@@ -968,12 +1132,12 @@
  * (matches the design spec). The modal frame itself is reused, but the
  * outer overlay aligns it to the bottom and stretches it to full width. */
 @media (max-width: 480px) {
-  .sb-footnote-modal-overlay:has(.sb-bookmark-picker) {
+  .sb-footnote-modal-overlay:has(.sb-save-picker) {
     align-items: flex-end;
     padding: 0;
   }
 
-  .sb-footnote-modal:has(.sb-bookmark-picker) {
+  .sb-footnote-modal:has(.sb-save-picker) {
     width: 100%;
     max-width: 100%;
     border-radius: 1rem 1rem 0 0;
@@ -991,37 +1155,34 @@
 }
 
 .sb-chapter-decoration-diminish {
-  /* Excluding the decorated verses here (rather than relying on the
-     `.sb-verse:has(.sb-verse-decoration-diminish)` override above to win)
-     matters because both selectors have equal specificity (two classes) —
-     a tie the later-declared rule would otherwise win regardless of which
-     one is meant to take precedence, silently dimming the very verses this
-     decoration exists to keep bright. */
+  /* Opacity is a plain state (dimmed while this class is present) rather
+     than a fixed-length @keyframes animation, so it holds for as long as
+     the decoration stays active instead of finishing on its own clock —
+     if a second diminish decoration arrives before the first expires, the
+     class never toggles off, so already-dimmed verses just stay dimmed
+     until the last matching decoration is removed (see `containerClasses`
+     in BibleReader.tsx). Excluding the decorated verses here (rather than
+     relying on the `.sb-verse:has(.sb-verse-decoration-diminish)` override
+     above to win) matters because both selectors have equal specificity
+     (two classes) — a tie the later-declared rule would otherwise win
+     regardless of which one is meant to take precedence, silently dimming
+     the very verses this decoration exists to keep bright. */
   .sb-verse:not(:has(.sb-verse-decoration-diminish)),
   .sb-chapter-heading {
-    animation: diminish-in-out 3s ease-in-out;
+    opacity: 0.4;
   }
 
   /* Nested so this beats `.sb-chapter-decoration-diminish .sb-verse` above
-     (equal specificity would otherwise let the dim animation win). */
+     (equal specificity would otherwise let the dim opacity win). */
   .sb-verse:has(.sb-verse-decoration-diminish) {
-    animation: none;
     opacity: 1;
   }
 }
 
-@keyframes diminish-in-out {
-  0% {
-    opacity: 1;
-  }
-
-  10%,
-  90% {
-    opacity: 0.4;
-  }
-
-  100% {
-    opacity: 1;
+@media (prefers-reduced-motion: reduce) {
+  .sb-verse,
+  .sb-chapter-heading {
+    transition: none;
   }
 }
 
@@ -1090,8 +1251,10 @@
 
 /* On mobile the panel is a plain block inside the swipe panel's own scroll
    (not a flex child), so it otherwise sits flush against the screen edges
-   and the bottom of the reader. Give it the same breathing room as the rest
-   of the mobile chrome.
+   and the bottom of the reader. Side and bottom margins match the rest of
+   the mobile chrome. The top margin is much taller on purpose: the panel
+   follows the chapter, and a short gap leaves it in view while you're still
+   reading the last verses. A tall gap keeps it a deliberate scroll away.
 
    `justify-self: flex-end` above (needed on desktop, to hug the end of the
    `.sb-bible-reader-content` row) also applies to plain block boxes per the
@@ -1102,7 +1265,7 @@
    fit-content width is wider than the screen, so the box's left edge renders
    off-screen; reset back to the normal stretch-to-fill behavior here. */
 .sb-bible-reader-mobile .sb-bible-reader-discover-panel {
-  margin: 6rem 1rem 2rem;
+  margin: 20rem 1rem 2rem;
   justify-self: auto;
 }
 
@@ -1146,5 +1309,10 @@
   .sb-bible-reader-discover-panel {
     flex: 1 1 0;
     min-width: 18rem;
+  }
+
+  .sb-bible-reader-content:not(.sb-bible-reader-content--discover-below)
+    > .sb-bible-reader-discover-panel {
+    width: 22.5rem;
   }
 }

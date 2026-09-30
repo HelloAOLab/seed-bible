@@ -1,19 +1,18 @@
-import type { PiecesProviderPort } from "../../../application/ports/out/piecePosition";
+import type {
+  PiecesMap,
+  PiecesProviderAdapterPort,
+} from "../../../application/ports/out/PiecesProviderAdapter";
 import type {
   ExperienceKey,
   ExperienceKeyMap,
 } from "../../../domain/models/experience";
 import type { Piece } from "../../../domain/models/piece";
 
-type PiecesMap = {
-  [E in ExperienceKey]: { [K in ExperienceKeyMap[E]]: Piece<K> };
-};
-
 interface ProviderParams {
   piecesMap: PiecesMap;
 }
 
-export class PiecesProvider implements PiecesProviderPort {
+export class PiecesProvider implements PiecesProviderAdapterPort {
   #piecesMap: ProviderParams["piecesMap"];
 
   constructor({ piecesMap }: ProviderParams) {

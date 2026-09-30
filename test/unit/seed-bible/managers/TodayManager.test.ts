@@ -24,6 +24,16 @@ describe("todayWillAutoOpenForUrl", () => {
       ).toBe(false);
     });
 
+    // A static page carries no reading position, so it used to read as
+    // "nowhere in particular" and Today opened over it. Today's pane is
+    // fullscreen, so it displaced the About pane and sent the reader back to
+    // the selected tab's chapter.
+    it("stays closed on a static page such as /en/about", () => {
+      expect(
+        todayWillAutoOpenForUrl(new URL("http://localhost:3000/en/about"), "/")
+      ).toBe(false);
+    });
+
     it("stays closed for a shared-session invite", () => {
       expect(
         todayWillAutoOpenForUrl(
@@ -44,6 +54,15 @@ describe("todayWillAutoOpenForUrl", () => {
       ).toBe(true);
     });
 
+    it("opens on ?today=open even over a static page", () => {
+      expect(
+        todayWillAutoOpenForUrl(
+          new URL("http://localhost:3000/en/about?today=open"),
+          "/"
+        )
+      ).toBe(true);
+    });
+
     it("stays closed on ?today=closed even on a bare URL", () => {
       expect(
         todayWillAutoOpenForUrl(
@@ -57,6 +76,35 @@ describe("todayWillAutoOpenForUrl", () => {
       expect(
         todayWillAutoOpenForUrl(
           new URL("http://localhost:3000/?today=maybe"),
+          "/"
+        )
+      ).toBe(false);
+    });
+  });
+
+  describe("when the page is a compact embed", () => {
+    it("stays closed on a bare URL with ?embed=true", () => {
+      expect(
+        todayWillAutoOpenForUrl(
+          new URL("http://localhost:3000/?embed=true"),
+          "/"
+        )
+      ).toBe(false);
+    });
+
+    it("stays closed on ?embed=minimal even without a reading path", () => {
+      expect(
+        todayWillAutoOpenForUrl(
+          new URL("http://localhost:3000/?embed=minimal"),
+          "/"
+        )
+      ).toBe(false);
+    });
+
+    it("stays closed even when ?today=open is also set", () => {
+      expect(
+        todayWillAutoOpenForUrl(
+          new URL("http://localhost:3000/?embed=true&today=open"),
           "/"
         )
       ).toBe(false);
@@ -176,5 +224,26 @@ describe("Today pane wiring", () => {
     )?.component;
 
     expect(second).toBe(first);
+  });
+
+  it("does not open Today when the page is a compact embed", async () => {
+    const state = await createTestSeedBibleState({ embed: true });
+
+    state.today.open();
+
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIsOpen(state)).toBe(false);
+  });
+
+  it("does not auto-open Today on a bare embed URL", async () => {
+    window.history.replaceState(null, "", "/?embed=true");
+
+    const state = await createTestSeedBibleState({
+      todayOpen: "fromUrl",
+      embed: true,
+    });
+
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIsOpen(state)).toBe(false);
   });
 });
