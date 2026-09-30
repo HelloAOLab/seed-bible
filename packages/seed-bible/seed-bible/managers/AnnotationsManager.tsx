@@ -94,10 +94,12 @@ export interface AnnotationsManager {
   editAnnotation: (annotation: Annotation) => void;
 
   /**
-   * Persists `editingAnnotation` (upsert), updates the chapter cache, clears
-   * the draft, and returns to the discover view. No-op when nothing is being
-   * edited. Rethrows on save failure, leaving `editingAnnotation` intact so
-   * the caller doesn't lose the draft.
+   * Persists `editingAnnotation` (upsert), updates the chapter cache, and
+   * clears the draft. On a wide screen it returns to the discover view; on
+   * mobile it closes the discover pane so the chapter the user was reading
+   * is visible again. No-op when nothing is being edited. Rethrows on save
+   * failure, leaving `editingAnnotation` intact so the caller doesn't lose
+   * the draft.
    */
   saveEditingAnnotation: () => Promise<void>;
 
@@ -487,6 +489,12 @@ export interface CreateAnnotationsManagerOptions {
   store?: OfflineRecordStore<Annotation> | null;
   /** See {@link CreateRecordSyncManagerOptions.confirmAdoption}. */
   confirmAdoption?: CreateRecordSyncManagerOptions<Annotation>["confirmAdoption"];
+  /**
+   * Whether the app is in the mobile layout. After a note is saved, mobile
+   * closes the discover pane instead of leaving it open over the reader.
+   * Omitted means the wide-screen behavior: return to the discover view.
+   */
+  isMobile?: ReadonlySignal<boolean>;
 }
 
 /**
@@ -505,6 +513,7 @@ export function createAnnotationsManager(
     options.store === undefined
       ? createIndexedDbRecordStore<Annotation>(annotationSyncDomain.dbName)
       : options.store;
+  const isMobile = options.isMobile;
 
   /**
    * The record a query targets, or null when only the local store can answer.
@@ -1235,7 +1244,11 @@ export function createAnnotationsManager(
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = null;
-    discover.view.value = "discover";
+    // On mobile the discover pane fills the screen, so leaving it open after
+    // a save hides the chapter the note was just written against. Close it
+    // and leave the reader where it was. Wide screens keep the side pane on
+    // the discover view.
+    discover.view.value = isMobile?.value ? null : "discover";
   };
 
   const cancelEditingAnnotation = (): void => {

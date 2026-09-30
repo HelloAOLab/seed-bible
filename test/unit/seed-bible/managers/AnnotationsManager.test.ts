@@ -952,6 +952,39 @@ describe("AnnotationsManager", () => {
       ).toEqual(["a1"]);
     });
 
+    it("closes the discover pane on mobile after a note is saved", async () => {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(true) }
+      );
+      await manager.createNewAnnotation();
+
+      await manager.saveEditingAnnotation();
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBeNull();
+    });
+
+    it("still returns to discover after a save when the layout is not mobile", async () => {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(false) }
+      );
+      manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
+
+      await manager.saveEditingAnnotation();
+
+      expect(discover.view.value).toBe("discover");
+    });
+
     it("leaves the draft intact and rethrows when saving fails", async () => {
       recordDataMock.mockResolvedValueOnce({
         success: false,
