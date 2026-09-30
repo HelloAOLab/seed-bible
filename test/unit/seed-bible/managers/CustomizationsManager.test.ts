@@ -2107,9 +2107,13 @@ describe("CustomizationsManager", () => {
             ...sharedRecord,
             variants: [
               {
-                ...sharedRecord.variants[0],
+                id: "variant_shared",
+                name: "Shared variant",
                 baseTheme: "light",
+                themes: {},
                 highlightColors: {},
+                createdAt: 1,
+                updatedAt: 1,
               },
             ],
             extensionSettings: {},
