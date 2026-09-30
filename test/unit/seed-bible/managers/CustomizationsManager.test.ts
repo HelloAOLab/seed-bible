@@ -2098,6 +2098,58 @@ describe("CustomizationsManager", () => {
       expect(posthogMock.identify).not.toHaveBeenCalled();
     });
 
+    it("tags events synchronously from a matching SSR seed, without fetching the record", () => {
+      const { manager } = createManager(
+        createNavigationManager({ initialHref: linkedHref }),
+        {
+          locator: "other-user.customization_shared",
+          customization: {
+            ...sharedRecord,
+            variants: [
+              {
+                ...sharedRecord.variants[0],
+                baseTheme: "light",
+                highlightColors: {},
+              },
+            ],
+            extensionSettings: {},
+            extensionSettingDefaults: {},
+          },
+        }
+      );
+
+      expect(manager.linkedCustomization.value?.id).toBe(
+        "customization_shared"
+      );
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(posthogMock.register_for_session).toHaveBeenLastCalledWith({
+        customization_id: "other-user.customization_shared",
+      });
+      expect(posthogMock.identify).toHaveBeenLastCalledWith("user-1", {
+        customization_id: "other-user.customization_shared",
+      });
+    });
+
+    it("leaves events untagged when the SSR seed already resolved the link as not found", () => {
+      createManager(createNavigationManager({ initialHref: linkedHref }), {
+        locator: "other-user.customization_shared",
+        customization: null,
+      });
+
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
+      expect(posthogMock.identify).not.toHaveBeenCalled();
+      expect(posthogMock.unregister_for_session).toHaveBeenCalledWith(
+        "customization_id"
+      );
+    });
+
     it("doesn't tag events with a draft the owner is only previewing", async () => {
       const { manager } = createManager();
       const created = await manager.create();
