@@ -82,16 +82,14 @@ function createHistoryEntry(
 }
 
 function createState(history: PlaylistPlayHistory[]) {
-  const continueFromHistory = vi.fn().mockResolvedValue(undefined);
-  const replayFromHistory = vi.fn().mockResolvedValue(undefined);
+  const playFromHistory = vi.fn().mockResolvedValue(undefined);
   const removePlayHistory = vi.fn().mockResolvedValue(undefined);
   const toast = vi.fn();
   const state = {
     playlists: {
       userPlaylistHistory: signal(history),
       userPlaylists: signal([]),
-      continueFromHistory,
-      replayFromHistory,
+      playFromHistory,
       removePlayHistory,
     },
     tabs: {
@@ -103,8 +101,7 @@ function createState(history: PlaylistPlayHistory[]) {
 
   return {
     state,
-    continueFromHistory,
-    replayFromHistory,
+    playFromHistory,
     removePlayHistory,
     toast,
   };
@@ -146,9 +143,7 @@ describe("PlaylistHistoryPane", () => {
 
   it("lists a session with its progress and continues from the play button", async () => {
     const entry = createHistoryEntry();
-    const { state, continueFromHistory, replayFromHistory } = createState([
-      entry,
-    ]);
+    const { state, playFromHistory } = createState([entry]);
     renderPane(state);
 
     const item = container.querySelector(
@@ -173,15 +168,12 @@ describe("PlaylistHistoryPane", () => {
       play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     expect(onLeave).toHaveBeenCalledTimes(1);
-    expect(continueFromHistory).toHaveBeenCalledWith(entry);
-    expect(replayFromHistory).not.toHaveBeenCalled();
+    expect(playFromHistory).toHaveBeenCalledWith(entry);
   });
 
   it("replays a completed session", async () => {
     const entry = createHistoryEntry({ currentStep: 3, totalSteps: 4 });
-    const { state, replayFromHistory, continueFromHistory } = createState([
-      entry,
-    ]);
+    const { state, playFromHistory } = createState([entry]);
     renderPane(state);
 
     const play = container.querySelector(
@@ -193,8 +185,7 @@ describe("PlaylistHistoryPane", () => {
       play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     expect(onLeave).toHaveBeenCalledTimes(1);
-    expect(replayFromHistory).toHaveBeenCalledWith(entry);
-    expect(continueFromHistory).not.toHaveBeenCalled();
+    expect(playFromHistory).toHaveBeenCalledWith(entry);
   });
 
   it("removes a session without leaving the page", async () => {
@@ -218,8 +209,8 @@ describe("PlaylistHistoryPane", () => {
 
   it("toasts when the playlist cannot be opened", async () => {
     const entry = createHistoryEntry();
-    const { state, continueFromHistory, toast } = createState([entry]);
-    continueFromHistory.mockRejectedValueOnce(new Error("missing"));
+    const { state, playFromHistory, toast } = createState([entry]);
+    playFromHistory.mockRejectedValueOnce(new Error("missing"));
     renderPane(state);
 
     const play = container.querySelector(
@@ -239,8 +230,8 @@ describe("PlaylistHistoryPane", () => {
   it("shows a small spinner while a playlist is opening", async () => {
     let resolvePlay: () => void = () => {};
     const entry = createHistoryEntry();
-    const { state, continueFromHistory } = createState([entry]);
-    continueFromHistory.mockReturnValue(
+    const { state, playFromHistory } = createState([entry]);
+    playFromHistory.mockReturnValue(
       new Promise<void>((resolve) => {
         resolvePlay = resolve;
       })
@@ -261,7 +252,7 @@ describe("PlaylistHistoryPane", () => {
     act(() => {
       play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
-    expect(continueFromHistory).toHaveBeenCalledTimes(1);
+    expect(playFromHistory).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       resolvePlay();

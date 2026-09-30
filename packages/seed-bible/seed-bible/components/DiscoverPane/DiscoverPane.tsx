@@ -143,7 +143,7 @@ export function DiscoverPaneTitle(props: {
         <span className="sb-discover-title" dir="auto">
           {title}
         </span>
-        {playlists.openingPlayback?.value ? <Spinner size="1rem" /> : null}
+        {playlists.openingPlayback.value ? <Spinner size="1rem" /> : null}
       </div>
     );
   }

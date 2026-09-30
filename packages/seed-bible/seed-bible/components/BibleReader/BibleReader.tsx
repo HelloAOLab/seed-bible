@@ -2892,6 +2892,15 @@ export function BibleReader(props: BibleReaderProps) {
       <DiscoverContentPanel tab={currentSlot.tab} state={state} />
     ) : null;
 
+  // Playback opens on the selected tab only. Other slots in a split view
+  // must not show this loader.
+  const playlistOpeningHere =
+    !!state &&
+    state.playlists.openingPlayback.value &&
+    state.playlists.view.value !== "play_playlist" &&
+    currentSlot.tab != null &&
+    state.tabs.selectedTabId.value === currentSlot.tab.id;
+
   return (
     <div
       className={`sb-bible-reader ${readerFontSizeClass}${
@@ -2899,9 +2908,7 @@ export function BibleReader(props: BibleReaderProps) {
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
-      {state?.playlists.openingPlayback?.value &&
-      state.playlists.view.value !== "play_playlist" &&
-      !isCompactReader ? (
+      {playlistOpeningHere && !isCompactReader ? (
         <Spinner
           className="sb-playlist-opening-spinner"
           size="1rem"
@@ -2941,8 +2948,7 @@ export function BibleReader(props: BibleReaderProps) {
                 </button>
               </h1>
             </div>
-            {state.playlists.openingPlayback?.value &&
-            state.playlists.view.value !== "play_playlist" ? (
+            {playlistOpeningHere ? (
               <Spinner
                 size="1rem"
                 label={t("opening-playlist", {

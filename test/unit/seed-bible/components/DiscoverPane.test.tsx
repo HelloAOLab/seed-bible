@@ -174,6 +174,7 @@ function createMockPlaylists(
     editingPlaylist,
     userPlaylistHistory: signal(overrides.userPlaylistHistory ?? []),
     playing: signal(overrides.playing ?? null),
+    openingPlayback: signal(false),
     createNewPlaylist,
     startPlaying,
     editPlaylist,
@@ -2157,6 +2158,7 @@ describe("DiscoverPaneTitle", () => {
       view,
       actualView,
       playing,
+      openingPlayback: signal(false),
       editingPlaylist: signal(null),
       goBackFromPlayingView: vi.fn(),
     } as unknown as PlaylistManager;

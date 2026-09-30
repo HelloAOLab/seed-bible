@@ -570,7 +570,7 @@ export interface SeedBibleState {
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
 import {
   createPlaylistManager,
-  isPlaylistPlayHistoryComplete,
+  playlistHistoryOpenFailedMessage,
   type PlaylistManager,
   type PlaylistItemData,
   type Playlist,
@@ -3165,20 +3165,12 @@ export function createSeedBibleState(
     // the user on the reader with no sign that anything is happening, and a
     // failed load only toasts after they've already left.
     const { t } = i18n;
-    const action = isPlaylistPlayHistoryComplete(entry)
-      ? playlists.replayFromHistory(entry)
-      : playlists.continueFromHistory(entry);
-    return action.then(
+    return playlists.playFromHistory(entry).then(
       () => {
         closeProfile();
       },
       (error) => {
-        toast(
-          t("playlist-history-open-failed", {
-            defaultValue:
-              "Couldn't open that playlist. It may have been deleted.",
-          })
-        );
+        toast(playlistHistoryOpenFailedMessage(t));
         throw error;
       }
     );

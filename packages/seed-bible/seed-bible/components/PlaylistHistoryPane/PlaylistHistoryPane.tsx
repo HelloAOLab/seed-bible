@@ -9,6 +9,7 @@ import type {
 import {
   groupPlaylistPlayHistoryByDay,
   isPlaylistPlayHistoryComplete,
+  playlistHistoryOpenFailedMessage,
   playlistPlayHistoryDayKind,
   playlistPlayHistoryPercent,
 } from "../../managers/PlaylistManager";
@@ -112,22 +113,14 @@ export function PlaylistHistoryPane(props: PlaylistHistoryPaneProps) {
       return;
     }
     openingId.value = entry.id;
-    const action = isPlaylistPlayHistoryComplete(entry)
-      ? playlists.replayFromHistory(entry)
-      : playlists.continueFromHistory(entry);
-    void action.then(
+    void playlists.playFromHistory(entry).then(
       () => {
         openingId.value = null;
         onLeave();
       },
       () => {
         openingId.value = null;
-        state.app.toast(
-          t("playlist-history-open-failed", {
-            defaultValue:
-              "Couldn't open that playlist. It may have been deleted.",
-          })
-        );
+        state.app.toast(playlistHistoryOpenFailedMessage(t));
       }
     );
   };

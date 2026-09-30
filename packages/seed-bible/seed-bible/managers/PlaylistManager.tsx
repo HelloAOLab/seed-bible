@@ -547,6 +547,15 @@ export function isPlaylistPlayHistoryComplete(
   return entry.totalSteps > 0 && entry.currentStep >= entry.totalSteps - 1;
 }
 
+/** Shown when a history row's playlist cannot be loaded. One string for every caller. */
+export function playlistHistoryOpenFailedMessage(t: {
+  (key: string, options?: { defaultValue?: string }): string;
+}): string {
+  return t("playlist-history-open-failed", {
+    defaultValue: "Couldn't open that playlist. It may have been deleted.",
+  });
+}
+
 /**
  * Formats a wall-clock play duration for the history accordion. Kept here so
  * manager tests can assert the same string the UI shows.
@@ -1830,6 +1839,15 @@ export function createPlaylistManager(
     }
   };
 
+  /**
+   * Continues a history row, or replays it when that session already finished.
+   * Resolves once the first item is on screen.
+   */
+  const playFromHistory = (entry: PlaylistPlayHistory): Promise<void> =>
+    isPlaylistPlayHistoryComplete(entry)
+      ? replayFromHistory(entry)
+      : continueFromHistory(entry);
+
   const syncPlaylists = async () => {
     if (!login.userId.value) {
       userPlaylists.value = [];
@@ -2353,6 +2371,7 @@ export function createPlaylistManager(
     stopPlaying,
     continueFromHistory,
     replayFromHistory,
+    playFromHistory,
     removePlayHistory,
     getPlaylistUrl,
     isDiscoverOpen,
