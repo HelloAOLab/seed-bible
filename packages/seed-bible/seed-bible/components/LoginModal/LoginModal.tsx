@@ -44,6 +44,7 @@ export function LoginModal({
   const wasOpenRef = useRef(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
+  const logoImgRef = useRef<HTMLImageElement>(null);
   const logoFailed = useSignal(false);
 
   const termsOfServiceLink = navigation.linkToQuery({
@@ -89,6 +90,18 @@ export function LoginModal({
     const target =
       step.value === "email" ? emailInputRef.current : codeInputRef.current;
     target?.focus();
+  });
+
+  // The logo can fail while the page is still loading, before this handler
+  // exists. A finished image with no pixels is that missed error.
+  useSignalEffect(() => {
+    if (!login.isLoginOpen.value) {
+      return;
+    }
+    const img = logoImgRef.current;
+    if (img?.complete && img.naturalWidth === 0) {
+      logoFailed.value = true;
+    }
   });
 
   if (!isOpen) {
@@ -272,6 +285,7 @@ export function LoginModal({
               className={`sb-login-logo${logoFailed.value ? " is-broken" : ""}`}
             >
               <img
+                ref={logoImgRef}
                 src={SeedBibleTitleIcon}
                 alt={t("seed-bible", { defaultValue: "Seed Bible" })}
                 onError={() => {
