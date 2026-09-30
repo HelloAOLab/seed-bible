@@ -9,6 +9,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { ModalContentProps } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { mockBodyMetrics } from "../testUtils/mockExpandableTextMetrics";
 
 // Per-extension strings the tests can supply, keyed by `${ns}:${key}`.
 // Extension titles/descriptions live in the extension's own namespace.
@@ -194,11 +195,15 @@ describe("ExtensionsSettingsView", () => {
     expect(container.textContent).toContain("No extensions available.");
   });
 
-  it("collapses a long extension description behind Read more, and expands it on click", () => {
+  it("clamps a long extension description to two lines behind Read more, and expands it on click", () => {
     extensionStrings.set(
       "long-one:description",
       "Interactive 3D visualization of the Bible.\nWith a guided tour on first visit."
     );
+    // jsdom does no layout, so stand in for a description that runs past
+    // its two lines.
+    const restore = mockBodyMetrics({ scrollHeight: 60, clientHeight: 30 });
+    onTestFinished(restore);
     renderExtensions([makeEntry("long-one", true)]);
 
     const description = () =>
@@ -208,16 +213,19 @@ describe("ExtensionsSettingsView", () => {
         ".sb-expandable-text-toggle"
       )!;
 
-    expect(description().textContent).toContain(
-      "Interactive 3D visualization of the Bible."
+    expect(description().classList).toContain("sb-expandable-text--clamped");
+    expect(description().getAttribute("style")).toContain(
+      "--sb-expandable-text-lines: 2"
     );
-    expect(description().textContent).not.toContain("guided tour");
     expect(toggle().textContent).toBe("Read more");
 
     act(() => {
       toggle().dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
+    expect(description().classList).not.toContain(
+      "sb-expandable-text--clamped"
+    );
     expect(description().textContent).toContain("guided tour");
     expect(toggle().textContent).toBe("Read less");
   });

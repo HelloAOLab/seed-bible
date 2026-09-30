@@ -1479,6 +1479,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             </span>
             <ExpandableText
               className="sb-extension-description"
+              lines={2}
               readMoreLabel={t("read-more", { defaultValue: "Read more" })}
               readLessLabel={t("read-less", { defaultValue: "Read less" })}
             >
