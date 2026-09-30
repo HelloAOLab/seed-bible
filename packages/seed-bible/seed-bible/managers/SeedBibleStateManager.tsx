@@ -1631,6 +1631,9 @@ export function createSeedBibleState(
     } finally {
       restoringStoredState = false;
     }
+    // Restoring can replace the tab a playing playlist's URL started playback
+    // on; start it again on whichever tab is active now.
+    playlists.resumePlaybackFromUrl();
     // Deliberately outside the batch: this can set `promptVisible`, and it must
     // observe the settled reader state rather than a half-applied one.
     tutorial.armAutoStart();
@@ -1638,6 +1641,18 @@ export function createSeedBibleState(
     // state rather than the empty SSR seed.
     armSidebarCollapsed();
   };
+
+  /**
+   * The step a playlist is playing at when the URL is its playing path
+   * (1-based); null on a shared page itself, or anywhere else.
+   */
+  const sharedPageStep = computed<number | null>(
+    () =>
+      parseSharedPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )?.step ?? null
+  );
 
   /** The shared playlist or reading plan page the URL is on, once it has loaded. */
   const sharedPage = computed<{
@@ -1775,7 +1790,9 @@ export function createSeedBibleState(
         return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
       }
 
-      if (sharedPageTitle.value) {
+      // Only on the shared page itself: while a playlist plays at its own
+      // path, the tab is titled after the chapter like any other reading.
+      if (sharedPageTitle.value && sharedPageStep.value == null) {
         return `${sharedPageTitle.value} | ${seedBibleTitle}`;
       }
 
@@ -3614,7 +3631,9 @@ export function createSeedBibleState(
       });
       return;
     }
-    if (!page || !name) {
+    // A playing path (one with a step) is the playlist being read, not its
+    // page, so it shows no modal.
+    if (!page || !name || sharedPageStep.value != null) {
       if (
         modals.modals.peek().some((modal) => modal.id === SHARED_PAGE_MODAL_ID)
       ) {
@@ -3745,8 +3764,9 @@ export function createSeedBibleState(
   /** Set when a visit that began on a shared page closed it for home. */
   const closedSharedPageForHome = signal(false);
 
-  // Starting leaves the shared page before the modal closes, so this only
-  // sees a close that should go home. Going home is what a fresh visit to "/"
+  // Starting leaves the shared page (a playlist for its first step's path)
+  // before the modal closes, so this only sees a close that should go home.
+  // Going home is what a fresh visit to "/"
   // would do: the reader takes the address bar back, Today opens over it
   // when a visit to "/" would open it, and a visit that began on this page
   // stops counting as a content link, so the tutorial offer can appear.
@@ -3754,10 +3774,11 @@ export function createSeedBibleState(
     const modalOpen = modals.modals.value.some(
       (modal) => modal.id === SHARED_PAGE_MODAL_ID
     );
+    const onSharedPage = !!sharedPage.peek() && sharedPageStep.peek() == null;
     if (
       modalOpen ||
       !(
-        sharedPage.peek() ||
+        onSharedPage ||
         sharedPageNotFoundKind.peek() ||
         sharedPageLoadFailedKind.peek()
       )

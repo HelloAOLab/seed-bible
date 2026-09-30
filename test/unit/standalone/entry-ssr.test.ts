@@ -59,13 +59,22 @@ describe("sharedPageQueryRedirect", () => {
     ).toBe("/b/dev/en/playlist/u.p?customization=o.c");
   });
 
-  it("leaves a playing playlist's own URL alone, so a reload resumes it", () => {
+  it("sends an old playback URL to the playing path, with the step made 1-based", () => {
     expect(
       sharedPageQueryRedirect(
         "/en/AAB/exodus/2?playlist=u.p&playlistStep=3",
         ""
       )
-    ).toBeNull();
+    ).toBe("/en/playlist/u.p/-/4");
+  });
+
+  it("starts an old playback URL with an unreadable step at the first step", () => {
+    expect(
+      sharedPageQueryRedirect(
+        "/en/AAB/exodus/2?playlist=u.p&playlistStep=x",
+        ""
+      )
+    ).toBe("/en/playlist/u.p/-/1");
   });
 
   it("sends an old reading plan share link to the plan's own page", () => {
@@ -474,6 +483,18 @@ describe("render() redirect wiring", () => {
 
     expect(result).toEqual({
       redirectTo: "/en/reading-plan/owner.plan_shared",
+    });
+  });
+
+  it("returns a plain 301 from an old playback URL to the playing path", async () => {
+    const result = await render({
+      path: "/es/spa_onbv/john/3?playlist=owner.playlist_shared&playlistStep=0",
+      config: DEFAULT_APP_CONFIG,
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/es/playlist/owner.playlist_shared/-/1",
     });
   });
 
@@ -1432,9 +1453,15 @@ describe("render() server-rendered meta tags", () => {
     };
 
     /** Answers `getData` calls by `{recordName}/{address}`; anything else is "not found". */
-    function mockRecords(records: Record<string, unknown>) {
+    function mockRecords(
+      records: Record<string, unknown>,
+      options: { slowUrlSuffix?: string } = {}
+    ) {
       const responses = createDefaultManagerResponseMap();
       globalThis.fetch = (async (url: string, init?: RequestInit) => {
+        if (options.slowUrlSuffix && url.endsWith(options.slowUrlSuffix)) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
         if (url === CALL_PROCEDURE_URL) {
           const body = JSON.parse(String(init?.body));
           const key = `${body.input?.recordName}/${body.input?.address}`;
@@ -1489,6 +1516,45 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain(
         '<link rel="canonical" href="/en/playlist/owner.playlist_shared/psalms-for-hard-days"'
       );
+    });
+
+    it("renders a playing path at its step's chapter, without the playlist's modal", async () => {
+      // Its own locator: every render in this file shares jsdom's one
+      // `window`, and states from earlier tests stay subscribed to it. One
+      // that had `owner.playlist_shared` cached would start playing it too
+      // when this render writes that playlist's step into the URL, and pull
+      // this render's step along with it. Real SSR has no `window`.
+      mockRecords(
+        {
+          "owner/playlist_steps": {
+            ...PLAYLIST,
+            id: "playlist_steps",
+            items: [
+              {
+                type: "bible-verse",
+                translationId: "AAB",
+                ref: { bookId: "GEN", chapter: 1 },
+              },
+              {
+                type: "bible-verse",
+                translationId: "AAB",
+                ref: { bookId: "EXO", chapter: 2 },
+              },
+            ],
+          },
+        },
+        // A step's chapter that takes a moment to arrive, as a real one does:
+        // the render has to wait for the reader to reach it.
+        { slowUrlSuffix: "/EXO/2.json" }
+      );
+
+      const { html, notFound } = await renderResult(
+        "/en/playlist/owner.playlist_steps/psalms-for-hard-days/2?useFreeBibleAPI=true"
+      );
+
+      expect(notFound).toBeUndefined();
+      expect(html).toMatch(/<title>[^<]*Exodus 2/);
+      expect(html).not.toContain("sb-playlist-page-modal");
     });
 
     it("opens a link whose title slug is out of date, pointing the canonical URL at the current title", async () => {

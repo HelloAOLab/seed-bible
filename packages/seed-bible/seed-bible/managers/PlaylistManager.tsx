@@ -32,7 +32,7 @@ import { emphasizeVerses } from "./BibleReadingManager";
 import { BOOK_SLUGS, type BookId } from "./BibleDataManager";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
-import { buildSharedPagePath } from "./SharedPagePath";
+import { buildSharedPagePath, parsePlaylistPagePath } from "./SharedPagePath";
 import {
   createSharedPageLoader,
   loadSharedPageAuthorName,
@@ -842,6 +842,35 @@ export function createPlayingState(
   };
 }
 
+/**
+ * What playback a URL asks for: the playlist `locator` and the 0-based queue
+ * `stepIndex` (null when it names none). Read from a playing playlist's path,
+ * `/{lang}/playlist/{locator}/{title}/{step}` (whose step is 1-based), or
+ * from the `?playlist=`/`?playlistStep=` params that ad-hoc queues (a reading
+ * plan's day) still use and old links carried. Null when the URL asks for no
+ * playback, including a playlist's own page without a step.
+ */
+export function playbackRequestFromUrl(
+  url: URL,
+  basePath: string
+): { locator: string; stepIndex: number | null } | null {
+  const page = parsePlaylistPagePath(url.pathname, basePath);
+  if (page) {
+    return page.step != null
+      ? { locator: page.locator, stepIndex: page.step - 1 }
+      : null;
+  }
+  const locator = url.searchParams.get("playlist");
+  if (!locator) {
+    return null;
+  }
+  const step = url.searchParams.get("playlistStep");
+  return {
+    locator,
+    stepIndex: step === null ? null : Math.floor(parseNumber(step, 0)),
+  };
+}
+
 /** Stable id so navigating between non-verse items updates the same modal instead of closing/reopening it. */
 const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
 
@@ -868,11 +897,17 @@ export function createPlaylistManager(
   chats: ChatsManager,
   initialPlaylistPageSeed?: PlaylistPageSeed
 ) {
-  const initialPlaylistLocator = signal(
-    navigation.currentUrl.value.searchParams.get("playlist")
+  const initialPlaybackRequest = playbackRequestFromUrl(
+    navigation.initialUrl,
+    navigation.basePath
   );
-  const initialPlaylistStep = signal(
-    navigation.currentUrl.value.searchParams.get("playlistStep")
+  /**
+   * The playlist the initial URL asked to play, until that load settles.
+   * Bridges the gap before playback starts, so the URL sync doesn't take the
+   * not-yet-playing state for a request to stop.
+   */
+  const initialPlaylistLocator = signal(
+    initialPlaybackRequest?.locator ?? null
   );
   const userPlaylists = signal<Playlist[]>([]);
   /** Latest play per playlist for the signed-in user, newest first. */
@@ -1618,9 +1653,14 @@ export function createPlaylistManager(
     return playing.value;
   };
 
+  /**
+   * Loads a playlist by locator and plays it at `stepIndex` (0-based). Reuses
+   * the playlist a playlist page already loaded for the same locator. Resolves
+   * once the reader has moved to that step, so the server can render it.
+   */
   const startPlayingLocator = async (
     locator: string,
-    step: string | null
+    stepIndex: number | null
   ): Promise<void> => {
     const parsed = parsePlaylistLocator(locator);
     if (!parsed) {
@@ -1629,8 +1669,15 @@ export function createPlaylistManager(
     }
     const { recordName, id } = parsed;
     try {
-      const playlist = await loadPlaylist(recordName, id);
-      startPlaying(playlist, Math.floor(parseNumber(step, 0)));
+      const loaded = playlistPageLoader.page.peek();
+      const playlist =
+        loaded?.locator === locator
+          ? loaded.item
+          : await loadPlaylist(recordName, id);
+      const state = startPlaying(playlist, stepIndex ?? 0);
+      if (state) {
+        await state.jumpTo(state.currentIndex.peek());
+      }
     } catch (err) {
       console.error("Failed to load playlist for playback:", err);
     }
@@ -1673,7 +1720,16 @@ export function createPlaylistManager(
       tab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
     }
     initialPlaylistLocator.value = null;
-    initialPlaylistStep.value = null;
+    // A playing path only means anything while playing. Left in the address
+    // bar, it would be read straight back as a request to play again.
+    if (
+      parsePlaylistPagePath(
+        navigation.currentUrl.peek().pathname,
+        navigation.basePath
+      )?.step != null
+    ) {
+      tabs.leaveStaticPage();
+    }
     modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     if (view.peek()) {
       view.value = "discover";
@@ -1828,6 +1884,22 @@ export function createPlaylistManager(
         }
       });
 
+      // A saved playlist's path carries the step. A scripture step moves the
+      // reader, and that navigation writes the URL; a text or link step
+      // doesn't, so it asks for the URL write itself.
+      let lastIndex = playingState.currentIndex.peek();
+      const disposeStepUrl = effect(() => {
+        const index = playingState.currentIndex.value;
+        if (index === lastIndex) {
+          return;
+        }
+        lastIndex = index;
+        const item = playingState.currentItem.peek();
+        if (item && item.type !== "bible-verse") {
+          readingState.requestUrlUpdate();
+        }
+      });
+
       // Reports a `playlist_finished` event the first time *this client's
       // own* forward navigation reaches the last item in the queue. Hooked
       // onto `next()` itself rather than a reactive effect on `currentIndex`,
@@ -1898,13 +1970,41 @@ export function createPlaylistManager(
           return firstPlaylist?.title ?? label;
         },
 
+        // A saved playlist plays at its own path,
+        // `/{lang}/playlist/{locator}/{title}/{step}` (step 1-based), in place
+        // of the chapter's. Ad-hoc queues have no record to point at, so they
+        // keep the chapter's path and the query params below.
+        transformUrlPath: ({ pathname }) => {
+          const current = data.value;
+          const firstPlaylist = current?.playlists[0];
+          if (
+            !current ||
+            !firstPlaylist ||
+            !isRecordedPlaylist(firstPlaylist) ||
+            current.queue.length === 0
+          ) {
+            return pathname;
+          }
+          return buildSharedPagePath({
+            kind: "playlist",
+            language: i18n.language.peek(),
+            locator: getPlaylistLocator(firstPlaylist),
+            title: firstPlaylist.title,
+            step: Math.max(0, current.step) + 1,
+          });
+        },
+
         // Always active (independent of `isShared`): contributes the
-        // `playlist`/`playlistStep` query params for this reading state's URL.
+        // `playlist`/`playlistStep` query params for an ad-hoc queue's URL,
+        // and clears them for a saved playlist, whose path carries both.
         // Falls back to the last-seen locator while nothing is playing so the
         // param doesn't flash-clear during an async deep-link load.
         transformQueryParams: ({ queryParams }) => {
           const current = data.value;
           const firstPlaylist = current?.playlists[0];
+          if (firstPlaylist && isRecordedPlaylist(firstPlaylist)) {
+            return { ...queryParams, playlist: null, playlistStep: null };
+          }
           // Emit `playlistStep` only when a playlist is actually loaded; an
           // enablement with no playlist reads as "nothing playing" (step
           // absent), with `playlist` falling back to the last-seen locator.
@@ -1977,6 +2077,7 @@ export function createPlaylistManager(
         dispose: () => {
           disposeOut();
           disposeIn();
+          disposeStepUrl();
           playingState.dispose();
         },
       };
@@ -2056,11 +2157,25 @@ export function createPlaylistManager(
     if (!page) {
       return;
     }
+    // Push a new history entry before playback starts, so Back from playing
+    // returns to the playlist's page, its home. Starting first would rewrite
+    // the page's own entry into the first step's path (enabling playback
+    // replaces the current URL), leaving nothing to go back to.
+    tabs.leaveStaticPage({ push: true });
     startPlaying(page.item, 0);
-    // The reader doesn't write its position over a playlist page's URL, so
-    // it has to be told to take the address bar back.
-    tabs.leaveStaticPage();
   };
+
+  /**
+   * The step the URL is playing, 1-based, when it's a playing playlist's own
+   * path; null on the playlist's page itself or anywhere else.
+   */
+  const playlistPageStep = computed<number | null>(
+    () =>
+      parsePlaylistPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )?.step ?? null
+  );
 
   // Inbound (URL -> state) half of the `playlist`/`playlistStep` sync. Reads
   // both params together so pasting a link with a nonzero step while
@@ -2075,9 +2190,10 @@ export function createPlaylistManager(
   // (that happens separately, via `transformQueryParams`/`TabsManager`), would
   // wrongly treat the still-stale URL as an external "stop playback" request.
   const syncPlayingFromUrl = () => {
-    const url = navigation.currentUrl.value;
-    const requestedLocator = url.searchParams.get("playlist");
-    const requestedStep = url.searchParams.get("playlistStep");
+    const request = playbackRequestFromUrl(
+      navigation.currentUrl.value,
+      navigation.basePath
+    );
 
     const playingState = playing.peek();
     const firstPlaylist = playingState?.playlists.peek()[0];
@@ -2087,22 +2203,23 @@ export function createPlaylistManager(
         : null
       : initialPlaylistLocator.peek();
 
-    if (requestedLocator === locator) {
-      if (playingState && requestedStep !== null) {
-        const step = playingState.currentIndex.peek().toString();
-        if (requestedStep !== step) {
-          playingState.jumpTo(Math.floor(parseNumber(requestedStep, 0)));
-        }
+    if ((request?.locator ?? null) === locator) {
+      if (
+        playingState &&
+        request?.stepIndex != null &&
+        request.stepIndex !== playingState.currentIndex.peek()
+      ) {
+        void playingState.jumpTo(request.stepIndex);
       }
       return;
     }
 
-    if (!requestedLocator) {
+    if (!request) {
       stopPlaying();
       return;
     }
 
-    void startPlayingLocator(requestedLocator, requestedStep);
+    void startPlayingLocator(request.locator, request.stepIndex);
   };
 
   effect(() => {
@@ -2110,18 +2227,70 @@ export function createPlaylistManager(
     syncPlayingFromUrl();
   });
 
-  if (initialPlaylistLocator.value) {
-    void startPlayingLocator(
-      initialPlaylistLocator.value,
-      initialPlaylistStep.value
-    ).finally(() => {
-      // The fallback locator only bridges this initial async load. Clear it
-      // once settled so a later switch to a non-playing tab (whose URL has no
-      // `playlist`) isn't misread as a stale request for it.
-      initialPlaylistLocator.value = null;
-      initialPlaylistStep.value = null;
-    });
+  let resolveInitialPlayback: () => void = () => {};
+  /**
+   * Settles once the playback the initial URL asked for has started and the
+   * reader has moved to its step (or failed to). The server waits on this so
+   * a reload mid-playlist renders the step's chapter, and the client waits on
+   * it before hydrating so its first render matches. Resolved immediately
+   * when the URL asked for no playback.
+   */
+  const initialPlaybackPromise = new Promise<void>((resolve) => {
+    resolveInitialPlayback = resolve;
+  });
+
+  if (initialPlaybackRequest) {
+    // A playing path's playlist is what the page loader is already fetching
+    // (or was seeded with); waiting for it saves loading it twice.
+    const ready =
+      parsePlaylistPagePath(navigation.initialUrl.pathname, navigation.basePath)
+        ?.step != null
+        ? playlistPageLoader.initialLoadPromise
+        : Promise.resolve();
+    void ready
+      .then(() =>
+        startPlayingLocator(
+          initialPlaybackRequest.locator,
+          initialPlaybackRequest.stepIndex
+        )
+      )
+      .finally(() => {
+        // The fallback locator only bridges this initial async load. Clear it
+        // once settled so a later switch to a non-playing tab (whose URL has
+        // no playback in it) isn't misread as a stale request for it.
+        initialPlaylistLocator.value = null;
+        resolveInitialPlayback();
+      });
+  } else {
+    resolveInitialPlayback();
   }
+
+  /**
+   * Starts the playback the URL asks for on the active tab, if that tab
+   * isn't already playing it. Restoring saved tabs after mount can replace
+   * the tab the initial playback started on, and nothing about the URL
+   * changes to trigger the sync above, so the app calls this after restoring.
+   */
+  const resumePlaybackFromUrl = (): void => {
+    if (initialPlaylistLocator.peek()) {
+      return; // The initial load is still starting it, on whatever tab is active then.
+    }
+    const request = playbackRequestFromUrl(
+      navigation.currentUrl.peek(),
+      navigation.basePath
+    );
+    if (!request) {
+      return;
+    }
+    const firstPlaylist = playing.peek()?.playlists.peek()[0];
+    if (
+      firstPlaylist &&
+      getPlaylistLocator(firstPlaylist) === request.locator
+    ) {
+      return;
+    }
+    void startPlayingLocator(request.locator, request.stepIndex);
+  };
 
   /**
    * Builds the AI tools that let a provider edit whatever playlist is
@@ -2295,6 +2464,9 @@ export function createPlaylistManager(
     removePlayHistory,
     getPlaylistUrl,
     playlistPage,
+    playlistPageStep,
+    initialPlaybackPromise,
+    resumePlaybackFromUrl,
     playingAuthorName,
     playlistPageNotFound: playlistPageLoader.notFound,
     playlistPageLoadFailed: playlistPageLoader.loadFailed,

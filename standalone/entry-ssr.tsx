@@ -314,16 +314,16 @@ export function legacyReadingUrlRedirect(
 }
 
 /**
- * Sends an old-style share link — `?playlist={locator}` or
- * `?readingPlan={locator}`, on whatever chapter the sharer's page happened to
- * be — to that content's own page, `/{lang}/playlist/{locator}` or
- * `/{lang}/reading-plan/{locator}`. A 301: the target depends only on the URL.
+ * Sends an old-style playlist or reading plan link to that content's own
+ * path, as a 301 (the target depends only on the URL):
  *
- * A `?playlist=` link with `?playlistStep=` doesn't redirect. The app writes
- * both params into the address bar while a playlist plays, so a reload
- * mid-playback has to keep resuming the playlist rather than land on its
- * intro modal. Share links never carried a step. `?readingPlan=` is only
- * ever a share link, so it always redirects.
+ * - A share link (`?playlist={locator}` or `?readingPlan={locator}`, on
+ *   whatever chapter the sharer's page happened to be) goes to its page,
+ *   `/{lang}/playlist/{locator}` or `/{lang}/reading-plan/{locator}`.
+ * - A playlist playback URL (`?playlist=…&playlistStep={n}`, 0-based) goes
+ *   to its playing path, `/{lang}/playlist/{locator}/-/{n + 1}`. The title
+ *   slug isn't known without fetching the playlist, so a placeholder stands
+ *   in; the app writes the real one as soon as playback starts.
  *
  * The language is the one the link names (its path segment or `?lang=`),
  * else the translation's own, else `DEFAULT_UI_LANGUAGE`. The title slug is
@@ -343,19 +343,28 @@ export function sharedPageQueryRedirect(
     kind: SharedPageKind;
     param: string;
     locator: string;
-  } | null =
-    playlistLocator && !url.searchParams.has("playlistStep")
-      ? { kind: "playlist", param: "playlist", locator: playlistLocator }
-      : readingPlanLocator
-        ? {
-            kind: "readingPlan",
-            param: "readingPlan",
-            locator: readingPlanLocator,
-          }
-        : null;
+  } | null = playlistLocator
+    ? { kind: "playlist", param: "playlist", locator: playlistLocator }
+    : readingPlanLocator
+      ? {
+          kind: "readingPlan",
+          param: "readingPlan",
+          locator: readingPlanLocator,
+        }
+      : null;
   if (!target) {
     return null;
   }
+  // Only a playlist has steps to play.
+  const stepParam =
+    target.kind === "playlist" ? url.searchParams.get("playlistStep") : null;
+  const stepIndex = stepParam === null ? null : Number(stepParam);
+  const step =
+    stepIndex === null
+      ? null
+      : Number.isInteger(stepIndex) && stepIndex >= 0
+        ? stepIndex + 1
+        : 1;
 
   const parsed = parseReadingPath(url.pathname, basePath);
   const translationId =
@@ -370,6 +379,9 @@ export function sharedPageQueryRedirect(
 
   const remainingParams = new URLSearchParams(url.search);
   remainingParams.delete(target.param);
+  if (target.kind === "playlist") {
+    remainingParams.delete("playlistStep");
+  }
   for (const key of READING_POSITION_PARAMS) {
     remainingParams.delete(key);
   }
@@ -380,6 +392,7 @@ export function sharedPageQueryRedirect(
     language,
     locator: target.locator,
     title: null,
+    step,
   })}${query ? `?${query}` : ""}`;
 }
 
@@ -637,6 +650,10 @@ export async function render(
     state.playlists.initialPlaylistPageLoadPromise,
     state.readingPlans.initialReadingPlanPageLoadPromise,
   ]);
+  // A reload mid-playlist names only its step, not the chapter; the reader
+  // moves there once the playlist has loaded, so wait for that too before
+  // rendering.
+  await state.playlists.initialPlaybackPromise;
 
   const [appHtml] = await Promise.all([
     renderToStringAsync(

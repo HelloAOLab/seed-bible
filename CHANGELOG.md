@@ -11,7 +11,8 @@
   - A link to a playlist that no longer exists answers "not found", and shows a "Playlist not found" message whose Close button goes to the home screen.
   - If a playlist can't be loaded (for example, the connection drops), a "Couldn't load playlist" message offers "Try again" or "Close" instead of leaving the reader stuck on the link.
   - While a playlist plays, the player shows who made it and its description above the queue.
-  - Old `?playlist=` share links permanently redirect (301) to the playlist's page. A link that also has `?playlistStep=`, which is what the address bar shows while a playlist plays, still resumes playback instead.
+  - While a playlist plays, the address bar shows its own path with the step at the end (`/{lang}/playlist/{id}/{title}/2` for the second step), so reloading or sharing it opens that step. Back from the first step returns to the playlist's page.
+  - Old `?playlist=` links permanently redirect (301): share links to the playlist's page, and playback links (`?playlist=…&playlistStep=…`) to the matching step.
   - The "Would you like a tutorial?" offer stays hidden for a visit that starts on a playlist link, including after the playlist is started. Closing the playlist without starting it goes to the home screen, where the offer can appear as usual.
 - Give each shared reading plan its own page at `/{lang}/reading-plan/{id}/{title}`. ([#1786](https://github.com/HelloAOLab/seed-bible/issues/1786))
   - Opening a shared reading plan link shows the plan's cover, author, description and number of sessions, with "Start Reading Plan" and "Close" buttons. Before, the link opened straight onto a chapter with the plans panel beside it.
