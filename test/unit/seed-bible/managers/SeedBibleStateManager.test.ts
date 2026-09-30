@@ -229,6 +229,8 @@ function createMockSharedSession(id: string) {
       translationBooks: signal(null),
       selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),
       getUrlQueryParams: vi.fn().mockReturnValue({}),
+      getUrlPathOverride: vi.fn().mockReturnValue(null),
+      requestUrlUpdate: vi.fn(),
       // TabsManager subscribes to reading-state navigation events to drive the
       // URL; the mock just returns a no-op unsubscribe.
       onNavigate: vi.fn().mockReturnValue(() => undefined),

@@ -3,6 +3,7 @@ import {
   parsePlaylistPagePath,
   slugifyPlaylistTitle,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistPagePath";
+import { playbackRequestFromUrl } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { parseReadingPath } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 import { isNonReadingPagePath } from "@packages/seed-bible/seed-bible/managers/StaticPagePath";
 
@@ -14,13 +15,19 @@ describe("parsePlaylistPagePath", () => {
       language: "en",
       locator: "user-1.playlist_abc",
       slug: "my-list",
+      step: null,
     });
   });
 
   it("parses a path without the optional slug", () => {
     expect(
       parsePlaylistPagePath("/es/playlist/user-1.playlist_abc", "")
-    ).toEqual({ language: "es", locator: "user-1.playlist_abc", slug: null });
+    ).toEqual({
+      language: "es",
+      locator: "user-1.playlist_abc",
+      slug: null,
+      step: null,
+    });
   });
 
   it("strips the deployment prefix", () => {
@@ -76,6 +83,7 @@ describe("buildPlaylistPagePath", () => {
       language: "en",
       locator: "user-1.playlist_abc",
       slug: "psalms-for-hard-days",
+      step: null,
     });
   });
 
@@ -103,5 +111,73 @@ describe("playlist paths are not reading paths", () => {
 
   it("still treats a reading path as one", () => {
     expect(isNonReadingPagePath("/en/AAB/john/3", "")).toBe(false);
+  });
+});
+
+describe("playing paths", () => {
+  it("parses a trailing step", () => {
+    expect(parsePlaylistPagePath("/en/playlist/u.p/my-list/3", "")).toEqual({
+      language: "en",
+      locator: "u.p",
+      slug: "my-list",
+      step: 3,
+    });
+  });
+
+  it("reads a 4-segment path's last segment as a slug even when it's a number", () => {
+    expect(parsePlaylistPagePath("/en/playlist/u.p/2024", "")?.step).toBeNull();
+    expect(parsePlaylistPagePath("/en/playlist/u.p/2024", "")?.slug).toBe(
+      "2024"
+    );
+  });
+
+  it.each(["0", "-1", "two", "1.5"])("rejects step %s", (step) => {
+    expect(parsePlaylistPagePath(`/en/playlist/u.p/x/${step}`, "")).toBeNull();
+  });
+
+  it("builds a step path, with a placeholder slug for an untitled playlist", () => {
+    expect(
+      buildPlaylistPagePath({
+        language: "en",
+        locator: "u.p",
+        title: "My List",
+        step: 2,
+      })
+    ).toBe("/en/playlist/u.p/my-list/2");
+    expect(
+      buildPlaylistPagePath({
+        language: "en",
+        locator: "u.p",
+        title: null,
+        step: 1,
+      })
+    ).toBe("/en/playlist/u.p/-/1");
+  });
+});
+
+describe("playbackRequestFromUrl", () => {
+  const request = (href: string) =>
+    playbackRequestFromUrl(new URL(href, "http://localhost"), "");
+
+  it("reads a playing path's step as a 0-based index", () => {
+    expect(request("/en/playlist/u.p/my-list/3")).toEqual({
+      locator: "u.p",
+      stepIndex: 2,
+    });
+  });
+
+  it("asks for no playback on the playlist's own page", () => {
+    expect(request("/en/playlist/u.p/my-list")).toBeNull();
+  });
+
+  it("still reads the query params an ad-hoc queue uses", () => {
+    expect(request("/en/AAB/john/3?playlist=.plan-1&playlistStep=2")).toEqual({
+      locator: ".plan-1",
+      stepIndex: 2,
+    });
+  });
+
+  it("asks for no playback on a plain chapter", () => {
+    expect(request("/en/AAB/john/3")).toBeNull();
   });
 });

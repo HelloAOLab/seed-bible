@@ -301,6 +301,7 @@ function makeReadingState(
     chapterData: signal<TranslationBookChapter | null>(null),
     decorateVerses: vi.fn(),
     removeDecoration: vi.fn(),
+    requestUrlUpdate: vi.fn(),
     enabledExtensions: computed(() => Array.from(runtimes.value.values())),
     isExtensionEnabled: (id: string) => runtimes.value.has(id),
     enableExtension: (id: string, data?: unknown) => {
@@ -2182,11 +2183,12 @@ describe("createPlaylistManager", () => {
       expect(result.playlistStep).toBeNull();
     });
 
-    it("transformQueryParams reflects the currently playing playlist and step", async () => {
+    it("a saved playlist plays at its own path, with the step 1-based and no playlist query params", async () => {
       makeManager("user-1");
       await flush();
       const playlist = makePlaylist({
         id: "playlist-9",
+        title: "Psalms for Hard Days",
         items: [
           { type: "html", html: "a" },
           { type: "html", html: "b" },
@@ -2198,17 +2200,51 @@ describe("createPlaylistManager", () => {
         step: 1,
       });
 
-      const result = instance.transformQueryParams!({
-        readingState: {} as any,
-        data: signal(undefined) as any,
-        queryParams: { book: "GEN" },
+      expect(
+        instance.transformUrlPath!({
+          readingState: {} as any,
+          data: signal(undefined) as any,
+          pathname: null,
+        })
+      ).toBe("/en/playlist/user-1.playlist-9/psalms-for-hard-days/2");
+      expect(
+        instance.transformQueryParams!({
+          readingState: {} as any,
+          data: signal(undefined) as any,
+          queryParams: { book: "GEN" },
+        })
+      ).toEqual({ book: "GEN", playlist: null, playlistStep: null });
+    });
+
+    it("an ad-hoc queue (no saved record) keeps the chapter's path and query params", async () => {
+      makeManager("user-1");
+      await flush();
+      const queue = [
+        { type: "html" as const, html: "a" },
+        { type: "html" as const, html: "b" },
+      ];
+      const instance = activateExtension({
+        playlists: [
+          { id: "plan-1", title: "Day 1", description: null, items: queue },
+        ],
+        queue,
+        step: 1,
       });
 
-      expect(result).toEqual({
-        book: "GEN",
-        playlist: "user-1.playlist-9",
-        playlistStep: "1",
-      });
+      expect(
+        instance.transformUrlPath!({
+          readingState: {} as any,
+          data: signal(undefined) as any,
+          pathname: null,
+        })
+      ).toBeNull();
+      expect(
+        instance.transformQueryParams!({
+          readingState: {} as any,
+          data: signal(undefined) as any,
+          queryParams: { book: "GEN" },
+        })
+      ).toEqual({ book: "GEN", playlist: ".plan-1", playlistStep: "1" });
     });
 
     it("subTitle/shortSubTitle use the first playlist's title while playing", async () => {
@@ -2294,7 +2330,7 @@ describe("createPlaylistManager", () => {
       const definition =
         lastReadingExtensionManager.getReadingExtension("playlist")!;
       const instance = definition.activate({
-        readingState: {} as any,
+        readingState: { requestUrlUpdate: vi.fn() } as any,
         data,
         isShared: signal(false),
       }) as unknown as PlaylistReadingExtensionInstance;
@@ -2322,7 +2358,7 @@ describe("createPlaylistManager", () => {
       const definition =
         lastReadingExtensionManager.getReadingExtension("playlist")!;
       const instance = definition.activate({
-        readingState: {} as any,
+        readingState: { requestUrlUpdate: vi.fn() } as any,
         data,
         isShared: signal(false),
       }) as unknown as PlaylistReadingExtensionInstance;
@@ -2845,6 +2881,79 @@ describe("createPlaylistManager", () => {
       expect(getDataMock).not.toHaveBeenCalledWith("author-1", "profile");
     });
 
+    describe("playing at the playlist's own path", () => {
+      const STEP_HREF =
+        "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist/2";
+      const twoSteps = () =>
+        makePlaylist({
+          items: [
+            { type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } },
+            { type: "bible-verse", ref: { bookId: "EXO", chapter: 2 } },
+          ],
+        });
+
+      it("starts at the path's step (1-based), reusing the playlist the page loaded", async () => {
+        const manager = makeManager(null, undefined, STEP_HREF, {
+          locator: "user-1.playlist-1",
+          playlist: twoSteps(),
+          authorName: null,
+        });
+
+        await manager.initialPlaybackPromise;
+
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(selectTranslationAndChapterMock).toHaveBeenLastCalledWith(
+          "BSB",
+          "EXO",
+          2,
+          undefined
+        );
+        expect(getDataMock).not.toHaveBeenCalledWith("user-1", "playlist-1");
+      });
+
+      it("starts playback again on a tab that replaced the one it started on", async () => {
+        const tabs = makeTabs(
+          makeTab("boot-tab", selectTranslationAndChapterMock)
+        );
+        const manager = makeManager(null, tabs, STEP_HREF, {
+          locator: "user-1.playlist-1",
+          playlist: twoSteps(),
+          authorName: null,
+        });
+        await manager.initialPlaybackPromise;
+
+        // What restoring saved tabs does when none of them is the boot tab.
+        const restored = makeTab(
+          "restored-tab",
+          selectTranslationAndChapterMock
+        );
+        tabs.tabs.value = [restored];
+        tabs.selectedTabId.value = "restored-tab";
+        expect(manager.playing.value).toBeNull();
+
+        manager.resumePlaybackFromUrl();
+        await flush();
+
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(restored.readingState.isExtensionEnabled("playlist")).toBe(true);
+      });
+
+      it("doesn't restart playback that's already playing the URL's playlist", async () => {
+        const manager = makeManager(null, undefined, STEP_HREF, {
+          locator: "user-1.playlist-1",
+          playlist: twoSteps(),
+          authorName: null,
+        });
+        await manager.initialPlaybackPromise;
+        const before = manager.playing.value;
+
+        manager.resumePlaybackFromUrl();
+        await flush();
+
+        expect(manager.playing.value).toBe(before);
+      });
+    });
+
     it("loads a playlist page the app navigates to after startup", async () => {
       const playlist = makePlaylist();
       respondWith({ "user-1/playlist-1": { success: true, data: playlist } });
@@ -3113,12 +3222,12 @@ describe("createPlaylistManager", () => {
       const definition =
         lastReadingExtensionManager.getReadingExtension("playlist")!;
       const participantA = definition.activate({
-        readingState: {} as any,
+        readingState: { requestUrlUpdate: vi.fn() } as any,
         data: sharedData,
         isShared: signal(true),
       }) as unknown as PlaylistReadingExtensionInstance;
       const participantB = definition.activate({
-        readingState: {} as any,
+        readingState: { requestUrlUpdate: vi.fn() } as any,
         data: sharedData,
         isShared: signal(true),
       }) as unknown as PlaylistReadingExtensionInstance;

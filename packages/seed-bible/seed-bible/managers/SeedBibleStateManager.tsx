@@ -1605,6 +1605,9 @@ export function createSeedBibleState(
     } finally {
       restoringStoredState = false;
     }
+    // Restoring can replace the tab a playing playlist's URL started playback
+    // on; start it again on whichever tab is active now.
+    playlists.resumePlaybackFromUrl();
     // Deliberately outside the batch: this can set `promptVisible`, and it must
     // observe the settled reader state rather than a half-applied one.
     tutorial.armAutoStart();
@@ -1652,7 +1655,9 @@ export function createSeedBibleState(
         return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
       }
 
-      if (playlistPageTitle.value) {
+      // Only on the playlist's own page: while it plays, the tab is titled
+      // after the chapter like any other reading.
+      if (playlistPageTitle.value && playlists.playlistPageStep.value == null) {
         return `${playlistPageTitle.value} | ${seedBibleTitle}`;
       }
 
@@ -3414,7 +3419,9 @@ export function createSeedBibleState(
       });
       return;
     }
-    if (!page) {
+    // A playing path (one with a step) is the playlist being read, not its
+    // page, so it shows no modal.
+    if (!page || playlists.playlistPageStep.value != null) {
       if (
         modals.modals
           .peek()
@@ -3445,8 +3452,8 @@ export function createSeedBibleState(
   /** Set when a visit that began on a playlist page closed it for home. */
   const closedPlaylistPageForHome = signal(false);
 
-  // Starting leaves the playlist page before the modal closes, so this only
-  // sees a close that should go home. Going home is what a fresh visit to "/"
+  // Starting leaves the playlist page (for its first step's path) before the
+  // modal closes, so this only sees a close that should go home. Going home is what a fresh visit to "/"
   // would do: the reader takes the address bar back, Today opens over it
   // when a visit to "/" would open it, and a visit that began on this page
   // stops counting as a content link, so the tutorial offer can appear.
@@ -3454,10 +3461,13 @@ export function createSeedBibleState(
     const modalOpen = modals.modals.value.some(
       (modal) => modal.id === PLAYLIST_PAGE_MODAL_ID
     );
+    const onPlaylistPage =
+      !!playlists.playlistPage.peek() &&
+      playlists.playlistPageStep.peek() == null;
     if (
       modalOpen ||
       !(
-        playlists.playlistPage.peek() ||
+        onPlaylistPage ||
         playlists.playlistPageNotFound.peek() ||
         playlists.playlistPageLoadFailed.peek()
       )

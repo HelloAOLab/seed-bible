@@ -15,6 +15,7 @@ import {
   stripBasePath,
 } from "./ReadingUrlPath";
 import { isNonReadingPagePath } from "./StaticPagePath";
+import { parsePlaylistPagePath } from "./PlaylistPagePath";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
@@ -382,9 +383,9 @@ export interface TabsManager {
    * while sitting on a static page like "/en/about" — the escape hatch the
    * tab-focus effect itself uses internally, exposed for anything else that
    * needs to explicitly leave a static page (e.g. an About-page pane
-   * closing).
+   * closing). Replaces the current history entry unless `push`.
    */
-  leaveStaticPage: () => void;
+  leaveStaticPage: (options?: { push?: boolean }) => void;
 
   /**
    * Applies the tabs saved in `localStorage` by a previous visit, reconciled
@@ -700,6 +701,18 @@ export function createTabs(
       // infer from the language change alone.
       void i18nManager.changeLanguage(requestedLanguage);
     }
+    // A playlist's page or playing path names no chapter, so reading one here
+    // would send the reader to the default Genesis 1. While playing, the
+    // playlist moves the reader to the step itself; racing it with this aborts
+    // that load and strands the reader on Genesis 1.
+    if (
+      parsePlaylistPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )
+    ) {
+      return;
+    }
     const readingState = selectedTab.readingState;
 
     const books = readingState.translationBooks.value?.books ?? [];
@@ -784,6 +797,13 @@ export function createTabs(
     // change and re-commit, defeating the prescriptive (one-write-per-nav)
     // design.
     untracked(() => {
+      const tab = selectedTab.peek();
+      // An extension that owns this tab's address (a playing playlist's
+      // `/{lang}/playlist/{locator}/{title}/{step}`) always gets it written,
+      // including over its own page's path: that path is the page the tab
+      // is showing.
+      const pathOverride = tab?.readingState.getUrlPathOverride() ?? null;
+
       // Never overwrite a static page's own URL (e.g. "/en/about") with the
       // reading position. This runs unconditionally on mount and on every
       // UI-language change (see the effects below); without this guard, the
@@ -796,6 +816,7 @@ export function createTabs(
       // this guard and take the user back to the reader — see the tab-focus
       // effect below, the only caller that ever passes it.
       if (
+        !pathOverride &&
         !options.leaveStaticPage &&
         isNonReadingPagePath(
           navigation.currentUrl.peek().pathname,
@@ -816,7 +837,6 @@ export function createTabs(
         });
       }
 
-      const tab = selectedTab.peek();
       const nextQueryParams: Record<string, string | null> =
         tab?.readingState.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
 
@@ -860,7 +880,9 @@ export function createTabs(
         ? dataManager.buildTranslationId(rawTranslationId)
         : null;
 
-      if (bookId && chapter && translationId) {
+      if (pathOverride) {
+        writeUrl(queryUpdate, options.replace, pathOverride);
+      } else if (bookId && chapter && translationId) {
         const pathname = buildReadingPath({
           language: i18nManager.language.peek(),
           translationId,
@@ -1270,8 +1292,11 @@ export function createTabs(
    * needs to explicitly leave a static page (e.g. an About-page pane
    * closing).
    */
-  const leaveStaticPage = () => {
-    commitSelectedTabToUrl({ replace: true, leaveStaticPage: true });
+  const leaveStaticPage = (options: { push?: boolean } = {}) => {
+    commitSelectedTabToUrl({
+      replace: !options.push,
+      leaveStaticPage: true,
+    });
   };
 
   return {

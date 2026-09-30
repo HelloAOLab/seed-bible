@@ -57,9 +57,12 @@ const state = createSeedBibleState({
  * the reader subtree waiting on its own Suspense fallback.
  */
 function waitForThisPagesChapterLoads() {
-  return waitForInitialChapterLoads(
-    state.tabs.tabs.value.map((tab) => tab.readingState.chapterDataPromise)
-  );
+  return waitForInitialChapterLoads([
+    ...state.tabs.tabs.value.map((tab) => tab.readingState.chapterDataPromise),
+    // A reload mid-playlist moves the reader to its step's chapter after the
+    // playlist loads; the server rendered that chapter, so wait for it too.
+    state.playlists.initialPlaybackPromise,
+  ]);
 }
 
 void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(

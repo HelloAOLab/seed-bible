@@ -30,6 +30,9 @@ function responses() {
     [makeUrl("/api/AAB/EXO/2.json", PRIVATE_API_ENDPOINT)]: createResponse(
       makeChapter(aabBooks, "EXO", 2)
     ),
+    [makeUrl("/api/AAB/MAT/1.json", PRIVATE_API_ENDPOINT)]: createResponse(
+      makeChapter(aabBooks, "MAT", 1)
+    ),
   };
 }
 
@@ -111,12 +114,178 @@ describe("tutorial offer on a playlist link", () => {
     );
 
     expect(modalOpen(state)).toBe(false);
-    // The address bar has left the playlist page for the playing chapter.
+    // The address bar has moved from the playlist's page to its first step.
     const url = new URL(window.location.href);
-    expect(url.pathname).toBe("/en/AAB/exodus/2");
-    expect(url.searchParams.get("playlist")).toBe("owner.playlist_shared");
-    expect(url.searchParams.get("playlistStep")).toBe("0");
+    expect(url.pathname).toBe(
+      "/en/playlist/owner.playlist_shared/exodus-stories/1"
+    );
+    expect(url.search).toBe("");
     expect(state.tutorial.promptVisible.value).toBe(false);
+  });
+
+  describe("playing at its own path", () => {
+    const TWO_STEPS = {
+      ...SEED,
+      playlist: PlaylistSchema.parse({
+        ...SEED.playlist,
+        items: [
+          {
+            type: "bible-verse",
+            translationId: "AAB",
+            ref: { bookId: "EXO", chapter: 2 },
+          },
+          { type: "html", html: "<p>Reflect</p>" },
+        ],
+      }),
+    };
+
+    const pathname = () => new URL(window.location.href).pathname;
+
+    it("writes each step into the path, including one that doesn't move the reader", async () => {
+      window.history.replaceState(
+        null,
+        "",
+        "/en/playlist/owner.playlist_shared/exodus-stories"
+      );
+      const state = await createTestSeedBibleState({
+        responses: responses(),
+        todayOpen: "fromUrl",
+        initialPlaylistPageSeed: TWO_STEPS,
+      });
+
+      state.playlists.startPlaylistPage();
+      await waitFor(() => pathname().endsWith("/1"), 2000);
+      // Let the first step's own navigation finish, or its URL write could
+      // land after the step moves on and pass for the step's own write.
+      await waitFor(
+        () =>
+          state.app.currentReadingState.value?.tab.readingState.chapterData
+            .value?.book.id === "EXO",
+        2000
+      );
+
+      await state.playlists.playing.value!.next();
+      await waitFor(() => pathname().endsWith("/2"), 2000);
+      expect(pathname()).toBe(
+        "/en/playlist/owner.playlist_shared/exodus-stories/2"
+      );
+    });
+
+    it("moving to the next scripture step takes the reader to its chapter, not the default one", async () => {
+      window.history.replaceState(
+        null,
+        "",
+        "/en/playlist/owner.playlist_shared/exodus-stories"
+      );
+      const state = await createTestSeedBibleState({
+        responses: responses(),
+        todayOpen: "fromUrl",
+        initialPlaylistPageSeed: {
+          ...SEED,
+          playlist: PlaylistSchema.parse({
+            ...SEED.playlist,
+            items: [
+              {
+                type: "bible-verse",
+                translationId: "AAB",
+                ref: { bookId: "EXO", chapter: 2 },
+              },
+              {
+                type: "bible-verse",
+                translationId: "AAB",
+                ref: { bookId: "MAT", chapter: 1 },
+              },
+            ],
+          }),
+        },
+      });
+      const book = () =>
+        state.app.currentReadingState.value?.tab.readingState.chapterData.value
+          ?.book.id;
+      state.playlists.startPlaylistPage();
+      await waitFor(() => book() === "EXO", 2000);
+
+      await state.playlists.playing.value!.next();
+      await waitFor(() => pathname().endsWith("/2"), 2000);
+      await waitFor(() => book() === "MAT", 2000);
+      // Give a stray URL-driven navigation (to the default chapter) the
+      // chance to land before checking it didn't.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(book()).toBe("MAT");
+      expect(
+        state.app.currentReadingState.value?.tab.readingState.bookId.value
+      ).toBe("MAT");
+    });
+
+    it("Back from playing returns to the playlist's page and stops playback", async () => {
+      window.history.replaceState(
+        null,
+        "",
+        "/en/playlist/owner.playlist_shared/exodus-stories"
+      );
+      const state = await createTestSeedBibleState({
+        responses: responses(),
+        todayOpen: "fromUrl",
+        initialPlaylistPageSeed: TWO_STEPS,
+      });
+      state.playlists.startPlaylistPage();
+      await waitFor(() => pathname().endsWith("/1"), 2000);
+
+      window.history.back();
+      await waitFor(
+        () =>
+          pathname() === "/en/playlist/owner.playlist_shared/exodus-stories",
+        2000
+      );
+      await waitFor(() => modalOpen(state), 2000);
+
+      expect(state.playlists.playing.value).toBeNull();
+    });
+
+    it("a reload on a step resumes playback there, without the modal", async () => {
+      window.history.replaceState(
+        null,
+        "",
+        "/en/playlist/owner.playlist_shared/exodus-stories/1"
+      );
+      const state = await createTestSeedBibleState({
+        responses: responses(),
+        todayOpen: "fromUrl",
+        initialPlaylistPageSeed: TWO_STEPS,
+      });
+      await state.playlists.initialPlaybackPromise;
+
+      expect(state.playlists.playing.value?.currentIndex.value).toBe(0);
+      expect(
+        state.app.currentReadingState.value?.tab.readingState.chapterData.value
+          ?.book.id
+      ).toBe("EXO");
+      expect(modalOpen(state)).toBe(false);
+      expect(state.today.isOpen.value).toBe(false);
+      expect(pathname()).toBe(
+        "/en/playlist/owner.playlist_shared/exodus-stories/1"
+      );
+    });
+
+    it("stopping playback leaves the playing path for the reader's chapter", async () => {
+      window.history.replaceState(
+        null,
+        "",
+        "/en/playlist/owner.playlist_shared/exodus-stories/1"
+      );
+      const state = await createTestSeedBibleState({
+        responses: responses(),
+        todayOpen: "fromUrl",
+        initialPlaylistPageSeed: TWO_STEPS,
+      });
+      await state.playlists.initialPlaybackPromise;
+
+      state.playlists.stopPlaying();
+
+      expect(pathname()).toBe("/en/AAB/exodus/2");
+      expect(state.playlists.playing.value).toBeNull();
+    });
   });
 
   it("shows a not-found modal for a playlist that doesn't exist, and goes home from it", async () => {

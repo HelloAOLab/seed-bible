@@ -554,6 +554,20 @@ export interface BibleReadingState {
   getUrlQueryParams: (currentUrl: URL) => Record<string, string | null>;
 
   /**
+   * The path an enabled extension wants this reading state written to the
+   * URL at (without the deployment prefix), or null for the reading
+   * position's own path. See `transformUrlPath`.
+   */
+  getUrlPathOverride: () => string | null;
+
+  /**
+   * Asks the owner to write this reading state to the URL again, for a
+   * change the URL reflects that isn't a chapter navigation (an extension's
+   * own position moving, say). Pushes a history entry unless `replace`.
+   */
+  requestUrlUpdate: (options?: { replace?: boolean }) => void;
+
+  /**
    * Subscribes to navigation events for this reading state. The listener is
    * invoked once per completed navigation (chapter/book/translation change,
    * extension toggle, etc.), which lets the owner prescriptively update the URL
@@ -3236,6 +3250,24 @@ export function createBibleReadingState(
    * @param currentUrl The current URL.
    * @returns An object representing the query parameters.
    */
+  const getUrlPathOverride = (): string | null => {
+    let pathname: string | null = null;
+    for (const extension of enabledExtensions.value) {
+      if (extension.instance.transformUrlPath) {
+        pathname = extension.instance.transformUrlPath({
+          readingState: readingStateRef,
+          data: extension.data,
+          pathname,
+        });
+      }
+    }
+    return pathname;
+  };
+
+  const requestUrlUpdate = (options: { replace?: boolean } = {}) => {
+    emitNavigate({ replace: options.replace ?? false });
+  };
+
   const getUrlQueryParams = (currentUrl: URL) => {
     const selectedBookId = bookId.value;
     const selectedChapter = chapterNumber.value;
@@ -3508,6 +3540,8 @@ export function createBibleReadingState(
     disableExtension,
     dispose: disposeReadingState,
     getUrlQueryParams,
+    getUrlPathOverride,
+    requestUrlUpdate,
     onNavigate,
   };
 
