@@ -21,15 +21,31 @@
   gap: 0.5rem;
 }
 
-/* The wordmark file is a near-black silhouette. Paint it with the reader
-   text color — the color chosen to contrast with this modal's background —
-   so a light theme keeps a dark mark and a dark theme gets the light one.
-   `mask-mode: alpha` uses the file's transparency, not its dark pixels. */
+/* The file is a near-black silhouette. The image sets the box; the mask
+   paints that silhouette with the reader text color. If the file fails to
+   load, the image shows its text alternative instead. */
 .sb-login-logo {
+  display: inline-block;
+  position: relative;
+  height: 2.5rem;
+  max-width: 100%;
+  margin-bottom: 0.5rem;
+  line-height: 0;
+}
+
+.sb-login-logo img {
   display: block;
   height: 2.5rem;
-  aspect-ratio: 3128 / 1146;
-  margin-bottom: 0.5rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  opacity: 0;
+}
+
+.sb-login-logo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
   background-color: var(--sb-reader-font-color);
   -webkit-mask-image: url("../../img/SeedBibleLogoWithTitleBlack.png");
   mask-image: url("../../img/SeedBibleLogoWithTitleBlack.png");
@@ -41,6 +57,22 @@
   mask-size: contain;
   -webkit-mask-mode: alpha;
   mask-mode: alpha;
+}
+
+.sb-login-logo.is-broken {
+  height: auto;
+}
+
+.sb-login-logo.is-broken img {
+  height: auto;
+  width: auto;
+  max-width: 100%;
+  opacity: 1;
+  color: var(--sb-reader-font-color);
+}
+
+.sb-login-logo.is-broken::after {
+  content: none;
 }
 
 .sb-login-title {

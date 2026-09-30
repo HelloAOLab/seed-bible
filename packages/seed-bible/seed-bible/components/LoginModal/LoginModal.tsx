@@ -3,6 +3,7 @@ import { batch, useSignal, useSignalEffect } from "@preact/signals";
 import { useRef } from "preact/hooks";
 import type { LoginRequestSuccess } from "@casual-simulation/aux-records";
 import { useI18n } from "../../i18n/I18nManager";
+import SeedBibleTitleIcon from "../../img/SeedBibleLogoWithTitleBlack.png";
 import { MaterialIcon } from "../icons";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import type { LoginManager } from "../../managers/LoginManager";
@@ -43,6 +44,7 @@ export function LoginModal({
   const wasOpenRef = useRef(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
+  const logoFailed = useSignal(false);
 
   const termsOfServiceLink = navigation.linkToQuery({
     terms: "open",
@@ -267,10 +269,16 @@ export function LoginModal({
         <div className="sb-login-modal-body">
           <div className="sb-login-header">
             <span
-              className="sb-login-logo"
-              role="img"
-              aria-label={t("seed-bible", { defaultValue: "Seed Bible" })}
-            />
+              className={`sb-login-logo${logoFailed.value ? " is-broken" : ""}`}
+            >
+              <img
+                src={SeedBibleTitleIcon}
+                alt={t("seed-bible", { defaultValue: "Seed Bible" })}
+                onError={() => {
+                  logoFailed.value = true;
+                }}
+              />
+            </span>
             <h3 className="sb-login-title">{title}</h3>
             <p className="sb-login-subtitle">{subtitle}</p>
             {onCode && (
