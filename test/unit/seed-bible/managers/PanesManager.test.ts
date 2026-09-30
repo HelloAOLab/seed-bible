@@ -213,6 +213,119 @@ describe("createPanes", () => {
     });
   });
 
+  describe("openPane with exclusive", () => {
+    it("closes every other pane, fullscreen included, when an exclusive side pane opens", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+      const exclusive = panes.openPane({
+        placement: "side",
+        title: "Exclusive",
+        component: componentReturning("Exclusive"),
+        exclusive: true,
+      });
+
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual([exclusive.id]);
+      expect(panes.selectedPaneId.value).toBe(exclusive.id);
+      expect(exclusive.placement).toBe("side");
+    });
+
+    it("closes other panes when an existing pane is reused by id with exclusive", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "editor",
+        placement: "side",
+        title: "Editor",
+        component: componentReturning("Editor"),
+      });
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+      });
+      panes.openPane({
+        id: "editor",
+        placement: "side",
+        title: "Editor",
+        component: componentReturning("Editor"),
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+
+      panes.openPane({
+        id: "editor",
+        placement: "side",
+        title: "Editor Updated",
+        component: componentReturning("Editor Updated"),
+        exclusive: true,
+      });
+
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value[0]?.id).toBe("editor");
+      expect(panes.panes.value[0]?.title).toBe("Editor Updated");
+    });
+
+    it("tells each closed pane it was displaced", () => {
+      const panes = createPanes();
+      const onFullscreenClose = vi.fn();
+      const onFloatingClose = vi.fn();
+
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+        onClose: onFloatingClose,
+      });
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+        onClose: onFullscreenClose,
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Other",
+        component: componentReturning("Other"),
+        onClose: onFloatingClose,
+      });
+      panes.openPane({
+        placement: "side",
+        title: "Exclusive",
+        component: componentReturning("Exclusive"),
+        exclusive: true,
+      });
+
+      expect(onFullscreenClose).toHaveBeenCalledWith("displaced");
+      expect(onFloatingClose).toHaveBeenLastCalledWith("displaced");
+    });
+
+    it("does not store the exclusive flag on the pane", () => {
+      const panes = createPanes();
+
+      const pane = panes.openPane({
+        placement: "side",
+        title: "Exclusive",
+        component: componentReturning("Exclusive"),
+        exclusive: true,
+      });
+
+      expect("exclusive" in pane).toBe(false);
+    });
+  });
+
   describe("openPane on a mobile viewport", () => {
     it("closes other panes when any pane is opened, since panes display fullscreen", () => {
       const isMobile = signal(true);
