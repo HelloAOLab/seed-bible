@@ -2486,32 +2486,48 @@ describe("createPlaylistManager", () => {
     expect(manager.openingPlayback.value).toBe(false);
   });
 
-  it("clears the loader on stop, and a late chapter resolve does not turn it back on", async () => {
-    let resolveChapter: () => void = () => {};
-    selectTranslationAndChapterMock.mockReturnValue(
-      new Promise<void>((resolve) => {
-        resolveChapter = resolve;
-      })
+  it("clears the loader on stop, and a late chapter resolve does not hide the next open", async () => {
+    const resolvers: Array<() => void> = [];
+    selectTranslationAndChapterMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvers.push(resolve);
+        })
     );
     const manager = makeManager("user-1");
     await flush();
-    manager.startPlaying(
-      makePlaylist({
-        items: [
-          {
-            type: "bible-verse",
-            ref: { bookId: "JHN", chapter: 3, verse: 16 },
-          },
-        ],
-      })
-    );
+    const verse = {
+      type: "bible-verse" as const,
+      ref: { bookId: "JHN", chapter: 3, verse: 16 },
+    };
+
+    manager.startPlaying(makePlaylist({ id: "a", items: [verse] }));
     await flush();
+    const stoppedBatch = resolvers.length;
+    expect(stoppedBatch).toBeGreaterThan(0);
     expect(manager.openingPlayback.value).toBe(true);
 
     manager.stopPlaying();
     expect(manager.openingPlayback.value).toBe(false);
 
-    resolveChapter();
+    manager.startPlaying(
+      makePlaylist({
+        id: "b",
+        items: [{ ...verse, ref: { bookId: "GEN", chapter: 1, verse: 1 } }],
+      })
+    );
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    for (let i = 0; i < stoppedBatch; i++) {
+      resolvers[i]!();
+    }
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    for (let i = stoppedBatch; i < resolvers.length; i++) {
+      resolvers[i]!();
+    }
     await flush();
     expect(manager.openingPlayback.value).toBe(false);
   });

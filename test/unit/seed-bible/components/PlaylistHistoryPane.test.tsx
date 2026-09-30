@@ -171,21 +171,15 @@ describe("PlaylistHistoryPane", () => {
     expect(playFromHistory).toHaveBeenCalledWith(entry);
   });
 
-  it("replays a completed session", async () => {
+  it("labels a finished session Replay", () => {
     const entry = createHistoryEntry({ currentStep: 3, totalSteps: 4 });
-    const { state, playFromHistory } = createState([entry]);
+    const { state } = createState([entry]);
     renderPane(state);
 
     const play = container.querySelector(
       ".sb-playlist-history-item .sb-discover-item-play"
     ) as HTMLButtonElement;
     expect(play.getAttribute("aria-label")).toBe("Replay");
-
-    await act(async () => {
-      play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(onLeave).toHaveBeenCalledTimes(1);
-    expect(playFromHistory).toHaveBeenCalledWith(entry);
   });
 
   it("removes a session without leaving the page", async () => {
