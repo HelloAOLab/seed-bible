@@ -114,6 +114,8 @@ function createQuickToolContext(
     annotationsForChapter?: unknown[];
     isMobile?: boolean;
     isDiscoverOpen?: ReadonlySignal<boolean>;
+    readingPlansForChapter?: unknown[];
+    pendingAnnotationChangesForChapter?: number;
   } = {}
 ): QuickToolContext {
   return {
@@ -137,6 +139,9 @@ function createQuickToolContext(
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
       ),
+      pendingCountForChapter: vi.fn(
+        () => overrides.pendingAnnotationChangesForChapter ?? 0
+      ),
     } as any,
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
@@ -145,6 +150,11 @@ function createQuickToolContext(
     app: {
       isMobile: signal(overrides.isMobile ?? false),
       isDiscoverOpen: overrides.isDiscoverOpen ?? signal(false),
+    } as any,
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(
+        () => overrides.readingPlansForChapter ?? []
+      ),
     } as any,
   };
 }
@@ -1616,6 +1626,34 @@ describe("createBibleToolsManager", () => {
       tool?.onSelect();
       expect(context.readingState.discoverContentPanelInline.value).toBe(true);
     });
+
+    it("is visible when there is at least one reading plan", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        readingPlansForChapter: [{ planId: "test-plan" }],
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool).toBeDefined();
+      expect(tool?.visible.value).toBe(true);
+    });
+
+    it("is visible when the chapter only has pending annotation changes", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        pendingAnnotationChangesForChapter: 3,
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool).toBeDefined();
+      expect(tool?.visible.value).toBe(true);
+    });
   });
 
   describe("chapter navigation tools stay enabled while loading (#1414)", () => {
@@ -1816,9 +1854,13 @@ describe("createBibleToolsManager", () => {
         } as any,
         annotations: {
           getAnnotationsForChapter: () => signal([]),
+          pendingCountForChapter: vi.fn(),
         } as any,
         features: {} as any,
         surface: "quick-toolbar",
+        readingPlans: {
+          getReadingPlansForChapter: vi.fn(() => []),
+        } as any,
         ...overrides,
       };
     }

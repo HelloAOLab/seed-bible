@@ -50,6 +50,8 @@ import {
   type Annotation,
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
+import type { ReadingPlansManager } from "./ReadingPlansManager";
+import type { FeaturesManager } from "./FeaturesManager";
 
 export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
@@ -1309,6 +1311,37 @@ export function hasAnyDiscoverResults(
     readingState.discoveredCrossReferences.value.length > 0 ||
     readingState.discoveredStudyNotes.value.length > 0 ||
     readingState.discoveredContent.value.length > 0
+  );
+}
+
+export function hasDiscoverPanelContent(
+  readingState: BibleReadingState,
+  annotations: AnnotationsManager,
+  readingPlans: ReadingPlansManager,
+  features: FeaturesManager
+): boolean {
+  const bookId = readingState.bookId.value;
+  const chapterNumber = readingState.chapterNumber.value;
+  const hasAnnotations = Boolean(
+    bookId &&
+    chapterNumber &&
+    annotations.getAnnotationsForChapter(bookId, chapterNumber).value.length > 0
+  );
+  // A note deleted offline is no longer in the chapter list, but it is still
+  // a change that has to reach the server.
+  const pendingAnnotationChanges =
+    bookId && chapterNumber
+      ? annotations.pendingCountForChapter(bookId, chapterNumber)
+      : 0;
+  const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
+  const plans = readingPlans.getReadingPlansForChapter(
+    bookId,
+    chapterNumber,
+    features
+  );
+
+  return (
+    showAnnotations || hasAnyDiscoverResults(readingState) || plans.length > 0
   );
 }
 

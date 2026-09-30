@@ -159,6 +159,7 @@ function createMockState(
       },
     },
     features: { isFeatureEnabled: vi.fn().mockReturnValue(false) },
+    readingPlans: { getReadingPlansForChapter: vi.fn(() => []) },
   } as unknown as SeedBibleState;
 }
 

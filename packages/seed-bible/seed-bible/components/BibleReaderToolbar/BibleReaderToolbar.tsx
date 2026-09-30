@@ -1023,6 +1023,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           features: props.state.features,
           surface: "mobile-navigation-bar",
           app: props.state.app,
+          readingPlans: props.state.readingPlans,
         })
         .find((tool) => tool.id === "ext_audioReader-play") ?? null
   );
