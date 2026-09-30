@@ -58,6 +58,7 @@ describe("share button — surface wiring", () => {
             toast={state.app.toast}
             modals={state.modals}
             app={state.app}
+            readingPlans={state.readingPlans}
           />
         </TestHost>,
         container

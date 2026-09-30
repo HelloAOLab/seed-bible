@@ -20,6 +20,10 @@ import { captureEvent } from "./Utils";
 import { savePhotoToGallery } from "./UserGalleryManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { TabsManager } from "./TabsManager";
+import {
+  FEATURE_KEY_READING_PLANS,
+  type FeaturesManager,
+} from "./FeaturesManager";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -1448,6 +1452,16 @@ function captureProgressCompletionEvents(
   }
 }
 
+export interface PlanMatch {
+  planKey: string;
+  planTitle: string | null;
+  progress: ReadingPlanProgress;
+  /** Sessions in this plan whose readings cover the current passage. */
+  sessions: ReadingPlanSession[];
+  /** True when this chapter is recorded as read everywhere it appears. */
+  allComplete: boolean;
+}
+
 export function createReadingPlansManager(
   os: CasualOSManager,
   login: LoginManager,
@@ -2430,6 +2444,61 @@ export function createReadingPlansManager(
     }
   };
 
+  const getReadingPlansForChapter = (
+    bookId: string | null,
+    chapter: number,
+    features: FeaturesManager
+  ): PlanMatch[] => {
+    const featureOn = features.isFeatureEnabled(
+      FEATURE_KEY_READING_PLANS
+    ).value;
+
+    const fullPlans = fullReadingPlans.value;
+    const progresses = userReadingPlanProgresses.value;
+
+    const matches: PlanMatch[] = [];
+    if (featureOn && bookId) {
+      for (const plan of fullPlans) {
+        const planId = formatReadingPlanId(plan.recordName, plan.address);
+        const progress = progresses.find((p) => p.planId === planId);
+        if (!progress) {
+          continue; // only plans the user is actually following
+        }
+        const sessions = plan.sessions.filter((s) =>
+          sessionMatchesPassage(s, bookId, chapter)
+        );
+        if (sessions.length === 0) {
+          continue;
+        }
+        // Done means "this chapter is read", not "the whole session is read":
+        // every reading covering the open chapter has that chapter recorded.
+        const allComplete = sessions.every((s) => {
+          const sp = progress.sessions.find(
+            (entry) => entry.sessionId === s.id
+          );
+          return s.readings.every((reading) => {
+            const item = reading.item;
+            if (item.type !== "bible-verse" || item.ref.bookId !== bookId) {
+              return true; // not this passage — not this card's business
+            }
+            if (!readingChapters(reading).includes(chapter)) {
+              return true;
+            }
+            return isReadingChapterComplete(sp, reading.id, chapter);
+          });
+        });
+        matches.push({
+          planKey: planId,
+          planTitle: plan.title ?? null,
+          progress,
+          sessions,
+          allComplete,
+        });
+      }
+    }
+    return matches;
+  };
+
   effect(() => {
     void syncReadingPlanProgresses();
     void syncReadingPlans();
@@ -2479,6 +2548,7 @@ export function createReadingPlansManager(
     finishEditingReadingPlan,
     loadByLocator,
     getReadingPlanShareUrl,
+    getReadingPlansForChapter,
   };
 }
 

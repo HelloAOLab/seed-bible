@@ -3,7 +3,7 @@ import { useSignal } from "@preact/signals";
 import { useCallback, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
-import { hasAnyDiscoverResults } from "../../managers/BibleReadingManager";
+import { hasDiscoverPanelContent } from "../../managers/BibleReadingManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   CrossReferencesSection,
@@ -17,10 +17,7 @@ import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
 import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
 import { MaterialIcon } from "../icons";
 import { translateTitle } from "../../app/utils";
-import {
-  getReadingPlansForChapter,
-  ReadingPlansSection,
-} from "../ReadingPlansSection/ReadingPlansSection";
+import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
 import {
   findScrollContainer,
   readBottomChromeInset,
@@ -146,12 +143,19 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
       ? state.annotations.pendingCountForChapter(bookId, chapterNumber)
       : 0;
   const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
-  const plans = getReadingPlansForChapter(state, tab.readingState);
+  const plans = state.readingPlans.getReadingPlansForChapter(
+    bookId,
+    chapterNumber,
+    state.features
+  );
 
   if (
-    !showAnnotations &&
-    !hasAnyDiscoverResults(tab.readingState) &&
-    plans.length === 0
+    !hasDiscoverPanelContent(
+      tab.readingState,
+      state.annotations,
+      state.readingPlans,
+      state.features
+    )
   ) {
     return null;
   }
