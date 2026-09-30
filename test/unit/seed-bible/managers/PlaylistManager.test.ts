@@ -2626,6 +2626,75 @@ describe("createPlaylistManager", () => {
       );
     });
 
+    it("looks up the author's name for the playlist that's playing, once per author", async () => {
+      respondWith({
+        "author-1/profile": { success: true, data: { name: "Ruth" } },
+      });
+      const manager = makeManager(
+        null,
+        undefined,
+        "http://localhost:3000/en/AAB/john/3"
+      );
+      const playlist = makePlaylist({
+        authorUserId: "author-1",
+        items: [{ type: "bible-verse", ref: { bookId: "JHN", chapter: 3 } }],
+      });
+
+      manager.startPlaying(playlist);
+      await flush();
+      expect(manager.playingAuthorName.value).toBe("Ruth");
+
+      manager.stopPlaying();
+      expect(manager.playingAuthorName.value).toBeNull();
+      manager.startPlaying(playlist);
+      await flush();
+
+      expect(manager.playingAuthorName.value).toBe("Ruth");
+      expect(
+        getDataMock.mock.calls.filter(([, address]) => address === "profile")
+      ).toHaveLength(1);
+    });
+
+    it("has no author for a queue nobody authored, such as a reading plan's day", async () => {
+      const manager = makeManager(
+        null,
+        undefined,
+        "http://localhost:3000/en/AAB/john/3"
+      );
+
+      manager.startPlaying({
+        id: "plan-1",
+        title: "Day 1",
+        description: null,
+        items: [{ type: "bible-verse", ref: { bookId: "JHN", chapter: 3 } }],
+      });
+      await flush();
+
+      expect(manager.playingAuthorName.value).toBeNull();
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        expect.anything(),
+        "profile"
+      );
+    });
+
+    it("reuses the author name a playlist page already loaded", async () => {
+      const playlist = makePlaylist({
+        authorUserId: "author-1",
+        items: [{ type: "bible-verse", ref: { bookId: "JHN", chapter: 3 } }],
+      });
+      const manager = makeManager(null, undefined, PAGE_HREF, {
+        locator: "user-1.playlist-1",
+        item: playlist,
+        authorName: "Ruth",
+      });
+
+      manager.startPlaylistPage();
+      await flush();
+
+      expect(manager.playingAuthorName.value).toBe("Ruth");
+      expect(getDataMock).not.toHaveBeenCalledWith("author-1", "profile");
+    });
+
     it("loads a playlist page the app navigates to after startup", async () => {
       const playlist = makePlaylist();
       respondWith({ "user-1/playlist-1": { success: true, data: playlist } });

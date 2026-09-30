@@ -83,6 +83,29 @@ function parseLocator(
 }
 
 /**
+ * Reads a user's display name from their public profile record. Null when
+ * they have none, or it couldn't be read. Read straight from the record
+ * rather than through `LoginManager.getUserProfile`, which is written for
+ * the signed-in user's own profile.
+ */
+export async function loadSharedPageAuthorName(
+  os: CasualOSManager,
+  userId: string
+): Promise<string | null> {
+  try {
+    const profile = await os.getData(userId, "profile");
+    if (!profile.success) {
+      return null;
+    }
+    const parsed = userProfileSchema.safeParse(profile.data);
+    return parsed.success ? parsed.data.name.trim() || null : null;
+  } catch (err) {
+    console.warn("Failed to load author profile:", err);
+    return null;
+  }
+}
+
+/**
  * Loads the record behind a shared content page of one `kind` whenever the
  * URL is on one, plus its author's name.
  */
@@ -125,20 +148,6 @@ export function createSharedPageLoader<T>(options: {
     return !!locator && current?.locator === locator && !current.item;
   });
 
-  const loadAuthorName = async (userId: string): Promise<string | null> => {
-    try {
-      const profile = await os.getData(userId, "profile");
-      if (!profile.success) {
-        return null;
-      }
-      const parsed = userProfileSchema.safeParse(profile.data);
-      return parsed.success ? parsed.data.name.trim() || null : null;
-    } catch (err) {
-      console.warn("Failed to load shared page author profile:", err);
-      return null;
-    }
-  };
-
   /** Resolves to null when the load failed for a reason other than "not found". */
   const fetchPage = async (
     locator: string
@@ -166,7 +175,7 @@ export function createSharedPageLoader<T>(options: {
       return {
         locator,
         item,
-        authorName: await loadAuthorName(authorUserId(item)),
+        authorName: await loadSharedPageAuthorName(os, authorUserId(item)),
       };
     } catch (err) {
       console.error(`Failed to load ${kind} page:`, err);
