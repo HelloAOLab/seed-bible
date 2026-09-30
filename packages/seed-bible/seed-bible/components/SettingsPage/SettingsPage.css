@@ -177,8 +177,6 @@
   font-size: 0.75rem;
   opacity: 0.78;
   line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .sb-extension-state-icon {

@@ -10,6 +10,10 @@ import {
 import type { ModalContentProps } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
+// Per-extension strings the tests can supply, keyed by `${ns}:${key}`.
+// Extension titles/descriptions live in the extension's own namespace.
+const extensionStrings = vi.hoisted(() => new Map<string, string>());
+
 // Match the i18n mock used by the other component tests: return the
 // defaultValue (or key) so assertions can rely on the English strings.
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -19,8 +23,10 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return {
     ...actual,
     useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
+      t: (key: string, options?: { defaultValue?: string; ns?: string }) =>
+        (options?.ns && extensionStrings.get(`${options.ns}:${key}`)) ??
+        options?.defaultValue ??
+        key,
       language: "en",
     }),
   };
@@ -95,6 +101,7 @@ describe("ExtensionsSettingsView", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
+    extensionStrings.clear();
   });
 
   function renderExtensions(entries: ExtensionListEntry[]) {
@@ -185,6 +192,43 @@ describe("ExtensionsSettingsView", () => {
 
     expect(container.querySelector(".sb-extensions-tabs")).toBeNull();
     expect(container.textContent).toContain("No extensions available.");
+  });
+
+  it("collapses a long extension description behind Read more, and expands it on click", () => {
+    extensionStrings.set(
+      "long-one:description",
+      "Interactive 3D visualization of the Bible.\nWith a guided tour on first visit."
+    );
+    renderExtensions([makeEntry("long-one", true)]);
+
+    const description = () =>
+      container.querySelector(".sb-extension-row .sb-extension-description")!;
+    const toggle = () =>
+      description().querySelector<HTMLButtonElement>(
+        ".sb-expandable-text-toggle"
+      )!;
+
+    expect(description().textContent).toContain(
+      "Interactive 3D visualization of the Bible."
+    );
+    expect(description().textContent).not.toContain("guided tour");
+    expect(toggle().textContent).toBe("Read more");
+
+    act(() => {
+      toggle().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(description().textContent).toContain("guided tour");
+    expect(toggle().textContent).toBe("Read less");
+  });
+
+  it("renders no description element for an extension without one", () => {
+    renderExtensions([makeEntry("plain-one", true)]);
+
+    expect(container.querySelector(".sb-extension-name")?.textContent).toBe(
+      "plain-one"
+    );
+    expect(container.querySelector(".sb-extension-description")).toBeNull();
   });
 
   describe("Configure modal", () => {

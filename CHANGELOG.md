@@ -8,6 +8,8 @@
 
 ### 🔧 Changed
 
+- Show long extension descriptions on one line with a "Read more" link in the Extensions settings list. Before, a long description made its row several lines tall.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed

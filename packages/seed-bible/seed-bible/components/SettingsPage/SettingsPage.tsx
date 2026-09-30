@@ -30,6 +30,7 @@ import {
   openCustomizationEditPane,
 } from "../CustomizationEditPane/CustomizationEditPane";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
+import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { download, translateTitle } from "../../app/utils";
 import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
 import {
@@ -1476,14 +1477,18 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 customizations.activeCustomization.value?.name
               )}
             </span>
-            <span className="sb-extension-description">
+            <ExpandableText
+              className="sb-extension-description"
+              readMoreLabel={t("read-more", { defaultValue: "Read more" })}
+              readLessLabel={t("read-less", { defaultValue: "Read less" })}
+            >
               {getBrandedAppText(
                 t("description", { ns: id, defaultValue: "" }),
                 t,
                 branding,
                 customizations.activeCustomization.value?.name
               )}
-            </span>
+            </ExpandableText>
           </div>
           <div className="sb-extension-row-actions">
             {installState === "installed" &&
