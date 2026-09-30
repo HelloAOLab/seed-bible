@@ -9,7 +9,7 @@ import {
 } from "@preact/signals";
 import type { LoginManager } from "../managers/LoginManager";
 import type { CasualOSManager } from "./OsManager";
-import type { DiscoverManager } from "./DiscoverManager";
+import type { DiscoverManager, DiscoverView } from "./DiscoverManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import type { TranslationBookChapter } from "./FreeUseBibleAPI";
 import {
@@ -95,15 +95,20 @@ export interface AnnotationsManager {
 
   /**
    * Persists `editingAnnotation` (upsert), updates the chapter cache, and
-   * clears the draft. On a wide screen it returns to the discover view; on
-   * mobile it closes the discover pane so the chapter the user was reading
-   * is visible again. No-op when nothing is being edited. Rethrows on save
-   * failure, leaving `editingAnnotation` intact so the caller doesn't lose
-   * the draft.
+   * clears the draft. On a wide screen it returns to the discover view. On
+   * mobile it returns to the view that was open before the editor: the
+   * reader when the note was started there, or the notes list when it was
+   * opened from Discover. No-op when nothing is being edited. Rethrows on
+   * save failure, leaving `editingAnnotation` intact so the caller doesn't
+   * lose the draft.
    */
   saveEditingAnnotation: () => Promise<void>;
 
-  /** Discards the current edit and returns to the discover view. */
+  /**
+   * Discards the current edit. On a wide screen it returns to the discover
+   * view. On mobile it returns to the same place `saveEditingAnnotation`
+   * would: the reader, or the notes list if the editor was opened from it.
+   */
   cancelEditingAnnotation: () => void;
 
   /**
@@ -490,9 +495,10 @@ export interface CreateAnnotationsManagerOptions {
   /** See {@link CreateRecordSyncManagerOptions.confirmAdoption}. */
   confirmAdoption?: CreateRecordSyncManagerOptions<Annotation>["confirmAdoption"];
   /**
-   * Whether the app is in the mobile layout. After a note is saved, mobile
-   * closes the discover pane instead of leaving it open over the reader.
-   * Omitted means the wide-screen behavior: return to the discover view.
+   * Whether the app is in the mobile layout. After a note is saved or
+   * cancelled, mobile returns to the discover view that was open before the
+   * editor. Omitted means the wide-screen behavior: return to the discover
+   * view.
    */
   isMobile?: ReadonlySignal<boolean>;
 }
@@ -1131,6 +1137,29 @@ export function createAnnotationsManager(
   // is a docked panel, not a modal).
   const draftTabId = signal<string | null>(null);
 
+  // The discover view underneath the editor, captured when it opens. On
+  // mobile, save and cancel put this back so a note started from the reader
+  // returns to the chapter, and a note opened from the notes list returns to
+  // that list. `null` means Discover was closed.
+  let viewBeforeEditing: DiscoverView | null = null;
+
+  const rememberViewBeforeEditing = () => {
+    const current = discover.view.peek();
+    // A second open while the editor is already up keeps the original
+    // origin, instead of recording the editor as the place to return to.
+    if (current !== "create_annotation") {
+      viewBeforeEditing = current;
+    }
+  };
+
+  const leaveAnnotationEditor = () => {
+    isDraftingNewAnnotation.value = false;
+    draftTabId.value = null;
+    editingAnnotation.value = null;
+    discover.view.value = isMobile?.value ? viewBeforeEditing : "discover";
+    viewBeforeEditing = null;
+  };
+
   const activeTab = computed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
@@ -1215,6 +1244,7 @@ export function createAnnotationsManager(
         updatedAtMs: now,
       },
     });
+    rememberViewBeforeEditing();
     discover.view.value = "create_annotation";
   };
 
@@ -1222,6 +1252,7 @@ export function createAnnotationsManager(
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = { ...annotation };
+    rememberViewBeforeEditing();
     discover.view.value = "create_annotation";
   };
 
@@ -1241,21 +1272,11 @@ export function createAnnotationsManager(
     // annotation gets them — not just this one.
     const saved = await saveAnnotation(current);
     upsertIntoCache(saved, recordId);
-    isDraftingNewAnnotation.value = false;
-    draftTabId.value = null;
-    editingAnnotation.value = null;
-    // On mobile the discover pane fills the screen, so leaving it open after
-    // a save hides the chapter the note was just written against. Close it
-    // and leave the reader where it was. Wide screens keep the side pane on
-    // the discover view.
-    discover.view.value = isMobile?.value ? null : "discover";
+    leaveAnnotationEditor();
   };
 
   const cancelEditingAnnotation = (): void => {
-    isDraftingNewAnnotation.value = false;
-    draftTabId.value = null;
-    editingAnnotation.value = null;
-    discover.view.value = "discover";
+    leaveAnnotationEditor();
   };
 
   const deleteAnnotationAndRefresh = async (
