@@ -191,7 +191,9 @@
 
 .sb-reader-toolbar-more-menu {
   position: absolute;
-  right: 0;
+  /* Inline end, not physical right, so an RTL anchor on the left grows
+     the menu into the screen. */
+  inset-inline-end: 0;
   bottom: calc(100% + 0.625rem);
   min-width: 11.25rem;
   border-radius: var(--sb-reader-toolbar-border-radius);
@@ -207,7 +209,7 @@
 .sb-reader-toolbar-more-item {
   border: none;
   background: transparent;
-  text-align: left;
+  text-align: start;
   padding: 0.5rem 0.625rem;
   border-radius: 0.5rem;
   display: flex;
@@ -222,7 +224,7 @@
 
 .sb-tool-context-menu {
   position: absolute;
-  right: 0;
+  inset-inline-end: 0;
   bottom: calc(100% + 0.5rem);
   min-width: 11.25rem;
   border-radius: var(--sb-reader-toolbar-border-radius);
@@ -266,7 +268,7 @@
 .sb-tool-context-menu-item {
   border: none;
   background: transparent;
-  text-align: left;
+  text-align: start;
   padding: 0.5rem 0.625rem;
   border-radius: 0.5rem;
   display: flex;
