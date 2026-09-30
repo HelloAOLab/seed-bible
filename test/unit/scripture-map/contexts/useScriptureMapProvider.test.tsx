@@ -73,16 +73,23 @@ describe("useScriptureMapProvider", () => {
   });
 
   function setup(config = makeConfig()) {
+    let renderCount = 0;
     const result = {
       current: null as unknown as ReturnType<typeof useScriptureMapProvider>,
+      // A changing prop is needed because @preact/signals skips re-rendering
+      // a component whose props are unchanged.
+      rerender: () =>
+        act(() =>
+          render(<TestComponent renderCount={++renderCount} />, container)
+        ),
     };
 
-    function TestComponent() {
+    function TestComponent(_props: { renderCount: number }) {
       result.current = useScriptureMapProvider(config);
       return null;
     }
 
-    act(() => render(<TestComponent />, container));
+    result.rerender();
     return result;
   }
 
@@ -128,6 +135,156 @@ describe("useScriptureMapProvider", () => {
       const result = setup(makeConfig({ initialScaleFactor: 0.25 }));
       act(() => result.current.handleZoomOut());
       expect(result.current.scaleFactor).toBe(0.25);
+    });
+  });
+
+  describe("scaleFactor persistence", () => {
+    function makeLogin({
+      userId = "user-1",
+      profileConfig = null,
+      localConfig = {},
+    }: {
+      userId?: string | null;
+      profileConfig?: Record<string, unknown> | null;
+      localConfig?: Record<string, unknown>;
+    } = {}) {
+      return {
+        userId: { value: userId },
+        profile: {
+          value: profileConfig
+            ? ({ name: "", config: profileConfig } as {
+                name: string;
+                config: Record<string, unknown>;
+              } | null)
+            : null,
+        },
+        updateProfile: vi.fn(),
+        localConfig: { value: localConfig },
+      };
+    }
+
+    function setupWithLogin(
+      login: ReturnType<typeof makeLogin>,
+      initialScaleFactor = 1
+    ) {
+      return setup(
+        makeConfig({
+          initialScaleFactor,
+          seedBibleState: makeSeedBibleState({ login }),
+        })
+      );
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("reads a saved scale factor from the profile, overriding initialScaleFactor", () => {
+      const login = makeLogin({
+        profileConfig: { scriptureMapScaleFactor: 1.2 },
+      });
+      const result = setupWithLogin(login, 0.75);
+      expect(result.current.scaleFactor).toBe(1.2);
+    });
+
+    it("reads the scale factor from localConfig when signed out", () => {
+      const login = makeLogin({
+        userId: null,
+        localConfig: { scriptureMapScaleFactor: 0.9 },
+      });
+      const result = setupWithLogin(login, 0.75);
+      expect(result.current.scaleFactor).toBe(0.9);
+    });
+
+    it.each([["big"], [NaN]])(
+      "falls back to initialScaleFactor when the saved value is %s",
+      (saved) => {
+        const login = makeLogin({
+          profileConfig: { scriptureMapScaleFactor: saved },
+        });
+        const result = setupWithLogin(login, 0.75);
+        expect(result.current.scaleFactor).toBe(0.75);
+      }
+    );
+
+    it("clamps an out-of-range saved value to 1.5", () => {
+      const login = makeLogin({
+        profileConfig: { scriptureMapScaleFactor: 5 },
+      });
+      const result = setupWithLogin(login, 0.75);
+      expect(result.current.scaleFactor).toBe(1.5);
+    });
+
+    it("persists the new scale factor to the profile after zooming", () => {
+      const login = makeLogin({ profileConfig: {} });
+      const result = setupWithLogin(login, 1);
+
+      act(() => result.current.handleZoomIn());
+      vi.advanceTimersByTime(500);
+
+      expect(login.updateProfile).toHaveBeenCalledWith({
+        config: expect.objectContaining({ scriptureMapScaleFactor: 1.05 }),
+      });
+    });
+
+    it("coalesces rapid zooms into a single write with the final value", () => {
+      const login = makeLogin({ profileConfig: {} });
+      const result = setupWithLogin(login, 1);
+
+      for (let i = 0; i < 5; i++) {
+        act(() => result.current.handleZoomIn());
+      }
+      vi.advanceTimersByTime(499);
+      expect(login.updateProfile).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1);
+      expect(login.updateProfile).toHaveBeenCalledTimes(1);
+      expect(login.updateProfile).toHaveBeenCalledWith({
+        config: expect.objectContaining({
+          scriptureMapScaleFactor: expect.closeTo(1.25),
+        }),
+      });
+    });
+
+    it("flushes a pending write when the map unmounts", () => {
+      const login = makeLogin({ profileConfig: {} });
+      const result = setupWithLogin(login, 1);
+
+      act(() => result.current.handleZoomIn());
+      act(() => render(null, container));
+
+      expect(login.updateProfile).toHaveBeenCalledWith({
+        config: expect.objectContaining({ scriptureMapScaleFactor: 1.05 }),
+      });
+    });
+
+    it("writes the new scale factor to localConfig when signed out", () => {
+      const login = makeLogin({ userId: null });
+      const result = setupWithLogin(login, 1);
+
+      act(() => result.current.handleZoomIn());
+      vi.advanceTimersByTime(500);
+
+      expect(login.localConfig.value.scriptureMapScaleFactor).toBe(1.05);
+      expect(login.updateProfile).not.toHaveBeenCalled();
+    });
+
+    it("picks up a saved scale factor when the profile loads after mount", () => {
+      const login = makeLogin();
+      const result = setupWithLogin(login, 0.75);
+      expect(result.current.scaleFactor).toBe(0.75);
+
+      login.profile.value = {
+        name: "",
+        config: { scriptureMapScaleFactor: 1.2 },
+      };
+      result.rerender();
+
+      expect(result.current.scaleFactor).toBe(1.2);
     });
   });
 
