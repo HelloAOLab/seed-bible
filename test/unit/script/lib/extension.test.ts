@@ -164,4 +164,152 @@ describe("ExtensionMetaSchema", () => {
       markdownDescription: "How large",
     });
   });
+
+  describe("sensitive settings", () => {
+    const sensitiveMeta = (
+      settings: unknown,
+      sensitive: unknown = {
+        exampleApi: {
+          host: "api.example.com",
+          requestMapping: {
+            "headers.authorization.bearer": "apiKey",
+            "body.client_id": "clientId",
+          },
+        },
+      }
+    ) => ({ ...meta(settings), sensitive });
+
+    const sensitiveProblems = (settings: unknown, sensitive?: unknown) => {
+      const result = ExtensionMetaSchema.safeParse(
+        sensitiveMeta(settings, sensitive)
+      );
+      expect(result.success).toBe(false);
+      if (result.success) {
+        return [];
+      }
+      return result.error.issues.map(
+        (issue) => `${issue.path.join(".")}: ${issue.message}`
+      );
+    };
+
+    const bothSettings = {
+      apiKey: { type: "string", sensitive: "exampleApi" },
+      clientId: { type: "string", sensitive: "exampleApi" },
+    };
+
+    it("accepts several settings that share one sensitive destination", () => {
+      const result = ExtensionMetaSchema.safeParse(sensitiveMeta(bothSettings));
+
+      expect(result.success).toBe(true);
+      expect(result.data?.sensitive?.exampleApi?.host).toBe("api.example.com");
+    });
+
+    it("rejects a setting that names a destination the manifest doesn't declare", () => {
+      expect(
+        sensitiveProblems({
+          ...bothSettings,
+          other: { type: "string", sensitive: "missing" },
+        })
+      ).toContain(
+        'settings.other.sensitive: names "missing", which isn\'t declared in the sensitive section'
+      );
+    });
+
+    it("rejects a sensitive setting that no requestMapping entry sends", () => {
+      expect(
+        sensitiveProblems({
+          ...bothSettings,
+          unused: { type: "string", sensitive: "exampleApi" },
+        })
+      ).toContain(
+        "settings.unused.sensitive: isn't used by any requestMapping entry in sensitive.exampleApi"
+      );
+    });
+
+    it("rejects a mapping to an undeclared setting or to an ordinary one", () => {
+      const issues = sensitiveProblems({
+        apiKey: { type: "string", sensitive: "exampleApi" },
+        clientId: { type: "string" },
+      });
+
+      expect(issues).toContain(
+        'sensitive.exampleApi.requestMapping.body.client_id: maps to setting "clientId", which must declare "sensitive": "exampleApi"'
+      );
+      expect(
+        sensitiveProblems({
+          apiKey: { type: "string", sensitive: "exampleApi" },
+        })
+      ).toContain(
+        'sensitive.exampleApi.requestMapping.body.client_id: maps to setting "clientId", which isn\'t declared'
+      );
+    });
+
+    // Anything in the manifest is public, so a default or a list of choices
+    // would give the secret away.
+    it("rejects a default or enum on a sensitive setting", () => {
+      const issues = sensitiveProblems({
+        apiKey: { type: "string", sensitive: "exampleApi", default: "abc" },
+        clientId: { type: "string", sensitive: "exampleApi", enum: ["a"] },
+      });
+
+      expect(issues).toContain(
+        "settings.apiKey.default: a sensitive setting can't declare default"
+      );
+      expect(issues).toContain(
+        "settings.clientId.enum: a sensitive setting can't declare enum"
+      );
+    });
+
+    // Without this a sensitive number would be stored as an ordinary,
+    // publicly readable value.
+    it("rejects sensitive on a setting that isn't a string", () => {
+      expect(
+        sensitiveProblems({
+          ...bothSettings,
+          count: { type: "number", sensitive: "exampleApi" },
+        })
+      ).toContain(
+        "settings.count.sensitive: only string settings can be sensitive, but this setting is a number"
+      );
+    });
+
+    it("rejects a host with a scheme or path, and a property proxies can't fill", () => {
+      const issues = sensitiveProblems(bothSettings, {
+        exampleApi: {
+          host: "https://api.example.com/v1",
+          requestMapping: {
+            "headers.x-api-key": "apiKey",
+            "body.client_id": "clientId",
+          },
+        },
+      });
+
+      expect(
+        issues.some((issue) => issue.startsWith("sensitive.exampleApi.host:"))
+      ).toBe(true);
+      expect(
+        issues.some((issue) =>
+          issue.startsWith(
+            "sensitive.exampleApi.requestMapping.headers.x-api-key:"
+          )
+        )
+      ).toBe(true);
+    });
+
+    it("accepts a host with a port", () => {
+      const result = ExtensionMetaSchema.safeParse(
+        sensitiveMeta(bothSettings, {
+          exampleApi: {
+            host: "example.com:8443",
+            requestMapping: {
+              "headers.authorization": "apiKey",
+              "body.client_id": "clientId",
+            },
+          },
+        })
+      );
+
+      expect(result.success).toBe(true);
+    });
+  });
 });

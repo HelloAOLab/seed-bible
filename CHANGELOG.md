@@ -5,6 +5,10 @@
 ### ✨ Added
 
 - Link someone straight into a tutorial with `?tutorial=<id>`, optionally at a given step with `&tutorialStep=<n>`. The main tour's ID is `introduction`; all IDs are listed in `docs/tutorial-links.md`. The address now tracks the tutorial's current step, so refreshing mid-tutorial picks up where you left off instead of losing it. ([#1808](https://github.com/HelloAOLab/seed-bible/issues/1808))
+- Let extensions declare `sensitive` settings, such as API keys, whose values never come back to the browser. ([#1836](https://github.com/HelloAOLab/seed-bible/issues/1836))
+  - An extension's `extension.json` lists each destination once in a `sensitive` section (a host plus which request property each setting fills in), and each sensitive setting names the destination it belongs to, so a "Client ID" and an "API key" can both be sent to the same host.
+  - Values are saved in a private CasualOS proxy record owned by the viewer. The extension sends requests with `extensionSettings.fetchWithSensitiveValues`, and the server adds the values before forwarding them.
+  - The Configure window shows these settings as masked fields that only say whether a value is set. Customization default overrides skip them.
 
 ### 🔧 Changed
 

@@ -153,6 +153,32 @@ export default function initExampleExtension() {
                   {typeof subtitle === "string" && subtitle && (
                     <p style={{ opacity: 0.75 }}>{subtitle}</p>
                   )}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      // Sensitive settings can't be read. Instead the request
+                      // goes through the viewer's proxy for httpbin.org, which
+                      // adds the API key and client ID on the server.
+                      try {
+                        const response =
+                          await context.extensionSettings.fetchWithSensitiveValues(
+                            "example-extension",
+                            {
+                              url: "https://httpbin.org/post",
+                              method: "POST",
+                              body: { hello: "world" },
+                            }
+                          );
+                        context.app?.toast(
+                          `Example service: ${response.status}`
+                        );
+                      } catch (error) {
+                        context.app?.toast(String(error));
+                      }
+                    }}
+                  >
+                    {t("send-sensitive-request")}
+                  </button>
                 </div>
               );
             },
@@ -181,7 +207,7 @@ export default function initExampleExtension() {
             },
             onSelect: () => {
               console.log("Item 1 clicked with context:", context);
-              context.toast("Item 1 clicked!");
+              context.app?.toast("Item 1 clicked!");
             },
           },
           {
@@ -194,7 +220,7 @@ export default function initExampleExtension() {
             },
             onSelect: () => {
               console.log("Item 2 clicked with context:", context);
-              context.toast("Item 2 clicked!");
+              context.app?.toast("Item 2 clicked!");
             },
           },
         ],

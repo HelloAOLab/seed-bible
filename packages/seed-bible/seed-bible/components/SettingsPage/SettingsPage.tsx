@@ -30,6 +30,7 @@ import {
   openCustomizationEditPane,
 } from "../CustomizationEditPane/CustomizationEditPane";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
+import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import { download, translateTitle } from "../../app/utils";
 import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
 import {
@@ -38,6 +39,7 @@ import {
 } from "../../components/Skeleton/Skeleton";
 import {
   ExtensionInitalizer,
+  nonSensitiveSettings,
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
 import {
@@ -1297,7 +1299,11 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleConfigureExtension = (extensionEntry: ExtensionListEntry) => {
-    const settings = extensionEntry.extension?.meta.settings ?? {};
+    const allSettings = extensionEntry.extension?.meta.settings ?? {};
+    const settings = nonSensitiveSettings(allSettings);
+    const sensitive = extensionEntry.extension?.meta.sensitive ?? {};
+    const hasSensitive =
+      Object.keys(settings).length < Object.keys(allSettings).length;
     state.modals.openModal({
       title: {
         key: "extension-settings-title",
@@ -1333,25 +1339,51 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
         ) : (
           <>
-            <ExtensionSettingsForm
-              extensionId={extensionEntry.id}
-              settings={settings}
-              getValue={(key) =>
-                extensionSettings.getValue(extensionEntry.id, key)
-              }
-              onChange={(key, value) =>
-                void extensionSettings.setValue(extensionEntry.id, key, value)
-              }
-              resetting={{
-                hasOwnValue: (key) =>
-                  extensionSettings.valuesByExtensionId.value[
-                    extensionEntry.id
-                  ]?.[key] !== undefined,
-                onReset: (key) =>
-                  void extensionSettings.clearValue(extensionEntry.id, key),
-              }}
-              t={t}
-            />
+            {(!hasSensitive || Object.keys(settings).length > 0) && (
+              <ExtensionSettingsForm
+                extensionId={extensionEntry.id}
+                settings={settings}
+                getValue={(key) =>
+                  extensionSettings.getValue(extensionEntry.id, key)
+                }
+                onChange={(key, value) =>
+                  void extensionSettings.setValue(extensionEntry.id, key, value)
+                }
+                resetting={{
+                  hasOwnValue: (key) =>
+                    extensionSettings.valuesByExtensionId.value[
+                      extensionEntry.id
+                    ]?.[key] !== undefined,
+                  onReset: (key) =>
+                    void extensionSettings.clearValue(extensionEntry.id, key),
+                }}
+                t={t}
+              />
+            )}
+            {hasSensitive && (
+              <SensitiveSettingsForm
+                extensionId={extensionEntry.id}
+                settings={allSettings}
+                sensitive={sensitive}
+                isSet={(key) =>
+                  extensionSettings.isSensitiveValueSet(extensionEntry.id, key)
+                }
+                onSave={(proxyId, values) =>
+                  extensionSettings.setSensitiveValues(
+                    extensionEntry.id,
+                    proxyId,
+                    values
+                  )
+                }
+                onClear={(proxyId) =>
+                  extensionSettings.clearSensitiveValues(
+                    extensionEntry.id,
+                    proxyId
+                  )
+                }
+                t={t}
+              />
+            )}
             {extensionSettings.hasSaveError(extensionEntry.id) && (
               <p className="sb-settings-save-error" role="alert">
                 {t("extension-settings-save-failed", {
