@@ -607,10 +607,11 @@
     color: inherit;
   }
 
-  /* More popover anchored above the More tab */
+  /* More popover anchored above the More tab. Inline end so RTL (More tab
+     on the left) grows the menu into the screen instead of off the left edge. */
   .sb-mobile-more-menu {
     position: absolute;
-    right: 0;
+    inset-inline-end: 0;
     bottom: calc(100% + 0.5rem);
     min-width: 12.5rem;
     padding: 0.625rem;
@@ -636,7 +637,7 @@
     font-size: 0.9375rem;
     border-radius: 0.625rem;
     cursor: pointer;
-    text-align: left;
+    text-align: start;
     transition: background-color 0.15s ease;
   }
 
