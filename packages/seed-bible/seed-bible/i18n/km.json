@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "ជ្រើសរើសចំនួនអត្ថបទដើម្បីអានជាប់ៗគ្នាពីម៉ឺនុយប្លង់នេះ។",
   "tutorial.addTabTitle": "បើកវគ្គបន្ថែមទៀត",
   "tutorial.addTabBody": "បន្ថែមផ្ទាំងថ្មីមួយដើម្បីអានសៀវភៅ ឬការបកប្រែជាច្រើនក្នុងពេលតែមួយ។",
-  "playlist-history": "ប្រវត្តិ​បញ្ជី​ចាក់",
   "discover-playlist-history-empty": "ចាក់​បញ្ជី​ចាក់​ដែល​បាន​រក្សា​ទុក​ពេល​ចូល ហើយ​វា​នឹង​បង្ហាញ​នៅ​ទីនេះ។",
   "playlist-history-session-summary": "{{time}} - {{percent}} % - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} %",

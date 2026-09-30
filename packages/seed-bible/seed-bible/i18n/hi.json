@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "इस लेआउट मेनू से चुनें कि आप कितने अंशों को साथ-साथ पढ़ना चाहते हैं।",
   "tutorial.addTabTitle": "और अधिक पृष्ठ खोलें",
   "tutorial.addTabBody": "एक नया टैब खोलें ताकि आप एक साथ कई किताबें या अनुवाद पढ़ सकें।",
-  "playlist-history": "प्लेलिस्ट इतिहास",
   "discover-playlist-history-empty": "लॉग इन करके सेव की गई प्लेलिस्ट चलाएं और वह यहां दिखाई देगी।",
   "playlist-history-session-summary": "{{time}} - {{percent}} % पूर्ण - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % पूर्ण",

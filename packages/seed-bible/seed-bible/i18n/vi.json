@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Chọn số lượng đoạn văn bạn muốn đọc cạnh nhau từ menu bố cục này.",
   "tutorial.addTabTitle": "Mở thêm đoạn văn",
   "tutorial.addTabBody": "Thêm một tab mới để đọc nhiều sách hoặc bản dịch cùng lúc.",
-  "playlist-history": "Lịch sử danh sách phát",
   "discover-playlist-history-empty": "Khi đăng nhập, hãy phát danh sách phát đã lưu và nó sẽ hiển thị ở đây.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % hoàn thành - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % hoàn thành",

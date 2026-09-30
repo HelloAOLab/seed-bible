@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "د دې ترتیب مینو څخه د څو برخو څنګ په څنګ لوستلو لپاره غوره کړئ.",
   "tutorial.addTabTitle": "نورې برخې خلاصې کړئ",
   "tutorial.addTabBody": "یو نوی ټب اضافه کړئ ترڅو څو کتابونه یا ژباړې څنګ په څنګ ولولئ.",
-  "playlist-history": "د پلی لیست تاریخ",
   "discover-playlist-history-empty": "د ننوتلو پرمهال خوندي شوی پلی لیست پلی کړئ او دا به دلته ښکاره شي.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % بشپړ - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % بشپړ شوی",

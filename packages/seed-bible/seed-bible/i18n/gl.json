@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Escolle cantas pasaxes queres ler unha ao lado da outra neste menú de deseño.",
   "tutorial.addTabTitle": "Abrir máis pasaxes",
   "tutorial.addTabBody": "Engade unha nova lapela para ler varios libros ou traducións xuntos.",
-  "playlist-history": "Historial da lista de reprodución",
   "discover-playlist-history-empty": "Reproduce unha lista de reprodución gardada coa sesión iniciada e aparecerá aquí.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % completado - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % completado",

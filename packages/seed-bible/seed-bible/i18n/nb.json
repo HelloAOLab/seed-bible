@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Velg hvor mange avsnitt du vil lese side om side fra denne layoutmenyen.",
   "tutorial.addTabTitle": "Åpne flere passasjer",
   "tutorial.addTabBody": "Legg til en ny fane for å lese flere bøker eller oversettelser side om side.",
-  "playlist-history": "Spillelistehistorikk",
   "discover-playlist-history-empty": "Spill av en lagret spilleliste mens du er logget på, så vises den her.",
   "playlist-history-session-summary": "{{time}} – {{percent}} % fullført – {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} – {{percent}} % fullført",

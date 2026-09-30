@@ -57,6 +57,7 @@ import { MobileSessionParticipants } from "../../components/SessionParticipants/
 import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import { Spinner } from "../Spinner/Spinner";
 import {
   SaveStarIcon,
   openSaveModalForLocation,
@@ -2808,14 +2809,7 @@ export function BibleReader(props: BibleReaderProps) {
             disabled={retrying}
             aria-busy={retrying}
           >
-            {retrying && (
-              <span
-                className="material-symbols-outlined sb-reader-error-retry-spinner"
-                aria-hidden="true"
-              >
-                progress_activity
-              </span>
-            )}
+            {retrying && <Spinner size="1.125rem" />}
             {t("reload", { defaultValue: "Reload" })}
           </button>
         </div>
@@ -2905,6 +2899,15 @@ export function BibleReader(props: BibleReaderProps) {
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
+      {state?.playlists.openingPlayback?.value &&
+      state.playlists.view.value !== "play_playlist" &&
+      !isCompactReader ? (
+        <Spinner
+          className="sb-playlist-opening-spinner"
+          size="1rem"
+          label={t("opening-playlist", { defaultValue: "Opening playlist" })}
+        />
+      ) : null}
       {isCompactReader && state ? (
         <Fragment key="mobile">
           <div
@@ -2938,6 +2941,15 @@ export function BibleReader(props: BibleReaderProps) {
                 </button>
               </h1>
             </div>
+            {state.playlists.openingPlayback?.value &&
+            state.playlists.view.value !== "play_playlist" ? (
+              <Spinner
+                size="1rem"
+                label={t("opening-playlist", {
+                  defaultValue: "Opening playlist",
+                })}
+              />
+            ) : null}
             {!isMinimalEmbed && (
               <ChapterNotesButton
                 state={state}

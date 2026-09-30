@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "از این منوی طرح‌بندی، تعداد متونی را که می‌خواهید کنار هم بخوانید، انتخاب کنید.",
   "tutorial.addTabTitle": "باز کردن گذرگاه‌های بیشتر",
   "tutorial.addTabBody": "برای خواندن چندین کتاب یا ترجمه در کنار هم، یک برگه جدید اضافه کنید.",
-  "playlist-history": "تاریخچه لیست پخش",
   "discover-playlist-history-empty": "هنگام ورود به سیستم، یک لیست پخش ذخیره شده را پخش کنید و در اینجا نمایش داده خواهد شد.",
   "playlist-history-session-summary": "{{time}} - {{percent}} ٪ تکمیل شده - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} ٪ تکمیل شده",

@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Pilih berapa banyak petikan untuk dibaca bersebelahan daripada menu susun atur ini.",
   "tutorial.addTabTitle": "Buka lebih banyak petikan",
   "tutorial.addTabBody": "Tambahkan tab baharu untuk membaca beberapa buku atau terjemahan bersebelahan.",
-  "playlist-history": "Sejarah senarai main",
   "discover-playlist-history-empty": "Mainkan senarai main yang disimpan semasa log masuk dan ia akan dipaparkan di sini.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % selesai - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % selesai",

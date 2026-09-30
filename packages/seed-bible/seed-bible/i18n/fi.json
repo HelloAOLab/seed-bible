@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Valitse tästä asetteluvalikosta, kuinka monta katkelmaa luetaan rinnakkain.",
   "tutorial.addTabTitle": "Avaa lisää kohtia",
   "tutorial.addTabBody": "Lisää uusi välilehti lukeaksesi useita kirjoja tai käännöksiä rinnakkain.",
-  "playlist-history": "Soittolistahistoria",
   "discover-playlist-history-empty": "Toista tallennettua soittolistaa kirjautuneena sisään, niin se näkyy täällä.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % valmiina - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % valmiina",

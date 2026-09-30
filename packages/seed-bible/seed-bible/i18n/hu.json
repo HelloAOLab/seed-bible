@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Válassza ki ebből az elrendezési menüből, hogy hány szövegrészt szeretne egymás mellett olvasni.",
   "tutorial.addTabTitle": "Nyisson meg több részt",
   "tutorial.addTabBody": "Új lap hozzáadása több könyv vagy fordítás egymás melletti olvasásához.",
-  "playlist-history": "Lejátszási lista előzményei",
   "discover-playlist-history-empty": "Játssz le egy mentett lejátszási listát bejelentkezés nélkül, és az itt fog megjelenni.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % készültség - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % készültség",

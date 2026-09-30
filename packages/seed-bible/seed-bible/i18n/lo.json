@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "ເລືອກຈຳນວນຂໍ້ຄວາມທີ່ຈະອ່ານຄຽງຄູ່ກັນຈາກເມນູຮູບແບບນີ້.",
   "tutorial.addTabTitle": "ເປີດບົດຄວາມເພີ່ມເຕີມ",
   "tutorial.addTabBody": "ເພີ່ມແຖບໃໝ່ເພື່ອອ່ານປຶ້ມຫຼາຍຫົວ ຫຼື ການແປພາສາຫຼາຍຫົວຄຽງຄູ່ກັນ.",
-  "playlist-history": "ປະຫວັດລາຍການເພງ",
   "discover-playlist-history-empty": "ຫຼິ້ນລາຍການຫຼິ້ນທີ່ບັນທຶກໄວ້ໃນຂະນະທີ່ເຂົ້າສູ່ລະບົບແລ້ວມັນຈະປາກົດຢູ່ທີ່ນີ້.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % ສຳເລັດແລ້ວ - {{item}}",
   "playlist-history-session-summary-no-item": "ສຳເລັດແລ້ວ {{time}} - {{percent}} %",

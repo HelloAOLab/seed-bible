@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Ushbu maket menyusidan yonma-yon o'qiladigan parchalar sonini tanlang.",
   "tutorial.addTabTitle": "Ko'proq parchalarni oching",
   "tutorial.addTabBody": "Bir nechta kitob yoki tarjimalarni yonma-yon o'qish uchun yangi yorliq qo'shing.",
-  "playlist-history": "Pleylist tarixi",
   "discover-playlist-history-empty": "Tizimga kirganingizda saqlangan pleylistni ijro eting, u shu yerda ko'rsatiladi.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % bajarildi - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % bajarildi",

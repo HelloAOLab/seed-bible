@@ -5,6 +5,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/ProfilePane/ProfilePane";
+import { PLAYLIST_HISTORY_PANE_ID } from "@packages/seed-bible/seed-bible/components/PlaylistHistoryPane/PlaylistHistoryPane";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type {
   Translation,
@@ -3019,5 +3020,15 @@ describe("opening another screen while Today is up", () => {
     expect(state.isProfileOpen.value).toBe(true);
     expect(state.today.isOpen.value).toBe(false);
     expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
+  });
+
+  it("opens playlist history as its own screen", async () => {
+    const state = await createState();
+
+    state.openPlaylistHistory();
+    await Promise.resolve();
+
+    expect(state.isPlaylistHistoryOpen.value).toBe(true);
+    expect(paneIds(state)).toEqual([PLAYLIST_HISTORY_PANE_ID]);
   });
 });

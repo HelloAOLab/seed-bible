@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Pilih berapa banyak bagian yang ingin dibaca berdampingan dari menu tata letak ini.",
   "tutorial.addTabTitle": "Buka lebih banyak bagian",
   "tutorial.addTabBody": "Tambahkan tab baru untuk membaca beberapa buku atau terjemahan secara berdampingan.",
-  "playlist-history": "Riwayat daftar putar",
   "discover-playlist-history-empty": "Putar daftar putar yang tersimpan saat Anda masuk, dan daftar putar tersebut akan muncul di sini.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % selesai - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % selesai",

@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Επιλέξτε πόσα αποσπάσματα θα διαβάσετε δίπλα-δίπλα από αυτό το μενού διάταξης.",
   "tutorial.addTabTitle": "Άνοιγμα περισσότερων αποσπασμάτων",
   "tutorial.addTabBody": "Προσθέστε μια νέα καρτέλα για να διαβάσετε πολλά βιβλία ή μεταφράσεις δίπλα-δίπλα.",
-  "playlist-history": "Ιστορικό λίστας αναπαραγωγής",
   "discover-playlist-history-empty": "Ανοίξτε μια αποθηκευμένη λίστα αναπαραγωγής ενώ είστε συνδεδεμένοι, αυτή θα εμφανιστεί εδώ.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % ολοκλήρωσης - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ολοκλήρωσης",

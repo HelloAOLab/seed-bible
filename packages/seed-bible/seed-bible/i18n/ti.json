@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "ካብዚ ኣቀማምጣ ዝርዝር ክንደይ ክፍልታት ጎኒ ንጎኒ ከተንብብ ከም ዘለካ ምረጽ።",
   "tutorial.addTabTitle": "ተወሳኺ ክፍልታት ክፈት",
   "tutorial.addTabBody": "ሓያሎ መጻሕፍቲ ወይ ትርጉማት ጎኒ ንጎኒ ንምንባብ ሓድሽ ትብ ወስኽ።",
-  "playlist-history": "ታሪኽ ዝርዝር ደርፍታት",
   "discover-playlist-history-empty": "ኣብ ዝኣተኻሉ እዋን ዝተዓቀበ ዝርዝር ደርፍታት ተጻወት እሞ ኣብዚ ክረአ እዩ።",
   "playlist-history-session-summary": "{{time}} - {{percent}} % ተዛዚሙ - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ተዛዚሙ",

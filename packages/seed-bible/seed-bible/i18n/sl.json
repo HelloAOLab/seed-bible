@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "V tem meniju postavitve izberite, koliko odlomkov želite brati drug ob drugem.",
   "tutorial.addTabTitle": "Odprite več odlomkov",
   "tutorial.addTabBody": "Dodajte nov zavihek za branje več knjig ali prevodov drugega ob drugem.",
-  "playlist-history": "Zgodovina seznamov predvajanja",
   "discover-playlist-history-empty": "Predvajajte shranjen seznam predvajanja, ko ste prijavljeni, in prikazal se bo tukaj.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % dokončano - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % dokončano",

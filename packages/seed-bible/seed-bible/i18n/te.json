@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "ఈ లేఅవుట్ మెనూ నుండి ఎన్ని పేరాగ్రాఫ్‌లను పక్కపక్కనే చదవాలో ఎంచుకోండి.",
   "tutorial.addTabTitle": "మరిన్ని మార్గాలను తెరవండి",
   "tutorial.addTabBody": "అనేక పుస్తకాలను లేదా అనువాదాలను పక్కపక్కనే చదవడానికి కొత్త ట్యాబ్‌ను జోడించండి.",
-  "playlist-history": "ప్లేలిస్ట్ చరిత్ర",
   "discover-playlist-history-empty": "సైన్ ఇన్ చేసి ఉన్నప్పుడు సేవ్ చేసిన ప్లేలిస్ట్‌ను ప్లే చేస్తే, అది ఇక్కడ కనిపిస్తుంది.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % పూర్తయింది - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % పూర్తయింది",

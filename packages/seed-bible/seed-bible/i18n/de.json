@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Wählen Sie in diesem Layoutmenü aus, wie viele Textpassagen nebeneinander angezeigt werden sollen.",
   "tutorial.addTabTitle": "Öffne weitere Durchgänge",
   "tutorial.addTabBody": "Fügen Sie einen neuen Tab hinzu, um mehrere Bücher oder Übersetzungen nebeneinander zu lesen.",
-  "playlist-history": "Wiedergabeverlauf",
   "discover-playlist-history-empty": "Spiele eine gespeicherte Playlist ab, während du angemeldet bist, und sie wird hier angezeigt.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % abgeschlossen - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % abgeschlossen",
