@@ -3,16 +3,11 @@ import { batch, useSignal, useSignalEffect } from "@preact/signals";
 import { useRef } from "preact/hooks";
 import type { LoginRequestSuccess } from "@casual-simulation/aux-records";
 import { useI18n } from "../../i18n/I18nManager";
-import SeedBibleTitleIcon from "../../img/SeedBibleLogoWithTitleBlack.png";
 import { MaterialIcon } from "../icons";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import type { LoginManager } from "../../managers/LoginManager";
 
 type LoginStep = "email" | "code";
-
-// Placeholder asset/links. Replace `LOGO_SRC` with the real Seed Bible logo and
-// point the legal links at their real destinations when available.
-const LOGO_SRC = SeedBibleTitleIcon;
 
 /**
  * Guided login flow shown when {@link CasualOSManager.isLoginOpen} is set.
@@ -271,12 +266,10 @@ export function LoginModal({
       >
         <div className="sb-login-modal-body">
           <div className="sb-login-header">
-            <img
+            <span
               className="sb-login-logo"
-              src={LOGO_SRC}
-              alt={t("login-account-title", {
-                defaultValue: "Login to your account",
-              })}
+              role="img"
+              aria-label={t("seed-bible", { defaultValue: "Seed Bible" })}
             />
             <h3 className="sb-login-title">{title}</h3>
             <p className="sb-login-subtitle">{subtitle}</p>
