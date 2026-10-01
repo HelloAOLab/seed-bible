@@ -145,12 +145,57 @@
 .sb-friends-button--primary {
   border-color: var(--sb-primary-color);
   background: var(--sb-primary-color);
-  color: var(--sb-reader-background);
+  color: var(--sb-primary-font-color);
 }
 
 .sb-friends-button--primary:hover:not(:disabled) {
-  color: var(--sb-reader-background);
+  color: var(--sb-primary-font-color);
   opacity: 0.9;
+}
+
+/* The spinner sits over the label rather than beside it, so a button never
+   changes size when it starts or stops working. */
+.sb-friends-busy-button {
+  position: relative;
+}
+
+/* Hidden with opacity rather than visibility so it keeps both its space and
+   its place in the accessibility tree. */
+.sb-friends-busy-label--hidden {
+  opacity: 0;
+}
+
+/* Centred with negative margins, not a transform, so the transform is free
+   for the spin. */
+.sb-friends-busy-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1em;
+  height: 1em;
+  margin: -0.5em 0 0 -0.5em;
+  font-size: 1rem;
+  line-height: 1;
+  animation: sb-friends-busy-spin 0.9s linear infinite;
+}
+
+/* A working button isn't an unavailable one, so it isn't faded like the
+   others are while it runs. */
+.sb-friends-busy-button[aria-busy="true"]:disabled {
+  opacity: 1;
+  cursor: progress;
+}
+
+@keyframes sb-friends-busy-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-friends-busy-spinner {
+    animation: none;
+  }
 }
 
 .sb-friends-add-form {

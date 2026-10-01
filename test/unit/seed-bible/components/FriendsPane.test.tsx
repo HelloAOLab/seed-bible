@@ -305,6 +305,78 @@ describe("FriendsPane", () => {
     });
   });
 
+  describe("while a request is in flight", () => {
+    /** Holds the next call to a fake server procedure until released. */
+    const holdNext = (spy: {
+      getMockImplementation: () => unknown;
+      mockImplementationOnce: (impl: never) => unknown;
+    }) => {
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const impl = spy.getMockImplementation() as (
+        ...args: unknown[]
+      ) => Promise<unknown>;
+      spy.mockImplementationOnce((async (...args: unknown[]) => {
+        await gate;
+        return impl(...args);
+      }) as never);
+      return () => release();
+    };
+    const spinnerIn = (el: Element) =>
+      el.querySelector(".sb-friends-busy-spinner");
+
+    it("spins only the answer being sent, and keeps its label in place", async () => {
+      const state = createState();
+      server.requestFrom(ADA_ID);
+      await renderPane(state);
+      const release = holdNext(server.spies.accept);
+      const requests = section("Friend requests")!;
+      const accept = button(requests, "Accept")!;
+      const decline = button(requests, "Decline")!;
+
+      await act(async () => accept.click());
+
+      expect(accept.getAttribute("aria-busy")).toBe("true");
+      expect(spinnerIn(accept)).not.toBeNull();
+      // The label stays in the button under the spinner, so its size holds.
+      expect(accept.querySelector(".sb-friends-busy-label")?.textContent).toBe(
+        "Accept"
+      );
+      expect(decline.disabled).toBe(true);
+      expect(spinnerIn(decline)).toBeNull();
+
+      release();
+      await waitForIdle();
+      expect(section("Friend requests")).toBeNull();
+    });
+
+    it("spins Send request until the request has been sent", async () => {
+      await renderPane(createState());
+      const release = holdNext(server.spies.request);
+      const send = button(
+        container.querySelector(".sb-friends-add-form")!,
+        "Send request"
+      )!;
+
+      const input = container.querySelector(
+        ".sb-friends-add-input"
+      ) as HTMLInputElement;
+      act(() => {
+        input.value = ADA_ID;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      await act(async () => send.click());
+
+      expect(spinnerIn(send)).not.toBeNull();
+      expect(send.disabled).toBe(true);
+
+      release();
+      await waitForIdle();
+      expect(spinnerIn(send)).toBeNull();
+      expect(text()).toContain("Request sent.");
+    });
+  });
+
   it("cancels a sent request", async () => {
     const state = createState();
     server.requestTo(ADA_ID);

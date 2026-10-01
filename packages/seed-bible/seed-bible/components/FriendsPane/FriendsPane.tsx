@@ -96,6 +96,48 @@ function CopyButton(props: {
   );
 }
 
+/**
+ * A button that shows a spinner while its request is in flight. The label
+ * stays in place (just invisible) under the spinner, so the button keeps its
+ * size and screen readers still hear what it is.
+ */
+function BusyButton(props: {
+  busy: boolean;
+  disabled?: boolean;
+  className: string;
+  type?: "button" | "submit";
+  onClick?: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type={props.type ?? "button"}
+      className={`${props.className} sb-friends-busy-button`}
+      disabled={props.busy || props.disabled}
+      aria-busy={props.busy}
+      onClick={props.onClick}
+    >
+      <span
+        className={
+          props.busy
+            ? "sb-friends-busy-label sb-friends-busy-label--hidden"
+            : "sb-friends-busy-label"
+        }
+      >
+        {props.children}
+      </span>
+      {props.busy ? (
+        <span
+          className="material-symbols-outlined sb-friends-busy-spinner"
+          aria-hidden="true"
+        >
+          progress_activity
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
 /** The outcome of the last send, shown under the Add a friend form. */
 type SendOutcome = {
   message: string;
@@ -235,13 +277,14 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
           autoComplete="off"
           spellcheck={false}
         />
-        <button
+        <BusyButton
           type="submit"
           className="sb-friends-button sb-friends-button--primary"
-          disabled={busy.value || value.value.trim().length === 0}
+          busy={busy.value}
+          disabled={value.value.trim().length === 0}
         >
           {t("send-friend-request", { defaultValue: "Send request" })}
-        </button>
+        </BusyButton>
       </form>
       {outcome.value ? (
         <div
@@ -296,10 +339,12 @@ function IncomingRequestRow(props: {
 }) {
   const { request, friends, toast } = props;
   const { t } = useI18n();
-  const busy = useSignal(false);
+  // Which answer is in flight, so only that button spins while both are
+  // disabled.
+  const answering = useSignal<"accept" | "decline" | null>(null);
 
   const answer = async (accept: boolean) => {
-    busy.value = true;
+    answering.value = accept ? "accept" : "decline";
     try {
       if (!accept) {
         await friends.declineRequest(request.id);
@@ -325,7 +370,7 @@ function IncomingRequestRow(props: {
         })
       );
     } finally {
-      busy.value = false;
+      answering.value = null;
     }
   };
 
@@ -333,22 +378,22 @@ function IncomingRequestRow(props: {
     <li className="sb-friends-row">
       <PersonIdentity person={request} />
       <span className="sb-friends-row-actions">
-        <button
-          type="button"
+        <BusyButton
           className="sb-friends-button sb-friends-button--primary"
-          disabled={busy.value}
+          busy={answering.value === "accept"}
+          disabled={answering.value !== null}
           onClick={() => void answer(true)}
         >
           {t("accept", { defaultValue: "Accept" })}
-        </button>
-        <button
-          type="button"
+        </BusyButton>
+        <BusyButton
           className="sb-friends-button"
-          disabled={busy.value}
+          busy={answering.value === "decline"}
+          disabled={answering.value !== null}
           onClick={() => void answer(false)}
         >
           {t("decline", { defaultValue: "Decline" })}
-        </button>
+        </BusyButton>
       </span>
     </li>
   );
@@ -377,10 +422,9 @@ function OutgoingRequestRow(props: {
           text={getFriendRequestUrl(navigation, request.id)}
           label={t("copy-friend-request-link", { defaultValue: "Copy link" })}
         />
-        <button
-          type="button"
+        <BusyButton
           className="sb-friends-button"
-          disabled={busy.value}
+          busy={busy.value}
           onClick={() => {
             busy.value = true;
             void friends
@@ -397,7 +441,7 @@ function OutgoingRequestRow(props: {
           }}
         >
           {t("cancel", { defaultValue: "Cancel" })}
-        </button>
+        </BusyButton>
       </span>
     </li>
   );
