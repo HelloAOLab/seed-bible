@@ -76,7 +76,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
           <div className="sb-play-playlist-about" dir="auto">
             {authorName ? (
               <p className="sb-play-playlist-author">
-                {t("playlist-page-by-author", {
+                {t("shared-page-by-author", {
                   author: authorName,
                   defaultValue: "By {{author}}",
                 })}

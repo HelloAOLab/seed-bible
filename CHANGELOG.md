@@ -20,6 +20,14 @@
   - While a playlist plays, the address bar shows its own path with the step at the end (`/{lang}/playlist/{id}/{title}/2` for the second step), so reloading or sharing it opens that step. Back from the first step returns to the playlist's page.
   - Old `?playlist=` links permanently redirect (301): share links to the playlist's page, and playback links (`?playlist=…&playlistStep=…`) to the matching step.
   - The "Would you like a tutorial?" offer stays hidden for a visit that starts on a playlist link, including after the playlist is started. Closing the playlist without starting it goes to the home screen, where the offer can appear as usual.
+- Give each shared reading plan its own page at `/{lang}/reading-plan/{id}/{title}`. ([#1786](https://github.com/HelloAOLab/seed-bible/issues/1786))
+  - Opening a shared reading plan link shows the plan's cover, author, description and number of sessions, with "Start Reading Plan" and "Close" buttons. Before, the link opened straight onto a chapter with the plans panel beside it.
+  - The page also says roughly how long each session takes to read.
+  - "Start Reading Plan" opens the plan's setup screen, where the reader picks a pace.
+  - Someone who has already started the plan sees where they are ("You're on day 5", or "You're on session 5" when reading at their own pace), with "Resume" and "Start from beginning" instead.
+  - Link previews, search results, the 404 and "Reading plan not found" message for a deleted plan, the "Couldn't load reading plan" message with "Try again", and the hidden tutorial offer work the same way as for shared playlists.
+  - Old `?readingPlan=` share links permanently redirect (301) to the plan's page.
+  - Playing a day of a reading plan shows who made the plan in the player, like a playlist does.
 
 ### 🔧 Changed
 

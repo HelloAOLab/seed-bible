@@ -4,7 +4,10 @@ import { render } from "preact";
 import { readInjectedConfig } from "../app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../app/apiResponseSeed";
 import { readInjectedCustomizationSeed } from "../app/customizationSeed";
-import { readInjectedPlaylistPageSeed } from "../app/playlistPageSeed";
+import {
+  readInjectedPlaylistPageSeed,
+  readInjectedReadingPlanPageSeed,
+} from "../app/sharedPageSeeds";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { decideHydration, type HydrationDecision } from "../app/hydrationGate";
 import { hydrateWithFallback } from "../app/hydrateWithFallback";
@@ -26,8 +29,9 @@ const apiResponseSnapshot = readInjectedApiResponseSnapshot();
 // creation below doesn't re-fetch a record the page already reflects.
 const initialCustomizationSeed = readInjectedCustomizationSeed();
 
-// Same, for the playlist a shared playlist link opens on.
+// Same, for the playlist or reading plan a shared link opens on.
 const initialPlaylistPageSeed = readInjectedPlaylistPageSeed();
+const initialReadingPlanPageSeed = readInjectedReadingPlanPageSeed();
 
 const container = document.getElementById("app") ?? document.body;
 
@@ -43,6 +47,7 @@ const state = createSeedBibleState({
   apiResponseSnapshot,
   initialCustomizationSeed,
   initialPlaylistPageSeed,
+  initialReadingPlanPageSeed,
 });
 
 /**

@@ -25,7 +25,10 @@ import {
   THEME_PRESET_STYLE_TEXT,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { ssrTranslationsCache } from "./ssrTranslationsCache";
-import { buildPlaylistPagePath } from "@packages/seed-bible/seed-bible/managers/PlaylistPagePath";
+import {
+  buildSharedPagePath,
+  type SharedPageKind,
+} from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -56,8 +59,9 @@ export interface RenderOptions {
    * - `<!--CUSTOMIZATION_JSON-->` where the JSON-serialized
    *   `?customization=...` load result should be injected, so the client can
    *   skip re-fetching a customization record the server already resolved.
-   * - `<!--PLAYLIST_PAGE_JSON-->` where the JSON-serialized playlist-page
-   *   load result should be injected, likewise for a shared playlist link.
+   * - `<!--PLAYLIST_PAGE_JSON-->` and `<!--READING_PLAN_PAGE_JSON-->` where
+   *   the JSON-serialized load results for a shared playlist or reading plan
+   *   page should be injected, likewise.
    * - `<!--THEME_STYLE_TAG-->` where the active theme's composed CSS text
    *   should be injected, inside a `<style id="sb-theme-styles">` tag.
    * - `<!--THEME_PRESETS_JSON-->` where the built-in theme presets' composed
@@ -310,32 +314,50 @@ export function legacyReadingUrlRedirect(
 }
 
 /**
- * Sends an old-style playlist link to the playlist's own path, as a 301 (the
- * target depends only on the URL):
+ * Sends an old-style playlist or reading plan link to that content's own
+ * path, as a 301 (the target depends only on the URL):
  *
- * - A share link (`?playlist={locator}`, on whatever chapter the sharer's page
- *   happened to be) goes to its page, `/{lang}/playlist/{locator}`.
- * - A playback URL (`…&playlistStep={n}`, 0-based) goes to its playing path,
- *   `/{lang}/playlist/{locator}/-/{n + 1}`. The title slug isn't known
- *   without fetching the playlist, so a placeholder stands in; the app
- *   writes the real one as soon as playback starts.
+ * - A share link (`?playlist={locator}` or `?readingPlan={locator}`, on
+ *   whatever chapter the sharer's page happened to be) goes to its page,
+ *   `/{lang}/playlist/{locator}` or `/{lang}/reading-plan/{locator}`.
+ * - A playlist playback URL (`?playlist=…&playlistStep={n}`, 0-based) goes
+ *   to its playing path, `/{lang}/playlist/{locator}/-/{n + 1}`. The title
+ *   slug isn't known without fetching the playlist, so a placeholder stands
+ *   in; the app writes the real one as soon as playback starts.
  *
  * The language is the one the link names (its path segment or `?lang=`),
  * else the translation's own, else `DEFAULT_UI_LANGUAGE`. The title slug is
- * left off, since adding it would mean fetching the playlist before
+ * left off, since adding it would mean fetching the record before
  * responding; the page's canonical URL carries it instead. Unrelated query
  * params are kept, and the ones that only placed the reader are dropped.
  */
-export function playlistQueryRedirect(
+export function sharedPageQueryRedirect(
   path: string,
   basePath: string
 ): string | null {
   const url = new URL(path, "http://ssr.local");
-  const locator = url.searchParams.get("playlist");
-  if (!locator) {
+
+  const playlistLocator = url.searchParams.get("playlist");
+  const readingPlanLocator = url.searchParams.get("readingPlan");
+  const target: {
+    kind: SharedPageKind;
+    param: string;
+    locator: string;
+  } | null = playlistLocator
+    ? { kind: "playlist", param: "playlist", locator: playlistLocator }
+    : readingPlanLocator
+      ? {
+          kind: "readingPlan",
+          param: "readingPlan",
+          locator: readingPlanLocator,
+        }
+      : null;
+  if (!target) {
     return null;
   }
-  const stepParam = url.searchParams.get("playlistStep");
+  // Only a playlist has steps to play.
+  const stepParam =
+    target.kind === "playlist" ? url.searchParams.get("playlistStep") : null;
   const stepIndex = stepParam === null ? null : Number(stepParam);
   const step =
     stepIndex === null
@@ -356,16 +378,19 @@ export function playlistQueryRedirect(
     DEFAULT_UI_LANGUAGE;
 
   const remainingParams = new URLSearchParams(url.search);
-  remainingParams.delete("playlist");
-  remainingParams.delete("playlistStep");
+  remainingParams.delete(target.param);
+  if (target.kind === "playlist") {
+    remainingParams.delete("playlistStep");
+  }
   for (const key of READING_POSITION_PARAMS) {
     remainingParams.delete(key);
   }
   const query = remainingParams.toString();
 
-  return `${basePath}${buildPlaylistPagePath({
+  return `${basePath}${buildSharedPagePath({
+    kind: target.kind,
     language,
-    locator,
+    locator: target.locator,
     title: null,
     step,
   })}${query ? `?${query}` : ""}`;
@@ -532,12 +557,12 @@ export async function render(
 
   // Before the reading-path redirects: the target isn't a reading path, and
   // correcting the chapter first would only add a second hop.
-  const playlistRedirectTo = playlistQueryRedirect(
+  const sharedPageRedirectTo = sharedPageQueryRedirect(
     options.path,
     injectedConfig.basePath
   );
-  if (playlistRedirectTo) {
-    return { redirectTo: playlistRedirectTo };
+  if (sharedPageRedirectTo) {
+    return { redirectTo: sharedPageRedirectTo };
   }
 
   const redirectTo = legacyReadingUrlRedirect(
@@ -619,10 +644,11 @@ export async function render(
   await Promise.all([
     state.i18n.ready,
     state.app.selectedTab.value?.readingState.chapterDataPromise,
-    // So the title, meta and modal describe a shared playlist link's
-    // playlist. Awaited here with the chapter, not suspended on during the
-    // render, for the reason above.
+    // So the title, meta and modal describe a shared playlist or reading
+    // plan link's content. Awaited here with the chapter, not suspended on
+    // during the render, for the reason above.
     state.playlists.initialPlaylistPageLoadPromise,
+    state.readingPlans.initialReadingPlanPageLoadPromise,
   ]);
   // A reload mid-playlist names only its step, not the chapter; the reader
   // moves there once the playlist has loaded, so wait for that too before
@@ -747,6 +773,9 @@ export async function render(
   const playlistPageSeedJson = escapeForScript(
     JSON.stringify(state.playlists.getPlaylistPageSeed())
   );
+  const readingPlanPageSeedJson = escapeForScript(
+    JSON.stringify(state.readingPlans.getReadingPlanPageSeed())
+  );
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
@@ -760,6 +789,7 @@ export async function render(
     ["<!-- SEED_JSON -->", seedJson],
     ["<!-- CUSTOMIZATION_JSON -->", customizationSeedJson],
     ["<!-- PLAYLIST_PAGE_JSON -->", playlistPageSeedJson],
+    ["<!-- READING_PLAN_PAGE_JSON -->", readingPlanPageSeedJson],
     ["<!-- APP_HTML -->", appHtml],
   ];
 
@@ -770,9 +800,12 @@ export async function render(
     ? stripDefaultFaviconLinks(withSocialImage)
     : withSocialImage;
 
-  // A shared playlist link whose playlist doesn't exist is a 404 like an
-  // unknown book is. One whose load merely failed or timed out is not.
-  const playlistNotFound = state.playlists.playlistPageNotFound.value;
+  // A shared playlist or reading plan link whose record doesn't exist is a
+  // 404 like an unknown book is. One whose load merely failed or timed out is
+  // not.
+  const sharedPageNotFound =
+    state.playlists.playlistPageNotFound.value ||
+    state.readingPlans.readingPlanPageNotFound.value;
 
   return {
     html: substitutions.reduce(
@@ -780,6 +813,6 @@ export async function render(
         replacePlaceholder(html, placeholder, value),
       baseHtml
     ),
-    ...(notFound || playlistNotFound ? { notFound: true as const } : {}),
+    ...(notFound || sharedPageNotFound ? { notFound: true as const } : {}),
   };
 }

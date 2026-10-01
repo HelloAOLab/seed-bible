@@ -300,22 +300,24 @@ describe("readingPlanDayPlaylist", () => {
     title: "Through the Psalms",
     description: "Thirty days in the Psalter",
     heroImageUrl: "https://example.com/psalms.jpg",
+    authorUserId: "author-1",
   } satisfies Pick<
     ReadingPlan,
-    "address" | "title" | "description" | "heroImageUrl"
+    "address" | "title" | "description" | "heroImageUrl" | "authorUserId"
   >;
   const items = [
     { type: "verse", reference: { bookId: "PSA", chapter: 1, verse: 1 } },
   ] as unknown as PlaylistItemData[];
 
-  // The player takes its cover art from the playlist it is handed, so a plan
-  // that drops its hero image plays with a blank cover.
+  // The player takes its cover art, description and author from the
+  // playlist it is handed, so a plan that drops them plays without them.
   it("carries the plan's own presentation into playback", () => {
     expect(readingPlanDayPlaylist(plan, items)).toEqual({
       id: "plan-address",
       title: "Through the Psalms",
       description: "Thirty days in the Psalter",
       heroImageUrl: "https://example.com/psalms.jpg",
+      authorUserId: "author-1",
       items,
     });
   });

@@ -17,7 +17,7 @@ import {
   parseReadingPath,
 } from "../managers/ReadingUrlPath";
 import { parseStaticPagePath } from "../managers/StaticPagePath";
-import { parsePlaylistPagePath } from "../managers/PlaylistPagePath";
+import { parseSharedPagePath } from "../managers/SharedPagePath";
 import type { BrandingConfig } from "../app/appConfig";
 
 function getLanguageName(importPath: string): string {
@@ -165,9 +165,9 @@ export function getPreferredSupportedLanguage(
  * meaning of the 3-segment "fully default" form, not "detect from the
  * browser" (browser-based detection only applies to a bare `/` with no
  * reading path at all, via `getInitialLanguage`). Next, a static page path
- * (e.g. "/es/about") or a playlist page path always names its language
- * explicitly. Falls back to the legacy `?lang=` query param for anything
- * else.
+ * (e.g. "/es/about") or a shared playlist or reading plan page path always
+ * names its language explicitly. Falls back to the legacy `?lang=` query
+ * param for anything else.
  */
 export function getUrlLanguage(url: URL, basePath: string): string | null {
   const parsed = parseReadingPath(url.pathname, basePath);
@@ -180,9 +180,9 @@ export function getUrlLanguage(url: URL, basePath: string): string | null {
     return staticPage.language;
   }
 
-  const playlistPage = parsePlaylistPagePath(url.pathname, basePath);
-  if (playlistPage) {
-    return playlistPage.language;
+  const sharedPage = parseSharedPagePath(url.pathname, basePath);
+  if (sharedPage) {
+    return sharedPage.language;
   }
 
   const urlLang = url.searchParams.get("lang");

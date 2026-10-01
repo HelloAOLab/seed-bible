@@ -1,4 +1,4 @@
-.sb-playlist-page-modal-hero {
+.sb-shared-page-modal-hero {
   display: block;
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -7,24 +7,30 @@
   margin-bottom: 0.75rem;
 }
 
-.sb-playlist-page-modal-author {
+.sb-shared-page-modal-author {
   margin: 0 0 0.5rem;
   font-size: 0.875rem;
   opacity: 0.8;
 }
 
-.sb-playlist-page-modal-description {
+.sb-shared-page-modal-description {
   margin: 0 0 0.5rem;
   white-space: pre-line;
 }
 
-.sb-playlist-page-modal-count {
+.sb-shared-page-modal-count {
   margin: 0;
   font-size: 0.8125rem;
   opacity: 0.7;
 }
 
-.sb-playlist-page-modal-actions {
+.sb-shared-page-modal-status {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-shared-page-modal-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -32,7 +38,7 @@
   margin-top: 1rem;
 }
 
-.sb-playlist-page-modal-actions button {
+.sb-shared-page-modal-actions button {
   border: 1px solid var(--sb-primary-color);
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
@@ -44,7 +50,7 @@
   cursor: pointer;
 }
 
-.sb-playlist-page-modal-actions .sb-playlist-page-modal-start {
+.sb-shared-page-modal-actions .sb-shared-page-modal-start {
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
 }

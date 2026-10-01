@@ -1,7 +1,7 @@
 import {
   acceptLanguageRedirect,
   legacyReadingUrlRedirect,
-  playlistQueryRedirect,
+  sharedPageQueryRedirect,
   render,
   stripDefaultOgImageMeta,
 } from "../../../standalone/entry-ssr";
@@ -16,10 +16,10 @@ import {
 import { buildChapterUrl } from "../../../script/lib/sitemap";
 import { resetSsrTranslationsCacheForTests } from "../../../standalone/ssrTranslationsCache";
 
-describe("playlistQueryRedirect", () => {
-  it("sends an old share link to the playlist's own page", () => {
+describe("sharedPageQueryRedirect", () => {
+  it("sends an old playlist share link to the playlist's own page", () => {
     expect(
-      playlistQueryRedirect(
+      sharedPageQueryRedirect(
         "/en/AAB/genesis/1?playlist=user-1.playlist_abc",
         ""
       )
@@ -27,32 +27,32 @@ describe("playlistQueryRedirect", () => {
   });
 
   it("keeps the language the link was shared in", () => {
-    expect(playlistQueryRedirect("/es/spa_onbv/john/3?playlist=u.p", "")).toBe(
-      "/es/playlist/u.p"
-    );
+    expect(
+      sharedPageQueryRedirect("/es/spa_onbv/john/3?playlist=u.p", "")
+    ).toBe("/es/playlist/u.p");
   });
 
   it("uses the translation's language when the path names none", () => {
-    expect(playlistQueryRedirect("/spa_onbv/john/3?playlist=u.p", "")).toBe(
+    expect(sharedPageQueryRedirect("/spa_onbv/john/3?playlist=u.p", "")).toBe(
       "/es/playlist/u.p"
     );
   });
 
   it("falls back to English for a bare root link", () => {
-    expect(playlistQueryRedirect("/?playlist=u.p", "")).toBe(
+    expect(sharedPageQueryRedirect("/?playlist=u.p", "")).toBe(
       "/en/playlist/u.p"
     );
   });
 
   it("uses ?lang= on a legacy query-param link", () => {
     expect(
-      playlistQueryRedirect("/?book=JHN&chapter=3&lang=fr&playlist=u.p", "")
+      sharedPageQueryRedirect("/?book=JHN&chapter=3&lang=fr&playlist=u.p", "")
     ).toBe("/fr/playlist/u.p");
   });
 
   it("keeps the deployment prefix and unrelated params, dropping reading-position ones", () => {
     expect(
-      playlistQueryRedirect(
+      sharedPageQueryRedirect(
         "/b/dev/en/AAB/genesis/1?playlist=u.p&customization=o.c&translation=NIV",
         "/b/dev"
       )
@@ -61,19 +61,36 @@ describe("playlistQueryRedirect", () => {
 
   it("sends an old playback URL to the playing path, with the step made 1-based", () => {
     expect(
-      playlistQueryRedirect("/en/AAB/exodus/2?playlist=u.p&playlistStep=3", "")
+      sharedPageQueryRedirect(
+        "/en/AAB/exodus/2?playlist=u.p&playlistStep=3",
+        ""
+      )
     ).toBe("/en/playlist/u.p/-/4");
   });
 
   it("starts an old playback URL with an unreadable step at the first step", () => {
     expect(
-      playlistQueryRedirect("/en/AAB/exodus/2?playlist=u.p&playlistStep=x", "")
+      sharedPageQueryRedirect(
+        "/en/AAB/exodus/2?playlist=u.p&playlistStep=x",
+        ""
+      )
     ).toBe("/en/playlist/u.p/-/1");
   });
 
-  it("leaves a URL without ?playlist= alone", () => {
-    expect(playlistQueryRedirect("/en/AAB/genesis/1", "")).toBeNull();
-    expect(playlistQueryRedirect("/en/AAB/genesis/1?playlist=", "")).toBeNull();
+  it("sends an old reading plan share link to the plan's own page", () => {
+    expect(
+      sharedPageQueryRedirect("/es/spa_onbv/john/3?readingPlan=u.plan_1", "")
+    ).toBe("/es/reading-plan/u.plan_1");
+  });
+
+  it("leaves a URL without ?playlist= or ?readingPlan= alone", () => {
+    expect(sharedPageQueryRedirect("/en/AAB/genesis/1", "")).toBeNull();
+    expect(
+      sharedPageQueryRedirect("/en/AAB/genesis/1?playlist=", "")
+    ).toBeNull();
+    expect(
+      sharedPageQueryRedirect("/en/AAB/genesis/1?readingPlan=", "")
+    ).toBeNull();
   });
 });
 
@@ -457,6 +474,18 @@ describe("render() redirect wiring", () => {
     });
   });
 
+  it("returns a plain 301 from an old ?readingPlan= share link to the plan page", async () => {
+    const result = await render({
+      path: "/en/AAB/genesis/1?readingPlan=owner.plan_shared",
+      config: DEFAULT_APP_CONFIG,
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/en/reading-plan/owner.plan_shared",
+    });
+  });
+
   it("returns a plain 301 from an old playback URL to the playing path", async () => {
     const result = await render({
       path: "/es/spa_onbv/john/3?playlist=owner.playlist_shared&playlistStep=0",
@@ -567,6 +596,7 @@ describe("render() server-rendered meta tags", () => {
     '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
     '<script type="application/json" id="app-customization-seed"><!-- CUSTOMIZATION_JSON --></script>',
     '<script type="application/json" id="app-playlist-page-seed"><!-- PLAYLIST_PAGE_JSON --></script>',
+    '<script type="application/json" id="app-reading-plan-page-seed"><!-- READING_PLAN_PAGE_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -1575,7 +1605,7 @@ describe("render() server-rendered meta tags", () => {
 
       const { html } = await renderResult(PAGE_PATH);
 
-      expect(html).toContain("sb-playlist-page-modal");
+      expect(html).toContain("sb-shared-page-modal");
       expect(html).toContain("By Ruth");
       expect(html).toContain("Start Playlist");
       expect(html).toContain("1 item");
@@ -1601,7 +1631,7 @@ describe("render() server-rendered meta tags", () => {
 
       expect(readEmbeddedPlaylistSeed(html)).toEqual({
         locator: "owner.playlist_shared",
-        playlist: PLAYLIST,
+        item: PLAYLIST,
         authorName: "Ruth",
       });
     });
@@ -1613,12 +1643,12 @@ describe("render() server-rendered meta tags", () => {
 
       expect(notFound).toBe(true);
       expect(html).toContain("<title>Playlist not found | Seed Bible</title>");
-      expect(html).toContain("sb-playlist-page-modal--not-found");
+      expect(html).toContain("sb-shared-page-modal--not-found");
       expect(html).toContain("This playlist doesn't exist");
       expect(html).not.toContain("Start Playlist");
       expect(readEmbeddedPlaylistSeed(html)).toEqual({
         locator: "owner.playlist_shared",
-        playlist: null,
+        item: null,
         authorName: null,
       });
     });
@@ -1628,6 +1658,158 @@ describe("render() server-rendered meta tags", () => {
 
       const { notFound, html } = await renderResult(
         "/en/playlist/owner.playlist_shared/2024?useFreeBibleAPI=true"
+      );
+
+      expect(notFound).toBeUndefined();
+      expect(html).toContain("<title>2024 | Seed Bible</title>");
+    });
+  });
+
+  describe("shared reading plan page", () => {
+    const CALL_PROCEDURE_URL =
+      "https://auth.seedbible.org/api/v3/callProcedure";
+    const PAGE_PATH =
+      "/en/reading-plan/owner.plan_shared/advent-readings?useFreeBibleAPI=true";
+
+    const PLAN = {
+      address: "plan_shared",
+      recordName: "owner",
+      authorUserId: "author-1",
+      locale: "en",
+      title: "Advent Readings",
+      description: "Four weeks toward Christmas.",
+      heroImageUrl: "https://files.example/advent.jpg",
+      cadenceOptions: [
+        {
+          id: "daily",
+          label: "Daily",
+          cadence: { segments: [{ type: "read", days: 1 }] },
+        },
+      ],
+      defaultCadenceId: "daily",
+      status: "complete",
+      schemaVersion: 1,
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: { type: "bible-verse", ref: { bookId: "ISA", chapter: 9 } },
+            },
+          ],
+        },
+        { id: "s2", readings: [] },
+      ],
+      createdAtMs: 1,
+      updatedAtMs: 1,
+    };
+
+    function mockRecords(records: Record<string, unknown>) {
+      const responses = createDefaultManagerResponseMap();
+      globalThis.fetch = (async (url: string, init?: RequestInit) => {
+        if (url === CALL_PROCEDURE_URL) {
+          const body = JSON.parse(String(init?.body));
+          const key = `${body.input?.recordName}/${body.input?.address}`;
+          if (body.procedure === "getData" && key in records) {
+            return createResponse({ success: true, data: records[key] });
+          }
+          return createResponse({
+            success: false,
+            errorCode: "data_not_found",
+            errorMessage: "Data not found",
+          });
+        }
+        const response = responses[url];
+        if (!response) {
+          throw new Error(`No mocked response for ${url}`);
+        }
+        return response;
+      }) as typeof globalThis.fetch;
+    }
+
+    function readEmbeddedPlanSeed(html: string): unknown {
+      const match = /id="app-reading-plan-page-seed">([\s\S]*?)<\/script>/.exec(
+        html
+      );
+      if (!match) {
+        throw new Error("app-reading-plan-page-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("titles, describes and illustrates the page after the plan", async () => {
+      mockRecords({
+        "owner/plan_shared": PLAN,
+        "author-1/profile": { name: "Ruth" },
+      });
+
+      const { html, notFound } = await renderResult(PAGE_PATH);
+
+      expect(notFound).toBeUndefined();
+      expect(html).toContain(
+        "<title>Advent Readings by Ruth | Seed Bible</title>"
+      );
+      expect(html).toContain(
+        '<meta name="description" content="Four weeks toward Christmas."'
+      );
+      expect(html).toContain(
+        '<meta property="og:title" content="Advent Readings by Ruth"'
+      );
+      expect(html).toContain(
+        '<meta property="og:image" content="https://files.example/advent.jpg"'
+      );
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      expect(html).toContain(
+        '<link rel="canonical" href="/en/reading-plan/owner.plan_shared/advent-readings"'
+      );
+    });
+
+    it("renders the plan modal with Start Reading Plan and Close", async () => {
+      mockRecords({
+        "owner/plan_shared": PLAN,
+        "author-1/profile": { name: "Ruth" },
+      });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(html).toContain("sb-shared-page-modal");
+      expect(html).toContain("By Ruth");
+      expect(html).toMatch(/2 sessions · About \d+ min per session/);
+      expect(html).toContain("Start Reading Plan");
+    });
+
+    it("embeds the loaded plan as a seed for the client to reuse", async () => {
+      mockRecords({ "owner/plan_shared": PLAN });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(readEmbeddedPlanSeed(html)).toEqual({
+        locator: "owner.plan_shared",
+        item: PLAN,
+        authorName: null,
+      });
+    });
+
+    it("answers 404 when the plan doesn't exist", async () => {
+      mockRecords({});
+
+      const { html, notFound } = await renderResult(PAGE_PATH);
+
+      expect(notFound).toBe(true);
+      expect(html).toContain(
+        "<title>Reading plan not found | Seed Bible</title>"
+      );
+      expect(html).toContain("sb-shared-page-modal--not-found");
+      expect(html).toContain("This reading plan doesn't exist");
+      expect(html).not.toContain("Start Reading Plan");
+    });
+
+    it("is not mistaken for a reading path when the title slug is a number", async () => {
+      mockRecords({ "owner/plan_shared": { ...PLAN, title: "2024" } });
+
+      const { notFound, html } = await renderResult(
+        "/en/reading-plan/owner.plan_shared/2024?useFreeBibleAPI=true"
       );
 
       expect(notFound).toBeUndefined();

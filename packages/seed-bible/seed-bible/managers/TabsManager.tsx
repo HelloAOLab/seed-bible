@@ -15,7 +15,7 @@ import {
   stripBasePath,
 } from "./ReadingUrlPath";
 import { isNonReadingPagePath } from "./StaticPagePath";
-import { parsePlaylistPagePath } from "./PlaylistPagePath";
+import { parsePlaylistPagePath } from "./SharedPagePath";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
