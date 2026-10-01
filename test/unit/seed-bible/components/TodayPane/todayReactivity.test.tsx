@@ -118,7 +118,7 @@ describe("Today screen reactivity", () => {
       getTranslationBooks: async () => ({ books: [] }) as never,
       searchVerses: async () => [],
       getCommunityReading: async () => ({}),
-      followedReaders: signal([]),
+      friendReaders: signal([]),
       getReadingHistoryEvents: async () => [],
     });
     const login = loginStub({ userId: signal("u1"), profile });

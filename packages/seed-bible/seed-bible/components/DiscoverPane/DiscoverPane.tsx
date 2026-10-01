@@ -1,7 +1,5 @@
 import "./DiscoverPane.css";
 import "./DiscoverShared.css";
-import { useSignal } from "@preact/signals";
-import { useEffect } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import type {
@@ -20,11 +18,7 @@ import type { ChatsManager } from "../../managers/ChatsManager";
 import { translateTitle } from "../../app/utils";
 import { v4 as uuid } from "uuid";
 import type { AnnotationsManager } from "../../managers/AnnotationsManager";
-import type {
-  FollowedUser,
-  FollowsManager,
-} from "../../managers/FollowsManager";
-import type { LoginManager } from "../../managers/LoginManager";
+import type { Friend, FriendsManager } from "../../managers/FriendsManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { MaterialIcon } from "../icons";
 import {
@@ -37,7 +31,7 @@ import {
 } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
-import { DiscoverEmpty, DiscoverSection } from "./DiscoverSection";
+import { DiscoverSection } from "./DiscoverSection";
 import { Avatar } from "../Avatar/Avatar";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
@@ -348,7 +342,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         modals={modals}
         toast={props.toast}
         login={props.state.login}
-        follows={props.state.follows}
+        friends={props.state.friends}
         tabs={tabs}
         discover={props.state.discover}
         panes={props.state.panes}
@@ -363,8 +357,8 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         toast={props.toast}
       />
 
-      <FollowedPlaylistsSection
-        follows={props.state.follows}
+      <FriendPlaylistsSection
+        friends={props.state.friends}
         playlists={playlists}
         toast={props.toast}
       />
@@ -387,11 +381,6 @@ export function DiscoverPane(props: DiscoverPaneProps) {
           collapsible
         />
       ))}
-
-      <FollowingSection
-        follows={props.state.follows}
-        login={props.state.login}
-      />
     </div>
   );
 }
@@ -603,28 +592,28 @@ function PlaylistHistorySection({
 }
 
 /**
- * Playlists belonging to people the signed-in user follows, sectioned per
- * followed account (name + avatar header) rather than merged into
- * `PlaylistSection`'s own list — these rows can only ever be someone else's
- * playlist, so there's no "own vs. followed" ambiguity to guard against the
- * way `AnnotationGroupSection` has to for merged annotations. Renders nothing
- * when there's no follow with any playlists, since (unlike "My Playlists")
- * there's no create-one call-to-action to fall back on for an empty state.
+ * Friends' playlists, sectioned per friend (name + avatar header) rather than
+ * merged into `PlaylistSection`'s own list — these rows can only ever be
+ * someone else's playlist, so there's no "own vs. friend's" ambiguity to guard
+ * against the way `AnnotationGroupSection` has to for merged annotations.
+ * Renders nothing when no friend has any playlists, since (unlike "My
+ * Playlists") there's no create-one call-to-action to fall back on for an
+ * empty state.
  */
-function FollowedPlaylistsSection(props: {
-  follows: FollowsManager;
+function FriendPlaylistsSection(props: {
+  friends: FriendsManager;
   playlists: PlaylistManager;
   toast: SeedBibleState["app"]["toast"];
 }) {
-  const { follows, playlists, toast } = props;
+  const { friends, playlists, toast } = props;
   const { t } = useI18n();
 
-  // Reading each followed user's view here (rather than only `followingIds`)
+  // Reading each friend's view here (rather than only `friendIds`)
   // subscribes this render to their playlists arriving.
-  const groups = follows.following.value
-    .map((followed) => ({
-      followed,
-      playlists: playlists.getUserPlaylists(followed.userId).value,
+  const groups = friends.friends.value
+    .map((friend) => ({
+      friend,
+      playlists: playlists.getUserPlaylists(friend.userId).value,
     }))
     .filter((group) => group.playlists.length > 0);
 
@@ -638,11 +627,11 @@ function FollowedPlaylistsSection(props: {
         defaultValue: "Playlists from people you follow",
       })}
     >
-      <ul className="sb-followed-playlists-groups">
+      <ul className="sb-friend-playlists-groups">
         {groups.map((group) => (
-          <FollowedPlaylistGroup
-            key={group.followed.userId}
-            followed={group.followed}
+          <FriendPlaylistGroup
+            key={group.friend.userId}
+            friend={group.friend}
             playlists={group.playlists}
             playlistsManager={playlists}
             toast={toast}
@@ -653,32 +642,32 @@ function FollowedPlaylistsSection(props: {
   );
 }
 
-/** One followed account's playlists: an avatar/name header plus its rows. */
-function FollowedPlaylistGroup(props: {
-  followed: FollowedUser;
+/** One friend's playlists: an avatar/name header plus its rows. */
+function FriendPlaylistGroup(props: {
+  friend: Friend;
   playlists: Playlist[];
   playlistsManager: PlaylistManager;
   toast: SeedBibleState["app"]["toast"];
 }) {
-  const { followed, playlists, playlistsManager, toast } = props;
+  const { friend, playlists, playlistsManager, toast } = props;
   const { t } = useI18n();
 
   const displayName =
-    followed.name?.trim() ||
+    friend.name?.trim() ||
     t("follow-unnamed-user", {
-      id: followed.userId.slice(0, 8),
+      id: friend.userId.slice(0, 8),
       defaultValue: "User {{id}}",
     });
 
   return (
-    <li className="sb-followed-playlists-group">
-      <div className="sb-followed-playlists-group-header">
+    <li className="sb-friend-playlists-group">
+      <div className="sb-friend-playlists-group-header">
         <Avatar
-          imageUrl={followed.pictureUrl ?? null}
-          visual={getUserAnimalVisual(followed.userId)}
+          imageUrl={friend.pictureUrl}
+          visual={getUserAnimalVisual(friend.userId)}
           title={displayName}
         />
-        <span className="sb-followed-playlists-group-name">{displayName}</span>
+        <span className="sb-friend-playlists-group-name">{displayName}</span>
       </div>
       <ul className="sb-discover-list">
         {playlists.map((playlist) => (
@@ -743,152 +732,5 @@ function FollowedPlaylistGroup(props: {
         ))}
       </ul>
     </li>
-  );
-}
-
-/**
- * Builds the shareable link that lets someone follow the given account.
- * Mirrors the `?playlist=` locator links produced by `PlaylistManager`.
- */
-function getFollowUrl(userId: string, origin?: string): string {
-  const base =
-    origin ?? (typeof window !== "undefined" ? window.location.origin : "");
-  return `${base}/?follow=${encodeURIComponent(userId)}`;
-}
-
-function FollowRow(props: {
-  user: FollowedUser;
-  onUnfollow: (userId: string) => Promise<void>;
-}) {
-  const { t } = useI18n();
-  const isRemoving = useSignal(false);
-
-  const displayName =
-    props.user.name?.trim() ||
-    t("follow-unnamed-user", {
-      id: props.user.userId.slice(0, 8),
-      defaultValue: "User {{id}}",
-    });
-
-  return (
-    <li className="sb-following-row">
-      <Avatar
-        imageUrl={props.user.pictureUrl ?? null}
-        visual={getUserAnimalVisual(props.user.userId)}
-        title={displayName}
-      />
-      <span className="sb-following-name">{displayName}</span>
-      <button
-        type="button"
-        className="sb-following-unfollow"
-        disabled={isRemoving.value}
-        aria-label={t("unfollow-user", {
-          name: displayName,
-          defaultValue: "Unfollow {{name}}",
-        })}
-        onClick={() => {
-          isRemoving.value = true;
-          void props.onUnfollow(props.user.userId).finally(() => {
-            isRemoving.value = false;
-          });
-        }}
-      >
-        {t("unfollow", { defaultValue: "Unfollow" })}
-      </button>
-    </li>
-  );
-}
-
-/**
- * The accounts the signed-in user follows: a share-my-link CTA, plus the
- * followed list with unfollow. Always renders something (a sign-in prompt,
- * loading, empty, or the list) rather than returning `null` like
- * `FollowedPlaylistsSection` — this is the primary surface for the follow
- * feature itself, not a secondary "also see this" list.
- */
-function FollowingSection(props: {
-  follows: FollowsManager;
-  login: LoginManager;
-}) {
-  const { t } = useI18n();
-  const copied = useSignal(false);
-
-  // Profile snapshots stored alongside each follow go stale as people rename
-  // themselves or change their picture. Refresh once when this section mounts
-  // (i.e. once per time Discover is opened) — this is the only surface that
-  // shows the whole list at once.
-  useEffect(() => {
-    void props.follows.refreshProfiles();
-  }, []);
-
-  const userId = props.login.userId.value;
-  const following = props.follows.following.value;
-
-  const copyMyLink = async () => {
-    if (!userId) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(getFollowUrl(userId));
-      copied.value = true;
-      setTimeout(() => {
-        copied.value = false;
-      }, 2000);
-    } catch (err) {
-      console.error("Failed to copy the follow link:", err);
-    }
-  };
-
-  return (
-    <DiscoverSection title={t("following", { defaultValue: "Following" })}>
-      {userId && (
-        <div className="sb-following-share">
-          <p className="sb-following-share-text">
-            {t("following-share-description", {
-              defaultValue:
-                "Share this link so other people can follow you and see your highlights, playlists, and reading activity.",
-            })}
-          </p>
-          <button
-            type="button"
-            className="sb-following-share-button"
-            onClick={() => void copyMyLink()}
-          >
-            {copied.value
-              ? t("copied", { defaultValue: "Copied" })
-              : t("following-copy-my-link", {
-                  defaultValue: "Copy my follow link",
-                })}
-          </button>
-        </div>
-      )}
-
-      {!userId ? (
-        <DiscoverEmpty
-          text={t("following-signed-out", {
-            defaultValue: "Sign in to follow other people.",
-          })}
-        />
-      ) : props.follows.isLoading.value && following.length === 0 ? (
-        <DiscoverEmpty text={t("loading", { defaultValue: "Loading…" })} />
-      ) : following.length === 0 ? (
-        <DiscoverEmpty
-          text={t("following-empty", {
-            defaultValue:
-              "You aren't following anyone yet. Open someone's follow link, or follow people you're reading with in a shared session.",
-          })}
-        />
-      ) : (
-        <ul className="sb-following-list">
-          {following.map((user) => (
-            <FollowRow
-              key={user.userId}
-              user={user}
-              onUnfollow={props.follows.unfollow}
-            />
-          ))}
-        </ul>
-      )}
-    </DiscoverSection>
   );
 }

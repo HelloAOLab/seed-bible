@@ -8,9 +8,9 @@ import type {
   UserProfile,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type {
-  FollowedUser,
-  FollowsManager,
-} from "@packages/seed-bible/seed-bible/managers/FollowsManager";
+  Friend,
+  FriendsManager,
+} from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
@@ -66,19 +66,13 @@ function createMockRemoteClients() {
   };
 }
 
-function makeFollows(initial: FollowedUser[] = []) {
-  const following = signal<FollowedUser[]>(initial);
+function makeFriends(initial: Friend[] = []) {
+  const friendList = signal<Friend[]>(initial);
   const manager = {
-    following,
-    followingIds: computed(() => following.value.map((f) => f.userId)),
-    isFollowing: (userId: string) =>
-      computed(() => following.value.some((f) => f.userId === userId)),
-    follow: vi.fn(),
-    unfollow: vi.fn(),
-    refreshProfiles: vi.fn(),
-    isLoading: computed(() => false),
-  } as unknown as FollowsManager;
-  return { manager, following };
+    friends: friendList,
+    friendIds: computed(() => friendList.value.map((f) => f.userId)),
+  } as unknown as FriendsManager;
+  return { manager, friendList };
 }
 
 function makeLogin(userId: string | null = null) {
@@ -133,29 +127,29 @@ describe("InvitationsManager", () => {
     // the background. That surfaced as unrelated uncaught exceptions across the
     // whole suite. The registry must stay closed until there is something to
     // gain from opening it.
-    it("does not open while signed out, even with follows", async () => {
-      const { manager: follows } = makeFollows([
-        { userId: "other-1", followedAtMs: 1, name: null, pictureUrl: null },
+    it("does not open while signed out, even with friends", async () => {
+      const { manager: friends } = makeFriends([
+        { userId: "other-1", name: null, pictureUrl: null },
       ]);
-      createInvitationsManager(os, makeLogin(null), follows, vi.fn());
+      createInvitationsManager(os, makeLogin(null), friends, vi.fn());
       await flushPromises();
 
       expect(getSharedDocumentMock).not.toHaveBeenCalled();
     });
 
-    it("does not open while signed in but following nobody", async () => {
-      const { manager: follows } = makeFollows([]);
-      createInvitationsManager(os, makeLogin("me"), follows, vi.fn());
+    it("does not open while signed in with no friends", async () => {
+      const { manager: friends } = makeFriends([]);
+      createInvitationsManager(os, makeLogin("me"), friends, vi.fn());
       await flushPromises();
 
       expect(getSharedDocumentMock).not.toHaveBeenCalled();
     });
 
-    it("opens once signed in and following at least one account", async () => {
-      const { manager: follows } = makeFollows([
-        { userId: "other-1", followedAtMs: 1, name: null, pictureUrl: null },
+    it("opens once signed in with at least one friend", async () => {
+      const { manager: friends } = makeFriends([
+        { userId: "other-1", name: null, pictureUrl: null },
       ]);
-      createInvitationsManager(os, makeLogin("me"), follows, vi.fn());
+      createInvitationsManager(os, makeLogin("me"), friends, vi.fn());
       await flushPromises();
 
       expect(getSharedDocumentMock).toHaveBeenCalledWith(
@@ -165,25 +159,23 @@ describe("InvitationsManager", () => {
       );
     });
 
-    it("opens once a signed-in user with no follows later follows someone", async () => {
-      const { manager: follows, following } = makeFollows([]);
-      createInvitationsManager(os, makeLogin("me"), follows, vi.fn());
+    it("opens once a signed-in user with no friends gains one", async () => {
+      const { manager: friends, friendList } = makeFriends([]);
+      createInvitationsManager(os, makeLogin("me"), friends, vi.fn());
       await flushPromises();
       expect(getSharedDocumentMock).not.toHaveBeenCalled();
 
-      following.value = [
-        { userId: "other-1", followedAtMs: 1, name: null, pictureUrl: null },
-      ];
+      friendList.value = [{ userId: "other-1", name: null, pictureUrl: null }];
       await flushPromises();
 
       expect(getSharedDocumentMock).toHaveBeenCalledTimes(1);
     });
 
-    it("does not open when disabled, even signed in with follows", async () => {
-      const { manager: follows } = makeFollows([
-        { userId: "other-1", followedAtMs: 1, name: null, pictureUrl: null },
+    it("does not open when disabled, even signed in with friends", async () => {
+      const { manager: friends } = makeFriends([
+        { userId: "other-1", name: null, pictureUrl: null },
       ]);
-      createInvitationsManager(os, makeLogin("me"), follows, vi.fn(), {
+      createInvitationsManager(os, makeLogin("me"), friends, vi.fn(), {
         enabled: () => false,
       });
       await flushPromises();
@@ -191,12 +183,12 @@ describe("InvitationsManager", () => {
       expect(getSharedDocumentMock).not.toHaveBeenCalled();
     });
 
-    it("publishSession opens the registry even with no follows", async () => {
-      const { manager: follows } = makeFollows([]);
+    it("publishSession opens the registry even with no friends", async () => {
+      const { manager: friends } = makeFriends([]);
       const manager = createInvitationsManager(
         os,
         makeLogin("host"),
-        follows,
+        friends,
         vi.fn()
       );
 
@@ -211,42 +203,41 @@ describe("InvitationsManager", () => {
   });
 
   describe("filtering available sessions", () => {
-    it("surfaces only sessions hosted by someone the user follows, excluding self and dismissed entries", async () => {
-      const { manager: follows } = makeFollows([
+    it("surfaces only sessions hosted by a friend, excluding self and dismissed entries", async () => {
+      const { manager: friends } = makeFriends([
         {
-          userId: "followed-host",
-          followedAtMs: 1,
+          userId: "friend-host",
           name: null,
           pictureUrl: null,
         },
       ]);
       const login = makeLogin("me");
-      const manager = createInvitationsManager(os, login, follows, vi.fn());
+      const manager = createInvitationsManager(os, login, friends, vi.fn());
       await flushPromises();
 
       mockRemoteClients.emit({
         type: "client_connected",
-        client: { connectionId: "conn-followed" },
+        client: { connectionId: "conn-friend" },
       });
       mockRemoteClients.emit({
         type: "client_connected",
-        client: { connectionId: "conn-unfollowed" },
+        client: { connectionId: "conn-stranger" },
       });
       mockRemoteClients.emit({
         type: "client_connected",
         client: { connectionId: "conn-self" },
       });
 
-      mockMap.set("session-followed", {
-        sessionId: "session-followed",
-        hostUserId: "followed-host",
-        hostConnectionId: "conn-followed",
+      mockMap.set("session-friend", {
+        sessionId: "session-friend",
+        hostUserId: "friend-host",
+        hostConnectionId: "conn-friend",
         publishedAt: 100,
       });
-      mockMap.set("session-unfollowed", {
-        sessionId: "session-unfollowed",
-        hostUserId: "unfollowed-host",
-        hostConnectionId: "conn-unfollowed",
+      mockMap.set("session-stranger", {
+        sessionId: "session-stranger",
+        hostUserId: "stranger-host",
+        hostConnectionId: "conn-stranger",
         publishedAt: 200,
       });
       mockMap.set("session-self", {
@@ -257,15 +248,14 @@ describe("InvitationsManager", () => {
       });
 
       expect(manager.availableSessions.value.map((s) => s.sessionId)).toEqual([
-        "session-followed",
+        "session-friend",
       ]);
     });
 
     it("hides an entry whose host is no longer connected", async () => {
-      const { manager: follows } = makeFollows([
+      const { manager: friends } = makeFriends([
         {
-          userId: "followed-host",
-          followedAtMs: 1,
+          userId: "friend-host",
           name: null,
           pictureUrl: null,
         },
@@ -273,14 +263,14 @@ describe("InvitationsManager", () => {
       const manager = createInvitationsManager(
         os,
         makeLogin("me"),
-        follows,
+        friends,
         vi.fn()
       );
       await flushPromises();
 
       mockMap.set("session-1", {
         sessionId: "session-1",
-        hostUserId: "followed-host",
+        hostUserId: "friend-host",
         hostConnectionId: "conn-1",
         publishedAt: 100,
       });
@@ -305,10 +295,9 @@ describe("InvitationsManager", () => {
     });
 
     it("dismissAvailableSession hides an entry for this client only", async () => {
-      const { manager: follows } = makeFollows([
+      const { manager: friends } = makeFriends([
         {
-          userId: "followed-host",
-          followedAtMs: 1,
+          userId: "friend-host",
           name: null,
           pictureUrl: null,
         },
@@ -316,7 +305,7 @@ describe("InvitationsManager", () => {
       const manager = createInvitationsManager(
         os,
         makeLogin("me"),
-        follows,
+        friends,
         vi.fn()
       );
       await flushPromises();
@@ -327,7 +316,7 @@ describe("InvitationsManager", () => {
       });
       mockMap.set("session-1", {
         sessionId: "session-1",
-        hostUserId: "followed-host",
+        hostUserId: "friend-host",
         hostConnectionId: "conn-1",
         publishedAt: 100,
       });
@@ -338,11 +327,10 @@ describe("InvitationsManager", () => {
       expect(manager.availableSessions.value).toEqual([]);
     });
 
-    it("re-filters when the follow list changes without a registry change", async () => {
-      const { manager: follows, following } = makeFollows([
+    it("re-filters when the friends list changes without a registry change", async () => {
+      const { manager: friends, friendList } = makeFriends([
         {
-          userId: "followed-host",
-          followedAtMs: 1,
+          userId: "friend-host",
           name: null,
           pictureUrl: null,
         },
@@ -350,7 +338,7 @@ describe("InvitationsManager", () => {
       const manager = createInvitationsManager(
         os,
         makeLogin("me"),
-        follows,
+        friends,
         vi.fn()
       );
       await flushPromises();
@@ -361,24 +349,24 @@ describe("InvitationsManager", () => {
       });
       mockMap.set("session-1", {
         sessionId: "session-1",
-        hostUserId: "followed-host",
+        hostUserId: "friend-host",
         hostConnectionId: "conn-1",
         publishedAt: 100,
       });
       expect(manager.availableSessions.value).toHaveLength(1);
 
-      following.value = [];
+      friendList.value = [];
       expect(manager.availableSessions.value).toEqual([]);
     });
   });
 
   describe("publishSession / unpublishSession", () => {
     it("publishes under the signed-in user's id", async () => {
-      const { manager: follows } = makeFollows([]);
+      const { manager: friends } = makeFriends([]);
       const manager = createInvitationsManager(
         os,
         makeLogin("host-1"),
-        follows,
+        friends,
         vi.fn()
       );
 
@@ -391,11 +379,11 @@ describe("InvitationsManager", () => {
     });
 
     it("falls back to the connection id when signed out", async () => {
-      const { manager: follows } = makeFollows([]);
+      const { manager: friends } = makeFriends([]);
       const manager = createInvitationsManager(
         os,
         makeLogin(null),
-        follows,
+        friends,
         vi.fn()
       );
 
@@ -408,11 +396,11 @@ describe("InvitationsManager", () => {
     });
 
     it("removes the entry on unpublish", async () => {
-      const { manager: follows } = makeFollows([]);
+      const { manager: friends } = makeFriends([]);
       const manager = createInvitationsManager(
         os,
         makeLogin("host-1"),
-        follows,
+        friends,
         vi.fn()
       );
 
@@ -427,11 +415,11 @@ describe("InvitationsManager", () => {
   describe("joinAvailableSession", () => {
     it("calls the join callback with the session id", async () => {
       const onJoin = vi.fn();
-      const { manager: follows } = makeFollows([]);
+      const { manager: friends } = makeFriends([]);
       const manager = createInvitationsManager(
         os,
         makeLogin("me"),
-        follows,
+        friends,
         onJoin
       );
 
@@ -448,10 +436,9 @@ describe("InvitationsManager", () => {
 
   describe("dispose", () => {
     it("stops surfacing sessions and does not throw on further registry changes", async () => {
-      const { manager: follows } = makeFollows([
+      const { manager: friends } = makeFriends([
         {
-          userId: "followed-host",
-          followedAtMs: 1,
+          userId: "friend-host",
           name: null,
           pictureUrl: null,
         },
@@ -459,7 +446,7 @@ describe("InvitationsManager", () => {
       const manager = createInvitationsManager(
         os,
         makeLogin("me"),
-        follows,
+        friends,
         vi.fn()
       );
       await flushPromises();
@@ -469,7 +456,7 @@ describe("InvitationsManager", () => {
       expect(() =>
         mockMap.set("session-1", {
           sessionId: "session-1",
-          hostUserId: "followed-host",
+          hostUserId: "friend-host",
           hostConnectionId: "conn-1",
           publishedAt: 100,
         })

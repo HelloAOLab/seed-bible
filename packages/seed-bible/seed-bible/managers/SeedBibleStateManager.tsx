@@ -74,7 +74,7 @@ import type {
   TabsLayoutManager,
 } from "../managers/TabsLayoutManager";
 import { createLoginManager } from "../managers/LoginManager";
-import type { LoginManager, UserProfile } from "../managers/LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 import { createSidebar } from "../managers/SidebarManager";
 import { createTabs } from "../managers/TabsManager";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
@@ -131,9 +131,9 @@ import {
   type SavesManager,
 } from "../managers/SavesManager";
 import {
-  createFollowsManager,
-  type FollowsManager,
-} from "../managers/FollowsManager";
+  createFriendsManager,
+  type FriendsManager,
+} from "../managers/FriendsManager";
 import {
   createChatsManager,
   type ChatSession,
@@ -439,11 +439,11 @@ export interface SeedBibleState {
   /** Archival saves manager: categorized references to chapters and verses. */
   saves: SavesManager;
   /**
-   * The set of accounts the signed-in user follows. Following is asymmetric
-   * and unlocks reads of those accounts' already-public highlights, playlists,
-   * and reading history.
+   * The signed-in user's friends and pending friend requests. A friendship is
+   * a mutual shared permission; for now it only decides whose already-public
+   * highlights, notes, playlists, reading plans and reading history are shown.
    */
-  follows: FollowsManager;
+  friends: FriendsManager;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Chat session manager for in-app chat state. */
@@ -676,7 +676,7 @@ export function createSeedBibleState(
     confirmAdoption: (owner) => askToAdopt(owner, "highlights"),
   });
   const saves = createSavesManager(os, login);
-  const follows = createFollowsManager(os, login);
+  const friends = createFriendsManager(os, login);
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
@@ -2483,7 +2483,7 @@ export function createSeedBibleState(
   const invitations = createInvitationsManager(
     os,
     login,
-    follows,
+    friends,
     async (sessionId) => {
       await handleJoinSharedSession(sessionId);
     },
@@ -2505,70 +2505,6 @@ export function createSeedBibleState(
     }
 
     await handleJoinSharedSession(initialSessionId);
-  };
-
-  /**
-   * Handles a `?follow=<userId>` link by asking the user to confirm.
-   *
-   * Never follows automatically: the link can come from anywhere, and writing
-   * to the user's follow list without showing them whose account it is would
-   * turn any link into a silent subscription. The param is cleared either way
-   * so a reload doesn't re-prompt.
-   */
-  const setupInitialFollow = async () => {
-    // Needs the network (to resolve the profile) and a modal — neither exists
-    // during SSR.
-    if (typeof window === "undefined") {
-      return;
-    }
-    const followUserId = navigation.currentUrl.value.searchParams
-      .get("follow")
-      ?.trim();
-    if (!followUserId) {
-      return;
-    }
-
-    navigation.updateQueryParam("follow", null);
-
-    if (followUserId === login.userId.value) {
-      return;
-    }
-
-    // A profile that fails to load isn't a reason to abort — the account may
-    // simply never have set one. Show the prompt with whatever we have.
-    let profile: UserProfile | null = null;
-    try {
-      profile = await login.getUserProfile(followUserId);
-    } catch (error) {
-      console.warn("Could not load the profile for a follow link:", error);
-    }
-
-    const modalId = `follow-prompt-${followUserId}`;
-    const { FollowPrompt } =
-      await import("../components/FollowingPane/FollowPrompt");
-
-    modals.openModal({
-      id: modalId,
-      title: { key: "follow", defaultValue: "Follow" },
-      content: () => (
-        <FollowPrompt
-          userId={followUserId}
-          profile={profile}
-          onConfirm={async () => {
-            await follows.follow(followUserId);
-            modals.closeModal(modalId);
-            const { t } = i18n;
-            toast(
-              t("following-user-toast", {
-                name: profile?.name?.trim() || followUserId.slice(0, 8),
-                defaultValue: "Following {{name}}",
-              })
-            );
-          }}
-          onCancel={() => modals.closeModal(modalId)}
-        />
-      ),
-    });
   };
 
   // Tell the user when we signed them out for them. `login.sessionEnded` only fires
@@ -2811,8 +2747,6 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
-  void setupInitialFollow();
-
   // A shared `?readingPlan=` link loads the plan, then opens the pane once a
   // reading tab is actually there. The tab is usually ready after the network
   // round-trip, but if it isn't yet this waits rather than selecting the plan
@@ -2834,7 +2768,7 @@ export function createSeedBibleState(
       panesManager: panes,
       modals,
       playlists,
-      follows,
+      friends,
       os,
       login,
       gallery,
@@ -2881,7 +2815,7 @@ export function createSeedBibleState(
   const today = createTodayManager({
     os,
     login,
-    follows,
+    friends,
     navigation,
     search,
     bibleData: data,
@@ -2909,7 +2843,7 @@ export function createSeedBibleState(
     readingHistory,
     highlights,
     saves,
-    follows,
+    friends,
     annotations,
     chats,
     sessions,
@@ -3156,7 +3090,7 @@ export function createSeedBibleState(
       panesManager: panes,
       modals,
       playlists,
-      follows,
+      friends,
       os,
       login,
       gallery,

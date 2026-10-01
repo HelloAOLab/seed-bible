@@ -261,7 +261,7 @@ function createMobileState(): SeedBibleState {
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
-    follows: { following: signal([]), followingIds: signal([]) },
+    friends: { friends: signal([]), friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
       pendingCountForChapter: vi.fn(() => 0),
@@ -308,7 +308,7 @@ function createDesktopState(): SeedBibleState {
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
-    follows: { following: signal([]), followingIds: signal([]) },
+    friends: { friends: signal([]), friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
       pendingCountForChapter: vi.fn(() => 0),

@@ -144,7 +144,7 @@ function createMockState(
     panes: { closeFullscreenPanes: vi.fn() },
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
-    follows: { following: signal([]), followingIds: signal([]) },
+    friends: { friends: signal([]), friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])

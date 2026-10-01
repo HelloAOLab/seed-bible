@@ -2,7 +2,7 @@ import { effect, signal, type Signal } from "@preact/signals";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { CasualOSManager } from "./OsManager";
-import type { FollowsManager } from "./FollowsManager";
+import type { FriendsManager } from "./FriendsManager";
 import type {
   SharedDocument,
   SharedMap,
@@ -36,8 +36,8 @@ interface StoredRegistryEntry {
 
 export interface InvitationsManager {
   /**
-   * Shared sessions currently published by people the user follows.
-   * When someone they follow creates a shared tab, it auto-appears here.
+   * Shared sessions currently published by the user's friends.
+   * When a friend creates a shared tab, it auto-appears here.
    */
   availableSessions: Signal<AvailableSharedSession[]>;
   /** Publish a newly-created shared session into the global registry. */
@@ -91,7 +91,7 @@ function parseStoredEntry(value: unknown): StoredRegistryEntry | null {
  *   every logged-in client. Its `sessions` map holds `{ sessionId, hostUserId,
  *   publishedAt }` entries keyed by session id.
  * - When a user creates a shared session, `publishSession()` writes an entry;
- *   clients that follow them see it live and can click to join.
+ *   their friends see it live and can click to join.
  * - `unpublishSession()` removes the entry (typically called when the session
  *   tab is closed / disposed).
  *
@@ -99,26 +99,26 @@ function parseStoredEntry(value: unknown): StoredRegistryEntry | null {
  * and joining IS the acceptance.
  *
  * **The registry document is global** — every client writes to and reads from
- * the same doc, so an entry is visible to everyone. What the follow list
+ * the same doc, so an entry is visible to everyone. What the friends list
  * controls is which entries this client will *surface*: `applyEntries` keeps
- * only sessions hosted by someone the user follows. Without that filter this
+ * only sessions hosted by a friend. Without that filter this
  * manager would notify every user about every session in the app, which is why
  * it was previously disabled.
  *
  * The registry is only opened (a live WebSocket) once the user is signed in
- * and follows at least one account — with no follows, every entry would be
+ * and has at least one friend — with no friends, every entry would be
  * filtered out anyway, so there's nothing to gain from connecting.
  */
 export function createInvitationsManager(
   os: CasualOSManager,
   login: LoginManager,
-  follows: FollowsManager,
+  friends: FriendsManager,
   onJoin: OnJoinSharedSession,
   options?: {
     /**
      * When false, the registry document is never opened and no sessions are
      * ever surfaced. Lets the feature be switched off independently of the
-     * follow list, since opening the registry costs a shared document on every
+     * friends list, since opening the registry costs a shared document on every
      * client.
      */
     enabled?: () => boolean;
@@ -155,7 +155,7 @@ export function createInvitationsManager(
   const applyEntries = (entries: StoredRegistryEntry[]) => {
     const currentUserId = login.userId.value;
     const currentConnectionId = os.connectionId;
-    const followedIds = new Set(follows.followingIds.value);
+    const friendIds = new Set(friends.friendIds.value);
 
     const filtered = entries.filter(
       (entry) =>
@@ -166,7 +166,7 @@ export function createInvitationsManager(
         entry.hostUserId !== currentConnectionId &&
         // The registry is global, so this is what keeps it from broadcasting
         // every session in the app to every user.
-        followedIds.has(entry.hostUserId) &&
+        friendIds.has(entry.hostUserId) &&
         !locallyDismissed.has(entry.sessionId) &&
         // Only show entries whose host is currently connected. This means
         // notifications only fire when a user is actually live in their
@@ -185,14 +185,14 @@ export function createInvitationsManager(
 
   const refreshProfiles = async (entries: StoredRegistryEntry[]) => {
     const version = ++profileRefreshVersion;
-    // Only the hosts that survive the follow filter are worth a profile
+    // Only the hosts that survive the friends filter are worth a profile
     // request — the rest are never rendered.
-    const followedIds = new Set(follows.followingIds.peek());
+    const friendIds = new Set(friends.friendIds.peek());
     const uniqueIds = Array.from(
       new Set(
         entries
           .map((entry) => entry.hostUserId)
-          .filter((id) => followedIds.has(id))
+          .filter((id) => friendIds.has(id))
       )
     );
 
@@ -265,26 +265,27 @@ export function createInvitationsManager(
     }
   };
 
-  // Re-filter when the signed-in account or the follow list changes, so
-  // following someone who is already hosting surfaces their session right away
-  // (and unfollowing hides it) without waiting for the next registry change.
+  // Re-filter when the signed-in account or the friends list changes, so
+  // becoming friends with someone who is already hosting surfaces their
+  // session right away (and unfriending hides it) without waiting for the next
+  // registry change.
   //
   // This is also what opens the registry document in the first place — but
-  // only once the user is signed in AND follows at least one account. With no
-  // follows, `applyEntries` would filter every entry out anyway, so there is
-  // nothing to gain from connecting; every signed-out/no-follows case (which
+  // only once the user is signed in AND has at least one friend. With no
+  // friends, `applyEntries` would filter every entry out anyway, so there is
+  // nothing to gain from connecting; every signed-out/no-friends case (which
   // includes most tests and most anonymous visits) never opens a live
   // WebSocket at all. Opening is one-way: once connected, it stays connected
-  // rather than disconnecting again if the follow list empties out.
+  // rather than disconnecting again if the friends list empties out.
   const stopAuthEffect = effect(() => {
     const userId = login.userId.value;
-    const hasFollows = follows.following.value.length > 0;
+    const hasFriends = friends.friendIds.value.length > 0;
     if (registryMap) {
       applyEntries(readStoredEntries());
     } else if (
       typeof window !== "undefined" &&
       userId &&
-      hasFollows &&
+      hasFriends &&
       isEnabled()
     ) {
       void openRegistry();

@@ -1,7 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { signal } from "@preact/signals";
-import type { FollowedUser } from "@packages/seed-bible/seed-bible/managers/FollowsManager";
+import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import { act } from "preact/test-utils";
 import { useReadingHistoryProvider } from "../../../../packages/scripture-map/contexts/ReadingHistory/useReadingHistoryProvider";
 import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
@@ -66,9 +66,9 @@ function makeContext(overrides: Record<string, unknown> = {}) {
     seedBibleState: {
       os: {},
       tabs: { selectedTabId: { value: "tab-1" } },
-      // Followed accounts are merged into `usersDataMap` alongside the
-      // connected users, so the provider always reads this signal.
-      follows: { following: signal<FollowedUser[]>([]) },
+      // Friends are merged into `usersDataMap` alongside the connected
+      // users, so the provider always reads this signal.
+      friends: { friends: signal<Friend[]>([]) },
     },
     seedBibleUtilsEventManager: { subscribe },
     getDayRangeSeconds: vi.fn((ms: number) => {
@@ -226,14 +226,13 @@ describe("useReadingHistoryProvider", () => {
       expect(result.current.usersDataMap.get("u2")?.configId).toBe("c-u2");
     });
 
-    it("includes followed accounts that are not currently online", async () => {
+    it("includes friends who are not currently online", async () => {
       getConnectedUsers.mockReturnValue([
         { authId: MY_AUTH_ID, configId: "c-me" },
       ]);
-      const follows = signal<FollowedUser[]>([
+      const friends = signal<Friend[]>([
         {
-          userId: "followed-1",
-          followedAtMs: Date.UTC(2026, 0, 1),
+          userId: "friend-1",
           name: "Ada",
           pictureUrl: null,
         },
@@ -243,29 +242,28 @@ describe("useReadingHistoryProvider", () => {
           seedBibleState: {
             os: {},
             tabs: { selectedTabId: { value: "tab-1" } },
-            follows: { following: follows },
+            friends: { friends },
           },
         })
       );
 
       const result = await setupAsync();
 
-      expect(result.current.usersDataMap.has("followed-1")).toBe(true);
-      expect(result.current.usersDataMap.get("followed-1")?.profile?.name).toBe(
+      expect(result.current.usersDataMap.has("friend-1")).toBe(true);
+      expect(result.current.usersDataMap.get("friend-1")?.profile?.name).toBe(
         "Ada"
       );
     });
 
-    it("prefers the live connected entry over the stored follow snapshot", async () => {
-      // A followed user who is also online should keep their presence details
-      // (configId and live profile) rather than being replaced by the snapshot.
+    it("prefers the live connected entry over the friend's loaded profile", async () => {
+      // A friend who is also online should keep their presence details
+      // (configId and live profile) rather than being replaced by the profile.
       getConnectedUsers.mockReturnValue([
-        { authId: "followed-1", configId: "c-live" },
+        { authId: "friend-1", configId: "c-live" },
       ]);
-      const follows = signal<FollowedUser[]>([
+      const friends = signal<Friend[]>([
         {
-          userId: "followed-1",
-          followedAtMs: Date.UTC(2026, 0, 1),
+          userId: "friend-1",
           name: "Stale Name",
           pictureUrl: null,
         },
@@ -275,7 +273,7 @@ describe("useReadingHistoryProvider", () => {
           seedBibleState: {
             os: {},
             tabs: { selectedTabId: { value: "tab-1" } },
-            follows: { following: follows },
+            friends: { friends },
           },
         })
       );
@@ -283,7 +281,7 @@ describe("useReadingHistoryProvider", () => {
       const result = await setupAsync();
 
       expect(result.current.usersDataMap.size).toBe(1);
-      expect(result.current.usersDataMap.get("followed-1")?.configId).toBe(
+      expect(result.current.usersDataMap.get("friend-1")?.configId).toBe(
         "c-live"
       );
     });

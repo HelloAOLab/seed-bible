@@ -8,7 +8,7 @@ import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
 import type { DiscoverManager } from "../../managers/DiscoverManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { LoginManager } from "../../managers/LoginManager";
-import type { FollowsManager } from "../../managers/FollowsManager";
+import type { FriendsManager } from "../../managers/FriendsManager";
 import {
   annotationVerseNumbers,
   annotationListHasOtherAuthors,
@@ -328,7 +328,7 @@ function AnnotationGroupSection(props: {
       {expanded.value ? (
         <ul className="sb-annotation-group-list">
           {group.annotations.map((annotation) => {
-            // Followed users' annotations can appear in this same list; only
+            // Friends' annotations can appear in this same list; only
             // the author may edit or delete their own annotation.
             const isOwnAnnotation =
               annotation.data.userId === login.userId.value;
@@ -436,7 +436,7 @@ export function AnnotationsSection(props: {
   modals: ModalManager;
   toast: SeedBibleState["app"]["toast"];
   login: LoginManager;
-  follows: FollowsManager;
+  friends: FriendsManager;
   tabs: TabsManager;
   discover: DiscoverManager;
   panes: PanesManager;
@@ -448,7 +448,7 @@ export function AnnotationsSection(props: {
     modals,
     toast,
     login,
-    follows,
+    friends,
     tabs,
     discover,
     panes,
@@ -554,17 +554,17 @@ export function AnnotationsSection(props: {
     bookId,
     chapterNumber
   ).value;
-  // Reading each followed user's view here (rather than only `followingIds`)
+  // Reading each friend's view here (rather than only `friendIds`)
   // subscribes this render to their annotations arriving, same as `.value`
   // above does for the signed-in user's own.
-  const followedAnnotations = follows.followingIds.value.flatMap(
+  const friendAnnotations = friends.friendIds.value.flatMap(
     (userId) =>
       annotations.getUserAnnotationsForChapter(userId, bookId, chapterNumber)
         .value
   );
   const chapterAnnotations = sortAnnotations([
     ...ownAnnotations,
-    ...followedAnnotations,
+    ...friendAnnotations,
   ]);
   const groups = groupAnnotationsByVerseRange(chapterAnnotations);
   const otherPeoplePresent = annotationListHasOtherAuthors(

@@ -172,20 +172,20 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
         })
       );
 
-      // People the user follows, on top of whoever happens to be online. Their
+      // The user's friends, on top of whoever happens to be online. Their
       // reading history is world-readable, so the timeline can show them
       // whether or not they're currently in a session. Added after the
       // connected users so a live entry (which carries presence details) wins
-      // over the stored follow snapshot for the same account.
-      for (const followed of seedBibleState.follows.following.value) {
-        if (newUsersData.has(followed.userId)) {
+      // over the friend's loaded profile for the same account.
+      for (const friend of seedBibleState.friends.friends.value) {
+        if (newUsersData.has(friend.userId)) {
           continue;
         }
-        newUsersData.set(followed.userId, {
-          authId: followed.userId,
+        newUsersData.set(friend.userId, {
+          authId: friend.userId,
           profile: {
-            name: followed.name ?? "",
-            pictureUrl: followed.pictureUrl ?? null,
+            name: friend.name ?? "",
+            pictureUrl: friend.pictureUrl,
           },
         });
       }
@@ -217,11 +217,12 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
     };
   }, [refreshUsersDataMap]);
 
-  // Following or unfollowing someone changes who belongs on the timeline.
-  // `fetchUsersDataMap` is a `useCallback` keyed on the user id, so it can't
-  // notice that on its own — reading the follow signal here is what re-runs it.
+  // Gaining or losing a friend (or a friend's profile loading) changes who
+  // belongs on the timeline. `fetchUsersDataMap` is a `useCallback` keyed on
+  // the user id, so it can't notice that on its own — reading the friends
+  // signal here is what re-runs it.
   useSignalEffect(() => {
-    void seedBibleState.follows.following.value;
+    void seedBibleState.friends.friends.value;
     void refreshUsersDataMap();
   });
 

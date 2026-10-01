@@ -22,10 +22,7 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
-import type {
-  FollowedUser,
-  FollowsManager,
-} from "../../managers/FollowsManager";
+import type { Friend, FriendsManager } from "../../managers/FriendsManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
 import type { CasualOSManager } from "../../managers/OsManager";
@@ -39,10 +36,10 @@ import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
   /**
-   * Powers the "Reading plans from people you follow" section. Without it
-   * the section is omitted entirely.
+   * Powers the "Reading plans from your friends" section. Without it the
+   * section is omitted entirely.
    */
-  follows?: FollowsManager;
+  friends?: FriendsManager;
   /** Books of the active translation, for the scripture typeahead + labels. */
   books: TranslationBook[];
   /** Modals host, for previewing/opening a text or link reading. */
@@ -270,7 +267,7 @@ export function ReadingPlansPaneActions(props: {
 export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   const {
     readingPlans,
-    follows,
+    friends,
     books,
     modals,
     os,
@@ -371,7 +368,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   return (
     <ReadingPlansList
       readingPlans={readingPlans}
-      follows={follows}
+      friends={friends}
       books={books}
       onOpen={(plan) => void openPlanDetail(readingPlans, plan)}
       onEdit={(plan) => void editPlan(plan)}
@@ -393,10 +390,10 @@ interface PlanRow {
 interface ReadingPlansListProps {
   readingPlans: ReadingPlansManager;
   /**
-   * Powers the "Reading plans from people you follow" section. Omitted
-   * entirely when not provided.
+   * Powers the "Reading plans from your friends" section. Omitted entirely
+   * when not provided.
    */
-  follows?: FollowsManager;
+  friends?: FriendsManager;
   books: TranslationBook[];
   onOpen: (plan: ReadingPlanMetadata) => void;
   onEdit: (plan: ReadingPlanMetadata) => void;
@@ -427,7 +424,7 @@ function dayReadingsLabel(
 }
 
 function ReadingPlansList(props: ReadingPlansListProps) {
-  const { readingPlans, follows, books, onOpen, onEdit, onRestart, toast } =
+  const { readingPlans, friends, books, onOpen, onEdit, onRestart, toast } =
     props;
   const { t } = useI18n();
   // Deleting a plan erases it for good, so the button asks once first rather
@@ -829,10 +826,10 @@ function ReadingPlansList(props: ReadingPlansListProps) {
           ) : null}
         </div>
       )}
-      {follows ? (
-        <FollowedReadingPlansSection
+      {friends ? (
+        <FriendReadingPlansSection
           readingPlans={readingPlans}
-          follows={follows}
+          friends={friends}
           books={books}
           onOpen={onOpen}
           openingId={openingId}
@@ -843,35 +840,35 @@ function ReadingPlansList(props: ReadingPlansListProps) {
 }
 
 /**
- * Reading plans people the signed-in user follows are currently going
- * through — one section per followed account, showing their own progress.
- * A followed row always has a progress record (that's how it was found), so
- * it's always "active" or "completed", never "not started" — there is
- * nothing to bucket. Renders nothing when no followed account has any
- * resolvable progress, mirroring `FollowedPlaylistsSection`'s reasoning:
+ * Reading plans the signed-in user's friends are currently going through —
+ * one section per friend, showing their own progress. A friend's row always
+ * has a progress record (that's how it was found), so it's always "active"
+ * or "completed", never "not started" — there is nothing to bucket. Renders
+ * nothing when no friend has any resolvable progress, mirroring
+ * `FriendPlaylistsSection`'s reasoning:
  * there's no create-one call-to-action to fall back on for someone else's
  * reading.
  */
-function FollowedReadingPlansSection(props: {
+function FriendReadingPlansSection(props: {
   readingPlans: ReadingPlansManager;
-  follows: FollowsManager;
+  friends: FriendsManager;
   books: TranslationBook[];
   onOpen: (plan: ReadingPlanMetadata) => void;
   openingId: string | null;
 }) {
-  const { readingPlans, follows, books, onOpen, openingId } = props;
+  const { readingPlans, friends, books, onOpen, openingId } = props;
   const { t } = useI18n();
   const nowMs = Date.now();
 
-  // Reading each followed user's progress view (and each resolved plan's
-  // `.value`) here — not just `followingIds` — subscribes this render to
+  // Reading each friend's progress view (and each resolved plan's
+  // `.value`) here — not just `friendIds` — subscribes this render to
   // their data arriving as it settles.
-  const groups = follows.following.value
-    .map((followed) => {
+  const groups = friends.friends.value
+    .map((friend) => {
       const progresses = readingPlans.getUserReadingPlanProgresses(
-        followed.userId
+        friend.userId
       ).value;
-      const rows: FollowedReadingPlanRow[] = [];
+      const rows: FriendReadingPlanRow[] = [];
       for (const progress of progresses) {
         const locator = parseReadingPlanId(progress.planId);
         if (!locator) {
@@ -891,7 +888,7 @@ function FollowedReadingPlansSection(props: {
         );
         rows.push({ full, progress, planId: progress.planId, summary });
       }
-      return { followed, rows };
+      return { friend, rows };
     })
     .filter((group) => group.rows.length > 0);
 
@@ -906,11 +903,11 @@ function FollowedReadingPlansSection(props: {
       })}
       count={groups.reduce((sum, group) => sum + group.rows.length, 0)}
     >
-      <ul className="sb-rp-followed-groups">
+      <ul className="sb-rp-friend-groups">
         {groups.map((group) => (
-          <FollowedReadingPlanGroup
-            key={group.followed.userId}
-            followed={group.followed}
+          <FriendReadingPlanGroup
+            key={group.friend.userId}
+            friend={group.friend}
             rows={group.rows}
             books={books}
             onOpen={onOpen}
@@ -923,40 +920,40 @@ function FollowedReadingPlansSection(props: {
   );
 }
 
-interface FollowedReadingPlanRow {
+interface FriendReadingPlanRow {
   full: ReadingPlan;
   progress: ReadingPlanProgress;
   planId: string;
   summary: CalendarSummary;
 }
 
-/** One followed account's in-progress reading plans: an avatar/name header plus its cards. */
-function FollowedReadingPlanGroup(props: {
-  followed: FollowedUser;
-  rows: FollowedReadingPlanRow[];
+/** One friend's in-progress reading plans: an avatar/name header plus its cards. */
+function FriendReadingPlanGroup(props: {
+  friend: Friend;
+  rows: FriendReadingPlanRow[];
   books: TranslationBook[];
   onOpen: (plan: ReadingPlanMetadata) => void;
   openingId: string | null;
   t: ReturnType<typeof useI18n>["t"];
 }) {
-  const { followed, rows, books, onOpen, openingId, t } = props;
+  const { friend, rows, books, onOpen, openingId, t } = props;
 
   const displayName =
-    followed.name?.trim() ||
+    friend.name?.trim() ||
     t("follow-unnamed-user", {
-      id: followed.userId.slice(0, 8),
+      id: friend.userId.slice(0, 8),
       defaultValue: "User {{id}}",
     });
 
   return (
-    <li className="sb-rp-followed-group">
-      <div className="sb-rp-followed-group-header">
+    <li className="sb-rp-friend-group">
+      <div className="sb-rp-friend-group-header">
         <Avatar
-          imageUrl={followed.pictureUrl ?? null}
-          visual={getUserAnimalVisual(followed.userId)}
+          imageUrl={friend.pictureUrl}
+          visual={getUserAnimalVisual(friend.userId)}
           title={displayName}
         />
-        <span className="sb-rp-followed-group-name">{displayName}</span>
+        <span className="sb-rp-friend-group-name">{displayName}</span>
       </div>
       <div className="sb-rp-section-cards">
         {rows.map((row) => (
@@ -995,8 +992,8 @@ function PlanSection(props: {
 
 function ActivePlanCard(props: {
   // Only `summary`/`progress` and the plan's image and description are read
-  // below, so this accepts both an owned plan's full `PlanRow` and a followed
-  // plan's row (see `FollowedReadingPlanRow`, which passes its full plan as
+  // below, so this accepts both an owned plan's full `PlanRow` and a friend's
+  // plan's row (see `FriendReadingPlanRow`, which passes its full plan as
   // `meta`) without either needing the other's fields (`planId`/`full`/`state`).
   row: Pick<PlanRow, "summary" | "progress"> & {
     meta: Pick<ReadingPlanMetadata, "heroImageUrl" | "description">;

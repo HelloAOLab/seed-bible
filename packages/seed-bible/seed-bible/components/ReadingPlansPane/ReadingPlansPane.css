@@ -151,7 +151,7 @@
   gap: 12px;
 }
 
-.sb-rp-followed-groups {
+.sb-rp-friend-groups {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -160,19 +160,19 @@
   gap: 16px;
 }
 
-.sb-rp-followed-group {
+.sb-rp-friend-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.sb-rp-followed-group-header {
+.sb-rp-friend-group-header {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.sb-rp-followed-group-name {
+.sb-rp-friend-group-name {
   font-size: 0.875rem;
   font-weight: 600;
   overflow: hidden;

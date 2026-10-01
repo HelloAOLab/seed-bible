@@ -6,7 +6,7 @@ import { SocialSection } from "@packages/seed-bible/seed-bible/components/TodayP
 import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { FilteredReading } from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
-import type { FollowedUser } from "@packages/seed-bible/seed-bible/managers/FollowsManager";
+import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import { todayStub, loginStub } from "../../testUtils/todayStubs";
 import { mockI18nState } from "../../testUtils/mockI18n";
 
@@ -80,11 +80,10 @@ vi.mock(
 
 const CURRENT_USER_ID = "user-1";
 
-function followedUser(overrides: Partial<FollowedUser> = {}): FollowedUser {
+function friend(overrides: Partial<Friend> = {}): Friend {
   return {
-    userId: "followed-1",
-    followedAtMs: Date.UTC(2026, 0, 1),
-    name: "Followed",
+    userId: "friend-1",
+    name: "Friend",
     pictureUrl: null,
     ...overrides,
   };
@@ -96,7 +95,7 @@ describe("SocialSection", () => {
   let onOpenPassage: Mock;
   let bookNames: Signal<Map<string, string>>;
   let translationBooksMap: Signal<Map<string, { numberOfChapters: number }>>;
-  let followedReaders: Signal<FollowedUser[]>;
+  let friendReaders: Signal<Friend[]>;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -106,7 +105,7 @@ describe("SocialSection", () => {
     onOpenPassage = vi.fn();
     bookNames = signal(new Map([["GEN", "Genesis"]]));
     translationBooksMap = signal(new Map([["GEN", { numberOfChapters: 3 }]]));
-    followedReaders = signal([]);
+    friendReaders = signal([]);
   });
 
   afterEach(() => {
@@ -125,7 +124,7 @@ describe("SocialSection", () => {
     const signedIn = options.signedIn ?? true;
     const today = todayStub({
       getCommunityReading,
-      followedReaders,
+      friendReaders,
       bookNames,
       translationBooksMap: translationBooksMap as never,
     });
@@ -241,7 +240,7 @@ describe("SocialSection", () => {
     });
 
     it("lists the signed-in reader alone, selected, with their colour", () => {
-      // Following nobody, so "community" is a party of one.
+      // No friends, so "community" is a party of one.
       setup();
       openUserFilter();
 
@@ -271,10 +270,10 @@ describe("SocialSection", () => {
       expect(filterOptions()[0]!.textContent).toBe("Anonymous");
     });
 
-    it("lists the accounts the user follows after the user, all selected", () => {
-      followedReaders.value = [
-        followedUser({ userId: "ada", name: "Ada" }),
-        followedUser({ userId: "bob", name: "Bob" }),
+    it("lists the user's friends after the user, all selected", () => {
+      friendReaders.value = [
+        friend({ userId: "ada", name: "Ada" }),
+        friend({ userId: "bob", name: "Bob" }),
       ];
       setup();
       openUserFilter();
@@ -288,42 +287,40 @@ describe("SocialSection", () => {
       }
     });
 
-    it("labels a followed account with no name by a short id", () => {
-      followedReaders.value = [
-        followedUser({ userId: "abcdef123456", name: null }),
-      ];
+    it("labels a friend with no name by a short id", () => {
+      friendReaders.value = [friend({ userId: "abcdef123456", name: null })];
       setup();
       openUserFilter();
 
       expect(filterOptions()[1]!.textContent).toBe("User abcdef12");
     });
 
-    it("adds and drops followed readers as the follow list changes", () => {
+    it("adds and drops friends as the friends list changes", () => {
       setup();
       openUserFilter();
       expect(filterOptions()).toHaveLength(1);
 
       act(() => {
-        followedReaders.value = [followedUser({ userId: "ada", name: "Ada" })];
+        friendReaders.value = [friend({ userId: "ada", name: "Ada" })];
       });
       expect(filterOptions().map((o) => o.textContent)).toEqual(["Me", "Ada"]);
 
       act(() => {
-        followedReaders.value = [];
+        friendReaders.value = [];
       });
       expect(filterOptions().map((o) => o.textContent)).toEqual(["Me"]);
     });
 
-    it("keeps a reader deselected when someone else is followed", () => {
-      followedReaders.value = [followedUser({ userId: "ada", name: "Ada" })];
+    it("keeps a reader deselected when someone else becomes a friend", () => {
+      friendReaders.value = [friend({ userId: "ada", name: "Ada" })];
       setup();
       openUserFilter();
       act(() => (filterOptions()[1] as HTMLButtonElement).click());
 
       act(() => {
-        followedReaders.value = [
-          followedUser({ userId: "ada", name: "Ada" }),
-          followedUser({ userId: "bob", name: "Bob" }),
+        friendReaders.value = [
+          friend({ userId: "ada", name: "Ada" }),
+          friend({ userId: "bob", name: "Bob" }),
         ];
       });
 

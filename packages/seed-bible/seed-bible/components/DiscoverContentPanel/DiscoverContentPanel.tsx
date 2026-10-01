@@ -286,7 +286,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               modals={state.modals}
               toast={state.app.toast}
               login={state.login}
-              follows={state.follows}
+              friends={state.friends}
               tabs={state.tabs}
               discover={state.discover}
               panes={state.panes}

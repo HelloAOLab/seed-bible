@@ -53,16 +53,16 @@ export const SocialSection = (props: {
   const profile = props.login.profile.value;
 
   // Read during render on purpose: reading the signal subscribes this
-  // component, so following or unfollowing someone re-renders the section.
-  const followedReaders = props.today.followedReaders.value;
+  // component, so gaining or losing a friend re-renders the section.
+  const friendReaders = props.today.friendReaders.value;
   // Keyed on content rather than the array's identity, so the map below (and
   // the filters effect that stores a new Map whenever it changes) only re-runs
   // when a reader actually joins, leaves, or changes name or picture.
-  const followedKey = followedReaders
+  const friendsKey = friendReaders
     .map((f) => `${f.userId}\u0000${f.name ?? ""}\u0000${f.pictureUrl ?? ""}`)
     .join("\u0001");
 
-  // The reader list: the signed-in user, then the accounts they follow.
+  // The reader list: the signed-in user, then their friends.
   // Derived rather than held in state: every input is already to hand during
   // render, so an effect writing it would only make the map lag a render
   // behind its own inputs.
@@ -82,23 +82,23 @@ export const SocialSection = (props: {
         },
       ],
     ]);
-    for (const followed of followedReaders) {
-      if (map.has(followed.userId)) continue;
-      const followedVisual = getUserAnimalVisual(followed.userId);
-      map.set(followed.userId, {
+    for (const friend of friendReaders) {
+      if (map.has(friend.userId)) continue;
+      const friendVisual = getUserAnimalVisual(friend.userId);
+      map.set(friend.userId, {
         name:
-          trimmedOrNull(followed.name) ??
+          trimmedOrNull(friend.name) ??
           t("follow-unnamed-user", {
-            id: followed.userId.slice(0, 8),
+            id: friend.userId.slice(0, 8),
             defaultValue: "User {{id}}",
           }),
-        pictureUrl: followed.pictureUrl,
-        color: followedVisual.color,
-        icon: followedVisual.defaultIcon,
+        pictureUrl: friend.pictureUrl,
+        color: friendVisual.color,
+        icon: friendVisual.defaultIcon,
       });
     }
     return map;
-  }, [userId, profile?.name, profile?.pictureUrl, followedKey, t]);
+  }, [userId, profile?.name, profile?.pictureUrl, friendsKey, t]);
 
   const initialOption = useMemo(() => buildTimespanOptions().twoDays, []);
   const year = useSignal<number>(initialOption.year);
