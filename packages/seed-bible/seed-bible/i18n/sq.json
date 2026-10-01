@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Zgjidh sa pasazhe do të lexosh krah për krah nga kjo meny paraqitjeje.",
   "tutorial.addTabTitle": "Hap më shumë pasazhe",
   "tutorial.addTabBody": "Shto një skedë të re për të lexuar disa libra ose përkthime krah për krah.",
-  "playlist-history": "Historiku i listës së luajtjes",
   "discover-playlist-history-empty": "Luaj një listë luajtjeje të ruajtur ndërsa je i kyçur dhe ajo do të shfaqet këtu.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % e përfunduar - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % e përfunduar",

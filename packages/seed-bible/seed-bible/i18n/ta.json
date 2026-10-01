@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "இந்த தளவமைப்பு மெனுவிலிருந்து, எத்தனை பத்திகளை அருகருகே படிக்க வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும்.",
   "tutorial.addTabTitle": "மேலும் பத்திகளைத் திறக்கவும்",
   "tutorial.addTabBody": "பல புத்தகங்களை அல்லது மொழிபெயர்ப்புகளை அருகருகே வைத்துப் படிக்க, ஒரு புதிய தாவலைச் சேர்க்கவும்.",
-  "playlist-history": "பிளேலிஸ்ட் வரலாறு",
   "discover-playlist-history-empty": "உள்நுழைந்திருக்கும்போது சேமித்த பிளேலிஸ்ட்டை இயக்கவும், அது இங்கே காட்டப்படும்.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % நிறைவு - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % நிறைவு",

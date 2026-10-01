@@ -2391,6 +2391,262 @@ describe("createPlaylistManager", () => {
     expect(manager.playing.value).toBeNull();
   });
 
+  it("does not stop playback when a URL change never had a playlist param", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startPlaying(
+      makePlaylist({ items: [{ type: "html", html: "a" }] })
+    );
+    expect(manager.playing.value).not.toBeNull();
+
+    // Closing Profile rewrites the query string (for example dropping
+    // `profile=open`) before playback has written `playlist`. That must not
+    // be read as "stop".
+    const url = new URL(lastNavigation.currentUrl.value);
+    url.searchParams.set("profile", "open");
+    lastNavigation.push(url.toString());
+    await flush();
+
+    expect(manager.playing.value).not.toBeNull();
+  });
+
+  it("shows that a playlist is still opening until its first chapter is ready", async () => {
+    let resolveChapter: () => void = () => {};
+    selectTranslationAndChapterMock.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveChapter = resolve;
+      })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.startPlaying(
+      makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 3, verse: 16 },
+          },
+        ],
+      })
+    );
+
+    expect(manager.openingPlayback.value).toBe(true);
+    // A `.finally()` on an already-resolved promise still runs later. Flush
+    // first so this fails if the loader ignores the chapter load.
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    resolveChapter();
+    await flush();
+
+    expect(manager.openingPlayback.value).toBe(false);
+  });
+
+  it("keeps the loader up for a second playlist after the first chapter resolves", async () => {
+    const resolvers: Array<() => void> = [];
+    selectTranslationAndChapterMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvers.push(resolve);
+        })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    const verse = {
+      type: "bible-verse" as const,
+      ref: { bookId: "JHN", chapter: 3, verse: 16 },
+    };
+
+    manager.startPlaying(makePlaylist({ id: "a", items: [verse] }));
+    await flush();
+    const firstBatch = resolvers.length;
+    expect(firstBatch).toBeGreaterThan(0);
+    expect(manager.openingPlayback.value).toBe(true);
+
+    manager.startPlaying(
+      makePlaylist({
+        id: "b",
+        items: [{ ...verse, ref: { bookId: "GEN", chapter: 1, verse: 1 } }],
+      })
+    );
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    for (let i = 0; i < firstBatch; i++) {
+      resolvers[i]!();
+    }
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    for (let i = firstBatch; i < resolvers.length; i++) {
+      resolvers[i]!();
+    }
+    await flush();
+    expect(manager.openingPlayback.value).toBe(false);
+  });
+
+  it("clears the loader on stop, and a late chapter resolve does not hide the next open", async () => {
+    const resolvers: Array<() => void> = [];
+    selectTranslationAndChapterMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvers.push(resolve);
+        })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    const verse = {
+      type: "bible-verse" as const,
+      ref: { bookId: "JHN", chapter: 3, verse: 16 },
+    };
+
+    manager.startPlaying(makePlaylist({ id: "a", items: [verse] }));
+    await flush();
+    const stoppedBatch = resolvers.length;
+    expect(stoppedBatch).toBeGreaterThan(0);
+    expect(manager.openingPlayback.value).toBe(true);
+
+    manager.stopPlaying();
+    expect(manager.openingPlayback.value).toBe(false);
+
+    manager.startPlaying(
+      makePlaylist({
+        id: "b",
+        items: [{ ...verse, ref: { bookId: "GEN", chapter: 1, verse: 1 } }],
+      })
+    );
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    for (let i = 0; i < stoppedBatch; i++) {
+      resolvers[i]!();
+    }
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    for (let i = stoppedBatch; i < resolvers.length; i++) {
+      resolvers[i]!();
+    }
+    await flush();
+    expect(manager.openingPlayback.value).toBe(false);
+  });
+
+  it("continueFromHistory stays pending until the chapter loads", async () => {
+    let resolveChapter: () => void = () => {};
+    selectTranslationAndChapterMock.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveChapter = resolve;
+      })
+    );
+    const playlist = makePlaylist({
+      items: [
+        {
+          type: "bible-verse",
+          ref: { bookId: "JHN", chapter: 3, verse: 16 },
+        },
+      ],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: playlist });
+    const manager = makeManager("user-1");
+    await flush();
+
+    let settled = false;
+    const pending = manager.continueFromHistory(
+      makeHistory({ currentStep: 0, totalSteps: 2 })
+    );
+    void pending.then(() => {
+      settled = true;
+    });
+
+    await flush();
+    expect(settled).toBe(false);
+    expect(manager.openingPlayback.value).toBe(true);
+
+    resolveChapter();
+    await pending;
+    expect(settled).toBe(true);
+    expect(manager.openingPlayback.value).toBe(false);
+  });
+
+  it("replayFromHistory waits on the chapter and starts at the beginning", async () => {
+    let resolveChapter: () => void = () => {};
+    selectTranslationAndChapterMock.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveChapter = resolve;
+      })
+    );
+    const playlist = makePlaylist({
+      items: [
+        {
+          type: "bible-verse",
+          ref: { bookId: "JHN", chapter: 3, verse: 16 },
+        },
+        { type: "html", html: "b" },
+      ],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: playlist });
+    const manager = makeManager("user-1");
+    await flush();
+
+    let settled = false;
+    const pending = manager.replayFromHistory(
+      makeHistory({ currentStep: 1, totalSteps: 2 })
+    );
+    void pending.then(() => {
+      settled = true;
+    });
+    await flush();
+    expect(settled).toBe(false);
+    expect(manager.playing.value?.currentIndex.value).toBe(0);
+
+    resolveChapter();
+    await pending;
+    expect(settled).toBe(true);
+  });
+
+  it("playFromHistory replays a finished session and continues an unfinished one", async () => {
+    const playlist = makePlaylist({
+      items: [
+        { type: "html", html: "a" },
+        { type: "html", html: "b" },
+        { type: "html", html: "c" },
+      ],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: playlist });
+    const manager = makeManager("user-1");
+    await flush();
+
+    await manager.playFromHistory(
+      makeHistory({ currentStep: 2, totalSteps: 3 })
+    );
+    expect(manager.playing.value?.currentIndex.value).toBe(0);
+
+    await manager.playFromHistory(
+      makeHistory({ currentStep: 1, totalSteps: 3 })
+    );
+    expect(manager.playing.value?.currentIndex.value).toBe(1);
+  });
+
+  it("continueFromHistory rejects when there is no tab to play on", async () => {
+    const tabs = {
+      tabs: signal([]),
+      selectedTabId: signal(""),
+    } as unknown as TabsArg;
+    const playlist = makePlaylist({
+      items: [{ type: "html", html: "a" }],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: playlist });
+    const manager = makeManager("user-1", tabs);
+    await flush();
+
+    await expect(manager.continueFromHistory(makeHistory())).rejects.toThrow(
+      "Cannot play a playlist without an open tab."
+    );
+    await flush();
+    expect(manager.openingPlayback.value).toBe(false);
+  });
+
   describe("getPlaylistUrl", () => {
     it("points at the first scripture item's chapter, not the chapter the sharer is viewing", async () => {
       const manager = makeManager(

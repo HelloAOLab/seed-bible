@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Изберете колко пасажа да прочетете един до друг от това меню за оформление.",
   "tutorial.addTabTitle": "Отворете още пасажи",
   "tutorial.addTabBody": "Добавете нов раздел, за да четете няколко книги или превода един до друг.",
-  "playlist-history": "История на плейлистите",
   "discover-playlist-history-empty": "Пуснете запазен плейлист, докато сте влезли в профила си, и той ще се покаже тук.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % завършено - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % завършено",

@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "请从此布局菜单中选择要并排阅读的段落数量。",
   "tutorial.addTabTitle": "打开更多通道",
   "tutorial.addTabBody": "添加一个新标签页，即可并排阅读多本书籍或译本。",
-  "playlist-history": "播放列表历史记录",
   "discover-playlist-history-empty": "登录后播放已保存的播放列表，它将显示在此处。",
   "playlist-history-session-summary": "{{time}} - {{percent}}完成百分比 - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}}完成百分比",

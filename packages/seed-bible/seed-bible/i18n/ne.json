@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "यो लेआउट मेनुबाट कतिवटा खण्डहरू सँगै पढ्ने भनेर छनौट गर्नुहोस्।",
   "tutorial.addTabTitle": "थप खण्डहरू खोल्नुहोस्",
   "tutorial.addTabBody": "धेरै पुस्तकहरू वा अनुवादहरू सँगै पढ्नको लागि नयाँ ट्याब थप्नुहोस्।",
-  "playlist-history": "प्लेलिस्ट इतिहास",
   "discover-playlist-history-empty": "साइन इन भएको बेला सुरक्षित गरिएको प्लेलिस्ट प्ले गर्नुहोस् र त्यो यहाँ देखिनेछ।",
   "playlist-history-session-summary": "{{time}} - {{percent}} % पूरा - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % पूरा भयो",

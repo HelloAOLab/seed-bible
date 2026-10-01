@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Šiame maketo meniu pasirinkite, kiek ištraukų skaityti greta.",
   "tutorial.addTabTitle": "Atidaryti daugiau ištraukų",
   "tutorial.addTabBody": "Pridėkite naują skirtuką, kad galėtumėte skaityti kelias knygas ar vertimus vienu metu.",
-  "playlist-history": "Grojaraščio istorija",
   "discover-playlist-history-empty": "Prisijungę paleiskite išsaugotą grojaraštį ir jis bus rodomas čia.",
   "playlist-history-session-summary": "{{time}} – {{percent}} % užbaigta – {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} – {{percent}} % užbaigta",

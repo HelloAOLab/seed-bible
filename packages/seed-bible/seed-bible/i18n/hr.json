@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "U ovom izborniku rasporeda odaberite koliko odlomaka želite čitati jedan pored drugog.",
   "tutorial.addTabTitle": "Otvorite više odlomaka",
   "tutorial.addTabBody": "Dodajte novu karticu za čitanje nekoliko knjiga ili prijevoda jedan pored drugog.",
-  "playlist-history": "Povijest popisa za reprodukciju",
   "discover-playlist-history-empty": "Spremljeni popis za reprodukciju reproducirajte dok ste prijavljeni i prikazat će se ovdje.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % dovršeno - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % dovršeno",

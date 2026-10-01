@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Chagua vifungu vingapi vya kusoma kando kutoka kwenye menyu hii ya mpangilio.",
   "tutorial.addTabTitle": "Fungua vifungu zaidi",
   "tutorial.addTabBody": "Ongeza kichupo kipya ili kusoma vitabu au tafsiri kadhaa pamoja.",
-  "playlist-history": "Historia ya orodha ya kucheza",
   "discover-playlist-history-empty": "Cheza orodha ya kucheza iliyohifadhiwa ukiwa umeingia na itaonekana hapa.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % imekamilika - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % imekamilika",

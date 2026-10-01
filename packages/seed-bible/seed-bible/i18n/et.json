@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Valige sellest küljendusmenüüst, mitu lõiku kõrvuti lugeda.",
   "tutorial.addTabTitle": "Ava rohkem lõike",
   "tutorial.addTabBody": "Lisa uus vahekaart, et lugeda mitut raamatut või tõlget kõrvuti.",
-  "playlist-history": "Esitusloendi ajalugu",
   "discover-playlist-history-empty": "Esita sisselogituna salvestatud esitusloendit ja see kuvatakse siin.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % valmisolekust - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % valmisolekust",

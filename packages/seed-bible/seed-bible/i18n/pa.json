@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "ਇਸ ਲੇਆਉਟ ਮੀਨੂ ਤੋਂ ਚੁਣੋ ਕਿ ਕਿੰਨੇ ਪੈਰੇ ਨਾਲ-ਨਾਲ ਪੜ੍ਹਨੇ ਹਨ।",
   "tutorial.addTabTitle": "ਹੋਰ ਪੈਰੇ ਖੋਲ੍ਹੋ",
   "tutorial.addTabBody": "ਕਈ ਕਿਤਾਬਾਂ ਜਾਂ ਅਨੁਵਾਦਾਂ ਨੂੰ ਨਾਲ-ਨਾਲ ਪੜ੍ਹਨ ਲਈ ਇੱਕ ਨਵਾਂ ਟੈਬ ਸ਼ਾਮਲ ਕਰੋ।",
-  "playlist-history": "ਪਲੇਲਿਸਟ ਇਤਿਹਾਸ",
   "discover-playlist-history-empty": "ਸਾਈਨ ਇਨ ਕਰਨ ਵੇਲੇ ਇੱਕ ਸੁਰੱਖਿਅਤ ਕੀਤੀ ਪਲੇਲਿਸਟ ਚਲਾਓ ਅਤੇ ਇਹ ਇੱਥੇ ਦਿਖਾਈ ਦੇਵੇਗੀ।",
   "playlist-history-session-summary": "{{time}} - {{percent}} % ਪੂਰਾ - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ਪੂਰਾ",

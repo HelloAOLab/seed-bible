@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Seleccione en este menú de diseño cuántos pasajes desea leer simultáneamente.",
   "tutorial.addTabTitle": "Abrir más pasajes",
   "tutorial.addTabBody": "Añade una nueva pestaña para leer varios libros o traducciones simultáneamente.",
-  "playlist-history": "Historial de listas de reproducción",
   "discover-playlist-history-empty": "Reproduce una lista de reproducción guardada mientras tengas la sesión iniciada y aparecerá aquí.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % completado - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % completado",

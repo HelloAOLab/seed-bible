@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Kies in dit lay-outmenu hoeveel passages u naast elkaar wilt lezen.",
   "tutorial.addTabTitle": "Open meer passages",
   "tutorial.addTabBody": "Voeg een nieuw tabblad toe om meerdere boeken of vertalingen naast elkaar te lezen.",
-  "playlist-history": "Afspeellijstgeschiedenis",
   "discover-playlist-history-empty": "Speel een opgeslagen afspeellijst af terwijl je bent ingelogd en deze verschijnt hier.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % voltooid - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % voltooid",

@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "ከዚህ የአቀማመጥ ምናሌ ውስጥ ምን ያህል አንቀጾች ጎን ለጎን እንደሚነበቡ ይምረጡ።",
   "tutorial.addTabTitle": "ተጨማሪ ምዕራፎችን ይክፈቱ",
   "tutorial.addTabBody": "በርካታ መጽሐፍትን ወይም ትርጉሞችን ጎን ለጎን ለማንበብ አዲስ ትር ያክሉ።",
-  "playlist-history": "የአጫዋች ዝርዝር ታሪክ",
   "discover-playlist-history-empty": "ገብተው ሳለ የተቀመጠ የአጫዋች ዝርዝር ያጫውቱ እና እዚህ ይታያል።",
   "playlist-history-session-summary": "{{time}} - {{percent}} % ተጠናቋል - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ተጠናቋል",

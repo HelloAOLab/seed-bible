@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Khetha ukuthi zingaki izindima okufanele uzifunde eceleni kule menyu yesakhiwo.",
   "tutorial.addTabTitle": "Vula izindima ezengeziwe",
   "tutorial.addTabBody": "Engeza ithebhu entsha ukuze ufunde izincwadi eziningana noma izinguqulo eceleni.",
-  "playlist-history": "Umlando wohlu lwadlalwayo",
   "discover-playlist-history-empty": "Dlala uhlu lokudlalayo olugciniwe ngenkathi ungene ngemvume futhi luzovela lapha.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % kuqediwe - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ephelele",

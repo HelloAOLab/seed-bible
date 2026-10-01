@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Kies hoeveel gedeeltes langs mekaar gelees moet word vanaf hierdie uitlegkieslys.",
   "tutorial.addTabTitle": "Maak meer gedeeltes oop",
   "tutorial.addTabBody": "Voeg 'n nuwe oortjie by om verskeie boeke of vertalings langs mekaar te lees.",
-  "playlist-history": "Speellysgeskiedenis",
   "discover-playlist-history-empty": "Speel 'n gestoorde snitlys terwyl jy aangemeld is en dit sal hier verskyn.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % voltooi - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % voltooi",

@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Бул макет менюсунан канча үзүндүнү катар-катар окууну тандаңыз.",
   "tutorial.addTabTitle": "Көбүрөөк өтмөктөрдү ачыңыз",
   "tutorial.addTabBody": "Бир нече китепти же котормолорду катар окуу үчүн жаңы өтмөк кошуңуз.",
-  "playlist-history": "Ойнотмо тизменин тарыхы",
   "discover-playlist-history-empty": "Аккаунтка кирип турганда сакталган ойнотмо тизмесин ойнотуңуз, ал бул жерде көрсөтүлөт.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % аткарылды - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % аткарылды",

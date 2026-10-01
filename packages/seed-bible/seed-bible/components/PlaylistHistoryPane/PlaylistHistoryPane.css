@@ -1,0 +1,54 @@
+/*
+ * Playlist history screen, opened from Profile. Item rows reuse the discover
+ * list classes (imported with DiscoverPane.css); this file is the page shell
+ * and the day groupings.
+ */
+.sb-playlist-history-screen {
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 16px 16px 32px;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+}
+
+.sb-playlist-history-inner {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.sb-playlist-history-empty {
+  margin: 8px 0 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.sb-playlist-history-day-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-playlist-history-day-group + .sb-playlist-history-day-group {
+  margin-top: 16px;
+}
+
+.sb-playlist-history-day {
+  margin: 0 0 2px;
+  padding: 0 2px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-playlist-history-item .sb-discover-item-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}

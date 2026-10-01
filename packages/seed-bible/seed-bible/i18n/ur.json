@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "اس ترتیب کے مینو سے منتخب کریں کہ کتنے حصئوں کو ساتھ ساتھ پڑھنا ہے۔",
   "tutorial.addTabTitle": "مزید حوالے کھولیں۔",
   "tutorial.addTabBody": "ساتھ ساتھ متعدد کتابیں یا ترجمے پڑھنے کے لیے ایک نیا ٹیب شامل کریں۔",
-  "playlist-history": "پلے لسٹ کی تاریخ",
   "discover-playlist-history-empty": "سائن ان ہونے کے دوران ایک محفوظ کردہ پلے لسٹ چلائیں اور وہ یہاں نظر آئے گی۔",
   "playlist-history-session-summary": "{{time}} - {{percent}} % مکمل - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % مکمل",

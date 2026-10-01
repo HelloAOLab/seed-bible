@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "このレイアウトメニューから、並べて表示する文章の数を選択してください。",
   "tutorial.addTabTitle": "通路をさらに開く",
   "tutorial.addTabBody": "新しいタブを追加して、複数の書籍や翻訳版を並べて読むことができます。",
-  "playlist-history": "プレイリスト履歴",
   "discover-playlist-history-empty": "ログインした状態で保存済みのプレイリストを再生すると、ここに表示されます。",
   "playlist-history-session-summary": "{{time}} - {{percent}} %完了 - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} %完了",

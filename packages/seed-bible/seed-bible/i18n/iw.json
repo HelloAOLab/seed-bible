@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "בחר כמה קטעים לקרוא זה לצד זה מתפריט פריסה זה.",
   "tutorial.addTabTitle": "פתחו עוד קטעים",
   "tutorial.addTabBody": "הוסף כרטיסייה חדשה כדי לקרוא מספר ספרים או תרגומים זה לצד זה.",
-  "playlist-history": "היסטוריית פלייליסטים",
   "discover-playlist-history-empty": "הפעל פלייליסט שמורה בזמן שאתה מחובר והוא יופיע כאן.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % השלמה - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % הושלמו",
