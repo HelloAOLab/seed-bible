@@ -1,6 +1,8 @@
 import "./BibleReader.inline.css";
 import "./BibleReader.css";
 import {
+  type AvailableTranslations,
+  type Translation,
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
@@ -2376,6 +2378,23 @@ function ChapterContent(props: ChapterContentProps) {
   );
 }
 
+/**
+ * The current translation's metadata, falling back to the catalog entry when
+ * its book list hasn't loaded — `translation` comes from that book list, which
+ * is exactly what's missing when a translation never opened fails offline.
+ */
+function resolveTranslation(
+  translationId: string,
+  fromBookList: Translation | null,
+  catalog: AvailableTranslations | null
+): Translation | null {
+  return (
+    fromBookList ??
+    catalog?.translations.find((entry) => entry.id === translationId) ??
+    null
+  );
+}
+
 export function BibleReader(props: BibleReaderProps) {
   const {
     currentSlot,
@@ -2722,16 +2741,48 @@ export function BibleReader(props: BibleReaderProps) {
   // clears `error` as it starts, so without this the panel would flash back to
   // the (still empty) chapter body before the new request settles.
   const [retrying, setRetrying] = useState(false);
+  const offline = state?.bibleData?.offline;
   const retryChapterLoad = async () => {
     if (retrying) return;
+    const failedTranslationId = translationId.peek();
     setRetrying(true);
     try {
       await readingState.retryLoad();
     } finally {
       setRetrying(false);
     }
+    if (
+      !offline ||
+      error.peek() ||
+      translationId.peek() !== failedTranslationId
+    ) {
+      return;
+    }
+    const recoveredTranslation = resolveTranslation(
+      failedTranslationId,
+      translation.peek(),
+      availableTranslations.peek()
+    );
+    if (recoveredTranslation) {
+      offline.offerRecoveryPrompt(recoveredTranslation);
+    }
   };
   const showLoadError = (!!error.value && !loading.value) || retrying;
+
+  const failedTranslation = resolveTranslation(
+    translationId.value,
+    translation.value,
+    availableTranslations.value
+  );
+  const failedTranslationNotSaved =
+    !!offline?.supported &&
+    !!failedTranslation &&
+    !offline.isDownloaded(failedTranslation.id);
+  const hasOtherSavedTranslation =
+    !!offline?.supported &&
+    [...offline.downloaded.value.keys()].some(
+      (savedId) => savedId !== translationId.value
+    );
 
   const renderMainContent = () => (
     <>
@@ -2818,6 +2869,41 @@ export function BibleReader(props: BibleReaderProps) {
             )}
             {t("reload", { defaultValue: "Reload" })}
           </button>
+
+          {failedTranslationNotSaved && !offline.isOnline.value && (
+            <p className="sb-reader-error-hint">
+              {t("chapter-unavailable-download-offline-hint", {
+                abbreviation: failedTranslation.shortName,
+                defaultValue:
+                  "Once you're back online, download {{abbreviation}} so this doesn't happen again.",
+              })}
+            </p>
+          )}
+
+          {hasOtherSavedTranslation && (
+            <div className="sb-reader-error-alternatives">
+              <p className="sb-reader-error-hint">
+                {t("chapter-unavailable-switch-heading", {
+                  defaultValue:
+                    "Or keep reading in a translation saved on this device:",
+                })}
+              </p>
+              <button
+                type="button"
+                className="sb-reader-error-action"
+                onClick={() =>
+                  void selectorState.openDownloadedTranslations(currentSlot)
+                }
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  translate
+                </span>
+                {t("chapter-unavailable-choose-saved", {
+                  defaultValue: "Choose a saved translation",
+                })}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

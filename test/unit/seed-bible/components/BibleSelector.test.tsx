@@ -1969,4 +1969,62 @@ describe("BibleSelector offline downloads", () => {
     await waitFor(() => Boolean(offlineButton("update")));
     expect(offlineButton("update")?.title).toContain("newer version");
   });
+
+  const downloadedFilterNote = () =>
+    container.querySelector(".sb-translation-downloaded-filter");
+
+  it("says when the list is narrowed to saved translations, and widens it on request", async () => {
+    const { state } = await openTranslationList();
+    expect(await state.bibleData.offline.downloadTranslation("AAB")).toBe(true);
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+
+    await act(async () => {
+      await state.selector.openDownloadedTranslations(slot);
+    });
+
+    expect(downloadedFilterNote()?.textContent).toContain(
+      "Saved on this device"
+    );
+
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(
+          ".sb-translation-downloaded-filter-show-all"
+        )
+        ?.click();
+    });
+
+    expect(downloadedFilterNote()).toBeNull();
+    expect(state.selector.downloadedOnly.value).toBe(false);
+  });
+
+  it("doesn't offer to widen a narrowed list's empty search beyond saved translations", async () => {
+    const { state } = await openTranslationList();
+    expect(await state.bibleData.offline.downloadTranslation("AAB")).toBe(true);
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    // The view-mode setting most visitors have, which on its own makes an
+    // empty search offer to include partial translations.
+    state.selector.showAllLanguages.value = "complete";
+
+    await act(async () => {
+      await state.selector.openDownloadedTranslations(slot);
+    });
+    act(() => {
+      state.selector.languageQuery.value = "no such translation";
+    });
+
+    const list = container.querySelector(".sb-translation-list-empty");
+    expect(list?.textContent).toContain("No results found.");
+    // That offer would only flip the view-mode setting, which the saved-only
+    // list ignores — a button that does nothing.
+    expect(list?.textContent).not.toContain("expand your search");
+  });
+
+  it("shows no narrowed-list note when the list is opened the usual way", async () => {
+    const { state } = await openTranslationList();
+    expect(await state.bibleData.offline.downloadTranslation("AAB")).toBe(true);
+
+    expect(container.querySelector(".translation-option")).not.toBeNull();
+    expect(downloadedFilterNote()).toBeNull();
+  });
 });

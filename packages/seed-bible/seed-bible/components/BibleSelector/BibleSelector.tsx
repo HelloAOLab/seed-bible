@@ -39,6 +39,7 @@ import {
   formatBytes,
   type OfflineTranslationsManager,
 } from "../../managers/OfflineTranslationsManager";
+import { downloadTranslationWithToast } from "../OfflineDownloadPrompt/downloadTranslationWithToast";
 import type { TutorialManager } from "../../managers/TutorialManager";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
@@ -1190,26 +1191,7 @@ const OfflineTranslationControls = (props: {
   const error = offline.errors.value.get(translation.id) ?? null;
 
   const startDownload = async () => {
-    const succeeded = await offline.downloadTranslation(translation.id);
-    if (succeeded) {
-      app.toast(
-        t("translation-downloaded", {
-          name: translation.shortName,
-          defaultValue: "{{name}} is now available offline",
-        })
-      );
-      return;
-    }
-
-    const failure = offline.errors.value.get(translation.id);
-    if (failure) {
-      app.toast(
-        t("translation-download-failed", {
-          name: translation.shortName,
-          defaultValue: "Couldn't download {{name}}.",
-        })
-      );
-    }
+    await downloadTranslationWithToast(offline, translation, app.toast, t);
   };
 
   if (progress) {
@@ -1432,9 +1414,11 @@ const TranslationModal = (props: {
   const {
     languageQuery,
     selectingTranslation,
+    downloadedOnly,
     showCustomTranslation,
     allowedTranslationLimit,
     showAllLanguages,
+    listViewMode,
     showTranslationSettings,
     showTranslationInfo,
     pendingOfflineDelete,
@@ -1477,7 +1461,7 @@ const TranslationModal = (props: {
     <TranslationList
       groups={filteredApiTranslations.value}
       query={languageQuery.value}
-      viewMode={showAllLanguages.value}
+      viewMode={listViewMode.value}
       selectedTranslationIds={
         selectedTranslation.value ? [selectedTranslation.value.id] : []
       }
@@ -1605,6 +1589,29 @@ const TranslationModal = (props: {
               </span>
             )}
           </div>
+          {downloadedOnly.value && (
+            <div className="sb-translation-downloaded-filter">
+              <span className="sb-translation-downloaded-filter-label">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  offline_pin
+                </span>
+                {t("translations-saved-on-device", {
+                  defaultValue: "Saved on this device",
+                })}
+              </span>
+              <button
+                type="button"
+                className="sb-translation-downloaded-filter-show-all"
+                onClick={() => {
+                  downloadedOnly.value = false;
+                }}
+              >
+                {t("show-all-translations", {
+                  defaultValue: "Show all translations",
+                })}
+              </button>
+            </div>
+          )}
           {LanguageList}
           <div className="footer">
             <div
