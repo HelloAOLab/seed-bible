@@ -120,6 +120,8 @@ export function BusyButton(props: {
   className: string;
   type?: "button" | "submit";
   onClick?: () => void;
+  /** For when the visible label alone doesn't say who it acts on. */
+  ariaLabel?: string;
   children: string;
 }) {
   return (
@@ -128,6 +130,7 @@ export function BusyButton(props: {
       className={`${props.className} sb-friends-busy-button`}
       disabled={props.busy || props.disabled}
       aria-busy={props.busy}
+      aria-label={props.ariaLabel}
       onClick={props.onClick}
     >
       <span

@@ -1085,5 +1085,9 @@
   "friend-request-link-sign-in": "Sign in to see this friend request.",
   "friend-request-link-unavailable": "This friend request isn't available. It may have been sent to a different account, already been answered, or expired.",
   "friend-request-link-confirm": "{{name}} wants to be friends.",
-  "copy-your-user-id": "Copy your user ID"
+  "copy-your-user-id": "Copy your user ID",
+  "add-friend-button": "Add friend",
+  "friend-status-requested": "Requested",
+  "add-friend-user": "Add {{name}} as a friend",
+  "accept-friend-user": "Accept {{name}}'s friend request"
 }

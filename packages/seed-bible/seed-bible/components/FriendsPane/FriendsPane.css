@@ -276,6 +276,13 @@
   visibility: hidden;
 }
 
+/* "Friends" / "Requested" in place of Add friend on a session participant. */
+.sb-participant-friend-status {
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+  font-size: 0.75rem;
+}
+
 /* The person a friend link is about, at the top of its prompt. */
 .sb-friend-link-person {
   display: flex;

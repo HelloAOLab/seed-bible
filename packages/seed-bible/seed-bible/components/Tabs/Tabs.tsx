@@ -46,6 +46,7 @@ import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 import { trimmedOrNull } from "../../managers/Utils";
 import { useAppConfig } from "../../app/appConfig";
+import { ParticipantFriendButton } from "../FriendsPane/ParticipantFriendButton";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -109,7 +110,8 @@ const HIGHLIGHT_DURATION_OPTIONS: { label: string; value: number | null }[] = [
  * - "End Session" removes the tab (which disposes the session and removes
  *   its registry entry automatically via `wrapSessionLifecycle`).
  *
- * Non-host participants see the current settings but can't change them.
+ * Non-host participants see the current settings and who's there, but can't
+ * change them. Everyone can add the other participants as friends.
  */
 /**
  * localStorage flag: once the host ticks "Don't show this again" in the
@@ -407,7 +409,7 @@ function SessionSettingsModalContent(props: {
           </p>
         </div>
 
-        {isHost && participants.length > 0 && (
+        {participants.length > 0 && (
           <div className="sb-session-settings-section">
             <div className="sb-session-settings-section-title">
               {t("session-settings-section-participants", {
@@ -459,7 +461,12 @@ function SessionSettingsModalContent(props: {
                         </span>
                       )}
                     </span>
-                    {!isHostUser && (
+                    <ParticipantFriendButton
+                      state={state}
+                      userId={user.userId}
+                      displayName={getUserDisplayName(user)}
+                    />
+                    {isHost && !isHostUser && (
                       <button
                         type="button"
                         className={`sb-session-participant-action${isCoHost ? " sb-session-participant-action-active" : ""}`}
