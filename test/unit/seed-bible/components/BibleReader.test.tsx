@@ -2348,7 +2348,7 @@ describe("BibleReader", () => {
    */
   function renderReaderWithDiscoveredContent() {
     const { selectorState, readingState } = createFixture();
-    readingState.discoveredCrossReferences.value = [
+    (readingState as any).discoveredCrossReferences = signal([
       {
         providerId: "p1",
         results: [
@@ -2363,7 +2363,7 @@ describe("BibleReader", () => {
           },
         ],
       },
-    ] as any;
+    ]);
     const slot: TabSlot = {
       id: "slot-1",
       tab: { id: "tab-1", readingState } as any,
