@@ -2341,6 +2341,96 @@ describe("BibleReader", () => {
     ).toBe(true);
   });
 
+  /**
+   * Renders a desktop reader whose tab has a discovered cross reference — the
+   * minimum the compact discover panel needs to render — with the Discover
+   * pane state and the settings exposed so tests can flip them.
+   */
+  function renderReaderWithDiscoveredContent() {
+    const { selectorState, readingState } = createFixture();
+    readingState.discoveredCrossReferences.value = [
+      {
+        providerId: "p1",
+        results: [
+          {
+            type: "cross-reference",
+            reference: { chapter: 1, bookData: { name: "Genesis" } },
+            crossReference: {
+              chapter: 5,
+              verse: 3,
+              bookData: { commonName: "Exodus", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ] as any;
+    const slot: TabSlot = {
+      id: "slot-1",
+      tab: { id: "tab-1", readingState } as any,
+    };
+    const isDiscoverOpen = signal(false);
+    const settings = signal({ discoveredContent: { showContent: true } });
+    const base = createMobileState();
+    const state = {
+      ...base,
+      app: {
+        ...base.app,
+        isMobile: signal(false),
+        isCompactReader: signal(false),
+        isDiscoverOpen,
+      },
+      discover: { ...base.discover, contentTypes: signal([]) },
+      settings: { settings },
+    } as any as SeedBibleState;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const panel = () =>
+      container.querySelector(".sb-bible-reader-discover-panel");
+
+    return { panel, isDiscoverOpen, settings };
+  }
+
+  it("shows the compact discover panel when the chapter has discovered content", () => {
+    const { panel } = renderReaderWithDiscoveredContent();
+
+    expect(panel()).not.toBeNull();
+  });
+
+  it("hides the compact discover panel while the Discover pane is open and brings it back when it closes", () => {
+    const { panel, isDiscoverOpen } = renderReaderWithDiscoveredContent();
+
+    act(() => {
+      isDiscoverOpen.value = true;
+    });
+    expect(panel()).toBeNull();
+
+    act(() => {
+      isDiscoverOpen.value = false;
+    });
+    expect(panel()).not.toBeNull();
+  });
+
+  it("hides the compact discover panel when the showContent setting is disabled", () => {
+    const { panel, settings } = renderReaderWithDiscoveredContent();
+
+    act(() => {
+      settings.value = { discoveredContent: { showContent: false } };
+    });
+
+    expect(panel()).toBeNull();
+  });
+
   it("clicking the mobile header notes button targets the earliest annotated verse in the compact discover panel", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
