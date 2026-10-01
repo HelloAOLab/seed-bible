@@ -2333,7 +2333,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       {playing ? (
                         <button
                           type="button"
-                          disabled={!playing.hasNext.value}
+                          disabled={
+                            !playing.hasNext.value && !playing.canFinish.value
+                          }
                           onClick={() => playing.next()}
                           onPointerDown={spawnRipple}
                           className="sb-reader-floating-nav-arrow"

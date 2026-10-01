@@ -4,6 +4,7 @@
 
 ### ✨ Added
 
+- Show a "Playlist finished" message when you press next on the last item of a playlist, with buttons to close it or share the playlist. Sharing opens your device's share sheet, or copies the playlist's link where there isn't one. Before, the next button simply greyed out on the last item. Pressing next again after closing the message goes on to the next chapter, as it did before. Reading plan days don't show it.
 - Offer to switch to a downloaded translation when a chapter fails to load, if another translation in the same language is saved on the device and it contains that book and chapter. When more than one matches, you pick one from the same searchable menu Settings uses for language.
 - Save an annotation with Cmd+Enter on Mac or Ctrl+Enter on Windows and Linux while typing, and keep Enter inserting a new line.
 - Focus the annotation editor when it opens so you can start typing right away, whether you are writing a new note or editing an existing one. ([#1793](https://github.com/HelloAOLab/seed-bible/issues/1793))

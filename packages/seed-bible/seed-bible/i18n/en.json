@@ -539,6 +539,8 @@
   "dont-show-again": "Don't show this again",
   "share-playlist": "Share playlist",
   "playlist-url-copied": "Playlist URL copied to clipboard",
+  "playlist-finished": "Playlist finished",
+  "playlist-finished-message": "You've reached the end of {{title}}.",
   "current-playlist": "Current playlist",
   "playlist-add-mode-label": "Item type",
   "languageUnavailable.title": "Language Unavailable",
