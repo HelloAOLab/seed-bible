@@ -3459,6 +3459,11 @@ export function createSeedBibleState(
     // uses — rather than growing a second editor on this screen.
     annotations.editAnnotation(annotation);
   };
+  const createPlaylistFromContent = () => {
+    closeYourContent();
+    closeProfile();
+    void playlists.createNewPlaylist();
+  };
   const renderYourContentPane = () => (
     <YourContentPane
       state={state}
@@ -3466,6 +3471,7 @@ export function createSeedBibleState(
       onPlayPlaylist={playPlaylistFromContent}
       onEditPlaylist={editPlaylistFromContent}
       onEditAnnotation={editAnnotationFromContent}
+      onCreatePlaylist={createPlaylistFromContent}
     />
   );
   const renderYourContentPaneTitle = () => <YourContentPaneTitle />;
