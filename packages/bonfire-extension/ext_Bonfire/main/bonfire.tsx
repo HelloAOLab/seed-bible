@@ -1,5 +1,13 @@
 import { type SeedBibleState } from "seed-bible";
 import { z } from "zod";
+import type { ChatProviderMessageOptions } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import {
+  runChatCompletionToolLoop,
+  toChatCompletionMessages,
+  toChatCompletionTools,
+} from "@packages/seed-bible/seed-bible/managers/ChatCompletions";
+
+const PROVIDER_ID = "bonfire-chat-provider";
 
 const bonfireSessionStartResponseSchema = z.object({
   session: z.object({
@@ -105,8 +113,15 @@ export interface BonfireOptions {
   orgId: string;
   /** The AI ID for the Bonfire API. */
   aiId: string;
-  /** The API key for the Bonfire API. */
-  // apiKey: string;
+  /** The API key for the Bonfire API, sent as a bearer token if set. */
+  apiKey?: string;
+  /**
+   * The URL of Bonfire's `/v1/chat/completions` endpoint. When set, the
+   * provider sends the whole conversation plus Seed Bible's tools on every
+   * request and runs the tools Bonfire asks for. When omitted, it uses the
+   * session API, which doesn't support tools.
+   */
+  chatCompletionsUrl?: string;
   /** The name of the Bonfire chat provider. */
   name: string;
   /** The URL of the icon for the Bonfire chat provider. */
@@ -122,6 +137,14 @@ export function* registerBonfireChatProvider(
   context: SeedBibleState,
   options: BonfireOptions
 ) {
+  if (options.chatCompletionsUrl) {
+    yield* registerBonfireChatCompletionsProvider(context, {
+      ...options,
+      chatCompletionsUrl: options.chatCompletionsUrl,
+    });
+    return;
+  }
+
   const { orgId, aiId, name, iconUrl } = options;
   const headers = {
     "Content-Type": "application/json",
@@ -132,7 +155,7 @@ export function* registerBonfireChatProvider(
 
   // TODO: Add default logo for Bonfire
   yield context.chats.registerProvider({
-    id: "bonfire-chat-provider",
+    id: PROVIDER_ID,
     name: name ?? {
       key: "title",
       defaultValue: "Bonfire",
@@ -206,7 +229,6 @@ export function* registerBonfireChatProvider(
       }
       console.log("[Bonfire] Generating response for message:", lastMessage);
 
-      const readingState = context.app.selectedTab.value?.readingState;
       const response = await fetch(
         "https://bonfire.seedbible.io/api/v1/session/chat",
         {
@@ -219,7 +241,7 @@ export function* registerBonfireChatProvider(
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
             },
-            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}`,
+            custom_instructions: readingInstructions(context),
           }),
           headers,
         }
@@ -229,6 +251,69 @@ export function* registerBonfireChatProvider(
         type: "text",
         text: streamBonfireMessageDeltas(response),
       };
+    },
+  });
+}
+
+function readingInstructions(context: SeedBibleState) {
+  const readingState = context.app.selectedTab.value?.readingState;
+  return `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}`;
+}
+
+/**
+ * Registers a provider backed by Bonfire's stateless `/v1/chat/completions`
+ * endpoint. Bonfire only routes and validates tool calls; the tools
+ * themselves run here, in the browser.
+ */
+function* registerBonfireChatCompletionsProvider(
+  context: SeedBibleState,
+  options: BonfireOptions & { chatCompletionsUrl: string }
+) {
+  const { orgId, aiId, name, iconUrl, apiKey, chatCompletionsUrl } = options;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (apiKey) {
+    headers.Authorization = `Bearer ${apiKey}`;
+  }
+
+  yield context.chats.registerProvider({
+    id: PROVIDER_ID,
+    name: name ?? {
+      key: "title",
+      defaultValue: "Bonfire",
+      ns: "ext_Bonfire",
+    },
+    iconUrl,
+    supportsSharedChats: false,
+    supportsToolCalling: true,
+    generateResponse: async function* (
+      chatContext
+    ): AsyncGenerator<ChatProviderMessageOptions> {
+      const tools = toChatCompletionTools(chatContext.tools);
+      yield* runChatCompletionToolLoop({
+        messages: [
+          {
+            role: "system",
+            content: chatContext.instructions ?? readingInstructions(context),
+          },
+          ...toChatCompletionMessages(chatContext, PROVIDER_ID),
+        ],
+        tools: chatContext.tools,
+        requestCompletion: (messages) =>
+          fetch(chatCompletionsUrl, {
+            method: "POST",
+            body: JSON.stringify({
+              org_id: orgId,
+              ai_id: aiId,
+              stream: true,
+              messages,
+              tools,
+              metadata: { client: "seed-bible" },
+            }),
+            headers,
+          }),
+      });
     },
   });
 }
