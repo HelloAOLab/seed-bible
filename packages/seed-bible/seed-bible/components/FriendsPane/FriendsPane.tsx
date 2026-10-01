@@ -99,6 +99,8 @@ function CopyButton(props: {
 /** The outcome of the last send, shown under the Add a friend form. */
 type SendOutcome = {
   message: string;
+  /** Something the user has to fix or retry, shown as an error. */
+  isError?: boolean;
   /** Set when there's a pending request whose link is worth sending them. */
   requestId?: string;
 };
@@ -140,18 +142,21 @@ function sendOutcomeMessage(
         message: t("friend-request-self", {
           defaultValue: "That's your own account.",
         }),
+        isError: true,
       };
     case "user_not_found":
       return {
         message: t("friend-request-user-not-found", {
           defaultValue: "No account uses that email.",
         }),
+        isError: true,
       };
     case "not_signed_in":
       return {
         message: t("friends-signed-out", {
           defaultValue: "Sign in to add friends and see what they're reading.",
         }),
+        isError: true,
       };
   }
 }
@@ -183,6 +188,7 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
           : t("add-friend-invalid-id", {
               defaultValue: "That doesn't look like a user ID.",
             }),
+        isError: true,
       };
       return;
     }
@@ -200,6 +206,7 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
         message: t("friend-request-failed", {
           defaultValue: "Couldn't send the request. Try again.",
         }),
+        isError: true,
       };
     } finally {
       busy.value = false;
@@ -237,7 +244,14 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
         </button>
       </form>
       {outcome.value ? (
-        <div className="sb-friends-add-outcome" role="status">
+        <div
+          className={
+            outcome.value.isError
+              ? "sb-friends-add-outcome sb-friends-add-outcome--error"
+              : "sb-friends-add-outcome"
+          }
+          role={outcome.value.isError ? "alert" : "status"}
+        >
           <span>{outcome.value.message}</span>
           {outcome.value.requestId ? (
             <CopyButton

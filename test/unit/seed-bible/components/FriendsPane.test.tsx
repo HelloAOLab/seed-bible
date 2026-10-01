@@ -75,6 +75,10 @@ describe("FriendsPane", () => {
   };
 
   const text = () => container.textContent ?? "";
+  const outcomeIsError = () =>
+    container
+      .querySelector(".sb-friends-add-outcome")!
+      .classList.contains("sb-friends-add-outcome--error");
   const personNames = (root: ParentNode | null) =>
     Array.from(root?.querySelectorAll(".sb-friends-person-name") ?? []).map(
       (el) => el.textContent
@@ -242,6 +246,7 @@ describe("FriendsPane", () => {
       expect(text()).toContain(
         "Request sent. Send them the link so they can accept it."
       );
+      expect(outcomeIsError()).toBe(false);
       const sent = server.rows.find((r) => r.targetUserId === ADA_ID)!;
       expect(section("Sent requests")!.textContent).toContain("Ada");
 
@@ -258,6 +263,7 @@ describe("FriendsPane", () => {
       await typeAndSend("not-an-id");
 
       expect(text()).toContain("That doesn't look like a user ID.");
+      expect(outcomeIsError()).toBe(true);
       expect(server.rows).toEqual([]);
     });
 
@@ -284,6 +290,8 @@ describe("FriendsPane", () => {
       await typeAndSend(ADA_ID);
 
       expect(text()).toContain("You're already friends.");
+      // Informational, not something to fix.
+      expect(outcomeIsError()).toBe(false);
     });
 
     it("copies the user's own ID to share", async () => {

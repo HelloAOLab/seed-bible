@@ -179,6 +179,10 @@
   line-height: 1.4;
 }
 
+.sb-friends-add-outcome--error {
+  color: var(--sb-error-color, #d64545);
+}
+
 .sb-friends-my-id {
   display: flex;
   flex-wrap: wrap;
