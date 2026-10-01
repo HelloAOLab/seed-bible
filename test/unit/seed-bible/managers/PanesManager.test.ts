@@ -1078,4 +1078,33 @@ describe("createPanes", () => {
       expect(panes.panes.value).toBe(before);
     });
   });
+
+  describe("header visibility", () => {
+    it("defaults showHeader to true if omitted", () => {
+      const panes = createPanes();
+
+      const pane = panes.openPane({
+        placement: "fullscreen",
+        title: "Today",
+        component: componentReturning("Today"),
+      });
+
+      expect(pane.showHeader).toBe(true);
+      expect(panes.panes.value[0]?.showHeader).toBe(true);
+    });
+
+    it("successfully sets showHeader", () => {
+      const panes = createPanes();
+
+      const pane = panes.openPane({
+        placement: "fullscreen",
+        title: "Today",
+        component: componentReturning("Today"),
+        showHeader: false,
+      });
+
+      expect(pane.showHeader).toBe(false);
+      expect(panes.panes.value[0]?.showHeader).toBe(false);
+    });
+  });
 });
