@@ -45,6 +45,11 @@ import {
   YourContentPaneTitle,
 } from "../components/YourContentPane/YourContentPane";
 import {
+  FRIENDS_PANE_ID,
+  FriendsPane,
+  FriendsPaneTitle,
+} from "../components/FriendsPane/FriendsPane";
+import {
   createYourContentManager,
   type YourContentManager,
 } from "../managers/YourContentManager";
@@ -512,6 +517,13 @@ export interface SeedBibleState {
   /** Closes "Your content" (clears `content` from the URL). */
   closeYourContent: () => void;
 
+  /** True when the Friends screen is showing. */
+  isFriendsOpen: ReadonlySignal<boolean>;
+  /** Opens Friends (reflected in the URL as `?friends=open`). */
+  openFriends: () => void;
+  /** Closes Friends (clears `friends` from the URL). */
+  closeFriends: () => void;
+
   /** True when the Profile screen is showing. */
   isProfileOpen: ReadonlySignal<boolean>;
   /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
@@ -880,6 +892,21 @@ export function createSeedBibleState(
     contentOpen.value = false;
   };
 
+  // The Friends screen, reached from Profile. Bound to `?friends=open` on the
+  // same terms as "Your content" above.
+  const friendsOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("friends") === "open"
+  );
+  const isFriendsOpen = computed(() => friendsOpen.value);
+  const openFriends = () => {
+    friendsOpen.value = true;
+  };
+  const closeFriends = () => {
+    friendsOpen.value = false;
+  };
+
   // The Profile screen. Two-way bound to `?profile=open` so it can be
   // deep-linked and so the browser's back button leaves it, mirroring Today.
   //
@@ -938,6 +965,14 @@ export function createSeedBibleState(
       },
       set value(newValue) {
         contentOpen.value = newValue === "open";
+      },
+    },
+    friends: {
+      get value() {
+        return friendsOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        friendsOpen.value = newValue === "open";
       },
     },
     "edit-profile": {
@@ -2868,6 +2903,9 @@ export function createSeedBibleState(
     isYourContentOpen,
     openYourContent,
     closeYourContent,
+    isFriendsOpen,
+    openFriends,
+    closeFriends,
     isProfileOpen,
     openProfile,
     closeProfile,
@@ -3060,11 +3098,12 @@ export function createSeedBibleState(
   // stays stable across reopens.
   //
   // Opening any fullscreen pane closes the others, so the screens reached from
-  // Profile ("Edit profile", "Your content") each carry a back button that
-  // reopens it rather than relying on a pane stack.
+  // Profile ("Edit profile", "Your content", "Friends") each carry a back
+  // button that reopens it rather than relying on a pane stack.
   const backToProfile = () => {
     closeEditProfile();
     closeYourContent();
+    closeFriends();
     openProfile();
   };
   const renderProfileBackButton = () => (
@@ -3105,6 +3144,7 @@ export function createSeedBibleState(
       onEditPicture={editProfilePicture}
       onOpenReadingPlans={openReadingPlansFromProfile}
       onOpenYourContent={openYourContent}
+      onOpenFriends={openFriends}
     />
   );
   const renderProfilePaneTitle = () => <ProfilePaneTitle />;
@@ -3220,6 +3260,33 @@ export function createSeedBibleState(
     );
     if (!paneOpen && isYourContentOpen.peek()) {
       closeYourContent();
+    }
+  });
+
+  // "Friends", wired like "Your content" above.
+  const renderFriendsPane = () => <FriendsPane state={state} />;
+  const renderFriendsPaneTitle = () => <FriendsPaneTitle />;
+
+  effect(() => {
+    if (isFriendsOpen.value) {
+      panes.openPane({
+        id: FRIENDS_PANE_ID,
+        placement: "fullscreen",
+        title: renderFriendsPaneTitle,
+        leading: renderProfileBackButton,
+        component: renderFriendsPane,
+      });
+    } else {
+      panes.closePane(FRIENDS_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === FRIENDS_PANE_ID
+    );
+    if (!paneOpen && isFriendsOpen.peek()) {
+      closeFriends();
     }
   });
 

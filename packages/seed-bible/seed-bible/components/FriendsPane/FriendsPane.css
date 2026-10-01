@@ -1,0 +1,204 @@
+/*
+ * Friends screen, reached from Profile. Colours come from the `--sb-*` theme
+ * variables, like the Profile and Your content screens, so it follows the
+ * theme ThemeManager injects on `body`.
+ */
+.sb-friends-screen {
+  --sb-friends-padding: 16px;
+  --sb-friends-radius: 12px;
+  --sb-friends-surface: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 95%
+  );
+  --sb-friends-border: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 88%
+  );
+  --sb-friends-muted: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: 32px;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+}
+
+.sb-friends-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--sb-friends-padding);
+  box-sizing: border-box;
+}
+
+.sb-friends-signed-out {
+  align-items: center;
+  text-align: center;
+}
+
+.sb-friends-section,
+.sb-friends-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-friends-card {
+  padding: var(--sb-friends-padding);
+  border: 1px solid var(--sb-friends-border);
+  border-radius: var(--sb-friends-radius);
+}
+
+.sb-friends-heading {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.sb-friends-empty {
+  margin: 0;
+  color: var(--sb-friends-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.sb-friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-friends-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: var(--sb-friends-radius);
+}
+
+.sb-friends-row:hover {
+  background: var(--sb-friends-surface);
+}
+
+.sb-friends-person-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sb-friends-person-name,
+.sb-friends-person-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-friends-person-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sb-friends-person-subtitle {
+  color: var(--sb-friends-muted);
+  font-size: 0.8125rem;
+}
+
+.sb-friends-row-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.sb-friends-button {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--sb-friends-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-friends-button:hover:not(:disabled) {
+  border-color: var(--sb-primary-color);
+  color: var(--sb-primary-color);
+}
+
+.sb-friends-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sb-friends-button--primary {
+  border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-reader-background);
+}
+
+.sb-friends-button--primary:hover:not(:disabled) {
+  color: var(--sb-reader-background);
+  opacity: 0.9;
+}
+
+.sb-friends-add-form {
+  display: flex;
+  gap: 8px;
+}
+
+.sb-friends-add-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--sb-friends-border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.sb-friends-add-outcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.sb-friends-my-id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sb-friends-border);
+  font-size: 0.8125rem;
+}
+
+.sb-friends-my-id-label {
+  color: var(--sb-friends-muted);
+}
+
+.sb-friends-my-id-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
