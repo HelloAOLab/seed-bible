@@ -1780,9 +1780,8 @@ export function createPlaylistManager(
     }
     initialPlaylistLocator.value = null;
     initialPlaylistStep.value = null;
-    // Bump the generation so an in-flight open can't clear a later play, and
-    // drop the loader now that playback is gone.
-    openingGeneration += 1;
+    // Drop the loader. A later open bumps the generation itself, so a finish
+    // from this one can only set the flag false, which this already did.
     openingPlayback.value = false;
     modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     if (view.peek()) {

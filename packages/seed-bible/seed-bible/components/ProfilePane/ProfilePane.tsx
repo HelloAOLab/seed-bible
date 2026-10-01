@@ -527,11 +527,13 @@ export function ProfilePane(props: ProfileScreenProps) {
           <ReadingPlansCard state={state} onOpen={onOpenReadingPlans} />
         ) : null}
 
-        <PlaylistHistoryCard
-          state={state}
-          onViewAll={onOpenPlaylistHistory}
-          onContinue={onContinuePlaylist}
-        />
+        {state.playlists.userPlaylistHistory.value.length > 0 ? (
+          <PlaylistHistoryCard
+            state={state}
+            onViewAll={onOpenPlaylistHistory}
+            onContinue={onContinuePlaylist}
+          />
+        ) : null}
 
         <ProfileRow
           icon="edit"

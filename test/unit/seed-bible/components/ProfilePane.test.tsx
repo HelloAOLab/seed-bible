@@ -418,18 +418,12 @@ describe("ProfilePane", () => {
     expect(container.querySelector(".sb-profile-account-button")).toBeNull();
   });
 
-  it("shows an empty history card until a playlist has been played", () => {
+  it("hides playlist history until a playlist has been played", () => {
     const { state } = createState();
     renderPane(state);
 
-    const card = container.querySelector(".sb-profile-playlist-history");
-    expect(card?.textContent).toContain("My playlist history");
-    expect(card?.textContent).toContain("View all");
-    expect(card?.textContent).toContain(
-      "Playlists you listen to will show up here."
-    );
-    expect(card?.querySelector(".sb-profile-progress")).toBeNull();
-    expect(card?.querySelector(".sb-profile-playlist-continue")).toBeNull();
+    expect(container.querySelector(".sb-profile-playlist-history")).toBeNull();
+    expect(container.textContent).not.toContain("View all");
   });
 
   it("features the latest playlist on the history card and continues it", () => {
@@ -739,7 +733,10 @@ describe("ProfilePane", () => {
   });
 
   it("hides the plans card when the reading plans feature is off", () => {
-    const { state } = createState({ plansEnabled: false });
+    const { state } = createState({
+      plansEnabled: false,
+      playlistHistory: [historyEntry()],
+    });
     renderPane(state);
 
     expect(container.querySelector(".sb-profile-plans")).toBeNull();
