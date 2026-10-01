@@ -22,12 +22,35 @@ import {
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the annotation composer. If that fetch fails (e.g. offline
 // and not yet cached), fall back to a plain textarea so the note isn't lost.
-const AnnotationEditor = lazy<ComponentType<AnnotationEditorProps>>(() =>
-  import("../TipTapEditor/TipTapEditor").catch((err: unknown) => {
-    console.error("Failed to load the rich text editor:", err);
-    return { default: PlainTextAnnotationEditor };
-  })
-);
+function loadAnnotationEditor() {
+  return lazy<ComponentType<AnnotationEditorProps>>(() =>
+    import("../TipTapEditor/TipTapEditor").catch((err: unknown) => {
+      console.error("Failed to load the rich text editor:", err);
+      editorLoadFailed = true;
+      return { default: PlainTextAnnotationEditor };
+    })
+  );
+}
+
+let editorLoadFailed = false;
+let AnnotationEditor = loadAnnotationEditor();
+
+/**
+ * The editor component for this mount of the form. `lazy()` caches its
+ * result, so after a failed load a fresh one is made to retry TipTap the next
+ * time the form opens while the browser reports being online. It's captured
+ * once per mount so a retry never swaps editors under text being typed.
+ */
+function useAnnotationEditor(): ComponentType<AnnotationEditorProps> {
+  const [editor] = useState(() => {
+    if (editorLoadFailed && navigator.onLine) {
+      editorLoadFailed = false;
+      AnnotationEditor = loadAnnotationEditor();
+    }
+    return AnnotationEditor;
+  });
+  return editor;
+}
 
 interface CreateAnnotationFormProps {
   annotations: AnnotationsManager;
@@ -39,6 +62,7 @@ interface CreateAnnotationFormProps {
 export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
   const { annotations, tabs, toast } = props;
   const { t } = useI18n();
+  const EditorComponent = useAnnotationEditor();
   const editorRef = useRef<AnnotationEditorHandle | null>(null);
   // Sync re-entry gate: React `saving` state is too late for Mod+Enter
   // (disabled only blocks the button; a second key event can land before
@@ -131,7 +155,7 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
           />
         }
       >
-        <AnnotationEditor
+        <EditorComponent
           className="sb-settings-text-input sb-annotation-editor"
           initialContent={editing.data.html}
           autofocus="end"
