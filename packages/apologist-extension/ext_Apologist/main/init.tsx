@@ -192,7 +192,16 @@ export default function initApologistExtension() {
         url.searchParams.get("apologistModel") ?? "openai/gpt/5-mini";
       const apologistConversationId: string | null =
         url.searchParams.get("apologistConversation") ?? null;
-      const apologistTeamId = url.searchParams.get("apologistTeamID") ?? null;
+      const rawApologistTeamId = url.searchParams.get("apologistTeamID");
+      const apologistTeamId =
+        rawApologistTeamId && /^\d+$/.test(rawApologistTeamId)
+          ? Number(rawApologistTeamId)
+          : null;
+      if (rawApologistTeamId && apologistTeamId === null) {
+        console.error(
+          `[Apologist] apologistTeamID must be an integer, got "${rawApologistTeamId}". Discovered content is disabled.`
+        );
+      }
 
       if (customApologistDomain && !apologistApiKey) {
         console.error(
@@ -427,7 +436,7 @@ export default function initApologistExtension() {
         },
       });
 
-      if (apologistTeamId) {
+      if (apologistTeamId !== null) {
         const providerName =
           apologistName ??
           i18n.t("title", { ns: "ext_Apologist", defaultValue: "Apologist" });
@@ -445,6 +454,7 @@ export default function initApologistExtension() {
                 ?.books.find((b) => b.id === book)?.name ?? book;
 
             const results = await searchApologistContent({
+              domain: apologistDomain,
               query: `${bookName} ${chapter}`,
               teamId: apologistTeamId,
               apiKey: apologistApiKey,

@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-export const APOLOGIST_SEARCH_URL = "https://my.gospel.bot/api/v1/search";
-
 export const APOLOGIST_SEARCH_TYPES = [
   "article",
   "youtube",
@@ -84,11 +82,12 @@ export function parseSearchResponse(body: unknown): ApologistSearchResult[] {
 }
 
 export async function searchApologistContent(options: {
+  domain: string;
   query: string;
-  teamId: string;
+  teamId: number;
   apiKey: string | null;
 }): Promise<ApologistSearchResult[]> {
-  const response = await fetch(APOLOGIST_SEARCH_URL, {
+  const response = await fetch(`https://${options.domain}/api/v1/search`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

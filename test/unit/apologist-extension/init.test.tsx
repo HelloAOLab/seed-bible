@@ -81,6 +81,11 @@ describe("initApologistExtension discover provider", () => {
     expect(findDiscoverProvider(context)).toBeUndefined();
   });
 
+  it("does not register a discover provider when apologistTeamID isn't an integer", () => {
+    const context = install("?apologistTeamID=team-42&apologistApiKey=apg_key");
+    expect(findDiscoverProvider(context)).toBeUndefined();
+  });
+
   it("searches the team's content for the current chapter", async () => {
     fetchMock.mockResolvedValue(
       new Response(
@@ -100,7 +105,9 @@ describe("initApologistExtension discover provider", () => {
         { status: 200 }
       )
     );
-    const context = install("?apologistTeamID=team-42&apologistApiKey=apg_key");
+    const context = install(
+      "?apologistTeamID=42&apologistApiKey=apg_key&apologistDomain=my.gospel.bot"
+    );
     const provider = findDiscoverProvider(context);
     expect(provider).toBeDefined();
 
@@ -117,7 +124,7 @@ describe("initApologistExtension discover provider", () => {
     expect(JSON.parse(init.body)).toEqual({
       query: "John 3",
       filters: {
-        team_ids: ["team-42"],
+        team_ids: [42],
         model: "source",
         types: ["article", "youtube", "episode", "media", "url"],
       },
@@ -145,9 +152,22 @@ describe("initApologistExtension discover provider", () => {
     );
   });
 
+  it("searches the default Apologist domain when none is configured", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: [] }), { status: 200 })
+    );
+    const context = install("?apologistTeamID=42");
+
+    await findDiscoverProvider(context)!.discover(discoverContext);
+
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      "https://apologist.seedbible.io/api/v1/search"
+    );
+  });
+
   it("fails the lookup when the search request is rejected", async () => {
     fetchMock.mockResolvedValue(new Response("bad key", { status: 401 }));
-    const context = install("?apologistTeamID=team-42&apologistApiKey=apg_bad");
+    const context = install("?apologistTeamID=42&apologistApiKey=apg_bad");
 
     await expect(
       findDiscoverProvider(context)!.discover(discoverContext)
@@ -158,7 +178,7 @@ describe("initApologistExtension discover provider", () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ data: [] }), { status: 200 })
     );
-    const context = install("?apologistTeamID=team-42&apologistApiKey=apg_key");
+    const context = install("?apologistTeamID=42&apologistApiKey=apg_key");
 
     await expect(
       findDiscoverProvider(context)!.discover(discoverContext)
