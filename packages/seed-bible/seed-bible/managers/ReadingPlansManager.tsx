@@ -30,6 +30,7 @@ import {
   type SharedPageSeed,
 } from "./SharedPageLoader";
 import { DEFAULT_UI_LANGUAGE } from "./ReadingUrlPath";
+import { createLinkPreviewLoader } from "./linkPreview";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -2042,6 +2043,9 @@ export function createReadingPlansManager(
   // -------------------------------------------------------------------------
 
   const editingReadingPlan = signal<ReadingPlanDraft | null>(null);
+  const linkPreviews = createLinkPreviewLoader((url) =>
+    os.getLinkPreview(url, options.language?.peek())
+  );
   // Set while a draft save is in flight or scheduled, so the wizard can show
   // that the user's work is being kept without them having to press anything.
   const editingReadingPlanSaving = signal(false);
@@ -2360,6 +2364,24 @@ export function createReadingPlansManager(
           : session
       ),
     }));
+    linkPreviews.request(item, (_original, previewed) => {
+      const draft = editingReadingPlan.peek();
+      const stillThere = draft?.plan.sessions.some((session) =>
+        session.readings.some((r) => r.id === reading.id)
+      );
+      if (!stillThere) {
+        return;
+      }
+      mutateDraft((plan) => ({
+        ...plan,
+        sessions: plan.sessions.map((session) => ({
+          ...session,
+          readings: session.readings.map((r) =>
+            r.id === reading.id ? { ...r, item: previewed } : r
+          ),
+        })),
+      }));
+    });
   };
 
   /** Removes a reading from a session of the draft. */
@@ -2386,6 +2408,7 @@ export function createReadingPlansManager(
    * no draft or it has no readings.
    */
   const finishEditingReadingPlan = async (): Promise<ReadingPlan | null> => {
+    await linkPreviews.settle();
     const draft = editingReadingPlan.peek();
     if (!draft || draftReadingCount(draft) === 0) {
       return null;

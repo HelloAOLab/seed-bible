@@ -84,4 +84,22 @@ describe("playlistItemLabel", () => {
       )
     ).toBe("GEN 1:2-end");
   });
+
+  it("labels a link by its own title, then its preview's title, then its URL", () => {
+    const url = "https://example.com/page";
+    const preview = { title: "Page title" };
+    expect(
+      playlistItemLabel(
+        { type: "link", url, title: "Mine", preview },
+        t,
+        resolveBookName
+      )
+    ).toBe("Mine");
+    expect(
+      playlistItemLabel({ type: "link", url, preview }, t, resolveBookName)
+    ).toBe("Page title");
+    expect(playlistItemLabel({ type: "link", url }, t, resolveBookName)).toBe(
+      url
+    );
+  });
 });

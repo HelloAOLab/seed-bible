@@ -43,6 +43,11 @@ import {
   type SharedPage,
   type SharedPageSeed,
 } from "./SharedPageLoader";
+import {
+  carryOverLinkPreview,
+  createLinkPreviewLoader,
+  LinkPreviewSchema,
+} from "./linkPreview";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -84,6 +89,8 @@ export const PlaylistItem = z.discriminatedUnion("type", [
      * {@link resolveLinkMedia}).
      */
     embed: z.boolean().optional(),
+    /** The page's title, description, and image, fetched when it was saved. */
+    preview: LinkPreviewSchema.optional(),
   }),
 ]);
 
@@ -911,6 +918,30 @@ export function createPlaylistManager(
   /** Copy of the draft when the editor opened, for unsaved-change detection. */
   const editingPlaylistBaseline = signal<Playlist | null>(null);
 
+  const linkPreviews = createLinkPreviewLoader((url) =>
+    os.getLinkPreview(url, i18n.language.peek())
+  );
+
+  /**
+   * Fetches a preview for a link item just saved into the edited playlist and
+   * swaps it in. Matches by object identity, so an item edited or removed
+   * while the fetch was in flight is left alone.
+   */
+  const requestEditingItemPreview = (item: PlaylistItemData) => {
+    linkPreviews.request(item, (original, previewed) => {
+      const current = editingPlaylist.peek();
+      if (!current?.items.includes(original)) {
+        return;
+      }
+      editingPlaylist.value = {
+        ...current,
+        items: current.items.map((existing) =>
+          existing === original ? previewed : existing
+        ),
+      };
+    });
+  };
+
   /**
    * Id of the history row being written for the active play session, or null
    * when nothing is being tracked (signed out, `history: false`, or idle).
@@ -1392,6 +1423,7 @@ export function createPlaylistManager(
    * is no playlist being edited.
    */
   const saveEditingPlaylist = async (): Promise<void> => {
+    await linkPreviews.settle();
     const current = editingPlaylist.value;
     if (!current) {
       return;
@@ -1441,6 +1473,7 @@ export function createPlaylistManager(
       ...current,
       items: [...current.items, item],
     };
+    requestEditingItemPreview(item);
     return "success";
   };
 
@@ -1467,6 +1500,7 @@ export function createPlaylistManager(
         ...current.items.slice(index),
       ],
     };
+    requestEditingItemPreview(item);
     return "success";
   };
 
@@ -1486,12 +1520,14 @@ export function createPlaylistManager(
     if (index < 0 || index >= current.items.length) {
       return `error: index out of range (0-${current.items.length - 1})`;
     }
+    const updated = carryOverLinkPreview(current.items[index], item);
     editingPlaylist.value = {
       ...current,
       items: current.items.map((existing, i) =>
-        i === index ? item : existing
+        i === index ? updated : existing
       ),
     };
+    requestEditingItemPreview(updated);
     return "success";
   };
 

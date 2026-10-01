@@ -1218,6 +1218,7 @@ describe("createReadingPlansManager", () => {
   let eraseDataMock: Mock;
   let recordFileMock: Mock;
   let warnSpy: Mock;
+  let getLinkPreviewMock: Mock;
   let errorSpy: Mock;
   let userId: ReturnType<typeof signal<string | null>>;
 
@@ -1293,6 +1294,10 @@ describe("createReadingPlansManager", () => {
         return { success: true, items };
       },
     });
+    // Stubbed on the SDK client (a proxy, so assigned rather than spied on)
+    // so OsManager's own link preview handling still runs.
+    (os.client as unknown as { getLinkPreview: unknown }).getLinkPreview =
+      getLinkPreviewMock;
     const login = { userId } as unknown as LoginArg;
     const tabs = {
       tabs: signal([
@@ -1314,6 +1319,11 @@ describe("createReadingPlansManager", () => {
   beforeEach(() => {
     recordDataMock = vi.fn().mockResolvedValue(undefined);
     eraseDataMock = vi.fn().mockResolvedValue({ success: true });
+    getLinkPreviewMock = vi.fn().mockResolvedValue({
+      success: false,
+      errorCode: "not_supported",
+      errorMessage: "Link previews are not supported.",
+    });
     recordFileMock = vi.fn().mockResolvedValue({
       success: true,
       url: "https://example.com/hero.jpg",
@@ -1957,6 +1967,80 @@ describe("createReadingPlansManager", () => {
     expect(manager.editingReadingPlan.value!.plan.cadenceOptions).toHaveLength(
       2
     );
+  });
+
+  it("finishEditingReadingPlan stores the preview fetched for a link reading", async () => {
+    let respond!: (value: unknown) => void;
+    getLinkPreviewMock.mockReturnValue(
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+    );
+    const manager = makeManager("user-1", undefined, {
+      language: signal("es"),
+    });
+    await flush();
+
+    manager.startEditingReadingPlan();
+    manager.addReadingToEditingPlan({
+      type: "link",
+      url: "https://example.com/psalms",
+    });
+    const finishing = manager.finishEditingReadingPlan();
+    respond({
+      success: true,
+      cachedUntilMs: Date.now() + 60_000,
+      title: "Psalms overview",
+      description: "A short introduction.",
+      imageUrl: "https://example.com/psalms.png",
+      meta: {},
+    });
+    const plan = await finishing;
+
+    expect(getLinkPreviewMock).toHaveBeenCalledWith({
+      url: "https://example.com/psalms",
+      locale: "es",
+    });
+    expect(plan!.sessions[0]!.readings[0]!.item).toEqual({
+      type: "link",
+      url: "https://example.com/psalms",
+      preview: {
+        title: "Psalms overview",
+        description: "A short introduction.",
+        imageUrl: "https://example.com/psalms.png",
+      },
+    });
+  });
+
+  it("doesn't bring back a link reading removed while its preview was loading", async () => {
+    let respond!: (value: unknown) => void;
+    getLinkPreviewMock.mockReturnValue(
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.startEditingReadingPlan();
+    manager.addReadingToEditingPlan({
+      type: "link",
+      url: "https://example.com/gone",
+    });
+    const readingId =
+      manager.editingReadingPlan.value!.plan.sessions[0]!.readings[0]!.id;
+    manager.removeReadingFromEditingPlan(0, readingId);
+    respond({
+      success: true,
+      cachedUntilMs: Date.now() + 60_000,
+      title: "Gone",
+      meta: {},
+    });
+    await flush();
+
+    expect(
+      manager.editingReadingPlan.value!.plan.sessions[0]!.readings
+    ).toEqual([]);
   });
 
   it("finishEditingReadingPlan completes the plan, pruning empty sessions", async () => {
