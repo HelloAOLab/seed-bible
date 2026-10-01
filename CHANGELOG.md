@@ -14,6 +14,8 @@
 
 ### 🔧 Changed
 
+- Show long extension descriptions as two lines with a "Read more" link in the Extensions settings list. Before, a long description made its row several lines tall. ([#1924](https://github.com/HelloAOLab/seed-bible/pull/1924))
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed
