@@ -15,12 +15,13 @@ export function isApplePlatform(): boolean {
   return typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
 }
 
+// Quotes need no escaping in text content, and leaving them alone keeps the
+// output identical to TipTap's for plain paragraphs (see `isPlainTextHtml`).
 function escapeHtml(text: string): string {
   return text
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replaceAll(">", "&gt;");
 }
 
 /** One `<p>` per line, matching how TipTap stores plain paragraphs. */
@@ -31,25 +32,108 @@ export function plainTextToHtml(text: string): string {
     .join("");
 }
 
-/** Flattens saved annotation HTML to text, one line per top-level block. */
+/** Blocks that hold a line of text, so an empty one is still a blank line. */
+const TEXT_BLOCKS = new Set(["P", "H1", "H2", "H3", "H4", "H5", "H6", "PRE"]);
+const BLOCKS = new Set([
+  ...TEXT_BLOCKS,
+  "LI",
+  "UL",
+  "OL",
+  "BLOCKQUOTE",
+  "DIV",
+  "HR",
+]);
+
+/**
+ * Flattens saved annotation HTML to text: one line per paragraph, heading or
+ * list item (prefixed `- `, indented when nested), and `<br>` as a line break.
+ */
 export function htmlToPlainText(html: string | undefined): string {
   if (!html || typeof DOMParser === "undefined") {
     return "";
   }
   // DOMParser builds an inert document, so markup in saved HTML can't run.
   const body = new DOMParser().parseFromString(html, "text/html").body;
-  if (body.children.length === 0) {
-    return body.textContent ?? "";
+  const lines: string[] = [];
+  let line: string | null = null;
+  let pendingPrefix = "";
+
+  const append = (text: string) => {
+    if (line === null) {
+      line = pendingPrefix;
+      pendingPrefix = "";
+    }
+    line += text;
+  };
+  const endLine = () => {
+    if (line !== null) {
+      lines.push(line);
+      line = null;
+    }
+  };
+
+  const walk = (node: Node, listDepth: number) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      append(node.textContent ?? "");
+      return;
+    }
+    if (!(node instanceof Element)) {
+      return;
+    }
+    if (node.tagName === "BR") {
+      append("");
+      endLine();
+      return;
+    }
+    if (!BLOCKS.has(node.tagName)) {
+      node.childNodes.forEach((child) => walk(child, listDepth));
+      return;
+    }
+    endLine();
+    const before = lines.length;
+    const isList = node.tagName === "UL" || node.tagName === "OL";
+    if (node.tagName === "LI") {
+      pendingPrefix = `${"  ".repeat(Math.max(listDepth - 1, 0))}- `;
+    }
+    node.childNodes.forEach((child) =>
+      walk(child, isList ? listDepth + 1 : listDepth)
+    );
+    endLine();
+    if (lines.length === before && TEXT_BLOCKS.has(node.tagName)) {
+      lines.push(pendingPrefix);
+    }
+    pendingPrefix = "";
+  };
+
+  body.childNodes.forEach((child) => walk(child, 0));
+  endLine();
+  return lines.join("\n");
+}
+
+function normalizeHtml(html: string): string {
+  return new DOMParser().parseFromString(html, "text/html").body.innerHTML;
+}
+
+/**
+ * True when the note survives a trip through the textarea unchanged: only
+ * plain paragraphs, no lists, line breaks, links, marks or alignment. Saving
+ * anything else from the textarea would strip it, so it opens read-only.
+ */
+export function isPlainTextHtml(html: string | undefined): boolean {
+  if (!html?.trim() || typeof DOMParser === "undefined") {
+    return true;
   }
-  return Array.from(body.children)
-    .map((child) => child.textContent ?? "")
-    .join("\n");
+  return (
+    normalizeHtml(plainTextToHtml(htmlToPlainText(html))) ===
+    normalizeHtml(html)
+  );
 }
 
 /**
  * Stand-in for `TipTapEditor` when its lazily-loaded bundle can't be fetched
  * (typically because the user is offline), so an annotation can still be
- * written. Formatting in an existing annotation is flattened to plain text.
+ * written. An existing note with formatting opens read-only instead, since
+ * saving it from here would strip that formatting for good.
  */
 export function PlainTextAnnotationEditor(props: AnnotationEditorProps) {
   const {
@@ -62,6 +146,7 @@ export function PlainTextAnnotationEditor(props: AnnotationEditorProps) {
   } = props;
   const { t } = useI18n();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [readOnly] = useState(() => !isPlainTextHtml(initialContent));
   const [value, setValue] = useState(() => htmlToPlainText(initialContent));
   const valueRef = useRef(value);
   valueRef.current = value;
@@ -71,6 +156,12 @@ export function PlainTextAnnotationEditor(props: AnnotationEditorProps) {
   onEmptyChangeRef.current = onEmptyChange;
 
   useEffect(() => {
+    if (readOnly) {
+      // No handle and "empty" keep Save disabled and make the form's save a
+      // no-op, so the formatted original is never overwritten.
+      onEmptyChangeRef.current(true);
+      return;
+    }
     onEditorRef.current({
       get isEmpty() {
         return valueRef.current.trim() === "";
@@ -91,10 +182,15 @@ export function PlainTextAnnotationEditor(props: AnnotationEditorProps) {
   return (
     <>
       <p className="sb-annotation-editor-offline-notice" role="status">
-        {t("annotation-editor-unavailable", {
-          defaultValue:
-            "The formatting editor couldn't load, so this note will be saved as plain text.",
-        })}
+        {readOnly
+          ? t("annotation-editor-unavailable-read-only", {
+              defaultValue:
+                "The formatting editor couldn't load. This note has formatting that would be lost, so it can't be edited until you reconnect.",
+            })
+          : t("annotation-editor-unavailable", {
+              defaultValue:
+                "The formatting editor couldn't load, so this note will be saved as plain text.",
+            })}
       </p>
       <div className={className}>
         <textarea
@@ -102,6 +198,7 @@ export function PlainTextAnnotationEditor(props: AnnotationEditorProps) {
           className="sb-annotation-editor-textarea"
           rows={6}
           value={value}
+          readOnly={readOnly}
           aria-label={t("annotation-text", { defaultValue: "Annotation text" })}
           onInput={(event) => {
             const next = event.currentTarget.value;

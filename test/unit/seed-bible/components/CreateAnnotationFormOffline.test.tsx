@@ -221,17 +221,66 @@ describe("CreateAnnotationForm when the rich text editor can't load", () => {
     expect(saveEditingAnnotation).toHaveBeenCalledTimes(1);
   });
 
-  it("seeds an existing annotation's text, one line per paragraph", async () => {
-    const { textarea, saveButton } = await renderForm(
-      createAnnotation({
-        data: {
-          type: "comment",
-          html: "<p>Already <strong>written</strong></p><p>Second</p>",
-        },
-      })
-    );
+  it("lets a plain existing note be edited and saved without changing the rest", async () => {
+    const { annotations, saveEditingAnnotation, textarea, saveButton } =
+      await renderForm(
+        createAnnotation({
+          data: {
+            type: "comment",
+            html: "<p>Already written</p><p>Second</p>",
+          },
+        })
+      );
 
     expect(textarea.value).toBe("Already written\nSecond");
+    expect(textarea.readOnly).toBe(false);
     expect(saveButton.disabled).toBe(false);
+
+    act(() => {
+      typeInto(textarea, "Already written\nSecond, fixed");
+    });
+    await act(async () => {
+      saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await flushSave();
+    });
+
+    expect(saveEditingAnnotation).toHaveBeenCalledTimes(1);
+    expect(annotations.editingAnnotation.value?.data.html).toBe(
+      "<p>Already written</p><p>Second, fixed</p>"
+    );
+  });
+
+  it("opens a note with a list and line break read-only so saving can't flatten it", async () => {
+    const html =
+      "<ul><li><p>First</p></li><li><p>Second</p></li></ul><p>Line one<br>Line two</p>";
+    const { annotations, saveEditingAnnotation, textarea, saveButton } =
+      await renderForm(createAnnotation({ data: { type: "comment", html } }));
+
+    expect(textarea.value).toBe("- First\n- Second\nLine one\nLine two");
+    expect(textarea.readOnly).toBe(true);
+    expect(saveButton.disabled).toBe(true);
+    expect(
+      container.querySelector(".sb-annotation-editor-offline-notice")
+        ?.textContent
+    ).toBe(
+      "The formatting editor couldn't load. This note has formatting that would be lost, so it can't be edited until you reconnect."
+    );
+
+    const isMac = /Mac/.test(navigator.platform);
+    await act(async () => {
+      saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      textarea.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          metaKey: isMac,
+          ctrlKey: !isMac,
+          bubbles: true,
+        })
+      );
+      await flushSave();
+    });
+
+    expect(saveEditingAnnotation).not.toHaveBeenCalled();
+    expect(annotations.editingAnnotation.value?.data.html).toBe(html);
   });
 });

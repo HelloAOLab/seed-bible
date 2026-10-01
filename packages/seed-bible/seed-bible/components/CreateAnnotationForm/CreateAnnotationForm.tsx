@@ -12,20 +12,31 @@ import { extractContentText } from "../../managers/ChapterText";
 import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
 import type { TabsManager } from "../../managers/TabsManager";
 import { sanitize } from "../../managers/Sanitization";
+import { captureEvent } from "../../managers/Utils";
 import {
   isApplePlatform,
   PlainTextAnnotationEditor,
   type AnnotationEditorHandle,
   type AnnotationEditorProps,
 } from "./PlainTextAnnotationEditor";
+import { retryChunkImport } from "./retryChunkImport";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the annotation composer. If that fetch fails (e.g. offline
 // and not yet cached), fall back to a plain textarea so the note isn't lost.
-function loadAnnotationEditor() {
+function loadAnnotationEditor(isRetry: boolean) {
+  const load = () => import("../TipTapEditor/TipTapEditor");
   return lazy<ComponentType<AnnotationEditorProps>>(() =>
-    import("../TipTapEditor/TipTapEditor").catch((err: unknown) => {
+    (isRetry ? retryChunkImport(load) : load()).catch((err: unknown) => {
       console.error("Failed to load the rich text editor:", err);
+      // A failure while online is likely a broken deploy rather than a lost
+      // connection, and would otherwise only show up as users quietly getting
+      // the plain-text editor.
+      captureEvent("annotation_editor_load_failed", {
+        online: navigator.onLine,
+        retry: isRetry,
+        error: err instanceof Error ? err.message : String(err),
+      });
       editorLoadFailed = true;
       return { default: PlainTextAnnotationEditor };
     })
@@ -33,7 +44,7 @@ function loadAnnotationEditor() {
 }
 
 let editorLoadFailed = false;
-let AnnotationEditor = loadAnnotationEditor();
+let AnnotationEditor = loadAnnotationEditor(false);
 
 /**
  * The editor component for this mount of the form. `lazy()` caches its
@@ -45,7 +56,7 @@ function useAnnotationEditor(): ComponentType<AnnotationEditorProps> {
   const [editor] = useState(() => {
     if (editorLoadFailed && navigator.onLine) {
       editorLoadFailed = false;
-      AnnotationEditor = loadAnnotationEditor();
+      AnnotationEditor = loadAnnotationEditor(true);
     }
     return AnnotationEditor;
   });

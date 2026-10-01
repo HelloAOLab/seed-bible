@@ -712,6 +712,7 @@
   "delete-annotation-failed": "Couldn't delete the annotation.",
   "save-annotation-failed": "Couldn't save the annotation.",
   "annotation-editor-unavailable": "The formatting editor couldn't load, so this note will be saved as plain text.",
+  "annotation-editor-unavailable-read-only": "The formatting editor couldn't load. This note has formatting that would be lost, so it can't be edited until you reconnect.",
   "annotation-text": "Annotation text",
   "annotation-group-expand": "Expand group",
   "annotation-group-collapse": "Collapse group",

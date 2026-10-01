@@ -95,6 +95,7 @@ describe("CreateAnnotationForm retrying the rich text editor", () => {
     render(null, container);
     container.remove();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   async function openForm() {
@@ -129,9 +130,17 @@ describe("CreateAnnotationForm retrying the rich text editor", () => {
   // One sequential test: the failed-load state lives at module level in the
   // form, so splitting these steps across tests would make them order-bound.
   it("keeps the textarea while open, then retries TipTap on the next open once online", async () => {
+    const capture = vi.fn();
+    vi.stubGlobal("posthog", { capture });
     setOnline(false);
     const textarea = (await openForm()) as HTMLTextAreaElement;
     expect(textarea.tagName).toBe("TEXTAREA");
+    // Reported with the online flag, so a broken deploy (failing while
+    // online) can be told apart from users who are simply offline.
+    expect(capture).toHaveBeenCalledWith(
+      "annotation_editor_load_failed",
+      expect.objectContaining({ online: false, retry: false })
+    );
 
     // Connection returns mid-note: the open form must not swap editors and
     // drop what's been typed.
@@ -155,5 +164,6 @@ describe("CreateAnnotationForm retrying the rich text editor", () => {
     // Online at the next open: TipTap is fetched again and loads.
     setOnline(true);
     expect((await openForm()).className).toBe("stub-tiptap-editor");
+    expect(capture).toHaveBeenCalledTimes(1);
   });
 });
