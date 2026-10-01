@@ -52,14 +52,27 @@
 
 .sb-friends-card {
   padding: var(--sb-friends-padding);
-  border: 1px solid var(--sb-friends-border);
   border-radius: var(--sb-friends-radius);
+  /* Matches the compact Discover panel (`.sb-discover-content-panel`): a 1px
+     ring in place of a border, plus a soft drop shadow. */
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 4px 8px #0000002c;
 }
 
 .sb-friends-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-size: 1.0625rem;
   font-weight: 700;
+}
+
+/* Scoped so it outranks the global `body .material-symbols-outlined` size. */
+.sb-friends-heading .material-symbols-outlined {
+  color: var(--sb-primary-color);
+  font-size: 1.375rem;
 }
 
 .sb-friends-empty {

@@ -85,7 +85,8 @@ describe("FriendsPane", () => {
     );
   const section = (heading: string) =>
     Array.from(container.querySelectorAll(".sb-friends-section")).find(
-      (el) => el.querySelector(".sb-friends-heading")?.textContent === heading
+      (el) =>
+        el.querySelector(".sb-friends-heading-text")?.textContent === heading
     ) ?? null;
   /** What a button shows, leaving out the hidden alternate label and spinner. */
   const visibleLabel = (el: Element) => {
@@ -170,6 +171,25 @@ describe("FriendsPane", () => {
     expect(
       container.querySelector(".sb-friends-my-id-value")?.textContent
     ).toBe(ME);
+  });
+
+  it("marks each section heading with an icon", async () => {
+    const state = createState();
+    server.requestFrom(ADA_ID);
+    server.requestTo(BOB_ID);
+    await renderPane(state);
+
+    const iconOf = (root: Element | null) =>
+      root?.querySelector(".sb-friends-heading .material-symbols-outlined");
+    const friendsIcon = iconOf(section("Friends"));
+    const addIcon = iconOf(container.querySelector(".sb-friends-card"));
+
+    expect(friendsIcon?.textContent).toBe("group");
+    expect(addIcon?.textContent).toBe("person_add");
+    expect(iconOf(section("Friend requests"))?.textContent).toBe("how_to_reg");
+    expect(iconOf(section("Sent requests"))?.textContent).toBe("schedule_send");
+    // Decorative: the heading is announced by its text alone.
+    expect(friendsIcon?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("lists friends and requests in their own sections", async () => {

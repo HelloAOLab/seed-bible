@@ -11,6 +11,7 @@ import type {
 import type { ModalManager } from "../../managers/ModalManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
+import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import { getAddFriendUrl, getFriendRequestUrl } from "./friendLinks";
 
@@ -70,6 +71,17 @@ export function PersonIdentity(props: {
         ) : null}
       </span>
     </>
+  );
+}
+
+function FriendsHeading(props: { icon?: string; children: string }) {
+  return (
+    <h2 className="sb-friends-heading">
+      {props.icon ? (
+        <MaterialIcon aria-hidden="true">{props.icon}</MaterialIcon>
+      ) : null}
+      <span className="sb-friends-heading-text">{props.children}</span>
+    </h2>
   );
 }
 
@@ -291,9 +303,9 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
 
   return (
     <section className="sb-friends-card">
-      <h2 className="sb-friends-heading">
+      <FriendsHeading icon="person_add">
         {t("add-friend", { defaultValue: "Add a friend" })}
-      </h2>
+      </FriendsHeading>
       <form className="sb-friends-add-form" onSubmit={submit}>
         <input
           type="text"
@@ -652,9 +664,9 @@ export function FriendsPane(props: { state: SeedBibleState }) {
       <div className="sb-friends-inner">
         {incoming.length > 0 ? (
           <section className="sb-friends-section">
-            <h2 className="sb-friends-heading">
+            <FriendsHeading icon="how_to_reg">
               {t("friend-requests", { defaultValue: "Friend requests" })}
-            </h2>
+            </FriendsHeading>
             <ul className="sb-friends-list">
               {incoming.map((request) => (
                 <IncomingRequestRow
@@ -669,9 +681,9 @@ export function FriendsPane(props: { state: SeedBibleState }) {
         ) : null}
 
         <section className="sb-friends-section">
-          <h2 className="sb-friends-heading">
+          <FriendsHeading icon="group">
             {t("friends", { defaultValue: "Friends" })}
-          </h2>
+          </FriendsHeading>
           {friendList.length > 0 ? (
             <ul className="sb-friends-list">
               {friendList.map((friend) => (
@@ -700,9 +712,9 @@ export function FriendsPane(props: { state: SeedBibleState }) {
 
         {outgoing.length > 0 ? (
           <section className="sb-friends-section">
-            <h2 className="sb-friends-heading">
+            <FriendsHeading icon="schedule_send">
               {t("sent-friend-requests", { defaultValue: "Sent requests" })}
-            </h2>
+            </FriendsHeading>
             <ul className="sb-friends-list">
               {outgoing.map((request) => (
                 <OutgoingRequestRow
