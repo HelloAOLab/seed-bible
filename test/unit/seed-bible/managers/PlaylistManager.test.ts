@@ -1,4 +1,5 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import {
   CasualOSManager,
   createModalManager,
@@ -35,6 +36,8 @@ import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, signal } from "@preact/signals";
+import { h, render, type ComponentChildren } from "preact";
+import { act } from "preact/test-utils";
 import type { Mock } from "vitest";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
@@ -426,6 +429,7 @@ describe("createPlaylistManager", () => {
   /** The fake `ChatsManager`'s `addContext`/`removeContext` spies from the most recent `makeManager()` call. */
   /** The `ModalManager` from the most recent `makeManager()` call. */
   let lastModals: ReturnType<typeof createModalManager>;
+  let lastI18n: ReturnType<typeof createI18nManager>;
   let lastChatsAddContext: Mock;
   let lastChatsRemoveContext: Mock;
 
@@ -456,6 +460,7 @@ describe("createPlaylistManager", () => {
     const modals = createModalManager();
     lastModals = modals;
     const i18n = createI18nManager(navigation, ["en"]);
+    lastI18n = i18n;
     // Reuse the registry the fake reading states share, so the extension the
     // manager registers is the one those tabs can enable.
     const readingExtensionManager = sharedReadingExtensionManager!;
@@ -2542,6 +2547,60 @@ describe("createPlaylistManager", () => {
         key: "playlist-finished",
         defaultValue: "Playlist finished",
       });
+    });
+
+    /** Plays a two-item saved playlist through to its finished modal. */
+    const finishPlaylist = async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      manager.startPlaying(playlist);
+      await manager.playing.value!.next();
+      await manager.playing.value!.next();
+      return manager;
+    };
+
+    it("stops playback when its Close button is pressed", async () => {
+      const manager = await finishPlaylist();
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      try {
+        act(() => {
+          render(
+            h(I18nProvider, {
+              i18n: lastI18n,
+              children: finishedModal()!.content({
+                t: (key) => key,
+              }) as ComponentChildren,
+            }),
+            container
+          );
+        });
+        const close = Array.from(container.querySelectorAll("button")).find(
+          (b) => b.textContent === "Close"
+        )!;
+
+        act(() => close.click());
+
+        expect(manager.playing.value).toBeNull();
+        expect(finishedModal()).toBeUndefined();
+      } finally {
+        render(null, container);
+        container.remove();
+      }
+    });
+
+    it("keeps playing when the modal is just dismissed (its X or the backdrop)", async () => {
+      const manager = await finishPlaylist();
+
+      lastModals.closeModal("playlist-finished");
+
+      expect(manager.playing.value).not.toBeNull();
     });
 
     it("never opens for a queue with no saved playlist behind it, like a reading plan's day", async () => {

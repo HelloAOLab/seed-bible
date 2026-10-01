@@ -1711,7 +1711,10 @@ export function createPlaylistManager(
             i18n.t("untitled-playlist", { defaultValue: "Untitled playlist" })
           }
           shareUrl={getPlaylistUrl(playlist)}
-          onClose={() => modals.closeModal(PLAYLIST_FINISHED_MODAL_ID)}
+          onClose={() => {
+            stopPlaying();
+            modals.closeModal(PLAYLIST_FINISHED_MODAL_ID);
+          }}
         />
       ),
     });
