@@ -458,6 +458,7 @@ export function openCustomizationEditPane(
   state.panes.openPane({
     id: CUSTOMIZATION_EDIT_PANE_ID,
     placement: "side",
+    exclusive: true,
     title: () => (
       <CustomizationEditPaneTitle customizations={state.customizations} />
     ),

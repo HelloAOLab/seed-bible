@@ -31,6 +31,8 @@
 
 ### 🔧 Changed
 
+- Opening a customization to edit now closes every other pane first, including fullscreen ones, so the editor is the only pane on screen. Before, a fullscreen pane (or a floating one) stayed open next to the editor.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed
