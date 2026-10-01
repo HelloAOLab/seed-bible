@@ -178,6 +178,7 @@ describe("YourContentPane", () => {
   let onPlayPlaylist: Mock<(playlist: unknown) => void>;
   let onEditPlaylist: Mock<(playlist: unknown) => void>;
   let onEditAnnotation: Mock<(annotation: unknown) => void>;
+  let onCreatePlaylist: Mock<() => void>;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -186,6 +187,7 @@ describe("YourContentPane", () => {
     onPlayPlaylist = vi.fn((_playlist: unknown) => {});
     onEditPlaylist = vi.fn((_playlist: unknown) => {});
     onEditAnnotation = vi.fn((_annotation: unknown) => {});
+    onCreatePlaylist = vi.fn(() => {});
   });
 
   afterEach(() => {
@@ -202,6 +204,7 @@ describe("YourContentPane", () => {
           onPlayPlaylist={onPlayPlaylist}
           onEditPlaylist={onEditPlaylist}
           onEditAnnotation={onEditAnnotation}
+          onCreatePlaylist={onCreatePlaylist}
         />,
         container
       );
@@ -599,6 +602,52 @@ describe("YourContentPane", () => {
       document.body.querySelectorAll<HTMLElement>(".sb-context-menu-item")
     );
 
+  const openCreateMenu = () => {
+    const trigger =
+      container.querySelector<HTMLButtonElement>(".sb-content-create");
+    if (!trigger) throw new Error("The Create button did not render.");
+    act(() => {
+      trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  it("puts the Create button ahead of the filter chips", () => {
+    const { state } = createState();
+    renderPane(state);
+
+    const create = container.querySelector(".sb-content-create");
+    const chips = container.querySelector(".sb-content-chips");
+    if (!create || !chips) throw new Error("The toolbar did not render.");
+    expect(create.textContent).toBe("+ Create");
+    expect(
+      create.compareDocumentPosition(chips) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("offers only Playlist from the Create menu", () => {
+    const { state } = createState();
+    renderPane(state);
+    openCreateMenu();
+
+    expect(menuItems().map((item) => item.textContent)).toEqual([
+      "queue_musicPlaylist",
+    ]);
+  });
+
+  it("starts a new playlist from the Create menu", () => {
+    const { state } = createState();
+    renderPane(state);
+    openCreateMenu();
+
+    const item = menuItems()[0];
+    if (!item) throw new Error("The Create menu had no items.");
+    act(() => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(onCreatePlaylist).toHaveBeenCalledTimes(1);
+  });
+
   it("edits a playlist from its options menu", () => {
     const list = playlist("p1", "Morning devotions");
     const { state } = createState({ playlists: [list] });
@@ -827,6 +876,7 @@ describe("YourContentPane save options", () => {
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
+          onCreatePlaylist={vi.fn()}
         />,
         container
       );
@@ -894,6 +944,7 @@ describe("YourContentPane save options", () => {
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
+          onCreatePlaylist={vi.fn()}
         />,
         container
       );
@@ -933,6 +984,7 @@ describe("YourContentPane clearing a highlight", () => {
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
+          onCreatePlaylist={vi.fn()}
         />,
         container
       );
@@ -1009,6 +1061,7 @@ describe("YourContentPane clearing a highlight", () => {
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
+          onCreatePlaylist={vi.fn()}
         />,
         container
       );
