@@ -87,9 +87,19 @@ describe("FriendsPane", () => {
     Array.from(container.querySelectorAll(".sb-friends-section")).find(
       (el) => el.querySelector(".sb-friends-heading")?.textContent === heading
     ) ?? null;
+  /** What a button shows, leaving out the hidden alternate label and spinner. */
+  const visibleLabel = (el: Element) => {
+    const copy = el.cloneNode(true) as Element;
+    copy
+      .querySelectorAll(
+        ".sb-friends-copy-label--hidden, .sb-friends-busy-spinner"
+      )
+      .forEach((hidden) => hidden.remove());
+    return copy.textContent;
+  };
   const button = (root: ParentNode, label: string) =>
     Array.from(root.querySelectorAll("button")).find(
-      (el) => el.textContent === label
+      (el) => visibleLabel(el) === label
     ) as HTMLButtonElement | undefined;
   const click = async (el: HTMLElement | undefined) => {
     expect(el).toBeDefined();
@@ -294,14 +304,29 @@ describe("FriendsPane", () => {
       expect(outcomeIsError()).toBe(false);
     });
 
+    it("copies the user's friend link", async () => {
+      await renderPane(createState());
+
+      await click(button(container, "Copy your friend link"));
+
+      expect(writeText).toHaveBeenCalledWith(
+        `https://seedbible.test/?addFriend=${ME}`
+      );
+    });
+
     it("copies the user's own ID to share", async () => {
       await renderPane(createState());
 
-      await click(
-        button(container.querySelector(".sb-friends-my-id")!, "Copy")
-      );
+      const row = container.querySelector(".sb-friends-my-id")!;
+      await click(button(row, "Copy your user ID"));
 
       expect(writeText).toHaveBeenCalledWith(ME);
+      // Both labels stay in the button so it keeps its width; only the
+      // visible one changes.
+      expect(button(row, "Copied")).toBeDefined();
+      expect(row.querySelector("button")!.textContent).toContain(
+        "Copy your user ID"
+      );
     });
   });
 

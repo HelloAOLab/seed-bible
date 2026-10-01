@@ -49,6 +49,7 @@ import {
   FriendsPane,
   FriendsPaneTitle,
 } from "../components/FriendsPane/FriendsPane";
+import { setupFriendLinks } from "../components/FriendsPane/FriendLinkPrompts";
 import {
   createYourContentManager,
   type YourContentManager,
@@ -2781,6 +2782,8 @@ export function createSeedBibleState(
   // should target the session tab created by the join.
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
+
+  void setupFriendLinks({ navigation, login, friends, modals, toast });
 
   // A shared `?readingPlan=` link loads the plan, then opens the pane once a
   // reading tab is actually there. The tab is usually ready after the network

@@ -12,6 +12,7 @@ import type { ModalManager } from "../../managers/ModalManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
+import { getAddFriendUrl, getFriendRequestUrl } from "./friendLinks";
 
 export const FRIENDS_PANE_ID = "friends-pane";
 
@@ -36,7 +37,10 @@ export function FriendsPaneTitle() {
   return <>{t("friends", { defaultValue: "Friends" })}</>;
 }
 
-function displayNameOf(person: Pick<Friend, "userId" | "name">, t: T): string {
+export function displayNameOf(
+  person: Pick<Friend, "userId" | "name">,
+  t: T
+): string {
   return (
     person.name ||
     t("follow-unnamed-user", {
@@ -46,7 +50,7 @@ function displayNameOf(person: Pick<Friend, "userId" | "name">, t: T): string {
   );
 }
 
-function PersonIdentity(props: {
+export function PersonIdentity(props: {
   person: Pick<Friend, "userId" | "name" | "pictureUrl">;
   subtitle?: string;
 }) {
@@ -91,7 +95,16 @@ function CopyButton(props: {
           .catch((error) => console.error("Failed to copy:", error));
       }}
     >
-      {copied.value ? t("copied", { defaultValue: "Copied" }) : props.label}
+      {/* Both labels share one grid cell, so the button is as wide as the
+          longer one and doesn't resize when it flips to "Copied". */}
+      <span className="sb-friends-copy-labels">
+        <span className={copied.value ? "sb-friends-copy-label--hidden" : ""}>
+          {props.label}
+        </span>
+        <span className={copied.value ? "" : "sb-friends-copy-label--hidden"}>
+          {t("copied", { defaultValue: "Copied" })}
+        </span>
+      </span>
     </button>
   );
 }
@@ -101,7 +114,7 @@ function CopyButton(props: {
  * stays in place (just invisible) under the spinner, so the button keeps its
  * size and screen readers still hear what it is.
  */
-function BusyButton(props: {
+export function BusyButton(props: {
   busy: boolean;
   disabled?: boolean;
   className: string;
@@ -306,30 +319,38 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
           ) : null}
         </div>
       ) : null}
-      <div className="sb-friends-my-id">
-        <span className="sb-friends-my-id-label">
-          {t("your-user-id", { defaultValue: "Your user ID" })}
-        </span>
-        <code className="sb-friends-my-id-value">{props.userId}</code>
-        <CopyButton
-          text={props.userId}
-          label={t("copy", { defaultValue: "Copy" })}
-        />
+      <div className="sb-friends-share">
+        <div className="sb-friends-share-row sb-friends-my-link">
+          <span className="sb-friends-share-text sb-friends-share-label">
+            {t("your-friend-link-description", {
+              defaultValue:
+                "Share your friend link. Anyone who opens it can send you a request.",
+            })}
+          </span>
+          <CopyButton
+            text={getAddFriendUrl(navigation, props.userId)}
+            label={t("copy-your-friend-link", {
+              defaultValue: "Copy your friend link",
+            })}
+          />
+        </div>
+        <div className="sb-friends-share-row sb-friends-my-id">
+          <span className="sb-friends-share-text">
+            <span className="sb-friends-share-label">
+              {t("your-user-id", { defaultValue: "Your user ID" })}
+            </span>
+            <code className="sb-friends-my-id-value">{props.userId}</code>
+          </span>
+          <CopyButton
+            text={props.userId}
+            label={t("copy-your-user-id", {
+              defaultValue: "Copy your user ID",
+            })}
+          />
+        </div>
       </div>
     </section>
   );
-}
-
-/**
- * The link that opens a pending request straight to Accept. Built from the
- * deployment root so it works on preview deploys, and carries nothing from
- * the sender's current page.
- */
-function getFriendRequestUrl(
-  navigation: SeedBibleState["navigation"],
-  requestId: string
-): string {
-  return navigation.linkToBareRoot({ friendRequest: requestId });
 }
 
 function IncomingRequestRow(props: {

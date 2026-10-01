@@ -1070,5 +1070,20 @@
   "friend-request-cancel-failed": "Couldn't cancel the request. Try again.",
   "remove-friend-confirm-title": "Remove friend?",
   "remove-friend-confirm-message": "Remove {{name}} as a friend? You'll both stop seeing each other's reading.",
-  "remove-friend-failed": "Couldn't remove the friend. Try again."
+  "remove-friend-failed": "Couldn't remove the friend. Try again.",
+  "your-friend-link-description": "Share your friend link. Anyone who opens it can send you a request.",
+  "copy-your-friend-link": "Copy your friend link",
+  "friend-request": "Friend request",
+  "add-friend-link-sign-in": "Sign in to send {{name}} a friend request.",
+  "add-friend-link-own": "This is your own friend link. Share it so people can send you a friend request.",
+  "add-friend-link-already-friends": "You're already friends with {{name}}.",
+  "add-friend-link-already-sent": "You've already sent {{name}} a friend request.",
+  "add-friend-link-they-asked": "{{name}} has already sent you a friend request.",
+  "add-friend-link-confirm": "Send {{name}} a friend request?",
+  "friend-request-sent-to": "Friend request sent to {{name}}.",
+  "now-friends-with": "You're now friends with {{name}}.",
+  "friend-request-link-sign-in": "Sign in to see this friend request.",
+  "friend-request-link-unavailable": "This friend request isn't available. It may have been sent to a different account, already been answered, or expired.",
+  "friend-request-link-confirm": "{{name}} wants to be friends.",
+  "copy-your-user-id": "Copy your user ID"
 }
