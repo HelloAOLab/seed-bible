@@ -7,6 +7,29 @@
   min-height: 8rem;
 }
 
+.sb-annotation-editor-offline-notice {
+  margin: 0 0 6px;
+  font-size: 0.85em;
+  color: var(--sb-secondary-font-color);
+}
+
+.sb-annotation-editor-textarea {
+  display: block;
+  width: 100%;
+  min-height: 8rem;
+  box-sizing: border-box;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+
+.sb-annotation-editor-textarea:focus {
+  outline: none;
+}
+
 /* Shown only on mobile, where opening the composer hides the reader (and the
    verse(s) being annotated) behind a fullscreen pane. */
 .sb-annotation-verse-quote {

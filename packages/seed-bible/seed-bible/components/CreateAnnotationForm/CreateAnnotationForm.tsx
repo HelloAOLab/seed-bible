@@ -1,7 +1,6 @@
 import "./CreateAnnotationForm.css";
-import { lazy, Suspense } from "preact/compat";
+import { lazy, Suspense, type ComponentType } from "preact/compat";
 import { useRef, useState } from "preact/hooks";
-import type { Editor } from "@tiptap/core";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   annotationVerseNumbers,
@@ -13,15 +12,22 @@ import { extractContentText } from "../../managers/ChapterText";
 import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
 import type { TabsManager } from "../../managers/TabsManager";
 import { sanitize } from "../../managers/Sanitization";
+import {
+  isApplePlatform,
+  PlainTextAnnotationEditor,
+  type AnnotationEditorHandle,
+  type AnnotationEditorProps,
+} from "./PlainTextAnnotationEditor";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
-// actually opens the annotation composer.
-const TipTapEditor = lazy(() => import("../TipTapEditor/TipTapEditor"));
-
-/** TipTap's `Mod` key: Cmd on Apple, Ctrl on Windows/Linux. */
-function isApplePlatform(): boolean {
-  return typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
-}
+// actually opens the annotation composer. If that fetch fails (e.g. offline
+// and not yet cached), fall back to a plain textarea so the note isn't lost.
+const AnnotationEditor = lazy<ComponentType<AnnotationEditorProps>>(() =>
+  import("../TipTapEditor/TipTapEditor").catch((err: unknown) => {
+    console.error("Failed to load the rich text editor:", err);
+    return { default: PlainTextAnnotationEditor };
+  })
+);
 
 interface CreateAnnotationFormProps {
   annotations: AnnotationsManager;
@@ -33,7 +39,7 @@ interface CreateAnnotationFormProps {
 export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
   const { annotations, tabs, toast } = props;
   const { t } = useI18n();
-  const editorRef = useRef<Editor | null>(null);
+  const editorRef = useRef<AnnotationEditorHandle | null>(null);
   // Sync re-entry gate: React `saving` state is too late for Mod+Enter
   // (disabled only blocks the button; a second key event can land before
   // setSaving re-renders). Flip this before the first await.
@@ -125,7 +131,7 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
           />
         }
       >
-        <TipTapEditor
+        <AnnotationEditor
           className="sb-settings-text-input sb-annotation-editor"
           initialContent={editing.data.html}
           autofocus="end"

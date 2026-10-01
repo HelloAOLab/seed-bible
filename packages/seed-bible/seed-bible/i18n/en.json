@@ -711,6 +711,8 @@
   "delete-annotation-confirm-message": "Delete this annotation? This can't be undone.",
   "delete-annotation-failed": "Couldn't delete the annotation.",
   "save-annotation-failed": "Couldn't save the annotation.",
+  "annotation-editor-unavailable": "The formatting editor couldn't load, so this note will be saved as plain text.",
+  "annotation-text": "Annotation text",
   "annotation-group-expand": "Expand group",
   "annotation-group-collapse": "Collapse group",
   "annotation-override-banner": "Notes are being saved and loaded from your team's account.",
