@@ -362,6 +362,7 @@ describe("createLoginManager", () => {
       expect(openSpy).toHaveBeenCalledTimes(1);
       expect(requestOpenIDLoginMock).toHaveBeenCalledWith({
         provider: YOUVERSION_OPEN_ID_PROVIDER,
+        comId: "seed-bible",
       });
 
       await vi.advanceTimersByTimeAsync(0);

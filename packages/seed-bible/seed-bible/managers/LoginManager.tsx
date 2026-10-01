@@ -11,6 +11,12 @@ import type {
   OpenIDProviderInfo,
 } from "@casual-simulation/aux-records/AuthController";
 
+/**
+ * The studio users are signed into. Sent with every kind of login request so
+ * email and OpenID logins end up in the same place.
+ */
+export const LOGIN_COM_ID = "seed-bible";
+
 /** The auth server's OpenID provider id for YouVersion accounts. */
 export const YOUVERSION_OPEN_ID_PROVIDER = "youversion";
 
@@ -749,7 +755,7 @@ export function createLoginManager({
     const result = await client.requestLogin({
       address: email,
       addressType: "email",
-      comId: "seed-bible",
+      comId: LOGIN_COM_ID,
     });
 
     if (result.success) {
@@ -844,7 +850,10 @@ export function createLoginManager({
     activeOpenIDLogin = attempt;
 
     try {
-      const request = await client.requestOpenIDLogin({ provider });
+      const request = await client.requestOpenIDLogin({
+        provider,
+        comId: LOGIN_COM_ID,
+      });
       if (attempt.cancelled) {
         return cancelled;
       }

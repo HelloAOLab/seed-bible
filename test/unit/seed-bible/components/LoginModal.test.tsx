@@ -144,6 +144,7 @@ describe("LoginModal", () => {
     expect(openSpy).toHaveBeenCalledTimes(1);
     expect(requestOpenIDLogin).toHaveBeenCalledWith({
       provider: YOUVERSION_OPEN_ID_PROVIDER,
+      comId: "seed-bible",
     });
     await waitFor(
       () => popup.location.href === "https://login.youversion.com/authorize"
