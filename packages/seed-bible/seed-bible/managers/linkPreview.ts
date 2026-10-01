@@ -100,11 +100,18 @@ const SETTLE_TIMEOUT_MS = 3000;
  * Fetches previews for link items as they are saved into a draft, and lets the
  * draft's final save wait briefly for any still in flight — otherwise a link
  * added just before "Save" would be stored without its preview.
+ *
+ * Once a save has taken its copy of the draft, `cancel` drops whatever is
+ * still in flight. A preview landing after that would change a draft the save
+ * has already moved past, and the reading plan wizard autosaves on every
+ * change, so it could write the old draft back over the finished plan.
  */
 export function createLinkPreviewLoader(
   fetchPreview: (url: string) => Promise<LinkPreview | null>
 ) {
   const pending = new Set<Promise<void>>();
+  // Bumped by `cancel`; a request only applies if it is still current.
+  let generation = 0;
 
   return {
     /**
@@ -119,10 +126,11 @@ export function createLinkPreviewLoader(
       if (item.type !== "link" || item.preview) {
         return;
       }
+      const startedIn = generation;
       const task = (async () => {
         try {
           const preview = await fetchPreview(item.url);
-          if (preview) {
+          if (preview && startedIn === generation) {
             apply(item, { ...item, preview });
           }
         } catch (error) {
@@ -146,6 +154,12 @@ export function createLinkPreviewLoader(
         }),
       ]);
       clearTimeout(timer);
+    },
+
+    /** Drops the results of every request still in flight. */
+    cancel(): void {
+      generation++;
+      pending.clear();
     },
   };
 }

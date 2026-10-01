@@ -114,13 +114,19 @@ function clonePlaylist(playlist: Playlist): Playlist {
   return PlaylistSchema.parse(JSON.parse(JSON.stringify(playlist)));
 }
 
-/** Fields the unsaved-changes prompt cares about: name, description, cover, items. */
+/**
+ * Fields the unsaved-changes prompt cares about: name, description, cover, items.
+ * Link previews are left out — they are fetched, not edited, so one filling in
+ * after the editor opens isn't a change the author needs to be asked about.
+ */
 function playlistEditorState(playlist: Playlist): string {
   return JSON.stringify({
     title: playlist.title ?? null,
     description: playlist.description ?? null,
     heroImageUrl: playlist.heroImageUrl ?? null,
-    items: playlist.items,
+    items: playlist.items.map((item) =>
+      item.type === "link" ? { ...item, preview: undefined } : item
+    ),
   });
 }
 
@@ -930,7 +936,7 @@ export function createPlaylistManager(
   const requestEditingItemPreview = (item: PlaylistItemData) => {
     linkPreviews.request(item, (original, previewed) => {
       const current = editingPlaylist.peek();
-      if (!current?.items.includes(original)) {
+      if (!current) {
         return;
       }
       editingPlaylist.value = {
@@ -1398,9 +1404,11 @@ export function createPlaylistManager(
       createdAtMs: now,
       updatedAtMs: now,
     });
+    linkPreviews.cancel();
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(draft);
     view.value = "create_playlist";
+    draft.items.forEach(requestEditingItemPreview);
 
     return editingPlaylist;
   };
@@ -1411,10 +1419,14 @@ export function createPlaylistManager(
    * later via `saveEditingPlaylist`.
    */
   const editPlaylist = (playlist: Playlist): void => {
+    linkPreviews.cancel();
     const draft = clonePlaylist(playlist);
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(playlist);
     view.value = "create_playlist";
+    // Links saved before previews existed, or whose preview missed the save
+    // cutoff, get one now so the next save stores it.
+    draft.items.forEach(requestEditingItemPreview);
   };
 
   /**
@@ -1424,6 +1436,7 @@ export function createPlaylistManager(
    */
   const saveEditingPlaylist = async (): Promise<void> => {
     await linkPreviews.settle();
+    linkPreviews.cancel();
     const current = editingPlaylist.value;
     if (!current) {
       return;
@@ -1581,6 +1594,7 @@ export function createPlaylistManager(
 
   /** Discards the current edit and returns to the discover view. */
   const cancelEditingPlaylist = (): void => {
+    linkPreviews.cancel();
     editingPlaylist.value = null;
     editingPlaylistBaseline.value = null;
     view.value = "discover";

@@ -1275,6 +1275,101 @@ describe("createPlaylistManager", () => {
       ]);
     });
 
+    it("saves without the preview once Save stops waiting for it", async () => {
+      // Never answers: the cutoff is the only thing that lets Save finish.
+      getLinkPreviewMock.mockReturnValue(new Promise(() => undefined));
+      const manager = await startEditing();
+      vi.useFakeTimers();
+      try {
+        manager.addEditingPlaylistItem({
+          type: "link",
+          url: "https://example.com/hangs",
+        });
+        let saved = false;
+        const saving = manager.saveEditingPlaylist().then(() => {
+          saved = true;
+        });
+
+        await vi.advanceTimersByTimeAsync(2900);
+        expect(saved).toBe(false);
+        await vi.advanceTimersByTimeAsync(100);
+        await saving;
+
+        expect(savedItems()).toEqual([
+          { type: "link", url: "https://example.com/hangs" },
+        ]);
+        expect(manager.editingPlaylist.value).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("ignores a preview that lands after the playlist was saved", async () => {
+      let respond!: (value: unknown) => void;
+      getLinkPreviewMock.mockReturnValue(
+        new Promise((resolve) => {
+          respond = resolve;
+        })
+      );
+      const manager = await startEditing();
+      vi.useFakeTimers();
+      try {
+        manager.addEditingPlaylistItem({
+          type: "link",
+          url: "https://example.com/late",
+        });
+        const saving = manager.saveEditingPlaylist();
+        await vi.advanceTimersByTimeAsync(3000);
+        await saving;
+        // Reopened straight away: the late preview must not land in it either.
+        manager.editPlaylist(manager.userPlaylists.value[0]!);
+        const writes = recordDataMock.mock.calls.length;
+
+        respond(previewResponse());
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(recordDataMock.mock.calls.length).toBe(writes);
+        expect(manager.userPlaylists.value[0]!.items).toEqual([
+          { type: "link", url: "https://example.com/late" },
+        ]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("fetches previews for links that don't have one when a playlist is opened for editing", async () => {
+      getLinkPreviewMock.mockResolvedValue(previewResponse());
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(
+        makePlaylist({
+          items: [
+            { type: "link", url: "https://example.com/old" },
+            {
+              type: "link",
+              url: "https://example.com/has-one",
+              preview: { title: "Already here" },
+            },
+          ],
+        })
+      );
+      await flush();
+
+      expect(getLinkPreviewMock).toHaveBeenCalledTimes(1);
+      expect(
+        manager.editingPlaylist.value!.items.map(
+          (item) => item.type === "link" && item.preview?.title
+        )
+      ).toEqual(["The Bible Project", "Already here"]);
+      // Filled in, not edited: closing shouldn't ask about unsaved changes.
+      expect(manager.isEditingPlaylistDirty()).toBe(false);
+
+      await manager.saveEditingPlaylist();
+      expect(savedItems()[0]).toMatchObject({
+        preview: { title: "The Bible Project" },
+      });
+    });
+
     it("drops an image URL that isn't http(s)", async () => {
       getLinkPreviewMock.mockResolvedValue(
         previewResponse({ imageUrl: "javascript:alert(1)" })

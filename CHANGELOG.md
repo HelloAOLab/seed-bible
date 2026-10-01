@@ -28,7 +28,7 @@
   - Link previews, search results, the 404 and "Reading plan not found" message for a deleted plan, the "Couldn't load reading plan" message with "Try again", and the hidden tutorial offer work the same way as for shared playlists.
   - Old `?readingPlan=` share links permanently redirect (301) to the plan's page.
   - Playing a day of a reading plan shows who made the plan in the player, like a playlist does.
-- Fetch a preview for each link you add to a playlist or reading plan. When you save the link, Seed Bible looks up the page's title, description and image and stores them with the item, so opening the link shows the image, title and description above the "Open" button, and a link you didn't give a title is listed by the page's title instead of its raw URL. Editing a link's title keeps its preview; changing its URL fetches a new one. Links the server can't preview are saved as before. ([#1929](https://github.com/HelloAOLab/seed-bible/issues/1929))
+- Fetch a preview for each link you add to a playlist or reading plan. When you save the link, Seed Bible looks up the page's title, description and image and stores them with the item, so opening the link shows the image, title and description above the "Open" button, and a link you didn't give a title is listed by the page's title instead of its raw URL. Editing a link's title keeps its preview; changing its URL fetches a new one. Links saved before this change, or whose preview took too long to arrive, get one the next time you edit and save the playlist or plan. Links the server can't preview are saved as before. ([#1929](https://github.com/HelloAOLab/seed-bible/issues/1929))
 
 ### 🔧 Changed
 

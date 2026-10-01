@@ -2012,7 +2012,7 @@ describe("createReadingPlansManager", () => {
     });
   });
 
-  it("doesn't bring back a link reading removed while its preview was loading", async () => {
+  it("doesn't bring back or autosave a link reading removed while its preview was loading", async () => {
     let respond!: (value: unknown) => void;
     getLinkPreviewMock.mockReturnValue(
       new Promise((resolve) => {
@@ -2021,26 +2021,141 @@ describe("createReadingPlansManager", () => {
     );
     const manager = makeManager("user-1");
     await flush();
+    vi.useFakeTimers();
+    try {
+      manager.startEditingReadingPlan();
+      manager.addReadingToEditingPlan({
+        type: "link",
+        url: "https://example.com/gone",
+      });
+      const readingId =
+        manager.editingReadingPlan.value!.plan.sessions[0]!.readings[0]!.id;
+      manager.removeReadingFromEditingPlan(0, readingId);
+      // Let the autosave for the add and remove land first.
+      await vi.advanceTimersByTimeAsync(2000);
+      const updatedAtMs = manager.editingReadingPlan.value!.plan.updatedAtMs;
+      recordDataMock.mockClear();
 
-    manager.startEditingReadingPlan();
-    manager.addReadingToEditingPlan({
-      type: "link",
-      url: "https://example.com/gone",
-    });
-    const readingId =
-      manager.editingReadingPlan.value!.plan.sessions[0]!.readings[0]!.id;
-    manager.removeReadingFromEditingPlan(0, readingId);
-    respond({
+      respond({
+        success: true,
+        cachedUntilMs: Date.now() + 60_000,
+        title: "Gone",
+        meta: {},
+      });
+      await vi.advanceTimersByTimeAsync(2000);
+
+      const draft = manager.editingReadingPlan.value!;
+      expect(draft.plan.sessions[0]!.readings).toEqual([]);
+      // Nothing changed, so nothing is written or re-stamped.
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(draft.plan.updatedAtMs).toBe(updatedAtMs);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps a finished plan finished when a preview lands after Save gave up waiting", async () => {
+    let respond!: (value: unknown) => void;
+    getLinkPreviewMock.mockReturnValue(
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    vi.useFakeTimers();
+    try {
+      manager.startEditingReadingPlan();
+      manager.addReadingToEditingPlan({
+        type: "link",
+        url: "https://example.com/slow",
+      });
+      await vi.advanceTimersByTimeAsync(1000); // the draft's autosave lands
+      recordDataMock.mockClear();
+
+      // The completing write is slow, so the late preview arrives mid-save.
+      let finishWrite!: () => void;
+      recordDataMock.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishWrite = resolve;
+          })
+      );
+      const finishing = manager.finishEditingReadingPlan();
+      await vi.advanceTimersByTimeAsync(3000); // Save stops waiting
+      respond({
+        success: true,
+        cachedUntilMs: Date.now() + 60_000,
+        title: "Late",
+        meta: {},
+      });
+      await vi.advanceTimersByTimeAsync(1000); // past the autosave debounce
+      finishWrite();
+      const plan = await finishing;
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(plan!.status).toBe("complete");
+      expect(
+        recordDataMock.mock.calls.map((c) => (c[2] as ReadingPlan).status)
+      ).toEqual(["complete", "complete"]);
+      expect(manager.userReadingPlans.value.map((p) => p.status)).toEqual([
+        "complete",
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("fetches previews for a published plan's links that don't have one when it is edited", async () => {
+    getLinkPreviewMock.mockResolvedValue({
       success: true,
       cachedUntilMs: Date.now() + 60_000,
-      title: "Gone",
+      title: "Commentary",
       meta: {},
     });
+    const plan = makePlan({
+      authorUserId: "user-1",
+      recordName: "user-1",
+      status: "complete",
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: { type: "link", url: "https://example.com/old" },
+            },
+            {
+              id: "r2",
+              item: {
+                type: "link",
+                url: "https://example.com/has-one",
+                preview: { title: "Already here" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const manager = makeManager("user-1");
     await flush();
 
-    expect(
-      manager.editingReadingPlan.value!.plan.sessions[0]!.readings
-    ).toEqual([]);
+    manager.editExistingReadingPlan(plan);
+    const saved = await manager.finishEditingReadingPlan();
+
+    expect(getLinkPreviewMock).toHaveBeenCalledTimes(1);
+    expect(saved!.sessions[0]!.readings.map((r) => r.item)).toEqual([
+      {
+        type: "link",
+        url: "https://example.com/old",
+        preview: { title: "Commentary" },
+      },
+      {
+        type: "link",
+        url: "https://example.com/has-one",
+        preview: { title: "Already here" },
+      },
+    ]);
   });
 
   it("finishEditingReadingPlan completes the plan, pruning empty sessions", async () => {
