@@ -123,6 +123,8 @@ function createMockTab(
 function createMockState(
   overrides: {
     annotationsForChapter?: Annotation[];
+    /** Each friend's notes on the chapter, keyed by their user ID. */
+    friendAnnotations?: Record<string, Annotation[]>;
     pendingCountForChapter?: number;
     contentTypes?: DiscoverContentTypeDefinition[];
   } = {}
@@ -145,10 +147,16 @@ function createMockState(
     panes: { closeFullscreenPanes: vi.fn() },
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
-    friends: { friends: signal([]), friendIds: signal([]) },
+    friends: {
+      friends: signal([]),
+      friendIds: signal(Object.keys(overrides.friendAnnotations ?? {})),
+    },
     annotations: {
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
+      ),
+      getUserAnnotationsForChapter: vi.fn((userId: string) =>
+        signal(overrides.friendAnnotations?.[userId] ?? [])
       ),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
       hasRecordOverride: false,
@@ -265,6 +273,35 @@ describe("DiscoverContentPanel", () => {
     ).map((el) => el.textContent);
     expect(sectionTitles).toContain("Notes");
     expect(container.textContent).toContain("A helpful note.");
+  });
+
+  it("shows a friend's notes on a chapter where the user has none of their own", () => {
+    const tab = createMockTab();
+    const state = createMockState({
+      annotationsForChapter: [],
+      friendAnnotations: {
+        "friend-1": [
+          createAnnotation({
+            id: "friend-note",
+            data: {
+              type: "comment",
+              html: "<p>A friend's note.</p>",
+              userId: "friend-1",
+            },
+          } as Partial<Annotation>),
+        ],
+      },
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toContain("Notes");
+    expect(container.textContent).toContain("A friend's note.");
   });
 
   it("renders nothing when there are discovered results absent but also no annotations", () => {

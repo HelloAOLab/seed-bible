@@ -467,6 +467,30 @@ export function sortAnnotations(annotations: Annotation[]): Annotation[] {
   });
 }
 
+/**
+ * A chapter's notes as the signed-in user sees them: their own plus each
+ * friend's. Reading this during a render subscribes to every one of those
+ * lists, so the caller updates as friends' notes arrive.
+ */
+export function visibleChapterAnnotations(
+  annotations: Pick<
+    AnnotationsManager,
+    "getAnnotationsForChapter" | "getUserAnnotationsForChapter"
+  >,
+  friendIds: readonly string[],
+  bookId: string,
+  chapterNumber: number
+): Annotation[] {
+  return sortAnnotations([
+    ...annotations.getAnnotationsForChapter(bookId, chapterNumber).value,
+    ...friendIds.flatMap(
+      (userId) =>
+        annotations.getUserAnnotationsForChapter(userId, bookId, chapterNumber)
+          .value
+    ),
+  ]);
+}
+
 type AnnotationsEntry = {
   /**
    * Effective record id these annotations belong to: the override, the

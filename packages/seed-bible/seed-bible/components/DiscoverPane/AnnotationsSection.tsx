@@ -14,7 +14,7 @@ import {
   annotationListHasOtherAuthors,
   formatAnnotationVerseNumbers,
   groupAnnotationsByVerseRange,
-  sortAnnotations,
+  visibleChapterAnnotations,
   type Annotation,
   type AnnotationGroup,
   type AnnotationsManager,
@@ -494,10 +494,12 @@ export function AnnotationsSection(props: {
       }
       discover.scrollToVerse.value = null; // consume once, immediately
 
-      const chapterAnnotations = annotations.getAnnotationsForChapter(
+      const chapterAnnotations = visibleChapterAnnotations(
+        annotations,
+        friends.friendIds.value,
         target.bookId,
         target.chapterNumber
-      ).value;
+      );
       const group = groupAnnotationsByVerseRange(chapterAnnotations).find((g) =>
         g.annotations.some((a) =>
           annotationVerseNumbers(a).includes(target.verseNumber)
@@ -528,7 +530,7 @@ export function AnnotationsSection(props: {
       window.clearTimeout(highlightTimer);
       dispose();
     };
-  }, [tab, discover, annotations]);
+  }, [tab, discover, annotations, friends]);
 
   if (!tab) {
     return (
@@ -550,22 +552,12 @@ export function AnnotationsSection(props: {
     );
   }
 
-  const ownAnnotations = annotations.getAnnotationsForChapter(
+  const chapterAnnotations = visibleChapterAnnotations(
+    annotations,
+    friends.friendIds.value,
     bookId,
     chapterNumber
-  ).value;
-  // Reading each friend's view here (rather than only `friendIds`)
-  // subscribes this render to their annotations arriving, same as `.value`
-  // above does for the signed-in user's own.
-  const friendAnnotations = friends.friendIds.value.flatMap(
-    (userId) =>
-      annotations.getUserAnnotationsForChapter(userId, bookId, chapterNumber)
-        .value
   );
-  const chapterAnnotations = sortAnnotations([
-    ...ownAnnotations,
-    ...friendAnnotations,
-  ]);
   const groups = groupAnnotationsByVerseRange(chapterAnnotations);
   const otherPeoplePresent = annotationListHasOtherAuthors(
     chapterAnnotations,
