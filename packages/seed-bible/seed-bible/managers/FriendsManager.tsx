@@ -7,7 +7,7 @@ import {
 } from "@preact/signals";
 import type { SharedMarkerPermission } from "@casual-simulation/aux-common";
 import type { SharedPermission } from "@casual-simulation/aux-records";
-import type { LoginManager } from "./LoginManager";
+import type { LoginManager, UserProfile } from "./LoginManager";
 import type { CasualOSManager } from "./OsManager";
 
 /**
@@ -35,20 +35,37 @@ export const FRIEND_REQUEST_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
  */
 const FOCUS_REFRESH_INTERVAL_MS = 30 * 1000;
 
-export interface Friend {
-  userId: string;
+/** The parts of someone's public profile shown alongside them. */
+export interface FriendProfile {
   /** Null until their profile has loaded, or when they never set a name. */
   name: string | null;
   pictureUrl: string | null;
+  /** Optional: only the friend link prompts show these. */
+  location?: string | null;
+  description?: string | null;
 }
 
-export interface FriendRequest {
+/** Picks what's shown from a public profile; blanks stand in for no profile. */
+export function toFriendProfile(
+  profile: UserProfile | null | undefined
+): Required<FriendProfile> {
+  return {
+    name: profile?.name?.trim() || null,
+    pictureUrl: profile?.pictureUrl ?? null,
+    location: profile?.location?.trim() || null,
+    description: profile?.description?.trim() || null,
+  };
+}
+
+export interface Friend extends FriendProfile {
+  userId: string;
+}
+
+export interface FriendRequest extends FriendProfile {
   /** The shared permission ID, which is what accept/decline/cancel take. */
   id: string;
   /** The other person: the sender for incoming requests, the recipient for outgoing ones. */
   userId: string;
-  name: string | null;
-  pictureUrl: string | null;
   createdAtMs: number;
   expireTimeMs: number | null;
 }
@@ -126,7 +143,7 @@ export interface FriendsManager {
 }
 
 type FriendLink = { userId: string; sharedPermissionIds: string[] };
-type Profile = { name: string | null; pictureUrl: string | null };
+type Profile = Required<FriendProfile>;
 
 const isFriendsPermission = (permission: SharedMarkerPermission): boolean =>
   permission.marker === FRIENDS_PERMISSION.marker &&
@@ -165,7 +182,12 @@ export function createFriendsManager(
   const profilesInFlight = new Set<string>();
 
   const profileFor = (userId: string): Profile =>
-    profiles.value.get(userId) ?? { name: null, pictureUrl: null };
+    profiles.value.get(userId) ?? {
+      name: null,
+      pictureUrl: null,
+      location: null,
+      description: null,
+    };
 
   const friends = computed<Friend[]>(() =>
     links.value.map((link) => ({
@@ -221,12 +243,9 @@ export function createFriendsManager(
       wanted.map(async (userId) => {
         profilesInFlight.add(userId);
         try {
-          const profile = await login.getUserProfile(userId);
+          const profile = await login.getPublicProfile(userId);
           const next = new Map(profiles.peek());
-          next.set(userId, {
-            name: profile?.name?.trim() || null,
-            pictureUrl: profile?.pictureUrl ?? null,
-          });
+          next.set(userId, toFriendProfile(profile));
           profiles.value = next;
         } catch (error) {
           // Left out of the cache so the next refresh tries again; the UI

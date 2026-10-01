@@ -1,19 +1,30 @@
 import type { ComponentChildren } from "preact";
 import { useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
-import type { Friend, FriendsManager } from "../../managers/FriendsManager";
+import {
+  toFriendProfile,
+  type Friend,
+  type FriendsManager,
+} from "../../managers/FriendsManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import { useI18n } from "../../i18n/I18nManager";
-import { BusyButton, displayNameOf, PersonIdentity } from "./FriendsPane";
+import { BusyButton } from "./FriendsPane";
+import {
+  displayNameOf,
+  emptyProfileNote,
+  hasEmptyProfile,
+  PersonCard,
+} from "./PersonCard";
 import { ADD_FRIEND_PARAM, FRIEND_REQUEST_PARAM } from "./friendLinks";
 
 type Toast = (message: string) => void;
+type ProfileLookup = "found" | "no_account" | "failed";
 
 export interface FriendLinkDeps {
   navigation: Pick<NavigationManager, "currentUrl" | "updateQueryParams">;
-  login: Pick<LoginManager, "userId" | "login" | "getUserProfile">;
+  login: Pick<LoginManager, "userId" | "login" | "getPublicProfile">;
   friends: FriendsManager;
   modals: Pick<ModalManager, "openModal" | "closeModal">;
   toast: Toast;
@@ -69,11 +80,13 @@ function SignInPrompt(props: {
  */
 function AddFriendLinkPrompt(props: {
   person: Friend;
+  /** How reading their profile went, which decides what the card can say. */
+  lookup: ProfileLookup;
   deps: FriendLinkDeps;
   onSignIn: () => void;
   onClose: () => void;
 }) {
-  const { person, deps, onSignIn, onClose } = props;
+  const { person, lookup, deps, onSignIn, onClose } = props;
   const { friends, login, toast } = deps;
   const { t } = useI18n();
   const busy = useSignal(false);
@@ -85,6 +98,24 @@ function AddFriendLinkPrompt(props: {
     action: { label: string; run: () => Promise<void> } | null;
   } | null>(null);
   const name = displayNameOf(person, t);
+
+  // Checked before sign-in: there's no one to send a request to, so signing
+  // in wouldn't help.
+  if (lookup === "no_account") {
+    return (
+      <div className="sb-confirm-delete">
+        <p className="sb-confirm-delete-message">
+          {t("add-friend-link-no-account", {
+            defaultValue:
+              "This friend link doesn't match anyone's account. Check that it was copied correctly.",
+          })}
+        </p>
+        <PromptActions>
+          <CloseButton onClose={onClose} primary />
+        </PromptActions>
+      </div>
+    );
+  }
 
   if (!login.userId.value) {
     return (
@@ -202,10 +233,15 @@ function AddFriendLinkPrompt(props: {
   };
 
   return (
-    <div className="sb-confirm-delete sb-friend-link-prompt">
-      <div className="sb-friend-link-person">
-        <PersonIdentity person={person} />
-      </div>
+    <div className="sb-confirm-delete">
+      <PersonCard
+        person={person}
+        note={
+          lookup === "found" && hasEmptyProfile(person)
+            ? emptyProfileNote(t)
+            : undefined
+        }
+      />
       <p className="sb-confirm-delete-message">{message}</p>
       <PromptActions>
         {action ? (
@@ -327,10 +363,8 @@ function FriendRequestLinkPrompt(props: {
   };
 
   return (
-    <div className="sb-confirm-delete sb-friend-link-prompt">
-      <div className="sb-friend-link-person">
-        <PersonIdentity person={request} />
-      </div>
+    <div className="sb-confirm-delete">
+      <PersonCard person={request} />
       <p className="sb-confirm-delete-message">
         {t("friend-request-link-confirm", {
           name,
@@ -389,14 +423,12 @@ export async function openAddFriendLinkPrompt(
   }
   // Their name and picture make the prompt meaningful, but an account that
   // never set them can still be befriended, so a failed lookup isn't fatal.
-  let person: Friend = { userId, name: null, pictureUrl: null };
+  let person: Friend = { userId, ...toFriendProfile(null) };
+  let lookup: ProfileLookup = "failed";
   try {
-    const profile = await deps.login.getUserProfile(userId);
-    person = {
-      userId,
-      name: profile?.name?.trim() || null,
-      pictureUrl: profile?.pictureUrl ?? null,
-    };
+    const profile = await deps.login.getPublicProfile(userId);
+    person = { userId, ...toFriendProfile(profile) };
+    lookup = profile ? "found" : "no_account";
   } catch (error) {
     console.warn("Could not load the profile for a friend link:", error);
   }
@@ -408,6 +440,7 @@ export async function openAddFriendLinkPrompt(
     content: () => (
       <AddFriendLinkPrompt
         person={person}
+        lookup={lookup}
         deps={deps}
         onSignIn={() => void signInThen(deps, ADD_FRIEND_MODAL_ID, reopen)}
         onClose={() => deps.modals.closeModal(ADD_FRIEND_MODAL_ID)}

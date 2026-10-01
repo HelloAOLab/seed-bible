@@ -41,7 +41,7 @@ describe("FriendsManager", () => {
     login = {
       userId,
       login: vi.fn().mockResolvedValue(null),
-      getUserProfile: vi.fn(async (id: string) => ({
+      getPublicProfile: vi.fn(async (id: string) => ({
         name: names[id] ?? "",
         pictureUrl: null,
       })),
@@ -59,7 +59,13 @@ describe("FriendsManager", () => {
 
       await loaded(friends, () => {
         expect(friends.friends.value).toEqual([
-          { userId: "ada", name: "Ada", pictureUrl: null },
+          {
+            userId: "ada",
+            name: "Ada",
+            pictureUrl: null,
+            location: null,
+            description: null,
+          },
         ]);
         expect(friends.incomingRequests.value).toMatchObject([
           { userId: "bob", name: "Bob" },
@@ -303,7 +309,13 @@ describe("FriendsManager", () => {
         success: true,
       });
       expect(friends.friends.value).toEqual([
-        { userId: "ada", name: "Ada", pictureUrl: null },
+        {
+          userId: "ada",
+          name: "Ada",
+          pictureUrl: null,
+          location: null,
+          description: null,
+        },
       ]);
       expect(friends.incomingRequests.value).toEqual([]);
     });

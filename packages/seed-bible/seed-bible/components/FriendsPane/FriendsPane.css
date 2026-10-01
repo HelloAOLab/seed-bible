@@ -127,6 +127,27 @@
   font-size: 0.8125rem;
 }
 
+/* The picture and name in a row, which open that person's profile. */
+.sb-friends-person-button {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-friends-person-button:hover .sb-friends-person-name {
+  text-decoration: underline;
+}
+
 .sb-friends-row-actions {
   display: flex;
   flex-shrink: 0;
@@ -296,11 +317,44 @@
   font-size: 0.75rem;
 }
 
-/* The person a friend link is about, at the top of its prompt. */
+/* The person a friend link is about, at the top of its prompt: a card of its
+   own, so their profile reads as separate from the prompt's question below. */
+.sb-friend-link-about {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
 .sb-friend-link-person {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.sb-friend-link-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Scoped so it outranks the global `body .material-symbols-outlined` size. */
+.sb-friend-link-location .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.sb-friend-link-description,
+.sb-friend-link-note {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.sb-friend-link-note {
+  margin: 0;
+  font-style: italic;
 }
 
 .sb-friends-my-id-value {

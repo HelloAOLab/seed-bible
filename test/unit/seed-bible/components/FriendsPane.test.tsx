@@ -6,7 +6,10 @@ import {
   createFriendsManager,
   type FriendsManager,
 } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
-import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import type {
+  LoginManager,
+  UserProfile,
+} from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
@@ -23,6 +26,8 @@ describe("FriendsPane", () => {
   let container: HTMLDivElement;
   let userId: Signal<string | null>;
   let names: Record<string, string>;
+  /** Overrides `names` for one person; null means no account has the ID. */
+  let profiles: Record<string, UserProfile | null>;
   let login: LoginManager;
   let server: ReturnType<typeof fakeSharedPermissions>;
   let friends: FriendsManager;
@@ -129,13 +134,15 @@ describe("FriendsPane", () => {
     document.body.appendChild(container);
     userId = signal<string | null>(ME);
     names = { [ADA_ID]: "Ada", [BOB_ID]: "Bob" };
+    profiles = {};
     login = {
       userId,
       login: vi.fn().mockResolvedValue(null),
-      getUserProfile: vi.fn(async (id: string) => ({
-        name: names[id] ?? "",
-        pictureUrl: null,
-      })),
+      getPublicProfile: vi.fn(async (id: string) =>
+        id in profiles
+          ? profiles[id]
+          : { name: names[id] ?? "", pictureUrl: null }
+      ),
     } as unknown as LoginManager;
     toast = vi.fn();
     modalContent = null;
@@ -426,6 +433,96 @@ describe("FriendsPane", () => {
       await waitForIdle();
       expect(spinnerIn(send)).toBeNull();
       expect(text()).toContain("Request sent.");
+    });
+  });
+
+  describe("profile popup", () => {
+    const openProfile = async (root: ParentNode, name: string) => {
+      const person = root.querySelector<HTMLButtonElement>(
+        `[aria-label="View ${name}'s profile"]`
+      );
+      await click(person ?? undefined);
+      const dialog = document.createElement("div");
+      act(() => render(modalContent!(), dialog));
+      await waitForIdle();
+      return dialog;
+    };
+
+    it("opens a friend's profile from their name", async () => {
+      profiles[ADA_ID] = {
+        name: "Ada",
+        location: "London",
+        description: "Reads a psalm every morning.",
+      };
+      const state = createState();
+      server.friendsWith(ADA_ID);
+      await renderPane(state);
+
+      const dialog = await openProfile(section("Friends")!, "Ada");
+
+      expect(dialog.textContent).toContain("Ada");
+      expect(dialog.textContent).toContain("London");
+      expect(dialog.textContent).toContain("Reads a psalm every morning.");
+      expect(dialog.textContent).not.toContain("hasn't set up");
+      // Looking isn't acting: the friendship is untouched.
+      expect(server.rows[0]!.status).toBe("accepted");
+    });
+
+    it("shows the profile someone just updated, not the copy the row loaded", async () => {
+      const state = createState();
+      server.friendsWith(ADA_ID);
+      await renderPane(state);
+      profiles[ADA_ID] = { name: "Ada", location: "Paris" };
+
+      const dialog = await openProfile(section("Friends")!, "Ada");
+
+      expect(dialog.textContent).toContain("Paris");
+    });
+
+    it("says so kindly when someone hasn't set up their profile", async () => {
+      profiles[BOB_ID] = { name: "" };
+      const state = createState();
+      server.requestFrom(BOB_ID);
+      await renderPane(state);
+
+      const dialog = await openProfile(
+        section("Friend requests")!,
+        "User 22222222"
+      );
+
+      expect(dialog.textContent).toContain(
+        "This person hasn't set up their profile yet."
+      );
+    });
+
+    it("says when a sent request's user ID belongs to no one", async () => {
+      profiles[BOB_ID] = null;
+      const state = createState();
+      server.requestTo(BOB_ID);
+      await renderPane(state);
+
+      const dialog = await openProfile(
+        section("Sent requests")!,
+        "User 22222222"
+      );
+
+      expect(dialog.textContent).toContain(
+        "We couldn't find anyone with this user ID."
+      );
+      expect(dialog.textContent).not.toContain("hasn't set up");
+    });
+
+    it("keeps what the row showed when the profile can't be read", async () => {
+      const state = createState();
+      server.friendsWith(ADA_ID);
+      await renderPane(state);
+      vi.mocked(login.getPublicProfile).mockRejectedValue(new Error("offline"));
+
+      const dialog = await openProfile(section("Friends")!, "Ada");
+
+      expect(dialog.textContent).toContain("Ada");
+      expect(dialog.textContent).not.toContain("hasn't set up");
+      expect(dialog.textContent).not.toContain("couldn't find");
     });
   });
 

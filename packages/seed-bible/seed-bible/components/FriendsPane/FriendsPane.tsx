@@ -9,11 +9,14 @@ import type {
   SendFriendRequestResult,
 } from "../../managers/FriendsManager";
 import type { ModalManager } from "../../managers/ModalManager";
-import { getUserAnimalVisual } from "../../managers/SessionsManager";
-import { Avatar } from "../Avatar/Avatar";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import { getAddFriendUrl, getFriendRequestUrl } from "./friendLinks";
+import {
+  displayNameOf,
+  PersonButton,
+  type PersonProfileDeps,
+} from "./PersonCard";
 
 export const FRIENDS_PANE_ID = "friends-pane";
 
@@ -36,42 +39,6 @@ type T = ReturnType<typeof useI18n>["t"];
 export function FriendsPaneTitle() {
   const { t } = useI18n();
   return <>{t("friends", { defaultValue: "Friends" })}</>;
-}
-
-export function displayNameOf(
-  person: Pick<Friend, "userId" | "name">,
-  t: T
-): string {
-  return (
-    person.name ||
-    t("follow-unnamed-user", {
-      id: person.userId.slice(0, 8),
-      defaultValue: "User {{id}}",
-    })
-  );
-}
-
-export function PersonIdentity(props: {
-  person: Pick<Friend, "userId" | "name" | "pictureUrl">;
-  subtitle?: string;
-}) {
-  const { t } = useI18n();
-  const name = displayNameOf(props.person, t);
-  return (
-    <>
-      <Avatar
-        imageUrl={props.person.pictureUrl}
-        visual={getUserAnimalVisual(props.person.userId)}
-        title={name}
-      />
-      <span className="sb-friends-person-text">
-        <span className="sb-friends-person-name">{name}</span>
-        {props.subtitle ? (
-          <span className="sb-friends-person-subtitle">{props.subtitle}</span>
-        ) : null}
-      </span>
-    </>
-  );
 }
 
 function FriendsHeading(props: { icon?: string; children: string }) {
@@ -389,9 +356,10 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
 function IncomingRequestRow(props: {
   request: FriendRequest;
   friends: FriendsManager;
+  profiles: PersonProfileDeps;
   toast: Toast;
 }) {
-  const { request, friends, toast } = props;
+  const { request, friends, profiles, toast } = props;
   const { t } = useI18n();
   // Which answer is in flight, so only that button spins while both are
   // disabled.
@@ -440,7 +408,7 @@ function IncomingRequestRow(props: {
 
   return (
     <li className="sb-friends-row">
-      <PersonIdentity person={request} />
+      <PersonButton deps={profiles} person={request} />
       <span className="sb-friends-row-actions">
         <BusyButton
           className="sb-friends-button sb-friends-button--primary"
@@ -467,15 +435,17 @@ function OutgoingRequestRow(props: {
   request: FriendRequest;
   friends: FriendsManager;
   navigation: SeedBibleState["navigation"];
+  profiles: PersonProfileDeps;
   toast: Toast;
 }) {
-  const { request, friends, navigation, toast } = props;
+  const { request, friends, navigation, profiles, toast } = props;
   const { t } = useI18n();
   const busy = useSignal(false);
 
   return (
     <li className="sb-friends-row">
-      <PersonIdentity
+      <PersonButton
+        deps={profiles}
         person={request}
         subtitle={t("friend-request-waiting", {
           defaultValue: "Waiting for them to accept",
@@ -575,9 +545,10 @@ function FriendRow(props: {
   friend: Friend;
   friends: FriendsManager;
   modals: ModalManager;
+  profiles: PersonProfileDeps;
   toast: Toast;
 }) {
-  const { friend, friends, modals, toast } = props;
+  const { friend, friends, modals, profiles, toast } = props;
   const { t } = useI18n();
 
   const openConfirm = () => {
@@ -601,7 +572,7 @@ function FriendRow(props: {
 
   return (
     <li className="sb-friends-row">
-      <PersonIdentity person={friend} />
+      <PersonButton deps={profiles} person={friend} />
       <span className="sb-friends-row-actions">
         <button
           type="button"
@@ -673,6 +644,7 @@ export function FriendsPane(props: { state: SeedBibleState }) {
                   key={request.id}
                   request={request}
                   friends={friends}
+                  profiles={state}
                   toast={toast}
                 />
               ))}
@@ -692,6 +664,7 @@ export function FriendsPane(props: { state: SeedBibleState }) {
                   friend={friend}
                   friends={friends}
                   modals={modals}
+                  profiles={state}
                   toast={toast}
                 />
               ))}
@@ -722,6 +695,7 @@ export function FriendsPane(props: { state: SeedBibleState }) {
                   request={request}
                   friends={friends}
                   navigation={navigation}
+                  profiles={state}
                   toast={toast}
                 />
               ))}

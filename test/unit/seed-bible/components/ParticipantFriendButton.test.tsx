@@ -75,7 +75,7 @@ describe("ParticipantFriendButton", () => {
     const login = {
       userId,
       login: vi.fn().mockResolvedValue(null),
-      getUserProfile: vi.fn(async () => ({ name: "Ada", pictureUrl: null })),
+      getPublicProfile: vi.fn(async () => ({ name: "Ada", pictureUrl: null })),
     } as unknown as LoginManager;
     const os = CasualOSManager();
     server = fakeSharedPermissions(os, () => userId.peek());

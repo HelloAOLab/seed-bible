@@ -10,7 +10,10 @@ import {
   createFriendsManager,
   type FriendsManager,
 } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
-import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import type {
+  LoginManager,
+  UserProfile,
+} from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
 
@@ -26,6 +29,8 @@ describe("friend links", () => {
   let userId: Signal<string | null>;
   let signInSucceeds: boolean;
   let login: LoginManager;
+  /** Overrides the default profiles; null means no account has the ID. */
+  let profiles: Record<string, UserProfile | null>;
   let server: ReturnType<typeof fakeSharedPermissions>;
   let friends: FriendsManager;
   let currentUrl: Signal<URL>;
@@ -91,6 +96,7 @@ describe("friend links", () => {
     document.body.appendChild(dialog);
     userId = signal<string | null>(ME);
     signInSucceeds = true;
+    profiles = {};
     login = {
       userId,
       login: vi.fn(async () => {
@@ -99,10 +105,11 @@ describe("friend links", () => {
         }
         return null;
       }),
-      getUserProfile: vi.fn(async (id: string) => ({
-        name: id === ADA_ID ? "Ada" : "",
-        pictureUrl: null,
-      })),
+      getPublicProfile: vi.fn(async (id: string) =>
+        id in profiles
+          ? profiles[id]
+          : { name: id === ADA_ID ? "Ada" : "", pictureUrl: null }
+      ),
     } as unknown as LoginManager;
     const os = CasualOSManager();
     server = fakeSharedPermissions(os, () => userId.peek());
@@ -174,6 +181,57 @@ describe("friend links", () => {
       release();
       await settle();
       expect(openModalId).toBeNull();
+    });
+
+    it("shows where they are and what they wrote about themselves", async () => {
+      profiles[ADA_ID] = {
+        name: "Ada",
+        location: "London",
+        description: "Reads a psalm every morning.",
+      };
+      await openWith(`?addFriend=${ADA_ID}`);
+
+      expect(text()).toContain("London");
+      expect(text()).toContain("Reads a psalm every morning.");
+      expect(text()).not.toContain("hasn't set up");
+    });
+
+    it("says so kindly when they haven't set up their profile", async () => {
+      profiles[ADA_ID] = { name: "" };
+      await openWith(`?addFriend=${ADA_ID}`);
+
+      expect(text()).toContain("This person hasn't set up their profile yet.");
+      // They can still be added.
+      expect(button("Send request")).toBeDefined();
+    });
+
+    it("explains a link that matches no account, without offering to send", async () => {
+      profiles[ADA_ID] = null;
+      await openWith(`?addFriend=${ADA_ID}`);
+
+      expect(text()).toContain(
+        "This friend link doesn't match anyone's account."
+      );
+      expect(button("Send request")).toBeUndefined();
+    });
+
+    it("doesn't ask a signed-out visitor to sign in for a link that matches no account", async () => {
+      userId.value = null;
+      profiles[ADA_ID] = null;
+      await openWith(`?addFriend=${ADA_ID}`);
+
+      expect(text()).toContain(
+        "This friend link doesn't match anyone's account."
+      );
+      expect(button("Log in")).toBeUndefined();
+    });
+
+    it("still offers to send when the profile can't be read", async () => {
+      vi.mocked(login.getPublicProfile).mockRejectedValue(new Error("offline"));
+      await openWith(`?addFriend=${ADA_ID}`);
+
+      expect(button("Send request")).toBeDefined();
+      expect(text()).not.toContain("hasn't set up");
     });
 
     it("sends nothing when the user cancels", async () => {
@@ -251,6 +309,20 @@ describe("friend links", () => {
       expect(friends.friendIds.value).toEqual([ADA_ID]);
       expect(toast).toHaveBeenCalledWith("You're now friends with Ada.");
       expect(openModalId).toBeNull();
+    });
+
+    it("shows where the sender is and what they wrote about themselves", async () => {
+      profiles[ADA_ID] = {
+        name: "Ada",
+        location: "London",
+        description: "Reads a psalm every morning.",
+      };
+      const request = server.requestFrom(ADA_ID);
+      await openWith(`?friendRequest=${request.id}`);
+      // The sender's profile loads after the request list does.
+      await vi.waitFor(() => expect(text()).toContain("London"));
+
+      expect(text()).toContain("Reads a psalm every morning.");
     });
 
     it("declines it", async () => {
