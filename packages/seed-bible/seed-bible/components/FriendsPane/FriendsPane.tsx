@@ -654,7 +654,7 @@ export function FriendsPane(props: { state: SeedBibleState }) {
                 ? t("loading", { defaultValue: "Loading…" })
                 : t("friends-empty", {
                     defaultValue:
-                      "No friends yet. Add someone by their user ID, or share yours with them.",
+                      "No friends yet. Share your friend link, or add someone by their user ID.",
                   })}
             </p>
           )}

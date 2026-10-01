@@ -1038,7 +1038,7 @@
   "discover-annotations-empty-create": "Create a note",
   "friends": "Friends",
   "friends-signed-out": "Sign in to add friends and see what they're reading.",
-  "friends-empty": "No friends yet. Add someone by their user ID, or share yours with them.",
+  "friends-empty": "No friends yet. Share your friend link, or add someone by their user ID.",
   "friends-row-subtitle-empty": "Add friends and see what they're reading",
   "friends-count": "{{count}} friend",
   "friends-count-plural": "{{count}} friends",
