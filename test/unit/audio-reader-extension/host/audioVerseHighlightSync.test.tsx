@@ -122,6 +122,7 @@ describe("audio-reader verse highlight sync", () => {
       annotations: state.annotations,
       features: state.features,
       surface: "quick-toolbar",
+      settings: state.settings,
     };
     const tool = state.tools
       .getQuickTools(ctx)

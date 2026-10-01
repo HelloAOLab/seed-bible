@@ -263,6 +263,9 @@ function createMobileState(): SeedBibleState {
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
+    },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
       pendingCountForChapter: vi.fn(() => 0),
@@ -310,6 +313,9 @@ function createDesktopState(): SeedBibleState {
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
+    },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),

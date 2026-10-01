@@ -290,6 +290,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
+    },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
       pendingCountForChapter: vi.fn(() => 0),
@@ -3749,6 +3752,9 @@ describe("BibleReader", () => {
       },
       features: {
         isFeatureEnabled: vi.fn(() => true),
+      },
+      settings: {
+        settings: signal({ discoveredContent: { showContent: true } }),
       },
       saves: {
         isLocationSaved: vi.fn(() => false),

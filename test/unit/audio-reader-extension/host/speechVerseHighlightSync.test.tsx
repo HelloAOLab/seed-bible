@@ -97,6 +97,7 @@ describe("audio-reader speech verse highlight sync (#1769)", () => {
       annotations: state.annotations,
       features: state.features,
       surface: "quick-toolbar",
+      settings: state.settings,
     };
     return state.tools
       .getQuickTools(ctx)

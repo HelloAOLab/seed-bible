@@ -65,6 +65,7 @@ import {
 } from "./FeaturesManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
+import type { SettingsManager } from "./SettingsManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -424,6 +425,8 @@ export interface QuickToolContext {
   annotations: AnnotationsManager;
 
   features: FeaturesManager;
+
+  settings: SettingsManager;
 
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
@@ -912,7 +915,11 @@ function getDefaultQuickToolbarTools(
         </MaterialIcon>
       ),
       isVisible: (c) => {
-        if (c.app?.isMobile?.value || c.app?.isDiscoverOpen?.value) {
+        if (
+          c.app?.isMobile?.value ||
+          c.app?.isDiscoverOpen?.value ||
+          !c.settings.settings.value.discoveredContent.showContent
+        ) {
           return false;
         }
         if (hasAnyDiscoverResults(c.readingState)) {

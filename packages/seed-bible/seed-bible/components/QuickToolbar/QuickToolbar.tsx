@@ -12,6 +12,7 @@ import type { AnnotationsManager } from "../../managers/AnnotationsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
+import type { SettingsManager } from "../../managers";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;
@@ -19,6 +20,7 @@ interface QuickToolbarProps {
   playlists: PlaylistManager;
   annotations: AnnotationsManager;
   features: FeaturesManager;
+  settings: SettingsManager;
   /** Extra class for layout differences (e.g. desktop vs mobile header). */
   className?: string;
   /** Shared session for the current reader surface, if any. Used by Share. */
@@ -50,6 +52,7 @@ export function QuickToolbar(props: QuickToolbarProps) {
     toast: props.toast,
     modals: props.modals,
     app: props.app,
+    settings: props.settings,
   });
   const visibleTools = tools.filter((tool) => tool.visible.value);
 

@@ -141,6 +141,9 @@ function createQuickToolContext(
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     } as any,
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
+    } as any,
     surface: "quick-toolbar",
     app: {
       isMobile: signal(overrides.isMobile ?? false),
@@ -1818,6 +1821,9 @@ describe("createBibleToolsManager", () => {
           getAnnotationsForChapter: () => signal([]),
         } as any,
         features: {} as any,
+        settings: {
+          settings: signal({ discoveredContent: { showContent: true } }),
+        } as any,
         surface: "quick-toolbar",
         ...overrides,
       };
