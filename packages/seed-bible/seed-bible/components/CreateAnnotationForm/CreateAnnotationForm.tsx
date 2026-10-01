@@ -12,9 +12,8 @@ import { extractContentText } from "../../managers/ChapterText";
 import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
 import type { TabsManager } from "../../managers/TabsManager";
 import { sanitize } from "../../managers/Sanitization";
-import { captureEvent } from "../../managers/Utils";
+import { captureEvent, isApplePlatform } from "../../managers/Utils";
 import {
-  isApplePlatform,
   PlainTextAnnotationEditor,
   type AnnotationEditorHandle,
   type AnnotationEditorProps,
@@ -51,6 +50,11 @@ let AnnotationEditor = loadAnnotationEditor(false);
  * result, so after a failed load a fresh one is made to retry TipTap the next
  * time the form opens while the browser reports being online. It's captured
  * once per mount so a retry never swaps editors under text being typed.
+ *
+ * `navigator.onLine` only says a network interface is up, not that the
+ * network works (a captive portal or flaky Wi-Fi still reads as online), so
+ * the retry is a guess. If it fails, the user sees the loading box and then
+ * the textarea again, and the failure is reported with `retry: true`.
  */
 function useAnnotationEditor(): ComponentType<AnnotationEditorProps> {
   const [editor] = useState(() => {

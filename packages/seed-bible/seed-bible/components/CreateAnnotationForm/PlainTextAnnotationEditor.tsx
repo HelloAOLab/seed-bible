@@ -1,6 +1,7 @@
 import type { Editor } from "@tiptap/core";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
+import { isApplePlatform } from "../../managers/Utils";
 import type { TipTapEditorProps } from "../TipTapEditor/TipTapEditor";
 
 /** The slice of TipTap's `Editor` the annotation form reads from. */
@@ -9,11 +10,6 @@ export type AnnotationEditorHandle = Pick<Editor, "isEmpty" | "getHTML">;
 export type AnnotationEditorProps = Omit<TipTapEditorProps, "onEditor"> & {
   onEditor: (editor: AnnotationEditorHandle | null) => void;
 };
-
-/** TipTap's `Mod` key: Cmd on Apple, Ctrl on Windows/Linux. */
-export function isApplePlatform(): boolean {
-  return typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
-}
 
 // Quotes need no escaping in text content, and leaving them alone keeps the
 // output identical to TipTap's for plain paragraphs (see `isPlainTextHtml`).
