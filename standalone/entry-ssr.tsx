@@ -25,6 +25,7 @@ import {
   THEME_PRESET_STYLE_TEXT,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { ssrTranslationsCache } from "./ssrTranslationsCache";
+import { buildPlaylistPagePath } from "@packages/seed-bible/seed-bible/managers/PlaylistPagePath";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -55,6 +56,8 @@ export interface RenderOptions {
    * - `<!--CUSTOMIZATION_JSON-->` where the JSON-serialized
    *   `?customization=...` load result should be injected, so the client can
    *   skip re-fetching a customization record the server already resolved.
+   * - `<!--PLAYLIST_PAGE_JSON-->` where the JSON-serialized playlist-page
+   *   load result should be injected, likewise for a shared playlist link.
    * - `<!--THEME_STYLE_TAG-->` where the active theme's composed CSS text
    *   should be injected, inside a `<style id="sb-theme-styles">` tag.
    * - `<!--THEME_PRESETS_JSON-->` where the built-in theme presets' composed
@@ -176,6 +179,15 @@ export function stripDefaultFaviconLinks(html: string): string {
   return html.replace(LINK_TAG_RE, (tag) => (isFaviconLinkTag(tag) ? "" : tag));
 }
 
+/** Query params that only ever described a reading position. */
+const READING_POSITION_PARAMS = [
+  "book",
+  "chapter",
+  "translation",
+  "translationId",
+  "lang",
+];
+
 /**
  * Detects a URL that isn't already the canonical
  * `/{lang}/{translationId}/{bookSlug}/{chapter}` form, for requests that
@@ -289,18 +301,74 @@ export function legacyReadingUrlRedirect(
   });
 
   const remainingParams = new URLSearchParams(url.search);
-  for (const key of [
-    "book",
-    "chapter",
-    "translation",
-    "translationId",
-    "lang",
-  ]) {
+  for (const key of READING_POSITION_PARAMS) {
     remainingParams.delete(key);
   }
   const query = remainingParams.toString();
 
   return `${basePath}${readingPath}${query ? `?${query}` : ""}`;
+}
+
+/**
+ * Sends an old-style playlist link to the playlist's own path, as a 301 (the
+ * target depends only on the URL):
+ *
+ * - A share link (`?playlist={locator}`, on whatever chapter the sharer's page
+ *   happened to be) goes to its page, `/{lang}/playlist/{locator}`.
+ * - A playback URL (`…&playlistStep={n}`, 0-based) goes to its playing path,
+ *   `/{lang}/playlist/{locator}/-/{n + 1}`. The title slug isn't known
+ *   without fetching the playlist, so a placeholder stands in; the app
+ *   writes the real one as soon as playback starts.
+ *
+ * The language is the one the link names (its path segment or `?lang=`),
+ * else the translation's own, else `DEFAULT_UI_LANGUAGE`. The title slug is
+ * left off, since adding it would mean fetching the playlist before
+ * responding; the page's canonical URL carries it instead. Unrelated query
+ * params are kept, and the ones that only placed the reader are dropped.
+ */
+export function playlistQueryRedirect(
+  path: string,
+  basePath: string
+): string | null {
+  const url = new URL(path, "http://ssr.local");
+  const locator = url.searchParams.get("playlist");
+  if (!locator) {
+    return null;
+  }
+  const stepParam = url.searchParams.get("playlistStep");
+  const stepIndex = stepParam === null ? null : Number(stepParam);
+  const step =
+    stepIndex === null
+      ? null
+      : Number.isInteger(stepIndex) && stepIndex >= 0
+        ? stepIndex + 1
+        : 1;
+
+  const parsed = parseReadingPath(url.pathname, basePath);
+  const translationId =
+    parsed?.translationId ??
+    url.searchParams.get("translationId") ??
+    url.searchParams.get("translation");
+  const language =
+    parsed?.language?.toLowerCase() ??
+    url.searchParams.get("lang") ??
+    (translationId ? uiLocaleForDefaultTranslation(translationId) : null) ??
+    DEFAULT_UI_LANGUAGE;
+
+  const remainingParams = new URLSearchParams(url.search);
+  remainingParams.delete("playlist");
+  remainingParams.delete("playlistStep");
+  for (const key of READING_POSITION_PARAMS) {
+    remainingParams.delete(key);
+  }
+  const query = remainingParams.toString();
+
+  return `${basePath}${buildPlaylistPagePath({
+    language,
+    locator,
+    title: null,
+    step,
+  })}${query ? `?${query}` : ""}`;
 }
 
 /**
@@ -436,13 +504,7 @@ export function acceptLanguageRedirect(
   }
 
   const remainingParams = new URLSearchParams(url.search);
-  for (const key of [
-    "book",
-    "chapter",
-    "translation",
-    "translationId",
-    "lang",
-  ]) {
+  for (const key of READING_POSITION_PARAMS) {
     remainingParams.delete(key);
   }
   const query = remainingParams.toString();
@@ -467,6 +529,16 @@ export async function render(
   | string
 > {
   const { config: injectedConfig } = options;
+
+  // Before the reading-path redirects: the target isn't a reading path, and
+  // correcting the chapter first would only add a second hop.
+  const playlistRedirectTo = playlistQueryRedirect(
+    options.path,
+    injectedConfig.basePath
+  );
+  if (playlistRedirectTo) {
+    return { redirectTo: playlistRedirectTo };
+  }
 
   const redirectTo = legacyReadingUrlRedirect(
     options.path,
@@ -547,7 +619,15 @@ export async function render(
   await Promise.all([
     state.i18n.ready,
     state.app.selectedTab.value?.readingState.chapterDataPromise,
+    // So the title, meta and modal describe a shared playlist link's
+    // playlist. Awaited here with the chapter, not suspended on during the
+    // render, for the reason above.
+    state.playlists.initialPlaylistPageLoadPromise,
   ]);
+  // A reload mid-playlist names only its step, not the chapter; the reader
+  // moves there once the playlist has loaded, so wait for that too before
+  // rendering.
+  await state.playlists.initialPlaybackPromise;
 
   const [appHtml] = await Promise.all([
     renderToStringAsync(
@@ -559,6 +639,7 @@ export async function render(
   // `options.html`'s default `og:image` tags need stripping first (see
   // `stripDefaultOgImageMeta`).
   const customizationLogoUrl = state.app.customizationLogoUrl.value;
+  const socialImage = state.app.socialImage.value;
 
   const metaHtml = await renderToStringAsync(
     <>
@@ -573,8 +654,10 @@ export async function render(
       <meta property="og:description" content={state.app.description.value} />
       <meta property="og:url" content={state.app.canonicalUrl.value} />
       <meta property="og:site_name" content={state.app.siteName.value} />
-      {/* Only emitted when a customization with an uploaded logo is active.
-          `stripDefaultOgImageMeta` has already removed index.html's own
+      {/* Only emitted for a shared playlist with a cover image, or when a
+          customization with an uploaded logo is active (see
+          `state.app.socialImage`). `stripDefaultOgImageMeta` has already
+          removed index.html's own
           `og:image`/`:type`/`:width`/`:height`/`:alt` from `baseHtml` below in
           that case, so there is exactly one set of these tags either way —
           unlike the favicon `<link>`, a crawler can't be relied on to prefer
@@ -582,11 +665,11 @@ export async function render(
           first, or treat multiple as a gallery), so an override here has to
           replace the default rather than merely follow it. No explicit
           `:type`/`:width`/`:height`: those described the default JPG's fixed
-          1200x630 crop and would misdescribe an arbitrary uploaded logo. */}
-      {customizationLogoUrl && (
+          1200x630 crop and would misdescribe an arbitrary uploaded image. */}
+      {socialImage && (
         <>
-          <meta property="og:image" content={customizationLogoUrl} />
-          <meta property="og:image:alt" content={state.app.siteName.value} />
+          <meta property="og:image" content={socialImage.url} />
+          <meta property="og:image:alt" content={socialImage.alt} />
         </>
       )}
       {/* `twitter:*` really is `name=`, unlike `og:*`. No `twitter:image`: it
@@ -661,6 +744,10 @@ export async function render(
     JSON.stringify(state.customizations.getInitialCustomizationSeed())
   );
 
+  const playlistPageSeedJson = escapeForScript(
+    JSON.stringify(state.playlists.getPlaylistPageSeed())
+  );
+
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
     ["<!-- HTML_LANG -->", escapeForHtmlAttribute(state.i18n.language.value)],
@@ -672,12 +759,20 @@ export async function render(
     ["<!-- CONFIG_JSON -->", configJson],
     ["<!-- SEED_JSON -->", seedJson],
     ["<!-- CUSTOMIZATION_JSON -->", customizationSeedJson],
+    ["<!-- PLAYLIST_PAGE_JSON -->", playlistPageSeedJson],
     ["<!-- APP_HTML -->", appHtml],
   ];
 
-  const baseHtml = customizationLogoUrl
-    ? stripDefaultFaviconLinks(stripDefaultOgImageMeta(options.html))
+  const withSocialImage = socialImage
+    ? stripDefaultOgImageMeta(options.html)
     : options.html;
+  const baseHtml = customizationLogoUrl
+    ? stripDefaultFaviconLinks(withSocialImage)
+    : withSocialImage;
+
+  // A shared playlist link whose playlist doesn't exist is a 404 like an
+  // unknown book is. One whose load merely failed or timed out is not.
+  const playlistNotFound = state.playlists.playlistPageNotFound.value;
 
   return {
     html: substitutions.reduce(
@@ -685,6 +780,6 @@ export async function render(
         replacePlaceholder(html, placeholder, value),
       baseHtml
     ),
-    ...(notFound ? { notFound: true as const } : {}),
+    ...(notFound || playlistNotFound ? { notFound: true as const } : {}),
   };
 }

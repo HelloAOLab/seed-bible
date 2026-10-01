@@ -4,6 +4,7 @@ import { render } from "preact";
 import { readInjectedConfig } from "../app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../app/apiResponseSeed";
 import { readInjectedCustomizationSeed } from "../app/customizationSeed";
+import { readInjectedPlaylistPageSeed } from "../app/playlistPageSeed";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { decideHydration, type HydrationDecision } from "../app/hydrationGate";
 import { hydrateWithFallback } from "../app/hydrateWithFallback";
@@ -25,6 +26,9 @@ const apiResponseSnapshot = readInjectedApiResponseSnapshot();
 // creation below doesn't re-fetch a record the page already reflects.
 const initialCustomizationSeed = readInjectedCustomizationSeed();
 
+// Same, for the playlist a shared playlist link opens on.
+const initialPlaylistPageSeed = readInjectedPlaylistPageSeed();
+
 const container = document.getElementById("app") ?? document.body;
 
 console.log("Starting APP");
@@ -38,6 +42,7 @@ const state = createSeedBibleState({
   config,
   apiResponseSnapshot,
   initialCustomizationSeed,
+  initialPlaylistPageSeed,
 });
 
 /**
@@ -52,9 +57,12 @@ const state = createSeedBibleState({
  * the reader subtree waiting on its own Suspense fallback.
  */
 function waitForThisPagesChapterLoads() {
-  return waitForInitialChapterLoads(
-    state.tabs.tabs.value.map((tab) => tab.readingState.chapterDataPromise)
-  );
+  return waitForInitialChapterLoads([
+    ...state.tabs.tabs.value.map((tab) => tab.readingState.chapterDataPromise),
+    // A reload mid-playlist moves the reader to its step's chapter after the
+    // playlist loads; the server rendered that chapter, so wait for it too.
+    state.playlists.initialPlaybackPromise,
+  ]);
 }
 
 void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(

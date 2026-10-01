@@ -10,6 +10,7 @@ import {
 import type { OfflineTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import type { AppConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
+import type { PlaylistPageSeed } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
 // Lazy per-language loaders for the real "seed-bible" locale files, mirroring
@@ -87,6 +88,8 @@ export interface CreateTestSeedBibleStateOptions {
    * this helper otherwise mirrors, so this defaults to `false`.
    */
   skipHydrateAutoOpen?: boolean;
+  /** A playlist-page load to seed, as the server would embed it. */
+  initialPlaylistPageSeed?: PlaylistPageSeed;
 }
 
 export async function waitFor(
@@ -328,6 +331,7 @@ export async function createTestSeedBibleState(
   const state = createSeedBibleState({
     offlineStore: options.offlineStore,
     config: options.config,
+    initialPlaylistPageSeed: options.initialPlaylistPageSeed,
   });
   // Before anything can sign in: the resume effect fires the moment a session
   // key lands, and it is the path that would otherwise open a socket.

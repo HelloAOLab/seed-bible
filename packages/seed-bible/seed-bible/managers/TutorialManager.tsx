@@ -518,7 +518,13 @@ export function createTutorialManager(
   isMobile: ReadonlySignal<boolean>,
   panes: PanesManager,
   sidebar: SidebarManager,
-  joinedViaSessionLink = false,
+  /**
+   * The visit started from a shared link (a session invite, a playlist, a
+   * reading plan). While true, neither the offer card nor contextual tips
+   * appear. A signal because a playlist link lifts it once the visitor closes
+   * the playlist without starting it and lands on the home screen.
+   */
+  openedViaContentLink: ReadonlySignal<boolean> = signal(false),
   /**
    * Compact partner-site embed. While this is true the offer card, the tour,
    * and the "turn off tutorials" follow-up never start — an embed has no room
@@ -784,9 +790,9 @@ export function createTutorialManager(
     if (running.value) {
       return;
     }
-    // On a session-join tab, don't pop contextual coach marks. Not persisted,
-    // so these tips still appear on a normal (non-session-link) visit later.
-    if (joinedViaSessionLink) {
+    // On a content-link tab, don't pop contextual coach marks. Not persisted,
+    // so these tips still appear on a normal (non-link) visit later.
+    if (openedViaContentLink.value) {
       return;
     }
     if (optedOut.value) {
@@ -939,7 +945,7 @@ export function createTutorialManager(
       // Opened via a shared-session invite link: don't auto-launch the onboarding
       // tour over the join. We don't record completion, so the tour still
       // auto-starts on a later visit that isn't a session link.
-      if (joinedViaSessionLink) {
+      if (openedViaContentLink.value) {
         return;
       }
       // A partner-site embed has none of the chrome the tour points at.

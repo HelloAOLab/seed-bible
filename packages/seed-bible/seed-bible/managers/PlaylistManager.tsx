@@ -41,6 +41,11 @@ import {
 } from "./ReadingUrlPath";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
+import {
+  buildPlaylistPagePath,
+  parsePlaylistPagePath,
+} from "./PlaylistPagePath";
+import { userProfileSchema } from "./LoginManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -145,6 +150,28 @@ export type SimplePlaylist = Pick<
 >;
 
 /**
+ * The playlist a `/{lang}/playlist/{locator}` page shows, with its author's
+ * display name (null when they have none, or their profile couldn't be read).
+ */
+export interface PlaylistPage {
+  locator: string;
+  playlist: Playlist;
+  authorName: string | null;
+}
+
+/**
+ * A completed playlist-page load, embedded by SSR so the client can skip
+ * re-fetching it — see `PlaylistManager.getPlaylistPageSeed`. `playlist` is
+ * null when the load found nothing. It crossed a server/client boundary as
+ * JSON, so it is re-validated before use.
+ */
+export interface PlaylistPageSeed {
+  locator: string;
+  playlist: Playlist | null;
+  authorName: string | null;
+}
+
+/**
  * True when a playlist is backed by a record, so a play-history row can reload
  * it later by `{recordName, id}`. Ad-hoc queues (a reading plan's day, say)
  * carry no record name and so can't be resumed from history.
@@ -186,7 +213,7 @@ function firstScriptureShareRef(items: readonly PlaylistItemData[]): {
 }
 
 /**
- * Builds a share URL for content made of `items` (a playlist, a reading
+ * Builds a share URL for content made of `items` (e.g. a reading
  * plan). The path is the first resolvable scripture item's chapter so opening
  * the link does not load the chapter the sharer happened to be reading and
  * then jump to the shared content. The query string is replaced by
@@ -907,6 +934,35 @@ export function createPlayingState(
   };
 }
 
+/**
+ * What playback a URL asks for: the playlist `locator` and the 0-based queue
+ * `stepIndex` (null when it names none). Read from a playing playlist's path,
+ * `/{lang}/playlist/{locator}/{title}/{step}` (whose step is 1-based), or
+ * from the `?playlist=`/`?playlistStep=` params that ad-hoc queues (a reading
+ * plan's day) still use and old links carried. Null when the URL asks for no
+ * playback, including a playlist's own page without a step.
+ */
+export function playbackRequestFromUrl(
+  url: URL,
+  basePath: string
+): { locator: string; stepIndex: number | null } | null {
+  const page = parsePlaylistPagePath(url.pathname, basePath);
+  if (page) {
+    return page.step != null
+      ? { locator: page.locator, stepIndex: page.step - 1 }
+      : null;
+  }
+  const locator = url.searchParams.get("playlist");
+  if (!locator) {
+    return null;
+  }
+  const step = url.searchParams.get("playlistStep");
+  return {
+    locator,
+    stepIndex: step === null ? null : Math.floor(parseNumber(step, 0)),
+  };
+}
+
 /** Stable id so navigating between non-verse items updates the same modal instead of closing/reopening it. */
 const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
 
@@ -930,13 +986,20 @@ export function createPlaylistManager(
   i18n: I18nManager,
   readingExtensionManager: BibleReadingExtensionManager,
   discover: DiscoverManager,
-  chats: ChatsManager
+  chats: ChatsManager,
+  initialPlaylistPageSeed?: PlaylistPageSeed
 ) {
-  const initialPlaylistLocator = signal(
-    navigation.currentUrl.value.searchParams.get("playlist")
+  const initialPlaybackRequest = playbackRequestFromUrl(
+    navigation.initialUrl,
+    navigation.basePath
   );
-  const initialPlaylistStep = signal(
-    navigation.currentUrl.value.searchParams.get("playlistStep")
+  /**
+   * The playlist the initial URL asked to play, until that load settles.
+   * Bridges the gap before playback starts, so the URL sync doesn't take the
+   * not-yet-playing state for a request to stop.
+   */
+  const initialPlaylistLocator = signal(
+    initialPlaybackRequest?.locator ?? null
   );
   const userPlaylists = signal<Playlist[]>([]);
   /** Latest play per playlist for the signed-in user, newest first. */
@@ -1682,9 +1745,14 @@ export function createPlaylistManager(
     return playing.value;
   };
 
+  /**
+   * Loads a playlist by locator and plays it at `stepIndex` (0-based). Reuses
+   * the playlist a playlist page already loaded for the same locator. Resolves
+   * once the reader has moved to that step, so the server can render it.
+   */
   const startPlayingLocator = async (
     locator: string,
-    step: string | null
+    stepIndex: number | null
   ): Promise<void> => {
     const parsed = parsePlaylistLocator(locator);
     if (!parsed) {
@@ -1693,23 +1761,34 @@ export function createPlaylistManager(
     }
     const { recordName, id } = parsed;
     try {
-      const playlist = await loadPlaylist(recordName, id);
-      startPlaying(playlist, Math.floor(parseNumber(step, 0)));
+      const loaded = playlistPageResult.peek();
+      const playlist =
+        loaded?.locator === locator && loaded.playlist
+          ? loaded.playlist
+          : await loadPlaylist(recordName, id);
+      const state = startPlaying(playlist, stepIndex ?? 0);
+      if (state) {
+        await state.jumpTo(state.currentIndex.peek());
+      }
     } catch (err) {
       console.error("Failed to load playlist for playback:", err);
     }
   };
 
-  /** Gets a shareable URL for the given playlist. */
+  /**
+   * Gets a shareable URL for the given playlist: its own
+   * `/{lang}/playlist/{locator}/{title}` page, which shows the playlist before
+   * anything starts playing.
+   */
   const getPlaylistUrl = (playlist: Playlist): string =>
-    buildScriptureShareUrl({
-      items: playlist.items,
-      currentUrl: navigation.currentUrl.value,
-      basePath: navigation.basePath,
-      activeTranslationId: activeTab.peek()?.readingState.translationId.peek(),
-      param: "playlist",
-      locator: getPlaylistLocator(playlist),
-    });
+    new URL(
+      `${navigation.basePath}${buildPlaylistPagePath({
+        language: i18n.language.peek(),
+        locator: getPlaylistLocator(playlist),
+        title: playlist.title,
+      })}`,
+      navigation.currentUrl.value
+    ).toString();
 
   const goBackFromPlayingView = () => {
     if (isMobile.value) {
@@ -1732,7 +1811,16 @@ export function createPlaylistManager(
       tab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
     }
     initialPlaylistLocator.value = null;
-    initialPlaylistStep.value = null;
+    // A playing path only means anything while playing. Left in the address
+    // bar, it would be read straight back as a request to play again.
+    if (
+      parsePlaylistPagePath(
+        navigation.currentUrl.peek().pathname,
+        navigation.basePath
+      )?.step != null
+    ) {
+      tabs.leaveStaticPage();
+    }
     modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     if (view.peek()) {
       view.value = "discover";
@@ -1887,6 +1975,22 @@ export function createPlaylistManager(
         }
       });
 
+      // A saved playlist's path carries the step. A scripture step moves the
+      // reader, and that navigation writes the URL; a text or link step
+      // doesn't, so it asks for the URL write itself.
+      let lastIndex = playingState.currentIndex.peek();
+      const disposeStepUrl = effect(() => {
+        const index = playingState.currentIndex.value;
+        if (index === lastIndex) {
+          return;
+        }
+        lastIndex = index;
+        const item = playingState.currentItem.peek();
+        if (item && item.type !== "bible-verse") {
+          readingState.requestUrlUpdate();
+        }
+      });
+
       // Reports a `playlist_finished` event the first time *this client's
       // own* forward navigation reaches the last item in the queue. Hooked
       // onto `next()` itself rather than a reactive effect on `currentIndex`,
@@ -1957,13 +2061,40 @@ export function createPlaylistManager(
           return firstPlaylist?.title ?? label;
         },
 
+        // A saved playlist plays at its own path,
+        // `/{lang}/playlist/{locator}/{title}/{step}` (step 1-based), in place
+        // of the chapter's. Ad-hoc queues have no record to point at, so they
+        // keep the chapter's path and the query params below.
+        transformUrlPath: ({ pathname }) => {
+          const current = data.value;
+          const firstPlaylist = current?.playlists[0];
+          if (
+            !current ||
+            !firstPlaylist ||
+            !isRecordedPlaylist(firstPlaylist) ||
+            current.queue.length === 0
+          ) {
+            return pathname;
+          }
+          return buildPlaylistPagePath({
+            language: i18n.language.peek(),
+            locator: getPlaylistLocator(firstPlaylist),
+            title: firstPlaylist.title,
+            step: Math.max(0, current.step) + 1,
+          });
+        },
+
         // Always active (independent of `isShared`): contributes the
-        // `playlist`/`playlistStep` query params for this reading state's URL.
+        // `playlist`/`playlistStep` query params for an ad-hoc queue's URL,
+        // and clears them for a saved playlist, whose path carries both.
         // Falls back to the last-seen locator while nothing is playing so the
         // param doesn't flash-clear during an async deep-link load.
         transformQueryParams: ({ queryParams }) => {
           const current = data.value;
           const firstPlaylist = current?.playlists[0];
+          if (firstPlaylist && isRecordedPlaylist(firstPlaylist)) {
+            return { ...queryParams, playlist: null, playlistStep: null };
+          }
           // Emit `playlistStep` only when a playlist is actually loaded; an
           // enablement with no playlist reads as "nothing playing" (step
           // absent), with `playlist` falling back to the last-seen locator.
@@ -2036,6 +2167,7 @@ export function createPlaylistManager(
         dispose: () => {
           disposeOut();
           disposeIn();
+          disposeStepUrl();
           playingState.dispose();
         },
       };
@@ -2045,6 +2177,317 @@ export function createPlaylistManager(
       return instance as unknown as ReadingExtensionInstance;
     },
   });
+
+  /** The locator of the playlist page the URL is on, or null when it isn't on one. */
+  const playlistPageLocator = computed<string | null>(
+    () =>
+      parsePlaylistPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )?.locator ?? null
+  );
+
+  /**
+   * The latest playlist-page load that actually completed, found or not. A
+   * load that errored for any other reason than "not found" leaves this
+   * untouched, so it is never mistaken for a missing playlist.
+   */
+  const playlistPageResult = signal<PlaylistPageSeed | null>(null);
+
+  /** The playlist the current playlist page shows, once it has loaded. */
+  const playlistPage = computed<PlaylistPage | null>(() => {
+    const locator = playlistPageLocator.value;
+    const result = playlistPageResult.value;
+    if (!locator || result?.locator !== locator || !result.playlist) {
+      return null;
+    }
+    return {
+      locator,
+      playlist: result.playlist,
+      authorName: result.authorName,
+    };
+  });
+
+  /** True when the current playlist page's playlist was looked up and doesn't exist. */
+  const playlistPageNotFound = computed<boolean>(() => {
+    const locator = playlistPageLocator.value;
+    const result = playlistPageResult.value;
+    return !!locator && result?.locator === locator && !result.playlist;
+  });
+
+  const loadAuthorName = async (userId: string): Promise<string | null> => {
+    try {
+      const result = await os.getData(userId, "profile");
+      if (!result.success) {
+        return null;
+      }
+      const parsed = userProfileSchema.safeParse(result.data);
+      return parsed.success ? parsed.data.name.trim() || null : null;
+    } catch (err) {
+      console.warn("Failed to load playlist author profile:", err);
+      return null;
+    }
+  };
+
+  /** Resolves to null when the load failed for a reason other than "not found". */
+  const fetchPlaylistPage = async (
+    locator: string
+  ): Promise<PlaylistPageSeed | null> => {
+    const parsed = parsePlaylistLocator(locator);
+    if (!parsed) {
+      return { locator, playlist: null, authorName: null };
+    }
+    try {
+      const result = await os.getData(parsed.recordName, parsed.id);
+      if (!result.success) {
+        if (result.errorCode === "data_not_found") {
+          return { locator, playlist: null, authorName: null };
+        }
+        console.error("Failed to load playlist page:", result.errorCode);
+        return null;
+      }
+      const playlistResult = PlaylistSchema.safeParse(result.data);
+      if (!playlistResult.success) {
+        console.warn("Invalid playlist record for locator:", locator);
+        return { locator, playlist: null, authorName: null };
+      }
+      const playlist = playlistResult.data;
+      return {
+        locator,
+        playlist,
+        authorName: await loadAuthorName(playlist.authorUserId),
+      };
+    } catch (err) {
+      console.error("Failed to load playlist page:", err);
+      return null;
+    }
+  };
+
+  const initialPlaylistPageLocator =
+    parsePlaylistPagePath(navigation.initialUrl.pathname, navigation.basePath)
+      ?.locator ?? null;
+
+  /** Whether the initial page's own playlist load actually finished (unlike the promise below, never forced by the SSR timeout). */
+  let initialPlaylistPageLoadCompleted = false;
+  let resolveInitialPlaylistPageLoad: () => void = () => {};
+  /**
+   * Settles once the initial playlist page's playlist has loaded (or during
+   * SSR, once a timeout gives up on it). SSR waits on this so the page's
+   * title, meta and modal describe the playlist. Resolved immediately when
+   * the page didn't start on a playlist page.
+   */
+  const initialPlaylistPageLoadPromise = new Promise<void>((resolve) => {
+    resolveInitialPlaylistPageLoad = resolve;
+  });
+
+  const validateSeed = (seed: PlaylistPageSeed): PlaylistPageSeed | null => {
+    if (seed.playlist === null) {
+      return { locator: seed.locator, playlist: null, authorName: null };
+    }
+    const parsed = PlaylistSchema.safeParse(seed.playlist);
+    if (!parsed.success) {
+      return null;
+    }
+    return {
+      locator: seed.locator,
+      playlist: parsed.data,
+      authorName: typeof seed.authorName === "string" ? seed.authorName : null,
+    };
+  };
+
+  /** The locator most recently requested, so a URL effect re-run doesn't re-fetch it. */
+  let requestedPlaylistPageLocator: string | null = null;
+
+  /**
+   * The locator whose latest load failed for a reason other than "not
+   * found" (a network error, a server error). Only set on the client: a
+   * server render that couldn't load the playlist embeds no seed, so the
+   * client tries again itself, and showing the failure in the server's HTML
+   * would contradict whatever that retry finds.
+   */
+  const failedPlaylistPageLocator = signal<string | null>(null);
+  /** True while a "Try again" reload of a failed playlist page is in flight. */
+  const playlistPageRetrying = signal(false);
+
+  const requestPlaylistPage = (locator: string): Promise<void> => {
+    requestedPlaylistPageLocator = locator;
+    return fetchPlaylistPage(locator).then((result) => {
+      if (requestedPlaylistPageLocator !== locator) {
+        return;
+      }
+      if (result) {
+        playlistPageResult.value = result;
+        failedPlaylistPageLocator.value = null;
+      } else if (!import.meta.env.SSR) {
+        failedPlaylistPageLocator.value = locator;
+      }
+    });
+  };
+
+  /**
+   * True when the current playlist page's playlist couldn't be loaded for a
+   * reason other than it not existing, so the visitor can be offered a retry
+   * rather than being told it's gone.
+   */
+  const playlistPageLoadFailed = computed<boolean>(() => {
+    const locator = playlistPageLocator.value;
+    return (
+      !!locator &&
+      failedPlaylistPageLocator.value === locator &&
+      playlistPageResult.value?.locator !== locator
+    );
+  });
+
+  /** Loads the current playlist page's playlist again after a failed load. */
+  const retryPlaylistPage = async (): Promise<void> => {
+    const locator = playlistPageLocator.peek();
+    if (!locator || playlistPageRetrying.peek()) {
+      return;
+    }
+    playlistPageRetrying.value = true;
+    try {
+      await requestPlaylistPage(locator);
+    } finally {
+      playlistPageRetrying.value = false;
+    }
+  };
+
+  if (initialPlaylistPageLocator) {
+    const seed =
+      initialPlaylistPageSeed?.locator === initialPlaylistPageLocator
+        ? validateSeed(initialPlaylistPageSeed)
+        : null;
+    if (seed) {
+      requestedPlaylistPageLocator = initialPlaylistPageLocator;
+      playlistPageResult.value = seed;
+      initialPlaylistPageLoadCompleted = true;
+      resolveInitialPlaylistPageLoad();
+    } else {
+      void requestPlaylistPage(initialPlaylistPageLocator).then(() => {
+        initialPlaylistPageLoadCompleted = true;
+        resolveInitialPlaylistPageLoad();
+      });
+      // Backstop so an `os.getData()` that never answers can't hold an SSR
+      // request open; the client never waits on this promise.
+      if (import.meta.env.SSR) {
+        const SSR_PLAYLIST_PAGE_TIMEOUT_MS = 5000;
+        const timer = setTimeout(() => {
+          console.warn(
+            "Timed out waiting for playlist page load:",
+            initialPlaylistPageLocator
+          );
+          resolveInitialPlaylistPageLoad();
+        }, SSR_PLAYLIST_PAGE_TIMEOUT_MS);
+        void initialPlaylistPageLoadPromise.then(() => clearTimeout(timer));
+      }
+    }
+  } else {
+    resolveInitialPlaylistPageLoad();
+  }
+
+  // Later in-app navigations onto a playlist page load it the same way.
+  effect(() => {
+    const locator = playlistPageLocator.value;
+    if (locator && locator !== requestedPlaylistPageLocator) {
+      void requestPlaylistPage(locator);
+    }
+  });
+
+  /**
+   * The initial playlist page's completed load, for `entry-ssr.tsx` to embed
+   * in the page. Null when the page isn't a playlist page or the load hadn't
+   * finished (the SSR timeout fired first) — seeding "not found" for a load
+   * that merely timed out would hide a playlist that exists.
+   */
+  const getPlaylistPageSeed = (): PlaylistPageSeed | null => {
+    if (!initialPlaylistPageLocator || !initialPlaylistPageLoadCompleted) {
+      return null;
+    }
+    const result = playlistPageResult.peek();
+    return result?.locator === initialPlaylistPageLocator ? result : null;
+  };
+
+  /**
+   * Author names already looked up, by user id, so playback doesn't re-read
+   * a profile every time it starts. A lookup that found no name isn't kept,
+   * so a later playback can try again.
+   */
+  const authorNameCache = new Map<string, Promise<string | null>>();
+  const getAuthorName = (userId: string): Promise<string | null> => {
+    const cached = authorNameCache.get(userId);
+    if (cached) {
+      return cached;
+    }
+    const lookup = loadAuthorName(userId).then((name) => {
+      if (!name) {
+        authorNameCache.delete(userId);
+      }
+      return name;
+    });
+    authorNameCache.set(userId, lookup);
+    return lookup;
+  };
+
+  /**
+   * The display name of whoever made the playlist that's playing, for the
+   * player. Null while it loads, and for queues no one authored (a reading
+   * plan's day) or whose author has no name.
+   */
+  const playingAuthorName = signal<string | null>(null);
+  effect(() => {
+    const first = playing.value?.playlists.value[0] as
+      | Partial<Playlist>
+      | undefined;
+    const userId = first?.authorUserId;
+    playingAuthorName.value = null;
+    if (!userId) {
+      return;
+    }
+    // Started from a playlist page, the name is already loaded.
+    const page = playlistPage.peek();
+    if (page?.playlist.authorUserId === userId && page.authorName) {
+      playingAuthorName.value = page.authorName;
+      return;
+    }
+    let current = true;
+    void getAuthorName(userId).then((name) => {
+      if (current) {
+        playingAuthorName.value = name;
+      }
+    });
+    return () => {
+      current = false;
+    };
+  });
+
+  /**
+   * Starts the current playlist page's playlist from its first item and
+   * leaves the playlist page for the reader.
+   */
+  const startPlaylistPage = (): void => {
+    const page = playlistPage.peek();
+    if (!page) {
+      return;
+    }
+    // Push a new history entry before playback starts, so Back from playing
+    // returns to the playlist's page, its home. Starting first would rewrite
+    // the page's own entry into the first step's path (enabling playback
+    // replaces the current URL), leaving nothing to go back to.
+    tabs.leaveStaticPage({ push: true });
+    startPlaying(page.playlist, 0);
+  };
+
+  /**
+   * The step the URL is playing, 1-based, when it's a playing playlist's own
+   * path; null on the playlist's page itself or anywhere else.
+   */
+  const playlistPageStep = computed<number | null>(
+    () =>
+      parsePlaylistPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )?.step ?? null
+  );
 
   // Inbound (URL -> state) half of the `playlist`/`playlistStep` sync. Reads
   // both params together so pasting a link with a nonzero step while
@@ -2059,9 +2502,10 @@ export function createPlaylistManager(
   // (that happens separately, via `transformQueryParams`/`TabsManager`), would
   // wrongly treat the still-stale URL as an external "stop playback" request.
   const syncPlayingFromUrl = () => {
-    const url = navigation.currentUrl.value;
-    const requestedLocator = url.searchParams.get("playlist");
-    const requestedStep = url.searchParams.get("playlistStep");
+    const request = playbackRequestFromUrl(
+      navigation.currentUrl.value,
+      navigation.basePath
+    );
 
     const playingState = playing.peek();
     const firstPlaylist = playingState?.playlists.peek()[0];
@@ -2071,22 +2515,23 @@ export function createPlaylistManager(
         : null
       : initialPlaylistLocator.peek();
 
-    if (requestedLocator === locator) {
-      if (playingState && requestedStep !== null) {
-        const step = playingState.currentIndex.peek().toString();
-        if (requestedStep !== step) {
-          playingState.jumpTo(Math.floor(parseNumber(requestedStep, 0)));
-        }
+    if ((request?.locator ?? null) === locator) {
+      if (
+        playingState &&
+        request?.stepIndex != null &&
+        request.stepIndex !== playingState.currentIndex.peek()
+      ) {
+        void playingState.jumpTo(request.stepIndex);
       }
       return;
     }
 
-    if (!requestedLocator) {
+    if (!request) {
       stopPlaying();
       return;
     }
 
-    void startPlayingLocator(requestedLocator, requestedStep);
+    void startPlayingLocator(request.locator, request.stepIndex);
   };
 
   effect(() => {
@@ -2094,18 +2539,70 @@ export function createPlaylistManager(
     syncPlayingFromUrl();
   });
 
-  if (initialPlaylistLocator.value) {
-    void startPlayingLocator(
-      initialPlaylistLocator.value,
-      initialPlaylistStep.value
-    ).finally(() => {
-      // The fallback locator only bridges this initial async load. Clear it
-      // once settled so a later switch to a non-playing tab (whose URL has no
-      // `playlist`) isn't misread as a stale request for it.
-      initialPlaylistLocator.value = null;
-      initialPlaylistStep.value = null;
-    });
+  let resolveInitialPlayback: () => void = () => {};
+  /**
+   * Settles once the playback the initial URL asked for has started and the
+   * reader has moved to its step (or failed to). The server waits on this so
+   * a reload mid-playlist renders the step's chapter, and the client waits on
+   * it before hydrating so its first render matches. Resolved immediately
+   * when the URL asked for no playback.
+   */
+  const initialPlaybackPromise = new Promise<void>((resolve) => {
+    resolveInitialPlayback = resolve;
+  });
+
+  if (initialPlaybackRequest) {
+    // A playing path's playlist is what the page loader is already fetching
+    // (or was seeded with); waiting for it saves loading it twice.
+    const ready =
+      parsePlaylistPagePath(navigation.initialUrl.pathname, navigation.basePath)
+        ?.step != null
+        ? initialPlaylistPageLoadPromise
+        : Promise.resolve();
+    void ready
+      .then(() =>
+        startPlayingLocator(
+          initialPlaybackRequest.locator,
+          initialPlaybackRequest.stepIndex
+        )
+      )
+      .finally(() => {
+        // The fallback locator only bridges this initial async load. Clear it
+        // once settled so a later switch to a non-playing tab (whose URL has
+        // no playback in it) isn't misread as a stale request for it.
+        initialPlaylistLocator.value = null;
+        resolveInitialPlayback();
+      });
+  } else {
+    resolveInitialPlayback();
   }
+
+  /**
+   * Starts the playback the URL asks for on the active tab, if that tab
+   * isn't already playing it. Restoring saved tabs after mount can replace
+   * the tab the initial playback started on, and nothing about the URL
+   * changes to trigger the sync above, so the app calls this after restoring.
+   */
+  const resumePlaybackFromUrl = (): void => {
+    if (initialPlaylistLocator.peek()) {
+      return; // The initial load is still starting it, on whatever tab is active then.
+    }
+    const request = playbackRequestFromUrl(
+      navigation.currentUrl.peek(),
+      navigation.basePath
+    );
+    if (!request) {
+      return;
+    }
+    const firstPlaylist = playing.peek()?.playlists.peek()[0];
+    if (
+      firstPlaylist &&
+      getPlaylistLocator(firstPlaylist) === request.locator
+    ) {
+      return;
+    }
+    void startPlayingLocator(request.locator, request.stepIndex);
+  };
 
   /**
    * Builds the AI tools that let a provider edit whatever playlist is
@@ -2278,6 +2775,18 @@ export function createPlaylistManager(
     replayFromHistory,
     removePlayHistory,
     getPlaylistUrl,
+    playlistPage,
+    playlistPageStep,
+    initialPlaybackPromise,
+    resumePlaybackFromUrl,
+    playingAuthorName,
+    playlistPageNotFound,
+    playlistPageLoadFailed,
+    playlistPageRetrying,
+    retryPlaylistPage,
+    initialPlaylistPageLoadPromise,
+    getPlaylistPageSeed,
+    startPlaylistPage,
     isDiscoverOpen,
     goBackFromPlayingView,
     isMobile,

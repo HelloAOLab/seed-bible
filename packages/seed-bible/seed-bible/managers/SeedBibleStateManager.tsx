@@ -24,6 +24,16 @@ import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import {
+  PlaylistLoadFailedModalContent,
+  PlaylistNotFoundModalContent,
+  PlaylistPageModalContent,
+} from "../components/PlaylistPageModal/PlaylistPageModal";
+import {
+  buildPlaylistPagePath,
+  parsePlaylistPagePath,
+} from "../managers/PlaylistPagePath";
+import type { PlaylistPageSeed } from "../managers/PlaylistManager";
+import {
   buildStaticPagePath,
   parseStaticPagePath,
 } from "../managers/StaticPagePath";
@@ -231,6 +241,7 @@ const APP_META_DESCRIPTION =
 
 /** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
 export const ABOUT_PANE_ID = "about-page-pane";
+export const PLAYLIST_PAGE_MODAL_ID = "playlist-page";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -371,6 +382,13 @@ export interface AppState {
    * defaults already in index.html.
    */
   customizationLogoUrl: ReadonlySignal<string | null>;
+
+  /**
+   * The `og:image` this page should advertise instead of index.html's
+   * default: a shared playlist's cover, else the active customization's logo.
+   * Null keeps the default.
+   */
+  socialImage: ReadonlySignal<{ url: string; alt: string } | null>;
 
   /** Whether the current URL is the static "/{lang}/about" page. */
   isAboutPage: ReadonlySignal<boolean>;
@@ -626,6 +644,13 @@ export interface CreateSeedBibleStateOptions {
    * `readInjectedCustomizationSeed` in `app/customizationSeed.ts`.
    */
   initialCustomizationSeed?: InitialCustomizationSeed;
+
+  /**
+   * A prior SSR render's completed playlist-page load, so the new
+   * `PlaylistManager` doesn't re-fetch it — see `readInjectedPlaylistPageSeed`
+   * in `app/playlistPageSeed.ts`.
+   */
+  initialPlaylistPageSeed?: PlaylistPageSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -827,17 +852,27 @@ export function createSeedBibleState(
   const search = createSearchManager();
 
   // When the app is opened via a content link — a shared-session invite
-  // (`?sessionId=...`), a shared playlist (`?playlist=...`), or a shared
-  // reading plan (`?readingPlan=...`) — the user came to view that content,
-  // not to onboard, so we skip the welcome screen and the auto-starting
-  // tutorial for this visit. This is derived from the current URL rather
-  // than persisted, so it only affects this tab/load: revisiting without
-  // those params shows onboarding and tutorials as usual.
-  const openedViaContentLink =
+  // (`?sessionId=...`), a shared playlist (`?playlist=...` or a
+  // `/{lang}/playlist/...` page), or a shared reading plan
+  // (`?readingPlan=...`) — the user came to view that content, not to
+  // onboard, so we skip the welcome screen and the auto-starting tutorial for
+  // this visit. This is derived from the current URL rather than persisted,
+  // so it only affects this tab/load: revisiting without those params shows
+  // onboarding and tutorials as usual. Closing a playlist page without
+  // starting it lifts this (see the playlist page effects below).
+  const openedViaPlaylistPage =
     typeof window !== "undefined" &&
-    (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
-      !!navigation.currentUrl.value.searchParams.get("playlist") ||
-      !!navigation.currentUrl.value.searchParams.get("readingPlan"));
+    parsePlaylistPagePath(
+      navigation.currentUrl.value.pathname,
+      navigation.basePath
+    ) !== null;
+  const openedViaContentLink = signal(
+    typeof window !== "undefined" &&
+      (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
+        !!navigation.currentUrl.value.searchParams.get("playlist") ||
+        !!navigation.currentUrl.value.searchParams.get("readingPlan") ||
+        openedViaPlaylistPage)
+  );
 
   const onboarding = createOnboardingManager(login);
 
@@ -1064,7 +1099,8 @@ export function createSeedBibleState(
     i18n,
     readingExtensions,
     discover,
-    chats
+    chats,
+    options.initialPlaylistPageSeed
   );
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
@@ -1204,7 +1240,7 @@ export function createSeedBibleState(
       installOfferResolved.value = true;
       return;
     }
-    if (openedViaContentLink) {
+    if (openedViaContentLink.value) {
       return;
     }
     if (login.userId.value && login.profile.value === null) {
@@ -1323,7 +1359,7 @@ export function createSeedBibleState(
       if (
         !storedApplied &&
         !mobile &&
-        !openedViaContentLink &&
+        !openedViaContentLink.peek() &&
         !tutorial.completed.value &&
         !tutorial.optedOut.value
       ) {
@@ -1573,6 +1609,9 @@ export function createSeedBibleState(
     } finally {
       restoringStoredState = false;
     }
+    // Restoring can replace the tab a playing playlist's URL started playback
+    // on; start it again on whichever tab is active now.
+    playlists.resumePlaybackFromUrl();
     // Deliberately outside the batch: this can set `promptVisible`, and it must
     // observe the settled reader state rather than a half-applied one.
     tutorial.armAutoStart();
@@ -1580,6 +1619,26 @@ export function createSeedBibleState(
     // state rather than the empty SSR seed.
     armSidebarCollapsed();
   };
+
+  /** "{playlist} by {author}" while on a playlist page, else null. */
+  const playlistPageTitle = computed<string | null>(() => {
+    const page = playlists.playlistPage.value;
+    if (!page) {
+      return null;
+    }
+    void i18n.language.value;
+    const { t } = i18n;
+    const playlistTitle =
+      page.playlist.title ||
+      t("untitled-playlist", { defaultValue: "Untitled playlist" });
+    return page.authorName
+      ? t("playlist-page-title", {
+          title: playlistTitle,
+          author: page.authorName,
+          defaultValue: "{{title}} by {{author}}",
+        })
+      : playlistTitle;
+  });
 
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
@@ -1598,6 +1657,20 @@ export function createSeedBibleState(
     const getTitle = () => {
       if (isAboutPage.value) {
         return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
+      }
+
+      // Only on the playlist's own page: while it plays, the tab is titled
+      // after the chapter like any other reading.
+      if (playlistPageTitle.value && playlists.playlistPageStep.value == null) {
+        return `${playlistPageTitle.value} | ${seedBibleTitle}`;
+      }
+
+      if (playlists.playlistPageNotFound.value) {
+        return `${t("playlist-not-found-title", { defaultValue: "Playlist not found" })} | ${seedBibleTitle}`;
+      }
+
+      if (playlists.playlistPageLoadFailed.value) {
+        return `${t("playlist-load-failed-title", { defaultValue: "Couldn't load playlist" })} | ${seedBibleTitle}`;
       }
 
       if (!selectedTab.value) {
@@ -1620,6 +1693,17 @@ export function createSeedBibleState(
           defaultValue:
             "Seed Bible is a free Bible app with dozens of translations, reading plans, notes, highlights, and study tools.",
         }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
+
+    const playlistPage = playlists.playlistPage.value;
+    if (playlistPage) {
+      return truncateForMeta(
+        playlistPage.playlist.description?.trim() ||
+          t("playlist-page-meta-description", {
+            defaultValue: "A Bible reading playlist on Seed Bible.",
+          }),
         META_DESCRIPTION_MAX_GRAPHEMES
       );
     }
@@ -1695,6 +1779,15 @@ export function createSeedBibleState(
     () => customizations.activeCustomization.value?.logoUrl ?? null
   );
 
+  const socialImage = computed<{ url: string; alt: string } | null>(() => {
+    const heroImageUrl = playlists.playlistPage.value?.playlist.heroImageUrl;
+    if (heroImageUrl) {
+      return { url: heroImageUrl, alt: playlistPageTitle.value ?? "" };
+    }
+    const logoUrl = customizationLogoUrl.value;
+    return logoUrl ? { url: logoUrl, alt: siteName.value } : null;
+  });
+
   /**
    * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
    * along with `description`.
@@ -1717,6 +1810,10 @@ export function createSeedBibleState(
 
     if (isAboutPage.value) {
       return t("about-title", { defaultValue: "About the Seed Bible" });
+    }
+
+    if (playlistPageTitle.value) {
+      return playlistPageTitle.value;
     }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
@@ -1767,6 +1864,15 @@ export function createSeedBibleState(
       return `${navigation.basePath}${buildStaticPagePath({
         language: i18n.language.value,
         page: "about",
+      })}`;
+    }
+
+    const playlistPage = playlists.playlistPage.value;
+    if (playlistPage) {
+      return `${navigation.basePath}${buildPlaylistPagePath({
+        language: i18n.language.value,
+        locator: playlistPage.locator,
+        title: playlistPage.playlist.title,
       })}`;
     }
 
@@ -1920,7 +2026,7 @@ export function createSeedBibleState(
       downloadOfferChecked = true;
       return;
     }
-    if (openedViaContentLink) {
+    if (openedViaContentLink.value) {
       return;
     }
     if (!installOfferResolved.value) {
@@ -2934,6 +3040,7 @@ export function createSeedBibleState(
       description,
       siteName,
       customizationLogoUrl,
+      socialImage,
       canonicalUrl,
       socialTitle,
       isAboutPage,
@@ -3274,6 +3381,129 @@ export function createSeedBibleState(
     if (!paneOpen && isAboutPage.peek()) {
       tabs.leaveStaticPage();
     }
+  });
+
+  // A shared playlist link opens on a modal describing the playlist. Start
+  // plays it; closing it any other way (Close, the header's X, the backdrop)
+  // leaves for the home screen. A link to a playlist that doesn't exist opens
+  // a "not found" modal in the same place, and one that failed to load opens
+  // a "try again" modal there; closing either goes home too.
+  effect(() => {
+    const page = playlists.playlistPage.value;
+    if (!page && playlists.playlistPageLoadFailed.value) {
+      const retrying = playlists.playlistPageRetrying.value;
+      modals.openModal({
+        id: PLAYLIST_PAGE_MODAL_ID,
+        title: i18n.t("playlist-load-failed-title", {
+          defaultValue: "Couldn't load playlist",
+        }),
+        useCasualOSApp: false,
+        content: () => (
+          <PlaylistLoadFailedModalContent
+            retrying={retrying}
+            onRetry={() => void playlists.retryPlaylistPage()}
+            onClose={() => modals.closeModal(PLAYLIST_PAGE_MODAL_ID)}
+          />
+        ),
+      });
+      return;
+    }
+    if (!page && playlists.playlistPageNotFound.value) {
+      modals.openModal({
+        id: PLAYLIST_PAGE_MODAL_ID,
+        title: i18n.t("playlist-not-found-title", {
+          defaultValue: "Playlist not found",
+        }),
+        useCasualOSApp: false,
+        content: () => (
+          <PlaylistNotFoundModalContent
+            onClose={() => modals.closeModal(PLAYLIST_PAGE_MODAL_ID)}
+          />
+        ),
+      });
+      return;
+    }
+    // A playing path (one with a step) is the playlist being read, not its
+    // page, so it shows no modal.
+    if (!page || playlists.playlistPageStep.value != null) {
+      if (
+        modals.modals
+          .peek()
+          .some((modal) => modal.id === PLAYLIST_PAGE_MODAL_ID)
+      ) {
+        modals.closeModal(PLAYLIST_PAGE_MODAL_ID);
+      }
+      return;
+    }
+    modals.openModal({
+      id: PLAYLIST_PAGE_MODAL_ID,
+      title:
+        page.playlist.title ||
+        i18n.t("untitled-playlist", { defaultValue: "Untitled playlist" }),
+      // Rendered in place rather than in a CasualOS app iframe so the server
+      // render includes it.
+      useCasualOSApp: false,
+      content: () => (
+        <PlaylistPageModalContent
+          page={page}
+          onStart={playlists.startPlaylistPage}
+          onClose={() => modals.closeModal(PLAYLIST_PAGE_MODAL_ID)}
+        />
+      ),
+    });
+  });
+
+  /** Set when a visit that began on a playlist page closed it for home. */
+  const closedPlaylistPageForHome = signal(false);
+
+  // Starting leaves the playlist page (for its first step's path) before the
+  // modal closes, so this only sees a close that should go home. Going home is what a fresh visit to "/"
+  // would do: the reader takes the address bar back, Today opens over it
+  // when a visit to "/" would open it, and a visit that began on this page
+  // stops counting as a content link, so the tutorial offer can appear.
+  effect(() => {
+    const modalOpen = modals.modals.value.some(
+      (modal) => modal.id === PLAYLIST_PAGE_MODAL_ID
+    );
+    const onPlaylistPage =
+      !!playlists.playlistPage.peek() &&
+      playlists.playlistPageStep.peek() == null;
+    if (
+      modalOpen ||
+      !(
+        onPlaylistPage ||
+        playlists.playlistPageNotFound.peek() ||
+        playlists.playlistPageLoadFailed.peek()
+      )
+    ) {
+      return;
+    }
+    const home = new URL(navigation.initialUrl.href);
+    home.pathname = `${navigation.basePath}/`;
+    tabs.leaveStaticPage();
+    if (todayWillAutoOpenForUrl(home, navigation.basePath)) {
+      today.open();
+    }
+    if (openedViaPlaylistPage) {
+      closedPlaylistPageForHome.value = true;
+    }
+  });
+
+  // Lifts the content-link suppression only once Today's pane is actually
+  // covering the reader. Lifting it in the same update as `today.open()`
+  // would let the tutorial offer see a visible reader in the moment before
+  // the pane opens, and show itself underneath Today.
+  effect(() => {
+    if (!closedPlaylistPageForHome.value) {
+      return;
+    }
+    const todayPaneOpen = panes.panes.value.some(
+      (pane) => pane.id === TODAY_PANE_ID
+    );
+    if (today.isOpen.value && !todayPaneOpen) {
+      return;
+    }
+    openedViaContentLink.value = false;
   });
 
   // Settings UI language changes also select the nearest available Bible
