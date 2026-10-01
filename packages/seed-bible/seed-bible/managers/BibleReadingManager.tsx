@@ -36,6 +36,7 @@ import type {
   DiscoverContentResult,
   DiscoverCrossReferenceResult,
   DiscoverManager,
+  DiscoverProviderResults,
   DiscoverReference,
   DiscoverStudyNoteResult,
 } from "../managers/DiscoverManager";
@@ -787,7 +788,8 @@ export function resolveTranslationUiLanguage(params: {
   );
 }
 
-function bibleLanguageCodesForUi(uiLanguage: string): string[] {
+/** Bible-API language codes that correspond to a UI locale (e.g. "en" → "eng"). */
+export function bibleLanguageCodesForUi(uiLanguage: string): string[] {
   const mapped = UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage];
   if (mapped?.length) {
     return mapped;
@@ -2803,6 +2805,11 @@ export function createBibleReadingState(
     nextChapterNumber: number,
     options?: SelectTranslationAndChapterOptions
   ) => {
+    // Recorded before the catalog fetch so a plain network failure ("Failed
+    // to fetch") is what Reload retries. Rolled back below only when this
+    // translation does not contain the book: that miss can never succeed,
+    // and retrying it would leave the reader stuck off the chapter on screen.
+    const previousAttempt = lastLoadAttempt;
     lastLoadAttempt = () =>
       selectTranslationAndChapter(
         nextTranslationIdOrUrl,
@@ -2819,6 +2826,7 @@ export function createBibleReadingState(
       const books = await dataManager.getTranslationBooks(nextTranslationId);
       const selectedBook = books.books.find((book) => book.id === nextBookId);
       if (!selectedBook) {
+        lastLoadAttempt = previousAttempt;
         throw new Error(
           `Book with ID "${nextBookId}" not available for translation "${nextTranslationId}".`
         );
@@ -3180,14 +3188,23 @@ export function createBibleReadingState(
 
     const stopDiscoverEffect = effect(() => {
       const chapter = chapterData.value;
+      // Subscribed but otherwise unused. `providers` is the signal extensions
+      // update when they register, and the first chapter often finishes
+      // loading before they do. The UI language is separate from the Bible
+      // translation's language: card text is built in the UI locale when
+      // `discover()` runs. A read inside the async loop below would not
+      // subscribe this effect, so neither would re-run discovery.
       void discoverManager.providers.value;
+      const uiLanguage = i18nManager.language.value;
+      // Before reading the cache: a locale change has to drop stored answers
+      // in this same turn, or the replay below would paint the old language.
+      discoverManager.setUiLanguage(uiLanguage);
       if (!chapter) {
         discoveredResults.value = [];
         return;
       }
 
       const generation = ++discoverGeneration;
-      discoveredResults.value = [];
 
       const context = {
         translationId: chapter.translation.id,
@@ -3197,39 +3214,60 @@ export function createBibleReadingState(
       };
       const currentBookData = chapter.book;
 
+      const enrich = (
+        result: DiscoverProviderResults
+      ): DiscoverResultWithBookData[] =>
+        result.results.map((entry) => {
+          const refBookData =
+            translationBooks.value?.books.find(
+              (b) => b.id === entry.reference.book
+            ) ?? currentBookData;
+
+          if (entry.type === "cross-reference") {
+            const crossRefBookData =
+              translationBooks.value?.books.find(
+                (b) => b.id === entry.crossReference.book
+              ) ?? currentBookData;
+
+            return {
+              ...entry,
+              reference: withBookData(entry.reference, refBookData),
+              crossReference: withBookData(
+                entry.crossReference,
+                crossRefBookData
+              ),
+            };
+          }
+
+          return {
+            ...entry,
+            reference: withBookData(entry.reference, refBookData),
+          };
+        });
+
+      // Paint answers this chapter already has in this same turn, so coming
+      // back doesn't blank the panel while the cached lookup is replayed.
+      // `untracked` matters: enrich reads the book catalog, and a tracked
+      // read would re-run this effect when the catalog arrives.
+      const cached = discoverManager.cachedResults(context);
+      const alreadyFetched = new Set(cached.map((result) => result.providerId));
+      discoveredResults.value = untracked(() =>
+        cached.flatMap((result) => {
+          const enrichedResults = enrich(result);
+          return enrichedResults.length > 0
+            ? [{ providerId: result.providerId, results: enrichedResults }]
+            : [];
+        })
+      );
+
       void (async () => {
         for await (const result of discoverManager.discover(context)) {
           if (generation !== discoverGeneration) return;
+          if (alreadyFetched.has(result.providerId)) continue;
 
-          const enrichedResults: DiscoverResultWithBookData[] =
-            result.results.map((entry) => {
-              const refBookData =
-                translationBooks.value?.books.find(
-                  (b) => b.id === entry.reference.book
-                ) ?? currentBookData;
+          const enrichedResults = untracked(() => enrich(result));
 
-              if (entry.type === "cross-reference") {
-                const crossRefBookData =
-                  translationBooks.value?.books.find(
-                    (b) => b.id === entry.crossReference.book
-                  ) ?? currentBookData;
-
-                return {
-                  ...entry,
-                  reference: withBookData(entry.reference, refBookData),
-                  crossReference: withBookData(
-                    entry.crossReference,
-                    crossRefBookData
-                  ),
-                };
-              }
-
-              return {
-                ...entry,
-                reference: withBookData(entry.reference, refBookData),
-              };
-            });
-
+          if (generation !== discoverGeneration) return;
           if (enrichedResults.length > 0) {
             discoveredResults.value = [
               ...discoveredResults.value,

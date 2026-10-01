@@ -796,6 +796,19 @@ export function createSeedBibleState(
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
 
+  const renderedAsMobile = options.config?.renderedAsMobile ?? false;
+
+  // Seeded from the SAME `renderedAsMobile` guess the server made — never
+  // `window.innerWidth`/`.innerHeight` here — so the client's first
+  // render/hydrate pass produces the identical viewport-derived layout the
+  // server rendered, regardless of the device's actual screen size.
+  // `applyViewport` (below, exposed on `AppState`) corrects this to the real
+  // dimensions once, from a post-mount effect in `MainBody` — see
+  // `app/main.tsx`.
+  const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
+  const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
+  const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
+
   const annotationRecordKey =
     navigation.currentUrl.value.searchParams.get("annotationRecordKey") ??
     undefined;
@@ -805,7 +818,10 @@ export function createSeedBibleState(
     tabs,
     discover,
     annotationRecordKey,
-    { confirmAdoption: (owner) => askToAdopt(owner, "notes") }
+    {
+      confirmAdoption: (owner) => askToAdopt(owner, "notes"),
+      isMobile,
+    }
   );
   const yourContent = createYourContentManager({
     annotations,
@@ -1088,18 +1104,6 @@ export function createSeedBibleState(
       selectedTab.value?.readingState.translationBooks.value?.books;
   });
 
-  const renderedAsMobile = options.config?.renderedAsMobile ?? false;
-
-  // Seeded from the SAME `renderedAsMobile` guess the server made — never
-  // `window.innerWidth`/`.innerHeight` here — so the client's first
-  // render/hydrate pass produces the identical viewport-derived layout the
-  // server rendered, regardless of the device's actual screen size.
-  // `applyViewport` (below, exposed on `AppState`) corrects this to the real
-  // dimensions once, from a post-mount effect in `MainBody` — see
-  // `app/main.tsx`.
-  const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
-  const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
-  const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
   const isMinimalEmbed = computed(() =>
     isMinimalEmbedUrl(navigation.currentUrl.value)
   );

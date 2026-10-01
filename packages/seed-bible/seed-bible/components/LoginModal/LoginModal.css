@@ -21,11 +21,57 @@
   gap: 0.5rem;
 }
 
+/* The file is a near-black silhouette. The image sets the box; the mask
+   paints that silhouette with the same text color as the rest of the modal.
+   If the file fails to load, the image shows its text alternative instead. */
 .sb-login-logo {
+  display: inline-block;
+  position: relative;
   height: 2.5rem;
-  width: auto;
-  object-fit: contain;
+  max-width: 100%;
   margin-bottom: 0.5rem;
+  line-height: 0;
+}
+
+.sb-login-logo img {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  opacity: 0;
+}
+
+.sb-login-logo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--sb-font-color);
+  -webkit-mask-image: url("../../img/SeedBibleLogoWithTitleBlack.png");
+  mask-image: url("../../img/SeedBibleLogoWithTitleBlack.png");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-mode: alpha;
+  mask-mode: alpha;
+}
+
+.sb-login-logo.is-broken {
+  height: auto;
+}
+
+.sb-login-logo.is-broken img {
+  height: auto;
+  width: auto;
+  opacity: 1;
+  color: var(--sb-font-color);
+}
+
+.sb-login-logo.is-broken::after {
+  content: none;
 }
 
 .sb-login-title {
