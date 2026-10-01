@@ -440,7 +440,7 @@ function VersePreview(props: {
           <Skeleton shape="line" width="72%" />
         </SkeletonContainer>
       ) : loaded ? (
-        <q className="sb-theographic-quote-text">
+        <blockquote className="sb-theographic-quote-text">
           {highlightName(loaded.text, name).map((part, index) =>
             part.match ? (
               <mark key={index} className="sb-theographic-quote-mark">
@@ -450,7 +450,7 @@ function VersePreview(props: {
               part.text
             )
           )}
-        </q>
+        </blockquote>
       ) : (
         <p className="sb-theographic-card-hint">
           {t("verse-unavailable", {

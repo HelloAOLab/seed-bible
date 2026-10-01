@@ -32,9 +32,6 @@
   align-items: stretch;
   overflow: hidden;
   position: relative;
-  padding: 0.3125rem;
-  /* padding-left: 0px; */
-  margin-left: -0.625rem;
 }
 
 .sb-attached-pane-resize-handle {
@@ -126,21 +123,23 @@
   right: 0;
 }
 
+/* Reader slots sit flush by default: on a phone, and in a compact embed at any
+   frame width, since the embed renders the phone reader. */
 .sb-pane-shell:not(.sb-pane-shell-detached) {
-  border-radius: 0.75rem;
-  margin: 0.75rem 0rem;
-  /* box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.2); */
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
-/* Keep this override in this file, directly after the rule above: both share
-   one selector, so the later rule wins, and CSS split across files is ordered
-   by whichever import chain Vite reaches first, which unrelated imports can
-   flip. */
-@media (max-width: 480px) {
-  .sb-pane-shell:not(.sb-pane-shell-detached) {
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
+/* Only the docked desktop layout floats them as rounded cards. Scoped this
+   way, rather than undone for phones and embeds, so the flush values above
+   live in one place. Its extra classes also let it win on specificity, so it
+   doesn't rely on coming after the rule above. */
+@media (min-width: 481px) {
+  .sb-app-root:not(.sb-embed-minimal)
+    .sb-pane-shell:not(.sb-pane-shell-detached) {
+    border-radius: 0.75rem;
+    margin: 0.75rem 0rem;
   }
 }
 
@@ -186,6 +185,13 @@
   .sb-pane-shell-detached[data-placement="fullscreen"] {
     bottom: 4.375rem;
   }
+}
+
+/* A compact embed hides that bottom bar, so the same inset would leave a
+   strip of the reader showing under a fullscreen pane (Compare, and any
+   other pane). Sit flush with the viewport instead. */
+.sb-embed-minimal .sb-pane-shell-detached[data-placement="fullscreen"] {
+  bottom: 0;
 }
 
 .sb-pane-shell-detached[data-placement="floating"] .sb-pane-header {

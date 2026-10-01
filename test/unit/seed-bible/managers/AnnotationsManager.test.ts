@@ -952,6 +952,103 @@ describe("AnnotationsManager", () => {
       ).toEqual(["a1"]);
     });
 
+    it("closes the discover pane on mobile after a new note started from the reader is saved", async () => {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(true) }
+      );
+      expect(discover.view.value).toBeNull();
+
+      await manager.createNewAnnotation();
+      expect(discover.view.value).toBe("create_annotation");
+
+      await manager.saveEditingAnnotation();
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBeNull();
+    });
+
+    it("returns to the discover list on mobile when a new note was started from that list", async () => {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(true) }
+      );
+      discover.view.value = "discover";
+
+      await manager.createNewAnnotation();
+      expect(discover.view.value).toBe("create_annotation");
+
+      await manager.saveEditingAnnotation();
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(discover.view.value).toBe("discover");
+    });
+
+    it("returns to the discover list on mobile when a note opened from that list is saved", async () => {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(true) }
+      );
+      discover.view.value = "discover";
+      manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
+      expect(discover.view.value).toBe("create_annotation");
+
+      await manager.saveEditingAnnotation();
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBe("discover");
+    });
+
+    it("closes the discover pane on mobile when an existing note opened from the reader is saved", async () => {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(true) }
+      );
+      expect(discover.view.value).toBeNull();
+      manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
+      expect(discover.view.value).toBe("create_annotation");
+
+      await manager.saveEditingAnnotation();
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(discover.view.value).toBeNull();
+    });
+
+    it("still returns to discover after a save when the layout is not mobile", async () => {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(false) }
+      );
+      manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
+
+      await manager.saveEditingAnnotation();
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(discover.view.value).toBe("discover");
+    });
+
     it("leaves the draft intact and rethrows when saving fails", async () => {
       recordDataMock.mockResolvedValueOnce({
         success: false,
@@ -969,6 +1066,42 @@ describe("AnnotationsManager", () => {
   describe("cancelEditingAnnotation", () => {
     it("discards the draft and returns to discover", () => {
       const manager = createManager();
+      manager.editAnnotation(createCommentAnnotation());
+
+      manager.cancelEditingAnnotation();
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBe("discover");
+    });
+
+    it("closes the discover pane on mobile when a new note started from the reader is cancelled", async () => {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(true) }
+      );
+      await manager.createNewAnnotation();
+      expect(discover.view.value).toBe("create_annotation");
+
+      manager.cancelEditingAnnotation();
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBeNull();
+    });
+
+    it("returns to the discover list on mobile when cancelling a note opened from that list", () => {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(true) }
+      );
+      discover.view.value = "discover";
       manager.editAnnotation(createCommentAnnotation());
 
       manager.cancelEditingAnnotation();

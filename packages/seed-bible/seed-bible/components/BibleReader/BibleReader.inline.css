@@ -1,5 +1,6 @@
 .sb-bible-reader {
-  padding: 1.875rem 1.5rem 6rem 1.5rem;
+  width: 100%;
+  padding: 1.875rem 1% 6rem;
   margin: 0 auto;
   box-sizing: border-box;
   position: relative;
@@ -54,14 +55,15 @@
   color: var(--sb-primary-color);
 }
 
-/* Force a tight 1% reader margin in mobile view, regardless of the
-   user's saved scriptureMargin setting. Breakpoint mirrors `isMobile`
-   in SeedBibleStateManager (viewportWidth <= 480). */
-@media (max-width: 480px) {
-  .sb-bible-reader {
-    width: 100%;
-    padding-right: 1%;
-    padding-left: 1%;
+/* The rule above is the phone reader's tight 1% margin, which a compact embed
+   also uses at any frame width. Only the desktop layout widens it. `:where()`
+   keeps this at the base rule's specificity, so more specific reader rules
+   still win as they did before. Breakpoint mirrors `isMobile` in
+   SeedBibleStateManager (viewportWidth <= 480). */
+@media (min-width: 481px) {
+  :where(.sb-app-root:not(.sb-embed-minimal)) .sb-bible-reader {
+    width: auto;
+    padding-inline: 1.5rem;
   }
 }
 
@@ -353,6 +355,29 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }
 
+.sb-bible-reader-mobile-header-open-tab {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--sb-reader-floating-nav-play-background);
+  color: var(--sb-reader-floating-nav-play-glyph);
+  cursor: pointer;
+  padding: 0;
+}
+
+.sb-bible-reader-mobile-header-open-tab:active {
+  filter: brightness(0.95);
+}
+
+.sb-bible-reader-mobile-header-open-tab .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
 .sb-bible-reader-mobile-header-notes {
   flex-shrink: 0;
   display: inline-flex;
@@ -512,6 +537,7 @@
   line-height: var(--text-verse-line-height, 1.7);
   font-family: var(--sb-verse-font-family);
   font-size: 1em;
+  padding-inline: 0.625rem;
 
   /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
      Short enough to read as immediate rather than as an animation.
@@ -594,9 +620,12 @@
   }
 }
 
-@media (max-width: 480px) {
-  .sb-chapter-content {
-    padding-inline: 0.625rem;
+/* Desktop drops the phone/embed side padding set on `.sb-chapter-content`.
+   `:where()` keeps this at the base rule's specificity so the gutter rules
+   (`-presence`, `-note-gutter`) still override it. */
+@media (min-width: 481px) {
+  :where(.sb-app-root:not(.sb-embed-minimal)) .sb-chapter-content {
+    padding-inline: 0;
   }
 }
 
@@ -841,17 +870,31 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
-.sb-reader-error-retry {
+.sb-reader-error-offline {
+  margin: 0.25rem 0 0;
+  max-width: 26rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--sb-font-color);
+}
+
+.sb-reader-error-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.sb-reader-error-retry,
+.sb-reader-error-switch {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 0.75rem;
   border: none;
   border-radius: 0.625rem;
   padding: 0.625rem 1.5rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
@@ -859,6 +902,11 @@
   transition:
     transform 0.1s ease,
     background-color 0.2s ease;
+}
+
+.sb-reader-error-retry {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
 }
 
 .sb-reader-error-retry:hover {
@@ -872,6 +920,33 @@
 .sb-reader-error-retry:disabled {
   opacity: 0.75;
   cursor: default;
+}
+
+.sb-reader-error-switch {
+  background: transparent;
+  color: var(--sb-font-color);
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+}
+
+.sb-reader-error-switch:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-reader-error-switch:active {
+  transform: translateY(1px);
+}
+
+.sb-reader-error-offline-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.sb-reader-error-offline-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
 }
 
 .sb-reader-error-retry-spinner {

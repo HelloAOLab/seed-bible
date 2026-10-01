@@ -686,6 +686,9 @@ function readMobileSheetViewportCap(): number {
   }
 }
 
+/** Cards kept on the collapsed mobile verse sheet — one row of the four-per-row grid. */
+const VERSE_SHEET_COLLAPSED_COUNT = 4;
+
 interface BibleReaderToolbarProps {
   state: SeedBibleState;
 }
@@ -876,10 +879,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const hasVerseSelection = useComputed(
     () => readingState.value!.selectedVerses.value.length > 0
   );
-  // Align with the app-wide mobile breakpoint (`state.app.isMobile`, 480px).
-  // Kept as a local computed signal so its own viewport listener continues to
-  // drive re-renders even if `app.isMobile` is not consumed elsewhere.
-  const isSmallScreen = props.state.app.isMobile;
+  // Align with compact reader chrome (`app.isCompactReader`): phone layout
+  // or a partner-site embed. Local computed so this toolbar re-renders from
+  // those signals without waiting on a parent.
+  const isSmallScreen = useComputed(
+    () =>
+      props.state.app.isCompactReader?.value ?? props.state.app.isMobile.value
+  );
+  const isMinimalEmbed = useComputed(
+    () => props.state.app.isMinimalEmbed?.value ?? false
+  );
   // A pane fills the whole screen when it's fullscreen, or (on mobile) for any
   // open pane — mobile renders every pane fullscreen. Mirrors the "fills the
   // screen" rule in PanesManager/SeedBibleStateManager. Used to hide the
@@ -956,9 +965,56 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     () => verseSheetDragReveal.value !== null
   );
 
+  // Which cards the verse toolbar shows. The render and the overflow check
+  // below both read these, so the swipe hint can't disagree with the cards
+  // actually on screen. Highlight and Save are built in rather than registered
+  // tools, which is why they get their own flags.
+  const showHighlightCard = useComputed(
+    () =>
+      !isMinimalEmbed.value &&
+      settings.settings.value.selectionUI.showHighlightColors
+  );
+  const showSaveCard = useComputed(() => !isMinimalEmbed.value);
+  const nonCancelVerseTools = useComputed(() =>
+    verseToolbarTools.value.filter((tool) => tool.id !== "clear-selection")
+  );
+
+  /**
+   * Whether the collapsed sheet is hiding something: action cards past the
+   * first row, Copy / Compare / Share (which only show once the drawer opens),
+   * or notes on the selection. Measured height is not enough —
+   * the overflow row's padding, and a height left behind after that row
+   * unmounts, both read as "more" when the sheet is already showing everything.
+   */
+  const verseSheetHasHiddenContent = useComputed(() => {
+    if (!isSmallScreen.value) return false;
+    const visibleTools = nonCancelVerseTools.value.filter(
+      (tool) => tool.visible.value
+    );
+    const pinnedCount = visibleTools.filter((tool) =>
+      VERSE_SHEET_PINNED_TOOL_IDS.has(tool.id)
+    ).length;
+    const otherCount =
+      visibleTools.length -
+      pinnedCount +
+      (showHighlightCard.value ? 1 : 0) +
+      (showSaveCard.value ? 1 : 0);
+    // With nothing else for the collapsed row (the compact embed), Copy,
+    // Compare, and Share take the row themselves instead of hiding in the drawer.
+    const cardCount = otherCount > 0 ? otherCount : pinnedCount;
+    const hasPinnedCard = otherCount > 0 && pinnedCount > 0;
+    const annotationCount =
+      readingState.value?.selectionAnnotations.value.length ?? 0;
+    return (
+      cardCount > VERSE_SHEET_COLLAPSED_COUNT ||
+      hasPinnedCard ||
+      annotationCount > 0
+    );
+  });
+
   /** Whether there is anything to reveal — no overflow row, nothing to drag to. */
   const hasVerseSheetOverflow = useComputed(
-    () => verseSheetOverflowHeight.value > 0
+    () => verseSheetHasHiddenContent.value && verseSheetOverflowHeight.value > 0
   );
 
   /**
@@ -1078,17 +1134,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return "bible";
   });
 
-  const previousChapterTool = useComputed(
-    () => tools.value.find((tool) => tool.id === "previous-chapter") ?? null
-  );
-  const nextChapterTool = useComputed(
-    () => tools.value.find((tool) => tool.id === "next-chapter") ?? null
-  );
-  const openSelectorTool = useComputed(
-    () => tools.value.find((tool) => tool.id === "open-selector") ?? null
-  );
+  const previousChapterTool = useComputed(() => {
+    const tool =
+      tools.value.find((entry) => entry.id === "previous-chapter") ?? null;
+    return tool?.visible.value ? tool : null;
+  });
+  const nextChapterTool = useComputed(() => {
+    const tool =
+      tools.value.find((entry) => entry.id === "next-chapter") ?? null;
+    return tool?.visible.value ? tool : null;
+  });
+  const openSelectorTool = useComputed(() => {
+    const tool =
+      tools.value.find((entry) => entry.id === "open-selector") ?? null;
+    return tool?.visible.value ? tool : null;
+  });
   // The audio-reader extension's play/pause control, surfaced here instead
-  // of the quick toolbar on mobile.
+  // of the quick toolbar on mobile. `app` is forwarded so `showInEmbedded`
+  // can hide the control in a partner-site embed.
   const audioPlayTool = useComputed(
     () =>
       toolsManager
@@ -1098,6 +1161,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           annotations: props.state.annotations,
           features: props.state.features,
           surface: "mobile-navigation-bar",
+          app: props.state.app,
         })
         .find((tool) => tool.id === "ext_audioReader-play") ?? null
   );
@@ -1371,9 +1435,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       stopOverflowMeasure.current?.();
       stopOverflowMeasure.current = null;
       verseSheetScrollerRef.current = element?.parentElement ?? null;
-      // Unmount passes null. Writing the pinned-height signal here would
-      // re-render and call this again.
-      if (!element) return;
+      // A missing row means there is nothing left to reveal; a stale height
+      // would keep "Swipe up to see more" over an empty sheet. This callback
+      // is stable, so the write can't re-trigger it.
+      if (!element) {
+        if (verseSheetOverflowHeight.peek() !== 0) {
+          verseSheetOverflowHeight.value = 0;
+        }
+        return;
+      }
       const measure = () => {
         const next = element.scrollHeight;
         if (next !== verseSheetOverflowHeight.peek()) {
@@ -1577,7 +1647,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const customHighlightColors = useComputed(
     () => settings.settings.value.customHighlightColors
   );
-  const selectionUI = useComputed(() => settings.settings.value.selectionUI);
 
   const applyCustomColor = (color: string) => {
     settings.addCustomHighlightColor(color);
@@ -1812,10 +1881,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
       const wrap = toolbarWrapRef.current;
       const toolbar = wrap?.querySelector(".sb-reader-toolbar");
+      const nav = wrap?.querySelector(".sb-reader-floating-nav");
+      if (nav instanceof HTMLElement && !(toolbar instanceof HTMLElement)) {
+        write(nav.offsetHeight);
+        return;
+      }
       if (!(toolbar instanceof HTMLElement)) return;
 
       let insetPx = toolbar.offsetHeight;
-      const nav = wrap?.querySelector(".sb-reader-floating-nav");
       if (nav instanceof HTMLElement) {
         insetPx += nav.offsetHeight;
       } else {
@@ -1883,6 +1956,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     isVerseSheetExpanded.value,
     isHighlightPickerOpen.value,
     isSmallScreen.value,
+    isMinimalEmbed.value,
     activeMobileTab.value,
   ]);
 
@@ -2143,7 +2217,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       {!shouldReplaceDefaultToolbar.value && (
         <div
           ref={toolbarWrapRef}
-          className="sb-reader-toolbar-wrap"
+          className={`sb-reader-toolbar-wrap${
+            isMinimalEmbed.value ? " sb-reader-toolbar-wrap-embed" : ""
+          }`}
           dir={readingState.value?.translation.value?.textDirection ?? "auto"}
         >
           {isSmallScreen.value &&
@@ -2287,340 +2363,345 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               );
             })()}
 
-          <div
-            className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : " sb-reader-toolbar-labeled"}`}
-          >
-            {isSmallScreen.value ? (
-              <>
-                <MobileBottomTab
-                  iconNode={
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M9 18H11"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M15 19L17 21L21 17"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  }
-                  label={t("today", { defaultValue: "Today" })}
-                  active={activeMobileTab.value === "today"}
-                  onClick={() => {
-                    void openTodayScreen();
-                  }}
-                />
-
-                <MobileBottomTab
-                  iconNode={<SelfAvatarVisual state={props.state} />}
-                  label={t("you", { defaultValue: "You" })}
-                  active={activeMobileTab.value === "you"}
-                  onClick={openProfileScreen}
-                />
-
-                <MobileBottomTab
-                  iconNode={
-                    <SeedBibleIcon
-                      size={24}
-                      className="sb-reader-toolbar-seed-icon"
-                    />
-                  }
-                  label={t("bible", { defaultValue: "Bible" })}
-                  active={activeMobileTab.value === "bible"}
-                  onClick={() => {
-                    // The Bible text is already showing, so there's nothing to
-                    // dismiss — open the book selector instead of doing nothing.
-                    if (activeMobileTab.value === "bible") {
-                      openSelectorTool.value?.onSelect();
-                      return;
+          {!isMinimalEmbed.value && (
+            <div
+              className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : " sb-reader-toolbar-labeled"}`}
+            >
+              {isSmallScreen.value ? (
+                <>
+                  <MobileBottomTab
+                    iconNode={
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M9 18H11"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M15 19L17 21L21 17"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
                     }
-                    isMoreMenuOpen.value = false;
-                    sidebar.closeSearchPanel();
-                    sidebar.closeChatPanel();
-                    sidebar.closeSettings();
-                    sidebar.closeSidebar();
-                    // Close any fullscreen pane (e.g. Today).
-                    panes.closeAll();
-                    selectedToolbarToolId.value = null;
-                  }}
-                />
-
-                <MobileBottomTab
-                  iconName="search"
-                  label={t("search", { defaultValue: "Search" })}
-                  active={activeMobileTab.value === "search"}
-                  onClick={() => {
-                    isMoreMenuOpen.value = false;
-                    panes.closeAll();
-                    // Dismiss the tabs/saves drawer if it's open.
-                    sidebar.closeSidebar();
-                    if (sidebar.isSearchPanelOpen.value) {
-                      sidebar.closeSearchPanel();
-                    } else {
-                      sidebar.openSearchPanel();
-                    }
-                  }}
-                />
-
-                <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
-                  <button
-                    type="button"
-                    ref={moreButtonRef}
+                    label={t("today", { defaultValue: "Today" })}
+                    active={activeMobileTab.value === "today"}
                     onClick={() => {
-                      // Opening the More menu should dismiss whatever else is
-                      // covering the reader — the search bar, the chat panel,
-                      // the settings view, or the tabs/saves drawer — the
-                      // same way the other bottom tabs do. Extension panes are
-                      // left alone, since those are opened *from* this menu.
-                      if (!isMoreMenuOpen.value) {
-                        sidebar.closeSearchPanel();
-                        sidebar.closeChatPanel();
-                        sidebar.closeSettings();
-                        sidebar.closeSidebar();
-                      }
-                      isMoreMenuOpen.value = !isMoreMenuOpen.value;
+                      void openTodayScreen();
                     }}
-                    className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
-                      activeMobileTab.value === "more"
-                        ? " sb-reader-toolbar-mobile-tab-button-active"
-                        : ""
-                    }`}
-                    aria-label={t("more", { defaultValue: "More" })}
-                    aria-expanded={isMoreMenuOpen.value}
-                  >
-                    <span
-                      className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
-                      aria-hidden="true"
-                    >
-                      menu
-                    </span>
-                    <span className="sb-reader-toolbar-mobile-tab-label">
-                      {t("more", { defaultValue: "More" })}
-                    </span>
-                    {chatInMoreMenu.value &&
-                      !isMoreMenuOpen.value &&
-                      unreadChatIndicator.value && (
-                        <span
-                          className="sb-reader-toolbar-unread-indicator"
-                          aria-label={
-                            chats.wasMentioned.value
-                              ? t("unread-mention", {
-                                  defaultValue: "Unread mention",
-                                })
-                              : t("unread-messages", {
-                                  defaultValue: "Unread messages: {{count}}",
-                                  count: unreadChatIndicator.value,
-                                })
-                          }
-                        >
-                          {unreadChatIndicator.value}
-                        </span>
-                      )}
-                    {chatInMoreMenu.value &&
-                      !isMoreMenuOpen.value &&
-                      hasTypingInChats.value && (
-                        <span
-                          className="sb-reader-toolbar-typing-indicator"
-                          aria-label={t("someone-is-typing", {
-                            defaultValue: "Someone is typing...",
-                          })}
-                        />
-                      )}
-                  </button>
+                  />
 
-                  {isMoreMenuOpen.value && (
-                    <MobileMoreMenu
-                      tools={moreTools.value}
-                      unreadChatIndicator={unreadChatIndicator.value}
-                      chatWasMentioned={chats.wasMentioned.value}
-                      hasTypingInChats={hasTypingInChats.value}
-                      pinnedItems={[
-                        {
-                          id: "saves",
-                          label: t("saves", {
-                            defaultValue: "Saves",
-                          }),
-                          iconNode: savesTabIcon(false),
-                          onClick: openSavesView,
-                        },
-                        {
-                          id: "tabs",
-                          label: t("tabs", {
-                            defaultValue: "Tabs",
-                          }),
-                          iconNode: <SbTabsIcon />,
-                          onClick: openTabsView,
-                        },
-                      ]}
-                      onClose={() => {
-                        isMoreMenuOpen.value = false;
-                      }}
-                    />
-                  )}
-                </div>
-              </>
-            ) : (
-              tools.value.flatMap((tool) => {
-                const ToolIcon = tool.icon;
-                const menuItems =
-                  tool.getItems?.().filter((item) => item.visible.value) ?? [];
-                const hasMenuItems = menuItems.length > 0;
-                const hideLabel = tool.hideLabel;
-                const label = translateTitle(t, tool.title);
-                if (!tool.visible.value) return [];
-                const itemElement = (
-                  <div
-                    key={tool.id}
-                    className={`sb-reader-toolbar-item${hideLabel ? " sb-reader-toolbar-item-arrow" : ""}`}
-                  >
-                    <ToolActionElement
-                      // A tool that opens a menu stays a button: the href
-                      // would advertise a destination the click never goes to.
-                      href={hasMenuItems ? null : tool.href.value}
-                      disabled={tool.disabled.value}
-                      onActivate={() => {
-                        if (hasMenuItems) {
-                          selectedToolbarToolId.value =
-                            selectedToolbarToolId.value === tool.id
-                              ? null
-                              : tool.id;
-                          return;
+                  <MobileBottomTab
+                    iconNode={<SelfAvatarVisual state={props.state} />}
+                    label={t("you", { defaultValue: "You" })}
+                    active={activeMobileTab.value === "you"}
+                    onClick={openProfileScreen}
+                  />
+
+                  <MobileBottomTab
+                    iconNode={
+                      <SeedBibleIcon
+                        size={24}
+                        className="sb-reader-toolbar-seed-icon"
+                      />
+                    }
+                    label={t("bible", { defaultValue: "Bible" })}
+                    active={activeMobileTab.value === "bible"}
+                    onClick={() => {
+                      // The Bible text is already showing, so there's nothing to
+                      // dismiss — open the book selector instead of doing nothing.
+                      if (activeMobileTab.value === "bible") {
+                        openSelectorTool.value?.onSelect();
+                        return;
+                      }
+                      isMoreMenuOpen.value = false;
+                      sidebar.closeSearchPanel();
+                      sidebar.closeChatPanel();
+                      sidebar.closeSettings();
+                      sidebar.closeSidebar();
+                      // Close any fullscreen pane (e.g. Today).
+                      panes.closeAll();
+                      selectedToolbarToolId.value = null;
+                    }}
+                  />
+
+                  <MobileBottomTab
+                    iconName="search"
+                    label={t("search", { defaultValue: "Search" })}
+                    active={activeMobileTab.value === "search"}
+                    onClick={() => {
+                      isMoreMenuOpen.value = false;
+                      panes.closeAll();
+                      // Dismiss the tabs/saves drawer if it's open.
+                      sidebar.closeSidebar();
+                      if (sidebar.isSearchPanelOpen.value) {
+                        sidebar.closeSearchPanel();
+                      } else {
+                        sidebar.openSearchPanel();
+                      }
+                    }}
+                  />
+
+                  <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
+                    <button
+                      type="button"
+                      ref={moreButtonRef}
+                      onClick={() => {
+                        // Opening the More menu should dismiss whatever else is
+                        // covering the reader — the search bar, the chat panel,
+                        // the settings view, or the tabs/saves drawer — the
+                        // same way the other bottom tabs do. Extension panes are
+                        // left alone, since those are opened *from* this menu.
+                        if (!isMoreMenuOpen.value) {
+                          sidebar.closeSearchPanel();
+                          sidebar.closeChatPanel();
+                          sidebar.closeSettings();
+                          sidebar.closeSidebar();
                         }
-
-                        selectedToolbarToolId.value = null;
-                        tool.onSelect();
+                        isMoreMenuOpen.value = !isMoreMenuOpen.value;
                       }}
-                      dataToolId={tool.id}
-                      className="sb-reader-toolbar-button"
-                      ariaLabel={label}
+                      className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
+                        activeMobileTab.value === "more"
+                          ? " sb-reader-toolbar-mobile-tab-button-active"
+                          : ""
+                      }`}
+                      aria-label={t("more", { defaultValue: "More" })}
+                      aria-expanded={isMoreMenuOpen.value}
                     >
-                      <ToolIcon />
-                      {hideLabel ? (
-                        <span className="sr-only">{label}</span>
-                      ) : (
-                        <span className="sb-reader-toolbar-button-label">
-                          {label}
-                        </span>
-                      )}
-                      {tool.id === "open-chat" && unreadChatIndicator.value && (
-                        <span
-                          className="sb-reader-toolbar-unread-indicator"
-                          aria-label={
-                            chats.wasMentioned.value
-                              ? t("unread-mention", {
-                                  defaultValue: "Unread mention",
-                                })
-                              : t("unread-messages", {
-                                  defaultValue: "Unread messages: {{count}}",
-                                  count: unreadChatIndicator.value,
-                                })
-                          }
-                        >
-                          {unreadChatIndicator.value}
-                        </span>
-                      )}
-                      {tool.id === "open-chat" && hasTypingInChats.value && (
-                        <span
-                          className="sb-reader-toolbar-typing-indicator"
-                          aria-label={t("someone-is-typing", {
-                            defaultValue: "Someone is typing...",
-                          })}
-                        />
-                      )}
-                    </ToolActionElement>
-                    {hasMenuItems &&
-                      selectedToolbarToolId.value === tool.id && (
-                        <div
-                          className="sb-tool-context-menu"
-                          role="menu"
-                          onKeyDown={(event) => {
-                            if (event.key === "Escape") {
-                              event.preventDefault();
-                              selectedToolbarToolId.value = null;
-                              return;
+                      <span
+                        className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
+                        aria-hidden="true"
+                      >
+                        menu
+                      </span>
+                      <span className="sb-reader-toolbar-mobile-tab-label">
+                        {t("more", { defaultValue: "More" })}
+                      </span>
+                      {chatInMoreMenu.value &&
+                        !isMoreMenuOpen.value &&
+                        unreadChatIndicator.value && (
+                          <span
+                            className="sb-reader-toolbar-unread-indicator"
+                            aria-label={
+                              chats.wasMentioned.value
+                                ? t("unread-mention", {
+                                    defaultValue: "Unread mention",
+                                  })
+                                : t("unread-messages", {
+                                    defaultValue: "Unread messages: {{count}}",
+                                    count: unreadChatIndicator.value,
+                                  })
                             }
-                            handleVerticalListKeyNav(
-                              event,
-                              event.currentTarget
-                            );
-                          }}
-                        >
-                          <div
-                            className="sb-tool-context-menu-scroll"
-                            ref={attachMenuOverflowFade}
                           >
-                            {menuItems.map((item) => {
-                              const MenuItemIcon = item.icon;
-                              return (
-                                <button
-                                  key={item.id}
-                                  disabled={item.disabled.value}
-                                  onClick={() => {
-                                    item.onSelect();
-                                    selectedToolbarToolId.value = null;
-                                  }}
-                                  className="sb-tool-context-menu-item"
-                                  role="menuitem"
-                                >
-                                  <MenuItemIcon />
-                                  <span>{translateTitle(t, item.title)}</span>
-                                </button>
-                              );
+                            {unreadChatIndicator.value}
+                          </span>
+                        )}
+                      {chatInMoreMenu.value &&
+                        !isMoreMenuOpen.value &&
+                        hasTypingInChats.value && (
+                          <span
+                            className="sb-reader-toolbar-typing-indicator"
+                            aria-label={t("someone-is-typing", {
+                              defaultValue: "Someone is typing...",
                             })}
-                          </div>
-                          <div className="sb-tool-context-menu-fade" hidden />
-                        </div>
-                      )}
+                          />
+                        )}
+                    </button>
+
+                    {isMoreMenuOpen.value && (
+                      <MobileMoreMenu
+                        tools={moreTools.value}
+                        unreadChatIndicator={unreadChatIndicator.value}
+                        chatWasMentioned={chats.wasMentioned.value}
+                        hasTypingInChats={hasTypingInChats.value}
+                        pinnedItems={[
+                          {
+                            id: "saves",
+                            label: t("saves", {
+                              defaultValue: "Saves",
+                            }),
+                            iconNode: savesTabIcon(false),
+                            onClick: openSavesView,
+                          },
+                          {
+                            id: "tabs",
+                            label: t("tabs", {
+                              defaultValue: "Tabs",
+                            }),
+                            iconNode: <SbTabsIcon />,
+                            onClick: openTabsView,
+                          },
+                        ]}
+                        onClose={() => {
+                          isMoreMenuOpen.value = false;
+                        }}
+                      />
+                    )}
                   </div>
-                );
-                if (
-                  tool.id === "previous-chapter" ||
-                  tool.id === "previous-item"
-                ) {
-                  return [
-                    itemElement,
+                </>
+              ) : (
+                tools.value.flatMap((tool) => {
+                  const ToolIcon = tool.icon;
+                  const menuItems =
+                    tool.getItems?.().filter((item) => item.visible.value) ??
+                    [];
+                  const hasMenuItems = menuItems.length > 0;
+                  const hideLabel = tool.hideLabel;
+                  const label = translateTitle(t, tool.title);
+                  if (!tool.visible.value) return [];
+                  const itemElement = (
                     <div
-                      key="divider-after-prev"
-                      className="sb-reader-toolbar-divider"
-                      aria-hidden="true"
-                    />,
-                  ];
-                }
-                if (tool.id === "next-chapter" || tool.id === "next-item") {
-                  return [
-                    <div
-                      key="divider-before-next"
-                      className="sb-reader-toolbar-divider"
-                      aria-hidden="true"
-                    />,
-                    itemElement,
-                  ];
-                }
-                return [itemElement];
-              })
-            )}
-          </div>
+                      key={tool.id}
+                      className={`sb-reader-toolbar-item${hideLabel ? " sb-reader-toolbar-item-arrow" : ""}`}
+                    >
+                      <ToolActionElement
+                        // A tool that opens a menu stays a button: the href
+                        // would advertise a destination the click never goes to.
+                        href={hasMenuItems ? null : tool.href.value}
+                        disabled={tool.disabled.value}
+                        onActivate={() => {
+                          if (hasMenuItems) {
+                            selectedToolbarToolId.value =
+                              selectedToolbarToolId.value === tool.id
+                                ? null
+                                : tool.id;
+                            return;
+                          }
+
+                          selectedToolbarToolId.value = null;
+                          tool.onSelect();
+                        }}
+                        dataToolId={tool.id}
+                        className="sb-reader-toolbar-button"
+                        ariaLabel={label}
+                      >
+                        <ToolIcon />
+                        {hideLabel ? (
+                          <span className="sr-only">{label}</span>
+                        ) : (
+                          <span className="sb-reader-toolbar-button-label">
+                            {label}
+                          </span>
+                        )}
+                        {tool.id === "open-chat" &&
+                          unreadChatIndicator.value && (
+                            <span
+                              className="sb-reader-toolbar-unread-indicator"
+                              aria-label={
+                                chats.wasMentioned.value
+                                  ? t("unread-mention", {
+                                      defaultValue: "Unread mention",
+                                    })
+                                  : t("unread-messages", {
+                                      defaultValue:
+                                        "Unread messages: {{count}}",
+                                      count: unreadChatIndicator.value,
+                                    })
+                              }
+                            >
+                              {unreadChatIndicator.value}
+                            </span>
+                          )}
+                        {tool.id === "open-chat" && hasTypingInChats.value && (
+                          <span
+                            className="sb-reader-toolbar-typing-indicator"
+                            aria-label={t("someone-is-typing", {
+                              defaultValue: "Someone is typing...",
+                            })}
+                          />
+                        )}
+                      </ToolActionElement>
+                      {hasMenuItems &&
+                        selectedToolbarToolId.value === tool.id && (
+                          <div
+                            className="sb-tool-context-menu"
+                            role="menu"
+                            onKeyDown={(event) => {
+                              if (event.key === "Escape") {
+                                event.preventDefault();
+                                selectedToolbarToolId.value = null;
+                                return;
+                              }
+                              handleVerticalListKeyNav(
+                                event,
+                                event.currentTarget
+                              );
+                            }}
+                          >
+                            <div
+                              className="sb-tool-context-menu-scroll"
+                              ref={attachMenuOverflowFade}
+                            >
+                              {menuItems.map((item) => {
+                                const MenuItemIcon = item.icon;
+                                return (
+                                  <button
+                                    key={item.id}
+                                    disabled={item.disabled.value}
+                                    onClick={() => {
+                                      item.onSelect();
+                                      selectedToolbarToolId.value = null;
+                                    }}
+                                    className="sb-tool-context-menu-item"
+                                    role="menuitem"
+                                  >
+                                    <MenuItemIcon />
+                                    <span>{translateTitle(t, item.title)}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="sb-tool-context-menu-fade" hidden />
+                          </div>
+                        )}
+                    </div>
+                  );
+                  if (
+                    tool.id === "previous-chapter" ||
+                    tool.id === "previous-item"
+                  ) {
+                    return [
+                      itemElement,
+                      <div
+                        key="divider-after-prev"
+                        className="sb-reader-toolbar-divider"
+                        aria-hidden="true"
+                      />,
+                    ];
+                  }
+                  if (tool.id === "next-chapter" || tool.id === "next-item") {
+                    return [
+                      <div
+                        key="divider-before-next"
+                        className="sb-reader-toolbar-divider"
+                        aria-hidden="true"
+                      />,
+                      itemElement,
+                    ];
+                  }
+                  return [itemElement];
+                })
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -3082,9 +3163,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   ) : null;
                 };
 
-                const nonCancel = verseToolbarTools.value.filter(
-                  (tool) => tool.id !== "clear-selection"
-                );
+                const nonCancel = nonCancelVerseTools.value;
                 const cancelTools = verseToolbarTools.value.filter(
                   (tool) => tool.id === "clear-selection"
                 );
@@ -3118,7 +3197,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   ? t("edit-save", { defaultValue: "Edit save" })
                   : t("save-verses", { defaultValue: "Save" });
 
-                const highlightCard = selectionUI.value.showHighlightColors ? (
+                const highlightCard = showHighlightCard.value ? (
                   <div key="highlight" className="sb-verse-toolbar-action-item">
                     <button
                       type="button"
@@ -3144,7 +3223,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   </div>
                 ) : null;
 
-                const saveCard = (
+                const saveCard = !showSaveCard.value ? null : (
                   <div key="save" className="sb-verse-toolbar-action-item">
                     <button
                       type="button"
@@ -3212,28 +3291,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const otherTools = nonCancel.filter(
                   (tool) => !VERSE_SHEET_PINNED_TOOL_IDS.has(tool.id)
                 );
-                const actionCards = [
+                const otherCards = [
                   highlightCard,
                   saveCard,
                   ...otherTools.map(renderTool),
                 ].filter(Boolean);
-                const pinnedCards = pinnedTools.map(renderTool).filter(Boolean);
+                const pinnedToolCards = pinnedTools
+                  .map(renderTool)
+                  .filter(Boolean);
+                const actionCards =
+                  otherCards.length > 0 ? otherCards : pinnedToolCards;
+                const pinnedCards =
+                  otherCards.length > 0 ? pinnedToolCards : [];
 
                 // One full row of cards, matching the four-per-row grid below.
                 // Keeping the collapsed sheet to a single row is what makes it
                 // short by default.
-                const COLLAPSED_COUNT = 4;
-                // Annotations, or Copy/Compare/Share, also make the sheet
-                // openable even when the remaining tools fit in one row.
-                const hasOverflow =
-                  actionCards.length > COLLAPSED_COUNT ||
-                  pinnedCards.length > 0 ||
-                  selectionAnnotations.value.length > 0;
+                const hasOverflow = verseSheetHasHiddenContent.value;
                 const primaryCards = hasOverflow
-                  ? actionCards.slice(0, COLLAPSED_COUNT)
+                  ? actionCards.slice(0, VERSE_SHEET_COLLAPSED_COUNT)
                   : actionCards;
                 const overflowCards = hasOverflow
-                  ? actionCards.slice(COLLAPSED_COUNT)
+                  ? actionCards.slice(VERSE_SHEET_COLLAPSED_COUNT)
                   : [];
 
                 return (
@@ -3333,7 +3412,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               itself carries the accessible toggle. */}
           {isSmallScreen.value &&
             !isHighlightPickerOpen.value &&
-            hasVerseSheetOverflow.value &&
+            verseSheetHasHiddenContent.value &&
             !isVerseSheetExpanded.value && (
               <div
                 className="sb-verse-toolbar-swipe-hint"
