@@ -2205,10 +2205,35 @@ describe("createPlaylistManager", () => {
         instance.getAdjacentChapter!({ direction: "next" } as any)
       ).toBeNull();
       await instance.navigateNext!({} as any);
-      // Once shown, the swipe moves on to the reader's own next chapter.
+      // Once shown, the swipe moves on to the reader's own next chapter. The
+      // reader only asks again when something it watches changes, which is
+      // what the reactive flag is for.
+      expect(instance.playingState.finishPromptShown.value).toBe(true);
       expect(
         instance.getAdjacentChapter!({ direction: "next" } as any)
       ).toBeUndefined();
+    });
+
+    it("turns next off on the Bible's last chapter once the finished modal has been shown", async () => {
+      makeManager("user-1");
+      await flush();
+      const readingState = makeReadingState(vi.fn());
+      // Revelation 22: a chapter with nothing after it.
+      readingState.chapterData.value = {
+        nextChapterApiLink: null,
+        previousChapterApiLink: "/api/previous.json",
+      } as any;
+      const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
+      const instance = activateExtension(
+        { playlists: [playlist], queue: playlist.items, step: 0 },
+        false,
+        readingState
+      );
+
+      expect(instance.hasNext!.value).toBe(true);
+      await instance.navigateNext!({} as any);
+      expect(isFinishedModalOpen()).toBe(true);
+      expect(instance.hasNext!.value).toBe(false);
     });
 
     it("hasNext/hasPrevious fall back to the loaded chapter's own links at the queue's edges", async () => {
@@ -2597,10 +2622,21 @@ describe("createPlaylistManager", () => {
 
     it("keeps playing when the modal is just dismissed (its X or the backdrop)", async () => {
       const manager = await finishPlaylist();
+      expect(finishedModal()).toBeDefined();
 
       lastModals.closeModal("playlist-finished");
 
       expect(manager.playing.value).not.toBeNull();
+      expect(manager.playing.value!.currentIndex.value).toBe(1);
+    });
+
+    it("closes when playback ends some other way, so its Close can't stop a later playback", async () => {
+      const manager = await finishPlaylist();
+      expect(finishedModal()).toBeDefined();
+
+      manager.stopPlaying();
+
+      expect(finishedModal()).toBeUndefined();
     });
 
     it("never opens for a queue with no saved playlist behind it, like a reading plan's day", async () => {
@@ -2638,6 +2674,11 @@ describe("createPlaylistManager", () => {
 
       expect(playing.currentIndex.value).toBe(1);
       expect(finishedModal()).toBeUndefined();
+
+      // The same position does finish the playlist once this client presses
+      // next itself, so it was the sync that didn't.
+      await playing.next();
+      expect(finishedModal()).toBeDefined();
     });
   });
 

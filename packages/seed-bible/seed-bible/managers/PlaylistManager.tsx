@@ -647,6 +647,23 @@ export function createPlayingState(
   );
   /** Whether pressing next does anything: moves on, or finishes the playlist. */
   const canPressNext = computed(() => hasNext.value || canFinish.value);
+  /**
+   * Whether `onFinish` has run since playback last reached the last item. The
+   * reader's own next controls (keyboard, swipe) finish the playlist once, then
+   * hand back to chapter-by-chapter reading so they don't dead end on the
+   * modal. A signal so the swipe preview, which `null`s out the finishing
+   * swipe, reloads the real next chapter once it has been shown. Moving to any
+   * other item re-arms it.
+   */
+  const finishPromptShown = signal(false);
+  let lastIndex = currentIndex.peek();
+  const disposeRearm = effect(() => {
+    const index = currentIndex.value;
+    if (index !== lastIndex) {
+      lastIndex = index;
+      finishPromptShown.value = false;
+    }
+  });
 
   let decorationId: string | null = null;
 
@@ -709,6 +726,7 @@ export function createPlayingState(
       currentIndex.value = currentIndex.value + 1;
       await navigateToCurrentItem();
     } else if (canFinish.value) {
+      finishPromptShown.value = true;
       onFinish?.();
     }
   };
@@ -830,6 +848,7 @@ export function createPlayingState(
 
   /** Tears down the navigation effect. Call when playback ends or is replaced. */
   const dispose = (): void => {
+    disposeRearm();
     disposeDecoration();
   };
 
@@ -842,6 +861,7 @@ export function createPlayingState(
     hasPrevious,
     canFinish,
     canPressNext,
+    finishPromptShown: finishPromptShown as ReadonlySignal<boolean>,
     tab,
     next,
     previous,
@@ -1894,13 +1914,7 @@ export function createPlaylistManager(
       const tab =
         tabs.tabs.value.find((t) => t.readingState === readingState) ?? null;
 
-      // Whether the finished modal has been shown since playback last reached
-      // the last item. The reader's own next controls (keyboard, swipe) show it
-      // once, then hand back to chapter-by-chapter reading so they don't dead
-      // end on the modal; moving to another item re-arms it.
-      let finishPromptShown = false;
       const playingState = createPlayingState(initial.playlists, tab, () => {
-        finishPromptShown = true;
         const playlist = playingState.playlists.peek()[0];
         if (playlist && isRecordedPlaylist(playlist)) {
           openPlaylistFinishedModal(playlist);
@@ -1944,7 +1958,6 @@ export function createPlaylistManager(
           return;
         }
         lastIndex = index;
-        finishPromptShown = false;
         const item = playingState.currentItem.peek();
         if (item && item.type !== "bible-verse") {
           readingState.requestUrlUpdate();
@@ -1995,7 +2008,8 @@ export function createPlaylistManager(
       const hasNext = computed(
         () =>
           playingState.hasNext.value ||
-          playingState.canFinish.value ||
+          (playingState.canFinish.value &&
+            !playingState.finishPromptShown.value) ||
           !!readingState.chapterData.value?.nextChapterApiLink
       );
       const hasPrevious = computed(
@@ -2084,7 +2098,10 @@ export function createPlaylistManager(
             return { type: "default" };
           }
           if (!playingState.hasNext.value) {
-            if (!playingState.canFinish.value || finishPromptShown) {
+            if (
+              !playingState.canFinish.value ||
+              playingState.finishPromptShown.value
+            ) {
               return { type: "default" };
             }
             return playingState
@@ -2121,7 +2138,7 @@ export function createPlaylistManager(
             if (
               direction === "next" &&
               playingState.canFinish.value &&
-              !finishPromptShown
+              !playingState.finishPromptShown.value
             ) {
               // This step shows the finished modal and stays put.
               return null;
@@ -2146,6 +2163,9 @@ export function createPlaylistManager(
           disposeIn();
           disposeStepUrl();
           playingState.dispose();
+          // Its Close stops this playback; with the playback gone some other
+          // way (stopped, or by a session peer) it would stop the wrong one.
+          modals.closeModal(PLAYLIST_FINISHED_MODAL_ID);
         },
       };
       // The registry erases `TData` to `unknown`; the extra `playingState`

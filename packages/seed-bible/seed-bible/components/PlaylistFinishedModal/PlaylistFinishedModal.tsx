@@ -13,7 +13,9 @@ export function PlaylistFinishedModalContent(props: {
   onClose: () => void;
 }) {
   const { t } = useI18n();
-  const [copied, setCopied] = useState(false);
+  const [copyResult, setCopyResult] = useState<"copied" | "failed" | null>(
+    null
+  );
 
   const share = async () => {
     if (typeof navigator.share === "function") {
@@ -22,19 +24,24 @@ export function PlaylistFinishedModalContent(props: {
           title: props.playlistTitle,
           url: props.shareUrl,
         });
+        return;
       } catch (error) {
         // Dismissing the share sheet rejects with an AbortError; nothing to do.
-        if ((error as Error)?.name !== "AbortError") {
-          console.error("Failed to share the playlist.", error);
+        if ((error as Error)?.name === "AbortError") {
+          return;
         }
+        // Some browsers expose a share sheet that refuses to open (for
+        // example NotAllowedError on desktop), so copy the link instead.
+        console.error("Failed to share the playlist.", error);
       }
-      return;
     }
     try {
       await navigator.clipboard.writeText(props.shareUrl);
-      setCopied(true);
+      setCopyResult("copied");
     } catch (error) {
+      // Also covers no clipboard at all (an insecure origin, some webviews).
       console.error("Failed to copy the playlist link.", error);
+      setCopyResult("failed");
     }
   };
 
@@ -46,11 +53,15 @@ export function PlaylistFinishedModalContent(props: {
           defaultValue: "You've reached the end of {{title}}.",
         })}
       </p>
-      {copied ? (
+      {copyResult ? (
         <p className="sb-playlist-finished-copied" role="status">
-          {t("playlist-url-copied", {
-            defaultValue: "Playlist URL copied to clipboard",
-          })}
+          {copyResult === "copied"
+            ? t("playlist-url-copied", {
+                defaultValue: "Playlist URL copied to clipboard",
+              })
+            : t("playlist-url-copy-failed", {
+                defaultValue: "Couldn't copy the playlist link",
+              })}
         </p>
       ) : null}
       <div className="sb-playlist-finished-actions">

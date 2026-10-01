@@ -2,26 +2,11 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { Mock } from "vitest";
 import { PlaylistFinishedModalContent } from "@packages/seed-bible/seed-bible/components/PlaylistFinishedModal/PlaylistFinishedModal";
-
-vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (key: string, options?: Record<string, unknown>) => {
-        let str = (options?.defaultValue as string | undefined) ?? key;
-        for (const [optionKey, value] of Object.entries(options ?? {})) {
-          if (optionKey === "defaultValue") continue;
-          str = str.replaceAll(`{{${optionKey}}}`, String(value));
-        }
-        return str;
-      },
-      language: "en",
-    }),
-  };
-});
+import {
+  I18nProvider,
+  createI18nManager,
+} from "@packages/seed-bible/seed-bible/i18n";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers";
 
 const SHARE_URL = "https://example.com/en/playlist/user-1.p1/psalms";
 
@@ -53,13 +38,24 @@ describe("PlaylistFinishedModalContent", () => {
   const renderModal = () =>
     act(() => {
       render(
-        <PlaylistFinishedModalContent
-          playlistTitle="Psalms of Ascent"
-          shareUrl={SHARE_URL}
-          onClose={onClose}
-        />,
+        <I18nProvider
+          i18n={createI18nManager(createNavigationManager(), ["en"])}
+        >
+          <PlaylistFinishedModalContent
+            playlistTitle="Psalms of Ascent"
+            shareUrl={SHARE_URL}
+            onClose={onClose}
+          />
+        </I18nProvider>,
         container
       );
+    });
+
+  /** Presses Share and lets its share-then-copy steps finish rendering. */
+  const pressShare = () =>
+    act(async () => {
+      button("Share playlist").click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
   const button = (label: string) =>
@@ -88,7 +84,7 @@ describe("PlaylistFinishedModalContent", () => {
     });
     renderModal();
 
-    await act(async () => button("Share playlist").click());
+    await pressShare();
 
     expect(share).toHaveBeenCalledWith({
       title: "Psalms of Ascent",
@@ -101,20 +97,67 @@ describe("PlaylistFinishedModalContent", () => {
     renderModal();
     expect(container.textContent).not.toContain("copied");
 
-    await act(async () => button("Share playlist").click());
+    await pressShare();
 
     expect(writeText).toHaveBeenCalledWith(SHARE_URL);
     expect(container.textContent).toContain("Playlist URL copied to clipboard");
   });
 
-  it("doesn't claim the link was copied when copying fails", async () => {
+  const setShare = (share: unknown) =>
+    Object.defineProperty(window.navigator, "share", {
+      configurable: true,
+      value: share,
+    });
+
+  it("says the link couldn't be copied when copying fails", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     writeText.mockRejectedValue(new Error("denied"));
     renderModal();
 
-    await act(async () => button("Share playlist").click());
+    await pressShare();
 
-    expect(container.textContent).not.toContain("copied");
+    expect(container.textContent).not.toContain("copied to clipboard");
+    expect(container.textContent).toContain("Couldn't copy the playlist link");
     errorSpy.mockRestore();
+  });
+
+  it("says the link couldn't be copied when there is no clipboard", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    Object.defineProperty(window.navigator, "clipboard", {
+      configurable: true,
+      value: undefined,
+    });
+    renderModal();
+
+    await pressShare();
+
+    expect(container.textContent).toContain("Couldn't copy the playlist link");
+    errorSpy.mockRestore();
+  });
+
+  it("copies the link instead when the share sheet refuses to open", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    setShare(
+      vi.fn().mockRejectedValue(new DOMException("blocked", "NotAllowedError"))
+    );
+    renderModal();
+
+    await pressShare();
+
+    expect(writeText).toHaveBeenCalledWith(SHARE_URL);
+    expect(container.textContent).toContain("Playlist URL copied to clipboard");
+    errorSpy.mockRestore();
+  });
+
+  it("does nothing more when the share sheet is dismissed", async () => {
+    setShare(
+      vi.fn().mockRejectedValue(new DOMException("dismissed", "AbortError"))
+    );
+    renderModal();
+
+    await pressShare();
+
+    expect(writeText).not.toHaveBeenCalled();
+    expect(container.textContent).not.toContain("copy");
   });
 });
