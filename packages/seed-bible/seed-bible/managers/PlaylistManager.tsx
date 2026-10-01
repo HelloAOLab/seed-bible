@@ -645,6 +645,8 @@ export function createPlayingState(
       !!playlists.value[0] &&
       isRecordedPlaylist(playlists.value[0])
   );
+  /** Whether pressing next does anything: moves on, or finishes the playlist. */
+  const canPressNext = computed(() => hasNext.value || canFinish.value);
 
   let decorationId: string | null = null;
 
@@ -839,6 +841,7 @@ export function createPlayingState(
     hasNext,
     hasPrevious,
     canFinish,
+    canPressNext,
     tab,
     next,
     previous,
