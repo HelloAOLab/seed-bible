@@ -4,8 +4,30 @@
 
 ### ✨ Added
 
-- Follow other people and see what they are reading. Share your follow link, or tap Follow next to someone in a shared session, and their reading activity joins yours in the Today screen's Community section and on the scripture map. Following needs no approval and the other person isn't notified — the highlights, playlists, and reading history it shows have always been public to anyone with your link. A new Following panel lists everyone you follow and lets you unfollow at any time.
-- Shared sessions hosted by people you follow now appear as joinable invitations again. Previously this listed sessions from every user in the app, so it was switched off; it now only surfaces the people you have chosen to follow.
+- Offer to switch to a downloaded translation when a chapter fails to load, if another translation in the same language is saved on the device and it contains that book and chapter. When more than one matches, you pick one from the same searchable menu Settings uses for language.
+- Save an annotation with Cmd+Enter on Mac or Ctrl+Enter on Windows and Linux while typing, and keep Enter inserting a new line.
+- Focus the annotation editor when it opens so you can start typing right away, whether you are writing a new note or editing an existing one. ([#1793](https://github.com/HelloAOLab/seed-bible/issues/1793))
+- Edit your profile from the profile screen. The pencil in the corner of the profile card — or tapping your name — opens an Edit profile screen with your name, location and description. Your email address, location and description now show on the profile screen itself. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
+- Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1", "Gen.1" and "Gen. 1:1" resolve the same as "Gen 1:1", and a trailing abbreviation period ("Gen.") keeps offering suggestions. Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
+- See where everyone else is reading in a shared session. Each other participant gets a slim coloured bar beside the text spanning the verses on their screen, with their avatar at the top of it, so you can tell at a glance whether they are with you or still a few verses back. The bars glide along as people move, and people on the same verses stand side by side in a gutter that stays the same width, so the scripture never shifts as they come and go. Scroll past the start of someone's bar and their avatar stays with you at the top of the screen for as long as their verses do; small arrows show when a bar carries on above or below the screen, and a crowd on the same verses collapses into a short avatar stack. Someone who switches to another tab keeps their place in the session but their bar disappears until they come back. Before this, the only clue was watching their highlights appear. ([#1692](https://github.com/HelloAOLab/seed-bible/issues/1692))
+- Link someone straight into a tutorial with `?tutorial=<id>`, optionally at a given step with `&tutorialStep=<n>`. The main tour's ID is `introduction`; all IDs are listed in `docs/tutorial-links.md`. The address now tracks the tutorial's current step, so refreshing mid-tutorial picks up where you left off instead of losing it. ([#1808](https://github.com/HelloAOLab/seed-bible/issues/1808))
+- Give each shared playlist its own page at `/{lang}/playlist/{id}/{title}`. ([#1785](https://github.com/HelloAOLab/seed-bible/issues/1785))
+  - Opening a shared playlist link shows the playlist's cover, author and description, with "Start Playlist" and "Close" buttons. Before, the link opened straight onto a chapter with no sign it was a playlist.
+  - Link previews and search results now show "{playlist} by {author}", the playlist's description and its cover image.
+  - A link to a playlist that no longer exists answers "not found", and shows a "Playlist not found" message whose Close button goes to the home screen.
+  - If a playlist can't be loaded (for example, the connection drops), a "Couldn't load playlist" message offers "Try again" or "Close" instead of leaving the reader stuck on the link.
+  - While a playlist plays, the player shows who made it and its description above the queue.
+  - While a playlist plays, the address bar shows its own path with the step at the end (`/{lang}/playlist/{id}/{title}/2` for the second step), so reloading or sharing it opens that step. Back from the first step returns to the playlist's page.
+  - Old `?playlist=` links permanently redirect (301): share links to the playlist's page, and playback links (`?playlist=…&playlistStep=…`) to the matching step.
+  - The "Would you like a tutorial?" offer stays hidden for a visit that starts on a playlist link, including after the playlist is started. Closing the playlist without starting it goes to the home screen, where the offer can appear as usual.
+- Give each shared reading plan its own page at `/{lang}/reading-plan/{id}/{title}`. ([#1786](https://github.com/HelloAOLab/seed-bible/issues/1786))
+  - Opening a shared reading plan link shows the plan's cover, author, description and number of sessions, with "Start Reading Plan" and "Close" buttons. Before, the link opened straight onto a chapter with the plans panel beside it.
+  - The page also says roughly how long each session takes to read.
+  - "Start Reading Plan" opens the plan's setup screen, where the reader picks a pace.
+  - Someone who has already started the plan sees where they are ("You're on day 5", or "You're on session 5" when reading at their own pace), with "Resume" and "Start from beginning" instead.
+  - Link previews, search results, the 404 and "Reading plan not found" message for a deleted plan, the "Couldn't load reading plan" message with "Try again", and the hidden tutorial offer work the same way as for shared playlists.
+  - Old `?readingPlan=` share links permanently redirect (301) to the plan's page.
+  - Playing a day of a reading plan shows who made the plan in the player, like a playlist does.
 
 ### 🔧 Changed
 
@@ -25,6 +47,8 @@
   - People on the same verses appear side by side, and a crowd collapses into an avatar stack.
   - A person's bar is hidden while they're in another tab.
 - Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
+- Show a compact reader when Seed Bible is embedded on another site with `?embed=minimal` or `?embed=true`: translation, open in a new tab, quick settings, and chapter navigation, without the Today screen or the bottom tab bar. ([#1843](https://github.com/HelloAOLab/seed-bible/pull/1843))
+  - Quick settings keep scripture and UI size, but hide "Go to all settings".
 - Show the people, places and events a chapter mentions in the Discover panel, from the Theographic Bible Metadata dataset. ([#1839](https://github.com/HelloAOLab/seed-bible/pull/1839))
   - Pick the new People, Places or Events filter to list them with the verses they appear in; select a verse to narrow the list.
   - Open an entry to see its facts, its dictionary entry and the verses that mention it. Places also show a map.

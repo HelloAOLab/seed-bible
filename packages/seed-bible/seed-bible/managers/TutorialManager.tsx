@@ -274,6 +274,91 @@ export const CONTEXTUAL_TUTORIALS: Record<string, TutorialStep[]> = {
   ],
 };
 
+/**
+ * ID of the first-run onboarding tour. Picks the desktop or mobile step list
+ * for the current viewport, so the same link works on both.
+ */
+export const INTRODUCTION_TUTORIAL_ID = "introduction";
+
+/**
+ * Tutorials that can be launched from a `?tutorial=<id>` link. Keep
+ * docs/tutorial-links.md in sync. `mobile-settings` and `offline-download`
+ * are left out: they spotlight a sheet/list that only exists after the user
+ * opens it, so launched cold they would point at nothing.
+ */
+export const LINKABLE_TUTORIAL_IDS: readonly string[] = [
+  INTRODUCTION_TUTORIAL_ID,
+  "pane-layout",
+  "add-tab",
+  "search",
+];
+
+/**
+ * Linkable tutorials whose target is only rendered on desktop. A link to one
+ * of these is ignored on a mobile viewport rather than spotlighting nothing.
+ */
+const DESKTOP_ONLY_TUTORIAL_IDS: readonly string[] = ["pane-layout"];
+
+/** A tutorial requested by the page URL (`?tutorial=` / `?tutorialStep=`). */
+export interface TutorialLinkRequest {
+  id: string;
+  step: number;
+}
+
+/**
+ * Reads a tutorial request from `?tutorial=<id>&tutorialStep=<n>`. Returns
+ * null for a missing or unknown id; a missing or malformed step means 0.
+ */
+export function parseTutorialLink(
+  params: URLSearchParams
+): TutorialLinkRequest | null {
+  const id = params.get("tutorial");
+  if (!id || !LINKABLE_TUTORIAL_IDS.includes(id)) {
+    return null;
+  }
+  const rawStep = params.get("tutorialStep") ?? "";
+  return { id, step: /^\d+$/.test(rawStep) ? Number(rawStep) : 0 };
+}
+
+/**
+ * Mirrors the running tutorial into `?tutorial=&tutorialStep=` so the page can
+ * be shared or refreshed mid-tour and land back on the same step. Replaces
+ * rather than pushes: stepping through a tour shouldn't fill Back history.
+ * Only linkable tutorials are written; anything else counts as "not running",
+ * so a link never advertises a tour that won't replay. While `linkedTutorial`
+ * is pending its params are kept until it launches; otherwise stale params
+ * (e.g. an unlinkable id) are cleared right away.
+ */
+export function mirrorTutorialToUrl(
+  tutorial: Pick<TutorialManager, "activeTutorialId" | "index">,
+  navigation: {
+    updateQueryParams: (
+      update: Record<string, string | null>,
+      replaceState?: boolean
+    ) => void;
+  },
+  linkedTutorial: TutorialLinkRequest | null
+): () => void {
+  let shouldClear = linkedTutorial === null;
+  return effect(() => {
+    const rawId = tutorial.activeTutorialId.value;
+    const step = tutorial.index.value;
+    const id = rawId && LINKABLE_TUTORIAL_IDS.includes(rawId) ? rawId : null;
+    if (id) {
+      shouldClear = true;
+      navigation.updateQueryParams(
+        { tutorial: id, tutorialStep: String(step) },
+        true
+      );
+    } else if (shouldClear) {
+      navigation.updateQueryParams(
+        { tutorial: null, tutorialStep: null },
+        true
+      );
+    }
+  });
+}
+
 function readFlag(key: string): boolean {
   try {
     return window.localStorage.getItem(key) === "true";
@@ -332,6 +417,11 @@ export interface TutorialManager {
   isLast: ReadonlySignal<boolean>;
   /** Whether the tour can step backwards from the active step. */
   canGoBack: ReadonlySignal<boolean>;
+  /**
+   * ID of the running tutorial ({@link INTRODUCTION_TUTORIAL_ID} or a
+   * contextual feature id), or null when none is running.
+   */
+  activeTutorialId: ReadonlySignal<string | null>;
   /** Whether the user has already completed/skipped the onboarding tour. */
   completed: ReadonlySignal<boolean>;
   /** Whether the user has opted out of all future tutorial prompts. */
@@ -362,6 +452,12 @@ export interface TutorialManager {
    * flag is still tracked under `featureId` either way.
    */
   startContextual: (featureId: string, steps?: TutorialStep[]) => void;
+  /**
+   * Starts a tutorial by id at `step` (clamped to the tour's length), whether
+   * or not the user has seen it or opted out — this is an explicit request,
+   * e.g. from a link. Returns false for an unknown id.
+   */
+  startTutorial: (id: string, step?: number) => boolean;
   /** Advances to the next step, finishing after the last one. */
   next: () => void;
   /** Goes back one step (no-op on the first). */
@@ -422,7 +518,20 @@ export function createTutorialManager(
   isMobile: ReadonlySignal<boolean>,
   panes: PanesManager,
   sidebar: SidebarManager,
-  joinedViaSessionLink = false
+  /**
+   * The visit started from a shared link (a session invite, a playlist, a
+   * reading plan). While true, neither the offer card nor contextual tips
+   * appear. A signal because a playlist link lifts it once the visitor closes
+   * the playlist without starting it and lands on the home screen.
+   */
+  openedViaContentLink: ReadonlySignal<boolean> = signal(false),
+  /**
+   * Compact partner-site embed. While this is true the offer card, the tour,
+   * and the "turn off tutorials" follow-up never start — an embed has no room
+   * for coach marks aimed at chrome that isn't there.
+   */
+  isMinimalEmbed: ReadonlySignal<boolean> = signal(false),
+  linkedTutorial: TutorialLinkRequest | null = null
 ): TutorialManager {
   const running = signal<boolean>(false);
   const index = signal<number>(0);
@@ -504,6 +613,15 @@ export function createTutorialManager(
       };
     }
     return local;
+  });
+
+  const activeTutorialId = computed<string | null>(() => {
+    if (!running.value) {
+      return null;
+    }
+    return mode.value === "contextual"
+      ? activeFeatureId.value
+      : INTRODUCTION_TUTORIAL_ID;
   });
 
   const currentStep = computed<TutorialStep | null>(() =>
@@ -616,7 +734,10 @@ export function createTutorialManager(
   // button) before the reader was visible.
   let autoStartChecked = false;
 
-  const start = () => {
+  const start = (startIndex = 0) => {
+    if (isMinimalEmbed.value) {
+      return;
+    }
     // An explicit start resolves the first-run offer. Marking that before
     // tearing Today down matters: closing the pane is what makes the reader
     // visible, and the offer effect would otherwise pop the card on top of
@@ -650,17 +771,28 @@ export function createTutorialManager(
     if (activeSteps.value.length === 0) {
       return;
     }
-    index.value = 0;
-    running.value = true;
+    // Batched so a linked start at step N never briefly runs step 0 (whose
+    // selector-group effect would flash the book selector open).
+    batch(() => {
+      index.value = Math.min(
+        Math.max(0, Math.floor(startIndex)),
+        activeSteps.value.length - 1
+      );
+      running.value = true;
+    });
   };
 
   const startContextual = (featureId: string, steps?: TutorialStep[]) => {
+    if (isMinimalEmbed.value) {
+      return;
+    }
+
     if (running.value) {
       return;
     }
-    // On a session-join tab, don't pop contextual coach marks. Not persisted,
-    // so these tips still appear on a normal (non-session-link) visit later.
-    if (joinedViaSessionLink) {
+    // On a content-link tab, don't pop contextual coach marks. Not persisted,
+    // so these tips still appear on a normal (non-link) visit later.
+    if (openedViaContentLink.value) {
       return;
     }
     if (optedOut.value) {
@@ -678,6 +810,31 @@ export function createTutorialManager(
     activeSteps.value = resolvedSteps;
     index.value = 0;
     running.value = true;
+  };
+
+  const startTutorial = (id: string, step = 0): boolean => {
+    if (isMinimalEmbed.value) {
+      return false;
+    }
+    if (isMobile.value && DESKTOP_ONLY_TUTORIAL_IDS.includes(id)) {
+      return false;
+    }
+    if (id === INTRODUCTION_TUTORIAL_ID) {
+      start(step);
+      return running.value;
+    }
+    const steps = CONTEXTUAL_TUTORIALS[id];
+    if (!steps || steps.length === 0) {
+      return false;
+    }
+    batch(() => {
+      mode.value = "contextual";
+      activeFeatureId.value = id;
+      activeSteps.value = steps;
+      index.value = Math.min(Math.max(0, Math.floor(step)), steps.length - 1);
+      running.value = true;
+    });
+    return true;
   };
 
   const finish = () => {
@@ -711,6 +868,9 @@ export function createTutorialManager(
   };
 
   const skip = () => {
+    if (isMinimalEmbed.value) {
+      return;
+    }
     finish();
     skipPromptVisible.value = true;
   };
@@ -771,10 +931,25 @@ export function createTutorialManager(
       if (autoStartChecked || running.value) {
         return;
       }
+      // A `?tutorial=` link asked for a specific tour: launch it (once the
+      // reader is ready to be pointed at) in place of the offer card. Checked
+      // before the session-link guard because it is an explicit request.
+      if (linkedTutorial) {
+        if (!readerVisible.value) {
+          return;
+        }
+        autoStartChecked = true;
+        startTutorial(linkedTutorial.id, linkedTutorial.step);
+        return;
+      }
       // Opened via a shared-session invite link: don't auto-launch the onboarding
       // tour over the join. We don't record completion, so the tour still
       // auto-starts on a later visit that isn't a session link.
-      if (joinedViaSessionLink) {
+      if (openedViaContentLink.value) {
+        return;
+      }
+      // A partner-site embed has none of the chrome the tour points at.
+      if (isMinimalEmbed.value) {
         return;
       }
       if (!readerVisible.value) {
@@ -796,6 +971,7 @@ export function createTutorialManager(
     },
     running,
     index,
+    activeTutorialId,
     currentStep,
     isLast,
     canGoBack,
@@ -804,8 +980,9 @@ export function createTutorialManager(
     promptVisible,
     skipPromptVisible,
     featuresSeen,
-    start,
+    start: () => start(),
     startContextual,
+    startTutorial,
     next,
     prev,
     finish,

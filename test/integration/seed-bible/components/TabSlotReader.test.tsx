@@ -177,6 +177,8 @@ function createFixture(): ReaderFixture {
     enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
     isExtensionEnabled: vi.fn(() => false),
     getUrlQueryParams: vi.fn(() => ({})),
+    getUrlPathOverride: vi.fn(() => null),
+    requestUrlUpdate: vi.fn(),
     onNavigate: vi.fn(() => () => {}),
     shortSubTitle: signal<string>(""),
     shortTitle: signal<string>(""),
@@ -222,11 +224,13 @@ function createSavesStub() {
 }
 
 function createMobileState(): SeedBibleState {
+  const discover = createDiscoverManager();
   return {
     app: {
       isMobile: signal(true),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
+      isDiscoverOpen: discover.isDiscoverOpen,
     },
     selector: {
       selectingTranslation: signal(false),
@@ -254,7 +258,7 @@ function createMobileState(): SeedBibleState {
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: createDiscoverManager(),
+    discover,
     playlists: {
       playing: signal(null),
     },
@@ -273,11 +277,13 @@ function createMobileState(): SeedBibleState {
 }
 
 function createDesktopState(): SeedBibleState {
+  const discover = createDiscoverManager();
   return {
     app: {
       isMobile: signal(false),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
+      isDiscoverOpen: discover.isDiscoverOpen,
     },
     selector: {
       selectingTranslation: signal(false),
@@ -301,7 +307,7 @@ function createDesktopState(): SeedBibleState {
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: createDiscoverManager(),
+    discover,
     playlists: {
       playing: signal(null),
     },
@@ -1569,6 +1575,29 @@ describe("TabSlotReader integration", () => {
       expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
     });
 
+    it("hides the panel while the full Discover pane is open and brings it back when it closes", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+      expect(
+        container.querySelector(".sb-discover-content-panel")
+      ).not.toBeNull();
+
+      act(() => {
+        state.discover.view.value = "discover";
+      });
+      expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+
+      act(() => {
+        state.discover.view.value = null;
+      });
+      expect(
+        container.querySelector(".sb-discover-content-panel")
+      ).not.toBeNull();
+    });
+
     it("lets a touch gesture starting inside the panel scroll it instead of swiping the chapter", () => {
       const { slot, readingState, discoveredCrossReferences } = createFixture();
       discoveredCrossReferences.value = crossReferenceFixture;
@@ -1662,6 +1691,27 @@ describe("TabSlotReader integration", () => {
           Node.DOCUMENT_POSITION_FOLLOWING
         )
       ).toBe(true);
+    });
+
+    it("hides the tool while the full Discover pane is open and brings it back when it closes", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState();
+      const findTool = () =>
+        container.querySelector('button[aria-label="Discover content"]');
+
+      renderTabSlotReader(slot, readingState, state, container);
+      expect(findTool()).not.toBeNull();
+
+      act(() => {
+        state.discover.view.value = "discover";
+      });
+      expect(findTool()).toBeNull();
+
+      act(() => {
+        state.discover.view.value = null;
+      });
+      expect(findTool()).not.toBeNull();
     });
   });
 });

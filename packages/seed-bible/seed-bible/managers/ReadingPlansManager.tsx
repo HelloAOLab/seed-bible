@@ -7,11 +7,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import {
-  buildScriptureShareUrl,
-  PlaylistItem,
-  type PlaylistItemData,
-} from "./PlaylistManager";
+import { PlaylistItem, type PlaylistItemData } from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { omit } from "es-toolkit";
@@ -28,6 +24,13 @@ import { captureEvent } from "./Utils";
 import { savePhotoToGallery } from "./UserGalleryManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { TabsManager } from "./TabsManager";
+import { buildSharedPagePath, parseRecordLocator } from "./SharedPagePath";
+import {
+  createSharedPageLoader,
+  type SharedPage,
+  type SharedPageSeed,
+} from "./SharedPageLoader";
+import { DEFAULT_UI_LANGUAGE } from "./ReadingUrlPath";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -147,45 +150,33 @@ export function getReadingPlanLocator(plan: {
   return `${plan.recordName}.${plan.address}`;
 }
 
-export function parseReadingPlanLocator(
-  locator: string | null | undefined
-): { recordName: string; address: string } | null {
-  if (!locator) {
-    return null;
-  }
-  const lastDot = locator.lastIndexOf(".");
-  if (lastDot <= 0 || lastDot === locator.length - 1) {
-    console.error("Invalid reading plan locator:", locator);
-    return null;
-  }
-  return {
-    recordName: locator.slice(0, lastDot),
-    address: locator.slice(lastDot + 1),
-  };
-}
-
 /**
- * Builds a shareable reading-plan URL, opening on the plan's first scripture
- * chapter the same way a shared playlist does.
+ * Builds a shareable reading-plan URL: the plan's own
+ * `/{lang}/reading-plan/{locator}/{title}` page, which shows the plan before
+ * the reader starts it.
  */
 export function buildReadingPlanShareUrl(params: {
-  plan: Pick<ReadingPlan, "recordName" | "address" | "sessions">;
+  plan: Pick<ReadingPlan, "recordName" | "address" | "title">;
   currentUrl: URL;
   basePath: string;
-  activeTranslationId?: string;
+  language: string;
 }): string {
-  const { plan, currentUrl, basePath, activeTranslationId } = params;
-  return buildScriptureShareUrl({
-    items: plan.sessions.flatMap((session) =>
-      session.readings.map((reading) => reading.item)
-    ),
-    currentUrl,
-    basePath,
-    activeTranslationId,
-    param: "readingPlan",
-    locator: getReadingPlanLocator(plan),
-  });
+  const { plan, currentUrl, basePath, language } = params;
+  return new URL(
+    `${basePath}${buildSharedPagePath({
+      kind: "readingPlan",
+      language,
+      locator: getReadingPlanLocator(plan),
+      title: plan.title,
+    })}`,
+    currentUrl
+  ).toString();
 }
+
+/** A shared `/{lang}/reading-plan/...` page's plan and its author. */
+export type ReadingPlanPage = SharedPage<ReadingPlan>;
+/** A completed reading-plan-page load, embedded by SSR — see `SharedPageSeed`. */
+export type ReadingPlanPageSeed = SharedPageSeed<ReadingPlan>;
 
 // ---------------------------------------------------------------------------
 // Progress
@@ -1479,11 +1470,61 @@ function captureProgressCompletionEvents(
   }
 }
 
+/** The most recent progress the user has for a given plan id, if any. */
+export function latestReadingPlanProgress(
+  progresses: ReadingPlanProgress[],
+  planId: string
+): ReadingPlanProgress | null {
+  return (
+    progresses
+      .filter((p) => p.planId === planId)
+      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
+  );
+}
+
+/**
+ * Where the signed-in reader is in the plan a reading plan page shows, from
+ * their most recent progress on it.
+ */
+export interface ReadingPlanPageProgress {
+  progress: ReadingPlanProgress;
+  /** Counted in sessions when self-paced (no schedule), else in days. */
+  unit: "day" | "session";
+  /** The 1-based day or session to resume at; null once every one is done. */
+  resumeAt: number | null;
+}
+
+/**
+ * Average reading time, in whole minutes, of a plan's sessions that have
+ * something to read. Null when none do.
+ */
+export function averageSessionMinutes(
+  plan: Pick<ReadingPlan, "sessions">,
+  resolveBook?: (bookId: string) => BookLength | null | undefined
+): number | null {
+  const sessions = plan.sessions.filter((s) => s.readings.length > 0);
+  if (sessions.length === 0) {
+    return null;
+  }
+  const total = sessions.reduce(
+    (sum, session) =>
+      sum + estimateReadingMinutes(session.readings, resolveBook),
+    0
+  );
+  return Math.max(1, Math.round(total / sessions.length));
+}
+
 export function createReadingPlansManager(
   os: CasualOSManager,
   login: LoginManager,
   tabs: Pick<TabsManager, "tabs" | "selectedTabId">,
-  navigation: Pick<NavigationManager, "currentUrl" | "basePath">
+  navigation: Pick<NavigationManager, "currentUrl" | "initialUrl" | "basePath">,
+  options: {
+    /** UI language for the links this hands out. */
+    language?: ReadonlySignal<string>;
+    /** A prior SSR render's reading-plan-page load, so it isn't re-fetched. */
+    initialReadingPlanPageSeed?: ReadingPlanPageSeed;
+  } = {}
 ) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
   const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
@@ -1550,8 +1591,9 @@ export function createReadingPlansManager(
   const loadByLocator = async (
     locator: string
   ): Promise<ReadingPlan | null> => {
-    const parsed = parseReadingPlanLocator(locator);
+    const parsed = parseRecordLocator(locator);
     if (!parsed) {
+      console.error("Invalid reading plan locator:", locator);
       return null;
     }
     const plan = await getReadingPlan(parsed.recordName, parsed.address);
@@ -1560,17 +1602,55 @@ export function createReadingPlansManager(
   };
 
   /** Gets a shareable URL for the given plan. */
-  const getReadingPlanShareUrl = (plan: ReadingPlan): string => {
-    const selectedTab = tabs.tabs
-      .peek()
-      .find((tab) => tab.id === tabs.selectedTabId.peek());
-    return buildReadingPlanShareUrl({
+  const getReadingPlanShareUrl = (plan: ReadingPlan): string =>
+    buildReadingPlanShareUrl({
       plan,
       currentUrl: navigation.currentUrl.peek(),
       basePath: navigation.basePath,
-      activeTranslationId: selectedTab?.readingState.translationId.peek(),
+      language: options.language?.peek() ?? DEFAULT_UI_LANGUAGE,
     });
-  };
+
+  const readingPlanPageLoader = createSharedPageLoader({
+    os,
+    navigation,
+    kind: "readingPlan",
+    schema: ReadingPlanSchema,
+    authorUserId: (plan) => plan.authorUserId,
+    initialSeed: options.initialReadingPlanPageSeed,
+  });
+
+  /**
+   * The signed-in reader's place in the reading plan page's plan, or null
+   * when they haven't started it (or aren't signed in, or their progress is
+   * still loading).
+   */
+  const readingPlanPageProgress = computed<ReadingPlanPageProgress | null>(
+    () => {
+      const page = readingPlanPageLoader.page.value;
+      if (!page) {
+        return null;
+      }
+      const plan = page.item;
+      const progress = latestReadingPlanProgress(
+        userReadingPlanProgresses.value,
+        formatReadingPlanId(plan.recordName, plan.address)
+      );
+      if (!progress) {
+        return null;
+      }
+      const nowMs = Date.now();
+      const summary = summarizeCalendar(
+        getReadingCalendar(plan, progress, nowMs),
+        nowMs,
+        progress.timeZone
+      );
+      return {
+        progress,
+        unit: progress.selfPaced === true ? "session" : "day",
+        resumeAt: summary.nextDayNumber,
+      };
+    }
+  );
 
   // A plan lives in two records: the plan itself and a `_metadata` companion
   // the list reads so it can render without loading every plan's contents.
@@ -2730,6 +2810,14 @@ export function createReadingPlansManager(
     finishEditingReadingPlan,
     loadByLocator,
     getReadingPlanShareUrl,
+    readingPlanPage: readingPlanPageLoader.page,
+    readingPlanPageNotFound: readingPlanPageLoader.notFound,
+    readingPlanPageProgress,
+    readingPlanPageLoadFailed: readingPlanPageLoader.loadFailed,
+    readingPlanPageRetrying: readingPlanPageLoader.retrying,
+    retryReadingPlanPage: readingPlanPageLoader.retry,
+    initialReadingPlanPageLoadPromise: readingPlanPageLoader.initialLoadPromise,
+    getReadingPlanPageSeed: readingPlanPageLoader.getSeed,
   };
 }
 

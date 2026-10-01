@@ -2003,6 +2003,168 @@ describe("CustomizationsManager", () => {
     expect(manager.activeCustomization.value?.extensionSettings).toEqual({});
   });
 
+  describe("PostHog customization tracking", () => {
+    const sharedRecord = {
+      id: "customization_shared",
+      name: "Shared",
+      variants: [
+        {
+          id: "variant_shared",
+          name: "Shared variant",
+          themes: {},
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      defaultVariantId: "variant_shared",
+      logoUrl: null,
+      createdAt: 1,
+      updatedAt: 1,
+    };
+    const linkedHref =
+      "http://localhost/?customization=other-user.customization_shared";
+    let posthogMock: {
+      register_for_session: Mock;
+      unregister_for_session: Mock;
+      identify: Mock;
+    };
+
+    beforeEach(() => {
+      posthogMock = {
+        register_for_session: vi.fn(),
+        unregister_for_session: vi.fn(),
+        identify: vi.fn(),
+      };
+      (globalThis as any).posthog = posthogMock;
+    });
+
+    afterEach(() => {
+      delete (globalThis as any).posthog;
+    });
+
+    it("tags every event with the linked customization and identifies the signed-in user with it", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+
+      const { manager } = createManager(
+        createNavigationManager({ initialHref: linkedHref })
+      );
+      await manager.initialCustomizationLoadPromise;
+
+      expect(posthogMock.register_for_session).toHaveBeenLastCalledWith({
+        customization_id: "other-user.customization_shared",
+      });
+      expect(posthogMock.identify).toHaveBeenLastCalledWith("user-1", {
+        customization_id: "other-user.customization_shared",
+      });
+    });
+
+    it("tags events for a signed-out viewer without identifying anyone, then identifies once they sign in", async () => {
+      login.userId.value = null;
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+
+      const { manager } = createManager(
+        createNavigationManager({ initialHref: linkedHref })
+      );
+      await manager.initialCustomizationLoadPromise;
+
+      expect(posthogMock.register_for_session).toHaveBeenLastCalledWith({
+        customization_id: "other-user.customization_shared",
+      });
+      expect(posthogMock.identify).not.toHaveBeenCalled();
+
+      login.userId.value = "user-2";
+
+      expect(posthogMock.identify).toHaveBeenLastCalledWith("user-2", {
+        customization_id: "other-user.customization_shared",
+      });
+    });
+
+    it("leaves events untagged when there is no ?customization= link", () => {
+      createManager();
+
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
+      expect(posthogMock.identify).not.toHaveBeenCalled();
+      expect(posthogMock.unregister_for_session).toHaveBeenCalledWith(
+        "customization_id"
+      );
+    });
+
+    it("leaves events untagged when the linked customization can't be found", async () => {
+      const { manager } = createManager(
+        createNavigationManager({ initialHref: linkedHref })
+      );
+      await manager.initialCustomizationLoadPromise;
+
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
+      expect(posthogMock.identify).not.toHaveBeenCalled();
+    });
+
+    it("tags events synchronously from a matching SSR seed, without fetching the record", () => {
+      const { manager } = createManager(
+        createNavigationManager({ initialHref: linkedHref }),
+        {
+          locator: "other-user.customization_shared",
+          customization: {
+            ...sharedRecord,
+            variants: [
+              {
+                id: "variant_shared",
+                name: "Shared variant",
+                baseTheme: "light",
+                themes: {},
+                highlightColors: {},
+                createdAt: 1,
+                updatedAt: 1,
+              },
+            ],
+            extensionSettings: {},
+            extensionSettingDefaults: {},
+          },
+        }
+      );
+
+      expect(manager.linkedCustomization.value?.id).toBe(
+        "customization_shared"
+      );
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(posthogMock.register_for_session).toHaveBeenLastCalledWith({
+        customization_id: "other-user.customization_shared",
+      });
+      expect(posthogMock.identify).toHaveBeenLastCalledWith("user-1", {
+        customization_id: "other-user.customization_shared",
+      });
+    });
+
+    it("leaves events untagged when the SSR seed already resolved the link as not found", () => {
+      createManager(createNavigationManager({ initialHref: linkedHref }), {
+        locator: "other-user.customization_shared",
+        customization: null,
+      });
+
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
+      expect(posthogMock.identify).not.toHaveBeenCalled();
+      expect(posthogMock.unregister_for_session).toHaveBeenCalledWith(
+        "customization_id"
+      );
+    });
+
+    it("doesn't tag events with a draft the owner is only previewing", async () => {
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+
+      expect(manager.activeCustomization.value?.id).toBe(created.id);
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
+    });
+  });
+
   it("initialCustomizationLoadSettled is true immediately with no ?customization= param", () => {
     const { manager } = createManager();
 

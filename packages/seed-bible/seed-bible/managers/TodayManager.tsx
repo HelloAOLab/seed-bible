@@ -19,7 +19,8 @@ import {
 } from "./ReadingHistoryManager";
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 import { hasReadingUrlPosition } from "./ReadingUrlPath";
-import { parseStaticPagePath } from "./StaticPagePath";
+import { isNonReadingPagePath } from "./StaticPagePath";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { TranslationBooks } from "./FreeUseBibleAPI";
 import {
   createReadingHistoryState,
@@ -57,10 +58,12 @@ type TranslationBookSummary = {
 };
 
 /**
- * Whether Today should auto-open over the reader for this boot URL: an explicit
- * `?today=` param always wins, and otherwise it opens unless the URL already
- * points somewhere specific — a canonical reading path, a static page such as
- * "/en/about", or a shared-session invite.
+ * Whether Today should auto-open over the reader for this boot URL. A compact
+ * embed (`?embed=minimal` / `?embed=true`) never opens Today — that chrome
+ * has no Today surface. Otherwise an explicit `?today=` param always wins,
+ * and with no param it opens unless the URL already points somewhere
+ * specific — a canonical reading path, a static page such as "/en/about", a
+ * shared playlist page, or a shared-session invite.
  *
  * Must be given `initialUrl` (the URL as first loaded), never the live
  * `currentUrl`: `TabsManager` echoes the reader's book/chapter back into the URL
@@ -74,18 +77,21 @@ export function todayWillAutoOpenForUrl(
   initialUrl: URL,
   basePath: string
 ): boolean {
+  if (isMinimalEmbedUrl(initialUrl)) {
+    return false;
+  }
   const requested = initialUrl.searchParams.get("today");
   if (requested !== null) {
     return requested === "open";
   }
   return !(
     hasReadingUrlPosition(initialUrl, basePath) ||
-    // A static page is a destination the visitor asked for just as much as a
-    // chapter is. It carries no reading position, so without this it reads as
-    // "nowhere in particular" and Today opens over it — and because Today's
-    // pane is fullscreen, it displaces the static page's own pane, which in
-    // turn sends the reader back to the selected tab's chapter.
-    parseStaticPagePath(initialUrl.pathname, basePath) !== null ||
+    // A static page or shared playlist is a destination the visitor asked for
+    // just as much as a chapter is. It carries no reading position, so without
+    // this it reads as "nowhere in particular" and Today opens over it — and
+    // because Today's pane is fullscreen, it displaces the static page's own
+    // pane, which in turn sends the reader back to the selected tab's chapter.
+    isNonReadingPagePath(initialUrl.pathname, basePath) ||
     initialUrl.searchParams.has("sessionId")
   );
 }
@@ -339,6 +345,10 @@ export function createTodayManager(options: {
           return isOpen.value ? "open" : null;
         },
         set value(newValue) {
+          if (isMinimalEmbedUrl(navigation.currentUrl.peek())) {
+            isOpen.value = false;
+            return;
+          }
           isOpen.value = newValue === "open";
         },
       },
@@ -350,6 +360,9 @@ export function createTodayManager(options: {
   // would subscribe that effect to the signal it is about to write and trip
   // preact's "Cycle detected". Use `.peek()` if a guard is ever needed.
   const open = () => {
+    if (isMinimalEmbedUrl(navigation.currentUrl.peek())) {
+      return;
+    }
     isOpen.value = true;
   };
   const close = () => {

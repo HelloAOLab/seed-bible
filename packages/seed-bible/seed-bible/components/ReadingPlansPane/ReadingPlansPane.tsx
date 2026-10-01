@@ -13,6 +13,7 @@ import {
   type CalendarSummary,
   type ReadingPlan,
   type ReadingPlanMetadata,
+  latestReadingPlanProgress,
   type ReadingPlanProgress,
   type ReadingPlansManager,
 } from "../../managers/ReadingPlansManager";
@@ -94,18 +95,6 @@ const planLoadError = signal<string | null>(null);
 /** The plan currently being opened, so its card can show it's working. */
 const openingPlanId = signal<string | null>(null);
 
-/** The most recent progress the user has for a given plan id, if any. */
-function latestProgress(
-  progresses: ReadingPlanProgress[],
-  planId: string
-): ReadingPlanProgress | null {
-  return (
-    progresses
-      .filter((p) => p.planId === planId)
-      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
-  );
-}
-
 function copyReadingPlanShareUrl(
   readingPlans: ReadingPlansManager,
   plan: ReadingPlan,
@@ -136,7 +125,7 @@ async function openPlanDetail(
   } finally {
     openingPlanId.value = null;
   }
-  const progress = latestProgress(
+  const progress = latestReadingPlanProgress(
     readingPlans.userReadingPlanProgresses.value,
     planId
   );
@@ -455,7 +444,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     .filter((meta) => meta.status !== "draft")
     .map((meta) => {
       const planId = formatReadingPlanId(meta.recordName, meta.address);
-      const progress = latestProgress(progresses, planId);
+      const progress = latestReadingPlanProgress(progresses, planId);
       const full = fullById.get(planId) ?? null;
       let summary: CalendarSummary | null = null;
       let state: PlanRow["state"] = "notstarted";
