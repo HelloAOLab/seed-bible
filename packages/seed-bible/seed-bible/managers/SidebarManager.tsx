@@ -4,13 +4,10 @@ import type { ChatsManager } from "./ChatsManager";
 
 /**
  * Which settings subpage the SettingsPage should jump to on its next mount.
- * Used by the sidebar avatar button to deep-link into Account settings
- * without exporting the internal `SettingsView` type across packages.
  */
 export type RequestedSettingsView =
   | null
   | "main"
-  | "account"
   | "display-and-theme"
   | "display-and-theme-all-settings"
   | "toolbar"

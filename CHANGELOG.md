@@ -14,9 +14,13 @@
 
 ### 🔧 Changed
 
+- Replace "Account settings" in the Settings menu with "Profile", which opens your Profile screen — the same one the avatar button on desktop and the "You" tab on mobile open. Editing your name, picture, location and description, and signing out, all happen from there now. ([#1799](https://github.com/HelloAOLab/seed-bible/issues/1799))
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed
+
+- Remove the separate Account settings page, which duplicated the Profile and Edit profile screens. Its "Your ID is" row for copying your user ID went with it. ([#1799](https://github.com/HelloAOLab/seed-bible/issues/1799))
 
 ## v1.11.0 — 2026-09-28
 

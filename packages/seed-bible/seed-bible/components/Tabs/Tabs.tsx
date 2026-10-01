@@ -2556,7 +2556,6 @@ export function getSelfDisplayName(
 /**
  * Button at the bottom-right of the sidebar showing the current user's
  * avatar. Opens the Profile screen — the desktop entry point for it (#1554).
- * Account settings now hangs off Profile rather than being reached directly.
  */
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;

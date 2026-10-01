@@ -31,11 +31,6 @@ import {
 } from "../CustomizationEditPane/CustomizationEditPane";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { download, translateTitle } from "../../app/utils";
-import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
-import {
-  Skeleton,
-  SkeletonContainer,
-} from "../../components/Skeleton/Skeleton";
 import {
   ExtensionInitalizer,
   type ExtensionListEntry,
@@ -166,343 +161,6 @@ function SettingsHero(props: {
       {props.description && (
         <p className="sb-settings-hero-description">{props.description}</p>
       )}
-    </div>
-  );
-}
-
-/**
- * Placeholder shown while the user's profile is still being fetched. It mirrors
- * the real form's layout (avatar, three fields, the ID row and the save button)
- * with shimmering blocks, so on a slow connection the user can see the page is
- * still loading instead of a deceptively empty, editable form.
- */
-function AccountSettingsSkeleton() {
-  const { t } = useI18n();
-  return (
-    <SkeletonContainer
-      label={t("loading-profile", { defaultValue: "Loading your profile…" })}
-      className="sb-account-settings-layout"
-    >
-      <div className="sb-account-picture-row" aria-hidden="true">
-        <Skeleton shape="circle" width="3.875rem" height="3.875rem" />
-        <Skeleton shape="button" width="8.5rem" height="2.75rem" />
-      </div>
-
-      {[0, 1, 2].map((row) => (
-        <div key={row} className="sb-settings-field-row" aria-hidden="true">
-          <Skeleton shape="line" width="40%" />
-          <Skeleton
-            width="100%"
-            height={row === 1 ? "6.25rem" : "3rem"}
-            radius="0.625rem"
-          />
-        </div>
-      ))}
-
-      <div className="sb-settings-field-row" aria-hidden="true">
-        <Skeleton shape="line" width="40%" />
-        <Skeleton width="100%" height="3rem" radius="0.625rem" />
-      </div>
-
-      <div className="sb-settings-actions" aria-hidden="true">
-        <Skeleton width="100%" height="3.25rem" radius="0.375rem" />
-      </div>
-    </SkeletonContainer>
-  );
-}
-
-function AccountSettingsView(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { login } = state;
-  const { t } = useI18n();
-  const isLoggedIn = useComputed(() => login.userId.value !== null);
-  const profile = useComputed(
-    () => login.profile.value ?? login.cachedProfile.value
-  );
-  // `profile` above can be showing a cached value while `login.profile` (the
-  // network-confirmed one `updateProfile` actually writes against) is still
-  // null — Save must not let the user believe an edit was saved in that
-  // window.
-  const isProfileLoaded = useComputed(() => login.profile.value !== null);
-  // Show the loading skeleton only while a fetch is in flight *and* we have
-  // no profile (cached or confirmed) to display yet. If we already hold a
-  // profile — from the localStorage cache, or a background re-fetch — keep
-  // showing the real form rather than flashing a skeleton over data the user
-  // can already read and edit.
-  const isProfileLoading = useComputed(
-    () => login.isProfileLoading.value && profile.value === null
-  );
-
-  const newName = useSignal<string | null>(null);
-  const name = useComputed(() => newName.value ?? profile.value?.name ?? "");
-  const newLocation = useSignal<string | null>(null);
-  const location = useComputed(
-    () => newLocation.value ?? profile.value?.location ?? ""
-  );
-  const newDescription = useSignal<string | null>(null);
-  const description = useComputed(
-    () => newDescription.value ?? profile.value?.description ?? ""
-  );
-  const pictureUrl = useComputed(() => profile.value?.pictureUrl ?? "");
-  const isUploadingPicture = useSignal(false);
-  const isSaving = useComputed(() => login.isSavingProfile.value);
-  const uidCopied = useSignal(false);
-
-  const handleSave = () => {
-    if (!isProfileLoaded.value) {
-      // `updateProfile` would silently no-op here (profile not confirmed
-      // yet) — refuse instead of clearing the user's in-progress edits below.
-      return;
-    }
-    login.updateProfile({
-      name: name.value,
-      location: location.value || null,
-      description: description.value || null,
-      pictureUrl: pictureUrl.value || null,
-    });
-    newName.value = null;
-    newLocation.value = null;
-    newDescription.value = null;
-  };
-
-  const handleUploadPicture = () => {
-    openProfilePictureModal({
-      modals: state.modals,
-      login,
-      t,
-      onUploadingChange: (uploading) => {
-        isUploadingPicture.value = uploading;
-      },
-    });
-  };
-
-  const handleCopyUserId = async () => {
-    const id = login.userId.value;
-    if (!id) {
-      return;
-    }
-
-    try {
-      navigator.clipboard.writeText(id);
-      uidCopied.value = true;
-      setTimeout(() => {
-        uidCopied.value = false;
-      }, 1200);
-    } catch (error) {
-      console.error("Failed to copy user ID.", error);
-    }
-  };
-
-  return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs
-        onBack={() => (state.sidebar.requestedSettingsView.value = "main")}
-        trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
-          t("account-settings", { defaultValue: "Account settings" }),
-        ]}
-      />
-      <section className="sb-settings-section">
-        {isLoggedIn.value && isProfileLoading.value ? (
-          <AccountSettingsSkeleton />
-        ) : isLoggedIn.value ? (
-          <div className="sb-account-settings-layout">
-            <p className="sb-account-settings-intro">
-              {t("account-settings-intro", {
-                defaultValue: "Manage your profile information here",
-              })}
-            </p>
-
-            <div className="sb-account-picture-row">
-              {pictureUrl.value ? (
-                <img
-                  className="sb-account-picture-preview"
-                  src={pictureUrl.value}
-                  alt={t("profile-picture", {
-                    defaultValue: "Profile picture",
-                  })}
-                />
-              ) : (
-                <div
-                  className="sb-account-picture-placeholder"
-                  aria-hidden="true"
-                >
-                  <span className="material-symbols-outlined">person</span>
-                </div>
-              )}
-              <button
-                className="sb-account-picture-button"
-                onClick={() => void handleUploadPicture()}
-                disabled={isUploadingPicture.value}
-              >
-                {isUploadingPicture.value
-                  ? t("uploading", { defaultValue: "Uploading..." })
-                  : t("update-picture", { defaultValue: "Update picture" })}
-              </button>
-            </div>
-
-            <div className="sb-settings-field-row">
-              <label
-                className="sb-settings-field-label"
-                htmlFor="sb-profile-name"
-              >
-                {t("profile-name", { defaultValue: "Profile name" })}
-              </label>
-              <input
-                id="sb-profile-name"
-                className="sb-settings-text-input sb-account-text-input"
-                type="text"
-                value={name.value}
-                onInput={(event: Event) => {
-                  newName.value = (
-                    event.currentTarget as HTMLInputElement
-                  ).value;
-                }}
-                placeholder={t("profile-name-placeholder", {
-                  defaultValue: "e.g Craig family",
-                })}
-              />
-              <p className="sb-account-field-helper">
-                {t("profile-name-helper", {
-                  defaultValue: "You can change this later",
-                })}
-              </p>
-            </div>
-            <div className="sb-settings-field-row">
-              <label
-                className="sb-settings-field-label"
-                htmlFor="sb-profile-description"
-              >
-                {t("description", { defaultValue: "Description" })}{" "}
-                <span className="sb-account-label-optional">
-                  {t("optional", { defaultValue: "(Optional)" })}
-                </span>
-              </label>
-              <textarea
-                id="sb-profile-description"
-                className="sb-settings-text-input sb-settings-textarea sb-account-textarea"
-                value={description.value ?? ""}
-                maxLength={300}
-                onInput={(event: Event) => {
-                  newDescription.value = (
-                    event.currentTarget as HTMLTextAreaElement
-                  ).value;
-                }}
-                placeholder={t("description-placeholder", {
-                  defaultValue: "Enter your profile description...",
-                })}
-              />
-            </div>
-            <div className="sb-settings-field-row">
-              <label
-                className="sb-settings-field-label"
-                htmlFor="sb-profile-location"
-              >
-                {t("location", { defaultValue: "Location" })}{" "}
-                <span className="sb-account-label-optional">
-                  {t("optional", { defaultValue: "(Optional)" })}
-                </span>
-              </label>
-              <input
-                id="sb-profile-location"
-                className="sb-settings-text-input sb-account-text-input"
-                type="text"
-                value={location.value ?? ""}
-                onInput={(event: Event) => {
-                  newLocation.value = (
-                    event.currentTarget as HTMLInputElement
-                  ).value;
-                }}
-                placeholder={t("location-placeholder", {
-                  defaultValue: "e.g Austin,TX",
-                })}
-              />
-            </div>
-
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                {t("your-id-is", { defaultValue: "Your ID is:" })}
-              </label>
-              <div className="sb-account-uid-row">
-                <span
-                  className="sb-account-uid-value"
-                  title={login.userId.value ?? ""}
-                >
-                  {login.userId.value}
-                </span>
-                <button
-                  type="button"
-                  className="sb-account-copy-uid-button"
-                  onClick={() => void handleCopyUserId()}
-                  aria-label={t("copy-user-id", {
-                    defaultValue: "Copy user ID",
-                  })}
-                  title={
-                    uidCopied.value
-                      ? t("copied", { defaultValue: "Copied" })
-                      : t("copy", { defaultValue: "Copy" })
-                  }
-                >
-                  <span className="material-symbols-outlined">
-                    {uidCopied.value ? "check" : "content_copy"}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <div className="sb-settings-actions">
-              <button
-                className="sb-settings-save-button sb-account-save-button"
-                onClick={handleSave}
-                disabled={!isProfileLoaded.value || isSaving.value}
-                aria-busy={isSaving.value}
-              >
-                {!isProfileLoaded.value ? (
-                  t("loading-profile", {
-                    defaultValue: "Loading your profile…",
-                  })
-                ) : isSaving.value ? (
-                  <span className="sb-account-save-saving">
-                    <span
-                      className="material-symbols-outlined sb-account-save-spinner"
-                      aria-hidden="true"
-                    >
-                      progress_activity
-                    </span>
-                    {t("saving", { defaultValue: "Saving…" })}
-                  </span>
-                ) : (
-                  t("save-changes", { defaultValue: "Save changes" })
-                )}
-              </button>
-            </div>
-
-            <div className="sb-account-signout-section">
-              <button
-                className="sb-account-signout-button"
-                onClick={() => void login.logout()}
-              >
-                <span className="material-symbols-outlined">logout</span>
-                {t("sign-out", { defaultValue: "Sign out" })}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="sb-settings-login-prompt">
-            <p>
-              {t("login-required-message", {
-                defaultValue: "Please log in to view and edit your profile.",
-              })}
-            </p>
-            <button
-              className="sb-settings-action-button"
-              onClick={() => void login.login()}
-            >
-              {t("log-in", { defaultValue: "Log in" })}
-            </button>
-          </div>
-        )}
-      </section>
     </div>
   );
 }
@@ -2547,6 +2205,13 @@ function SettingsMainView(props: { state: SeedBibleState }) {
     state.sidebar.requestedSettingsView.value = view;
   };
 
+  // Settings is a full-screen drawer on mobile, so it has to close for the
+  // Profile screen underneath to be seen.
+  const openProfile = () => {
+    state.sidebar.closeSettings();
+    state.openProfile();
+  };
+
   return (
     <div className="sb-settings-page">
       <section className="sb-settings-section">
@@ -2555,15 +2220,12 @@ function SettingsMainView(props: { state: SeedBibleState }) {
         </h2> */}
         <ul className="sb-settings-list">
           <li>
-            <button
-              className="sb-settings-nav-item"
-              onClick={() => onNavigate("account")}
-            >
+            <button className="sb-settings-nav-item" onClick={openProfile}>
               <span className="sb-settings-nav-icon">
                 <MaterialIcon>person</MaterialIcon>
               </span>
               <span className="sb-settings-nav-label">
-                {t("account-settings", { defaultValue: "Account settings" })}
+                {t("profile", { defaultValue: "Profile" })}
               </span>
               <span className="material-symbols-outlined rtl-mirror">
                 chevron_right
@@ -2756,14 +2418,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
 
 export function SettingsPage(props: { state: SeedBibleState }) {
   const { state } = props;
-  // Honor a deep-link requested by the sidebar (e.g. clicking the
-  // bottom-right avatar opens Account settings directly). Consumed once and
-  // cleared so subsequent opens start at the main list.
   const currentView = state.sidebar.requestedSettingsView;
-
-  if (currentView.value === "account") {
-    return <AccountSettingsView state={state} />;
-  }
 
   if (currentView.value === "display-and-theme") {
     return <DisplayAndThemeSettingsView state={state} />;

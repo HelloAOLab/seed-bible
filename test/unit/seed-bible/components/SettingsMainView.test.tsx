@@ -28,6 +28,7 @@ function createMockState(userId: string | null): SeedBibleState {
       requestedSettingsView: signal<string>("main"),
       closeSettings: vi.fn(),
     },
+    openProfile: vi.fn(),
     login: {
       userId: signal<string | null>(userId),
     },
@@ -78,5 +79,25 @@ describe("SettingsMainView", () => {
     renderMain("user-1");
 
     expect(navLabels()).toContain("Customize");
+  });
+
+  it("opens the Profile screen and closes settings from the Profile nav item", () => {
+    const state = renderMain("user-1");
+
+    const profileItem = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-settings-nav-item")
+    ).find(
+      (el) =>
+        el.querySelector(".sb-settings-nav-label")?.textContent === "Profile"
+    );
+    expect(profileItem).toBeDefined();
+    expect(navLabels()).not.toContain("Account settings");
+
+    act(() => {
+      profileItem!.click();
+    });
+
+    expect(state.openProfile).toHaveBeenCalledTimes(1);
+    expect(state.sidebar.closeSettings).toHaveBeenCalledTimes(1);
   });
 });
