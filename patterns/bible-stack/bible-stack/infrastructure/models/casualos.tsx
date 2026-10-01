@@ -95,6 +95,7 @@ export interface PieceBotTags<T extends BiblePiece = BiblePiece> {
   formAddress?: string;
   strokeWidth?: number;
   formDepthTest?: boolean;
+  formDepthWrite?: boolean;
   scale?: number;
   scaleX?: number;
   scaleY?: number;
@@ -141,3 +142,29 @@ export interface BotListenerParametersMap<B extends PieceBot> {
   onPointerExit: { bot: Bot; dimension: string };
   onPointerUp: { bot: Bot; dimension: string };
 }
+
+export interface UserPresenceChangedMessage {
+  type?: "OnUserPresenceChanged";
+  presence?: unknown;
+}
+
+export interface UserIdentityChangedMessage {
+  type?: "OnUserIdentityChanged";
+  identity?: unknown;
+}
+
+export type Message = UserPresenceChangedMessage | UserIdentityChangedMessage;
+
+export interface ReadyMessage {
+  type: "ready";
+}
+
+export interface ReaderNavigationMessage {
+  type: "reader-navigation";
+  data: {
+    bookId: string;
+    chapter?: number;
+  };
+}
+
+export type PatternMessage = ReadyMessage | ReaderNavigationMessage;

@@ -1,4 +1,5 @@
-node_modules
+# Also covers backups such as node_modules.bak-root left behind by a root-owned install.
+node_modules*/
 dist
 pattern-dist
 /base-branch

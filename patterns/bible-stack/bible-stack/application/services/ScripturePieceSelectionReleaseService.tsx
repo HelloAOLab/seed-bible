@@ -1,41 +1,39 @@
 import { BibleStates, type Piece } from "../../domain/models/canvas";
-import type {
-  PieceAdapterPort,
-  ScripturePieceSelectionReleaseDataRepositoryPort,
-} from "../ports/scripturePieceSelectionRelease";
-import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type {
-  TestamentSelectionReleaseServicePort,
-  SectionSelectionReleaseServicePort,
-  ChapterSelectionReleaseServicePort,
-} from "../ports/in/ScripturePieceSelectionRelease";
+import type { ScripturePieceSelectionReleaseServicePort } from "../ports/in/ScripturePieceSelectionRelease";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { PiecePort } from "../ports/out/Piece";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
-  pieceAdapterPort: PieceAdapterPort;
-  pieceDataRepositoryPort: ScripturePieceSelectionReleaseDataRepositoryPort;
+  pieceAdapterPort: PiecePort;
+  pieceDataRepositoryPort: PieceDataRepositoryPort;
   sequenceStateServicePort: SequenceStateServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
+  loggerPort: LoggerPort;
 }
 
 // prettier-ignore
-export class ScripturePieceSelectionReleaseService implements TestamentSelectionReleaseServicePort, SectionSelectionReleaseServicePort, ChapterSelectionReleaseServicePort {
+export class ScripturePieceSelectionReleaseService implements ScripturePieceSelectionReleaseServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
+  #loggerPort: ServiceParams['loggerPort']
 
   constructor({
     pieceAdapterPort,
     pieceDataRepositoryPort,
     sequenceStateServicePort,
     pieceHierarchyServicePort,
+    loggerPort
   }: ServiceParams) {
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
+    this.#loggerPort = loggerPort;
   }
 
   handlePieceSelectionRelease(
@@ -51,17 +49,18 @@ export class ScripturePieceSelectionReleaseService implements TestamentSelection
     const pieceData = this.#pieceDataRepositoryPort.getPieceData(piece);
 
     if (!pieceData) {
-      throw new Error(
+      this.#loggerPort.error(
         "ScripturePieceSelectionReleaseService: pieceData not found at handlePieceSelectionRelease."
       );
+      return;
     }
 
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      pieceData.parentDataIds as StackParentDataIds
+      pieceData.parentDataIds ?? {}
     );
 
     if (
-      bibleData?.currentState !== BibleStates.Open ||
+      (bibleData && bibleData.currentState !== BibleStates.Open) ||
       this.#pieceAdapterPort.isPieceAnchored(piece)
     )
       return;

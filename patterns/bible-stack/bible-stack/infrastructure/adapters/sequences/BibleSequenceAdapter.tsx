@@ -1,15 +1,4 @@
 import type { StackBibleData } from "../../../domain/entities/StackBibleData";
-import type { BibleSequenceAdapterPort } from "../../../application/ports/bibleLifecycle";
-// import type {
-//   BibleSequenceAdapterConfigProviderPort,
-//   PieceMapperPort,
-//   PieceAdapterPort,
-//   SectionInfoMapperPort,
-// } from "bibleStack.infrastructure.ports.bibleSequence";
-// import type {
-//   DimensionProviderPort,
-//   VisualStateRegistryPort,
-// } from "bibleStack.infrastructure.ports.bibleSetup";
 import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
 import type { StackLowerCoverMapper } from "../../mappers/StackLowerCoverMapper";
 import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
@@ -42,6 +31,17 @@ import type { SectionInfoMapper } from "../../mappers/SectionInfoMapper";
 import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
 import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvider";
 import type { PieceBotTags } from "../../models/casualos";
+import type { BibleSequencePort } from "../../../application/ports/out/BibleSequence";
+// import type {
+//   BibleSequenceAdapterConfigProviderPort,
+//   PieceMapperPort,
+//   PieceAdapterPort,
+//   SectionInfoMapperPort,
+// } from "bibleStack.infrastructure.ports.bibleSequence";
+// import type {
+//   DimensionProviderPort,
+//   VisualStateRegistryPort,
+// } from "bibleStack.infrastructure.ports.bibleSetup";
 
 interface BibleSequenceAdapterParams {
   configProviderPort: SequenceConfigProvider;
@@ -64,7 +64,7 @@ interface BibleSequenceAdapterParams {
   piecesConigProvider: PiecesConfigProvider;
 }
 
-export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
+export class BibleSequenceAdapter implements BibleSequencePort {
   #configProviderPort: BibleSequenceAdapterParams["configProviderPort"];
   #dimensionProviderPort: BibleSequenceAdapterParams["dimensionProviderPort"];
   #visualStateRegistryPort: BibleSequenceAdapterParams["visualStateRegistryPort"];

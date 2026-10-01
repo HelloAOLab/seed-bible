@@ -516,6 +516,8 @@ describe("createSeedBibleState", () => {
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
       onFeatureFlags: vi.fn(),
+      register_for_session: vi.fn(),
+      unregister_for_session: vi.fn(),
     };
 
     try {
@@ -576,6 +578,8 @@ describe("createSeedBibleState", () => {
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
       onFeatureFlags: vi.fn(),
+      register_for_session: vi.fn(),
+      unregister_for_session: vi.fn(),
     };
 
     try {
@@ -1658,6 +1662,8 @@ describe("createSeedBibleState", () => {
       (globalThis as any).posthog = {
         capture: mockPosthogCapture,
         onFeatureFlags: vi.fn(),
+        register_for_session: vi.fn(),
+        unregister_for_session: vi.fn(),
       };
     });
 

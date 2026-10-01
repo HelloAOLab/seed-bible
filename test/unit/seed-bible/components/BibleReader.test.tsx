@@ -326,8 +326,11 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     selector: selectorState,
     app: {
       isMobile: signal(true),
+      isMinimalEmbed: signal(false),
+      isCompactReader: signal(true),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
+      isDiscoverOpen: signal(false),
       openDiscover: vi.fn(),
       toast: vi.fn(),
     },
@@ -2482,7 +2485,11 @@ describe("BibleReader", () => {
     const state = createMobileState();
     return {
       ...state,
-      app: { ...state.app, isMobile: signal(isMobile) },
+      app: {
+        ...state.app,
+        isMobile: signal(isMobile),
+        isCompactReader: signal(isMobile),
+      },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
       },
@@ -2835,7 +2842,11 @@ describe("BibleReader", () => {
       const state = createMobileState();
       return {
         ...state,
-        app: { ...state.app, isMobile: signal(isMobile) },
+        app: {
+          ...state.app,
+          isMobile: signal(isMobile),
+          isCompactReader: signal(isMobile),
+        },
         annotations: {
           getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
         },
@@ -4051,6 +4062,7 @@ describe("BibleReader", () => {
     const state = {
       app: {
         isMobile: signal(false),
+        isDiscoverOpen: signal(false),
         openVerseReference,
       },
       tools: createBibleToolsManager(testBranding),
@@ -4218,7 +4230,11 @@ describe("BibleReader", () => {
         const base = createMobileState();
         renderHeader({
           ...base,
-          app: { ...base.app, isMobile: signal(isMobile) },
+          app: {
+            ...base.app,
+            isMobile: signal(isMobile),
+            isCompactReader: signal(isMobile),
+          },
         } as any as SeedBibleState);
 
         const cluster = container.querySelector(clusterSelector);
@@ -4601,6 +4617,77 @@ describe("BibleReader", () => {
     );
   });
 
+  it("opens the book selector when the mobile content title is tapped", () => {
+    const { slot, selectorState, readingState, chapterData, setOpen } =
+      createFixture();
+    const state = createMobileState(selectorState);
+    selectorState.selectingTranslation.value = true;
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const title = container.querySelector(
+      ".sb-reader-swipe-panel-current .sb-bible-reader-mobile-content-title"
+    );
+    expect(title).not.toBeNull();
+
+    act(() => {
+      title?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
+    expect(selectorState.selectingTranslation.value).toBe(false);
+  });
+
+  it("makes only the current chapter title tappable on mobile", async () => {
+    const { slot, selectorState, readingState, chapterData, setOpen } =
+      createFixture();
+    const state = createMobileState(selectorState);
+
+    const current = chapterData.value!;
+    chapterData.value = {
+      ...current,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+    };
+    vi.mocked(readingState.getAdjacentChapter).mockImplementation(
+      async (direction) => ({
+        ...current,
+        chapter: { ...current.chapter, number: direction === "next" ? 2 : 0 },
+      })
+    );
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const sideTitles = container.querySelectorAll(
+      ".sb-reader-swipe-panel-side .sb-bible-reader-mobile-content-title"
+    );
+    expect(sideTitles).toHaveLength(2);
+
+    act(() => {
+      sideTitles.forEach((title) =>
+        title.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      );
+    });
+    expect(setOpen).not.toHaveBeenCalled();
+
+    const tappable = container.querySelectorAll(
+      ".sb-bible-reader-mobile-content-title-tappable"
+    );
+    expect(tappable).toHaveLength(1);
+    expect(
+      tappable[0]?.closest(".sb-reader-swipe-panel-current")
+    ).not.toBeNull();
+  });
+
   it("swiping left on mobile loads the next chapter", async () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
@@ -4685,5 +4772,101 @@ describe("BibleReader", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("BibleReader — compact embed header", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function createEmbedState(): SeedBibleState {
+    const base = createMobileState();
+    return {
+      ...base,
+      app: {
+        ...base.app,
+        isMinimalEmbed: signal(true),
+        isCompactReader: signal(true),
+      },
+      navigation: {
+        currentUrl: signal(
+          new URL("http://localhost:3000/en/BSB/genesis/1?embed=true&verse=2")
+        ),
+      },
+    } as any as SeedBibleState;
+  }
+
+  function renderEmbedHeader(state: SeedBibleState) {
+    const { slot, selectorState, readingState } = createFixture();
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+  }
+
+  it("shows only the translation chip, open-in-new-tab, and settings", () => {
+    renderEmbedHeader(createEmbedState());
+
+    expect(
+      container.querySelector(
+        "button.sb-bible-reader-mobile-header-translation"
+      )
+    ).not.toBeNull();
+    expect(
+      container.querySelector(".sb-bible-reader-mobile-header-open-tab")
+    ).not.toBeNull();
+    expect(
+      container.querySelector(".sb-bible-reader-mobile-header-settings")
+    ).not.toBeNull();
+    expect(
+      container.querySelector(".sb-bible-reader-mobile-header-close")
+    ).toBeNull();
+
+    expect(container.querySelector(".sb-bible-reader-save-button")).toBeNull();
+    expect(
+      container.querySelector(".sb-bible-reader-mobile-header-notes")
+    ).toBeNull();
+    expect(
+      container.querySelector(".sb-bible-reader-mobile-header-book")
+    ).toBeNull();
+    expect(
+      container.querySelector(".sb-quick-toolbar-mobile-header")
+    ).toBeNull();
+  });
+
+  it("opens the current chapter in a new tab without the embed param", () => {
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+    renderEmbedHeader(createEmbedState());
+
+    const button = container.querySelector<HTMLButtonElement>(
+      ".sb-bible-reader-mobile-header-open-tab"
+    );
+    expect(button).not.toBeNull();
+    act(() => button!.click());
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const opened = openSpy.mock.calls[0]![0] as string;
+    const openedUrl = new URL(opened);
+    expect(openedUrl.searchParams.has("embed")).toBe(false);
+    expect(openedUrl.pathname).toBe("/en/BSB/genesis/1");
+    expect(openedUrl.searchParams.get("verse")).toBe("2");
+    expect(openSpy.mock.calls[0]![1]).toBe("_blank");
+    openSpy.mockRestore();
   });
 });

@@ -10,4 +10,5 @@ export interface SectionSelectionServicePort {
     makeTourGuide?: boolean;
   }) => Promise<void>;
   deselect: (data: StackSectionData) => Promise<void>;
+  hasSectionEverBeenSelected(name: string): boolean;
 }

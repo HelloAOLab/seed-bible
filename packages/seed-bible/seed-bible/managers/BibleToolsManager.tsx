@@ -98,6 +98,12 @@ export interface BibleTool<TContext> {
   title: TranslatableTitle;
   /** Icon renderer for the given tool context. */
   icon: BibleToolIcon<TContext>;
+  /**
+   * Whether this tool stays available in a partner-site embed
+   * (`?embed=minimal` or `?embed=true`). Defaults to false, so a tool is
+   * hidden there unless it opts in.
+   */
+  showInEmbedded?: boolean;
 }
 
 /**
@@ -492,7 +498,7 @@ function validateToolActions(
   }
 }
 
-function resolveToolItems<TContext>(
+function resolveToolItems<TContext extends object>(
   getItems:
     | ((context: TContext) => ManagedBibleToolItem<TContext>[])
     | undefined,
@@ -519,7 +525,11 @@ function resolveToolItems<TContext>(
         title: item.title,
         icon: () => item.icon(context),
         disabled: resolveToolPredicate(item.isDisabled, context, false),
-        visible: resolveToolPredicate(item.isVisible, context, true),
+        visible: resolveToolVisibility(
+          item.showInEmbedded,
+          item.isVisible,
+          context
+        ),
         onSelect: () => item.onSelect?.(context),
       };
     });
@@ -541,6 +551,38 @@ function resolveToolPredicate<TContext>(
   }
 
   return result;
+}
+
+/**
+ * Whether the tool context is a compact partner-site embed. Contexts that
+ * don't carry app state are treated as the full app, so a surface that never
+ * forwards `app` keeps its current tools.
+ */
+function contextIsEmbedded(context: object): boolean {
+  const app = (
+    context as {
+      app?: { isMinimalEmbed?: { readonly value: boolean } };
+    }
+  ).app;
+  return app?.isMinimalEmbed?.value === true;
+}
+
+/**
+ * Visibility for a tool, with the embed allow-list applied.
+ *
+ * `showInEmbedded` defaults to false: in an embed the tool is hidden unless
+ * it opts in. Outside an embed the predicate is unchanged.
+ */
+function resolveToolVisibility<TContext extends object>(
+  showInEmbedded: boolean | undefined,
+  predicate: ToolPredicate<TContext> | undefined,
+  context: TContext
+): ReadonlySignal<boolean> {
+  const base = resolveToolPredicate(predicate, context, true);
+  if (showInEmbedded) {
+    return base;
+  }
+  return computed(() => !contextIsEmbedded(context) && base.value);
 }
 
 /**
@@ -870,7 +912,7 @@ function getDefaultQuickToolbarTools(
         </MaterialIcon>
       ),
       isVisible: (c) => {
-        if (c.app?.isMobile?.value) {
+        if (c.app?.isMobile?.value || c.app?.isDiscoverOpen?.value) {
           return false;
         }
         if (hasAnyDiscoverResults(c.readingState)) {
@@ -1046,6 +1088,7 @@ function getDefaultToolbarTools(
     {
       id: "previous-chapter",
       priority: 0,
+      showInEmbedded: true,
       hideLabel: true,
       title: { key: "previous-chapter", defaultValue: "Previous Chapter" },
       icon: (context) =>
@@ -1104,6 +1147,7 @@ function getDefaultToolbarTools(
     {
       id: "open-selector",
       priority: 100,
+      showInEmbedded: true,
       title: { key: "books", defaultValue: "Books" },
       icon: OpenSelectorIcon,
       onSelect: (context) => {
@@ -1185,6 +1229,7 @@ function getDefaultToolbarTools(
     {
       id: "next-chapter",
       priority: 1000,
+      showInEmbedded: true,
       hideLabel: true,
       title: { key: "next-chapter", defaultValue: "Next Chapter" },
       icon: (context) =>
@@ -1380,6 +1425,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
     {
       id: "copy-verse",
       priority: 200,
+      showInEmbedded: true,
       title: { key: "copy-verse", defaultValue: "Copy" },
       icon: CopyVerseIcon,
       isVisible: (context) =>
@@ -1400,6 +1446,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
     {
       id: "share-verse",
       priority: 300,
+      showInEmbedded: true,
       title: { key: "share-verse", defaultValue: "Share" },
       icon: ShareVerseIcon,
       isVisible: (context) =>
@@ -1733,7 +1780,11 @@ export function createBibleToolsManager(
       title: tool.title,
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
-      visible: resolveToolPredicate(tool.isVisible, context, true),
+      visible: resolveToolVisibility(
+        tool.showInEmbedded,
+        tool.isVisible,
+        context
+      ),
       href: resolveToolHref(tool.getHref, context),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
@@ -1776,7 +1827,11 @@ export function createBibleToolsManager(
       title: tool.title,
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
-      visible: resolveToolPredicate(tool.isVisible, context, true),
+      visible: resolveToolVisibility(
+        tool.showInEmbedded,
+        tool.isVisible,
+        context
+      ),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
     }));
@@ -1812,7 +1867,11 @@ export function createBibleToolsManager(
       title: tool.title,
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
-      visible: resolveToolPredicate(tool.isVisible, context, true),
+      visible: resolveToolVisibility(
+        tool.showInEmbedded,
+        tool.isVisible,
+        context
+      ),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
     }));
@@ -1847,7 +1906,11 @@ export function createBibleToolsManager(
       title: tool.title,
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
-      visible: resolveToolPredicate(tool.isVisible, context, true),
+      visible: resolveToolVisibility(
+        tool.showInEmbedded,
+        tool.isVisible,
+        context
+      ),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
     }));
@@ -1876,7 +1939,11 @@ export function createBibleToolsManager(
       title: tool.title,
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
-      visible: resolveToolPredicate(tool.isVisible, context, true),
+      visible: resolveToolVisibility(
+        tool.showInEmbedded,
+        tool.isVisible,
+        context
+      ),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
       className: tool.className,

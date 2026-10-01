@@ -10,6 +10,8 @@
 - Edit your profile from the profile screen. The pencil in the corner of the profile card — or tapping your name — opens an Edit profile screen with your name, location and description. Your email address, location and description now show on the profile screen itself. ([#1552](https://github.com/HelloAOLab/seed-bible/issues/1552))
 - Accept period-separated scripture references when adding entries to a playlist or reading plan, so "Gen 1.1", "Gen.1.1", "Gen.1" and "Gen. 1:1" resolve the same as "Gen 1:1", and a trailing abbreviation period ("Gen.") keeps offering suggestions. Chat, annotations and the editor already understood these forms. ([#1773](https://github.com/HelloAOLab/seed-bible/pull/1773))
 - See where everyone else is reading in a shared session. Each other participant gets a slim coloured bar beside the text spanning the verses on their screen, with their avatar at the top of it, so you can tell at a glance whether they are with you or still a few verses back. The bars glide along as people move, and people on the same verses stand side by side in a gutter that stays the same width, so the scripture never shifts as they come and go. Scroll past the start of someone's bar and their avatar stays with you at the top of the screen for as long as their verses do; small arrows show when a bar carries on above or below the screen, and a crowd on the same verses collapses into a short avatar stack. Someone who switches to another tab keeps their place in the session but their bar disappears until they come back. Before this, the only clue was watching their highlights appear. ([#1692](https://github.com/HelloAOLab/seed-bible/issues/1692))
+- Link someone straight into a tutorial with `?tutorial=<id>`, optionally at a given step with `&tutorialStep=<n>`. The main tour's ID is `introduction`; all IDs are listed in `docs/tutorial-links.md`. The address now tracks the tutorial's current step, so refreshing mid-tutorial picks up where you left off instead of losing it. ([#1808](https://github.com/HelloAOLab/seed-bible/issues/1808))
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
@@ -28,6 +30,8 @@
   - People on the same verses appear side by side, and a crowd collapses into an avatar stack.
   - A person's bar is hidden while they're in another tab.
 - Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
+- Show a compact reader when Seed Bible is embedded on another site with `?embed=minimal` or `?embed=true`: translation, open in a new tab, quick settings, and chapter navigation, without the Today screen or the bottom tab bar. ([#1843](https://github.com/HelloAOLab/seed-bible/pull/1843))
+  - Quick settings keep scripture and UI size, but hide "Go to all settings".
 - Show the people, places and events a chapter mentions in the Discover panel, from the Theographic Bible Metadata dataset. ([#1839](https://github.com/HelloAOLab/seed-bible/pull/1839))
   - Pick the new People, Places or Events filter to list them with the verses they appear in; select a verse to narrow the list.
   - Open an entry to see its facts, its dictionary entry and the verses that mention it. Places also show a map.

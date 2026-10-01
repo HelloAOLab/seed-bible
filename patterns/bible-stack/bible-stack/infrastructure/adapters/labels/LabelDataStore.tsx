@@ -1,14 +1,12 @@
 import { InfoLabelData } from "../../../domain/entities/InfoLabelData";
-import type { LabelDataStorePort as SectionSelectionDataStorePort } from "../../../application/ports/out/SectionSelection";
-import type { LabelDataStorePort as PieceActivityDataStorePort } from "../../../application/ports/out/PieceActivity";
-import type { LabelDataRepositoryPort } from "../../../application/ports/out/LabelInteraction";
+import type { LabelDataStorePort } from "../../../application/ports/out/LabelDataStore";
 
 interface LabelDataStoreProps {
   labelDataSet?: Set<InfoLabelData>;
 }
 
 // prettier-ignore
-export class LabelDataStore implements SectionSelectionDataStorePort, PieceActivityDataStorePort, LabelDataRepositoryPort {
+export class LabelDataStore implements LabelDataStorePort {
   #labelDataSet: NonNullable<LabelDataStoreProps["labelDataSet"]>;
 
   constructor({ labelDataSet = new Set() }: LabelDataStoreProps) {

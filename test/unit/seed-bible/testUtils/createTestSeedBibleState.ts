@@ -63,6 +63,12 @@ export interface CreateTestSeedBibleStateOptions {
    */
   chatFirst?: boolean | string;
   /**
+   * Compact partner-site embed via `?embed=minimal` / `?embed=true`. Applied
+   * through the real URL param before the state is built, same as chat-first.
+   * Pass a string to set a non-canonical value for edge-case tests.
+   */
+  embed?: boolean | string;
+  /**
    * Desktop sidebar rail preference seeded before hydration.
    *
    * The app collapses the rail for a new visitor who has no saved choice.
@@ -281,6 +287,22 @@ export async function createTestSeedBibleState(
       url.searchParams.set(
         "chatFirst",
         options.chatFirst === true ? "true" : options.chatFirst
+      );
+    }
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }
+
+  // Same boot-latch pattern for compact embed: `isMinimalEmbed` is read from
+  // the URL at construction, so the param has to be on the URL before the
+  // state is built.
+  if (typeof window !== "undefined" && options.embed !== undefined) {
+    const url = new URL(window.location.href);
+    if (options.embed === false) {
+      url.searchParams.delete("embed");
+    } else {
+      url.searchParams.set(
+        "embed",
+        options.embed === true ? "true" : options.embed
       );
     }
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
