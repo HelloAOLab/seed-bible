@@ -7,10 +7,15 @@
   min-height: 8rem;
 }
 
+/* Matches the info banner in `AnnotationOverrideBanner.css` so it reads as a
+   notice about the form, not as text inside the textarea below it. */
 .sb-annotation-editor-offline-notice {
-  margin: 0 0 6px;
-  font-size: 0.85em;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
+  font-size: 0.8125rem;
 }
 
 .sb-annotation-editor-textarea {

@@ -154,6 +154,19 @@ describe("CreateAnnotationForm when the rich text editor can't load", () => {
     expect(saveButton.disabled).toBe(true);
   });
 
+  it("shows the notice as a banner outside the text box, not inside it", async () => {
+    const { textarea } = await renderForm(createAnnotation());
+    const notice = container.querySelector(
+      ".sb-annotation-editor-offline-notice"
+    )!;
+
+    expect(notice.closest(".sb-annotation-editor")).toBeNull();
+    expect(
+      notice.compareDocumentPosition(textarea) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   it("saves typed text as escaped paragraphs", async () => {
     const { annotations, saveEditingAnnotation, toast, textarea, saveButton } =
       await renderForm(createAnnotation());

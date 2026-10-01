@@ -89,37 +89,39 @@ export function PlainTextAnnotationEditor(props: AnnotationEditorProps) {
   }, []);
 
   return (
-    <div className={className}>
+    <>
       <p className="sb-annotation-editor-offline-notice" role="status">
         {t("annotation-editor-unavailable", {
           defaultValue:
             "The formatting editor couldn't load, so this note will be saved as plain text.",
         })}
       </p>
-      <textarea
-        ref={textareaRef}
-        className="sb-annotation-editor-textarea"
-        rows={6}
-        value={value}
-        aria-label={t("annotation-text", { defaultValue: "Annotation text" })}
-        onInput={(event) => {
-          const next = event.currentTarget.value;
-          const wasEmpty = valueRef.current.trim() === "";
-          const isEmpty = next.trim() === "";
-          valueRef.current = next;
-          setValue(next);
-          if (wasEmpty !== isEmpty) {
-            onEmptyChangeRef.current(isEmpty);
-          }
-        }}
-        onKeyDown={(event) => {
-          const mod = isApplePlatform() ? event.metaKey : event.ctrlKey;
-          if (event.key === "Enter" && mod && onModEnter) {
-            event.preventDefault();
-            onModEnter();
-          }
-        }}
-      />
-    </div>
+      <div className={className}>
+        <textarea
+          ref={textareaRef}
+          className="sb-annotation-editor-textarea"
+          rows={6}
+          value={value}
+          aria-label={t("annotation-text", { defaultValue: "Annotation text" })}
+          onInput={(event) => {
+            const next = event.currentTarget.value;
+            const wasEmpty = valueRef.current.trim() === "";
+            const isEmpty = next.trim() === "";
+            valueRef.current = next;
+            setValue(next);
+            if (wasEmpty !== isEmpty) {
+              onEmptyChangeRef.current(isEmpty);
+            }
+          }}
+          onKeyDown={(event) => {
+            const mod = isApplePlatform() ? event.metaKey : event.ctrlKey;
+            if (event.key === "Enter" && mod && onModEnter) {
+              event.preventDefault();
+              onModEnter();
+            }
+          }}
+        />
+      </div>
+    </>
   );
 }
