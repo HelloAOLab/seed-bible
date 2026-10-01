@@ -9,7 +9,12 @@ import type {
   LoginRequestSuccess,
   OpenIDLoginRequestFailure,
   OpenIDProviderInfo,
+  ProcessOpenIDAuthorizationCodeFailure,
 } from "@casual-simulation/aux-records/AuthController";
+import {
+  OPEN_ID_CALLBACK_CHANNEL,
+  type OpenIDCallbackMessage,
+} from "./OpenIDCallback";
 
 /**
  * The studio users are signed into. Sent with every kind of login request so
@@ -47,6 +52,7 @@ export interface OpenIDLoginClientFailure {
 export type OpenIDLoginResult =
   | CompleteOpenIDLoginResult
   | OpenIDLoginRequestFailure
+  | ProcessOpenIDAuthorizationCodeFailure
   | OpenIDLoginClientFailure;
 
 /**
@@ -846,8 +852,53 @@ export function createLoginManager({
       };
     }
 
-    const attempt = { cancelled: false, popup, wake: () => {} };
+    // Set when a wake-up arrives while no wait is in progress (e.g. the
+    // callback page reports in during a check), so the next wait ends at once
+    // instead of the news sitting unread for a whole interval.
+    let wokenEarly = false;
+    const attempt = {
+      cancelled: false,
+      popup,
+      wake: () => {
+        wokenEarly = true;
+      },
+    };
     activeOpenIDLogin = attempt;
+
+    const waitForNextCheck = () =>
+      new Promise<void>((resolve) => {
+        if (wokenEarly) {
+          wokenEarly = false;
+          resolve();
+          return;
+        }
+        const done = () => {
+          clearTimeout(timer);
+          attempt.wake = () => {
+            wokenEarly = true;
+          };
+          resolve();
+        };
+        const timer = setTimeout(done, OPEN_ID_POLL_INTERVAL_MS);
+        attempt.wake = done;
+      });
+
+    let callbackFailure: ProcessOpenIDAuthorizationCodeFailure | null = null;
+    const channel =
+      typeof BroadcastChannel === "undefined"
+        ? null
+        : new BroadcastChannel(OPEN_ID_CALLBACK_CHANNEL);
+    channel?.addEventListener("message", (event: MessageEvent) => {
+      const message = event.data as OpenIDCallbackMessage;
+      if (message?.type === "failed") {
+        callbackFailure = {
+          success: false,
+          errorCode: message.errorCode,
+          errorMessage: message.errorMessage,
+        };
+      }
+      attempt.wake();
+    });
 
     try {
       const request = await client.requestOpenIDLogin({
@@ -863,19 +914,18 @@ export function createLoginManager({
 
       popup.location.href = request.authorizationUrl;
 
-      // The provider sends the user back to the auth server, not to us, so the
-      // only way to learn the login finished is to keep asking.
+      // The sign-in window finishes on our callback page (see
+      // `OpenIDCallback.ts`), which hands the code to the auth server. Only
+      // the auth server can say when that is done, so keep asking; the
+      // callback page's message just makes the next check happen sooner.
       const deadline = Date.now() + OPEN_ID_LOGIN_TIMEOUT_MS;
       while (true) {
-        await new Promise<void>((resolve) => {
-          const timer = setTimeout(resolve, OPEN_ID_POLL_INTERVAL_MS);
-          attempt.wake = () => {
-            clearTimeout(timer);
-            resolve();
-          };
-        });
+        await waitForNextCheck();
         if (attempt.cancelled) {
           return cancelled;
+        }
+        if (callbackFailure) {
+          return callbackFailure;
         }
 
         // Read before asking, so a window closed right after the user finished
@@ -913,6 +963,7 @@ export function createLoginManager({
         }
       }
     } finally {
+      channel?.close();
       if (activeOpenIDLogin === attempt) {
         activeOpenIDLogin = null;
       }

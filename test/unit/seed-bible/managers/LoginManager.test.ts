@@ -9,6 +9,10 @@ import {
 import { saveProfileConfigValue } from "@packages/seed-bible/seed-bible/managers/ProfileConfigSync";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { formatV1SessionKey } from "@casual-simulation/aux-common";
+import {
+  OPEN_ID_CALLBACK_CHANNEL,
+  type OpenIDCallbackMessage,
+} from "@packages/seed-bible/seed-bible/managers/OpenIDCallback";
 import type { Mock } from "vitest";
 
 vi.setConfig({ testTimeout: 5000 });
@@ -269,7 +273,9 @@ describe("createLoginManager", () => {
     let openSpy: Mock;
 
     beforeEach(() => {
-      vi.useFakeTimers();
+      // `setImmediate` stays real so a `BroadcastChannel` message, which the
+      // fake clock can't deliver, still gets a turn to arrive.
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
 
       listOpenIDProvidersMock.mockReset();
       requestOpenIDLoginMock.mockReset();
@@ -306,6 +312,28 @@ describe("createLoginManager", () => {
       openSpy.mockRestore();
       vi.useRealTimers();
     });
+
+    /** Posts as the callback page does, and waits until it has been delivered. */
+    async function reportFromCallbackPage(message: OpenIDCallbackMessage) {
+      const sender = new BroadcastChannel(OPEN_ID_CALLBACK_CHANNEL);
+      const receiver = new BroadcastChannel(OPEN_ID_CALLBACK_CHANNEL);
+      let delivered = false;
+      receiver.onmessage = () => {
+        delivered = true;
+      };
+      sender.postMessage(message);
+      const start = performance.now();
+      while (!delivered) {
+        if (performance.now() - start > 1000) {
+          throw new Error("Timed out waiting for the message.");
+        }
+        await new Promise((resolve) => setImmediate(resolve));
+      }
+      sender.close();
+      receiver.close();
+      // Let the manager act on it.
+      await vi.advanceTimersByTimeAsync(0);
+    }
 
     function completeSuccessfully() {
       completeOAuthLoginMock.mockResolvedValue({
@@ -403,6 +431,44 @@ describe("createLoginManager", () => {
 
       await expect(resultPromise).resolves.toMatchObject({ success: true });
       expect(manager.userId.value).toBe(USER_ID);
+    });
+
+    it("checks right away once the callback page has handed over the code", async () => {
+      const manager = createLoginManager({ os });
+      const resultPromise = manager.loginWithOpenID(
+        YOUVERSION_OPEN_ID_PROVIDER
+      );
+      await vi.advanceTimersByTimeAsync(0);
+
+      completeSuccessfully();
+      // No time passes: the message alone triggers the check.
+      await reportFromCallbackPage({ type: "processed" });
+
+      await expect(resultPromise).resolves.toMatchObject({ success: true });
+      expect(manager.userId.value).toBe(USER_ID);
+    });
+
+    it("reports a failure from the callback page instead of a cancel", async () => {
+      const manager = createLoginManager({ os });
+      const resultPromise = manager.loginWithOpenID(
+        YOUVERSION_OPEN_ID_PROVIDER
+      );
+      await vi.advanceTimersByTimeAsync(0);
+
+      // The callback page closes the window after it reports.
+      await reportFromCallbackPage({
+        type: "failed",
+        errorCode: "invalid_request",
+        errorMessage: "The login request is invalid.",
+      });
+      popup.close();
+
+      await expect(resultPromise).resolves.toEqual({
+        success: false,
+        errorCode: "invalid_request",
+        errorMessage: "The login request is invalid.",
+      });
+      expect(manager.userId.value).toBeNull();
     });
 
     it("reports a blocked sign-in window without contacting the server", async () => {
