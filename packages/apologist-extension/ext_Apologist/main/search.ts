@@ -7,6 +7,7 @@ export const APOLOGIST_SEARCH_TYPES = [
   "youtube",
   "episode",
   "media",
+  "url",
 ] as const;
 
 export interface ApologistSearchResult {

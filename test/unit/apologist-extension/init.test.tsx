@@ -119,7 +119,7 @@ describe("initApologistExtension discover provider", () => {
       filters: {
         team_ids: ["team-42"],
         model: "source",
-        types: ["article", "youtube", "episode", "media"],
+        types: ["article", "youtube", "episode", "media", "url"],
       },
     });
 

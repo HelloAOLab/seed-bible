@@ -60,7 +60,7 @@ You can configure the Apologist Chat Provider by setting the following variables
 - `apologistModel` - The model that should be used. If not specified, then `openai/gpt/5-mini` will be used.
   - See the [Apologist Documentation](https://apologistproject.org/documentation/apologist-fusion/chat-completion#8-toc-title) for a list of supported models.
 
-- `apologistTeamID` - The ID of the Apologist team whose content should be shown in the Discover pane. If specified, then each chapter is searched (e.g. "John 3") against the team's articles, YouTube videos, episodes, and media using the [semantic search API](https://my.gospel.bot/api/v1/search), and the matches are shown as discovered content.
+- `apologistTeamID` - The ID of the Apologist team whose content should be shown in the Discover pane. If specified, then each chapter is searched (e.g. "John 3") against the team's articles, YouTube videos, episodes, media, and links using the [semantic search API](https://my.gospel.bot/api/v1/search), and the matches are shown as discovered content.
   - The request is authenticated with `apologistApiKey`, so you should also include it.
 
 ### Examples
