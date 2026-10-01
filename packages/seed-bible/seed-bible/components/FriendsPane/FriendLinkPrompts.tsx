@@ -9,14 +9,10 @@ import {
 import type { LoginManager } from "../../managers/LoginManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { NavigationManager } from "../../managers/NavigationManager";
+import { displayNameOf } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
 import { BusyButton } from "./FriendsPane";
-import {
-  displayNameOf,
-  emptyProfileNote,
-  hasEmptyProfile,
-  PersonCard,
-} from "./PersonCard";
+import { emptyProfileNote, hasEmptyProfile, PersonCard } from "./PersonCard";
 import { ADD_FRIEND_PARAM, FRIEND_REQUEST_PARAM } from "./friendLinks";
 
 type Toast = (message: string) => void;

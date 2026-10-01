@@ -28,6 +28,7 @@ import { Avatar } from "../Avatar/Avatar";
 import type { CasualOSManager } from "../../managers/OsManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { UserGalleryManager } from "../../managers/UserGalleryManager";
+import { displayNameOf } from "../../managers/Utils";
 import { readingLabel } from "./readingLabel";
 import { ReadingPlanEditor } from "./ReadingPlanEditor";
 import { ReadingPlanDetail } from "./ReadingPlanDetail";
@@ -898,8 +899,8 @@ function FriendReadingPlansSection(props: {
 
   return (
     <PlanSection
-      label={t("following-reading-plans", {
-        defaultValue: "Reading plans from people you follow",
+      label={t("friends-reading-plans", {
+        defaultValue: "Reading plans from your friends",
       })}
       count={groups.reduce((sum, group) => sum + group.rows.length, 0)}
     >
@@ -938,12 +939,7 @@ function FriendReadingPlanGroup(props: {
 }) {
   const { friend, rows, books, onOpen, openingId, t } = props;
 
-  const displayName =
-    friend.name?.trim() ||
-    t("follow-unnamed-user", {
-      id: friend.userId.slice(0, 8),
-      defaultValue: "User {{id}}",
-    });
+  const displayName = displayNameOf(friend, t);
 
   return (
     <li className="sb-rp-friend-group">

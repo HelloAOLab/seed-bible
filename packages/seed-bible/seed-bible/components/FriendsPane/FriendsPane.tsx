@@ -9,14 +9,11 @@ import type {
   SendFriendRequestResult,
 } from "../../managers/FriendsManager";
 import type { ModalManager } from "../../managers/ModalManager";
+import { displayNameOf } from "../../managers/Utils";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import { getAddFriendUrl, getFriendRequestUrl } from "./friendLinks";
-import {
-  displayNameOf,
-  PersonButton,
-  type PersonProfileDeps,
-} from "./PersonCard";
+import { PersonButton, type PersonProfileDeps } from "./PersonCard";
 
 export const FRIENDS_PANE_ID = "friends-pane";
 

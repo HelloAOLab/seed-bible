@@ -661,15 +661,15 @@ describe("createPlaylistManager", () => {
             ],
           };
         }
-        if (recordName === "followed-user") {
+        if (recordName === "friend-user") {
           return {
             success: true,
             items: [
               {
                 data: makePlaylist({
-                  id: "followed-playlist",
-                  recordName: "followed-user",
-                  authorUserId: "followed-user",
+                  id: "friend-playlist",
+                  recordName: "friend-user",
+                  authorUserId: "friend-user",
                 }),
               },
             ],
@@ -684,14 +684,11 @@ describe("createPlaylistManager", () => {
       const manager = makeManager("user-1");
       await flush();
 
-      const view = manager.getUserPlaylists("followed-user");
+      const view = manager.getUserPlaylists("friend-user");
       await flush();
 
-      expect(listDataByMarkerMock).toHaveBeenCalledWith(
-        "followed-user",
-        MARKER
-      );
-      expect(view.value.map((p) => p.id)).toEqual(["followed-playlist"]);
+      expect(listDataByMarkerMock).toHaveBeenCalledWith("friend-user", MARKER);
+      expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"]);
     });
 
     it("returns the same signal for repeated calls", async () => {
@@ -699,8 +696,8 @@ describe("createPlaylistManager", () => {
       const manager = makeManager("user-1");
       await flush();
 
-      expect(manager.getUserPlaylists("followed-user")).toBe(
-        manager.getUserPlaylists("followed-user")
+      expect(manager.getUserPlaylists("friend-user")).toBe(
+        manager.getUserPlaylists("friend-user")
       );
     });
 
@@ -710,11 +707,11 @@ describe("createPlaylistManager", () => {
       await flush();
 
       const mine = manager.getUserPlaylists("user-1");
-      const theirs = manager.getUserPlaylists("followed-user");
+      const theirs = manager.getUserPlaylists("friend-user");
       await flush();
 
       expect(mine.value.map((p) => p.id)).toEqual(["user-1-playlist"]);
-      expect(theirs.value.map((p) => p.id)).toEqual(["followed-playlist"]);
+      expect(theirs.value.map((p) => p.id)).toEqual(["friend-playlist"]);
     });
 
     it("settles to an empty list without throwing when the account's playlists can't be loaded", async () => {

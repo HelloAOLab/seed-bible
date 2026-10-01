@@ -1427,7 +1427,7 @@ export function createPlaylistManager(
 
   /**
    * Reactive view of one account's playlists, pinned to the account passed
-   * in rather than whoever is signed in — this is how a followed user's
+   * in rather than whoever is signed in — this is how a friend's
    * playlists are read. Playlists are stored world-readable
    * (`publicRead:playlists`), so this works for any account and does not
    * require being signed in. Loads lazily on first access, keyed by account.

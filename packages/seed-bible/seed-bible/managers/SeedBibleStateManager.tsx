@@ -579,11 +579,7 @@ import {
   createTextToSpeechManager,
   type TextToSpeechManager,
 } from "./TextToSpeechManager";
-import {
-  createFeaturesManager,
-  FEATURE_KEY_FOLLOWED_SESSIONS,
-  type FeaturesManager,
-} from "./FeaturesManager";
+import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
@@ -2522,10 +2518,6 @@ export function createSeedBibleState(
     friends,
     async (sessionId) => {
       await handleJoinSharedSession(sessionId);
-    },
-    {
-      enabled: () =>
-        features.isFeatureEnabled(FEATURE_KEY_FOLLOWED_SESSIONS).value,
     }
   );
 

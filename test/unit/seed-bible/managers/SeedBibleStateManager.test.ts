@@ -500,7 +500,7 @@ describe("createSeedBibleState", () => {
     const result = await state.app.createSharedSession();
 
     expect(mockSessionsManager.createSession).toHaveBeenCalledTimes(1);
-    // Auto-publishes to the shared-sessions registry so followers can see it
+    // Auto-publishes to the shared-sessions registry so friends can see it
     // — through the mock, not the real `InvitationsManager`, which would
     // otherwise open a real WebSocket connection.
     expect(mockInvitationsManager.publishSession).toHaveBeenCalledWith(session);

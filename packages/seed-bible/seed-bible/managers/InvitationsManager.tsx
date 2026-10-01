@@ -113,16 +113,7 @@ export function createInvitationsManager(
   os: CasualOSManager,
   login: LoginManager,
   friends: FriendsManager,
-  onJoin: OnJoinSharedSession,
-  options?: {
-    /**
-     * When false, the registry document is never opened and no sessions are
-     * ever surfaced. Lets the feature be switched off independently of the
-     * friends list, since opening the registry costs a shared document on every
-     * client.
-     */
-    enabled?: () => boolean;
-  }
+  onJoin: OnJoinSharedSession
 ): InvitationsManager {
   const availableSessions = signal<AvailableSharedSession[]>([]);
   const profileCache = new Map<string, UserProfile | null>();
@@ -139,8 +130,6 @@ export function createInvitationsManager(
   // stale (the host's browser closed without a clean unpublish) and is
   // hidden from the UI.
   const liveConnectionIds = new Set<string>();
-
-  const isEnabled = () => options?.enabled?.() ?? true;
 
   const readStoredEntries = (): StoredRegistryEntry[] => {
     if (!registryMap) return [];
@@ -219,7 +208,7 @@ export function createInvitationsManager(
   };
 
   const openRegistry = async () => {
-    if (registryDoc || disposed || !isEnabled()) return;
+    if (registryDoc || disposed) return;
     try {
       const document = await os.getSharedDocument(
         null,
@@ -282,12 +271,7 @@ export function createInvitationsManager(
     const hasFriends = friends.friendIds.value.length > 0;
     if (registryMap) {
       applyEntries(readStoredEntries());
-    } else if (
-      typeof window !== "undefined" &&
-      userId &&
-      hasFriends &&
-      isEnabled()
-    ) {
+    } else if (typeof window !== "undefined" && userId && hasFriends) {
       void openRegistry();
     }
   });

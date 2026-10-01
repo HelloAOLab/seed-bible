@@ -300,7 +300,7 @@ export interface HighlightsManager {
    *
    * Unlike {@link HighlightsManager.getChapterHighlights}, this view is pinned
    * to the account passed in and does not follow the signed-in user — it's how
-   * a followed user's highlights are read. Highlights are stored world-readable
+   * a friend's highlights are read. Highlights are stored world-readable
    * (`publicRead:highlights/{translationId}`), so this works for any account
    * and does not require being signed in.
    */
@@ -455,7 +455,7 @@ type ChapterHighlightsEntry = {
    *
    * The account-switch sweep drops every entry that isn't the signed-in
    * account's, which is what stops one account's highlights being served to
-   * the next. Entries for a followed user are never "the signed-in account's",
+   * the next. Entries for a friend are never "the signed-in account's",
    * so without this flag every sign-in would evict them and force a re-read.
    */
   explicit: boolean;
@@ -572,7 +572,7 @@ export function createHighlightsManager(
     address: string,
     entry: ChapterHighlightsEntry
   ): Promise<void> => {
-    // Another account's highlights (someone the user follows) are read straight
+    // Another account's highlights (a friend's) are read straight
     // from the server. The local store mirrors the signed-in account's own
     // rows for the sync engine; it has no business holding anyone else's.
     const isOtherAccount = entry.explicit && owner !== peekOwner();
@@ -700,7 +700,7 @@ export function createHighlightsManager(
     }
     cachedOwner = owner;
     for (const [key, entry] of entries) {
-      // Entries for an explicitly named account (a followed user's highlights)
+      // Entries for an explicitly named account (a friend's highlights)
       // aren't the signed-in account's data and were never at risk of leaking
       // across a switch, so the sweep leaves them alone.
       if (entry.owner !== owner && !entry.explicit) {

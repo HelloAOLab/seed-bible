@@ -671,13 +671,13 @@ describe("AnnotationsManager", () => {
               ],
             };
           }
-          if (recordName === "followed-user") {
+          if (recordName === "friend-user") {
             return {
               success: true,
               items: [
                 {
                   address: "a2",
-                  data: createCommentAnnotation({ id: "followed-note" }),
+                  data: createCommentAnnotation({ id: "friend-note" }),
                 },
               ],
             };
@@ -692,17 +692,17 @@ describe("AnnotationsManager", () => {
       const manager = createManager();
 
       const view = manager.getUserAnnotationsForChapter(
-        "followed-user",
+        "friend-user",
         "GEN",
         1
       );
 
       await vi.waitFor(() => {
-        expect(view.value.map((a) => a.id)).toEqual(["followed-note"]);
+        expect(view.value.map((a) => a.id)).toEqual(["friend-note"]);
       });
 
       expect(listDataByMarkerMock).toHaveBeenCalledWith(
-        "followed-user",
+        "friend-user",
         "publicRead:annotations/GEN/1",
         undefined
       );
@@ -713,29 +713,29 @@ describe("AnnotationsManager", () => {
       const manager = createManager();
 
       const view = manager.getUserAnnotationsForChapter(
-        "followed-user",
+        "friend-user",
         "GEN",
         1
       );
       await vi.waitFor(() => {
-        expect(view.value.map((a) => a.id)).toEqual(["followed-note"]);
+        expect(view.value.map((a) => a.id)).toEqual(["friend-note"]);
       });
 
       login.userId.value = "user-2";
 
       // Unlike `getAnnotationsForChapter`, this view does not follow the
-      // signed-in account — it still shows the followed user's annotations.
-      expect(view.value.map((a) => a.id)).toEqual(["followed-note"]);
+      // signed-in account — it still shows the friend's annotations.
+      expect(view.value.map((a) => a.id)).toEqual(["friend-note"]);
     });
 
-    it("keeps a followed account's cached annotations across a sign-in", async () => {
+    it("keeps a friend's cached annotations across a sign-in", async () => {
       mockPerUserAnnotations();
       const manager = createManager();
 
-      manager.getUserAnnotationsForChapter("followed-user", "GEN", 1);
+      manager.getUserAnnotationsForChapter("friend-user", "GEN", 1);
       await vi.waitFor(() => {
         expect(listDataByMarkerMock).toHaveBeenCalledWith(
-          "followed-user",
+          "friend-user",
           "publicRead:annotations/GEN/1",
           undefined
         );
@@ -743,10 +743,10 @@ describe("AnnotationsManager", () => {
       const callsAfterFirstLoad = listDataByMarkerMock.mock.calls.length;
 
       // The account-switch sweep must not evict explicitly-requested entries,
-      // or every sign-in would force a re-read of every followed user.
+      // or every sign-in would force a re-read of every friend.
       login.userId.value = "user-2";
 
-      manager.getUserAnnotationsForChapter("followed-user", "GEN", 1);
+      manager.getUserAnnotationsForChapter("friend-user", "GEN", 1);
       expect(listDataByMarkerMock.mock.calls.length).toBe(callsAfterFirstLoad);
     });
 
@@ -755,8 +755,8 @@ describe("AnnotationsManager", () => {
       const manager = createManager();
 
       expect(
-        manager.getUserAnnotationsForChapter("followed-user", "GEN", 1)
-      ).toBe(manager.getUserAnnotationsForChapter("followed-user", "GEN", 1));
+        manager.getUserAnnotationsForChapter("friend-user", "GEN", 1)
+      ).toBe(manager.getUserAnnotationsForChapter("friend-user", "GEN", 1));
     });
 
     it("keeps different accounts' annotations separate for the same chapter", async () => {
@@ -765,14 +765,14 @@ describe("AnnotationsManager", () => {
 
       const mine = manager.getUserAnnotationsForChapter("user-1", "GEN", 1);
       const theirs = manager.getUserAnnotationsForChapter(
-        "followed-user",
+        "friend-user",
         "GEN",
         1
       );
 
       await vi.waitFor(() => {
         expect(mine.value.map((a) => a.id)).toEqual(["user-1-note"]);
-        expect(theirs.value.map((a) => a.id)).toEqual(["followed-note"]);
+        expect(theirs.value.map((a) => a.id)).toEqual(["friend-note"]);
       });
     });
   });

@@ -1775,7 +1775,7 @@ export function createReadingPlansManager(
   /**
    * Reactive view of one account's reading-plan progress, pinned to the
    * account passed in rather than whoever is signed in — this is how a
-   * followed user's "what they're currently reading" is discovered. Progress
+   * friend's "what they're currently reading" is discovered. Progress
    * is stored world-readable (`publicRead:readingPlanProgress`), so this
    * works for any account and does not require being signed in. Each entry's
    * `planId` can be resolved to actual plan content via `parseReadingPlanId`
@@ -1807,8 +1807,8 @@ export function createReadingPlansManager(
   };
 
   // Cached plan content keyed by locator (`recordName`+`address`), not by
-  // account — a plan lives once regardless of how many followers are reading
-  // it, so this naturally dedups when two followed users are on the same
+  // account — a plan lives once regardless of how many friends are reading
+  // it, so this naturally dedups when two friends are on the same
   // plan. Resolves to null on failure (deleted plan, bad locator) instead of
   // throwing, so one bad reference is skipped in a feed rather than breaking
   // it.
@@ -1883,9 +1883,9 @@ export function createReadingPlansManager(
   /**
    * Reactive view of a single plan's content, addressed directly by
    * `{recordName, address}` rather than by an already-loaded metadata object
-   * — this is how a followed user's progress (which only carries the opaque
+   * — this is how a friend's progress (which only carries the opaque
    * `planId`, parsed via `parseReadingPlanId`) is turned into an actual plan
-   * to render, whether that plan was authored by the followed user
+   * to render, whether that plan was authored by the friend
    * themselves or by a third party. Resolves to `null` (never throws) for a
    * plan that can't be loaded, so a bad reference degrades to "skip this row"
    * rather than breaking the whole feed.

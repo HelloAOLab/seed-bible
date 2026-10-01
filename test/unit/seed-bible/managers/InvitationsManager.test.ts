@@ -171,18 +171,6 @@ describe("InvitationsManager", () => {
       expect(getSharedDocumentMock).toHaveBeenCalledTimes(1);
     });
 
-    it("does not open when disabled, even signed in with friends", async () => {
-      const { manager: friends } = makeFriends([
-        { userId: "other-1", name: null, pictureUrl: null },
-      ]);
-      createInvitationsManager(os, makeLogin("me"), friends, vi.fn(), {
-        enabled: () => false,
-      });
-      await flushPromises();
-
-      expect(getSharedDocumentMock).not.toHaveBeenCalled();
-    });
-
     it("publishSession opens the registry even with no friends", async () => {
       const { manager: friends } = makeFriends([]);
       const manager = createInvitationsManager(

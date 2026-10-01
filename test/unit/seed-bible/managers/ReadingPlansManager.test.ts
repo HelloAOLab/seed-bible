@@ -2536,15 +2536,15 @@ describe("createReadingPlansManager", () => {
               ],
             };
           }
-          if (recordName === "followed-user") {
+          if (recordName === "friend-user") {
             return {
               success: true,
               items: [
                 {
                   address: "p2",
                   data: makeProgress({
-                    id: "followed-progress",
-                    recordName: "followed-user",
+                    id: "friend-progress",
+                    recordName: "friend-user",
                   }),
                 },
               ],
@@ -2560,15 +2560,15 @@ describe("createReadingPlansManager", () => {
       const manager = makeManager("user-1");
       await flush();
 
-      const view = manager.getUserReadingPlanProgresses("followed-user");
+      const view = manager.getUserReadingPlanProgresses("friend-user");
       await flush();
 
       expect(listDataByMarkerMock).toHaveBeenCalledWith(
-        "followed-user",
+        "friend-user",
         "publicRead:readingPlanProgress",
         undefined
       );
-      expect(view.value.map((p) => p.id)).toEqual(["followed-progress"]);
+      expect(view.value.map((p) => p.id)).toEqual(["friend-progress"]);
     });
 
     it("returns the same signal for repeated calls", async () => {
@@ -2576,8 +2576,8 @@ describe("createReadingPlansManager", () => {
       const manager = makeManager("user-1");
       await flush();
 
-      expect(manager.getUserReadingPlanProgresses("followed-user")).toBe(
-        manager.getUserReadingPlanProgresses("followed-user")
+      expect(manager.getUserReadingPlanProgresses("friend-user")).toBe(
+        manager.getUserReadingPlanProgresses("friend-user")
       );
     });
 
@@ -2587,11 +2587,11 @@ describe("createReadingPlansManager", () => {
       await flush();
 
       const mine = manager.getUserReadingPlanProgresses("user-1");
-      const theirs = manager.getUserReadingPlanProgresses("followed-user");
+      const theirs = manager.getUserReadingPlanProgresses("friend-user");
       await flush();
 
       expect(mine.value.map((p) => p.id)).toEqual(["user-1-progress"]);
-      expect(theirs.value.map((p) => p.id)).toEqual(["followed-progress"]);
+      expect(theirs.value.map((p) => p.id)).toEqual(["friend-progress"]);
     });
 
     it("settles to an empty list without throwing when the account's progress can't be loaded", async () => {

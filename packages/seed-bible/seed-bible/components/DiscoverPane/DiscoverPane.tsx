@@ -36,6 +36,7 @@ import { Avatar } from "../Avatar/Avatar";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import { displayNameOf } from "../../managers/Utils";
 import {
   CrossReferencesSection,
   StudyNotesSection,
@@ -623,8 +624,8 @@ function FriendPlaylistsSection(props: {
 
   return (
     <DiscoverSection
-      title={t("following-playlists", {
-        defaultValue: "Playlists from people you follow",
+      title={t("friends-playlists", {
+        defaultValue: "Playlists from your friends",
       })}
     >
       <ul className="sb-friend-playlists-groups">
@@ -652,12 +653,7 @@ function FriendPlaylistGroup(props: {
   const { friend, playlists, playlistsManager, toast } = props;
   const { t } = useI18n();
 
-  const displayName =
-    friend.name?.trim() ||
-    t("follow-unnamed-user", {
-      id: friend.userId.slice(0, 8),
-      defaultValue: "User {{id}}",
-    });
+  const displayName = displayNameOf(friend, t);
 
   return (
     <li className="sb-friend-playlists-group">

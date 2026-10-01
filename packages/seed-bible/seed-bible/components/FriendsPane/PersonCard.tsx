@@ -6,25 +6,13 @@ import { toFriendProfile, type Friend } from "../../managers/FriendsManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
+import { displayNameOf } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
 import { Avatar } from "../Avatar/Avatar";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { MaterialIcon } from "../icons";
 
 type T = ReturnType<typeof useI18n>["t"];
-
-export function displayNameOf(
-  person: Pick<Friend, "userId" | "name">,
-  t: T
-): string {
-  return (
-    person.name ||
-    t("follow-unnamed-user", {
-      id: person.userId.slice(0, 8),
-      defaultValue: "User {{id}}",
-    })
-  );
-}
 
 export function PersonIdentity(props: {
   person: Pick<Friend, "userId" | "name" | "pictureUrl">;

@@ -34,7 +34,7 @@ import type {
   TodayManager,
   TodayPassageTarget,
 } from "../../managers/TodayManager";
-import { trimmedOrNull } from "../../managers/Utils";
+import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 
 const TIMESPAN_OPTION_IDS = ["twoDays", "week", "month", "all"] as const;
 
@@ -86,12 +86,7 @@ export const SocialSection = (props: {
       if (map.has(friend.userId)) continue;
       const friendVisual = getUserAnimalVisual(friend.userId);
       map.set(friend.userId, {
-        name:
-          trimmedOrNull(friend.name) ??
-          t("follow-unnamed-user", {
-            id: friend.userId.slice(0, 8),
-            defaultValue: "User {{id}}",
-          }),
+        name: displayNameOf(friend, t),
         pictureUrl: friend.pictureUrl,
         color: friendVisual.color,
         icon: friendVisual.defaultIcon,

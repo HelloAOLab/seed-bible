@@ -81,7 +81,7 @@ export interface AnnotationsManager {
    *
    * Unlike {@link AnnotationsManager.getAnnotationsForChapter}, this view is
    * pinned to the account passed in and does not follow the signed-in user —
-   * it's how a followed user's annotations are read. Annotations are stored
+   * it's how a friend's annotations are read. Annotations are stored
    * world-readable (`publicRead:annotations/{bookId}/{chapterNumber}`), so
    * this works for any account and does not require being signed in.
    */
@@ -491,7 +491,7 @@ type AnnotationsEntry = {
    *
    * The account-switch sweep drops every entry that isn't the signed-in
    * account's, which is what stops one account's annotations being served to
-   * the next. Entries for a followed user are never "the signed-in
+   * the next. Entries for a friend are never "the signed-in
    * account's", so without this flag every sign-in would evict them and
    * force a re-read.
    */
@@ -953,7 +953,7 @@ export function createAnnotationsManager(
       // A record override always reads straight from that record — it has no
       // local mirror to fall back on. Otherwise `loadChapterForOwner` covers
       // both the signed-in account and the signed-out local bucket.
-      // Another account's annotations (someone the user follows) are read
+      // Another account's annotations (a friend's) are read
       // straight from the server too: the local mirror only holds the
       // signed-in account's own rows for the sync engine.
       const isOtherAccount =
@@ -1071,7 +1071,7 @@ export function createAnnotationsManager(
     }
     cachedRecordId = recordId;
     for (const [key, entry] of entries) {
-      // Entries for an explicitly named account (a followed user's
+      // Entries for an explicitly named account (a friend's
       // annotations) aren't the signed-in account's data and were never at
       // risk of leaking across a switch, so the sweep leaves them alone.
       if (entry.recordId !== recordId && !entry.explicit) {
