@@ -7,6 +7,9 @@ import {
   resolveMessageAuthors,
   type ChatProviderMessageOptions,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import type { DiscoverContentResult } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { PlaylistLinkContent } from "seed-bible/components";
+import { searchApologistContent } from "./search";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -163,6 +166,7 @@ type ChatMessage =
     };
 
 const PROVIDER_ID = "apologist-chat-provider";
+const DISCOVER_PROVIDER_ID = "apologist-discover-provider";
 
 // Bounds the tool-call resolution loop below so a model that never emits
 // final content (or keeps calling tools) can't hang generateResponse forever.
@@ -188,6 +192,7 @@ export default function initApologistExtension() {
         url.searchParams.get("apologistModel") ?? "openai/gpt/5-mini";
       const apologistConversationId: string | null =
         url.searchParams.get("apologistConversation") ?? null;
+      const apologistTeamId = url.searchParams.get("apologistTeamID") ?? null;
 
       if (customApologistDomain && !apologistApiKey) {
         console.error(
@@ -421,6 +426,52 @@ export default function initApologistExtension() {
           }
         },
       });
+
+      if (apologistTeamId) {
+        const providerName =
+          apologistName ??
+          i18n.t("title", { ns: "ext_Apologist", defaultValue: "Apologist" });
+
+        // `reference` has to name the chapter being read: results whose
+        // reference doesn't match it are dropped before display.
+        yield context.discover.registerDiscoverProvider({
+          id: DISCOVER_PROVIDER_ID,
+          title: providerName,
+          description: "Content from your Apologist team.",
+          discover: async ({ translationId, book, chapter }) => {
+            const bookName =
+              context.bibleData
+                .getCachedTranslationBooks(translationId)
+                ?.books.find((b) => b.id === book)?.name ?? book;
+
+            const results = await searchApologistContent({
+              query: `${bookName} ${chapter}`,
+              teamId: apologistTeamId,
+              apiKey: apologistApiKey,
+            });
+
+            return results.map(
+              (item): DiscoverContentResult => ({
+                type: "content",
+                title: item.title,
+                description: item.description,
+                reference: { book, chapter },
+                author: item.author ?? providerName,
+                image: item.image,
+                onClick: () => {
+                  context.modals.openModal({
+                    id: `apologist-content-${item.id}`,
+                    title: item.title,
+                    content: () => (
+                      <PlaylistLinkContent url={item.url} title={item.title} />
+                    ),
+                  });
+                },
+              })
+            );
+          },
+        });
+      }
 
       if (apologistShareToken) {
         // init conversation
