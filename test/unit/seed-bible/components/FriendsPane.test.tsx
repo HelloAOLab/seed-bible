@@ -205,6 +205,7 @@ describe("FriendsPane", () => {
 
     expect(section("Friend requests")).toBeNull();
     expect(section("Friends")!.textContent).toContain("Ada");
+    expect(toast).toHaveBeenCalledWith("You're now friends with Ada.");
   });
 
   it("tells the user when a request expired before they accepted it", async () => {
@@ -228,6 +229,7 @@ describe("FriendsPane", () => {
 
     expect(section("Friend requests")).toBeNull();
     expect(text()).toContain("No friends yet.");
+    expect(toast).toHaveBeenCalledWith("Declined Ada's friend request.");
   });
 
   it("removes a friend after confirming", async () => {
@@ -257,6 +259,9 @@ describe("FriendsPane", () => {
         "Request sent. Send them the link so they can accept it."
       );
       expect(outcomeIsError()).toBe(false);
+      expect(toast).toHaveBeenCalledWith(
+        expect.stringMatching(/^Friend request sent/)
+      );
       const sent = server.rows.find((r) => r.targetUserId === ADA_ID)!;
       expect(section("Sent requests")!.textContent).toContain("Ada");
 
@@ -300,6 +305,8 @@ describe("FriendsPane", () => {
       await typeAndSend(ADA_ID);
 
       expect(text()).toContain("You're already friends.");
+      // Nothing was sent, so there's no "sent" toast.
+      expect(toast).not.toHaveBeenCalled();
       // Informational, not something to fix.
       expect(outcomeIsError()).toBe(false);
     });
@@ -410,5 +417,6 @@ describe("FriendsPane", () => {
     await click(button(section("Sent requests")!, "Cancel"));
 
     expect(section("Sent requests")).toBeNull();
+    expect(toast).toHaveBeenCalledWith("Canceled your friend request to Ada.");
   });
 });

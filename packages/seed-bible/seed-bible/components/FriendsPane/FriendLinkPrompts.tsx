@@ -306,6 +306,12 @@ function FriendRequestLinkPrompt(props: {
         );
       } else {
         await friends.declineRequest(request.id);
+        toast(
+          t("friend-request-declined", {
+            name,
+            defaultValue: "Declined {{name}}'s friend request.",
+          })
+        );
       }
       onClose();
     } catch (error) {

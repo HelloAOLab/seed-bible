@@ -221,6 +221,7 @@ function sendOutcomeMessage(
 
 function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
   const { friends, navigation } = props.state;
+  const toast = props.state.app.toast;
   const { t } = useI18n();
   const value = useSignal("");
   const busy = useSignal(false);
@@ -255,6 +256,23 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
     try {
       const result = await friends.sendRequest(target);
       outcome.value = sendOutcomeMessage(result, t);
+      if (result.status === "sent") {
+        // Their profile loads in the background after the send, so the name
+        // is only there if it was already known.
+        const name = friends.outgoingRequests
+          .peek()
+          .find((r) => r.id === result.requestId)?.name;
+        toast(
+          name
+            ? t("friend-request-sent-to", {
+                name,
+                defaultValue: "Friend request sent to {{name}}.",
+              })
+            : t("friend-request-sent-toast", {
+                defaultValue: "Friend request sent.",
+              })
+        );
+      }
       if (result.status !== "user_not_found") {
         value.value = "";
       }
@@ -368,24 +386,34 @@ function IncomingRequestRow(props: {
   const answering = useSignal<"accept" | "decline" | null>(null);
 
   const answer = async (accept: boolean) => {
+    const name = displayNameOf(request, t);
     answering.value = accept ? "accept" : "decline";
     try {
       if (!accept) {
         await friends.declineRequest(request.id);
+        toast(
+          t("friend-request-declined", {
+            name,
+            defaultValue: "Declined {{name}}'s friend request.",
+          })
+        );
         return;
       }
       const result = await friends.acceptRequest(request.id);
-      if (!result.success) {
-        toast(
-          result.reason === "expired"
+      toast(
+        result.success
+          ? t("now-friends-with", {
+              name,
+              defaultValue: "You're now friends with {{name}}.",
+            })
+          : result.reason === "expired"
             ? t("friend-request-expired", {
                 defaultValue: "That request has expired.",
               })
             : t("friend-request-unavailable", {
                 defaultValue: "That request is no longer available.",
               })
-        );
-      }
+      );
     } catch (error) {
       console.error("Failed to answer friend request:", error);
       toast(
@@ -453,6 +481,14 @@ function OutgoingRequestRow(props: {
             busy.value = true;
             void friends
               .cancelRequest(request.id)
+              .then(() =>
+                toast(
+                  t("friend-request-canceled", {
+                    name: displayNameOf(request, t),
+                    defaultValue: "Canceled your friend request to {{name}}.",
+                  })
+                )
+              )
               .catch((error) => {
                 console.error("Failed to cancel friend request:", error);
                 toast(

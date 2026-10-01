@@ -261,6 +261,7 @@ describe("friend links", () => {
 
       expect(request.status).toBe("rejected");
       expect(friends.friendIds.value).toEqual([]);
+      expect(toast).toHaveBeenCalledWith("Declined Ada's friend request.");
     });
 
     it("explains when the request isn't there to answer", async () => {
