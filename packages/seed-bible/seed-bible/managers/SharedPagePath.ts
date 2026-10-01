@@ -67,6 +67,28 @@ export function parseSharedPagePath(
   return { kind, language, locator, slug: slug ?? null, step };
 }
 
+/**
+ * Splits a `{recordName}.{address}` record locator, the form shared links and
+ * play history use to name a playlist or reading plan. Splits on the last dot,
+ * since a record name can contain dots and an address doesn't. Null when the
+ * locator is missing or has nothing on one side of that dot.
+ */
+export function parseRecordLocator(
+  locator: string | null | undefined
+): { recordName: string; address: string } | null {
+  if (!locator) {
+    return null;
+  }
+  const lastDot = locator.lastIndexOf(".");
+  if (lastDot <= 0 || lastDot === locator.length - 1) {
+    return null;
+  }
+  return {
+    recordName: locator.slice(0, lastDot),
+    address: locator.slice(lastDot + 1),
+  };
+}
+
 /** Longest slug kept; titles past this are cut at a word boundary. */
 const MAX_SLUG_LENGTH = 80;
 

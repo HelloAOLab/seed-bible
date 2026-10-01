@@ -23,7 +23,7 @@ import { captureEvent } from "./Utils";
 import { savePhotoToGallery } from "./UserGalleryManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { TabsManager } from "./TabsManager";
-import { buildSharedPagePath } from "./SharedPagePath";
+import { buildSharedPagePath, parseRecordLocator } from "./SharedPagePath";
 import {
   createSharedPageLoader,
   type SharedPage,
@@ -147,23 +147,6 @@ export function getReadingPlanLocator(plan: {
   address: string;
 }): string {
   return `${plan.recordName}.${plan.address}`;
-}
-
-export function parseReadingPlanLocator(
-  locator: string | null | undefined
-): { recordName: string; address: string } | null {
-  if (!locator) {
-    return null;
-  }
-  const lastDot = locator.lastIndexOf(".");
-  if (lastDot <= 0 || lastDot === locator.length - 1) {
-    console.error("Invalid reading plan locator:", locator);
-    return null;
-  }
-  return {
-    recordName: locator.slice(0, lastDot),
-    address: locator.slice(lastDot + 1),
-  };
 }
 
 /**
@@ -1584,8 +1567,9 @@ export function createReadingPlansManager(
   const loadByLocator = async (
     locator: string
   ): Promise<ReadingPlan | null> => {
-    const parsed = parseReadingPlanLocator(locator);
+    const parsed = parseRecordLocator(locator);
     if (!parsed) {
+      console.error("Invalid reading plan locator:", locator);
       return null;
     }
     const plan = await getReadingPlan(parsed.recordName, parsed.address);

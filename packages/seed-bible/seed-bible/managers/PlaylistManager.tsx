@@ -32,7 +32,11 @@ import { emphasizeVerses } from "./BibleReadingManager";
 import { BOOK_SLUGS, type BookId } from "./BibleDataManager";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
-import { buildSharedPagePath, parsePlaylistPagePath } from "./SharedPagePath";
+import {
+  buildSharedPagePath,
+  parsePlaylistPagePath,
+  parseRecordLocator,
+} from "./SharedPagePath";
 import {
   createSharedPageLoader,
   loadSharedPageAuthorName,
@@ -118,22 +122,6 @@ function getPlaylistLocator(playlist: {
   id: string;
 }): string {
   return `${playlist.recordName ?? ""}.${playlist.id}`;
-}
-
-function parsePlaylistLocator(
-  locator: string | null | undefined
-): { recordName: string; id: string } | null {
-  if (!locator) {
-    return null;
-  }
-  const lastDot = locator.lastIndexOf(".");
-  if (lastDot <= 0 || lastDot === locator.length - 1) {
-    console.error("Invalid playlist locator:", locator);
-    return null;
-  }
-  const recordName = locator.slice(0, lastDot);
-  const id = locator.slice(lastDot + 1);
-  return { recordName, id };
 }
 
 export type Playlist = z.infer<typeof PlaylistSchema>;
@@ -1662,12 +1650,12 @@ export function createPlaylistManager(
     locator: string,
     stepIndex: number | null
   ): Promise<void> => {
-    const parsed = parsePlaylistLocator(locator);
+    const parsed = parseRecordLocator(locator);
     if (!parsed) {
       console.error("Invalid playlist locator in URL:", locator);
       return;
     }
-    const { recordName, id } = parsed;
+    const { recordName, address: id } = parsed;
     try {
       const loaded = playlistPageLoader.page.peek();
       const playlist =

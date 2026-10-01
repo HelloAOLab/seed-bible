@@ -1,3 +1,4 @@
+import { parseRecordLocator } from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers";
 import {
   CadenceSchema,
@@ -34,7 +35,6 @@ import {
   sessionsFromDraft,
   buildReadingPlanShareUrl,
   getReadingPlanLocator,
-  parseReadingPlanLocator,
   type Cadence,
   type ReadingPlanDraft,
   type ReadingPlan,
@@ -1201,7 +1201,7 @@ describe("buildReadingPlanShareUrl", () => {
       address: "plan-1",
     });
     expect(locator).toBe("user.name.plan-1");
-    expect(parseReadingPlanLocator(locator)).toEqual({
+    expect(parseRecordLocator(locator)).toEqual({
       recordName: "user.name",
       address: "plan-1",
     });

@@ -2,7 +2,11 @@ import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
 import { userProfileSchema } from "./LoginManager";
-import { parseSharedPagePath, type SharedPageKind } from "./SharedPagePath";
+import {
+  parseRecordLocator,
+  parseSharedPagePath,
+  type SharedPageKind,
+} from "./SharedPagePath";
 
 /**
  * The record a shared content page (`/{lang}/playlist/...`,
@@ -67,20 +71,6 @@ interface Schema<T> {
 }
 
 const SSR_SHARED_PAGE_TIMEOUT_MS = 5000;
-
-/** Splits a `{recordName}.{address}` locator on its last dot. */
-function parseLocator(
-  locator: string
-): { recordName: string; address: string } | null {
-  const lastDot = locator.lastIndexOf(".");
-  if (lastDot <= 0 || lastDot === locator.length - 1) {
-    return null;
-  }
-  return {
-    recordName: locator.slice(0, lastDot),
-    address: locator.slice(lastDot + 1),
-  };
-}
 
 /**
  * Reads a user's display name from their public profile record. Null when
@@ -153,7 +143,7 @@ export function createSharedPageLoader<T>(options: {
     locator: string
   ): Promise<SharedPageSeed<T> | null> => {
     const missing = { locator, item: null, authorName: null };
-    const parsed = parseLocator(locator);
+    const parsed = parseRecordLocator(locator);
     if (!parsed) {
       return missing;
     }

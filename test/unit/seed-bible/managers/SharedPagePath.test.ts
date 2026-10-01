@@ -1,5 +1,6 @@
 import {
   buildSharedPagePath,
+  parseRecordLocator,
   parseSharedPagePath,
   slugifyTitle,
 } from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
@@ -216,4 +217,20 @@ describe("playbackRequestFromUrl", () => {
   it("asks for no playback on a plain chapter", () => {
     expect(request("/en/AAB/john/3")).toBeNull();
   });
+});
+
+describe("parseRecordLocator", () => {
+  it("splits a locator on its last dot, so a record name can contain dots", () => {
+    expect(parseRecordLocator("user.name.playlist_abc")).toEqual({
+      recordName: "user.name",
+      address: "playlist_abc",
+    });
+  });
+
+  it.each([null, undefined, "", "no-dot", ".address", "record."])(
+    "rejects %j",
+    (locator) => {
+      expect(parseRecordLocator(locator)).toBeNull();
+    }
+  );
 });
