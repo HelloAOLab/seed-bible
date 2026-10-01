@@ -248,24 +248,16 @@ describe("createPanes", () => {
         title: "Editor",
         component: componentReturning("Editor"),
       });
-      panes.openPane({
-        placement: "fullscreen",
-        title: "Fullscreen",
-        component: componentReturning("Fullscreen"),
-      });
-      panes.openPane({
-        id: "editor",
-        placement: "side",
-        title: "Editor",
-        component: componentReturning("Editor"),
-      });
+      // Resized so the check below shows the pane was reused, not recreated
+      // at the default width.
+      panes.resizePane("editor", 100, 0, 1);
       panes.openPane({
         placement: "floating",
         title: "Floating",
         component: componentReturning("Floating"),
       });
 
-      panes.openPane({
+      const reused = panes.openPane({
         id: "editor",
         placement: "side",
         title: "Editor Updated",
@@ -273,9 +265,9 @@ describe("createPanes", () => {
         exclusive: true,
       });
 
-      expect(panes.panes.value).toHaveLength(1);
-      expect(panes.panes.value[0]?.id).toBe("editor");
-      expect(panes.panes.value[0]?.title).toBe("Editor Updated");
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual(["editor"]);
+      expect(reused.title).toBe("Editor Updated");
+      expect(reused.width).toBe(580);
     });
 
     it("tells each closed pane it was displaced", () => {
@@ -284,12 +276,6 @@ describe("createPanes", () => {
       const onFloatingClose = vi.fn();
 
       panes.openPane({
-        placement: "floating",
-        title: "Floating",
-        component: componentReturning("Floating"),
-        onClose: onFloatingClose,
-      });
-      panes.openPane({
         placement: "fullscreen",
         title: "Fullscreen",
         component: componentReturning("Fullscreen"),
@@ -297,8 +283,8 @@ describe("createPanes", () => {
       });
       panes.openPane({
         placement: "floating",
-        title: "Other",
-        component: componentReturning("Other"),
+        title: "Floating",
+        component: componentReturning("Floating"),
         onClose: onFloatingClose,
       });
       panes.openPane({
@@ -308,21 +294,29 @@ describe("createPanes", () => {
         exclusive: true,
       });
 
-      expect(onFullscreenClose).toHaveBeenCalledWith("displaced");
-      expect(onFloatingClose).toHaveBeenLastCalledWith("displaced");
+      expect(onFullscreenClose).toHaveBeenCalledExactlyOnceWith("displaced");
+      expect(onFloatingClose).toHaveBeenCalledExactlyOnceWith("displaced");
     });
 
-    it("does not store the exclusive flag on the pane", () => {
+    it("applies only to the open it was passed to, not to later opens", () => {
       const panes = createPanes();
 
-      const pane = panes.openPane({
+      const exclusive = panes.openPane({
         placement: "side",
         title: "Exclusive",
         component: componentReturning("Exclusive"),
         exclusive: true,
       });
+      const floating = panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
 
-      expect("exclusive" in pane).toBe(false);
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual([
+        exclusive.id,
+        floating.id,
+      ]);
     });
   });
 
