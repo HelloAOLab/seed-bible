@@ -15,6 +15,7 @@ import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
 import type { ChatsManager } from "./ChatsManager";
 import { openPlaylistItemPreview } from "../components/playlistItemPreview";
+import { PlaylistFinishedModalContent } from "../components/PlaylistFinishedModal/PlaylistFinishedModal";
 import type { I18nManager } from "../i18n";
 import type {
   BibleReadingExtensionManager,
@@ -613,7 +614,8 @@ export function expandCrossChapterItem(
  */
 export function createPlayingState(
   sourcePlaylists: SimplePlaylist[],
-  tab: ReaderTab | null = null
+  tab: ReaderTab | null = null,
+  onFinish?: () => void
 ) {
   const playlists = signal<SimplePlaylist[]>(sourcePlaylists);
   const queue = signal<PlaylistItemData[]>(
@@ -629,6 +631,39 @@ export function createPlayingState(
   );
   const hasNext = computed(() => currentIndex.value < queue.value.length - 1);
   const hasPrevious = computed(() => currentIndex.value > 0);
+  /**
+   * True on the last item of a saved playlist, where `next()` reports the
+   * playlist finished (via `onFinish`) instead of doing nothing. Ad-hoc queues,
+   * like a reading plan's day, keep their own progress and have no link to
+   * share, so they never finish this way.
+   */
+  const canFinish = computed(
+    () =>
+      !!onFinish &&
+      queue.value.length > 0 &&
+      currentIndex.value === queue.value.length - 1 &&
+      !!playlists.value[0] &&
+      isRecordedPlaylist(playlists.value[0])
+  );
+  /** Whether pressing next does anything: moves on, or finishes the playlist. */
+  const canPressNext = computed(() => hasNext.value || canFinish.value);
+  /**
+   * Whether `onFinish` has run since playback last reached the last item. The
+   * reader's own next controls (keyboard, swipe) finish the playlist once, then
+   * hand back to chapter-by-chapter reading so they don't dead end on the
+   * modal. A signal so the swipe preview, which `null`s out the finishing
+   * swipe, reloads the real next chapter once it has been shown. Moving to any
+   * other item re-arms it.
+   */
+  const finishPromptShown = signal(false);
+  let lastIndex = currentIndex.peek();
+  const disposeRearm = effect(() => {
+    const index = currentIndex.value;
+    if (index !== lastIndex) {
+      lastIndex = index;
+      finishPromptShown.value = false;
+    }
+  });
 
   let decorationId: string | null = null;
 
@@ -682,11 +717,17 @@ export function createPlayingState(
     });
   };
 
-  /** Advances to the next step. No-op at the end of the queue. */
+  /**
+   * Advances to the next step. On the last item it calls `onFinish` when
+   * `canFinish` allows, and is otherwise a no-op.
+   */
   const next = async (): Promise<void> => {
     if (hasNext.value) {
       currentIndex.value = currentIndex.value + 1;
       await navigateToCurrentItem();
+    } else if (canFinish.value) {
+      finishPromptShown.value = true;
+      onFinish?.();
     }
   };
 
@@ -807,6 +848,7 @@ export function createPlayingState(
 
   /** Tears down the navigation effect. Call when playback ends or is replaced. */
   const dispose = (): void => {
+    disposeRearm();
     disposeDecoration();
   };
 
@@ -817,6 +859,9 @@ export function createPlayingState(
     currentItem,
     hasNext,
     hasPrevious,
+    canFinish,
+    canPressNext,
+    finishPromptShown: finishPromptShown as ReadonlySignal<boolean>,
     tab,
     next,
     previous,
@@ -858,6 +903,8 @@ export function playbackRequestFromUrl(
     stepIndex: step === null ? null : Math.floor(parseNumber(step, 0)),
   };
 }
+
+const PLAYLIST_FINISHED_MODAL_ID = "playlist-finished";
 
 /** Stable id so navigating between non-verse items updates the same modal instead of closing/reopening it. */
 const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
@@ -1671,12 +1718,36 @@ export function createPlaylistManager(
     }
   };
 
+  const openPlaylistFinishedModal = (
+    playlist: Pick<Playlist, "id" | "recordName" | "title">
+  ): void => {
+    modals.openModal({
+      id: PLAYLIST_FINISHED_MODAL_ID,
+      title: { key: "playlist-finished", defaultValue: "Playlist finished" },
+      content: () => (
+        <PlaylistFinishedModalContent
+          playlistTitle={
+            playlist.title ??
+            i18n.t("untitled-playlist", { defaultValue: "Untitled playlist" })
+          }
+          shareUrl={getPlaylistUrl(playlist)}
+          onClose={() => {
+            stopPlaying();
+            modals.closeModal(PLAYLIST_FINISHED_MODAL_ID);
+          }}
+        />
+      ),
+    });
+  };
+
   /**
    * Gets a shareable URL for the given playlist: its own
    * `/{lang}/playlist/{locator}/{title}` page, which shows the playlist before
    * anything starts playing.
    */
-  const getPlaylistUrl = (playlist: Playlist): string =>
+  const getPlaylistUrl = (
+    playlist: Pick<Playlist, "id" | "recordName" | "title">
+  ): string =>
     new URL(
       `${navigation.basePath}${buildSharedPagePath({
         kind: "playlist",
@@ -1843,7 +1914,12 @@ export function createPlaylistManager(
       const tab =
         tabs.tabs.value.find((t) => t.readingState === readingState) ?? null;
 
-      const playingState = createPlayingState(initial.playlists, tab);
+      const playingState = createPlayingState(initial.playlists, tab, () => {
+        const playlist = playingState.playlists.peek()[0];
+        if (playlist && isRecordedPlaylist(playlist)) {
+          openPlaylistFinishedModal(playlist);
+        }
+      });
       // Apply the synced queue + position (a peer's queue may differ from the
       // raw playlist items after add/remove/reorder).
       playingState.setState(initial);
@@ -1932,6 +2008,8 @@ export function createPlaylistManager(
       const hasNext = computed(
         () =>
           playingState.hasNext.value ||
+          (playingState.canFinish.value &&
+            !playingState.finishPromptShown.value) ||
           !!readingState.chapterData.value?.nextChapterApiLink
       );
       const hasPrevious = computed(
@@ -2012,13 +2090,23 @@ export function createPlaylistManager(
         // enough for two quick presses to compute the same target.
         // At the ends of the queue these fall through to `default` rather than
         // `prevent`, so the reader keeps navigating chapter by chapter once the
-        // queue is exhausted instead of going dead (see `hasNext` above).
+        // queue is exhausted instead of going dead (see `hasNext` above). The
+        // one exception is the first step past a saved playlist's last item,
+        // which shows the finished modal instead.
         navigateNext: () => {
-          if (
-            playingState.queue.value.length === 0 ||
-            !playingState.hasNext.value
-          ) {
+          if (playingState.queue.value.length === 0) {
             return { type: "default" };
+          }
+          if (!playingState.hasNext.value) {
+            if (
+              !playingState.canFinish.value ||
+              playingState.finishPromptShown.value
+            ) {
+              return { type: "default" };
+            }
+            return playingState
+              .next()
+              .then(() => ({ type: "prevent" }) as const);
           }
           return playingState.next().then(() => ({ type: "prevent" }) as const);
         },
@@ -2047,6 +2135,14 @@ export function createPlaylistManager(
             playingState.currentIndex.value + (direction === "next" ? 1 : -1);
           const step = queue[stepIndex];
           if (!step) {
+            if (
+              direction === "next" &&
+              playingState.canFinish.value &&
+              !playingState.finishPromptShown.value
+            ) {
+              // This step shows the finished modal and stays put.
+              return null;
+            }
             // Past the queue's edge, navigation falls through to the reader's
             // own chapter stepping, so preview that instead.
             return undefined;
@@ -2067,6 +2163,9 @@ export function createPlaylistManager(
           disposeIn();
           disposeStepUrl();
           playingState.dispose();
+          // Its Close stops this playback; with the playback gone some other
+          // way (stopped, or by a session peer) it would stop the wrong one.
+          modals.closeModal(PLAYLIST_FINISHED_MODAL_ID);
         },
       };
       // The registry erases `TData` to `unknown`; the extra `playingState`
