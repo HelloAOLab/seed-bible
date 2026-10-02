@@ -40,7 +40,10 @@ export interface InvitationsManager {
    * When a friend creates a shared tab, it auto-appears here.
    */
   availableSessions: Signal<AvailableSharedSession[]>;
-  /** Publish a newly-created shared session into the global registry. */
+  /**
+   * Publish a newly-created shared session into the global registry. Does
+   * nothing unless the host is signed in with at least one friend.
+   */
   publishSession: (session: BibleReadingSession) => Promise<void>;
   /** Remove a previously-published session from the registry. */
   unpublishSession: (sessionId: string) => Promise<void>;
@@ -105,9 +108,10 @@ function parseStoredEntry(value: unknown): StoredRegistryEntry | null {
  * manager would notify every user about every session in the app, which is why
  * it was previously disabled.
  *
- * The registry is only opened (a live WebSocket) once the user is signed in
- * and has at least one friend — with no friends, every entry would be
- * filtered out anyway, so there's nothing to gain from connecting.
+ * The registry is only opened (a live WebSocket), and a session only
+ * published, once the user is signed in and has at least one friend — with no
+ * friends there's nobody to see their session and nothing to surface, so
+ * there's nothing to gain from connecting.
  */
 export function createInvitationsManager(
   os: CasualOSManager,
@@ -279,17 +283,18 @@ export function createInvitationsManager(
   const publishSession = async (
     session: BibleReadingSession
   ): Promise<void> => {
+    // Anyone can read the registry, so a session is only listed when its
+    // host has a friend to see it; nobody else's would ever be shown.
+    if (!login.userId.peek() || friends.friendIds.peek().length === 0) return;
     await openRegistry();
     if (!registryDoc || !registryMap) return;
-    // Fall back to the connection id when the user isn't logged in so
-    // anonymous hosts still publish and other clients can discover them.
-    const hostConnectionId = os.connectionId;
-    const hostUserId = login.userId.value ?? hostConnectionId;
+    // Signing out while the registry was connecting leaves no host to list.
+    const hostUserId = login.userId.peek();
     if (!hostUserId) return;
     const entry: StoredRegistryEntry = {
       sessionId: session.id,
       hostUserId,
-      hostConnectionId,
+      hostConnectionId: os.connectionId,
       publishedAt: Date.now(),
     };
     const docRef = registryDoc;

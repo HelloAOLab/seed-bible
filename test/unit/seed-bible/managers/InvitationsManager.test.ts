@@ -171,7 +171,9 @@ describe("InvitationsManager", () => {
       expect(getSharedDocumentMock).toHaveBeenCalledTimes(1);
     });
 
-    it("publishSession opens the registry even with no friends", async () => {
+    // The registry is public, so a host nobody can see shouldn't be listed in
+    // it (or connect to it) just because they started a shared session.
+    it("publishSession neither opens the registry nor publishes while signed in with no friends", async () => {
       const { manager: friends } = makeFriends([]);
       const manager = createInvitationsManager(
         os,
@@ -182,11 +184,25 @@ describe("InvitationsManager", () => {
 
       await manager.publishSession({ id: "session-1" } as any);
 
-      expect(getSharedDocumentMock).toHaveBeenCalledWith(
-        null,
-        REGISTRY_DOC_ID,
-        REGISTRY_DOC_DATA
+      expect(getSharedDocumentMock).not.toHaveBeenCalled();
+      expect(mockMap.get("session-1")).toBeUndefined();
+    });
+
+    it("publishSession neither opens the registry nor publishes while signed out, even with friends", async () => {
+      const { manager: friends } = makeFriends([
+        { userId: "other-1", name: null, pictureUrl: null },
+      ]);
+      const manager = createInvitationsManager(
+        os,
+        makeLogin(null),
+        friends,
+        vi.fn()
       );
+
+      await manager.publishSession({ id: "session-1" } as any);
+
+      expect(getSharedDocumentMock).not.toHaveBeenCalled();
+      expect(mockMap.get("session-1")).toBeUndefined();
     });
   });
 
@@ -350,7 +366,9 @@ describe("InvitationsManager", () => {
 
   describe("publishSession / unpublishSession", () => {
     it("publishes under the signed-in user's id", async () => {
-      const { manager: friends } = makeFriends([]);
+      const { manager: friends } = makeFriends([
+        { userId: "other-1", name: null, pictureUrl: null },
+      ]);
       const manager = createInvitationsManager(
         os,
         makeLogin("host-1"),
@@ -363,28 +381,37 @@ describe("InvitationsManager", () => {
       expect(mockMap.get("session-1")).toMatchObject({
         sessionId: "session-1",
         hostUserId: "host-1",
+        hostConnectionId: os.connectionId,
       });
     });
 
-    it("falls back to the connection id when signed out", async () => {
-      const { manager: friends } = makeFriends([]);
-      const manager = createInvitationsManager(
-        os,
-        makeLogin(null),
-        friends,
-        vi.fn()
-      );
-
-      await manager.publishSession({ id: "session-1" } as any);
-
-      expect(mockMap.get("session-1")).toMatchObject({
-        sessionId: "session-1",
-        hostUserId: os.connectionId,
+    it("does not publish when the host signs out while the registry is connecting", async () => {
+      const { manager: friends } = makeFriends([
+        { userId: "other-1", name: null, pictureUrl: null },
+      ]);
+      const login = makeLogin("host-1");
+      let finishOpening!: () => void;
+      const opened = new Promise<void>((resolve) => {
+        finishOpening = resolve;
       });
+      getSharedDocumentMock.mockImplementation(async () => {
+        await opened;
+        return mockDocument as unknown as SharedDocument;
+      });
+      const manager = createInvitationsManager(os, login, friends, vi.fn());
+
+      const publishing = manager.publishSession({ id: "session-1" } as any);
+      login.userId.value = null;
+      finishOpening();
+      await publishing;
+
+      expect(mockMap.get("session-1")).toBeUndefined();
     });
 
     it("removes the entry on unpublish", async () => {
-      const { manager: friends } = makeFriends([]);
+      const { manager: friends } = makeFriends([
+        { userId: "other-1", name: null, pictureUrl: null },
+      ]);
       const manager = createInvitationsManager(
         os,
         makeLogin("host-1"),
