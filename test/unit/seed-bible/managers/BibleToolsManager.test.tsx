@@ -1854,7 +1854,7 @@ describe("createBibleToolsManager", () => {
         } as any,
         annotations: {
           getAnnotationsForChapter: () => signal([]),
-          pendingCountForChapter: vi.fn(),
+          pendingCountForChapter: vi.fn(() => 0),
         } as any,
         features: {} as any,
         surface: "quick-toolbar",

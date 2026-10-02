@@ -5,6 +5,7 @@ import { DiscoverContentPanel } from "@packages/seed-bible/seed-bible/components
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import type { PlanMatch } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 import {
   createDiscoverManager,
   type DiscoverContentTypeDefinition,
@@ -55,6 +56,17 @@ function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
     data: { type: "comment", html: "<p>A helpful note.</p>" },
     ...overrides,
   } as Annotation;
+}
+
+function createPlanMatch(overrides: Partial<PlanMatch> = {}): PlanMatch {
+  return {
+    planKey: "plan-1",
+    planTitle: "Through the Bible in a Year",
+    progress: { id: "progress-1" },
+    sessions: [],
+    allComplete: false,
+    ...overrides,
+  } as PlanMatch;
 }
 
 /** One Theographic result as the provider builds it. */
@@ -125,8 +137,10 @@ function createMockState(
     annotationsForChapter?: Annotation[];
     pendingCountForChapter?: number;
     contentTypes?: DiscoverContentTypeDefinition[];
+    readingPlansForChapter?: PlanMatch[];
   } = {}
 ): SeedBibleState {
+  const readingPlansForChapter = overrides.readingPlansForChapter ?? [];
   const discover = createDiscoverManager();
   for (const definition of overrides.contentTypes ?? []) {
     discover.registerContentType(definition);
@@ -158,8 +172,14 @@ function createMockState(
         pendingCount: signal(0),
       },
     },
-    features: { isFeatureEnabled: vi.fn().mockReturnValue(false) },
-    readingPlans: { getReadingPlansForChapter: vi.fn(() => []) },
+    // The real manager only returns plans while the reading-plans feature is
+    // on, so the flag follows whether any plans were given.
+    features: {
+      isFeatureEnabled: vi.fn(() => signal(readingPlansForChapter.length > 0)),
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => readingPlansForChapter),
+    },
   } as unknown as SeedBibleState;
 }
 
@@ -276,6 +296,28 @@ describe("DiscoverContentPanel", () => {
     });
 
     expect(container.innerHTML).toBe("");
+  });
+
+  it("renders the reading-plans section when a followed plan covers the chapter and nothing else exists", () => {
+    const tab = createMockTab();
+    const state = createMockState({
+      annotationsForChapter: [],
+      readingPlansForChapter: [createPlanMatch()],
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-discover-content-panel")
+    ).not.toBeNull();
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toEqual(["Reading Plans"]);
+    expect(container.textContent).toContain("Through the Bible in a Year");
+    expect(container.textContent).not.toContain("Pick a filter above");
   });
 
   it("only shows filter chips for content that is actually available", () => {
