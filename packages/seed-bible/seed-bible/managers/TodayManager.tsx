@@ -18,7 +18,7 @@ import {
 } from "./ReadingHistoryManager";
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 import { hasReadingUrlPosition } from "./ReadingUrlPath";
-import { parseStaticPagePath } from "./StaticPagePath";
+import { isNonReadingPagePath } from "./StaticPagePath";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { TranslationBooks } from "./FreeUseBibleAPI";
 import {
@@ -61,8 +61,8 @@ type TranslationBookSummary = {
  * embed (`?embed=minimal` / `?embed=true`) never opens Today — that chrome
  * has no Today surface. Otherwise an explicit `?today=` param always wins,
  * and with no param it opens unless the URL already points somewhere
- * specific — a canonical reading path, a static page such as "/en/about",
- * or a shared-session invite.
+ * specific — a canonical reading path, a static page such as "/en/about", a
+ * shared playlist page, or a shared-session invite.
  *
  * Must be given `initialUrl` (the URL as first loaded), never the live
  * `currentUrl`: `TabsManager` echoes the reader's book/chapter back into the URL
@@ -85,12 +85,12 @@ export function todayWillAutoOpenForUrl(
   }
   return !(
     hasReadingUrlPosition(initialUrl, basePath) ||
-    // A static page is a destination the visitor asked for just as much as a
-    // chapter is. It carries no reading position, so without this it reads as
-    // "nowhere in particular" and Today opens over it — and because Today's
-    // pane is fullscreen, it displaces the static page's own pane, which in
-    // turn sends the reader back to the selected tab's chapter.
-    parseStaticPagePath(initialUrl.pathname, basePath) !== null ||
+    // A static page or shared playlist is a destination the visitor asked for
+    // just as much as a chapter is. It carries no reading position, so without
+    // this it reads as "nowhere in particular" and Today opens over it — and
+    // because Today's pane is fullscreen, it displaces the static page's own
+    // pane, which in turn sends the reader back to the selected tab's chapter.
+    isNonReadingPagePath(initialUrl.pathname, basePath) ||
     initialUrl.searchParams.has("sessionId")
   );
 }

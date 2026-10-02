@@ -19,7 +19,7 @@ export default function initExampleExtension() {
     init: function* (context: SeedBibleState) {
       console.log("Example extension initialized with context:", context);
 
-      context.discover.registerDiscoverProvider({
+      yield context.discover.registerDiscoverProvider({
         id: "example-discover-provider",
         description: "An example discover provider that returns dummy results.",
         title: "Example Discover Provider",
