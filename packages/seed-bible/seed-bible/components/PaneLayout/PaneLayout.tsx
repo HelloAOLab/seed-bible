@@ -280,13 +280,15 @@ export function FullscreenPane(props: FullscreenPaneProps) {
       }}
       onPointerDown={() => app.selectPane(pane.id)}
     >
-      <PaneHeader
-        title={pane.title}
-        icon={pane.icon}
-        leading={pane.leading}
-        header={pane.header}
-        onClose={() => closePaneFromHeader(panesManager, pane)}
-      />
+      {pane.showHeader && (
+        <PaneHeader
+          title={pane.title}
+          icon={pane.icon}
+          leading={pane.leading}
+          header={pane.header}
+          onClose={() => closePaneFromHeader(panesManager, pane)}
+        />
+      )}
       <div className="sb-pane-detached-body">
         <div className="sb-pane-component">
           <pane.component />
@@ -321,13 +323,15 @@ export function SidePane(props: SidePaneProps) {
       }
       onPointerDown={() => app.selectPane(pane.id)}
     >
-      <PaneHeader
-        title={pane.title}
-        icon={pane.icon}
-        leading={pane.leading}
-        header={pane.header}
-        onClose={() => closePaneFromHeader(panesManager, pane)}
-      />
+      {pane.showHeader && (
+        <PaneHeader
+          title={pane.title}
+          icon={pane.icon}
+          leading={pane.leading}
+          header={pane.header}
+          onClose={() => closePaneFromHeader(panesManager, pane)}
+        />
+      )}
       <div className="sb-pane-detached-body">
         <div className="sb-pane-component">
           <pane.component />

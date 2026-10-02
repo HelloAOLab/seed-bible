@@ -81,6 +81,8 @@ export interface Pane {
   width: number;
   /** Pane height (floating placement only). */
   height: number;
+  /** Whether the built-in header bar is shown. See PaneOpenOptions.showHeader. */
+  showHeader: boolean;
 }
 
 export interface PaneOpenOptions {
@@ -140,6 +142,16 @@ export interface PaneOpenOptions {
    * size the user dragged it to.
    */
   size?: { width: number; height: number };
+  /**
+   * Whether the pane shows its built-in header bar (title, icon, `leading`,
+   * `header` and the close button). Defaults to `true`. Ignored while the pane
+   * is displayed floating, since the header is its drag handle: a floating pane
+   * opened with `false` keeps its header on desktop and drops it only on mobile,
+   * where it's displayed fullscreen. Without the header there's no close (X)
+   * button and `confirmClose` is never consulted, so the pane's component must
+   * provide its own way to close.
+   */
+  showHeader?: boolean;
 }
 
 export interface PanesManager {
@@ -202,7 +214,7 @@ export interface PanesManager {
 function createPaneFactory() {
   let nextPaneId = 1;
 
-  return ({ size, ...options }: PaneOpenOptions): Pane => {
+  return ({ size, showHeader, ...options }: PaneOpenOptions): Pane => {
     const paneId = nextPaneId;
     nextPaneId += 1;
     const offset = (paneId - 1) * 24;
@@ -214,6 +226,7 @@ function createPaneFactory() {
       y: 48 + offset,
       width: size?.width ?? 480,
       height: size?.height ?? 320,
+      showHeader: showHeader ?? true,
     };
   };
 }
@@ -300,6 +313,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
           header: options.header,
           onClose: options.onClose,
           confirmClose: options.confirmClose,
+          showHeader: options.showHeader ?? true,
         };
         syncPaneState(
           willFillScreen
