@@ -11,7 +11,7 @@ import {
   fakeSharedPermissions,
   ME,
 } from "../testUtils/fakeSharedPermissions";
-import { signal, type Signal } from "@preact/signals";
+import { effect, signal, type Signal } from "@preact/signals";
 
 describe("FriendsManager", () => {
   let os: CasualOSManager;
@@ -369,6 +369,51 @@ describe("FriendsManager", () => {
       expect(server.rows[0]!.status).toBe("revoked");
     });
 
+    it("accepting withdraws the request you'd also sent them", async () => {
+      // Both people asked at once.
+      const theirs = server.requestFrom("ada");
+      const mine = server.requestTo("ada");
+      const friends = create();
+      await loaded(friends, () => {});
+
+      await friends.acceptRequest(theirs.id);
+
+      expect(theirs.status).toBe("accepted");
+      expect(mine.status).toBe("revoked");
+      expect(friends.friendIds.value).toEqual(["ada"]);
+    });
+
+    it("declining ends every request waiting from that person", async () => {
+      // Sent from two devices before either saw the other.
+      const older = server.requestFrom("ada");
+      const newer = server.requestFrom("ada");
+      const friends = create();
+      await loaded(friends, () =>
+        expect(friends.incomingRequests.value).toMatchObject([{ id: newer.id }])
+      );
+
+      await friends.declineRequest(newer.id);
+
+      expect(older.status).toBe("rejected");
+      expect(newer.status).toBe("rejected");
+      expect(friends.incomingRequests.value).toEqual([]);
+    });
+
+    it("cancelling withdraws every request you sent that person", async () => {
+      const older = server.requestTo("ada");
+      const newer = server.requestTo("ada");
+      const friends = create();
+      await loaded(friends, () =>
+        expect(friends.outgoingRequests.value).toMatchObject([{ id: newer.id }])
+      );
+
+      await friends.cancelRequest(newer.id);
+
+      expect(older.status).toBe("revoked");
+      expect(newer.status).toBe("revoked");
+      expect(friends.outgoingRequests.value).toEqual([]);
+    });
+
     it("treats a request that's already gone as done", async () => {
       const request = server.requestFrom("ada", { status: "revoked" });
       const friends = create();
@@ -393,6 +438,60 @@ describe("FriendsManager", () => {
       expect(first.status).toBe("revoked");
       expect(second.status).toBe("revoked");
       expect(friends.friendIds.value).toEqual(["bob"]);
+    });
+
+    // Both people asked at once and one request was accepted, so the other is
+    // still waiting. If it outlived the friendship, its recipient could accept
+    // it and restore the friendship without the other person.
+    it("declines a leftover request from them, without ever showing it", async () => {
+      server.friendsWith("ada");
+      const leftover = server.requestFrom("ada");
+      const friends = create();
+      await loaded(friends, () =>
+        expect(friends.friendIds.value).toEqual(["ada"])
+      );
+      const shown: string[] = [];
+      const stopWatching = effect(() => {
+        for (const request of friends.incomingRequests.value) {
+          shown.push(request.userId);
+        }
+      });
+
+      await friends.unfriend("ada");
+      stopWatching();
+
+      expect(leftover.status).toBe("rejected");
+      expect(shown).toEqual([]);
+      expect(friends.incomingRequests.value).toEqual([]);
+      expect(friends.friendIds.value).toEqual([]);
+    });
+
+    it("withdraws a leftover request you sent them", async () => {
+      server.friendsWith("ada");
+      const leftover = server.requestTo("ada");
+      const friends = create();
+      await loaded(friends, () =>
+        expect(friends.friendIds.value).toEqual(["ada"])
+      );
+
+      await friends.unfriend("ada");
+
+      expect(leftover.status).toBe("revoked");
+      expect(friends.outgoingRequests.value).toEqual([]);
+    });
+
+    it("ends a leftover request that arrived after the lists were last read", async () => {
+      server.friendsWith("ada");
+      const friends = create();
+      await loaded(friends, () =>
+        expect(friends.friendIds.value).toEqual(["ada"])
+      );
+      const leftover = server.requestFrom("ada");
+
+      await friends.unfriend("ada");
+
+      expect(leftover.status).toBe("rejected");
+      expect(friends.incomingRequests.value).toEqual([]);
     });
 
     it("puts the friend back and throws when the server refuses", async () => {

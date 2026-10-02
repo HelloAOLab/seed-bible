@@ -133,12 +133,20 @@ export interface FriendsManager {
     target: { userId: string } | { email: string }
   ) => Promise<SendFriendRequestResult>;
 
+  /** Accepts a request, and ends any other still waiting with that person. */
   acceptRequest: (requestId: string) => Promise<AnswerFriendRequestResult>;
+  /** Declines a request, and any other that person has waiting. */
   declineRequest: (requestId: string) => Promise<void>;
-  /** Withdraws a request the signed-in user sent. */
+  /**
+   * Withdraws a request the signed-in user sent, and any other still waiting
+   * with that person.
+   */
   cancelRequest: (requestId: string) => Promise<void>;
 
-  /** Ends every friendship connection with this person. */
+  /**
+   * Ends every friendship connection with this person, and any request still
+   * waiting between you.
+   */
   unfriend: (userId: string) => Promise<void>;
 }
 
@@ -211,7 +219,8 @@ export function createFriendsManager(
     )) {
       const userId = otherUserId(request);
       // A pending request with someone who is already a friend is left over
-      // from both people asking at once; the friendship already answers it.
+      // from both people asking at once. Accepting or unfriending ends it;
+      // until then, the friendship already answers it.
       if (!userId || friendSet.has(userId) || seen.has(userId)) {
         continue;
       }
@@ -371,6 +380,44 @@ export function createFriendsManager(
     return login.userId.peek() === userId ? userId : null;
   };
 
+  /**
+   * Ends every pending request between the signed-in user and `userId`,
+   * except `keepId`: declines theirs and withdraws mine. When both people ask
+   * at once, accepting one leaves the other waiting; left alone, it would let
+   * one person restore the friendship without the other after it ends. A
+   * failure here isn't worth failing the caller over, since the next refresh
+   * just shows the request again.
+   */
+  const endPendingRequestsWith = async (
+    userId: string,
+    keepId?: string
+  ): Promise<boolean> => {
+    const theirs = incoming
+      .peek()
+      .filter((r) => r.requestingUserId === userId && r.id !== keepId);
+    const mine = outgoing
+      .peek()
+      .filter((r) => r.targetUserId === userId && r.id !== keepId);
+    if (theirs.length === 0 && mine.length === 0) {
+      return false;
+    }
+    // Hidden straight away, so ending a friendship doesn't briefly show them
+    // as new requests.
+    batch(() => {
+      incoming.value = incoming.peek().filter((r) => !theirs.includes(r));
+      outgoing.value = outgoing.peek().filter((r) => !mine.includes(r));
+    });
+    try {
+      await Promise.all([
+        ...theirs.map((r) => os.rejectSharedPermission(r.id)),
+        ...mine.map((r) => os.revokeSharedPermission(r.id)),
+      ]);
+    } catch (error) {
+      console.warn(`Could not end pending requests with ${userId}:`, error);
+    }
+    return true;
+  };
+
   const acceptRequest = async (
     requestId: string
   ): Promise<AnswerFriendRequestResult> => {
@@ -378,6 +425,9 @@ export function createFriendsManager(
     if (!me) {
       return { success: false, reason: "not_signed_in" };
     }
+    const requesterId = incoming
+      .peek()
+      .find((r) => r.id === requestId)?.requestingUserId;
     const result = await os.acceptSharedPermission(requestId, me);
     if (!result.success) {
       if (result.errorCode === "shared_permission_expired") {
@@ -394,33 +444,51 @@ export function createFriendsManager(
       throw new Error(`Failed to accept friend request: ${result.errorCode}`);
     }
     await refresh();
+    // Read after the refresh, so a request sent since the lists were last
+    // read is ended too.
+    if (requesterId && (await endPendingRequestsWith(requesterId, requestId))) {
+      await refresh();
+    }
     return { success: true };
   };
 
   /**
-   * Withdraws or declines a request. A request that's already gone (answered,
-   * withdrawn, or revoked by the other side) is the outcome the caller wanted,
-   * so that isn't an error.
+   * Withdraws or declines a request, along with any other request waiting in
+   * the same direction with the same person: only their newest is shown, so
+   * ending just that one would bring the next one back. A request that's
+   * already gone (answered, withdrawn, or revoked by the other side) is the
+   * outcome the caller wanted, so that isn't an error.
    */
   const endRequest = async (
     requestId: string,
+    requests: ReadonlySignal<SharedPermission[]>,
+    otherUserId: (request: SharedPermission) => string | null,
     end: (
       id: string
     ) => Promise<{ success: true } | { success: false; errorCode: string }>,
     action: string
   ): Promise<void> => {
-    const result = await end(requestId);
-    if (
-      !result.success &&
-      result.errorCode !== "not_found" &&
-      result.errorCode !== "invalid_request"
-    ) {
-      await refresh();
+    const request = requests.peek().find((r) => r.id === requestId);
+    const userId = request ? otherUserId(request) : null;
+    const ids = userId
+      ? requests
+          .peek()
+          .filter((r) => otherUserId(r) === userId)
+          .map((r) => r.id)
+      : [requestId];
+    const results = await Promise.all(ids.map((id) => end(id)));
+    const failed = results.find(
+      (r) =>
+        !r.success &&
+        r.errorCode !== "not_found" &&
+        r.errorCode !== "invalid_request"
+    );
+    await refresh();
+    if (failed && !failed.success) {
       throw new Error(
-        `Failed to ${action} friend request: ${result.errorCode}`
+        `Failed to ${action} friend request: ${failed.errorCode}`
       );
     }
-    await refresh();
   };
 
   const sendRequest = async (
@@ -501,10 +569,16 @@ export function createFriendsManager(
     if (!link) {
       return;
     }
+    // Started first: it hides any leftover request before its first await, so
+    // the request is already gone when dropping the link would surface it.
+    const endingLeftovers = endPendingRequestsWith(userId);
     links.value = links.peek().filter((l) => l.userId !== userId);
-    const results = await Promise.all(
-      link.sharedPermissionIds.map((id) => os.revokeSharedPermission(id))
-    );
+    const [results] = await Promise.all([
+      Promise.all(
+        link.sharedPermissionIds.map((id) => os.revokeSharedPermission(id))
+      ),
+      endingLeftovers,
+    ]);
     const failed = results.find(
       (r) =>
         !r.success &&
@@ -514,6 +588,10 @@ export function createFriendsManager(
     // Either way the server now decides what's left, including putting the
     // friend back if the revoke didn't go through.
     await refresh();
+    // A request sent since the lists were last read only shows up now.
+    if (await endPendingRequestsWith(userId)) {
+      await refresh();
+    }
     if (failed && !failed.success) {
       throw new Error(`Failed to unfriend: ${failed.errorCode}`);
     }
@@ -529,9 +607,21 @@ export function createFriendsManager(
     sendRequest,
     acceptRequest,
     declineRequest: (requestId) =>
-      endRequest(requestId, os.rejectSharedPermission, "decline"),
+      endRequest(
+        requestId,
+        incoming,
+        (r) => r.requestingUserId,
+        os.rejectSharedPermission,
+        "decline"
+      ),
     cancelRequest: (requestId) =>
-      endRequest(requestId, os.revokeSharedPermission, "cancel"),
+      endRequest(
+        requestId,
+        outgoing,
+        (r) => r.targetUserId,
+        os.revokeSharedPermission,
+        "cancel"
+      ),
     unfriend,
   };
 }
