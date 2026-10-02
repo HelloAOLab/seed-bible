@@ -14,7 +14,7 @@ import {
   type BibleReadingState,
   type BibleSelectedVerse,
   type ReadingPosition,
-  hasDiscoverPanelContent,
+  getDiscoverPanelContent,
 } from "../managers/BibleReadingManager";
 import {
   buildReadingPath,
@@ -917,12 +917,12 @@ function getDefaultQuickToolbarTools(
         if (c.app?.isMobile?.value || c.app?.isDiscoverOpen?.value) {
           return false;
         }
-        return hasDiscoverPanelContent(
+        return getDiscoverPanelContent(
           c.readingState,
           c.annotations,
           c.readingPlans,
           c.features
-        );
+        ).hasAny;
       },
       onSelect: (c) => {
         c.readingState.discoverContentPanelInline.value =

@@ -50,7 +50,7 @@ import {
   type Annotation,
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
-import type { ReadingPlansManager } from "./ReadingPlansManager";
+import type { PlanMatch, ReadingPlansManager } from "./ReadingPlansManager";
 import type { FeaturesManager } from "./FeaturesManager";
 
 export interface DiscoverTypedProviderResults<TResult> {
@@ -1314,12 +1314,25 @@ export function hasAnyDiscoverResults(
   );
 }
 
-export function hasDiscoverPanelContent(
+export interface DiscoverPanelContent {
+  hasAnnotations: boolean;
+  showAnnotations: boolean;
+  plans: PlanMatch[];
+  hasDiscoverResults: boolean;
+  hasAny: boolean;
+}
+
+/**
+ * What the discover content panel has to show for the reading state's current
+ * chapter. Both the panel and its quick-tool toggle read this, so they can't
+ * disagree about whether there is anything to show.
+ */
+export function getDiscoverPanelContent(
   readingState: BibleReadingState,
   annotations: AnnotationsManager,
   readingPlans: ReadingPlansManager,
   features: FeaturesManager
-): boolean {
+): DiscoverPanelContent {
   const bookId = readingState.bookId.value;
   const chapterNumber = readingState.chapterNumber.value;
   const hasAnnotations = Boolean(
@@ -1328,7 +1341,8 @@ export function hasDiscoverPanelContent(
     annotations.getAnnotationsForChapter(bookId, chapterNumber).value.length > 0
   );
   // A note deleted offline is no longer in the chapter list, but it is still
-  // a change that has to reach the server.
+  // a change that has to reach the server. Keep the notes section (and its
+  // chip) up so that pending sync stays visible.
   const pendingAnnotationChanges =
     bookId && chapterNumber
       ? annotations.pendingCountForChapter(bookId, chapterNumber)
@@ -1339,10 +1353,15 @@ export function hasDiscoverPanelContent(
     chapterNumber,
     features
   );
+  const hasDiscoverResults = hasAnyDiscoverResults(readingState);
 
-  return (
-    showAnnotations || hasAnyDiscoverResults(readingState) || plans.length > 0
-  );
+  return {
+    hasAnnotations,
+    showAnnotations,
+    plans,
+    hasDiscoverResults,
+    hasAny: showAnnotations || hasDiscoverResults || plans.length > 0,
+  };
 }
 
 export function createBibleReadingState(

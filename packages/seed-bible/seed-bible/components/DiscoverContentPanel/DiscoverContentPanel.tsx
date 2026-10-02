@@ -3,7 +3,7 @@ import { useSignal } from "@preact/signals";
 import { useCallback, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
-import { hasDiscoverPanelContent } from "../../managers/BibleReadingManager";
+import { getDiscoverPanelContent } from "../../managers/BibleReadingManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   CrossReferencesSection,
@@ -128,35 +128,15 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   }
 
   const bookId = tab.readingState.bookId.value;
-  const chapterNumber = tab.readingState.chapterNumber.value;
-  const hasAnnotations = Boolean(
-    bookId &&
-    chapterNumber &&
-    state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
-      .length > 0
-  );
-  // A note deleted offline is no longer in the chapter list, but it is still
-  // a change that has to reach the server. Keep the section (and its chip)
-  // up so that pending sync stays visible.
-  const pendingAnnotationChanges =
-    bookId && chapterNumber
-      ? state.annotations.pendingCountForChapter(bookId, chapterNumber)
-      : 0;
-  const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
-  const plans = state.readingPlans.getReadingPlansForChapter(
-    bookId,
-    chapterNumber,
-    state.features
-  );
-
-  if (
-    !hasDiscoverPanelContent(
+  const { hasAnnotations, showAnnotations, plans, hasAny } =
+    getDiscoverPanelContent(
       tab.readingState,
       state.annotations,
       state.readingPlans,
       state.features
-    )
-  ) {
+    );
+
+  if (!hasAny) {
     return null;
   }
 
