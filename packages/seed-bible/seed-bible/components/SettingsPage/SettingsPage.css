@@ -406,6 +406,14 @@
   width: 100%;
 }
 
+/* The native option popup ignores the select's translucent background and
+   renders white, so options need an explicit theme background to keep the
+   inherited font color readable in dark mode. */
+.sb-settings-language-select option {
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+}
+
 .sb-settings-language-select:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
 }
