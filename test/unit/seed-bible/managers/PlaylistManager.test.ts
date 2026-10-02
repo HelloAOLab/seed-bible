@@ -1,4 +1,5 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import {
   CasualOSManager,
   createModalManager,
@@ -28,12 +29,15 @@ import {
   type PlaylistPageSeed,
   type PlaylistReadingData,
   type PlaylistReadingExtensionInstance,
+  type SimplePlaylist,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, signal } from "@preact/signals";
+import { h, render, type ComponentChildren } from "preact";
+import { act } from "preact/test-utils";
 import type { Mock } from "vitest";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
@@ -423,6 +427,9 @@ describe("createPlaylistManager", () => {
     typeof createBibleReadingExtensionManager
   >;
   /** The fake `ChatsManager`'s `addContext`/`removeContext` spies from the most recent `makeManager()` call. */
+  /** The `ModalManager` from the most recent `makeManager()` call. */
+  let lastModals: ReturnType<typeof createModalManager>;
+  let lastI18n: ReturnType<typeof createI18nManager>;
   let lastChatsAddContext: Mock;
   let lastChatsRemoveContext: Mock;
 
@@ -451,7 +458,9 @@ describe("createPlaylistManager", () => {
     );
     const isMobile = signal(false);
     const modals = createModalManager();
+    lastModals = modals;
     const i18n = createI18nManager(navigation, ["en"]);
+    lastI18n = i18n;
     // Reuse the registry the fake reading states share, so the extension the
     // manager registers is the one those tabs can enable.
     const readingExtensionManager = sharedReadingExtensionManager!;
@@ -2092,10 +2101,25 @@ describe("createPlaylistManager", () => {
       });
     });
 
+    /**
+     * A queue no record backs, like a reading plan's day. It has no link to
+     * share, so reaching its end hands straight back to chapter navigation
+     * without a finished modal.
+     */
+    const makeAdHocPlaylist = (
+      overrides: Partial<Playlist> = {}
+    ): SimplePlaylist => {
+      const { recordName: _recordName, ...rest } = makePlaylist(overrides);
+      return rest;
+    };
+
+    const isFinishedModalOpen = () =>
+      lastModals.modals.value.some((m) => m.id === "playlist-finished");
+
     it("navigateNext/navigatePrevious advance the queue and hand back over at the bounds", async () => {
       makeManager("user-1");
       await flush();
-      const playlist = makePlaylist({
+      const playlist = makeAdHocPlaylist({
         items: [
           { type: "html", html: "a" },
           { type: "html", html: "b" },
@@ -2125,13 +2149,100 @@ describe("createPlaylistManager", () => {
         type: "default",
       });
       expect(instance.playingState.currentIndex.value).toBe(1);
+      expect(isFinishedModalOpen()).toBe(false);
+    });
+
+    it("navigateNext past a saved playlist's last item shows the finished modal once, then hands back to chapter navigation", async () => {
+      makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      const instance = activateExtension({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 1,
+      });
+
+      expect(instance.hasNext!.value).toBe(true);
+      expect(await instance.navigateNext!({} as any)).toEqual({
+        type: "prevent",
+      });
+      expect(isFinishedModalOpen()).toBe(true);
+      expect(instance.playingState.currentIndex.value).toBe(1);
+
+      // Pressing on doesn't trap the reader on the modal.
+      lastModals.closeModal("playlist-finished");
+      expect(await instance.navigateNext!({} as any)).toEqual({
+        type: "default",
+      });
+      expect(isFinishedModalOpen()).toBe(false);
+
+      // Stepping off the last item and back re-arms the modal.
+      await instance.navigatePrevious!({} as any);
+      await instance.navigateNext!({} as any);
+      expect(isFinishedModalOpen()).toBe(false);
+      expect(await instance.navigateNext!({} as any)).toEqual({
+        type: "prevent",
+      });
+      expect(isFinishedModalOpen()).toBe(true);
+    });
+
+    it("does not preview a chapter for the swipe that shows the finished modal", async () => {
+      makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
+      const instance = activateExtension({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 0,
+      });
+
+      expect(
+        instance.getAdjacentChapter!({ direction: "next" } as any)
+      ).toBeNull();
+      await instance.navigateNext!({} as any);
+      // Once shown, the swipe moves on to the reader's own next chapter. The
+      // reader only asks again when something it watches changes, which is
+      // what the reactive flag is for.
+      expect(instance.playingState.finishPromptShown.value).toBe(true);
+      expect(
+        instance.getAdjacentChapter!({ direction: "next" } as any)
+      ).toBeUndefined();
+    });
+
+    it("turns next off on the Bible's last chapter once the finished modal has been shown", async () => {
+      makeManager("user-1");
+      await flush();
+      const readingState = makeReadingState(vi.fn());
+      // Revelation 22: a chapter with nothing after it.
+      readingState.chapterData.value = {
+        nextChapterApiLink: null,
+        previousChapterApiLink: "/api/previous.json",
+      } as any;
+      const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
+      const instance = activateExtension(
+        { playlists: [playlist], queue: playlist.items, step: 0 },
+        false,
+        readingState
+      );
+
+      expect(instance.hasNext!.value).toBe(true);
+      await instance.navigateNext!({} as any);
+      expect(isFinishedModalOpen()).toBe(true);
+      expect(instance.hasNext!.value).toBe(false);
     });
 
     it("hasNext/hasPrevious fall back to the loaded chapter's own links at the queue's edges", async () => {
       makeManager("user-1");
       await flush();
       const readingState = makeReadingState(vi.fn());
-      const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
+      const playlist = makeAdHocPlaylist({
+        items: [{ type: "html", html: "a" }],
+      });
       const instance = activateExtension(
         { playlists: [playlist], queue: playlist.items, step: 0 },
         false,
@@ -2430,6 +2541,145 @@ describe("createPlaylistManager", () => {
     await flush();
 
     expect(manager.playing.value).toBeNull();
+  });
+
+  describe("playlist finished modal", () => {
+    const finishedModal = () =>
+      lastModals.modals.value.find((m) => m.id === "playlist-finished");
+
+    it("opens when next is pressed on a saved playlist's last item, and not before", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+
+      manager.startPlaying(playlist);
+      const playing = manager.playing.value!;
+      expect(playing.canFinish.value).toBe(false);
+
+      await playing.next();
+      expect(playing.currentIndex.value).toBe(1);
+      expect(finishedModal()).toBeUndefined();
+      expect(playing.canFinish.value).toBe(true);
+
+      await playing.next();
+      expect(playing.currentIndex.value).toBe(1);
+      expect(finishedModal()?.title).toEqual({
+        key: "playlist-finished",
+        defaultValue: "Playlist finished",
+      });
+    });
+
+    /** Plays a two-item saved playlist through to its finished modal. */
+    const finishPlaylist = async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      manager.startPlaying(playlist);
+      await manager.playing.value!.next();
+      await manager.playing.value!.next();
+      return manager;
+    };
+
+    it("stops playback when its Close button is pressed", async () => {
+      const manager = await finishPlaylist();
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      try {
+        act(() => {
+          render(
+            h(I18nProvider, {
+              i18n: lastI18n,
+              children: finishedModal()!.content({
+                t: (key) => key,
+              }) as ComponentChildren,
+            }),
+            container
+          );
+        });
+        const close = Array.from(container.querySelectorAll("button")).find(
+          (b) => b.textContent === "Close"
+        )!;
+
+        act(() => close.click());
+
+        expect(manager.playing.value).toBeNull();
+        expect(finishedModal()).toBeUndefined();
+      } finally {
+        render(null, container);
+        container.remove();
+      }
+    });
+
+    it("keeps playing when the modal is just dismissed (its X or the backdrop)", async () => {
+      const manager = await finishPlaylist();
+      expect(finishedModal()).toBeDefined();
+
+      lastModals.closeModal("playlist-finished");
+
+      expect(manager.playing.value).not.toBeNull();
+      expect(manager.playing.value!.currentIndex.value).toBe(1);
+    });
+
+    it("closes when playback ends some other way, so its Close can't stop a later playback", async () => {
+      const manager = await finishPlaylist();
+      expect(finishedModal()).toBeDefined();
+
+      manager.stopPlaying();
+
+      expect(finishedModal()).toBeUndefined();
+    });
+
+    it("never opens for a queue with no saved playlist behind it, like a reading plan's day", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const { recordName: _recordName, ...adHoc } = makePlaylist({
+        items: [{ type: "html", html: "a" }],
+      });
+
+      manager.startPlaying(adHoc, 0, { history: false });
+      const playing = manager.playing.value!;
+      expect(playing.canFinish.value).toBe(false);
+
+      await playing.next();
+      expect(finishedModal()).toBeUndefined();
+    });
+
+    it("does not open for a session peer whose position reaches the end via sync", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+
+      manager.startPlaying(playlist);
+      const playing = manager.playing.value!;
+      await playing.setState({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 1,
+      });
+
+      expect(playing.currentIndex.value).toBe(1);
+      expect(finishedModal()).toBeUndefined();
+
+      // The same position does finish the playlist once this client presses
+      // next itself, so it was the sync that didn't.
+      await playing.next();
+      expect(finishedModal()).toBeDefined();
+    });
   });
 
   describe("getPlaylistUrl", () => {

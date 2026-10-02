@@ -98,6 +98,55 @@ export async function awaitDocumentSync(
   }
 }
 
+export type ProxyRequestMethod =
+  | "GET"
+  | "POST"
+  | "PUT"
+  | "PATCH"
+  | "DELETE"
+  | "HEAD"
+  | "OPTIONS";
+
+type ProxyResult<T> =
+  | ({ success: true } & T)
+  | { success: false; errorCode: string; errorMessage: string };
+
+/**
+ * The CasualOS proxy record procedures. Newer than the SDK version this app
+ * pins, so its client has no types for them; the client forwards any method
+ * name to the server as a procedure call, so they work all the same.
+ */
+interface ProxyProcedures {
+  recordProxy(input: {
+    recordName: string;
+    item: {
+      address: string;
+      host: string;
+      data: Record<string, string>;
+      markers: string[];
+    };
+  }): Promise<ProxyResult<{ recordName: string; address: string }>>;
+  eraseProxy(input: {
+    recordName: string;
+    address: string;
+  }): Promise<ProxyResult<object>>;
+  proxyRequest(input: {
+    recordName: string;
+    address: string;
+    path: string;
+    method: ProxyRequestMethod;
+    body?: unknown;
+  }): Promise<
+    ProxyResult<{
+      response: {
+        statusCode: number;
+        headers: Record<string, string>;
+        body: string | null;
+      };
+    }>
+  >;
+}
+
 export function CasualOSManager(
   endpoint: string = "https://auth.seedbible.org"
 ) {
@@ -381,6 +430,44 @@ export function CasualOSManager(
     },
 
     listDataByMarker,
+
+    /**
+     * Creates or replaces a proxy record: a host plus values the server
+     * attaches to each request it forwards there. The values are never sent
+     * back to the browser, and replacing a proxy replaces all of its `data`.
+     */
+    recordProxy: (
+      recordName: string,
+      address: string,
+      host: string,
+      data: Record<string, string>,
+      options: { marker: string }
+    ) =>
+      (client as unknown as ProxyProcedures).recordProxy({
+        recordName,
+        item: { address, host, data, markers: [options.marker] },
+      }),
+
+    eraseProxy: (recordName: string, address: string) =>
+      (client as unknown as ProxyProcedures).eraseProxy({
+        recordName,
+        address,
+      }),
+
+    /**
+     * Sends a request through a proxy record. The server fills in the proxy's
+     * values and forwards it to the proxy's host; `path` is appended to it.
+     */
+    proxyRequest: (
+      recordName: string,
+      address: string,
+      request: { path: string; method: ProxyRequestMethod; body?: unknown }
+    ) =>
+      (client as unknown as ProxyProcedures).proxyRequest({
+        recordName,
+        address,
+        ...request,
+      }),
 
     listAllDataByMarker: async (
       recordName: string,

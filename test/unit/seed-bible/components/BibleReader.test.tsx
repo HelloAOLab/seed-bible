@@ -22,6 +22,10 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { DownloadedTranslation } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import {
+  createPlayingState,
+  type SimplePlaylist,
+} from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { vi, type Mock } from "vitest";
 import { mockI18nState, resetMockI18n } from "../testUtils/mockI18n";
 import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
@@ -4688,6 +4692,62 @@ describe("BibleReader", () => {
     expect(
       tappable[0]?.closest(".sb-reader-swipe-panel-current")
     ).not.toBeNull();
+  });
+
+  it("previews the next chapter again once a finished playlist's modal has been shown", async () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState(selectorState);
+    const playing = createPlayingState(
+      [
+        {
+          id: "playlist-1",
+          recordName: "user-1",
+          title: "The Love of Jesus",
+          description: null,
+          items: [{ type: "html", html: "a" }],
+        } as SimplePlaylist,
+      ],
+      null,
+      () => {}
+    );
+    Object.assign(state.playlists, {
+      playing: signal(playing),
+      isMobile: signal(true),
+      view: signal(null),
+    });
+
+    const current = chapterData.value!;
+    chapterData.value = {
+      ...current,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      previousChapterApiLink: null,
+    };
+    // Like the playlist extension: the swipe that finishes the playlist
+    // previews nothing, and after that the reader's own next chapter.
+    vi.mocked(readingState.getAdjacentChapter).mockImplementation(async () =>
+      playing.finishPromptShown.value
+        ? { ...current, chapter: { ...current.chapter, number: 2 } }
+        : null
+    );
+    const nextPanelTitle = () =>
+      container.querySelector(
+        ".sb-reader-swipe-panel-side .sb-bible-reader-mobile-content-title"
+      )?.textContent ?? null;
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(nextPanelTitle()).toBeNull();
+
+    await act(async () => {
+      await playing.next();
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(nextPanelTitle()).toContain("2");
   });
 
   it("swiping left on mobile loads the next chapter", async () => {

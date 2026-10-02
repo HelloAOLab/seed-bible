@@ -319,6 +319,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   // the swipe previews below depend on (the queue decides the neighbour).
   const playbackStep =
     state?.playlists?.playing.value?.currentIndex.value ?? null;
+  // The swipe that finishes a playlist previews nothing; once it has, the next
+  // swipe goes on to the reader's own next chapter, so preview that.
+  const playbackFinishShown =
+    state?.playlists?.playing.value?.finishPromptShown.value ?? false;
 
   useEffect(() => {
     if (!isCompactReader || !state) {
@@ -391,6 +395,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     // While playing, the neighbour depends on the queue position too — without
     // this the preview would keep showing the step the reader has left behind.
     playbackStep,
+    playbackFinishShown,
   ]);
 
   useEffect(() => {

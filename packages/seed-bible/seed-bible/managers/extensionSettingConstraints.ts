@@ -18,6 +18,14 @@ export interface ExtensionStringSettingDefinition {
    * extension's own translations, falling back to the value itself.
    */
   enum?: string[];
+  /**
+   * The id of an entry in the extension's `sensitive` section. A sensitive
+   * value is never read back into the browser: it is stored in a CasualOS
+   * proxy record that attaches it to requests sent to that entry's host (see
+   * `ExtensionSensitiveProxyDefinition`). Can't be combined with `default` or
+   * `enum`, since both would publish the value in the manifest.
+   */
+  sensitive?: string;
 }
 
 export interface ExtensionNumberSettingDefinition {
@@ -39,6 +47,75 @@ export interface ExtensionBooleanSettingDefinition {
   type: "boolean";
   /** See `ExtensionStringSettingDefinition.default`. */
   default?: boolean;
+}
+
+/**
+ * One destination that sensitive settings are sent to, declared once in the
+ * extension's `sensitive` section and shared by every setting that names it.
+ * Each becomes one CasualOS proxy record per viewer, so all of its settings
+ * travel together on every request made through it.
+ */
+export type ExtensionSensitiveProxyVisibility = "private" | "public";
+
+export interface ExtensionSensitiveProxyDefinition {
+  /**
+   * Where requests go, as a host with an optional port (`api.example.com`,
+   * `example.com:8443`). The default: a viewer can pick another host when
+   * they save their values, and the extension keeps addressing this one.
+   */
+  host: string;
+  /**
+   * Who may send requests through the viewer's proxy. `private` (the default)
+   * means only the viewer; `public` means anyone who knows the proxy's
+   * address, though nobody can read the values either way. The default:
+   * a viewer can choose the other when they save their values.
+   */
+  visibility?: ExtensionSensitiveProxyVisibility;
+  /**
+   * Request property -> the key of the setting whose value fills it. The
+   * properties are the ones CasualOS proxies support (see
+   * {@link isSupportedSensitiveRequestProperty}).
+   */
+  requestMapping: Record<string, string>;
+}
+
+/**
+ * The request properties a CasualOS proxy record can fill in: a property of
+ * the JSON body, or the `Authorization` header (as-is, or as a bearer token).
+ */
+export function isSupportedSensitiveRequestProperty(property: string): boolean {
+  return (
+    property === "headers.authorization" ||
+    property === "headers.authorization.bearer" ||
+    (property.startsWith("body.") && property.length > "body.".length)
+  );
+}
+
+/** `host` or `host:port`, with no scheme, path or credentials. */
+export function isValidSensitiveHost(host: string): boolean {
+  return /^(?=.{1,253}(?::|$))[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*(?::\d{1,5})?$/i.test(
+    host
+  );
+}
+
+/** True when the setting's value is held by a proxy rather than stored as a readable value. */
+export function isSensitiveSetting(
+  definition: ExtensionSettingDefinition | undefined
+): boolean {
+  return (
+    definition?.type === "string" && typeof definition.sensitive === "string"
+  );
+}
+
+/** The settings that hold an ordinary, readable value. */
+export function nonSensitiveSettings(
+  settings: Record<string, ExtensionSettingDefinition>
+): Record<string, ExtensionSettingDefinition> {
+  return Object.fromEntries(
+    Object.entries(settings).filter(
+      ([, definition]) => !isSensitiveSetting(definition)
+    )
+  );
 }
 
 export type ExtensionSettingDefinition =
