@@ -23,7 +23,8 @@ import type {
   ReaderTab,
   TabsManager,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock, Mocked } from "vitest";
 
 function createCommentAnnotation(
@@ -648,6 +649,149 @@ describe("AnnotationsManager", () => {
       await vi.waitFor(() => {
         expect(view.value.map((a) => a.id)).toEqual(["user-2-note"]);
       });
+    });
+  });
+
+  describe("keeping a friend's notes fresh", () => {
+    const START = new Date("2026-10-01T10:00:00Z").getTime();
+    let friendNotes: ReturnType<typeof createCommentAnnotation>[];
+    let stopWatching: (() => void) | null;
+    let page: ReturnType<typeof stubPageVisibility>;
+
+    const friendReads = () =>
+      listDataByMarkerMock.mock.calls.filter(
+        ([recordName, , lastAddress]) =>
+          recordName === "friend-user" && lastAddress === undefined
+      ).length;
+    /** Shows the friend's GEN 1 notes, as a render would. */
+    const watch = (manager: ReturnType<typeof createManager>) => {
+      const view = manager.getUserAnnotationsForChapter(
+        "friend-user",
+        "GEN",
+        1
+      );
+      stopWatching = effect(() => void view.value);
+      return view;
+    };
+    const ids = (view: { value: { id: string }[] }) =>
+      view.value.map((a) => a.id);
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(START);
+      page = stubPageVisibility();
+      friendNotes = [createCommentAnnotation({ id: "friend-note" })];
+      stopWatching = null;
+      listDataByMarkerMock.mockImplementation(
+        async (recordName: string, _marker: string, lastAddress?: string) =>
+          recordName === "friend-user" && !lastAddress
+            ? {
+                success: true,
+                items: friendNotes.map((data) => ({ address: data.id, data })),
+              }
+            : { success: true, items: [] }
+      );
+    });
+
+    afterEach(() => {
+      stopWatching?.();
+      page.restore();
+      vi.useRealTimers();
+    });
+
+    it("reads them again when you come back to the app more than 30 seconds later", async () => {
+      const view = watch(createManager());
+      await vi.waitFor(() => expect(ids(view)).toEqual(["friend-note"]));
+
+      friendNotes.push(createCommentAnnotation({ id: "new-friend-note" }));
+      vi.setSystemTime(START + 31_000);
+      page.leaveAndReturn();
+
+      await vi.waitFor(() =>
+        expect(ids(view)).toEqual(["friend-note", "new-friend-note"])
+      );
+      expect(friendReads()).toBe(2);
+    });
+
+    it("also reads them again when the window regains focus", async () => {
+      const view = watch(createManager());
+      await vi.waitFor(() => expect(ids(view)).toEqual(["friend-note"]));
+
+      friendNotes.push(createCommentAnnotation({ id: "new-friend-note" }));
+      vi.setSystemTime(START + 31_000);
+      window.dispatchEvent(new Event("focus"));
+
+      await vi.waitFor(() =>
+        expect(ids(view)).toEqual(["friend-note", "new-friend-note"])
+      );
+    });
+
+    it("doesn't read them when the page is hidden", async () => {
+      const view = watch(createManager());
+      await vi.waitFor(() => expect(ids(view)).toEqual(["friend-note"]));
+
+      vi.setSystemTime(START + 31_000);
+      page.set("hidden");
+      await flush();
+
+      expect(friendReads()).toBe(1);
+    });
+
+    it("doesn't read them again within 30 seconds of the last read", async () => {
+      const view = watch(createManager());
+      await vi.waitFor(() => expect(ids(view)).toEqual(["friend-note"]));
+
+      vi.setSystemTime(START + 10_000);
+      page.leaveAndReturn();
+      await flush();
+
+      expect(friendReads()).toBe(1);
+    });
+
+    it("doesn't read them when you come back while they're off screen", async () => {
+      const view = watch(createManager());
+      await vi.waitFor(() => expect(ids(view)).toEqual(["friend-note"]));
+      stopWatching!();
+      stopWatching = null;
+
+      vi.setSystemTime(START + 31_000);
+      page.leaveAndReturn();
+      await flush();
+
+      expect(friendReads()).toBe(1);
+    });
+
+    it("reads them again when they come back on screen more than 30 seconds later", async () => {
+      const manager = createManager();
+      const view = watch(manager);
+      await vi.waitFor(() => expect(ids(view)).toEqual(["friend-note"]));
+      stopWatching!();
+
+      friendNotes.push(createCommentAnnotation({ id: "new-friend-note" }));
+      vi.setSystemTime(START + 31_000);
+      watch(manager);
+
+      await vi.waitFor(() =>
+        expect(ids(view)).toEqual(["friend-note", "new-friend-note"])
+      );
+    });
+
+    it("keeps showing the notes it has when a re-read fails", async () => {
+      const view = watch(createManager());
+      await vi.waitFor(() => expect(ids(view)).toEqual(["friend-note"]));
+
+      listDataByMarkerMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "Down.",
+      });
+      vi.setSystemTime(START + 31_000);
+      page.leaveAndReturn();
+      await vi.waitFor(() => expect(friendReads()).toBe(2));
+      await flush();
+
+      expect(ids(view)).toEqual(["friend-note"]);
     });
   });
 

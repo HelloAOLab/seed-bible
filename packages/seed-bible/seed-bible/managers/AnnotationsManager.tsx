@@ -14,6 +14,10 @@ import type { DiscoverManager, DiscoverView } from "./DiscoverManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import type { TranslationBookChapter } from "./FreeUseBibleAPI";
 import {
+  createFriendContentFreshness,
+  isFriendContentStale,
+} from "./friendContentFreshness";
+import {
   createRecordSyncManager,
   type CreateRecordSyncManagerOptions,
   type RecordSyncManager,
@@ -527,6 +531,8 @@ type AnnotationsEntry = {
    * force a re-read.
    */
   explicit: boolean;
+  /** When the last successful read finished, for re-reading a friend's notes. */
+  loadedAtMs: number | null;
 };
 
 function entryKey(recordId: string, address: string): string {
@@ -944,6 +950,7 @@ export function createAnnotationsManager(
 
   // Cached annotations, keyed by account + chapter address.
   const entries = new Map<string, AnnotationsEntry>();
+  const friendFreshness = createFriendContentFreshness();
   // Identity-stable per-chapter views handed to callers, keyed by address.
   const views = new Map<string, ReadonlySignal<Annotation[]>>();
   // Per-account views handed to callers that named an account explicitly,
@@ -962,16 +969,20 @@ export function createAnnotationsManager(
     );
     let entry = entries.get(key);
     if (!entry) {
-      entry = {
+      const created: AnnotationsEntry = {
         recordId,
         bookId,
         chapterNumber,
-        data: signal<Annotation[]>([]),
+        data: friendFreshness.trackedSignal<Annotation[]>([], () =>
+          refreshFriendEntry(created)
+        ),
         settled: false,
         loadFailed: false,
         load: null,
         explicit,
+        loadedAtMs: null,
       };
+      entry = created;
       entries.set(key, entry);
     } else if (explicit) {
       // The signed-in user can also be read through the explicit path (a
@@ -1007,6 +1018,7 @@ export function createAnnotationsManager(
         return;
       }
       entry.data.value = loaded;
+      entry.loadedAtMs = Date.now();
       entry.loadFailed = false;
       // Only authoritative once we know the list is complete: either the server
       // answered, or the mirror has a record of having listed this chapter
@@ -1024,6 +1036,27 @@ export function createAnnotationsManager(
       // empty chapter — `loadFailed` is what stops it retrying on every read.
       entry.loadFailed = true;
     }
+  };
+
+  /**
+   * Reads a friend's chapter again when it's back on screen or the app
+   * regains focus (see `createFriendContentFreshness`), keeping the notes
+   * already shown until the new list arrives. The signed-in user's own notes
+   * are kept current by the sync engine instead.
+   */
+  const refreshFriendEntry = (entry: AnnotationsEntry): void => {
+    const isOtherAccount =
+      entry.explicit && entry.recordId !== untracked(effectiveRecordId);
+    if (
+      !isOtherAccount ||
+      entry.load ||
+      !(entry.loadFailed || isFriendContentStale(entry.loadedAtMs))
+    ) {
+      return;
+    }
+    entry.settled = false;
+    entry.loadFailed = false;
+    void ensureLoaded(entry.recordId, entry.bookId, entry.chapterNumber, entry);
   };
 
   const ensureLoaded = (

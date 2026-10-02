@@ -33,6 +33,10 @@ import { BOOK_SLUGS, type BookId } from "./BibleDataManager";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
 import {
+  createFriendContentFreshness,
+  isFriendContentStale,
+} from "./friendContentFreshness";
+import {
   buildSharedPagePath,
   parsePlaylistPagePath,
   parseRecordLocator,
@@ -1329,7 +1333,10 @@ export function createPlaylistManager(
     data: Signal<Playlist[]>;
     settled: boolean;
     load: Promise<void> | null;
+    /** When the last successful read finished. */
+    loadedAtMs: number | null;
   };
+  const friendFreshness = createFriendContentFreshness();
   const userPlaylistEntries = new Map<string, UserPlaylistsEntry>();
   // Identity-stable views handed to callers, keyed by userId. Never pruned:
   // evicting one would mint a new computed on the next call, breaking
@@ -1341,7 +1348,15 @@ export function createPlaylistManager(
   ): UserPlaylistsEntry => {
     let entry = userPlaylistEntries.get(userId);
     if (!entry) {
-      entry = { data: signal<Playlist[]>([]), settled: false, load: null };
+      const created: UserPlaylistsEntry = {
+        data: friendFreshness.trackedSignal<Playlist[]>([], () =>
+          refreshUserPlaylists(userId, created)
+        ),
+        settled: false,
+        load: null,
+        loadedAtMs: null,
+      };
+      entry = created;
       userPlaylistEntries.set(userId, entry);
     }
     return entry;
@@ -1359,14 +1374,34 @@ export function createPlaylistManager(
         return;
       }
       entry.data.value = loaded;
+      entry.loadedAtMs = Date.now();
       entry.settled = true;
     } catch (error) {
       console.error(`Failed to load playlists for ${userId}:`, error);
       if (!entry.settled) {
-        entry.data.value = [];
+        // A failed re-read keeps the playlists already shown.
+        if (entry.loadedAtMs === null) {
+          entry.data.value = [];
+        }
         entry.settled = true;
       }
     }
+  };
+
+  /**
+   * Reads a friend's playlists again when they're back on screen or the app
+   * regains focus (see `createFriendContentFreshness`), keeping the ones
+   * already shown until the new list arrives.
+   */
+  const refreshUserPlaylists = (
+    userId: string,
+    entry: UserPlaylistsEntry
+  ): void => {
+    if (entry.load || !isFriendContentStale(entry.loadedAtMs)) {
+      return;
+    }
+    entry.settled = false;
+    void ensureUserPlaylistsLoaded(userId, entry);
   };
 
   const ensureUserPlaylistsLoaded = (

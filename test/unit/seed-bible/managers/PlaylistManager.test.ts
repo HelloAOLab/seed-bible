@@ -33,7 +33,8 @@ import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
-import { computed, signal } from "@preact/signals";
+import { computed, effect, signal } from "@preact/signals";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock } from "vitest";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
@@ -684,6 +685,79 @@ describe("createPlaylistManager", () => {
         return { success: true, items: [] };
       });
     };
+
+    describe("keeping them fresh", () => {
+      const START = new Date("2026-10-01T10:00:00Z").getTime();
+      let stopWatching: (() => void) | undefined;
+      let page: ReturnType<typeof stubPageVisibility>;
+
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(START);
+        page = stubPageVisibility();
+        stopWatching = undefined;
+      });
+      afterEach(() => {
+        stopWatching?.();
+        page.restore();
+        vi.useRealTimers();
+      });
+
+      /** Shows the friend's playlists, as a render would. */
+      const watchFriend = async () => {
+        mockPerUserPlaylists();
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserPlaylists("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"]);
+        return view;
+      };
+
+      it("reads them again when you come back to the app more than 30 seconds later", async () => {
+        const view = await watchFriend();
+        listDataByMarkerMock.mockImplementation(async (recordName: unknown) =>
+          recordName === "friend-user"
+            ? {
+                success: true,
+                items: [
+                  {
+                    data: makePlaylist({
+                      id: "new-friend-playlist",
+                      recordName: "friend-user",
+                      authorUserId: "friend-user",
+                    }),
+                  },
+                ],
+              }
+            : { success: true, items: [] }
+        );
+
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["new-friend-playlist"])
+        );
+      });
+
+      it("keeps showing the playlists it has when a re-read fails", async () => {
+        const view = await watchFriend();
+        listDataByMarkerMock.mockResolvedValue({
+          success: false,
+          errorCode: "server_error",
+          errorMessage: "Down.",
+        });
+
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+        await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled());
+        await flush();
+
+        expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"]);
+      });
+    });
 
     it("reads playlists from the named account's record", async () => {
       mockPerUserPlaylists();

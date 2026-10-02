@@ -45,7 +45,8 @@ import {
   type CalendarReadingDay,
   type CalendarSkipRange,
 } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 import {
   addCivilDays,
   civilDateInZone,
@@ -2357,6 +2358,55 @@ describe("createReadingPlansManager", () => {
         }
       );
     };
+
+    it("reads a friend's progress again when you come back to the app more than 30 seconds later", async () => {
+      const START = new Date("2026-10-01T10:00:00Z").getTime();
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(START);
+      const page = stubPageVisibility();
+      let stopWatching: (() => void) | undefined;
+      try {
+        mockPerUserProgresses();
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserReadingPlanProgresses("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value.map((p) => p.id)).toEqual(["friend-progress"]);
+
+        listDataByMarkerMock.mockImplementation(
+          async (
+            recordName: unknown,
+            _marker: unknown,
+            lastAddress?: string
+          ) =>
+            recordName === "friend-user" && !lastAddress
+              ? {
+                  success: true,
+                  items: [
+                    {
+                      address: "p3",
+                      data: makeProgress({
+                        id: "new-friend-progress",
+                        recordName: "friend-user",
+                      }),
+                    },
+                  ],
+                }
+              : { success: true, items: [] }
+        );
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["new-friend-progress"])
+        );
+      } finally {
+        stopWatching?.();
+        page.restore();
+        vi.useRealTimers();
+      }
+    });
 
     it("reads progress from the named account's record", async () => {
       mockPerUserProgresses();

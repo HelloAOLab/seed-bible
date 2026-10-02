@@ -31,6 +31,10 @@ import {
   type SharedPageSeed,
 } from "./SharedPageLoader";
 import { DEFAULT_UI_LANGUAGE } from "./ReadingUrlPath";
+import {
+  createFriendContentFreshness,
+  isFriendContentStale,
+} from "./friendContentFreshness";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -1787,7 +1791,10 @@ export function createReadingPlansManager(
     data: Signal<ReadingPlanProgress[]>;
     settled: boolean;
     load: Promise<void> | null;
+    /** When the last successful read finished. */
+    loadedAtMs: number | null;
   };
+  const friendFreshness = createFriendContentFreshness();
   const userReadingPlanProgressEntries = new Map<
     string,
     UserReadingPlanProgressesEntry
@@ -1802,11 +1809,15 @@ export function createReadingPlansManager(
   ): UserReadingPlanProgressesEntry => {
     let entry = userReadingPlanProgressEntries.get(userId);
     if (!entry) {
-      entry = {
-        data: signal<ReadingPlanProgress[]>([]),
+      const created: UserReadingPlanProgressesEntry = {
+        data: friendFreshness.trackedSignal<ReadingPlanProgress[]>([], () =>
+          refreshUserReadingPlanProgresses(userId, created)
+        ),
         settled: false,
         load: null,
+        loadedAtMs: null,
       };
+      entry = created;
       userReadingPlanProgressEntries.set(userId, entry);
     }
     return entry;
@@ -1824,6 +1835,7 @@ export function createReadingPlansManager(
         return;
       }
       entry.data.value = loaded;
+      entry.loadedAtMs = Date.now();
       entry.settled = true;
     } catch (error) {
       console.error(
@@ -1831,10 +1843,29 @@ export function createReadingPlansManager(
         error
       );
       if (!entry.settled) {
-        entry.data.value = [];
+        // A failed re-read keeps the progress already shown.
+        if (entry.loadedAtMs === null) {
+          entry.data.value = [];
+        }
         entry.settled = true;
       }
     }
+  };
+
+  /**
+   * Reads a friend's reading plan progress again when it's back on screen or
+   * the app regains focus (see `createFriendContentFreshness`), keeping what's
+   * already shown until the new list arrives.
+   */
+  const refreshUserReadingPlanProgresses = (
+    userId: string,
+    entry: UserReadingPlanProgressesEntry
+  ): void => {
+    if (entry.load || !isFriendContentStale(entry.loadedAtMs)) {
+      return;
+    }
+    entry.settled = false;
+    void ensureUserReadingPlanProgressesLoaded(userId, entry);
   };
 
   const ensureUserReadingPlanProgressesLoaded = (
