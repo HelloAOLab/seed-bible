@@ -3028,7 +3028,9 @@ export function BibleReader(props: BibleReaderProps) {
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
   const extraContent =
-    state && !state.app.isDiscoverOpen.value ? (
+    state &&
+    !state.app.isDiscoverOpen.value &&
+    state.settings.settings.value.discoveredContent.showContent ? (
       <DiscoverContentPanel tab={currentSlot.tab} state={state} />
     ) : null;
 
@@ -3138,6 +3140,7 @@ export function BibleReader(props: BibleReaderProps) {
                     playlists={state.playlists}
                     annotations={state.annotations}
                     features={state.features}
+                    settings={state.settings}
                     sharedSession={sharedSession ?? null}
                     toast={state.app.toast}
                     modals={state.modals}
@@ -3285,6 +3288,7 @@ export function BibleReader(props: BibleReaderProps) {
                   playlists={state.playlists}
                   annotations={state.annotations}
                   features={state.features}
+                  settings={state.settings}
                   sharedSession={sharedSession ?? null}
                   toast={state.app.toast}
                   modals={state.modals}

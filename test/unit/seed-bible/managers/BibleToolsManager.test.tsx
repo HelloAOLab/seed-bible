@@ -117,6 +117,7 @@ function createQuickToolContext(
     annotationsForChapter?: unknown[];
     isMobile?: boolean;
     isDiscoverOpen?: ReadonlySignal<boolean>;
+    settings?: ReadonlySignal<{ discoveredContent: { showContent: boolean } }>;
   } = {}
 ): QuickToolContext {
   return {
@@ -143,6 +144,11 @@ function createQuickToolContext(
     } as any,
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
+    } as any,
+    settings: {
+      settings:
+        overrides.settings ??
+        signal({ discoveredContent: { showContent: true } }),
     } as any,
     surface: "quick-toolbar",
     app: {
@@ -1621,6 +1627,26 @@ describe("createBibleToolsManager", () => {
       tool?.onSelect();
       expect(context.readingState.discoverContentPanelInline.value).toBe(true);
     });
+
+    it("is visible while the showContent option in settings is enabled, otherwise is hidden", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const settings = signal({ discoveredContent: { showContent: true } });
+      const context = createQuickToolContext({
+        discoveredCrossReferences: [{ providerId: "p1", results: [{}] }],
+        annotationsForChapter: [{ id: "ann-1" }],
+        settings,
+      });
+
+      const resolveTool = () =>
+        manager
+          .getQuickTools(context)
+          .find((t) => t.id === "discover-content-panel");
+
+      expect(resolveTool()?.visible.value).toBe(true);
+
+      settings.value = { discoveredContent: { showContent: false } };
+      expect(resolveTool()?.visible.value).toBe(false);
+    });
   });
 
   describe("next-item tool while a playlist plays", () => {
@@ -1869,6 +1895,9 @@ describe("createBibleToolsManager", () => {
           getAnnotationsForChapter: () => signal([]),
         } as any,
         features: {} as any,
+        settings: {
+          settings: signal({ discoveredContent: { showContent: true } }),
+        } as any,
         surface: "quick-toolbar",
         ...overrides,
       };
