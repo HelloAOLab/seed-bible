@@ -356,6 +356,23 @@ const sharedAIChatParticipantArraySchema = z.array(
   sharedAIChatParticipantSchema
 );
 
+/**
+ * A translation the agent is asking this viewer to confirm. It lives on the
+ * session in memory only, so a shared chat does not show the banner to anyone
+ * else, and switching changes only this viewer's reader.
+ */
+export interface TranslationSuggestion {
+  id: string;
+  /** "Louis Segond (LSG)", or the short name when that is already the name. */
+  label: string;
+  shortName: string;
+  /**
+   * What the reader asked for when this suggestion is only the closest match
+   * (for example "NIV"). Null when the suggestion is the translation they named.
+   */
+  unavailable: string | null;
+}
+
 export interface ChatSession {
   /**
    * The ID of the chat.
@@ -388,6 +405,20 @@ export interface ChatSession {
   markAsRead: (messageId?: string) => void;
   /** Sends a message and notifies the other participants. */
   sendMessage: (message: ChatMessageOptions) => Promise<void>;
+
+  /**
+   * Inserts a message without asking an AI participant to reply.
+   *
+   * A confirmed or dismissed translation suggestion is recorded this way.
+   * Going through {@link sendMessage} would start another turn.
+   */
+  appendMessage: (message: ChatMessageOptions, authors?: string[]) => void;
+
+  /**
+   * The translation banner for this chat, or null when there is nothing to
+   * confirm. Not part of the message log.
+   */
+  translationSuggestion: Signal<TranslationSuggestion | null>;
 
   /** Updates whether the local participant is currently typing. */
   setTypingStatus: (isTyping: boolean) => void;
@@ -1684,6 +1715,13 @@ function createSharedChatSession(
     }
   };
 
+  const appendMessage = (
+    message: ChatMessageOptions,
+    authors: string[] = []
+  ) => {
+    chats.push(createChatMessage(message, authors, []));
+  };
+
   const parsedMessages = computed<ParsedChatTextMessage[]>(() => {
     // Test doubles and partial session mocks may omit reading state; fall back
     // to English-only resolution via getBookId when books are unavailable.
@@ -1714,6 +1752,8 @@ function createSharedChatSession(
     wasMentioned,
     markAsRead,
     sendMessage,
+    appendMessage,
+    translationSuggestion: signal<TranslationSuggestion | null>(null),
     setTypingStatus: (isTyping: boolean) => {
       localIsTyping.value = isTyping;
     },
@@ -2127,6 +2167,14 @@ function createLocalChatSession(
     }
   };
 
+  const appendMessage = (
+    message: ChatMessageOptions,
+    authors: string[] = []
+  ) => {
+    const nextMessage = createChatMessage(message, authors, []);
+    messages.value = [...messages.value, nextMessage];
+  };
+
   const getMessageAuthors = (message: ChatMessage) =>
     resolveMessageAuthors(
       totalParticipants.value,
@@ -2181,6 +2229,8 @@ function createLocalChatSession(
     wasMentioned,
     markAsRead,
     sendMessage,
+    appendMessage,
+    translationSuggestion: signal<TranslationSuggestion | null>(null),
     setTypingStatus: (isTyping: boolean) => {
       localIsTyping.value = isTyping;
     },

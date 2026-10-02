@@ -12,6 +12,7 @@ import type {
   ChatSession,
   IdentifiedLocalChatContext,
   TextChatMessage,
+  TranslationSuggestion,
   UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
@@ -225,6 +226,8 @@ function createMockChatSession(
     wasMentioned: signal(false),
     markAsRead: vi.fn(),
     sendMessage: vi.fn().mockResolvedValue(undefined),
+    appendMessage: vi.fn(),
+    translationSuggestion: signal<TranslationSuggestion | null>(null),
     setTypingStatus: vi.fn(),
     participants: signal([]),
     totalParticipants: signal([]),
@@ -771,6 +774,33 @@ describe("FloatingChatPanel", () => {
       );
     });
     verseToolbar.remove();
+
+    expect(closeChatPanel).not.toHaveBeenCalled();
+  });
+
+  it("ignores a pointerdown on .sb-footnote-modal-overlay so modal clicks do not close chat", () => {
+    const { state, closeChatPanel } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    const overlay = document.createElement("div");
+    overlay.className = "sb-footnote-modal-overlay";
+    const modalButton = document.createElement("button");
+    overlay.appendChild(modalButton);
+    document.body.appendChild(overlay);
+
+    act(() => {
+      modalButton.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true })
+      );
+    });
+    overlay.remove();
 
     expect(closeChatPanel).not.toHaveBeenCalled();
   });
