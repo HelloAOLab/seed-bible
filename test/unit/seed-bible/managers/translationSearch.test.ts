@@ -334,8 +334,8 @@ describe("createTranslationAgentTools", () => {
   it("searchTranslations returns catalog hits and never a translation that is absent", async () => {
     const tools = createTranslationAgentTools({
       loadCatalog: async () => CATALOG,
-      postTranslationChoices: () => {
-        throw new Error("search should not post a card");
+      showTranslationSuggestion: () => {
+        throw new Error("search should not show a banner");
       },
     });
     const search = tools.find((tool) => tool.name === "searchTranslations")!;
@@ -349,41 +349,70 @@ describe("createTranslationAgentTools", () => {
     expect(result.translations.map((hit) => hit.id)).not.toContain("NIV");
   });
 
-  it("suggestTranslations posts only catalog translations as choice buttons", async () => {
-    const posted: { id: string; label: string }[][] = [];
+  it("suggestTranslation shows one catalog translation and rejects an unknown id", async () => {
+    const shown: { id: string; unavailable: string | null }[] = [];
     const tools = createTranslationAgentTools({
       loadCatalog: async () => CATALOG,
-      postTranslationChoices: (choices) => {
-        posted.push(choices);
+      showTranslationSuggestion: (suggestion) => {
+        shown.push(suggestion);
       },
     });
-    const suggest = tools.find((tool) => tool.name === "suggestTranslations")!;
+    const suggest = tools.find((tool) => tool.name === "suggestTranslation")!;
 
-    const result = (await suggest.function({
-      translationIds: ["fra_lsg", "NIV", "LSG"],
-    })) as { shown: { id: string }[]; rejected: string[] };
-
-    expect(posted).toEqual([[{ id: "fra_lsg", label: "LSG (Louis Segond)" }]]);
-    expect(result.shown).toEqual([
-      { id: "fra_lsg", label: "LSG (Louis Segond)" },
+    const exact = (await suggest.function({ id: "fra_lsg" })) as {
+      suggested: { id: string; label: string; unavailable: string | null };
+      rejected: string[];
+    };
+    expect(shown).toEqual([
+      {
+        id: "fra_lsg",
+        label: "Louis Segond (LSG)",
+        shortName: "LSG",
+        unavailable: null,
+      },
     ]);
-    expect(result.rejected).toEqual(["NIV"]);
+    expect(exact.suggested.label).toBe("Louis Segond (LSG)");
+    expect(exact.rejected).toEqual([]);
+
+    const nearest = (await suggest.function({
+      id: "LSG",
+      unavailable: "NIV",
+    })) as {
+      suggested: { unavailable: string | null };
+      rejected: string[];
+    };
+    expect(nearest.suggested.unavailable).toBe("NIV");
+    expect(nearest.rejected).toEqual([]);
+    expect(shown[1]?.unavailable).toBe("NIV");
+
+    const strayBrace = (await suggest.function({
+      id: "fra_lsg",
+      unavailable: "}",
+    })) as { suggested: { unavailable: string | null } };
+    expect(strayBrace.suggested.unavailable).toBeNull();
+
+    const braceStuckToName = (await suggest.function({
+      id: "fra_lsg",
+      unavailable: "NIV}",
+    })) as { suggested: { unavailable: string | null } };
+    expect(braceStuckToName.suggested.unavailable).toBe("NIV");
   });
 
-  it("suggestTranslations does not post a card when nothing matched", async () => {
-    const post = vi.fn();
+  it("suggestTranslation does not show a banner when the id is not in the catalog", async () => {
+    const show = vi.fn();
     const tools = createTranslationAgentTools({
       loadCatalog: async () => CATALOG,
-      postTranslationChoices: post,
+      showTranslationSuggestion: show,
     });
-    const suggest = tools.find((tool) => tool.name === "suggestTranslations")!;
+    const suggest = tools.find((tool) => tool.name === "suggestTranslation")!;
 
-    const result = (await suggest.function({
-      translationIds: ["NIV"],
-    })) as { shown: unknown[]; error: string };
+    const result = (await suggest.function({ id: "NIV" })) as {
+      suggested: null;
+      error: string;
+    };
 
-    expect(post).not.toHaveBeenCalled();
-    expect(result.shown).toEqual([]);
+    expect(show).not.toHaveBeenCalled();
+    expect(result.suggested).toBeNull();
     expect(result.error).toMatch(/searchTranslations/);
   });
 });

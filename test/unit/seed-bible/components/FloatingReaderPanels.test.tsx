@@ -12,6 +12,7 @@ import type {
   ChatSession,
   IdentifiedLocalChatContext,
   TextChatMessage,
+  TranslationSuggestion,
   UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
@@ -226,7 +227,7 @@ function createMockChatSession(
     markAsRead: vi.fn(),
     sendMessage: vi.fn().mockResolvedValue(undefined),
     appendMessage: vi.fn(),
-    deferUntilResponseSettled: vi.fn(),
+    translationSuggestion: signal<TranslationSuggestion | null>(null),
     setTypingStatus: vi.fn(),
     participants: signal([]),
     totalParticipants: signal([]),

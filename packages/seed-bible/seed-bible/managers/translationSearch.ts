@@ -12,8 +12,6 @@ import { z } from "zod";
 const DEFAULT_SEARCH_LIMIT = 8;
 /** Hard cap so a broad query (every English Bible) cannot flood the model. */
 const MAX_SEARCH_LIMIT = 20;
-/** Buttons on one choice card. More than this is a wall of options, not a choice. */
-const MAX_SUGGESTED_TRANSLATIONS = 8;
 /**
  * How many translations to name in a prompt for an agent that cannot call
  * tools. Past this, the note says the list is incomplete instead of pretending
@@ -249,12 +247,9 @@ function findUniqueByShortName(
 export function resolveSuggestedTranslations(
   catalog: readonly Translation[],
   requested: readonly string[],
-  limit = MAX_SUGGESTED_TRANSLATIONS
+  limit = requested.length
 ): ResolvedTranslationSuggestions {
-  const capped = Math.min(
-    MAX_SUGGESTED_TRANSLATIONS,
-    Math.max(1, Math.floor(limit) || MAX_SUGGESTED_TRANSLATIONS)
-  );
+  const capped = Math.max(1, Math.floor(limit) || requested.length);
   const shown: Translation[] = [];
   const rejected: string[] = [];
   const seen = new Set<string>();
@@ -282,14 +277,54 @@ export function resolveSuggestedTranslations(
   return { shown, rejected };
 }
 
-/** Button label: "LSG (Louis Segond)". The short name alone when it is the name. */
-export function translationChoiceLabel(translation: Translation): string {
+/** Banner name: "Louis Segond (LSG)". The short name alone when it is the name. */
+export function translationSuggestionLabel(translation: Translation): string {
   const title = translation.englishName || translation.name || translation.id;
   const shortName = translation.shortName || translation.id;
   if (title.toLowerCase() === shortName.toLowerCase()) {
     return shortName;
   }
-  return `${shortName} (${title})`;
+  return `${title} (${shortName})`;
+}
+
+/**
+ * A name safe to drop into the banner. Tool calls sometimes pass a stray
+ * brace from their JSON (`}`) instead of a translation name.
+ */
+export function readableTranslationRequest(value: string): string | null {
+  const cleaned = value.replace(/[{}]/g, "").trim();
+  if (!cleaned || cleaned.length > 80) {
+    return null;
+  }
+  if (!/[\p{Letter}\p{Number}]/u.test(cleaned)) {
+    return null;
+  }
+  return cleaned;
+}
+
+/**
+ * The name to show in "NIV isn't available" when `unavailable` is not already
+ * this translation. An exact request stays a plain switch question.
+ */
+export function suggestionUnavailableLabel(
+  translation: Translation,
+  unavailable: string | null | undefined
+): string | null {
+  const raw = readableTranslationRequest(unavailable ?? "");
+  if (!raw) {
+    return null;
+  }
+  const q = raw.toLowerCase();
+  const known = [
+    translation.id,
+    translation.shortName,
+    translation.name,
+    translation.englishName,
+  ];
+  if (known.some((value) => value.trim().toLowerCase() === q)) {
+    return null;
+  }
+  return raw;
 }
 
 function summarizeTranslations(translations: readonly Translation[]): {
@@ -436,37 +471,50 @@ const searchTranslationsParameters = z.object({
     ),
 });
 
-const suggestTranslationsParameters = z.object({
-  translationIds: z
-    .array(z.string().min(1))
+const suggestTranslationParameters = z.object({
+  id: z
+    .string()
     .min(1)
-    .max(MAX_SUGGESTED_TRANSLATIONS)
     .describe(
-      "Translation ids from searchTranslations, in the order to show them. Unknown ids are dropped. A short name is accepted only when exactly one translation uses it."
+      "One translation id from searchTranslations. A short name is accepted only when exactly one translation uses it."
+    ),
+  unavailable: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "The name the user asked for when it is not in the catalog, such as NIV. Omit this when id is exactly what they asked for."
     ),
 });
 
+export interface ShownTranslationSuggestion {
+  id: string;
+  label: string;
+  shortName: string;
+  unavailable: string | null;
+}
+
 /**
- * Core agent tools for looking up the real translation catalog and offering
- * the reader buttons that switch the open tab.
+ * Core agent tools for looking up the real translation catalog and asking the
+ * reader to confirm one switch.
  */
 export function createTranslationAgentTools(deps: {
   loadCatalog: () => Promise<readonly Translation[]>;
   /**
-   * Posts the choice card into the chat that called the tool (`call.chatId`),
-   * falling back to the selected chat. Throw when there is no chat to post
-   * into; the tool reports that to the agent instead of claiming the buttons
-   * were shown.
+   * Shows the confirmation banner on the chat that called the tool
+   * (`call.chatId`), falling back to the selected chat. Throw when there is
+   * no chat to show it on; the tool reports that to the agent instead of
+   * claiming the banner was shown. Does not change the reader.
    */
-  postTranslationChoices: (
-    choices: { id: string; label: string }[],
+  showTranslationSuggestion: (
+    suggestion: ShownTranslationSuggestion,
     call?: AIToolCallContext
   ) => void;
 }): AIProviderFunctionTool[] {
   const searchTranslations = generateFunctionTool({
     name: "searchTranslations",
     description:
-      "Looks up Bible translations this app can actually open, by language or name. Call this before recommending a translation. Each hit includes its id, shortName, and language. Only these translations exist. Do not invent others (for example NIV) when they are absent. Short names are not unique, so read the language on each hit.",
+      "Looks up Bible translations this app can actually open, by language or name. Call this before recommending a translation, then call suggestTranslation with one id from the results when the reader should be asked to switch. Each hit includes its id, shortName, and language. Only these translations exist. Do not invent others (for example NIV) when they are absent. Short names are not unique, so read the language on each hit.",
     parameters: searchTranslationsParameters,
     function: async (args) => {
       let catalog: readonly Translation[];
@@ -479,11 +527,11 @@ export function createTranslationAgentTools(deps: {
     },
   });
 
-  const suggestTranslations = generateFunctionTool({
-    name: "suggestTranslations",
+  const suggestTranslation = generateFunctionTool({
+    name: "suggestTranslation",
     description:
-      "Shows the reader buttons for translations to switch the open Bible tab to. Pass ids from searchTranslations. Tapping a button stays on the same chapter when that translation includes it. Unknown ids are ignored and reported back. Call this when you want the reader to switch, instead of only naming translations in prose.",
-    parameters: suggestTranslationsParameters,
+      "Asks the reader to confirm switching the open Bible tab to one catalog translation. Call searchTranslations first and pass one id it returned. Also say in your reply what you are suggesting. Nothing switches until the reader taps Switch. If they asked for a translation that is not in the catalog, pass that name as unavailable and pass the closest real id; the banner then says the request is not available. Unknown ids are rejected. Calling this again replaces the banner.",
+    parameters: suggestTranslationParameters,
     function: async (args, call) => {
       let catalog: readonly Translation[];
       try {
@@ -492,32 +540,34 @@ export function createTranslationAgentTools(deps: {
         return `error: ${err instanceof Error ? err.message : String(err)}`;
       }
 
-      const { shown, rejected } = resolveSuggestedTranslations(
-        catalog,
-        args.translationIds
-      );
-      if (shown.length === 0) {
+      const { shown, rejected } = resolveSuggestedTranslations(catalog, [
+        args.id,
+      ]);
+      const translation = shown[0];
+      if (!translation) {
         return {
-          shown: [],
+          suggested: null,
           rejected,
           error:
-            "None of those translations are in the catalog. Call searchTranslations and pass the ids it returns.",
+            "That translation is not in the catalog. Call searchTranslations and pass an id it returns.",
         };
       }
 
-      const choices = shown.map((translation) => ({
+      const suggestion: ShownTranslationSuggestion = {
         id: translation.id,
-        label: translationChoiceLabel(translation),
-      }));
+        label: translationSuggestionLabel(translation),
+        shortName: translation.shortName || translation.id,
+        unavailable: suggestionUnavailableLabel(translation, args.unavailable),
+      };
       try {
-        deps.postTranslationChoices(choices, call);
+        deps.showTranslationSuggestion(suggestion, call);
       } catch (err) {
         return `error: ${err instanceof Error ? err.message : String(err)}`;
       }
 
-      return { shown: choices, rejected };
+      return { suggested: suggestion, rejected };
     },
   });
 
-  return [searchTranslations.tool, suggestTranslations.tool];
+  return [searchTranslations.tool, suggestTranslation.tool];
 }

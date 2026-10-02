@@ -3022,7 +3022,7 @@ describe("opening another screen while Today is up", () => {
   });
 });
 
-describe("translation choice cards", () => {
+describe("translation suggestions", () => {
   const partialOnly: Translation = {
     id: "partial_only",
     name: "Only Partial",
@@ -3066,20 +3066,23 @@ describe("translation choice cards", () => {
     );
   });
 
-  it("reports an error when no chat can receive the card", async () => {
+  it("reports an error when no chat can show the banner", async () => {
     const state = await createStateWithOptions({
       responses: createLanguageSwitchResponses(),
     });
+    const other = state.chats.createLocalSession();
+    state.chats.selectChat(other.id);
 
     await expect(
-      toolNamed(state, "suggestTranslations").function(
-        { translationIds: ["AAB"] },
+      toolNamed(state, "suggestTranslation").function(
+        { id: "AAB" },
         { chatId: "missing-chat" }
       )
     ).resolves.toBe("error: No chat is open.");
+    expect(other.translationSuggestion.value).toBeNull();
   });
 
-  it("card posts to the calling chat even when another chat is selected", async () => {
+  it("shows the banner on the calling chat even when another chat is selected", async () => {
     const state = await createStateWithOptions({
       responses: createLanguageSwitchResponses(),
     });
@@ -3101,21 +3104,17 @@ describe("translation choice cards", () => {
     chatA.addParticipant("ai-second");
     state.chats.selectChat(chatB.id);
 
-    await toolNamed(state, "suggestTranslations").function(
-      { translationIds: ["AAB"] },
+    await toolNamed(state, "suggestTranslation").function(
+      { id: "AAB", unavailable: "NIV" },
       { chatId: chatA.id, providerId: "ai-second" }
     );
 
-    expect(
-      chatA.messages.value.find((message) => message.type === "choices")
-    ).toMatchObject({
-      type: "choices",
-      choiceType: "translation",
-      authors: ["ai-second"],
-      choices: [{ id: "AAB", label: "AAB (Accessible Ancients Bible)" }],
+    expect(chatA.translationSuggestion.value).toMatchObject({
+      id: "AAB",
+      shortName: "AAB",
+      unavailable: "NIV",
     });
-    expect(
-      chatB.messages.value.filter((message) => message.type === "choices")
-    ).toEqual([]);
+    expect(chatA.messages.value).toEqual([]);
+    expect(chatB.translationSuggestion.value).toBeNull();
   });
 });

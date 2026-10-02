@@ -6,8 +6,8 @@ import type {
   AIChatParticipant,
   ChatMessage,
   ChatSession,
-  ChoicesChatMessage,
   ParsedChatTextMessage,
+  TranslationSuggestion,
   UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
@@ -80,7 +80,7 @@ function createMockChatSession(
     markAsRead: vi.fn(),
     sendMessage: vi.fn().mockResolvedValue(undefined),
     appendMessage: vi.fn(),
-    deferUntilResponseSettled: vi.fn(),
+    translationSuggestion: signal<TranslationSuggestion | null>(null),
     setTypingStatus: vi.fn(),
     participants: signal([]),
     totalParticipants: signal([]),
@@ -2017,12 +2017,13 @@ describe("ChatView", () => {
     ).toBe("");
   });
 
-  function renderChoiceCard(
+  function renderSuggestionBanner(
     books: { id: string }[],
     options: {
       hasTab?: boolean;
       booksError?: boolean;
       selectError?: boolean;
+      unavailable?: string | null;
     } = {}
   ) {
     const translationId = signal("eng_bsb");
@@ -2035,21 +2036,17 @@ describe("ChatView", () => {
     const selectTranslation = vi.fn(async () => {
       translationId.value = "fra_lsg";
     });
-    const choice: ChoicesChatMessage = {
-      id: "choices-1",
-      authors: ["provider-1"],
-      timeMs: 2,
-      targets: [],
-      type: "choices",
-      choiceType: "translation",
-      choices: [
-        { id: "fra_lsg", label: "LSG (Louis Segond)" },
-        { id: "fra_ncl", label: "NCL" },
-      ],
-    };
+    const appendMessage = vi.fn();
+    const suggestion = signal<TranslationSuggestion | null>({
+      id: "fra_lsg",
+      label: "Louis Segond (LSG)",
+      shortName: "LSG",
+      unavailable: options.unavailable ?? null,
+    });
     const chat = createMockChatSession({
-      messages: signal<ChatMessage[]>([choice]),
-      parsedMessages: signal([]),
+      appendMessage,
+      translationSuggestion: suggestion,
+      participants: signal([createMockParticipant({ id: "me", isSelf: true })]),
     });
     const readingState = {
       translationId,
@@ -2078,32 +2075,71 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    return { selectTranslation, selectTranslationAndChapter };
+    return {
+      selectTranslation,
+      selectTranslationAndChapter,
+      appendMessage,
+      suggestion,
+      chat,
+    };
   }
 
-  it("shows translation choices instead of the empty state", () => {
-    renderChoiceCard([{ id: "JHN" }]);
+  function clickBannerButton(label: string) {
+    const button = [
+      ...container.querySelectorAll<HTMLButtonElement>(
+        ".sb-chat-view-translation-banner button"
+      ),
+    ].find((entry) => entry.textContent === label);
+    if (!button) {
+      throw new Error(`No banner button labeled ${label}`);
+    }
+    button.click();
+  }
 
-    expect(container.querySelector(".sb-chat-view-empty")).toBeNull();
-    const buttons = [
-      ...container.querySelectorAll<HTMLButtonElement>(".sb-chat-view-choice"),
-    ].map((button) => button.textContent);
-    expect(buttons).toEqual(["LSG (Louis Segond)", "NCL"]);
+  it("shows one switch question above the chat", () => {
+    renderSuggestionBanner([{ id: "JHN" }]);
+
     expect(
-      container.querySelector(".sb-chat-view-choices-label")?.textContent
-    ).toBe("Switch translation");
+      container.querySelector(".sb-chat-view-translation-banner-text")
+        ?.textContent
+    ).toBe("Switch to Louis Segond (LSG)?");
+    const buttons = [
+      ...container.querySelectorAll<HTMLButtonElement>(
+        ".sb-chat-view-translation-banner button"
+      ),
+    ].map((button) => button.textContent);
+    expect(buttons).toEqual(["Switch", "Dismiss"]);
+    expect(container.querySelector(".sb-chat-view-choices")).toBeNull();
   });
 
-  it("switches the open tab to the chosen translation and stays on the same chapter", async () => {
-    const { selectTranslationAndChapter, selectTranslation } = renderChoiceCard(
-      [{ id: "JHN" }]
-    );
-    const button = container.querySelector<HTMLButtonElement>(
-      ".sb-chat-view-choice"
-    )!;
+  it("says when the request is only a closest match", () => {
+    renderSuggestionBanner([{ id: "JHN" }], { unavailable: "NIV" });
+
+    expect(
+      container.querySelector(".sb-chat-view-translation-banner-text")
+        ?.textContent
+    ).toBe("NIV isn't available. Closest match: LSG.");
+  });
+
+  it("asks to switch when the missing name is only a brace", () => {
+    renderSuggestionBanner([{ id: "JHN" }], { unavailable: "}" });
+
+    expect(
+      container.querySelector(".sb-chat-view-translation-banner-text")
+        ?.textContent
+    ).toBe("Switch to Louis Segond (LSG)?");
+  });
+
+  it("switches the open tab and records that in the chat", async () => {
+    const {
+      selectTranslationAndChapter,
+      selectTranslation,
+      appendMessage,
+      suggestion,
+    } = renderSuggestionBanner([{ id: "JHN" }]);
 
     await act(async () => {
-      button.click();
+      clickBannerButton("Switch");
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
@@ -2115,59 +2151,63 @@ describe("ChatView", () => {
       3
     );
     expect(selectTranslation).not.toHaveBeenCalled();
+    expect(suggestion.value).toBeNull();
+    expect(appendMessage).toHaveBeenCalledWith(
+      { type: "text", text: "User switched to LSG" },
+      ["me"]
+    );
     expect(
-      container
-        .querySelector(".sb-chat-view-choice")
-        ?.getAttribute("aria-pressed")
-    ).toBe("true");
+      container.querySelector(".sb-chat-view-translation-banner")
+    ).toBeNull();
   });
 
   it("opens the translation's first book when the current chapter is not in it", async () => {
-    const { selectTranslation, selectTranslationAndChapter } = renderChoiceCard(
-      [{ id: "MAT" }]
-    );
+    const { selectTranslation, selectTranslationAndChapter, appendMessage } =
+      renderSuggestionBanner([{ id: "MAT" }]);
 
     await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(".sb-chat-view-choice")!
-        .click();
+      clickBannerButton("Switch");
+      await Promise.resolve();
+      await Promise.resolve();
     });
 
     expect(selectTranslation).toHaveBeenCalledWith("fra_lsg");
     expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+    expect(appendMessage).toHaveBeenCalledWith(
+      { type: "text", text: "User switched to LSG" },
+      ["me"]
+    );
   });
 
-  it("does nothing when there is no open tab to switch", async () => {
-    const { selectTranslation, selectTranslationAndChapter } = renderChoiceCard(
-      [{ id: "JHN" }],
-      { hasTab: false }
-    );
+  it("leaves the banner up and does not record a switch when there is no open tab", async () => {
+    const {
+      selectTranslation,
+      selectTranslationAndChapter,
+      appendMessage,
+      suggestion,
+    } = renderSuggestionBanner([{ id: "JHN" }], { hasTab: false });
 
     await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(".sb-chat-view-choice")!
-        .click();
+      clickBannerButton("Switch");
     });
 
     expect(selectTranslation).not.toHaveBeenCalled();
     expect(selectTranslationAndChapter).not.toHaveBeenCalled();
-    expect(
-      container
-        .querySelector(".sb-chat-view-choice")
-        ?.getAttribute("aria-pressed")
-    ).toBe("false");
+    expect(appendMessage).not.toHaveBeenCalled();
+    expect(suggestion.value?.id).toBe("fra_lsg");
     expect(container.querySelector(".sb-chat-view-error")?.textContent).toBe(
       "Couldn't switch translation."
     );
   });
 
   it("shows an error when switching the translation fails", async () => {
-    renderChoiceCard([{ id: "JHN" }], { booksError: true });
+    const { appendMessage, suggestion } = renderSuggestionBanner(
+      [{ id: "JHN" }],
+      { booksError: true }
+    );
 
     await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(".sb-chat-view-choice")!
-        .click();
+      clickBannerButton("Switch");
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -2175,20 +2215,17 @@ describe("ChatView", () => {
     expect(container.querySelector(".sb-chat-view-error")?.textContent).toBe(
       "Couldn't switch translation."
     );
-    expect(
-      container
-        .querySelector(".sb-chat-view-choice")
-        ?.getAttribute("aria-pressed")
-    ).toBe("false");
+    expect(appendMessage).not.toHaveBeenCalled();
+    expect(suggestion.value?.id).toBe("fra_lsg");
   });
 
   it("shows an error when the reader throws while switching", async () => {
-    renderChoiceCard([{ id: "JHN" }], { selectError: true });
+    const { appendMessage } = renderSuggestionBanner([{ id: "JHN" }], {
+      selectError: true,
+    });
 
     await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(".sb-chat-view-choice")!
-        .click();
+      clickBannerButton("Switch");
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
@@ -2197,55 +2234,30 @@ describe("ChatView", () => {
     expect(container.querySelector(".sb-chat-view-error")?.textContent).toBe(
       "Couldn't switch translation."
     );
+    expect(appendMessage).not.toHaveBeenCalled();
   });
 
-  it("shows translation choices under the question that offers them", () => {
-    const question = createMockMessage({
-      id: "ai-1",
-      authors: ["provider-1"],
-      timeMs: 30,
-      text: "Which French translation would you like?",
-      parts: ["Which French translation would you like?"],
-    });
-    const choice: ChoicesChatMessage = {
-      id: "choices-1",
-      authors: ["provider-1"],
-      timeMs: 10,
-      targets: [],
-      type: "choices",
-      choiceType: "translation",
-      choices: [{ id: "fra_lsg", label: "LSG" }],
-    };
-    const chat = createMockChatSession({
-      messages: signal<ChatMessage[]>([
-        choice,
-        createMockToolCallMessage({
-          id: "tool-1",
-          authors: ["provider-1"],
-          timeMs: 20,
-        }),
-        question,
-      ]),
-      parsedMessages: signal([question]),
-    });
-    const state = createMockState();
+  it("dismisses the banner without changing the reader and records that", async () => {
+    const {
+      selectTranslation,
+      selectTranslationAndChapter,
+      appendMessage,
+      suggestion,
+    } = renderSuggestionBanner([{ id: "JHN" }]);
 
-    act(() => {
-      render(<ChatView chat={chat} state={state} />, container);
+    await act(async () => {
+      clickBannerButton("Dismiss");
     });
 
-    const order = [
-      ...container.querySelectorAll(
-        ".sb-chat-view-event, .sb-chat-view-message-group, .sb-chat-view-choices"
-      ),
-    ].map((node) => node.className.split(" ")[0]);
-    expect(order).toEqual([
-      "sb-chat-view-event",
-      "sb-chat-view-message-group",
-      "sb-chat-view-choices",
-    ]);
+    expect(selectTranslation).not.toHaveBeenCalled();
+    expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+    expect(suggestion.value).toBeNull();
+    expect(appendMessage).toHaveBeenCalledWith(
+      { type: "text", text: "User dismissed the suggestion" },
+      ["me"]
+    );
     expect(
-      container.querySelector(".sb-chat-view-message-body")?.textContent
-    ).toContain("Which French translation would you like?");
+      container.querySelector(".sb-chat-view-translation-banner")
+    ).toBeNull();
   });
 });

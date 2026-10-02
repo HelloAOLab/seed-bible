@@ -2684,42 +2684,21 @@ export function createSeedBibleState(
         }
         return data.getTranslations();
       },
-      postTranslationChoices: (choices, call) => {
+      showTranslationSuggestion: (suggestion, call) => {
         const openChats = chats.chats.peek();
         const callingChat = call?.chatId
           ? openChats.find((chat) => chat.id === call.chatId)
           : undefined;
+        // A chat id that is not open must not fall through to whichever chat
+        // the reader happens to be looking at.
+        if (call?.chatId && !callingChat) {
+          throw new Error("No chat is open.");
+        }
         const chat = callingChat ?? chats.selectedChat.peek();
         if (!chat) {
           throw new Error("No chat is open.");
         }
-        const participants = chat.participants.peek();
-        const callingAuthor = call?.providerId
-          ? participants.find(
-              (participant) =>
-                participant.isAI &&
-                !participant.isRemote &&
-                participant.providerId === call.providerId
-            )
-          : undefined;
-        const author =
-          callingAuthor ??
-          participants.find(
-            (participant) => participant.isAI && !participant.isRemote
-          );
-        const authors = author ? [author.id] : [];
-        // The tool runs before the assistant writes its question. Posting now
-        // would put the buttons above that question.
-        chat.deferUntilResponseSettled(() => {
-          chat.appendMessage(
-            {
-              type: "choices",
-              choiceType: "translation",
-              choices,
-            },
-            authors
-          );
-        });
+        chat.translationSuggestion.value = suggestion;
       },
     });
 

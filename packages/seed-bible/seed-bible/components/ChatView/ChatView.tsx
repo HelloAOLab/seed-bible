@@ -6,10 +6,13 @@ import {
   type ChatParticipant,
   type ChatMessage,
   type ChatSession,
-  type ChoicesChatMessage,
   type ParsedChatTextMessage,
+  type TranslationSuggestion,
 } from "../../managers/ChatsManager";
-import { switchReaderToTranslation } from "../../managers/translationSearch";
+import {
+  readableTranslationRequest,
+  switchReaderToTranslation,
+} from "../../managers/translationSearch";
 import {
   getUserAnimalVisual,
   type ConnectionSessionUserVisual,
@@ -49,13 +52,6 @@ interface ChatJoinGroup {
 
 type ToolCallChatMessage = Extract<ChatMessage, { type: "tool_call" }>;
 
-/** A choice card. Each card is its own row; they are not grouped with text bubbles. */
-interface ChatChoicesGroup {
-  type: "choices";
-  key: string;
-  message: ChoicesChatMessage;
-}
-
 /** A run of consecutive tool-call messages from the same author(s) collapsed into one notification. */
 interface ChatToolCallGroup {
   type: "tool";
@@ -71,11 +67,7 @@ interface ChatToolCallGroup {
   timeMs: number;
 }
 
-type ChatTimelineGroup =
-  | ChatMessageGroup
-  | ChatJoinGroup
-  | ChatToolCallGroup
-  | ChatChoicesGroup;
+type ChatTimelineGroup = ChatMessageGroup | ChatJoinGroup | ChatToolCallGroup;
 
 interface JoinEvent {
   participant: ChatParticipant;
@@ -151,112 +143,29 @@ function getJoinEvents(
 
 const ENTRY_KIND_PRIORITY = {
   message: 0,
-  choices: 1,
-  tool: 2,
-  join: 3,
+  tool: 1,
+  join: 2,
 } as const;
 
 type TimelineEntry =
   | { kind: "message"; timeMs: number; message: ParsedChatTextMessage }
   | { kind: "tool"; timeMs: number; message: ToolCallChatMessage }
-  | { kind: "choices"; timeMs: number; message: ChoicesChatMessage }
   | { kind: "join"; timeMs: number; participant: ChatParticipant };
 
-function authorKeyOf(entry: TimelineEntry): string {
-  if (entry.kind === "join") {
-    return "";
-  }
-  return entry.message.authors.join(" ");
-}
-
 /**
- * A choice card is created while the assistant is still deciding what to say,
- * so its timestamp is earlier than the question it belongs to. Draw it after
- * that question. Tool-use lines between the card and the question stay put.
- */
-function placeChoicesAfterAnswer(entries: TimelineEntry[]): TimelineEntry[] {
-  const moved = new Set<number>();
-  const insertAfter = new Map<number, TimelineEntry[]>();
-
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    if (entry?.kind !== "choices") {
-      continue;
-    }
-    const authorKey = authorKeyOf(entry);
-    if (!authorKey) {
-      continue;
-    }
-
-    let target = -1;
-    for (let j = i + 1; j < entries.length; j++) {
-      const next = entries[j];
-      if (!next || next.kind === "tool" || next.kind === "join") {
-        continue;
-      }
-      if (next.kind === "choices") {
-        continue;
-      }
-      if (next.kind === "message" && authorKeyOf(next) === authorKey) {
-        target = j;
-        while (target + 1 < entries.length) {
-          const following = entries[target + 1];
-          if (
-            !following ||
-            following.kind !== "message" ||
-            authorKeyOf(following) !== authorKey
-          ) {
-            break;
-          }
-          target += 1;
-        }
-      }
-      break;
-    }
-
-    if (target === -1) {
-      continue;
-    }
-    moved.add(i);
-    const list = insertAfter.get(target) ?? [];
-    list.push(entry);
-    insertAfter.set(target, list);
-  }
-
-  const placed: TimelineEntry[] = [];
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    if (entry && !moved.has(i)) {
-      placed.push(entry);
-    }
-    const extra = insertAfter.get(i);
-    if (extra) {
-      placed.push(...extra);
-    }
-  }
-  return placed;
-}
-
-/**
- * Interleaves messages, choice cards, tool-call events, and participant join
- * events into a single time-ordered list of render groups. Consecutive
- * messages from the same author(s) are grouped together, consecutive tool
- * calls from the same author(s) collapse into one notification, and
- * consecutive join events collapse into a single notification. A change in
- * entry kind or author breaks the current group. Choice cards stay as their
- * own row.
+ * Interleaves messages, tool-call events, and participant join events into a
+ * single time-ordered list of render groups. Consecutive messages from the
+ * same author(s) are grouped together, consecutive tool calls from the same
+ * author(s) collapse into one notification, and consecutive join events
+ * collapse into a single notification. A change in entry kind or author
+ * breaks the current group.
  */
 function buildTimeline(
   messages: ParsedChatTextMessage[],
   toolCallMessages: ToolCallChatMessage[],
-  choicesMessages: ChoicesChatMessage[],
   participants: ChatParticipant[]
 ): ChatTimelineGroup[] {
-  if (
-    messages.length === 0 &&
-    toolCallMessages.length === 0 &&
-    choicesMessages.length === 0
-  ) {
+  if (messages.length === 0 && toolCallMessages.length === 0) {
     return [];
   }
 
@@ -275,13 +184,6 @@ function buildTimeline(
         message,
       })
     ),
-    ...choicesMessages.map(
-      (message): TimelineEntry => ({
-        kind: "choices",
-        timeMs: message.timeMs,
-        message,
-      })
-    ),
     ...getJoinEvents(messages, participants).map(
       (event): TimelineEntry => ({
         kind: "join",
@@ -291,17 +193,15 @@ function buildTimeline(
     ),
   ];
 
-  // Stable sort by time; at equal times, messages come before choice cards,
-  // which come before tool calls, which come before joins.
+  // Stable sort by time; at equal times, messages come before tool calls,
+  // which come before joins.
   entries.sort(
     (a, b) =>
       a.timeMs - b.timeMs ||
       ENTRY_KIND_PRIORITY[a.kind] - ENTRY_KIND_PRIORITY[b.kind]
   );
-  const ordered = placeChoicesAfterAnswer(entries);
-
   const groups: ChatTimelineGroup[] = [];
-  for (const entry of ordered) {
+  for (const entry of entries) {
     const lastGroup = groups[groups.length - 1];
     if (entry.kind === "message") {
       const key = entry.message.authors.join(" ");
@@ -325,12 +225,6 @@ function buildTimeline(
           timeMs: entry.timeMs,
         });
       }
-    } else if (entry.kind === "choices") {
-      groups.push({
-        type: "choices",
-        key: `choices-${entry.message.id}`,
-        message: entry.message,
-      });
     } else if (lastGroup?.type === "join") {
       lastGroup.participants.push(entry.participant);
       lastGroup.timeMs = entry.timeMs;
@@ -737,18 +631,14 @@ export function ChatView(props: ChatViewProps) {
   const toolCallMessages = chat.messages.value.filter(
     (m): m is ToolCallChatMessage => m.type === "tool_call"
   );
-  const choicesMessages = chat.messages.value.filter(
-    (m): m is ChoicesChatMessage => m.type === "choices"
-  );
   const timelineGroups = buildTimeline(
     messages,
     toolCallMessages,
-    choicesMessages,
     chat.totalParticipants.value
   );
-  const selectedChoiceIds = useSignal<Record<string, string>>({});
-  const pendingChoiceKey = useSignal<string | null>(null);
-  const choiceErrorMessageId = useSignal<string | null>(null);
+  const suggestion = chat.translationSuggestion.value;
+  const suggestionPending = useSignal(false);
+  const suggestionError = useSignal<string | null>(null);
   const localDraft = useSignal("");
   // Prefer the session draft so typed text survives ChatView unmounting when
   // the user clicks a verse (that closes the floating panel).
@@ -807,6 +697,14 @@ export function ChatView(props: ChatViewProps) {
   const isMentionPickerOpen = mentionContext !== null;
   const mentionActiveIndex = useSignal(0);
 
+  const suggestionKey = suggestion
+    ? `${suggestion.id}\0${suggestion.unavailable ?? ""}`
+    : "";
+
+  useEffect(() => {
+    suggestionError.value = null;
+  }, [suggestionKey]);
+
   useEffect(() => {
     mentionActiveIndex.value = 0;
   }, [mentionQuery, totalMentionCount]);
@@ -850,7 +748,7 @@ export function ChatView(props: ChatViewProps) {
       }
       container.scrollTop = container.scrollHeight;
     }
-  }, [messages.length, toolCallMessages.length, choicesMessages.length]);
+  }, [messages.length, toolCallMessages.length]);
 
   useEffect(() => {
     // Don't autofocus on mobile — focusing opens the soft keyboard.
@@ -1082,43 +980,65 @@ export function ChatView(props: ChatViewProps) {
     }
   };
 
-  const reportChoiceError = (messageId: string) => {
-    choiceErrorMessageId.value = messageId;
+  const recordSuggestionOutcome = (text: string) => {
+    const self = chat.participants.value.find(
+      (participant) => participant.isSelf
+    );
+    chat.appendMessage({ type: "text", text }, self ? [self.id] : []);
   };
 
-  const chooseTranslation = async (
-    message: ChoicesChatMessage,
-    choiceId: string
-  ) => {
-    if (message.choiceType !== "translation" || pendingChoiceKey.value) {
+  const dismissSuggestion = () => {
+    if (suggestionPending.value) {
       return;
     }
-    choiceErrorMessageId.value = null;
+    chat.translationSuggestion.value = null;
+    suggestionError.value = null;
+    recordSuggestionOutcome(
+      t("chat-translation-suggestion-dismissed", {
+        defaultValue: "User dismissed the suggestion",
+      })
+    );
+  };
+
+  const acceptSuggestion = async (current: TranslationSuggestion) => {
+    if (suggestionPending.value) {
+      return;
+    }
+    suggestionError.value = null;
     const readingState = state.app.selectedTab.value?.readingState;
     if (!readingState) {
-      reportChoiceError(message.id);
+      suggestionError.value = t("chat-switch-translation-failed", {
+        defaultValue: "Couldn't switch translation.",
+      });
       return;
     }
-    pendingChoiceKey.value = `${message.id}:${choiceId}`;
+    suggestionPending.value = true;
     try {
       const switched = await switchReaderToTranslation({
         readingState,
         getTranslationBooks: (translationId) =>
           state.bibleData.getTranslationBooks(translationId),
-        translationId: choiceId,
+        translationId: current.id,
       });
-      if (switched) {
-        selectedChoiceIds.value = {
-          ...selectedChoiceIds.value,
-          [message.id]: choiceId,
-        };
-      } else {
-        reportChoiceError(message.id);
+      if (!switched) {
+        suggestionError.value = t("chat-switch-translation-failed", {
+          defaultValue: "Couldn't switch translation.",
+        });
+        return;
       }
+      chat.translationSuggestion.value = null;
+      recordSuggestionOutcome(
+        t("chat-translation-switched", {
+          defaultValue: "User switched to {{shortName}}",
+          shortName: current.shortName,
+        })
+      );
     } catch {
-      reportChoiceError(message.id);
+      suggestionError.value = t("chat-switch-translation-failed", {
+        defaultValue: "Couldn't switch translation.",
+      });
     } finally {
-      pendingChoiceKey.value = null;
+      suggestionPending.value = false;
     }
   };
 
@@ -1126,8 +1046,63 @@ export function ChatView(props: ChatViewProps) {
 
   const othersPresent = activeParticipants.filter((p) => !p.isSelf);
 
+  const requestedName = suggestion
+    ? readableTranslationRequest(suggestion.unavailable ?? "")
+    : null;
+  const suggestionText = suggestion
+    ? requestedName
+      ? t("chat-translation-closest-match", {
+          defaultValue:
+            "{{requested}} isn't available. Closest match: {{match}}.",
+          requested: requestedName,
+          match: suggestion.shortName,
+        })
+      : t("chat-suggest-translation", {
+          defaultValue: "Switch to {{label}}?",
+          label: suggestion.label,
+        })
+    : "";
+
   return (
     <div className="sb-chat-view">
+      {suggestion ? (
+        <div
+          className="sb-chat-view-translation-banner"
+          role="region"
+          aria-label={suggestionText}
+        >
+          <p className="sb-chat-view-translation-banner-text">
+            {suggestionText}
+          </p>
+          {suggestionError.value ? (
+            <p className="sb-chat-view-error" role="alert">
+              {suggestionError.value}
+            </p>
+          ) : null}
+          <div className="sb-chat-view-translation-banner-actions">
+            <button
+              type="button"
+              className="sb-chat-view-translation-banner-switch"
+              disabled={suggestionPending.value}
+              onClick={() => {
+                void acceptSuggestion(suggestion);
+              }}
+            >
+              {t("chat-suggest-switch", { defaultValue: "Switch" })}
+            </button>
+            <button
+              type="button"
+              className="sb-chat-view-translation-banner-dismiss"
+              disabled={suggestionPending.value}
+              onClick={() => {
+                dismissSuggestion();
+              }}
+            >
+              {t("chat-suggest-dismiss", { defaultValue: "Dismiss" })}
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div
         className="sb-chat-view-messages"
         ref={messagesRef}
@@ -1170,64 +1145,6 @@ export function ChatView(props: ChatViewProps) {
                     {getJoinLabel(group.participants, t)}
                   </span>
                   <RelativeDateTime timeMs={group.timeMs} />
-                </div>
-              );
-            }
-
-            if (group.type === "choices") {
-              const message = group.message;
-              const pending = pendingChoiceKey.value?.startsWith(
-                `${message.id}:`
-              );
-              const heading =
-                message.choiceType === "translation"
-                  ? t("chat-switch-translation", {
-                      defaultValue: "Switch translation",
-                    })
-                  : "";
-              return (
-                <div
-                  className="sb-chat-view-choices"
-                  key={group.key}
-                  data-message-id={message.id}
-                  role="group"
-                  aria-label={heading}
-                >
-                  {heading ? (
-                    <p className="sb-chat-view-choices-label">{heading}</p>
-                  ) : null}
-                  {choiceErrorMessageId.value === message.id ? (
-                    <p className="sb-chat-view-error" role="alert">
-                      {t("chat-switch-translation-failed", {
-                        defaultValue: "Couldn't switch translation.",
-                      })}
-                    </p>
-                  ) : null}
-                  <div className="sb-chat-view-choices-list">
-                    {message.choices.map((choice) => {
-                      const selected =
-                        selectedChoiceIds.value[message.id] === choice.id;
-                      return (
-                        <button
-                          key={choice.id}
-                          type="button"
-                          className={`sb-chat-view-choice${selected ? " is-selected" : ""}`}
-                          dir="auto"
-                          aria-pressed={selected}
-                          aria-label={t("chat-switch-to-translation", {
-                            defaultValue: "Switch to {{name}}",
-                            name: choice.label,
-                          })}
-                          disabled={pending}
-                          onClick={() => {
-                            void chooseTranslation(message, choice.id);
-                          }}
-                        >
-                          {choice.label}
-                        </button>
-                      );
-                    })}
-                  </div>
                 </div>
               );
             }
