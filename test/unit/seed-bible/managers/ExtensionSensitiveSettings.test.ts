@@ -451,30 +451,24 @@ describe("ExtensionSettingsManager sensitive settings", () => {
   });
 
   describe("visibility", () => {
-    it("uses the manifest's visibility by default", async () => {
+    it("is private unless the viewer chooses otherwise, even if the manifest says public", async () => {
+      // An uploaded manifest isn't guaranteed to have passed validation.
       const meta = baseMeta();
-      meta.sensitive!.exampleApi!.visibility = "public";
+      Object.assign(meta.sensitive!.exampleApi!, { visibility: "public" });
       extensionsListSignal.value = [entry(meta)];
       const manager = create();
       await flushPromises();
 
       expect(manager.getSensitiveDestination("ext-1", "exampleApi")).toEqual({
         host: "api.example.com",
-        visibility: "public",
+        visibility: "private",
       });
       await manager.setSensitiveValues("ext-1", "exampleApi", { apiKey: "k" });
 
-      expect(recordProxyMock.mock.calls[0]![4]).toEqual({
-        marker: "publicRead",
-      });
-      // The pointer itself stays private whatever the proxy's visibility.
-      expect(lastPointerWrite()![3]).toEqual({ marker: "private" });
+      expect(recordProxyMock.mock.calls[0]![4]).toEqual({ marker: "private" });
     });
 
-    it("lets the viewer override it, and keeps their choice on the next save", async () => {
-      const meta = baseMeta();
-      meta.sensitive!.exampleApi!.visibility = "public";
-      extensionsListSignal.value = [entry(meta)];
+    it("makes the proxy public when the viewer chooses, and keeps that choice on the next save", async () => {
       const manager = create();
       await flushPromises();
 
@@ -482,15 +476,21 @@ describe("ExtensionSettingsManager sensitive settings", () => {
         "ext-1",
         "exampleApi",
         { apiKey: "k" },
-        { visibility: "private" }
+        { visibility: "public" }
       );
       await manager.setSensitiveValues("ext-1", "exampleApi", { apiKey: "k2" });
 
-      expect(recordProxyMock.mock.calls[0]![4]).toEqual({ marker: "private" });
-      expect(recordProxyMock.mock.calls[1]![4]).toEqual({ marker: "private" });
+      expect(recordProxyMock.mock.calls[0]![4]).toEqual({
+        marker: "publicRead",
+      });
+      expect(recordProxyMock.mock.calls[1]![4]).toEqual({
+        marker: "publicRead",
+      });
+      // The pointer itself stays private whatever the proxy's visibility.
+      expect(lastPointerWrite()![3]).toEqual({ marker: "private" });
       expect(
         manager.getSensitiveDestination("ext-1", "exampleApi")?.visibility
-      ).toBe("private");
+      ).toBe("public");
     });
   });
 

@@ -122,7 +122,7 @@ export interface SensitiveDestination {
 export interface SensitiveSaveOptions {
   /** Replaces the manifest's host. Omit to keep the last saved one, or the manifest's. */
   host?: string;
-  /** Replaces the manifest's visibility. Omit to keep the last saved one, or the manifest's. */
+  /** Omit to keep the last saved visibility, or `private` if there is none. */
   visibility?: ExtensionSensitiveProxyVisibility;
 }
 
@@ -320,7 +320,7 @@ export function createExtensionSensitiveSettings(
     const pointer = currentPointer(extensionId, proxyId);
     return pointer
       ? { host: pointer.host, visibility: pointer.visibility }
-      : { host: proxy.host, visibility: proxy.visibility ?? "private" };
+      : { host: proxy.host, visibility: "private" };
   };
 
   const isSensitiveValueSet = (extensionId: string, key: string): boolean => {

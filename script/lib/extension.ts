@@ -384,7 +384,14 @@ export const ExtensionSensitiveProxyDefinitionSchema = z.looseObject({
     message:
       "host must be a host name with an optional port (e.g. api.example.com), with no scheme or path",
   }),
-  visibility: z.enum(["private", "public"]).optional(),
+  // Settings are loose objects, so without this an extension declaring a
+  // visibility would be accepted and silently get `private` anyway.
+  visibility: z
+    .never({
+      error:
+        "visibility can't be set by an extension; it is private until the viewer chooses otherwise",
+    })
+    .optional(),
   requestMapping: z
     .record(
       z.string().refine(isSupportedSensitiveRequestProperty, {

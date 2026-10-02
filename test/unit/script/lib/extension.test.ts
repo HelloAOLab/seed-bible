@@ -312,7 +312,8 @@ describe("ExtensionMetaSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    it("accepts a private or public visibility and rejects anything else", () => {
+    // Visibility is the viewer's choice alone.
+    it("rejects a visibility declared by the extension", () => {
       const withVisibility = (visibility: unknown) =>
         ExtensionMetaSchema.safeParse(
           sensitiveMeta(bothSettings, {
@@ -327,9 +328,9 @@ describe("ExtensionMetaSchema", () => {
           })
         ).success;
 
-      expect(withVisibility("private")).toBe(true);
-      expect(withVisibility("public")).toBe(true);
-      expect(withVisibility("everyone")).toBe(false);
+      expect(withVisibility(undefined)).toBe(true);
+      expect(withVisibility("private")).toBe(false);
+      expect(withVisibility("public")).toBe(false);
     });
   });
 });
