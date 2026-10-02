@@ -37,6 +37,15 @@ If you want to prompt users to continue the conversation in the Seed Bible, you 
 
       5. Click "Submit"
 
+## Settings
+
+Signed-in users can save their Apologist agent in the Apologist extension's settings:
+
+- **Host** - The domain of the agent, e.g. `my.agent.domain.bot`. Defaults to `apologist.seedbible.io`.
+- **API key** - Stored as a sensitive setting: it's kept in a CasualOS proxy record owned by the user and never sent back to the browser. CasualOS adds it to each request on the server, as an `Authorization: Bearer` header.
+
+Once saved, every request the extension makes (chat, conversation history, shared conversations, and discovered content) goes through that proxy to the saved host. If nothing is saved, or the user is signed out, requests go straight to `apologistDomain` (below) with `apologistApiKey`, as before.
+
 ## Options
 
 You can configure the Apologist Chat Provider by setting the following variables as parameters of the [query string](https://en.wikipedia.org/wiki/Query_string) in the URL.

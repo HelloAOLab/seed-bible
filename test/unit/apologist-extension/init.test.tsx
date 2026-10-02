@@ -7,6 +7,7 @@ import {
   setupExtensionContext,
   unregisterExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import { SensitiveSettingsError } from "@packages/seed-bible/seed-bible/managers/ExtensionSensitiveSettings";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../seed-bible/testUtils/mockI18n");
@@ -16,8 +17,22 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
 const { default: initApologistExtension } =
   await import("@packages/apologist-extension/ext_Apologist/main/init");
 
-function createFakeContext(search: string): SeedBibleState {
+/**
+ * Stands in for `ExtensionSettingsManager.fetchWithSensitiveValues`, the
+ * CasualOS proxy boundary. By default the viewer has saved nothing.
+ */
+function noSavedProxy(): Promise<Response> {
+  return Promise.reject(
+    new SensitiveSettingsError("not_set", "No sensitive values are set.")
+  );
+}
+
+function createFakeContext(
+  search: string,
+  fetchWithSensitiveValues: Mock = vi.fn(noSavedProxy)
+): SeedBibleState {
   return {
+    extensionSettings: { fetchWithSensitiveValues },
     navigation: {
       currentUrl: { value: new URL(`https://seedbible.org/${search}`) },
     },
@@ -72,8 +87,11 @@ describe("initApologistExtension discover provider", () => {
     vi.restoreAllMocks();
   });
 
-  function install(search: string): SeedBibleState {
-    const context = createFakeContext(search);
+  function install(
+    search: string,
+    fetchWithSensitiveValues?: Mock
+  ): SeedBibleState {
+    const context = createFakeContext(search, fetchWithSensitiveValues);
     setupExtensionContext(context);
     initApologistExtension();
     return context;
@@ -322,6 +340,120 @@ describe("initApologistExtension discover provider", () => {
 
     expect(titles).toEqual(["Born Again", "Eternal Life"]);
   });
+
+  describe("with an API key saved in settings", () => {
+    const searchResponse = () =>
+      new Response(
+        JSON.stringify({
+          results: [{ id: 1, title: "Born Again", url: "https://a.org/1" }],
+        }),
+        { status: 200 }
+      );
+
+    it("sends the search through the viewer's proxy instead of a regular request", async () => {
+      const proxyFetch = vi.fn(() => Promise.resolve(searchResponse()));
+      const context = install(
+        "?apologistTeamID=42&apologistApiKey=url_key&apologistDomain=other.bot",
+        proxyFetch
+      );
+
+      const results =
+        await findDiscoverProvider(context)!.discover(discoverContext);
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(proxyFetch).toHaveBeenCalledWith("ext_Apologist", {
+        url: "https://apologist.seedbible.io/api/v1/search",
+        method: "POST",
+        body: {
+          query: "John 3",
+          limit: 20,
+          filters: {
+            team_ids: [42],
+            model: "source",
+            types: ["article", "youtube", "episode", "media", "url"],
+          },
+        },
+      });
+      expect(results.map((r) => r.type === "content" && r.title)).toEqual([
+        "Born Again",
+      ]);
+    });
+
+    it("streams chat replies through the viewer's proxy", async () => {
+      const proxyFetch = vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            'data: {"choices":[{"delta":{"content":"Hello"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n',
+            { status: 200 }
+          )
+        )
+      );
+      const context = install("", proxyFetch);
+      const chatProvider = (context.chats.registerProvider as Mock).mock
+        .calls[0]![0];
+
+      const texts: string[] = [];
+      for await (const message of chatProvider.generateResponse({
+        instructions: "Reading John 3",
+        messages: [],
+        participants: [],
+      })) {
+        for await (const chunk of message.text) {
+          texts.push(chunk);
+        }
+      }
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(proxyFetch).toHaveBeenCalledWith(
+        "ext_Apologist",
+        expect.objectContaining({
+          url: "https://apologist.seedbible.io/api/v1/chat/completions",
+          method: "POST",
+        })
+      );
+      expect(texts.join("")).toBe("Hello");
+    });
+
+    it("fails the lookup when the proxy request fails, without retrying it as a regular request", async () => {
+      const proxyFetch = vi.fn(() =>
+        Promise.reject(
+          new SensitiveSettingsError("request_failed", "server_error: boom")
+        )
+      );
+      const context = install("?apologistTeamID=42", proxyFetch);
+
+      await expect(
+        findDiscoverProvider(context)!.discover(discoverContext)
+      ).rejects.toThrow("server_error: boom");
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
+  it.each(["not_set", "signed_out", "not_loaded"] as const)(
+    "makes a regular request to the configured domain when the proxy reports %s",
+    async (code) => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ results: [] }), { status: 200 })
+      );
+      const proxyFetch = vi.fn(() =>
+        Promise.reject(new SensitiveSettingsError(code, code))
+      );
+      const context = install(
+        "?apologistTeamID=42&apologistApiKey=url_key&apologistDomain=my.gospel.bot",
+        proxyFetch
+      );
+
+      await findDiscoverProvider(context)!.discover(discoverContext);
+
+      expect(proxyFetch).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0]!;
+      expect(url).toBe("https://my.gospel.bot/api/v1/search");
+      expect(init.headers).toEqual({
+        "Content-Type": "application/json",
+        "x-api-key": "url_key",
+      });
+    }
+  );
 
   it("searches the default Apologist domain when none is configured", async () => {
     fetchMock.mockResolvedValue(

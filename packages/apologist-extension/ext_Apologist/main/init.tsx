@@ -10,6 +10,10 @@ import {
 import type { DiscoverContentResult } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { PlaylistLinkContent } from "seed-bible/components";
 import { rankResultsForChapter, searchApologistContent } from "./search";
+import {
+  createApologistRequest,
+  DEFAULT_APOLOGIST_DOMAIN,
+} from "./apologistRequest";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -184,7 +188,7 @@ export default function initApologistExtension() {
         url.searchParams.get("apologistIconUrl") ?? undefined;
       const customApologistDomain =
         url.searchParams.get("apologistDomain") ?? null;
-      const apologistDomain = customApologistDomain ?? "apologist.seedbible.io";
+      const apologistDomain = customApologistDomain ?? DEFAULT_APOLOGIST_DOMAIN;
       const apologistApiKey = url.searchParams.get("apologistApiKey") ?? null;
       const apologistShareToken =
         url.searchParams.get("apologistShareToken") ?? null;
@@ -202,6 +206,11 @@ export default function initApologistExtension() {
           `[Apologist] apologistTeamID must be an integer, got "${rawApologistTeamId}". Discovered content is disabled.`
         );
       }
+
+      const apologistRequest = createApologistRequest(context, {
+        domain: apologistDomain,
+        apiKey: apologistApiKey,
+      });
 
       if (customApologistDomain && !apologistApiKey) {
         console.error(
@@ -270,11 +279,11 @@ export default function initApologistExtension() {
           }
 
           for (let turn = 0; turn < MAX_COMPLETION_TURNS; turn++) {
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/chat/completions`,
+            const response = await apologistRequest(
+              "/api/v1/chat/completions",
               {
                 method: "POST",
-                body: JSON.stringify({
+                body: {
                   model: apologistModel,
                   stream: true,
                   metadata: {
@@ -283,12 +292,7 @@ export default function initApologistExtension() {
                   },
                   messages: messages,
                   tools,
-                }),
-                headers: apologistApiKey
-                  ? {
-                      Authorization: `Bearer ${apologistApiKey}`,
-                    }
-                  : {},
+                },
               }
             );
 
@@ -453,11 +457,9 @@ export default function initApologistExtension() {
                 .getCachedTranslationBooks(translationId)
                 ?.books.find((b) => b.id === book)?.name ?? book;
 
-            const results = await searchApologistContent({
-              domain: apologistDomain,
+            const results = await searchApologistContent(apologistRequest, {
               query: `${bookName} ${chapter}`,
               teamId: apologistTeamId,
-              apiKey: apologistApiKey,
             });
 
             return rankResultsForChapter(results, bookName, chapter).map(
@@ -491,8 +493,8 @@ export default function initApologistExtension() {
               "[Apologist] Getting conversation history for share token:",
               apologistShareToken
             );
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/shares/${encodeURIComponent(apologistShareToken)}`
+            const response = await apologistRequest(
+              `/api/v1/shares/${encodeURIComponent(apologistShareToken)}`
             );
 
             const responseData = await response.json();
@@ -576,15 +578,8 @@ export default function initApologistExtension() {
               "[Apologist] Getting conversation history for conversation ID:",
               apologistConversationId
             );
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/chat/completions?conversation_id=${encodeURIComponent(apologistConversationId)}`,
-              {
-                headers: apologistApiKey
-                  ? {
-                      Authorization: `Bearer ${apologistApiKey}`,
-                    }
-                  : {},
-              }
+            const response = await apologistRequest(
+              `/api/v1/chat/completions?conversation_id=${encodeURIComponent(apologistConversationId)}`
             );
 
             const responseData = await response.json();

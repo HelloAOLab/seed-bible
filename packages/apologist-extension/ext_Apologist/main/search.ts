@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ApologistRequest } from "./apologistRequest";
 
 export const APOLOGIST_SEARCH_TYPES = [
   "article",
@@ -176,19 +177,15 @@ export function rankResultsForChapter(
   return [...mentioning, ...rest];
 }
 
-export async function searchApologistContent(options: {
-  domain: string;
-  query: string;
-  teamId: number;
-  apiKey: string | null;
-}): Promise<ApologistSearchResult[]> {
-  const response = await fetch(`https://${options.domain}/api/v1/search`, {
+export async function searchApologistContent(
+  request: ApologistRequest,
+  options: { query: string; teamId: number }
+): Promise<ApologistSearchResult[]> {
+  const response = await request("/api/v1/search", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.apiKey ? { "x-api-key": options.apiKey } : {}),
-    },
-    body: JSON.stringify({
+    headers: { "Content-Type": "application/json" },
+    apiKeyHeader: "x-api-key",
+    body: {
       query: options.query,
       limit: 20,
       filters: {
@@ -196,7 +193,7 @@ export async function searchApologistContent(options: {
         model: "source",
         types: APOLOGIST_SEARCH_TYPES,
       },
-    }),
+    },
   });
 
   if (!response.ok) {
