@@ -266,6 +266,8 @@ export function AnnotationCommentMeta(props: {
 function AnnotationGroupSection(props: {
   id: string;
   group: AnnotationGroup;
+  /** The signed-in user's own notes in this chapter, which they may edit. */
+  ownAnnotations: ReadonlySet<Annotation>;
   annotations: AnnotationsManager;
   modals: ModalManager;
   toast: SeedBibleState["app"]["toast"];
@@ -282,6 +284,7 @@ function AnnotationGroupSection(props: {
   const {
     id,
     group,
+    ownAnnotations,
     annotations,
     modals,
     toast,
@@ -330,8 +333,7 @@ function AnnotationGroupSection(props: {
           {group.annotations.map((annotation) => {
             // Friends' annotations can appear in this same list; only
             // the author may edit or delete their own annotation.
-            const isOwnAnnotation =
-              annotation.data.userId === login.userId.value;
+            const isOwnAnnotation = ownAnnotations.has(annotation);
             return (
               <li
                 key={annotation.id}
@@ -558,6 +560,12 @@ export function AnnotationsSection(props: {
     bookId,
     chapterNumber
   );
+  // Decided by which list a note came from rather than its `userId`, which
+  // notes written while signed out don't have, and which a friend's note
+  // could set to anyone.
+  const ownAnnotations = new Set(
+    annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+  );
   const groups = groupAnnotationsByVerseRange(chapterAnnotations);
   const otherPeoplePresent = annotationListHasOtherAuthors(
     chapterAnnotations,
@@ -609,6 +617,7 @@ export function AnnotationsSection(props: {
               key={groupKey}
               id={groupElementId(groupKey)}
               group={group}
+              ownAnnotations={ownAnnotations}
               annotations={annotations}
               modals={modals}
               toast={toast}

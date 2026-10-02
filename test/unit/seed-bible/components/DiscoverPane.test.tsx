@@ -233,6 +233,8 @@ function createMockAnnotations(
   overrides: {
     editingAnnotation?: Annotation | null;
     annotationsForChapter?: Annotation[];
+    /** Each friend's notes on the chapter, by user id. */
+    friendAnnotationsForChapter?: Record<string, Annotation[]>;
     deleteAnnotationAndRefreshImpl?: () => Promise<void>;
     hasRecordOverride?: boolean;
     pendingSyncCount?: number;
@@ -252,7 +254,9 @@ function createMockAnnotations(
   const annotations = {
     editingAnnotation: signal(overrides.editingAnnotation ?? null),
     getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
-    getUserAnnotationsForChapter: vi.fn(() => signal([])),
+    getUserAnnotationsForChapter: vi.fn((userId: string) =>
+      signal(overrides.friendAnnotationsForChapter?.[userId] ?? [])
+    ),
     createNewAnnotation,
     editAnnotation,
     saveEditingAnnotation,
@@ -383,6 +387,7 @@ function createMockState(
     openVerseReference?: ReturnType<typeof vi.fn>;
     userId?: string | null;
     discover?: DiscoverManager;
+    friendIds?: string[];
   } = {}
 ): SeedBibleState {
   return {
@@ -409,7 +414,7 @@ function createMockState(
     },
     friends: {
       friends: signal([]),
-      friendIds: signal([]),
+      friendIds: signal(overrides.friendIds ?? []),
     },
   } as unknown as SeedBibleState;
 }
@@ -1597,6 +1602,77 @@ describe("DiscoverPane", () => {
     });
 
     expect(editAnnotation).toHaveBeenCalledWith(annotation);
+  });
+
+  // Notes written while signed out are saved with no author, and keep none
+  // once they move to the account on sign-in.
+  it("keeps the annotation menu on your own note that has no author", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Hello</p>", userId: null },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState(false, { userId: "user-1" });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const items = Array.from(container.querySelectorAll('[role="menuitem"]'));
+    expect(items.some((el) => el.textContent?.includes("Edit"))).toBe(true);
+    expect(items.some((el) => el.textContent?.includes("Delete"))).toBe(true);
+  });
+
+  it("shows no annotation menu on a friend's note, even one naming you as its author", () => {
+    const { playlists } = createMockPlaylists();
+    const friendsNote = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+    });
+    const { annotations } = createMockAnnotations({
+      friendAnnotationsForChapter: { ada: [friendsNote] },
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState(false, {
+      userId: "user-1",
+      friendIds: ["ada"],
+    });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-annotation-item")).not.toBeNull();
+    expect(container.querySelector('[role="menuitem"]')).toBeNull();
+    expect(container.querySelector(".sb-annotation-item-menu")).toBeNull();
   });
 
   it("the annotation Delete menu item opens a confirm modal; confirming deletes and closes it", async () => {
