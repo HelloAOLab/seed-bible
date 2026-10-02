@@ -1,9 +1,27 @@
 {
   "id": "ext_Apologist",
+  "settings": {
+    "apiKey": {
+      "type": "string",
+      "sensitive": "apologist"
+    }
+  },
+  "sensitive": {
+    "apologist": {
+      "host": "apologist.seedbible.io",
+      "visibility": "private",
+      "requestMapping": {
+        "headers.authorization.bearer": "apiKey"
+      }
+    }
+  },
   "translations": {
     "en": {
       "title": "Apologist",
-      "description": "Be curious. Be humble. Learn boldly. This is AI for seekers of spiritual truth"
+      "description": "Be curious. Be humble. Learn boldly. This is AI for seekers of spiritual truth",
+      "setting-apiKey-title": "API key",
+      "setting-apiKey-description": "The API key for your Apologist agent. It's sent as a bearer token to the agent's host.",
+      "sensitive-apologist-title": "Apologist agent"
     },
     "es": {
       "title": "Apologista",

@@ -37,6 +37,15 @@ If you want to prompt users to continue the conversation in the Seed Bible, you 
 
       5. Click "Submit"
 
+## Settings
+
+Signed-in users can save their Apologist agent in the Apologist extension's settings:
+
+- **Host** - The domain of the agent, e.g. `my.agent.domain.bot`. Defaults to `apologist.seedbible.io`.
+- **API key** - Stored as a sensitive setting: it's kept in a CasualOS proxy record owned by the user and never sent back to the browser. CasualOS adds it to each request on the server, as an `Authorization: Bearer` header.
+
+Once saved, every request the extension makes (chat, conversation history, shared conversations, and discovered content) goes through that proxy to the saved host. If nothing is saved, or the user is signed out, requests go straight to `apologistDomain` (below) with `apologistApiKey`, as before.
+
 ## Options
 
 You can configure the Apologist Chat Provider by setting the following variables as parameters of the [query string](https://en.wikipedia.org/wiki/Query_string) in the URL.
@@ -59,6 +68,9 @@ You can configure the Apologist Chat Provider by setting the following variables
 - `apologistIconUrl` - The URL to the icon that should be used. If not specified, then a default one will be used.
 - `apologistModel` - The model that should be used. If not specified, then `openai/gpt/5-mini` will be used.
   - See the [Apologist Documentation](https://apologistproject.org/documentation/apologist-fusion/chat-completion#8-toc-title) for a list of supported models.
+
+- `apologistTeamID` - The integer ID of the Apologist team whose content should be shown in the Discover pane. If specified, then each chapter is searched (e.g. "John 3") against the team's articles, YouTube videos, episodes, media, and links using the semantic search API of the agent at `apologistDomain`, and the matches are shown as discovered content.
+  - The request is sent to `apologistDomain` and authenticated with `apologistApiKey`, so you should also include both.
 
 ### Examples
 
@@ -84,4 +96,10 @@ https://seedbible.org/?autoinstall-ext_Apologist=true&apologistIconUrl=https%3A%
 
 ```
 https://seedbible.org/?autoinstall-ext_Apologist=true&apologistModel=openai/gpt/5.4-nano
+```
+
+#### Show your team's content in the Discover pane
+
+```
+https://seedbible.org/?autoinstall-ext_Apologist=true&apologistTeamID=123&apologistDomain=my.agent.domain.bot&apologistApiKey=MY_API_KEY
 ```

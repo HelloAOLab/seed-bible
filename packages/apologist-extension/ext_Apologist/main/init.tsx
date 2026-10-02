@@ -7,6 +7,13 @@ import {
   resolveMessageAuthors,
   type ChatProviderMessageOptions,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import type { DiscoverContentResult } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { PlaylistLinkContent } from "seed-bible/components";
+import { rankResultsForChapter, searchApologistContent } from "./search";
+import {
+  createApologistRequest,
+  DEFAULT_APOLOGIST_DOMAIN,
+} from "./apologistRequest";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -163,6 +170,7 @@ type ChatMessage =
     };
 
 const PROVIDER_ID = "apologist-chat-provider";
+const DISCOVER_PROVIDER_ID = "apologist-discover-provider";
 
 // Bounds the tool-call resolution loop below so a model that never emits
 // final content (or keeps calling tools) can't hang generateResponse forever.
@@ -180,7 +188,7 @@ export default function initApologistExtension() {
         url.searchParams.get("apologistIconUrl") ?? undefined;
       const customApologistDomain =
         url.searchParams.get("apologistDomain") ?? null;
-      const apologistDomain = customApologistDomain ?? "apologist.seedbible.io";
+      const apologistDomain = customApologistDomain ?? DEFAULT_APOLOGIST_DOMAIN;
       const apologistApiKey = url.searchParams.get("apologistApiKey") ?? null;
       const apologistShareToken =
         url.searchParams.get("apologistShareToken") ?? null;
@@ -188,6 +196,21 @@ export default function initApologistExtension() {
         url.searchParams.get("apologistModel") ?? "openai/gpt/5-mini";
       const apologistConversationId: string | null =
         url.searchParams.get("apologistConversation") ?? null;
+      const rawApologistTeamId = url.searchParams.get("apologistTeamID");
+      const apologistTeamId =
+        rawApologistTeamId && /^\d+$/.test(rawApologistTeamId)
+          ? Number(rawApologistTeamId)
+          : null;
+      if (rawApologistTeamId && apologistTeamId === null) {
+        console.error(
+          `[Apologist] apologistTeamID must be an integer, got "${rawApologistTeamId}". Discovered content is disabled.`
+        );
+      }
+
+      const apologistRequest = createApologistRequest(context, {
+        domain: apologistDomain,
+        apiKey: apologistApiKey,
+      });
 
       if (customApologistDomain && !apologistApiKey) {
         console.error(
@@ -256,11 +279,11 @@ export default function initApologistExtension() {
           }
 
           for (let turn = 0; turn < MAX_COMPLETION_TURNS; turn++) {
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/chat/completions`,
+            const response = await apologistRequest(
+              "/api/v1/chat/completions",
               {
                 method: "POST",
-                body: JSON.stringify({
+                body: {
                   model: apologistModel,
                   stream: true,
                   metadata: {
@@ -269,12 +292,7 @@ export default function initApologistExtension() {
                   },
                   messages: messages,
                   tools,
-                }),
-                headers: apologistApiKey
-                  ? {
-                      Authorization: `Bearer ${apologistApiKey}`,
-                    }
-                  : {},
+                },
               }
             );
 
@@ -422,6 +440,51 @@ export default function initApologistExtension() {
         },
       });
 
+      if (apologistTeamId !== null) {
+        const providerName =
+          apologistName ??
+          i18n.t("title", { ns: "ext_Apologist", defaultValue: "Apologist" });
+
+        // `reference` has to name the chapter being read: results whose
+        // reference doesn't match it are dropped before display.
+        yield context.discover.registerDiscoverProvider({
+          id: DISCOVER_PROVIDER_ID,
+          title: providerName,
+          description: "Content from your Apologist team.",
+          discover: async ({ translationId, book, chapter }) => {
+            const bookName =
+              context.bibleData
+                .getCachedTranslationBooks(translationId)
+                ?.books.find((b) => b.id === book)?.name ?? book;
+
+            const results = await searchApologistContent(apologistRequest, {
+              query: `${bookName} ${chapter}`,
+              teamId: apologistTeamId,
+            });
+
+            return rankResultsForChapter(results, bookName, chapter).map(
+              (item): DiscoverContentResult => ({
+                type: "content",
+                title: item.title,
+                description: item.description,
+                reference: { book, chapter },
+                author: item.author ?? item.source ?? providerName,
+                image: item.image,
+                onClick: () => {
+                  context.modals.openModal({
+                    id: `apologist-content-${item.id}`,
+                    title: item.title,
+                    content: () => (
+                      <PlaylistLinkContent url={item.url} title={item.title} />
+                    ),
+                  });
+                },
+              })
+            );
+          },
+        });
+      }
+
       if (apologistShareToken) {
         // init conversation
         const initConversation = async () => {
@@ -430,8 +493,8 @@ export default function initApologistExtension() {
               "[Apologist] Getting conversation history for share token:",
               apologistShareToken
             );
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/shares/${encodeURIComponent(apologistShareToken)}`
+            const response = await apologistRequest(
+              `/api/v1/shares/${encodeURIComponent(apologistShareToken)}`
             );
 
             const responseData = await response.json();
@@ -515,15 +578,8 @@ export default function initApologistExtension() {
               "[Apologist] Getting conversation history for conversation ID:",
               apologistConversationId
             );
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/chat/completions?conversation_id=${encodeURIComponent(apologistConversationId)}`,
-              {
-                headers: apologistApiKey
-                  ? {
-                      Authorization: `Bearer ${apologistApiKey}`,
-                    }
-                  : {},
-              }
+            const response = await apologistRequest(
+              `/api/v1/chat/completions?conversation_id=${encodeURIComponent(apologistConversationId)}`
             );
 
             const responseData = await response.json();
