@@ -11,25 +11,25 @@
 
 import type { TestamentBot } from "../../models/stack";
 import type { TestamentInteractionServicePort } from "../../../application/ports/in/TestamentInteraction";
-import type { TestamentDragServicePort } from "../../../application/ports/in/ScripturePieceDrag";
-import type { TestamentDraggingServicePort } from "../../../application/ports/in/ScripturePieceDragging";
-import type { TestamentDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
-import type { TestamentSelectionReleaseServicePort } from "../../../application/ports/in/ScripturePieceSelectionRelease";
 import type {
   BaseRelocationEvent,
   BotListenerParametersMap,
 } from "../../models/casualos";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import type { RelocationEventMapper } from "../../mappers/RelocationEventMapper";
+import type { ScripturePieceDragServicePort } from "../../../application/ports/in/ScripturePieceDrag";
+import type { ScripturePieceDraggingServicePort } from "../../../application/ports/in/ScripturePieceDragging";
+import type { ScripturePieceDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
+import type { ScripturePieceSelectionReleaseServicePort } from "../../../application/ports/in/ScripturePieceSelectionRelease";
 
 interface ControllerParams {
   testamentInteractionServicePort: TestamentInteractionServicePort;
   pieceMapperPort: PieceMapper;
-  dragServicePort: TestamentDragServicePort;
-  draggingServicePort: TestamentDraggingServicePort;
+  dragServicePort: ScripturePieceDragServicePort;
+  draggingServicePort: ScripturePieceDraggingServicePort;
   relocationEventMapper: RelocationEventMapper;
-  selectionReleaseServicePort: TestamentSelectionReleaseServicePort;
-  dropServicePort: TestamentDropServicePort;
+  selectionReleaseServicePort: ScripturePieceSelectionReleaseServicePort;
+  dropServicePort: ScripturePieceDropServicePort;
 }
 
 export class TestamentInteractionController {

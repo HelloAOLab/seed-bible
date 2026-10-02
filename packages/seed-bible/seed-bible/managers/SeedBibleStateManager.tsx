@@ -20,8 +20,26 @@ import {
   type TodayManager,
   type TodayPassageTarget,
 } from "../managers/TodayManager";
+import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
+import {
+  SharedPageLoadFailedModalContent,
+  SharedPageModalContent,
+  SharedPageNotFoundModalContent,
+  type SharedPageModalAction,
+} from "../components/SharedPageModal/SharedPageModal";
+import {
+  buildSharedPagePath,
+  parseSharedPagePath,
+  type SharedPageKind,
+} from "../managers/SharedPagePath";
+import type { PlaylistPageSeed } from "../managers/PlaylistManager";
+import {
+  averageSessionMinutes,
+  type ReadingPlanPageSeed,
+  type ReadingPlanProgress,
+} from "../managers/ReadingPlansManager";
 import {
   buildStaticPagePath,
   parseStaticPagePath,
@@ -179,6 +197,8 @@ import {
 } from "../managers/OnboardingManager";
 import {
   createTutorialManager,
+  parseTutorialLink,
+  mirrorTutorialToUrl,
   type TutorialManager,
 } from "../managers/TutorialManager";
 import { range } from "es-toolkit";
@@ -228,6 +248,7 @@ const APP_META_DESCRIPTION =
 
 /** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
 export const ABOUT_PANE_ID = "about-page-pane";
+export const SHARED_PAGE_MODAL_ID = "shared-page";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -288,6 +309,17 @@ export interface AppState {
 
   /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
+  /**
+   * Compact partner-site embed (`?embed=minimal` or `?embed=true`). The
+   * reader keeps a phone-like chrome and drops Today, the bottom tab bar,
+   * and the sidebar so the passage is easy to read inside an iframe.
+   */
+  isMinimalEmbed: ReadonlySignal<boolean>;
+  /**
+   * Phone layout, or a compact embed. Drives the swipe reader, mobile
+   * header, and floating chapter nav — not pane placement or the sidebar.
+   */
+  isCompactReader: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
   /**
@@ -358,8 +390,27 @@ export interface AppState {
    */
   customizationLogoUrl: ReadonlySignal<string | null>;
 
+  /**
+   * The `og:image` this page should advertise instead of index.html's
+   * default: a shared playlist's cover, else the active customization's logo.
+   * Null keeps the default.
+   */
+  socialImage: ReadonlySignal<{ url: string; alt: string } | null>;
+
   /** Whether the current URL is the static "/{lang}/about" page. */
   isAboutPage: ReadonlySignal<boolean>;
+
+  /**
+   * Starts the shared playlist or reading plan the current page shows (its
+   * modal's Start button) and leaves the page for the reader. No-op off one.
+   */
+  startSharedPage: () => void;
+
+  /**
+   * Resumes the reading plan the current page shows where the signed-in
+   * reader left off, in the plans pane. No-op when they haven't started it.
+   */
+  resumeSharedPage: () => void;
 
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<{ id: number; message: string } | null>;
@@ -618,6 +669,16 @@ export interface CreateSeedBibleStateOptions {
    * `readInjectedCustomizationSeed` in `app/customizationSeed.ts`.
    */
   initialCustomizationSeed?: InitialCustomizationSeed;
+
+  /**
+   * A prior SSR render's completed playlist-page load, so the new
+   * `PlaylistManager` doesn't re-fetch it — see `readInjectedPlaylistPageSeed`
+   * in `app/playlistPageSeed.ts`.
+   */
+  initialPlaylistPageSeed?: PlaylistPageSeed;
+
+  /** Same as `initialPlaylistPageSeed`, for a shared reading plan page. */
+  initialReadingPlanPageSeed?: ReadingPlanPageSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -741,6 +802,19 @@ export function createSeedBibleState(
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
 
+  const renderedAsMobile = options.config?.renderedAsMobile ?? false;
+
+  // Seeded from the SAME `renderedAsMobile` guess the server made — never
+  // `window.innerWidth`/`.innerHeight` here — so the client's first
+  // render/hydrate pass produces the identical viewport-derived layout the
+  // server rendered, regardless of the device's actual screen size.
+  // `applyViewport` (below, exposed on `AppState`) corrects this to the real
+  // dimensions once, from a post-mount effect in `MainBody` — see
+  // `app/main.tsx`.
+  const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
+  const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
+  const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
+
   const annotationRecordKey =
     navigation.currentUrl.value.searchParams.get("annotationRecordKey") ??
     undefined;
@@ -750,7 +824,10 @@ export function createSeedBibleState(
     tabs,
     discover,
     annotationRecordKey,
-    { confirmAdoption: (owner) => askToAdopt(owner, "notes") }
+    {
+      confirmAdoption: (owner) => askToAdopt(owner, "notes"),
+      isMobile,
+    }
   );
   const yourContent = createYourContentManager({
     annotations,
@@ -803,17 +880,28 @@ export function createSeedBibleState(
   const search = createSearchManager();
 
   // When the app is opened via a content link — a shared-session invite
-  // (`?sessionId=...`), a shared playlist (`?playlist=...`), or a shared
-  // reading plan (`?readingPlan=...`) — the user came to view that content,
-  // not to onboard, so we skip the welcome screen and the auto-starting
-  // tutorial for this visit. This is derived from the current URL rather
-  // than persisted, so it only affects this tab/load: revisiting without
-  // those params shows onboarding and tutorials as usual.
-  const openedViaContentLink =
+  // (`?sessionId=...`), a shared playlist (`?playlist=...` or a
+  // `/{lang}/playlist/...` page), or a shared reading plan (`?readingPlan=...`
+  // or a `/{lang}/reading-plan/...` page) — the user came to view that
+  // content, not to onboard, so we skip the welcome screen and the
+  // auto-starting tutorial for this visit. This is derived from the current
+  // URL rather than persisted, so it only affects this tab/load: revisiting
+  // without those params shows onboarding and tutorials as usual. Closing a
+  // shared page without starting it lifts this (see the shared page effects
+  // below).
+  const openedViaSharedPage =
     typeof window !== "undefined" &&
-    (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
-      !!navigation.currentUrl.value.searchParams.get("playlist") ||
-      !!navigation.currentUrl.value.searchParams.get("readingPlan"));
+    parseSharedPagePath(
+      navigation.currentUrl.value.pathname,
+      navigation.basePath
+    ) !== null;
+  const openedViaContentLink = signal(
+    typeof window !== "undefined" &&
+      (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
+        !!navigation.currentUrl.value.searchParams.get("playlist") ||
+        !!navigation.currentUrl.value.searchParams.get("readingPlan") ||
+        openedViaSharedPage)
+  );
 
   const onboarding = createOnboardingManager(login);
 
@@ -964,7 +1052,10 @@ export function createSeedBibleState(
       },
     },
   });
-  const readingPlans = createReadingPlansManager(os, login, tabs, navigation);
+  const readingPlans = createReadingPlansManager(os, login, tabs, navigation, {
+    language: i18n.language,
+    initialReadingPlanPageSeed: options.initialReadingPlanPageSeed,
+  });
   const gallery = createUserGalleryManager(os, login);
   const textToSpeech = createTextToSpeechManager();
 
@@ -1019,18 +1110,12 @@ export function createSeedBibleState(
       selectedTab.value?.readingState.translationBooks.value?.books;
   });
 
-  const renderedAsMobile = options.config?.renderedAsMobile ?? false;
-
-  // Seeded from the SAME `renderedAsMobile` guess the server made — never
-  // `window.innerWidth`/`.innerHeight` here — so the client's first
-  // render/hydrate pass produces the identical viewport-derived layout the
-  // server rendered, regardless of the device's actual screen size.
-  // `applyViewport` (below, exposed on `AppState`) corrects this to the real
-  // dimensions once, from a post-mount effect in `MainBody` — see
-  // `app/main.tsx`.
-  const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
-  const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
-  const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
+  const isMinimalEmbed = computed(() =>
+    isMinimalEmbedUrl(navigation.currentUrl.value)
+  );
+  const isCompactReader = computed(
+    () => isMobile.value || isMinimalEmbed.value
+  );
 
   // Created after `isMobile` so panes can enforce a single fullscreen pane:
   // on mobile every pane is displayed fullscreen, so opening one closes the
@@ -1046,7 +1131,8 @@ export function createSeedBibleState(
     i18n,
     readingExtensions,
     discover,
-    chats
+    chats,
+    options.initialPlaylistPageSeed
   );
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
@@ -1141,6 +1227,11 @@ export function createSeedBibleState(
     return true;
   });
 
+  // Client-only: SSR can't run the tour, and launching it there would put
+  // the overlay in the served HTML.
+  const tutorialLink = import.meta.env.SSR
+    ? null
+    : parseTutorialLink(navigation.currentUrl.value.searchParams);
   const tutorial = createTutorialManager(
     login,
     readerVisible,
@@ -1148,8 +1239,14 @@ export function createSeedBibleState(
     isMobile,
     panes,
     sidebar,
-    openedViaContentLink
+    openedViaContentLink,
+    isMinimalEmbed,
+    tutorialLink
   );
+
+  if (!import.meta.env.SSR) {
+    mirrorTutorialToUrl(tutorial, navigation, tutorialLink);
+  }
 
   // Once the tutorial has been resolved (seen, skipped, declined, or opted
   // out) and the reader is visible, offer the install prompt — to any
@@ -1167,7 +1264,15 @@ export function createSeedBibleState(
     if (installOfferChecked) {
       return;
     }
-    if (openedViaContentLink) {
+    // A visitor inside someone else's iframe should not be asked to install
+    // our app. Resolve the offer so the offline-download prompt can take its
+    // own turn and refuse for the same reason.
+    if (isMinimalEmbed.value) {
+      installOfferChecked = true;
+      installOfferResolved.value = true;
+      return;
+    }
+    if (openedViaContentLink.value) {
       return;
     }
     if (login.userId.value && login.profile.value === null) {
@@ -1286,7 +1391,7 @@ export function createSeedBibleState(
       if (
         !storedApplied &&
         !mobile &&
-        !openedViaContentLink &&
+        !openedViaContentLink.peek() &&
         !tutorial.completed.value &&
         !tutorial.optedOut.value
       ) {
@@ -1536,6 +1641,9 @@ export function createSeedBibleState(
     } finally {
       restoringStoredState = false;
     }
+    // Restoring can replace the tab a playing playlist's URL started playback
+    // on; start it again on whichever tab is active now.
+    playlists.resumePlaybackFromUrl();
     // Deliberately outside the batch: this can set `promptVisible`, and it must
     // observe the settled reader state rather than a half-applied one.
     tutorial.armAutoStart();
@@ -1543,6 +1651,135 @@ export function createSeedBibleState(
     // state rather than the empty SSR seed.
     armSidebarCollapsed();
   };
+
+  /**
+   * The step a playlist is playing at when the URL is its playing path
+   * (1-based); null on a shared page itself, or anywhere else.
+   */
+  const sharedPageStep = computed<number | null>(
+    () =>
+      parseSharedPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )?.step ?? null
+  );
+
+  /** The shared playlist or reading plan page the URL is on, once it has loaded. */
+  const sharedPage = computed<{
+    kind: SharedPageKind;
+    locator: string;
+    title: string | null;
+    description: string | null;
+    heroImageUrl: string | null | undefined;
+    authorName: string | null;
+  } | null>(() => {
+    const playlistPage = playlists.playlistPage.value;
+    if (playlistPage) {
+      return {
+        kind: "playlist",
+        locator: playlistPage.locator,
+        title: playlistPage.item.title,
+        description: playlistPage.item.description,
+        heroImageUrl: playlistPage.item.heroImageUrl,
+        authorName: playlistPage.authorName,
+      };
+    }
+    const planPage = readingPlans.readingPlanPage.value;
+    if (planPage) {
+      return {
+        kind: "readingPlan",
+        locator: planPage.locator,
+        title: planPage.item.title,
+        description: planPage.item.description,
+        heroImageUrl: planPage.item.heroImageUrl,
+        authorName: planPage.authorName,
+      };
+    }
+    return null;
+  });
+
+  /** The kind of shared page the URL is on when its record was looked up and doesn't exist. */
+  const sharedPageNotFoundKind = computed<SharedPageKind | null>(() =>
+    playlists.playlistPageNotFound.value
+      ? "playlist"
+      : readingPlans.readingPlanPageNotFound.value
+        ? "readingPlan"
+        : null
+  );
+
+  /** "Playlist not found" / "Reading plan not found", or null. */
+  const sharedPageNotFoundTitle = computed<string | null>(() => {
+    const kind = sharedPageNotFoundKind.value;
+    if (!kind) {
+      return null;
+    }
+    void i18n.language.value;
+    const { t } = i18n;
+    return kind === "playlist"
+      ? t("playlist-not-found-title", { defaultValue: "Playlist not found" })
+      : t("reading-plan-not-found-title", {
+          defaultValue: "Reading plan not found",
+        });
+  });
+
+  /** The kind of shared page the URL is on when its record failed to load (not "not found"). */
+  const sharedPageLoadFailedKind = computed<SharedPageKind | null>(() =>
+    playlists.playlistPageLoadFailed.value
+      ? "playlist"
+      : readingPlans.readingPlanPageLoadFailed.value
+        ? "readingPlan"
+        : null
+  );
+
+  /** "Couldn't load playlist" / "Couldn't load reading plan", or null. */
+  const sharedPageLoadFailedTitle = computed<string | null>(() => {
+    const kind = sharedPageLoadFailedKind.value;
+    if (!kind) {
+      return null;
+    }
+    void i18n.language.value;
+    const { t } = i18n;
+    return kind === "playlist"
+      ? t("playlist-load-failed-title", {
+          defaultValue: "Couldn't load playlist",
+        })
+      : t("reading-plan-load-failed-title", {
+          defaultValue: "Couldn't load reading plan",
+        });
+  });
+
+  /** The shared page's title, falling back to "Untitled …" for its kind. */
+  const sharedPageName = computed<string | null>(() => {
+    const page = sharedPage.value;
+    if (!page) {
+      return null;
+    }
+    void i18n.language.value;
+    const { t } = i18n;
+    return (
+      page.title ||
+      (page.kind === "playlist"
+        ? t("untitled-playlist", { defaultValue: "Untitled playlist" })
+        : t("untitled-reading-plan", { defaultValue: "Untitled plan" }))
+    );
+  });
+
+  /** "{title} by {author}" while on a shared page, else null. */
+  const sharedPageTitle = computed<string | null>(() => {
+    const page = sharedPage.value;
+    const name = sharedPageName.value;
+    if (!page || !name) {
+      return null;
+    }
+    const { t } = i18n;
+    return page.authorName
+      ? t("shared-page-title", {
+          title: name,
+          author: page.authorName,
+          defaultValue: "{{title}} by {{author}}",
+        })
+      : name;
+  });
 
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
@@ -1561,6 +1798,20 @@ export function createSeedBibleState(
     const getTitle = () => {
       if (isAboutPage.value) {
         return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
+      }
+
+      // Only on the shared page itself: while a playlist plays at its own
+      // path, the tab is titled after the chapter like any other reading.
+      if (sharedPageTitle.value && sharedPageStep.value == null) {
+        return `${sharedPageTitle.value} | ${seedBibleTitle}`;
+      }
+
+      if (sharedPageNotFoundTitle.value) {
+        return `${sharedPageNotFoundTitle.value} | ${seedBibleTitle}`;
+      }
+
+      if (sharedPageLoadFailedTitle.value) {
+        return `${sharedPageLoadFailedTitle.value} | ${seedBibleTitle}`;
       }
 
       if (!selectedTab.value) {
@@ -1583,6 +1834,21 @@ export function createSeedBibleState(
           defaultValue:
             "Seed Bible is a free Bible app with dozens of translations, reading plans, notes, highlights, and study tools.",
         }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
+
+    const page = sharedPage.value;
+    if (page) {
+      return truncateForMeta(
+        page.description?.trim() ||
+          (page.kind === "playlist"
+            ? t("playlist-page-meta-description", {
+                defaultValue: "A Bible reading playlist on Seed Bible.",
+              })
+            : t("reading-plan-page-meta-description", {
+                defaultValue: "A Bible reading plan on Seed Bible.",
+              })),
         META_DESCRIPTION_MAX_GRAPHEMES
       );
     }
@@ -1658,6 +1924,15 @@ export function createSeedBibleState(
     () => customizations.activeCustomization.value?.logoUrl ?? null
   );
 
+  const socialImage = computed<{ url: string; alt: string } | null>(() => {
+    const heroImageUrl = sharedPage.value?.heroImageUrl;
+    if (heroImageUrl) {
+      return { url: heroImageUrl, alt: sharedPageTitle.value ?? "" };
+    }
+    const logoUrl = customizationLogoUrl.value;
+    return logoUrl ? { url: logoUrl, alt: siteName.value } : null;
+  });
+
   /**
    * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
    * along with `description`.
@@ -1680,6 +1955,10 @@ export function createSeedBibleState(
 
     if (isAboutPage.value) {
       return t("about-title", { defaultValue: "About the Seed Bible" });
+    }
+
+    if (sharedPageTitle.value) {
+      return sharedPageTitle.value;
     }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
@@ -1730,6 +2009,16 @@ export function createSeedBibleState(
       return `${navigation.basePath}${buildStaticPagePath({
         language: i18n.language.value,
         page: "about",
+      })}`;
+    }
+
+    const page = sharedPage.value;
+    if (page) {
+      return `${navigation.basePath}${buildSharedPagePath({
+        kind: page.kind,
+        language: i18n.language.value,
+        locator: page.locator,
+        title: page.title,
       })}`;
     }
 
@@ -1879,7 +2168,11 @@ export function createSeedBibleState(
     if (downloadOfferChecked) {
       return;
     }
-    if (openedViaContentLink) {
+    if (isMinimalEmbed.value) {
+      downloadOfferChecked = true;
+      return;
+    }
+    if (openedViaContentLink.value) {
       return;
     }
     if (!installOfferResolved.value) {
@@ -2908,6 +3201,8 @@ export function createSeedBibleState(
       applyViewport,
       hydrateFromStorage,
       isMobile,
+      isMinimalEmbed,
+      isCompactReader,
       isMobileLandscape,
       isCompactDesktop,
       currentReadingState,
@@ -2923,9 +3218,12 @@ export function createSeedBibleState(
       description,
       siteName,
       customizationLogoUrl,
+      socialImage,
       canonicalUrl,
       socialTitle,
       isAboutPage,
+      startSharedPage,
+      resumeSharedPage,
       currentToast,
       toast,
       isDiscoverOpen: playlists.isDiscoverOpen,
@@ -3263,6 +3561,298 @@ export function createSeedBibleState(
     if (!paneOpen && isAboutPage.peek()) {
       tabs.leaveStaticPage();
     }
+  });
+
+  /**
+   * Leaves the reading plan page for the plan in the plans pane: its pace
+   * picker when `progress` is null (a fresh start), else the reader's place
+   * in that progress, ready to read the day or session they're on.
+   */
+  const openReadingPlanPageInPane = (
+    progress: ReadingPlanProgress | null
+  ): void => {
+    const page = readingPlans.readingPlanPage.peek();
+    if (!page) {
+      return;
+    }
+    readingPlans.selectedReadingPlan.value = page.item;
+    void readingPlans.selectReadingPlanProgress(progress);
+    // Leave the page first. Moving the address bar onto a chapter closes
+    // fullscreen panes (every pane is fullscreen on a phone), so a pane
+    // opened before it would close again straight away.
+    tabs.leaveStaticPage();
+    pendingSharedPlan.value = page.item;
+  };
+
+  // A function declaration so the `state` object above can refer to it.
+  function startSharedPage(): void {
+    if (playlists.playlistPage.peek()) {
+      playlists.startPlaylistPage();
+    } else {
+      openReadingPlanPageInPane(null);
+    }
+  }
+
+  // Same reason as `startSharedPage` for being a function declaration.
+  function resumeSharedPage(): void {
+    const place = readingPlans.readingPlanPageProgress.peek();
+    if (place) {
+      openReadingPlanPageInPane(place.progress);
+    }
+  }
+
+  // A shared playlist or reading plan link opens on a modal describing it.
+  // Start begins it; closing it any other way (Close, the header's X, the
+  // backdrop) leaves for the home screen. A link to one that doesn't exist
+  // opens a "not found" modal in the same place, and one that failed to load
+  // opens a "try again" modal there; closing either goes home too.
+  effect(() => {
+    const page = sharedPage.value;
+    const name = sharedPageName.value;
+    const notFoundKind = sharedPageNotFoundKind.value;
+    const failedKind = sharedPageLoadFailedKind.value;
+    const failedTitle = sharedPageLoadFailedTitle.value;
+    if (!page && failedKind && failedTitle) {
+      const { t } = i18n;
+      const retrying =
+        failedKind === "playlist"
+          ? playlists.playlistPageRetrying.value
+          : readingPlans.readingPlanPageRetrying.value;
+      modals.openModal({
+        id: SHARED_PAGE_MODAL_ID,
+        title: failedTitle,
+        useCasualOSApp: false,
+        content: () => (
+          <SharedPageLoadFailedModalContent
+            message={
+              failedKind === "playlist"
+                ? t("playlist-load-failed-message", {
+                    defaultValue:
+                      "Something went wrong loading this playlist. Check your internet connection and try again.",
+                  })
+                : t("reading-plan-load-failed-message", {
+                    defaultValue:
+                      "Something went wrong loading this reading plan. Check your internet connection and try again.",
+                  })
+            }
+            retrying={retrying}
+            onRetry={() =>
+              void (failedKind === "playlist"
+                ? playlists.retryPlaylistPage()
+                : readingPlans.retryReadingPlanPage())
+            }
+            onClose={() => modals.closeModal(SHARED_PAGE_MODAL_ID)}
+          />
+        ),
+      });
+      return;
+    }
+    const notFoundTitle = sharedPageNotFoundTitle.value;
+    if (!page && notFoundKind && notFoundTitle) {
+      const { t } = i18n;
+      modals.openModal({
+        id: SHARED_PAGE_MODAL_ID,
+        title: notFoundTitle,
+        useCasualOSApp: false,
+        content: () => (
+          <SharedPageNotFoundModalContent
+            message={
+              notFoundKind === "playlist"
+                ? t("playlist-not-found-message", {
+                    defaultValue:
+                      "This playlist doesn't exist, or it has been deleted. Check the link, or ask the person who shared it for a new one.",
+                  })
+                : t("reading-plan-not-found-message", {
+                    defaultValue:
+                      "This reading plan doesn't exist, or it has been deleted. Check the link, or ask the person who shared it for a new one.",
+                  })
+            }
+            onClose={() => modals.closeModal(SHARED_PAGE_MODAL_ID)}
+          />
+        ),
+      });
+      return;
+    }
+    // A playing path (one with a step) is the playlist being read, not its
+    // page, so it shows no modal.
+    if (!page || !name || sharedPageStep.value != null) {
+      if (
+        modals.modals.peek().some((modal) => modal.id === SHARED_PAGE_MODAL_ID)
+      ) {
+        modals.closeModal(SHARED_PAGE_MODAL_ID);
+      }
+      return;
+    }
+    const { t } = i18n;
+    const playlistPage = playlists.playlistPage.value;
+    const planPage = readingPlans.readingPlanPage.value;
+    let lengthLabel: string;
+    let status: string | null = null;
+    let actions: SharedPageModalAction[];
+    if (playlistPage) {
+      lengthLabel = t("playlist-page-item-count", {
+        count: playlistPage.item.items.length,
+        defaultValue: "{{count}} items",
+      });
+      actions = [
+        {
+          label: t("playlist-page-start", { defaultValue: "Start Playlist" }),
+          primary: true,
+          disabled: playlistPage.item.items.length === 0,
+          onClick: startSharedPage,
+        },
+      ];
+    } else {
+      const plan = planPage?.item;
+      const sessionCount = t("reading-plan-session-count-sessions", {
+        count: plan?.sessions.length ?? 0,
+        defaultValue: "{{count}} sessions",
+      });
+      // Estimated at the loaded translation's own chapter lengths when its
+      // catalog is there, else at a typical chapter length.
+      const books =
+        selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+      const minutes = plan
+        ? averageSessionMinutes(plan, (bookId) =>
+            books.find((book) => book.id === bookId)
+          )
+        : null;
+      lengthLabel =
+        minutes != null
+          ? `${sessionCount} · ${t("reading-plan-page-minutes-per-session", {
+              count: minutes,
+              defaultValue: "About {{count}} min per session",
+            })}`
+          : sessionCount;
+
+      const startFresh = {
+        label: t("reading-plan-page-start", {
+          defaultValue: "Start Reading Plan",
+        }),
+        primary: true,
+        disabled: minutes == null,
+        onClick: startSharedPage,
+      };
+      const place = readingPlans.readingPlanPageProgress.value;
+      if (!place) {
+        actions = [startFresh];
+      } else if (place.resumeAt == null) {
+        status = t("reading-plan-page-finished", {
+          defaultValue: "You've finished this plan.",
+        });
+        actions = [
+          {
+            ...startFresh,
+            label: t("reading-plan-page-start-over", {
+              defaultValue: "Start from beginning",
+            }),
+          },
+        ];
+      } else {
+        const isDay = place.unit === "day";
+        status = isDay
+          ? t("reading-plan-page-on-day", {
+              day: place.resumeAt,
+              defaultValue: "You're on day {{day}}",
+            })
+          : t("reading-plan-page-on-session", {
+              session: place.resumeAt,
+              defaultValue: "You're on session {{session}}",
+            });
+        actions = [
+          {
+            ...startFresh,
+            primary: false,
+            label: t("reading-plan-page-start-over", {
+              defaultValue: "Start from beginning",
+            }),
+          },
+          {
+            label: isDay
+              ? t("reading-plan-page-resume-day", {
+                  day: place.resumeAt,
+                  defaultValue: "Resume day {{day}}",
+                })
+              : t("reading-plan-page-resume-session", {
+                  session: place.resumeAt,
+                  defaultValue: "Resume session {{session}}",
+                }),
+            primary: true,
+            onClick: resumeSharedPage,
+          },
+        ];
+      }
+    }
+    modals.openModal({
+      id: SHARED_PAGE_MODAL_ID,
+      title: name,
+      // Rendered in place rather than in a CasualOS app iframe so the server
+      // render includes it.
+      useCasualOSApp: false,
+      content: () => (
+        <SharedPageModalContent
+          heroImageUrl={page.heroImageUrl}
+          authorName={page.authorName}
+          description={page.description}
+          lengthLabel={lengthLabel}
+          status={status}
+          actions={actions}
+          onClose={() => modals.closeModal(SHARED_PAGE_MODAL_ID)}
+        />
+      ),
+    });
+  });
+
+  /** Set when a visit that began on a shared page closed it for home. */
+  const closedSharedPageForHome = signal(false);
+
+  // Starting leaves the shared page (a playlist for its first step's path)
+  // before the modal closes, so this only sees a close that should go home.
+  // Going home is what a fresh visit to "/"
+  // would do: the reader takes the address bar back, Today opens over it
+  // when a visit to "/" would open it, and a visit that began on this page
+  // stops counting as a content link, so the tutorial offer can appear.
+  effect(() => {
+    const modalOpen = modals.modals.value.some(
+      (modal) => modal.id === SHARED_PAGE_MODAL_ID
+    );
+    const onSharedPage = !!sharedPage.peek() && sharedPageStep.peek() == null;
+    if (
+      modalOpen ||
+      !(
+        onSharedPage ||
+        sharedPageNotFoundKind.peek() ||
+        sharedPageLoadFailedKind.peek()
+      )
+    ) {
+      return;
+    }
+    const home = new URL(navigation.initialUrl.href);
+    home.pathname = `${navigation.basePath}/`;
+    tabs.leaveStaticPage();
+    if (todayWillAutoOpenForUrl(home, navigation.basePath)) {
+      today.open();
+    }
+    if (openedViaSharedPage) {
+      closedSharedPageForHome.value = true;
+    }
+  });
+
+  // Lifts the content-link suppression only once Today's pane is actually
+  // covering the reader. Lifting it in the same update as `today.open()`
+  // would let the tutorial offer see a visible reader in the moment before
+  // the pane opens, and show itself underneath Today.
+  effect(() => {
+    if (!closedSharedPageForHome.value) {
+      return;
+    }
+    const todayPaneOpen = panes.panes.value.some(
+      (pane) => pane.id === TODAY_PANE_ID
+    );
+    if (today.isOpen.value && !todayPaneOpen) {
+      return;
+    }
+    openedViaContentLink.value = false;
   });
 
   // Settings UI language changes also select the nearest available Bible

@@ -1,4 +1,3 @@
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import {
   BibleStates,
   PieceSelectionSources,
@@ -6,25 +5,28 @@ import {
   type Piece,
   type SelectionModality,
 } from "../../domain/models/canvas";
-import type { TestamentDataRepositoryPort } from "../ports/testaments";
 import type { TestamentInteractionServicePort } from "../ports/in/TestamentInteraction";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import { HighlightRequestSources } from "../../domain/models/pieces";
-import type { PaintPort } from "../ports/in/Paint";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
-import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { ParentDataIds } from "../../domain/models/canvas";
+import type { PaintServicePort } from "../ports/in/Paint";
+import type { TestamentSelectionServicePort } from "../ports/in/TestamentSelection";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
-  testamentDataRepositoryPort: TestamentDataRepositoryPort;
+  testamentDataRepositoryPort: PieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   tourGuideServicePort: TourGuideServicePort;
-  testamentSelectionServicePort: TestamentSelectionPort;
-  pieceHighlightServicePort: PieceHighlighterPort;
-  paintPort: PaintPort;
+  testamentSelectionServicePort: TestamentSelectionServicePort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
+  paintPort: PaintServicePort;
+  loggerPort: LoggerPort;
 }
 
 export class TestamentInteractionService implements TestamentInteractionServicePort {
@@ -35,6 +37,7 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
   #testamentSelectionServicePort: ServiceParams["testamentSelectionServicePort"];
   #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
   #paintPort: ServiceParams["paintPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     sequenceStateServicePort,
@@ -44,6 +47,7 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
     testamentSelectionServicePort,
     pieceHighlightServicePort,
     paintPort,
+    loggerPort,
   }: ServiceParams) {
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#testamentDataRepositoryPort = testamentDataRepositoryPort;
@@ -52,11 +56,12 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
     this.#testamentSelectionServicePort = testamentSelectionServicePort;
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
     this.#paintPort = paintPort;
+    this.#loggerPort = loggerPort;
   }
 
   #meetsBaseInteractionConditions(testamentData: StackTestamentData): boolean {
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      testamentData.parentDataIds as StackParentDataIds
+      testamentData.parentDataIds as ParentDataIds
     );
 
     if (
@@ -79,9 +84,10 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
       this.#testamentDataRepositoryPort.getPieceData(testament);
 
     if (!testamentData) {
-      throw new Error(
-        "TestamentInteractionService: testamentData not found at meetsBaseInteractionConditions"
+      this.#loggerPort.error(
+        "TestamentInteractionService: testamentData not found at handleTestamentSelection"
       );
+      return;
     }
 
     if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
@@ -132,9 +138,10 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
       this.#testamentDataRepositoryPort.getPieceData(testament);
 
     if (!testamentData) {
-      throw new Error(
-        "TestamentInteractionService: testamentData not found at meetsBaseInteractionConditions"
+      this.#loggerPort.error(
+        "TestamentInteractionService: testamentData not found at handleTestamentFocusBegin"
       );
+      return;
     }
 
     testamentData.beginFocus();
@@ -158,9 +165,10 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
       this.#testamentDataRepositoryPort.getPieceData(testament);
 
     if (!testamentData) {
-      throw new Error(
-        "TestamentInteractionService: testamentData not found at meetsBaseInteractionConditions"
+      this.#loggerPort.error(
+        "TestamentInteractionService: testamentData not found at handleTestamentFocusEnd"
       );
+      return;
     }
 
     testamentData.endFocus();

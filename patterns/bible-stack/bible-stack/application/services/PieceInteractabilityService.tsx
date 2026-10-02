@@ -1,43 +1,41 @@
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import { BibleTypes, type Piece } from "../../domain/models/canvas";
-import type {
-  InteractabilityBlockerPort,
-  InteractabilityUnlockerPort,
-} from "../ports/in/PieceInteractability";
+import type { PieceInteractabilityServicePort } from "../ports/in/PieceInteractability";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
-import type {
-  BibleDataRepositoryPort,
-  PieceDataRepositoryPort,
-  PieceAdapterPort,
-} from "../ports/out/PieceInteractability";
-import type { StackPieceDataMap } from "../ports/pieces";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { PieceDataMap } from "../../domain/models/canvas";
+import type { PiecePort } from "../ports/out/Piece";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   pieceDataRepositoryPort: PieceDataRepositoryPort;
-  pieceAdapterPort: PieceAdapterPort;
+  pieceAdapterPort: PiecePort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
+  loggerPort: LoggerPort;
 }
 
-export class PieceInteractabilityService
-  implements InteractabilityBlockerPort, InteractabilityUnlockerPort
-{
+export class PieceInteractabilityService implements PieceInteractabilityServicePort {
   #bibleDataRepositoryPort: ServiceParams["bibleDataRepositoryPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #scripturePiecesStateServicePort: ServiceParams["scripturePiecesStateServicePort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     bibleDataRepositoryPort,
     pieceDataRepositoryPort,
     pieceAdapterPort,
     scripturePiecesStateServicePort,
+    loggerPort,
   }: ServiceParams) {
     this.#bibleDataRepositoryPort = bibleDataRepositoryPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#scripturePiecesStateServicePort = scripturePiecesStateServicePort;
+    this.#loggerPort = loggerPort;
   }
 
   blockAll(): void {
@@ -72,27 +70,25 @@ export class PieceInteractabilityService
         !testamentData.isSplitIntoSections
       ) {
         if (!testamentData.piece) {
-          throw new Error(
+          this.#loggerPort.error(
             "PieceInteractabilityService: testamentData.piece not defined at setTestamentsInteractable"
           );
+          return;
         }
         this.#setPieceInteractable({ piece: testamentData.piece, value });
       }
       if (testamentData.isSplitIntoSections) {
         testamentData.childrenData.forEach((sectionData) => {
           if (
-            !(
-              sectionData.type === "StackSectionBook" &&
-              sectionData.selectionState === "Selected"
-            ) &&
             sectionData.isActive &&
             !sectionData.isBeingDragged &&
             sectionData.selectionState !== "Selected"
           ) {
             if (!sectionData.piece) {
-              throw new Error(
+              this.#loggerPort.error(
                 "PieceInteractabilityService: sectionData.piece not defined at setTestamentsInteractable"
               );
+              return;
             }
             this.#setPieceInteractable({ piece: sectionData.piece, value });
           }
@@ -107,9 +103,10 @@ export class PieceInteractabilityService
                 !bookData.isBeingDragged
               ) {
                 if (!bookData.piece) {
-                  throw new Error(
+                  this.#loggerPort.error(
                     "PieceInteractabilityService: bookData.piece not defined at setTestamentsInteractable"
                   );
+                  return;
                 }
                 this.#setPieceInteractable({ piece: bookData.piece, value });
               }
@@ -144,7 +141,7 @@ export class PieceInteractabilityService
       case "StackBook":
       case "StackChapter": {
         const data = this.#pieceDataRepositoryPort.getPieceData(
-          piece as Piece<keyof StackPieceDataMap>
+          piece as Piece<keyof PieceDataMap>
         );
         if (data) {
           if (value) {

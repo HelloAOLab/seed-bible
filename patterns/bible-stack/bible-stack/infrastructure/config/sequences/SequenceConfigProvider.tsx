@@ -1,7 +1,4 @@
-import {
-  FocusOnAnimations,
-  type FocusOnAnimationKey,
-} from "./focusOnAnimations";
+import { FocusOnAnimations } from "./focusOnAnimations";
 import {
   CrackOpenBibleAnimationDurations,
   CrackOpenBibleAnimationEasing,
@@ -17,13 +14,14 @@ import {
   OpenBibleAnimationEasing,
 } from "./openBibleAnimation";
 import type { BibleType } from "../../../domain/models/canvas";
-import type { BibleSequenceServiceConfigProviderPort } from "../../../application/ports/bibleLifecycle";
 import {
   ToggleBibleAnimationConfigs,
   type ToggleBibleAnimationConfigType,
 } from "./toggleBibleModeAnimation";
+import type { FocusOnAnimationKey } from "../../../application/ports/out/Camera";
+import type { SequenceConfigProviderPort } from "../../../application/ports/out/SequenceConfigProvider";
 
-export class SequenceConfigProvider implements BibleSequenceServiceConfigProviderPort {
+export class SequenceConfigProvider implements SequenceConfigProviderPort {
   getFocusOnAnimationConfig(key: FocusOnAnimationKey) {
     return FocusOnAnimations[key];
   }
