@@ -1248,6 +1248,8 @@ describe("createReadingPlansManager", () => {
   let warnSpy: Mock;
   let errorSpy: Mock;
   let userId: ReturnType<typeof signal<string | null>>;
+  // Every manager a test made, so `afterEach` can finish what it left open.
+  let managers: ReturnType<typeof createReadingPlansManager>[] = [];
 
   const flush = async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -1336,7 +1338,15 @@ describe("createReadingPlansManager", () => {
       initialUrl: new URL(sharer.url),
       basePath: sharer.basePath ?? "",
     };
-    return createReadingPlansManager(os, login, tabs, navigation, options);
+    const manager = createReadingPlansManager(
+      os,
+      login,
+      tabs,
+      navigation,
+      options
+    );
+    managers.push(manager);
+    return manager;
   };
 
   beforeEach(() => {
@@ -1354,11 +1364,22 @@ describe("createReadingPlansManager", () => {
     errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Draft saves are debounced, so some tests drive them with fake timers.
     // Restore real ones here too: a leaked fake clock makes every later test
     // that awaits `flush()` (a real setTimeout) hang until it times out.
     vi.useRealTimers();
+    // A draft edited with real timers saves 700ms later, after its test has
+    // ended, and would capture its analytics event into whichever later test
+    // was running then. Cancelling writes the pending save now and closes it.
+    const open = managers.filter((m) => m.editingReadingPlan.peek() !== null);
+    managers = [];
+    for (const manager of open) {
+      manager.cancelEditingReadingPlan();
+    }
+    await vi.waitFor(() =>
+      expect(open.every((m) => m.editingReadingPlan.peek() === null)).toBe(true)
+    );
     warnSpy.mockRestore();
     errorSpy.mockRestore();
   });
