@@ -1335,6 +1335,8 @@ export function createPlaylistManager(
     load: Promise<void> | null;
     /** When the last successful read finished. */
     loadedAtMs: number | null;
+    /** The last read failed, so coming back to it reads again right away. */
+    loadFailed: boolean;
   };
   const friendFreshness = createFriendContentFreshness();
   const userPlaylistEntries = new Map<string, UserPlaylistsEntry>();
@@ -1355,6 +1357,7 @@ export function createPlaylistManager(
         settled: false,
         load: null,
         loadedAtMs: null,
+        loadFailed: false,
       };
       entry = created;
       userPlaylistEntries.set(userId, entry);
@@ -1375,10 +1378,12 @@ export function createPlaylistManager(
       }
       entry.data.value = loaded;
       entry.loadedAtMs = Date.now();
+      entry.loadFailed = false;
       entry.settled = true;
     } catch (error) {
       console.error(`Failed to load playlists for ${userId}:`, error);
       if (!entry.settled) {
+        entry.loadFailed = true;
         // A failed re-read keeps the playlists already shown.
         if (entry.loadedAtMs === null) {
           entry.data.value = [];
@@ -1391,13 +1396,17 @@ export function createPlaylistManager(
   /**
    * Reads a friend's playlists again when they're back on screen or the app
    * regains focus (see `createFriendContentFreshness`), keeping the ones
-   * already shown until the new list arrives.
+   * already shown until the new list arrives. A read that failed is tried
+   * again then too, however recent it was.
    */
   const refreshUserPlaylists = (
     userId: string,
     entry: UserPlaylistsEntry
   ): void => {
-    if (entry.load || !isFriendContentStale(entry.loadedAtMs)) {
+    if (
+      entry.load ||
+      !(entry.loadFailed || isFriendContentStale(entry.loadedAtMs))
+    ) {
       return;
     }
     entry.settled = false;

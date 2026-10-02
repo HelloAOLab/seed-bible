@@ -2408,6 +2408,35 @@ describe("createReadingPlansManager", () => {
       }
     });
 
+    it("reads a friend's progress again when you come back to the app after the first read failed", async () => {
+      const page = stubPageVisibility();
+      let stopWatching: (() => void) | undefined;
+      try {
+        listDataByMarkerMock.mockImplementation(async (recordName: unknown) =>
+          recordName === "friend-user"
+            ? { success: false, errorCode: "server_error" }
+            : { success: true, items: [] }
+        );
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserReadingPlanProgresses("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value).toEqual([]);
+
+        mockPerUserProgresses();
+        // No time passes: a failed read is tried again however recent it was.
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["friend-progress"])
+        );
+      } finally {
+        stopWatching?.();
+        page.restore();
+      }
+    });
+
     it("reads progress from the named account's record", async () => {
       mockPerUserProgresses();
       const manager = makeManager("user-1");
@@ -2525,6 +2554,54 @@ describe("createReadingPlansManager", () => {
 
       expect(view.value).toBeNull();
       expect(errorSpy).toHaveBeenCalled();
+    });
+
+    it("reads a plan again when it's back on screen after it failed to load", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "server_error",
+      });
+      const view = manager.getReadingPlanByLocator("other-user", "plan-9");
+      let stopWatching = effect(() => void view.value);
+      await flush();
+      expect(view.value).toBeNull();
+      stopWatching();
+
+      getDataMock.mockResolvedValueOnce({
+        success: true,
+        data: makePlan({ recordName: "other-user", address: "plan-9" }),
+      });
+      stopWatching = effect(() => void view.value);
+
+      try {
+        await vi.waitFor(() => expect(view.value?.address).toBe("plan-9"));
+      } finally {
+        stopWatching();
+      }
+    });
+
+    it("doesn't read a plan that loaded again when it's back on screen", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValueOnce({
+        success: true,
+        data: makePlan({ recordName: "other-user", address: "plan-9" }),
+      });
+      const view = manager.getReadingPlanByLocator("other-user", "plan-9");
+      let stopWatching = effect(() => void view.value);
+      await flush();
+      expect(view.value?.address).toBe("plan-9");
+      stopWatching();
+
+      stopWatching = effect(() => void view.value);
+      await flush();
+      stopWatching();
+
+      expect(
+        getDataMock.mock.calls.filter(([, address]) => address === "plan-9")
+      ).toHaveLength(1);
     });
   });
 

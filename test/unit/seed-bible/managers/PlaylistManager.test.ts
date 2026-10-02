@@ -742,6 +742,50 @@ describe("createPlaylistManager", () => {
         );
       });
 
+      /** Shows a friend whose first read fails, as a render would. */
+      const watchFriendWhoseReadFails = async () => {
+        listDataByMarkerMock.mockImplementation(async (recordName: unknown) =>
+          recordName === "friend-user"
+            ? {
+                success: false,
+                errorCode: "server_error",
+                errorMessage: "Down.",
+              }
+            : { success: true, items: [] }
+        );
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserPlaylists("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value).toEqual([]);
+        return view;
+      };
+
+      it("reads them again when you come back to the app after the first read failed", async () => {
+        const view = await watchFriendWhoseReadFails();
+        mockPerUserPlaylists();
+
+        // No time passes: a failed read is tried again however recent it was.
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"])
+        );
+      });
+
+      it("reads them again when they come back on screen after the first read failed", async () => {
+        const view = await watchFriendWhoseReadFails();
+        stopWatching?.();
+        mockPerUserPlaylists();
+
+        stopWatching = effect(() => void view.value);
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"])
+        );
+      });
+
       it("keeps showing the playlists it has when a re-read fails", async () => {
         const view = await watchFriend();
         listDataByMarkerMock.mockResolvedValue({

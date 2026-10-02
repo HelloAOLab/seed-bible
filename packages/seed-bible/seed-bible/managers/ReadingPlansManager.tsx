@@ -1793,6 +1793,8 @@ export function createReadingPlansManager(
     load: Promise<void> | null;
     /** When the last successful read finished. */
     loadedAtMs: number | null;
+    /** The last read failed, so coming back to it reads again right away. */
+    loadFailed: boolean;
   };
   const friendFreshness = createFriendContentFreshness();
   const userReadingPlanProgressEntries = new Map<
@@ -1816,6 +1818,7 @@ export function createReadingPlansManager(
         settled: false,
         load: null,
         loadedAtMs: null,
+        loadFailed: false,
       };
       entry = created;
       userReadingPlanProgressEntries.set(userId, entry);
@@ -1836,6 +1839,7 @@ export function createReadingPlansManager(
       }
       entry.data.value = loaded;
       entry.loadedAtMs = Date.now();
+      entry.loadFailed = false;
       entry.settled = true;
     } catch (error) {
       console.error(
@@ -1843,6 +1847,7 @@ export function createReadingPlansManager(
         error
       );
       if (!entry.settled) {
+        entry.loadFailed = true;
         // A failed re-read keeps the progress already shown.
         if (entry.loadedAtMs === null) {
           entry.data.value = [];
@@ -1855,13 +1860,17 @@ export function createReadingPlansManager(
   /**
    * Reads a friend's reading plan progress again when it's back on screen or
    * the app regains focus (see `createFriendContentFreshness`), keeping what's
-   * already shown until the new list arrives.
+   * already shown until the new list arrives. A read that failed is tried
+   * again then too, however recent it was.
    */
   const refreshUserReadingPlanProgresses = (
     userId: string,
     entry: UserReadingPlanProgressesEntry
   ): void => {
-    if (entry.load || !isFriendContentStale(entry.loadedAtMs)) {
+    if (
+      entry.load ||
+      !(entry.loadFailed || isFriendContentStale(entry.loadedAtMs))
+    ) {
       return;
     }
     entry.settled = false;
@@ -1922,11 +1931,13 @@ export function createReadingPlansManager(
   // it, so this naturally dedups when two friends are on the same
   // plan. Resolves to null on failure (deleted plan, bad locator) instead of
   // throwing, so one bad reference is skipped in a feed rather than breaking
-  // it.
+  // it, and is read again once it's back on screen in case the failure was
+  // only a dropped connection.
   type ReadingPlanLocatorEntry = {
     data: Signal<ReadingPlan | null>;
     settled: boolean;
     load: Promise<void> | null;
+    loadFailed: boolean;
   };
   const readingPlanLocatorEntries = new Map<string, ReadingPlanLocatorEntry>();
   const readingPlanLocatorViews = new Map<
@@ -1935,15 +1946,21 @@ export function createReadingPlansManager(
   >();
 
   const getOrCreateReadingPlanLocatorEntry = (
-    planId: string
+    recordName: string,
+    address: string
   ): ReadingPlanLocatorEntry => {
+    const planId = formatReadingPlanId(recordName, address);
     let entry = readingPlanLocatorEntries.get(planId);
     if (!entry) {
-      entry = {
-        data: signal<ReadingPlan | null>(null),
+      const created: ReadingPlanLocatorEntry = {
+        data: friendFreshness.trackedSignal<ReadingPlan | null>(null, () =>
+          retryReadingPlanByLocator(recordName, address, created)
+        ),
         settled: false,
         load: null,
+        loadFailed: false,
       };
+      entry = created;
       readingPlanLocatorEntries.set(planId, entry);
     }
     return entry;
@@ -1968,9 +1985,28 @@ export function createReadingPlansManager(
       );
       if (!entry.settled) {
         entry.data.value = null;
+        entry.loadFailed = true;
         entry.settled = true;
       }
     }
+  };
+
+  /**
+   * Reads a plan that failed to load again when it's back on screen or the
+   * app regains focus. A plan that loaded isn't read again: a friend's
+   * progress changes far more often than the plan it follows.
+   */
+  const retryReadingPlanByLocator = (
+    recordName: string,
+    address: string,
+    entry: ReadingPlanLocatorEntry
+  ): void => {
+    if (entry.load || !entry.loadFailed) {
+      return;
+    }
+    entry.settled = false;
+    entry.loadFailed = false;
+    void ensureReadingPlanByLocatorLoaded(recordName, address, entry);
   };
 
   const ensureReadingPlanByLocatorLoaded = (
@@ -2009,7 +2045,7 @@ export function createReadingPlansManager(
     let view = readingPlanLocatorViews.get(planId);
     if (!view) {
       view = computed(() => {
-        const entry = getOrCreateReadingPlanLocatorEntry(planId);
+        const entry = getOrCreateReadingPlanLocatorEntry(recordName, address);
         void ensureReadingPlanByLocatorLoaded(recordName, address, entry);
         return entry.data.value;
       });
@@ -2019,7 +2055,7 @@ export function createReadingPlansManager(
     void ensureReadingPlanByLocatorLoaded(
       recordName,
       address,
-      getOrCreateReadingPlanLocatorEntry(planId)
+      getOrCreateReadingPlanLocatorEntry(recordName, address)
     );
 
     return view;
