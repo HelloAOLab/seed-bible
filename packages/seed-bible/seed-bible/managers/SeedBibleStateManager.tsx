@@ -2281,7 +2281,9 @@ export function createSeedBibleState(
   let toastSeq = 0;
   const toastQueue = signal<{ id: number; message: string }[]>([]);
   const toast = (message: string) => {
-    toastQueue.value = [...toastQueue.value, { id: ++toastSeq, message }];
+    // `peek()`: toast() is called from inside effects, and a tracked read
+    // would subscribe that effect to the queue it is writing.
+    toastQueue.value = [...toastQueue.peek(), { id: ++toastSeq, message }];
   };
 
   const MIN_TOAST_MS = 1500;
