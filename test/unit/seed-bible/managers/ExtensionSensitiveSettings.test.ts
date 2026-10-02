@@ -450,6 +450,151 @@ describe("ExtensionSettingsManager sensitive settings", () => {
     expect(manager.isSensitiveValueSet("ext-1", "apiKey")).toBe(true);
   });
 
+  describe("visibility", () => {
+    it("uses the manifest's visibility by default", async () => {
+      const meta = baseMeta();
+      meta.sensitive!.exampleApi!.visibility = "public";
+      extensionsListSignal.value = [entry(meta)];
+      const manager = create();
+      await flushPromises();
+
+      expect(manager.getSensitiveDestination("ext-1", "exampleApi")).toEqual({
+        host: "api.example.com",
+        visibility: "public",
+      });
+      await manager.setSensitiveValues("ext-1", "exampleApi", { apiKey: "k" });
+
+      expect(recordProxyMock.mock.calls[0]![4]).toEqual({
+        marker: "publicRead",
+      });
+      // The pointer itself stays private whatever the proxy's visibility.
+      expect(lastPointerWrite()![3]).toEqual({ marker: "private" });
+    });
+
+    it("lets the viewer override it, and keeps their choice on the next save", async () => {
+      const meta = baseMeta();
+      meta.sensitive!.exampleApi!.visibility = "public";
+      extensionsListSignal.value = [entry(meta)];
+      const manager = create();
+      await flushPromises();
+
+      await manager.setSensitiveValues(
+        "ext-1",
+        "exampleApi",
+        { apiKey: "k" },
+        { visibility: "private" }
+      );
+      await manager.setSensitiveValues("ext-1", "exampleApi", { apiKey: "k2" });
+
+      expect(recordProxyMock.mock.calls[0]![4]).toEqual({ marker: "private" });
+      expect(recordProxyMock.mock.calls[1]![4]).toEqual({ marker: "private" });
+      expect(
+        manager.getSensitiveDestination("ext-1", "exampleApi")?.visibility
+      ).toBe("private");
+    });
+  });
+
+  describe("host override", () => {
+    it("saves the viewer's host and routes the extension's own URL to it", async () => {
+      const manager = create();
+      await flushPromises();
+
+      await manager.setSensitiveValues(
+        "ext-1",
+        "exampleApi",
+        { apiKey: "k" },
+        { host: " My-Proxy.example.org:8443 " }
+      );
+      const address = recordProxyMock.mock.calls[0]![1];
+
+      expect(recordProxyMock.mock.calls[0]![2]).toBe(
+        "my-proxy.example.org:8443"
+      );
+      expect(manager.getSensitiveDestination("ext-1", "exampleApi")).toEqual({
+        host: "my-proxy.example.org:8443",
+        visibility: "private",
+      });
+      expect(manager.isSensitiveValueSet("ext-1", "apiKey")).toBe(true);
+
+      // The extension still addresses the host its manifest declares...
+      await manager.fetchWithSensitiveValues("ext-1", {
+        url: "https://api.example.com/v1/chat",
+      });
+      // ...or the one the viewer chose.
+      await manager.fetchWithSensitiveValues("ext-1", {
+        url: "https://my-proxy.example.org:8443/v1/chat",
+      });
+      expect(proxyRequestMock).toHaveBeenNthCalledWith(1, "user-1", address, {
+        path: "/v1/chat",
+        method: "GET",
+        body: undefined,
+      });
+      expect(proxyRequestMock).toHaveBeenNthCalledWith(
+        2,
+        "user-1",
+        address,
+        expect.objectContaining({ path: "/v1/chat" })
+      );
+    });
+
+    it("keeps the chosen host when the values are saved again without one", async () => {
+      const manager = create();
+      await flushPromises();
+      await manager.setSensitiveValues(
+        "ext-1",
+        "exampleApi",
+        { apiKey: "k" },
+        { host: "proxy.example.org" }
+      );
+
+      await manager.setSensitiveValues("ext-1", "exampleApi", { apiKey: "k2" });
+
+      expect(recordProxyMock.mock.calls[1]![2]).toBe("proxy.example.org");
+    });
+
+    it("refuses a host with a scheme or path", async () => {
+      const manager = create();
+      await flushPromises();
+
+      expect(
+        await manager.setSensitiveValues(
+          "ext-1",
+          "exampleApi",
+          { apiKey: "k" },
+          { host: "https://proxy.example.org/v1" }
+        )
+      ).toBe(false);
+      expect(recordProxyMock).not.toHaveBeenCalled();
+    });
+
+    // The viewer agreed to send this extension's values somewhere when it
+    // declared one host; moving to another needs them entered again.
+    it("asks again when the extension changes its own host, even after an override", async () => {
+      const manager = create();
+      await flushPromises();
+      await manager.setSensitiveValues(
+        "ext-1",
+        "exampleApi",
+        { apiKey: "k" },
+        { host: "proxy.example.org" }
+      );
+
+      const moved = baseMeta();
+      moved.sensitive!.exampleApi!.host = "api2.example.com";
+      extensionsListSignal.value = [entry(moved)];
+
+      expect(manager.isSensitiveValueSet("ext-1", "apiKey")).toBe(false);
+      expect(manager.getSensitiveDestination("ext-1", "exampleApi")?.host).toBe(
+        "api2.example.com"
+      );
+      await expect(
+        manager.fetchWithSensitiveValues("ext-1", {
+          url: "https://proxy.example.org/v1",
+        })
+      ).rejects.toMatchObject({ code: "unknown_destination" });
+    });
+  });
+
   it("drops the previous account's pointers when the account changes", async () => {
     const manager = create();
     await flushPromises();

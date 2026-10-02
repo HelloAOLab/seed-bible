@@ -41,6 +41,7 @@ export type ExtensionSettingDefinitionFile =
 
 export interface ExtensionSensitiveProxyDefinitionFile {
   host: string;
+  visibility?: "private" | "public";
   requestMapping: Record<string, string>;
 }
 

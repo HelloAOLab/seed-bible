@@ -158,7 +158,9 @@ export default function initExampleExtension() {
                     onClick={async () => {
                       // Sensitive settings can't be read. Instead the request
                       // goes through the viewer's proxy for httpbin.org, which
-                      // adds the API key and client ID on the server.
+                      // adds the API key and client ID on the server. If the
+                      // viewer chose another host in Settings, the same path
+                      // is sent there instead.
                       try {
                         const response =
                           await context.extensionSettings.fetchWithSensitiveValues(

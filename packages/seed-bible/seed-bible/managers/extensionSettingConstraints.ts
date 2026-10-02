@@ -55,9 +55,22 @@ export interface ExtensionBooleanSettingDefinition {
  * Each becomes one CasualOS proxy record per viewer, so all of its settings
  * travel together on every request made through it.
  */
+export type ExtensionSensitiveProxyVisibility = "private" | "public";
+
 export interface ExtensionSensitiveProxyDefinition {
-  /** Where requests go, as a host with an optional port (`api.example.com`, `example.com:8443`). */
+  /**
+   * Where requests go, as a host with an optional port (`api.example.com`,
+   * `example.com:8443`). The default: a viewer can pick another host when
+   * they save their values, and the extension keeps addressing this one.
+   */
   host: string;
+  /**
+   * Who may send requests through the viewer's proxy. `private` (the default)
+   * means only the viewer; `public` means anyone who knows the proxy's
+   * address, though nobody can read the values either way. The default:
+   * a viewer can choose the other when they save their values.
+   */
+  visibility?: ExtensionSensitiveProxyVisibility;
   /**
    * Request property -> the key of the setting whose value fills it. The
    * properties are the ones CasualOS proxies support (see

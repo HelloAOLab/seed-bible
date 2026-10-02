@@ -8,17 +8,27 @@ import {
   isSupportedSensitiveRequestProperty,
   isValidSensitiveHost,
   type ExtensionSensitiveProxyDefinition,
+  type ExtensionSensitiveProxyVisibility,
 } from "./extensionSettingConstraints";
 
 export const EXTENSION_SENSITIVE_PROXIES_ADDRESS = "extensionSensitiveProxies";
 
 /**
- * Both the proxy records and the record that points at them are `private`, so
- * only the viewer who set the values can use them. Every other record the app
- * writes is `publicRead`, which is exactly why sensitive values can't live in
- * `ExtensionSettingsManager`'s record.
+ * The record that points at the proxies is always `private`. Every other
+ * record the app writes is `publicRead`, which is exactly why sensitive
+ * values can't live in `ExtensionSettingsManager`'s record.
  */
 const PRIVATE_MARKER = "private";
+
+/**
+ * On a proxy record `publicRead` grants only `run`: anyone who knows the
+ * address can send requests through it, but nobody but its owner can read its
+ * values back.
+ */
+const PROXY_MARKERS: Record<ExtensionSensitiveProxyVisibility, string> = {
+  private: PRIVATE_MARKER,
+  public: "publicRead",
+};
 
 /**
  * Where one extension's values for one `sensitive` entry are held, and what
@@ -28,7 +38,11 @@ const PRIVATE_MARKER = "private";
 export interface SensitiveProxyPointer {
   recordName: string;
   address: string;
+  /** Where the proxy sends requests: the manifest's host, or the one the viewer chose. */
   host: string;
+  /** The manifest's host when this was saved. */
+  defaultHost: string;
+  visibility: ExtensionSensitiveProxyVisibility;
   requestMapping: Record<string, string>;
   /** The settings that had a value in the last save. */
   keys: string[];
@@ -38,13 +52,24 @@ const pointersPayloadSchema = z.record(
   z.string(),
   z.record(
     z.string(),
-    z.object({
-      recordName: z.string(),
-      address: z.string(),
-      host: z.string(),
-      requestMapping: z.record(z.string(), z.string()),
-      keys: z.array(z.string()),
-    })
+    z
+      .object({
+        recordName: z.string(),
+        address: z.string(),
+        host: z.string(),
+        defaultHost: z.string().optional(),
+        visibility: z.enum(["private", "public"]).optional(),
+        requestMapping: z.record(z.string(), z.string()),
+        keys: z.array(z.string()),
+      })
+      // Pointers saved before hosts and visibility could be chosen.
+      .transform(
+        (pointer): SensitiveProxyPointer => ({
+          ...pointer,
+          defaultHost: pointer.defaultHost ?? pointer.host,
+          visibility: pointer.visibility ?? "private",
+        })
+      )
   )
 );
 
@@ -71,7 +96,11 @@ export class SensitiveSettingsError extends Error {
 }
 
 export interface SensitiveFetchRequest {
-  /** Must be `https:`, and its host one this extension's `sensitive` section declares. */
+  /**
+   * Must be `https:`, and its host one this extension's `sensitive` section
+   * declares (or the host the viewer chose instead). The request goes to the
+   * viewer's chosen host either way, with this URL's path and query.
+   */
   url: string | URL;
   /** Defaults to `GET`, like `fetch`. */
   method?: ProxyRequestMethod;
@@ -84,6 +113,19 @@ export interface SensitiveFetchRequest {
   proxy?: string;
 }
 
+/** Where one `sensitive` entry's requests go and who may send them. */
+export interface SensitiveDestination {
+  host: string;
+  visibility: ExtensionSensitiveProxyVisibility;
+}
+
+export interface SensitiveSaveOptions {
+  /** Replaces the manifest's host. Omit to keep the last saved one, or the manifest's. */
+  host?: string;
+  /** Replaces the manifest's visibility. Omit to keep the last saved one, or the manifest's. */
+  visibility?: ExtensionSensitiveProxyVisibility;
+}
+
 export interface ExtensionSensitiveSettings {
   /** extensionId -> sensitive entry id -> where its values are held. Empty when signed out. */
   sensitiveProxiesByExtensionId: ReadonlySignal<Pointers>;
@@ -94,15 +136,29 @@ export interface ExtensionSensitiveSettings {
    */
   isSensitiveValueSet: (extensionId: string, key: string) => boolean;
   /**
+   * Where this entry's requests go: the viewer's saved choice while it is
+   * current, else the manifest's. Null if the extension declares no such entry.
+   */
+  getSensitiveDestination: (
+    extensionId: string,
+    proxyId: string
+  ) => SensitiveDestination | null;
+  /**
    * Replaces every value of one `sensitive` entry at once. A setting missing
    * from `values`, or given an empty string, ends up not set: the stored
    * values can't be read back, so there is nothing to keep them from. Saving
-   * with nothing set clears the entry. Resolves to whether it was saved.
+   * with nothing set clears the entry. Resolves to whether it was saved, and
+   * to false for a host that isn't a host name with an optional port.
+   *
+   * The host and visibility can only change along with the values, so nothing
+   * can send values already stored to a new host, or open them to other
+   * people, without knowing them.
    */
   setSensitiveValues: (
     extensionId: string,
     proxyId: string,
-    values: Record<string, string>
+    values: Record<string, string>,
+    options?: SensitiveSaveOptions
   ) => Promise<boolean>;
   /** Deletes the proxy record and forgets it. Resolves to whether it was cleared. */
   clearSensitiveValues: (
@@ -234,11 +290,37 @@ export function createExtensionSensitiveSettings(
     pointer: SensitiveProxyPointer
   ): boolean => {
     const proxy = getMeta(extensionId)?.sensitive?.[proxyId];
+    // Compared with the manifest's host, not the one the viewer chose: an
+    // extension that moves to a new host gets its values entered again.
     return (
       proxy !== undefined &&
-      pointer.host === proxy.host &&
+      pointer.defaultHost === proxy.host &&
       sameMapping(pointer.requestMapping, proxy.requestMapping ?? {})
     );
+  };
+
+  const currentPointer = (
+    extensionId: string,
+    proxyId: string
+  ): SensitiveProxyPointer | undefined => {
+    const pointer = pointers.value[extensionId]?.[proxyId];
+    return pointer && isCurrent(extensionId, proxyId, pointer)
+      ? pointer
+      : undefined;
+  };
+
+  const getSensitiveDestination = (
+    extensionId: string,
+    proxyId: string
+  ): SensitiveDestination | null => {
+    const proxy = getMeta(extensionId)?.sensitive?.[proxyId];
+    if (!proxy) {
+      return null;
+    }
+    const pointer = currentPointer(extensionId, proxyId);
+    return pointer
+      ? { host: pointer.host, visibility: pointer.visibility }
+      : { host: proxy.host, visibility: proxy.visibility ?? "private" };
   };
 
   const isSensitiveValueSet = (extensionId: string, key: string): boolean => {
@@ -246,11 +328,9 @@ export function createExtensionSensitiveSettings(
     if (setting?.type !== "string" || setting.sensitive === undefined) {
       return false;
     }
-    const pointer = pointers.value[extensionId]?.[setting.sensitive];
     return (
-      pointer !== undefined &&
-      isCurrent(extensionId, setting.sensitive, pointer) &&
-      pointer.keys.includes(key)
+      currentPointer(extensionId, setting.sensitive)?.keys.includes(key) ===
+      true
     );
   };
 
@@ -325,10 +405,17 @@ export function createExtensionSensitiveSettings(
     userId: string,
     extensionId: string,
     proxyId: string,
-    values: Record<string, string>
+    values: Record<string, string>,
+    options: SensitiveSaveOptions
   ): Promise<boolean> => {
     const usable = usableMapping(extensionId, proxyId);
-    if (!usable) {
+    const destination = getSensitiveDestination(extensionId, proxyId);
+    if (!usable || !destination) {
+      return false;
+    }
+    const host = (options.host ?? destination.host).trim().toLowerCase();
+    const visibility = options.visibility ?? destination.visibility;
+    if (!isValidSensitiveHost(host) || !(visibility in PROXY_MARKERS)) {
       return false;
     }
     const data: Record<string, string> = {};
@@ -343,17 +430,13 @@ export function createExtensionSensitiveSettings(
     if (keys.size === 0) {
       return clearNow(userId, extensionId, proxyId);
     }
-    // Reusing the address replaces the host along with the values, so a proxy
-    // saved for an older manifest can't keep sending to where it used to.
+    // Reusing the address replaces the host and markers along with the
+    // values, so an older save can't keep sending to where it used to.
     const address = pointers.value[extensionId]?.[proxyId]?.address ?? uuid();
     try {
-      const result = await os.recordProxy(
-        userId,
-        address,
-        usable.proxy.host,
-        data,
-        { marker: PRIVATE_MARKER }
-      );
+      const result = await os.recordProxy(userId, address, host, data, {
+        marker: PROXY_MARKERS[visibility],
+      });
       if (!result.success) {
         console.error(
           "Failed to save extension sensitive settings:",
@@ -372,7 +455,9 @@ export function createExtensionSensitiveSettings(
         [proxyId]: {
           recordName: userId,
           address,
-          host: usable.proxy.host,
+          host,
+          defaultHost: usable.proxy.host,
+          visibility,
           requestMapping: { ...usable.proxy.requestMapping },
           keys: [...keys],
         },
@@ -390,7 +475,8 @@ export function createExtensionSensitiveSettings(
   const setSensitiveValues = async (
     extensionId: string,
     proxyId: string,
-    values: Record<string, string>
+    values: Record<string, string>,
+    options: SensitiveSaveOptions = {}
   ): Promise<boolean> => {
     const userId = await waitForLoaded();
     if (!userId) {
@@ -398,7 +484,7 @@ export function createExtensionSensitiveSettings(
     }
     return queue(() =>
       loadedUserId === userId
-        ? setNow(userId, extensionId, proxyId, values)
+        ? setNow(userId, extensionId, proxyId, values, options)
         : Promise.resolve(false)
     );
   };
@@ -443,9 +529,20 @@ export function createExtensionSensitiveSettings(
         "Sensitive values can only be sent to an https URL without credentials."
       );
     }
+    const userId = await waitForLoaded();
+    if (!userId) {
+      throw new SensitiveSettingsError(
+        "not_loaded",
+        "This account's sensitive settings couldn't be loaded."
+      );
+    }
     const host = url.host.toLowerCase();
     const candidates = Object.entries(getMeta(extensionId)?.sensitive ?? {})
-      .filter(([, proxy]) => proxy.host.toLowerCase() === host)
+      .filter(
+        ([id, proxy]) =>
+          proxy.host.toLowerCase() === host ||
+          currentPointer(extensionId, id)?.host === host
+      )
       .filter(([id]) => request.proxy === undefined || id === request.proxy);
     if (candidates.length === 0) {
       throw new SensitiveSettingsError(
@@ -460,15 +557,8 @@ export function createExtensionSensitiveSettings(
       );
     }
     const [proxyId] = candidates[0]!;
-    const userId = await waitForLoaded();
-    if (!userId) {
-      throw new SensitiveSettingsError(
-        "not_loaded",
-        "This account's sensitive settings couldn't be loaded."
-      );
-    }
-    const pointer = pointers.value[extensionId]?.[proxyId];
-    if (!pointer || !isCurrent(extensionId, proxyId, pointer)) {
+    const pointer = currentPointer(extensionId, proxyId);
+    if (!pointer) {
       throw new SensitiveSettingsError(
         "not_set",
         `No sensitive values are set for ${host}.`
@@ -509,6 +599,7 @@ export function createExtensionSensitiveSettings(
   return {
     sensitiveProxiesByExtensionId: pointers,
     isSensitiveValueSet,
+    getSensitiveDestination,
     setSensitiveValues,
     clearSensitiveValues,
     fetchWithSensitiveValues,

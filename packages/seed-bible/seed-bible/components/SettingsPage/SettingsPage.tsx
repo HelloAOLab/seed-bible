@@ -1368,11 +1368,18 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 isSet={(key) =>
                   extensionSettings.isSensitiveValueSet(extensionEntry.id, key)
                 }
-                onSave={(proxyId, values) =>
+                getDestination={(proxyId) =>
+                  extensionSettings.getSensitiveDestination(
+                    extensionEntry.id,
+                    proxyId
+                  )
+                }
+                onSave={(proxyId, values, options) =>
                   extensionSettings.setSensitiveValues(
                     extensionEntry.id,
                     proxyId,
-                    values
+                    values,
+                    options
                   )
                 }
                 onClear={(proxyId) =>

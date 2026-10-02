@@ -55,6 +55,7 @@ export type {
   ExtensionBooleanSettingDefinition,
   ExtensionNumberSettingDefinition,
   ExtensionSensitiveProxyDefinition,
+  ExtensionSensitiveProxyVisibility,
   ExtensionSettingDefinition,
   ExtensionSettingValue,
   ExtensionStringSettingDefinition,

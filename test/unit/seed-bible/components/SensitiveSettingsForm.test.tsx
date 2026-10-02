@@ -20,7 +20,11 @@ describe("SensitiveSettingsForm", () => {
   const renderForm = (saveResult = true) => {
     const setKeys = signal<string[]>([]);
     const onSave = vi.fn(
-      async (_proxyId: string, values: Record<string, string>) => {
+      async (
+        _proxyId: string,
+        values: Record<string, string>,
+        _options: { host?: string; visibility?: string }
+      ) => {
         if (saveResult) {
           setKeys.value = Object.keys(values).filter((key) => values[key]);
         }
@@ -49,6 +53,10 @@ describe("SensitiveSettingsForm", () => {
               },
             },
           }}
+          getDestination={() => ({
+            host: "api.example.com",
+            visibility: "private",
+          })}
           isSet={(key) => setKeys.value.includes(key)}
           onSave={onSave}
           onClear={onClear}
@@ -64,13 +72,22 @@ describe("SensitiveSettingsForm", () => {
     container.querySelector<HTMLInputElement>(
       `#sb-extension-setting-ext-1-${key}`
     )!;
+  const hostInput = () =>
+    container.querySelector<HTMLInputElement>(
+      "#sb-extension-sensitive-ext-1-exampleApi-host"
+    )!;
+  const visibilitySelect = () =>
+    container.querySelector<HTMLSelectElement>(
+      "#sb-extension-sensitive-ext-1-exampleApi-visibility"
+    )!;
 
-  const type = (key: string, text: string) => {
+  const typeInto = (element: HTMLInputElement, text: string) => {
     act(() => {
-      input(key).value = text;
-      input(key).dispatchEvent(new Event("input", { bubbles: true }));
+      element.value = text;
+      element.dispatchEvent(new Event("input", { bubbles: true }));
     });
   };
+  const type = (key: string, text: string) => typeInto(input(key), text);
 
   const button = (label: string) =>
     [...container.querySelectorAll("button")].find(
@@ -102,10 +119,11 @@ describe("SensitiveSettingsForm", () => {
     type("clientId", "client-123");
     await click("Save");
 
-    expect(onSave).toHaveBeenCalledWith("exampleApi", {
-      apiKey: "secret-key",
-      clientId: "client-123",
-    });
+    expect(onSave).toHaveBeenCalledWith(
+      "exampleApi",
+      { apiKey: "secret-key", clientId: "client-123" },
+      { host: "api.example.com", visibility: "private" }
+    );
     expect(input("apiKey").value).toBe("");
     expect(container.textContent).not.toContain("secret-key");
     expect(container.textContent).not.toContain("Not set");
@@ -133,6 +151,35 @@ describe("SensitiveSettingsForm", () => {
     await click("Save");
 
     expect(input("apiKey").value).toBe("secret-key");
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+  });
+
+  it("saves the host and visibility the viewer picked along with the values", async () => {
+    const { onSave } = renderForm();
+
+    expect(hostInput().value).toBe("api.example.com");
+    typeInto(hostInput(), "Proxy.Example.org");
+    act(() => {
+      visibilitySelect().value = "public";
+      visibilitySelect().dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    type("apiKey", "secret-key");
+    await click("Save");
+
+    expect(onSave).toHaveBeenCalledWith(
+      "exampleApi",
+      { apiKey: "secret-key" },
+      { host: "proxy.example.org", visibility: "public" }
+    );
+  });
+
+  it("won't save to a host that isn't a host name", () => {
+    renderForm();
+
+    typeInto(hostInput(), "https://proxy.example.org/v1");
+    type("apiKey", "secret-key");
+
+    expect(button("Save")!.disabled).toBe(true);
     expect(container.querySelector('[role="alert"]')).not.toBeNull();
   });
 });

@@ -384,6 +384,7 @@ export const ExtensionSensitiveProxyDefinitionSchema = z.looseObject({
     message:
       "host must be a host name with an optional port (e.g. api.example.com), with no scheme or path",
   }),
+  visibility: z.enum(["private", "public"]).optional(),
   requestMapping: z
     .record(
       z.string().refine(isSupportedSensitiveRequestProperty, {

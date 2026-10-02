@@ -311,5 +311,25 @@ describe("ExtensionMetaSchema", () => {
 
       expect(result.success).toBe(true);
     });
+
+    it("accepts a private or public visibility and rejects anything else", () => {
+      const withVisibility = (visibility: unknown) =>
+        ExtensionMetaSchema.safeParse(
+          sensitiveMeta(bothSettings, {
+            exampleApi: {
+              host: "api.example.com",
+              visibility,
+              requestMapping: {
+                "headers.authorization.bearer": "apiKey",
+                "body.client_id": "clientId",
+              },
+            },
+          })
+        ).success;
+
+      expect(withVisibility("private")).toBe(true);
+      expect(withVisibility("public")).toBe(true);
+      expect(withVisibility("everyone")).toBe(false);
+    });
   });
 });
