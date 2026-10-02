@@ -214,6 +214,18 @@ async function createState() {
   return createTestSeedBibleState();
 }
 
+const MIN_TOAST_MS = 1500;
+const FULL_TOAST_MS = 3500;
+
+/** Every toast message that reaches the screen, in the order it was shown. */
+function recordShownToasts(state: SeedBibleState) {
+  const shown: string[] = [];
+  state.app.currentToast.subscribe((toast) => {
+    if (toast) shown.push(toast.message);
+  });
+  return shown;
+}
+
 function createMockSharedSession(id: string) {
   return {
     id,
@@ -907,13 +919,11 @@ describe("createSeedBibleState", () => {
         hostConnectedUser,
         otherGuestConnectedUser,
       ];
+      const shown = recordShownToasts(state);
 
       // A real drop takes the whole list with it, our own entry included.
       session.isSynced.value = false;
       session.connectedUsers.value = [];
-      expect(state.app.currentToast.value?.message).toBe(
-        "You lost connection to the session"
-      );
 
       session.isSynced.value = true;
       session.connectedUsers.value = [
@@ -921,12 +931,13 @@ describe("createSeedBibleState", () => {
         hostConnectedUser,
         otherGuestConnectedUser,
       ];
-      expect(state.app.currentToast.value?.message).toBe(
-        "You rejoined the session"
-      );
 
       vi.advanceTimersByTime(30_000);
 
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+      ]);
       expect(originalDispose).not.toHaveBeenCalled();
       expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
     });
@@ -937,6 +948,7 @@ describe("createSeedBibleState", () => {
         state,
         "session-sync-drop"
       );
+      const shown = recordShownToasts(state);
 
       session.isSynced.value = false;
       session.connectedUsers.value = [];
@@ -947,9 +959,12 @@ describe("createSeedBibleState", () => {
 
       session.isSynced.value = true;
       session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
-      expect(state.app.currentToast.value?.message).toBe(
-        "You rejoined the session"
-      );
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+      ]);
     });
 
     it("does not show a you-disconnected toast on a remaining host device when another of the host's devices leaves", async () => {
@@ -990,25 +1005,23 @@ describe("createSeedBibleState", () => {
         state,
         "session-airplane-rejoin"
       );
+      const shown = recordShownToasts(state);
 
       session.isSynced.value = false;
       session.connectedUsers.value = [];
-      expect(state.app.currentToast.value?.message).toBe(
-        "You lost connection to the session"
-      );
 
       // Coming back rebuilds presence from scratch, so we reappear first and
       // the host lands a beat later.
       session.isSynced.value = true;
       session.connectedUsers.value = [selfConnectedUser];
-      expect(state.app.currentToast.value?.message).toBe(
-        "You rejoined the session"
-      );
-
       session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
-      expect(state.app.currentToast.value?.message).toBe(
-        "You rejoined the session"
-      );
+
+      vi.advanceTimersByTime(MIN_TOAST_MS + FULL_TOAST_MS);
+
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+      ]);
       expect(originalDispose).not.toHaveBeenCalled();
     });
 
@@ -1018,6 +1031,7 @@ describe("createSeedBibleState", () => {
         state,
         "session-resume-rejoin"
       );
+      const shown = recordShownToasts(state);
 
       // We drop while the app is in the foreground, so we are told about it.
       session.isSynced.value = false;
@@ -1034,10 +1048,12 @@ describe("createSeedBibleState", () => {
       // told we dropped, we must be told we are back.
       session.isSynced.value = true;
       session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      vi.advanceTimersByTime(MIN_TOAST_MS);
 
-      expect(state.app.currentToast.value?.message).toBe(
-        "You rejoined the session"
-      );
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+      ]);
     });
 
     it("stays silent on recovery when the drop itself was never announced", async () => {
@@ -1068,21 +1084,20 @@ describe("createSeedBibleState", () => {
         state,
         "session-rejoin-host-still-gone"
       );
+      const shown = recordShownToasts(state);
 
       session.isSynced.value = false;
       session.connectedUsers.value = [];
       session.isSynced.value = true;
       session.connectedUsers.value = [selfConnectedUser];
 
-      expect(state.app.currentToast.value?.message).toBe(
-        "You rejoined the session"
-      );
+      vi.advanceTimersByTime(5000);
 
-      vi.advanceTimersByTime(2000);
-
-      expect(state.app.currentToast.value?.message).toBe(
-        "The host disconnected from the session"
-      );
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+        "The host disconnected from the session",
+      ]);
       expect(originalDispose).not.toHaveBeenCalled();
     });
   });
@@ -1935,12 +1950,119 @@ describe("createSeedBibleState", () => {
       // bare reason string would be `===` the previous value, so the effect would
       // never re-run and the message would be silently swallowed.
       const state = await createState();
+      vi.useFakeTimers();
+      const shown = recordShownToasts(state);
 
       state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
+      state.login.sessionEnded.value = { reason: "signed_out", id: 2 };
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+
+      expect(shown).toEqual([
+        "You've been signed out. Please sign in again.",
+        "You've been signed out. Please sign in again.",
+      ]);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+  });
+
+  describe("toast queue", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("shows a lone toast for the full duration", async () => {
+      const state = await createState();
+
+      state.app.toast("Solo");
+      vi.advanceTimersByTime(FULL_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("Solo");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("shows toasts fired in the same tick one after another instead of replacing the first", async () => {
+      const state = await createState();
+
+      state.app.toast("A");
+      state.app.toast("B");
+      expect(state.app.currentToast.value?.message).toBe("A");
+
+      vi.advanceTimersByTime(MIN_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("A");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value?.message).toBe("B");
+
+      vi.advanceTimersByTime(FULL_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("B");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("keeps the current toast until its minimum time when the next one arrives early", async () => {
+      const state = await createState();
+
+      state.app.toast("A");
+      vi.advanceTimersByTime(1000);
+      state.app.toast("B");
+
+      vi.advanceTimersByTime(MIN_TOAST_MS - 1000 - 1);
+      expect(state.app.currentToast.value?.message).toBe("A");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value?.message).toBe("B");
+    });
+
+    it("dismisses the current toast as soon as the next one arrives once its minimum time has passed", async () => {
+      const state = await createState();
+
+      state.app.toast("A");
+      vi.advanceTimersByTime(2000);
+      state.app.toast("B");
+      vi.advanceTimersByTime(0);
+
+      expect(state.app.currentToast.value?.message).toBe("B");
+    });
+
+    it("shows a burst in order, each for the minimum time except the last", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      for (let i = 1; i <= 5; i++) state.app.toast(`Toast ${i}`);
+
+      vi.advanceTimersByTime(4 * MIN_TOAST_MS);
+      expect(state.app.currentToast.value?.message).toBe("Toast 5");
+
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual([
+        "Toast 1",
+        "Toast 2",
+        "Toast 3",
+        "Toast 4",
+        "Toast 5",
+      ]);
+    });
+
+    it("shows a repeated message as two separate toasts", async () => {
+      const state = await createState();
+
+      state.app.toast("Igual");
+      state.app.toast("Igual");
       const firstToastId = state.app.currentToast.value?.id;
 
-      state.login.sessionEnded.value = { reason: "signed_out", id: 2 };
+      vi.advanceTimersByTime(MIN_TOAST_MS);
 
+      expect(state.app.currentToast.value?.message).toBe("Igual");
       expect(state.app.currentToast.value?.id).not.toBe(firstToastId);
     });
   });

@@ -415,9 +415,12 @@ export interface AppState {
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<{ id: number; message: string } | null>;
   /**
-   * Shows a toast message at the bottom of the screen for 3.5s.
-   * Calling again replaces the current toast and restarts the timer
-   * (only one toast is ever visible at a time, always the most recent).
+   * Shows a toast message at the bottom of the screen for 3.5s if single and for
+   * 1.5s if there are others waiting. Calling again enqueues the toast.
+   * If a new toast arrives, the current one's remaining time is recalculated to
+   * match the 1.5s. If the time elapsed since it was shown is already beyond that
+   * threshold, the toast is dismissed immediately.
+   * (only one toast is ever visible at a time, always the oldest in the queue).
    */
   toast: (message: string) => void;
 
@@ -2264,27 +2267,52 @@ export function createSeedBibleState(
     }
   };
 
-  // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
-  // A new call overwrites the current toast and restarts the timer, so only the
-  // most recent message is ever visible. The incrementing id keys the render so
+  // App-level toast: a single popup shown at the bottom of the screen for 3.5s if single and
+  // for 1.5s if there are others waiting.
+  // A new call enqueues the message and recalculates the current toast duration,
+  // so it uses MIN_TOAST_MS based on the current toast shown time, not the new
+  // toast arrival time. The incrementing id keys the render so
   // the slide-in animation replays even for a repeated message.
   //
   // Defined here (rather than further down, where it's exposed on `state`)
   // because the host-disconnect handling below also calls it, and that
   // effect runs immediately when constructed.
-  const currentToast = signal<{ id: number; message: string } | null>(null);
+
   let toastSeq = 0;
-  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+  const toastQueue = signal<{ id: number; message: string }[]>([]);
   const toast = (message: string) => {
-    if (toastTimer !== null) {
-      clearTimeout(toastTimer);
-    }
-    currentToast.value = { id: ++toastSeq, message };
-    toastTimer = setTimeout(() => {
-      currentToast.value = null;
-      toastTimer = null;
-    }, 3500);
+    // `peek()`: toast() is called from inside effects, and a tracked read
+    // would subscribe that effect to the queue it is writing.
+    toastQueue.value = [...toastQueue.peek(), { id: ++toastSeq, message }];
   };
+
+  const MIN_TOAST_MS = 1500;
+  const FULL_TOAST_MS = 3500;
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+  let shownId: number | null = null;
+  let shownAt = 0;
+  const currentToast = computed(() => toastQueue.value[0] ?? null);
+
+  toastQueue.subscribe((queue) => {
+    if (toastTimer !== null) clearTimeout(toastTimer);
+    toastTimer = null;
+
+    const head = queue[0];
+    if (!head) {
+      shownId = null;
+      return;
+    }
+    if (head.id !== shownId) {
+      shownId = head.id;
+      shownAt = Date.now();
+    }
+
+    const duration = queue.length > 1 ? MIN_TOAST_MS : FULL_TOAST_MS;
+    const remaining = Math.max(0, duration - (Date.now() - shownAt));
+    toastTimer = setTimeout(() => {
+      toastQueue.value = toastQueue.value.slice(1);
+    }, remaining);
+  });
 
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
   // entry is removed from the global shared-sessions registry too. The
@@ -3040,7 +3068,7 @@ export function createSeedBibleState(
       os,
       login,
       gallery,
-      toast,
+      toast: toast,
     });
     showReadingPlanDetailView();
   });
@@ -3187,7 +3215,7 @@ export function createSeedBibleState(
       startSharedPage,
       resumeSharedPage,
       currentToast,
-      toast,
+      toast: toast,
       isDiscoverOpen: playlists.isDiscoverOpen,
       openDiscover: handleOpenDiscover,
       closeDiscover: handleCloseDiscover,
