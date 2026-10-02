@@ -26,7 +26,10 @@ function createFakeContext(search: string): SeedBibleState {
     modals: { openModal: vi.fn() },
     bibleData: {
       getCachedTranslationBooks: vi.fn(() => ({
-        books: [{ id: "JHN", name: "John" }],
+        books: [
+          { id: "JHN", name: "John" },
+          { id: "EXO", name: "Éxodo" },
+        ],
       })),
     },
   } as unknown as SeedBibleState;
@@ -154,16 +157,27 @@ describe("initApologistExtension discover provider", () => {
     );
   });
 
-  async function discoverTitles(
-    items: Record<string, unknown>[]
-  ): Promise<string[]> {
+  async function discoverContent(
+    items: Record<string, unknown>[],
+    options: { search?: string; book?: string } = {}
+  ) {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ results: items }), { status: 200 })
     );
-    const context = install("?apologistTeamID=42");
-    const results =
-      await findDiscoverProvider(context)!.discover(discoverContext);
-    return results.map((r) => (r.type === "content" ? r.title : r.type));
+    const context = install(options.search ?? "?apologistTeamID=42");
+    const results = await findDiscoverProvider(context)!.discover({
+      ...discoverContext,
+      book: options.book ?? discoverContext.book,
+    });
+    return results.flatMap((r) => (r.type === "content" ? [r] : []));
+  }
+
+  async function discoverTitles(
+    items: Record<string, unknown>[],
+    options?: { book?: string }
+  ): Promise<string[]> {
+    const results = await discoverContent(items, options);
+    return results.map((r) => r.title);
   }
 
   it("uses referral_url, listing_url and Name when url or title are missing", async () => {
@@ -237,6 +251,65 @@ describe("initApologistExtension discover provider", () => {
     ]);
 
     expect(titles).toEqual(["Nicodemus", "Grace", "Faith"]);
+  });
+
+  it("matches chapters of book names that start with an accented letter", async () => {
+    const titles = await discoverTitles(
+      [
+        { id: 1, title: "La pascua", url: "https://a.org/1" },
+        { id: 2, title: "Éxodo 4: Moisés vuelve", url: "https://a.org/2" },
+        {
+          id: 3,
+          title: "La zarza ardiente",
+          description: "Un estudio de Éxodo 3",
+          url: "https://a.org/3",
+        },
+      ],
+      { book: "EXO" }
+    );
+
+    expect(fetchMock.mock.calls[0]![1].body).toContain('"query":"Éxodo 3"');
+    expect(titles).toEqual(["La zarza ardiente", "La pascua"]);
+  });
+
+  it("puts a result first when its description names a range covering the chapter", async () => {
+    const titles = await discoverTitles([
+      { id: 1, title: "Grace", url: "https://a.org/1" },
+      {
+        id: 2,
+        title: "The Gospel's Opening",
+        description: "Walks through John 1-4",
+        url: "https://a.org/2",
+      },
+      {
+        id: 3,
+        title: "Later Signs",
+        description: "Walks through John 5-7",
+        url: "https://a.org/3",
+      },
+    ]);
+
+    expect(titles).toEqual(["The Gospel's Opening", "Grace", "Later Signs"]);
+  });
+
+  it("prefers a result's own author over its website, and falls back to the agent's name", async () => {
+    const results = await discoverContent(
+      [
+        {
+          id: 1,
+          title: "With Author",
+          author: "R.C. Sproul",
+          url: "https://www.ligonier.org/1",
+        },
+        { id: 2, title: "Unreadable Link", url: "not a web address" },
+      ],
+      { search: "?apologistTeamID=42&apologistName=Team%20Agent" }
+    );
+
+    expect(results.map((r) => [r.title, r.author])).toEqual([
+      ["With Author", "R.C. Sproul"],
+      ["Unreadable Link", "Team Agent"],
+    ]);
   });
 
   it("removes repeated results by id or by title", async () => {
