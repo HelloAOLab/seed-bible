@@ -175,13 +175,27 @@ describe("useScriptureMapProvider", () => {
       );
     }
 
+    let visibilityState: DocumentVisibilityState = "visible";
+
     beforeEach(() => {
       vi.useFakeTimers();
+      visibilityState = "visible";
+      // jsdom's own `visibilityState` is read-only, so stand in for it.
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => visibilityState,
+      });
     });
 
     afterEach(() => {
       vi.useRealTimers();
+      Reflect.deleteProperty(document, "visibilityState");
     });
+
+    function setVisibility(next: DocumentVisibilityState) {
+      visibilityState = next;
+      document.dispatchEvent(new Event("visibilitychange"));
+    }
 
     it("reads a saved scale factor from the profile, overriding initialScaleFactor", () => {
       const login = makeLogin({
@@ -260,6 +274,28 @@ describe("useScriptureMapProvider", () => {
       expect(login.updateProfile).toHaveBeenCalledWith({
         config: expect.objectContaining({ scriptureMapScaleFactor: 1.05 }),
       });
+    });
+
+    it("flushes a pending write when the page is hidden", () => {
+      const login = makeLogin({ profileConfig: {} });
+      const result = setupWithLogin(login, 1);
+
+      act(() => result.current.handleZoomIn());
+      setVisibility("hidden");
+
+      expect(login.updateProfile).toHaveBeenCalledWith({
+        config: expect.objectContaining({ scriptureMapScaleFactor: 1.05 }),
+      });
+    });
+
+    it("keeps waiting out the debounce when the page becomes visible", () => {
+      const login = makeLogin({ profileConfig: {} });
+      const result = setupWithLogin(login, 1);
+
+      act(() => result.current.handleZoomIn());
+      setVisibility("visible");
+
+      expect(login.updateProfile).not.toHaveBeenCalled();
     });
 
     it("writes the new scale factor to localConfig when signed out", () => {

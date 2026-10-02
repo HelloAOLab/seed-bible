@@ -504,6 +504,15 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
   }, []);
 
   useEffect(() => {
+    // Closing or reloading the tab never unmounts the map, so a zoom still
+    // inside its debounce would be lost; hiding the page sends it.
+    const flushPendingSaveOnHide = () => {
+      if (document.visibilityState === "hidden") {
+        debouncedSaveProfileConfigValue.flush();
+      }
+    };
+    document.addEventListener("visibilitychange", flushPendingSaveOnHide);
+
     const updateUserColorsUnsubscribe = bibleVizUtilsEventManager.subscribe(
       "UserColorStoreChanged",
       updateUserColors
@@ -516,6 +525,7 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
     updateUserColors();
 
     return () => {
+      document.removeEventListener("visibilitychange", flushPendingSaveOnHide);
       debouncedSaveProfileConfigValue.flush();
       updateUserColorsUnsubscribe();
       updateUserPresenceUnsubscribe();
