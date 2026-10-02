@@ -137,6 +137,7 @@ function setup() {
   const tabs = {
     tabs: signal([tab]),
     selectedTabId: signal("tab-1"),
+    leaveStaticPage: () => commitToUrl(),
   } as any;
   const discover = {
     view: signal(null),
@@ -164,13 +165,17 @@ function setup() {
   );
 
   // What TabsManager does in the real app: each navigation writes the reading
-  // state's query params (including the playlist extension's `playlist` /
-  // `playlistStep`) back into the URL.
+  // state's query params back into the URL, at the path an extension asks
+  // for when one does (a saved playlist playing at
+  // `/{lang}/playlist/{locator}/{title}/{step}`).
   const commitToUrl = () => {
-    navigation.updateQueryParams(
-      readingState.getUrlQueryParams(navigation.currentUrl.peek()),
-      false
-    );
+    const query = readingState.getUrlQueryParams(navigation.currentUrl.peek());
+    const pathOverride = readingState.getUrlPathOverride();
+    if (pathOverride) {
+      navigation.updatePathAndQueryParams(pathOverride, query, false);
+    } else {
+      navigation.updateQueryParams(query, false);
+    }
   };
   const disposeNav = readingState.onNavigate(() => commitToUrl());
   commitToUrl();
