@@ -18,6 +18,7 @@
   - Each destination can be private (only the viewer can use it) or public (anyone with its address can send requests through it, but nobody can read the values). It's always private until the viewer changes it; extensions can't choose.
   - The viewer can also send a destination's values to a different host than the extension declares. The extension keeps using its own URL, and requests go to the viewer's host with the same path.
   - The Configure window shows these settings as masked fields that only say whether a value is set. Customization default overrides skip them.
+  - Secrets for an extension that's no longer installed, or that no longer asks for them, are listed under Settings → Extensions with a Clear button, so they can still be removed from the server.
 - Give each shared playlist its own page at `/{lang}/playlist/{id}/{title}`. ([#1785](https://github.com/HelloAOLab/seed-bible/issues/1785))
   - Opening a shared playlist link shows the playlist's cover, author and description, with "Start Playlist" and "Close" buttons. Before, the link opened straight onto a chapter with no sign it was a playlist.
   - Link previews and search results now show "{playlist} by {author}", the playlist's description and its cover image.

@@ -7,6 +7,7 @@ import type { ExtensionManager } from "./ExtensionManager";
 import {
   isSupportedSensitiveRequestProperty,
   isValidSensitiveHost,
+  normalizeSensitiveHost,
   type ExtensionSensitiveProxyDefinition,
   type ExtensionSensitiveProxyVisibility,
 } from "./extensionSettingConstraints";
@@ -126,6 +127,16 @@ export interface SensitiveSaveOptions {
   visibility?: ExtensionSensitiveProxyVisibility;
 }
 
+/**
+ * Saved values nothing in the Configure window can reach any more: the
+ * extension isn't installed, or no longer declares the entry.
+ */
+export interface UnusedSensitiveProxy {
+  extensionId: string;
+  proxyId: string;
+  host: string;
+}
+
 export interface ExtensionSensitiveSettings {
   /** extensionId -> sensitive entry id -> where its values are held. Empty when signed out. */
   sensitiveProxiesByExtensionId: ReadonlySignal<Pointers>;
@@ -135,6 +146,17 @@ export interface ExtensionSensitiveSettings {
    * extension changed its `host` or `requestMapping` counts as not set.
    */
   isSensitiveValueSet: (extensionId: string, key: string) => boolean;
+  /**
+   * True when a proxy record is saved for this entry, even one that no longer
+   * counts as set because the extension changed its host or mapping since. It
+   * still holds the viewer's values until it is cleared or saved over.
+   */
+  hasStoredSensitiveValues: (extensionId: string, proxyId: string) => boolean;
+  /**
+   * Proxies whose extension isn't installed or no longer declares the entry,
+   * so the viewer can still clear them with `clearSensitiveValues`.
+   */
+  getUnusedSensitiveProxies: () => UnusedSensitiveProxy[];
   /**
    * Where this entry's requests go: the viewer's saved choice while it is
    * current, else the manifest's. Null if the extension declares no such entry.
@@ -309,6 +331,26 @@ export function createExtensionSensitiveSettings(
       : undefined;
   };
 
+  const hasStoredSensitiveValues = (
+    extensionId: string,
+    proxyId: string
+  ): boolean => pointers.value[extensionId]?.[proxyId] !== undefined;
+
+  const getUnusedSensitiveProxies = (): UnusedSensitiveProxy[] => {
+    const unused: UnusedSensitiveProxy[] = [];
+    for (const [extensionId, byProxy] of Object.entries(pointers.value)) {
+      const entry = extensions.extensions.value.find(
+        (candidate) => candidate.id === extensionId
+      );
+      for (const [proxyId, pointer] of Object.entries(byProxy)) {
+        if (!entry?.installed || !entry.extension?.meta.sensitive?.[proxyId]) {
+          unused.push({ extensionId, proxyId, host: pointer.host });
+        }
+      }
+    }
+    return unused;
+  };
+
   const getSensitiveDestination = (
     extensionId: string,
     proxyId: string
@@ -413,7 +455,7 @@ export function createExtensionSensitiveSettings(
     if (!usable || !destination) {
       return false;
     }
-    const host = (options.host ?? destination.host).trim().toLowerCase();
+    const host = normalizeSensitiveHost(options.host ?? destination.host);
     const visibility = options.visibility ?? destination.visibility;
     if (!isValidSensitiveHost(host) || !(visibility in PROXY_MARKERS)) {
       return false;
@@ -536,13 +578,15 @@ export function createExtensionSensitiveSettings(
         "This account's sensitive settings couldn't be loaded."
       );
     }
-    const host = url.host.toLowerCase();
+    const host = normalizeSensitiveHost(url.host);
     const candidates = Object.entries(getMeta(extensionId)?.sensitive ?? {})
-      .filter(
-        ([id, proxy]) =>
-          proxy.host.toLowerCase() === host ||
-          currentPointer(extensionId, id)?.host === host
-      )
+      .filter(([id, proxy]) => {
+        const chosen = currentPointer(extensionId, id)?.host;
+        return (
+          normalizeSensitiveHost(proxy.host) === host ||
+          (chosen !== undefined && normalizeSensitiveHost(chosen) === host)
+        );
+      })
       .filter(([id]) => request.proxy === undefined || id === request.proxy);
     if (candidates.length === 0) {
       throw new SensitiveSettingsError(
@@ -564,11 +608,23 @@ export function createExtensionSensitiveSettings(
         `No sensitive values are set for ${host}.`
       );
     }
-    const result = await os.proxyRequest(pointer.recordName, pointer.address, {
-      path: url.pathname + url.search,
-      method: request.method ?? "GET",
-      body: request.body,
-    });
+    // Everything past here is reported as `request_failed`, so an extension
+    // branching on `code` never meets a bare network error from the SDK, or
+    // the RangeError / TypeError `Response` throws for a status outside
+    // 200–599 or a header value it won't accept.
+    let result: Awaited<ReturnType<typeof os.proxyRequest>>;
+    try {
+      result = await os.proxyRequest(pointer.recordName, pointer.address, {
+        path: url.pathname + url.search,
+        method: request.method ?? "GET",
+        body: request.body,
+      });
+    } catch (error) {
+      throw new SensitiveSettingsError(
+        "request_failed",
+        `The request couldn't be sent: ${String(error)}`
+      );
+    }
     if (!result.success) {
       throw new SensitiveSettingsError(
         "request_failed",
@@ -576,10 +632,17 @@ export function createExtensionSensitiveSettings(
       );
     }
     const { statusCode, headers, body } = result.response;
-    return new Response(NULL_BODY_STATUSES.has(statusCode) ? null : body, {
-      status: statusCode,
-      headers,
-    });
+    try {
+      return new Response(NULL_BODY_STATUSES.has(statusCode) ? null : body, {
+        status: statusCode,
+        headers,
+      });
+    } catch (error) {
+      throw new SensitiveSettingsError(
+        "request_failed",
+        `The response couldn't be read: ${String(error)}`
+      );
+    }
   };
 
   effect(() => {
@@ -600,6 +663,8 @@ export function createExtensionSensitiveSettings(
     sensitiveProxiesByExtensionId: pointers,
     isSensitiveValueSet,
     getSensitiveDestination,
+    hasStoredSensitiveValues,
+    getUnusedSensitiveProxies,
     setSensitiveValues,
     clearSensitiveValues,
     fetchWithSensitiveValues,

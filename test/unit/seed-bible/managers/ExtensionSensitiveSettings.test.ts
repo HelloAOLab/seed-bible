@@ -595,6 +595,154 @@ describe("ExtensionSettingsManager sensitive settings", () => {
     });
   });
 
+  describe("failures that aren't the proxy's answer", () => {
+    const setUp = async () => {
+      const manager = create();
+      await flushPromises();
+      await manager.setSensitiveValues("ext-1", "exampleApi", { apiKey: "k" });
+      return manager;
+    };
+
+    it("reports a request that couldn't be sent as request_failed", async () => {
+      proxyRequestMock.mockRejectedValue(new TypeError("Failed to fetch"));
+      const manager = await setUp();
+
+      const error = await manager
+        .fetchWithSensitiveValues("ext-1", {
+          url: "https://api.example.com/v1",
+        })
+        .catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(SensitiveSettingsError);
+      expect(error).toMatchObject({ code: "request_failed" });
+    });
+
+    it("reports a status a Response can't hold as request_failed", async () => {
+      proxyRequestMock.mockResolvedValue({
+        success: true,
+        response: { statusCode: 999, headers: {}, body: "" },
+      });
+      const manager = await setUp();
+
+      await expect(
+        manager.fetchWithSensitiveValues("ext-1", {
+          url: "https://api.example.com/v1",
+        })
+      ).rejects.toMatchObject({ code: "request_failed" });
+    });
+
+    it("reports a header value a Response won't accept as request_failed", async () => {
+      proxyRequestMock.mockResolvedValue({
+        success: true,
+        response: { statusCode: 200, headers: { "x-bad": "a\nb" }, body: "" },
+      });
+      const manager = await setUp();
+
+      await expect(
+        manager.fetchWithSensitiveValues("ext-1", {
+          url: "https://api.example.com/v1",
+        })
+      ).rejects.toMatchObject({ code: "request_failed" });
+    });
+  });
+
+  // `new URL("https://api.example.com:443/").host` drops the port, so a host
+  // declared or chosen with it used to never match.
+  describe("the default https port", () => {
+    it("matches a manifest host declared with :443", async () => {
+      const meta = baseMeta();
+      meta.sensitive!.exampleApi!.host = "api.example.com:443";
+      extensionsListSignal.value = [entry(meta)];
+      const manager = create();
+      await flushPromises();
+      await manager.setSensitiveValues("ext-1", "exampleApi", { apiKey: "k" });
+
+      const response = await manager.fetchWithSensitiveValues("ext-1", {
+        url: "https://api.example.com/v1",
+      });
+
+      expect(response.status).toBe(200);
+      expect(recordProxyMock.mock.calls[0]![2]).toBe("api.example.com");
+    });
+
+    it("drops :443 from a host the viewer chose", async () => {
+      const manager = create();
+      await flushPromises();
+      await manager.setSensitiveValues(
+        "ext-1",
+        "exampleApi",
+        { apiKey: "k" },
+        { host: "proxy.example.org:443" }
+      );
+
+      expect(recordProxyMock.mock.calls[0]![2]).toBe("proxy.example.org");
+      await manager.fetchWithSensitiveValues("ext-1", {
+        url: "https://proxy.example.org:443/v1",
+      });
+      expect(proxyRequestMock).toHaveBeenCalled();
+    });
+  });
+
+  describe("values nothing uses any more", () => {
+    it("lists a proxy whose extension was uninstalled, and clears it", async () => {
+      const manager = create();
+      await flushPromises();
+      await manager.setSensitiveValues("ext-1", "exampleApi", { apiKey: "k" });
+      const address = recordProxyMock.mock.calls[0]![1];
+      expect(manager.getUnusedSensitiveProxies()).toEqual([]);
+
+      extensionsListSignal.value = [{ ...entry(baseMeta()), installed: false }];
+
+      expect(manager.getUnusedSensitiveProxies()).toEqual([
+        {
+          extensionId: "ext-1",
+          proxyId: "exampleApi",
+          host: "api.example.com",
+        },
+      ]);
+      expect(await manager.clearSensitiveValues("ext-1", "exampleApi")).toBe(
+        true
+      );
+      expect(eraseProxyMock).toHaveBeenCalledWith("user-1", address);
+      expect(manager.getUnusedSensitiveProxies()).toEqual([]);
+    });
+
+    it("lists a proxy for an entry the extension no longer declares, or an extension that's gone", async () => {
+      const manager = create();
+      await flushPromises();
+      await manager.setSensitiveValues("ext-1", "exampleApi", { apiKey: "k" });
+
+      const renamed = baseMeta();
+      renamed.sensitive = { renamedApi: renamed.sensitive!.exampleApi! };
+      extensionsListSignal.value = [entry(renamed)];
+      expect(manager.getUnusedSensitiveProxies()).toHaveLength(1);
+
+      extensionsListSignal.value = [];
+      expect(manager.getUnusedSensitiveProxies()).toEqual([
+        {
+          extensionId: "ext-1",
+          proxyId: "exampleApi",
+          host: "api.example.com",
+        },
+      ]);
+    });
+
+    it("still reports a proxy saved for an older manifest as stored, so it can be cleared", async () => {
+      const manager = create();
+      await flushPromises();
+      await manager.setSensitiveValues("ext-1", "exampleApi", { apiKey: "k" });
+
+      const moved = baseMeta();
+      moved.sensitive!.exampleApi!.host = "api2.example.com";
+      extensionsListSignal.value = [entry(moved)];
+
+      expect(manager.isSensitiveValueSet("ext-1", "apiKey")).toBe(false);
+      expect(manager.hasStoredSensitiveValues("ext-1", "exampleApi")).toBe(
+        true
+      );
+    });
+  });
+
   it("drops the previous account's pointers when the account changes", async () => {
     const manager = create();
     await flushPromises();

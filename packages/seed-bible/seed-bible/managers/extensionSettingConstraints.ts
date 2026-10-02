@@ -98,6 +98,15 @@ export function isValidSensitiveHost(host: string): boolean {
   );
 }
 
+/**
+ * The form hosts are compared in. Drops `:443`, because the URL parser drops
+ * the default `https:` port too: `new URL("https://a.com:443/").host` is
+ * `a.com`, so a host declared with it would otherwise never match a request.
+ */
+export function normalizeSensitiveHost(host: string): string {
+  return host.trim().toLowerCase().replace(/:443$/, "");
+}
+
 /** True when the setting's value is held by a proxy rather than stored as a readable value. */
 export function isSensitiveSetting(
   definition: ExtensionSettingDefinition | undefined
