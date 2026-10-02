@@ -33,6 +33,8 @@ import {
   createReadingPlansManager,
   draftReadingCount,
   sessionsFromDraft,
+  formatReadingPlanId,
+  parseReadingPlanId,
   buildReadingPlanShareUrl,
   getReadingPlanLocator,
   type Cadence,
@@ -43,7 +45,8 @@ import {
   type CalendarReadingDay,
   type CalendarSkipRange,
 } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 import {
   addCivilDays,
   civilDateInZone,
@@ -1147,6 +1150,31 @@ describe("estimateReadingMinutes", () => {
 
   it("never returns less than a minute, even for no readings", () => {
     expect(estimateReadingMinutes([])).toBe(1);
+  });
+});
+
+describe("parseReadingPlanId", () => {
+  it("round-trips with formatReadingPlanId, including an address with its own underscore", () => {
+    const planId = formatReadingPlanId("user-123", "plan_abc-def");
+    expect(parseReadingPlanId(planId)).toEqual({
+      recordName: "user-123",
+      address: "plan_abc-def",
+    });
+  });
+
+  it("splits on the first underscore only, preserving the address's own underscore", () => {
+    expect(parseReadingPlanId("rp_user-123_plan_abc-def")).toEqual({
+      recordName: "user-123",
+      address: "plan_abc-def",
+    });
+  });
+
+  it("rejects a string missing the rp_ prefix", () => {
+    expect(parseReadingPlanId("user-123_plan_abc-def")).toBeNull();
+  });
+
+  it("rejects rp_ followed by no further underscore", () => {
+    expect(parseReadingPlanId("rp_onlyrecordname")).toBeNull();
   });
 });
 
@@ -2289,6 +2317,215 @@ describe("createReadingPlansManager", () => {
     const saved = recordDataMock.mock.calls.at(-1)![2] as ReadingPlanProgress;
     expect(saved.percentComplete).toBeCloseTo(1 / 3, 10);
     expect(saved.totalReadings).toBe(3);
+  });
+
+  describe("getUserReadingPlanProgresses", () => {
+    const mockPerUserProgresses = () => {
+      // `os.listAllDataByMarker` (see `makeManager`) pages until an empty
+      // page comes back, so a lastAddress on the call means "give me the
+      // next page" — returning empty there is what ends the loop after one.
+      listDataByMarkerMock.mockImplementation(
+        async (recordName: unknown, _marker: unknown, lastAddress?: string) => {
+          if (lastAddress) {
+            return { success: true, items: [] };
+          }
+          if (recordName === "user-1") {
+            return {
+              success: true,
+              items: [
+                {
+                  address: "p1",
+                  data: makeProgress({ id: "user-1-progress" }),
+                },
+              ],
+            };
+          }
+          if (recordName === "friend-user") {
+            return {
+              success: true,
+              items: [
+                {
+                  address: "p2",
+                  data: makeProgress({
+                    id: "friend-progress",
+                    recordName: "friend-user",
+                  }),
+                },
+              ],
+            };
+          }
+          return { success: true, items: [] };
+        }
+      );
+    };
+
+    it("reads a friend's progress again when you come back to the app more than 30 seconds later", async () => {
+      const START = new Date("2026-10-01T10:00:00Z").getTime();
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(START);
+      const page = stubPageVisibility();
+      let stopWatching: (() => void) | undefined;
+      try {
+        mockPerUserProgresses();
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserReadingPlanProgresses("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value.map((p) => p.id)).toEqual(["friend-progress"]);
+
+        listDataByMarkerMock.mockImplementation(
+          async (
+            recordName: unknown,
+            _marker: unknown,
+            lastAddress?: string
+          ) =>
+            recordName === "friend-user" && !lastAddress
+              ? {
+                  success: true,
+                  items: [
+                    {
+                      address: "p3",
+                      data: makeProgress({
+                        id: "new-friend-progress",
+                        recordName: "friend-user",
+                      }),
+                    },
+                  ],
+                }
+              : { success: true, items: [] }
+        );
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["new-friend-progress"])
+        );
+      } finally {
+        stopWatching?.();
+        page.restore();
+        vi.useRealTimers();
+      }
+    });
+
+    it("reads progress from the named account's record", async () => {
+      mockPerUserProgresses();
+      const manager = makeManager("user-1");
+      await flush();
+
+      const view = manager.getUserReadingPlanProgresses("friend-user");
+      await flush();
+
+      expect(listDataByMarkerMock).toHaveBeenCalledWith(
+        "friend-user",
+        "publicRead:readingPlanProgress",
+        undefined
+      );
+      expect(view.value.map((p) => p.id)).toEqual(["friend-progress"]);
+    });
+
+    it("returns the same signal for repeated calls", async () => {
+      mockPerUserProgresses();
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.getUserReadingPlanProgresses("friend-user")).toBe(
+        manager.getUserReadingPlanProgresses("friend-user")
+      );
+    });
+
+    it("keeps different accounts' progress separate", async () => {
+      mockPerUserProgresses();
+      const manager = makeManager("user-1");
+      await flush();
+
+      const mine = manager.getUserReadingPlanProgresses("user-1");
+      const theirs = manager.getUserReadingPlanProgresses("friend-user");
+      await flush();
+
+      expect(mine.value.map((p) => p.id)).toEqual(["user-1-progress"]);
+      expect(theirs.value.map((p) => p.id)).toEqual(["friend-progress"]);
+    });
+
+    it("settles to an empty list without throwing when the account's progress can't be loaded", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      listDataByMarkerMock.mockRejectedValueOnce(new Error("boom"));
+
+      const view = manager.getUserReadingPlanProgresses("broken-user");
+      await flush();
+
+      expect(view.value).toEqual([]);
+      expect(errorSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("getReadingPlanByLocator", () => {
+    it("loads the plan at the given locator", async () => {
+      const plan = makePlan({ recordName: "other-user", address: "plan-9" });
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValueOnce({ success: true, data: plan });
+
+      const view = manager.getReadingPlanByLocator("other-user", "plan-9");
+      await flush();
+
+      expect(getDataMock).toHaveBeenCalledWith("other-user", "plan-9");
+      expect(view.value?.address).toBe("plan-9");
+    });
+
+    it("returns the same signal for repeated calls to the same locator", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.getReadingPlanByLocator("other-user", "plan-9")).toBe(
+        manager.getReadingPlanByLocator("other-user", "plan-9")
+      );
+    });
+
+    it("keeps different locators' plans separate, including two addresses under the same account", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockImplementation(
+        async (recordName: string, address: string) => {
+          if (recordName === "other-user" && address === "plan-a") {
+            return {
+              success: true,
+              data: makePlan({ recordName: "other-user", address: "plan-a" }),
+            };
+          }
+          if (recordName === "other-user" && address === "plan-b") {
+            return {
+              success: true,
+              data: makePlan({ recordName: "other-user", address: "plan-b" }),
+            };
+          }
+          return { success: false, errorCode: "data_not_found" };
+        }
+      );
+
+      const a = manager.getReadingPlanByLocator("other-user", "plan-a");
+      const b = manager.getReadingPlanByLocator("other-user", "plan-b");
+      await flush();
+
+      expect(a.value?.address).toBe("plan-a");
+      expect(b.value?.address).toBe("plan-b");
+    });
+
+    it("settles to null without throwing when the plan can't be loaded", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "data_not_found",
+      });
+
+      const view = manager.getReadingPlanByLocator("gone-user", "gone-plan");
+      await flush();
+
+      expect(view.value).toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+    });
   });
 
   describe("getReadingPlanShareUrl", () => {

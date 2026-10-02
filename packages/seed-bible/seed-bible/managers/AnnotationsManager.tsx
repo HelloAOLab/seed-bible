@@ -4,6 +4,7 @@ import {
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
@@ -12,6 +13,10 @@ import type { CasualOSManager } from "./OsManager";
 import type { DiscoverManager, DiscoverView } from "./DiscoverManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import type { TranslationBookChapter } from "./FreeUseBibleAPI";
+import {
+  createFriendContentFreshness,
+  isFriendContentStale,
+} from "./friendContentFreshness";
 import {
   createRecordSyncManager,
   type CreateRecordSyncManagerOptions,
@@ -71,6 +76,21 @@ export interface AnnotationsManager {
    * by `saveEditingAnnotation`/`deleteAnnotationAndRefresh` below.
    */
   getAnnotationsForChapter: (
+    bookId: string,
+    chapterNumber: number
+  ) => ReadonlySignal<Annotation[]>;
+
+  /**
+   * Reactive view of one chapter's annotations for a named account.
+   *
+   * Unlike {@link AnnotationsManager.getAnnotationsForChapter}, this view is
+   * pinned to the account passed in and does not follow the signed-in user —
+   * it's how a friend's annotations are read. Annotations are stored
+   * world-readable (`publicRead:annotations/{bookId}/{chapterNumber}`), so
+   * this works for any account and does not require being signed in.
+   */
+  getUserAnnotationsForChapter: (
+    userId: string,
     bookId: string,
     chapterNumber: number
   ) => ReadonlySignal<Annotation[]>;
@@ -434,7 +454,7 @@ export function getAnnotationMarker(
   return `publicRead:${group}/${bookId}/${chapterNumber}`;
 }
 
-function sortAnnotations(annotations: Annotation[]): Annotation[] {
+export function sortAnnotations(annotations: Annotation[]): Annotation[] {
   return [...annotations].sort((a, b) => {
     if (typeof a.order === "number") {
       if (typeof b.order === "number") {
@@ -449,6 +469,30 @@ function sortAnnotations(annotations: Annotation[]): Annotation[] {
 
     return a.id < b.id ? -1 : 1;
   });
+}
+
+/**
+ * A chapter's notes as the signed-in user sees them: their own plus each
+ * friend's. Reading this during a render subscribes to every one of those
+ * lists, so the caller updates as friends' notes arrive.
+ */
+export function visibleChapterAnnotations(
+  annotations: Pick<
+    AnnotationsManager,
+    "getAnnotationsForChapter" | "getUserAnnotationsForChapter"
+  >,
+  friendIds: readonly string[],
+  bookId: string,
+  chapterNumber: number
+): Annotation[] {
+  return sortAnnotations([
+    ...annotations.getAnnotationsForChapter(bookId, chapterNumber).value,
+    ...friendIds.flatMap(
+      (userId) =>
+        annotations.getUserAnnotationsForChapter(userId, bookId, chapterNumber)
+          .value
+    ),
+  ]);
 }
 
 type AnnotationsEntry = {
@@ -476,6 +520,19 @@ type AnnotationsEntry = {
   loadFailed: boolean;
   /** In-flight load, shared by concurrent readers. */
   load: Promise<void> | null;
+  /**
+   * True when this entry was requested for a named account (via
+   * `getUserAnnotationsForChapter`) rather than for whoever is signed in.
+   *
+   * The account-switch sweep drops every entry that isn't the signed-in
+   * account's, which is what stops one account's annotations being served to
+   * the next. Entries for a friend are never "the signed-in
+   * account's", so without this flag every sign-in would evict them and
+   * force a re-read.
+   */
+  explicit: boolean;
+  /** When the last successful read finished, for re-reading a friend's notes. */
+  loadedAtMs: number | null;
 };
 
 function entryKey(recordId: string, address: string): string {
@@ -893,13 +950,18 @@ export function createAnnotationsManager(
 
   // Cached annotations, keyed by account + chapter address.
   const entries = new Map<string, AnnotationsEntry>();
+  const friendFreshness = createFriendContentFreshness();
   // Identity-stable per-chapter views handed to callers, keyed by address.
   const views = new Map<string, ReadonlySignal<Annotation[]>>();
+  // Per-account views handed to callers that named an account explicitly,
+  // keyed by account + address. Same no-pruning rule as `views`.
+  const userViews = new Map<string, ReadonlySignal<Annotation[]>>();
 
   const getOrCreateEntry = (
     recordId: string,
     bookId: string,
-    chapterNumber: number
+    chapterNumber: number,
+    explicit = false
   ): AnnotationsEntry => {
     const key = entryKey(
       recordId,
@@ -907,16 +969,26 @@ export function createAnnotationsManager(
     );
     let entry = entries.get(key);
     if (!entry) {
-      entry = {
+      const created: AnnotationsEntry = {
         recordId,
         bookId,
         chapterNumber,
-        data: signal<Annotation[]>([]),
+        data: friendFreshness.trackedSignal<Annotation[]>([], () =>
+          refreshFriendEntry(created)
+        ),
         settled: false,
         loadFailed: false,
         load: null,
+        explicit,
+        loadedAtMs: null,
       };
+      entry = created;
       entries.set(key, entry);
+    } else if (explicit) {
+      // The signed-in user can also be read through the explicit path (a
+      // caller passing their own id). Once that happens the entry has to
+      // survive the sweep like any other explicit entry.
+      entry.explicit = true;
     }
     return entry;
   };
@@ -931,8 +1003,14 @@ export function createAnnotationsManager(
       // A record override always reads straight from that record — it has no
       // local mirror to fall back on. Otherwise `loadChapterForOwner` covers
       // both the signed-in account and the signed-out local bucket.
-      const loaded = recordOverride
-        ? await listFromServer(recordOverride, bookId, chapterNumber)
+      // Another account's annotations (a friend's) are read
+      // straight from the server too: the local mirror only holds the
+      // signed-in account's own rows for the sync engine.
+      const isOtherAccount =
+        entry.explicit && recordId !== untracked(effectiveRecordId);
+      const serverOnly = recordOverride ?? (isOtherAccount ? recordId : null);
+      const loaded = serverOnly
+        ? await listFromServer(serverOnly, bookId, chapterNumber)
         : await loadChapterForOwner(recordId, bookId, chapterNumber);
       // A mutation that settled the entry while this request was in the air
       // holds newer annotations than this response does.
@@ -940,6 +1018,7 @@ export function createAnnotationsManager(
         return;
       }
       entry.data.value = loaded;
+      entry.loadedAtMs = Date.now();
       entry.loadFailed = false;
       // Only authoritative once we know the list is complete: either the server
       // answered, or the mirror has a record of having listed this chapter
@@ -947,6 +1026,7 @@ export function createAnnotationsManager(
       // as "you have no annotations" for the rest of the page's life.
       entry.settled =
         loaded.length > 0 ||
+        isOtherAccount ||
         (!recordOverride &&
           (await hasLocalChapter(recordId, bookId, chapterNumber)));
       entry.loadFailed = !entry.settled;
@@ -956,6 +1036,27 @@ export function createAnnotationsManager(
       // empty chapter — `loadFailed` is what stops it retrying on every read.
       entry.loadFailed = true;
     }
+  };
+
+  /**
+   * Reads a friend's chapter again when it's back on screen or the app
+   * regains focus (see `createFriendContentFreshness`), keeping the notes
+   * already shown until the new list arrives. The signed-in user's own notes
+   * are kept current by the sync engine instead.
+   */
+  const refreshFriendEntry = (entry: AnnotationsEntry): void => {
+    const isOtherAccount =
+      entry.explicit && entry.recordId !== untracked(effectiveRecordId);
+    if (
+      !isOtherAccount ||
+      entry.load ||
+      !(entry.loadFailed || isFriendContentStale(entry.loadedAtMs))
+    ) {
+      return;
+    }
+    entry.settled = false;
+    entry.loadFailed = false;
+    void ensureLoaded(entry.recordId, entry.bookId, entry.chapterNumber, entry);
   };
 
   const ensureLoaded = (
@@ -1005,6 +1106,30 @@ export function createAnnotationsManager(
     return view;
   };
 
+  // Views pinned to a named account. Kept separate from `views` rather than
+  // re-keying it: those views deliberately read `login.userId` so they track
+  // the signed-in account, and these deliberately don't.
+  const getOrCreateUserView = (
+    userId: string,
+    bookId: string,
+    chapterNumber: number
+  ): ReadonlySignal<Annotation[]> => {
+    const key = entryKey(
+      userId,
+      annotationsCacheAddress(bookId, chapterNumber)
+    );
+    let view = userViews.get(key);
+    if (!view) {
+      view = computed(() => {
+        const entry = getOrCreateEntry(userId, bookId, chapterNumber, true);
+        void ensureLoaded(userId, bookId, chapterNumber, entry);
+        return entry.data.value;
+      });
+      userViews.set(key, view);
+    }
+    return view;
+  };
+
   // Drops every cached entry that no longer belongs to the current record,
   // so signing back in re-reads from the server instead of serving a stale
   // entry left over from a previous session as that same account. A no-op
@@ -1018,7 +1143,10 @@ export function createAnnotationsManager(
     }
     cachedRecordId = recordId;
     for (const [key, entry] of entries) {
-      if (entry.recordId !== recordId) {
+      // Entries for an explicitly named account (a friend's
+      // annotations) aren't the signed-in account's data and were never at
+      // risk of leaking across a switch, so the sweep leaves them alone.
+      if (entry.recordId !== recordId && !entry.explicit) {
         entries.delete(key);
       }
     }
@@ -1028,6 +1156,25 @@ export function createAnnotationsManager(
     bookId: string,
     chapterNumber: number
   ): ReadonlySignal<Annotation[]> => getOrCreateView(bookId, chapterNumber);
+
+  const getUserAnnotationsForChapter = (
+    userId: string,
+    bookId: string,
+    chapterNumber: number
+  ): ReadonlySignal<Annotation[]> => {
+    const view = getOrCreateUserView(userId, bookId, chapterNumber);
+
+    // Kick the load eagerly, same as `getAnnotationsForChapter`, so callers
+    // that read the view later still see it arrive as soon as possible.
+    void ensureLoaded(
+      userId,
+      bookId,
+      chapterNumber,
+      getOrCreateEntry(userId, bookId, chapterNumber, true)
+    );
+
+    return view;
+  };
 
   const upsertIntoCache = (annotation: Annotation, recordId?: string): void => {
     const cacheRecordId = recordId ?? effectiveRecordId();
@@ -1297,6 +1444,7 @@ export function createAnnotationsManager(
     listAnnotationsForChapter,
     listAllAnnotations,
     getAnnotationsForChapter,
+    getUserAnnotationsForChapter,
     editingAnnotation,
     createNewAnnotation,
     editAnnotation,

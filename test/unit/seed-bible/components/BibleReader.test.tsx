@@ -369,6 +369,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    friends: { friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
       pendingCountForChapter: vi.fn(() => 0),
@@ -2492,6 +2493,7 @@ describe("BibleReader", () => {
         isMobile: signal(isMobile),
         isCompactReader: signal(isMobile),
       },
+      friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
       },
@@ -2695,6 +2697,53 @@ describe("BibleReader", () => {
     expect(state.app.openDiscover).not.toHaveBeenCalled();
   });
 
+  it("offers the mobile header notes button for a friend's note when the user has none, and jumps to it", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    (state.annotations.getAnnotationsForChapter as any) = vi.fn(() =>
+      signal([])
+    );
+    (state as any).friends = { friendIds: signal(["friend-1"]) };
+    (state.annotations as any).getUserAnnotationsForChapter = vi.fn(() =>
+      signal([
+        {
+          id: "friend-note",
+          bookId: "GEN",
+          chapterNumber: 1,
+          verseNumber: 3,
+          data: { type: "comment", html: "<p>Note</p>", userId: "friend-1" },
+        },
+      ])
+    );
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const notesButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-notes"
+    ) as HTMLElement;
+    expect(notesButton).not.toBeNull();
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+    });
+  });
+
   it("falls back to opening the full Discover pane when no annotation targets a specific verse", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
@@ -2849,6 +2898,7 @@ describe("BibleReader", () => {
           isMobile: signal(isMobile),
           isCompactReader: signal(isMobile),
         },
+        friends: { friendIds: signal([]) },
         annotations: {
           getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
         },
@@ -2887,6 +2937,21 @@ describe("BibleReader", () => {
       expect(markers).toHaveLength(1);
       expect((markers[0] as HTMLElement).style.top).toBe("40px");
       expect(markers[0]?.textContent).toBe("sticky_note_2");
+    });
+
+    it("marks a verse that only a friend has a note on", () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      const state = annotatedState([]);
+      (state as any).friends = { friendIds: signal(["friend-1"]) };
+      (state.annotations as any).getUserAnnotationsForChapter = vi.fn(() =>
+        signal([note({ id: "friend-note" })])
+      );
+      renderReader(state, fixture);
+
+      const markers = container.querySelectorAll(".sb-note-gutter-marker");
+      expect(markers).toHaveLength(1);
+      expect((markers[0] as HTMLElement).style.top).toBe("40px");
     });
 
     // A verse of poetry is a block of its own lines, so its element rect is
@@ -4077,6 +4142,7 @@ describe("BibleReader", () => {
       saves: {
         isLocationSaved: vi.fn(() => false),
       },
+      friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
       },

@@ -69,6 +69,7 @@ describe("HighlightsManager", () => {
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),
       getUserProfile: vi.fn().mockResolvedValue(null),
+      getPublicProfile: vi.fn().mockResolvedValue(null),
       uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
       userInfo: signal({ id: "user-1", email: "test@example.com" }),
       cancelLogin: vi.fn().mockResolvedValue(undefined),
@@ -1150,6 +1151,122 @@ describe("HighlightsManager", () => {
         },
         { marker: "publicRead:highlights/BSB" }
       );
+    });
+  });
+
+  describe("getUserChapterHighlights", () => {
+    const mockPerUserHighlights = () => {
+      getDataMock.mockImplementation(async (recordName: unknown) => {
+        if (recordName === "user-1") {
+          return {
+            success: true,
+            data: { highlights: [{ colorId: "user-1-color", verse: 1 }] },
+          };
+        }
+        if (recordName === "friend-user") {
+          return {
+            success: true,
+            data: { highlights: [{ colorId: "friend-color", verse: 3 }] },
+          };
+        }
+        return {
+          success: false,
+          errorCode: "data_not_found",
+          errorMessage: "Data not found",
+        };
+      });
+    };
+
+    it("reads highlights from the named account's record", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      const view = manager.getUserChapterHighlights(
+        "friend-user",
+        "BSB",
+        "GEN",
+        1
+      );
+      await flushPromises();
+
+      expect(getDataMock).toHaveBeenCalledWith(
+        "friend-user",
+        "highlights:BSB/GEN/1"
+      );
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "friend-color", verse: 3 }],
+      });
+    });
+
+    it("stays pinned to that account when the signed-in account changes", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      const view = manager.getUserChapterHighlights(
+        "friend-user",
+        "BSB",
+        "GEN",
+        1
+      );
+      await flushPromises();
+
+      login.userId.value = "user-2";
+      await flushPromises();
+
+      // Unlike `getChapterHighlights`, this view does not follow the signed-in
+      // account — it still shows the friend's highlights.
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "friend-color", verse: 3 }],
+      });
+    });
+
+    it("keeps a friend's cached highlights across a sign-in", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1);
+      await flushPromises();
+      const callsAfterFirstLoad = getDataMock.mock.calls.length;
+
+      // The account-switch sweep must not evict explicitly-requested entries,
+      // or every sign-in would force a re-read of every friend.
+      login.userId.value = "user-2";
+      await flushPromises();
+
+      manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1);
+      await flushPromises();
+
+      expect(getDataMock.mock.calls.length).toBe(callsAfterFirstLoad);
+    });
+
+    it("returns the same signal for repeated calls", () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      expect(
+        manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1)
+      ).toBe(manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1));
+    });
+
+    it("keeps different accounts' highlights separate for the same chapter", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      const mine = manager.getUserChapterHighlights("user-1", "BSB", "GEN", 1);
+      const theirs = manager.getUserChapterHighlights(
+        "friend-user",
+        "BSB",
+        "GEN",
+        1
+      );
+      await flushPromises();
+
+      expect(mine.value).toEqual({
+        highlights: [{ colorId: "user-1-color", verse: 1 }],
+      });
+      expect(theirs.value).toEqual({
+        highlights: [{ colorId: "friend-color", verse: 3 }],
+      });
     });
   });
 

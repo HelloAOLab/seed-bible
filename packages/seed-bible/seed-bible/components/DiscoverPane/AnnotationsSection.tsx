@@ -8,11 +8,13 @@ import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
 import type { DiscoverManager } from "../../managers/DiscoverManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { LoginManager } from "../../managers/LoginManager";
+import type { FriendsManager } from "../../managers/FriendsManager";
 import {
   annotationVerseNumbers,
   annotationListHasOtherAuthors,
   formatAnnotationVerseNumbers,
   groupAnnotationsByVerseRange,
+  visibleChapterAnnotations,
   type Annotation,
   type AnnotationGroup,
   type AnnotationsManager,
@@ -325,95 +327,103 @@ function AnnotationGroupSection(props: {
       </button>
       {expanded.value ? (
         <ul className="sb-annotation-group-list">
-          {group.annotations.map((annotation) => (
-            <li
-              key={annotation.id}
-              className="sb-annotation-item"
-              dir="auto"
-              onClick={async () => {
-                if (!annotation.verseNumber) {
-                  return;
-                }
-                const tab = tabs.tabs.value.find(
-                  (t) => t.id === tabs.selectedTabId.value
-                );
-                if (!tab) {
-                  return;
-                }
+          {group.annotations.map((annotation) => {
+            // Friends' annotations can appear in this same list; only
+            // the author may edit or delete their own annotation.
+            const isOwnAnnotation =
+              annotation.data.userId === login.userId.value;
+            return (
+              <li
+                key={annotation.id}
+                className="sb-annotation-item"
+                dir="auto"
+                onClick={async () => {
+                  if (!annotation.verseNumber) {
+                    return;
+                  }
+                  const tab = tabs.tabs.value.find(
+                    (t) => t.id === tabs.selectedTabId.value
+                  );
+                  if (!tab) {
+                    return;
+                  }
 
-                panes.closeFullscreenPanes();
-                // `translationId` is optional on the item; fall back to the tab's current
-                // translation. `.peek()` avoids re-navigating when the tab changes it.
-                await tab.readingState.selectTranslationAndChapter(
-                  tab.readingState.translationId.peek(),
-                  annotation.bookId,
-                  annotation.chapterNumber,
-                  { scrollToVerse: annotation.verseNumber }
-                );
+                  panes.closeFullscreenPanes();
+                  // `translationId` is optional on the item; fall back to the tab's current
+                  // translation. `.peek()` avoids re-navigating when the tab changes it.
+                  await tab.readingState.selectTranslationAndChapter(
+                    tab.readingState.translationId.peek(),
+                    annotation.bookId,
+                    annotation.chapterNumber,
+                    { scrollToVerse: annotation.verseNumber }
+                  );
 
-                emphasizeVerses(
-                  tab.readingState,
-                  {
-                    book: annotation.bookId as BookId,
-                    chapter: annotation.chapterNumber,
-                    verse: annotation.verseNumber,
-                    endVerse: annotation.endVerseNumber ?? undefined,
-                  },
-                  annotationVerseNumbers(annotation)
-                );
-              }}
-            >
-              <div className="sb-annotation-item-main">
-                <AnnotationPreview
-                  html={annotation.data.html}
-                  onReferenceClick={onReferenceClick}
-                />
-                <AnnotationCommentMeta
-                  annotation={annotation}
-                  login={login}
-                  t={t}
-                  language={language}
-                  otherPeoplePresent={otherPeoplePresent}
-                />
-              </div>
-              <ContextMenuWithButton
-                buttonClassName="sb-annotation-item-menu"
-                aria-label={t("annotation-options", {
-                  defaultValue: "Annotation options",
-                })}
-                onClick={(e) => e.stopPropagation()}
+                  emphasizeVerses(
+                    tab.readingState,
+                    {
+                      book: annotation.bookId as BookId,
+                      chapter: annotation.chapterNumber,
+                      verse: annotation.verseNumber,
+                      endVerse: annotation.endVerseNumber ?? undefined,
+                    },
+                    annotationVerseNumbers(annotation)
+                  );
+                }}
               >
-                <ContextMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    annotations.editAnnotation(annotation);
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    edit
-                  </MaterialIcon>
-                  {t("edit-annotation", { defaultValue: "Edit" })}
-                </ContextMenuItem>
-                <ContextMenuItem
-                  className="sb-context-menu-item--danger"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openDeleteAnnotationConfirm(
-                      modals,
-                      annotations,
-                      annotation,
-                      toast
-                    );
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    delete
-                  </MaterialIcon>
-                  {t("delete-annotation", { defaultValue: "Delete" })}
-                </ContextMenuItem>
-              </ContextMenuWithButton>
-            </li>
-          ))}
+                <div className="sb-annotation-item-main">
+                  <AnnotationPreview
+                    html={annotation.data.html}
+                    onReferenceClick={onReferenceClick}
+                  />
+                  <AnnotationCommentMeta
+                    annotation={annotation}
+                    login={login}
+                    t={t}
+                    language={language}
+                    otherPeoplePresent={otherPeoplePresent}
+                  />
+                </div>
+                {isOwnAnnotation ? (
+                  <ContextMenuWithButton
+                    buttonClassName="sb-annotation-item-menu"
+                    aria-label={t("annotation-options", {
+                      defaultValue: "Annotation options",
+                    })}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ContextMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        annotations.editAnnotation(annotation);
+                      }}
+                    >
+                      <MaterialIcon className="sb-context-menu-item-icon">
+                        edit
+                      </MaterialIcon>
+                      {t("edit-annotation", { defaultValue: "Edit" })}
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      className="sb-context-menu-item--danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDeleteAnnotationConfirm(
+                          modals,
+                          annotations,
+                          annotation,
+                          toast
+                        );
+                      }}
+                    >
+                      <MaterialIcon className="sb-context-menu-item-icon">
+                        delete
+                      </MaterialIcon>
+                      {t("delete-annotation", { defaultValue: "Delete" })}
+                    </ContextMenuItem>
+                  </ContextMenuWithButton>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       ) : null}
     </div>
@@ -426,6 +436,7 @@ export function AnnotationsSection(props: {
   modals: ModalManager;
   toast: SeedBibleState["app"]["toast"];
   login: LoginManager;
+  friends: FriendsManager;
   tabs: TabsManager;
   discover: DiscoverManager;
   panes: PanesManager;
@@ -437,6 +448,7 @@ export function AnnotationsSection(props: {
     modals,
     toast,
     login,
+    friends,
     tabs,
     discover,
     panes,
@@ -482,10 +494,12 @@ export function AnnotationsSection(props: {
       }
       discover.scrollToVerse.value = null; // consume once, immediately
 
-      const chapterAnnotations = annotations.getAnnotationsForChapter(
+      const chapterAnnotations = visibleChapterAnnotations(
+        annotations,
+        friends.friendIds.value,
         target.bookId,
         target.chapterNumber
-      ).value;
+      );
       const group = groupAnnotationsByVerseRange(chapterAnnotations).find((g) =>
         g.annotations.some((a) =>
           annotationVerseNumbers(a).includes(target.verseNumber)
@@ -516,7 +530,7 @@ export function AnnotationsSection(props: {
       window.clearTimeout(highlightTimer);
       dispose();
     };
-  }, [tab, discover, annotations]);
+  }, [tab, discover, annotations, friends]);
 
   if (!tab) {
     return (
@@ -538,10 +552,12 @@ export function AnnotationsSection(props: {
     );
   }
 
-  const chapterAnnotations = annotations.getAnnotationsForChapter(
+  const chapterAnnotations = visibleChapterAnnotations(
+    annotations,
+    friends.friendIds.value,
     bookId,
     chapterNumber
-  ).value;
+  );
   const groups = groupAnnotationsByVerseRange(chapterAnnotations);
   const otherPeoplePresent = annotationListHasOtherAuthors(
     chapterAnnotations,

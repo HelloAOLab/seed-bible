@@ -14,6 +14,7 @@ import {
   parseSessionKey,
   generateV1ConnectionToken,
 } from "@casual-simulation/aux-common";
+import type { SharedMarkerPermission } from "@casual-simulation/aux-common";
 import { sha256 } from "hash.js";
 import { first, firstValueFrom, timeout } from "rxjs";
 import { guardRecordsClient } from "./SessionGuard";
@@ -95,6 +96,36 @@ export async function awaitDocumentSync(
   } catch (error) {
     doc.unsubscribe();
     throw error;
+  }
+}
+
+/**
+ * Collects every page of a listing that pages by number from 0 and reports a
+ * total, as the shared-permission listings do (unlike `listData`, which pages
+ * by address). Throws when a page fails, matching `listAllData`.
+ */
+async function listAllPages<T>(
+  label: string,
+  fetchPage: (
+    page: number
+  ) => Promise<
+    | { success: true; items: T[]; totalCount: number }
+    | { success: false; errorCode: string }
+  >
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let page = 0; ; page++) {
+    const result = await fetchPage(page);
+    if (!result.success) {
+      console.error(`Error listing ${label}:`, result);
+      throw new Error(`Error listing ${label}: ${result.errorCode}`);
+    }
+    all.push(...result.items);
+    // Stopping on an empty page too means a total that shrinks while we page
+    // (someone revoking mid-listing) can't keep us asking for pages forever.
+    if (result.items.length === 0 || all.length >= result.totalCount) {
+      return all;
+    }
   }
 }
 
@@ -477,6 +508,91 @@ export function CasualOSManager(
       listAllDataInFlight.set(recordName, sweep);
       return sweep;
     },
+
+    /**
+     * Asks another user to share `permission` both ways: once they accept, each
+     * of them holds it in the other's record.
+     *
+     * A target is required. An untargeted request can be accepted by whoever
+     * reaches it first, so it would hand the grant to anyone holding its ID.
+     */
+    requestSharedPermission: (
+      recordName: string,
+      permission: SharedMarkerPermission,
+      target: { userId: string } | { email: string },
+      options?: { expireTimeMs?: number }
+    ) =>
+      client.requestSharedPermission({
+        recordName,
+        permission,
+        targetUserId: "userId" in target ? target.userId : undefined,
+        targetUserEmail: "email" in target ? target.email : undefined,
+        expireTimeMs: options?.expireTimeMs,
+      }),
+
+    /**
+     * Accepts a request sent to the signed-in user, granting the requester the
+     * permission in `recordName` (the accepter's own record).
+     *
+     * Accepting a request that is already accepted reports success without
+     * granting anything, so success alone doesn't prove a new share exists.
+     */
+    acceptSharedPermission: (sharedPermissionId: string, recordName: string) =>
+      client.acceptSharedPermission({ sharedPermissionId, recordName }),
+
+    /** Declines a request sent to the signed-in user. */
+    rejectSharedPermission: (sharedPermissionId: string) =>
+      client.rejectSharedPermission({ sharedPermissionId }),
+
+    /**
+     * Ends a share from either side, removing the grant from both records. The
+     * requester can also use it to withdraw a request nobody has accepted yet.
+     */
+    revokeSharedPermission: (sharedPermissionId: string) =>
+      client.revokeSharedPermission({ sharedPermissionId }),
+
+    /** Every accepted share the signed-in user is part of, as the other party's record. */
+    listAllSharedRecords: () =>
+      listAllPages("shared records", async (page) => {
+        const result = await client.listSharedRecords({ page });
+        return result.success
+          ? {
+              success: true,
+              items: result.sharedRecords,
+              totalCount: result.totalCount,
+            }
+          : result;
+      }),
+
+    /** Every request the signed-in user has sent, in any status. */
+    listAllSentSharedPermissions: () =>
+      listAllPages("sent shared permissions", async (page) => {
+        const result = await client.listSentSharedPermissions({ page });
+        return result.success
+          ? {
+              success: true,
+              items: result.sharedPermissions,
+              totalCount: result.totalCount,
+            }
+          : result;
+      }),
+
+    /**
+     * Every request ever sent to the signed-in user, in any status. Callers
+     * wanting what still needs an answer must keep `status: "requested"` and
+     * drop expired ones themselves; an expired request keeps that status.
+     */
+    listAllRequestedSharedPermissions: () =>
+      listAllPages("requested shared permissions", async (page) => {
+        const result = await client.listRequestedSharedPermissions({ page });
+        return result.success
+          ? {
+              success: true,
+              items: result.sharedPermissions,
+              totalCount: result.totalCount,
+            }
+          : result;
+      }),
 
     recordFile: async (
       recordKey: string,

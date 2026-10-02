@@ -1,0 +1,367 @@
+/*
+ * Friends screen, reached from Profile. Colours come from the `--sb-*` theme
+ * variables, like the Profile and Your content screens, so it follows the
+ * theme ThemeManager injects on `body`.
+ */
+.sb-friends-screen {
+  --sb-friends-padding: 16px;
+  --sb-friends-radius: 12px;
+  --sb-friends-surface: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 95%
+  );
+  --sb-friends-border: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 88%
+  );
+  --sb-friends-muted: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: 32px;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+}
+
+.sb-friends-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--sb-friends-padding);
+  box-sizing: border-box;
+}
+
+.sb-friends-signed-out {
+  align-items: center;
+  text-align: center;
+}
+
+.sb-friends-section,
+.sb-friends-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-friends-card {
+  padding: var(--sb-friends-padding);
+  border-radius: var(--sb-friends-radius);
+  /* Matches the compact Discover panel (`.sb-discover-content-panel`): a 1px
+     ring in place of a border, plus a soft drop shadow. */
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 4px 8px #0000002c;
+}
+
+.sb-friends-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+/* Scoped so it outranks the global `body .material-symbols-outlined` size. */
+.sb-friends-heading .material-symbols-outlined {
+  color: var(--sb-primary-color);
+  font-size: 1.375rem;
+}
+
+.sb-friends-empty {
+  margin: 0;
+  color: var(--sb-friends-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.sb-friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-friends-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: var(--sb-friends-radius);
+}
+
+.sb-friends-row:hover {
+  background: var(--sb-friends-surface);
+}
+
+.sb-friends-person-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sb-friends-person-name,
+.sb-friends-person-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-friends-person-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sb-friends-person-subtitle {
+  color: var(--sb-friends-muted);
+  font-size: 0.8125rem;
+}
+
+/* The picture and name in a row, which open that person's profile. */
+.sb-friends-person-button {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-friends-person-button:hover .sb-friends-person-name {
+  text-decoration: underline;
+}
+
+.sb-friends-row-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.sb-friends-button {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--sb-friends-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-friends-button:hover:not(:disabled) {
+  border-color: var(--sb-primary-color);
+  color: var(--sb-primary-color);
+}
+
+.sb-friends-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sb-friends-button--primary {
+  border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-friends-button--primary:hover:not(:disabled) {
+  color: var(--sb-primary-font-color);
+  opacity: 0.9;
+}
+
+/* The spinner sits over the label rather than beside it, so a button never
+   changes size when it starts or stops working. */
+.sb-friends-busy-button {
+  position: relative;
+  /* A rotating icon's corners sweep outside its box; clipping here stops
+     that from making a scrolling parent (like a modal body) grow a scrollbar
+     mid-spin. */
+  overflow: hidden;
+}
+
+/* Hidden with opacity rather than visibility so it keeps both its space and
+   its place in the accessibility tree. */
+.sb-friends-busy-label--hidden {
+  opacity: 0;
+}
+
+/* Centred with negative margins, not a transform, so the transform is free
+   for the spin. Scoped under the button so it outranks the global
+   `body .material-symbols-outlined` size, and sized in `em` so it fits the
+   label it replaces in any button. */
+.sb-friends-busy-button .sb-friends-busy-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1em;
+  height: 1em;
+  margin: -0.5em 0 0 -0.5em;
+  font-size: 1.25em;
+  line-height: 1;
+  animation: sb-friends-busy-spin 0.9s linear infinite;
+}
+
+/* A working button isn't an unavailable one, so it isn't faded like the
+   others are while it runs. */
+.sb-friends-busy-button[aria-busy="true"]:disabled {
+  opacity: 1;
+  cursor: progress;
+}
+
+@keyframes sb-friends-busy-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-friends-busy-button .sb-friends-busy-spinner {
+    animation: none;
+  }
+}
+
+.sb-friends-add-form {
+  display: flex;
+  gap: 8px;
+}
+
+.sb-friends-add-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--sb-friends-border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.sb-friends-add-outcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.sb-friends-add-outcome--error {
+  color: var(--sb-error-color, #d64545);
+}
+
+/* "Your user ID" and the friend link: one row each, text on the left
+   (wrapping within its own space) and the button always on the right. */
+.sb-friends-share {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sb-friends-border);
+  font-size: 0.8125rem;
+}
+
+.sb-friends-share-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sb-friends-share-text {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sb-friends-share-label {
+  color: var(--sb-friends-muted);
+}
+
+.sb-friends-copy-labels {
+  display: inline-grid;
+}
+
+.sb-friends-copy-labels > span {
+  grid-area: 1 / 1;
+}
+
+.sb-friends-copy-label--hidden {
+  visibility: hidden;
+}
+
+/* "Friends" / "Requested" in place of Add friend on a session participant. */
+.sb-participant-friend-status {
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+  font-size: 0.75rem;
+}
+
+/* The person a friend link is about, at the top of its prompt: a card of its
+   own, so their profile reads as separate from the prompt's question below. */
+.sb-friend-link-about {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-friend-link-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sb-friend-link-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Scoped so it outranks the global `body .material-symbols-outlined` size. */
+.sb-friend-link-location .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.sb-friend-link-description,
+.sb-friend-link-note {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.sb-friend-link-note {
+  margin: 0;
+  font-style: italic;
+}
+
+.sb-friends-my-id-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}

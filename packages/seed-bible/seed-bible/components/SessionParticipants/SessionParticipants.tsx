@@ -17,6 +17,7 @@ import {
   openShareSessionModal,
 } from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
+import { ParticipantFriendButton } from "../FriendsPane/ParticipantFriendButton";
 
 /** How many avatars the compact stack shows before collapsing into a "+N" chip. */
 const MAX_STACK_AVATARS = 3;
@@ -163,6 +164,11 @@ export function MobileSessionParticipants({
                         <span className="sb-session-participants-list-name">
                           {getUserDisplayName(user)}
                         </span>
+                        <ParticipantFriendButton
+                          state={state}
+                          userId={user.userId}
+                          displayName={getUserDisplayName(user)}
+                        />
                       </li>
                     );
                   })}
