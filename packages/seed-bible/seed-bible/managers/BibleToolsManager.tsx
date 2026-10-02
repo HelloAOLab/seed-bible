@@ -928,7 +928,7 @@ function getDefaultQuickToolbarTools(
           return false;
         }
         return (
-          c.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+          c.annotations.visibleAnnotationsForChapter(bookId, chapterNumber)
             .length > 0
         );
       },

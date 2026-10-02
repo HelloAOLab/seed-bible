@@ -95,6 +95,16 @@ export interface AnnotationsManager {
     chapterNumber: number
   ) => ReadonlySignal<Annotation[]>;
 
+  /**
+   * A chapter's notes as the signed-in user sees them: their own plus each
+   * friend's (see {@link visibleChapterAnnotations}). Reading it during a
+   * render or computed subscribes to all of them.
+   */
+  visibleAnnotationsForChapter: (
+    bookId: string,
+    chapterNumber: number
+  ) => Annotation[];
+
   /** The annotation currently being created/edited in the pane, or null. */
   editingAnnotation: Signal<Annotation | null>;
 
@@ -558,6 +568,12 @@ export interface CreateAnnotationsManagerOptions {
    * view.
    */
   isMobile?: ReadonlySignal<boolean>;
+  /**
+   * The signed-in user's friends, whose notes
+   * `visibleAnnotationsForChapter` includes. Omitted means only the user's
+   * own.
+   */
+  friendIds?: ReadonlySignal<readonly string[]>;
 }
 
 /**
@@ -1438,13 +1454,20 @@ export function createAnnotationsManager(
     }
   };
 
-  return {
+  const manager: AnnotationsManager = {
     saveAnnotation,
     deleteAnnotation,
     listAnnotationsForChapter,
     listAllAnnotations,
     getAnnotationsForChapter,
     getUserAnnotationsForChapter,
+    visibleAnnotationsForChapter: (bookId, chapterNumber) =>
+      visibleChapterAnnotations(
+        manager,
+        options.friendIds?.value ?? [],
+        bookId,
+        chapterNumber
+      ),
     editingAnnotation,
     createNewAnnotation,
     editAnnotation,
@@ -1458,4 +1481,5 @@ export function createAnnotationsManager(
         annotationCollection(bookId, chapterNumber)
       ),
   };
+  return manager;
 }

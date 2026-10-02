@@ -372,6 +372,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     friends: { friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      visibleAnnotationsForChapter: vi.fn(() => []),
       pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
@@ -2496,6 +2497,7 @@ describe("BibleReader", () => {
       friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+        visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
       },
     } as any as SeedBibleState;
   }
@@ -2901,6 +2903,7 @@ describe("BibleReader", () => {
         friends: { friendIds: signal([]) },
         annotations: {
           getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+          visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
         },
       } as any as SeedBibleState;
     }
@@ -4145,6 +4148,7 @@ describe("BibleReader", () => {
       friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
+        visibleAnnotationsForChapter: vi.fn(() => []),
       },
     } as any as SeedBibleState;
 

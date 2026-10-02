@@ -37,6 +37,7 @@ import {
   annotationVerseNumbers,
   annotationListHasOtherAuthors,
   groupAnnotationsByVerseRange,
+  type Annotation,
   type AnnotationGroup,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
@@ -522,6 +523,8 @@ function applyHighlightWithSession(
 function VerseToolbarAnnotationGroup(props: {
   id: string;
   group: AnnotationGroup;
+  /** The signed-in user's own notes in this chapter, which they may edit. */
+  ownAnnotations: ReadonlySet<Annotation>;
   tabs: TabsManager;
   login: LoginManager;
   annotations: AnnotationsManager;
@@ -534,6 +537,7 @@ function VerseToolbarAnnotationGroup(props: {
   const {
     id,
     group,
+    ownAnnotations,
     tabs,
     login,
     annotations,
@@ -589,40 +593,42 @@ function VerseToolbarAnnotationGroup(props: {
                   otherPeoplePresent={otherPeoplePresent}
                 />
               </div>
-              <ContextMenuWithButton
-                buttonClassName="sb-annotation-item-menu"
-                aria-label={t("annotation-options", {
-                  defaultValue: "Annotation options",
-                })}
-              >
-                <ContextMenuItem
-                  onClick={() => {
-                    console.log("Editing annotation", annotation);
-                    annotations.editAnnotation(annotation);
-                  }}
+              {ownAnnotations.has(annotation) ? (
+                <ContextMenuWithButton
+                  buttonClassName="sb-annotation-item-menu"
+                  aria-label={t("annotation-options", {
+                    defaultValue: "Annotation options",
+                  })}
                 >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    edit
-                  </MaterialIcon>
-                  {t("edit-annotation", { defaultValue: "Edit" })}
-                </ContextMenuItem>
-                <ContextMenuItem
-                  className="sb-context-menu-item--danger"
-                  onClick={() => {
-                    openDeleteAnnotationConfirm(
-                      modals,
-                      annotations,
-                      annotation,
-                      toast
-                    );
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    delete
-                  </MaterialIcon>
-                  {t("delete-annotation", { defaultValue: "Delete" })}
-                </ContextMenuItem>
-              </ContextMenuWithButton>
+                  <ContextMenuItem
+                    onClick={() => {
+                      console.log("Editing annotation", annotation);
+                      annotations.editAnnotation(annotation);
+                    }}
+                  >
+                    <MaterialIcon className="sb-context-menu-item-icon">
+                      edit
+                    </MaterialIcon>
+                    {t("edit-annotation", { defaultValue: "Edit" })}
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    className="sb-context-menu-item--danger"
+                    onClick={() => {
+                      openDeleteAnnotationConfirm(
+                        modals,
+                        annotations,
+                        annotation,
+                        toast
+                      );
+                    }}
+                  >
+                    <MaterialIcon className="sb-context-menu-item-icon">
+                      delete
+                    </MaterialIcon>
+                    {t("delete-annotation", { defaultValue: "Delete" })}
+                  </ContextMenuItem>
+                </ContextMenuWithButton>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -1748,6 +1754,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const selectionAnnotations = useComputed(
     () => readingState.value?.selectionAnnotations.value ?? []
   );
+  // Friends' notes are in the sheet too, so only these get the edit/delete
+  // menu. Decided by which list a note came from, as in Discover's list.
+  const ownSelectionAnnotations = useComputed(() => {
+    const verse = readingState.value?.selectedVerses.value[0];
+    return new Set<Annotation>(
+      verse
+        ? props.state.annotations.getAnnotationsForChapter(
+            verse.bookId,
+            verse.chapterNumber
+          ).value
+        : []
+    );
+  });
 
   // Reset picker and the mobile sheet's expanded state when selection clears.
   // The drag offsets go too: a sheet dismissed by dragging it down would
@@ -3380,6 +3399,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                     key={groupKey}
                                     id={`sb-verse-toolbar-annotation-group-${groupKey}`}
                                     group={group}
+                                    ownAnnotations={
+                                      ownSelectionAnnotations.value
+                                    }
                                     tabs={tabs}
                                     login={props.state.login}
                                     annotations={props.state.annotations}

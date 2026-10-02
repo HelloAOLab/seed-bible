@@ -6,6 +6,7 @@ import {
   formatAnnotationVerseNumbers,
   groupAnnotationsByVerseRange,
   type Annotation,
+  type AnnotationsManager,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import {
   createInMemoryRecordStore,
@@ -23,7 +24,7 @@ import type {
   ReaderTab,
   TabsManager,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
-import { effect, signal } from "@preact/signals";
+import { computed, effect, signal } from "@preact/signals";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock, Mocked } from "vitest";
 
@@ -792,6 +793,86 @@ describe("AnnotationsManager", () => {
       await flush();
 
       expect(ids(view)).toEqual(["friend-note"]);
+    });
+  });
+
+  describe("visibleAnnotationsForChapter", () => {
+    beforeEach(() => {
+      listDataByMarkerMock.mockImplementation(
+        async (recordName: string, _marker: string, lastAddress?: string) => {
+          if (lastAddress) {
+            return { success: true, items: [] };
+          }
+          const id = { "user-1": "my-note", "friend-user": "friend-note" }[
+            recordName
+          ];
+          return {
+            success: true,
+            items: id
+              ? [{ address: id, data: createCommentAnnotation({ id }) }]
+              : [],
+          };
+        }
+      );
+    });
+
+    const visibleIds = (manager: AnnotationsManager) =>
+      computed(() =>
+        manager.visibleAnnotationsForChapter("GEN", 1).map((a) => a.id)
+      );
+
+    it("includes each friend's notes alongside your own", async () => {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        {
+          friendIds: signal(["friend-user"]),
+        }
+      );
+
+      const ids = visibleIds(manager);
+
+      await vi.waitFor(() =>
+        expect([...ids.value].sort()).toEqual(["friend-note", "my-note"])
+      );
+    });
+
+    it("follows the friends list as it changes", async () => {
+      const friendIds = signal<string[]>([]);
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        {
+          friendIds,
+        }
+      );
+      const ids = visibleIds(manager);
+      await vi.waitFor(() => expect(ids.value).toEqual(["my-note"]));
+
+      friendIds.value = ["friend-user"];
+      await vi.waitFor(() =>
+        expect([...ids.value].sort()).toEqual(["friend-note", "my-note"])
+      );
+
+      friendIds.value = [];
+      expect(ids.value).toEqual(["my-note"]);
+    });
+
+    it("is only your own notes when no friends list is given", async () => {
+      const ids = visibleIds(createManager());
+
+      await vi.waitFor(() => expect(ids.value).toEqual(["my-note"]));
+      expect(listDataByMarkerMock).not.toHaveBeenCalledWith(
+        "friend-user",
+        expect.anything(),
+        expect.anything()
+      );
     });
   });
 

@@ -137,6 +137,9 @@ function createQuickToolContext(
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
       ),
+      visibleAnnotationsForChapter: vi.fn(
+        () => overrides.annotationsForChapter ?? []
+      ),
     } as any,
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
@@ -1818,6 +1821,7 @@ describe("createBibleToolsManager", () => {
         } as any,
         annotations: {
           getAnnotationsForChapter: () => signal([]),
+          visibleAnnotationsForChapter: () => [],
         } as any,
         features: {} as any,
         surface: "quick-toolbar",

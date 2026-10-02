@@ -845,6 +845,7 @@ export function createSeedBibleState(
     {
       confirmAdoption: (owner) => askToAdopt(owner, "notes"),
       isMobile,
+      friendIds: friends.friendIds,
     }
   );
   const yourContent = createYourContentManager({
