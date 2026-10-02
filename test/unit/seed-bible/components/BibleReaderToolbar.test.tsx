@@ -168,6 +168,48 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
 
     expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
   });
+  it("does not reopen a verse tool menu after the verse selection is cleared", async () => {
+    state.tools.registerVerseToolbarTool({
+      id: "test-verse-menu-tool",
+      priority: 100,
+      title: "Test verse tool",
+      icon: () => <span>test</span>,
+      isVisible: () => true,
+      getItems: () => [
+        {
+          id: "test-verse-menu-item",
+          title: "Test item",
+          icon: () => <span>item</span>,
+          onSelect: vi.fn(),
+        },
+      ],
+    });
+
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    const toolButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-verse-toolbar-action")
+    ).find((button) => button.getAttribute("aria-label") === "Test verse tool");
+
+    expect(toolButton).not.toBeUndefined();
+
+    await act(async () => {
+      toolButton!.click();
+    });
+
+    expect(container.querySelector('[role="menu"]')).not.toBeNull();
+
+    await act(async () => {
+      readingState.clearSelectedVerses();
+    });
+
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+    await selectFirstVerse();
+
+    // The old menu must not reopen automatically.
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+  });
 
   it("clears the verse selection when a tap lands in empty chapter-content space (not on a verse)", async () => {
     const readingState = await selectFirstVerse();
