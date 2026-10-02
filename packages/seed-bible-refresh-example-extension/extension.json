@@ -16,6 +16,17 @@
       "type": "string",
       "default": "warm",
       "enum": ["plain", "warm", "bold"]
+    },
+    "exampleClientId": { "type": "string", "sensitive": "exampleService" },
+    "exampleApiKey": { "type": "string", "sensitive": "exampleService" }
+  },
+  "sensitive": {
+    "exampleService": {
+      "host": "httpbin.org",
+      "requestMapping": {
+        "headers.authorization.bearer": "exampleApiKey",
+        "body.client_id": "exampleClientId"
+      }
     }
   },
   "translations": {
@@ -44,6 +55,12 @@
       "setting-tone-option-plain": "Plain",
       "setting-tone-option-warm": "Warm",
       "setting-tone-option-bold": "Bold",
+      "setting-exampleClientId-title": "Example client ID",
+      "setting-exampleClientId-description": "Sent in the body of requests to the example service.",
+      "setting-exampleApiKey-title": "Example API key",
+      "setting-exampleApiKey-description": "Sent as a bearer token to the example service.",
+      "sensitive-exampleService-title": "Example service",
+      "send-sensitive-request": "Send a request with the sensitive settings",
       "example-banner": "This is the example banner. Turn it off in this extension's settings."
     },
     "es": {

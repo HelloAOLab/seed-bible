@@ -3,11 +3,16 @@ import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
 import {
+  isSensitiveSetting,
   settingValueSatisfiesDefinition,
   type ExtensionManager,
   type ExtensionSettingValue,
 } from "./ExtensionManager";
 import type { CustomizationsManager } from "./CustomizationsManager";
+import {
+  createExtensionSensitiveSettings,
+  type ExtensionSensitiveSettings,
+} from "./ExtensionSensitiveSettings";
 
 export const EXTENSION_SETTING_VALUES_ADDRESS = "extensionSettingValues";
 
@@ -39,8 +44,13 @@ const extensionSettingValuesPayloadSchema = z.record(
  * Nothing is kept on the device, so a signed-out viewer only ever gets the
  * defaults. Offline and signed-out settings are planned as follow-up work
  * built on this manager.
+ *
+ * Sensitive settings (`"sensitive"` in the manifest) never pass through this
+ * record: their values go into private CasualOS proxy records and are only
+ * ever used by the server (see `ExtensionSensitiveSettings`), so `getValue`
+ * and `setValue` ignore them.
  */
-export interface ExtensionSettingsManager {
+export interface ExtensionSettingsManager extends ExtensionSensitiveSettings {
   /** extensionId -> settingKey -> the value this viewer explicitly set. Empty when signed out. */
   valuesByExtensionId: ReadonlySignal<
     Record<string, Record<string, ExtensionSettingValue>>
@@ -48,8 +58,8 @@ export interface ExtensionSettingsManager {
   /**
    * Resolves one setting's effective value: the viewer's own value, else the
    * active Customization's default, else the setting's own `default`, else
-   * `undefined`. Returns `undefined` if `extensionId` isn't known or no
-   * longer declares `key`. A stored value whose type or constraints no longer
+   * `undefined`. Returns `undefined` if `extensionId` isn't known, no longer
+   * declares `key`, or `key` is sensitive. A stored value whose type or constraints no longer
    * match is ignored (not clamped) and the next fallback is used.
    */
   getValue: (
@@ -67,7 +77,8 @@ export interface ExtensionSettingsManager {
    * have loaded. Never rejects: a failed save sets `hasSaveError` for this
    * extension, as does a change made when those stored values couldn't be
    * loaded (saving then would replace them, so nothing is saved). No-op while
-   * signed out, or if `extensionId`/`key` isn't a currently-declared setting.
+   * signed out, or if `extensionId`/`key` isn't a currently-declared setting
+   * or is sensitive (use `setSensitiveValues`).
    */
   setValue: (
     extensionId: string,
@@ -195,7 +206,7 @@ export function createExtensionSettingsManager(
     key: string
   ): ExtensionSettingValue | undefined => {
     const definition = getDefinition(extensionId, key);
-    if (!definition) {
+    if (!definition || isSensitiveSetting(definition)) {
       return undefined;
     }
     const ownValue = valuesByExtensionId.value[extensionId]?.[key];
@@ -346,7 +357,8 @@ export function createExtensionSettingsManager(
   ): Promise<void> => {
     const userId = await waitForOwnValues(extensionId);
     const definition = getDefinition(extensionId, key);
-    if (!userId || !definition) {
+    // This record is `publicRead`, so a sensitive value must never land here.
+    if (!userId || !definition || isSensitiveSetting(definition)) {
       return;
     }
     // Never store a value the setting's constraints reject. The form already
@@ -426,6 +438,7 @@ export function createExtensionSettingsManager(
   });
 
   return {
+    ...createExtensionSensitiveSettings(os, login, extensions),
     valuesByExtensionId,
     hasSaveError,
     getValue,

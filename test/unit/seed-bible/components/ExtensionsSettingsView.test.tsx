@@ -80,6 +80,7 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       getValue: vi.fn(),
       setValue: vi.fn().mockResolvedValue(undefined),
       clearValue: vi.fn().mockResolvedValue(undefined),
+      getUnusedSensitiveProxies: () => [],
     },
   } as unknown as SeedBibleState;
 }
