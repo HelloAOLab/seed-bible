@@ -123,6 +123,7 @@ describe("initApologistExtension discover provider", () => {
     });
     expect(JSON.parse(init.body)).toEqual({
       query: "John 3",
+      limit: 20,
       filters: {
         team_ids: [42],
         model: "source",
@@ -136,6 +137,7 @@ describe("initApologistExtension discover provider", () => {
         title: "Born Again",
         description: "What Jesus told Nicodemus",
         image: "https://example.com/thumb.jpg",
+        author: "youtu.be",
         reference: { book: "JHN", chapter: 3 },
       }),
     ]);
@@ -150,6 +152,102 @@ describe("initApologistExtension discover provider", () => {
     expect(container.querySelector("iframe")?.getAttribute("src")).toBe(
       "https://www.youtube.com/embed/abc123"
     );
+  });
+
+  async function discoverTitles(
+    items: Record<string, unknown>[]
+  ): Promise<string[]> {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ results: items }), { status: 200 })
+    );
+    const context = install("?apologistTeamID=42");
+    const results =
+      await findDiscoverProvider(context)!.discover(discoverContext);
+    return results.map((r) => (r.type === "content" ? r.title : r.type));
+  }
+
+  it("uses referral_url, listing_url and Name when url or title are missing", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          results: [
+            {
+              id: "a",
+              Name: "Referral Only",
+              referral_url: "https://www.ligonier.org/learn/born-again",
+              image_url: "https://example.com/a.jpg",
+              summary: "A summary",
+            },
+            {
+              id: "b",
+              title: "Listing Only",
+              listing_url: "https://tabletalkmagazine.com/b",
+            },
+          ],
+        }),
+        { status: 200 }
+      )
+    );
+    const context = install("?apologistTeamID=42");
+
+    const results =
+      await findDiscoverProvider(context)!.discover(discoverContext);
+
+    expect(results).toEqual([
+      expect.objectContaining({
+        title: "Referral Only",
+        description: "A summary",
+        image: "https://example.com/a.jpg",
+        author: "ligonier.org",
+      }),
+      expect.objectContaining({
+        title: "Listing Only",
+        author: "tabletalkmagazine.com",
+      }),
+    ]);
+  });
+
+  it("drops results whose title is about a different chapter of the same book", async () => {
+    const titles = await discoverTitles([
+      { id: 1, title: "John 4: The Woman at the Well", url: "https://a.org/1" },
+      { id: 2, title: "John 1–4 Overview", url: "https://a.org/2" },
+      { id: 3, title: "1 John 4: God Is Love", url: "https://a.org/3" },
+      { id: 4, title: "John 3:16 Explained", url: "https://a.org/4" },
+      { id: 5, title: "Born of Water and Spirit", url: "https://a.org/5" },
+    ]);
+
+    expect(titles).toEqual([
+      "John 1–4 Overview",
+      "John 3:16 Explained",
+      "1 John 4: God Is Love",
+      "Born of Water and Spirit",
+    ]);
+  });
+
+  it("puts results that mention the chapter first and keeps the API's order otherwise", async () => {
+    const titles = await discoverTitles([
+      { id: 1, title: "Grace", url: "https://a.org/1" },
+      {
+        id: 2,
+        title: "Nicodemus",
+        description: "A study of John 3",
+        url: "https://a.org/2",
+      },
+      { id: 3, title: "Faith", url: "https://a.org/3" },
+    ]);
+
+    expect(titles).toEqual(["Nicodemus", "Grace", "Faith"]);
+  });
+
+  it("removes repeated results by id or by title", async () => {
+    const titles = await discoverTitles([
+      { id: 1, title: "Born Again", url: "https://a.org/1" },
+      { id: 1, title: "Born Again (copy)", url: "https://a.org/1" },
+      { id: 2, title: "  born   AGAIN ", url: "https://b.org/2" },
+      { id: 3, title: "Eternal Life", url: "https://a.org/3" },
+    ]);
+
+    expect(titles).toEqual(["Born Again", "Eternal Life"]);
   });
 
   it("searches the default Apologist domain when none is configured", async () => {

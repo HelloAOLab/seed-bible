@@ -9,7 +9,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { DiscoverContentResult } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { PlaylistLinkContent } from "seed-bible/components";
-import { searchApologistContent } from "./search";
+import { rankResultsForChapter, searchApologistContent } from "./search";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -460,13 +460,13 @@ export default function initApologistExtension() {
               apiKey: apologistApiKey,
             });
 
-            return results.map(
+            return rankResultsForChapter(results, bookName, chapter).map(
               (item): DiscoverContentResult => ({
                 type: "content",
                 title: item.title,
                 description: item.description,
                 reference: { book, chapter },
-                author: item.author ?? providerName,
+                author: item.author ?? item.source ?? providerName,
                 image: item.image,
                 onClick: () => {
                   context.modals.openModal({

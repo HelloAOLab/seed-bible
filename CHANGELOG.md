@@ -4,7 +4,7 @@
 
 ### ✨ Added
 
-- Show an Apologist team's own content in the Discover pane. When the Apologist extension is opened with `?apologistTeamID=<id>` (plus `apologistApiKey`), each chapter you read is run through Apologist's semantic search, and the team's matching articles, YouTube videos, episodes, media and links appear as discovered content that opens in a modal. ([#1831](https://github.com/HelloAOLab/seed-bible/issues/1831))
+- Show an Apologist team's own content in the Discover pane. When the Apologist extension is opened with `?apologistTeamID=<id>` (plus `apologistApiKey`), each chapter you read is run through Apologist's semantic search, and the team's matching articles, YouTube videos, episodes, media and links appear as discovered content that opens in a modal. Each card names the website it comes from, results that are about a different chapter of the same book are left out, repeats are removed, and results that mention the chapter itself are listed first. ([#1831](https://github.com/HelloAOLab/seed-bible/issues/1831))
 - Offer to switch to a downloaded translation when a chapter fails to load, if another translation in the same language is saved on the device and it contains that book and chapter. When more than one matches, you pick one from the same searchable menu Settings uses for language.
 - Save an annotation with Cmd+Enter on Mac or Ctrl+Enter on Windows and Linux while typing, and keep Enter inserting a new line.
 - Focus the annotation editor when it opens so you can start typing right away, whether you are writing a new note or editing an existing one. ([#1793](https://github.com/HelloAOLab/seed-bible/issues/1793))
