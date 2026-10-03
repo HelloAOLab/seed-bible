@@ -46,6 +46,7 @@ import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 import { trimmedOrNull } from "../../managers/Utils";
 import { useAppConfig } from "../../app/appConfig";
+import { SessionQRCode } from "../SessionQRCode/SessionQRCode";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -256,6 +257,8 @@ function SessionSettingsModalContent(props: {
             </button>
           </div>
         </div>
+
+        <SessionQRCode url={sessionUrl.href} modals={state.modals} />
 
         {!isHost && (
           <p className="sb-session-settings-note">
@@ -679,6 +682,7 @@ export function openShareSessionModal(
     content: () => (
       <ShareModal
         app={state.app}
+        modals={state.modals}
         session={session}
         hideShareLink
         onClose={() => state.modals.closeModal(modalId)}

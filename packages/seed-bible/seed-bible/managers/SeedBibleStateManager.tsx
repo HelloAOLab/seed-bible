@@ -256,6 +256,18 @@ export const SHARED_PAGE_MODAL_ID = "shared-page";
  * These values are mostly computed from lower-level managers and represent
  * the currently active reading context and pane selection.
  */
+export interface ToastOptions {
+  /** Makes the toast tappable. Tapping it dismisses the toast first. */
+  onClick?: () => void;
+  /** Secondary line telling people what tapping the toast does. */
+  hint?: string;
+}
+
+export interface AppToast extends ToastOptions {
+  id: number;
+  message: string;
+}
+
 export interface AppState {
   /** True when multi-slot tab layouts are enabled by config. */
   panelsEnabled: ReadonlySignal<boolean>;
@@ -413,13 +425,14 @@ export interface AppState {
   resumeSharedPage: () => void;
 
   /** The toast currently shown at the bottom of the screen, or null when none. */
-  currentToast: ReadonlySignal<{ id: number; message: string } | null>;
+  currentToast: ReadonlySignal<AppToast | null>;
   /**
-   * Shows a toast message at the bottom of the screen for 3.5s.
+   * Shows a toast message at the bottom of the screen for 3.5s (6s when it
+   * has an `onClick`, so there's time to tap it).
    * Calling again replaces the current toast and restarts the timer
    * (only one toast is ever visible at a time, always the most recent).
    */
-  toast: (message: string) => void;
+  toast: (message: string, options?: ToastOptions) => void;
 
   /** Opens a chat session. */
   openChat: (sharedChat: ChatSession) => void;
@@ -2272,18 +2285,33 @@ export function createSeedBibleState(
   // Defined here (rather than further down, where it's exposed on `state`)
   // because the host-disconnect handling below also calls it, and that
   // effect runs immediately when constructed.
-  const currentToast = signal<{ id: number; message: string } | null>(null);
+  const currentToast = signal<AppToast | null>(null);
   let toastSeq = 0;
   let toastTimer: ReturnType<typeof setTimeout> | null = null;
-  const toast = (message: string) => {
+  const dismissToast = () => {
+    if (toastTimer !== null) {
+      clearTimeout(toastTimer);
+      toastTimer = null;
+    }
+    currentToast.value = null;
+  };
+  const toast = (message: string, options?: ToastOptions) => {
     if (toastTimer !== null) {
       clearTimeout(toastTimer);
     }
-    currentToast.value = { id: ++toastSeq, message };
-    toastTimer = setTimeout(() => {
-      currentToast.value = null;
-      toastTimer = null;
-    }, 3500);
+    const onClick = options?.onClick;
+    currentToast.value = {
+      id: ++toastSeq,
+      message,
+      hint: options?.hint,
+      onClick: onClick
+        ? () => {
+            dismissToast();
+            onClick();
+          }
+        : undefined,
+    };
+    toastTimer = setTimeout(dismissToast, onClick ? 6000 : 3500);
   };
 
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
