@@ -535,12 +535,13 @@ export const CUSTOMIZATION_FONT_PRESETS: CustomizationFontPreset[] = [
   { name: "Open Sans", value: "Open Sans, sans-serif" },
   { name: "Playfair Display", value: "Playfair Display, serif" },
   { name: "Cormorant Garamond", value: "Cormorant Garamond, serif" },
+  { name: "Plus Jakarta Sans", value: "Plus Jakarta Sans, sans-serif" },
 ];
 
 /**
  * The presets for one font field, with a "Default" entry (that field's
  * value in the Seed Bible Light theme) prepended. "Default" is
- * field-specific — unlike the 6 named presets, which apply the exact same
+ * field-specific — unlike the 7 named presets, which apply the exact same
  * value regardless of which of the 5 fields is being edited — so it can't
  * live in `CUSTOMIZATION_FONT_PRESETS` itself.
  */

@@ -24,7 +24,10 @@ import {
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
-import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
+import {
+  CUSTOMIZATION_FONT_PRESETS,
+  type SeedBibleCustomization,
+} from "../../managers/CustomizationsManager";
 import {
   buildCustomizationTutorialSteps,
   openCustomizationEditPane,
@@ -792,11 +795,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
     state.sidebar.requestedSettingsView.value = "main";
   };
 
-  const onOpenAllSettings = () => {
-    state.sidebar.requestedSettingsView.value =
-      "display-and-theme-all-settings";
-  };
-
   const handleDecreaseFontSize = () => {
     if (fontSizeIndex > 0) {
       const next = FONT_SIZE_OPTIONS[fontSizeIndex - 1];
@@ -947,6 +945,37 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             </div>
           </>
         )}
+
+        <div className="sb-settings-field-row">
+          <label className="sb-settings-field-label" htmlFor="sb-font-select">
+            {t("font", { defaultValue: "Font" })}
+          </label>
+          <select
+            id="sb-font-select"
+            className="sb-settings-language-select"
+            value={current.fontOverride ?? "default"}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+              if (target.value === "default") {
+                settings.setFontOverride(undefined);
+              } else {
+                settings.setFontOverride(target.value);
+              }
+            }}
+          >
+            {[
+              {
+                value: "default",
+                name: t("default", { defaultValue: "Default" }),
+              },
+              ...CUSTOMIZATION_FONT_PRESETS,
+            ].map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <h3 className="sb-settings-subheading">
           {t("scripture-elements", { defaultValue: "Scripture elements" })}
@@ -1208,17 +1237,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             }}
           />
         </div>
-
-        <button
-          type="button"
-          className="sb-settings-nav-item"
-          onClick={onOpenAllSettings}
-        >
-          <span>{t("all-settings", { defaultValue: "All settings" })}</span>
-          <span className="material-symbols-outlined rtl-mirror">
-            chevron_right
-          </span>
-        </button>
       </section>
     </div>
   );
