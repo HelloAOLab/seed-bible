@@ -21,11 +21,14 @@ import { hasReadingUrlPosition } from "./ReadingUrlPath";
 import { isNonReadingPagePath } from "./StaticPagePath";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { TranslationBooks } from "./FreeUseBibleAPI";
+import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
+import {
+  buildCommunityFeed,
+  type CommunityFeedItem,
+} from "./TodayCommunityFeed";
 import {
   createReadingHistoryState,
-  getCommunityReading as queryCommunityReading,
   getUserLastReading as queryUserLastReading,
-  type FilteredReading,
   type ReadingHistoryState,
   type Timespan,
 } from "./TodayReadingHistory";
@@ -103,8 +106,20 @@ export interface TodayManager {
    * `ready` renders the resume card.
    */
   readingHistory: ReadonlySignal<ReadingHistoryState>;
-  /** Reading activity for one window, bucketed book -> chapter -> userId[]. */
-  getCommunityReading: (timespan: Timespan) => Promise<FilteredReading>;
+  /**
+   * The readers whose notes and reading the community feed shows. The signed-in
+   * user alone until subscriptions exist (#1846); empty when signed out.
+   */
+  communityMembers: ReadonlySignal<string[]>;
+  /**
+   * Everything the community members did inside `span`, newest first. With
+   * `crossedPaths` on, chapters that several members read fold into shared
+   * items; the "all" window turns it off.
+   */
+  getCommunityFeed: (
+    span: Timespan,
+    options: { crossedPaths: boolean }
+  ) => Promise<CommunityFeedItem[]>;
   /** Book id -> display name for the translation the reader has loaded. */
   bookNames: ReadonlySignal<Map<string, string>>;
   /**
@@ -156,6 +171,7 @@ export function createTodayManager(options: {
   navigation: NavigationManager;
   search: SearchManager;
   bibleData: BibleDataManager;
+  annotations: Pick<AnnotationsManager, "listAllAnnotationsForUser">;
   /** UI language used to pick a default translation when nothing is loaded. */
   defaultLanguage: string;
   /**
@@ -167,8 +183,15 @@ export function createTodayManager(options: {
     translationId: string | null;
   } | null>;
 }): TodayManager {
-  const { os, login, navigation, search, bibleData, currentReadingState } =
-    options;
+  const {
+    os,
+    login,
+    navigation,
+    search,
+    bibleData,
+    annotations,
+    currentReadingState,
+  } = options;
 
   const fetchReadingHistoryEvents = (
     recordName: string,
@@ -184,17 +207,59 @@ export function createTodayManager(options: {
         queryUserLastReading(fetchReadingHistoryEvents, userId, range),
     });
 
-  // The reader list is just the signed-in user: nothing subscribes to anyone
-  // else yet, so a fan-out over "community" members has nothing to fan out to.
-  const getCommunityReading = (
-    timespan: Timespan
-  ): Promise<FilteredReading> => {
+  // Just the signed-in user: nothing subscribes to anyone else yet, so the
+  // fan-out below has one member to fan out to. The feed, its grouping and its
+  // tests are written for several so #1846 only has to widen this list.
+  const communityMembers = computed(() => {
     const userId = login.userId.value;
-    return queryCommunityReading(
-      fetchReadingHistoryEvents,
-      userId ? [userId] : [],
-      timespan
-    );
+    return userId ? [userId] : [];
+  });
+
+  const getCommunityFeed = async (
+    span: Timespan,
+    { crossedPaths }: { crossedPaths: boolean }
+  ): Promise<CommunityFeedItem[]> => {
+    const members = communityMembers.peek();
+
+    // One member's unreachable record costs that member's rows, not the feed.
+    const eventsByReader = new Map<string, ReadingEvent[]>();
+    const notesByUser = new Map<string, Annotation[]>();
+    await Promise.all([
+      ...members.map((memberId) =>
+        fetchReadingHistoryEvents(memberId, span.from, span.to)
+          .then((events) => {
+            eventsByReader.set(memberId, Array.from(events));
+          })
+          .catch((error: unknown) => {
+            console.warn(
+              `[TodayManager] Could not read ${memberId}'s reading history for the community feed.`,
+              error
+            );
+            eventsByReader.set(memberId, []);
+          })
+      ),
+      ...members.map((memberId) =>
+        annotations
+          .listAllAnnotationsForUser(memberId)
+          .then((notes) => {
+            notesByUser.set(memberId, notes);
+          })
+          .catch((error: unknown) => {
+            console.warn(
+              `[TodayManager] Could not read ${memberId}'s notes for the community feed.`,
+              error
+            );
+            notesByUser.set(memberId, []);
+          })
+      ),
+    ]);
+
+    return buildCommunityFeed({
+      eventsByReader,
+      notesByUser,
+      span,
+      crossedPaths,
+    });
   };
 
   // Latched so Today's cards keep their book names while the reader is between
@@ -356,7 +421,8 @@ export function createTodayManager(options: {
   return {
     isOpen,
     readingHistory,
-    getCommunityReading,
+    communityMembers,
+    getCommunityFeed,
     bookNames,
     lastTranslationBooks,
     lastTranslationId,

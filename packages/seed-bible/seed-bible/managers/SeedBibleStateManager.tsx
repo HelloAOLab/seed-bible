@@ -3086,6 +3086,7 @@ export function createSeedBibleState(
     navigation,
     search,
     bibleData: data,
+    annotations,
     defaultLanguage: i18n.defaultLanguage,
     currentReadingState,
   });

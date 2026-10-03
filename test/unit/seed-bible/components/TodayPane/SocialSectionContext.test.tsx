@@ -14,10 +14,8 @@ function makeValue(
     userProfileMap: new Map(),
     year: 2026,
     timespan: undefined,
-    communityReading: {},
     selectYear: vi.fn(),
     selectDay: vi.fn(),
-    toggleUserFilter: vi.fn(),
     ...overrides,
   };
 }
