@@ -93,7 +93,10 @@
 .sb-bible-reader-title {
   flex: 0 1 auto;
   min-width: 0;
-  font-family: var(--text-bookTitle-font);
+  font-family: var(
+    --sb-scripture-font-override,
+    var(--sb-book-title-font-family)
+  );
   /* color: var(--text-bookTitle-color); */
   color: var(--sb-book-title-font-color);
   font-weight: var(--text-bookTitle-weight);
@@ -498,7 +501,10 @@
   max-width: 100%;
   margin: 2rem auto;
   text-align: center;
-  font-family: var(--text-bookTitle-font);
+  font-family: var(
+    --sb-scripture-font-override,
+    var(--sb-book-title-font-family)
+  );
   color: var(--sb-book-title-font-color);
   font-weight: var(--text-bookTitle-weight);
   font-style: var(--text-bookTitle-font-style);
@@ -630,7 +636,10 @@
 }
 
 .sb-chapter-heading {
-  font-family: var(--text-heading-font);
+  font-family: var(
+    --sb-scripture-font-override,
+    var(--sb-chapter-heading-font-family)
+  );
   /* color: var(--text-heading-color); */
   color: var(--sb-chapter-heading-font-color);
   font-weight: var(--text-heading-weight);
@@ -659,7 +668,7 @@
 .sb-verse {
   /* color: var(--text-verse-color); */
   color: var(--sb-verse-font-color);
-  font-family: var(--text-verse-font);
+  font-family: var(--sb-scripture-font-override, var(--sb-verse-font-family));
   font-weight: var(--text-verse-weight);
   font-style: var(--text-verse-font-style);
   text-decoration: var(--text-verse-text-decoration);
