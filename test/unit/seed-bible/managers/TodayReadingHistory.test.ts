@@ -1,6 +1,7 @@
 import {
   buildTimespanOptions,
-  getCommunityReading,
+  getTimelineYearTimespan,
+  getTimelineYearWindow,
   getUserLastReading,
 } from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
 import type { ReadingEvent } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
@@ -102,158 +103,47 @@ describe("buildTimespanOptions", () => {
   });
 });
 
-// ─── getCommunityReading ─────────────────────────────────────────────────────
+// ─── getTimelineYearWindow ──────────────────────────────────────────────────
 
-describe("getCommunityReading", () => {
-  it("returns nothing when there are no readers", async () => {
-    const result = await getCommunityReading(makeFetchEvents(), [], {
-      from: 0,
-      to: 100,
-    });
+describe("getTimelineYearWindow", () => {
+  // Local-time constructor on purpose: the window is defined on the reader's
+  // calendar, so the assertions below read in local time too.
+  const NOW = new Date(2026, 5, 15, 12, 34, 56);
 
-    expect(result).toEqual({});
+  it("ends the current year on today, at the end of the day", () => {
+    const { endDate } = getTimelineYearWindow(2026, NOW);
+
+    expect(endDate).toEqual(new Date(2026, 5, 15, 23, 59, 59, 999));
   });
 
-  it("does not query reading events when there are no readers", async () => {
-    const fetchEvents = makeFetchEvents();
+  it("starts the current year on the same date a year earlier, at midnight", () => {
+    const { startDate } = getTimelineYearWindow(2026, NOW);
 
-    await getCommunityReading(fetchEvents, [], { from: 0, to: 10 });
-
-    expect(fetchEvents).not.toHaveBeenCalled();
+    expect(startDate).toEqual(new Date(2025, 5, 15, 0, 0, 0, 0));
   });
 
-  it("groups a reader under bookId → chapter for an event inside the span", async () => {
-    const fetchEvents = makeFetchEvents({
-      u1: [makeEvent({ bookId: "JHN", chapter: 3, end: 50 })],
-    });
+  it("gives an earlier year the same calendar window, shifted back", () => {
+    const { startDate, endDate } = getTimelineYearWindow(2024, NOW);
 
-    const result = await getCommunityReading(fetchEvents, ["u1"], {
-      from: 0,
-      to: 100,
-    });
-
-    expect(result).toEqual({ JHN: { 3: ["u1"] } });
+    expect(startDate).toEqual(new Date(2023, 5, 15, 0, 0, 0, 0));
+    expect(endDate).toEqual(new Date(2024, 5, 15, 23, 59, 59, 999));
   });
 
-  it("accumulates multiple readers who read the same book/chapter", async () => {
-    const fetchEvents = makeFetchEvents({
-      u1: [makeEvent({ bookId: "JHN", chapter: 3, end: 40 })],
-      u2: [makeEvent({ bookId: "JHN", chapter: 3, end: 60, userId: "u2" })],
-    });
+  it("does not mutate the date it was given", () => {
+    const now = new Date(NOW);
 
-    const result = await getCommunityReading(fetchEvents, ["u1", "u2"], {
-      from: 0,
-      to: 100,
-    });
+    getTimelineYearWindow(2024, now);
 
-    expect(result).toEqual({ JHN: { 3: ["u1", "u2"] } });
+    expect(now).toEqual(NOW);
   });
 
-  it("keys readers by the record name fetched, not the event's userId", async () => {
-    // The two are not provably the same value, and the card matches its avatars
-    // against the reader list the caller supplied.
-    const fetchEvents = makeFetchEvents({
-      u1: [makeEvent({ bookId: "JHN", chapter: 3, end: 50, userId: "other" })],
+  it("converts to whole unix seconds, flooring the end-of-day millisecond", () => {
+    const { startDate, endDate } = getTimelineYearWindow(2026, NOW);
+
+    expect(getTimelineYearTimespan(2026, NOW)).toEqual({
+      from: startDate.getTime() / 1000,
+      to: Math.floor(endDate.getTime() / 1000),
     });
-
-    const result = await getCommunityReading(fetchEvents, ["u1"], {
-      from: 0,
-      to: 100,
-    });
-
-    expect(result).toEqual({ JHN: { 3: ["u1"] } });
-  });
-
-  it("groups distinct books and chapters separately", async () => {
-    const fetchEvents = makeFetchEvents({
-      u1: [
-        makeEvent({ bookId: "GEN", chapter: 1, end: 10 }),
-        makeEvent({ bookId: "GEN", chapter: 2, end: 20 }),
-        makeEvent({ bookId: "EXO", chapter: 1, end: 30 }),
-      ],
-    });
-
-    const result = await getCommunityReading(fetchEvents, ["u1"], {
-      from: 0,
-      to: 100,
-    });
-
-    expect(result).toEqual({
-      GEN: { 1: ["u1"], 2: ["u1"] },
-      EXO: { 1: ["u1"] },
-    });
-  });
-
-  it("excludes events whose end falls outside the span", async () => {
-    const fetchEvents = makeFetchEvents({
-      u1: [
-        makeEvent({ bookId: "GEN", chapter: 1, end: 5 }), // before span
-        makeEvent({ bookId: "GEN", chapter: 2, end: 150 }), // after span
-        makeEvent({ bookId: "GEN", chapter: 3, end: 50 }), // inside span
-      ],
-    });
-
-    const result = await getCommunityReading(fetchEvents, ["u1"], {
-      from: 10,
-      to: 100,
-    });
-
-    expect(result).toEqual({ GEN: { 3: ["u1"] } });
-  });
-
-  it("includes events whose end is exactly on the span boundaries", async () => {
-    const fetchEvents = makeFetchEvents({
-      u1: [
-        makeEvent({ bookId: "GEN", chapter: 1, end: 10 }), // == from
-        makeEvent({ bookId: "GEN", chapter: 2, end: 100 }), // == to
-      ],
-    });
-
-    const result = await getCommunityReading(fetchEvents, ["u1"], {
-      from: 10,
-      to: 100,
-    });
-
-    expect(result).toEqual({ GEN: { 1: ["u1"], 2: ["u1"] } });
-  });
-
-  it("records a reader once per chapter however many events they logged", async () => {
-    const fetchEvents = makeFetchEvents({
-      u1: [
-        makeEvent({ bookId: "GEN", chapter: 1, end: 20 }),
-        makeEvent({ bookId: "GEN", chapter: 1, end: 40 }),
-      ],
-    });
-
-    const result = await getCommunityReading(fetchEvents, ["u1"], {
-      from: 0,
-      to: 100,
-    });
-
-    expect(result).toEqual({ GEN: { 1: ["u1"] } });
-  });
-
-  it("queries each reader once, over the requested span", async () => {
-    const fetchEvents = makeFetchEvents({ u1: [], u2: [] });
-
-    await getCommunityReading(fetchEvents, ["u1", "u2"], { from: 0, to: 10 });
-
-    expect(fetchEvents).toHaveBeenCalledTimes(2);
-    expect(fetchEvents).toHaveBeenCalledWith("u1", 0, 10);
-    expect(fetchEvents).toHaveBeenCalledWith("u2", 0, 10);
-  });
-
-  it("rejects when a reader's fetch rejects", async () => {
-    // Pins today's all-or-nothing behaviour: one unreachable reader blanks the
-    // whole card. Softening that to a per-reader catch is a behaviour change and
-    // belongs in its own commit.
-    const fetchEvents = vi.fn(async () => {
-      throw new Error("unreachable");
-    });
-
-    await expect(
-      getCommunityReading(fetchEvents, ["u1"], { from: 0, to: 10 })
-    ).rejects.toThrow("unreachable");
   });
 });
 
