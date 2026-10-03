@@ -12,6 +12,7 @@ import {
   type CalendarSummary,
   type ReadingPlan,
   type ReadingPlanMetadata,
+  latestReadingPlanProgress,
   type ReadingPlanProgress,
   type ReadingPlansManager,
 } from "../../managers/ReadingPlansManager";
@@ -84,18 +85,6 @@ const planLoadError = signal<string | null>(null);
 /** The plan currently being opened, so its card can show it's working. */
 const openingPlanId = signal<string | null>(null);
 
-/** The most recent progress the user has for a given plan id, if any. */
-function latestProgress(
-  progresses: ReadingPlanProgress[],
-  planId: string
-): ReadingPlanProgress | null {
-  return (
-    progresses
-      .filter((p) => p.planId === planId)
-      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
-  );
-}
-
 function copyReadingPlanShareUrl(
   readingPlans: ReadingPlansManager,
   plan: ReadingPlan,
@@ -126,7 +115,7 @@ async function openPlanDetail(
   } finally {
     openingPlanId.value = null;
   }
-  const progress = latestProgress(
+  const progress = latestReadingPlanProgress(
     readingPlans.userReadingPlanProgresses.value,
     planId
   );
@@ -426,7 +415,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     .filter((meta) => meta.status !== "draft")
     .map((meta) => {
       const planId = formatReadingPlanId(meta.recordName, meta.address);
-      const progress = latestProgress(progresses, planId);
+      const progress = latestReadingPlanProgress(progresses, planId);
       const full = fullById.get(planId) ?? null;
       let summary: CalendarSummary | null = null;
       let state: PlanRow["state"] = "notstarted";
@@ -561,7 +550,9 @@ function ReadingPlansList(props: ReadingPlansListProps) {
               onClick={() => onOpen(hero.meta)}
               disabled={openingId === hero.planId}
             >
-              <HeroImageThumb url={hero.meta.heroImageUrl} />
+              {hero.meta.heroImageUrl ? (
+                <HeroImageThumb url={hero.meta.heroImageUrl} />
+              ) : null}
               <div className="sb-rp-today-text">
                 <span className="sb-rp-today-eyebrow">
                   {t("reading-plan-today-eyebrow", {
@@ -572,6 +563,11 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                 <span className="sb-rp-today-title" dir="auto">
                   {planTitle(hero.meta)}
                 </span>
+                {hero.meta.description ? (
+                  <span className="sb-rp-today-readings" dir="auto">
+                    {hero.meta.description}
+                  </span>
+                ) : null}
                 <span className="sb-rp-today-readings">
                   {dayReadingsLabel(hero.summary.next)}
                 </span>
@@ -611,11 +607,18 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                       onClick={() => resumeDraft(meta)}
                       disabled={!full}
                     >
-                      <HeroImageThumb url={meta.heroImageUrl} />
+                      {meta.heroImageUrl ? (
+                        <HeroImageThumb url={meta.heroImageUrl} />
+                      ) : null}
                       <span className="sb-rp-card-body">
                         <span className="sb-rp-card-title" dir="auto">
                           {planTitle(meta)}
                         </span>
+                        {meta.description ? (
+                          <span className="sb-rp-card-sub" dir="auto">
+                            {meta.description}
+                          </span>
+                        ) : null}
                         <span className="sb-rp-card-sub">
                           {t("reading-plan-draft-summary", {
                             defaultValue: "Draft · {{count}} readings",
@@ -689,11 +692,18 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                     onClick={() => onOpen(row.meta)}
                     disabled={openingId === row.planId}
                   >
-                    <HeroImageThumb url={row.meta.heroImageUrl} />
+                    {row.meta.heroImageUrl ? (
+                      <HeroImageThumb url={row.meta.heroImageUrl} />
+                    ) : null}
                     <span className="sb-rp-card-body">
                       <span className="sb-rp-card-title" dir="auto">
                         {planTitle(row.meta)}
                       </span>
+                      {row.meta.description ? (
+                        <span className="sb-rp-card-sub" dir="auto">
+                          {row.meta.description}
+                        </span>
+                      ) : null}
                       <span className="sb-rp-card-sub">
                         {openingId === row.planId
                           ? t("loading", { defaultValue: "Loading…" })
@@ -732,11 +742,18 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                         onClick={() => onOpen(row.meta)}
                         disabled={openingId === row.planId}
                       >
-                        <HeroImageThumb url={row.meta.heroImageUrl} />
+                        {row.meta.heroImageUrl ? (
+                          <HeroImageThumb url={row.meta.heroImageUrl} />
+                        ) : null}
                         <span className="sb-rp-card-body">
                           <span className="sb-rp-card-title" dir="auto">
                             {planTitle(row.meta)}
                           </span>
+                          {row.meta.description ? (
+                            <span className="sb-rp-card-sub" dir="auto">
+                              {row.meta.description}
+                            </span>
+                          ) : null}
                           <span className="sb-rp-card-sub">
                             {finishedMs != null
                               ? `${t("reading-plan-finished", {
@@ -815,11 +832,18 @@ function ActivePlanCard(props: {
       disabled={opening}
     >
       <div className="sb-rp-card-row">
-        <HeroImageThumb url={row.meta.heroImageUrl} />
+        {row.meta.heroImageUrl ? (
+          <HeroImageThumb url={row.meta.heroImageUrl} />
+        ) : null}
         <span className="sb-rp-card-body">
           <span className="sb-rp-card-title" dir="auto">
             {title}
           </span>
+          {row.meta.description ? (
+            <span className="sb-rp-card-sub" dir="auto">
+              {row.meta.description}
+            </span>
+          ) : null}
           <span className="sb-rp-card-sub">
             {selfPaced
               ? t("reading-plan-session-count-sessions", {
