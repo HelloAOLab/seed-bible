@@ -1585,6 +1585,7 @@ export function openShareModal(
     content: () => (
       <ShareModal
         app={app}
+        modals={modals}
         session={context.sharedSession ?? null}
         onClose={() => modals.closeModal(modalId)}
         onShareLink={() => {

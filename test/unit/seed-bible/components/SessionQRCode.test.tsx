@@ -1,6 +1,11 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { SessionQRCode } from "@packages/seed-bible/seed-bible/components/SessionQRCode/SessionQRCode";
+import { ShareModal } from "@packages/seed-bible/seed-bible/components/ShareModal/shareModal";
+import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
+import { ToastHost } from "@packages/seed-bible/seed-bible/components/ToastHost/ToastHost";
+import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import {
   createTestSeedBibleState,
   waitFor,
@@ -12,8 +17,9 @@ const SESSION_URL = "https://seedbible.org/?session=abc";
 describe("SessionQRCode", () => {
   let container: HTMLDivElement;
   let anchorClicks: string[];
+  let state: SeedBibleState;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     anchorClicks = [];
@@ -24,6 +30,7 @@ describe("SessionQRCode", () => {
     });
     URL.createObjectURL = vi.fn(() => "blob:qr");
     URL.revokeObjectURL = vi.fn();
+    state = await createTestSeedBibleState();
   });
 
   afterEach(() => {
@@ -35,20 +42,23 @@ describe("SessionQRCode", () => {
     Reflect.deleteProperty(navigator, "share");
   });
 
-  async function renderQR(url = SESSION_URL) {
-    const state = await createTestSeedBibleState();
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response(new Blob(["png"], { type: "image/png" })))
-    );
+  function renderWithHosts(children: preact.ComponentChildren) {
     act(() => {
       render(
         <TestHost state={state}>
-          <SessionQRCode url={url} />
+          <>
+            {children}
+            <ModalHost manager={state.modals} />
+            <ToastHost app={state.app} />
+          </>
         </TestHost>,
         container
       );
     });
+  }
+
+  async function renderQR(url = SESSION_URL) {
+    renderWithHosts(<SessionQRCode url={url} modals={state.modals} />);
   }
 
   async function renderGeneratedQR() {
@@ -69,15 +79,16 @@ describe("SessionQRCode", () => {
     return shareFn;
   }
 
-  async function clickSave() {
-    const button = container.querySelector<HTMLButtonElement>(
-      ".sb-session-qr-save"
-    );
+  async function click(element: HTMLElement | null) {
+    expect(element).not.toBeNull();
     await act(async () => {
-      button!.click();
+      element!.click();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
   }
+
+  const clickSave = () =>
+    click(container.querySelector<HTMLButtonElement>(".sb-session-qr-save"));
 
   it("renders a PNG QR code once generation finishes", async () => {
     await renderGeneratedQR();
@@ -104,6 +115,27 @@ describe("SessionQRCode", () => {
     expect(container.querySelector("img")).toBeNull();
   });
 
+  it("opens a large version of the QR code when the code is clicked", async () => {
+    await renderGeneratedQR();
+    expect(container.querySelector(".sb-session-qr-large")).toBeNull();
+
+    await click(
+      container.querySelector<HTMLButtonElement>("button.sb-session-qr-code")
+    );
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-session-qr-large-code img"))
+    );
+
+    const smallSrc = container
+      .querySelector(".sb-session-qr-code img")
+      ?.getAttribute("src");
+    expect(
+      container
+        .querySelector(".sb-session-qr-large-code img")
+        ?.getAttribute("src")
+    ).toBe(smallSrc);
+  });
+
   it("shares the image through the Web Share API when files can be shared", async () => {
     const share = mockWebShare(async () => {});
     await renderGeneratedQR();
@@ -114,6 +146,7 @@ describe("SessionQRCode", () => {
     const file = (share.mock.calls[0] as unknown as [{ files: File[] }])[0]
       .files[0];
     expect(file?.name).toBe("seed-bible-session-qr.png");
+    expect(file?.type).toBe("image/png");
     expect(anchorClicks).toEqual([]);
   });
 
@@ -156,5 +189,74 @@ describe("SessionQRCode", () => {
     await clickSave();
 
     expect(anchorClicks).toEqual(["seed-bible-session-qr.png"]);
+  });
+
+  describe("in the share sheet", () => {
+    const session = { id: "session-qr-test" } as BibleReadingSession;
+
+    function renderShareModal(sharedSession: BibleReadingSession | null) {
+      renderWithHosts(
+        <ShareModal
+          app={state.app}
+          modals={state.modals}
+          session={sharedSession}
+          hideShareLink
+        />
+      );
+    }
+
+    it("shows the session QR code when a session is active", async () => {
+      renderShareModal(session);
+      await waitFor(() =>
+        Boolean(container.querySelector(".sb-session-qr-code img"))
+      );
+
+      expect(container.querySelector(".sb-session-qr-card")).not.toBeNull();
+    });
+
+    it("shows no QR code when there is no session yet", () => {
+      renderShareModal(null);
+
+      expect(container.querySelector(".sb-session-qr")).toBeNull();
+    });
+
+    it("opens the QR code when the link-copied toast is clicked", async () => {
+      const writeText = vi.fn(async () => {});
+      vi.stubGlobal("navigator", {
+        ...navigator,
+        clipboard: { writeText },
+      });
+      renderShareModal(session);
+
+      const sessionAction = Array.from(
+        container.querySelectorAll<HTMLButtonElement>(".sb-share-action")
+      ).find((button) => button.textContent?.includes("Share current session"));
+      await click(sessionAction ?? null);
+
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining("sessionId=session-qr-test")
+      );
+      const toast =
+        container.querySelector<HTMLButtonElement>("button.sb-toast");
+      expect(container.querySelector(".sb-session-qr-large")).toBeNull();
+
+      await click(toast);
+      await waitFor(() =>
+        Boolean(container.querySelector(".sb-session-qr-large-code img"))
+      );
+
+      expect(container.querySelector(".sb-toast")).toBeNull();
+    });
+
+    it("keeps plain toasts non-interactive", async () => {
+      renderWithHosts(null);
+
+      await act(async () => {
+        state.app.toast("Copied");
+      });
+
+      expect(container.querySelector(".sb-toast")?.textContent).toBe("Copied");
+      expect(container.querySelector("button.sb-toast")).toBeNull();
+    });
   });
 });

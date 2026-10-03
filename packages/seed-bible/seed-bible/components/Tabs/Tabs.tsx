@@ -258,7 +258,7 @@ function SessionSettingsModalContent(props: {
           </div>
         </div>
 
-        <SessionQRCode url={sessionUrl.href} />
+        <SessionQRCode url={sessionUrl.href} modals={state.modals} />
 
         {!isHost && (
           <p className="sb-session-settings-note">
@@ -682,6 +682,7 @@ export function openShareSessionModal(
     content: () => (
       <ShareModal
         app={state.app}
+        modals={state.modals}
         session={session}
         hideShareLink
         onClose={() => state.modals.closeModal(modalId)}
