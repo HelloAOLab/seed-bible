@@ -59,6 +59,5 @@
       "place-type-cave": "Cave",
       "place-type-tower": "Tower"
     }
-  },
-  "dependencies": ["ext_locations"]
+  }
 }

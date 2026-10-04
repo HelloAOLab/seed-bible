@@ -23,7 +23,6 @@ import {
   createIsPlaceOpen,
   createOpenPlace,
   placePaneId,
-  type PlaceLocations,
 } from "@packages/theographic-extension/ext_theographic/map";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -80,7 +79,6 @@ function renderCard(
   options: {
     getEntity?: (path: string) => Promise<unknown>;
     getResource?: (url: string) => Promise<unknown>;
-    locations?: PlaceLocations;
     isMobile?: ReadonlySignal<boolean>;
     onReferenceClick?: (ref: VerseRef) => void;
     verses?: number[];
@@ -114,7 +112,6 @@ function renderCard(
         onReferenceClick={onReferenceClick}
         openPlace={openPlace}
         isPlaceOpen={options.isPlaceOpen}
-        locations={options.locations}
         isMobile={options.isMobile}
         scripture={options.scripture}
       />,
@@ -852,7 +849,7 @@ describe("the redesigned card", () => {
       },
     };
 
-    // Erech is in the locations extension's file; Abana isn't.
+    // Erech is in additionalGeoJSON.json; Abana isn't.
     const ERECH_GEOJSON = {
       type: "FeatureCollection",
       features: [
@@ -865,13 +862,6 @@ describe("the redesigned card", () => {
     };
     const ERECH_FILE =
       "https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/Erech.geojson";
-    const LOCATIONS: PlaceLocations = {
-      findLocation: (name) =>
-        name.toLowerCase() === "erech"
-          ? { place: "Erech", geojson: "Erech" }
-          : null,
-      getPlaceGeoJsonUrl: () => ERECH_FILE,
-    };
     const ABANA: TheographicPlaceEntry = {
       id: "abana_1",
       name: "Abana",
@@ -893,7 +883,6 @@ describe("the redesigned card", () => {
         scripture: fakeScripture(),
         getEntity: () => Promise.resolve(detail),
         getResource: file,
-        locations: LOCATIONS,
       });
       click(expandButton());
       await flush();
@@ -913,7 +902,7 @@ describe("the redesigned card", () => {
       return JSON.parse(src.searchParams.get("mapData")!);
     }
 
-    it("draws the locations extension's file, in an iframe, only when expanded", async () => {
+    it("draws the place's additionalGeoJSON.json file, in an iframe, only when expanded", async () => {
       renderCard({ contentType: "place_profile", entry: ERECH });
       // Collapsed cards don't load a map each.
       expect(container.querySelector("iframe")).toBeNull();

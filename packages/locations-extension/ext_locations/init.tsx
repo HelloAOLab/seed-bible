@@ -1,159 +1,112 @@
-import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import { computed } from "@preact/signals";
+import { computed, effect, signal } from "@preact/signals";
 import { registerExtension } from "seed-bible";
-import { LocationIcon, PortalComponent } from "seed-bible/components";
-import locations from "./locations.json";
-import geoImporterPattern from "virtual:@pattern/geo-importer";
-import { v4 as uuid } from "uuid";
+import { LocationIcon } from "seed-bible/components";
+import type {
+  TheographicExtensionApi,
+  TheographicPlaceEntry,
+} from "@seed-bible/theographic-extension";
 
-export interface PlaceData {
-  place: string;
-  geojson: string;
-}
+/** The Theographic extension's id, under which its API reaches `init`. */
+const THEOGRAPHIC_EXTENSION_ID = "theographic-extension";
 
-/**
- * What this extension hands to extensions that depend on it (the second
- * argument of their `init`), keyed under its id, `ext_locations`.
- */
-export interface LocationsExtensionApi {
-  findLocationsInText(text: string): PlaceData[];
-  findLocationsInVerses(verses: ChapterVerse[]): PlaceData[];
-  /** The entry for one place name, whatever its case, or null. */
-  findLocation(name: string): PlaceData | null;
-  /** Where a place's GeoJSON file lives. */
-  getPlaceGeoJsonUrl(place: PlaceData): string;
+/** The places one chapter mentions, as last loaded. */
+interface ChapterPlaces {
+  book: string;
+  chapter: number;
+  places: TheographicPlaceEntry[];
 }
 
 export default function initLocationsExtension() {
-  console.log("Loaded locations extension", geoImporterPattern);
-
   registerExtension({
     id: "ext_locations",
-    init: function* (context) {
-      const findLocationsInText = (text: string) => {
-        text = text.toLowerCase();
-        const foundPlaces: PlaceData[] = [];
-        const seen = new Set<string>();
-        const words = text.split(/[^\w]+/);
-        for (const word of words) {
-          const place = (locations as Record<string, PlaceData>)[
-            word.toLowerCase()
-          ];
-          if (place && !seen.has(place.place)) {
-            seen.add(place.place);
-            console.log("Found place:", place);
-            foundPlaces.push(place);
-          }
-        }
+    // Which places a verse mentions comes from the Theographic dataset, which
+    // aligns each place to the verses it appears in. Matching by verse number
+    // rather than by name works whatever language the verse text is in.
+    dependencies: [THEOGRAPHIC_EXTENSION_ID],
+    init: function* (context, dependencies) {
+      const theographic = dependencies[
+        THEOGRAPHIC_EXTENSION_ID
+      ] as TheographicExtensionApi;
 
-        return foundPlaces;
-      };
+      const selectedVerses = computed(
+        () =>
+          context.app.currentReadingState.value?.tab.readingState.selectedVerses
+            .value ?? []
+      );
+      const chapterPlaces = signal<ChapterPlaces | null>(null);
 
-      const findLocationsInVerses = (verses: ChapterVerse[]): PlaceData[] => {
-        let text = "";
-        for (const verse of verses) {
-          for (const content of verse.content) {
-            if (typeof content === "string") {
-              text += content;
-            } else if ("text" in content) {
-              text += content.text;
-            }
-          }
-        }
-
-        return findLocationsInText(text);
-      };
-
-      const findLocation = (name: string): PlaceData | null =>
-        (locations as Record<string, PlaceData>)[name.toLowerCase()] ?? null;
-
-      const getPlaceGeoJsonUrl = (place: PlaceData): string =>
-        place.place === place.geojson
-          ? `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${place.geojson}.geojson`
-          : `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${place.geojson}.geojson`;
-
-      const foundPlaces = computed(() => {
-        const readingState = context.app.currentReadingState.value;
-
-        if (!readingState) {
-          return [];
-        }
-
-        const selectedVerses =
-          readingState.tab.readingState.selectedVerses.value;
-        return findLocationsInVerses(selectedVerses.map((v) => v.verse));
-      });
-
-      const showPlaceOnMap = async (place: PlaceData) => {
-        console.log("Show place!", place);
-
-        const url = getPlaceGeoJsonUrl(place);
-        const response = await fetch(url);
-
-        if (response.status !== 200) {
-          console.error(
-            "Failed to fetch geojson data for place:",
-            place,
-            response
-          );
+      // Re-runs on every selection change, not just a change of chapter, so a
+      // chapter that failed to load is tried again the next time a verse in
+      // it is selected. The client shares in-flight requests and caches what
+      // it gets, so the repeats cost nothing.
+      yield effect(() => {
+        const first = selectedVerses.value[0];
+        if (!first) {
           return;
         }
 
-        const data = await response.text();
+        const { bookId: book, chapterNumber: chapter } = first;
+        const loaded = chapterPlaces.peek();
+        if (loaded?.book === book && loaded.chapter === chapter) {
+          return;
+        }
 
-        // Generate the portal instance id once, here — not inside the pane's
-        // render function — so re-renders (dragging/resizing the pane) reuse the
-        // same `inst` and the map iframe keeps its document instead of
-        // reloading.
-        const inst = uuid();
+        let isCurrent = true;
+        void theographic.getChapterPlaces(book, chapter).then(
+          (places) => {
+            if (isCurrent) {
+              chapterPlaces.value = { book, chapter, places };
+            }
+          },
+          (error: unknown) => {
+            console.warn("Failed to load the places for", book, chapter, error);
+          }
+        );
+        return () => {
+          isCurrent = false;
+        };
+      });
 
-        context.panes.openPane({
-          placement: "floating",
-          title: place.place,
-          component: () => (
-            <PortalComponent
-              portal="map"
-              portalType="map"
-              pattern={geoImporterPattern}
-              inst={inst}
-              query={{
-                mapData: data,
-              }}
-            />
-          ),
-        });
-      };
+      const foundPlaces = computed(() => {
+        const loaded = chapterPlaces.value;
+        if (!loaded) {
+          return [];
+        }
+
+        const selected = new Set(
+          selectedVerses.value
+            .filter(
+              (v) =>
+                v.bookId === loaded.book && v.chapterNumber === loaded.chapter
+            )
+            .map((v) => v.verse.number)
+        );
+        return loaded.places.filter(
+          (place) =>
+            place.verses.some((verse) => selected.has(verse)) &&
+            theographic.canMapPlace(place)
+        );
+      });
 
       yield context.tools.registerVerseToolbarTool({
         id: "show-locations",
         title: { key: "title", ns: "ext_locations", defaultValue: "Locations" },
         icon: () => <LocationIcon />,
         isVisible: () => foundPlaces.value.length > 0,
-        getItems: () => {
-          return foundPlaces.value.map((place) => ({
-            id: `show-location-${place.place}`,
+        getItems: () =>
+          foundPlaces.value.map((place) => ({
+            id: `show-location-${place.id}`,
             title: {
               key: "show-location-place",
               ns: "ext_locations",
-              defaultValue: `Show ${place.place} on map`,
-              options: { place: place.place },
+              defaultValue: `Show ${place.name} on map`,
+              options: { place: place.name },
             },
             icon: () => <span></span>,
-            onSelect: async () => {
-              await showPlaceOnMap(place);
-            },
-          }));
-        },
+            onSelect: () => theographic.openPlace(place),
+          })),
         priority: 100,
       });
-
-      return {
-        findLocationsInText,
-        findLocationsInVerses,
-        foundPlaces,
-        findLocation,
-        getPlaceGeoJsonUrl,
-      };
     },
   });
 }

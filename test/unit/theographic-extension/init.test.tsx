@@ -1,10 +1,12 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import {
-  registerExtension,
+  getExtensionExports,
   setupExtensionContext,
   unregisterExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import type { TheographicExtensionApi } from "@packages/theographic-extension/ext_theographic/init";
+import type { TheographicPlaceEntry } from "@packages/theographic-extension/ext_theographic/provider";
 
 const { default: initTheographicExtension, openInSameTab } =
   await import("@packages/theographic-extension/ext_theographic/init");
@@ -20,23 +22,9 @@ function createContext() {
   return { context, discover };
 }
 
-/** Stands in for the locations extension, which Theographic depends on. */
-function registerLocations() {
-  registerExtension({
-    id: "ext_locations",
-    init: () => ({
-      findLocation: () => null,
-      getPlaceGeoJsonUrl: () => "",
-    }),
-  });
-}
-
-function install(options: { withLocations?: boolean } = {}) {
+function install() {
   const { context, discover } = createContext();
   setupExtensionContext(context);
-  if (options.withLocations ?? true) {
-    registerLocations();
-  }
   initTheographicExtension();
   return discover;
 }
@@ -44,14 +32,10 @@ function install(options: { withLocations?: boolean } = {}) {
 describe("initTheographicExtension", () => {
   afterEach(() => {
     unregisterExtension("theographic-extension");
-    unregisterExtension("ext_locations");
   });
 
-  it("waits for the locations extension before installing", () => {
-    const discover = install({ withLocations: false });
-    expect(discover.providers.value).toEqual([]);
-
-    registerLocations();
+  it("installs without any other extension", () => {
+    const discover = install();
 
     expect(discover.providers.value.map((provider) => provider.id)).toEqual([
       "theographic",
@@ -115,6 +99,88 @@ describe("initTheographicExtension", () => {
     // still feeding results into the panel.
     expect(discover.contentTypes.value).toEqual([]);
     expect(discover.providers.value).toEqual([]);
+  });
+});
+
+describe("the API it hands to dependent extensions", () => {
+  const BETHEL: TheographicPlaceEntry = {
+    id: "bethel_202",
+    name: "Bethel (of Palestine)",
+    latitude: 31.93053921,
+    longitude: 35.22103275,
+    apiLink: "/api/d/theographic/places/bethel_202.json",
+    verses: [3],
+  };
+
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    unregisterExtension("theographic-extension");
+  });
+
+  function installApi(response: Response = new Response("", { status: 500 })) {
+    const fetchMock = vi.fn().mockResolvedValue(response);
+    globalThis.fetch = fetchMock;
+    const { context } = createContext();
+    setupExtensionContext(context);
+    initTheographicExtension();
+    const api = getExtensionExports<TheographicExtensionApi>(
+      "theographic-extension"
+    )!;
+    return { api, fetchMock, openPane: context.panes.openPane };
+  }
+
+  it("lists the places a chapter mentions, with their verses", async () => {
+    const chapter = {
+      chapter: { number: 13, people: [], places: [BETHEL], events: [] },
+    };
+    const { api, fetchMock } = installApi(
+      new Response(JSON.stringify(chapter), { status: 200 })
+    );
+
+    await expect(api.getChapterPlaces("GEN", 13)).resolves.toEqual([BETHEL]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://bible.example/api/d/theographic/GEN/13.json"
+    );
+  });
+
+  it("lists no places for a chapter the dataset has nothing for", async () => {
+    const { api } = installApi(new Response("", { status: 404 }));
+
+    await expect(api.getChapterPlaces("OBA", 1)).resolves.toEqual([]);
+  });
+
+  it("rejects when the chapter can't be loaded", async () => {
+    const { api } = installApi(new Response("", { status: 500 }));
+
+    await expect(api.getChapterPlaces("GEN", 14)).rejects.toThrow();
+  });
+
+  it("opens a place in its own floating pane", () => {
+    const { api, openPane } = installApi();
+
+    api.openPlace(BETHEL);
+
+    expect(openPane).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "theographic-place-bethel_202",
+        placement: "floating",
+        title: "Bethel (of Palestine)",
+      })
+    );
+  });
+
+  it("can't map a place with neither a file nor coordinates", () => {
+    const { api } = installApi();
+    const { latitude: _lat, longitude: _lng, ...unplaced } = BETHEL;
+
+    expect(api.canMapPlace(BETHEL)).toBe(true);
+    expect(api.canMapPlace({ ...unplaced, name: "Abana" })).toBe(false);
   });
 });
 

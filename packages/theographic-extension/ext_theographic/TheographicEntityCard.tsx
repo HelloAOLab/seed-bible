@@ -32,7 +32,7 @@ import type {
   TheographicReference,
   TheographicRelatedEntity,
 } from "./provider";
-import { PlaceMap, canMapPlace, type PlaceLocations } from "./map";
+import { PlaceMap, canMapPlace } from "./map";
 import { withoutQualifier } from "./names";
 
 type TheographicEntry =
@@ -63,8 +63,6 @@ interface TheographicEntityCardProps {
    * in a pane: panes there take the whole screen, over the card that opened it.
    */
   isMobile?: ReadonlySignal<boolean>;
-  /** The locations extension's lookup, for places it has a map file for. */
-  locations?: PlaceLocations;
   /** Book names and verse text in the reader's translation. */
   scripture?: ScriptureReader;
 }
@@ -205,7 +203,6 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
     openPlace,
     isPlaceOpen,
     isMobile,
-    locations,
     scripture,
   } = props;
   const { t } = useI18n("theographic-extension");
@@ -215,9 +212,9 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
     contentType === PLACE_CONTENT_TYPE
       ? (entry as TheographicPlaceEntry)
       : null;
-  // A place can be drawn from the locations extension's file even when the
+  // A place can be drawn from its additionalGeoJSON.json file even when the
   // dataset has no coordinates for it.
-  const isMappable = place != null && canMapPlace(place, locations);
+  const isMappable = place != null && canMapPlace(place);
 
   const isExpanded = useSignal(false);
   const detail = useSignal<DetailState>({ status: "idle" });
@@ -378,7 +375,7 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
                 place && isMappable && !isPlaceOpen?.(place) ? (
                   <PlaceMap
                     place={place}
-                    sources={{ client, locations }}
+                    sources={{ client }}
                     label={t("map-of", {
                       place: place.name,
                       defaultValue: "Map of {{place}}",

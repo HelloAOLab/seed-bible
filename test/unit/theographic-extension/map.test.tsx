@@ -7,11 +7,10 @@ import {
   canMapPlace,
   createIsPlaceOpen,
   createOpenPlace,
-  findKnownLocation,
+  findAdditionalGeoJsonUrl,
   fitsInPortalUrl,
   placePaneId,
   resolvePlaceMapData,
-  type PlaceLocations,
 } from "@packages/theographic-extension/ext_theographic/map";
 import type { TheographicPlaceEntry } from "@packages/theographic-extension/ext_theographic/provider";
 
@@ -53,57 +52,43 @@ function place(
   };
 }
 
-/** A stand-in for the locations extension's API, listing a few places. */
-function fakeLocations(): PlaceLocations & {
-  findLocation: ReturnType<typeof vi.fn>;
-} {
-  const table: Record<string, { place: string; geojson: string }> = {
-    erech: { place: "Erech", geojson: "Erech" },
-    jerusalem: { place: "Jerusalem", geojson: "m66c5b8" },
-    bethel: { place: "Bethel", geojson: "Bethel" },
-  };
-  return {
-    findLocation: vi.fn((name: string) => table[name.toLowerCase()] ?? null),
-    getPlaceGeoJsonUrl: (entry) => `https://files.test/${entry.geojson}.json`,
-  };
-}
+// Erech, Bethel and Jerusalem are listed in additionalGeoJSON.json; Abana isn't.
+const ERECH_FILE =
+  "https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/Erech.geojson";
+const BETHEL_FILE =
+  "https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/Bethel.geojson";
+const JERUSALEM_FILE =
+  "https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/m66c5b8.geojson";
 
-describe("findKnownLocation", () => {
-  it("asks the locations extension for the name", () => {
-    expect(findKnownLocation("Jerusalem", fakeLocations())).toEqual({
-      place: "Jerusalem",
-      geojson: "m66c5b8",
-    });
+describe("findAdditionalGeoJsonUrl", () => {
+  it("points a hand-built entry at the file named after it", () => {
+    expect(findAdditionalGeoJsonUrl("Erech")).toBe(ERECH_FILE);
+  });
+
+  it("points an OpenBible entry at its file by OpenBible id", () => {
+    expect(findAdditionalGeoJsonUrl("Jerusalem")).toBe(JERUSALEM_FILE);
+  });
+
+  it("ignores case", () => {
+    expect(findAdditionalGeoJsonUrl("JERUSALEM")).toBe(JERUSALEM_FILE);
   });
 
   it("drops the dataset's qualifier when the full name isn't listed", () => {
-    expect(findKnownLocation("Bethel (of Palestine)", fakeLocations())).toEqual(
-      { place: "Bethel", geojson: "Bethel" }
-    );
+    expect(findAdditionalGeoJsonUrl("Bethel (of Palestine)")).toBe(BETHEL_FILE);
   });
 
-  it("answers null for a place the extension doesn't list", () => {
-    expect(findKnownLocation("Abana", fakeLocations())).toBeNull();
-  });
-
-  it("answers null without the locations extension", () => {
-    expect(findKnownLocation("Erech", undefined)).toBeNull();
+  it("answers null for a place the file doesn't list", () => {
+    expect(findAdditionalGeoJsonUrl("Abana")).toBeNull();
   });
 });
 
 describe("canMapPlace", () => {
   it("can map a place that is listed or has coordinates, and nothing else", () => {
-    const locations = fakeLocations();
-
-    expect(canMapPlace(place("Erech"), locations)).toBe(true);
+    expect(canMapPlace(place("Erech"))).toBe(true);
     expect(
-      canMapPlace(
-        place("Abana", { latitude: 33.5, longitude: 36.3 }),
-        locations
-      )
+      canMapPlace(place("Abana", { latitude: 33.5, longitude: 36.3 }))
     ).toBe(true);
-    expect(canMapPlace(place("Abana"), locations)).toBe(false);
-    expect(canMapPlace(place("Erech"), undefined)).toBe(false);
+    expect(canMapPlace(place("Abana"))).toBe(false);
   });
 });
 
@@ -126,15 +111,11 @@ describe("resolvePlaceMapData", () => {
     const getResource = vi.fn().mockResolvedValue(geojson);
 
     await expect(
-      resolvePlaceMapData(place("Jerusalem"), {
-        client: { getResource },
-        locations: fakeLocations(),
-      })
+      resolvePlaceMapData(place("Jerusalem"), { client: { getResource } })
     ).resolves.toBe(JSON.stringify(geojson));
-    expect(getResource).toHaveBeenCalledWith(
-      "https://files.test/m66c5b8.json",
-      { maxLength: MAX_MAP_DATA_LENGTH }
-    );
+    expect(getResource).toHaveBeenCalledWith(JERUSALEM_FILE, {
+      maxLength: MAX_MAP_DATA_LENGTH,
+    });
   });
 
   it("builds a point for an unlisted place without fetching anything", async () => {
@@ -142,7 +123,7 @@ describe("resolvePlaceMapData", () => {
 
     const data = await resolvePlaceMapData(
       place("Abana", { latitude: 33.5, longitude: 36.3 }),
-      { client: { getResource }, locations: fakeLocations() }
+      { client: { getResource } }
     );
 
     expect(getResource).not.toHaveBeenCalled();
@@ -156,7 +137,7 @@ describe("resolvePlaceMapData", () => {
 
     const data = await resolvePlaceMapData(
       place("Erech", { latitude: 31.3, longitude: 45.6 }),
-      { client: { getResource }, locations: fakeLocations() }
+      { client: { getResource } }
     );
 
     expect(JSON.parse(data!)).toMatchObject({
@@ -171,21 +152,18 @@ describe("resolvePlaceMapData", () => {
 
     const data = await resolvePlaceMapData(
       place("Erech", { latitude: 31.3, longitude: 45.6 }),
-      { client: { getResource }, locations: fakeLocations() }
+      { client: { getResource } }
     );
 
     expect(JSON.parse(data!)).toMatchObject({ geometry: { type: "Point" } });
   });
 
-  it("draws the coordinates without the locations extension", async () => {
-    const getResource = vi.fn();
-
+  it("draws the coordinates when there is no client to fetch the file with", async () => {
     const data = await resolvePlaceMapData(
       place("Erech", { latitude: 31.3, longitude: 45.6 }),
-      { client: { getResource } }
+      {}
     );
 
-    expect(getResource).not.toHaveBeenCalled();
     expect(JSON.parse(data!)).toMatchObject({ geometry: { type: "Point" } });
   });
 
@@ -193,10 +171,7 @@ describe("resolvePlaceMapData", () => {
     const getResource = vi.fn().mockRejectedValue(new Error("offline"));
 
     await expect(
-      resolvePlaceMapData(place("Erech"), {
-        client: { getResource },
-        locations: fakeLocations(),
-      })
+      resolvePlaceMapData(place("Erech"), { client: { getResource } })
     ).resolves.toBeNull();
   });
 });
@@ -248,10 +223,7 @@ describe("createOpenPlace", () => {
     const panes = createPanes();
     const erech = place("Erech");
 
-    createOpenPlace(panes, {
-      client: { getResource },
-      locations: fakeLocations(),
-    })?.(erech);
+    createOpenPlace(panes, { client: { getResource } })?.(erech);
     renderPane(panes, placePaneId(erech));
 
     expect(container.querySelector(".sb-theographic-map-loading")).toBeTruthy();
@@ -273,7 +245,6 @@ describe("createOpenPlace", () => {
 
     createOpenPlace(panes, {
       client: { getResource: () => Promise.reject(new Error("offline")) },
-      locations: fakeLocations(),
     })?.(erech);
     renderPane(panes, placePaneId(erech));
     await flush();
@@ -286,7 +257,7 @@ describe("createOpenPlace", () => {
   it("opens nothing for a place there is nothing to draw for", () => {
     const panes = createPanes();
 
-    createOpenPlace(panes, { locations: fakeLocations() })?.(place("Abana"));
+    createOpenPlace(panes)?.(place("Abana"));
 
     expect(panes.panes.value).toHaveLength(0);
   });
