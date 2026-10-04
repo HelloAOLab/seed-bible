@@ -1559,6 +1559,12 @@ export function createSeedBibleState(
       if (!tabsRestored.value) {
         return;
       }
+      // The share-sheet preview is this same origin, so it shares the
+      // reader's localStorage. Writing here would replace their tabs with
+      // whatever chapter the preview was left on.
+      if (isMinimalEmbed.value) {
+        return;
+      }
 
       const persistedTabs = buildPersistedTabs();
       const persistableIds = new Set(persistedTabs.map((tab) => tab.id));
@@ -2055,6 +2061,11 @@ export function createSeedBibleState(
    */
   const READING_MAX_TICK_CREDIT_MS = READING_TICK_MS * 2;
   effect(() => {
+    // Same origin as the page around the share preview, so time the preview
+    // sits open must not become the viewer's reading history.
+    if (isMinimalEmbed.value) {
+      return;
+    }
     if (!selectedTab.value) {
       return;
     }

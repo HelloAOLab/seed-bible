@@ -8,6 +8,7 @@ import {
 import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import { SYSTEM_THEME_ID, type ThemeHighlightColor } from "./ThemeManager";
 import { parseNumber } from "./Utils";
 
@@ -818,6 +819,17 @@ export function createSettings(
       sessionOverrides[urlKey] ??
       local[profileKey];
 
+    // The embed link's theme is the look the site owner chose. The viewer's
+    // saved theme and color edits would otherwise paint over it, so the
+    // preview (and every signed-in visitor) would ignore the link.
+    const embedTheme = sessionOverrides[TAG_THEME_ID];
+    const pinnedEmbedTheme =
+      isMinimalEmbedUrl(navigation.currentUrl.value) &&
+      typeof embedTheme === "string" &&
+      embedTheme.trim().length > 0
+        ? embedTheme.trim()
+        : undefined;
+
     return {
       fontSize: parseFontSize(
         read(PROFILE_FONT_SIZE, TAG_FONT_SIZE),
@@ -867,15 +879,17 @@ export function createSettings(
         DEFAULT_SETTINGS.scriptureWidth
       ),
       themeId: parseThemeId(
-        read(PROFILE_THEME_ID, TAG_THEME_ID),
+        pinnedEmbedTheme ?? read(PROFILE_THEME_ID, TAG_THEME_ID),
         DEFAULT_SETTINGS.themeId
       ),
-      customTheme: parseStringRecord(
-        read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)
-      ),
-      customHighlights: parseHighlightOverrides(
-        read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
-      ),
+      customTheme: pinnedEmbedTheme
+        ? {}
+        : parseStringRecord(read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)),
+      customHighlights: pinnedEmbedTheme
+        ? {}
+        : parseHighlightOverrides(
+            read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
+          ),
       discoverContentPanelInline: parseBoolean(
         read(
           PROFILE_DISCOVER_CONTENT_PANEL_INLINE,

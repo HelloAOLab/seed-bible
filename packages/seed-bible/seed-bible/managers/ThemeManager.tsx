@@ -6,6 +6,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { SettingsManager } from "./SettingsManager";
 
 export interface BibleThemeVariables {
@@ -1358,15 +1359,25 @@ export function createTheme(
       const text = themeStyleText.value;
       if (skipWrite) {
         skipWrite = false;
-        // Keep the already-painted CSS (it may be dark while `currentTheme`
-        // is still the light default — see the skipWrite comment above),
-        // but copy its --sb-background onto the status-bar meta. The
-        // inline script does this too; doing it here covers a cached
+        // An embed document's theme is already known from the link, and the
+        // tag may still be the visitor's saved theme. Write the link's theme
+        // now. Everywhere else, keep the already-painted CSS (it may be dark
+        // while `currentTheme` is still the light default — see the skipWrite
+        // comment above) and only copy its --sb-background onto the status-bar
+        // meta. The inline script does this too; doing it here covers a cached
         // document whose script predates that update.
-        applyBrowserThemeColorFromCss(
-          document.getElementById("sb-theme-styles")?.textContent ?? ""
-        );
-        return;
+        let embedDocument = false;
+        try {
+          embedDocument = isMinimalEmbedUrl(new URL(window.location.href));
+        } catch {
+          embedDocument = false;
+        }
+        if (!embedDocument) {
+          applyBrowserThemeColorFromCss(
+            document.getElementById("sb-theme-styles")?.textContent ?? ""
+          );
+          return;
+        }
       }
       // A broken compose (empty, or a value that closed `body {` early) would
       // replace the live theme tag and strip every `--sb-*` color until

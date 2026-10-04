@@ -742,7 +742,8 @@ function renderChapterContent(
     verse: BibleSelectedVerse,
     verseNumber: number,
     event: MouseEvent
-  ) => void
+  ) => void,
+  hideHighlights = false
 ) {
   if (!chapterData) {
     return null;
@@ -793,6 +794,13 @@ function renderChapterContent(
   // reader's own highlight rather than replacing it, so the outline is what
   // says "this isn't yours, and yours is still underneath".
   const getVerseHighlight = (verseNumber: number): ResolvedHighlight | null => {
+    // Embeds (including the share-sheet preview of one) must not paint
+    // highlights. A signed-in viewer's own highlights would show there, and
+    // a visitor of the embed does not have them.
+    if (hideHighlights) {
+      return null;
+    }
+
     const decorated = decorationHighlights.get(verseNumber);
     if (decorated) {
       return { highlight: decorated, broadcast: true };
@@ -1817,6 +1825,11 @@ interface ChapterContentProps {
    * when none are. Drives the presence this client publishes.
    */
   onVisibleVersesChange?: (range: VisibleVerseRange | null) => void;
+  /**
+   * Skip every verse highlight, saved and broadcast. Used by the compact
+   * embed so the page does not show highlights the visitor does not have.
+   */
+  hideHighlights?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1837,6 +1850,7 @@ function ChapterContent(props: ChapterContentProps) {
     isMobile = false,
     presence,
     onVisibleVersesChange,
+    hideHighlights = false,
   } = props;
 
   const { t } = useI18n();
@@ -2439,7 +2453,8 @@ function ChapterContent(props: ChapterContentProps) {
         decorations.value,
         chapterAnnotations,
         scriptureElements,
-        onAnnotationVerseClick
+        onAnnotationVerseClick,
+        hideHighlights
       )}
     </div>
   );
@@ -2980,6 +2995,7 @@ export function BibleReader(props: BibleReaderProps) {
               highlights={highlights}
               decorations={decorations}
               annotations={state?.annotations}
+              hideHighlights={isMinimalEmbed}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
@@ -3028,7 +3044,7 @@ export function BibleReader(props: BibleReaderProps) {
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
   const extraContent =
-    state && !state.app.isDiscoverOpen.value ? (
+    state && !isMinimalEmbed && !state.app.isDiscoverOpen.value ? (
       <DiscoverContentPanel tab={currentSlot.tab} state={state} />
     ) : null;
 
@@ -3142,6 +3158,10 @@ export function BibleReader(props: BibleReaderProps) {
                     toast={state.app.toast}
                     modals={state.modals}
                     app={state.app}
+                    embedThemes={state.theme?.themes}
+                    customizationLocator={
+                      state.customizations?.activeCustomizationLocator
+                    }
                     className="sb-quick-toolbar-mobile-header"
                   />
                   {/*
@@ -3289,6 +3309,10 @@ export function BibleReader(props: BibleReaderProps) {
                   toast={state.app.toast}
                   modals={state.modals}
                   app={state.app}
+                  embedThemes={state.theme?.themes}
+                  customizationLocator={
+                    state.customizations?.activeCustomizationLocator
+                  }
                   className="sb-quick-toolbar-reader"
                 />
               </div>

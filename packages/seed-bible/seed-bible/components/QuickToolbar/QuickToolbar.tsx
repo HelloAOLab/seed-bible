@@ -12,6 +12,7 @@ import type { AnnotationsManager } from "../../managers/AnnotationsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
+import type { EmbedThemeChoice } from "../../managers/EmbedMode";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;
@@ -26,6 +27,10 @@ interface QuickToolbarProps {
   toast?: (message: string) => void;
   modals?: ModalManager;
   app?: AppState;
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /** Active customization locator, kept on the embed URL. */
+  customizationLocator?: { readonly value: string | null };
 }
 
 /**
@@ -50,6 +55,8 @@ export function QuickToolbar(props: QuickToolbarProps) {
     toast: props.toast,
     modals: props.modals,
     app: props.app,
+    embedThemes: props.embedThemes,
+    customizationLocator: props.customizationLocator,
   });
   const visibleTools = tools.filter((tool) => tool.visible.value);
 

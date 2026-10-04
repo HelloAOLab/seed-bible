@@ -10,6 +10,7 @@ import {
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
@@ -625,6 +626,12 @@ export interface CustomizationsManager {
    * was loaded via the URL.
    */
   activeCustomization: ReadonlySignal<SeedBibleCustomization | null>;
+  /**
+   * `recordName.id` for `activeCustomization`, or null when nothing is
+   * active (or a draft is open before the owner is signed in, so there is
+   * no record name to build a share link from).
+   */
+  activeCustomizationLocator: ReadonlySignal<string | null>;
   /** The variant of the active customization currently in effect (the device's color scheme when `isFollowingSystemScheme`, else the viewer's own pick, else the customization's default, else its first variant). */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
   /** Whether the active customization has both a Light-based and a Dark-based variant, and so can follow the device the way the app-wide System theme does. False when nothing is active. */
@@ -1205,6 +1212,31 @@ export function createCustomizationsManager(
     }
     const byId = (id: string | null | undefined) =>
       id ? customization.variants.find((v) => v.id === id) : undefined;
+    // The embed link names the theme. A saved variant pick would leave the
+    // preview on one look no matter which theme the link asked for.
+    if (isMinimalEmbedUrl(navigation.currentUrl.value)) {
+      const themeId = theme.selectedThemeId.value;
+      const baseThemeId =
+        themeId === SYSTEM_THEME_ID
+          ? theme.prefersDarkScheme.value
+            ? DARK_THEME.id
+            : LIGHT_THEME.id
+          : themeId;
+      const linked = customization.variants.find(
+        (variant) => variant.baseTheme === baseThemeId
+      );
+      if (linked) {
+        return linked;
+      }
+      // No variant matches the link's theme (only a light variant, or a
+      // branding theme id). The viewer's saved pick is not what a visitor
+      // to the embed sees — they get the customization's default.
+      return (
+        byId(customization.defaultVariantId) ??
+        customization.variants[0] ??
+        null
+      );
+    }
     const bySystemScheme = isFollowingSystemScheme.value
       ? customization.variants.find(
           (v) =>
@@ -2019,6 +2051,7 @@ export function createCustomizationsManager(
     customizations,
     isLoading,
     activeCustomization,
+    activeCustomizationLocator,
     activeVariant,
     canFollowSystemScheme,
     isFollowingSystemScheme,
