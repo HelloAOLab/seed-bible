@@ -1,7 +1,6 @@
 import "./BibleReader.inline.css";
 import "./BibleReader.css";
 import {
-  type AvailableTranslations,
   type Translation,
   type TranslationBookChapter,
   type ChapterVerse,
@@ -2379,20 +2378,27 @@ function ChapterContent(props: ChapterContentProps) {
 }
 
 /**
- * The current translation's metadata, falling back to the catalog entry when
- * its book list hasn't loaded — `translation` comes from that book list, which
- * is exactly what's missing when a translation never opened fails offline.
+ * A translation's metadata, from the reader's own book list when that's the
+ * one asked for, otherwise from the first catalog that has it. The book list
+ * alone isn't enough: it's missing when a translation never opened fails
+ * offline, and it belongs to the translation on screen, not one a failed
+ * switch was headed for.
  */
 function resolveTranslation(
   translationId: string,
   fromBookList: Translation | null,
-  catalog: AvailableTranslations | null
+  ...catalogs: Array<readonly Translation[] | null | undefined>
 ): Translation | null {
-  return (
-    fromBookList ??
-    catalog?.translations.find((entry) => entry.id === translationId) ??
-    null
-  );
+  if (fromBookList?.id === translationId) {
+    return fromBookList;
+  }
+  for (const catalog of catalogs) {
+    const entry = catalog?.find((candidate) => candidate.id === translationId);
+    if (entry) {
+      return entry;
+    }
+  }
+  return null;
 }
 
 export function BibleReader(props: BibleReaderProps) {
@@ -2418,6 +2424,7 @@ export function BibleReader(props: BibleReaderProps) {
     loading,
     isChapterContentStale,
     error,
+    failedTranslationId,
     selectVerse,
     clearSelectedVerses,
     selectedFootnote,
@@ -2740,28 +2747,40 @@ export function BibleReader(props: BibleReaderProps) {
   // Keep the failure state on screen while a retry is in flight — `retryLoad()`
   // clears `error` as it starts, so without this the panel would flash back to
   // the (still empty) chapter body before the new request settles.
-  const [retrying, setRetrying] = useState(false);
+  //
+  // Holds the translation being retried rather than a flag: `error` (and with
+  // it `failedTranslationId`) is cleared for the length of the retry, and the
+  // panel still has to say which translation failed.
+  const [retryingTranslationId, setRetryingTranslationId] = useState<
+    string | null
+  >(null);
+  const retrying = retryingTranslationId !== null;
   const offline = state?.bibleData?.offline;
   const retryChapterLoad = async () => {
     if (retrying) return;
-    const failedTranslationId = translationId.peek();
-    setRetrying(true);
+    const attemptedTranslationId =
+      failedTranslationId.peek() ?? translationId.peek();
+    setRetryingTranslationId(attemptedTranslationId);
     try {
       await readingState.retryLoad();
     } finally {
-      setRetrying(false);
+      setRetryingTranslationId(null);
     }
+    // A recovery only if the reader ended up on the translation that failed:
+    // retrying a failed switch lands there, but a reader who moved somewhere
+    // else mid-retry is looking at a chapter that never failed to load.
     if (
       !offline ||
       error.peek() ||
-      translationId.peek() !== failedTranslationId
+      translationId.peek() !== attemptedTranslationId
     ) {
       return;
     }
     const recoveredTranslation = resolveTranslation(
-      failedTranslationId,
+      attemptedTranslationId,
       translation.peek(),
-      availableTranslations.peek()
+      availableTranslations.peek()?.translations,
+      state?.bibleData?.availableTranslations?.peek()
     );
     if (recoveredTranslation) {
       offline.offerRecoveryPrompt(recoveredTranslation);
@@ -2769,10 +2788,16 @@ export function BibleReader(props: BibleReaderProps) {
   };
   const showLoadError = (!!error.value && !loading.value) || retrying;
 
+  const failedId =
+    retryingTranslationId ?? failedTranslationId.value ?? translationId.value;
+  // The app-wide catalog too: the reader's own copy is only filled in by some
+  // load paths, and a switch picked from the selector's list may be the first
+  // this reader has heard of that translation.
   const failedTranslation = resolveTranslation(
-    translationId.value,
+    failedId,
     translation.value,
-    availableTranslations.value
+    availableTranslations.value?.translations,
+    state?.bibleData?.availableTranslations?.value
   );
   const failedTranslationNotSaved =
     !!offline?.supported &&
@@ -2781,7 +2806,7 @@ export function BibleReader(props: BibleReaderProps) {
   const hasOtherSavedTranslation =
     !!offline?.supported &&
     [...offline.downloaded.value.keys()].some(
-      (savedId) => savedId !== translationId.value
+      (savedId) => savedId !== failedId
     );
 
   const renderMainContent = () => (

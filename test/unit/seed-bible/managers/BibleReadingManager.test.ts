@@ -2430,6 +2430,47 @@ describe("createBibleReadingState", () => {
     expect(state.chapterData.value?.chapter.number).toBe(1);
   });
 
+  it("names the translation a failed switch was for, not the one still on screen", async () => {
+    const responses = createReadingManagerResponseMap();
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+    expect(state.failedTranslationId.value).toBeNull();
+
+    // Offline: NIV's book list can't be fetched, so the switch fails before
+    // the reading position ever moves.
+    await state.selectTranslation("NIV");
+
+    expect(state.error.value).not.toBeNull();
+    expect(state.translationId.value).toBe("AAB");
+    expect(state.failedTranslationId.value).toBe("NIV");
+
+    // Back online, the user presses Reload: the switch completes, and with no
+    // error left there's no failed translation to name.
+    responses[makeExampleUrl("/api/NIV/books.json")] = createResponse(nivBooks);
+    responses[makeExampleUrl("/api/NIV/MAT/1.json")] = createResponse(
+      makeChapter(nivBooks, "MAT", 1)
+    );
+    await state.retryLoad();
+
+    expect(state.error.value).toBeNull();
+    expect(state.translationId.value).toBe("NIV");
+    expect(state.failedTranslationId.value).toBeNull();
+  });
+
+  it("names the translation on screen when its own chapter fails", async () => {
+    const responses = createReadingManagerResponseMap();
+    const chapterUrl = makeExampleUrl("/api/AAB/GEN/2.json");
+    responses[chapterUrl] = createResponse({ error: true }, 500, "Error");
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    await state.selectChapter("GEN", 2);
+
+    expect(state.failedTranslationId.value).toBe("AAB");
+  });
+
   it("loads a valid translation named by the URL without ever fetching the full translation catalog", async () => {
     // The overwhelmingly common case — a URL that already names a valid
     // translation — should validate it against just that translation's own
