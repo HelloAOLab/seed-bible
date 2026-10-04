@@ -161,3 +161,51 @@ describe("reading plan hero image", () => {
     expect(container.textContent).toContain("Read John in a month.");
   });
 });
+
+describe("reading plan options menu", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  it("puts share, edit, and delete in a menu on the plan card", () => {
+    const readingPlan = plan({
+      title: "Gospel of John",
+      description: "Read John in a month.",
+    });
+
+    act(() => {
+      render(
+        <ReadingPlansPane
+          readingPlans={listManager([readingPlan])}
+          books={[]}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-rp-card-actions")).toBeNull();
+    expect(container.querySelector(".sb-rp-restart")).toBeNull();
+
+    const options = container.querySelector(
+      '[aria-label="Reading plan options"]'
+    ) as HTMLButtonElement | null;
+    expect(options).not.toBeNull();
+
+    act(() => {
+      options?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const menu = document.body.querySelector('[role="menu"]');
+    expect(menu?.textContent).toContain("Share plan");
+    expect(menu?.textContent).toContain("Edit plan");
+    expect(menu?.textContent).toContain("Delete");
+  });
+});

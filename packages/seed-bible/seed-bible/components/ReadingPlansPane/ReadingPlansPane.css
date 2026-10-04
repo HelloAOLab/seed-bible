@@ -151,19 +151,15 @@
   gap: 12px;
 }
 
-/* A card plus the things that hang off it: its edit/delete row, and the load
-   error shown in place of opening a dead screen. */
+/* A card plus the load error shown in place of opening a dead screen. */
 .sb-rp-card-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.sb-rp-card-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+.sb-rp-card-menu {
+  flex: none;
 }
 
 .sb-rp-card-error {
@@ -174,6 +170,7 @@
 }
 
 .sb-rp-card:disabled,
+.sb-rp-card--opening,
 .sb-rp-card-open:disabled,
 .sb-rp-today:disabled {
   cursor: progress;

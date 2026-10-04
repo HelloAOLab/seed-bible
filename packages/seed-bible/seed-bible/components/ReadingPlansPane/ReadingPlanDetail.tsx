@@ -35,6 +35,7 @@ import {
   readingPreviewText,
 } from "./readingPreview";
 import { HeroImageBanner } from "../HeroImageField/HeroImageField";
+import { ReadingPlanOptionsMenu } from "./ReadingPlanOptionsMenu";
 
 interface ReadingPlanDetailProps {
   readingPlans: ReadingPlansManager;
@@ -97,7 +98,6 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
   const [celebrationDay, setCelebrationDay] = useState<number | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [pace, setPace] = useState<string | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   // Scripture readings covering several chapters can be opened out to tick off
   // one chapter at a time; keyed by reading id.
   const [expandedReadingId, setExpandedReadingId] = useState<string | null>(
@@ -124,69 +124,22 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     return null;
   }
 
-  const deletePlan = async () => {
-    if (!confirmingDelete) {
-      setConfirmingDelete(true);
-      return;
-    }
-    setConfirmingDelete(false);
-    try {
-      await readingPlans.deleteReadingPlan(plan);
-      onDeleted?.();
-    } catch (error) {
-      console.error("Failed to delete reading plan:", error);
-    }
-  };
-
   /**
-   * Edit and delete for the open plan. Delete is offered whether or not the
-   * plan is the user's to edit — a plan you can't get rid of is a plan you're
-   * stuck with — and asks once before erasing anything.
+   * Share, edit, and delete for the open plan, in the same menu a playlist
+   * row uses. Delete is offered whether or not the plan is the user's to
+   * edit — a plan you can't get rid of is a plan you're stuck with.
    */
   const planActions = (
     <div className="sb-rpd-plan-actions">
-      <button
-        type="button"
-        className="sb-rp-icon-button"
-        onClick={() => {
-          void navigator.clipboard.writeText(
-            readingPlans.getReadingPlanShareUrl(plan)
-          );
-          toast?.(
-            t("reading-plan-url-copied", {
-              defaultValue: "Reading plan URL copied to clipboard",
-            })
-          );
-        }}
-        aria-label={t("share-reading-plan", { defaultValue: "Share plan" })}
-        title={t("share-reading-plan", { defaultValue: "Share plan" })}
-      >
-        <MaterialIcon>share</MaterialIcon>
-      </button>
-      {canEdit && onEdit ? (
-        <button
-          type="button"
-          className="sb-rp-icon-button"
-          onClick={onEdit}
-          aria-label={t("edit-reading-plan", { defaultValue: "Edit plan" })}
-          title={t("edit-reading-plan", { defaultValue: "Edit plan" })}
-        >
-          <MaterialIcon>edit</MaterialIcon>
-        </button>
-      ) : null}
-      <button
-        type="button"
-        className={`sb-rp-restart${
-          confirmingDelete ? " sb-rp-restart-danger" : ""
-        }`}
-        onClick={() => void deletePlan()}
-      >
-        {confirmingDelete
-          ? t("reading-plan-delete-confirm", {
-              defaultValue: "Delete for good?",
-            })
-          : t("reading-plan-delete", { defaultValue: "Delete" })}
-      </button>
+      <ReadingPlanOptionsMenu
+        readingPlans={readingPlans}
+        plan={plan}
+        fullPlan={plan}
+        onEdit={canEdit && onEdit ? onEdit : undefined}
+        onDeleted={onDeleted}
+        modals={modals}
+        toast={toast}
+      />
     </div>
   );
 
