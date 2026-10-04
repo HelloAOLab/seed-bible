@@ -118,6 +118,11 @@ export const ShareModal = (props: ShareModalProps) => {
       props.app.toast(t("copied", { defaultValue: "Copied" }));
     } catch (error) {
       console.error("Failed to copy the embed code.", error);
+      props.app.toast(
+        t("share-embed-copy-failed", {
+          defaultValue: "Couldn't copy the embed code",
+        })
+      );
     }
   };
 

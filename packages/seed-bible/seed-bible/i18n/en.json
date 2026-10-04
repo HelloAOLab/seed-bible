@@ -594,6 +594,7 @@
   "share-embed-theme": "Theme",
   "share-embed-code": "Embed code",
   "share-embed-preview": "Preview",
+  "share-embed-copy-failed": "Couldn't copy the embed code",
   "signed-out-message": "You've been signed out. Please sign in again.",
   "account-suspended-message": "Your account has been suspended.",
   "loading-chapter": "Loading chapter…",

@@ -494,6 +494,7 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
       config: {
         themeId: "dark",
         customTheme: { background: "#123456" },
+        customHighlights: { yellow: { color: "#ffff00" } },
       },
     } as unknown as UserProfile);
     const settings = createSettings(
@@ -504,6 +505,7 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
 
     expect(settings.settings.value.themeId).toBe("light");
     expect(settings.settings.value.customTheme).toEqual({});
+    expect(settings.settings.value.customHighlights).toEqual({});
   });
 });
 

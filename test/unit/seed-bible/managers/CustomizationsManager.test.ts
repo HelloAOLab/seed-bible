@@ -2581,6 +2581,25 @@ describe("CustomizationsManager", () => {
       return { lightVariantId: light.id, darkVariantId: dark.id };
     }
 
+    it("uses the customization default when the embed theme matches no variant", async () => {
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref: "http://localhost/?embed=minimal&app.themeId=dark",
+        })
+      );
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      const light = created.variants[0]!;
+      manager.applyPresetToEditingVariant(light.id, "light");
+      const saved = manager.addEditingVariant()!;
+      manager.applyPresetToEditingVariant(saved.id, "light");
+      manager.setEditingDefaultVariant(light.id);
+      await manager.selectActiveVariant(saved.id);
+      settings.setThemeId("dark");
+
+      expect(manager.activeVariant.value?.id).toBe(light.id);
+    });
+
     it("follows the embed link's theme instead of a saved variant", async () => {
       const { manager } = createManager(
         createNavigationManager({

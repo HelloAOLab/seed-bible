@@ -1228,6 +1228,14 @@ export function createCustomizationsManager(
       if (linked) {
         return linked;
       }
+      // No variant matches the link's theme (only a light variant, or a
+      // branding theme id). The viewer's saved pick is not what a visitor
+      // to the embed sees — they get the customization's default.
+      return (
+        byId(customization.defaultVariantId) ??
+        customization.variants[0] ??
+        null
+      );
     }
     const bySystemScheme = isFollowingSystemScheme.value
       ? customization.variants.find(

@@ -179,6 +179,23 @@ describe("ShareModal embed", () => {
     expect(state.app.currentToast.value?.message).toBe("Copied");
   });
 
+  it("tells the user when copying the embed code fails", async () => {
+    writeText.mockRejectedValue(new Error("clipboard denied"));
+    await renderSheet({ shareUrl });
+
+    await act(async () => {
+      clickButton("Embed").click();
+    });
+    await act(async () => {
+      clickButton("Copy").click();
+    });
+
+    expect(state.app.currentToast.value?.message).toBe(
+      "Couldn't copy the embed code"
+    );
+    expect(container.querySelector("textarea")).not.toBeNull();
+  });
+
   it("opens Embed from the share sheet with the passage theme and customization", async () => {
     const modals = createModalManager();
     const themes = signal([
