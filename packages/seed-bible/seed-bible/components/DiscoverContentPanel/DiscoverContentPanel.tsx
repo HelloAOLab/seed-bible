@@ -125,7 +125,66 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const { t } = useI18n();
   const activeFilter = useSignal<FilterKey>("all");
   const panelRef = useSidePanelMaxHeight();
+  const filtersRef = useRef<HTMLDivElement>(null);
+  const scrollLeft = () => {
+    const container = filtersRef.current;
+    if (!container) return;
 
+    const pills = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+    );
+
+    const containerRect = container.getBoundingClientRect();
+
+    // Find the last pill that is outside the left edge.
+    const previousPill = [...pills].reverse().find((pill) => {
+      const rect = pill.getBoundingClientRect();
+
+      return rect.left < containerRect.left - 1;
+    });
+
+    if (!previousPill) return;
+
+    const pillRect = previousPill.getBoundingClientRect();
+
+    // Move the previous pill completely into view.
+    const scrollAmount = pillRect.left - containerRect.left;
+
+    container.scrollBy({
+      left: scrollAmount,
+      behavior: "smooth",
+    });
+  };
+
+  const scrollRight = () => {
+    const container = filtersRef.current;
+    if (!container) return;
+
+    const pills = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+    );
+
+    const containerRect = container.getBoundingClientRect();
+
+    // Find the first pill that is outside the right edge.
+    const nextPill = pills.find((pill) => {
+      const rect = pill.getBoundingClientRect();
+
+      return rect.right > containerRect.right + 1;
+    });
+
+    if (!nextPill) return;
+
+    const pillRect = nextPill.getBoundingClientRect();
+
+    // Move just enough to show the complete pill.
+    const scrollAmount = pillRect.right - containerRect.right;
+
+    container.scrollBy({
+      left: scrollAmount,
+      behavior: "smooth",
+    });
+  };
   if (!tab) {
     return null;
   }
@@ -270,8 +329,17 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         </div>
 
         {showFilters && (
-          <div style={{ display: "contents" }}>
-            <div className="sb-dcp-filters" role="tablist">
+          <div className="sb-dcp-filters-wrapper">
+            <button
+              type="button"
+              className="sb-dcp-filters-arrow"
+              onClick={scrollLeft}
+              aria-label="Scroll filters left"
+            >
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+
+            <div className="sb-dcp-filters" role="tablist" ref={filtersRef}>
               {filters.map(({ key, label }) => (
                 <button
                   key={key}
@@ -285,6 +353,15 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
                 </button>
               ))}
             </div>
+
+            <button
+              type="button"
+              className="sb-dcp-filters-arrow"
+              onClick={scrollRight}
+              aria-label="Scroll filters right"
+            >
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
           </div>
         )}
 
