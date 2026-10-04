@@ -414,7 +414,7 @@
   width: 100%;
 }
 
-/* Edit / delete for the open plan. Kept visually quiet — they sit alongside
+/* Options menu for the open plan. Kept visually quiet — it sits alongside
    the progress summary, not in place of it. */
 .sb-rpd-plan-actions {
   display: flex;

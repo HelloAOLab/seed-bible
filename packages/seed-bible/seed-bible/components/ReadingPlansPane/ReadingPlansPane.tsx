@@ -28,6 +28,7 @@ import type { UserGalleryManager } from "../../managers/UserGalleryManager";
 import { readingLabel } from "./readingLabel";
 import { ReadingPlanEditor } from "./ReadingPlanEditor";
 import { ReadingPlanDetail } from "./ReadingPlanDetail";
+import { ReadingPlanOptionsMenu } from "./ReadingPlanOptionsMenu";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 
 interface ReadingPlansPaneProps {
@@ -84,16 +85,6 @@ const planLoadError = signal<string | null>(null);
 
 /** The plan currently being opened, so its card can show it's working. */
 const openingPlanId = signal<string | null>(null);
-
-function copyReadingPlanShareUrl(
-  readingPlans: ReadingPlansManager,
-  plan: ReadingPlan,
-  toast: ((message: string) => void) | undefined,
-  copiedMessage: string
-) {
-  void navigator.clipboard.writeText(readingPlans.getReadingPlanShareUrl(plan));
-  toast?.(copiedMessage);
-}
 
 /**
  * Opens a plan's detail view. The view only switches once the plan is actually
@@ -348,6 +339,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     <ReadingPlansList
       readingPlans={readingPlans}
       books={books}
+      modals={modals}
       onOpen={(plan) => void openPlanDetail(readingPlans, plan)}
       onEdit={(plan) => void editPlan(plan)}
       onRestart={(plan) => void restartPlan(plan)}
@@ -368,6 +360,7 @@ interface PlanRow {
 interface ReadingPlansListProps {
   readingPlans: ReadingPlansManager;
   books: TranslationBook[];
+  modals?: ModalManager;
   onOpen: (plan: ReadingPlanMetadata) => void;
   onEdit: (plan: ReadingPlanMetadata) => void;
   /** Starts a completed plan over on a fresh progress, then opens it. */
@@ -376,7 +369,8 @@ interface ReadingPlansListProps {
 }
 
 function ReadingPlansList(props: ReadingPlansListProps) {
-  const { readingPlans, books, onOpen, onEdit, onRestart, toast } = props;
+  const { readingPlans, books, modals, onOpen, onEdit, onRestart, toast } =
+    props;
   const { t } = useI18n();
   // Deleting a plan erases it for good, so the button asks once first rather
   // than deleting on the tap that was meant to open it.
@@ -445,71 +439,17 @@ function ReadingPlansList(props: ReadingPlansListProps) {
   const planTitle = (meta: ReadingPlanMetadata) =>
     meta.title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" });
 
-  /**
-   * Edit and delete for a plan the user owns. Delete is offered on every plan
-   * — a plan you can't get rid of is a plan you're stuck with — and asks once
-   * before it erases anything.
-   */
-  const PlanActions = (actionProps: { row: PlanRow }) => {
-    const { row } = actionProps;
-    const confirming = confirmDeleteId === row.planId;
-    const full = row.full;
-    return (
-      <div className="sb-rp-card-actions">
-        {full ? (
-          <button
-            type="button"
-            className="sb-rp-icon-button"
-            onClick={() =>
-              copyReadingPlanShareUrl(
-                readingPlans,
-                full,
-                toast,
-                t("reading-plan-url-copied", {
-                  defaultValue: "Reading plan URL copied to clipboard",
-                })
-              )
-            }
-            aria-label={t("share-reading-plan", {
-              defaultValue: "Share plan",
-            })}
-            title={t("share-reading-plan", { defaultValue: "Share plan" })}
-          >
-            <MaterialIcon>share</MaterialIcon>
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="sb-rp-icon-button"
-          onClick={() => onEdit(row.meta)}
-          aria-label={t("edit-reading-plan", { defaultValue: "Edit plan" })}
-          title={t("edit-reading-plan", { defaultValue: "Edit plan" })}
-        >
-          <MaterialIcon>edit</MaterialIcon>
-        </button>
-        <button
-          type="button"
-          className={`sb-rp-restart${
-            confirming ? " sb-rp-restart-danger" : ""
-          }`}
-          onClick={() => {
-            if (!confirming) {
-              setConfirmDeleteId(row.planId);
-              return;
-            }
-            setConfirmDeleteId(null);
-            void readingPlans.deleteReadingPlan(row.meta);
-          }}
-        >
-          {confirming
-            ? t("reading-plan-delete-confirm", {
-                defaultValue: "Delete for good?",
-              })
-            : t("reading-plan-delete", { defaultValue: "Delete" })}
-        </button>
-      </div>
-    );
-  };
+  /** Share, edit, and delete, in the same menu a playlist row uses. */
+  const optionsMenu = (row: PlanRow) => (
+    <ReadingPlanOptionsMenu
+      readingPlans={readingPlans}
+      plan={row.meta}
+      fullPlan={row.full}
+      onEdit={() => onEdit(row.meta)}
+      modals={modals}
+      toast={toast}
+    />
+  );
 
   /** "Couldn't load this plan", shown in place of opening a dead screen. */
   const LoadError = (errorProps: { planId: string }) =>
@@ -668,10 +608,10 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                     dayReadingsLabel={dayReadingsLabel}
                     opening={openingId === row.planId}
                     onOpen={() => onOpen(row.meta)}
+                    menu={optionsMenu(row)}
                     t={t}
                   />
                   <LoadError planId={row.planId} />
-                  <PlanActions row={row} />
                 </div>
               ))}
             </PlanSection>
@@ -684,42 +624,60 @@ function ReadingPlansList(props: ReadingPlansListProps) {
               })}
               count={notStarted.length}
             >
-              {notStarted.map((row) => (
-                <div key={row.planId} className="sb-rp-card-group">
-                  <button
-                    type="button"
-                    className="sb-rp-card"
-                    onClick={() => onOpen(row.meta)}
-                    disabled={openingId === row.planId}
-                  >
-                    {row.meta.heroImageUrl ? (
-                      <HeroImageThumb url={row.meta.heroImageUrl} />
-                    ) : null}
-                    <span className="sb-rp-card-body">
-                      <span className="sb-rp-card-title" dir="auto">
-                        {planTitle(row.meta)}
-                      </span>
-                      {row.meta.description ? (
-                        <span className="sb-rp-card-sub" dir="auto">
-                          {row.meta.description}
+              {notStarted.map((row) => {
+                const opening = openingId === row.planId;
+                const open = () => {
+                  if (!opening) {
+                    onOpen(row.meta);
+                  }
+                };
+                return (
+                  <div key={row.planId} className="sb-rp-card-group">
+                    <div
+                      className={`sb-rp-card${
+                        opening ? " sb-rp-card--opening" : ""
+                      }`}
+                      onClick={open}
+                    >
+                      <button
+                        type="button"
+                        className="sb-rp-card-open"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          open();
+                        }}
+                        disabled={opening}
+                      >
+                        {row.meta.heroImageUrl ? (
+                          <HeroImageThumb url={row.meta.heroImageUrl} />
+                        ) : null}
+                        <span className="sb-rp-card-body">
+                          <span className="sb-rp-card-title" dir="auto">
+                            {planTitle(row.meta)}
+                          </span>
+                          {row.meta.description ? (
+                            <span className="sb-rp-card-sub" dir="auto">
+                              {row.meta.description}
+                            </span>
+                          ) : null}
+                          <span className="sb-rp-card-sub">
+                            {opening
+                              ? t("loading", { defaultValue: "Loading…" })
+                              : t("reading-plan-not-started", {
+                                  defaultValue: "Not started",
+                                })}
+                          </span>
                         </span>
-                      ) : null}
-                      <span className="sb-rp-card-sub">
-                        {openingId === row.planId
-                          ? t("loading", { defaultValue: "Loading…" })
-                          : t("reading-plan-not-started", {
-                              defaultValue: "Not started",
-                            })}
-                      </span>
-                    </span>
-                    <MaterialIcon className="sb-rp-card-chevron">
-                      chevron_right
-                    </MaterialIcon>
-                  </button>
-                  <LoadError planId={row.planId} />
-                  <PlanActions row={row} />
-                </div>
-              ))}
+                      </button>
+                      {optionsMenu(row)}
+                      <MaterialIcon className="sb-rp-card-chevron">
+                        {opening ? "hourglass_top" : "chevron_right"}
+                      </MaterialIcon>
+                    </div>
+                    <LoadError planId={row.planId} />
+                  </div>
+                );
+              })}
             </PlanSection>
           ) : null}
 
@@ -777,9 +735,9 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                       >
                         {t("reading-plan-restart", { defaultValue: "Restart" })}
                       </button>
+                      {optionsMenu(row)}
                     </div>
                     <LoadError planId={row.planId} />
-                    <PlanActions row={row} />
                   </div>
                 );
               })}
@@ -812,9 +770,10 @@ function ActivePlanCard(props: {
   dayReadingsLabel: (day: CalendarReadingDay) => string;
   opening: boolean;
   onOpen: () => void;
+  menu: ComponentChildren;
   t: ReturnType<typeof useI18n>["t"];
 }) {
-  const { row, title, dayReadingsLabel, opening, onOpen, t } = props;
+  const { row, title, dayReadingsLabel, opening, onOpen, menu, t } = props;
   const summary = row.summary;
   const total = summary?.totalDays ?? 0;
   const done = summary?.doneDays ?? 0;
@@ -825,46 +784,63 @@ function ActivePlanCard(props: {
   const selfPaced = row.progress?.selfPaced === true;
 
   return (
-    <button
-      type="button"
-      className="sb-rp-card sb-rp-card-lg"
-      onClick={onOpen}
-      disabled={opening}
+    <div
+      className={`sb-rp-card sb-rp-card-lg${
+        opening ? " sb-rp-card--opening" : ""
+      }`}
+      onClick={() => {
+        if (!opening) {
+          onOpen();
+        }
+      }}
     >
       <div className="sb-rp-card-row">
-        {row.meta.heroImageUrl ? (
-          <HeroImageThumb url={row.meta.heroImageUrl} />
-        ) : null}
-        <span className="sb-rp-card-body">
-          <span className="sb-rp-card-title" dir="auto">
-            {title}
-          </span>
-          {row.meta.description ? (
-            <span className="sb-rp-card-sub" dir="auto">
-              {row.meta.description}
-            </span>
+        <button
+          type="button"
+          className="sb-rp-card-open"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!opening) {
+              onOpen();
+            }
+          }}
+          disabled={opening}
+        >
+          {row.meta.heroImageUrl ? (
+            <HeroImageThumb url={row.meta.heroImageUrl} />
           ) : null}
-          <span className="sb-rp-card-sub">
-            {selfPaced
-              ? t("reading-plan-session-count-sessions", {
-                  defaultValue: "{{count}} sessions",
-                  count: total,
-                })
-              : t("reading-plan-duration-days", {
-                  defaultValue: "{{count}} days",
-                  count: total,
-                })}
-            {startedMs != null
-              ? ` · ${t("reading-plan-started-on", {
-                  defaultValue: "started {{date}}",
-                  date: new Date(startedMs).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                  }),
-                })}`
-              : ""}
+          <span className="sb-rp-card-body">
+            <span className="sb-rp-card-title" dir="auto">
+              {title}
+            </span>
+            {row.meta.description ? (
+              <span className="sb-rp-card-sub" dir="auto">
+                {row.meta.description}
+              </span>
+            ) : null}
+            <span className="sb-rp-card-sub">
+              {selfPaced
+                ? t("reading-plan-session-count-sessions", {
+                    defaultValue: "{{count}} sessions",
+                    count: total,
+                  })
+                : t("reading-plan-duration-days", {
+                    defaultValue: "{{count}} days",
+                    count: total,
+                  })}
+              {startedMs != null
+                ? ` · ${t("reading-plan-started-on", {
+                    defaultValue: "started {{date}}",
+                    date: new Date(startedMs).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    }),
+                  })}`
+                : ""}
+            </span>
           </span>
-        </span>
+        </button>
+        {menu}
         <MaterialIcon className="sb-rp-card-chevron">
           {opening ? "hourglass_top" : "arrow_forward"}
         </MaterialIcon>
@@ -918,6 +894,6 @@ function ActivePlanCard(props: {
           </span>
         ) : null}
       </div>
-    </button>
+    </div>
   );
 }
