@@ -1,6 +1,6 @@
 import "./DiscoverContentPanel.css";
-import { useSignal } from "@preact/signals";
-import { useCallback, useRef } from "preact/hooks";
+import { Signal, useSignal } from "@preact/signals";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { hasAnyDiscoverResults } from "../../managers/BibleReadingManager";
@@ -104,12 +104,244 @@ function useSidePanelMaxHeight() {
     };
   }, []);
 }
+interface DiscoverFiltersProps {
+  filters: { key: FilterKey; label: string }[];
+  activeFilter: Signal<FilterKey>;
+  displayFilter: FilterKey;
+}
 
 interface DiscoverContentPanelProps {
   tab: ReaderTab | null;
   state: SeedBibleState;
 }
+/**
+ * Renders the filters for discover content and provides horizontal
+ * scrolling controls when the filters do not fit within the available width.
+ *
+ * On smaller/coarse-pointer devices, the filters can be scrolled normally.
+ * The active filter is controlled through the provided signal.
+ */
+function DiscoverFilters({
+  filters,
+  activeFilter,
+  displayFilter,
+}: DiscoverFiltersProps) {
+  const { t } = useI18n();
+  const filtersRef = useRef<HTMLDivElement>(null);
 
+  const [hasScrollableFilters, setHasScrollableFilters] = useState(false);
+
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const container = filtersRef.current;
+
+    if (!container) {
+      setHasScrollableFilters(false);
+      setCanScrollLeft(false);
+      setCanScrollRight(false);
+      return;
+    }
+
+    const wrapper = container.parentElement;
+
+    if (!wrapper) {
+      setHasScrollableFilters(false);
+      setCanScrollLeft(false);
+      setCanScrollRight(false);
+      return;
+    }
+
+    // Compare against the full wrapper width so the arrows
+    const hasOverflow = container.scrollWidth > wrapper.clientWidth + 1;
+
+    setHasScrollableFilters(hasOverflow);
+
+    if (!hasOverflow) {
+      setCanScrollLeft(false);
+      setCanScrollRight(false);
+      return;
+    }
+
+    const pills = Array.from(
+      container.querySelectorAll<HTMLElement>(".sb-dcp-chip")
+    );
+
+    if (pills.length === 0) {
+      setCanScrollLeft(false);
+      setCanScrollRight(false);
+      return;
+    }
+
+    const firstPill = pills[0];
+    const lastPill = pills[pills.length - 1];
+
+    if (!firstPill || !lastPill) {
+      setCanScrollLeft(false);
+      setCanScrollRight(false);
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+
+    const firstPillRect = firstPill.getBoundingClientRect();
+
+    const lastPillRect = lastPill.getBoundingClientRect();
+
+    // Enable left arrow when the first pill is partially hidden.
+    setCanScrollLeft(firstPillRect.left < containerRect.left - 1);
+
+    // Keep right arrow enabled until the last pill
+    // is completely visible.
+    setCanScrollRight(lastPillRect.right > containerRect.right + 1);
+  }, []);
+
+  const scrollFilters = useCallback((direction: -1 | 1) => {
+    const container = filtersRef.current;
+
+    if (!container) return;
+
+    const pills = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+    );
+
+    const containerRect = container.getBoundingClientRect();
+
+    let targetPill: HTMLButtonElement | undefined;
+
+    if (direction === 1) {
+      // Find the next pill hidden on the right.
+      targetPill = pills.find((pill) => {
+        const rect = pill.getBoundingClientRect();
+
+        return rect.right > containerRect.right + 1;
+      });
+    } else {
+      // Find the previous pill hidden on the left.
+      for (let i = pills.length - 1; i >= 0; i -= 1) {
+        const pill = pills[i];
+
+        if (!pill) continue;
+
+        const rect = pill.getBoundingClientRect();
+
+        if (rect.left < containerRect.left - 1) {
+          targetPill = pill;
+          break;
+        }
+      }
+    }
+
+    if (!targetPill) {
+      return;
+    }
+
+    const targetRect = targetPill.getBoundingClientRect();
+
+    const scrollAmount =
+      direction === 1
+        ? targetRect.right - containerRect.right
+        : targetRect.left - containerRect.left;
+
+    container.scrollBy({
+      left: scrollAmount,
+    });
+  }, []);
+
+  useEffect(() => {
+    const container = filtersRef.current;
+
+    if (!container) return;
+
+    updateScrollState();
+
+    container.addEventListener("scroll", updateScrollState);
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(updateScrollState)
+        : null;
+
+    if (resizeObserver) {
+      resizeObserver.observe(container);
+
+      const wrapper = container.parentElement;
+
+      if (wrapper) {
+        resizeObserver.observe(wrapper);
+      }
+
+      container
+        .querySelectorAll<HTMLElement>(".sb-dcp-chip")
+        .forEach((chip) => {
+          resizeObserver.observe(chip);
+        });
+    }
+
+    return () => {
+      container.removeEventListener("scroll", updateScrollState);
+
+      resizeObserver?.disconnect();
+    };
+  }, [filters.length, updateScrollState]);
+
+  return (
+    <div
+      className={`sb-dcp-filters-wrapper${
+        hasScrollableFilters ? " sb-dcp-filters-wrapper--scrollable" : ""
+      }`}
+    >
+      {hasScrollableFilters && (
+        <button
+          type="button"
+          className="sb-dcp-filters-arrow"
+          onClick={() => scrollFilters(-1)}
+          disabled={!canScrollLeft}
+          aria-label={t("scroll-filters-left", {
+            defaultValue: "Scroll filters left",
+          })}
+        >
+          <MaterialIcon aria-hidden="true">chevron_left</MaterialIcon>
+        </button>
+      )}
+
+      <div className="sb-dcp-filters" role="tablist" ref={filtersRef}>
+        {filters.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={displayFilter === key}
+            className={`sb-dcp-chip${
+              displayFilter === key ? " sb-dcp-chip--active" : ""
+            }`}
+            onClick={() => {
+              activeFilter.value = key;
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {hasScrollableFilters && (
+        <button
+          type="button"
+          className="sb-dcp-filters-arrow"
+          onClick={() => scrollFilters(1)}
+          disabled={!canScrollRight}
+          aria-label={t("scroll-filters-right", {
+            defaultValue: "Scroll filters right",
+          })}
+        >
+          <MaterialIcon aria-hidden="true">chevron_right</MaterialIcon>
+        </button>
+      )}
+    </div>
+  );
+}
 /**
  * Automatically-visible discover content — the reader's own notes
  * (annotations) plus discovered cross references/study notes/content — for
@@ -122,89 +354,34 @@ interface DiscoverContentPanelProps {
  */
 export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const { tab, state } = props;
+
   const { t } = useI18n();
+
   const activeFilter = useSignal<FilterKey>("all");
+
   const panelRef = useSidePanelMaxHeight();
-  const filtersRef = useRef<HTMLDivElement>(null);
-  const scrollLeft = () => {
-    const container = filtersRef.current;
-    if (!container) return;
 
-    const pills = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
-    );
-
-    const containerRect = container.getBoundingClientRect();
-
-    // Find the last pill that is outside the left edge.
-    const previousPill = [...pills].reverse().find((pill) => {
-      const rect = pill.getBoundingClientRect();
-
-      return rect.left < containerRect.left - 1;
-    });
-
-    if (!previousPill) return;
-
-    const pillRect = previousPill.getBoundingClientRect();
-
-    // Move the previous pill completely into view.
-    const scrollAmount = pillRect.left - containerRect.left;
-
-    container.scrollBy({
-      left: scrollAmount,
-      behavior: "smooth",
-    });
-  };
-
-  const scrollRight = () => {
-    const container = filtersRef.current;
-    if (!container) return;
-
-    const pills = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
-    );
-
-    const containerRect = container.getBoundingClientRect();
-
-    // Find the first pill that is outside the right edge.
-    const nextPill = pills.find((pill) => {
-      const rect = pill.getBoundingClientRect();
-
-      return rect.right > containerRect.right + 1;
-    });
-
-    if (!nextPill) return;
-
-    const pillRect = nextPill.getBoundingClientRect();
-
-    // Move just enough to show the complete pill.
-    const scrollAmount = pillRect.right - containerRect.right;
-
-    container.scrollBy({
-      left: scrollAmount,
-      behavior: "smooth",
-    });
-  };
   if (!tab) {
     return null;
   }
 
   const bookId = tab.readingState.bookId.value;
+
   const chapterNumber = tab.readingState.chapterNumber.value;
+
   const hasAnnotations = Boolean(
     bookId &&
     chapterNumber &&
     state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
       .length > 0
   );
-  // A note deleted offline is no longer in the chapter list, but it is still
-  // a change that has to reach the server. Keep the section (and its chip)
-  // up so that pending sync stays visible.
+
   const pendingAnnotationChanges =
     bookId && chapterNumber
       ? state.annotations.pendingCountForChapter(bookId, chapterNumber)
       : 0;
   const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
+
   const plans = getReadingPlansForChapter(state, tab.readingState);
 
   if (
@@ -225,11 +402,14 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     tab.readingState.discoveredCrossReferences.value.flatMap(
       (group) => group.results
     ).length > 0;
+
   const hasStudyNotes =
     tab.readingState.discoveredStudyNotes.value.flatMap(
       (group) => group.results
     ).length > 0;
+
   const contentTypes = state.discover.contentTypes.value;
+
   const hasContent =
     tab.readingState.discoveredContent.value
       .flatMap((group) => group.results)
@@ -248,40 +428,61 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     plans.length > 0 ||
     typesWithResults.some((definition) => !definition.hiddenByDefault);
 
-  const filters: { key: FilterKey; label: string }[] = [
-    { key: "all", label: t("all", { defaultValue: "All" }) },
+  const filters: {
+    key: FilterKey;
+    label: string;
+  }[] = [
+    {
+      key: "all",
+      label: t("all", {
+        defaultValue: "All",
+      }),
+    },
+
     ...(showAnnotations
       ? [
           {
             key: "annotations" as const,
-            label: t("notes", { defaultValue: "Notes" }),
+            label: t("notes", {
+              defaultValue: "Notes",
+            }),
           },
         ]
       : []),
+
     ...(hasCrossReferences
       ? [
           {
             key: "cross-references" as const,
-            label: t("cross-references", { defaultValue: "Cross Refs" }),
+            label: t("cross-references", {
+              defaultValue: "Cross Refs",
+            }),
           },
         ]
       : []),
+
     ...(hasStudyNotes
       ? [
           {
             key: "study-notes" as const,
-            label: t("study-notes", { defaultValue: "Study Notes" }),
+            label: t("study-notes", {
+              defaultValue: "Study Notes",
+            }),
           },
         ]
       : []),
+
     ...(hasContent
       ? [
           {
             key: "content" as const,
-            label: t("content", { defaultValue: "Content" }),
+            label: t("content", {
+              defaultValue: "Content",
+            }),
           },
         ]
       : []),
+
     ...typesWithResults.map((definition) => ({
       key: `type:${definition.id}` as const,
       label: translateTitle(t, definition.title),
@@ -292,10 +493,19 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     filters.length > 2 ||
     typesWithResults.some((definition) => definition.hiddenByDefault);
 
-  // Falls back to "all" when the previously-active filter's content type is
-  // no longer available (e.g. the user filtered to "Cross Refs" then
-  // navigated to a chapter with none), so the chip row and content area don't
-  // go blank.
+  /*
+   * Keep the arrow state synchronized when:
+   *
+   * - the user scrolls
+   * - the number of filters changes
+   * - the wrapper/container is resized
+   * - an individual pill changes size
+   */
+
+  /*
+   * Falls back to "all" when the previously-active
+   * filter is no longer available.
+   */
   const f = filters.some((filter) => filter.key === activeFilter.value)
     ? activeFilter.value
     : "all";
@@ -312,6 +522,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         <div className="sb-dcp-header">
           <div className="sb-dcp-header-title">
             <MaterialIcon className="sb-dcp-header-icon">explore</MaterialIcon>
+
             <span>
               {t("discover-book-title", {
                 defaultValue: "Discover {{book}}",
@@ -319,52 +530,26 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               })}
             </span>
           </div>
+
           <button
             type="button"
             className="sb-dcp-create-btn"
             onClick={() => void state.annotations.createNewAnnotation()}
           >
-            + {t("create-playlist", { defaultValue: "Create" })}
+            +{" "}
+            {t("create-playlist", {
+              defaultValue: "Create",
+            })}
           </button>
         </div>
 
         {showFilters && (
-          <div className="sb-dcp-filters-wrapper">
-            <button
-              type="button"
-              className="sb-dcp-filters-arrow"
-              onClick={scrollLeft}
-              aria-label="Scroll filters left"
-            >
-              <span className="material-symbols-outlined">chevron_left</span>
-            </button>
-
-            <div className="sb-dcp-filters" role="tablist" ref={filtersRef}>
-              {filters.map(({ key, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  aria-selected={f === key}
-                  className={`sb-dcp-chip${f === key ? " sb-dcp-chip--active" : ""}`}
-                  onClick={() => (activeFilter.value = key)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              className="sb-dcp-filters-arrow"
-              onClick={scrollRight}
-              aria-label="Scroll filters right"
-            >
-              <span className="material-symbols-outlined">chevron_right</span>
-            </button>
-          </div>
+          <DiscoverFilters
+            filters={filters}
+            activeFilter={activeFilter}
+            displayFilter={f}
+          />
         )}
-
         <div className="sb-discover-content-panel-scroll">
           {(f === "all" || f === "annotations") && showAnnotations && (
             <AnnotationsSection
@@ -379,15 +564,19 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               onReferenceClick={state.app.openVerseReference}
             />
           )}
+
           {(f === "all" || f === "cross-references") && (
             <CrossReferencesSection tab={tab} />
           )}
+
           {(f === "all" || f === "study-notes") && (
             <StudyNotesSection tab={tab} />
           )}
+
           {(f === "all" || f === "content") && (
             <ContentSection tab={tab} contentTypes={contentTypes} />
           )}
+
           {typesWithResults.map((definition) =>
             f === `type:${definition.id}` ||
             (f === "all" && !definition.hiddenByDefault) ? (
@@ -398,6 +587,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               />
             ) : null
           )}
+
           {f === "all" && plans.length > 0 && (
             <ReadingPlansSection
               readingState={tab.readingState}
@@ -405,6 +595,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               plans={plans}
             />
           )}
+
           {f === "all" && !hasVisibleUnderAll && (
             <DiscoverEmpty
               text={t("discover-choose-filter-hint", {
@@ -420,7 +611,9 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
           className="sb-dcp-show-all"
           onClick={() => state.app.openDiscover()}
         >
-          {t("show-all", { defaultValue: "Show All" })}
+          {t("show-all", {
+            defaultValue: "Show All",
+          })}
         </button>
       </div>
     </div>
