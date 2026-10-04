@@ -1047,6 +1047,18 @@ describe("ChatView", () => {
     expect(input.value).toBe("Hello");
   });
 
+  it("marks the send icon so right-to-left layouts mirror it", () => {
+    const chat = createMockChatSession();
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const icon = container.querySelector(".sb-chat-view-send .rtl-mirror");
+    expect(icon?.textContent?.trim()).toBe("send");
+  });
+
   it("does not call sendMessage when the draft is empty", async () => {
     const sendMessage = vi.fn().mockResolvedValue(undefined);
     const chat = createMockChatSession({ sendMessage });
