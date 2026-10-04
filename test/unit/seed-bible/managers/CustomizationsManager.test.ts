@@ -2162,6 +2162,18 @@ describe("CustomizationsManager", () => {
       expect(manager.activeCustomization.value?.id).toBe(created.id);
       expect(posthogMock.register_for_session).not.toHaveBeenCalled();
     });
+
+    it("exposes a locator for the customization on screen", async () => {
+      const { manager } = createManager();
+      expect(manager.activeCustomizationLocator.value).toBeNull();
+
+      const created = await manager.create();
+      manager.startEditing(created.id);
+
+      expect(manager.activeCustomizationLocator.value).toBe(
+        `user-1.${created.id}`
+      );
+    });
   });
 
   it("initialCustomizationLoadSettled is true immediately with no ?customization= param", () => {
@@ -2208,6 +2220,9 @@ describe("CustomizationsManager", () => {
 
     expect(manager.initialCustomizationLoadSettled.value).toBe(true);
     expect(manager.linkedCustomization.value?.id).toBe("customization_shared");
+    expect(manager.activeCustomizationLocator.value).toBe(
+      "other-user.customization_shared"
+    );
   });
 
   it("initialCustomizationLoadPromise settles promptly for a malformed locator", async () => {
@@ -2565,6 +2580,24 @@ describe("CustomizationsManager", () => {
       manager.applyPresetToEditingVariant(dark.id, "dark");
       return { lightVariantId: light.id, darkVariantId: dark.id };
     }
+
+    it("follows the embed link's theme instead of a saved variant", async () => {
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref: "http://localhost/?embed=minimal&app.themeId=dark",
+        })
+      );
+      const { lightVariantId, darkVariantId } =
+        await createLightAndDarkCustomization(manager);
+      await manager.selectActiveVariant(lightVariantId);
+      settings.setThemeId("dark");
+
+      expect(manager.activeVariant.value?.id).toBe(darkVariantId);
+
+      settings.setThemeId("light");
+
+      expect(manager.activeVariant.value?.id).toBe(lightVariantId);
+    });
 
     it("follows the device between a customization's light and dark variants once the viewer picks System", async () => {
       const emitChange = stubColorScheme(false);

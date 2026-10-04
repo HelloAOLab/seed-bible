@@ -487,6 +487,24 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
     const localWins = createSettings(os, anon, navWith());
     expect(localWins.settings.value.themeId).toBe("dark");
   });
+
+  it("lets an embed link's theme outrank a signed-in viewer's saved theme and colors", () => {
+    const loggedIn = makeFakeLogin({
+      name: "Test",
+      config: {
+        themeId: "dark",
+        customTheme: { background: "#123456" },
+      },
+    } as unknown as UserProfile);
+    const settings = createSettings(
+      os,
+      loggedIn,
+      navWith("?embed=minimal&app.themeId=light")
+    );
+
+    expect(settings.settings.value.themeId).toBe("light");
+    expect(settings.settings.value.customTheme).toEqual({});
+  });
 });
 
 describe("anonymous settings survive a simulated page refresh", () => {

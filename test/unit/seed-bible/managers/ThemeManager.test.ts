@@ -482,6 +482,27 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     );
   });
 
+  it("paints an embed link's theme over the visitor's already-painted theme", () => {
+    window.history.replaceState({}, "", "/?embed=minimal&app.themeId=dark");
+    document.getElementById("sb-theme-styles")?.remove();
+    const tag = document.createElement("style");
+    tag.id = "sb-theme-styles";
+    tag.textContent = THEME_PRESET_STYLE_TEXT.light ?? "";
+    document.head.appendChild(tag);
+
+    const login = makeFakeLogin({
+      name: "Test",
+      config: { themeId: "light" },
+    } as UserProfile);
+    const settings = makeSettings(login, "?embed=minimal&app.themeId=dark");
+    createThemeManager(settings);
+
+    expect(document.getElementById("sb-theme-styles")?.textContent).toContain(
+      "--sb-background: #0a0a0a;"
+    );
+    window.history.replaceState({}, "", "/");
+  });
+
   it("?app.themeId sets only the starting value and doesn't fight a later setTheme call", () => {
     const login = makeFakeLogin(null);
     const settings = makeSettings(login, "?app.themeId=dark");

@@ -36,6 +36,7 @@ import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
+import type { EmbedThemeChoice } from "./EmbedMode";
 import type { AppState } from "./SeedBibleStateManager";
 import type {
   ReadingPlan,
@@ -223,6 +224,13 @@ export interface BibleToolContext {
    * shared-session actions (create/share the live session) should guard on it.
    */
   app?: AppState;
+
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 
   /**
    * Navigation manager, for tools that build their own links. Only
@@ -449,6 +457,13 @@ export interface QuickToolContext {
    * toolbar tool.
    */
   app?: AppState;
+
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
@@ -1611,6 +1626,12 @@ type ShareSheetContext = {
   app?: AppState;
   toast?: (message: string) => void;
   sharedSession?: BibleReadingSession | null;
+  /** Theme presets the Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 };
 
 /**
@@ -1638,6 +1659,9 @@ export function openShareModal(
       <ShareModal
         app={app}
         session={context.sharedSession ?? null}
+        shareUrl={shareUrl}
+        themes={context.embedThemes}
+        customizationLocator={context.customizationLocator}
         onClose={() => modals.closeModal(modalId)}
         onShareLink={() => {
           navigator.clipboard.writeText(shareUrl.toString());
