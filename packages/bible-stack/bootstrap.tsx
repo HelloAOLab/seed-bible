@@ -1,8 +1,11 @@
 import {
   MaterialIcon,
   PortalComponent,
+  type PortalComponentHandle,
 } from "@packages/seed-bible/seed-bible/components";
 import {
+  getConnectedUserVisualKey,
+  getUserAnimalVisual,
   registerExtension,
   type SeedBibleState,
 } from "@packages/seed-bible/seed-bible/managers";
@@ -10,6 +13,13 @@ import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 import type { UtilsAPI } from "@packages/seed-bible-utils/infrastructure/models/seedBible";
 import { v4 as uuid } from "uuid";
 import bibleStackPattern from "virtual:@pattern/bible-stack";
+import { useComputed, useSignal, useSignalEffect } from "@preact/signals";
+import type {
+  ReadingInstance,
+  UserPresence,
+  UserIdentityMap,
+} from "./models/userPresence";
+import { useRef } from "preact/hooks";
 
 const Icon = () => {
   return <MaterialIcon>layers</MaterialIcon>;
@@ -46,21 +56,177 @@ export const bootstrapExtension = () => {
               });
             },
             icon: Icon,
-            component: () => (
-              <PortalComponent
-                portal={dimension}
-                portalType="grid"
-                inst={inst}
-                pattern={bibleStackPattern}
-                query={{
-                  dimension,
-                  bookNames: JSON.stringify(
-                    Object.fromEntries(bookNames.value)
-                  ),
-                  language: context.i18n.language.value,
-                }}
-              />
-            ),
+            component: () => {
+              const portalRef = useRef<PortalComponentHandle>(null);
+
+              const userPresence = useComputed(() => {
+                const readingInstances: ReadingInstance[] =
+                  context.tabs.tabs.value
+                    .map((tab) => {
+                      const readingState = tab.readingState;
+                      const sharedSession = tab.sharedSession;
+                      const instances: ReadingInstance[] = [];
+                      if (sharedSession) {
+                        const connectedUsers =
+                          sharedSession.connectedUsers.value;
+                        const positions =
+                          sharedSession.participantPositions.value;
+                        instances.push(
+                          ...connectedUsers
+                            .filter(
+                              (user) =>
+                                user.connectionId !== context.login.connectionId
+                            )
+                            .flatMap((user) => {
+                              // `readingState` is the local reader's position,
+                              // so it only stands in until the peer broadcasts
+                              // one of their own.
+                              const position = positions.get(
+                                user.connectionId
+                              ) ?? {
+                                bookId: readingState.bookId.value,
+                                chapterNumber: readingState.chapterNumber.value,
+                              };
+                              if (
+                                !position.bookId ||
+                                position.chapterNumber <= 0
+                              ) {
+                                return [];
+                              }
+                              return [
+                                {
+                                  bookId: position.bookId,
+                                  chapter: position.chapterNumber,
+                                  id: `${user.connectionId}:${tab.id}`,
+                                  // Always selected on purpose: which tab a
+                                  // remote user has selected isn't published,
+                                  // so it can't be determined here.
+                                  selected: true,
+                                  translation: readingState.translationId.value,
+                                  connectionId: user.connectionId,
+                                } satisfies ReadingInstance,
+                              ];
+                            })
+                        );
+                      }
+                      const bookId = readingState.bookId.value;
+                      if (bookId) {
+                        instances.push({
+                          bookId,
+                          chapter: readingState.chapterNumber.value,
+                          id: `${context.login.connectionId}:${tab.id}`,
+                          selected: context.tabs.selectedTabId.value === tab.id,
+                          translation: readingState.translationId.value,
+                          connectionId: context.login.connectionId,
+                        });
+                      }
+                      return instances;
+                    })
+                    .flat();
+                const presence: UserPresence = new Map();
+                for (const instance of readingInstances) {
+                  if (!presence.has(instance.connectionId)) {
+                    presence.set(instance.connectionId, []);
+                  }
+                  presence.get(instance.connectionId)?.push(instance);
+                }
+                return presence;
+              });
+              const userIdentityMap = useComputed(() => {
+                const identity: UserIdentityMap = new Map();
+                for (const tab of context.tabs.tabs.value) {
+                  const sharedSession = tab.sharedSession;
+                  if (!sharedSession) continue;
+                  for (const user of sharedSession.connectedUsers.value) {
+                    if (identity.has(user.connectionId)) continue;
+                    identity.set(user.connectionId, {
+                      connectionId: user.connectionId,
+                      userId: user.userId ?? undefined,
+                      profile: user.profile ?? undefined,
+                      visual: user.visual,
+                    });
+                  }
+                }
+                const selfConnectionId = context.login.connectionId;
+                if (!identity.has(selfConnectionId)) {
+                  const selfUserId = context.login.userId.value;
+                  identity.set(selfConnectionId, {
+                    connectionId: selfConnectionId,
+                    userId: selfUserId ?? undefined,
+                    profile: context.login.profile.value ?? undefined,
+                    visual: getUserAnimalVisual(
+                      getConnectedUserVisualKey({
+                        userId: selfUserId,
+                        connectionId: selfConnectionId,
+                      })
+                    ),
+                  });
+                }
+                return identity;
+              });
+              const isReady = useSignal(false);
+              useSignalEffect(() => {
+                if (!isReady.value) return;
+                portalRef.current?.sendMessage({
+                  type: "OnUserPresenceChanged",
+                  presence: Object.fromEntries(userPresence.value),
+                });
+              });
+              useSignalEffect(() => {
+                if (!isReady.value) return;
+                portalRef.current?.sendMessage({
+                  type: "OnUserIdentityChanged",
+                  identity: Object.fromEntries(userIdentityMap.value),
+                });
+              });
+              return (
+                <PortalComponent
+                  ref={portalRef}
+                  onMessage={(inbound: unknown) => {
+                    const message = inbound as {
+                      type: string;
+                      data: { bookId: string; chapter?: number };
+                    };
+                    switch (message.type) {
+                      case "reader-navigation":
+                        {
+                          const tab = context.app.selectedTab.value;
+                          if (tab) {
+                            tab.readingState.selectChapter(
+                              message.data.bookId,
+                              message.data.chapter ?? 1
+                            );
+                          } else {
+                            const newTab = context.tabs.addTab(undefined, {
+                              initialBookId: message.data.bookId,
+                              initialChapterNumber: message.data.chapter ?? 1,
+                            });
+                            context.app.selectTab(newTab.id);
+                          }
+                        }
+                        break;
+                      case "ready":
+                        {
+                          isReady.value = true;
+                        }
+                        break;
+                    }
+                  }}
+                  portal={dimension}
+                  portalType="grid"
+                  inst={inst}
+                  pattern={bibleStackPattern}
+                  query={{
+                    dimension,
+                    bookNames: JSON.stringify(
+                      Object.fromEntries(bookNames.value)
+                    ),
+                    language: context.i18n.language.value,
+                    connectionId: context.login.connectionId,
+                  }}
+                />
+              );
+            },
           });
         },
         id: "bible-stack",

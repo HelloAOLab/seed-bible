@@ -32,8 +32,10 @@ export type UserLastReading = LastReading | undefined;
  * history". `loading` and `ready` both render the personalized layout
  * (`loading` shows placeholders); only `empty` renders the Welcome page.
  *
- * - `loading` — a userId is known and the history fetch is in flight.
- * - `empty`   — no userId (new/anonymous), or the fetch confirmed no history.
+ * - `loading` — this account is known to have history, and the fetch that
+ *   fills the resume card is still in flight.
+ * - `empty`   — no userId, no history last visit, or the fetch confirmed none.
+ *   Welcome is up immediately, so the personalized page never blinks in first.
  * - `ready`   — the fetch found a resume position.
  */
 export type ReadingHistoryState =
@@ -156,19 +158,59 @@ export interface ReadingHistoryStateDeps {
 const ONE_YEAR_SECONDS = 365 * DAY_SECONDS;
 
 /**
+ * Per-account memory of the last history result. A returning reader starts on
+ * the personalized layout (placeholders while this visit's fetch lands).
+ * Everyone else starts on Welcome, so a signed-in user with nothing to resume
+ * never sees the regular page blink in first. Remembered only after a real
+ * result — a failed fetch must not teach the next visit the wrong screen.
+ * Left in place on sign-out: one short entry per account that has signed in
+ * here. Dropping it would make that account's next sign-in flash Welcome
+ * until the history fetch returns.
+ */
+const HISTORY_KNOWN_KEY_PREFIX = "sb-today-history-";
+
+type KnownHistory = "ready" | "empty";
+
+function readKnownHistory(userId: string): KnownHistory | null {
+  if (typeof localStorage === "undefined") {
+    return null;
+  }
+  try {
+    const value = localStorage.getItem(HISTORY_KNOWN_KEY_PREFIX + userId);
+    return value === "ready" || value === "empty" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeKnownHistory(userId: string, known: KnownHistory): void {
+  if (typeof localStorage === "undefined") {
+    return;
+  }
+  try {
+    localStorage.setItem(HISTORY_KNOWN_KEY_PREFIX + userId, known);
+  } catch {
+    // Best-effort. The fetch result still drives this visit.
+  }
+}
+
+/**
  * Owns the Today screen's reading-history gate. It derives the first-paint
- * branch from `userId` (known synchronously at startup), so a returning user
- * never flashes the Welcome page while their history loads:
+ * branch from `userId` plus the last result stored for that account:
  *
  * - `userId === null` → `empty` (Welcome), no fetch.
- * - `userId !== null` → `loading` (personalized placeholders), then reconcile
- *   to `ready` / `empty` when the fetch resolves.
+ * - This account's last result was a resume position → `loading` (the
+ *   personalized placeholders), then `ready` when the fetch lands. A
+ *   returning reader never sees Welcome while that loads.
+ * - Otherwise → `empty` (Welcome) immediately, including a signed-in user
+ *   we have not seen before. The fetch still runs; a position promotes the
+ *   screen to `ready` when it arrives.
  *
- * Cross-account safety: on every `userId` change the state resets to `loading`
- * (clearing the previous account's position before the new fetch resolves),
- * and any in-flight fetch whose userId is no longer current is ignored — so
- * account A's result can never overwrite account B's state. A same-user refetch
- * (reading progressed) keeps the current card visible while revalidating.
+ * Cross-account safety: on every `userId` change the previous account's
+ * position is dropped before the new fetch resolves, and any in-flight fetch
+ * whose userId is no longer current is ignored — so account A's result can
+ * never overwrite account B's state. A same-user refetch (reading progressed)
+ * keeps the current card visible while revalidating.
  *
  * The returned `dispose` tears down the internal effect.
  */
@@ -197,10 +239,15 @@ export function createReadingHistoryState(deps: ReadingHistoryStateDeps): {
       return;
     }
 
-    // Only clear to a placeholder when the account itself changed; a plain
-    // reading-progress refetch keeps the current card visible (no flicker).
+    // Only reset when the account itself changed; a plain reading-progress
+    // refetch keeps the current card visible (no flicker). A known reader
+    // gets placeholders. Anyone else gets Welcome immediately — showing the
+    // personalized page and then swapping it for Welcome is the blink.
     if (userChanged) {
-      readingHistory.value = { status: "loading" };
+      readingHistory.value =
+        readKnownHistory(userId) === "ready"
+          ? { status: "loading" }
+          : { status: "empty" };
     }
 
     const requestedUserId = userId;
@@ -213,9 +260,11 @@ export function createReadingHistoryState(deps: ReadingHistoryStateDeps): {
         if (deps.userId.peek() !== requestedUserId) return;
         if (result) {
           readingHistory.value = { status: "ready", lastReading: result };
+          writeKnownHistory(requestedUserId, "ready");
         } else if (userChanged) {
           // Fresh load / account switch with no history → Welcome.
           readingHistory.value = { status: "empty" };
+          writeKnownHistory(requestedUserId, "empty");
         }
         // Same-user refetch that came back empty: keep the card already showing
         // rather than erasing a known-good position on a spurious empty result.

@@ -1,16 +1,14 @@
 import type { Piece } from "../../domain/models/canvas";
-import type { ViewportPort } from "../ports/in/ViewportPort";
-import type {
-  BibleDataRepositoryPort,
-  PieceDataRepositoryPort,
-} from "../ports/out/ViewportService";
+import type { ViewportServicePort } from "../ports/in/Viewport";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   pieceDataRepositoryPort: PieceDataRepositoryPort;
 }
 
-export class ViewportService implements ViewportPort {
+export class ViewportService implements ViewportServicePort {
   #bibleDataRepositoryPort: ServiceParams["bibleDataRepositoryPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
 

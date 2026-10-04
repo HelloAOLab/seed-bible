@@ -1,5 +1,6 @@
 import type { LabelDateFormat } from "../../../domain/models/label";
 
-export interface LabelDateFormatGetterPort {
-  dateFormat: LabelDateFormat;
+export interface LabelDateServicePort {
+  readonly dateFormat: LabelDateFormat;
+  changeDateFormat(newFormat: LabelDateFormat): void;
 }

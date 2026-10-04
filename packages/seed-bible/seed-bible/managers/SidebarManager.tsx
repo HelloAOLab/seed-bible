@@ -17,6 +17,37 @@ export type RequestedSettingsView =
   | "extensions"
   | "customizations";
 
+/**
+ * Remembers whether the desktop sidebar rail is collapsed. Absent until the
+ * user (or the new-user default) chooses — the signal itself stays expanded
+ * until `hydrateStoredCollapsed` runs, so SSR and the first client render match.
+ */
+export const SIDEBAR_COLLAPSED_STORAGE_KEY = "sb-sidebar-collapsed";
+
+function readStoredSidebarCollapsed(): boolean | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const stored = window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+  if (stored === "true") {
+    return true;
+  }
+  if (stored === "false") {
+    return false;
+  }
+  return null;
+}
+
+function writeStoredSidebarCollapsed(collapsed: boolean) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.localStorage.setItem(
+    SIDEBAR_COLLAPSED_STORAGE_KEY,
+    collapsed ? "true" : "false"
+  );
+}
+
 export interface CreateSidebarOptions {
   chatsManager: ChatsManager;
   navigation: NavigationManager;
@@ -119,8 +150,32 @@ export function createSidebar(options: CreateSidebarOptions) {
     isMobileOpen.value = false;
   };
 
+  /**
+   * Sets the rail and remembers the choice. Viewport-driven collapses (the
+   * compact-desktop band, mobile landscape) assign `isSidebarCollapsed`
+   * directly so they don't overwrite this preference.
+   */
+  const setSidebarCollapsed = (collapsed: boolean) => {
+    isSidebarCollapsed.value = collapsed;
+    writeStoredSidebarCollapsed(collapsed);
+  };
+
   const toggleSidebarCollapsed = () => {
-    isSidebarCollapsed.value = !isSidebarCollapsed.value;
+    setSidebarCollapsed(!isSidebarCollapsed.value);
+  };
+
+  /**
+   * Applies a saved rail preference. Returns false when nothing is stored so
+   * the caller can fall back to the new-user default; the signal stays at its
+   * SSR seed (expanded) in that case.
+   */
+  const hydrateStoredCollapsed = (): boolean => {
+    const stored = readStoredSidebarCollapsed();
+    if (stored === null) {
+      return false;
+    }
+    isSidebarCollapsed.value = stored;
+    return true;
   };
 
   const openSidebar = () => {
@@ -152,7 +207,9 @@ export function createSidebar(options: CreateSidebarOptions) {
    * desktop band, where an expanded sidebar floats over the reader). Closes any
    * open settings view and collapses the sidebar back to its rail. Wired to the
    * scrim rendered behind the overlay so clicking anywhere on the page outside
-   * the sidebar collapses it again.
+   * the sidebar collapses it again. The collapse is assigned directly, like
+   * the other viewport-driven ones: this band is the only place the scrim
+   * exists, so dismissing it must not overwrite a wide-desktop preference.
    *
    * No-ops while the Customization Center is open, so an accidental outside
    * click can't silently discard unsaved edits — every other way of leaving
@@ -200,6 +257,8 @@ export function createSidebar(options: CreateSidebarOptions) {
     openSettingsToView,
     closeSettings,
     toggleSidebarCollapsed,
+    setSidebarCollapsed,
+    hydrateStoredCollapsed,
     openSidebar,
     closeSidebar,
     collapseSidebarOverlay,
