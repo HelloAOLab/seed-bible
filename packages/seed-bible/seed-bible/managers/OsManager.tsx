@@ -133,7 +133,7 @@ async function listAllPages<T>(
  * Reads every page of a data listing, each continuing after the last address
  * the one before it returned. Throws on a failed page.
  */
-async function listAllByAddress(
+export async function listAllByAddress(
   fetchPage: (lastAddress: string | undefined) => Promise<
     | {
         success: true;

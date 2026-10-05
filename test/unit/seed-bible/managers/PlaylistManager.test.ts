@@ -437,7 +437,14 @@ describe("createPlaylistManager", () => {
     const os = CasualOSManager();
     Object.assign(os, {
       recordData: recordDataMock,
-      listDataByMarker: listDataByMarkerMock,
+      // The server always says how many records a listing holds. A mocked
+      // page that leaves the total out stands for the whole listing.
+      listDataByMarker: async (...args: unknown[]) => {
+        const page = await listDataByMarkerMock(...args);
+        return page?.success && page.totalCount === undefined
+          ? { ...page, totalCount: page.items.length }
+          : page;
+      },
       listAllDataByMarker: listAllDataByMarkerMock,
       getData: getDataMock,
       eraseData: eraseDataMock,
@@ -516,7 +523,11 @@ describe("createPlaylistManager", () => {
     const manager = makeManager("user-1");
     await flush();
 
-    expect(listDataByMarkerMock).toHaveBeenCalledWith("user-1", MARKER);
+    expect(listDataByMarkerMock).toHaveBeenCalledWith(
+      "user-1",
+      MARKER,
+      undefined
+    );
     expect(manager.userPlaylists.value).toEqual([playlist]);
   });
 
@@ -630,6 +641,51 @@ describe("createPlaylistManager", () => {
     expect(manager.userPlaylists.value).toHaveLength(1);
   });
 
+  describe("more than one page of playlists", () => {
+    // The server's paging stores return ten records at a time, counting the
+    // whole listing in `totalCount` on every page.
+    const twelvePlaylists = Array.from({ length: 12 }, (_, i) =>
+      makePlaylist({ id: `playlist-${String(i).padStart(2, "0")}` })
+    );
+    const servePagesOfTen = () =>
+      listDataByMarkerMock.mockImplementation(
+        async (_record: string, _marker: string, lastAddress?: string) => {
+          const after = twelvePlaylists.filter(
+            (p) => !lastAddress || p.id > lastAddress
+          );
+          return {
+            success: true,
+            items: after.slice(0, 10).map((p) => ({ address: p.id, data: p })),
+            totalCount: twelvePlaylists.length,
+          };
+        }
+      );
+
+    it("lists all of your own playlists", async () => {
+      servePagesOfTen();
+
+      const manager = makeManager("user-1");
+
+      await vi.waitFor(() =>
+        expect(manager.userPlaylists.value).toHaveLength(12)
+      );
+    });
+
+    it("lists all of a friend's playlists", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      servePagesOfTen();
+
+      const view = manager.getUserPlaylists("friend-user");
+
+      await vi.waitFor(() =>
+        expect(view.value.map((p) => p.id)).toEqual(
+          twelvePlaylists.map((p) => p.id)
+        )
+      );
+    });
+  });
+
   it("listPlaylists parses records on success and throws on failure", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -647,7 +703,7 @@ describe("createPlaylistManager", () => {
       errorMessage: "boom",
     });
     await expect(manager.listPlaylists("user-1")).rejects.toThrow(
-      "Failed to list playlists: boom"
+      "Error listing data: err"
     );
   });
 
@@ -811,7 +867,11 @@ describe("createPlaylistManager", () => {
       const view = manager.getUserPlaylists("friend-user");
       await flush();
 
-      expect(listDataByMarkerMock).toHaveBeenCalledWith("friend-user", MARKER);
+      expect(listDataByMarkerMock).toHaveBeenCalledWith(
+        "friend-user",
+        MARKER,
+        undefined
+      );
       expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"]);
     });
 

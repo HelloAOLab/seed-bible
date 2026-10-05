@@ -7,7 +7,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import type { CasualOSManager } from "./OsManager";
+import { listAllByAddress, type CasualOSManager } from "./OsManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import { v4 as uuid } from "uuid";
 import type { NavigationManager } from "./NavigationManager";
@@ -1308,18 +1308,10 @@ export function createPlaylistManager(
   };
 
   const listPlaylists = async (recordName: string) => {
-    const records = await os.listDataByMarker(
-      recordName,
-      "publicRead:playlists"
+    // Every page: the server's paging stores return ten records at a time.
+    const records = await listAllByAddress((lastAddress) =>
+      os.listDataByMarker(recordName, "publicRead:playlists", lastAddress)
     );
-    if (records.success === false) {
-      console.error(
-        "Failed to list playlists:",
-        records.errorCode,
-        records.errorMessage
-      );
-      throw new Error("Failed to list playlists: " + records.errorMessage);
-    }
     return records.items.map((record) => PlaylistSchema.parse(record.data));
   };
 
