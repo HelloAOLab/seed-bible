@@ -300,6 +300,13 @@
   color: var(--rp-muted);
 }
 
+.sb-rp-card-open-label {
+  flex: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rp-muted);
+}
+
 /* Progress inside a large card */
 .sb-rp-card-progress {
   display: flex;

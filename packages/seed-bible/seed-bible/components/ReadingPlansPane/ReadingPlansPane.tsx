@@ -95,6 +95,18 @@ const planLoadError = signal<string | null>(null);
 /** The plan currently being opened, so its card can show it's working. */
 const openingPlanId = signal<string | null>(null);
 
+/** "Couldn't load this plan", shown in place of opening a dead screen. */
+function PlanLoadError(props: { planId: string }) {
+  const { t } = useI18n();
+  return planLoadError.value === props.planId ? (
+    <p className="sb-rp-card-error" role="alert">
+      {t("reading-plan-load-failed", {
+        defaultValue: "Couldn't load this plan. Please try again.",
+      })}
+    </p>
+  ) : null;
+}
+
 function copyReadingPlanShareUrl(
   readingPlans: ReadingPlansManager,
   plan: ReadingPlan,
@@ -425,7 +437,6 @@ function ReadingPlansList(props: ReadingPlansListProps) {
   const metas = readingPlans.userReadingPlans.value;
   const fullPlans = readingPlans.fullReadingPlans.value;
   const progresses = readingPlans.userReadingPlanProgresses.value;
-  const failedPlanId = planLoadError.value;
   const openingId = openingPlanId.value;
 
   const dayReadingsLabelForBooks = (day: CalendarReadingDay): string =>
@@ -539,16 +550,6 @@ function ReadingPlansList(props: ReadingPlansListProps) {
       </div>
     );
   };
-
-  /** "Couldn't load this plan", shown in place of opening a dead screen. */
-  const LoadError = (errorProps: { planId: string }) =>
-    failedPlanId === errorProps.planId ? (
-      <p className="sb-rp-card-error" role="alert">
-        {t("reading-plan-load-failed", {
-          defaultValue: "Couldn't load this plan. Please try again.",
-        })}
-      </p>
-    ) : null;
 
   const resumeDraft = (meta: ReadingPlanMetadata) => {
     const full = fullById.get(
@@ -699,7 +700,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                     onOpen={() => onOpen(row.meta)}
                     t={t}
                   />
-                  <LoadError planId={row.planId} />
+                  <PlanLoadError planId={row.planId} />
                   <PlanActions row={row} />
                 </div>
               ))}
@@ -745,7 +746,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                       chevron_right
                     </MaterialIcon>
                   </button>
-                  <LoadError planId={row.planId} />
+                  <PlanLoadError planId={row.planId} />
                   <PlanActions row={row} />
                 </div>
               ))}
@@ -807,7 +808,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                         {t("reading-plan-restart", { defaultValue: "Restart" })}
                       </button>
                     </div>
-                    <LoadError planId={row.planId} />
+                    <PlanLoadError planId={row.planId} />
                     <PlanActions row={row} />
                   </div>
                 );
@@ -945,18 +946,23 @@ function FriendReadingPlanGroup(props: {
       </div>
       <div className="sb-rp-section-cards">
         {rows.map((row) => (
-          <ActivePlanCard
-            key={row.planId}
-            row={{ ...row, meta: row.full }}
-            title={
-              row.full.title ??
-              t("untitled-reading-plan", { defaultValue: "Untitled plan" })
-            }
-            dayReadingsLabel={(day) => dayReadingsLabel(books, day)}
-            opening={openingId === row.planId}
-            onOpen={() => onOpen(row.full)}
-            t={t}
-          />
+          <div key={row.planId} className="sb-rp-card-group">
+            <ActivePlanCard
+              row={{ ...row, meta: row.full }}
+              title={
+                row.full.title ??
+                t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+              }
+              dayReadingsLabel={(day) => dayReadingsLabel(books, day)}
+              opening={openingId === row.planId}
+              onOpen={() => onOpen(row.full)}
+              // The card shows their progress, but opening it shows the plan
+              // with yours, so it says what it opens.
+              openLabel={t("view-plan", { defaultValue: "View plan" })}
+              t={t}
+            />
+            <PlanLoadError planId={row.planId} />
+          </div>
         ))}
       </div>
     </li>
@@ -990,6 +996,8 @@ function ActivePlanCard(props: {
   dayReadingsLabel: (day: CalendarReadingDay) => string;
   opening: boolean;
   onOpen: () => void;
+  /** Words beside the arrow, for when opening the card isn't obvious. */
+  openLabel?: string;
   t: ReturnType<typeof useI18n>["t"];
 }) {
   const { row, title, dayReadingsLabel, opening, onOpen, t } = props;
@@ -1043,6 +1051,9 @@ function ActivePlanCard(props: {
               : ""}
           </span>
         </span>
+        {props.openLabel ? (
+          <span className="sb-rp-card-open-label">{props.openLabel}</span>
+        ) : null}
         <MaterialIcon className="sb-rp-card-chevron">
           {opening ? "hourglass_top" : "arrow_forward"}
         </MaterialIcon>

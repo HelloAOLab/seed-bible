@@ -627,6 +627,7 @@
   "reading-plan-needs-name": "Give your plan a name to save it",
   "reading-plan-delete": "Delete",
   "reading-plan-delete-confirm": "Delete for good?",
+  "view-plan": "View plan",
   "reading-plan-load-failed": "Couldn't load this plan. Please try again.",
   "loading": "Loading…",
   "reading-plan-not-started": "Not started",

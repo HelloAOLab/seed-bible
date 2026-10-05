@@ -55,10 +55,16 @@ describe("ReadingPlansPane — reading plans from your friends", () => {
     vi.restoreAllMocks();
   });
 
-  /** A real plans manager whose only records are Ada's progress and the plan. */
+  /**
+   * A real plans manager whose only records are Ada's progress and the plan.
+   * With `failOpening`, the plan reads once, for the card, then can't be read
+   * again to open it.
+   */
   function plansManagerWithAdasProgress(
-    progresses: ReturnType<typeof progress>[]
+    progresses: ReturnType<typeof progress>[],
+    { failOpening = false } = {}
   ) {
+    let planReads = 0;
     const os = CasualOSManager();
     vi.spyOn(os, "listAllDataByMarker").mockImplementation(
       async (recordName: string, marker: string) => ({
@@ -73,7 +79,9 @@ describe("ReadingPlansPane — reading plans from your friends", () => {
       recordName: string,
       address: string
     ) =>
-      recordName === "author-1" && address === "plan-1"
+      recordName === "author-1" &&
+      address === "plan-1" &&
+      !(failOpening && planReads++ > 0)
         ? {
             success: true,
             data: createReadingPlan(
@@ -136,6 +144,51 @@ describe("ReadingPlansPane — reading plans from your friends", () => {
     expect(card.textContent).toContain("Gospel of John");
     expect(card.textContent).toContain(startedLabel(RESTART_MS));
     expect(card.textContent).not.toContain(startedLabel(FIRST_START_MS));
+  });
+
+  const renderPane = (
+    readingPlans: ReturnType<typeof createReadingPlansManager>
+  ) =>
+    act(() => {
+      render(
+        <ReadingPlansPane
+          readingPlans={readingPlans}
+          friends={friendsWithAda()}
+          books={[]}
+        />,
+        container
+      );
+    });
+
+  // Opening shows the plan with the user's own progress, not Ada's.
+  it("says a friend's plan card opens the plan", async () => {
+    renderPane(
+      plansManagerWithAdasProgress([progress("first-time", FIRST_START_MS)])
+    );
+
+    await vi.waitFor(() => expect(friendCards()).toHaveLength(1));
+    expect(friendCards()[0]!.textContent).toContain("View plan");
+  });
+
+  it("says so when a friend's plan can't be opened", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    renderPane(
+      plansManagerWithAdasProgress([progress("first-time", FIRST_START_MS)], {
+        failOpening: true,
+      })
+    );
+    await vi.waitFor(() => expect(friendCards()).toHaveLength(1));
+
+    await act(async () => {
+      (friendCards()[0] as HTMLButtonElement).click();
+    });
+
+    await vi.waitFor(() =>
+      expect(
+        container.querySelector(".sb-rp-friend-group [role='alert']")
+          ?.textContent
+      ).toBe("Couldn't load this plan. Please try again.")
+    );
   });
 
   it("drops a friend's plan once they're no longer a friend", async () => {
