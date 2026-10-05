@@ -550,7 +550,28 @@ export function createFriendsManager(
     }
   };
 
-  const sendRequest = async (
+  // Two buttons for the same person can be pressed together, and each would
+  // pass the duplicate checks before either request exists, so the second
+  // press gets the first one's answer instead of sending again.
+  const sendsInFlight = new Map<string, Promise<SendFriendRequestResult>>();
+  const sendRequest = (
+    target: { userId: string } | { email: string }
+  ): Promise<SendFriendRequestResult> => {
+    const key = `${login.userId.peek()}:${
+      "userId" in target ? target.userId : target.email.trim().toLowerCase()
+    }`;
+    const inFlight = sendsInFlight.get(key);
+    if (inFlight) {
+      return inFlight;
+    }
+    const sending = sendRequestNow(target).finally(() => {
+      sendsInFlight.delete(key);
+    });
+    sendsInFlight.set(key, sending);
+    return sending;
+  };
+
+  const sendRequestNow = async (
     target: { userId: string } | { email: string }
   ): Promise<SendFriendRequestResult> => {
     const me = await resolveSignedInUser();

@@ -46,7 +46,10 @@ import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { useAppConfig } from "../../app/appConfig";
-import { ParticipantFriendButton } from "../FriendsPane/ParticipantFriendButton";
+import {
+  ParticipantFriendButton,
+  rowsWithFriendButton,
+} from "../FriendsPane/ParticipantFriendButton";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -226,6 +229,7 @@ function SessionSettingsModalContent(props: {
       sessionRoleRank(getUserSessionRole(options, a)) -
       sessionRoleRank(getUserSessionRole(options, b))
   );
+  const friendButtonRows = rowsWithFriendButton(participants);
 
   return (
     <div className="sb-session-settings">
@@ -461,11 +465,13 @@ function SessionSettingsModalContent(props: {
                         </span>
                       )}
                     </span>
-                    <ParticipantFriendButton
-                      state={state}
-                      userId={user.userId}
-                      displayName={getUserDisplayName(user)}
-                    />
+                    {friendButtonRows.has(user.connectionId) && (
+                      <ParticipantFriendButton
+                        state={state}
+                        userId={user.userId}
+                        displayName={getUserDisplayName(user)}
+                      />
+                    )}
                     {isHost && !isHostUser && (
                       <button
                         type="button"

@@ -17,7 +17,10 @@ import {
   openShareSessionModal,
 } from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
-import { ParticipantFriendButton } from "../FriendsPane/ParticipantFriendButton";
+import {
+  ParticipantFriendButton,
+  rowsWithFriendButton,
+} from "../FriendsPane/ParticipantFriendButton";
 
 /** How many avatars the compact stack shows before collapsing into a "+N" chip. */
 const MAX_STACK_AVATARS = 3;
@@ -55,6 +58,7 @@ export function MobileSessionParticipants({
       sessionRoleRank(getUserSessionRole(options, b))
   );
 
+  const friendButtonRows = rowsWithFriendButton(sortedUsers);
   const stackUsers = sortedUsers.slice(0, MAX_STACK_AVATARS);
   const overflowCount = sortedUsers.length - stackUsers.length;
 
@@ -164,11 +168,13 @@ export function MobileSessionParticipants({
                         <span className="sb-session-participants-list-name">
                           {getUserDisplayName(user)}
                         </span>
-                        <ParticipantFriendButton
-                          state={state}
-                          userId={user.userId}
-                          displayName={getUserDisplayName(user)}
-                        />
+                        {friendButtonRows.has(user.connectionId) && (
+                          <ParticipantFriendButton
+                            state={state}
+                            userId={user.userId}
+                            displayName={getUserDisplayName(user)}
+                          />
+                        )}
                       </li>
                     );
                   })}

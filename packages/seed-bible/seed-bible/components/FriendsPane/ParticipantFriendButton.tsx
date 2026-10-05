@@ -1,8 +1,28 @@
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import type { SessionConnectionInfo } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { displayNameOf } from "../../managers/Utils";
 import { BusyButton } from "./FriendsPane";
+
+/**
+ * The connection IDs of the participant rows that get a friend button: one per
+ * account. Someone in the session from two tabs has a row for each, and the
+ * same person shouldn't get two buttons.
+ */
+export function rowsWithFriendButton(
+  users: readonly SessionConnectionInfo[]
+): Set<string> {
+  const accounts = new Set<string>();
+  const rows = new Set<string>();
+  for (const user of users) {
+    if (user.userId && !accounts.has(user.userId)) {
+      accounts.add(user.userId);
+      rows.add(user.connectionId);
+    }
+  }
+  return rows;
+}
 
 /**
  * Add friend for one session participant, showing where the signed-in user

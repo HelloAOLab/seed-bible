@@ -345,6 +345,22 @@ describe("FriendsManager", () => {
       expect(server.rows).toHaveLength(1);
     });
 
+    // Two buttons for the same person, pressed together, each pass the
+    // duplicate checks before either request exists.
+    it("sends one request when asked twice at once", async () => {
+      const friends = create();
+      await loaded(friends, () => {});
+
+      const [first, second] = await Promise.all([
+        friends.sendRequest({ userId: "ada" }),
+        friends.sendRequest({ userId: "ada" }),
+      ]);
+
+      expect(server.rows).toHaveLength(1);
+      expect(first).toEqual({ status: "sent", requestId: server.rows[0]!.id });
+      expect(second).toEqual(first);
+    });
+
     it("sends by email", async () => {
       server.emails.set("ada@example.com", "ada");
       const friends = create();

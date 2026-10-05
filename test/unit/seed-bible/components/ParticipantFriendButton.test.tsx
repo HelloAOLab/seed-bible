@@ -203,7 +203,10 @@ describe("ParticipantFriendButton", () => {
   });
 
   describe("in session settings", () => {
-    const openSettings = async (hostUserId: string) => {
+    const openSettings = async (
+      hostUserId: string,
+      otherTabs: { userId: string; connectionId: string }[] = []
+    ) => {
       const session = {
         id: "session-1",
         options: signal({
@@ -227,6 +230,11 @@ describe("ParticipantFriendButton", () => {
             isSelf: false,
             profile: { name: "Ada" },
           },
+          ...otherTabs.map((tab) => ({
+            ...tab,
+            isSelf: false,
+            profile: { name: "Ada" },
+          })),
         ]),
         updateOptions: vi.fn(),
       } as unknown as BibleReadingSession;
@@ -243,6 +251,17 @@ describe("ParticipantFriendButton", () => {
       expect(button("Add friend")).toBeDefined();
       // Promoting people stays the host's job.
       expect(button("Make co-host")).toBeUndefined();
+    });
+
+    it("offers Add friend once for someone who joined from two tabs", async () => {
+      await openSettings(ME, [
+        { userId: ADA_ID, connectionId: "ada-second-tab" },
+      ]);
+
+      const addButtons = Array.from(
+        container.querySelectorAll("button")
+      ).filter((el) => visibleLabel(el) === "Add friend");
+      expect(addButtons).toHaveLength(1);
     });
 
     it("gives the host both Add friend and Make co-host", async () => {
