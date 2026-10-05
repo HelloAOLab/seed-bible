@@ -1191,6 +1191,33 @@ describe("createSeedBibleState", () => {
       ]);
     });
 
+    it("shows a single you-lost-connection toast when the connection drops again while it is still on screen", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session } = await joinAsHostedSession(
+        state,
+        "session-drop-rejoin-drop"
+      );
+      const shown = recordShownToasts(state);
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      vi.advanceTimersByTime(100);
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      vi.advanceTimersByTime(100);
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+
+      vi.advanceTimersByTime(FULL_TOAST_MS - 200 - 1);
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual(["You lost connection to the session"]);
+    });
+
     it("shows only the latest host state after the host flaps repeatedly", async () => {
       const state = await createStateWithTwoTabs();
       const { session, originalDispose } = await joinAsHostedSession(
@@ -2080,8 +2107,12 @@ describe("createSeedBibleState", () => {
       const shown = recordShownToasts(state);
 
       state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+      expect(state.app.currentToast.value).toBeNull();
+
+      // Signing out again takes signing back in first, so the second event
+      // never lands while the first toast is still up.
       state.login.sessionEnded.value = { reason: "signed_out", id: 2 };
-      vi.advanceTimersByTime(MIN_TOAST_MS);
 
       expect(shown).toEqual([
         "You've been signed out. Please sign in again.",
@@ -2234,6 +2265,35 @@ describe("createSeedBibleState", () => {
 
       expect(state.app.currentToast.value).toBeNull();
       expect(shown).toEqual(["Other", "Unrelated", "Online"]);
+    });
+
+    it("does not queue a keyed toast that repeats the one already on screen", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      state.app.toast("Offline", "connection");
+      state.app.toast("Online", "connection");
+      state.app.toast("Offline", "connection");
+
+      vi.advanceTimersByTime(FULL_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("Offline");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual(["Offline"]);
+    });
+
+    it("still queues a repeat of the toast on screen when its key differs", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      state.app.toast("Igual", "first");
+      state.app.toast("Igual", "second");
+
+      vi.advanceTimersByTime(MIN_TOAST_MS + FULL_TOAST_MS);
+
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual(["Igual", "Igual"]);
     });
 
     it("keeps every waiting toast without a key or with a different key", async () => {

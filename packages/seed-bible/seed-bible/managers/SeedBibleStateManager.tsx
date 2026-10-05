@@ -423,7 +423,9 @@ export interface AppState {
    * (only one toast is ever visible at a time, always the oldest in the queue).
    * Toasts sharing a `key` describe the same state, so a new one drops any
    * waiting toast with that key and joins the end of the queue; the toast on
-   * screen is never dropped. Toasts without a key are always shown.
+   * screen is never dropped. If the toast on screen already has the same key and
+   * message, the new one is not queued at all. Toasts without a key are always
+   * shown.
    */
   toast: (message: string, key?: string) => void;
 
@@ -2278,7 +2280,8 @@ export function createSeedBibleState(
   // the slide-in animation replays even for a repeated message.
   // A keyed toast supersedes the waiting toasts with the same key, so a burst
   // of state changes (e.g. a flaky connection) shows only the latest state
-  // instead of replaying every out-of-date one.
+  // instead of replaying every out-of-date one — and nothing at all when that
+  // latest state is the one already on screen.
   //
   // Defined here (rather than further down, where it's exposed on `state`)
   // because the host-disconnect handling below also calls it, and that
@@ -2292,11 +2295,17 @@ export function createSeedBibleState(
     // `peek()`: toast() is called from inside effects, and a tracked read
     // would subscribe that effect to the queue it is writing.
     const queue = toastQueue.peek();
-    const kept =
-      key === undefined
-        ? queue
-        : queue.filter((queued, index) => index === 0 || queued.key !== key);
-    toastQueue.value = [...kept, { id: ++toastSeq, message, key }];
+    if (key === undefined) {
+      toastQueue.value = [...queue, { id: ++toastSeq, message }];
+      return;
+    }
+    const [head, ...waiting] = queue;
+    const alreadyOnScreen = head?.key === key && head.message === message;
+    toastQueue.value = [
+      ...(head ? [head] : []),
+      ...waiting.filter((queued) => queued.key !== key),
+      ...(alreadyOnScreen ? [] : [{ id: ++toastSeq, message, key }]),
+    ];
   };
 
   const MIN_TOAST_MS = 1500;
