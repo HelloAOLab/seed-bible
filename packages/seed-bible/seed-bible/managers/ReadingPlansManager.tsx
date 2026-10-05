@@ -30,6 +30,7 @@ import {
   type SharedPageSeed,
 } from "./SharedPageLoader";
 import { DEFAULT_UI_LANGUAGE } from "./ReadingUrlPath";
+import { createLinkPreviewLoader } from "./linkPreview";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -2042,6 +2043,9 @@ export function createReadingPlansManager(
   // -------------------------------------------------------------------------
 
   const editingReadingPlan = signal<ReadingPlanDraft | null>(null);
+  const linkPreviews = createLinkPreviewLoader((url) =>
+    os.getLinkPreview(url, options.language?.peek())
+  );
   // Set while a draft save is in flight or scheduled, so the wizard can show
   // that the user's work is being kept without them having to press anything.
   const editingReadingPlanSaving = signal(false);
@@ -2156,12 +2160,51 @@ export function createReadingPlansManager(
   };
 
   /**
+   * Fetches a preview for a link reading in the draft and swaps it in when it
+   * arrives.
+   */
+  const requestReadingPreview = (reading: PlanReading) => {
+    linkPreviews.request(reading.item, (_original, previewed) => {
+      const draft = editingReadingPlan.peek();
+      // Checked up front, not left to the map below: `mutateDraft` would still
+      // bump `updatedAtMs` and schedule an autosave for a reading that's gone.
+      const stillThere = draft?.plan.sessions.some((session) =>
+        session.readings.some((r) => r.id === reading.id)
+      );
+      if (!stillThere) {
+        return;
+      }
+      mutateDraft((plan) => ({
+        ...plan,
+        sessions: plan.sessions.map((session) => ({
+          ...session,
+          readings: session.readings.map((r) =>
+            r.id === reading.id ? { ...r, item: previewed } : r
+          ),
+        })),
+      }));
+    });
+  };
+
+  /**
+   * Fetches previews for a reopened plan's links that don't have one — saved
+   * before previews existed, or whose preview missed the save cutoff — so the
+   * next save stores them.
+   */
+  const requestMissingReadingPreviews = (plan: ReadingPlan) => {
+    for (const session of plan.sessions) {
+      session.readings.forEach(requestReadingPreview);
+    }
+  };
+
+  /**
    * Opens a fresh draft with one empty session and the everyday cadence
    * pre-selected. Nothing is written yet — the first actual edit persists it,
    * so opening the wizard and immediately backing out leaves no empty plan
    * behind in the user's account.
    */
   const startEditingReadingPlan = () => {
+    linkPreviews.cancel();
     const userId = login.userId.value ?? "";
     const now = Date.now();
     editingReadingPlan.value = {
@@ -2179,6 +2222,7 @@ export function createReadingPlansManager(
 
   /** Reopens a saved draft so the author can carry on where they left off. */
   const resumeEditingReadingPlan = (plan: ReadingPlan) => {
+    linkPreviews.cancel();
     editingReadingPlan.value = {
       plan:
         plan.sessions.length > 0
@@ -2189,6 +2233,7 @@ export function createReadingPlansManager(
       isNew: true,
     };
     editingReadingPlanSaveError.value = false;
+    requestMissingReadingPreviews(plan);
   };
 
   /**
@@ -2199,6 +2244,7 @@ export function createReadingPlansManager(
    * out of the reader's list mid-edit.
    */
   const editExistingReadingPlan = (plan: ReadingPlan) => {
+    linkPreviews.cancel();
     editingReadingPlan.value = {
       plan:
         plan.sessions.length > 0
@@ -2209,6 +2255,7 @@ export function createReadingPlansManager(
       isNew: false,
     };
     editingReadingPlanSaveError.value = false;
+    requestMissingReadingPreviews(plan);
   };
 
   /**
@@ -2219,6 +2266,7 @@ export function createReadingPlansManager(
    * anything else) the author never saved.
    */
   const cancelEditingReadingPlan = () => {
+    linkPreviews.cancel();
     const draft = editingReadingPlan.peek();
     if (draft?.isNew && (draft.persisted || draftSaveTimer !== null)) {
       void flushDraftSave().then(() => {
@@ -2360,6 +2408,7 @@ export function createReadingPlansManager(
           : session
       ),
     }));
+    requestReadingPreview(reading);
   };
 
   /** Removes a reading from a session of the draft. */
@@ -2386,6 +2435,8 @@ export function createReadingPlansManager(
    * no draft or it has no readings.
    */
   const finishEditingReadingPlan = async (): Promise<ReadingPlan | null> => {
+    await linkPreviews.settle();
+    linkPreviews.cancel();
     const draft = editingReadingPlan.peek();
     if (!draft || draftReadingCount(draft) === 0) {
       return null;
@@ -2496,6 +2547,7 @@ export function createReadingPlansManager(
    * and leaving the plan alone.
    */
   const discardEditingReadingPlan = async () => {
+    linkPreviews.cancel();
     const draft = editingReadingPlan.peek();
     if (draftSaveTimer !== null) {
       clearTimeout(draftSaveTimer);
