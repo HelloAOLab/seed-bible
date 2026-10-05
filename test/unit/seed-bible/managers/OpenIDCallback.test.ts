@@ -3,6 +3,7 @@ import {
   YOUVERSION_AUTH_CALLBACK_URL,
   decideOpenIDCallbackStep,
   handleOpenIDCallback,
+  isOpenIDCallbackPath,
   type OpenIDCallbackMessage,
 } from "@packages/seed-bible/seed-bible/managers/OpenIDCallback";
 import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
@@ -21,6 +22,27 @@ async function waitFor(
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
 }
+
+describe("isOpenIDCallbackPath", () => {
+  it("matches the path the provider redirects back to", () => {
+    expect(isOpenIDCallbackPath("", "/oauth/redirect")).toBe(true);
+    expect(isOpenIDCallbackPath("", "/oauth/redirect/")).toBe(true);
+  });
+
+  it("matches only under this deployment's base path", () => {
+    const basePath = "/b/my-branch/abc123";
+    expect(isOpenIDCallbackPath(basePath, `${basePath}/oauth/redirect`)).toBe(
+      true
+    );
+    expect(isOpenIDCallbackPath(basePath, "/oauth/redirect")).toBe(false);
+  });
+
+  it("leaves every other page to the app", () => {
+    expect(isOpenIDCallbackPath("", "/")).toBe(false);
+    expect(isOpenIDCallbackPath("", "/en/genesis/1")).toBe(false);
+    expect(isOpenIDCallbackPath("", "/oauth/redirect/extra")).toBe(false);
+  });
+});
 
 describe("decideOpenIDCallbackStep", () => {
   it("forwards a state-only redirect to YouVersion with every parameter", () => {

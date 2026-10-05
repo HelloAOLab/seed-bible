@@ -1,7 +1,7 @@
 import "./initPostHog";
 import { Main } from "../app/main";
 import { render } from "preact";
-import { readInjectedConfig, withBasePath } from "../app/appConfig";
+import { readInjectedConfig } from "../app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../app/apiResponseSeed";
 import { readInjectedCustomizationSeed } from "../app/customizationSeed";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
@@ -9,8 +9,8 @@ import { decideHydration, type HydrationDecision } from "../app/hydrationGate";
 import { hydrateWithFallback } from "../app/hydrateWithFallback";
 import { waitForInitialChapterLoads } from "../app/initialChapterLoadWait";
 import {
-  YOUVERSION_CALLBACK_PATH,
   handleOpenIDCallback,
+  isOpenIDCallbackPath,
 } from "../managers/OpenIDCallback";
 import { CasualOSManager } from "../managers/OsManager";
 
@@ -21,7 +21,7 @@ const config = readInjectedConfig();
 
 const container = document.getElementById("app") ?? document.body;
 
-if (location.pathname === withBasePath(config, YOUVERSION_CALLBACK_PATH)) {
+if (isOpenIDCallbackPath(config.basePath, location.pathname)) {
   // This page only ever runs inside the sign-in window, and only for a moment
   // on its way to YouVersion or back to the window that opened it, so the
   // reader the server rendered here is cleared rather than started.

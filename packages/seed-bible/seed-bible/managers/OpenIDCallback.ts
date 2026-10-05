@@ -2,10 +2,26 @@ import type { ProcessOpenIDAuthorizationCodeFailure } from "@casual-simulation/a
 import type { CasualOSManager } from "./OsManager";
 
 /**
- * Where YouVersion sends the sign-in window back to. Must match the redirect
- * URI configured for the `youversion` provider on the auth server.
+ * Where the provider sends the sign-in window back to. Must match the redirect
+ * URI configured for the provider on the auth server.
  */
-export const YOUVERSION_CALLBACK_PATH = "/oauth/youversion/callback";
+export const OPEN_ID_CALLBACK_PATH = "/oauth/redirect";
+
+/**
+ * Whether `pathname` is the callback page, under this deployment's base path.
+ * This decides whether the app starts at all, so it has to match before the
+ * reader gets a chance to replace an unknown path with a chapter URL.
+ */
+export function isOpenIDCallbackPath(
+  basePath: string,
+  pathname: string
+): boolean {
+  const normalized =
+    pathname.length > 1 && pathname.endsWith("/")
+      ? pathname.slice(0, -1)
+      : pathname;
+  return normalized === `${basePath}${OPEN_ID_CALLBACK_PATH}`;
+}
 
 /**
  * YouVersion's own callback endpoint. Its first redirect back to us carries
