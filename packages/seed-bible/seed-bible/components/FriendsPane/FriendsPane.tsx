@@ -58,30 +58,37 @@ function CopyButton(props: {
   const { t } = useI18n();
   const copied = useSignal(false);
   return (
-    <button
-      type="button"
-      className={props.className ?? "sb-friends-button"}
-      onClick={() => {
-        void navigator.clipboard
-          .writeText(props.text)
-          .then(() => {
-            copied.value = true;
-            setTimeout(() => (copied.value = false), 2000);
-          })
-          .catch((error) => console.error("Failed to copy:", error));
-      }}
-    >
-      {/* Both labels share one grid cell, so the button is as wide as the
+    <>
+      <button
+        type="button"
+        className={props.className ?? "sb-friends-button"}
+        onClick={() => {
+          void navigator.clipboard
+            .writeText(props.text)
+            .then(() => {
+              copied.value = true;
+              setTimeout(() => (copied.value = false), 2000);
+            })
+            .catch((error) => console.error("Failed to copy:", error));
+        }}
+      >
+        {/* Both labels share one grid cell, so the button is as wide as the
           longer one and doesn't resize when it flips to "Copied". */}
-      <span className="sb-friends-copy-labels">
-        <span className={copied.value ? "sb-friends-copy-label--hidden" : ""}>
-          {props.label}
+        <span className="sb-friends-copy-labels">
+          <span className={copied.value ? "sb-friends-copy-label--hidden" : ""}>
+            {props.label}
+          </span>
+          <span className={copied.value ? "" : "sb-friends-copy-label--hidden"}>
+            {t("copied", { defaultValue: "Copied" })}
+          </span>
         </span>
-        <span className={copied.value ? "" : "sb-friends-copy-label--hidden"}>
-          {t("copied", { defaultValue: "Copied" })}
-        </span>
+      </button>
+      {/* The label flipping to "Copied" isn't announced on its own. Kept
+        outside the button so it doesn't become part of the button's name. */}
+      <span className="sr-only" role="status">
+        {copied.value ? t("copied", { defaultValue: "Copied" }) : ""}
       </span>
-    </button>
+    </>
   );
 }
 
@@ -363,8 +370,9 @@ function IncomingRequestRow(props: {
   // disabled.
   const answering = useSignal<"accept" | "decline" | null>(null);
 
+  const name = displayNameOf(request, t);
+
   const answer = async (accept: boolean) => {
-    const name = displayNameOf(request, t);
     answering.value = accept ? "accept" : "decline";
     try {
       if (!accept) {
@@ -412,6 +420,10 @@ function IncomingRequestRow(props: {
           className="sb-friends-button sb-friends-button--primary"
           busy={answering.value === "accept"}
           disabled={answering.value !== null}
+          ariaLabel={t("accept-friend-user", {
+            name,
+            defaultValue: "Accept {{name}}'s friend request",
+          })}
           onClick={() => void answer(true)}
         >
           {t("accept", { defaultValue: "Accept" })}
@@ -420,6 +432,10 @@ function IncomingRequestRow(props: {
           className="sb-friends-button"
           busy={answering.value === "decline"}
           disabled={answering.value !== null}
+          ariaLabel={t("decline-friend-user", {
+            name,
+            defaultValue: "Decline {{name}}'s friend request",
+          })}
           onClick={() => void answer(false)}
         >
           {t("decline", { defaultValue: "Decline" })}

@@ -943,6 +943,7 @@
   "friend-status-requested": "Requested",
   "add-friend-user": "Add {{name}} as a friend",
   "accept-friend-user": "Accept {{name}}'s friend request",
+  "decline-friend-user": "Decline {{name}}'s friend request",
   "friend-request-sent-toast": "Friend request sent.",
   "friend-request-declined": "Declined {{name}}'s friend request.",
   "friend-request-canceled": "Canceled your friend request to {{name}}.",

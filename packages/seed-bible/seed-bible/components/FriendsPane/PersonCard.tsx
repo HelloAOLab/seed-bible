@@ -1,6 +1,6 @@
 import "./FriendsPane.css";
 import type { ComponentChildren } from "preact";
-import { useEffect } from "preact/hooks";
+import { useEffect, useId } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import { toFriendProfile, type Friend } from "../../managers/FriendsManager";
 import type { LoginManager } from "../../managers/LoginManager";
@@ -17,6 +17,8 @@ type T = ReturnType<typeof useI18n>["t"];
 export function PersonIdentity(props: {
   person: Pick<Friend, "userId" | "name" | "pictureUrl">;
   subtitle?: ComponentChildren;
+  /** Put on the subtitle, for a control that wants it as its description. */
+  subtitleId?: string;
 }) {
   const { t } = useI18n();
   const name = displayNameOf(props.person, t);
@@ -30,7 +32,9 @@ export function PersonIdentity(props: {
       <span className="sb-friends-person-text">
         <span className="sb-friends-person-name">{name}</span>
         {props.subtitle ? (
-          <span className="sb-friends-person-subtitle">{props.subtitle}</span>
+          <span className="sb-friends-person-subtitle" id={props.subtitleId}>
+            {props.subtitle}
+          </span>
         ) : null}
       </span>
     </>
@@ -178,6 +182,7 @@ export function PersonButton(props: {
   subtitle?: ComponentChildren;
 }) {
   const { t } = useI18n();
+  const subtitleId = useId();
   const name = displayNameOf(props.person, t);
   return (
     <button
@@ -187,9 +192,16 @@ export function PersonButton(props: {
         name,
         defaultValue: "View {{name}}'s profile",
       })}
+      // The label replaces what the button shows, so the subtitle ("Waiting
+      // for them to accept") is read as its description instead.
+      aria-describedby={props.subtitle ? subtitleId : undefined}
       onClick={() => openPersonProfile(props.deps, props.person)}
     >
-      <PersonIdentity person={props.person} subtitle={props.subtitle} />
+      <PersonIdentity
+        person={props.person}
+        subtitle={props.subtitle}
+        subtitleId={subtitleId}
+      />
     </button>
   );
 }

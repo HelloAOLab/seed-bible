@@ -527,6 +527,50 @@ describe("FriendsPane", () => {
     });
   });
 
+  describe("for screen readers", () => {
+    it("reads a sent request's status along with the person", async () => {
+      const state = createState();
+      server.requestTo(ADA_ID);
+      await renderPane(state);
+
+      const person = section("Sent requests")!.querySelector(
+        ".sb-friends-person-button"
+      )!;
+      const description = document.getElementById(
+        person.getAttribute("aria-describedby") ?? ""
+      );
+
+      expect(person.getAttribute("aria-label")).toBe("View Ada's profile");
+      expect(description?.textContent).toBe("Waiting for them to accept");
+    });
+
+    it("says whose request Accept and Decline answer", async () => {
+      const state = createState();
+      server.requestFrom(ADA_ID);
+      await renderPane(state);
+
+      const requests = section("Friend requests")!;
+
+      expect(button(requests, "Accept")!.getAttribute("aria-label")).toBe(
+        "Accept Ada's friend request"
+      );
+      expect(button(requests, "Decline")!.getAttribute("aria-label")).toBe(
+        "Decline Ada's friend request"
+      );
+    });
+
+    it("announces that something was copied", async () => {
+      await renderPane(createState());
+      const row = container.querySelector(".sb-friends-my-id")!;
+      const status = () => row.querySelector('[role="status"]')?.textContent;
+      expect(status()).toBe("");
+
+      await click(button(row, "Copy your user ID"));
+
+      expect(status()).toBe("Copied");
+    });
+  });
+
   it("cancels a sent request", async () => {
     const state = createState();
     server.requestTo(ADA_ID);
