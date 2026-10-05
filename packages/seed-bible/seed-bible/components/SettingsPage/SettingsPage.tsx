@@ -948,7 +948,7 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
 
         <div className="sb-settings-field-row">
           <label className="sb-settings-field-label" htmlFor="sb-font-select">
-            {t("font", { defaultValue: "Font" })}
+            {t("scripture-font", { defaultValue: "Scripture Font" })}
           </label>
           <select
             id="sb-font-select"
