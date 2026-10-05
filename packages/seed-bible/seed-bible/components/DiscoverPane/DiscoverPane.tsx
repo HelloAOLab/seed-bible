@@ -164,13 +164,14 @@ export function DiscoverPaneTitle(props: {
     const providers = chats.providers.value.filter(
       (p) => p.supportsToolCalling
     );
-    // Opens the chat panel on a fresh local chat, seeded with an anonymous
-    // prompt message inviting the user to describe what they want changed,
-    // with the given AI provider (if any) already added as a participant.
+    const singleProvider = providers.length === 1 ? providers[0] : undefined;
+    // Opens the chat panel on a fresh local chat, seeded with a prompt
+    // message inviting the user to describe what they want changed, with
+    // the given AI provider already added as a participant.
     // `PlaylistManager` already exposes the playlist-editing tools to every
     // chat while a playlist is being edited, so replying here lets the AI
     // add/update/remove items and edit the title/description.
-    const startAiChat = (providerId: string | null) => {
+    const startAiChat = (providerId: string) => {
       let chat = chats.chats.value.find(
         (c) =>
           c.participants.value.every((p) => !p.isRemote) &&
@@ -183,7 +184,7 @@ export function DiscoverPaneTitle(props: {
           messages: [
             {
               id: uuid(),
-              authors: providerId ? [providerId] : [],
+              authors: [providerId],
               timeMs: Date.now(),
               targets: [],
               type: "text",
@@ -195,9 +196,7 @@ export function DiscoverPaneTitle(props: {
           providerIds: [],
         });
       }
-      if (providerId) {
-        chat.addParticipant(providerId);
-      }
+      chat.addParticipant(providerId);
       chats.selectChat(chat.id);
       openChatPanel();
     };
@@ -258,18 +257,17 @@ export function DiscoverPaneTitle(props: {
             ))}
           </ContextMenuWithButton>
         ) : (
-          // Zero or one provider: no choice to make, so skip the menu. A
-          // single provider is added automatically; with none, the chat opens
-          // with just the prompt message.
-          <button
-            type="button"
-            className="sb-discover-title-ai"
-            aria-label={aiButtonAriaLabel}
-            title={aiButtonLabel}
-            onClick={() => startAiChat(providers[0]?.id ?? null)}
-          >
-            <MaterialIcon>auto_awesome</MaterialIcon>
-          </button>
+          singleProvider && (
+            <button
+              type="button"
+              className="sb-discover-title-ai"
+              aria-label={aiButtonAriaLabel}
+              title={aiButtonLabel}
+              onClick={() => startAiChat(singleProvider.id)}
+            >
+              <MaterialIcon>auto_awesome</MaterialIcon>
+            </button>
+          )
         )}
       </div>
     );
