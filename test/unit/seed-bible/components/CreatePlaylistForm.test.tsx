@@ -758,7 +758,11 @@ describe("CreatePlaylistForm", () => {
         tab.readingState as unknown as { translationId: unknown }
       ).translationId = signal("BSB");
       const getTranslationBookChapter = vi.fn(
-        async (_translationId: string, _bookId: string, chapter: number) =>
+        async (
+          _translationId: string,
+          _bookId: string,
+          chapter: string | number
+        ) =>
           ({
             chapter: {
               number: chapter,
