@@ -217,6 +217,47 @@ describe("FriendsManager", () => {
   });
 
   describe("sendRequest()", () => {
+    // Without the lists, the duplicate checks see nobody: a request to an
+    // existing friend, or to someone who already asked, would go out anyway.
+    it("won't send while the friends lists can't be loaded", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      server.friendsWith("ada");
+      server.spies.listRecords.mockRejectedValue(new Error("offline"));
+      const friends = create();
+      await loaded(friends, () => {});
+
+      await expect(friends.sendRequest({ userId: "ada" })).rejects.toThrow(
+        "Couldn't load the friends lists"
+      );
+      expect(server.rows.map((r) => r.status)).toEqual(["accepted"]);
+    });
+
+    it("won't accept while the friends lists can't be loaded", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const request = server.requestFrom("ada");
+      server.spies.listRecords.mockRejectedValue(new Error("offline"));
+      const friends = create();
+      await loaded(friends, () => {});
+
+      await expect(friends.acceptRequest(request.id)).rejects.toThrow(
+        "Couldn't load the friends lists"
+      );
+      expect(request.status).toBe("requested");
+    });
+
+    it("reads the lists again before sending when the first load failed", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      server.friendsWith("ada");
+      server.spies.listRecords.mockRejectedValueOnce(new Error("offline"));
+      const friends = create();
+      await loaded(friends, () => {});
+
+      await expect(friends.sendRequest({ userId: "ada" })).resolves.toEqual({
+        status: "already_friends",
+      });
+      expect(server.rows).toHaveLength(1);
+    });
+
     it("sends a request that waits seven days for an answer", async () => {
       const friends = create();
       await loaded(friends, () => {});

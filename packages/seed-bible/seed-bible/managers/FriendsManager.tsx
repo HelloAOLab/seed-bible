@@ -392,6 +392,8 @@ export function createFriendsManager(
   /**
    * The account to act as, prompting sign-in if needed, with its lists read
    * at least once so the duplicate checks in `sendRequest` see real state.
+   * Throws when the lists can't be read: acting on empty lists would send a
+   * second request to an existing friend, or ask someone who already asked.
    */
   const resolveSignedInUser = async (): Promise<string | null> => {
     let userId = login.userId.peek();
@@ -405,7 +407,13 @@ export function createFriendsManager(
     if (loadedUserId.peek() !== userId) {
       await refresh();
     }
-    return login.userId.peek() === userId ? userId : null;
+    if (login.userId.peek() !== userId) {
+      return null;
+    }
+    if (loadedUserId.peek() !== userId) {
+      throw new Error("Couldn't load the friends lists");
+    }
+    return userId;
   };
 
   /**
