@@ -32,6 +32,7 @@ import {
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection } from "./DiscoverSection";
+import { PlaylistRow } from "./PlaylistRow";
 import { Avatar } from "../Avatar/Avatar";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
@@ -361,6 +362,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
       <FriendPlaylistsSection
         friends={props.state.friends}
         playlists={playlists}
+        modals={modals}
         toast={props.toast}
       />
 
@@ -604,9 +606,10 @@ function PlaylistHistorySection({
 function FriendPlaylistsSection(props: {
   friends: FriendsManager;
   playlists: PlaylistManager;
+  modals: ModalManager;
   toast: SeedBibleState["app"]["toast"];
 }) {
-  const { friends, playlists, toast } = props;
+  const { friends, playlists, modals, toast } = props;
   const { t } = useI18n();
 
   // Reading each friend's view here (rather than only `friendIds`)
@@ -635,6 +638,7 @@ function FriendPlaylistsSection(props: {
             friend={group.friend}
             playlists={group.playlists}
             playlistsManager={playlists}
+            modals={modals}
             toast={toast}
           />
         ))}
@@ -648,9 +652,10 @@ function FriendPlaylistGroup(props: {
   friend: Friend;
   playlists: Playlist[];
   playlistsManager: PlaylistManager;
+  modals: ModalManager;
   toast: SeedBibleState["app"]["toast"];
 }) {
-  const { friend, playlists, playlistsManager, toast } = props;
+  const { friend, playlists, playlistsManager, modals, toast } = props;
   const { t } = useI18n();
 
   const displayName = displayNameOf(friend, t);
@@ -667,64 +672,14 @@ function FriendPlaylistGroup(props: {
       </div>
       <ul className="sb-discover-list">
         {playlists.map((playlist) => (
-          <li
+          <PlaylistRow
             key={playlist.id}
-            className="sb-discover-item sb-discover-item--row sb-playlist-item"
-            dir="auto"
-            onClick={() => playlistsManager.startPlaying(playlist)}
-          >
-            <div className="sb-discover-item-main">
-              <span className="sb-discover-item-title">
-                {playlist.title ??
-                  t("untitled-playlist", {
-                    defaultValue: "Untitled playlist",
-                  })}
-              </span>
-              {playlist.description ? (
-                <span className="sb-discover-item-description">
-                  {playlist.description}
-                </span>
-              ) : null}
-            </div>
-            <button
-              type="button"
-              className="sb-discover-item-play"
-              aria-label={t("play-playlist", {
-                defaultValue: "Play playlist",
-              })}
-              onClick={(e) => {
-                e.stopPropagation();
-                playlistsManager.startPlaying(playlist);
-              }}
-            >
-              <MaterialIcon>play_arrow</MaterialIcon>
-            </button>
-            <ContextMenuWithButton
-              buttonClassName="sb-discover-item-menu"
-              aria-label={t("playlist-options", {
-                defaultValue: "Playlist options",
-              })}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ContextMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const url = playlistsManager.getPlaylistUrl(playlist);
-                  navigator.clipboard.writeText(url);
-                  toast(
-                    t("playlist-url-copied", {
-                      defaultValue: "Playlist URL copied to clipboard",
-                    })
-                  );
-                }}
-              >
-                <MaterialIcon className="sb-context-menu-item-icon">
-                  share
-                </MaterialIcon>
-                {t("share-playlist", { defaultValue: "Share playlist" })}
-              </ContextMenuItem>
-            </ContextMenuWithButton>
-          </li>
+            playlist={playlist}
+            playlists={playlistsManager}
+            modals={modals}
+            toast={toast}
+            readOnly
+          />
         ))}
       </ul>
     </li>

@@ -538,6 +538,21 @@ describe("DiscoverPane", () => {
       );
     });
 
+    it("shows a friend's playlist cover, as your own playlists do", () => {
+      renderWithFriends(signal([ada]), {
+        ada: [
+          createPlaylist({
+            id: "p1",
+            heroImageUrl: "https://example.com/cover.jpg",
+          }),
+        ],
+      });
+
+      expect(friendsSection()!.querySelector("img")?.getAttribute("src")).toBe(
+        "https://example.com/cover.jpg"
+      );
+    });
+
     it("drops a friend's playlists once they're no longer a friend", () => {
       const friends = signal([ada, bob]);
       renderWithFriends(friends, {

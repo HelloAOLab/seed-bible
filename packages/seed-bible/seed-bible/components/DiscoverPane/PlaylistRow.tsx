@@ -15,9 +15,9 @@ import { MaterialIcon } from "../icons";
  * and a menu offering share, edit and delete. A cover thumbnail is shown
  * only when the playlist has one.
  *
- * Used by the profile screen's "Your content", so the same playlist offers the
- * same actions and reads the same wherever it is listed. It renders an `<li>`,
- * so a caller has to wrap it in that list.
+ * Used by the profile screen's "Your content" and by friends' playlists in
+ * Discover, so a playlist reads the same wherever it is listed. It renders an
+ * `<li>`, so a caller has to wrap it in that list.
  */
 export function PlaylistRow(props: {
   playlist: Playlist;
@@ -34,6 +34,8 @@ export function PlaylistRow(props: {
    */
   onPlay?: (playlist: Playlist) => void;
   onEdit?: (playlist: Playlist) => void;
+  /** Someone else's playlist: Share stays, Edit and Delete don't. */
+  readOnly?: boolean;
 }) {
   const { playlist, playlists, modals, toast } = props;
   const { t } = useI18n();
@@ -109,29 +111,33 @@ export function PlaylistRow(props: {
           </MaterialIcon>
           {t("share-playlist", { defaultValue: "Share playlist" })}
         </ContextMenuItem>
-        <ContextMenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            edit(playlist);
-          }}
-        >
-          <MaterialIcon className="sb-context-menu-item-icon">
-            edit
-          </MaterialIcon>
-          {t("edit-playlist", { defaultValue: "Edit playlist" })}
-        </ContextMenuItem>
-        <ContextMenuItem
-          className="sb-context-menu-item--danger"
-          onClick={(e) => {
-            e.stopPropagation();
-            openDeletePlaylistConfirm(modals, playlists, playlist, toast);
-          }}
-        >
-          <MaterialIcon className="sb-context-menu-item-icon">
-            delete
-          </MaterialIcon>
-          {t("delete-playlist", { defaultValue: "Delete" })}
-        </ContextMenuItem>
+        {props.readOnly ? null : (
+          <>
+            <ContextMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                edit(playlist);
+              }}
+            >
+              <MaterialIcon className="sb-context-menu-item-icon">
+                edit
+              </MaterialIcon>
+              {t("edit-playlist", { defaultValue: "Edit playlist" })}
+            </ContextMenuItem>
+            <ContextMenuItem
+              className="sb-context-menu-item--danger"
+              onClick={(e) => {
+                e.stopPropagation();
+                openDeletePlaylistConfirm(modals, playlists, playlist, toast);
+              }}
+            >
+              <MaterialIcon className="sb-context-menu-item-icon">
+                delete
+              </MaterialIcon>
+              {t("delete-playlist", { defaultValue: "Delete" })}
+            </ContextMenuItem>
+          </>
+        )}
       </ContextMenuWithButton>
     </li>
   );
