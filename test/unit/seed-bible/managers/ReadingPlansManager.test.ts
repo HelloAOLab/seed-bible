@@ -2750,6 +2750,40 @@ describe("createReadingPlansManager", () => {
 
       expect(match?.allComplete).toBe(true);
     });
+
+    it("uses the most recent progress when the plan was started more than once", async () => {
+      // Starting a plan again appends a new progress after the old one, so the
+      // abandoned run comes first in the list.
+      const abandonedRun = progressFor(genesisPlan, {
+        id: "progress-abandoned",
+        startedAtMs: START_MS,
+      });
+      const currentRun = progressFor(genesisPlan, {
+        id: "progress-current",
+        startedAtMs: START_MS + 7 * 24 * 60 * 60 * 1000,
+        sessions: [
+          {
+            sessionId: "s1",
+            completedReadingIds: ["r1"],
+            partialChapters: [],
+          },
+        ],
+      });
+      const manager = await loadManager(
+        [genesisPlan],
+        [abandonedRun, currentRun]
+      );
+
+      const matches = manager.getReadingPlansForChapter(
+        "GEN",
+        1,
+        featuresWith(true)
+      );
+
+      expect(matches).toHaveLength(1);
+      expect(matches[0]?.progress.id).toBe("progress-current");
+      expect(matches[0]?.allComplete).toBe(true);
+    });
   });
 
   describe("getReadingPlanShareUrl", () => {

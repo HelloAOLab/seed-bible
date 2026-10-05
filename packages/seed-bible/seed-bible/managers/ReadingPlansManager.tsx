@@ -2599,7 +2599,7 @@ export function createReadingPlansManager(
     if (featureOn && bookId) {
       for (const plan of fullPlans) {
         const planId = formatReadingPlanId(plan.recordName, plan.address);
-        const progress = progresses.find((p) => p.planId === planId);
+        const progress = latestReadingPlanProgress(progresses, planId);
         if (!progress) {
           continue; // only plans the user is actually following
         }
