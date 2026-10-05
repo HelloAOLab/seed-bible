@@ -111,7 +111,9 @@ async function listAllPages<T>(
   ) => Promise<
     | { success: true; items: T[]; totalCount: number }
     | { success: false; errorCode: string }
-  >
+  >,
+  /** Stops at the page where this first finds what it's after. */
+  isFound?: (item: T) => boolean
 ): Promise<T[]> {
   const all: T[] = [];
   for (let page = 0; ; page++) {
@@ -123,7 +125,11 @@ async function listAllPages<T>(
     all.push(...result.items);
     // Stopping on an empty page too means a total that shrinks while we page
     // (someone revoking mid-listing) can't keep us asking for pages forever.
-    if (result.items.length === 0 || all.length >= result.totalCount) {
+    if (
+      result.items.length === 0 ||
+      all.length >= result.totalCount ||
+      (isFound && result.items.some(isFound))
+    ) {
       return all;
     }
   }
@@ -398,6 +404,17 @@ export function CasualOSManager(
     client.sessionKey = sessionKey.value as string;
   });
 
+  const fetchSentPage = async (page: number) => {
+    const result = await client.listSentSharedPermissions({ page });
+    return result.success
+      ? {
+          success: true as const,
+          items: result.sharedPermissions,
+          totalCount: result.totalCount,
+        }
+      : result;
+  };
+
   const listDataByMarker = async (
     // Despite the field's name, the records server resolves this the same
     // way it does a write's `recordKey` - either a bare record name or an
@@ -568,16 +585,21 @@ export function CasualOSManager(
 
     /** Every request the signed-in user has sent, in any status. */
     listAllSentSharedPermissions: () =>
-      listAllPages("sent shared permissions", async (page) => {
-        const result = await client.listSentSharedPermissions({ page });
-        return result.success
-          ? {
-              success: true,
-              items: result.sharedPermissions,
-              totalCount: result.totalCount,
-            }
-          : result;
-      }),
+      listAllPages("sent shared permissions", fetchSentPage),
+
+    /**
+     * One request the signed-in user sent, found by ID, or null. The server
+     * has no lookup by ID, so this pages the sent list (newest first) only as
+     * far as the request, which for one just sent is the first page.
+     */
+    findSentSharedPermission: async (id: string) => {
+      const sent = await listAllPages(
+        "sent shared permissions",
+        fetchSentPage,
+        (permission) => permission.id === id
+      );
+      return sent.find((permission) => permission.id === id) ?? null;
+    },
 
     /**
      * Every request ever sent to the signed-in user, in any status. Callers

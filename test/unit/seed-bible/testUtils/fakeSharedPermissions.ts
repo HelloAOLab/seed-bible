@@ -160,6 +160,12 @@ export function fakeSharedPermissions(
       .mockImplementation(async () =>
         rows.filter((r) => r.requestingUserId === me())
       ),
+    findSent: vi
+      .spyOn(os, "findSentSharedPermission")
+      .mockImplementation(
+        async (id: string) =>
+          rows.find((r) => r.id === id && r.requestingUserId === me()) ?? null
+      ),
   };
 
   return {

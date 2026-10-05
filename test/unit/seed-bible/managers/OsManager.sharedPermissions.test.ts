@@ -179,6 +179,37 @@ describe("CasualOSManager shared permissions", () => {
       expect(list).toHaveBeenCalledTimes(1);
     });
 
+    describe("findSentSharedPermission()", () => {
+      const sentPages = [["a", "b"], ["c", "d"], ["e"]].map((ids) =>
+        ids.map((id) => ({ id, targetUserId: `target-${id}` }))
+      );
+      const stubSent = () =>
+        stubProcedure<{ page: number }>(
+          "listSentSharedPermissions",
+          ({ page }) => ({
+            success: true,
+            sharedPermissions: sentPages[page] ?? [],
+            totalCount: 5,
+          })
+        );
+
+      it("stops at the page holding the request", async () => {
+        const list = stubSent();
+
+        const found = await os.findSentSharedPermission("c");
+
+        expect(found).toMatchObject({ id: "c", targetUserId: "target-c" });
+        expect(list.mock.calls.map(([input]) => input.page)).toEqual([0, 1]);
+      });
+
+      it("is null when no page holds it", async () => {
+        const list = stubSent();
+
+        await expect(os.findSentSharedPermission("z")).resolves.toBeNull();
+        expect(list.mock.calls.map(([input]) => input.page)).toEqual([0, 1, 2]);
+      });
+    });
+
     it("stops at an empty page even if the total says there's more", async () => {
       // A revoke landing mid-listing shrinks the real count below the total
       // the first page reported.

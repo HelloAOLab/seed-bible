@@ -328,6 +328,50 @@ describe("FriendsManager", () => {
       expect(server.rows.map((r) => r.status)).toEqual(["revoked"]);
     });
 
+    it("still reports a request by email as sent when it can't check who it reached", async () => {
+      server.emails.set("ada@example.com", "ada");
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const error = vi.spyOn(console, "error").mockImplementation(() => {});
+      const friends = create();
+      await loaded(friends, () => {});
+      // Listing what the user has sent fails, however it's asked for.
+      server.spies.findSent.mockRejectedValueOnce(new Error("offline"));
+      server.spies.listSent.mockRejectedValueOnce(new Error("offline"));
+
+      try {
+        await expect(
+          friends.sendRequest({ email: "ada@example.com" })
+        ).resolves.toMatchObject({ status: "sent" });
+        expect(server.rows).toMatchObject([
+          { requestingUserId: ME, targetUserId: "ada", status: "requested" },
+        ]);
+      } finally {
+        warn.mockRestore();
+        error.mockRestore();
+      }
+    });
+
+    it("still reports an existing friendship when taking back a request by email fails", async () => {
+      server.friendsWith("ada");
+      server.emails.set("ada@example.com", "ada");
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const friends = create();
+      await loaded(friends, () => {});
+      server.spies.revoke.mockResolvedValueOnce(fail("server_error") as never);
+
+      try {
+        await expect(
+          friends.sendRequest({ email: "ada@example.com" })
+        ).resolves.toEqual({ status: "already_friends" });
+        expect(warn).toHaveBeenCalledWith(
+          expect.stringContaining("Couldn't take back friend request"),
+          "server_error"
+        );
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
     it("asks the user to sign in first, and gives up if they don't", async () => {
       userId.value = null;
       const friends = create();

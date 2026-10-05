@@ -577,14 +577,35 @@ export function createFriendsManager(
     if ("email" in target) {
       // The server resolved the email to an account only now, so the checks
       // above couldn't run before sending. Run them against the account it
-      // picked, and take the new request back if one of them applies.
-      const sent = await os.listAllSentSharedPermissions();
-      const targetUserId = sent.find((r) => r.id === requestId)?.targetUserId;
-      const existing = targetUserId ? await existingWith(targetUserId) : null;
-      if (existing) {
-        await os.revokeSharedPermission(requestId);
-        await refresh();
-        return existing;
+      // picked, and take the new request back if one of them applies. Only a
+      // tidy-up: the request has gone out, so if this fails it's still sent.
+      try {
+        const sent = await os.findSentSharedPermission(requestId);
+        const existing = sent?.targetUserId
+          ? await existingWith(sent.targetUserId)
+          : null;
+        if (existing) {
+          const takeBack = await os.revokeSharedPermission(requestId);
+          if (
+            !takeBack.success &&
+            takeBack.errorCode !== "not_found" &&
+            takeBack.errorCode !== "invalid_request"
+          ) {
+            // Left waiting, which answering or ending a friendship tidies up:
+            // both end every request between the two people.
+            console.warn(
+              `Couldn't take back friend request ${requestId}:`,
+              takeBack.errorCode
+            );
+          }
+          await refresh();
+          return existing;
+        }
+      } catch (error) {
+        console.warn(
+          "Couldn't check who a friend request by email reached:",
+          error
+        );
       }
     }
 
