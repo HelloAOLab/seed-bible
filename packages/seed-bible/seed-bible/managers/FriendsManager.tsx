@@ -169,7 +169,16 @@ const isFriendsPermission = (permission: SharedMarkerPermission): boolean =>
 const isPendingFriendRequest = (request: SharedPermission, nowMs: number) =>
   request.status === "requested" &&
   isFriendsPermission(request.permission) &&
-  (request.expireTimeMs === null || request.expireTimeMs > nowMs);
+  !hasExpired(request, nowMs);
+
+/**
+ * A request can expire after the lists were read, and nothing re-reads them
+ * at that moment, so whatever acts on a listed request checks again.
+ */
+const hasExpired = (
+  request: { expireTimeMs: number | null },
+  nowMs = Date.now()
+) => request.expireTimeMs !== null && request.expireTimeMs <= nowMs;
 
 const EMPTY_LINKS: FriendLink[] = [];
 const EMPTY_REQUESTS: SharedPermission[] = [];
@@ -225,6 +234,7 @@ export function createFriendsManager(
   ): FriendRequest[] => {
     const friendSet = new Set(friendIds.value);
     const seen = new Set<string>();
+    const nowMs = Date.now();
     const result: FriendRequest[] = [];
     // Newest first, so a person with several pending requests is shown once,
     // by their latest.
@@ -235,7 +245,12 @@ export function createFriendsManager(
       // A pending request with someone who is already a friend is left over
       // from both people asking at once. Accepting or unfriending ends it;
       // until then, the friendship already answers it.
-      if (!userId || friendSet.has(userId) || seen.has(userId)) {
+      if (
+        !userId ||
+        friendSet.has(userId) ||
+        seen.has(userId) ||
+        hasExpired(request, nowMs)
+      ) {
         continue;
       }
       seen.add(userId);
@@ -467,6 +482,9 @@ export function createFriendsManager(
     const result = await os.acceptSharedPermission(requestId, me);
     if (!result.success) {
       if (result.errorCode === "shared_permission_expired") {
+        // Dropped from the list by the refresh, rather than left there to
+        // fail the same way on every press.
+        await refresh();
         return { success: false, reason: "expired" };
       }
       if (
@@ -545,7 +563,9 @@ export function createFriendsManager(
       if (friendIds.peek().includes(userId)) {
         return { status: "already_friends" };
       }
-      const theirs = incomingRequests.peek().find((r) => r.userId === userId);
+      const theirs = incomingRequests
+        .peek()
+        .find((r) => r.userId === userId && !hasExpired(r));
       if (theirs) {
         const accepted = await acceptRequest(theirs.id);
         if (accepted.success) {
@@ -554,7 +574,9 @@ export function createFriendsManager(
         // Their request went away in the meantime; fall through to asking.
         return null;
       }
-      const mine = outgoingRequests.peek().find((r) => r.userId === userId);
+      const mine = outgoingRequests
+        .peek()
+        .find((r) => r.userId === userId && !hasExpired(r));
       if (mine) {
         return { status: "already_requested", requestId: mine.id };
       }

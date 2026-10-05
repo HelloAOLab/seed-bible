@@ -258,6 +258,27 @@ describe("FriendsManager", () => {
       expect(server.rows).toHaveLength(1);
     });
 
+    it("sends a new request once the one you sent has expired", async () => {
+      const start = Date.UTC(2026, 9, 5, 12);
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(start);
+      try {
+        const friends = create();
+        await loaded(friends, () => {});
+        await friends.sendRequest({ userId: "ada" });
+
+        // A week passes with no answer, and nothing re-reads the lists.
+        vi.setSystemTime(start + FRIEND_REQUEST_LIFETIME_MS + 1000);
+
+        await expect(
+          friends.sendRequest({ userId: "ada" })
+        ).resolves.toMatchObject({ status: "sent" });
+        expect(server.rows).toHaveLength(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it("sends a request that waits seven days for an answer", async () => {
       const friends = create();
       await loaded(friends, () => {});
@@ -446,7 +467,7 @@ describe("FriendsManager", () => {
       expect(friends.incomingRequests.value).toEqual([]);
     });
 
-    it("reports an expired request", async () => {
+    it("reports an expired request, and stops listing it", async () => {
       const request = server.requestFrom("ada");
       const friends = create();
       await loaded(friends, () => {});
@@ -457,6 +478,7 @@ describe("FriendsManager", () => {
         reason: "expired",
       });
       expect(friends.friendIds.value).toEqual([]);
+      expect(friends.incomingRequests.value).toEqual([]);
     });
 
     it("reports a request that was withdrawn", async () => {
