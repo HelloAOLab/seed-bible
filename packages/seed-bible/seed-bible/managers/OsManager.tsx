@@ -117,12 +117,20 @@ async function listAllPages<T>(
   isFound?: (item: T) => boolean
 ): Promise<T[]> {
   const all: T[] = [];
+  let previousPage: string | null = null;
   for (let page = 0; ; page++) {
     const result = await fetchPage(page);
     if (!result.success) {
       console.error(`Error listing ${label}:`, result);
       throw new Error(`Error listing ${label}: ${result.errorCode}`);
     }
+    // A server that ignores `page` sends the first page every time, and
+    // without a total to reach, that would never end.
+    const thisPage = JSON.stringify(result.items);
+    if (thisPage === previousPage) {
+      return all;
+    }
+    previousPage = thisPage;
     all.push(...result.items);
     // Stopping on an empty page too means a total that shrinks while we page
     // (someone revoking mid-listing) can't keep us asking for pages forever.

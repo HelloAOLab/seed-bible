@@ -228,6 +228,37 @@ describe("CasualOSManager shared permissions", () => {
       expect(list).toHaveBeenCalledTimes(2);
     });
 
+    it("pages until an empty page when the server leaves out the total", async () => {
+      const pages = [[sharedRecord("a")], [sharedRecord("b")]];
+      const list = stubProcedure<{ page: number }>(
+        "listSharedRecords",
+        ({ page }) => ({ success: true, sharedRecords: pages[page] ?? [] })
+      );
+
+      const result = await os.listAllSharedRecords();
+
+      expect(result.map((r) => r.sharedPermissionId)).toEqual(["a", "b"]);
+      expect(list).toHaveBeenCalledTimes(3);
+    });
+
+    it("stops when the server ignores the page and leaves out the total", async () => {
+      // Gives up after a few pages, so a loop that never stops fails
+      // instead of running the test out of memory.
+      const list = stubProcedure("listSharedRecords", () =>
+        list.mock.calls.length > 10
+          ? { success: false, errorCode: "too_many_pages" }
+          : {
+              success: true,
+              sharedRecords: [sharedRecord("a"), sharedRecord("b")],
+            }
+      );
+
+      const result = await os.listAllSharedRecords();
+
+      expect(result.map((r) => r.sharedPermissionId)).toEqual(["a", "b"]);
+      expect(list).toHaveBeenCalledTimes(2);
+    });
+
     it("throws when a page fails", async () => {
       const consoleError = vi
         .spyOn(console, "error")
