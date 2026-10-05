@@ -544,10 +544,11 @@ type AnnotationsEntry = {
    */
   explicit: boolean;
   /**
-   * Whether `data` was last read as a friend's (straight from the server) or
-   * as the signed-in user's own (through the local mirror and sync). An
-   * explicit entry survives a change of account, so the change can turn it
-   * from one into the other; it's then read again the right way.
+   * Whether the last read, finished or failed, was as a friend's (straight
+   * from the server) or as the signed-in user's own (through the local mirror
+   * and sync). An explicit entry survives a change of account, so the change
+   * can turn it from one into the other; it's then read again the right way.
+   * Set when a read starts, so a failed read still records it.
    */
   readAsFriend: boolean;
   /** When the last successful read finished, for re-reading a friend's notes. */
@@ -1051,6 +1052,7 @@ export function createAnnotationsManager(
       // straight from the server too: the local mirror only holds the
       // signed-in account's own rows for the sync engine.
       const isOtherAccount = isFriendEntry(entry);
+      entry.readAsFriend = isOtherAccount;
       const serverOnly = recordOverride ?? (isOtherAccount ? recordId : null);
       const loaded = !serverOnly
         ? await loadChapterForOwner(recordId, bookId, chapterNumber)
@@ -1065,7 +1067,6 @@ export function createAnnotationsManager(
         return;
       }
       entry.data.value = loaded;
-      entry.readAsFriend = isOtherAccount;
       entry.loadedAtMs = Date.now();
       entry.loadFailed = false;
       // Only authoritative once we know the list is complete: either the server

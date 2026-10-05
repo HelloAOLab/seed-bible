@@ -914,6 +914,42 @@ describe("AnnotationsManager", () => {
       );
     });
 
+    // A failed read leaves the entry marked failed, which nothing retries
+    // for the signed-in user's own notes once the entry is theirs.
+    it("reads a friend's notes as their own when you sign in as them, even after reading them as a friend failed", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      listDataByMarkerMock.mockImplementation(
+        async (record: string, _marker: string, lastAddress?: string) => ({
+          success: true,
+          items:
+            record === "friend-user" && !lastAddress
+              ? [
+                  {
+                    address: "their-note",
+                    data: createCommentAnnotation({ id: "their-note" }),
+                  },
+                ]
+              : [],
+          totalCount: record === "friend-user" ? 1 : 0,
+        })
+      );
+      listDataByMarkerMock.mockRejectedValueOnce(new Error("offline"));
+      const manager = createManager();
+      manager.getUserAnnotationsForChapter("friend-user", "GEN", 1);
+      await vi.waitFor(() => expect(consoleError).toHaveBeenCalled());
+
+      // The same device, now signed in as that friend.
+      login.userId.value = "friend-user";
+      const asThemselves = manager.getAnnotationsForChapter("GEN", 1);
+
+      await vi.waitFor(() =>
+        expect(asThemselves.value.map((a) => a.id)).toEqual(["their-note"])
+      );
+      consoleError.mockRestore();
+    });
+
     it("asks once when the first page holds the whole listing", async () => {
       listOnePage([
         { address: "a1", data: createCommentAnnotation({ id: "a1" }) },

@@ -609,6 +609,8 @@ export function createHighlightsManager(
   const loadFriendHighlights = async (
     entry: ChapterHighlightsEntry
   ): Promise<void> => {
+    // Set before reading, so a read that fails still records it.
+    entry.readAsFriend = true;
     try {
       const fromServer = await friendFreshness.read(entry.data, () =>
         fetchFromServer(entry.owner, entry.address)
@@ -617,7 +619,6 @@ export function createHighlightsManager(
       // holds newer highlights than this response does.
       if (!entry.settled) {
         applyPayload(entry, fromServer);
-        entry.readAsFriend = true;
         entry.loadedAtMs = Date.now();
         entry.loadFailed = false;
       }
