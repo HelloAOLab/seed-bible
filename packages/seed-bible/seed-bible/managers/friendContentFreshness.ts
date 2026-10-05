@@ -102,13 +102,20 @@ export function createFriendContentFreshness(
   // The friend signals something is watching.
   const shown = new Set<Signal<unknown>>();
 
+  /**
+   * Reads again whatever is on screen and due for it: stale, or last read
+   * failed. Content that isn't on screen waits until it is.
+   */
+  const refreshOnScreen = () => {
+    for (const refreshIfStale of onScreen) {
+      refreshIfStale();
+    }
+  };
+
   if (typeof window !== "undefined") {
     const refreshOnReturn = () => {
-      if (document.visibilityState !== "visible") {
-        return;
-      }
-      for (const refreshIfStale of onScreen) {
-        refreshIfStale();
+      if (document.visibilityState === "visible") {
+        refreshOnScreen();
       }
     };
     window.addEventListener("focus", refreshOnReturn);
@@ -148,5 +155,5 @@ export function createFriendContentFreshness(
   const read = <T>(content: Signal<unknown>, load: () => Promise<T>) =>
     limiter.run(load, () => shown.has(content));
 
-  return { trackedSignal, read };
+  return { trackedSignal, read, refreshOnScreen };
 }

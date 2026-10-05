@@ -1921,6 +1921,63 @@ describe("AnnotationsManager", () => {
       );
     });
 
+    it("reads a friend's chapter again when the connection returns only if it's on screen", async () => {
+      listDataByMarkerMock.mockRejectedValue(new Error("offline"));
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const manager = createOfflineManager();
+      goOffline();
+      const shown = manager.getUserAnnotationsForChapter("friend-a", "GEN", 1);
+      const leftBehind = manager.getUserAnnotationsForChapter(
+        "friend-b",
+        "GEN",
+        2
+      );
+      const stopShowing = effect(() => void shown.value);
+      let stopShowingLeftBehind = effect(() => void leftBehind.value);
+      const listingsFor = (record: string) =>
+        listDataByMarkerMock.mock.calls.filter(([r]) => r === record).length;
+
+      try {
+        await waitForCondition(
+          () => listingsFor("friend-a") === 1 && listingsFor("friend-b") === 1
+        );
+        await settle();
+        // Friend B's chapter was visited offline, then left.
+        stopShowingLeftBehind();
+        listDataByMarkerMock.mockImplementation(
+          async (record: string, _marker: string, lastAddress?: string) => {
+            const id = `${record}-note`;
+            return {
+              success: true,
+              items: lastAddress
+                ? []
+                : [{ address: id, data: createCommentAnnotation({ id }) }],
+              totalCount: 1,
+            };
+          }
+        );
+
+        window.dispatchEvent(new Event("online"));
+
+        await vi.waitFor(() =>
+          expect(shown.value.map((a) => a.id)).toEqual(["friend-a-note"])
+        );
+        await settle();
+        expect(listingsFor("friend-b")).toBe(1);
+
+        stopShowingLeftBehind = effect(() => void leftBehind.value);
+        await vi.waitFor(() =>
+          expect(leftBehind.value.map((a) => a.id)).toEqual(["friend-b-note"])
+        );
+      } finally {
+        stopShowing();
+        stopShowingLeftBehind();
+        consoleError.mockRestore();
+      }
+    });
+
     it("keeps an unsent edit when the server list is refreshed", async () => {
       const manager = createOfflineManager();
       const mine = createCommentAnnotation({

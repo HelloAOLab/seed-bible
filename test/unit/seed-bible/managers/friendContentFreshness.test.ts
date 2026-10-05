@@ -142,3 +142,26 @@ describe("createFriendContentFreshness().read", () => {
     }
   });
 });
+
+describe("createFriendContentFreshness().refreshOnScreen", () => {
+  it("refreshes only the content something is showing", async () => {
+    const freshness = createFriendContentFreshness();
+    const refreshShown = vi.fn();
+    const refreshHidden = vi.fn();
+    const shown = freshness.trackedSignal<string[]>([], refreshShown);
+    freshness.trackedSignal<string[]>([], refreshHidden);
+    const stopShowing = effect(() => void shown.value);
+
+    try {
+      await flush();
+      refreshShown.mockClear();
+
+      freshness.refreshOnScreen();
+
+      expect(refreshShown).toHaveBeenCalledTimes(1);
+      expect(refreshHidden).not.toHaveBeenCalled();
+    } finally {
+      stopShowing();
+    }
+  });
+});

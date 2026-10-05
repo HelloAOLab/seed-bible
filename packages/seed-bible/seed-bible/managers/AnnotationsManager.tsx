@@ -1025,6 +1025,10 @@ export function createAnnotationsManager(
     return entry;
   };
 
+  /** Whether an entry holds another account's notes (a friend's). */
+  const isFriendEntry = (entry: AnnotationsEntry): boolean =>
+    entry.explicit && entry.recordId !== untracked(effectiveRecordId);
+
   const loadEntry = async (
     recordId: string,
     bookId: string,
@@ -1038,8 +1042,7 @@ export function createAnnotationsManager(
       // Another account's annotations (a friend's) are read
       // straight from the server too: the local mirror only holds the
       // signed-in account's own rows for the sync engine.
-      const isOtherAccount =
-        entry.explicit && recordId !== untracked(effectiveRecordId);
+      const isOtherAccount = isFriendEntry(entry);
       const serverOnly = recordOverride ?? (isOtherAccount ? recordId : null);
       const loaded = !serverOnly
         ? await loadChapterForOwner(recordId, bookId, chapterNumber)
@@ -1083,10 +1086,8 @@ export function createAnnotationsManager(
    * are kept current by the sync engine instead.
    */
   const refreshFriendEntry = (entry: AnnotationsEntry): void => {
-    const isOtherAccount =
-      entry.explicit && entry.recordId !== untracked(effectiveRecordId);
     if (
-      !isOtherAccount ||
+      !isFriendEntry(entry) ||
       entry.load ||
       !(entry.loadFailed || isFriendContentStale(entry.loadedAtMs))
     ) {
@@ -1285,6 +1286,11 @@ export function createAnnotationsManager(
       return;
     }
     for (const entry of entries.values()) {
+      // A friend's chapter is read again only while it's on screen, below:
+      // one per friend for every chapter visited offline would all go at once.
+      if (isFriendEntry(entry)) {
+        continue;
+      }
       // Anything not yet settled is worth another go, whether it failed or was
       // never loaded. Checking `settled` rather than `loadFailed` also covers
       // the case where the connection returned while a failing load was still
@@ -1303,6 +1309,7 @@ export function createAnnotationsManager(
         entry
       );
     }
+    friendFreshness.refreshOnScreen();
   });
 
   // --- Editing/view-transition state, mirroring PlaylistManager's pattern ---
