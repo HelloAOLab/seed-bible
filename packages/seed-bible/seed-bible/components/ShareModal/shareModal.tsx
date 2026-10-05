@@ -24,6 +24,8 @@ export const ShareModal = (props: ShareModalProps) => {
   const { t } = useI18n();
 
   const sessionActive = props.session !== null;
+  // A partner-site embed shares a link to the passage, not a live session.
+  const hideSharedSession = props.app.isMinimalEmbed.value;
 
   const close = () => props.onClose?.();
 
@@ -113,7 +115,9 @@ export const ShareModal = (props: ShareModalProps) => {
         },
   ].filter(
     (action): action is NonNullable<typeof action> =>
-      action !== null && !(props.hideShareLink && action.key === "link")
+      action !== null &&
+      !(props.hideShareLink && action.key === "link") &&
+      !(hideSharedSession && action.key === "session")
   );
 
   return (

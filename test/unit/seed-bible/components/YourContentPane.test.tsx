@@ -122,6 +122,30 @@ function startedProgress(plan: ReadingPlan): ReadingPlanProgress {
   );
 }
 
+/** Progress on a plan with its first `done` sessions read. */
+function progressWithSessionsDone(
+  plan: ReadingPlan,
+  done: number,
+  options: { selfPaced?: boolean } = {}
+): ReadingPlanProgress {
+  const progress = createReadingPlanProgress(
+    plan,
+    "user-1",
+    `${plan.address}-progress`,
+    PLAN_CREATED_MS,
+    options
+  );
+  return {
+    ...progress,
+    sessions: plan.sessions.slice(0, done).map((session, i) => ({
+      sessionId: session.id,
+      completedReadingIds: session.readings.map((r) => r.id),
+      partialChapters: [],
+      completedAtMs: PLAN_CREATED_MS + (i + 1) * 1000,
+    })),
+  };
+}
+
 interface StateOptions {
   annotations?: Annotation[];
   highlights?: StoredHighlight[];
@@ -137,6 +161,8 @@ interface StateOptions {
   /** Full plans; the screen reads them as the list and as the loaded plans. */
   readingPlans?: ReadingPlan[];
   readingPlanProgresses?: ReadingPlanProgress[];
+  /** Plans whose contents have loaded; defaults to every plan in `readingPlans`. */
+  fullReadingPlans?: ReadingPlan[];
   /** The reading-plans feature flag. On unless a test turns it off. */
   plansEnabled?: boolean;
   /** Makes deleting a plan fail, so the screen has to say so. */
@@ -216,7 +242,9 @@ function createState(options: StateOptions = {}) {
     },
     readingPlans: {
       userReadingPlans: signal(options.readingPlans ?? []),
-      fullReadingPlans: signal(options.readingPlans ?? []),
+      fullReadingPlans: signal(
+        options.fullReadingPlans ?? options.readingPlans ?? []
+      ),
       userReadingPlanProgresses: signal(options.readingPlanProgresses ?? []),
       deleteReadingPlan,
     },
@@ -735,6 +763,23 @@ describe("YourContentPane", () => {
     expect(row?.querySelector(".sb-discover-item-title")?.textContent).toBe(
       "Morning devotions"
     );
+    expect(row?.querySelector(".sb-hero-thumb")).toBeNull();
+    expect(row?.textContent).not.toContain("No image");
+  });
+
+  it("shows a cover thumbnail when the playlist has an image", () => {
+    const list = playlist("p1", "Morning devotions");
+    list.heroImageUrl = "https://example.com/cover.jpg";
+    const { state } = createState({ playlists: [list] });
+    renderPane(state);
+
+    const thumb = container.querySelector(
+      ".sb-playlist-item .sb-hero-thumb"
+    ) as HTMLImageElement;
+    expect(thumb).not.toBeNull();
+    expect(thumb.tagName).toBe("IMG");
+    expect(thumb.src).toBe("https://example.com/cover.jpg");
+    expect(container.querySelector(".sb-hero-thumb--empty")).toBeNull();
   });
 
   it("opens the passage an annotation is about", () => {
@@ -927,6 +972,53 @@ describe("YourContentPane", () => {
       renderPane(state);
 
       expect(planStatuses()).toEqual(["Day 1 of 3"]);
+    });
+
+    describe("with the clock a week after the plan began", () => {
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(PLAN_CREATED_MS + 7 * 24 * 60 * 60 * 1000);
+      });
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it("marks a plan with every session read as completed", () => {
+        const plan = readingPlan("plan-1", "Genesis", { sessions: 3 });
+        const { state } = createState({
+          readingPlans: [plan],
+          readingPlanProgresses: [progressWithSessionsDone(plan, 3)],
+        });
+        renderPane(state);
+
+        expect(planStatuses()).toEqual(["Completed"]);
+      });
+
+      it("counts sessions read for a self-paced plan", () => {
+        const plan = readingPlan("plan-1", "Genesis", { sessions: 3 });
+        const { state } = createState({
+          readingPlans: [plan],
+          readingPlanProgresses: [
+            progressWithSessionsDone(plan, 1, { selfPaced: true }),
+          ],
+        });
+        renderPane(state);
+
+        expect(planStatuses()).toEqual(["1/3 sessions"]);
+      });
+    });
+
+    it("leaves out the status of a started plan whose contents haven't loaded", () => {
+      const plan = readingPlan("plan-1", "Genesis", { sessions: 3 });
+      const { state } = createState({
+        readingPlans: [plan],
+        readingPlanProgresses: [startedProgress(plan)],
+        fullReadingPlans: [],
+      });
+      renderPane(state);
+
+      expect(planTitles()).toEqual(["Genesis"]);
+      expect(planStatuses()).toEqual([null]);
     });
 
     it("names an untitled plan", () => {
