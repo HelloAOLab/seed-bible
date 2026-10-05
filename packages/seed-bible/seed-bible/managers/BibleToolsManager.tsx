@@ -1279,7 +1279,7 @@ function getDefaultToolbarTools(
           <NextItemIcon />
         ),
       isDisabled: (context) =>
-        !context.playlists?.playing?.value?.hasNext.value,
+        !context.playlists?.playing?.value?.canPressNext.value,
       isVisible: (context) => !!context.playlists?.playing?.value,
       onSelect: (context) => {
         context.playlists?.playing.value?.next();

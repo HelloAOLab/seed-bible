@@ -17,7 +17,10 @@ import {
 import type { ReadingPlan } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
-import type { PlaylistItemData } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import {
+  createPlayingState,
+  type PlaylistItemData,
+} from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import { extractContentText } from "@packages/seed-bible/seed-bible/managers/ChapterText";
 
@@ -1620,6 +1623,52 @@ describe("createBibleToolsManager", () => {
 
       tool?.onSelect();
       expect(context.readingState.discoverContentPanelInline.value).toBe(true);
+    });
+  });
+
+  describe("next-item tool while a playlist plays", () => {
+    const items: PlaylistItemData[] = [
+      { type: "html", html: "a" },
+      { type: "html", html: "b" },
+    ];
+
+    async function nextItemToolOnLastItem(recordName?: string) {
+      const onFinish = vi.fn();
+      const playing = createPlayingState(
+        [
+          {
+            id: "playlist-1",
+            title: "The Love of Jesus",
+            description: null,
+            items,
+            ...(recordName ? { recordName } : {}),
+          },
+        ],
+        null,
+        onFinish
+      );
+      await playing.jumpTo(items.length - 1);
+      const context = createContext({
+        playlists: { playing: signal(playing) } as any,
+      });
+      const tool = createBibleToolsManager(testBranding)
+        .getToolbarTools(context)
+        .find((t) => t.id === "next-item");
+      return { tool, onFinish };
+    }
+
+    it("stays enabled on a saved playlist's last item and finishes the playlist", async () => {
+      const { tool, onFinish } = await nextItemToolOnLastItem("user-1");
+
+      expect(tool?.disabled.value).toBe(false);
+      await tool?.onSelect();
+      expect(onFinish).toHaveBeenCalledTimes(1);
+    });
+
+    it("is disabled on the last item of a queue with no saved playlist", async () => {
+      const { tool } = await nextItemToolOnLastItem();
+
+      expect(tool?.disabled.value).toBe(true);
     });
   });
 

@@ -19,6 +19,7 @@ import { sha256 } from "hash.js";
 import { first, firstValueFrom, timeout } from "rxjs";
 import { guardRecordsClient } from "./SessionGuard";
 import type { SessionInvalidatedEvent } from "./SessionGuard";
+import { toLinkPreview, type LinkPreview } from "./linkPreview";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
 
@@ -214,6 +215,9 @@ export function CasualOSManager(
     string,
     Promise<{ success: boolean; items: { address: string; data: unknown }[] }>
   >();
+
+  /** Link previews fetched this page load, keyed by locale and URL. */
+  const linkPreviews = new Map<string, Promise<LinkPreview | null>>();
 
   const sessionKey = signal<string | null>(null);
   const connectionKey = signal<string | null>(null);
@@ -617,6 +621,37 @@ export function CasualOSManager(
             }
           : result;
       }),
+
+    /**
+     * Fetches a page's link preview (title, description, image) from the
+     * records server. Resolves null when the page has nothing to show or the
+     * server can't preview it. Successful lookups are reused for the rest of
+     * the page load; failures aren't, so a later save can try again.
+     */
+    getLinkPreview: (
+      url: string,
+      locale?: string
+    ): Promise<LinkPreview | null> => {
+      const key = `${locale ?? ""} ${url}`;
+      const cached = linkPreviews.get(key);
+      if (cached) {
+        return cached;
+      }
+      const request = (async () => {
+        const result = await client.getLinkPreview({ url, locale });
+        if (!result.success) {
+          console.warn(
+            `[OsManager] No link preview for ${url}: ${result.errorCode}`
+          );
+          linkPreviews.delete(key);
+          return null;
+        }
+        return toLinkPreview(result);
+      })();
+      request.catch(() => linkPreviews.delete(key));
+      linkPreviews.set(key, request);
+      return request;
+    },
 
     recordFile: async (
       recordKey: string,

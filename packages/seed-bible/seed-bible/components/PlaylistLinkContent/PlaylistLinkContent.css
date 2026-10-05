@@ -37,3 +37,37 @@
   align-self: flex-start;
   text-decoration: none;
 }
+
+.sb-play-playlist-link-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-play-playlist-link-preview-image {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--sb-divider-color);
+}
+
+.sb-play-playlist-link-preview-site {
+  font-size: 12px;
+  color: var(--sb-secondary-font-color);
+}
+
+.sb-play-playlist-link-preview-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--sb-font-color);
+  overflow-wrap: anywhere;
+}
+
+.sb-play-playlist-link-preview-description {
+  margin: 0;
+  font-size: 14px;
+  color: var(--sb-font-color);
+  opacity: 0.8;
+  overflow-wrap: anywhere;
+}

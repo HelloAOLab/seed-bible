@@ -36,6 +36,14 @@ export function parseNumber(value: unknown, fallback: number): number {
   return fallback;
 }
 
+/**
+ * True on Apple platforms, where shortcuts use Cmd instead of Ctrl (TipTap's
+ * `Mod` key follows the same rule).
+ */
+export function isApplePlatform(): boolean {
+  return typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
+}
+
 /** Sends a PostHog event, no-op when `posthog` isn't present (SSR, tests). */
 export function captureEvent(
   eventName: string,
