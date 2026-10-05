@@ -24,8 +24,6 @@ export interface ProfileScreenProps {
   onOpenReadingPlans: () => void;
   /** Opens the "Your content" screen. */
   onOpenYourContent: () => void;
-  /** Opens the "Your images" screen: every image the user has uploaded. */
-  onOpenYourImages: () => void;
 }
 
 /** Pane header title. A component so it can call `useI18n`. */
@@ -397,15 +395,6 @@ export function ProfilePane(props: ProfileScreenProps) {
             defaultValue: "Create and manage your content",
           })}
           onClick={props.onOpenYourContent}
-        />
-
-        <ProfileRow
-          icon="photo_library"
-          title={t("your-images", { defaultValue: "Your images" })}
-          subtitle={t("your-images-subtitle", {
-            defaultValue: "See and delete the images you've uploaded",
-          })}
-          onClick={props.onOpenYourImages}
         />
 
         <button

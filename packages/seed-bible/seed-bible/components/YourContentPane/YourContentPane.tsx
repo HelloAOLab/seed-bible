@@ -22,6 +22,7 @@ import {
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n";
+import { UserImagesGrid } from "./UserImages";
 import "./YourContentPane.css";
 
 export const YOUR_CONTENT_PANE_ID = "your-content-pane";
@@ -396,7 +397,8 @@ function SavePill(props: {
 
 /**
  * The "Your content" screen (issue #1553): everything the reader has made —
- * annotations, highlights, saves and playlists — in one place, filtered
+ * annotations, highlights, saves, playlists and uploaded images — in one
+ * place, filtered
  * by a search box and a row of chips.
  *
  * "All" shows the first few of each section with a "See all" that switches
@@ -404,8 +406,9 @@ function SavePill(props: {
  */
 export function YourContentPane(props: YourContentScreenProps) {
   const { state, onOpenPassage } = props;
-  const { yourContent, saves, playlists, annotations } = state;
+  const { yourContent, saves, playlists, annotations, gallery } = state;
   const { t } = useI18n();
+  const userId = state.login.userId.value;
 
   // Every open refreshes, so a verse highlighted or annotated in the reader
   // since the last visit shows up. It's quiet when content is already
@@ -413,6 +416,13 @@ export function YourContentPane(props: YourContentScreenProps) {
   useEffect(() => {
     void yourContent.load({ force: true });
   }, []);
+
+  // Uploaded images live in the account's gallery, not in what `load` reads.
+  useEffect(() => {
+    if (userId) {
+      void gallery.syncPhotos();
+    }
+  }, [userId]);
 
   // Highlights carry no words of their own, so searching them means reading
   // their chapters back. Kicked off on the first search rather than on open:
@@ -485,6 +495,9 @@ export function YourContentPane(props: YourContentScreenProps) {
   const visiblePlaylists = playlists.userPlaylists.value.filter((p) =>
     matches(p.title, p.description)
   );
+  // An image has no words to search, so any search hides them all.
+  const visibleImages =
+    userId && needle.length === 0 ? gallery.photos.value : [];
 
   const showing = (section: ContentFilter) =>
     filter === "all" || filter === section;
@@ -510,6 +523,8 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("saves", { defaultValue: "Saves" });
       case "playlists":
         return t("playlists", { defaultValue: "Playlists" });
+      case "images":
+        return t("images", { defaultValue: "Images" });
     }
   };
 
@@ -518,6 +533,7 @@ export function YourContentPane(props: YourContentScreenProps) {
     highlights: visibleHighlights.length,
     saves: visibleSaves.length,
     playlists: visiblePlaylists.length,
+    images: visibleImages.length,
   };
 
   /**
@@ -557,6 +573,11 @@ export function YourContentPane(props: YourContentScreenProps) {
       case "playlists":
         return t("your-content-empty-playlists", {
           defaultValue: "Playlists you create will show up here.",
+        });
+      case "images":
+        return t("your-images-empty", {
+          defaultValue:
+            "Images you upload as covers for playlists and reading plans will show up here.",
         });
       case "all":
         return t("your-content-empty", {
@@ -746,6 +767,19 @@ export function YourContentPane(props: YourContentScreenProps) {
                 />
               ))}
             </ul>
+          </section>
+        ) : null}
+
+        {showing("images") && visibleImages.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("images", { defaultValue: "Images" })}
+              onSeeAll={seeAll("images", visibleImages)}
+            />
+            <UserImagesGrid
+              state={state}
+              photos={visibleImages.slice(0, limit(visibleImages))}
+            />
           </section>
         ) : null}
       </div>

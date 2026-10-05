@@ -22,7 +22,8 @@ export type ContentFilter =
   | "annotations"
   | "highlights"
   | "saves"
-  | "playlists";
+  | "playlists"
+  | "images";
 
 export const CONTENT_FILTERS: ContentFilter[] = [
   "all",
@@ -30,6 +31,7 @@ export const CONTENT_FILTERS: ContentFilter[] = [
   "highlights",
   "saves",
   "playlists",
+  "images",
 ];
 
 /** How far a load has got. `error` keeps a failure from looking like "empty". */

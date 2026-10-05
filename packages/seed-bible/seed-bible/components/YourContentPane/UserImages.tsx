@@ -1,23 +1,10 @@
-import { useEffect } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { GalleryPhoto } from "../../managers/UserGalleryManager";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n";
-import "./ProfilePane.css";
-
-export const USER_IMAGES_PANE_ID = "user-images-pane";
-
-export interface UserImagesScreenProps {
-  state: SeedBibleState;
-}
-
-/** Pane header title. A component so it can call `useI18n`. */
-export function UserImagesPaneTitle() {
-  const { t } = useI18n();
-  return <>{t("your-images", { defaultValue: "Your images" })}</>;
-}
+import "./YourContentPane.css";
 
 /** The parts of the app a delete touches: the gallery and the two cover users. */
 type DeleteState = Pick<
@@ -243,104 +230,49 @@ function formatUploadDate(ms: number, language: string): string {
 }
 
 /**
- * The "Your images" screen (issue #1748): every image the user has uploaded,
- * newest first, each of which can be viewed at full size or deleted. Reached
- * from the Profile screen; a fullscreen pane, so it carries the profile back
- * button in its header like "Your content" does.
+ * Tiles for the images the user has uploaded (issue #1748), each of which can
+ * be viewed at full size or deleted. "Your content" decides which photos to
+ * pass: its first few, or all of them under the Images chip.
  */
-export function UserImagesPane(props: UserImagesScreenProps) {
-  const { state } = props;
-  const { gallery, login, modals } = state;
+export function UserImagesGrid(props: {
+  state: SeedBibleState;
+  photos: GalleryPhoto[];
+}) {
+  const { state, photos } = props;
+  const { modals } = state;
   const { t, language } = useI18n();
-  const userId = login.userId.value;
-
-  // Every open refreshes, so an upload made elsewhere since the last visit
-  // shows up. The list already on screen stays put while it runs.
-  useEffect(() => {
-    if (userId) {
-      void gallery.syncPhotos();
-    }
-  }, [userId]);
-
-  if (!userId) {
-    return (
-      <div className="sb-profile-screen">
-        <div className="sb-profile-content">
-          <p className="sb-profile-signin-hint">
-            {t("profile-signed-out-message", {
-              defaultValue:
-                "Sign in to keep your highlights, notes and plans on every device.",
-            })}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const photos = gallery.photos.value;
-  const isLoading = gallery.isLoading.value && photos.length === 0;
 
   const requestDelete = (photo: GalleryPhoto) =>
     openDeleteImageConfirm(modals, state, photo, state.app.toast);
 
   return (
-    <div className="sb-profile-screen">
-      <div className="sb-profile-content">
-        <p className="sb-images-intro">
-          {t("your-images-intro", {
-            defaultValue:
-              "Images you've uploaded as covers for your playlists and reading plans.",
-          })}
-        </p>
-
-        {isLoading ? (
-          <p className="sb-images-status">
-            {t("loading-your-images", { defaultValue: "Loading your images…" })}
-          </p>
-        ) : null}
-
-        {!isLoading && photos.length === 0 ? (
-          <p className="sb-images-status">
-            {t("your-images-empty", {
-              defaultValue:
-                "Images you upload as covers for playlists and reading plans will show up here.",
-            })}
-          </p>
-        ) : null}
-
-        {photos.length > 0 ? (
-          <ul className="sb-images-grid">
-            {photos.map((photo) => (
-              <li key={photo.id} className="sb-images-item">
-                <button
-                  type="button"
-                  className="sb-images-tile"
-                  onClick={() =>
-                    openImagePreview(modals, photo, () => requestDelete(photo))
-                  }
-                  aria-label={t("view-image", { defaultValue: "View image" })}
-                >
-                  <img src={photo.url} alt="" loading="lazy" />
-                </button>
-                <button
-                  type="button"
-                  className="sb-images-delete"
-                  onClick={() => requestDelete(photo)}
-                  aria-label={t("delete-image", {
-                    defaultValue: "Delete image",
-                  })}
-                  title={t("delete-image", { defaultValue: "Delete image" })}
-                >
-                  <MaterialIcon>delete</MaterialIcon>
-                </button>
-                <span className="sb-images-date">
-                  {formatUploadDate(photo.createdAtMs, language)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-    </div>
+    <ul className="sb-images-grid">
+      {photos.map((photo) => (
+        <li key={photo.id} className="sb-images-item">
+          <button
+            type="button"
+            className="sb-images-tile"
+            onClick={() =>
+              openImagePreview(modals, photo, () => requestDelete(photo))
+            }
+            aria-label={t("view-image", { defaultValue: "View image" })}
+          >
+            <img src={photo.url} alt="" loading="lazy" />
+          </button>
+          <button
+            type="button"
+            className="sb-images-delete"
+            onClick={() => requestDelete(photo)}
+            aria-label={t("delete-image", { defaultValue: "Delete image" })}
+            title={t("delete-image", { defaultValue: "Delete image" })}
+          >
+            <MaterialIcon>delete</MaterialIcon>
+          </button>
+          <span className="sb-images-date">
+            {formatUploadDate(photo.createdAtMs, language)}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }

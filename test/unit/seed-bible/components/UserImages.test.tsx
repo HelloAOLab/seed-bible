@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { UserImagesPane } from "@packages/seed-bible/seed-bible/components/ProfilePane/UserImagesPane";
+import { UserImagesGrid } from "@packages/seed-bible/seed-bible/components/YourContentPane/UserImages";
 import {
   createModalManager,
   type ModalManager,
@@ -24,9 +24,7 @@ interface CoverUser {
 }
 
 interface StateOptions {
-  userId?: string | null;
   photos?: GalleryPhoto[];
-  isLoading?: boolean;
   playlists?: CoverUser[];
   readingPlans?: CoverUser[];
   /** Makes the gallery delete fail, so the dialog has to report it. */
@@ -37,8 +35,6 @@ interface StateOptions {
 
 function createState(options: StateOptions = {}) {
   const photos = signal<GalleryPhoto[]>(options.photos ?? []);
-  const isLoading = signal(options.isLoading ?? false);
-  const syncPhotos = vi.fn(async () => {});
   const deletePhoto = vi.fn(async (target: GalleryPhoto) => {
     if (options.deleteError) {
       throw options.deleteError;
@@ -56,10 +52,7 @@ function createState(options: StateOptions = {}) {
   const modals = createModalManager();
 
   const state = {
-    login: {
-      userId: signal(options.userId === undefined ? "user-1" : options.userId),
-    },
-    gallery: { photos, isLoading, syncPhotos, deletePhoto },
+    gallery: { photos, deletePhoto },
     playlists: {
       userPlaylists: signal(options.playlists ?? []),
       clearHeroImage: clearPlaylistCovers,
@@ -75,7 +68,6 @@ function createState(options: StateOptions = {}) {
   return {
     state,
     photos,
-    syncPhotos,
     deletePhoto,
     clearPlaylistCovers,
     clearPlanCovers,
@@ -95,7 +87,17 @@ async function settle(): Promise<void> {
   }
 }
 
-describe("UserImagesPane", () => {
+/** Reads the gallery the way "Your content" does, so a delete re-renders. */
+function Grid(props: { state: SeedBibleState }) {
+  return (
+    <UserImagesGrid
+      state={props.state}
+      photos={props.state.gallery.photos.value}
+    />
+  );
+}
+
+describe("UserImagesGrid", () => {
   let container: HTMLDivElement;
   let modalContainer: HTMLDivElement;
 
@@ -114,7 +116,7 @@ describe("UserImagesPane", () => {
 
   function renderPane(state: SeedBibleState) {
     act(() => {
-      render(<UserImagesPane state={state} />, container);
+      render(<Grid state={state} />, container);
     });
   }
 
@@ -144,13 +146,6 @@ describe("UserImagesPane", () => {
     });
   }
 
-  it("refreshes the gallery when opened", () => {
-    const { state, syncPhotos } = createState({ photos: [photo("a")] });
-    renderPane(state);
-
-    expect(syncPhotos).toHaveBeenCalledTimes(1);
-  });
-
   it("shows one tile per uploaded image, in gallery order", () => {
     const { state } = createState({ photos: [photo("a"), photo("b")] });
     renderPane(state);
@@ -162,38 +157,6 @@ describe("UserImagesPane", () => {
       "https://example.com/a.jpg",
       "https://example.com/b.jpg",
     ]);
-  });
-
-  it("asks the user to sign in when signed out", () => {
-    const { state, syncPhotos } = createState({ userId: null });
-    renderPane(state);
-
-    expect(container.textContent).toContain("Sign in to keep");
-    expect(container.querySelector(".sb-images-grid")).toBeNull();
-    expect(syncPhotos).not.toHaveBeenCalled();
-  });
-
-  it("says so when there are no images", () => {
-    const { state } = createState();
-    renderPane(state);
-
-    expect(container.textContent).toContain("will show up here");
-  });
-
-  it("shows a loading message instead of 'no images' during the first load", () => {
-    const { state } = createState({ isLoading: true });
-    renderPane(state);
-
-    expect(container.textContent).toContain("Loading your images");
-    expect(container.textContent).not.toContain("will show up here");
-  });
-
-  it("keeps the list on screen while it refreshes", () => {
-    const { state } = createState({ isLoading: true, photos: [photo("a")] });
-    renderPane(state);
-
-    expect(container.querySelectorAll(".sb-images-tile")).toHaveLength(1);
-    expect(container.textContent).not.toContain("Loading your images");
   });
 
   it("asks for confirmation first and names the covers that use the image", () => {
