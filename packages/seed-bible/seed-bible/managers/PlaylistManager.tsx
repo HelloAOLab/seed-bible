@@ -1039,11 +1039,10 @@ export function createPlaylistManager(
   });
 
   /**
-   * Armed only while a shared playlist has just opened on its first item and
-   * that item is text or a link. Dismissing that opening modal steps to the
-   * next item once. Cleared as soon as playback leaves the first item, and
-   * never set for a playlist started from the app, so closing a text or link
-   * modal later in a playlist stays put.
+   * Armed while a shared playlist opened on a leading run of text and link
+   * items. Each dismiss of that modal steps to the next item, and the next
+   * text or link opens again, until a verse. Closing the last item does not
+   * finish the playlist. Never set for a playlist started from the app.
    */
   const advanceOnOpeningSharedItemDismiss = signal(false);
   /**
@@ -1052,6 +1051,10 @@ export function createPlaylistManager(
    * later in-app play doesn't inherit it.
    */
   let sharedPlaylistOpening = false;
+  /** Index the dismiss-walk last stepped to. A move that isn't from that walk ends it. */
+  let dismissWalkIndex = 0;
+  /** True while a dismiss is itself calling `next()`, so that step doesn't end the walk. */
+  let advancingFromItemDismiss = false;
 
   // Opens the content modal for a non-verse item (video/link/text), or closes it
   // for verse items which are shown in the reader instead. Called both when the
@@ -1068,18 +1071,39 @@ export function createPlaylistManager(
       PLAYLIST_ITEM_MODAL_ID,
       i18n.t,
       () => {
-        const state = playing.peek();
         if (
-          !advanceOnOpeningSharedItemDismiss.peek() ||
-          !state ||
-          state.currentIndex.peek() !== 0
+          advancingFromItemDismiss ||
+          !advanceOnOpeningSharedItemDismiss.peek()
         ) {
           return;
         }
-        // Drop the arm before stepping so the next item's modal, opened by
-        // this same turn, doesn't step again.
-        advanceOnOpeningSharedItemDismiss.value = false;
+        const state = playing.peek();
+        if (!state) {
+          return;
+        }
+        const index = state.currentIndex.peek();
+        const queue = state.queue.peek();
+        const current = queue[index];
+        if (!current || current.type === "bible-verse") {
+          advanceOnOpeningSharedItemDismiss.value = false;
+          return;
+        }
+        const nextItem = queue[index + 1];
+        // Nothing playable ahead, including a playlist that is only text and
+        // links. Leave the visitor on this item instead of ending playback.
+        if (!nextItem || nextItem.type === "bible-verse") {
+          advanceOnOpeningSharedItemDismiss.value = false;
+        }
+        if (!nextItem) {
+          return;
+        }
+        advancingFromItemDismiss = true;
+        dismissWalkIndex = index + 1;
         void state.next();
+        // `next()` moves the index before it awaits navigation. Drop the guard
+        // now so a following text or link modal can be dismissed too; leaving
+        // it set until the promise settled swallowed that next close.
+        advancingFromItemDismiss = false;
       }
     );
   };
@@ -1742,11 +1766,15 @@ export function createPlaylistManager(
         : -1;
 
     const openingItem = queue[0];
-    advanceOnOpeningSharedItemDismiss.value =
+    const walkOpeningText =
       fromSharedOpening &&
       step === 0 &&
       !!openingItem &&
       openingItem.type !== "bible-verse";
+    if (walkOpeningText) {
+      dismissWalkIndex = 0;
+    }
+    advanceOnOpeningSharedItemDismiss.value = walkOpeningText;
 
     // Ending an existing tracked session before opening the next one keeps
     // duration/endedAt accurate when the user starts another playlist without
@@ -1964,11 +1992,24 @@ export function createPlaylistManager(
     showItemInModal(playing.value.currentItem.value);
   });
 
-  // Leaving the first item (or stopping) ends the one-time skip. Coming back
-  // to it later is ordinary playback, and closing its modal stays there.
+  // Stopping, or moving the queue some way other than closing the opening
+  // text/link modals, ends the walk. Coming back to those items later is
+  // ordinary playback.
   effect(() => {
     const state = playing.value;
-    if (!state || state.currentIndex.value !== 0) {
+    if (!state) {
+      advanceOnOpeningSharedItemDismiss.value = false;
+      return;
+    }
+    const index = state.currentIndex.value;
+    if (advancingFromItemDismiss) {
+      dismissWalkIndex = index;
+      return;
+    }
+    if (
+      advanceOnOpeningSharedItemDismiss.peek() &&
+      index !== dismissWalkIndex
+    ) {
       advanceOnOpeningSharedItemDismiss.value = false;
     }
   });

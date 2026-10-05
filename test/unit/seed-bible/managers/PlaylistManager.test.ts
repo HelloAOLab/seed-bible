@@ -2934,7 +2934,7 @@ describe("createPlaylistManager", () => {
       return manager;
     };
 
-    it("closing the opening text or link modal of a shared playlist advances once", () => {
+    it("keeps advancing through opening text and link items until a verse", async () => {
       const manager = startSharedPlaylist(openingItems());
       const modal = renderItemModal();
       try {
@@ -2947,14 +2947,21 @@ describe("createPlaylistManager", () => {
         expect(modal.container.textContent).toContain("Note");
         expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
 
-        // The rest of the playlist is ordinary playback: closing the next
-        // text item stays on it.
         modal.close();
+        await flush();
 
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+        expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+          "BSB",
+          "JHN",
+          3,
+          { scrollToVerse: 16 }
+        );
         expect(
           lastModals.modals.value.some((m) => m.id === "playlist-item-content")
+        ).toBe(false);
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-finished")
         ).toBe(false);
       } finally {
         modal.unmount();
@@ -3039,17 +3046,24 @@ describe("createPlaylistManager", () => {
       }
     });
 
-    it("finishes a shared playlist whose only item is text or a link when that modal is closed", () => {
+    it("does not finish a shared playlist when closing the last text or link item", () => {
       const manager = startSharedPlaylist([
-        { type: "html", title: "Only", html: "<p>Only item</p>" },
+        { type: "html", title: "Intro", html: "<p>Intro</p>" },
+        { type: "link", url: "https://example.com/end", title: "End" },
       ]);
       const modal = renderItemModal();
       try {
         modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("End");
+
+        modal.close();
+
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(manager.playing.value).not.toBeNull();
         expect(
           lastModals.modals.value.some((m) => m.id === "playlist-finished")
-        ).toBe(true);
+        ).toBe(false);
         expect(
           lastModals.modals.value.some((m) => m.id === "playlist-item-content")
         ).toBe(false);
