@@ -1,4 +1,5 @@
 import type { InitialCustomizationSeed } from "../managers/CustomizationsManager";
+import { readInjectedJsonObject } from "./injectedJson";
 
 /**
  * Reads the SSR `?customization=...` load result the host server injected as
@@ -11,18 +12,7 @@ import type { InitialCustomizationSeed } from "../managers/CustomizationsManager
 export function readInjectedCustomizationSeed():
   | InitialCustomizationSeed
   | undefined {
-  if (typeof document === "undefined") {
-    return undefined;
-  }
-  const el = document.getElementById("app-customization-seed");
-  if (!el?.textContent) {
-    return undefined;
-  }
-  try {
-    const parsed = JSON.parse(el.textContent);
-    return parsed && typeof parsed === "object" ? parsed : undefined;
-  } catch (error) {
-    console.error("CUSTOMIZATION SEED JSON PARSE FAILED:", error);
-    return undefined;
-  }
+  return readInjectedJsonObject<InitialCustomizationSeed>(
+    "app-customization-seed"
+  );
 }

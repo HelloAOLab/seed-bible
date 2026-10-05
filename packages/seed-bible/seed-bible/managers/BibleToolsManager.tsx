@@ -963,7 +963,10 @@ function getDefaultQuickToolbarTools(
  * record, so play history can't offer to resume it (see `isRecordedPlaylist`).
  */
 export function readingPlanDayPlaylist(
-  plan: Pick<ReadingPlan, "address" | "title" | "description" | "heroImageUrl">,
+  plan: Pick<
+    ReadingPlan,
+    "address" | "title" | "description" | "heroImageUrl" | "authorUserId"
+  >,
   items: PlaylistItemData[]
 ): SimplePlaylist {
   return {
@@ -971,6 +974,8 @@ export function readingPlanDayPlaylist(
     title: plan.title,
     description: plan.description,
     heroImageUrl: plan.heroImageUrl,
+    // So the player can say who made the plan.
+    authorUserId: plan.authorUserId,
     items,
   };
 }
@@ -1261,7 +1266,7 @@ function getDefaultToolbarTools(
           <NextItemIcon />
         ),
       isDisabled: (context) =>
-        !context.playlists?.playing?.value?.hasNext.value,
+        !context.playlists?.playing?.value?.canPressNext.value,
       isVisible: (context) => !!context.playlists?.playing?.value,
       onSelect: (context) => {
         context.playlists?.playing.value?.next();
