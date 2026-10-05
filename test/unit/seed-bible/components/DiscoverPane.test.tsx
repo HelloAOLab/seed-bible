@@ -35,6 +35,7 @@ import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/Logi
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Mock } from "vitest";
 import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
+import { createRealFriendNotes } from "../testUtils/realFriendContent";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -1877,21 +1878,26 @@ describe("DiscoverPane", () => {
     expect(items.some((el) => el.textContent?.includes("Delete"))).toBe(true);
   });
 
-  it("shows no annotation menu on a friend's note, even one naming you as its author", () => {
+  it("shows no annotation menu on a friend's note, even one naming you as its author", async () => {
     const { playlists } = createMockPlaylists();
     const friendsNote = createAnnotation({
       id: "a1",
-      data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+      data: { type: "comment", html: "<p>Hello</p>", userId: ME },
     });
-    const { annotations } = createMockAnnotations({
-      friendAnnotationsForChapter: { ada: [friendsNote] },
+    const discover = createDiscoverManager();
+    // The real managers, so the note arrives the way a friend's note does.
+    const { friends, annotations } = await createRealFriendNotes({
+      friendIds: ["ada"],
+      notes: { ada: [friendsNote] },
+      discover,
     });
     const tab = createMockTab();
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
     const state = createMockState(false, {
-      userId: "user-1",
-      friendIds: ["ada"],
+      userId: ME,
+      discover,
+      friendsManager: friends,
     });
 
     act(() => {
@@ -1908,7 +1914,9 @@ describe("DiscoverPane", () => {
       );
     });
 
-    expect(container.querySelector(".sb-annotation-item")).not.toBeNull();
+    await vi.waitFor(() =>
+      expect(container.querySelector(".sb-annotation-item")).not.toBeNull()
+    );
     expect(container.querySelector('[role="menuitem"]')).toBeNull();
     expect(container.querySelector(".sb-annotation-item-menu")).toBeNull();
   });
