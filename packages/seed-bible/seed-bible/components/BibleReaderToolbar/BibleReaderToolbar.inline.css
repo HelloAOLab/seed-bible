@@ -450,7 +450,7 @@
   border: none;
   background: transparent;
   color: var(--sb-book-title-font-color);
-  font-family: var(--text-bookTitle-font);
+  font-family: var(--sb-scripture-font-override, var(--text-bookTitle-font));
   font-size: min(1.2rem, 22px);
   font-weight: 700;
   display: flex;

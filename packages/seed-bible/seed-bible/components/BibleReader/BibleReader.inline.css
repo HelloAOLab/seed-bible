@@ -241,7 +241,7 @@
   margin: 0;
   font-size: 1.1875rem;
   font-weight: 600;
-  font-family: var(--text-bookTitle-font);
+  font-family: var(--sb-scripture-font-override, var(--text-bookTitle-font));
   color: var(--sb-book-title-font-color);
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -541,7 +541,7 @@
 
 .sb-chapter-content {
   line-height: var(--text-verse-line-height, 1.7);
-  font-family: var(--sb-verse-font-family);
+  font-family: var(--sb-scripture-font-override, var(--sb-verse-font-family));
   font-size: 1em;
   padding-inline: 0.625rem;
 
@@ -660,7 +660,10 @@
 }
 
 .sb-subtitle {
-  font-family: var(--sb-hebrew-subtitle-font-family);
+  font-family: var(
+    --sb-scripture-font-override,
+    var(--sb-hebrew-subtitle-font-family)
+  );
   font-style: var(--sb-hebrew-subtitle-font-style);
   color: var(--sb-hebrew-subtitle-font-color);
 }
