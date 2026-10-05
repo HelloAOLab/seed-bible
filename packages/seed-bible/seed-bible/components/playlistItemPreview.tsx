@@ -20,6 +20,8 @@ export function canPreviewPlaylistItem(item: PlaylistItemData): boolean {
  *
  * `modalId` is the caller's own, so a reading-plan preview can't close the
  * playlist playback modal (or the reverse) out from under the user.
+ * `onDismiss` runs only when the user closes the modal, not when playback
+ * replaces or removes it.
  *
  * Shared by playlist playback, the reading-plan wizard, and the plan detail
  * view so an item looks the same wherever it is previewed.
@@ -28,13 +30,15 @@ export function openPlaylistItemPreview(
   modals: ModalManager,
   item: PlaylistItemData,
   modalId: string,
-  t: ReturnType<typeof useI18n>["t"]
+  t: ReturnType<typeof useI18n>["t"],
+  onDismiss?: () => void
 ): void {
   if (item.type === "bible-verse") {
     return;
   }
   modals.openModal({
     id: modalId,
+    onDismiss,
     title:
       item.title?.trim() ||
       (item.type === "link" ? item.preview?.title : undefined) ||

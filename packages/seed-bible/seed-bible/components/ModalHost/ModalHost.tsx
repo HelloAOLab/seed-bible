@@ -11,13 +11,11 @@ export function ModalHost(props: { manager: ModalManager }) {
   return (
     <>
       {manager.modals.value.map((modal) => {
+        const dismiss = () => {
+          manager.dismissModal(modal.id);
+        };
         const content = (
-          <div
-            className="sb-footnote-modal-overlay"
-            onClick={() => {
-              manager.closeModal(modal.id);
-            }}
-          >
+          <div className="sb-footnote-modal-overlay" onClick={dismiss}>
             <div
               className="sb-footnote-modal"
               onClick={(event: MouseEvent) => {
@@ -31,9 +29,7 @@ export function ModalHost(props: { manager: ModalManager }) {
                 <button
                   className="sb-footnote-modal-close"
                   aria-label={t("close", { defaultValue: "Close" })}
-                  onClick={() => {
-                    manager.closeModal(modal.id);
-                  }}
+                  onClick={dismiss}
                 >
                   <span className="material-symbols-outlined">close</span>
                 </button>
