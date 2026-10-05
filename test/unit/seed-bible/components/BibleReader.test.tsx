@@ -174,6 +174,7 @@ function createFixture(): ReaderFixture {
     loading: signal(false),
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
+    readAlongVerse: signal<{ verse: number } | null>(null),
     error: signal<string | null>(null),
     retryLoad: vi.fn(async () => undefined),
     selectVerse,

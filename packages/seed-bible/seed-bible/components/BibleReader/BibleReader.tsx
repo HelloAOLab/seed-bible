@@ -69,7 +69,10 @@ import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPan
 import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
-import { findScrollContainer, readBottomChromeInset } from "./readerViewport";
+import {
+  findScrollContainer,
+  measureVisibleReaderBounds,
+} from "./readerViewport";
 
 interface ReaderChapterActionProps {
   state: SeedBibleState;
@@ -1617,29 +1620,14 @@ function placePresenceArrows(
 
 /**
  * Where the screen is over the chapter content, in the content's own
- * coordinates. Accounts for the mobile header floating over the top of the
- * scroller and the toolbar over its bottom, since verses under either are not
- * really on screen.
+ * coordinates. See `measureVisibleReaderBounds` for what counts as on screen.
  */
 function measurePresenceViewport(
   content: HTMLElement,
   scroller: HTMLElement | null
 ): PresenceViewport {
   const contentRect = content.getBoundingClientRect();
-  let top = 0;
-  let bottom = window.innerHeight;
-  if (scroller) {
-    const rect = scroller.getBoundingClientRect();
-    top = rect.top;
-    bottom = rect.bottom;
-  }
-  const header = content
-    .closest(".sb-bible-reader")
-    ?.querySelector(".sb-bible-reader-mobile-header");
-  if (header) {
-    top = Math.max(top, header.getBoundingClientRect().bottom);
-  }
-  bottom -= readBottomChromeInset();
+  const { top, bottom } = measureVisibleReaderBounds(content, scroller);
   return { top: top - contentRect.top, bottom: bottom - contentRect.top };
 }
 

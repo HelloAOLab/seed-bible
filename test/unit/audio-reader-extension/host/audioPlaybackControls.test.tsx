@@ -184,29 +184,53 @@ describe("audio-reader playback controls", () => {
     expect(litVerses(state)).toEqual([[1]]);
   });
 
-  it("scrolls the reader to the verse a seek lands in", async () => {
+  it("asks the reader to follow each verse as the narration reaches it", async () => {
+    await startChapterOne();
+    const readingState = getReadingState(state);
+    expect(readingState.readAlongVerse.value).toEqual({ verse: 1 });
+
+    playAt(5);
+    expect(readingState.readAlongVerse.value).toEqual({ verse: 2 });
+  });
+
+  it("asks the reader to follow the verse a seek lands in", async () => {
     const playback = await startChapterOne();
     reportDuration(10);
     const readingState = getReadingState(state);
 
     playback.seek(6);
-    expect(readingState.scrollToVerse.value).toBe(2);
+    expect(readingState.readAlongVerse.value).toEqual({ verse: 2 });
 
-    // The reader clears the request once it has scrolled; a later jump makes
-    // a fresh one, even back to a verse it has already been to.
-    readingState.scrollToVerse.value = null;
-    playback.seek(1);
-    expect(readingState.scrollToVerse.value).toBe(1);
+    // A fresh request each time, so jumping back to a verse already asked for
+    // still reaches the reader if the listener has scrolled away from it.
+    const before = readingState.readAlongVerse.value;
+    playback.seek(7);
+    expect(readingState.readAlongVerse.value).toEqual({ verse: 2 });
+    expect(readingState.readAlongVerse.value).not.toBe(before);
   });
 
-  it("scrolls to the verse scrubbed to while paused, too", async () => {
+  it("follows the verse scrubbed to while paused, and again on resume", async () => {
     const playback = await startChapterOne();
     reportDuration(10);
+    const readingState = getReadingState(state);
 
     fire("pause");
     playback.seek(6);
+    expect(readingState.readAlongVerse.value).toEqual({ verse: 2 });
 
-    expect(getReadingState(state).scrollToVerse.value).toBe(2);
+    // The listener scrolls away while paused; resuming brings them back.
+    const beforeResume = readingState.readAlongVerse.value;
+    fire("play");
+    expect(readingState.readAlongVerse.value).toEqual({ verse: 2 });
+    expect(readingState.readAlongVerse.value).not.toBe(beforeResume);
+  });
+
+  it("stops asking the reader to follow once playback stops", async () => {
+    const playback = await startChapterOne();
+
+    playback.stop();
+
+    expect(getReadingState(state).readAlongVerse.value).toBeNull();
   });
 
   it("keeps a seek inside the recording", async () => {

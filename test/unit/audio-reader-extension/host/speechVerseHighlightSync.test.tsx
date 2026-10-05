@@ -165,10 +165,14 @@ describe("audio-reader speech verse highlight sync (#1769)", () => {
     expect(lit).toHaveLength(1);
     expect(lit[0]!.verses).toEqual([2]);
     expect(lit[0]!.id).toBe(firstDecorationId);
+    // The reader is asked to keep the spoken verse on screen, as it is for
+    // recorded narration.
+    expect(getReadingState(state).readAlongVerse.value).toEqual({ verse: 2 });
 
     // Reaching the end of the chapter puts the reader back to rest.
     speech.queued[1]!.onend?.();
     expect(diminishDecorations(state)).toHaveLength(0);
+    expect(getReadingState(state).readAlongVerse.value).toBeNull();
     expect(state.textToSpeech.isSpeaking.value).toBe(false);
 
     // Pressing again starts the chapter over...

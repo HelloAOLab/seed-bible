@@ -370,6 +370,7 @@ function ensureAudio(): HTMLAudioElement | null {
       playbackTime.value = 0;
       // A replay should fetch timings and highlight from verse one again, not
       // resume mid-track from whatever verse was last read.
+      if (verseTrack) verseTrack.readingState.readAlongVerse.value = null;
       verseTrack = null;
       verseTrackToken++;
       // Finishing the chapter ends the session, so its scrubber goes with it.
@@ -420,16 +421,26 @@ function stopRecordedAudio(): void {
   isPlaying.value = false;
   playbackTime.value = 0;
   pauseVerseHighlight();
+  if (verseTrack) verseTrack.readingState.readAlongVerse.value = null;
   verseTrack = null;
   verseTrackToken++;
   hidePlayback();
 }
 
 /**
+ * Asks the reader to keep `verseNumber` on screen, so a listener can read
+ * along without scrolling. A new object each time: asking again for the same
+ * verse still has to reach the reader if the listener scrolled away from it.
+ */
+function followVerse(readingState: BibleReadingState, verseNumber: number) {
+  readingState.readAlongVerse.value = { verse: verseNumber };
+}
+
+/**
  * Moves the "now reading" highlight to match a jump to `currentTime`, and
- * scrolls the reader to the verse it lands in — a jump can land anywhere in
- * the chapter, often well off screen, and a highlight nobody can see doesn't
- * tell the listener where they are.
+ * brings the verse it lands in on screen — a jump can land anywhere in the
+ * chapter, often well off screen, and a highlight nobody can see doesn't tell
+ * the listener where they are.
  *
  * Ordinary playback only ever moves forward a verse at a time, which is what
  * `highlightVerseForTime` is built around; a seek can land anywhere, so the
@@ -450,7 +461,7 @@ function seekVerseHighlight(currentTime: number): void {
   const verseNumber = verseTrack.verseNumbers[index];
   if (verseNumber === undefined) return;
 
-  verseTrack.readingState.scrollToVerse.value = verseNumber;
+  followVerse(verseTrack.readingState, verseNumber);
 
   if (isPlaying.peek()) {
     highlightVerseForTime(currentTime);
@@ -517,6 +528,7 @@ function highlightVerseForTime(currentTime: number): void {
   }
   verseTrack.lastVerse = verseNumber;
   verseTrack.verseIndex = index;
+  followVerse(readingState, verseNumber);
 
   const durationMs = verseHighlightDurationMs(
     startTimes,
@@ -600,6 +612,8 @@ function resumeVerseHighlight(currentTime: number): void {
     },
     currentDecorationId ?? undefined
   );
+  // The listener may have scrolled away while it was paused.
+  followVerse(readingState, lastVerse);
 }
 
 /**
@@ -620,8 +634,11 @@ function highlightSpokenVerse(verseNumber: number | null): void {
       readingState.removeDecoration(decorationId);
       speechHighlight.decorationId = null;
     }
+    readingState.readAlongVerse.value = null;
     return;
   }
+
+  followVerse(readingState, verseNumber);
 
   speechHighlight.decorationId = readingState.decorateVerses(
     bookId,
