@@ -14,6 +14,14 @@ export const FRIEND_CONTENT_MAX_AGE_MS = 30 * 1000;
  */
 export const MAX_CONCURRENT_FRIEND_READS = 4;
 
+/**
+ * How long a read of friends' content holds its place before it's given up
+ * on: 20 seconds. On a stalled connection a read can hang without ever
+ * failing, and a few of those would hold every place, stopping all friend
+ * reads in the app.
+ */
+export const FRIEND_READ_TIMEOUT_MS = 20 * 1000;
+
 /** Whether content last read at `loadedAtMs` is due to be read again. */
 export function isFriendContentStale(
   loadedAtMs: number | null,
@@ -67,10 +75,22 @@ export function createFriendReadLimiter(
           return;
         }
         running++;
-        Promise.resolve()
-          .then(read)
+        // A read given up on still finishes in the background; its answer
+        // is just ignored. Callers treat this like any failed read and try
+        // again later.
+        let timeout: ReturnType<typeof setTimeout> | undefined;
+        Promise.race([
+          Promise.resolve().then(read),
+          new Promise<never>((_, timedOut) => {
+            timeout = setTimeout(
+              () => timedOut(new Error("Timed out reading a friend's content")),
+              FRIEND_READ_TIMEOUT_MS
+            );
+          }),
+        ])
           .then(resolve, reject)
           .finally(() => {
+            clearTimeout(timeout);
             running--;
             startWaiting();
           });

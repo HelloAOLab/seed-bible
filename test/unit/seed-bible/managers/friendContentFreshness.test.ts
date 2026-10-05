@@ -3,6 +3,7 @@ import { stubPageVisibility } from "../testUtils/pageVisibility";
 import {
   createFriendContentFreshness,
   createFriendReadLimiter,
+  FRIEND_READ_TIMEOUT_MS,
   SkippedFriendRead,
 } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
 
@@ -56,6 +57,31 @@ describe("createFriendReadLimiter", () => {
     expect(next.load).toHaveBeenCalledTimes(1);
     next.resolve(undefined);
     await expect(second).resolves.toBeUndefined();
+  });
+
+  describe("a read that never finishes", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    // On a stalled connection a read can hang without ever failing.
+    it("is given up on, freeing its slot", async () => {
+      const limiter = createFriendReadLimiter(1);
+      const stalled = pendingRead();
+      const next = pendingRead();
+
+      const first = limiter.run(stalled.load, always);
+      const firstFailed = expect(first).rejects.toThrow("Timed out");
+      const second = limiter.run(next.load, always);
+      await vi.advanceTimersByTimeAsync(FRIEND_READ_TIMEOUT_MS - 1);
+      expect(next.load).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+
+      await firstFailed;
+      expect(next.load).toHaveBeenCalledTimes(1);
+      next.resolve(undefined);
+      await expect(second).resolves.toBeUndefined();
+    });
   });
 
   it("skips a waiting read that's no longer wanted when its turn comes, and moves on", async () => {
