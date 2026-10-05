@@ -3,6 +3,10 @@ import { act } from "preact/test-utils";
 import type { Mock } from "vitest";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { signal, type Signal } from "@preact/signals";
+import type {
+  ChatContext,
+  ChatProvider,
+} from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import {
   createDiscoverManager,
   type DiscoverProvider,
@@ -40,6 +44,33 @@ function noSavedProxy(): Promise<Response> {
  */
 type SavedSettings = Signal<Record<string, unknown>>;
 
+/**
+ * Mirrors `ChatsManager.registerProvider`: registering an id that's already
+ * there swaps the provider in place, and only the current provider's
+ * unregister takes the agent out of open chats (recorded here).
+ */
+function createFakeChats() {
+  const providers = signal<ChatProvider[]>([]);
+  const removedFromChats: string[] = [];
+  return {
+    providers,
+    removedFromChats,
+    registerProvider(provider: ChatProvider) {
+      providers.value = [
+        ...providers.value.filter((p) => p.id !== provider.id),
+        provider,
+      ];
+      return () => {
+        if (!providers.value.includes(provider)) {
+          return;
+        }
+        removedFromChats.push(provider.id);
+        providers.value = providers.value.filter((p) => p !== provider);
+      };
+    },
+  };
+}
+
 function createFakeContext(
   search: string,
   fetchWithSensitiveValues: Mock = vi.fn(noSavedProxy),
@@ -54,7 +85,7 @@ function createFakeContext(
     navigation: {
       currentUrl: { value: new URL(`https://seedbible.org/${search}`) },
     },
-    chats: { registerProvider: vi.fn(() => () => undefined) },
+    chats: createFakeChats(),
     discover: createDiscoverManager(),
     modals: { openModal: vi.fn() },
     bibleData: {
@@ -66,6 +97,39 @@ function createFakeContext(
       })),
     },
   } as unknown as SeedBibleState;
+}
+
+function findChatProvider(context: SeedBibleState): ChatProvider {
+  const provider = context.chats.providers.value.find(
+    (p) => p.id === "apologist-chat-provider"
+  );
+  if (!provider) {
+    throw new Error("The Apologist chat provider isn't registered.");
+  }
+  return provider;
+}
+
+/** Sends one chat message and returns the agent's streamed reply. */
+async function sendChatMessage(context: SeedBibleState): Promise<string> {
+  const response = await findChatProvider(context).generateResponse({
+    instructions: "Reading John 3",
+    messages: [],
+    participants: [],
+  } as unknown as ChatContext);
+  let text = "";
+  for await (const message of response as AsyncIterable<{
+    text: AsyncIterable<string>;
+  }>) {
+    for await (const chunk of message.text) {
+      text += chunk;
+    }
+  }
+  return text;
+}
+
+function removedFromChats(context: SeedBibleState): string[] {
+  return (context.chats as unknown as ReturnType<typeof createFakeChats>)
+    .removedFromChats;
 }
 
 function findDiscoverProvider(
@@ -127,6 +191,129 @@ describe("initApologistExtension discover provider", () => {
   it("does not register a discover provider when apologistTeamID isn't an integer", () => {
     const context = install("?apologistTeamID=team-42&apologistApiKey=apg_key");
     expect(findDiscoverProvider(context)).toBeUndefined();
+  });
+
+  describe("name, model and content author from settings", () => {
+    const chatReply = () =>
+      new Response(
+        'data: {"choices":[{"delta":{"content":"Hi"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n',
+        { status: 200 }
+      );
+
+    function sentModels(): unknown[] {
+      return fetchMock.mock.calls
+        .filter(([url]) => String(url).endsWith("/chat/completions"))
+        .map(([, init]) => JSON.parse(init.body).model);
+    }
+
+    it("names the chat agent and its Discover source after the saved name", () => {
+      const context = install(
+        "?apologistTeamID=42",
+        undefined,
+        signal({ name: "Ask Pastor Bot" })
+      );
+
+      expect(findChatProvider(context).name).toBe("Ask Pastor Bot");
+      expect(findDiscoverProvider(context)!.title).toBe("Ask Pastor Bot");
+    });
+
+    it("prefers the name in the link, and treats a blank saved name as unset", () => {
+      const fromLink = install(
+        "?apologistName=Link%20Bot",
+        undefined,
+        signal({ name: "Saved Bot" })
+      );
+      expect(findChatProvider(fromLink).name).toBe("Link Bot");
+      unregisterExtension("ext_Apologist");
+
+      const blank = install("", undefined, signal({ name: "   " }));
+      expect(findChatProvider(blank).name).toEqual({
+        key: "title",
+        defaultValue: "Apologist",
+        ns: "ext_Apologist",
+      });
+    });
+
+    it("renames the agent in place when the saved name changes, without removing it from chats", () => {
+      const saved = signal<Record<string, unknown>>({});
+      const context = install("", undefined, saved);
+
+      saved.value = { name: "Ask Pastor Bot" };
+
+      expect(findChatProvider(context).name).toBe("Ask Pastor Bot");
+      expect(context.chats.providers.value).toHaveLength(1);
+      expect(removedFromChats(context)).toEqual([]);
+
+      unregisterExtension("ext_Apologist");
+      expect(removedFromChats(context)).toEqual(["apologist-chat-provider"]);
+    });
+
+    it("sends the saved model, the link's model over it, and the default with neither", async () => {
+      fetchMock.mockImplementation(() => Promise.resolve(chatReply()));
+
+      await sendChatMessage(
+        install("", undefined, signal({ model: "anthropic/claude" }))
+      );
+      unregisterExtension("ext_Apologist");
+      await sendChatMessage(
+        install(
+          "?apologistModel=openai/gpt/5.4-nano",
+          undefined,
+          signal({ model: "anthropic/claude" })
+        )
+      );
+      unregisterExtension("ext_Apologist");
+      await sendChatMessage(install("", undefined, signal({ model: "" })));
+
+      expect(sentModels()).toEqual([
+        "anthropic/claude",
+        "openai/gpt/5.4-nano",
+        "openai/gpt/5-mini",
+      ]);
+    });
+
+    it("uses a newly saved model on the next message", async () => {
+      fetchMock.mockImplementation(() => Promise.resolve(chatReply()));
+      const saved = signal<Record<string, unknown>>({});
+      const context = install("", undefined, saved);
+
+      await sendChatMessage(context);
+      saved.value = { model: "anthropic/claude" };
+      await sendChatMessage(context);
+
+      expect(sentModels()).toEqual(["openai/gpt/5-mini", "anthropic/claude"]);
+    });
+
+    it("regroups the open chapter's results when the saved content author changes", async () => {
+      fetchMock.mockImplementation(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              results: [{ id: 1, title: "One", url: "https://a.org/1" }],
+            }),
+            { status: 200 }
+          )
+        )
+      );
+      const saved = signal<Record<string, unknown>>({ teamId: 160 });
+      const context = install("", undefined, saved);
+
+      async function authors(): Promise<unknown[]> {
+        const found: unknown[] = [];
+        for await (const { results } of context.discover.discover(
+          discoverContext
+        )) {
+          found.push(
+            ...results.map((r) => (r.type === "content" ? r.author : null))
+          );
+        }
+        return found;
+      }
+
+      expect(await authors()).toEqual(["a.org"]);
+      saved.value = { teamId: 160, contentAuthor: "Reflection Ministries" };
+      expect(await authors()).toEqual(["Reflection Ministries"]);
+    });
   });
 
   describe("team ID from settings", () => {
@@ -286,12 +473,20 @@ describe("initApologistExtension discover provider", () => {
 
   async function discoverContent(
     items: Record<string, unknown>[],
-    options: { search?: string; book?: string } = {}
+    options: {
+      search?: string;
+      book?: string;
+      saved?: Record<string, unknown>;
+    } = {}
   ) {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ results: items }), { status: 200 })
     );
-    const context = install(options.search ?? "?apologistTeamID=42");
+    const context = install(
+      options.search ?? "?apologistTeamID=42",
+      undefined,
+      signal(options.saved ?? {})
+    );
     const results = await findDiscoverProvider(context)!.discover({
       ...discoverContext,
       book: options.book ?? discoverContext.book,
@@ -419,23 +614,50 @@ describe("initApologistExtension discover provider", () => {
     expect(titles).toEqual(["The Gospel's Opening", "Grace", "Later Signs"]);
   });
 
-  it("prefers a result's own author over its website, and falls back to the agent's name", async () => {
+  it("groups results by website, then the result's own author, then the agent's name", async () => {
     const results = await discoverContent(
       [
         {
           id: 1,
-          title: "With Author",
+          title: "Website And Author",
           author: "R.C. Sproul",
           url: "https://www.ligonier.org/1",
         },
-        { id: 2, title: "Unreadable Link", url: "not a web address" },
+        {
+          id: 2,
+          title: "Author Only",
+          author: "R.C. Sproul",
+          url: "not a web address",
+        },
+        { id: 3, title: "Neither", url: "also not a web address" },
       ],
       { search: "?apologistTeamID=42&apologistName=Team%20Agent" }
     );
 
     expect(results.map((r) => [r.title, r.author])).toEqual([
-      ["With Author", "R.C. Sproul"],
-      ["Unreadable Link", "Team Agent"],
+      ["Website And Author", "ligonier.org"],
+      ["Author Only", "R.C. Sproul"],
+      ["Neither", "Team Agent"],
+    ]);
+  });
+
+  it("groups every result under the saved content author", async () => {
+    const results = await discoverContent(
+      [
+        {
+          id: 1,
+          title: "One",
+          author: "R.C. Sproul",
+          url: "https://www.ligonier.org/1",
+        },
+        { id: 2, title: "Two", url: "https://tabletalkmagazine.com/2" },
+      ],
+      { saved: { contentAuthor: "  Reflection Ministries  " } }
+    );
+
+    expect(results.map((r) => r.author)).toEqual([
+      "Reflection Ministries",
+      "Reflection Ministries",
     ]);
   });
 
@@ -498,19 +720,8 @@ describe("initApologistExtension discover provider", () => {
         )
       );
       const context = install("", proxyFetch);
-      const chatProvider = (context.chats.registerProvider as Mock).mock
-        .calls[0]![0];
 
-      const texts: string[] = [];
-      for await (const message of chatProvider.generateResponse({
-        instructions: "Reading John 3",
-        messages: [],
-        participants: [],
-      })) {
-        for await (const chunk of message.text) {
-          texts.push(chunk);
-        }
-      }
+      const reply = await sendChatMessage(context);
 
       expect(fetchMock).not.toHaveBeenCalled();
       expect(proxyFetch).toHaveBeenCalledWith(
@@ -520,7 +731,7 @@ describe("initApologistExtension discover provider", () => {
           method: "POST",
         })
       );
-      expect(texts.join("")).toBe("Hello");
+      expect(reply).toBe("Hello");
     });
 
     it("fails the lookup when the proxy request fails, without retrying it as a regular request", async () => {
@@ -556,18 +767,8 @@ describe("initApologistExtension discover provider", () => {
       )
     );
     const context = install("?apologistApiKey=url_key");
-    const chatProvider = (context.chats.registerProvider as Mock).mock
-      .calls[0]![0];
 
-    for await (const message of chatProvider.generateResponse({
-      instructions: "Reading John 3",
-      messages: [],
-      participants: [],
-    })) {
-      for await (const _chunk of message.text) {
-        // drain the stream
-      }
-    }
+    await sendChatMessage(context);
 
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe("https://apologist.seedbible.io/api/v1/chat/completions");

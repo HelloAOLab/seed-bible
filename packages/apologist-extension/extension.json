@@ -1,10 +1,19 @@
 {
   "id": "ext_Apologist",
   "settings": {
+    "name": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
     "teamId": {
       "type": "number",
       "minimum": 1,
       "multipleOf": 1
+    },
+    "contentAuthor": {
+      "type": "string"
     },
     "apiKey": {
       "type": "string",
@@ -27,7 +36,13 @@
       "setting-apiKey-description": "The API key for your Apologist agent. It's sent in the x-api-key header to the agent's host.",
       "sensitive-apologist-title": "Apologist agent",
       "setting-teamId-title": "Team ID",
-      "setting-teamId-description": "The ID of the Apologist team whose articles, videos and other content should appear in the Discover pane. A team ID in the link (apologistTeamID) takes priority."
+      "setting-teamId-description": "The ID of the Apologist team whose articles, videos and other content should appear in the Discover pane. A team ID in the link (apologistTeamID) takes priority.",
+      "setting-name-title": "Agent name",
+      "setting-name-description": "The name shown for the Apologist agent in chats. Leave blank to use \"Apologist\". A name in the link (apologistName) takes priority.",
+      "setting-model-title": "AI model",
+      "setting-model-description": "The AI model the agent uses, e.g. openai/gpt/5-mini. Leave blank for the default. A model in the link (apologistModel) takes priority.",
+      "setting-contentAuthor-title": "Content author",
+      "setting-contentAuthor-description": "The name to group your team's content under in the Discover pane. Leave blank to group it by the website each item comes from."
     },
     "es": {
       "title": "Apologista",

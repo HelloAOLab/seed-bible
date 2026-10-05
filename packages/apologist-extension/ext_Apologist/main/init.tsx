@@ -6,6 +6,7 @@ import { DateTime } from "luxon";
 import { computed, effect, untracked } from "@preact/signals";
 import {
   resolveMessageAuthors,
+  type ChatProvider,
   type ChatProviderMessageOptions,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type {
@@ -176,6 +177,7 @@ type ChatMessage =
 
 const PROVIDER_ID = "apologist-chat-provider";
 const DISCOVER_PROVIDER_ID = "apologist-discover-provider";
+const DEFAULT_APOLOGIST_MODEL = "openai/gpt/5-mini";
 
 // Bounds the tool-call resolution loop below so a model that never emits
 // final content (or keeps calling tools) can't hang generateResponse forever.
@@ -188,7 +190,7 @@ export default function initApologistExtension() {
       console.log("Apologist extension initialized with context:", context);
 
       const url = context.navigation.currentUrl.value;
-      const apologistName = url.searchParams.get("apologistName") ?? null;
+      const urlName = url.searchParams.get("apologistName") ?? null;
       const apologistIconUrl =
         url.searchParams.get("apologistIconUrl") ?? undefined;
       const customApologistDomain =
@@ -197,8 +199,7 @@ export default function initApologistExtension() {
       const apologistApiKey = url.searchParams.get("apologistApiKey") ?? null;
       const apologistShareToken =
         url.searchParams.get("apologistShareToken") ?? null;
-      const apologistModel =
-        url.searchParams.get("apologistModel") ?? "openai/gpt/5-mini";
+      const urlModel = url.searchParams.get("apologistModel") ?? null;
       const apologistConversationId: string | null =
         url.searchParams.get("apologistConversation") ?? null;
       const rawApologistTeamId = url.searchParams.get("apologistTeamID");
@@ -212,6 +213,19 @@ export default function initApologistExtension() {
         );
       }
 
+      // A value in the link wins over the one saved in settings. Saved values
+      // load after sign-in and can change at any time, so they are read
+      // through signals rather than once here.
+      const readSavedText = (key: string): string | null => {
+        const saved = context.extensionSettings.getValue(
+          APOLOGIST_EXTENSION_ID,
+          key
+        );
+        return typeof saved === "string" && saved.trim() ? saved.trim() : null;
+      };
+      const customName = computed(() => urlName ?? readSavedText("name"));
+      const contentAuthor = computed(() => readSavedText("contentAuthor"));
+
       const apologistRequest = createApologistRequest(context, {
         domain: apologistDomain,
         apiKey: apologistApiKey,
@@ -224,9 +238,9 @@ export default function initApologistExtension() {
         return;
       }
 
-      yield context.chats.registerProvider({
+      const createChatProvider = (name: string | null): ChatProvider => ({
         id: PROVIDER_ID,
-        name: apologistName ?? {
+        name: name ?? {
           key: "title",
           defaultValue: "Apologist",
           ns: "ext_Apologist",
@@ -289,7 +303,10 @@ export default function initApologistExtension() {
               {
                 method: "POST",
                 body: {
-                  model: apologistModel,
+                  model:
+                    urlModel ??
+                    readSavedText("model") ??
+                    DEFAULT_APOLOGIST_MODEL,
                   stream: true,
                   metadata: {
                     bible: "bsb",
@@ -445,52 +462,74 @@ export default function initApologistExtension() {
         },
       });
 
-      const providerName =
-        apologistName ??
-        i18n.t("title", { ns: "ext_Apologist", defaultValue: "Apologist" });
+      // Registering under the same id swaps the provider in place, so a new
+      // name shows in every open chat. Unregistering first would instead
+      // remove the agent from those chats.
+      let unregisterChatProvider: () => void = () => undefined;
+      const disposeNameEffect = effect(() => {
+        const name = customName.value;
+        untracked(() => {
+          unregisterChatProvider = context.chats.registerProvider(
+            createChatProvider(name)
+          );
+        });
+      });
+      yield () => {
+        disposeNameEffect();
+        unregisterChatProvider();
+      };
 
       // `reference` has to name the chapter being read: results whose
       // reference doesn't match it are dropped before display.
-      const createDiscoverProvider = (teamId: number): DiscoverProvider => ({
-        id: DISCOVER_PROVIDER_ID,
-        title: providerName,
-        description: "Content from your Apologist team.",
-        discover: async ({ translationId, book, chapter }) => {
-          const bookName =
-            context.bibleData
-              .getCachedTranslationBooks(translationId)
-              ?.books.find((b) => b.id === book)?.name ?? book;
+      const createDiscoverProvider = (
+        teamId: number,
+        name: string | null,
+        author: string | null
+      ): DiscoverProvider => {
+        const providerName =
+          name ??
+          i18n.t("title", { ns: "ext_Apologist", defaultValue: "Apologist" });
+        return {
+          id: DISCOVER_PROVIDER_ID,
+          title: providerName,
+          description: "Content from your Apologist team.",
+          discover: async ({ translationId, book, chapter }) => {
+            const bookName =
+              context.bibleData
+                .getCachedTranslationBooks(translationId)
+                ?.books.find((b) => b.id === book)?.name ?? book;
 
-          const results = await searchApologistContent(apologistRequest, {
-            query: `${bookName} ${chapter}`,
-            teamId,
-          });
+            const results = await searchApologistContent(apologistRequest, {
+              query: `${bookName} ${chapter}`,
+              teamId,
+            });
 
-          return rankResultsForChapter(results, bookName, chapter).map(
-            (item): DiscoverContentResult => ({
-              type: "content",
-              title: item.title,
-              description: item.description,
-              reference: { book, chapter },
-              author: item.author ?? item.source ?? providerName,
-              image: item.image,
-              onClick: () => {
-                context.modals.openModal({
-                  id: `apologist-content-${item.id}`,
-                  title: item.title,
-                  content: () => (
-                    <PlaylistLinkContent url={item.url} title={item.title} />
-                  ),
-                });
-              },
-            })
-          );
-        },
-      });
+            return rankResultsForChapter(results, bookName, chapter).map(
+              (item): DiscoverContentResult => ({
+                type: "content",
+                title: item.title,
+                description: item.description,
+                reference: { book, chapter },
+                // Results are grouped by author in the Discover pane.
+                author: author ?? item.source ?? item.author ?? providerName,
+                image: item.image,
+                onClick: () => {
+                  context.modals.openModal({
+                    id: `apologist-content-${item.id}`,
+                    title: item.title,
+                    content: () => (
+                      <PlaylistLinkContent url={item.url} title={item.title} />
+                    ),
+                  });
+                },
+              })
+            );
+          },
+        };
+      };
 
-      // A team ID in the link wins over the one saved in settings. The saved
-      // one loads after sign-in and can change at any time, so the provider is
-      // swapped whenever the ID changes, which also re-runs the search.
+      // The provider is swapped whenever the team, name or content author
+      // changes, which also re-runs the search for the open chapter.
       const teamId = computed(() => {
         if (urlTeamId !== null) {
           return urlTeamId;
@@ -504,20 +543,22 @@ export default function initApologistExtension() {
           : null;
       });
       let unregisterDiscoverProvider: (() => void) | null = null;
-      const disposeTeamIdEffect = effect(() => {
+      const disposeDiscoverEffect = effect(() => {
         const id = teamId.value;
+        const name = customName.value;
+        const author = contentAuthor.value;
         untracked(() => {
           unregisterDiscoverProvider?.();
           unregisterDiscoverProvider =
             id === null
               ? null
               : context.discover.registerDiscoverProvider(
-                  createDiscoverProvider(id)
+                  createDiscoverProvider(id, name, author)
                 );
         });
       });
       yield () => {
-        disposeTeamIdEffect();
+        disposeDiscoverEffect();
         unregisterDiscoverProvider?.();
       };
 
