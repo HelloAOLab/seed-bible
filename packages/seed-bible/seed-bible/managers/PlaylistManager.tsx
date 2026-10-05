@@ -1038,6 +1038,21 @@ export function createPlaylistManager(
     return userPlaylists;
   });
 
+  /**
+   * Armed only while a shared playlist has just opened on its first item and
+   * that item is text or a link. Dismissing that opening modal steps to the
+   * next item once. Cleared as soon as playback leaves the first item, and
+   * never set for a playlist started from the app, so closing a text or link
+   * modal later in a playlist stays put.
+   */
+  const advanceOnOpeningSharedItemDismiss = signal(false);
+  /**
+   * Set immediately before `startPlaying` when that play came from a shared
+   * link or the shared page's Start button. `startPlaying` consumes it so a
+   * later in-app play doesn't inherit it.
+   */
+  let sharedPlaylistOpening = false;
+
   // Opens the content modal for a non-verse item (video/link/text), or closes it
   // for verse items which are shown in the reader instead. Called both when the
   // current item changes and when the user taps a queue item directly.
@@ -1047,7 +1062,26 @@ export function createPlaylistManager(
       return;
     }
 
-    openPlaylistItemPreview(modals, item, PLAYLIST_ITEM_MODAL_ID, i18n.t);
+    openPlaylistItemPreview(
+      modals,
+      item,
+      PLAYLIST_ITEM_MODAL_ID,
+      i18n.t,
+      () => {
+        const state = playing.peek();
+        if (
+          !advanceOnOpeningSharedItemDismiss.peek() ||
+          !state ||
+          state.currentIndex.peek() !== 0
+        ) {
+          return;
+        }
+        // Drop the arm before stepping so the next item's modal, opened by
+        // this same turn, doesn't step again.
+        advanceOnOpeningSharedItemDismiss.value = false;
+        void state.next();
+      }
+    );
   };
 
   const savePlaylist = async (playlist: Playlist) => {
@@ -1691,6 +1725,9 @@ export function createPlaylistManager(
     initialStep = 0,
     options?: StartPlayingOptions
   ): PlayingState | null => {
+    const fromSharedOpening = sharedPlaylistOpening;
+    sharedPlaylistOpening = false;
+
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
     // Play on the active tab only. Other tabs keep their own playback (if any)
     // untouched, so playback is isolated per reading state.
@@ -1703,6 +1740,13 @@ export function createPlaylistManager(
       queue.length > 0
         ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)
         : -1;
+
+    const openingItem = queue[0];
+    advanceOnOpeningSharedItemDismiss.value =
+      fromSharedOpening &&
+      step === 0 &&
+      !!openingItem &&
+      openingItem.type !== "bible-verse";
 
     // Ending an existing tracked session before opening the next one keeps
     // duration/endedAt accurate when the user starts another playlist without
@@ -1759,6 +1803,7 @@ export function createPlaylistManager(
         loaded?.locator === locator
           ? loaded.item
           : await loadPlaylist(recordName, id);
+      sharedPlaylistOpening = true;
       const state = startPlaying(playlist, stepIndex ?? 0);
       if (state) {
         await state.jumpTo(state.currentIndex.peek());
@@ -1917,6 +1962,15 @@ export function createPlaylistManager(
     }
 
     showItemInModal(playing.value.currentItem.value);
+  });
+
+  // Leaving the first item (or stopping) ends the one-time skip. Coming back
+  // to it later is ordinary playback, and closing its modal stays there.
+  effect(() => {
+    const state = playing.value;
+    if (!state || state.currentIndex.value !== 0) {
+      advanceOnOpeningSharedItemDismiss.value = false;
+    }
   });
 
   // Mirror queue position into the active history row whenever it changes.
@@ -2299,6 +2353,7 @@ export function createPlaylistManager(
     // the page's own entry into the first step's path (enabling playback
     // replaces the current URL), leaving nothing to go back to.
     tabs.leaveStaticPage({ push: true });
+    sharedPlaylistOpening = true;
     startPlaying(page.item, 0);
   };
 

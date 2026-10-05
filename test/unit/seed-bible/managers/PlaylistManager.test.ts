@@ -36,6 +36,7 @@ import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, signal } from "@preact/signals";
+import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
 import { h, render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import type { Mock } from "vitest";
@@ -2875,6 +2876,187 @@ describe("createPlaylistManager", () => {
     await flush();
 
     expect(manager.playing.value).toBeNull();
+  });
+
+  describe("playlist item modal", () => {
+    const SHARED_PAGE_HREF =
+      "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist";
+
+    const openingItems = (): Playlist["items"] => [
+      { type: "link", url: "https://example.com/intro", title: "Intro" },
+      { type: "html", title: "Note", html: "<p>A note</p>" },
+      {
+        type: "bible-verse",
+        ref: { bookId: "JHN", chapter: 3, verse: 16 },
+      },
+    ];
+
+    const renderItemModal = () => {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      const draw = () => {
+        act(() => {
+          render(
+            h(I18nProvider, {
+              i18n: lastI18n,
+              children: h(ModalHost, { manager: lastModals }),
+            }),
+            container
+          );
+        });
+      };
+      draw();
+      const click = (selector: string) => {
+        const target = container.querySelector(selector) as HTMLElement | null;
+        expect(target).not.toBeNull();
+        act(() => target!.click());
+        draw();
+      };
+      return {
+        container,
+        close: () => click(".sb-footnote-modal-close"),
+        dismissBackdrop: () => click(".sb-footnote-modal-overlay"),
+        unmount: () => {
+          render(null, container);
+          container.remove();
+        },
+      };
+    };
+
+    const startSharedPlaylist = (items: Playlist["items"]) => {
+      const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
+      const manager = makeManager(null, tabs, SHARED_PAGE_HREF, {
+        locator: "user-1.playlist-1",
+        item: makePlaylist({ items }),
+        authorName: null,
+      });
+      manager.startPlaylistPage();
+      return manager;
+    };
+
+    it("closing the opening text or link modal of a shared playlist advances once", () => {
+      const manager = startSharedPlaylist(openingItems());
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(modal.container.textContent).toContain("Intro");
+
+        modal.dismissBackdrop();
+
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
+        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+
+        // The rest of the playlist is ordinary playback: closing the next
+        // text item stays on it.
+        modal.close();
+
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
+        ).toBe(false);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("does not advance when a playlist started in the app closes a text or link modal", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: openingItems() }));
+
+      const modal = renderItemModal();
+      try {
+        modal.close();
+
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+
+        await manager.playing.value!.next();
+
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("does not advance when a shared playlist's first item is scripture", async () => {
+      const manager = startSharedPlaylist([
+        { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
+        { type: "html", title: "Note", html: "<p>A note</p>" },
+      ]);
+      await manager.playing.value!.next();
+
+      const modal = renderItemModal();
+      try {
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("does not advance when a shared link opens past the first item", async () => {
+      const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
+      const manager = makeManager(
+        null,
+        tabs,
+        "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist/2",
+        {
+          locator: "user-1.playlist-1",
+          item: makePlaylist({ items: openingItems() }),
+          authorName: null,
+        }
+      );
+      await manager.initialPlaybackPromise;
+
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
+        modal.dismissBackdrop();
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("does not advance after playback has already left and returned to the first item", async () => {
+      const manager = startSharedPlaylist(openingItems());
+      await manager.playing.value!.next();
+      await manager.playing.value!.previous();
+
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(modal.container.textContent).toContain("Intro");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("finishes a shared playlist whose only item is text or a link when that modal is closed", () => {
+      const manager = startSharedPlaylist([
+        { type: "html", title: "Only", html: "<p>Only item</p>" },
+      ]);
+      const modal = renderItemModal();
+      try {
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-finished")
+        ).toBe(true);
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
+        ).toBe(false);
+      } finally {
+        modal.unmount();
+      }
+    });
   });
 
   describe("playlist finished modal", () => {
