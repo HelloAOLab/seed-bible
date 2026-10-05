@@ -11,39 +11,50 @@ import {
 import { createFriendsManager } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type { Playlist } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { TabsManager } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { fakeSharedPermissions, ME } from "./fakeSharedPermissions";
 
+const PLAYLISTS_MARKER = "publicRead:playlists";
+
 /**
  * The real friends and notes managers over one `CasualOSManager`, signed in
- * as `ME`, with only the server stood in for: `friendIds` are friends on the
- * fake shared-permissions server, and `notes` holds each user's notes by user
- * ID, as the records server lists them. Resolves once the friends list has
- * loaded; the friends manager is disposed when the test finishes.
+ * as `ME`, with only the server stood in for:
+ * - `friendIds` are friends on the fake shared-permissions server, with the
+ *   public profile names in `names`.
+ * - `notes` and `playlists` hold each user's notes and playlists by user ID,
+ *   as the records server lists them.
  *
- * For component tests whose state is otherwise mocked, so a friend's notes
- * reach the component the way the app loads them rather than through a stub.
+ * Resolves once the friends list and their names have loaded; the friends
+ * manager is disposed when the test finishes. A test that needs the real
+ * playlist manager builds it over the returned `os` and `login`.
+ *
+ * For component tests whose state is otherwise mocked, so a friend's content
+ * reaches the component the way the app loads it rather than through a stub.
  */
-export async function createRealFriendNotes(options: {
+export async function createRealFriendContent(options: {
   friendIds: string[];
+  names?: Record<string, string>;
   notes?: Record<string, Annotation[]>;
+  playlists?: Record<string, Playlist[]>;
   discover?: DiscoverManager;
 }) {
-  const { friendIds, notes = {} } = options;
+  const { friendIds, names = {}, notes = {}, playlists = {} } = options;
   const os = CasualOSManager();
   vi.spyOn(os, "listDataByMarker").mockImplementation((async (
     recordName: string,
-    _marker: string,
+    marker: string,
     lastAddress?: string
-  ) => ({
-    success: true,
-    items: lastAddress
+  ) => {
+    const records: { id: string }[] =
+      marker === PLAYLISTS_MARKER
+        ? (playlists[recordName] ?? [])
+        : (notes[recordName] ?? []);
+    const items = lastAddress
       ? []
-      : (notes[recordName] ?? []).map((note) => ({
-          address: note.id,
-          data: note,
-        })),
-  })) as never);
+      : records.map((record) => ({ address: record.id, data: record }));
+    return { success: true, items, totalCount: records.length };
+  }) as never);
   vi.spyOn(os, "getData").mockResolvedValue({
     success: false,
     errorCode: "data_not_found",
@@ -52,7 +63,10 @@ export async function createRealFriendNotes(options: {
   const login = {
     userId: signal<string | null>(ME),
     login: vi.fn().mockResolvedValue(null),
-    getPublicProfile: vi.fn().mockResolvedValue({ name: "", pictureUrl: null }),
+    getPublicProfile: vi.fn(async (id: string) => ({
+      name: names[id] ?? "",
+      pictureUrl: null,
+    })),
     // What a note's author line reads its name from.
     getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
   } as unknown as LoginManager;
@@ -62,7 +76,11 @@ export async function createRealFriendNotes(options: {
   }
   const friends = createFriendsManager(os, login);
   onTestFinished(() => friends.dispose());
-  await vi.waitFor(() => expect(friends.friendIds.value).toEqual(friendIds));
+  await vi.waitFor(() =>
+    expect(friends.friends.value.map((f) => [f.userId, f.name ?? ""])).toEqual(
+      friendIds.map((id) => [id, names[id] ?? ""])
+    )
+  );
 
   const tabs = {
     tabs: signal([]),

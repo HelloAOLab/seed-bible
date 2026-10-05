@@ -1,6 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { computed, signal, type Signal } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
@@ -16,7 +16,14 @@ import type {
   PlaylistManager,
   PlaylistPlayHistory,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
-import { createPlayingState } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import {
+  createPlayingState,
+  createPlaylistManager,
+} from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers";
+import { createBibleReadingExtensionManager } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import type { ChatsManager } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type {
   Annotation,
   AnnotationsManager,
@@ -26,16 +33,15 @@ import type {
   ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import {
-  createFriendsManager,
-  type Friend,
-  type FriendsManager,
+import type {
+  Friend,
+  FriendsManager,
 } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Mock } from "vitest";
-import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
-import { createRealFriendNotes } from "../testUtils/realFriendContent";
+import { ME } from "../testUtils/fakeSharedPermissions";
+import { createRealFriendContent } from "../testUtils/realFriendContent";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -157,8 +163,6 @@ function createMockPlaylists(
     editingPlaylist?: Playlist | null;
     playing?: ReturnType<typeof createPlayingState> | null;
     deletePlaylistImpl?: () => Promise<void>;
-    /** Each friend's playlists, by user id. */
-    friendPlaylists?: Record<string, Playlist[]>;
   } = {}
 ): MockPlaylistsResult {
   const createNewPlaylist = vi.fn();
@@ -213,9 +217,7 @@ function createMockPlaylists(
     updateEditingPlaylistItem: vi.fn(),
     removeEditingPlaylistItem: vi.fn(),
     goBackFromPlayingView,
-    getUserPlaylists: vi.fn((userId: string) =>
-      signal(overrides.friendPlaylists?.[userId] ?? [])
-    ),
+    getUserPlaylists: vi.fn(() => signal([])),
   } as unknown as PlaylistManager;
 
   return {
@@ -246,8 +248,6 @@ function createMockAnnotations(
   overrides: {
     editingAnnotation?: Annotation | null;
     annotationsForChapter?: Annotation[];
-    /** Each friend's notes on the chapter, by user id. */
-    friendAnnotationsForChapter?: Record<string, Annotation[]>;
     deleteAnnotationAndRefreshImpl?: () => Promise<void>;
     hasRecordOverride?: boolean;
     pendingSyncCount?: number;
@@ -267,9 +267,7 @@ function createMockAnnotations(
   const annotations = {
     editingAnnotation: signal(overrides.editingAnnotation ?? null),
     getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
-    getUserAnnotationsForChapter: vi.fn((userId: string) =>
-      signal(overrides.friendAnnotationsForChapter?.[userId] ?? [])
-    ),
+    getUserAnnotationsForChapter: vi.fn(() => signal([])),
     createNewAnnotation,
     editAnnotation,
     saveEditingAnnotation,
@@ -400,14 +398,10 @@ function createMockState(
     openVerseReference?: ReturnType<typeof vi.fn>;
     userId?: string | null;
     discover?: DiscoverManager;
-    friendIds?: string[];
-    /** A friends list a test can change; `friendIds` follows it. */
-    friends?: Signal<Friend[]>;
-    /** The real friends manager, for tests that unfriend someone. */
+    /** The real friends manager, for tests about friends' content. */
     friendsManager?: FriendsManager;
   } = {}
 ): SeedBibleState {
-  const friendsList = overrides.friends;
   return {
     app: {
       isMobile: signal(isMobile),
@@ -430,53 +424,45 @@ function createMockState(
     panes: {
       closeFullscreenPanes: vi.fn(),
     },
-    friends: overrides.friendsManager
-      ? overrides.friendsManager
-      : friendsList
-        ? {
-            friends: friendsList,
-            friendIds: computed(() => friendsList.value.map((f) => f.userId)),
-          }
-        : {
-            friends: signal([]),
-            friendIds: signal(overrides.friendIds ?? []),
-          },
+    friends: overrides.friendsManager ?? {
+      friends: signal([]),
+      friendIds: signal([]),
+    },
   } as unknown as SeedBibleState;
 }
 
 describe("DiscoverPane", () => {
   let container: HTMLDivElement;
-  let disposers: (() => void)[] = [];
 
   const ada: Friend = { userId: "ada", name: "Ada", pictureUrl: null };
   const bob: Friend = { userId: "bob", name: "Bob", pictureUrl: null };
 
   /**
-   * The real friends manager over the fake shared-permissions server, signed
-   * in as `ME` with `friends` as friends, once their names have loaded.
+   * The real playlist manager over the `os` and `login` from
+   * `createRealFriendContent`, with the app pieces it needs alongside.
    */
-  const createRealFriends = async (friends: Friend[]) => {
-    const os = CasualOSManager();
-    const login = {
-      userId: signal<string | null>(ME),
-      login: vi.fn().mockResolvedValue(null),
-      getPublicProfile: vi.fn(async (id: string) => ({
-        name: friends.find((f) => f.userId === id)?.name ?? "",
-        pictureUrl: null,
-      })),
-    } as unknown as LoginManager;
-    const server = fakeSharedPermissions(os, () => login.userId.peek());
-    for (const friend of friends) {
-      server.friendsWith(friend.userId);
-    }
-    const manager = createFriendsManager(os, login);
-    disposers.push(manager.dispose);
-    await vi.waitFor(() =>
-      expect(manager.friends.value.map((f) => f.name)).toEqual(
-        friends.map((f) => f.name)
-      )
+  const createRealPlaylists = (
+    os: CasualOSManager,
+    login: LoginManager,
+    discover: DiscoverManager
+  ): PlaylistManager => {
+    const navigation = createNavigationManager();
+    return createPlaylistManager(
+      os,
+      login,
+      // No reader tab: nothing here plays into one.
+      {
+        tabs: signal([]),
+        selectedTabId: signal(null),
+      } as unknown as TabsManager,
+      navigation,
+      signal(false),
+      createModalManager(),
+      createI18nManager(navigation, ["en"]),
+      createBibleReadingExtensionManager(),
+      discover,
+      { addContext: vi.fn(), removeContext: vi.fn() } as unknown as ChatsManager
     );
-    return manager;
   };
 
   beforeEach(() => {
@@ -491,8 +477,6 @@ describe("DiscoverPane", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    for (const dispose of disposers) dispose();
-    disposers = [];
     vi.restoreAllMocks();
   });
 
@@ -506,23 +490,38 @@ describe("DiscoverPane", () => {
         container.querySelectorAll(".sb-friend-playlists-group-name")
       ).map((el) => el.textContent);
 
-    const renderWithFriends = (
-      friends: Signal<Friend[]> | FriendsManager,
+    /**
+     * Discover with the real friends and playlist managers, signed in as `ME`
+     * with `friends` as friends and `friendPlaylists` on the server, once
+     * each friend's playlists have been read.
+     */
+    const renderWithFriends = async (
+      friends: Friend[],
       friendPlaylists: Record<string, Playlist[]>
     ) => {
-      const mock = createMockPlaylists({ friendPlaylists });
-      const { annotations } = createMockAnnotations();
-      const state = createMockState(
-        false,
-        "friendIds" in friends
-          ? { userId: ME, friendsManager: friends }
-          : { friends }
+      const discover = createDiscoverManager();
+      const content = await createRealFriendContent({
+        friendIds: friends.map((f) => f.userId),
+        names: Object.fromEntries(friends.map((f) => [f.userId, f.name ?? ""])),
+        playlists: friendPlaylists,
+        discover,
+      });
+      const playlists = createRealPlaylists(
+        content.os,
+        content.login,
+        discover
       );
+      const { annotations } = createMockAnnotations();
+      const state = createMockState(false, {
+        userId: ME,
+        discover,
+        friendsManager: content.friends,
+      });
       act(() => {
         render(
           <DiscoverPane
             tabs={createMockTabs(createMockTab())}
-            playlists={mock.playlists}
+            playlists={playlists}
             annotations={annotations}
             modals={createModalManager()}
             state={state}
@@ -531,29 +530,51 @@ describe("DiscoverPane", () => {
           container
         );
       });
-      return { ...mock, state };
+      await vi.waitFor(() => {
+        for (const friend of friends) {
+          expect(content.os.listDataByMarker).toHaveBeenCalledWith(
+            friend.userId,
+            "publicRead:playlists",
+            undefined
+          );
+        }
+      });
+      await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+      return { ...content, playlists, state };
     };
 
-    it("lists each friend's playlists under their name, leaving out friends with none", () => {
-      renderWithFriends(signal([ada, bob]), {
-        ada: [createPlaylist({ id: "p1", title: "Psalms of Ascent" })],
+    it("lists each friend's playlists under their name, leaving out friends with none", async () => {
+      await renderWithFriends([ada, bob], {
+        ada: [
+          createPlaylist({
+            id: "p1",
+            recordName: "ada",
+            title: "Psalms of Ascent",
+          }),
+        ],
       });
 
       expect(groupNames()).toEqual(["Ada"]);
       expect(friendsSection()?.textContent).toContain("Psalms of Ascent");
     });
 
-    it("is left out when no friend has a playlist", () => {
-      renderWithFriends(signal([ada]), {});
+    it("is left out when no friend has a playlist", async () => {
+      await renderWithFriends([ada], {});
 
       expect(friendsSection()).toBeNull();
     });
 
-    it("plays a friend's playlist", () => {
-      const playlist = createPlaylist({ id: "p1", title: "Psalms of Ascent" });
-      const { startPlaying } = renderWithFriends(signal([ada]), {
-        ada: [playlist],
+    it("plays a friend's playlist", async () => {
+      const { playlists } = await renderWithFriends([ada], {
+        ada: [
+          createPlaylist({
+            id: "p1",
+            recordName: "ada",
+            title: "Psalms of Ascent",
+          }),
+        ],
       });
+      const startPlaying = vi.spyOn(playlists, "startPlaying");
 
       act(() => {
         friendsSection()!
@@ -561,12 +582,15 @@ describe("DiscoverPane", () => {
           .click();
       });
 
-      expect(startPlaying).toHaveBeenCalledWith(playlist);
+      expect(startPlaying).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "p1", recordName: "ada" })
+      );
     });
 
     it("shares a friend's playlist, and offers nothing to edit or delete it", async () => {
-      const playlist = createPlaylist({ id: "p1", title: "Psalms of Ascent" });
-      const { state } = renderWithFriends(signal([ada]), { ada: [playlist] });
+      const { playlists, state } = await renderWithFriends([ada], {
+        ada: [createPlaylist({ id: "p1", recordName: "ada" })],
+      });
       const items = Array.from(
         friendsSection()!.querySelectorAll('[role="menuitem"]')
       );
@@ -579,7 +603,7 @@ describe("DiscoverPane", () => {
       });
 
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        "https://example.com/?playlist=p1"
+        playlists.getPlaylistUrl(playlists.getUserPlaylists("ada").value[0]!)
       );
       expect(state.app.toast).toHaveBeenCalledWith(
         "Playlist URL copied to clipboard"
@@ -593,8 +617,8 @@ describe("DiscoverPane", () => {
       (navigator.clipboard.writeText as Mock).mockRejectedValueOnce(
         new Error("denied")
       );
-      const { state } = renderWithFriends(signal([ada]), {
-        ada: [createPlaylist({ id: "p1" })],
+      const { state } = await renderWithFriends([ada], {
+        ada: [createPlaylist({ id: "p1", recordName: "ada" })],
       });
 
       await act(async () => {
@@ -612,11 +636,12 @@ describe("DiscoverPane", () => {
       consoleError.mockRestore();
     });
 
-    it("shows a friend's playlist cover, as your own playlists do", () => {
-      renderWithFriends(signal([ada]), {
+    it("shows a friend's playlist cover, as your own playlists do", async () => {
+      await renderWithFriends([ada], {
         ada: [
           createPlaylist({
             id: "p1",
+            recordName: "ada",
             heroImageUrl: "https://example.com/cover.jpg",
           }),
         ],
@@ -628,10 +653,17 @@ describe("DiscoverPane", () => {
     });
 
     it("drops a friend's playlists once you unfriend them", async () => {
-      const friends = await createRealFriends([ada, bob]);
-      renderWithFriends(friends, {
-        ada: [createPlaylist({ id: "p1", title: "Psalms of Ascent" })],
-        bob: [createPlaylist({ id: "p2", title: "Gospels" })],
+      const { friends } = await renderWithFriends([ada, bob], {
+        ada: [
+          createPlaylist({
+            id: "p1",
+            recordName: "ada",
+            title: "Psalms of Ascent",
+          }),
+        ],
+        bob: [
+          createPlaylist({ id: "p2", recordName: "bob", title: "Gospels" }),
+        ],
       });
       expect(groupNames()).toEqual(["Ada", "Bob"]);
 
@@ -643,17 +675,24 @@ describe("DiscoverPane", () => {
   });
 
   it("drops a friend's note once you unfriend them", async () => {
-    const friends = await createRealFriends([ada]);
-    const friendsNote = createAnnotation({
-      id: "a1",
-      data: { type: "comment", html: "<p>Ada's note</p>", userId: "ada" },
+    const discover = createDiscoverManager();
+    const { friends, annotations } = await createRealFriendContent({
+      friendIds: ["ada"],
+      names: { ada: "Ada" },
+      notes: {
+        ada: [
+          createAnnotation({
+            id: "a1",
+            data: { type: "comment", html: "<p>Ada's note</p>", userId: "ada" },
+          }),
+        ],
+      },
+      discover,
     });
     const { playlists } = createMockPlaylists();
-    const { annotations } = createMockAnnotations({
-      friendAnnotationsForChapter: { ada: [friendsNote] },
-    });
     const state = createMockState(false, {
       userId: ME,
+      discover,
       friendsManager: friends,
     });
     act(() => {
@@ -669,7 +708,9 @@ describe("DiscoverPane", () => {
         container
       );
     });
-    expect(container.textContent).toContain("Ada's note");
+    await vi.waitFor(() =>
+      expect(container.textContent).toContain("Ada's note")
+    );
 
     await act(() => friends.unfriend("ada"));
 
@@ -1886,7 +1927,7 @@ describe("DiscoverPane", () => {
     });
     const discover = createDiscoverManager();
     // The real managers, so the note arrives the way a friend's note does.
-    const { friends, annotations } = await createRealFriendNotes({
+    const { friends, annotations } = await createRealFriendContent({
       friendIds: ["ada"],
       notes: { ada: [friendsNote] },
       discover,

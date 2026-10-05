@@ -9,7 +9,7 @@ import {
   createDiscoverManager,
   type DiscoverContentTypeDefinition,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
-import { createRealFriendNotes } from "../testUtils/realFriendContent";
+import { createRealFriendContent } from "../testUtils/realFriendContent";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -277,7 +277,7 @@ describe("DiscoverContentPanel", () => {
     const mockState = createMockState();
     // The real managers, so the friend's note is loaded from the server
     // the way the app loads it.
-    const { login, friends, annotations } = await createRealFriendNotes({
+    const { login, friends, annotations } = await createRealFriendContent({
       friendIds: ["friend-1"],
       notes: {
         "friend-1": [

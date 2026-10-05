@@ -28,7 +28,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { vi, type Mock } from "vitest";
 import { mockI18nState, resetMockI18n } from "../testUtils/mockI18n";
-import { createRealFriendNotes } from "../testUtils/realFriendContent";
+import { createRealFriendContent } from "../testUtils/realFriendContent";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
@@ -2710,7 +2710,7 @@ describe("BibleReader", () => {
     const mockState = createStateWithAnnotatedVerse("GEN", 1, 3, true);
     // The real managers, so the friend's note is loaded from the server the
     // way the app loads it.
-    const { login, friends, annotations } = await createRealFriendNotes({
+    const { login, friends, annotations } = await createRealFriendContent({
       friendIds: ["friend-1"],
       notes: {
         "friend-1": [
@@ -2966,7 +2966,7 @@ describe("BibleReader", () => {
       stubLineBoxes({ 1: [40] });
       const fixture = createFixture();
       const mockState = annotatedState([]);
-      const { login, friends, annotations } = await createRealFriendNotes({
+      const { login, friends, annotations } = await createRealFriendContent({
         friendIds: ["friend-1"],
         notes: {
           "friend-1": [
