@@ -99,8 +99,12 @@
   border-radius: var(--sb-friends-radius);
 }
 
-.sb-friends-row:hover {
-  background: var(--sb-friends-surface);
+/* Hover only where a pointer can hover: a phone applies it on tap and keeps
+   it until the next tap elsewhere. */
+@media (hover: hover) {
+  .sb-friends-row:hover {
+    background: var(--sb-friends-surface);
+  }
 }
 
 .sb-friends-person-text {
@@ -144,8 +148,10 @@
   cursor: pointer;
 }
 
-.sb-friends-person-button:hover .sb-friends-person-name {
-  text-decoration: underline;
+@media (hover: hover) {
+  .sb-friends-person-button:hover .sb-friends-person-name {
+    text-decoration: underline;
+  }
 }
 
 .sb-friends-row-actions {
@@ -166,9 +172,11 @@
   cursor: pointer;
 }
 
-.sb-friends-button:hover:not(:disabled) {
-  border-color: var(--sb-primary-color);
-  color: var(--sb-primary-color);
+@media (hover: hover) {
+  .sb-friends-button:hover:not(:disabled) {
+    border-color: var(--sb-primary-color);
+    color: var(--sb-primary-color);
+  }
 }
 
 .sb-friends-button:disabled {
@@ -182,9 +190,11 @@
   color: var(--sb-primary-font-color);
 }
 
-.sb-friends-button--primary:hover:not(:disabled) {
-  color: var(--sb-primary-font-color);
-  opacity: 0.9;
+@media (hover: hover) {
+  .sb-friends-button--primary:hover:not(:disabled) {
+    color: var(--sb-primary-font-color);
+    opacity: 0.9;
+  }
 }
 
 /* The spinner sits over the label rather than beside it, so a button never
