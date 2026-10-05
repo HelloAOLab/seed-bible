@@ -2,7 +2,10 @@ import "./shareModal.css";
 import { useEffect } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
-import { type BibleReadingSession } from "../../managers/SessionsManager";
+import {
+  getSessionUrl,
+  type BibleReadingSession,
+} from "../../managers/SessionsManager";
 
 export interface ShareModalProps {
   /** Called when the sheet should close (Cancel or Escape). */
@@ -21,6 +24,8 @@ export const ShareModal = (props: ShareModalProps) => {
   const { t } = useI18n();
 
   const sessionActive = props.session !== null;
+  // A partner-site embed shares a link to the passage, not a live session.
+  const hideSharedSession = props.app.isMinimalEmbed.value;
 
   const close = () => props.onClose?.();
 
@@ -110,7 +115,9 @@ export const ShareModal = (props: ShareModalProps) => {
         },
   ].filter(
     (action): action is NonNullable<typeof action> =>
-      action !== null && !(props.hideShareLink && action.key === "link")
+      action !== null &&
+      !(props.hideShareLink && action.key === "link") &&
+      !(hideSharedSession && action.key === "session")
   );
 
   return (
@@ -141,14 +148,3 @@ export const ShareModal = (props: ShareModalProps) => {
     </div>
   );
 };
-
-function getSessionUrl(session: BibleReadingSession) {
-  const url = new URL(window.location.href);
-  const pattern = url.searchParams.get("pattern");
-  url.search = "";
-  url.searchParams.set("sessionId", session.id);
-  if (pattern) {
-    url.searchParams.set("pattern", pattern);
-  }
-  return url;
-}

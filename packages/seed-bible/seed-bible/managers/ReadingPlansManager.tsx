@@ -1,4 +1,11 @@
-import { batch, computed, effect, signal, untracked } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  untracked,
+  type ReadonlySignal,
+} from "@preact/signals";
 import { PlaylistItem, type PlaylistItemData } from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
@@ -13,6 +20,17 @@ import {
 import { CasualOSManager } from "./OsManager";
 import { v4 as uuid } from "uuid";
 import { captureEvent } from "./Utils";
+import { savePhotoToGallery } from "./UserGalleryManager";
+import type { NavigationManager } from "./NavigationManager";
+import type { TabsManager } from "./TabsManager";
+import { buildSharedPagePath, parseRecordLocator } from "./SharedPagePath";
+import {
+  createSharedPageLoader,
+  type SharedPage,
+  type SharedPageSeed,
+} from "./SharedPageLoader";
+import { DEFAULT_UI_LANGUAGE } from "./ReadingUrlPath";
+import { createLinkPreviewLoader } from "./linkPreview";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -103,6 +121,11 @@ export const ReadingPlanMetadataSchema = z.object({
   locale: z.string(),
   title: z.string().nullable(),
   description: z.string().nullable(),
+  /**
+   * Public URL of a 4:3 cover image. Optional so plans saved before this field
+   * existed still parse.
+   */
+  heroImageUrl: z.url().max(2048).nullable().optional(),
   // Every pace the author offers for reading this plan. A plan has no single
   // duration — how long it takes follows from whichever cadence the reader
   // picks (see `cadenceDurationDays`).
@@ -119,6 +142,41 @@ export const ReadingPlanSchema = ReadingPlanMetadataSchema.extend({
   sessions: z.array(ReadingPlanSessionSchema),
 });
 export type ReadingPlan = z.infer<typeof ReadingPlanSchema>;
+
+export function getReadingPlanLocator(plan: {
+  recordName: string;
+  address: string;
+}): string {
+  return `${plan.recordName}.${plan.address}`;
+}
+
+/**
+ * Builds a shareable reading-plan URL: the plan's own
+ * `/{lang}/reading-plan/{locator}/{title}` page, which shows the plan before
+ * the reader starts it.
+ */
+export function buildReadingPlanShareUrl(params: {
+  plan: Pick<ReadingPlan, "recordName" | "address" | "title">;
+  currentUrl: URL;
+  basePath: string;
+  language: string;
+}): string {
+  const { plan, currentUrl, basePath, language } = params;
+  return new URL(
+    `${basePath}${buildSharedPagePath({
+      kind: "readingPlan",
+      language,
+      locator: getReadingPlanLocator(plan),
+      title: plan.title,
+    })}`,
+    currentUrl
+  ).toString();
+}
+
+/** A shared `/{lang}/reading-plan/...` page's plan and its author. */
+export type ReadingPlanPage = SharedPage<ReadingPlan>;
+/** A completed reading-plan-page load, embedded by SSR — see `SharedPageSeed`. */
+export type ReadingPlanPageSeed = SharedPageSeed<ReadingPlan>;
 
 // ---------------------------------------------------------------------------
 // Progress
@@ -315,6 +373,7 @@ export function createReadingPlan(
     locale?: string;
     title?: string | null;
     description?: string | null;
+    heroImageUrl?: string | null;
     cadenceOptions?: CadenceOption[];
     defaultCadenceId?: string | null;
     status?: ReadingPlanStatus;
@@ -332,6 +391,7 @@ export function createReadingPlan(
     locale: options.locale ?? "en",
     title: options.title ?? null,
     description: options.description ?? null,
+    heroImageUrl: options.heroImageUrl ?? null,
     cadenceOptions,
     defaultCadenceId: options.defaultCadenceId ?? cadenceOptions[0]?.id ?? null,
     status: options.status ?? "complete",
@@ -1387,9 +1447,61 @@ function captureProgressCompletionEvents(
   }
 }
 
+/** The most recent progress the user has for a given plan id, if any. */
+export function latestReadingPlanProgress(
+  progresses: ReadingPlanProgress[],
+  planId: string
+): ReadingPlanProgress | null {
+  return (
+    progresses
+      .filter((p) => p.planId === planId)
+      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
+  );
+}
+
+/**
+ * Where the signed-in reader is in the plan a reading plan page shows, from
+ * their most recent progress on it.
+ */
+export interface ReadingPlanPageProgress {
+  progress: ReadingPlanProgress;
+  /** Counted in sessions when self-paced (no schedule), else in days. */
+  unit: "day" | "session";
+  /** The 1-based day or session to resume at; null once every one is done. */
+  resumeAt: number | null;
+}
+
+/**
+ * Average reading time, in whole minutes, of a plan's sessions that have
+ * something to read. Null when none do.
+ */
+export function averageSessionMinutes(
+  plan: Pick<ReadingPlan, "sessions">,
+  resolveBook?: (bookId: string) => BookLength | null | undefined
+): number | null {
+  const sessions = plan.sessions.filter((s) => s.readings.length > 0);
+  if (sessions.length === 0) {
+    return null;
+  }
+  const total = sessions.reduce(
+    (sum, session) =>
+      sum + estimateReadingMinutes(session.readings, resolveBook),
+    0
+  );
+  return Math.max(1, Math.round(total / sessions.length));
+}
+
 export function createReadingPlansManager(
   os: CasualOSManager,
-  login: LoginManager
+  login: LoginManager,
+  tabs: Pick<TabsManager, "tabs" | "selectedTabId">,
+  navigation: Pick<NavigationManager, "currentUrl" | "initialUrl" | "basePath">,
+  options: {
+    /** UI language for the links this hands out. */
+    language?: ReadonlySignal<string>;
+    /** A prior SSR render's reading-plan-page load, so it isn't re-fetched. */
+    initialReadingPlanPageSeed?: ReadingPlanPageSeed;
+  } = {}
 ) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
   const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
@@ -1448,6 +1560,74 @@ export function createReadingPlansManager(
 
     return parsed.data;
   };
+
+  /**
+   * Loads a plan from a `recordName.address` share locator and selects it.
+   * Returns null when the locator is malformed.
+   */
+  const loadByLocator = async (
+    locator: string
+  ): Promise<ReadingPlan | null> => {
+    const parsed = parseRecordLocator(locator);
+    if (!parsed) {
+      console.error("Invalid reading plan locator:", locator);
+      return null;
+    }
+    const plan = await getReadingPlan(parsed.recordName, parsed.address);
+    selectedReadingPlan.value = plan;
+    return plan;
+  };
+
+  /** Gets a shareable URL for the given plan. */
+  const getReadingPlanShareUrl = (plan: ReadingPlan): string =>
+    buildReadingPlanShareUrl({
+      plan,
+      currentUrl: navigation.currentUrl.peek(),
+      basePath: navigation.basePath,
+      language: options.language?.peek() ?? DEFAULT_UI_LANGUAGE,
+    });
+
+  const readingPlanPageLoader = createSharedPageLoader({
+    os,
+    navigation,
+    kind: "readingPlan",
+    schema: ReadingPlanSchema,
+    authorUserId: (plan) => plan.authorUserId,
+    initialSeed: options.initialReadingPlanPageSeed,
+  });
+
+  /**
+   * The signed-in reader's place in the reading plan page's plan, or null
+   * when they haven't started it (or aren't signed in, or their progress is
+   * still loading).
+   */
+  const readingPlanPageProgress = computed<ReadingPlanPageProgress | null>(
+    () => {
+      const page = readingPlanPageLoader.page.value;
+      if (!page) {
+        return null;
+      }
+      const plan = page.item;
+      const progress = latestReadingPlanProgress(
+        userReadingPlanProgresses.value,
+        formatReadingPlanId(plan.recordName, plan.address)
+      );
+      if (!progress) {
+        return null;
+      }
+      const nowMs = Date.now();
+      const summary = summarizeCalendar(
+        getReadingCalendar(plan, progress, nowMs),
+        nowMs,
+        progress.timeZone
+      );
+      return {
+        progress,
+        unit: progress.selfPaced === true ? "session" : "day",
+        resumeAt: summary.nextDayNumber,
+      };
+    }
+  );
 
   // A plan lives in two records: the plan itself and a `_metadata` companion
   // the list reads so it can render without loading every plan's contents.
@@ -1863,6 +2043,9 @@ export function createReadingPlansManager(
   // -------------------------------------------------------------------------
 
   const editingReadingPlan = signal<ReadingPlanDraft | null>(null);
+  const linkPreviews = createLinkPreviewLoader((url) =>
+    os.getLinkPreview(url, options.language?.peek())
+  );
   // Set while a draft save is in flight or scheduled, so the wizard can show
   // that the user's work is being kept without them having to press anything.
   const editingReadingPlanSaving = signal(false);
@@ -1899,10 +2082,8 @@ export function createReadingPlansManager(
           : [...userReadingPlans.value, metadata];
       });
       editingReadingPlanSaveError.value = false;
-      // Editing an already-published plan (`isNew: false`) autosaves the same
-      // way but isn't a "draft" in the lifecycle sense — it keeps its
-      // `"complete"` status throughout and reports via
-      // reading_plan_updated on finish, not here.
+      // Published-plan edits are not written here — they wait for
+      // `finishEditingReadingPlan` so Cancel/back can walk away cleanly.
       if (draft.isNew) {
         captureEvent(
           draft.persisted
@@ -1942,7 +2123,9 @@ export function createReadingPlansManager(
       draftSaveTimer = null;
     }
     const draft = editingReadingPlan.peek();
-    if (!draft) {
+    // New drafts autosave so the author can leave and resume. Edits to an
+    // already-published plan stay in memory until Save changes.
+    if (!draft || !draft.isNew) {
       editingReadingPlanSaving.value = false;
       return;
     }
@@ -1971,7 +2154,47 @@ export function createReadingPlansManager(
       ...patch,
       plan: { ...update(current.plan), updatedAtMs: Date.now() },
     };
-    scheduleDraftSave();
+    if (current.isNew) {
+      scheduleDraftSave();
+    }
+  };
+
+  /**
+   * Fetches a preview for a link reading in the draft and swaps it in when it
+   * arrives.
+   */
+  const requestReadingPreview = (reading: PlanReading) => {
+    linkPreviews.request(reading.item, (_original, previewed) => {
+      const draft = editingReadingPlan.peek();
+      // Checked up front, not left to the map below: `mutateDraft` would still
+      // bump `updatedAtMs` and schedule an autosave for a reading that's gone.
+      const stillThere = draft?.plan.sessions.some((session) =>
+        session.readings.some((r) => r.id === reading.id)
+      );
+      if (!stillThere) {
+        return;
+      }
+      mutateDraft((plan) => ({
+        ...plan,
+        sessions: plan.sessions.map((session) => ({
+          ...session,
+          readings: session.readings.map((r) =>
+            r.id === reading.id ? { ...r, item: previewed } : r
+          ),
+        })),
+      }));
+    });
+  };
+
+  /**
+   * Fetches previews for a reopened plan's links that don't have one — saved
+   * before previews existed, or whose preview missed the save cutoff — so the
+   * next save stores them.
+   */
+  const requestMissingReadingPreviews = (plan: ReadingPlan) => {
+    for (const session of plan.sessions) {
+      session.readings.forEach(requestReadingPreview);
+    }
   };
 
   /**
@@ -1981,6 +2204,7 @@ export function createReadingPlansManager(
    * behind in the user's account.
    */
   const startEditingReadingPlan = () => {
+    linkPreviews.cancel();
     const userId = login.userId.value ?? "";
     const now = Date.now();
     editingReadingPlan.value = {
@@ -1998,6 +2222,7 @@ export function createReadingPlansManager(
 
   /** Reopens a saved draft so the author can carry on where they left off. */
   const resumeEditingReadingPlan = (plan: ReadingPlan) => {
+    linkPreviews.cancel();
     editingReadingPlan.value = {
       plan:
         plan.sessions.length > 0
@@ -2008,15 +2233,18 @@ export function createReadingPlansManager(
       isNew: true,
     };
     editingReadingPlanSaveError.value = false;
+    requestMissingReadingPreviews(plan);
   };
 
   /**
    * Opens an already-published plan in the same editor used to create one, so
-   * there is one screen for both. Edits autosave exactly as a draft's do, and
-   * the plan keeps its `"complete"` status throughout so it never drops out of
-   * the reader's list mid-edit.
+   * there is one screen for both. Edits stay in memory until Save changes —
+   * backing out (Cancel/back) drops them and leaves the published plan as it
+   * was. The plan keeps its `"complete"` status throughout so it never drops
+   * out of the reader's list mid-edit.
    */
   const editExistingReadingPlan = (plan: ReadingPlan) => {
+    linkPreviews.cancel();
     editingReadingPlan.value = {
       plan:
         plan.sessions.length > 0
@@ -2027,29 +2255,51 @@ export function createReadingPlansManager(
       isNew: false,
     };
     editingReadingPlanSaveError.value = false;
+    requestMissingReadingPreviews(plan);
   };
 
   /**
-   * Steps out of the wizard, flushing any pending change first. The draft
-   * itself is kept — that is the whole point of drafts — and stays in the
-   * plans list to be resumed or discarded.
+   * Steps out of the wizard. A new draft flushes any pending change first and
+   * is kept — that is the whole point of drafts — so it stays in the plans
+   * list to be resumed or discarded. An edit of a published plan is dropped
+   * without writing, so Cancel/back does not commit the cover image (or
+   * anything else) the author never saved.
    */
   const cancelEditingReadingPlan = () => {
+    linkPreviews.cancel();
     const draft = editingReadingPlan.peek();
-    if (draft && (draft.persisted || draftSaveTimer !== null)) {
+    if (draft?.isNew && (draft.persisted || draftSaveTimer !== null)) {
       void flushDraftSave().then(() => {
         editingReadingPlan.value = null;
       });
       return;
     }
+    if (draftSaveTimer !== null) {
+      clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+    }
+    editingReadingPlanSaving.value = false;
     editingReadingPlan.value = null;
   };
 
-  /** Merges a title/description change into the draft. */
+  /** Merges a title/description/cover-image change into the draft. */
   const updateEditingReadingPlan = (
-    patch: Partial<Pick<ReadingPlan, "title" | "description">>
+    patch: Partial<Pick<ReadingPlan, "title" | "description" | "heroImageUrl">>
   ) => {
     mutateDraft((plan) => ({ ...plan, ...patch }));
+  };
+
+  /**
+   * Uploads a cover image to the current user's record and returns its public
+   * URL. The caller attaches that URL via `updateEditingReadingPlan`. Throws
+   * when signed out.
+   */
+  const uploadHeroImage = async (file: File): Promise<string> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Cannot upload a cover image while signed out.");
+    }
+    return (await savePhotoToGallery(os, userId, file)).url;
   };
 
   /** Points new readings at a session of the draft. */
@@ -2158,6 +2408,7 @@ export function createReadingPlansManager(
           : session
       ),
     }));
+    requestReadingPreview(reading);
   };
 
   /** Removes a reading from a session of the draft. */
@@ -2184,6 +2435,8 @@ export function createReadingPlansManager(
    * no draft or it has no readings.
    */
   const finishEditingReadingPlan = async (): Promise<ReadingPlan | null> => {
+    await linkPreviews.settle();
+    linkPreviews.cancel();
     const draft = editingReadingPlan.peek();
     if (!draft || draftReadingCount(draft) === 0) {
       return null;
@@ -2294,6 +2547,7 @@ export function createReadingPlansManager(
    * and leaving the plan alone.
    */
   const discardEditingReadingPlan = async () => {
+    linkPreviews.cancel();
     const draft = editingReadingPlan.peek();
     if (draftSaveTimer !== null) {
       clearTimeout(draftSaveTimer);
@@ -2354,6 +2608,7 @@ export function createReadingPlansManager(
     cancelEditingReadingPlan,
     discardEditingReadingPlan,
     updateEditingReadingPlan,
+    uploadHeroImage,
     selectEditingPlanSession,
     setEditingPlanCadenceOptions,
     addSessionToEditingPlan,
@@ -2361,6 +2616,16 @@ export function createReadingPlansManager(
     addReadingToEditingPlan,
     removeReadingFromEditingPlan,
     finishEditingReadingPlan,
+    loadByLocator,
+    getReadingPlanShareUrl,
+    readingPlanPage: readingPlanPageLoader.page,
+    readingPlanPageNotFound: readingPlanPageLoader.notFound,
+    readingPlanPageProgress,
+    readingPlanPageLoadFailed: readingPlanPageLoader.loadFailed,
+    readingPlanPageRetrying: readingPlanPageLoader.retrying,
+    retryReadingPlanPage: readingPlanPageLoader.retry,
+    initialReadingPlanPageLoadPromise: readingPlanPageLoader.initialLoadPromise,
+    getReadingPlanPageSeed: readingPlanPageLoader.getSeed,
   };
 }
 

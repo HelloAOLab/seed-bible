@@ -237,6 +237,67 @@ describe("FreeUseBibleAPI", () => {
     );
   });
 
+  it("fetches a reader's audio timings from a chapter's link", async () => {
+    const payload = {
+      translationId: "AAB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      reader: "david",
+      audioLink:
+        "https://audio.bible.helloao.org/api/BSB/GEN/1/audio/david.mp3",
+      thisChapterLink: "/api/AAB/GEN/1.json",
+      nextChapterLink: "/api/AAB/GEN/2.json",
+      previousChapterLink: null,
+      thisChapterAudioTimingsLink: "/api/AAB/GEN/1.david.audioTimings.json",
+      nextChapterAudioTimingsLink: "/api/AAB/GEN/2.david.audioTimings.json",
+      previousChapterAudioTimingsLink: null,
+      verses: [8.056, 11.288, 19.514],
+    };
+    fetchMock.mockResolvedValue(createResponse(payload));
+
+    const api = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
+    const result = await api.getAudioTimings(
+      "/api/AAB/GEN/1.david.audioTimings.json"
+    );
+
+    expect(result).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://bible.helloao.org/api/AAB/GEN/1.david.audioTimings.json",
+      expect.anything()
+    );
+  });
+
+  it("uses endpoint override for audio timings links", async () => {
+    const payload = {
+      translationId: "AAB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      reader: "david",
+      audioLink:
+        "https://audio.bible.helloao.org/api/BSB/GEN/1/audio/david.mp3",
+      thisChapterLink: "/api/AAB/GEN/1.json",
+      nextChapterLink: "/api/AAB/GEN/2.json",
+      previousChapterLink: null,
+      thisChapterAudioTimingsLink: "/api/AAB/GEN/1.david.audioTimings.json",
+      nextChapterAudioTimingsLink: "/api/AAB/GEN/2.david.audioTimings.json",
+      previousChapterAudioTimingsLink: null,
+      verses: [8.056, 11.288, 19.514],
+    };
+    fetchMock.mockResolvedValue(createResponse(payload));
+
+    const api = new FreeUseBibleAPI("https://default.example/");
+    const result = await api.getAudioTimings(
+      "/api/AAB/GEN/1.david.audioTimings.json",
+      "https://override.example"
+    );
+
+    expect(result).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://override.example/api/AAB/GEN/1.david.audioTimings.json",
+      expect.anything()
+    );
+  });
+
   it("caches in-flight requests by URL", async () => {
     const payload = { translations: [{ id: "eng_kjv" }] };
     fetchMock.mockResolvedValue(createResponse(payload));

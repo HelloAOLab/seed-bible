@@ -4,7 +4,7 @@ import { useReadingHistoryContext } from "../contexts/ReadingHistory/ReadingHist
 import type {
   TooltipContentData,
   TooltipAnchor,
-} from "../components/containers/Tooltip";
+} from "../components/containers/ScriptureMapTooltip";
 import type {
   HexString,
   WeightedColor,
@@ -104,6 +104,7 @@ export const useBook: UseBook = (props) => {
     showingBooksColors,
     activeTab,
     translate,
+    CapitalizeFirstLetter,
     userColorStore,
     readingHistoryService,
     GetTextColorBasedOnBackground,
@@ -221,7 +222,9 @@ export const useBook: UseBook = (props) => {
       for (const userId in users) {
         const userSummary = users[userId];
         const isMe = userId === myAuthBotId;
-        const userName = isMe ? translate("you") : translate("guest");
+        const userName = CapitalizeFirstLetter(
+          isMe ? translate("you") : translate("anonymous")
+        );
         let userReadingTimeSeconds: number | undefined;
         let books: (typeof users)[string]["books"] | undefined;
         if (userSummary) {
@@ -441,7 +444,9 @@ export const useBook: UseBook = (props) => {
             chapterSummary;
           for (const userId in users) {
             const isMe = userId === myAuthBotId;
-            const userName = isMe ? translate("you") : translate("guest");
+            const userName = CapitalizeFirstLetter(
+              isMe ? translate("you") : translate("anonymous")
+            );
             let color: HexString | undefined = undefined;
             const userColor = userColorStore.getUserColor({ authId: userId });
             const dotStyle = { backgroundColor: userColor };

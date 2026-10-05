@@ -85,6 +85,9 @@ function makeScriptureMapCtx(overrides: Record<string, unknown> = {}) {
       getColorByReadingTime: vi.fn(() => "#aabbcc"),
       getColorByRecency: vi.fn(() => "#aabbcc"),
     },
+    CapitalizeFirstLetter: vi.fn(
+      (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
+    ),
     GetTextColorBasedOnBackground: vi.fn(() => "#000000"),
     IsValueBetween: vi.fn(() => false),
     ComputeRawGradientColors: vi.fn(() => "linear-gradient()"),
@@ -661,7 +664,7 @@ describe("useBook", () => {
       ).toBe("linear-gradient(red, blue)");
     });
 
-    it("uses guest translation for non-self users", () => {
+    it("uses the anonymous translation for non-self users", () => {
       const translate = vi.fn((key: string) => key);
       const readingSummary = {
         totalTimeSpentReading: 120,
@@ -684,8 +687,13 @@ describe("useBook", () => {
           readingHistoryRangeSeconds: { start: 0, end: 99999999 },
         })
       );
-      setup({ readingSummary: readingSummary as never });
-      expect(translate).toHaveBeenCalledWith("guest");
+      const result = setup({ readingSummary: readingSummary as never });
+      expect(translate).toHaveBeenCalledWith("anonymous");
+      const userEntry = result.current.tooltipContentsData.find(
+        (data) => data.type === "readingHistory"
+      );
+      expect(userEntry).toBeDefined();
+      expect((userEntry as { userName: string }).userName).toBe("Anonymous");
     });
   });
 

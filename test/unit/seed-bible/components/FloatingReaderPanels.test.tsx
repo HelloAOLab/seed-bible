@@ -20,26 +20,8 @@ import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState"
 import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (
-        key: string,
-        options?: { defaultValue?: string } & Record<string, unknown>
-      ) => {
-        const template = options?.defaultValue ?? key;
-        return options
-          ? template.replace(/\{\{(\w+)\}\}/g, (_match, name: string) =>
-              String(options[name] ?? "")
-            )
-          : template;
-      },
-      language: "en",
-    }),
-  };
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
 });
 
 vi.mock(
@@ -253,6 +235,7 @@ function createMockChatSession(
     removeParticipant: vi.fn(),
     getMessageAuthors: vi.fn().mockReturnValue([]),
     context: signal({}),
+    unsentDraft: signal(""),
     ...overrides,
   };
 }
@@ -267,6 +250,7 @@ function createMockChatListState(
     chats: {
       providers: signal(overrides.providers ?? []),
       selectChat: overrides.selectChat ?? vi.fn(),
+      composerDraft: signal(""),
     },
   } as unknown as SeedBibleState;
 }
@@ -341,6 +325,56 @@ describe("ChatList", () => {
     expect(
       container.querySelectorAll(".sb-floating-chat-list-item")
     ).toHaveLength(2);
+  });
+
+  it("shows a generic account icon for your own avatar when you are the only person in the chat", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const chat = createMockChatSession({
+      participants: signal([self]),
+      totalParticipants: signal([self]),
+    });
+    const state = createMockChatListState();
+
+    act(() => {
+      render(<ChatList chats={[chat]} state={state} />, container);
+    });
+
+    const cluster = container.querySelector(".sb-chat-list-avatar-cluster");
+    expect(cluster?.querySelector(".sb-tab-user-icon-generic")).not.toBeNull();
+    expect(cluster?.textContent).toContain("account_circle");
+    expect(cluster?.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the animal fallback for your own avatar when the other person is inactive", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const other = createMockParticipant({
+      id: "other",
+      name: "Alice",
+      isSelf: false,
+      isRemote: true,
+      isActive: false,
+    });
+    const chat = createMockChatSession({
+      participants: signal([self]),
+      totalParticipants: signal([self, other]),
+    });
+    const state = createMockChatListState();
+
+    act(() => {
+      render(<ChatList chats={[chat]} state={state} />, container);
+    });
+
+    const cluster = container.querySelector(".sb-chat-list-avatar-cluster");
+    expect(cluster?.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(cluster?.querySelector(".sb-tab-user-icon-generic")).toBeNull();
   });
 
   it("shows the chat title derived from the participant's name", () => {
@@ -536,6 +570,7 @@ function createMockFloatingChatPanelState(
       selectChat,
       providers: signal(opts.providers ?? []),
       activeContexts: signal(opts.activeContexts ?? []),
+      composerDraft: signal(""),
     },
   } as unknown as SeedBibleState;
   return { state, closeChatPanel, selectChat };
@@ -699,6 +734,10 @@ describe("FloatingChatPanel", () => {
       render(<FloatingChatPanel state={state} />, container);
     });
 
+    act(() => {
+      vi.runAllTimers();
+    });
+
     const outsideEl = document.createElement("div");
     document.body.appendChild(outsideEl);
     act(() => {
@@ -707,6 +746,54 @@ describe("FloatingChatPanel", () => {
     outsideEl.remove();
 
     expect(closeChatPanel).toHaveBeenCalled();
+  });
+
+  it("ignores a pointerdown on the verse toolbar so Ask AI can open without immediately closing", () => {
+    const { state, closeChatPanel } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    const verseToolbar = document.createElement("div");
+    verseToolbar.className = "sb-verse-toolbar";
+    const askAiButton = document.createElement("button");
+    verseToolbar.appendChild(askAiButton);
+    document.body.appendChild(verseToolbar);
+
+    act(() => {
+      askAiButton.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true })
+      );
+    });
+    verseToolbar.remove();
+
+    expect(closeChatPanel).not.toHaveBeenCalled();
+  });
+
+  it("does not close on an outside pointerdown that arrives before the dismiss listener attaches", () => {
+    const { state, closeChatPanel } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const outsideEl = document.createElement("div");
+    document.body.appendChild(outsideEl);
+    act(() => {
+      outsideEl.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    });
+    outsideEl.remove();
+
+    expect(closeChatPanel).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.runAllTimers();
+    });
   });
 
   it("pressing Escape calls closeChatPanel", () => {

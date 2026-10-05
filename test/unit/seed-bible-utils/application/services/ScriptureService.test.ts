@@ -16,6 +16,8 @@ const makeSubset = (
   author: "unknown",
   chaptersVerseCount: [10],
   numberOfChapters: 10,
+  startIndex: 0,
+  endIndex: 9,
   relativeDateRange: { min: 0, max: 0 },
   path: {
     arrangementName: "default",
@@ -114,15 +116,6 @@ describe("mapSubsetToCompleteBook", () => {
     expect(result.chapter).toBe(8);
   });
 
-  it("defaults startIndex to 0 when not provided", () => {
-    const svc = makeService();
-    const result = svc.mapSubsetToCompleteBook({
-      book: makeSubset({ startIndex: undefined, completeBookId: "genesis" }),
-      chapter: 7,
-    });
-    expect(result.chapter).toBe(7);
-  });
-
   it("returns the completeBookId as bookId", () => {
     const svc = makeService();
     const result = svc.mapSubsetToCompleteBook({
@@ -180,24 +173,6 @@ describe("mapCompleteToSubsetBook", () => {
       subsets: [subset],
     });
     expect(result.chapter).toBe(5);
-  });
-
-  it("treats missing startIndex as 0 for both range and chapter mapping", () => {
-    const svc = makeService();
-    const subset = makeSubset({
-      startIndex: undefined,
-      numberOfChapters: 20,
-      bookId: "psalms-1",
-      completeBookId: "psalms",
-    });
-    // start=1, end=20 → chapter=12 → mapped=12-0=12
-    const result = svc.mapCompleteToSubsetBook({
-      chapter: 12,
-      subsets: [subset],
-    });
-    expect(result.chapter).toBe(12);
-    expect(result.bookId).toBe("psalms-1");
-    expect(result.completeBookId).toBe("psalms");
   });
 
   it("picks the correct subset when multiple subsets exist", () => {

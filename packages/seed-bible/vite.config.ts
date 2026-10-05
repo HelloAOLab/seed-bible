@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 import path from "path";
+import { execSync } from "child_process";
+import { readFileSync } from "fs";
 import type { Plugin } from "vite";
 import {
   VIRTUAL_ID,
@@ -37,8 +39,28 @@ function emptyExtensionSetPlugin(): Plugin {
 // resolve — mirrors the root `vite.config.ts`'s app build in reusing the
 // `preact()` plugin and `resolve.dedupe` list, but replaces its
 // app-oriented `build` config with `build.lib`.
+// The root app build bakes these into the bundle via `define` (see the root
+// `vite.config.ts`); without the same substitution here, the published
+// library would reference undefined globals and throw at runtime.
+const appVersion = JSON.parse(
+  readFileSync(path.resolve(__dirname, "package.json"), "utf-8")
+).version as string;
+
+function resolveGitCommit(): string {
+  try {
+    return execSync("git rev-parse HEAD").toString().trim();
+  } catch {
+    return "unknown";
+  }
+}
+
 export default defineConfig({
   plugins: [preact(), emptyExtensionSetPlugin()],
+
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+    __GIT_COMMIT__: JSON.stringify(resolveGitCommit()),
+  },
 
   resolve: {
     // Same rationale as the root config: a second preact/signals instance

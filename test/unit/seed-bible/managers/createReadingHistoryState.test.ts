@@ -1,0 +1,354 @@
+import { signal } from "@preact/signals";
+import {
+  createReadingHistoryState,
+  type UserLastReading,
+} from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+/** Flush all pending microtasks (a macrotask tick drains the promise queue). */
+const flush = () => new Promise<void>((r) => setTimeout(r, 0));
+
+describe("createReadingHistoryState", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("is empty and fetches nothing when there is no user", () => {
+    const userId = signal<string | null>(null);
+    const refetchTrigger = signal(0);
+    const getUserLastReading = vi.fn();
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    expect(readingHistory.value).toEqual({ status: "empty" });
+    expect(getUserLastReading).not.toHaveBeenCalled();
+    dispose();
+  });
+
+  it("starts on Welcome, then shows the resume card when the user has history", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d = deferred<UserLastReading>();
+    const getUserLastReading = vi.fn(() => d.promise);
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    // No remembered history for this account, so Welcome is up while the
+    // fetch runs — the personalized page must not paint first.
+    expect(readingHistory.value).toEqual({ status: "empty" });
+    expect(getUserLastReading).toHaveBeenCalledWith("A", expect.any(Object));
+
+    d.resolve({ bookId: "GEN", chapter: 2 });
+    await flush();
+
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 2 },
+    });
+    expect(localStorage.getItem("sb-today-history-A")).toBe("ready");
+    dispose();
+  });
+
+  it("stays on Welcome when the logged-in user has never read", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d = deferred<UserLastReading>();
+    const getUserLastReading = vi.fn(() => d.promise);
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    expect(readingHistory.value).toEqual({ status: "empty" });
+
+    d.resolve(undefined);
+    await flush();
+
+    expect(readingHistory.value).toEqual({ status: "empty" });
+    expect(localStorage.getItem("sb-today-history-A")).toBe("empty");
+    dispose();
+  });
+
+  it("keeps the personalized layout for an account already known to have history", async () => {
+    localStorage.setItem("sb-today-history-A", "ready");
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d = deferred<UserLastReading>();
+    const getUserLastReading = vi.fn(() => d.promise);
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    expect(readingHistory.value).toEqual({ status: "loading" });
+
+    d.resolve({ bookId: "GEN", chapter: 2 });
+    await flush();
+
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 2 },
+    });
+    dispose();
+  });
+
+  // Split from the stale-result test below, where the reset had nothing to
+  // undo: account A's fetch never resolved there, so the state was still
+  // `loading` when the switch happened and the assertion held either way.
+  it("clears the previous account's card while the new account loads", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const dA = deferred<UserLastReading>();
+    const dB = deferred<UserLastReading>();
+    const getUserLastReading = vi.fn((id: string) =>
+      id === "A" ? dA.promise : dB.promise
+    );
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    // A gets all the way to a shown card first, so there is a real position on
+    // screen for the switch to clear.
+    dA.resolve({ bookId: "GEN", chapter: 9 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 9 },
+    });
+
+    // B's fetch is still in flight. B has no remembered history, so Welcome
+    // is up — A's chapter must not stay on screen, and the personalized page
+    // must not blink in while we find out.
+    userId.value = "B";
+    expect(readingHistory.value).toEqual({ status: "empty" });
+
+    dB.resolve({ bookId: "JHN", chapter: 1 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "JHN", chapter: 1 },
+    });
+    dispose();
+  });
+
+  it("ignores the previous account's result when it lands after the switch", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const dA = deferred<UserLastReading>();
+    const dB = deferred<UserLastReading>();
+    const getUserLastReading = vi.fn((id: string) =>
+      id === "A" ? dA.promise : dB.promise
+    );
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    expect(readingHistory.value).toEqual({ status: "empty" });
+
+    // Switch to a second account before A's fetch resolves.
+    userId.value = "B";
+
+    // B resolves first and becomes the live state.
+    dB.resolve({ bookId: "JHN", chapter: 1 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "JHN", chapter: 1 },
+    });
+
+    // A's stale, in-flight fetch must NOT overwrite B's state.
+    dA.resolve({ bookId: "GEN", chapter: 9 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "JHN", chapter: 1 },
+    });
+    dispose();
+  });
+
+  it("returns to empty on sign-out and ignores the previous user's late result", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d = deferred<UserLastReading>();
+    const getUserLastReading = vi.fn(() => d.promise);
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    expect(readingHistory.value).toEqual({ status: "empty" });
+
+    userId.value = null;
+    expect(readingHistory.value).toEqual({ status: "empty" });
+
+    // A's fetch resolving after sign-out must not resurrect the old position.
+    d.resolve({ bookId: "GEN", chapter: 1 });
+    await flush();
+    expect(readingHistory.value).toEqual({ status: "empty" });
+    dispose();
+  });
+
+  it("refetches without flashing a placeholder when the same user reads on", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d1 = deferred<UserLastReading>();
+    const d2 = deferred<UserLastReading>();
+    let call = 0;
+    const getUserLastReading = vi.fn(() =>
+      ++call === 1 ? d1.promise : d2.promise
+    );
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    d1.resolve({ bookId: "GEN", chapter: 1 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+
+    // Reading progresses: refetch, but the current card stays visible.
+    refetchTrigger.value = 1;
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+    expect(getUserLastReading).toHaveBeenCalledTimes(2);
+
+    d2.resolve({ bookId: "JHN", chapter: 4 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "JHN", chapter: 4 },
+    });
+    dispose();
+  });
+
+  it("falls back to empty when the initial load fails", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d = deferred<UserLastReading>();
+    const getUserLastReading = vi.fn(() => d.promise);
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    d.reject(new Error("boom"));
+    await flush();
+
+    expect(readingHistory.value).toEqual({ status: "empty" });
+    errSpy.mockRestore();
+    dispose();
+  });
+
+  it("keeps the current card when a same-user refetch fails", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d1 = deferred<UserLastReading>();
+    const d2 = deferred<UserLastReading>();
+    let call = 0;
+    const getUserLastReading = vi.fn(() =>
+      ++call === 1 ? d1.promise : d2.promise
+    );
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    d1.resolve({ bookId: "GEN", chapter: 1 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+
+    // Reading progresses; the refetch fails on a transient error. A returning
+    // user must NOT be flashed back to Welcome — the existing card stays.
+    refetchTrigger.value = 1;
+    d2.reject(new Error("network blip"));
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+
+    errSpy.mockRestore();
+    dispose();
+  });
+
+  it("keeps the current card when a same-user refetch returns no history", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d1 = deferred<UserLastReading>();
+    const d2 = deferred<UserLastReading>();
+    let call = 0;
+    const getUserLastReading = vi.fn(() =>
+      ++call === 1 ? d1.promise : d2.promise
+    );
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    d1.resolve({ bookId: "GEN", chapter: 1 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+
+    // A spurious empty result on a same-user refetch must not erase a
+    // known-good position.
+    refetchTrigger.value = 1;
+    d2.resolve(undefined);
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+
+    dispose();
+  });
+});

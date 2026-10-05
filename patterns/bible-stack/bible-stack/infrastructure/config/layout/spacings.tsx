@@ -1,0 +1,28 @@
+export const StackSpacings = {
+  BetweenArrangements: 2.5,
+  BetweenSections: 0.5,
+  BetweenBooks: 0.08,
+  CoverToCross: 2,
+  ExplodedViewSectionPadding: 2,
+  ExplodedViewSectionShadowPadding: 1,
+  SelectedBookMargin: 1,
+  ChapterGap: 0.05,
+  SectionShadowPadding: 1,
+  BibleShadowOffsetZ: -1,
+  BibleShadowOffsetX: 0,
+  BibleShadowOffsetY: 0,
+  BibleTransformerInitialRotationZ: 0,
+  TestamentOffsetX: 0,
+  TestamentOffsetY: 0,
+  LowerCoverOffsetX: 0,
+  LowerCoverOffsetY: 0,
+  LowerCoverOffsetZ: 0,
+  UpperCoverOffsetX: 0,
+  UpperCoverOffsetY: 0,
+  LeftCoverOffsetY: 0,
+  CrossVerticalLineOffsetX: 0,
+  CrossVerticalLineOffsetY: 0,
+  CrossHorizontalLineOffsetX: 0,
+} as const;
+
+export type StackSpacingsType = typeof StackSpacings;

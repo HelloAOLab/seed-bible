@@ -1,0 +1,14 @@
+{
+  "name": "@seed-bible/bible-stack",
+  "version": "1.0.0",
+  "description": "Interactive 3D visualization of the Bible as a physical stack of testaments, sections, and books that you can explode into an expanded view, select and navigate piece by piece, and highlight — with a guided tour on first visit.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.ts"
+    }
+  },
+  "dependencies": {
+    "seed-bible": "workspace:*"
+  }
+}

@@ -17,10 +17,11 @@ import {
   type BookReferenceMatch,
 } from "../../managers/SearchManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import type {
-  ChatMessage,
-  ChatProvider,
-  ChatSession,
+import {
+  chatHasOtherPeople,
+  type ChatMessage,
+  type ChatProvider,
+  type ChatSession,
 } from "../../managers/ChatsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ReaderTab } from "../../managers/TabsManager";
@@ -747,6 +748,11 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       if (!target) return;
       if (target.closest(".sb-floating-chat-panel")) return;
       if (target.closest(".sb-reader-toolbar")) return;
+      // Verse-toolbar Ask AI opens this panel, then clears the selection
+      // (unmounting the sheet). Ignore taps still aimed at that sheet so the
+      // opening gesture — or a ghost pointerdown after unmount — cannot
+      // immediately dismiss the chat.
+      if (target.closest(".sb-verse-toolbar")) return;
       // Context menus (e.g. the "new chat" provider list) are portaled to
       // <body>, so they live outside `.sb-floating-chat-panel` in the DOM even
       // though they're part of this panel's UI. Ignore taps inside them so
@@ -761,10 +767,21 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       }
     };
 
-    document.addEventListener("pointerdown", handleDocumentPointerDown);
+    // Defer attaching the outside-dismiss listener so the same tap that opened
+    // the panel (Ask AI on the verse toolbar, Chat in the reader bar, etc.)
+    // cannot close it before the gesture finishes.
+    let removePointerDown: (() => void) | undefined;
+    const attachTimer = window.setTimeout(() => {
+      document.addEventListener("pointerdown", handleDocumentPointerDown);
+      removePointerDown = () => {
+        document.removeEventListener("pointerdown", handleDocumentPointerDown);
+      };
+    }, 0);
+
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("pointerdown", handleDocumentPointerDown);
+      window.clearTimeout(attachTimer);
+      removePointerDown?.();
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
@@ -774,6 +791,9 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
   // Only display non-anonymous inactive participants
   const inactiveParticipants =
     selectedChat?.inactiveParticipants.value.filter((p) => p.name) ?? [];
+  const otherPeoplePresent = selectedChat
+    ? chatHasOtherPeople(selectedChat)
+    : false;
 
   return (
     <div
@@ -837,7 +857,9 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
           >
             {selectedChat.participants.value.map((participant) => {
               const label = getParticipantDisplayLabel(participant, t);
-              const avatar = getParticipantAvatar(participant, t);
+              const avatar = getParticipantAvatar(participant, t, {
+                otherPeoplePresent,
+              });
               return (
                 <ContextMenuItem
                   key={participant.id}
@@ -851,6 +873,7 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                     visual={avatar.visual}
                     title={avatar.label}
                     isSelf={avatar.isSelf}
+                    genericFallback={avatar.genericFallback}
                   />
                   <span className="sb-floating-chat-members-name">{label}</span>
                 </ContextMenuItem>
@@ -869,7 +892,9 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                 </span>
                 {inactiveParticipants.map((participant) => {
                   const label = getParticipantDisplayLabel(participant, t);
-                  const avatar = getParticipantAvatar(participant, t);
+                  const avatar = getParticipantAvatar(participant, t, {
+                    otherPeoplePresent,
+                  });
                   return (
                     <ContextMenuItem
                       key={participant.id}
@@ -883,6 +908,7 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                         visual={avatar.visual}
                         title={avatar.label}
                         isSelf={avatar.isSelf}
+                        genericFallback={avatar.genericFallback}
                       />
                       <span className="sb-floating-chat-members-name">
                         {label}
@@ -1023,6 +1049,7 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
   const toShow = pool.slice(0, 3);
   const overflowCount = pool.length - toShow.length;
   const count = overflowCount > 0 ? 4 : Math.max(toShow.length, 1);
+  const otherPeoplePresent = chatHasOtherPeople(chat);
 
   return (
     <div
@@ -1030,7 +1057,9 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
       aria-hidden="true"
     >
       {toShow.map((participant) => {
-        const av = getParticipantAvatar(participant, t);
+        const av = getParticipantAvatar(participant, t, {
+          otherPeoplePresent,
+        });
         return (
           <Avatar
             key={participant.id}
@@ -1038,6 +1067,7 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
             visual={av.visual}
             title={av.label}
             isSelf={av.isSelf}
+            genericFallback={av.genericFallback}
           />
         );
       })}

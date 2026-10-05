@@ -1,0 +1,470 @@
+import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
+import type { StackBibleData } from "../../domain/entities/StackBibleData";
+import {
+  HighlightRequestSources,
+  UnhighlightRequestSources,
+  HighlightPacings,
+} from "../../domain/models/pieces";
+import {
+  BibleTypes,
+  BibleVisualizationStates,
+  type Piece,
+  type SectionShadow,
+} from "../../domain/models/canvas";
+import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
+import type { InfoLabelData } from "../../domain/entities/InfoLabelData";
+import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
+import type { StackBookData } from "../../domain/entities/StackBookData";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
+import type { BookChaptersManagementServicePort } from "../ports/in/BookChaptersManagement";
+import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
+import type { BibleSequencePort } from "../ports/out/BibleSequence";
+import type { SequenceConfigProviderPort } from "../ports/out/SequenceConfigProvider";
+import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
+import type { PiecePort } from "../ports/out/Piece";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { RenderOrderPort } from "../ports/out/RenderOrder";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { AwaiterPort } from "../ports/out/Awaiter";
+
+interface ServiceParams {
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
+  bibleSequenceAdapterPort: BibleSequencePort;
+  scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
+  awaiterPort: AwaiterPort;
+  configProviderPort: SequenceConfigProviderPort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
+  pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
+  labelDataRepositoryPort: LabelDataStorePort;
+  pieceAdapterPort: PiecePort;
+  stackPieceLifecycleAdapterPort: StackPieceLifecyclePort;
+  bookChaptersManagementServicePort: BookChaptersManagementServicePort;
+  renderOrderAdapterPort: RenderOrderPort;
+  pieceDataRepositoryPort: Pick<
+    PieceDataRepositoryPort,
+    | "getAllTestaments"
+    | "getAllSections"
+    | "getAllSectionBooks"
+    | "getAllBooks"
+    | "getAllChapters"
+  >;
+  loggerPort: LoggerPort;
+}
+
+export class BibleSequenceService implements BibleSequenceServicePort {
+  #eventManagerPort: ServiceParams["eventManagerPort"];
+  #bibleSequenceAdapterPort: ServiceParams["bibleSequenceAdapterPort"];
+  #scripturePiecesStateServicePort: ServiceParams["scripturePiecesStateServicePort"];
+  #awaiterPort: ServiceParams["awaiterPort"];
+  #configProviderPort: ServiceParams["configProviderPort"];
+  #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
+  #pieceLabelServicePort: ServiceParams["pieceLabelServicePort"];
+  #labelDataRepositoryPort: ServiceParams["labelDataRepositoryPort"];
+  #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
+  #stackPieceLifecycleAdapterPort: ServiceParams["stackPieceLifecycleAdapterPort"];
+  #bookChaptersManagementServicePort: ServiceParams["bookChaptersManagementServicePort"];
+  #renderOrderAdapterPort: ServiceParams["renderOrderAdapterPort"];
+  #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
+  #loggerPort: ServiceParams["loggerPort"];
+
+  constructor({
+    eventManagerPort,
+    bibleSequenceAdapterPort,
+    scripturePiecesStateServicePort,
+    awaiterPort,
+    configProviderPort,
+    pieceHighlightServicePort,
+    pieceLabelServicePort,
+    labelDataRepositoryPort,
+    stackPieceLifecycleAdapterPort,
+    pieceAdapterPort,
+    bookChaptersManagementServicePort,
+    renderOrderAdapterPort,
+    pieceDataRepositoryPort,
+    loggerPort,
+  }: ServiceParams) {
+    this.#eventManagerPort = eventManagerPort;
+    this.#bibleSequenceAdapterPort = bibleSequenceAdapterPort;
+    this.#scripturePiecesStateServicePort = scripturePiecesStateServicePort;
+    this.#awaiterPort = awaiterPort;
+    this.#configProviderPort = configProviderPort;
+    this.#pieceHighlightServicePort = pieceHighlightServicePort;
+    this.#pieceLabelServicePort = pieceLabelServicePort;
+    this.#labelDataRepositoryPort = labelDataRepositoryPort;
+    this.#stackPieceLifecycleAdapterPort = stackPieceLifecycleAdapterPort;
+    this.#pieceAdapterPort = pieceAdapterPort;
+    this.#bookChaptersManagementServicePort = bookChaptersManagementServicePort;
+    this.#renderOrderAdapterPort = renderOrderAdapterPort;
+    this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
+    this.#loggerPort = loggerPort;
+  }
+
+  async resetBible({
+    bibleData,
+    pacing = "Regular",
+  }: {
+    bibleData: StackBibleData;
+    pacing?: StackPresenceNavigationPacing;
+  }): Promise<void> {
+    this.#eventManagerPort.emit("OnBibleResetSequenceStart", { bibleData });
+
+    try {
+      await this.closeBible({
+        bibleData,
+        pacing,
+      });
+      await this.openBible({
+        bibleData,
+        pacing,
+      });
+      this.#eventManagerPort.emit("OnBibleResetSequenceEnd", { bibleData });
+    } catch (error) {
+      this.#loggerPort.error(
+        "BibleSequenceService: Failed to display reset sequence at resetBible.",
+        { error }
+      );
+    }
+  }
+
+  async closeBible({
+    bibleData,
+    pacing = "Regular",
+  }: {
+    bibleData: StackBibleData;
+    pacing?: StackPresenceNavigationPacing;
+  }): Promise<void> {
+    this.#eventManagerPort.emit("OnBibleCloseSequenceStart", { bibleData });
+
+    const { testamentsData, sectionsData, booksData } =
+      bibleData.getActiveHierarchy();
+
+    const testaments = testamentsData.flatMap((data) =>
+      data.piece ? [data.piece] : []
+    );
+    const sections = sectionsData.flatMap((data) =>
+      data.type === "StackSection" && data.isSplitIntoBooks
+        ? []
+        : data.piece
+          ? [data.piece]
+          : []
+    );
+    const books = booksData.flatMap((data) => (data.piece ? [data.piece] : []));
+    const sectionShadows = sectionsData.flatMap((data) =>
+      data.type === "StackSection" && data.shadow
+        ? [data.shadow as Piece<"StackSectionShadow">]
+        : []
+    );
+    const selectedBooks: (Piece<"StackSectionBook"> | Piece<"StackBook">)[] = [
+      ...sectionsData.flatMap((data) =>
+        data.type === "StackSectionBook" &&
+        data.selectionState === "Selected" &&
+        data.piece
+          ? [data.piece]
+          : []
+      ),
+      ...booksData.flatMap((data) =>
+        data.selectionState === "Selected" && data.piece ? [data.piece] : []
+      ),
+    ];
+    const booksToHideChaptersData: (StackBookData | StackSectionBookData)[] = [
+      ...(sectionsData.filter(
+        (data) => data.type === "StackSectionBook" && data.isShowingChapters
+      ) as StackSectionBookData[]),
+      ...booksData.filter((data) => data.isShowingChapters),
+    ];
+    const lowerCover = bibleData.getStaticPiece("lowerCover");
+    const upperCover = bibleData.getStaticPiece("upperCover");
+    const verticalLine = bibleData.getStaticPiece("crossVerticalLine");
+    const horizontalLine = bibleData.getStaticPiece("crossHorizontalLine");
+
+    if (!upperCover) {
+      throw new Error(
+        `BibleSequenceService: upperCover not found at closeBible`
+      );
+    }
+    if (!verticalLine) {
+      throw new Error(
+        `BibleSequenceService: verticalLine not found at closeBible`
+      );
+    }
+    if (!horizontalLine) {
+      throw new Error(
+        `BibleSequenceService: horizontalLine not found at closeBible`
+      );
+    }
+    if (!lowerCover) {
+      throw new Error(
+        "BibleSequenceService: lowerCover not found at closeBible"
+      );
+    }
+
+    const selectedBooksLabelsData = selectedBooks
+      .map((book) => {
+        return this.#labelDataRepositoryPort.getDataByOwnerId(book.id);
+      })
+      .filter(Boolean) as InfoLabelData[];
+
+    const scripturePieces = [...testaments, ...sections, ...books];
+    const piecesToCollapse = [...scripturePieces, ...sectionShadows];
+
+    for (const bookData of booksToHideChaptersData) {
+      this.#bookChaptersManagementServicePort.hideChapters(bookData);
+    }
+    for (const piece of scripturePieces) {
+      this.#pieceAdapterPort.makeNonInteractable(piece);
+    }
+
+    await Promise.allSettled([
+      ...scripturePieces.map((piece) =>
+        this.#pieceHighlightServicePort.tryUnhighlightPiece({
+          piece,
+          source: UnhighlightRequestSources.Transition,
+          pacing: HighlightPacings.Instant,
+        })
+      ),
+      ...selectedBooksLabelsData.map((labelData) =>
+        this.#pieceLabelServicePort.hideLabel(labelData.owner, "Instant")
+      ),
+      ...sectionShadows.map((shadow) =>
+        this.#pieceLabelServicePort.hideLabel(shadow, "Instant")
+      ),
+    ]);
+
+    await this.#bibleSequenceAdapterPort.displayCloseBibleSequence({
+      lowerCover,
+      upperCover,
+      verticalLine,
+      horizontalLine,
+      pacing,
+      piecesToCollapse,
+    });
+    const piecesToRelease = bibleData.resetHierarchy();
+    for (const piece of piecesToRelease) {
+      switch (piece.type) {
+        case "StackTestament":
+          this.#stackPieceLifecycleAdapterPort.despawnTestament(
+            piece as Piece<"StackTestament">
+          );
+          break;
+        case "StackSection":
+          this.#stackPieceLifecycleAdapterPort.despawnSection(
+            piece as Piece<"StackSection">
+          );
+          break;
+        case "StackSectionBook":
+          this.#stackPieceLifecycleAdapterPort.despawnSectionBook(
+            piece as Piece<"StackSectionBook">
+          );
+          break;
+        case "StackBook":
+          this.#stackPieceLifecycleAdapterPort.despawnBook(
+            piece as Piece<"StackBook">
+          );
+          break;
+        case "StackSectionShadow":
+          this.#stackPieceLifecycleAdapterPort.despawnSectionShadow(
+            piece as SectionShadow
+          );
+          break;
+        default:
+          throw new Error(
+            `BibleSequenceService: Unrecognized piece type ${piece.type} at closeBible`
+          );
+      }
+    }
+    bibleData.changeState("Closed");
+    this.#eventManagerPort.emit("OnBibleCloseSequenceEnd", { bibleData });
+  }
+
+  async openBible({
+    bibleData,
+    pacing = "Regular",
+  }: {
+    bibleData: StackBibleData;
+    pacing?: StackPresenceNavigationPacing;
+  }): Promise<void> {
+    this.#eventManagerPort.emit("OnBibleOpenSequenceStart", { bibleData });
+
+    const lowerCover = bibleData.getStaticPiece("lowerCover");
+    const upperCover = bibleData.getStaticPiece("upperCover");
+    const verticalLine = bibleData.getStaticPiece("crossVerticalLine");
+    const horizontalLine = bibleData.getStaticPiece("crossHorizontalLine");
+
+    if (!upperCover) {
+      throw new Error(
+        `BibleSequenceService: upperCover not found at openBible`
+      );
+    }
+    if (!verticalLine) {
+      throw new Error(
+        `BibleSequenceService: verticalLine not found at openBible`
+      );
+    }
+    if (!horizontalLine) {
+      throw new Error(
+        `BibleSequenceService: horizontalLine not found at openBible`
+      );
+    }
+    if (!lowerCover) {
+      throw new Error(
+        "BibleSequenceService: lowerCover not found at openBible"
+      );
+    }
+
+    bibleData.changeVizState(BibleVisualizationStates.Regular);
+
+    bibleData.childrenData.forEach((testamentData) => {
+      const selecting = testamentData.changeSelectionState("RequestSelect");
+      if (!selecting) {
+        throw new Error(
+          "BibleSequenceService: testamentData should be selecting now."
+        );
+      }
+      testamentData.changeSelectionState("SequenceComplete");
+    });
+
+    for (const sectionData of bibleData.getAllSectionsData()) {
+      if (sectionData.type === "StackSection") {
+        sectionData.setPiece(
+          this.#stackPieceLifecycleAdapterPort.spawnSectionDomain()
+        );
+      } else {
+        sectionData.setPiece(
+          this.#stackPieceLifecycleAdapterPort.spawnSectionBookDomain()
+        );
+      }
+      sectionData.activate();
+    }
+
+    await this.#bibleSequenceAdapterPort.displayOpenBibleSequence({
+      lowerCover,
+      upperCover,
+      verticalLine,
+      horizontalLine,
+      pacing,
+      bibleData,
+      arePiecesDraggable:
+        this.#scripturePiecesStateServicePort.arePiecesDraggable,
+    });
+
+    for (const sectionData of bibleData.getAllSectionsData()) {
+      sectionData.becomeHighlightable();
+    }
+
+    bibleData.changeState("Open");
+
+    const activePieces = [
+      ...this.#pieceDataRepositoryPort.getAllTestaments(),
+      ...this.#pieceDataRepositoryPort.getAllSections(),
+      ...this.#pieceDataRepositoryPort.getAllSectionBooks(),
+      ...this.#pieceDataRepositoryPort.getAllBooks(),
+      ...this.#pieceDataRepositoryPort.getAllChapters(),
+    ]
+      .filter((data) => data.isPieceAvailable())
+      .flatMap((data) =>
+        data.piece !== undefined &&
+        this.#pieceAdapterPort.isPieceBeingUsed(data.piece)
+          ? [data.piece]
+          : []
+      );
+    this.#renderOrderAdapterPort.setSortedRenderOrder(activePieces);
+
+    const sectionsToHighlight: (
+      | Piece<"StackSection">
+      | Piece<"StackSectionBook">
+    )[] = [];
+
+    for (const testamentData of bibleData.childrenData) {
+      testamentData.childrenData.forEach((sectionData) => {
+        if (sectionData.piece) sectionsToHighlight.push(sectionData.piece);
+      });
+    }
+    sectionsToHighlight.reverse();
+    const highlights: Promise<void>[] = [];
+    await this.#awaiterPort.sleep(500);
+
+    for (const section of sectionsToHighlight) {
+      highlights.push(
+        this.#pieceHighlightServicePort.tryHighlightPiece({
+          piece: section,
+          source: "Transition",
+          scheduledUnhighlightData: {
+            delay: 2000,
+            pacing: "Regular",
+          },
+        })
+      );
+      await this.#awaiterPort.sleep(100);
+    }
+
+    await Promise.all(highlights);
+
+    for (const sectionData of bibleData.getAllSectionsData()) {
+      if (!sectionData.piece) {
+        throw new Error(
+          "BibleSequenceService: sectionData.piece not defined at openBible"
+        );
+      }
+      this.#pieceAdapterPort.makeInteractable(sectionData.piece);
+    }
+
+    this.#eventManagerPort.emit("OnBibleOpenSequenceEnd", { bibleData });
+
+    return;
+  }
+
+  async crackOpenBible(bibleData: StackBibleData) {
+    this.#eventManagerPort.emit("OnBibleCrackOpenSequenceStart");
+    bibleData.changeState("Open");
+    bibleData.childrenData.forEach((testamentData) =>
+      testamentData.attachToBible()
+    );
+
+    await this.#bibleSequenceAdapterPort.displayCrackOpenBibleSequence(
+      bibleData,
+      this.#scripturePiecesStateServicePort.arePiecesDraggable
+    );
+
+    bibleData.childrenData.forEach((testamentData) => {
+      if (bibleData.bibleType === BibleTypes.Default) {
+        testamentData.becomeHighlightable();
+      } else {
+        testamentData.becomeNonHighlightable();
+      }
+    });
+
+    this.#eventManagerPort.emit("OnBibleCrackOpenSequenceEnd");
+
+    if (bibleData.bibleType !== BibleTypes.Default) return;
+
+    await this.#awaiterPort.sleep(
+      this.#configProviderPort.getTestamentHighlightSequenceConfig(
+        "initialDelay"
+      )
+    );
+    for (const testamentData of bibleData.childrenData) {
+      if (!testamentData.piece)
+        throw new Error("testamentData.piece not found at crackOpenBible");
+      await this.#pieceHighlightServicePort.tryHighlightPiece({
+        piece: testamentData.piece,
+        source: HighlightRequestSources.Transition,
+        scheduledUnhighlightData: {
+          delay:
+            this.#configProviderPort.getTestamentHighlightSequenceConfig(
+              "unhighlightDelay"
+            ),
+        },
+      });
+      await this.#awaiterPort.sleep(
+        this.#configProviderPort.getTestamentHighlightSequenceConfig(
+          "staggerDelay"
+        )
+      );
+    }
+  }
+}

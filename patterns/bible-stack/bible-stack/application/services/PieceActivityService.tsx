@@ -1,0 +1,769 @@
+import {
+  BiblePieces,
+  type BiblePiece,
+  type PieceInfo,
+  type Piece,
+  type ActivityIndicatorType,
+  type ActivityContainerPieceType,
+} from "../../domain/models/canvas";
+import { ActivityIndicatorData } from "../../domain/entities/ActivityIndicatorData";
+import { HighlightStates } from "../../domain/models/highlight";
+import { InfoLabelData } from "../../domain/entities/InfoLabelData";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
+import type { PieceTypeMap } from "../../domain/models/pieces";
+import type { ArrangementServicePort } from "../ports/in/Arrangement";
+import type { ReadingInstance } from "../../domain/models/userPresence";
+import type { BibleStackEvents } from "../../domain/models/events";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type {
+  ActivityContainer,
+  NotifiableContainer,
+  ActivityContainerType,
+} from "../../domain/models/activity";
+import type { UserPresenceServicePort } from "../ports/in/UserPresence";
+import type {
+  AnyShowIndicatorCommand,
+  ActivityIndicatorsPort,
+} from "../ports/out/ActivityIndicators";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { ActivityNotificationPort } from "../ports/out/ActivityNotification";
+import type { UserIdentityStorePort } from "../ports/out/UserIdentityStore";
+import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
+import type { IdGeneratorPort } from "../ports/out/IdGenerator";
+
+interface ServiceParams {
+  dataRegistryPort: PieceDataRepositoryPort;
+  arrangementServicePort: ArrangementServicePort;
+  labelDataStorePort: LabelDataStorePort;
+  maxIndicators?: number;
+  userPresenceServicePort: UserPresenceServicePort;
+  // readingInstanceProviderPort: ReadingInstanceProviderPort;
+  activityIndicatorsAdapterPort: ActivityIndicatorsPort;
+  activityIndicatorLifecyclePort: StackPieceLifecyclePort;
+  activityNotificationAdapterPort: ActivityNotificationPort;
+  userIdentityStorePort: UserIdentityStorePort;
+  idGeneratorPort: IdGeneratorPort;
+  loggerPort: LoggerPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
+}
+
+type ActivityStrategyType<T extends BiblePiece = BiblePiece> = (
+  piece: PieceTypeMap[T],
+  dataRegistryPort: PieceDataRepositoryPort,
+  loggerPort: LoggerPort
+) =>
+  | {
+      key: string;
+      typeOfPiece: BiblePiece;
+    }
+  | undefined;
+
+const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
+  piece,
+  dataRegistryPort,
+  loggerPort
+) => {
+  const data = dataRegistryPort.getPieceData(piece);
+  if (!data) {
+    loggerPort.error(
+      "PieceActvityService: data not found at testamentActivityStrategy"
+    );
+    return undefined;
+  }
+  const key = data.getPieceInfoProperty("name");
+  const typeOfPiece = BiblePieces.StackTestament;
+
+  return { key, typeOfPiece };
+};
+
+const sectionActivityStrategy: ActivityStrategyType<
+  "StackSection" | "StackSectionShadow"
+> = (piece, dataRegistryPort, loggerPort) => {
+  const data =
+    piece.type === "StackSection"
+      ? dataRegistryPort.getPieceData(piece)
+      : dataRegistryPort.getDataById({
+          type: "StackSection",
+          id: piece.sectionDataId,
+        });
+
+  if (!data) {
+    loggerPort.error(
+      "PieceActivityService: data not found at sectionActivityStrategy"
+    );
+    return undefined;
+  }
+  const key = data.getPieceInfoProperty("name");
+  const typeOfPiece = BiblePieces.StackSection;
+
+  return { key, typeOfPiece };
+};
+
+const bookActivityStrategy: ActivityStrategyType<"StackBook"> = (
+  piece,
+  dataRegistryPort,
+  loggerPort
+) => {
+  const data = dataRegistryPort.getPieceData(piece);
+
+  if (!data) {
+    loggerPort.error(
+      "PieceActivityService: data not found at bookActivityStrategy"
+    );
+    return undefined;
+  }
+  const key = data.getPieceInfoProperty("bookId");
+  const typeOfPiece = BiblePieces.StackBook;
+
+  return { key, typeOfPiece };
+};
+
+const sectionBookActivityStrategy: ActivityStrategyType<"StackSectionBook"> = (
+  piece,
+  dataRegistryPort,
+  loggerPort
+) => {
+  const data = dataRegistryPort.getPieceData(piece);
+
+  if (!data) {
+    loggerPort.error(
+      "PieceActivityService: data not found at sectionBookActivityStrategy"
+    );
+    return undefined;
+  }
+  const key = data.getPieceBookInfoProperty("bookId");
+  const typeOfPiece = BiblePieces.StackBook;
+
+  return { key, typeOfPiece };
+};
+
+const chapterActivityStrategy: ActivityStrategyType<"StackChapter"> = (
+  piece,
+  dataRegistryPort,
+  loggerPort
+) => {
+  const data = dataRegistryPort.getPieceData(piece);
+
+  if (!data) {
+    loggerPort.error(
+      "PieceActivityService: data not found at chapterActivityStrategy"
+    );
+    return undefined;
+  }
+  const key = `${data.getCreationParam("bookId")} ${data.getPieceInfoProperty("number")}`;
+  const typeOfPiece = BiblePieces.StackChapter;
+
+  return { key, typeOfPiece };
+};
+
+const activityStrategiesMap: {
+  [K in BiblePiece]?: ActivityStrategyType<K>;
+} = {
+  [BiblePieces.StackTestament]: testamentActivityStrategy,
+  [BiblePieces.StackSection]: sectionActivityStrategy,
+  [BiblePieces.StackSectionShadow]: sectionActivityStrategy,
+  [BiblePieces.StackSectionBook]: sectionBookActivityStrategy,
+  [BiblePieces.StackBook]: bookActivityStrategy,
+  [BiblePieces.StackChapter]: chapterActivityStrategy,
+};
+
+interface IndicatorsStrategyParams<T extends BiblePiece> {
+  piece: Piece<T>;
+  dataRegistryPort: PieceDataRepositoryPort;
+  labelDataStorePort: LabelDataStorePort;
+}
+
+interface IndicatorsStrategyErrorMessage {
+  message: string;
+}
+
+type IndicatorsStrategyType<T extends BiblePiece = BiblePiece> = (
+  params: IndicatorsStrategyParams<T>
+) => ActivityIndicatorData[] | IndicatorsStrategyErrorMessage;
+
+const labelTransformerIndicatorsStrategy: IndicatorsStrategyType<
+  "InfoLabelTransformer"
+> = ({ piece, labelDataStorePort }) => {
+  const labelData = labelDataStorePort.getDataByTransformerId(piece.id);
+
+  if (!labelData) {
+    return { message: "PieceActivityService: labelData not found" };
+  }
+
+  return labelData.activityIndicators;
+};
+
+const pieceIndicatorsStrategy: IndicatorsStrategyType<"StackChapter"> = ({
+  piece,
+  dataRegistryPort,
+}) => {
+  const pieceData = dataRegistryPort.getPieceData(piece);
+
+  if (!pieceData) {
+    return {
+      message: "PieceActivityService: pieceData not found",
+    };
+  }
+
+  return pieceData.activityIndicators;
+};
+
+const indicatorsStrategiesMap: {
+  [K in BiblePiece]?: IndicatorsStrategyType<K>;
+} = {
+  [BiblePieces.InfoLabelTransformer]: labelTransformerIndicatorsStrategy,
+  [BiblePieces.StackChapter]: pieceIndicatorsStrategy,
+};
+
+export class PieceActivityService implements PieceActivityServicePort {
+  #dataRegistryPort: PieceDataRepositoryPort;
+  #arrangementServicePort: ArrangementServicePort;
+  #labelDataStorePort: LabelDataStorePort;
+  #maxIndicators: NonNullable<ServiceParams["maxIndicators"]>;
+  #userPresenceServicePort: ServiceParams["userPresenceServicePort"];
+  #activityIndicatorsAdapterPort: ServiceParams["activityIndicatorsAdapterPort"];
+  #activityIndicatorLifecyclePort: ServiceParams["activityIndicatorLifecyclePort"];
+  #activityNotificationAdapterPort: ServiceParams["activityNotificationAdapterPort"];
+  #userColorStorePort: ServiceParams["userIdentityStorePort"];
+  #idGeneratorPort: ServiceParams["idGeneratorPort"];
+  #loggerPort: LoggerPort;
+  #eventManagerPort: ServiceParams["eventManagerPort"];
+
+  constructor({
+    dataRegistryPort,
+    arrangementServicePort,
+    labelDataStorePort,
+    userPresenceServicePort,
+    maxIndicators = 4,
+    activityIndicatorsAdapterPort,
+    activityIndicatorLifecyclePort,
+    activityNotificationAdapterPort,
+    userIdentityStorePort,
+    idGeneratorPort,
+    loggerPort,
+    eventManagerPort,
+  }: ServiceParams) {
+    this.#dataRegistryPort = dataRegistryPort;
+    this.#arrangementServicePort = arrangementServicePort;
+    this.#labelDataStorePort = labelDataStorePort;
+    this.#maxIndicators = maxIndicators;
+    this.#userPresenceServicePort = userPresenceServicePort;
+    this.#activityIndicatorsAdapterPort = activityIndicatorsAdapterPort;
+    this.#activityIndicatorLifecyclePort = activityIndicatorLifecyclePort;
+    this.#activityNotificationAdapterPort = activityNotificationAdapterPort;
+    this.#userColorStorePort = userIdentityStorePort;
+    this.#idGeneratorPort = idGeneratorPort;
+    this.#loggerPort = loggerPort;
+    this.#eventManagerPort = eventManagerPort;
+
+    this.#eventManagerPort.subscribe("OnStackSequenceEnd", () => {
+      this.updateAllIndicators();
+      this.updateAllNotifications();
+    });
+
+    this.#eventManagerPort.subscribe("OnStackSequenceStart", () => {
+      this.hideAllNotifications();
+    });
+  }
+
+  getPieceActivity({ piece }: { piece: Piece }): ReadingInstance[] {
+    const strategy = activityStrategiesMap[piece.type] as
+      | ActivityStrategyType<BiblePiece>
+      | undefined;
+
+    if (!strategy) {
+      this.#loggerPort.error(
+        `PieceActivityService: strategy not found at getPieceActivity`
+      );
+      return [];
+    }
+
+    const readingInstances: ReadingInstance[] =
+      this.#userPresenceServicePort.getOwnUserPresence();
+    const remoteReadingInstances =
+      this.#userPresenceServicePort.getRemotesUserPresence();
+    const allReadingInstances: ReadingInstance[] = [
+      ...readingInstances,
+      ...[...remoteReadingInstances.values()].flat(),
+    ];
+    const instancePathMap: Map<
+      ReadingInstance,
+      [PieceInfo, PieceInfo, PieceInfo, PieceInfo]
+    > = new Map();
+
+    for (const readingInstance of allReadingInstances) {
+      const { bookId, chapter } = readingInstance;
+
+      let pathBookId = bookId;
+      let pathChapter = chapter;
+      let { found, testamentIndex, sectionIndex, arrangementIndex } =
+        this.#arrangementServicePort.getBookInfoPathById({
+          id: bookId,
+        });
+      if (!found) {
+        const bookSubset =
+          this.#arrangementServicePort.getBookSubsetByCompleteId({
+            id: bookId,
+            chapterNumber: chapter,
+          });
+        if (bookSubset) {
+          ({ found, testamentIndex, sectionIndex, arrangementIndex } =
+            this.#arrangementServicePort.getBookInfoPathById({
+              id: bookSubset.bookId,
+            }));
+          pathBookId = bookSubset.bookId;
+          pathChapter = chapter - bookSubset.startIndex;
+        }
+      }
+      if (found) {
+        const testament = this.#arrangementServicePort.getTestamentByIndices({
+          testamentIndex: testamentIndex!,
+          arrangementIndex: arrangementIndex!,
+        });
+        if (!testament) {
+          this.#loggerPort.error(
+            "PieceActivityService: testament not found at getPieceActivity"
+          );
+          continue;
+        }
+        const testamentName = testament.name;
+        const section = this.#arrangementServicePort.getSectionByIndices({
+          arrangementIndex: arrangementIndex!,
+          testamentIndex: testamentIndex!,
+          sectionIndex: sectionIndex!,
+        });
+
+        if (!section) {
+          this.#loggerPort.error(
+            "PieceActivityService: section not found at getPieceActivity"
+          );
+          continue;
+        }
+
+        const sectionName = section.name;
+        const path: [PieceInfo, PieceInfo, PieceInfo, PieceInfo] = [
+          {
+            typeOfPiece: BiblePieces.StackTestament,
+            key: testamentName,
+          },
+          {
+            typeOfPiece: BiblePieces.StackSection,
+            key: sectionName,
+          },
+          {
+            typeOfPiece: BiblePieces.StackBook,
+            key: pathBookId,
+          },
+          {
+            typeOfPiece: BiblePieces.StackChapter,
+            key: `${pathBookId} ${pathChapter}`,
+          },
+        ];
+
+        instancePathMap.set(readingInstance, path);
+      }
+    }
+
+    // `strategy` was looked up by `piece.type`, so it matches this piece at runtime.
+    const result = strategy(
+      piece as PieceTypeMap[keyof PieceTypeMap],
+      this.#dataRegistryPort,
+      this.#loggerPort
+    );
+
+    if (!result) return [];
+
+    const { key, typeOfPiece } = result;
+
+    const activity = allReadingInstances.filter((readingInstance) => {
+      const instancePath = instancePathMap.get(readingInstance);
+
+      return instancePath?.some((pieceInfo) => {
+        return (
+          typeOfPiece &&
+          pieceInfo.typeOfPiece === typeOfPiece &&
+          key &&
+          pieceInfo.key === key
+        );
+      });
+    });
+
+    const dedupedActivity: Map<string, ReadingInstance> = new Map();
+
+    for (const entry of activity) {
+      const existent = dedupedActivity.get(entry.connectionId);
+      if (!existent || (!existent.selected && entry.selected)) {
+        dedupedActivity.set(entry.connectionId, entry);
+      }
+    }
+
+    return [...dedupedActivity.values()];
+  }
+
+  getActivityIndicatorsForPiece(piece: Piece): ActivityIndicatorData[] {
+    const strategy = indicatorsStrategiesMap[piece.type] as
+      | IndicatorsStrategyType<BiblePiece>
+      | undefined;
+
+    if (!strategy) {
+      this.#loggerPort.error(
+        `PieceActivityService: strategy not found at getActivityIndicatorsForPiece`
+      );
+      return [];
+    }
+
+    const result = strategy({
+      piece,
+      dataRegistryPort: this.#dataRegistryPort,
+      labelDataStorePort: this.#labelDataStorePort,
+    });
+
+    if ("message" in result) {
+      this.#loggerPort.error(result.message);
+      return [];
+    }
+
+    return result;
+  }
+
+  getActivityIndicatorByType(
+    piece: Piece,
+    type: ActivityIndicatorType
+  ): ActivityIndicatorData | undefined {
+    const indicators = this.getActivityIndicatorsForPiece(piece);
+    return indicators.find((indicator) => indicator.indicatorType === type);
+  }
+
+  getExtraActivityIndicatorsForPiece(piece: Piece): {
+    extraIndicatorContent: ActivityIndicatorData | undefined;
+  } {
+    const extraIndicatorContent = this.getActivityIndicatorByType(
+      piece,
+      "extraContent"
+    );
+
+    return { extraIndicatorContent };
+  }
+
+  getPieceIndicatorByActivityIndex(
+    piece: Piece,
+    activityIndex: number
+  ): ActivityIndicatorData | undefined {
+    const indicators = this.getActivityIndicatorsForPiece(piece).filter(
+      (indicator) => indicator.indicatorType === "regular"
+    );
+    return indicators.find((indicator) => indicator.index === activityIndex);
+  }
+
+  getDataActivityIndicatorByType(
+    data: ActivityContainer,
+    type: ActivityIndicatorType
+  ): ActivityIndicatorData | undefined {
+    const indicators = data.activityIndicators;
+    return indicators.find((indicator) => indicator.indicatorType === type);
+  }
+
+  getDataExtraActivityIndicators(data: ActivityContainer): {
+    extraIndicatorContent: ActivityIndicatorData | undefined;
+  } {
+    const extraIndicatorContent = this.getDataActivityIndicatorByType(
+      data,
+      "extraContent"
+    );
+
+    return { extraIndicatorContent };
+  }
+
+  getDataIndicatorByActivityIndex(
+    data: ActivityContainer,
+    activityIndex: number
+  ): ActivityIndicatorData | undefined {
+    const indicators = data.activityIndicators.filter(
+      (indicator) => indicator.indicatorType === "regular"
+    );
+    return indicators.find((indicator) => indicator.index === activityIndex);
+  }
+
+  tryHideIndicators(container: ActivityContainer): boolean {
+    const indicatorsToDelete = container.clearActivityIndicators();
+    if (indicatorsToDelete) {
+      this.#activityIndicatorsAdapterPort.hideIndicators(indicatorsToDelete);
+      return true;
+    }
+    return false;
+  }
+
+  #getContainerAnchor(container: ActivityContainer): {
+    pieceId: string;
+    type: ActivityContainerPieceType;
+  } {
+    if (container instanceof InfoLabelData) {
+      return {
+        pieceId: container.transformer.id,
+        type: BiblePieces.InfoLabelTransformer,
+      };
+    }
+    if (!container.piece) {
+      throw new Error(
+        "PieceActivityService: chapter piece not defined at #getContainerAnchor"
+      );
+    }
+    return { pieceId: container.piece.id, type: BiblePieces.StackChapter };
+  }
+
+  #createIndicatorData(
+    container: ActivityContainer,
+    index: number,
+    indicatorType: ActivityIndicatorType
+  ): ActivityIndicatorData {
+    const dataId = this.#idGeneratorPort.getId();
+    const piece =
+      this.#activityIndicatorLifecyclePort.spawnActivityIndicatorDomain(dataId);
+    const backgroundDataId = this.#idGeneratorPort.getId();
+    const background =
+      this.#activityIndicatorLifecyclePort.spawnActivityIndicatorDomain(
+        backgroundDataId
+      );
+    const anchor = this.#getContainerAnchor(container);
+    const data = new ActivityIndicatorData({
+      id: dataId,
+      index,
+      indicatorType,
+      piece,
+      background,
+      containerPieceId: anchor.pieceId,
+      containerDataId: container.id,
+      containerType: anchor.type,
+    });
+    container.addActivityIndicator(data);
+    return data;
+  }
+
+  updateIndicators: (container: ActivityContainer) => ActivityIndicatorData[] =
+    (container) => {
+      let activityPiece: Piece | undefined;
+      let containerType: ActivityContainerType | undefined = undefined;
+      let shouldShowIndicators = true;
+      if (container instanceof InfoLabelData) {
+        activityPiece = container.owner;
+        containerType = "label";
+      } else if (container.piece) {
+        shouldShowIndicators = container.shouldShowActivityIndicators();
+        activityPiece = container.piece;
+        containerType = "piece";
+      }
+
+      if (!activityPiece || !containerType) {
+        return [];
+      }
+
+      const pieceActivity = this.getPieceActivity({
+        piece: activityPiece,
+      });
+
+      if (pieceActivity.length === 0 || !shouldShowIndicators) {
+        this.tryHideIndicators(container);
+        return [];
+      }
+
+      let currIndicators = container.activityIndicators;
+      const limit = Math.min(pieceActivity.length, this.#maxIndicators);
+      for (const indicator of currIndicators) {
+        if (indicator.indicatorType === "regular" && indicator.index >= limit) {
+          this.#activityIndicatorsAdapterPort.hideIndicator(indicator);
+          container.removeActivityIndicator(indicator.id);
+        }
+      }
+
+      currIndicators = container.activityIndicators;
+
+      if (pieceActivity.length <= this.#maxIndicators) {
+        const { extraIndicatorContent } =
+          this.getDataExtraActivityIndicators(container);
+        if (extraIndicatorContent) {
+          this.#activityIndicatorsAdapterPort.hideIndicator(
+            extraIndicatorContent
+          );
+          container.removeActivityIndicator(extraIndicatorContent.id);
+        }
+      }
+
+      const showIndicatorCommands: AnyShowIndicatorCommand[] = [];
+      const ownUserId = this.#userPresenceServicePort.getOwnConnectionId();
+
+      for (
+        let activityIndex = 0;
+        activityIndex < pieceActivity.length;
+        activityIndex++
+      ) {
+        const activity = pieceActivity[activityIndex]!;
+        if (activityIndex >= this.#maxIndicators) {
+          const extraCount = pieceActivity.length - this.#maxIndicators;
+          const { extraIndicatorContent } =
+            this.getDataExtraActivityIndicators(container);
+
+          const contentIndicator =
+            extraIndicatorContent ??
+            this.#createIndicatorData(container, activityIndex, "extraContent");
+          contentIndicator.index = activityIndex;
+
+          showIndicatorCommands.push({
+            type: "extraContent",
+            extraUsers: extraCount,
+            index: activityIndex,
+            indicator: contentIndicator,
+          });
+          break;
+        } else {
+          const indicator =
+            this.getDataIndicatorByActivityIndex(container, activityIndex) ??
+            this.#createIndicatorData(container, activityIndex, "regular");
+
+          const identity = this.#userColorStorePort.getUserDataByIds({
+            connectionId: activity.connectionId,
+          });
+
+          showIndicatorCommands.push({
+            type: "regular",
+            index: activityIndex,
+            indicator,
+            isSelected: activity.selected,
+            isOwnUser: activity.connectionId === ownUserId,
+            color: identity?.visual.color ?? "#ffffff",
+            icon: identity?.visual.defaultIcon ?? "",
+            pictureUrl: identity?.profile?.pictureUrl,
+          });
+        }
+      }
+
+      this.#activityIndicatorsAdapterPort.showIndicators({
+        container,
+        command: showIndicatorCommands,
+      });
+
+      this.#activityIndicatorsAdapterPort.updateIndicatorsPosition(container);
+
+      return container.activityIndicators;
+    };
+
+  updateAllIndicators() {
+    const labelsData = this.#labelDataStorePort
+      .getAllLabelsData()
+      .filter((data) => !data.isHiding);
+    const stackChaptersData =
+      this.#dataRegistryPort.getAllPiecesDataByType("StackChapter");
+
+    const containers: ActivityContainer[] = [
+      ...labelsData,
+      ...stackChaptersData,
+    ];
+
+    for (const container of containers) {
+      this.updateIndicators(container);
+    }
+  }
+
+  tryHideNotification(container: NotifiableContainer): boolean {
+    const currNotification = container.detachActivityNotification();
+
+    if (currNotification) {
+      this.#activityNotificationAdapterPort.hideNotification(currNotification);
+      return true;
+    }
+    return false;
+  }
+
+  updateNotification(container: NotifiableContainer) {
+    if (!container.piece || !container.isActive) return;
+
+    const ownUserSelectedInstance =
+      this.#userPresenceServicePort.getOwnUserSelectedInstance();
+
+    if (!ownUserSelectedInstance) return;
+
+    const { id: ownUserSelectedInstanceId } = ownUserSelectedInstance;
+
+    const pieceActivity = this.getPieceActivity({
+      piece: container.piece,
+    }).filter((activity) => activity.selected);
+    const isPieceSelected = container.getIsSelectedForNotification();
+
+    const shouldHide =
+      pieceActivity.length === 0 ||
+      isPieceSelected ||
+      !container.isActive ||
+      container.highlightState === HighlightStates.Highlighting ||
+      (container.highlightState === HighlightStates.Highlighted &&
+        !container.isSelected);
+
+    if (shouldHide) {
+      this.tryHideNotification(container);
+      return;
+    }
+
+    const isOwnUserInPiece =
+      !!ownUserSelectedInstanceId &&
+      pieceActivity.some((activity) => {
+        return ownUserSelectedInstanceId === activity.id;
+      });
+    const activityCount = pieceActivity.length;
+
+    const firstUserConnectionId = pieceActivity[0]?.connectionId;
+    const identity = this.#userColorStorePort.getUserDataByIds({
+      connectionId: firstUserConnectionId,
+    });
+
+    const newNotification =
+      this.#activityNotificationAdapterPort.showNotification({
+        isOwnUserInPiece,
+        activityCount,
+        color: identity?.visual.color ?? "#ffffff",
+        container,
+        notification: container.activityNotification,
+      });
+
+    container.attachActivityNotification(newNotification);
+    this.#activityNotificationAdapterPort.updateNotificationPosition(container);
+    this.#activityNotificationAdapterPort.updateNotificationDirection(
+      container
+    );
+  }
+
+  updateAllNotifications() {
+    const stackChaptersData =
+      this.#dataRegistryPort.getAllPiecesDataByType("StackChapter");
+
+    const containers: NotifiableContainer[] = [...stackChaptersData];
+
+    for (const container of containers) {
+      this.updateNotification(container);
+    }
+  }
+
+  hideAllNotifications() {
+    const stackChaptersData =
+      this.#dataRegistryPort.getAllPiecesDataByType("StackChapter");
+
+    const containers: NotifiableContainer[] = [...stackChaptersData];
+
+    for (const container of containers) {
+      this.tryHideNotification(container);
+    }
+  }
+
+  updateAllNotificationsDirection() {
+    const stackChaptersData =
+      this.#dataRegistryPort.getAllPiecesDataByType("StackChapter");
+
+    const containers: NotifiableContainer[] = [...stackChaptersData];
+
+    for (const container of containers) {
+      if (!container.activityNotification) continue;
+      this.#activityNotificationAdapterPort.updateNotificationDirection(
+        container
+      );
+    }
+  }
+}

@@ -1,6 +1,10 @@
 import "./Onboarding.css";
 import type { ComponentChildren } from "preact";
-import { useI18n } from "../../i18n/I18nManager";
+import {
+  isRightToLeftLanguage,
+  getBrandedAppText,
+  useI18n,
+} from "../../i18n/I18nManager";
 import { LANG_META } from "../../i18n/languageMeta";
 import { InstallAppsIcon, SafariIcon } from "../../components/icons";
 import type { OnboardingManager } from "../../managers/OnboardingManager";
@@ -23,11 +27,14 @@ export function OnboardingModals({
   os,
   toast,
   className = "",
+  customizationName,
 }: {
   onboarding: OnboardingManager;
   os: CasualOSManager;
   toast: (message: string) => void;
   className?: string;
+  /** The active Customization's name, if any — overrides the branded app name. */
+  customizationName?: string | null;
 }) {
   const step = onboarding.step.value;
 
@@ -54,7 +61,14 @@ export function OnboardingModals({
     return null;
   }
 
-  return card(<InstallContent onboarding={onboarding} os={os} toast={toast} />);
+  return card(
+    <InstallContent
+      onboarding={onboarding}
+      os={os}
+      toast={toast}
+      customizationName={customizationName}
+    />
+  );
 }
 
 /**
@@ -130,14 +144,106 @@ export function LanguageUnavailableModal({
   );
 }
 
+/**
+ * Offers to move the interface to the language of a Bible translation the user
+ * just picked (e.g. picking a Spanish translation while reading an English
+ * UI).
+ *
+ * Written in the language being offered, not the current one — the person most
+ * likely to want this is the one who can't read the current UI language.
+ */
+export function UiLanguageSwitchModal({
+  className = "",
+}: {
+  className?: string;
+}) {
+  const {
+    uiLanguageSwitchPrompt,
+    confirmUiLanguageSwitch,
+    dismissUiLanguageSwitch,
+    neverAskUiLanguageSwitch,
+  } = useI18n();
+  const prompt = uiLanguageSwitchPrompt.value;
+
+  if (!prompt) {
+    return null;
+  }
+
+  const { t: translate, targetLanguage } = prompt;
+  const nativeLanguageName =
+    LANG_META[targetLanguage]?.display ?? targetLanguage;
+
+  return (
+    <div className={`sb-onboarding-overlay ${className}`}>
+      <div
+        className="sb-onboarding-card"
+        role="dialog"
+        aria-modal="true"
+        // The card's text is in `targetLanguage`, which may not run in the same
+        // direction as the surrounding UI.
+        dir={isRightToLeftLanguage(targetLanguage) ? "rtl" : "ltr"}
+        onClick={(event: MouseEvent) => event.stopPropagation()}
+      >
+        <h2 className="sb-onboarding-title">
+          {translate("switch-language-title", {
+            defaultValue: "Switch language?",
+          })}
+        </h2>
+        <p className="sb-onboarding-body">
+          {translate("switch-language-body", {
+            defaultValue:
+              "Do you want to switch your language to {{nativeLanguageName}}?",
+            nativeLanguageName,
+          })}
+        </p>
+        <div className="sb-onboarding-actions">
+          <button
+            type="button"
+            className="sb-onboarding-btn sb-onboarding-btn-primary"
+            onClick={() => {
+              void confirmUiLanguageSwitch();
+            }}
+          >
+            {translate("switch-language-confirm", { defaultValue: "Switch" })}
+          </button>
+          <button
+            type="button"
+            className="sb-onboarding-btn sb-onboarding-btn-secondary"
+            onClick={() => {
+              dismissUiLanguageSwitch();
+            }}
+          >
+            {translate("switch-language-dismiss", {
+              defaultValue: "Don't Switch",
+            })}
+          </button>
+          <button
+            type="button"
+            className="sb-onboarding-btn sb-onboarding-btn-tertiary"
+            onClick={() => {
+              neverAskUiLanguageSwitch();
+            }}
+          >
+            {translate("switch-language-never", {
+              defaultValue: "Never Ask Again",
+            })}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function InstallContent({
   onboarding,
   os,
   toast,
+  customizationName,
 }: {
   onboarding: OnboardingManager;
   os: CasualOSManager;
   toast: (message: string) => void;
+  customizationName?: string | null;
 }) {
   const { t } = useI18n();
   const { branding } = useAppConfig();
@@ -187,10 +293,14 @@ function InstallContent({
       </div>
 
       <p className="sb-onboarding-body">
-        {t("onboarding.installBodyPre", {
-          appName: branding?.appName ?? "Seed Bible",
-          defaultValue: "Add Seed Bible to your ",
-        })}
+        {getBrandedAppText(
+          t("onboarding.installBodyPre", {
+            defaultValue: "Add Seed Bible to your ",
+          }),
+          t,
+          branding,
+          customizationName
+        )}
         <strong>{target}</strong>
         {t("onboarding.installBodyPost", {
           defaultValue:

@@ -1,0 +1,23 @@
+import { BibleTypes } from "../../../domain/models/canvas";
+import type { BibleType } from "../../../domain/models/canvas";
+import type { TestamentHighlightSequenceConfigKey } from "../../../application/ports/out/SequenceConfigProvider";
+
+export const CrackOpenBibleAnimationDurations: Record<BibleType, number> = {
+  [BibleTypes.Default]: 2,
+  [BibleTypes.PlatformerGame]: 0,
+} as const;
+
+export const CrackOpenBibleAnimationEasing = {
+  type: "sinusoidal",
+  mode: "inout",
+} as const;
+export type CrackOpenBibleAnimationEasingType =
+  typeof CrackOpenBibleAnimationEasing;
+
+export const CrackOpenBibleHighlightConfig = {
+  initialDelay: 500,
+  staggerDelay: 100,
+  unhighlightDelay: 4000,
+} as const satisfies Record<TestamentHighlightSequenceConfigKey, number>;
+export type CrackOpenBibleHighlightConfigType =
+  typeof CrackOpenBibleHighlightConfig;

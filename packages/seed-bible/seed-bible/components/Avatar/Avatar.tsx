@@ -46,21 +46,33 @@ export function sessionRoleRank(role: SessionRole | null): number {
   return role === "host" ? 0 : role === "co-host" ? 1 : 2;
 }
 
+/** Material icon shown when there is no profile picture and nobody else to tell apart. */
+export const GENERIC_AVATAR_ICON = "account_circle";
+
 export function Avatar({
   imageUrl,
   visual,
   title,
   isSelf,
+  genericFallback,
 }: {
   imageUrl: string | null;
   visual: ConnectionSessionUserVisual;
   title: string;
   isSelf?: boolean;
+  /**
+   * When there is no profile picture, show a generic account icon instead of
+   * the animal+color combo. Used when the current user is alone, so the
+   * control reads as "account / sign in" rather than a random identity.
+   */
+  genericFallback?: boolean;
 }) {
+  const selfClass = isSelf ? " sb-tab-user-icon-self" : "";
+
   if (imageUrl) {
     return (
       <span
-        className={`sb-tab-user-icon sb-tab-user-icon-has-image${isSelf ? " sb-tab-user-icon-self" : ""}`}
+        className={`sb-tab-user-icon sb-tab-user-icon-has-image${selfClass}`}
         title={title}
         style={{
           borderColor: visual.color,
@@ -70,9 +82,20 @@ export function Avatar({
     );
   }
 
+  if (genericFallback) {
+    return (
+      <span
+        className={`sb-tab-user-icon sb-tab-user-icon-generic${selfClass}`}
+        title={title}
+      >
+        <span className="material-symbols-outlined">{GENERIC_AVATAR_ICON}</span>
+      </span>
+    );
+  }
+
   return (
     <span
-      className={`sb-tab-user-icon sb-tab-user-icon-animal${isSelf ? " sb-tab-user-icon-self" : ""}`}
+      className={`sb-tab-user-icon sb-tab-user-icon-animal${selfClass}`}
       title={title}
       style={{
         borderColor: visual.color,

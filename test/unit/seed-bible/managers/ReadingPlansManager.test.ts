@@ -1,3 +1,4 @@
+import { parseRecordLocator } from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers";
 import {
   CadenceSchema,
@@ -32,6 +33,8 @@ import {
   createReadingPlansManager,
   draftReadingCount,
   sessionsFromDraft,
+  buildReadingPlanShareUrl,
+  getReadingPlanLocator,
   type Cadence,
   type ReadingPlanDraft,
   type ReadingPlan,
@@ -144,6 +147,18 @@ describe("ReadingPlansManager schemas", () => {
       sessions: [{ id: "s1", readings: [reading("r1"), reading("r2")] }],
     });
     expect(plan.sessions[0]!.readings).toHaveLength(2);
+  });
+
+  it("parses a plan without a cover image (legacy records)", () => {
+    const plan = makePlan();
+    expect(plan.heroImageUrl).toBeUndefined();
+  });
+
+  it("parses a plan with a cover image", () => {
+    const plan = makePlan({
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
+    expect(plan.heroImageUrl).toBe("https://example.com/plan-cover.jpg");
   });
 
   it("treats an omitted sessionsPerDay as 1", () => {
@@ -1135,14 +1150,75 @@ describe("estimateReadingMinutes", () => {
   });
 });
 
+describe("buildReadingPlanShareUrl", () => {
+  it("links to the plan's own page, named after its title", () => {
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan: makePlan({ title: "Advent Readings" }),
+        currentUrl: new URL(
+          "http://localhost:3000/en/AAB/john/3?sessionId=abc&verse=4"
+        ),
+        basePath: "",
+        language: "en",
+      })
+    );
+
+    expect(url.pathname).toBe(
+      "/en/reading-plan/record-1.plan-1/advent-readings"
+    );
+    expect(url.search).toBe("");
+  });
+
+  it("keeps the deployment prefix and uses the given UI language", () => {
+    expect(
+      buildReadingPlanShareUrl({
+        plan: makePlan({ title: "Advent Readings" }),
+        currentUrl: new URL("https://seed.example/app/es/spa_onbv/genesis/1"),
+        basePath: "/app",
+        language: "es",
+      })
+    ).toBe(
+      "https://seed.example/app/es/reading-plan/record-1.plan-1/advent-readings"
+    );
+  });
+
+  it("leaves the title segment off an untitled plan", () => {
+    const url = new URL(
+      buildReadingPlanShareUrl({
+        plan: makePlan({ title: null }),
+        currentUrl: new URL("http://localhost:3000/"),
+        basePath: "",
+        language: "en",
+      })
+    );
+
+    expect(url.pathname).toBe("/en/reading-plan/record-1.plan-1");
+  });
+
+  it("round-trips a locator whose recordName contains dots", () => {
+    const locator = getReadingPlanLocator({
+      recordName: "user.name",
+      address: "plan-1",
+    });
+    expect(locator).toBe("user.name.plan-1");
+    expect(parseRecordLocator(locator)).toEqual({
+      recordName: "user.name",
+      address: "plan-1",
+    });
+  });
+});
+
 describe("createReadingPlansManager", () => {
   type LoginArg = Parameters<typeof createReadingPlansManager>[1];
+  type TabsArg = Parameters<typeof createReadingPlansManager>[2];
 
   let recordDataMock: Mock;
   let getDataMock: Mock;
   let listDataByMarkerMock: Mock;
   let eraseDataMock: Mock;
+  let recordFileMock: Mock;
   let warnSpy: Mock;
+  let getLinkPreviewMock: Mock;
   let errorSpy: Mock;
   let userId: ReturnType<typeof signal<string | null>>;
 
@@ -1174,7 +1250,15 @@ describe("createReadingPlansManager", () => {
     return metadata;
   };
 
-  const makeManager = (id: string | null = "user-1") => {
+  // `sharer` is the page and open-tab translation a share link is built from.
+  const makeManager = (
+    id: string | null = "user-1",
+    sharer: { url: string; basePath?: string; translationId: string } = {
+      url: "http://localhost:3000/en/AAB/genesis/1",
+      translationId: "AAB",
+    },
+    options: Parameters<typeof createReadingPlansManager>[4] = {}
+  ) => {
     userId = signal<string | null>(id);
     const os = CasualOSManager();
 
@@ -1185,6 +1269,7 @@ describe("createReadingPlansManager", () => {
       getData: getDataMock,
       recordData: recordDataMock,
       eraseData: eraseDataMock,
+      recordFile: recordFileMock,
       listDataByMarker: listDataByMarkerMock,
       listAllDataByMarker: async (recordName: string, marker: string) => {
         const items: { address: string; data: unknown }[] = [];
@@ -1209,13 +1294,40 @@ describe("createReadingPlansManager", () => {
         return { success: true, items };
       },
     });
+    // Stubbed on the SDK client (a proxy, so assigned rather than spied on)
+    // so OsManager's own link preview handling still runs.
+    (os.client as unknown as { getLinkPreview: unknown }).getLinkPreview =
+      getLinkPreviewMock;
     const login = { userId } as unknown as LoginArg;
-    return createReadingPlansManager(os, login);
+    const tabs = {
+      tabs: signal([
+        {
+          id: "tab-1",
+          readingState: { translationId: signal(sharer.translationId) },
+        },
+      ]),
+      selectedTabId: signal("tab-1"),
+    } as unknown as TabsArg;
+    const navigation = {
+      currentUrl: signal(new URL(sharer.url)),
+      initialUrl: new URL(sharer.url),
+      basePath: sharer.basePath ?? "",
+    };
+    return createReadingPlansManager(os, login, tabs, navigation, options);
   };
 
   beforeEach(() => {
     recordDataMock = vi.fn().mockResolvedValue(undefined);
     eraseDataMock = vi.fn().mockResolvedValue({ success: true });
+    getLinkPreviewMock = vi.fn().mockResolvedValue({
+      success: false,
+      errorCode: "not_supported",
+      errorMessage: "Link previews are not supported.",
+    });
+    recordFileMock = vi.fn().mockResolvedValue({
+      success: true,
+      url: "https://example.com/hero.jpg",
+    });
     getDataMock = vi.fn().mockResolvedValue({ success: false });
     listDataByMarkerMock = vi
       .fn()
@@ -1278,6 +1390,58 @@ describe("createReadingPlansManager", () => {
 
     expect(manager.userReadingPlans.value).toEqual([metadata]);
     expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it("loadByLocator loads and selects the plan from a share locator", async () => {
+    const plan = makePlan();
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+
+    const manager = makeManager("user-1");
+    await flush();
+
+    const loaded = await manager.loadByLocator("record-1.plan-1");
+
+    expect(getDataMock).toHaveBeenCalledWith("record-1", "plan-1");
+    expect(loaded).toEqual(plan);
+    expect(manager.selectedReadingPlan.value).toEqual(plan);
+  });
+
+  it("loadByLocator returns null for a malformed locator", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    expect(await manager.loadByLocator(".plan-1")).toBeNull();
+    expect(await manager.loadByLocator("record-1.")).toBeNull();
+    expect(getDataMock).not.toHaveBeenCalled();
+  });
+
+  it("loadByLocator rejects (and selects nothing) when loading fails", async () => {
+    getDataMock.mockResolvedValue({ success: false, errorCode: "not_found" });
+    const manager = makeManager("user-1");
+    await flush();
+
+    await expect(manager.loadByLocator("record-1.plan-1")).rejects.toThrow(
+      /not_found/
+    );
+
+    expect(manager.selectedReadingPlan.value).toBeNull();
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it("loadByLocator rejects (and selects nothing) when the record fails to parse", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: { not: "a plan" },
+    });
+    const manager = makeManager("user-1");
+    await flush();
+
+    await expect(manager.loadByLocator("record-1.plan-1")).rejects.toThrow(
+      /Error parsing reading plan/
+    );
+
+    expect(manager.selectedReadingPlan.value).toBeNull();
+    expect(errorSpy).toHaveBeenCalled();
   });
 
   it("walks every page of results", async () => {
@@ -1573,6 +1737,9 @@ describe("createReadingPlansManager", () => {
     expect(started.persisted).toBe(false); // nothing written until an edit
 
     manager.updateEditingReadingPlan({ title: "Psalms" });
+    manager.updateEditingReadingPlan({
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
     manager.addReadingToEditingPlan({
       type: "bible-verse",
       ref: { bookId: "PSA", chapter: 23 },
@@ -1586,12 +1753,48 @@ describe("createReadingPlansManager", () => {
 
     const draft = manager.editingReadingPlan.value!;
     expect(draft.plan.title).toBe("Psalms");
+    expect(draft.plan.heroImageUrl).toBe("https://example.com/plan-cover.jpg");
     expect(draft.plan.sessions[0]!.readings).toHaveLength(2);
     expect(draft.plan.sessions[0]!.readings.map((r) => r.item.type)).toEqual([
       "bible-verse",
       "html",
     ]);
     expect(draftReadingCount(draft)).toBe(2);
+  });
+
+  it("uploadHeroImage stores the file and returns its public URL", async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], "cover.jpg", {
+      type: "image/jpeg",
+    });
+    const manager = makeManager("user-1");
+    await flush();
+
+    recordDataMock.mockClear();
+    await expect(manager.uploadHeroImage(file)).resolves.toBe(
+      "https://example.com/hero.jpg"
+    );
+    expect(recordFileMock).toHaveBeenCalledWith("user-1", file, {
+      mimeType: "image/jpeg",
+      marker: "publicRead",
+    });
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      expect.stringMatching(/^photo_/),
+      expect.objectContaining({ url: "https://example.com/hero.jpg" }),
+      { marker: "publicRead:userGallery" }
+    );
+  });
+
+  it("uploadHeroImage throws when signed out", async () => {
+    const manager = makeManager(null);
+    await flush();
+
+    await expect(
+      manager.uploadHeroImage(
+        new File([new Uint8Array([1])], "cover.jpg", { type: "image/jpeg" })
+      )
+    ).rejects.toThrow("Cannot upload a cover image while signed out.");
+    expect(recordFileMock).not.toHaveBeenCalled();
   });
 
   it("saves the draft to the user's account after a change", async () => {
@@ -1766,6 +1969,195 @@ describe("createReadingPlansManager", () => {
     );
   });
 
+  it("finishEditingReadingPlan stores the preview fetched for a link reading", async () => {
+    let respond!: (value: unknown) => void;
+    getLinkPreviewMock.mockReturnValue(
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+    );
+    const manager = makeManager("user-1", undefined, {
+      language: signal("es"),
+    });
+    await flush();
+
+    manager.startEditingReadingPlan();
+    manager.addReadingToEditingPlan({
+      type: "link",
+      url: "https://example.com/psalms",
+    });
+    const finishing = manager.finishEditingReadingPlan();
+    respond({
+      success: true,
+      cachedUntilMs: Date.now() + 60_000,
+      title: "Psalms overview",
+      description: "A short introduction.",
+      imageUrl: "https://example.com/psalms.png",
+      meta: {},
+    });
+    const plan = await finishing;
+
+    expect(getLinkPreviewMock).toHaveBeenCalledWith({
+      url: "https://example.com/psalms",
+      locale: "es",
+    });
+    expect(plan!.sessions[0]!.readings[0]!.item).toEqual({
+      type: "link",
+      url: "https://example.com/psalms",
+      preview: {
+        title: "Psalms overview",
+        description: "A short introduction.",
+        imageUrl: "https://example.com/psalms.png",
+      },
+    });
+  });
+
+  it("doesn't bring back or autosave a link reading removed while its preview was loading", async () => {
+    let respond!: (value: unknown) => void;
+    getLinkPreviewMock.mockReturnValue(
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    vi.useFakeTimers();
+    try {
+      manager.startEditingReadingPlan();
+      manager.addReadingToEditingPlan({
+        type: "link",
+        url: "https://example.com/gone",
+      });
+      const readingId =
+        manager.editingReadingPlan.value!.plan.sessions[0]!.readings[0]!.id;
+      manager.removeReadingFromEditingPlan(0, readingId);
+      // Let the autosave for the add and remove land first.
+      await vi.advanceTimersByTimeAsync(2000);
+      const updatedAtMs = manager.editingReadingPlan.value!.plan.updatedAtMs;
+      recordDataMock.mockClear();
+
+      respond({
+        success: true,
+        cachedUntilMs: Date.now() + 60_000,
+        title: "Gone",
+        meta: {},
+      });
+      await vi.advanceTimersByTimeAsync(2000);
+
+      const draft = manager.editingReadingPlan.value!;
+      expect(draft.plan.sessions[0]!.readings).toEqual([]);
+      // Nothing changed, so nothing is written or re-stamped.
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(draft.plan.updatedAtMs).toBe(updatedAtMs);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps a finished plan finished when a preview lands after Save gave up waiting", async () => {
+    let respond!: (value: unknown) => void;
+    getLinkPreviewMock.mockReturnValue(
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    vi.useFakeTimers();
+    try {
+      manager.startEditingReadingPlan();
+      manager.addReadingToEditingPlan({
+        type: "link",
+        url: "https://example.com/slow",
+      });
+      await vi.advanceTimersByTimeAsync(1000); // the draft's autosave lands
+      recordDataMock.mockClear();
+
+      // The completing write is slow, so the late preview arrives mid-save.
+      let finishWrite!: () => void;
+      recordDataMock.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishWrite = resolve;
+          })
+      );
+      const finishing = manager.finishEditingReadingPlan();
+      await vi.advanceTimersByTimeAsync(3000); // Save stops waiting
+      respond({
+        success: true,
+        cachedUntilMs: Date.now() + 60_000,
+        title: "Late",
+        meta: {},
+      });
+      await vi.advanceTimersByTimeAsync(1000); // past the autosave debounce
+      finishWrite();
+      const plan = await finishing;
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(plan!.status).toBe("complete");
+      expect(
+        recordDataMock.mock.calls.map((c) => (c[2] as ReadingPlan).status)
+      ).toEqual(["complete", "complete"]);
+      expect(manager.userReadingPlans.value.map((p) => p.status)).toEqual([
+        "complete",
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("fetches previews for a published plan's links that don't have one when it is edited", async () => {
+    getLinkPreviewMock.mockResolvedValue({
+      success: true,
+      cachedUntilMs: Date.now() + 60_000,
+      title: "Commentary",
+      meta: {},
+    });
+    const plan = makePlan({
+      authorUserId: "user-1",
+      recordName: "user-1",
+      status: "complete",
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: { type: "link", url: "https://example.com/old" },
+            },
+            {
+              id: "r2",
+              item: {
+                type: "link",
+                url: "https://example.com/has-one",
+                preview: { title: "Already here" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.editExistingReadingPlan(plan);
+    const saved = await manager.finishEditingReadingPlan();
+
+    expect(getLinkPreviewMock).toHaveBeenCalledTimes(1);
+    expect(saved!.sessions[0]!.readings.map((r) => r.item)).toEqual([
+      {
+        type: "link",
+        url: "https://example.com/old",
+        preview: { title: "Commentary" },
+      },
+      {
+        type: "link",
+        url: "https://example.com/has-one",
+        preview: { title: "Already here" },
+      },
+    ]);
+  });
+
   it("finishEditingReadingPlan completes the plan, pruning empty sessions", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -1881,6 +2273,66 @@ describe("createReadingPlansManager", () => {
 
     expect(manager.editingReadingPlan.value).toBeNull();
     expect(eraseDataMock).not.toHaveBeenCalled();
+  });
+
+  it("cover image changes on a published plan persist only on Save changes", async () => {
+    const plan = makePlan({
+      authorUserId: "user-1",
+      recordName: "user-1",
+      status: "complete",
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.editExistingReadingPlan(plan);
+    recordDataMock.mockClear();
+    vi.useFakeTimers();
+    try {
+      manager.updateEditingReadingPlan({ heroImageUrl: null });
+      expect(manager.editingReadingPlan.value!.plan.heroImageUrl).toBeNull();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      // Still only in the editor — the published plan is untouched.
+      expect(recordDataMock).not.toHaveBeenCalled();
+
+      manager.cancelEditingReadingPlan();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(manager.editingReadingPlan.value).toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("finishEditingReadingPlan writes a published plan's new cover image", async () => {
+    const plan = makePlan({
+      authorUserId: "user-1",
+      recordName: "user-1",
+      status: "complete",
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.editExistingReadingPlan(plan);
+    manager.updateEditingReadingPlan({
+      heroImageUrl: "https://example.com/new-cover.jpg",
+    });
+    recordDataMock.mockClear();
+
+    const saved = await manager.finishEditingReadingPlan();
+
+    expect(saved!.heroImageUrl).toBe("https://example.com/new-cover.jpg");
+    const written = recordDataMock.mock.calls.find(
+      (c) => c[3]?.marker === "publicRead:readingPlan"
+    )!;
+    expect((written[2] as ReadingPlan).heroImageUrl).toBe(
+      "https://example.com/new-cover.jpg"
+    );
   });
 
   it("deleting a plan erases its records and the user's progress through it", async () => {
@@ -2036,6 +2488,122 @@ describe("createReadingPlansManager", () => {
     const saved = recordDataMock.mock.calls.at(-1)![2] as ReadingPlanProgress;
     expect(saved.percentComplete).toBeCloseTo(1 / 3, 10);
     expect(saved.totalReadings).toBe(3);
+  });
+
+  describe("getReadingPlanShareUrl", () => {
+    it("builds the plan page link from the app's URL, base path and UI language", () => {
+      const manager = makeManager(
+        "user-1",
+        {
+          url: "https://seed.example/app/es/spa_onbv/genesis/1?sessionId=abc",
+          basePath: "/app",
+          translationId: "spa_onbv",
+        },
+        { language: signal("es") }
+      );
+
+      expect(manager.getReadingPlanShareUrl(makePlan())).toBe(
+        "https://seed.example/app/es/reading-plan/record-1.plan-1/test-plan"
+      );
+    });
+  });
+
+  describe("reading plan page", () => {
+    const PAGE = {
+      url: "http://localhost:3000/en/reading-plan/record-1.plan-1/test-plan",
+      translationId: "AAB",
+    };
+
+    const respondWith = (
+      responses: Record<string, { success: boolean; [key: string]: unknown }>
+    ) => {
+      getDataMock.mockImplementation(
+        async (recordName: string, address: string) =>
+          responses[`${recordName}/${address}`] ?? {
+            success: false,
+            errorCode: "data_not_found",
+          }
+      );
+    };
+
+    it("loads the plan and its author's name", async () => {
+      const plan = makePlan();
+      respondWith({
+        "record-1/plan-1": { success: true, data: plan },
+        "author-1/profile": { success: true, data: { name: "Ruth" } },
+      });
+
+      const manager = makeManager(null, PAGE);
+      await manager.initialReadingPlanPageLoadPromise;
+
+      expect(manager.readingPlanPage.value).toEqual({
+        locator: "record-1.plan-1",
+        item: plan,
+        authorName: "Ruth",
+      });
+      expect(manager.getReadingPlanPageSeed()).toEqual({
+        locator: "record-1.plan-1",
+        item: plan,
+        authorName: "Ruth",
+      });
+    });
+
+    it("reports a plan that doesn't exist as not found", async () => {
+      respondWith({});
+
+      const manager = makeManager(null, PAGE);
+      await manager.initialReadingPlanPageLoadPromise;
+
+      expect(manager.readingPlanPage.value).toBeNull();
+      expect(manager.readingPlanPageNotFound.value).toBe(true);
+    });
+
+    it("does not call a failed load not found, and can try again", async () => {
+      respondWith({
+        "record-1/plan-1": { success: false, errorCode: "server_error" },
+      });
+
+      const manager = makeManager(null, PAGE);
+      await manager.initialReadingPlanPageLoadPromise;
+
+      expect(manager.readingPlanPageNotFound.value).toBe(false);
+      expect(manager.readingPlanPageLoadFailed.value).toBe(true);
+      expect(manager.getReadingPlanPageSeed()).toBeNull();
+
+      const plan = makePlan();
+      respondWith({ "record-1/plan-1": { success: true, data: plan } });
+      await manager.retryReadingPlanPage();
+
+      expect(manager.readingPlanPageLoadFailed.value).toBe(false);
+      expect(manager.readingPlanPage.value?.item).toEqual(plan);
+    });
+
+    it("uses a matching seed instead of fetching", async () => {
+      const plan = makePlan();
+      const manager = makeManager(null, PAGE, {
+        initialReadingPlanPageSeed: {
+          locator: "record-1.plan-1",
+          item: plan,
+          authorName: null,
+        },
+      });
+
+      expect(manager.readingPlanPage.value?.item).toEqual(plan);
+      await flush();
+      expect(getDataMock).not.toHaveBeenCalledWith("record-1", "plan-1");
+    });
+
+    it("ignores a playlist page", async () => {
+      const manager = makeManager(null, {
+        url: "http://localhost:3000/en/playlist/record-1.plan-1",
+        translationId: "AAB",
+      });
+      await manager.initialReadingPlanPageLoadPromise;
+
+      expect(manager.readingPlanPage.value).toBeNull();
+      expect(manager.readingPlanPageNotFound.value).toBe(false);
+      expect(getDataMock).not.toHaveBeenCalledWith("record-1", "plan-1");
+    });
   });
 
   describe("analytics", () => {
@@ -2802,6 +3370,7 @@ describe("createReadingPlan", () => {
     expect(plan.locale).toBe("en");
     expect(plan.title).toBeNull();
     expect(plan.description).toBeNull();
+    expect(plan.heroImageUrl).toBeNull();
     expect(plan.schemaVersion).toBe(1);
     expect(plan.createdAtMs).toBe(START_MS);
     expect(plan.updatedAtMs).toBe(START_MS);
@@ -2828,12 +3397,14 @@ describe("createReadingPlan", () => {
       locale: "es-MX",
       title: "My Plan",
       description: "A custom plan",
+      heroImageUrl: "https://example.com/plan-cover.jpg",
       cadenceOptions,
     });
 
     expect(plan.locale).toBe("es-MX");
     expect(plan.title).toBe("My Plan");
     expect(plan.description).toBe("A custom plan");
+    expect(plan.heroImageUrl).toBe("https://example.com/plan-cover.jpg");
     expect(plan.cadenceOptions).toEqual(cadenceOptions);
     expect(plan.defaultCadenceId).toBe("weekly"); // first provided option
   });

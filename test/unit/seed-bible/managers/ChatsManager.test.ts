@@ -1,6 +1,7 @@
 import { signal } from "@preact/signals";
 import {
   createChatsManager,
+  chatHasOtherPeople,
   resolveMessageTargets,
   type ChatMessage,
   type ChatMessageOptions,
@@ -282,6 +283,53 @@ function createSharedSessionMock(options?: {
   };
 }
 
+function chatWithParticipants(participants: ChatParticipant[]) {
+  return { totalParticipants: { value: participants } };
+}
+
+describe("chatHasOtherPeople", () => {
+  it("is false when the only participants are the current user and AI", () => {
+    expect(chatHasOtherPeople(chatWithParticipants([]))).toBe(false);
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(false);
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: true },
+        ] as ChatParticipant[])
+      )
+    ).toBe(false);
+  });
+
+  it("is true when another person is in the chat", () => {
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(true);
+  });
+
+  it("is true when the other person is inactive", () => {
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false, isActive: true },
+          { isSelf: false, isAI: false, isActive: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(true);
+  });
+});
+
 describe("createChatsManager", () => {
   beforeEach(() => {
     uuidState.count = 0;
@@ -343,6 +391,27 @@ describe("createChatsManager", () => {
     expect(chats.chats.value[0]).toBe(firstChat);
     expect(chats.chats.value[1]).toBe(secondChat);
     expect(firstChat).not.toBe(secondChat);
+  });
+
+  it("exposes an empty composerDraft for prefilling the compose field", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    expect(chats.composerDraft.value).toBe("");
+    chats.composerDraft.value = "In the beginning. (Genesis 1:1 NIV)\n\n";
+    expect(chats.composerDraft.value).toBe(
+      "In the beginning. (Genesis 1:1 NIV)\n\n"
+    );
+  });
+
+  it("createLocalSession() exposes an empty unsentDraft for the compose field", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    expect(session.unsentDraft.value).toBe("");
+    session.unsentDraft.value = "how does this connect to";
+    expect(session.unsentDraft.value).toBe("how does this connect to");
   });
 
   it("createLocalSession() exposes lastMessageRead and markAsRead()", async () => {
@@ -1190,13 +1259,13 @@ describe("createChatsManager", () => {
         {
           userId: null,
           connectionId: "anon-1",
-          name: "Guest",
+          name: null,
           isSelf: false,
         },
         {
           userId: null,
           connectionId: "anon-2",
-          name: "Guest",
+          name: null,
           isSelf: false,
         },
       ],
@@ -1210,8 +1279,8 @@ describe("createChatsManager", () => {
         id: "anon-1",
         userId: null,
         connectionId: "anon-1",
-        profile: { name: "Guest" },
-        name: "Guest",
+        profile: null,
+        name: null,
         isSelf: false,
         isAI: false,
         isRemote: true,
@@ -1226,8 +1295,8 @@ describe("createChatsManager", () => {
         id: "anon-2",
         userId: null,
         connectionId: "anon-2",
-        profile: { name: "Guest" },
-        name: "Guest",
+        profile: null,
+        name: null,
         isSelf: false,
         isAI: false,
         isRemote: true,
@@ -2985,7 +3054,7 @@ describe("createChatsManager", () => {
           {
             userId: null,
             connectionId: "anon-1",
-            name: "Guest",
+            name: null,
             isSelf: false,
           },
         ],
@@ -3006,7 +3075,7 @@ describe("createChatsManager", () => {
       {
         userId: "u1",
         connectionId: "anon-1",
-        profile: { name: "Guest" },
+        profile: { name: "Dana" },
         isSelf: false,
         isActive: true,
         color: "#000000",
@@ -3049,7 +3118,7 @@ describe("createChatsManager", () => {
         {
           userId: null,
           connectionId: "anon-1",
-          name: "Guest",
+          name: null,
           isSelf: false,
         },
       ],
@@ -3075,7 +3144,7 @@ describe("createChatsManager", () => {
       {
         userId: "u1",
         connectionId: "anon-1",
-        profile: { name: "Guest" },
+        profile: { name: "Dana" },
         isSelf: false,
         isActive: true,
         color: "#000000",
@@ -3126,7 +3195,7 @@ describe("createChatsManager", () => {
         {
           userId: null,
           connectionId: "anon-1",
-          name: "Guest",
+          name: null,
           isSelf: false,
         },
       ],
@@ -3152,7 +3221,7 @@ describe("createChatsManager", () => {
       {
         userId: "u1",
         connectionId: "anon-1",
-        profile: { name: "Guest" },
+        profile: { name: "Dana" },
         isSelf: false,
         isActive: true,
         color: "#000000",
@@ -4117,6 +4186,51 @@ describe("createChatsManager", () => {
       });
     });
 
+    it("parses European period and compact period verse references", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Compare Gen 1.1 and Gen.1.1",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Compare ",
+          {
+            type: "verse_reference",
+            text: "Gen 1.1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+          " and ",
+          {
+            type: "verse_reference",
+            text: "Gen.1.1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("does not treat a book name used as a list header as a verse reference", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Mark: 3 things stood out",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Mark: 3 things stood out"],
+      });
+    });
+
     it("parses multiple verse references in one message", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
@@ -4327,6 +4441,35 @@ describe("createChatsManager", () => {
       });
     });
 
+    it("does not link Bible-domain names that only share a book abbreviation prefix", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Isaac 24 and Judah 4 and Jerusalem 70 AD",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Isaac 24 and Judah 4 and Jerusalem 70 AD"],
+      });
+    });
+
+    it("does not link out-of-range chapter references in chat", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "See Genesis 999" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["See Genesis 999"],
+      });
+    });
+
     it("resolves mention by shared participant id alias (shared session)", async () => {
       const { loginManager } = createLoginManagerMock();
       const { session, sharedChats, sharedParticipantAliases } =
@@ -4335,7 +4478,7 @@ describe("createChatsManager", () => {
             {
               userId: "u1",
               connectionId: "anon-1",
-              name: "Guest",
+              name: "Dana",
               isSelf: false,
             },
           ],

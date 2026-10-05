@@ -32,9 +32,6 @@
   align-items: stretch;
   overflow: hidden;
   position: relative;
-  padding: 0.3125rem;
-  /* padding-left: 0px; */
-  margin-left: -0.625rem;
 }
 
 .sb-attached-pane-resize-handle {
@@ -126,10 +123,24 @@
   right: 0;
 }
 
+/* Reader slots sit flush by default: on a phone, and in a compact embed at any
+   frame width, since the embed renders the phone reader. */
 .sb-pane-shell:not(.sb-pane-shell-detached) {
-  border-radius: 0.75rem;
-  margin: 0.75rem 0rem;
-  /* box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.2); */
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Only the docked desktop layout floats them as rounded cards. Scoped this
+   way, rather than undone for phones and embeds, so the flush values above
+   live in one place. Its extra classes also let it win on specificity, so it
+   doesn't rely on coming after the rule above. */
+@media (min-width: 481px) {
+  .sb-app-root:not(.sb-embed-minimal)
+    .sb-pane-shell:not(.sb-pane-shell-detached) {
+    border-radius: 0.75rem;
+    margin: 0.75rem 0rem;
+  }
 }
 
 .sb-pane-shell-detached {
@@ -174,6 +185,13 @@
   .sb-pane-shell-detached[data-placement="fullscreen"] {
     bottom: 4.375rem;
   }
+}
+
+/* A compact embed hides that bottom bar, so the same inset would leave a
+   strip of the reader showing under a fullscreen pane (Compare, and any
+   other pane). Sit flush with the viewport instead. */
+.sb-embed-minimal .sb-pane-shell-detached[data-placement="fullscreen"] {
+  bottom: 0;
 }
 
 .sb-pane-shell-detached[data-placement="floating"] .sb-pane-header {
@@ -303,9 +321,22 @@
   grid-row: 2;
 }
 
+/* Flex row wrapping `.sb-pane-reader` in every slot. Always has just the one
+   child; the discover content panel floats inside `.sb-bible-reader` itself
+   (see `.sb-discover-content-panel--side` and `BibleReader.tsx`). */
+.sb-pane-reader-outer {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
 .sb-pane-reader {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
   height: 100%;
   overflow: auto;
   scrollbar-width: none;

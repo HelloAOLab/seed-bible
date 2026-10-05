@@ -4,5 +4,5 @@
 // a normal import chain — `app/main.tsx` (the app's own mount point) isn't
 // part of this package's public surface, but consumers still need this CSS
 // loaded once, before any component's own co-located CSS.
-import "./app/styles/base.css";
-import "./app/styles/utilities.css";
+import "./app/styles/base.inline.css";
+import "./app/styles/utilities.inline.css";

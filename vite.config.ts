@@ -3,7 +3,7 @@ import { defineConfig, searchForWorkspaceRoot } from "vite";
 import preact from "@preact/preset-vite";
 import path from "path";
 import { execSync } from "child_process";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { analyzer } from "vite-bundle-analyzer";
 import { VitePWA } from "vite-plugin-pwa";
 import { patternPlugin } from "./script/lib/vite-plugin-patterns";
@@ -18,6 +18,7 @@ import {
   parseExtraExtensionDirs,
 } from "./script/lib/vite-plugin-extensions";
 import { htmlMetaAssetsPlugin } from "./script/lib/vite-plugin-html-meta-assets";
+import { inlineCriticalCssPlugin } from "./script/lib/vite-plugin-inline-critical-css";
 
 // Directories outside `packages/` that hold an out-of-tree extension under
 // active development (see `seed-bible-extension-scripts dev`). Empty by
@@ -52,6 +53,18 @@ const assetBaseUrl =
 // deploy branch is set), and pin its files/scope to the site root regardless of
 // where the versioned chunks live.
 const isRootBuild = !deployBranch || deployBranch === "main";
+
+const brandingConfig = existsSync(
+  path.resolve(__dirname, "seed-bible.branding.json")
+)
+  ? JSON.parse(
+      readFileSync(path.resolve(__dirname, "seed-bible.branding.json"), "utf-8")
+    )
+  : undefined;
+
+if (brandingConfig) {
+  console.log("[vite.config.ts] Using branding config:", brandingConfig);
+}
 
 function withTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
@@ -133,6 +146,8 @@ export default defineConfig(({ isSsrBuild }) => ({
     // assets apart from another branch deployment's. vite-plugin-pwa reuses
     // this `define` block when it compiles the worker.
     __ASSET_BASE_URL__: JSON.stringify(assetBaseUrl),
+
+    __BRANDING_CONFIG__: JSON.stringify(brandingConfig),
   },
 
   plugins: [
@@ -140,6 +155,7 @@ export default defineConfig(({ isSsrBuild }) => ({
     patternPlugin(),
     extensionsPlugin(),
     htmlMetaAssetsPlugin(),
+    ...inlineCriticalCssPlugin(),
     // Only the root build ships a service worker (see `isRootBuild` above).
     ...(isRootBuild
       ? [
@@ -147,8 +163,10 @@ export default defineConfig(({ isSsrBuild }) => ({
             registerType: "autoUpdate",
             // A hand-written worker (`standalone/sw.ts`) rather than a
             // generated one: the offline behaviour this deployment needs —
-            // network-first HTML keyed so every URL shares one cached copy,
-            // and asset caching scoped to this build's own chunks — can't be
+            // StaleWhileRevalidate HTML keyed to a single shared shell entry
+            // (so a controlled navigation loads instantly with no network
+            // round-trip, refreshed in the background for next time), and
+            // asset caching scoped to this build's own chunks — can't be
             // expressed in `generateSW`'s declarative config.
             strategies: "injectManifest",
             srcDir: "standalone",
@@ -196,8 +214,12 @@ export default defineConfig(({ isSsrBuild }) => ({
               ],
               start_url: "/",
               display: "standalone",
-              background_color: "#FFFFFF",
-              theme_color: "#FFFFFF",
+              // Splash/default only. Keep in sync with LIGHT_THEME
+              // `background` in ThemeManager. The installed app's live
+              // status bar is driven by <meta name="theme-color">, which
+              // ThemeManager updates to the active theme.
+              background_color: "#f8fafc",
+              theme_color: "#f8fafc",
               icons: [
                 {
                   src: "https://favicon.ao.bot/pwa/pwa-192x192.png",
@@ -425,6 +447,9 @@ export default defineConfig(({ isSsrBuild }) => ({
   test: {
     environment: "jsdom",
     globals: true,
+    // Blocks real WebSocket connections, so a test that reaches the network
+    // fails in its own file instead of as an unattributed async error.
+    setupFiles: ["./test/setup/blockRealSockets.ts"],
     // Inline react-i18next so the use-sync-external-store alias above applies
     // to its imports (aliases don't reach externalized modules, which are
     // loaded directly by Node).
@@ -435,8 +460,12 @@ export default defineConfig(({ isSsrBuild }) => ({
     },
     exclude: ["**/node_modules/**", "**/.git/**", "**/obsolete/**"],
     // Suites that bootstrap the full SeedBibleState pay a one-time ~6s
-    // dynamic import of the entire app graph in their first test.
+    // dynamic import of the entire app graph in their first test. Both limits
+    // need the allowance: a suite that builds the state in `beforeEach` is
+    // judged by `hookTimeout`, not `testTimeout` (BibleReaderToolbar's first
+    // hook lands at ~9.5s, against a 10s default).
     testTimeout: 20000,
+    hookTimeout: 20000,
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov", "json-summary"],

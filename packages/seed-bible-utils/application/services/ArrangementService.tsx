@@ -388,8 +388,8 @@ export class ArrangementService implements SetArrangementIndexByNamePort {
       for (const section of testament.sections) {
         for (const book of section.books) {
           if (book.type === "subset" && book.completeBookId === id) {
-            const start = (book.startIndex ?? 0) + 1;
-            const end = (book.startIndex ?? 0) + book.numberOfChapters;
+            const start = book.startIndex + 1;
+            const end = book.startIndex + book.numberOfChapters;
             if (start <= chapterNumber && chapterNumber <= end) {
               return book;
             }

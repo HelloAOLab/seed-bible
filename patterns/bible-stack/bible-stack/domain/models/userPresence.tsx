@@ -1,0 +1,52 @@
+import type { HexString } from "./commonTypes";
+import { z } from "zod";
+
+export const StackPresenceNavigationPacings = {
+  Regular: "Regular",
+  Double: "Double",
+} as const;
+
+export type StackPresenceNavigationPacing =
+  (typeof StackPresenceNavigationPacings)[keyof typeof StackPresenceNavigationPacings];
+
+export const userProfileSchema = z.object({
+  name: z.string().max(100),
+  location: z.string().max(100).nullable().optional(),
+  pictureUrl: z.url().max(1024).optional().nullable(),
+  description: z.string().max(300).optional().nullable(),
+  config: z.record(z.string(), z.unknown()).optional().nullable(),
+});
+
+export type UserProfile = z.infer<typeof userProfileSchema>;
+export interface ReadingInstance {
+  bookId: string;
+  chapter: number;
+  id: string;
+  selected: boolean;
+  translation: string;
+  connectionId: string;
+}
+
+export type UserPresence = Map<string, ReadingInstance[]>;
+
+export interface UserIds {
+  connectionId?: string;
+  userId?: string;
+}
+
+export interface UserData extends UserIds {
+  color: HexString;
+}
+
+export interface ConnectionSessionUserVisual {
+  defaultIcon: string;
+  color: string;
+  colorName: string;
+}
+
+export interface ConnectedUserData extends UserIds {
+  profile: UserProfile | undefined;
+  visual: ConnectionSessionUserVisual;
+}
+
+export type UserIdentityMap = Map<string, ConnectedUserData>;

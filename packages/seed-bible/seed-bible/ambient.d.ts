@@ -3,7 +3,8 @@
 // `typings/*.d.ts` files, which this package can't rely on once built
 // standalone (and `rootDir` in `tsconfig.build.json` excludes them anyway).
 // Mirrors `typings/css.d.ts`, `typings/extensions.d.ts`, `typings/ImportMeta.d.ts`,
-// and the `posthog` global from `typings/globals.d.ts`.
+// `typings/buildConstants.d.ts`, and the `posthog` global from
+// `typings/globals.d.ts`.
 
 declare module "*.css" {}
 
@@ -25,3 +26,6 @@ interface ImportMeta {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const posthog: any;
+
+declare const __APP_VERSION__: string;
+declare const __GIT_COMMIT__: string;
