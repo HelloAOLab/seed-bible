@@ -3,14 +3,19 @@ import { i18n } from "seed-bible/i18n";
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
 import { DateTime } from "luxon";
+import { computed, effect, untracked } from "@preact/signals";
 import {
   resolveMessageAuthors,
   type ChatProviderMessageOptions,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
-import type { DiscoverContentResult } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import type {
+  DiscoverContentResult,
+  DiscoverProvider,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { PlaylistLinkContent } from "seed-bible/components";
 import { rankResultsForChapter, searchApologistContent } from "./search";
 import {
+  APOLOGIST_EXTENSION_ID,
   createApologistRequest,
   DEFAULT_APOLOGIST_DOMAIN,
 } from "./apologistRequest";
@@ -197,13 +202,13 @@ export default function initApologistExtension() {
       const apologistConversationId: string | null =
         url.searchParams.get("apologistConversation") ?? null;
       const rawApologistTeamId = url.searchParams.get("apologistTeamID");
-      const apologistTeamId =
+      const urlTeamId =
         rawApologistTeamId && /^\d+$/.test(rawApologistTeamId)
           ? Number(rawApologistTeamId)
           : null;
-      if (rawApologistTeamId && apologistTeamId === null) {
+      if (rawApologistTeamId && urlTeamId === null) {
         console.error(
-          `[Apologist] apologistTeamID must be an integer, got "${rawApologistTeamId}". Discovered content is disabled.`
+          `[Apologist] apologistTeamID must be an integer, got "${rawApologistTeamId}". Ignoring it.`
         );
       }
 
@@ -440,50 +445,81 @@ export default function initApologistExtension() {
         },
       });
 
-      if (apologistTeamId !== null) {
-        const providerName =
-          apologistName ??
-          i18n.t("title", { ns: "ext_Apologist", defaultValue: "Apologist" });
+      const providerName =
+        apologistName ??
+        i18n.t("title", { ns: "ext_Apologist", defaultValue: "Apologist" });
 
-        // `reference` has to name the chapter being read: results whose
-        // reference doesn't match it are dropped before display.
-        yield context.discover.registerDiscoverProvider({
-          id: DISCOVER_PROVIDER_ID,
-          title: providerName,
-          description: "Content from your Apologist team.",
-          discover: async ({ translationId, book, chapter }) => {
-            const bookName =
-              context.bibleData
-                .getCachedTranslationBooks(translationId)
-                ?.books.find((b) => b.id === book)?.name ?? book;
+      // `reference` has to name the chapter being read: results whose
+      // reference doesn't match it are dropped before display.
+      const createDiscoverProvider = (teamId: number): DiscoverProvider => ({
+        id: DISCOVER_PROVIDER_ID,
+        title: providerName,
+        description: "Content from your Apologist team.",
+        discover: async ({ translationId, book, chapter }) => {
+          const bookName =
+            context.bibleData
+              .getCachedTranslationBooks(translationId)
+              ?.books.find((b) => b.id === book)?.name ?? book;
 
-            const results = await searchApologistContent(apologistRequest, {
-              query: `${bookName} ${chapter}`,
-              teamId: apologistTeamId,
-            });
+          const results = await searchApologistContent(apologistRequest, {
+            query: `${bookName} ${chapter}`,
+            teamId,
+          });
 
-            return rankResultsForChapter(results, bookName, chapter).map(
-              (item): DiscoverContentResult => ({
-                type: "content",
-                title: item.title,
-                description: item.description,
-                reference: { book, chapter },
-                author: item.author ?? item.source ?? providerName,
-                image: item.image,
-                onClick: () => {
-                  context.modals.openModal({
-                    id: `apologist-content-${item.id}`,
-                    title: item.title,
-                    content: () => (
-                      <PlaylistLinkContent url={item.url} title={item.title} />
-                    ),
-                  });
-                },
-              })
-            );
-          },
+          return rankResultsForChapter(results, bookName, chapter).map(
+            (item): DiscoverContentResult => ({
+              type: "content",
+              title: item.title,
+              description: item.description,
+              reference: { book, chapter },
+              author: item.author ?? item.source ?? providerName,
+              image: item.image,
+              onClick: () => {
+                context.modals.openModal({
+                  id: `apologist-content-${item.id}`,
+                  title: item.title,
+                  content: () => (
+                    <PlaylistLinkContent url={item.url} title={item.title} />
+                  ),
+                });
+              },
+            })
+          );
+        },
+      });
+
+      // A team ID in the link wins over the one saved in settings. The saved
+      // one loads after sign-in and can change at any time, so the provider is
+      // swapped whenever the ID changes, which also re-runs the search.
+      const teamId = computed(() => {
+        if (urlTeamId !== null) {
+          return urlTeamId;
+        }
+        const saved = context.extensionSettings.getValue(
+          APOLOGIST_EXTENSION_ID,
+          "teamId"
+        );
+        return typeof saved === "number" && Number.isInteger(saved) && saved > 0
+          ? saved
+          : null;
+      });
+      let unregisterDiscoverProvider: (() => void) | null = null;
+      const disposeTeamIdEffect = effect(() => {
+        const id = teamId.value;
+        untracked(() => {
+          unregisterDiscoverProvider?.();
+          unregisterDiscoverProvider =
+            id === null
+              ? null
+              : context.discover.registerDiscoverProvider(
+                  createDiscoverProvider(id)
+                );
         });
-      }
+      });
+      yield () => {
+        disposeTeamIdEffect();
+        unregisterDiscoverProvider?.();
+      };
 
       if (apologistShareToken) {
         // init conversation

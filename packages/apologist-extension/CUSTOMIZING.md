@@ -42,6 +42,7 @@ If you want to prompt users to continue the conversation in the Seed Bible, you 
 Signed-in users can save their Apologist agent in the Apologist extension's settings:
 
 - **Host** - The domain of the agent, e.g. `my.agent.domain.bot`. Defaults to `apologist.seedbible.io`.
+- **Team ID** - The Apologist team whose content appears in the Discover pane. Changing it updates the Discover pane right away. If the link includes `apologistTeamID`, that one is used instead.
 - **API key** - Stored as a sensitive setting: it's kept in a CasualOS proxy record owned by the user and never sent back to the browser. CasualOS adds it to each request on the server, in the `x-api-key` header.
 
 Once saved, every request the extension makes (chat, conversation history, shared conversations, and discovered content) goes through that proxy to the saved host. If nothing is saved, or the user is signed out, requests go straight to `apologistDomain` (below) with `apologistApiKey`, as before.
@@ -69,7 +70,7 @@ You can configure the Apologist Chat Provider by setting the following variables
 - `apologistModel` - The model that should be used. If not specified, then `openai/gpt/5-mini` will be used.
   - See the [Apologist Documentation](https://apologistproject.org/documentation/apologist-fusion/chat-completion#8-toc-title) for a list of supported models.
 
-- `apologistTeamID` - The integer ID of the Apologist team whose content should be shown in the Discover pane. If specified, then each chapter is searched (e.g. "John 3") against the team's articles, YouTube videos, episodes, media, and links using the semantic search API of the agent at `apologistDomain`, and the matches are shown as discovered content.
+- `apologistTeamID` - Takes priority over the Team ID setting. The integer ID of the Apologist team whose content should be shown in the Discover pane. If specified, then each chapter is searched (e.g. "John 3") against the team's articles, YouTube videos, episodes, media, and links using the semantic search API of the agent at `apologistDomain`, and the matches are shown as discovered content.
   - The request is sent to `apologistDomain` and authenticated with `apologistApiKey`, so you should also include both.
 
 ### Examples

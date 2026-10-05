@@ -1,6 +1,11 @@
 {
   "id": "ext_Apologist",
   "settings": {
+    "teamId": {
+      "type": "number",
+      "minimum": 1,
+      "multipleOf": 1
+    },
     "apiKey": {
       "type": "string",
       "sensitive": "apologist"
@@ -20,7 +25,9 @@
       "description": "Be curious. Be humble. Learn boldly. This is AI for seekers of spiritual truth",
       "setting-apiKey-title": "API key",
       "setting-apiKey-description": "The API key for your Apologist agent. It's sent in the x-api-key header to the agent's host.",
-      "sensitive-apologist-title": "Apologist agent"
+      "sensitive-apologist-title": "Apologist agent",
+      "setting-teamId-title": "Team ID",
+      "setting-teamId-description": "The ID of the Apologist team whose articles, videos and other content should appear in the Discover pane. A team ID in the link (apologistTeamID) takes priority."
     },
     "es": {
       "title": "Apologista",

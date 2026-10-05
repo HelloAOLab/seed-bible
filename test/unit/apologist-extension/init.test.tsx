@@ -2,7 +2,11 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { Mock } from "vitest";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import type { DiscoverProvider } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { signal, type Signal } from "@preact/signals";
+import {
+  createDiscoverManager,
+  type DiscoverProvider,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import {
   setupExtensionContext,
   unregisterExtension,
@@ -29,17 +33,29 @@ function noSavedProxy(): Promise<Response> {
   );
 }
 
+/**
+ * The viewer's saved (non-sensitive) Apologist settings. A signal, like the
+ * real `ExtensionSettingsManager`, so a test can change a setting after the
+ * extension has started, the way loading or editing it would.
+ */
+type SavedSettings = Signal<Record<string, unknown>>;
+
 function createFakeContext(
   search: string,
-  fetchWithSensitiveValues: Mock = vi.fn(noSavedProxy)
+  fetchWithSensitiveValues: Mock = vi.fn(noSavedProxy),
+  savedSettings: SavedSettings = signal({})
 ): SeedBibleState {
   return {
-    extensionSettings: { fetchWithSensitiveValues },
+    extensionSettings: {
+      fetchWithSensitiveValues,
+      getValue: (extensionId: string, key: string) =>
+        extensionId === "ext_Apologist" ? savedSettings.value[key] : undefined,
+    },
     navigation: {
       currentUrl: { value: new URL(`https://seedbible.org/${search}`) },
     },
     chats: { registerProvider: vi.fn(() => () => undefined) },
-    discover: { registerDiscoverProvider: vi.fn(() => () => undefined) },
+    discover: createDiscoverManager(),
     modals: { openModal: vi.fn() },
     bibleData: {
       getCachedTranslationBooks: vi.fn(() => ({
@@ -55,10 +71,9 @@ function createFakeContext(
 function findDiscoverProvider(
   context: SeedBibleState
 ): DiscoverProvider | undefined {
-  const register = context.discover.registerDiscoverProvider as Mock;
-  return register.mock.calls.find(
-    ([provider]) => provider.id === "apologist-discover-provider"
-  )?.[0];
+  return context.discover.providers.value.find(
+    (provider) => provider.id === "apologist-discover-provider"
+  );
 }
 
 const discoverContext = {
@@ -91,9 +106,14 @@ describe("initApologistExtension discover provider", () => {
 
   function install(
     search: string,
-    fetchWithSensitiveValues?: Mock
+    fetchWithSensitiveValues?: Mock,
+    savedSettings?: SavedSettings
   ): SeedBibleState {
-    const context = createFakeContext(search, fetchWithSensitiveValues);
+    const context = createFakeContext(
+      search,
+      fetchWithSensitiveValues,
+      savedSettings
+    );
     setupExtensionContext(context);
     initApologistExtension();
     return context;
@@ -107,6 +127,93 @@ describe("initApologistExtension discover provider", () => {
   it("does not register a discover provider when apologistTeamID isn't an integer", () => {
     const context = install("?apologistTeamID=team-42&apologistApiKey=apg_key");
     expect(findDiscoverProvider(context)).toBeUndefined();
+  });
+
+  describe("team ID from settings", () => {
+    const emptySearch = () =>
+      new Response(JSON.stringify({ results: [] }), { status: 200 });
+
+    function searchedTeamIds(): unknown[] {
+      return fetchMock.mock.calls.map(
+        ([, init]) => JSON.parse(init.body).filters.team_ids[0]
+      );
+    }
+
+    it("searches the team saved in settings when the link has none", async () => {
+      fetchMock.mockImplementation(() => Promise.resolve(emptySearch()));
+      const context = install("", undefined, signal({ teamId: 160 }));
+
+      await findDiscoverProvider(context)!.discover(discoverContext);
+
+      expect(searchedTeamIds()).toEqual([160]);
+    });
+
+    it("prefers the team ID in the link over the saved one", async () => {
+      fetchMock.mockImplementation(() => Promise.resolve(emptySearch()));
+      const context = install(
+        "?apologistTeamID=42",
+        undefined,
+        signal({ teamId: 160 })
+      );
+
+      await findDiscoverProvider(context)!.discover(discoverContext);
+
+      expect(searchedTeamIds()).toEqual([42]);
+    });
+
+    it("uses the saved team when the link's team ID isn't an integer", async () => {
+      fetchMock.mockImplementation(() => Promise.resolve(emptySearch()));
+      const context = install(
+        "?apologistTeamID=team-42",
+        undefined,
+        signal({ teamId: 160 })
+      );
+
+      await findDiscoverProvider(context)!.discover(discoverContext);
+
+      expect(searchedTeamIds()).toEqual([160]);
+    });
+
+    it("adds, switches and removes the Discover source as the saved team ID changes", async () => {
+      fetchMock.mockImplementation(() => Promise.resolve(emptySearch()));
+      const saved = signal<Record<string, unknown>>({});
+      const context = install("", undefined, saved);
+      expect(findDiscoverProvider(context)).toBeUndefined();
+
+      // Settings finish loading after sign-in.
+      saved.value = { teamId: 160 };
+      const firstLookup = context.discover.discover(discoverContext);
+      await firstLookup[Symbol.asyncIterator]().next();
+
+      // The viewer changes the team; the open chapter is searched again
+      // rather than served from the old team's cached results.
+      saved.value = { teamId: 7 };
+      for await (const _ of context.discover.discover(discoverContext)) {
+        // drain
+      }
+
+      expect(searchedTeamIds()).toEqual([160, 7]);
+
+      saved.value = {};
+      expect(findDiscoverProvider(context)).toBeUndefined();
+    });
+
+    it("ignores a saved team ID that isn't a positive whole number", () => {
+      for (const teamId of [4.5, 0, -3, "160"]) {
+        const context = install("", undefined, signal({ teamId }));
+        expect(findDiscoverProvider(context)).toBeUndefined();
+        unregisterExtension("ext_Apologist");
+      }
+    });
+
+    it("removes the Discover source when the extension is uninstalled", () => {
+      const context = install("", undefined, signal({ teamId: 160 }));
+      expect(findDiscoverProvider(context)).toBeDefined();
+
+      unregisterExtension("ext_Apologist");
+
+      expect(findDiscoverProvider(context)).toBeUndefined();
+    });
   });
 
   it("searches the team's content for the current chapter", async () => {
