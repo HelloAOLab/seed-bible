@@ -465,6 +465,100 @@ describe("InvitationsManager", () => {
       expect(mockMap.get("session-1")).toBeUndefined();
     });
 
+    // Sessions are published once, when they're created. On startup the
+    // friends list is still loading, so without a later publish a session
+    // created then would never reach anyone.
+    it("publishes a session created before the friends list loaded, once it has", async () => {
+      const { manager: friends, friendList } = makeFriends([]);
+      const manager = createInvitationsManager(
+        os,
+        makeLogin("host-1"),
+        friends,
+        vi.fn()
+      );
+
+      await manager.publishSession({ id: "session-1" } as any);
+      expect(mockMap.get("session-1")).toBeUndefined();
+
+      friendList.value = [{ userId: "other-1", name: null, pictureUrl: null }];
+
+      await vi.waitFor(() =>
+        expect(mockMap.get("session-1")).toMatchObject({
+          sessionId: "session-1",
+          hostUserId: "host-1",
+        })
+      );
+    });
+
+    it("publishes a session created while signed out once the host signs in", async () => {
+      const { manager: friends } = makeFriends([
+        { userId: "other-1", name: null, pictureUrl: null },
+      ]);
+      const login = makeLogin(null);
+      const manager = createInvitationsManager(os, login, friends, vi.fn());
+
+      await manager.publishSession({ id: "session-1" } as any);
+      login.userId.value = "host-1";
+
+      await vi.waitFor(() =>
+        expect(mockMap.get("session-1")).toMatchObject({
+          hostUserId: "host-1",
+        })
+      );
+    });
+
+    it("lists the session under the new account after switching accounts", async () => {
+      const { manager: friends } = makeFriends([
+        { userId: "other-1", name: null, pictureUrl: null },
+      ]);
+      const login = makeLogin("host-1");
+      const manager = createInvitationsManager(os, login, friends, vi.fn());
+      await manager.publishSession({ id: "session-1" } as any);
+
+      login.userId.value = "host-2";
+
+      await vi.waitFor(() =>
+        expect(mockMap.get("session-1")).toMatchObject({
+          hostUserId: "host-2",
+        })
+      );
+    });
+
+    it("doesn't publish a session that ended before it could be listed", async () => {
+      const { manager: friends, friendList } = makeFriends([]);
+      const manager = createInvitationsManager(
+        os,
+        makeLogin("host-1"),
+        friends,
+        vi.fn()
+      );
+      await manager.publishSession({ id: "session-1" } as any);
+      await manager.unpublishSession("session-1");
+
+      friendList.value = [{ userId: "other-1", name: null, pictureUrl: null }];
+      await vi.waitFor(() => expect(getSharedDocumentMock).toHaveBeenCalled());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(mockMap.get("session-1")).toBeUndefined();
+    });
+
+    it("opens the registry once when a session is published while it's connecting", async () => {
+      const { manager: friends } = makeFriends([
+        { userId: "other-1", name: null, pictureUrl: null },
+      ]);
+      const manager = createInvitationsManager(
+        os,
+        makeLogin("host-1"),
+        friends,
+        vi.fn()
+      );
+
+      await manager.publishSession({ id: "session-1" } as any);
+
+      expect(getSharedDocumentMock).toHaveBeenCalledTimes(1);
+      expect(mockMap.get("session-1")).toBeDefined();
+    });
+
     it("removes the entry on unpublish", async () => {
       const { manager: friends } = makeFriends([
         { userId: "other-1", name: null, pictureUrl: null },

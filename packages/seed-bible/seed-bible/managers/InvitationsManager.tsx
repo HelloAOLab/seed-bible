@@ -45,8 +45,9 @@ export interface InvitationsManager {
    */
   availableSessions: Signal<AvailableSharedSession[]>;
   /**
-   * Publish a newly-created shared session into the global registry. Does
-   * nothing unless the host is signed in with at least one friend.
+   * Publish a newly-created shared session into the global registry. It's
+   * only listed while the host is signed in with at least one friend, so
+   * until then it waits, and is listed as soon as both are true.
    */
   publishSession: (session: BibleReadingSession) => Promise<void>;
   /** Remove a previously-published session from the registry. */
@@ -128,6 +129,7 @@ export function createInvitationsManager(
 
   let registryDoc: SharedDocument | null = null;
   let registryMap: SharedMap<StoredRegistryEntry> | null = null;
+  let opening: Promise<void> | null = null;
   let changesSubscription: { unsubscribe: () => void } | null = null;
   let remoteClientsSubscription: { unsubscribe: () => void } | null = null;
   let disposed = false;
@@ -136,6 +138,10 @@ export function createInvitationsManager(
   // stale (the host's browser closed without a clean unpublish) and is
   // hidden from the UI.
   const liveConnectionIds = new Set<string>();
+  // Sessions this client hosts, each with the account it's listed under (null
+  // until it is). One created before the friends list loads, or before the
+  // first friend, waits here until it can be listed.
+  const hostedSessions = new Map<string, string | null>();
 
   const readStoredEntries = (): StoredRegistryEntry[] => {
     if (!registryMap) return [];
@@ -191,8 +197,15 @@ export function createInvitationsManager(
     applyEntries(readStoredEntries());
   };
 
-  const openRegistry = async () => {
-    if (registryDoc || disposed) return;
+  const openRegistry = () => {
+    if (registryDoc || disposed) return Promise.resolve();
+    opening ??= connectRegistry().finally(() => {
+      opening = null;
+    });
+    return opening;
+  };
+
+  const connectRegistry = async () => {
     try {
       const document = await os.getSharedDocument(
         null,
@@ -251,6 +264,34 @@ export function createInvitationsManager(
   // includes most tests and most anonymous visits) never opens a live
   // WebSocket at all. Opening is one-way: once connected, it stays connected
   // rather than disconnecting again if the friends list empties out.
+  const publishHostedSessions = async (): Promise<void> => {
+    const userId = login.userId.peek();
+    // Anyone can read the registry, so a session is only listed when its host
+    // has a friend to see it; nobody else's would ever be shown.
+    if (!userId || friends.friendIds.peek().length === 0) return;
+    if ([...hostedSessions.values()].every((listedAs) => listedAs === userId)) {
+      return;
+    }
+    await openRegistry();
+    if (!registryDoc || !registryMap) return;
+    // Signing out while the registry was connecting leaves no host to list.
+    const hostUserId = login.userId.peek();
+    if (!hostUserId) return;
+    const mapRef = registryMap;
+    registryDoc.transact(() => {
+      for (const [sessionId, listedAs] of hostedSessions) {
+        if (listedAs === hostUserId) continue;
+        mapRef.set(sessionId, {
+          sessionId,
+          hostUserId,
+          hostConnectionId: os.connectionId,
+          publishedAt: Date.now(),
+        });
+        hostedSessions.set(sessionId, hostUserId);
+      }
+    });
+  };
+
   const stopAuthEffect = effect(() => {
     const userId = login.userId.value;
     const hasFriends = friends.friendIds.value.length > 0;
@@ -259,33 +300,22 @@ export function createInvitationsManager(
     } else if (typeof window !== "undefined" && userId && hasFriends) {
       void openRegistry();
     }
+    if (userId && hasFriends) {
+      void publishHostedSessions();
+    }
   });
 
   const publishSession = async (
     session: BibleReadingSession
   ): Promise<void> => {
-    // Anyone can read the registry, so a session is only listed when its
-    // host has a friend to see it; nobody else's would ever be shown.
-    if (!login.userId.peek() || friends.friendIds.peek().length === 0) return;
-    await openRegistry();
-    if (!registryDoc || !registryMap) return;
-    // Signing out while the registry was connecting leaves no host to list.
-    const hostUserId = login.userId.peek();
-    if (!hostUserId) return;
-    const entry: StoredRegistryEntry = {
-      sessionId: session.id,
-      hostUserId,
-      hostConnectionId: os.connectionId,
-      publishedAt: Date.now(),
-    };
-    const docRef = registryDoc;
-    const mapRef = registryMap;
-    docRef.transact(() => {
-      mapRef.set(entry.sessionId, entry);
-    });
+    if (!hostedSessions.has(session.id)) {
+      hostedSessions.set(session.id, null);
+    }
+    await publishHostedSessions();
   };
 
   const unpublishSession = async (sessionId: string): Promise<void> => {
+    hostedSessions.delete(sessionId);
     if (!registryDoc || !registryMap) return;
     const docRef = registryDoc;
     const mapRef = registryMap;
