@@ -103,6 +103,21 @@ describe("FriendsManager", () => {
       });
     });
 
+    it("never lists you as your own friend or request", async () => {
+      server.friendsWith(ME);
+      server.requestFrom(ME);
+      server.friendsWith("ada");
+
+      const friends = create();
+
+      await loaded(friends, () => {
+        expect(server.spies.listRequested).toHaveBeenCalled();
+        expect(friends.friendIds.value).toEqual(["ada"]);
+      });
+      expect(friends.incomingRequests.value).toEqual([]);
+      expect(friends.outgoingRequests.value).toEqual([]);
+    });
+
     it("shows a person once when they're connected more than once", async () => {
       server.friendsWith("ada");
       server.friendsWith("ada");

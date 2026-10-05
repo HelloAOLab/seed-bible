@@ -316,9 +316,14 @@ export function createFriendsManager(
         return;
       }
 
+      // A request to your own email can be accepted if taking it back fails,
+      // and it shouldn't make you your own friend.
       const byUser = new Map<string, string[]>();
       for (const record of records) {
-        if (!isFriendsPermission(record.permission)) {
+        if (
+          !isFriendsPermission(record.permission) ||
+          record.ownerUserId === userId
+        ) {
           continue;
         }
         const ids = byUser.get(record.ownerUserId) ?? [];
@@ -338,10 +343,13 @@ export function createFriendsManager(
         if (!sameLinks(links.peek(), nextLinks)) {
           links.value = nextLinks;
         }
-        incoming.value = requested.filter((r) =>
-          isPendingFriendRequest(r, nowMs)
+        incoming.value = requested.filter(
+          (r) =>
+            isPendingFriendRequest(r, nowMs) && r.requestingUserId !== userId
         );
-        outgoing.value = sent.filter((r) => isPendingFriendRequest(r, nowMs));
+        outgoing.value = sent.filter(
+          (r) => isPendingFriendRequest(r, nowMs) && r.targetUserId !== userId
+        );
         loadedUserId.value = userId;
       });
 
