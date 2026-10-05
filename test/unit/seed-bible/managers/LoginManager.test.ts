@@ -1,7 +1,5 @@
 import {
   createLoginManager,
-  OPEN_ID_LOGIN_TIMEOUT_MS,
-  OPEN_ID_POLL_INTERVAL_MS,
   userProfileSchema,
   YOUVERSION_OPEN_ID_PROVIDER,
   type LoginManager,
@@ -10,8 +8,11 @@ import { saveProfileConfigValue } from "@packages/seed-bible/seed-bible/managers
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import {
-  OPEN_ID_CALLBACK_CHANNEL,
-  type OpenIDCallbackMessage,
+  PENDING_OPEN_ID_LOGIN_STORAGE_KEY,
+  handleOpenIDCallback,
+  readPendingOpenIDLogin,
+  writePendingOpenIDLogin,
+  type PendingOpenIDLogin,
 } from "@packages/seed-bible/seed-bible/managers/OpenIDCallback";
 import type { Mock } from "vitest";
 
@@ -28,6 +29,7 @@ const {
   listOpenIDProvidersMock,
   requestOpenIDLoginMock,
   completeOAuthLoginMock,
+  processOAuthCodeMock,
 } = vi.hoisted(() => ({
   requestLoginMock: vi.fn(),
   completeLoginMock: vi.fn(),
@@ -37,6 +39,7 @@ const {
   listOpenIDProvidersMock: vi.fn(),
   requestOpenIDLoginMock: vi.fn(),
   completeOAuthLoginMock: vi.fn(),
+  processOAuthCodeMock: vi.fn(),
 }));
 
 vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
@@ -50,6 +53,7 @@ vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
     listOpenIDProviders: listOpenIDProvidersMock,
     requestOpenIDLogin: requestOpenIDLoginMock,
     completeOAuthLogin: completeOAuthLoginMock,
+    processOAuthCode: processOAuthCodeMock,
   })),
 }));
 
@@ -260,37 +264,19 @@ describe("createLoginManager", () => {
   });
 
   describe("OpenID login", () => {
-    const AUTHORIZATION_URL = "https://login.youversion.com/authorize?state=1";
+    const AUTHORIZATION_URL = "https://api.youversion.com/auth/authorize?x=1";
+    const REQUEST_ID = "oid-request-1";
 
-    /** Stands in for the sign-in window the manager opens. */
-    interface FakePopup {
-      closed: boolean;
-      close: () => void;
-      location: { href: string };
-    }
-
-    let popup: FakePopup;
-    let openSpy: Mock;
+    let navigate: Mock;
 
     beforeEach(() => {
-      // `setImmediate` stays real so a `BroadcastChannel` message, which the
-      // fake clock can't deliver, still gets a turn to arrive.
-      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
-
       listOpenIDProvidersMock.mockReset();
       requestOpenIDLoginMock.mockReset();
       completeOAuthLoginMock.mockReset();
+      processOAuthCodeMock.mockReset();
+      navigate = vi.fn();
 
-      popup = {
-        closed: false,
-        close() {
-          this.closed = true;
-        },
-        location: { href: "" },
-      };
-      openSpy = vi
-        .spyOn(window, "open")
-        .mockImplementation(() => popup as unknown as Window) as Mock;
+      window.history.replaceState(null, "", "/en/BSB/john/3?today=closed#v16");
 
       listOpenIDProvidersMock.mockResolvedValue({
         success: true,
@@ -299,43 +285,9 @@ describe("createLoginManager", () => {
       requestOpenIDLoginMock.mockResolvedValue({
         success: true,
         authorizationUrl: AUTHORIZATION_URL,
-        requestId: "oid-request-1",
+        requestId: REQUEST_ID,
       });
-      completeOAuthLoginMock.mockResolvedValue({
-        success: false,
-        errorCode: "not_completed",
-        errorMessage: "The login request has not been completed.",
-      });
-    });
-
-    afterEach(() => {
-      openSpy.mockRestore();
-      vi.useRealTimers();
-    });
-
-    /** Posts as the callback page does, and waits until it has been delivered. */
-    async function reportFromCallbackPage(message: OpenIDCallbackMessage) {
-      const sender = new BroadcastChannel(OPEN_ID_CALLBACK_CHANNEL);
-      const receiver = new BroadcastChannel(OPEN_ID_CALLBACK_CHANNEL);
-      let delivered = false;
-      receiver.onmessage = () => {
-        delivered = true;
-      };
-      sender.postMessage(message);
-      const start = performance.now();
-      while (!delivered) {
-        if (performance.now() - start > 1000) {
-          throw new Error("Timed out waiting for the message.");
-        }
-        await new Promise((resolve) => setImmediate(resolve));
-      }
-      sender.close();
-      receiver.close();
-      // Let the manager act on it.
-      await vi.advanceTimersByTimeAsync(0);
-    }
-
-    function completeSuccessfully() {
+      processOAuthCodeMock.mockResolvedValue({ success: true });
       completeOAuthLoginMock.mockResolvedValue({
         success: true,
         userId: USER_ID,
@@ -343,6 +295,20 @@ describe("createLoginManager", () => {
         connectionKey: "connection-key-1",
         expireTimeMs: Date.now() + 1000 * 60 * 60,
         metadata: {},
+      });
+    });
+
+    afterEach(() => {
+      window.history.replaceState(null, "", "/");
+    });
+
+    /** What the callback page leaves behind before returning to the app. */
+    function savePending(overrides: Partial<PendingOpenIDLogin> = {}) {
+      writePendingOpenIDLogin(localStorage, {
+        requestId: REQUEST_ID,
+        returnUrl: "/en/BSB/john/3",
+        expireTimeMs: Date.now() + 60_000,
+        ...overrides,
       });
     }
 
@@ -379,241 +345,200 @@ describe("createLoginManager", () => {
       expect(manager.openIDProviders.value).toHaveLength(1);
     });
 
-    it("signs in once the user finishes with the provider", async () => {
-      const manager = createLoginManager({ os });
-      const loginPromise = manager.login();
+    it("saves the login request, then sends this tab to the provider", async () => {
+      const manager = createLoginManager({ os, navigate });
 
-      const resultPromise = manager.loginWithOpenID(
-        YOUVERSION_OPEN_ID_PROVIDER
-      );
-      // Opened synchronously so the browser counts it as part of the click.
-      expect(openSpy).toHaveBeenCalledTimes(1);
+      await expect(
+        manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
+      ).resolves.toEqual({ success: true });
+
       expect(requestOpenIDLoginMock).toHaveBeenCalledWith({
         provider: YOUVERSION_OPEN_ID_PROVIDER,
         comId: "seed-bible",
       });
-
-      await vi.advanceTimersByTimeAsync(0);
-      expect(popup.location.href).toBe(AUTHORIZATION_URL);
-
-      // Still signing in with the provider.
-      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
-      expect(completeOAuthLoginMock).toHaveBeenCalledWith({
-        requestId: "oid-request-1",
+      expect(readPendingOpenIDLogin(localStorage)).toMatchObject({
+        requestId: REQUEST_ID,
+        returnUrl: "/en/BSB/john/3?today=closed#v16",
       });
-      expect(manager.userId.value).toBeNull();
-
-      completeSuccessfully();
-      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
-
-      await expect(resultPromise).resolves.toMatchObject({ success: true });
-      await expect(loginPromise).resolves.toEqual({
-        id: USER_ID,
-        email: EMAIL,
-      });
-      expect(manager.userId.value).toBe(USER_ID);
-      expect(os.client.sessionKey).toBe(SESSION_KEY);
-      expect(localStorage.getItem("sessionKey")).toBe(SESSION_KEY);
-      expect(manager.isLoginOpen.value).toBe(false);
-      expect(popup.closed).toBe(true);
+      expect(navigate).toHaveBeenCalledWith(AUTHORIZATION_URL);
     });
 
-    it("still signs in when the window closes right after the user finishes", async () => {
-      const manager = createLoginManager({ os });
-      const resultPromise = manager.loginWithOpenID(
-        YOUVERSION_OPEN_ID_PROVIDER
-      );
-      await vi.advanceTimersByTimeAsync(0);
-
-      popup.close();
-      completeSuccessfully();
-      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
-
-      await expect(resultPromise).resolves.toMatchObject({ success: true });
-      expect(manager.userId.value).toBe(USER_ID);
-    });
-
-    it("checks right away once the callback page has handed over the code", async () => {
-      const manager = createLoginManager({ os });
-      const resultPromise = manager.loginWithOpenID(
-        YOUVERSION_OPEN_ID_PROVIDER
-      );
-      await vi.advanceTimersByTimeAsync(0);
-
-      completeSuccessfully();
-      // No time passes: the message alone triggers the check.
-      await reportFromCallbackPage({ type: "processed" });
-
-      await expect(resultPromise).resolves.toMatchObject({ success: true });
-      expect(manager.userId.value).toBe(USER_ID);
-    });
-
-    it("reports a failure from the callback page instead of a cancel", async () => {
-      const manager = createLoginManager({ os });
-      const resultPromise = manager.loginWithOpenID(
-        YOUVERSION_OPEN_ID_PROVIDER
-      );
-      await vi.advanceTimersByTimeAsync(0);
-
-      // The callback page closes the window after it reports.
-      await reportFromCallbackPage({
-        type: "failed",
-        errorCode: "invalid_request",
-        errorMessage: "The login request is invalid.",
-      });
-      popup.close();
-
-      await expect(resultPromise).resolves.toEqual({
-        success: false,
-        errorCode: "invalid_request",
-        errorMessage: "The login request is invalid.",
-      });
-      expect(manager.userId.value).toBeNull();
-    });
-
-    it("reports a blocked sign-in window without contacting the server", async () => {
-      openSpy.mockImplementation(() => null);
-      const manager = createLoginManager({ os });
-
-      await expect(
-        manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
-      ).resolves.toMatchObject({ success: false, errorCode: "popup_blocked" });
-      expect(requestOpenIDLoginMock).not.toHaveBeenCalled();
-    });
-
-    it("reports a provider the server refuses and closes the window", async () => {
+    it("stays put when the server refuses the provider", async () => {
       requestOpenIDLoginMock.mockResolvedValue({
         success: false,
         errorCode: "not_supported",
         errorMessage: "The given provider is not supported.",
       });
-      const manager = createLoginManager({ os });
+      const manager = createLoginManager({ os, navigate });
 
       await expect(
         manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
       ).resolves.toMatchObject({ success: false, errorCode: "not_supported" });
-      expect(popup.closed).toBe(true);
-      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+      expect(navigate).not.toHaveBeenCalled();
+      expect(readPendingOpenIDLogin(localStorage)).toBeNull();
     });
 
-    it("is cancelled when the user closes the sign-in window", async () => {
-      const manager = createLoginManager({ os });
-      const resultPromise = manager.loginWithOpenID(
-        YOUVERSION_OPEN_ID_PROVIDER
-      );
-      await vi.advanceTimersByTimeAsync(0);
+    it("stays put when the login request can't be saved", async () => {
+      const setItem = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation((key) => {
+          if (key === PENDING_OPEN_ID_LOGIN_STORAGE_KEY) {
+            throw new DOMException("Quota exceeded", "QuotaExceededError");
+          }
+        });
+      const manager = createLoginManager({ os, navigate });
 
-      popup.close();
-      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
-
-      await expect(resultPromise).resolves.toMatchObject({
+      await expect(
+        manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
+      ).resolves.toMatchObject({
         success: false,
-        errorCode: "cancelled",
+        errorCode: "storage_unavailable",
       });
-      expect(manager.userId.value).toBeNull();
-
-      // No more checks once the attempt is over.
-      const calls = completeOAuthLoginMock.mock.calls.length;
-      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS * 3);
-      expect(completeOAuthLoginMock).toHaveBeenCalledTimes(calls);
+      expect(navigate).not.toHaveBeenCalled();
+      setItem.mockRestore();
     });
 
-    it("is cancelled, and the window closed, when the login screen is dismissed", async () => {
+    it("finishes the login with the saved request id after coming back", async () => {
+      savePending({ codeProcessed: true });
+
       const manager = createLoginManager({ os });
-      const loginPromise = manager.login();
-      const resultPromise = manager.loginWithOpenID(
-        YOUVERSION_OPEN_ID_PROVIDER
-      );
-      await vi.advanceTimersByTimeAsync(0);
+      expect(manager.isCompletingOpenIDLogin.value).toBe(true);
 
-      await manager.cancelLogin();
-      expect(popup.closed).toBe(true);
-
-      // Even a login finishing in the meantime isn't applied.
-      completeSuccessfully();
-      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
-
-      await expect(resultPromise).resolves.toMatchObject({
-        success: false,
-        errorCode: "cancelled",
+      await waitFor(() => manager.userInfo.value !== null);
+      expect(completeOAuthLoginMock).toHaveBeenCalledWith({
+        requestId: REQUEST_ID,
       });
-      await expect(loginPromise).resolves.toBeNull();
-      expect(manager.userId.value).toBeNull();
-      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+      expect(manager.userId.value).toBe(USER_ID);
+      expect(localStorage.getItem("sessionKey")).toBe(SESSION_KEY);
+      expect(manager.isCompletingOpenIDLogin.value).toBe(false);
+      expect(manager.isLoginOpen.value).toBe(false);
+      // Used up, so the next page load doesn't try again.
+      expect(readPendingOpenIDLogin(localStorage)).toBeNull();
     });
 
     it("reports an existing email account instead of linking to it", async () => {
-      const manager = createLoginManager({ os });
-      const resultPromise = manager.loginWithOpenID(
-        YOUVERSION_OPEN_ID_PROVIDER
-      );
-      await vi.advanceTimersByTimeAsync(0);
-
+      savePending({ codeProcessed: true });
       completeOAuthLoginMock.mockResolvedValue({
         success: false,
         errorCode: "session_key_required_for_openid",
         errorMessage:
           "A valid session key is required to link this OpenID account to an existing user.",
       });
-      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
 
-      await expect(resultPromise).resolves.toMatchObject({
-        success: false,
+      const manager = createLoginManager({ os });
+
+      await waitFor(() => manager.openIDLoginError.value !== null);
+      expect(manager.openIDLoginError.value).toMatchObject({
         errorCode: "session_key_required_for_openid",
       });
+      expect(manager.isLoginOpen.value).toBe(true);
       expect(manager.userId.value).toBeNull();
-      expect(popup.closed).toBe(true);
+      expect(readPendingOpenIDLogin(localStorage)).toBeNull();
     });
 
-    it("gives up once the login request can no longer complete", async () => {
-      const manager = createLoginManager({ os });
-      const resultPromise = manager.loginWithOpenID(
-        YOUVERSION_OPEN_ID_PROVIDER
-      );
-
-      await vi.advanceTimersByTimeAsync(
-        OPEN_ID_LOGIN_TIMEOUT_MS + OPEN_ID_POLL_INTERVAL_MS
-      );
-
-      await expect(resultPromise).resolves.toMatchObject({
-        success: false,
-        errorCode: "timed_out",
+    it("reports a failure the callback page saved, without asking the server", async () => {
+      savePending({
+        error: {
+          errorCode: "invalid_request",
+          errorMessage: "The login request is invalid.",
+        },
       });
-      expect(popup.closed).toBe(true);
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.openIDLoginError.value).toEqual({
+        success: false,
+        errorCode: "invalid_request",
+        errorMessage: "The login request is invalid.",
+      });
+      expect(manager.isLoginOpen.value).toBe(true);
+      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+      expect(readPendingOpenIDLogin(localStorage)).toBeNull();
     });
 
-    it("closes the window when the server can't be reached", async () => {
-      requestOpenIDLoginMock.mockRejectedValue(
+    it("reports an unreachable auth server", async () => {
+      savePending({ codeProcessed: true });
+      completeOAuthLoginMock.mockRejectedValue(
         new TypeError("Failed to fetch")
       );
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
       const manager = createLoginManager({ os });
 
-      await expect(
-        manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
-      ).rejects.toThrow("Failed to fetch");
-      expect(popup.closed).toBe(true);
+      await waitFor(() => manager.openIDLoginError.value !== null);
+      expect(manager.openIDLoginError.value).toMatchObject({
+        errorCode: "server_error",
+      });
+      expect(manager.isCompletingOpenIDLogin.value).toBe(false);
+      errorSpy.mockRestore();
     });
 
-    it("abandons an earlier attempt when a new one starts", async () => {
+    it("leaves a login that hasn't come back from the provider alone", async () => {
+      savePending();
+
       const manager = createLoginManager({ os });
-      const firstPopup = popup;
-      const first = manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER);
-      await vi.advanceTimersByTimeAsync(0);
+      await flush();
 
-      popup = {
-        closed: false,
-        close() {
-          this.closed = true;
-        },
-        location: { href: "" },
-      };
-      const second = manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER);
-      expect(firstPopup.closed).toBe(true);
-      await expect(first).resolves.toMatchObject({ errorCode: "cancelled" });
+      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+      expect(manager.isLoginOpen.value).toBe(false);
+      expect(readPendingOpenIDLogin(localStorage)).not.toBeNull();
+    });
 
-      completeSuccessfully();
-      await vi.advanceTimersByTimeAsync(OPEN_ID_POLL_INTERVAL_MS);
-      await expect(second).resolves.toMatchObject({ success: true });
+    it("throws away a login request that has expired", async () => {
+      savePending({ codeProcessed: true, expireTimeMs: Date.now() - 1 });
+
+      const manager = createLoginManager({ os });
+      await flush();
+
+      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+      expect(manager.userId.value).toBeNull();
+      expect(readPendingOpenIDLogin(localStorage)).toBeNull();
+    });
+
+    it("signs in across the whole round trip through YouVersion", async () => {
+      // 1. "Continue with YouVersion" on the reader page.
+      const starting = createLoginManager({ os, navigate });
+      await starting.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER);
+      expect(navigate).toHaveBeenLastCalledWith(AUTHORIZATION_URL);
+
+      // 2. YouVersion sends the tab back with only the state; the callback
+      //    page sends it on to YouVersion again.
+      await handleOpenIDCallback({
+        os,
+        search: "?state=s1",
+        storage: localStorage,
+        navigate,
+        fallbackUrl: "/",
+      });
+      expect(navigate).toHaveBeenLastCalledWith(
+        "https://api.youversion.com/auth/callback?state=s1"
+      );
+
+      // 3. Back again with the code: it goes to the auth server and the tab
+      //    returns to the page the login started from.
+      await handleOpenIDCallback({
+        os,
+        search: "?code=c1&state=s1",
+        storage: localStorage,
+        navigate,
+        fallbackUrl: "/",
+      });
+      expect(processOAuthCodeMock).toHaveBeenCalledWith({
+        code: "c1",
+        state: "s1",
+      });
+      expect(navigate).toHaveBeenLastCalledWith(
+        "/en/BSB/john/3?today=closed#v16"
+      );
+      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+
+      // 4. The app loads there and finishes the login.
+      const returned = createLoginManager({ os: CasualOSManager() });
+      await waitFor(() => returned.userInfo.value !== null);
+      expect(completeOAuthLoginMock).toHaveBeenCalledWith({
+        requestId: REQUEST_ID,
+      });
+      expect(returned.userInfo.value).toEqual({ id: USER_ID, email: EMAIL });
     });
   });
 

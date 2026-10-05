@@ -9,7 +9,7 @@ import type { NavigationManager } from "../../managers/NavigationManager";
 import {
   YOUVERSION_OPEN_ID_PROVIDER,
   type LoginManager,
-  type OpenIDLoginResult,
+  type OpenIDLoginFailure,
 } from "../../managers/LoginManager";
 
 type LoginStep = "email" | "code";
@@ -48,7 +48,7 @@ export function LoginModal({
   const agreed = useSignal(false);
   const error = useSignal<string | null>(null);
   const isSubmitting = useSignal(false);
-  const isAwaitingOpenID = useSignal(false);
+  const isRedirectingToOpenID = useSignal(false);
 
   // The login request returned by `requestLoginByEmail`. Needed to complete the
   // login on the code screen. Kept in a ref because it's not rendered directly.
@@ -75,6 +75,18 @@ export function LoginModal({
 
   const isOpen = login.isLoginOpen.value;
 
+  const openIDErrorMessage = (failure: OpenIDLoginFailure): string => {
+    if (failure.errorCode === "session_key_required_for_openid") {
+      return t("login-error-openid-account-exists", {
+        defaultValue:
+          "An account with this email address already exists. Please log in with your email address instead.",
+      });
+    }
+    return t("login-error-generic", {
+      defaultValue: "Something went wrong. Please try again.",
+    });
+  };
+
   // Reset to a clean state every time the modal is (re)opened so a previous,
   // abandoned attempt doesn't leak into the next one.
   useSignalEffect(() => {
@@ -84,9 +96,13 @@ export function LoginModal({
         step.value = "email";
         code.value = "";
         agreed.value = false;
-        error.value = null;
+        // A YouVersion login that failed on the way back opens this screen
+        // to say why.
+        const openIDError = login.openIDLoginError.peek();
+        error.value = openIDError ? openIDErrorMessage(openIDError) : null;
+        login.openIDLoginError.value = null;
         isSubmitting.value = false;
-        isAwaitingOpenID.value = false;
+        isRedirectingToOpenID.value = false;
       });
       requestRef.current = null;
       login.loadOpenIDProviders().catch((err) => {
@@ -206,34 +222,6 @@ export function LoginModal({
     }
   };
 
-  const openIDErrorMessage = (result: OpenIDLoginResult): string | null => {
-    if (result.success) {
-      return null;
-    }
-    switch (result.errorCode) {
-      case "cancelled":
-        return null;
-      case "popup_blocked":
-        return t("login-error-popup-blocked", {
-          defaultValue:
-            "Your browser blocked the sign-in window. Please allow pop-ups for this site and try again.",
-        });
-      case "timed_out":
-        return t("login-error-openid-timed-out", {
-          defaultValue: "Sign-in took too long. Please try again.",
-        });
-      case "session_key_required_for_openid":
-        return t("login-error-openid-account-exists", {
-          defaultValue:
-            "An account with this email address already exists. Please log in with your email address instead.",
-        });
-      default:
-        return t("login-error-generic", {
-          defaultValue: "Something went wrong. Please try again.",
-        });
-    }
-  };
-
   const loginWithYouVersion = async () => {
     if (isSubmitting.value) {
       return;
@@ -248,23 +236,26 @@ export function LoginModal({
 
     error.value = null;
     isSubmitting.value = true;
-    isAwaitingOpenID.value = true;
+    isRedirectingToOpenID.value = true;
+    let result: Awaited<ReturnType<LoginManager["loginWithOpenID"]>>;
     try {
-      // Called before any await so the browser still counts the sign-in
-      // window as opened by this click.
-      const result = await login.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER);
-      // On success the login manager closes the login UI, which unmounts
-      // this component.
-      error.value = openIDErrorMessage(result);
+      result = await login.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER);
     } catch (err) {
       console.error("Failed to log in with YouVersion.", err);
-      error.value = t("login-error-generic", {
-        defaultValue: "Something went wrong. Please try again.",
-      });
-    } finally {
+      result = {
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "The login could not be started.",
+      };
+    }
+
+    // On success the page is already leaving for YouVersion, so the button
+    // stays disabled rather than inviting a second click.
+    if (!result.success) {
       batch(() => {
+        error.value = openIDErrorMessage(result);
         isSubmitting.value = false;
-        isAwaitingOpenID.value = false;
+        isRedirectingToOpenID.value = false;
       });
     }
   };
@@ -518,9 +509,9 @@ export function LoginModal({
                     <MaterialIcon className="sb-login-provider-icon">
                       menu_book
                     </MaterialIcon>
-                    {isAwaitingOpenID.value
-                      ? t("login-with-youversion-waiting", {
-                          defaultValue: "Waiting for YouVersion…",
+                    {isRedirectingToOpenID.value
+                      ? t("login-with-youversion-redirecting", {
+                          defaultValue: "Redirecting to YouVersion…",
                         })
                       : t("login-with-youversion", {
                           defaultValue: "Continue with YouVersion",

@@ -1,27 +1,14 @@
 import {
-  OPEN_ID_CALLBACK_CHANNEL,
   YOUVERSION_AUTH_CALLBACK_URL,
   decideOpenIDCallbackStep,
   handleOpenIDCallback,
   isOpenIDCallbackPath,
-  type OpenIDCallbackMessage,
+  readPendingOpenIDLogin,
+  writePendingOpenIDLogin,
+  type PendingOpenIDLogin,
 } from "@packages/seed-bible/seed-bible/managers/OpenIDCallback";
 import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Mock } from "vitest";
-
-/** Wait for a condition to become true, polling the macrotask queue. */
-async function waitFor(
-  condition: () => boolean,
-  timeoutMs = 1000
-): Promise<void> {
-  const start = Date.now();
-  while (!condition()) {
-    if (Date.now() - start > timeoutMs) {
-      throw new Error("Timed out waiting for condition.");
-    }
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
-}
 
 describe("isOpenIDCallbackPath", () => {
   it("matches the path the provider redirects back to", () => {
@@ -82,26 +69,29 @@ describe("decideOpenIDCallbackStep", () => {
 });
 
 describe("handleOpenIDCallback", () => {
+  const RETURN_URL = "/en/BSB/john/3?today=closed";
+
   let processOAuthCode: Mock;
   let navigate: Mock;
-  let close: Mock;
-  let listener: BroadcastChannel;
-  let messages: OpenIDCallbackMessage[];
 
   beforeEach(() => {
+    localStorage.clear();
     processOAuthCode = vi.fn().mockResolvedValue({ success: true });
     navigate = vi.fn();
-    close = vi.fn();
-    messages = [];
-    listener = new BroadcastChannel(OPEN_ID_CALLBACK_CHANNEL);
-    listener.onmessage = (event: MessageEvent) => {
-      messages.push(event.data as OpenIDCallbackMessage);
-    };
   });
 
   afterEach(() => {
-    listener.close();
+    localStorage.clear();
   });
+
+  function savePending(overrides: Partial<PendingOpenIDLogin> = {}) {
+    writePendingOpenIDLogin(localStorage, {
+      requestId: "oid-request-1",
+      returnUrl: RETURN_URL,
+      expireTimeMs: Date.now() + 60_000,
+      ...overrides,
+    });
+  }
 
   function run(search: string) {
     return handleOpenIDCallback({
@@ -110,35 +100,45 @@ describe("handleOpenIDCallback", () => {
         "client"
       >,
       search,
+      storage: localStorage,
       navigate,
-      close,
+      fallbackUrl: "/",
     });
   }
 
-  it("sends the window on to YouVersion without touching the auth server", async () => {
+  it("sends the tab on to YouVersion without touching the auth server", async () => {
+    savePending();
+
     await run("?state=abc");
 
     expect(navigate).toHaveBeenCalledWith(
       `${YOUVERSION_AUTH_CALLBACK_URL}?state=abc`
     );
     expect(processOAuthCode).not.toHaveBeenCalled();
-    expect(close).not.toHaveBeenCalled();
+    // Still needed for the trip back.
+    expect(readPendingOpenIDLogin(localStorage)).toMatchObject({
+      requestId: "oid-request-1",
+    });
   });
 
-  it("hands the code to the auth server, reports back and closes", async () => {
+  it("hands the code to the auth server and returns to the starting page", async () => {
+    savePending();
+
     await run("?code=the-code&state=abc");
 
     expect(processOAuthCode).toHaveBeenCalledWith({
       code: "the-code",
       state: "abc",
     });
-    await waitFor(() => messages.length > 0);
-    expect(messages).toEqual([{ type: "processed" }]);
-    expect(close).toHaveBeenCalled();
-    expect(navigate).not.toHaveBeenCalled();
+    expect(readPendingOpenIDLogin(localStorage)).toMatchObject({
+      requestId: "oid-request-1",
+      codeProcessed: true,
+    });
+    expect(navigate).toHaveBeenCalledWith(RETURN_URL);
   });
 
-  it("reports an auth server refusal and closes", async () => {
+  it("saves an auth server refusal for the app to report", async () => {
+    savePending();
     processOAuthCode.mockResolvedValue({
       success: false,
       errorCode: "invalid_request",
@@ -147,38 +147,54 @@ describe("handleOpenIDCallback", () => {
 
     await run("?code=the-code&state=abc");
 
-    await waitFor(() => messages.length > 0);
-    expect(messages).toEqual([
-      {
-        type: "failed",
-        errorCode: "invalid_request",
-        errorMessage: "The login request is invalid.",
-      },
-    ]);
-    expect(close).toHaveBeenCalled();
+    const pending = readPendingOpenIDLogin(localStorage);
+    expect(pending?.codeProcessed).toBeUndefined();
+    expect(pending?.error).toEqual({
+      errorCode: "invalid_request",
+      errorMessage: "The login request is invalid.",
+    });
+    expect(navigate).toHaveBeenCalledWith(RETURN_URL);
   });
 
-  it("reports an unreachable auth server and still closes", async () => {
+  it("saves an unreachable auth server as a failure", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
+    savePending();
     processOAuthCode.mockRejectedValue(new TypeError("Failed to fetch"));
 
     await run("?code=the-code&state=abc");
 
-    await waitFor(() => messages.length > 0);
-    expect(messages[0]).toMatchObject({
-      type: "failed",
-      errorCode: "server_error",
-    });
-    expect(close).toHaveBeenCalled();
+    expect(readPendingOpenIDLogin(localStorage)?.error?.errorCode).toBe(
+      "server_error"
+    );
+    expect(navigate).toHaveBeenCalledWith(RETURN_URL);
   });
 
-  it("just closes when the user declined on YouVersion", async () => {
+  it("reports a lost login request instead of processing the code", async () => {
+    await run("?code=the-code&state=abc");
+
+    expect(processOAuthCode).not.toHaveBeenCalled();
+    expect(readPendingOpenIDLogin(localStorage)).toMatchObject({
+      requestId: null,
+      error: { errorCode: "invalid_request" },
+    });
+    expect(navigate).toHaveBeenCalledWith("/");
+  });
+
+  it("forgets the login when the user declined on YouVersion", async () => {
+    savePending();
+
     await run("?error=access_denied&state=abc");
 
-    expect(close).toHaveBeenCalled();
     expect(processOAuthCode).not.toHaveBeenCalled();
-    // Give a stray message the chance to arrive before asserting there was none.
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(messages).toEqual([]);
+    expect(readPendingOpenIDLogin(localStorage)).toBeNull();
+    expect(navigate).toHaveBeenCalledWith(RETURN_URL);
+  });
+
+  it("never returns to another site", async () => {
+    savePending({ returnUrl: "//evil.example.com/" });
+
+    await run("?code=the-code&state=abc");
+
+    expect(navigate).toHaveBeenCalledWith("/");
   });
 });

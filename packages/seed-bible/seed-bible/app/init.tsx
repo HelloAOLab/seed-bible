@@ -22,15 +22,17 @@ const config = readInjectedConfig();
 const container = document.getElementById("app") ?? document.body;
 
 if (isOpenIDCallbackPath(config.basePath, location.pathname)) {
-  // This page only ever runs inside the sign-in window, and only for a moment
-  // on its way to YouVersion or back to the window that opened it, so the
-  // reader the server rendered here is cleared rather than started.
+  // This page is only ever passed through, on the way to YouVersion or back to
+  // the page the login started from, so the reader the server rendered here
+  // is cleared rather than started.
   container.replaceChildren();
   void handleOpenIDCallback({
     os: CasualOSManager(),
     search: location.search,
+    storage: localStorage,
+    // Replaced rather than pushed, so Back from the app skips this page.
     navigate: (url) => location.replace(url),
-    close: () => window.close(),
+    fallbackUrl: `${config.basePath}/`,
   });
 } else {
   startApp();

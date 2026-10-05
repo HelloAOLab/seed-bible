@@ -4,16 +4,16 @@ import type { CasualOSManager, UserInfo } from "./OsManager";
 import type { FatalSessionErrorCode } from "./SessionGuard";
 import type {
   CompleteLoginResult,
-  CompleteOpenIDLoginResult,
   LoginRequestResult,
   LoginRequestSuccess,
   OpenIDLoginRequestFailure,
   OpenIDProviderInfo,
-  ProcessOpenIDAuthorizationCodeFailure,
 } from "@casual-simulation/aux-records/AuthController";
 import {
-  OPEN_ID_CALLBACK_CHANNEL,
-  type OpenIDCallbackMessage,
+  OPEN_ID_LOGIN_REQUEST_LIFETIME_MS,
+  clearPendingOpenIDLogin,
+  readPendingOpenIDLogin,
+  writePendingOpenIDLogin,
 } from "./OpenIDCallback";
 
 /**
@@ -25,35 +25,25 @@ export const LOGIN_COM_ID = "seed-bible";
 /** The auth server's OpenID provider id for YouVersion accounts. */
 export const YOUVERSION_OPEN_ID_PROVIDER = "youversion";
 
-/** How often a pending OpenID login is checked for completion. */
-export const OPEN_ID_POLL_INTERVAL_MS = 1500;
-
 /**
- * How long to wait for the user to finish signing in with the provider. Matches
- * the lifetime of the login request on the auth server, after which it can
- * never complete anyway.
+ * Why a login with an OpenID provider didn't succeed. The codes are the auth
+ * server's, plus `storage_unavailable` when the browser won't let us save the
+ * login request across the redirects.
  */
-export const OPEN_ID_LOGIN_TIMEOUT_MS = 20 * 60 * 1000;
-
-/**
- * Failures that happen on this side of an OpenID login, as opposed to the
- * ones the auth server reports.
- *
- * - `popup_blocked`: the browser refused to open the sign-in window.
- * - `cancelled`: the user closed the sign-in window or the login screen first.
- * - `timed_out`: the user never finished signing in with the provider.
- */
-export interface OpenIDLoginClientFailure {
+export interface OpenIDLoginFailure {
   success: false;
-  errorCode: "popup_blocked" | "cancelled" | "timed_out";
+  errorCode: string;
   errorMessage: string;
 }
 
-export type OpenIDLoginResult =
-  | CompleteOpenIDLoginResult
+/**
+ * The outcome of starting an OpenID login. On success the browser is already
+ * on its way to the provider, and the login finishes when it comes back.
+ */
+export type StartOpenIDLoginResult =
+  | { success: true }
   | OpenIDLoginRequestFailure
-  | ProcessOpenIDAuthorizationCodeFailure
-  | OpenIDLoginClientFailure;
+  | OpenIDLoginFailure;
 
 /**
  * Why a session ended without the user asking it to.
@@ -243,16 +233,28 @@ export interface LoginManager {
   loadOpenIDProviders: () => Promise<OpenIDProviderInfo[]>;
 
   /**
-   * Signs the user in through an OpenID provider such as YouVersion.
+   * Starts signing the user in through an OpenID provider such as YouVersion.
    *
-   * Opens a window showing the provider's sign-in page and waits until the
-   * user finishes there, closes the window, or cancels the login. Must be
-   * called synchronously from a click handler: browsers only allow the window
-   * to open in direct response to a user action.
+   * Saves the login request so it survives the trip, then sends this tab to
+   * the provider's sign-in page. The provider sends the user back to the
+   * callback page (see `OpenIDCallback.ts`), which returns them to the page
+   * they started on, where the login is finished when the app loads.
    *
    * @param provider The provider id, e.g. {@link YOUVERSION_OPEN_ID_PROVIDER}.
    */
-  loginWithOpenID: (provider: string) => Promise<OpenIDLoginResult>;
+  loginWithOpenID: (provider: string) => Promise<StartOpenIDLoginResult>;
+
+  /**
+   * Why the OpenID login the user just came back from failed, for the login
+   * screen to explain. Null when there is nothing to report.
+   */
+  openIDLoginError: Signal<OpenIDLoginFailure | null>;
+
+  /**
+   * True while a login the user just came back from the provider with is
+   * being finished.
+   */
+  isCompletingOpenIDLogin: Signal<boolean>;
 }
 
 export const userProfileSchema = z.object({
@@ -388,8 +390,11 @@ function writeLocalConfig(config: Record<string, unknown>): void {
 
 export function createLoginManager({
   os,
+  navigate = (url) => window.location.assign(url),
 }: {
   os: CasualOSManager;
+  /** Sends this tab to another page. Replaceable so tests can watch it. */
+  navigate?: (url: string) => void;
 }): LoginManager {
   const { client, parsedSessionKey, sessionKey, connectionKey } = os;
 
@@ -545,13 +550,8 @@ export function createLoginManager({
   const openIDProviders = signal<OpenIDProviderInfo[] | null>(null);
   let openIDProvidersPromise: Promise<OpenIDProviderInfo[]> | null = null;
 
-  /** The OpenID login currently waiting on the provider, if any. */
-  let activeOpenIDLogin: {
-    cancelled: boolean;
-    popup: Window;
-    /** Ends the wait between checks early, so a cancel is seen immediately. */
-    wake: () => void;
-  } | null = null;
+  const openIDLoginError = signal<OpenIDLoginFailure | null>(null);
+  const isCompletingOpenIDLogin = signal(false);
 
   let loginPromise: Promise<UserInfo | null> | null = null;
   let resolveLoginPromise: ((value: UserInfo | null) => void) | null = null;
@@ -741,7 +741,6 @@ export function createLoginManager({
 
   async function cancelLogin() {
     isLoginOpen.value = false;
-    cancelOpenIDLogin();
     if (loginPromise && resolveLoginPromise) {
       // Resolves null rather than rejecting. Dismissing the prompt is an
       // answer ("carry on without an account"), not a failure, and every
@@ -814,162 +813,104 @@ export function createLoginManager({
     return openIDProvidersPromise;
   }
 
-  function cancelOpenIDLogin() {
-    const attempt = activeOpenIDLogin;
-    if (!attempt) {
-      return;
+  async function loginWithOpenID(
+    provider: string
+  ): Promise<StartOpenIDLoginResult> {
+    const request = await client.requestOpenIDLogin({
+      provider,
+      comId: LOGIN_COM_ID,
+    });
+    if (!request.success) {
+      return request;
     }
-    attempt.cancelled = true;
-    activeOpenIDLogin = null;
-    attempt.wake();
-    if (!attempt.popup.closed) {
-      attempt.popup.close();
-    }
-  }
 
-  async function loginWithOpenID(provider: string): Promise<OpenIDLoginResult> {
-    cancelOpenIDLogin();
-
-    const cancelled: OpenIDLoginClientFailure = {
-      success: false,
-      errorCode: "cancelled",
-      errorMessage: "The login was cancelled.",
-    };
-
-    // Opened before the first await, while the browser still treats this as
-    // part of the user's click; the provider's URL is only known once the
-    // request below returns, so the window starts out blank.
-    const popup = window.open(
-      "",
-      "sb-openid-login",
-      "popup,width=500,height=700"
-    );
-    if (!popup) {
+    const saved =
+      typeof localStorage !== "undefined" &&
+      writePendingOpenIDLogin(localStorage, {
+        requestId: request.requestId,
+        returnUrl: `${location.pathname}${location.search}${location.hash}`,
+        expireTimeMs: Date.now() + OPEN_ID_LOGIN_REQUEST_LIFETIME_MS,
+      });
+    if (!saved) {
+      // Without the request id there would be no way to finish the login
+      // after coming back, so don't send the user off at all.
       return {
         success: false,
-        errorCode: "popup_blocked",
-        errorMessage: "The sign-in window was blocked by the browser.",
+        errorCode: "storage_unavailable",
+        errorMessage: "The login request could not be saved.",
       };
     }
 
-    // Set when a wake-up arrives while no wait is in progress (e.g. the
-    // callback page reports in during a check), so the next wait ends at once
-    // instead of the news sitting unread for a whole interval.
-    let wokenEarly = false;
-    const attempt = {
-      cancelled: false,
-      popup,
-      wake: () => {
-        wokenEarly = true;
-      },
+    navigate(request.authorizationUrl);
+    return { success: true };
+  }
+
+  /**
+   * Finishes an OpenID login the user has just come back from, using the
+   * request id saved by {@link loginWithOpenID}.
+   */
+  async function resumeOpenIDLogin(storage: Storage): Promise<void> {
+    const pending = readPendingOpenIDLogin(storage);
+    if (!pending) {
+      return;
+    }
+
+    if (Date.now() >= pending.expireTimeMs) {
+      clearPendingOpenIDLogin(storage);
+      return;
+    }
+
+    if (!pending.error && !pending.codeProcessed) {
+      // Still on its way through the provider (or the user came back without
+      // finishing there); nothing to do until the callback page has run.
+      return;
+    }
+
+    // Cleared before anything else, so a failure below can't be retried on
+    // every page load.
+    clearPendingOpenIDLogin(storage);
+
+    const fail = (failure: OpenIDLoginFailure) => {
+      console.warn(
+        `[LoginManager] OpenID login failed (${failure.errorCode}): ${failure.errorMessage}`
+      );
+      batch(() => {
+        openIDLoginError.value = failure;
+        isLoginOpen.value = true;
+      });
     };
-    activeOpenIDLogin = attempt;
 
-    const waitForNextCheck = () =>
-      new Promise<void>((resolve) => {
-        if (wokenEarly) {
-          wokenEarly = false;
-          resolve();
-          return;
-        }
-        const done = () => {
-          clearTimeout(timer);
-          attempt.wake = () => {
-            wokenEarly = true;
-          };
-          resolve();
-        };
-        const timer = setTimeout(done, OPEN_ID_POLL_INTERVAL_MS);
-        attempt.wake = done;
-      });
+    if (pending.error) {
+      fail({ success: false, ...pending.error });
+      return;
+    }
 
-    let callbackFailure: ProcessOpenIDAuthorizationCodeFailure | null = null;
-    const channel =
-      typeof BroadcastChannel === "undefined"
-        ? null
-        : new BroadcastChannel(OPEN_ID_CALLBACK_CHANNEL);
-    channel?.addEventListener("message", (event: MessageEvent) => {
-      const message = event.data as OpenIDCallbackMessage;
-      if (message?.type === "failed") {
-        callbackFailure = {
-          success: false,
-          errorCode: message.errorCode,
-          errorMessage: message.errorMessage,
-        };
-      }
-      attempt.wake();
-    });
+    if (!pending.requestId) {
+      return;
+    }
 
+    isCompletingOpenIDLogin.value = true;
     try {
-      const request = await client.requestOpenIDLogin({
-        provider,
-        comId: LOGIN_COM_ID,
+      const result = await client.completeOAuthLogin({
+        requestId: pending.requestId,
       });
-      if (attempt.cancelled) {
-        return cancelled;
+      if (result.success) {
+        sessionKey.value = result.sessionKey;
+        connectionKey.value = result.connectionKey;
+        client.sessionKey = result.sessionKey;
+        await loadUserInfo();
+      } else {
+        fail(result);
       }
-      if (!request.success) {
-        return request;
-      }
-
-      popup.location.href = request.authorizationUrl;
-
-      // The sign-in window finishes on our callback page (see
-      // `OpenIDCallback.ts`), which hands the code to the auth server. Only
-      // the auth server can say when that is done, so keep asking; the
-      // callback page's message just makes the next check happen sooner.
-      const deadline = Date.now() + OPEN_ID_LOGIN_TIMEOUT_MS;
-      while (true) {
-        await waitForNextCheck();
-        if (attempt.cancelled) {
-          return cancelled;
-        }
-        if (callbackFailure) {
-          return callbackFailure;
-        }
-
-        // Read before asking, so a window closed right after the user finished
-        // still gets one last check instead of being reported as cancelled.
-        const popupClosed = popup.closed;
-        const result = await client.completeOAuthLogin({
-          requestId: request.requestId,
-        });
-        if (attempt.cancelled) {
-          return cancelled;
-        }
-
-        if (result.success) {
-          sessionKey.value = result.sessionKey;
-          connectionKey.value = result.connectionKey;
-          client.sessionKey = result.sessionKey;
-          await loadUserInfo();
-          return result;
-        }
-
-        if (result.errorCode !== "not_completed") {
-          return result;
-        }
-
-        if (popupClosed) {
-          return cancelled;
-        }
-
-        if (Date.now() >= deadline) {
-          return {
-            success: false,
-            errorCode: "timed_out",
-            errorMessage: "The login took too long to complete.",
-          };
-        }
-      }
+    } catch (err) {
+      console.error("[LoginManager] Failed to complete the OpenID login", err);
+      fail({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "The login could not be completed.",
+      });
     } finally {
-      channel?.close();
-      if (activeOpenIDLogin === attempt) {
-        activeOpenIDLogin = null;
-      }
-      if (!popup.closed) {
-        popup.close();
-      }
+      isCompletingOpenIDLogin.value = false;
     }
   }
 
@@ -1061,6 +1002,12 @@ export function createLoginManager({
       }
     }
   });
+
+  if (!import.meta.env.SSR && typeof localStorage !== "undefined") {
+    // Nobody awaits this; it reports failures through `openIDLoginError`
+    // rather than throwing.
+    void resumeOpenIDLogin(localStorage);
+  }
 
   if (sessionKey.value) {
     // Nobody awaits this, so it needs its own handler: a network failure here would
@@ -1336,5 +1283,7 @@ export function createLoginManager({
     openIDProviders,
     loadOpenIDProviders,
     loginWithOpenID,
+    openIDLoginError,
+    isCompletingOpenIDLogin,
   };
 }
