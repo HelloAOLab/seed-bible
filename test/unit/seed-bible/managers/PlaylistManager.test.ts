@@ -2992,14 +2992,43 @@ describe("createPlaylistManager", () => {
       const manager = startSharedPlaylist([
         { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
         { type: "html", title: "Note", html: "<p>A note</p>" },
+        { type: "html", title: "After", html: "<p>After</p>" },
       ]);
       await manager.playing.value!.next();
 
       const modal = renderItemModal();
       try {
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
         expect(modal.container.textContent).toContain("Note");
         modal.close();
         expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).not.toContain("After");
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("advances when a shared link opens on a text or link first item", async () => {
+      const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
+      const manager = makeManager(
+        null,
+        tabs,
+        "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist/1",
+        {
+          locator: "user-1.playlist-1",
+          item: makePlaylist({ items: openingItems() }),
+          authorName: null,
+        }
+      );
+      await manager.initialPlaybackPromise;
+
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(modal.container.textContent).toContain("Intro");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
       } finally {
         modal.unmount();
       }
