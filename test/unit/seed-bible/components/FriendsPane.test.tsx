@@ -369,6 +369,25 @@ describe("FriendsPane", () => {
     });
   });
 
+  // Plain-http previews and some in-app webviews have no clipboard at all.
+  it("says so when there's no clipboard to copy to", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    Object.defineProperty(navigator, "clipboard", {
+      value: undefined,
+      configurable: true,
+    });
+    await renderPane(createState());
+    const row = container.querySelector(".sb-friends-my-id")!;
+
+    await click(button(row, "Copy your user ID"));
+
+    expect(toast).toHaveBeenCalledWith("Couldn't copy to your clipboard.");
+    expect(button(row, "Copied")).toBeUndefined();
+    consoleError.mockRestore();
+  });
+
   describe("while a request is in flight", () => {
     /** Holds the next call to a fake server procedure until released. */
     const holdNext = (spy: {

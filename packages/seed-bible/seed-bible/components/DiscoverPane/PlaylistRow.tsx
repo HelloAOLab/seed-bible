@@ -43,6 +43,25 @@ export function PlaylistRow(props: {
     props.onPlay ?? ((target: Playlist) => playlists.startPlaying(target));
   const edit =
     props.onEdit ?? ((target: Playlist) => playlists.editPlaylist(target));
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(playlists.getPlaylistUrl(playlist));
+    } catch (error) {
+      // Also covers no clipboard at all (an insecure origin, some webviews).
+      console.error("Failed to copy the playlist link.", error);
+      toast(
+        t("playlist-url-copy-failed", {
+          defaultValue: "Couldn't copy the playlist link",
+        })
+      );
+      return;
+    }
+    toast(
+      t("playlist-url-copied", {
+        defaultValue: "Playlist URL copied to clipboard",
+      })
+    );
+  };
 
   return (
     <li
@@ -97,13 +116,7 @@ export function PlaylistRow(props: {
         <ContextMenuItem
           onClick={(e) => {
             e.stopPropagation();
-            const url = playlists.getPlaylistUrl(playlist);
-            navigator.clipboard.writeText(url);
-            toast(
-              t("playlist-url-copied", {
-                defaultValue: "Playlist URL copied to clipboard",
-              })
-            );
+            void copyLink();
           }}
         >
           <MaterialIcon className="sb-context-menu-item-icon">

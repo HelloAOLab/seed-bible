@@ -909,6 +909,7 @@
   "friend-request-user-not-found": "No account uses that email.",
   "friend-request-failed": "Couldn't send the request. Try again.",
   "copy-friend-request-link": "Copy link",
+  "copy-failed": "Couldn't copy to your clipboard.",
   "your-user-id": "Your user ID",
   "accept": "Accept",
   "decline": "Decline",

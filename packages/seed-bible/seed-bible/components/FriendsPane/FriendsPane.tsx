@@ -49,28 +49,39 @@ function FriendsHeading(props: { icon?: string; children: string }) {
   );
 }
 
-/** Copies `text`, flipping the button label to "Copied" for a moment. */
+/**
+ * Copies `text`, flipping the button label to "Copied" for a moment, or
+ * saying so in a toast when it can't.
+ */
 function CopyButton(props: {
   text: string;
   label: string;
+  toast: Toast;
   className?: string;
 }) {
   const { t } = useI18n();
   const copied = useSignal(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(props.text);
+    } catch (error) {
+      // Also covers no clipboard at all (an insecure origin, some webviews),
+      // where reading `writeText` throws before there's a promise to reject.
+      console.error("Failed to copy:", error);
+      props.toast(
+        t("copy-failed", { defaultValue: "Couldn't copy to your clipboard." })
+      );
+      return;
+    }
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 2000);
+  };
   return (
     <>
       <button
         type="button"
         className={props.className ?? "sb-friends-button"}
-        onClick={() => {
-          void navigator.clipboard
-            .writeText(props.text)
-            .then(() => {
-              copied.value = true;
-              setTimeout(() => (copied.value = false), 2000);
-            })
-            .catch((error) => console.error("Failed to copy:", error));
-        }}
+        onClick={() => void copy()}
       >
         {/* Both labels share one grid cell, so the button is as wide as the
           longer one and doesn't resize when it flips to "Copied". */}
@@ -316,6 +327,7 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
           <span>{outcome.value.message}</span>
           {outcome.value.requestId ? (
             <CopyButton
+              toast={toast}
               text={getFriendRequestUrl(navigation, outcome.value.requestId)}
               label={t("copy-friend-request-link", {
                 defaultValue: "Copy link",
@@ -333,6 +345,7 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
             })}
           </span>
           <CopyButton
+            toast={toast}
             text={getAddFriendUrl(navigation, props.userId)}
             label={t("copy-your-friend-link", {
               defaultValue: "Copy your friend link",
@@ -347,6 +360,7 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
             <code className="sb-friends-my-id-value">{props.userId}</code>
           </span>
           <CopyButton
+            toast={toast}
             text={props.userId}
             label={t("copy-your-user-id", {
               defaultValue: "Copy your user ID",
@@ -467,6 +481,7 @@ function OutgoingRequestRow(props: {
       />
       <span className="sb-friends-row-actions">
         <CopyButton
+          toast={toast}
           text={getFriendRequestUrl(navigation, request.id)}
           label={t("copy-friend-request-link", { defaultValue: "Copy link" })}
         />

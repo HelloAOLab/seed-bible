@@ -516,7 +516,7 @@ describe("DiscoverPane", () => {
       expect(startPlaying).toHaveBeenCalledWith(playlist);
     });
 
-    it("shares a friend's playlist, and offers nothing to edit or delete it", () => {
+    it("shares a friend's playlist, and offers nothing to edit or delete it", async () => {
       const playlist = createPlaylist({ id: "p1", title: "Psalms of Ascent" });
       const { state } = renderWithFriends(signal([ada]), { ada: [playlist] });
       const items = Array.from(
@@ -526,7 +526,7 @@ describe("DiscoverPane", () => {
       expect(items.map((el) => el.textContent)).toEqual([
         expect.stringContaining("Share playlist"),
       ]);
-      act(() => {
+      await act(async () => {
         (items[0] as HTMLElement).click();
       });
 
@@ -536,6 +536,32 @@ describe("DiscoverPane", () => {
       expect(state.app.toast).toHaveBeenCalledWith(
         "Playlist URL copied to clipboard"
       );
+    });
+
+    it("says so when sharing a friend's playlist can't copy the link", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      (navigator.clipboard.writeText as Mock).mockRejectedValueOnce(
+        new Error("denied")
+      );
+      const { state } = renderWithFriends(signal([ada]), {
+        ada: [createPlaylist({ id: "p1" })],
+      });
+
+      await act(async () => {
+        friendsSection()!
+          .querySelector<HTMLElement>('[role="menuitem"]')!
+          .click();
+      });
+
+      expect(state.app.toast).toHaveBeenCalledWith(
+        "Couldn't copy the playlist link"
+      );
+      expect(state.app.toast).not.toHaveBeenCalledWith(
+        "Playlist URL copied to clipboard"
+      );
+      consoleError.mockRestore();
     });
 
     it("shows a friend's playlist cover, as your own playlists do", () => {
