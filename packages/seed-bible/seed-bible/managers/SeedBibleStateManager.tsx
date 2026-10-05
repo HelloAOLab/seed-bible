@@ -763,7 +763,15 @@ export function createSeedBibleState(
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
     undefined
   );
-  const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
+  const extensions = createExtensionManager(login, {
+    defaultExtensions: SEED_BIBLE_EXTENSIONS,
+  });
+  const chats = createChatsManager(
+    login,
+    i18n,
+    selectedTabTranslationBooks,
+    extensions
+  );
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
   const readingExtensions = createBibleReadingExtensionManager();
@@ -837,9 +845,7 @@ export function createSeedBibleState(
     readingExtensions,
     () => annotations
   );
-  const extensions = createExtensionManager(login, {
-    defaultExtensions: SEED_BIBLE_EXTENSIONS,
-  });
+
   const extensionSettings = createExtensionSettingsManager(
     os,
     login,

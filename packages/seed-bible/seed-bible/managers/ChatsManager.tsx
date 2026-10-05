@@ -23,6 +23,7 @@ import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import { type i18n } from "i18next";
 import type { AIProviderFunctionTool } from "./AIManager";
+import type { ExtensionManager } from "./ExtensionManager";
 
 export const chatMessageBaseSchema = z.object({
   /**
@@ -500,7 +501,70 @@ export interface ChatsManager {
 }
 
 const DEFAULT_LOCAL_PARTICIPANT_ID = "local-user";
+const EXTENSION_ID_BY_PROVIDER_ID: Record<string, string> = {
+  "apologist-chat-provider": "ext_Apologist",
+};
+const EXPLICIT_MENTION_ONLY_PROVIDER_IDS = new Set(["apologist-chat-provider"]);
+function canReceiveDirectMessage(participant: ChatParticipant): boolean {
+  return (
+    (participant.isRemote && !participant.isAI) ||
+    (participant.isAI && !participant.isRemote)
+  );
+}
+function canBeAutoTargeted(participant: ChatParticipant): boolean {
+  return (
+    participant.isAI &&
+    !participant.isRemote &&
+    !EXPLICIT_MENTION_ONLY_PROVIDER_IDS.has(participant.providerId)
+  );
+}
 
+function getTargetParticipants(
+  participants: ChatParticipant[],
+  messages: ChatMessage[],
+  message: ChatMessageOptions,
+  i18n: i18n,
+  isEveryoneMentioned: boolean
+): {
+  messageTargets: string[] | true;
+  providerTargets: AIChatParticipant[];
+} {
+  if (isEveryoneMentioned) {
+    const providerTargets = participants.filter(
+      (participant): participant is AIChatParticipant =>
+        participant.isActive && canBeAutoTargeted(participant)
+    );
+    return {
+      messageTargets: true,
+      providerTargets,
+    };
+  }
+  const hasExplicitMention =
+    message.type === "text" && extractMentionTokens(message.text).length > 0;
+  const resolvedTargetParticipants =
+    message.type === "text"
+      ? resolveMessageTargets(participants, message.text, i18n)
+      : [];
+  const defaultProviderParticipant = getMostRecentProviderParticipant(
+    participants,
+    messages
+  );
+  const targetParticipants =
+    resolvedTargetParticipants.length > 0
+      ? resolvedTargetParticipants
+      : hasExplicitMention
+        ? []
+        : defaultProviderParticipant
+          ? [defaultProviderParticipant]
+          : [];
+  return {
+    messageTargets: targetParticipants.map((target) => target.id),
+    providerTargets: targetParticipants.filter(
+      (target): target is AIChatParticipant =>
+        target.isActive && target.isAI && !target.isRemote
+    ),
+  };
+}
 function getParticipantName(profile: UserProfile | null): string | null {
   const name = profile?.name;
   if (typeof name !== "string") {
@@ -878,29 +942,62 @@ function resolveParticipantFromToken(
   participantIdAliases: Readonly<Record<string, string>>,
   t: (key: string) => string
 ): ChatParticipant | null {
-  const byId = participants.find(
-    (p) => p.id === token || p.id.slice(0, 6) === token
-  );
-  if (byId) return byId;
+  const normalizedToken = token.trim().toLowerCase();
 
-  const resolvedId = participantIdAliases[token];
-  if (resolvedId) {
-    const aliased = participants.find((p) => p.id === resolvedId);
-    if (aliased) return aliased;
+  if (!normalizedToken) {
+    return null;
   }
 
+  // Prefer an exact participant ID.
+  const exactParticipant = participants.find(
+    (participant) => participant.id.toLowerCase() === normalizedToken
+  );
+
+  if (exactParticipant) {
+    return exactParticipant;
+  }
+
+  // Only resolve a short ID when it is unambiguous.
+  const shortIdMatches = participants.filter(
+    (participant) =>
+      participant.id.slice(0, 6).toLowerCase() === normalizedToken
+  );
+
+  if (shortIdMatches.length === 1) {
+    return shortIdMatches[0] ?? null;
+  }
+
+  // Fall back to an explicit participant ID alias.
+  const resolvedId = participantIdAliases[token];
+
+  if (resolvedId) {
+    const aliasedParticipant = participants.find(
+      (participant) => participant.id === resolvedId
+    );
+
+    if (aliasedParticipant) {
+      return aliasedParticipant;
+    }
+  }
+
+  // Finally, resolve by display name.
   for (const participant of participants) {
-    if (!participant.name) continue;
+    if (!participant.name) {
+      continue;
+    }
+
     const displayName =
       typeof participant.name === "string"
         ? participant.name
         : translateTitle(t, participant.name);
-    if (displayName === token) return participant;
+
+    if (displayName.trim().toLowerCase() === normalizedToken) {
+      return participant;
+    }
   }
 
   return null;
 }
-
 function parseTextMessage(
   message: TextChatMessage,
   participants: ChatParticipant[],
@@ -992,53 +1089,106 @@ export function resolveMessageTargets(
   text: string,
   i18n: i18n
 ): ChatParticipant[] {
-  if (extractMentionTokens(text).length === 0) {
+  const tokens = extractMentionTokens(text);
+
+  if (tokens.length === 0) {
     return [];
   }
 
   const matches = new Map<string, ChatParticipant>();
 
-  for (const participant of participants) {
-    if (!participant.isActive) {
+  for (const token of tokens) {
+    const normalizedToken = token.trim().toLowerCase();
+
+    if (!normalizedToken) {
       continue;
     }
+    const selfParticipant = participants.find(
+      (participant) => participant.isSelf
+    );
+
     if (
-      textIncludesMention(text, participant.id) ||
-      textIncludesMention(text, participant.id.slice(0, 6))
+      selfParticipant &&
+      (selfParticipant.id.toLowerCase() === normalizedToken ||
+        selfParticipant.id.slice(0, 6).toLowerCase() === normalizedToken)
     ) {
-      matches.set(participant.id, participant);
+      continue;
     }
-  }
+    /*
+     * Never target the current user by name either.
+     */ if (normalizedToken === "you") {
+      continue;
+    }
+    /*
+     * First resolve an exact participant ID.
+     *
+     * Exact IDs are safe because participant IDs are unique.
+     */
+    const exactParticipant = participants.find(
+      (participant) =>
+        participant.isActive && participant.id.toLowerCase() === normalizedToken
+    );
 
-  for (const participant of participants) {
-    if (!participant.isActive) {
-      continue;
-    }
-    if (!participant.name) {
+    if (exactParticipant) {
+      if (canReceiveDirectMessage(exactParticipant)) {
+        matches.set(exactParticipant.id, exactParticipant);
+      }
+
       continue;
     }
 
-    const name = participant.name;
-    if (typeof name === "string" && !textIncludesMention(text, name)) {
+    /*
+     * Resolve a short participant ID only when it is unambiguous.
+     * participant can share the same prefix as its owner.
+     */
+    const shortIdMatches = participants.filter(
+      (participant) =>
+        participant.isActive &&
+        participant.id.slice(0, 6).toLowerCase() === normalizedToken
+    );
+    //If the token is ambiguous, do not target anybody
+    if (shortIdMatches.length > 1) {
       continue;
-    } else if (typeof name === "object") {
-      const translatedName = translateTitle(i18n.t, name);
-      if (!textIncludesMention(text, translatedName)) {
+    }
+    if (shortIdMatches.length === 1) {
+      const participant = shortIdMatches[0];
+      if (!participant) {
         continue;
       }
+      if (canReceiveDirectMessage(participant)) {
+        matches.set(participant.id, participant);
+      }
+      continue;
     }
+    /*
+     * Finally resolve by display name.
+     */
+    for (const participant of participants) {
+      if (!participant.isActive || !participant.name) {
+        continue;
+      }
 
-    if (
-      (participant.isRemote && !participant.isAI) ||
-      (!participant.isRemote && participant.isAI)
-    ) {
-      matches.set(participant.id, participant);
+      const name =
+        typeof participant.name === "string"
+          ? participant.name
+          : translateTitle(i18n.t, participant.name);
+
+      if (name.trim().toLowerCase() === "you") {
+        continue;
+      }
+
+      if (!textIncludesMention(text, name)) {
+        continue;
+      }
+
+      if (canReceiveDirectMessage(participant)) {
+        matches.set(participant.id, participant);
+      }
     }
   }
 
   return Array.from(matches.values());
 }
-
 export function resolveMessageAuthors(
   participants: ChatParticipant[],
   message: ChatMessage,
@@ -1087,13 +1237,43 @@ function resolveMessageTargetsWithAliases(
   );
 
   for (const token of extractMentionTokens(text)) {
+    const normalizedToken = token.trim().toLowerCase();
+
+    /*
+     @you must never resolve to an AI/provider.
+     */
+    if (normalizedToken === "you") {
+      continue;
+    }
+
+    // Do not allow an alias to turn that into an AI participant.
+    const selfParticipant = participants.find(
+      (participant) => participant.isSelf
+    );
+
+    if (
+      selfParticipant &&
+      (selfParticipant.id.toLowerCase() === normalizedToken ||
+        selfParticipant.id.slice(0, 6).toLowerCase() === normalizedToken)
+    ) {
+      continue;
+    }
+
     const resolvedId = participantIdAliases[token];
+
     if (!resolvedId) {
       continue;
     }
 
-    const resolvedParticipant = participants.find((p) => p.id === resolvedId);
-    if (resolvedParticipant) {
+    const resolvedParticipant = participants.find(
+      (participant) => participant.id === resolvedId
+    );
+
+    if (!resolvedParticipant || resolvedParticipant.isSelf) {
+      continue;
+    }
+    //Only allow aliases to resolve to actual chat targets.
+    if (canReceiveDirectMessage(resolvedParticipant)) {
       matches.set(resolvedParticipant.id, resolvedParticipant);
     }
   }
@@ -1132,6 +1312,7 @@ function getMostRecentProviderParticipant(
 ): AIChatParticipant | null {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
+
     if (!message) {
       continue;
     }
@@ -1142,14 +1323,19 @@ function getMostRecentProviderParticipant(
       authorIndex -= 1
     ) {
       const authorId = message.authors[authorIndex];
+
       if (!authorId) {
         continue;
       }
 
       const participant = participants.find(
         (entry): entry is AIChatParticipant =>
-          entry.isAI && !entry.isRemote && entry.id === authorId
+          entry.isAI &&
+          !entry.isRemote &&
+          entry.id === authorId &&
+          !EXPLICIT_MENTION_ONLY_PROVIDER_IDS.has(entry.providerId)
       );
+
       if (participant) {
         return participant;
       }
@@ -1158,7 +1344,10 @@ function getMostRecentProviderParticipant(
 
   return (
     participants.find(
-      (entry): entry is AIChatParticipant => entry.isAI && !entry.isRemote
+      (entry): entry is AIChatParticipant =>
+        entry.isAI &&
+        !entry.isRemote &&
+        !EXPLICIT_MENTION_ONLY_PROVIDER_IDS.has(entry.providerId)
     ) ?? null
   );
 }
@@ -1167,7 +1356,8 @@ function createSharedChatSession(
   session: BibleReadingSession,
   chatProviders: Signal<ChatProvider[]>,
   i18nManager: I18nManager,
-  chatContext: ReadonlySignal<LocalChatContext>
+  chatContext: ReadonlySignal<LocalChatContext>,
+  extensions?: ExtensionManager
 ): SharedChatSession {
   const i18n = i18nManager.i18n;
   const chats = session.document.getArray<unknown>("chats");
@@ -1539,7 +1729,9 @@ function createSharedChatSession(
     });
   });
 
-  const addSharedProviderParticipant = (participantId: string) => {
+  const addSharedProviderParticipant = async (
+    participantId: string
+  ): Promise<void> => {
     const currentLocalParticipantId = localParticipantId.value;
     if (!currentLocalParticipantId) {
       return;
@@ -1566,7 +1758,7 @@ function createSharedChatSession(
     );
     if (provider?.onJoinChat) {
       const merged = chatContext.value;
-      provider.onJoinChat({
+      await provider.onJoinChat({
         chatId,
         messages: messages.value,
         participants: participants.value,
@@ -1585,6 +1777,44 @@ function createSharedChatSession(
       }
     });
   };
+  const ensureProviderExtensionInstalled = async (
+    providerId: string
+  ): Promise<boolean> => {
+    const extensionId = EXTENSION_ID_BY_PROVIDER_ID[providerId];
+
+    if (!extensionId) {
+      return true;
+    }
+
+    if (!extensions) {
+      console.error(
+        `[Chat] Cannot install extension '${extensionId}': ExtensionManager is unavailable.`
+      );
+      return false;
+    }
+
+    const extensionEntry = extensions.extensions.value.find(
+      (entry) => entry.extension?.meta.id === extensionId
+    );
+
+    if (!extensionEntry?.extension) {
+      console.error(
+        `[Chat] Cannot install extension '${extensionId}' for provider '${providerId}': extension not found.`
+      );
+      return false;
+    }
+
+    return extensions.loadExtension(extensionEntry.extension);
+  };
+  const getMentionedProviderIds = (text: string): string[] => {
+    const providerIds: string[] = [];
+
+    if (textIncludesMention(text, "Apologist")) {
+      providerIds.push("apologist-chat-provider");
+    }
+
+    return providerIds;
+  };
 
   const sendMessage = async (message: ChatMessageOptions) => {
     const authorId =
@@ -1595,7 +1825,30 @@ function createSharedChatSession(
     const isEveryoneMentioned =
       message.type === "text" && textMentionsEveryone(message.text);
 
-    // Auto-add available participants that are mentioned before resolving targets
+    /*
+     * Install extensions for providers explicitly mentioned in the message
+     * before resolving available participants. A provider cannot appear in
+     * availableParticipants until its extension has registered the provider.
+     */
+    const mentionedProviderIds =
+      !isEveryoneMentioned && message.type === "text"
+        ? getMentionedProviderIds(message.text)
+        : [];
+
+    for (const providerId of mentionedProviderIds) {
+      const installed = await ensureProviderExtensionInstalled(providerId);
+
+      if (!installed) {
+        console.error(
+          `[Chat] Failed to install extension for provider '${providerId}'.`
+        );
+      }
+    }
+
+    /*
+     * Now that newly installed extensions have had a chance to register their
+     * providers, resolve the providers that were mentioned.
+     */
     const mentionedAvailable =
       !isEveryoneMentioned && message.type === "text"
         ? resolveMessageTargetsWithAliases(
@@ -1605,12 +1858,19 @@ function createSharedChatSession(
             i18n
           )
         : [];
+
     for (const newParticipant of mentionedAvailable) {
-      addSharedProviderParticipant(newParticipant.id);
+      await addSharedProviderParticipant(newParticipant.id);
     }
 
     const targetParticipants: ChatParticipant[] = isEveryoneMentioned
-      ? participants.value.filter((p) => p.isActive && p.isAI && !p.isRemote)
+      ? participants.value.filter(
+          (p) =>
+            p.isActive &&
+            p.isAI &&
+            !p.isRemote &&
+            !EXPLICIT_MENTION_ONLY_PROVIDER_IDS.has(p.providerId)
+        )
       : message.type === "text"
         ? resolveMessageTargetsWithAliases(
             [...participants.value, ...mentionedAvailable],
@@ -1635,16 +1895,13 @@ function createSharedChatSession(
         if (!participant.isAI || participant.isRemote || !authorId) {
           return;
         }
-
         const provider = chatProviders.value.find(
           (entry) => entry.id === participant.providerId
         );
         if (!provider) {
           return;
         }
-
         setParticipantTyping(participant.id, true);
-
         try {
           const merged = chatContext.value;
           const response = await provider.generateResponse({
@@ -1748,6 +2005,13 @@ function createSharedChatSession(
       const provider = chatProviders.value.find(
         (entry) => entry.id === localProvider.providerId
       );
+
+      if (!provider) {
+        console.error(
+          `[Chat] Provider '${localProvider.providerId}' was not registered after extension installation.`
+        );
+        return;
+      }
       if (provider && provider.onLeaveChat) {
         const merged = chatContext.value;
         provider.onLeaveChat({
@@ -2025,44 +2289,24 @@ function createLocalChatSession(
     // Auto-add available participants that are mentioned
     if (message.type === "text") {
       const toAdd = isEveryoneMentioned
-        ? availableParticipants.value
+        ? availableParticipants.value.filter(canBeAutoTargeted)
         : resolveMessageTargets(
             availableParticipants.value,
             message.text,
             i18n
           );
+
       for (const newParticipant of toAdd) {
         addLocalProviderParticipant(newParticipant.id);
       }
     }
-
-    let messageTargets: string[] | true;
-    let providerTargets: AIChatParticipant[];
-    if (isEveryoneMentioned) {
-      messageTargets = true;
-      providerTargets = participants.value.filter(
-        (p): p is AIChatParticipant => p.isAI && !p.isRemote && p.isActive
-      );
-    } else {
-      const resolvedTargetParticipants =
-        message.type === "text"
-          ? resolveMessageTargets(participants.value, message.text, i18n)
-          : [];
-      const defaultProviderParticipant = getMostRecentProviderParticipant(
-        participants.value,
-        messages.value
-      );
-      const targetParticipants =
-        resolvedTargetParticipants.length > 0
-          ? resolvedTargetParticipants
-          : defaultProviderParticipant
-            ? [defaultProviderParticipant]
-            : [];
-      messageTargets = targetParticipants.map((target) => target.id);
-      providerTargets = targetParticipants.filter(
-        (target): target is AIChatParticipant => target.isAI && !target.isRemote
-      );
-    }
+    const { messageTargets, providerTargets } = getTargetParticipants(
+      participants.value,
+      messages.value,
+      message,
+      i18n,
+      isEveryoneMentioned
+    );
     const nextMessage = createChatMessage(
       message,
       participant.id ? [participant.id] : [],
@@ -2074,7 +2318,7 @@ function createLocalChatSession(
     for (const target of providerTargets) {
       void (async () => {
         const provider = chatProviders.value.find(
-          (entry) => entry.id === target.id
+          (entry) => entry.id === target.providerId
         );
         if (!provider) {
           return;
@@ -2236,7 +2480,8 @@ export function createChatsManager(
    * localized scripture names (shared chats read books from the session's
    * reading state instead).
    */
-  translationBooks?: ReadonlySignal<TranslationBook[] | undefined>
+  translationBooks?: ReadonlySignal<TranslationBook[] | undefined>,
+  extensions?: ExtensionManager
 ): ChatsManager {
   const chats = signal<ChatSession[]>([]);
   const isOpen = signal<boolean>(false);
@@ -2334,7 +2579,8 @@ export function createChatsManager(
       session,
       chatProviders,
       i18nManager,
-      context
+      context,
+      extensions
     );
     chats.value = [...chats.value, chat];
     return chat;

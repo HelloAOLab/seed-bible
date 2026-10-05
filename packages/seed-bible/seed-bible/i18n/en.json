@@ -506,6 +506,7 @@
   "inactive": "Inactive",
   "available": "Available",
   "everyone": "Everyone",
+  "ai-assistants": "AI assistants",
   "open-chat": "Open chat",
   "tutorial.promptTitle": "Welcome to Seed Bible. Would you like a tutorial?",
   "tutorial.promptBody": "A guided tour is available to help you learn the ins and outs of Seed Bible.",
