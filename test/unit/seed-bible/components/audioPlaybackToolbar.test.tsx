@@ -118,7 +118,7 @@ describe("BibleReaderToolbar — audio playback", () => {
       expect(toolbar.querySelector('[role="slider"]')).not.toBeNull();
       expect(
         toolbar.querySelector(".sb-audio-scrubber-remaining")?.textContent
-      ).toBe("-1:00");
+      ).toBe("1:00");
       expect(button("Pause")).not.toBeNull();
       expect(button("Stop")).toBeNull();
 

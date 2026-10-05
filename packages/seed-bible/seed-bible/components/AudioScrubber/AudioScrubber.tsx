@@ -24,7 +24,7 @@ function progressFraction(time: number, duration: number | null): number {
 
 interface AudioScrubberProps {
   playback: AudioPlaybackController;
-  /** Shows how much is left, as `-m:ss`, after the bar. */
+  /** Shows how much is left, as `m:ss`, after the bar. */
   showTimeRemaining?: boolean;
   className?: string;
 }
@@ -199,9 +199,7 @@ export function AudioScrubber(props: AudioScrubberProps) {
       </div>
       {props.showTimeRemaining && (
         <span className="sb-audio-scrubber-remaining">
-          {duration === null
-            ? "--:--"
-            : `-${formatPlaybackTime(duration - time)}`}
+          {duration === null ? "--:--" : formatPlaybackTime(duration - time)}
         </span>
       )}
     </div>

@@ -132,7 +132,7 @@ describe("AudioScrubber", () => {
 
     expect(
       container.querySelector(".sb-audio-scrubber-remaining")?.textContent
-    ).toBe("-1:15");
+    ).toBe("1:15");
   });
 
   it("shows a placeholder for the time remaining before the length is known", async () => {
