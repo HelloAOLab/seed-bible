@@ -8,6 +8,8 @@ import {
   unregisterExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import { SensitiveSettingsError } from "@packages/seed-bible/seed-bible/managers/ExtensionSensitiveSettings";
+import { ExtensionMetaSchema } from "../../../script/lib/extension";
+import apologistManifest from "@packages/apologist-extension/extension.json";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../seed-bible/testUtils/mockI18n");
@@ -427,6 +429,42 @@ describe("initApologistExtension discover provider", () => {
       ).rejects.toThrow("server_error: boom");
       expect(fetchMock).not.toHaveBeenCalled();
     });
+  });
+
+  it("declares a valid sensitive setting that sends the API key as x-api-key", () => {
+    const result = ExtensionMetaSchema.safeParse(apologistManifest);
+
+    expect(result.error?.issues).toBeUndefined();
+    expect(result.data?.sensitive?.apologist).toEqual({
+      host: "apologist.seedbible.io",
+      requestMapping: { "headers.x-api-key": "apiKey" },
+    });
+  });
+
+  it("sends the API key from the link as x-api-key on regular chat requests", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        'data: {"choices":[{"delta":{"content":"Hi"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n',
+        { status: 200 }
+      )
+    );
+    const context = install("?apologistApiKey=url_key");
+    const chatProvider = (context.chats.registerProvider as Mock).mock
+      .calls[0]![0];
+
+    for await (const message of chatProvider.generateResponse({
+      instructions: "Reading John 3",
+      messages: [],
+      participants: [],
+    })) {
+      for await (const _chunk of message.text) {
+        // drain the stream
+      }
+    }
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe("https://apologist.seedbible.io/api/v1/chat/completions");
+    expect(init.headers).toEqual({ "x-api-key": "url_key" });
   });
 
   it.each(["not_set", "signed_out", "not_loaded"] as const)(

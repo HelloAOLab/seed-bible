@@ -9,9 +9,8 @@
   "sensitive": {
     "apologist": {
       "host": "apologist.seedbible.io",
-      "visibility": "private",
       "requestMapping": {
-        "headers.authorization.bearer": "apiKey"
+        "headers.x-api-key": "apiKey"
       }
     }
   },
@@ -20,7 +19,7 @@
       "title": "Apologist",
       "description": "Be curious. Be humble. Learn boldly. This is AI for seekers of spiritual truth",
       "setting-apiKey-title": "API key",
-      "setting-apiKey-description": "The API key for your Apologist agent. It's sent as a bearer token to the agent's host.",
+      "setting-apiKey-description": "The API key for your Apologist agent. It's sent in the x-api-key header to the agent's host.",
       "sensitive-apologist-title": "Apologist agent"
     },
     "es": {

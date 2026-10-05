@@ -26,11 +26,6 @@ export interface ApologistRequestInit {
    * sends the headers its saved values fill in.
    */
   headers?: Record<string, string>;
-  /**
-   * How a regular (non-proxy) request passes the API key. The proxy can only
-   * fill in `Authorization`, so proxied requests always send a bearer token.
-   */
-  apiKeyHeader?: "authorization" | "x-api-key";
 }
 
 export type ApologistRequest = (
@@ -71,11 +66,7 @@ export function createApologistRequest(
 
     const headers: Record<string, string> = { ...init.headers };
     if (options.apiKey) {
-      if (init.apiKeyHeader === "x-api-key") {
-        headers["x-api-key"] = options.apiKey;
-      } else {
-        headers["Authorization"] = `Bearer ${options.apiKey}`;
-      }
+      headers["x-api-key"] = options.apiKey;
     }
     return fetch(`https://${options.domain}${path}`, {
       method,

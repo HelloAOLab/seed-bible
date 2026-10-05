@@ -184,7 +184,6 @@ export async function searchApologistContent(
   const response = await request("/api/v1/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    apiKeyHeader: "x-api-key",
     body: {
       query: options.query,
       limit: 20,

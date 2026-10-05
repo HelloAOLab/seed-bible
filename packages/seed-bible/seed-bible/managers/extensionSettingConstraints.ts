@@ -79,14 +79,58 @@ export interface ExtensionSensitiveProxyDefinition {
   requestMapping: Record<string, string>;
 }
 
+// CasualOS refuses these so a proxy can't spoof who sent a request or how it
+// was routed. Mirrors `FORBIDDEN_CUSTOM_HEADER_NAMES` and
+// `FORBIDDEN_CUSTOM_HEADER_PREFIXES` in CasualOS's `ProxyRecordData.ts`.
+const FORBIDDEN_CUSTOM_HEADER_NAMES: ReadonlySet<string> = new Set([
+  "x-real-ip",
+  "x-client-ip",
+  "x-cluster-client-ip",
+  "x-true-client-ip",
+  "x-originating-ip",
+  "x-remote-ip",
+  "x-remote-addr",
+  "x-proxyuser-ip",
+  "x-host",
+  "x-http-host-override",
+  "x-original-host",
+  "x-original-url",
+  "x-original-uri",
+  "x-original-forwarded-for",
+  "x-rewrite-url",
+  "x-http-method",
+  "x-http-method-override",
+  "x-method-override",
+  "x-middleware-subrequest",
+]);
+const FORBIDDEN_CUSTOM_HEADER_PREFIXES = [
+  "x-forwarded-",
+  "x-envoy-",
+  "x-amzn-",
+];
+
+function isSupportedCustomHeader(property: string): boolean {
+  const match = /^headers\.(x-[a-z0-9_-]+)$/i.exec(property);
+  if (!match) {
+    return false;
+  }
+  const name = match[1]!.toLowerCase();
+  return (
+    !FORBIDDEN_CUSTOM_HEADER_NAMES.has(name) &&
+    !FORBIDDEN_CUSTOM_HEADER_PREFIXES.some((prefix) => name.startsWith(prefix))
+  );
+}
+
 /**
  * The request properties a CasualOS proxy record can fill in: a property of
- * the JSON body, or the `Authorization` header (as-is, or as a bearer token).
+ * the JSON body, the `Authorization` header (as-is, or as a bearer token), or
+ * a custom `x-` header such as `x-api-key`.
  */
 export function isSupportedSensitiveRequestProperty(property: string): boolean {
   return (
     property === "headers.authorization" ||
     property === "headers.authorization.bearer" ||
+    isSupportedCustomHeader(property) ||
     (property.startsWith("body.") && property.length > "body.".length)
   );
 }
