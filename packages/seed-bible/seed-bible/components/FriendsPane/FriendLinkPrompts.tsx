@@ -315,6 +315,29 @@ function FriendRequestLinkPrompt(props: {
   const request = friends.incomingRequests.value.find(
     (r) => r.id === requestId
   );
+  // The sender opening their own link, to check it, say: "isn't available"
+  // would read as if sending had failed.
+  const sent = request
+    ? undefined
+    : friends.outgoingRequests.value.find((r) => r.id === requestId);
+
+  if (sent) {
+    return (
+      <div className="sb-confirm-delete">
+        <PersonCard person={sent} />
+        <p className="sb-confirm-delete-message">
+          {t("friend-request-link-own", {
+            name: displayNameOf(sent, t),
+            defaultValue:
+              "This is the link to your friend request to {{name}}. Send it to them so they can accept.",
+          })}
+        </p>
+        <PromptActions>
+          <CloseButton onClose={onClose} primary />
+        </PromptActions>
+      </div>
+    );
+  }
 
   if (!request) {
     return (

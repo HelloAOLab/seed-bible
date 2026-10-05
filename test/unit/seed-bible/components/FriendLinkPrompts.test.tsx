@@ -459,6 +459,20 @@ describe("friend links", () => {
       expect(button("Accept")).toBeUndefined();
     });
 
+    it("tells the sender the link is for the person they asked", async () => {
+      const request = server.requestTo(ADA_ID);
+      await openWith(`?friendRequest=${request.id}`);
+      // Their name comes from the profile, which loads after the lists.
+      await vi.waitFor(() =>
+        expect(text()).toContain(
+          "This is the link to your friend request to Ada."
+        )
+      );
+
+      expect(text()).not.toContain("isn't available");
+      expect(button("Accept")).toBeUndefined();
+    });
+
     it("signs a signed-out visitor in, then shows the request", async () => {
       userId.value = null;
       const request = server.requestFrom(ADA_ID);
