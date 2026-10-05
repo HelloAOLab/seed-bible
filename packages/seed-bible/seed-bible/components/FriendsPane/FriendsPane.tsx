@@ -58,6 +58,8 @@ function CopyButton(props: {
   label: string;
   toast: Toast;
   className?: string;
+  /** For when the visible label alone doesn't say whose link it copies. */
+  ariaLabel?: string;
 }) {
   const { t } = useI18n();
   const copied = useSignal(false);
@@ -81,6 +83,7 @@ function CopyButton(props: {
       <button
         type="button"
         className={props.className ?? "sb-friends-button"}
+        aria-label={props.ariaLabel}
         onClick={() => void copy()}
       >
         {/* Both labels share one grid cell, so the button is as wide as the
@@ -469,6 +472,7 @@ function OutgoingRequestRow(props: {
   const { request, friends, navigation, profiles, toast } = props;
   const { t } = useI18n();
   const busy = useSignal(false);
+  const name = displayNameOf(request, t);
 
   return (
     <li className="sb-friends-row">
@@ -484,10 +488,18 @@ function OutgoingRequestRow(props: {
           toast={toast}
           text={getFriendRequestUrl(navigation, request.id)}
           label={t("copy-friend-request-link", { defaultValue: "Copy link" })}
+          ariaLabel={t("copy-friend-request-link-user", {
+            name,
+            defaultValue: "Copy the link to your friend request to {{name}}",
+          })}
         />
         <BusyButton
           className="sb-friends-button"
           busy={busy.value}
+          ariaLabel={t("cancel-friend-request-user", {
+            name,
+            defaultValue: "Cancel your friend request to {{name}}",
+          })}
           onClick={() => {
             busy.value = true;
             void friends
@@ -495,7 +507,7 @@ function OutgoingRequestRow(props: {
               .then(() =>
                 toast(
                   t("friend-request-canceled", {
-                    name: displayNameOf(request, t),
+                    name,
                     defaultValue: "Canceled your friend request to {{name}}.",
                   })
                 )
@@ -606,6 +618,10 @@ function FriendRow(props: {
         <button
           type="button"
           className="sb-friends-button"
+          aria-label={t("remove-friend-user", {
+            name: displayNameOf(friend, t),
+            defaultValue: "Remove {{name}} as a friend",
+          })}
           onClick={openConfirm}
         >
           {t("remove", { defaultValue: "Remove" })}

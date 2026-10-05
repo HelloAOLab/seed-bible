@@ -582,6 +582,26 @@ describe("FriendsPane", () => {
       );
     });
 
+    // Several rows each have one, so the visible label alone would read as
+    // "Remove, Remove, Remove…".
+    it("says who Remove, Cancel and Copy link act on", async () => {
+      const state = createState();
+      server.friendsWith(ADA_ID);
+      server.requestTo(BOB_ID);
+      await renderPane(state);
+
+      expect(
+        button(section("Friends")!, "Remove")!.getAttribute("aria-label")
+      ).toBe("Remove Ada as a friend");
+      const sent = section("Sent requests")!;
+      expect(button(sent, "Cancel")!.getAttribute("aria-label")).toBe(
+        "Cancel your friend request to Bob"
+      );
+      expect(button(sent, "Copy link")!.getAttribute("aria-label")).toBe(
+        "Copy the link to your friend request to Bob"
+      );
+    });
+
     it("announces that something was copied", async () => {
       await renderPane(createState());
       const row = container.querySelector(".sb-friends-my-id")!;
