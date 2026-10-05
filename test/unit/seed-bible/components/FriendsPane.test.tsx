@@ -12,7 +12,11 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
+import {
+  fail,
+  fakeSharedPermissions,
+  ME,
+} from "../testUtils/fakeSharedPermissions";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -568,6 +572,70 @@ describe("FriendsPane", () => {
       await click(button(row, "Copy your user ID"));
 
       expect(status()).toBe("Copied");
+    });
+  });
+
+  // Each of these is a request the server turns down: the user is told,
+  // nothing changes, and the button can be pressed again.
+  describe("when the server refuses", () => {
+    it("says so when sending a request fails", async () => {
+      await renderPane(createState());
+      server.spies.request.mockResolvedValueOnce(fail("server_error") as never);
+
+      await typeAndSend(ADA_ID);
+
+      expect(text()).toContain("Couldn't send the request. Try again.");
+      expect(outcomeIsError()).toBe(true);
+      expect(section("Sent requests")).toBeNull();
+      expect(button(container, "Send request")!.disabled).toBe(false);
+    });
+
+    it("says so when answering a request fails", async () => {
+      const state = createState();
+      server.requestFrom(ADA_ID);
+      await renderPane(state);
+      server.spies.accept.mockResolvedValueOnce(fail("server_error") as never);
+
+      await click(button(section("Friend requests")!, "Accept"));
+
+      expect(toast).toHaveBeenCalledWith(
+        "Couldn't answer the request. Try again."
+      );
+      expect(personNames(section("Friend requests"))).toEqual(["Ada"]);
+      expect(button(section("Friend requests")!, "Accept")!.disabled).toBe(
+        false
+      );
+    });
+
+    it("says so when cancelling a request fails", async () => {
+      const state = createState();
+      server.requestTo(ADA_ID);
+      await renderPane(state);
+      server.spies.revoke.mockResolvedValueOnce(fail("server_error") as never);
+
+      await click(button(section("Sent requests")!, "Cancel"));
+
+      expect(toast).toHaveBeenCalledWith(
+        "Couldn't cancel the request. Try again."
+      );
+      expect(personNames(section("Sent requests"))).toEqual(["Ada"]);
+    });
+
+    it("says so when removing a friend fails, and keeps them", async () => {
+      const state = createState();
+      server.friendsWith(ADA_ID);
+      await renderPane(state);
+      server.spies.revoke.mockResolvedValueOnce(fail("server_error") as never);
+
+      await click(button(section("Friends")!, "Remove"));
+      const dialog = document.createElement("div");
+      act(() => render(modalContent!(), dialog));
+      await click(button(dialog, "Remove"));
+
+      expect(toast).toHaveBeenCalledWith(
+        "Couldn't remove the friend. Try again."
+      );
+      expect(personNames(section("Friends"))).toEqual(["Ada"]);
     });
   });
 

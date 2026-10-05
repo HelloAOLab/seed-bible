@@ -12,7 +12,11 @@ import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/Logi
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
-import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
+import {
+  fail,
+  fakeSharedPermissions,
+  ME,
+} from "../testUtils/fakeSharedPermissions";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -141,6 +145,22 @@ describe("ParticipantFriendButton", () => {
     await settle();
 
     expect(toast).toHaveBeenCalledWith("You're now friends with Ada.");
+  });
+
+  it("says so when sending fails, and can be pressed again", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    await renderButton(ADA_ID);
+    server.spies.request.mockResolvedValueOnce(fail("server_error") as never);
+
+    act(() => button("Add friend")!.click());
+    await settle();
+
+    expect(toast).toHaveBeenCalledWith("Couldn't send the request. Try again.");
+    expect(server.rows).toEqual([]);
+    expect(button("Add friend")!.disabled).toBe(false);
+    consoleError.mockRestore();
   });
 
   it("offers to accept a request they already sent", async () => {

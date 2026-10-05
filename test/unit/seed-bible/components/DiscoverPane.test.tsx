@@ -1,6 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { computed, signal } from "@preact/signals";
+import { computed, signal, type Signal } from "@preact/signals";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
@@ -26,6 +26,7 @@ import type {
   ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -148,6 +149,8 @@ function createMockPlaylists(
     editingPlaylist?: Playlist | null;
     playing?: ReturnType<typeof createPlayingState> | null;
     deletePlaylistImpl?: () => Promise<void>;
+    /** Each friend's playlists, by user id. */
+    friendPlaylists?: Record<string, Playlist[]>;
   } = {}
 ): MockPlaylistsResult {
   const createNewPlaylist = vi.fn();
@@ -202,7 +205,9 @@ function createMockPlaylists(
     updateEditingPlaylistItem: vi.fn(),
     removeEditingPlaylistItem: vi.fn(),
     goBackFromPlayingView,
-    getUserPlaylists: vi.fn(() => signal([])),
+    getUserPlaylists: vi.fn((userId: string) =>
+      signal(overrides.friendPlaylists?.[userId] ?? [])
+    ),
   } as unknown as PlaylistManager;
 
   return {
@@ -388,8 +393,11 @@ function createMockState(
     userId?: string | null;
     discover?: DiscoverManager;
     friendIds?: string[];
+    /** A friends list a test can change; `friendIds` follows it. */
+    friends?: Signal<Friend[]>;
   } = {}
 ): SeedBibleState {
+  const friendsList = overrides.friends;
   return {
     app: {
       isMobile: signal(isMobile),
@@ -412,15 +420,23 @@ function createMockState(
     panes: {
       closeFullscreenPanes: vi.fn(),
     },
-    friends: {
-      friends: signal([]),
-      friendIds: signal(overrides.friendIds ?? []),
-    },
+    friends: friendsList
+      ? {
+          friends: friendsList,
+          friendIds: computed(() => friendsList.value.map((f) => f.userId)),
+        }
+      : {
+          friends: signal([]),
+          friendIds: signal(overrides.friendIds ?? []),
+        },
   } as unknown as SeedBibleState;
 }
 
 describe("DiscoverPane", () => {
   let container: HTMLDivElement;
+
+  const ada: Friend = { userId: "ada", name: "Ada", pictureUrl: null };
+  const bob: Friend = { userId: "bob", name: "Bob", pictureUrl: null };
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -435,6 +451,141 @@ describe("DiscoverPane", () => {
     render(null, container);
     container.remove();
     vi.restoreAllMocks();
+  });
+
+  describe("playlists from your friends", () => {
+    const friendsSection = () =>
+      Array.from(container.querySelectorAll(".sb-discover-section")).find(
+        (el) => el.textContent?.includes("Playlists from your friends")
+      ) ?? null;
+    const groupNames = () =>
+      Array.from(
+        container.querySelectorAll(".sb-friend-playlists-group-name")
+      ).map((el) => el.textContent);
+
+    const renderWithFriends = (
+      friends: Signal<Friend[]>,
+      friendPlaylists: Record<string, Playlist[]>
+    ) => {
+      const mock = createMockPlaylists({ friendPlaylists });
+      const { annotations } = createMockAnnotations();
+      const state = createMockState(false, { friends });
+      act(() => {
+        render(
+          <DiscoverPane
+            tabs={createMockTabs(createMockTab())}
+            playlists={mock.playlists}
+            annotations={annotations}
+            modals={createModalManager()}
+            state={state}
+            toast={state.app.toast}
+          />,
+          container
+        );
+      });
+      return { ...mock, state };
+    };
+
+    it("lists each friend's playlists under their name, leaving out friends with none", () => {
+      renderWithFriends(signal([ada, bob]), {
+        ada: [createPlaylist({ id: "p1", title: "Psalms of Ascent" })],
+      });
+
+      expect(groupNames()).toEqual(["Ada"]);
+      expect(friendsSection()?.textContent).toContain("Psalms of Ascent");
+    });
+
+    it("is left out when no friend has a playlist", () => {
+      renderWithFriends(signal([ada]), {});
+
+      expect(friendsSection()).toBeNull();
+    });
+
+    it("plays a friend's playlist", () => {
+      const playlist = createPlaylist({ id: "p1", title: "Psalms of Ascent" });
+      const { startPlaying } = renderWithFriends(signal([ada]), {
+        ada: [playlist],
+      });
+
+      act(() => {
+        friendsSection()!
+          .querySelector<HTMLButtonElement>(".sb-discover-item-play")!
+          .click();
+      });
+
+      expect(startPlaying).toHaveBeenCalledWith(playlist);
+    });
+
+    it("shares a friend's playlist, and offers nothing to edit or delete it", () => {
+      const playlist = createPlaylist({ id: "p1", title: "Psalms of Ascent" });
+      const { state } = renderWithFriends(signal([ada]), { ada: [playlist] });
+      const items = Array.from(
+        friendsSection()!.querySelectorAll('[role="menuitem"]')
+      );
+
+      expect(items.map((el) => el.textContent)).toEqual([
+        expect.stringContaining("Share playlist"),
+      ]);
+      act(() => {
+        (items[0] as HTMLElement).click();
+      });
+
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        "https://example.com/?playlist=p1"
+      );
+      expect(state.app.toast).toHaveBeenCalledWith(
+        "Playlist URL copied to clipboard"
+      );
+    });
+
+    it("drops a friend's playlists once they're no longer a friend", () => {
+      const friends = signal([ada, bob]);
+      renderWithFriends(friends, {
+        ada: [createPlaylist({ id: "p1", title: "Psalms of Ascent" })],
+        bob: [createPlaylist({ id: "p2", title: "Gospels" })],
+      });
+      expect(groupNames()).toEqual(["Ada", "Bob"]);
+
+      act(() => {
+        friends.value = [bob];
+      });
+
+      expect(groupNames()).toEqual(["Bob"]);
+      expect(friendsSection()?.textContent).not.toContain("Psalms of Ascent");
+    });
+  });
+
+  it("drops a friend's note once they're no longer a friend", () => {
+    const friends = signal([ada]);
+    const friendsNote = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Ada's note</p>", userId: "ada" },
+    });
+    const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations({
+      friendAnnotationsForChapter: { ada: [friendsNote] },
+    });
+    const state = createMockState(false, { userId: "user-1", friends });
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={createMockTabs(createMockTab())}
+          playlists={playlists}
+          annotations={annotations}
+          modals={createModalManager()}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+    expect(container.textContent).toContain("Ada's note");
+
+    act(() => {
+      friends.value = [];
+    });
+
+    expect(container.textContent).not.toContain("Ada's note");
   });
 
   it("DiscoverPaneHeader shows the create menu only in the discover sub-view, with Annotation and Playlist items", () => {

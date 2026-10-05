@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { computed, signal } from "@preact/signals";
+import { computed, signal, type Signal } from "@preact/signals";
 import { ReadingPlansPane } from "@packages/seed-bible/seed-bible/components/ReadingPlansPane/ReadingPlansPane";
 import {
   createReadingPlan,
@@ -136,5 +136,30 @@ describe("ReadingPlansPane — reading plans from your friends", () => {
     expect(card.textContent).toContain("Gospel of John");
     expect(card.textContent).toContain(startedLabel(RESTART_MS));
     expect(card.textContent).not.toContain(startedLabel(FIRST_START_MS));
+  });
+
+  it("drops a friend's plan once they're no longer a friend", async () => {
+    const readingPlans = plansManagerWithAdasProgress([
+      progress("first-time", FIRST_START_MS),
+    ]);
+    const friends = friendsWithAda();
+
+    act(() => {
+      render(
+        <ReadingPlansPane
+          readingPlans={readingPlans}
+          friends={friends}
+          books={[]}
+        />,
+        container
+      );
+    });
+    await vi.waitFor(() => expect(friendCards()).toHaveLength(1));
+
+    act(() => {
+      (friends.friends as Signal<Friend[]>).value = [];
+    });
+
+    expect(friendCards()).toHaveLength(0);
   });
 });

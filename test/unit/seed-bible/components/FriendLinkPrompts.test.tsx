@@ -15,7 +15,11 @@ import type {
   UserProfile,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
-import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
+import {
+  fail,
+  fakeSharedPermissions,
+  ME,
+} from "../testUtils/fakeSharedPermissions";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -279,6 +283,24 @@ describe("friend links", () => {
       consoleError.mockRestore();
     });
 
+    it("says so when sending fails, and stays open to try again", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      await openWith(`?addFriend=${ADA_ID}`);
+      server.spies.request.mockResolvedValueOnce(fail("server_error") as never);
+
+      await click("Send request");
+
+      expect(toast).toHaveBeenCalledWith(
+        "Couldn't send the request. Try again."
+      );
+      expect(server.rows).toEqual([]);
+      expect(openModalId).not.toBeNull();
+      expect(button("Send request")!.disabled).toBe(false);
+      consoleError.mockRestore();
+    });
+
     it("sends nothing when the user cancels", async () => {
       await openWith(`?addFriend=${ADA_ID}`);
 
@@ -372,6 +394,25 @@ describe("friend links", () => {
   });
 
   describe("?friendRequest=", () => {
+    it("says so when answering fails, and stays open to try again", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const request = server.requestFrom(ADA_ID);
+      await openWith(`?friendRequest=${request.id}`);
+      server.spies.accept.mockResolvedValueOnce(fail("server_error") as never);
+
+      await click("Accept");
+
+      expect(toast).toHaveBeenCalledWith(
+        "Couldn't answer the request. Try again."
+      );
+      expect(friends.friendIds.value).toEqual([]);
+      expect(openModalId).not.toBeNull();
+      expect(button("Accept")!.disabled).toBe(false);
+      consoleError.mockRestore();
+    });
+
     it("shows who sent it and accepts it", async () => {
       const request = server.requestFrom(ADA_ID);
       await openWith(`?friendRequest=${request.id}`);
