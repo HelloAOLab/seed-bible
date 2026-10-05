@@ -91,10 +91,13 @@
   list-style: none;
 }
 
+/* When the buttons leave too little room for the name, they wrap onto their
+   own line instead of squeezing it. */
 .sb-friends-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   padding: 8px;
   border-radius: var(--sb-friends-radius);
 }
@@ -114,11 +117,15 @@
   min-width: 0;
 }
 
+/* Wraps to two lines before cutting off, so only a very long name loses any. */
 .sb-friends-person-name,
 .sb-friends-person-subtitle {
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .sb-friends-person-name {
@@ -134,7 +141,7 @@
 /* The picture and name in a row, which open that person's profile. */
 .sb-friends-person-button {
   display: flex;
-  flex: 1;
+  flex: 1 1 11rem;
   align-items: center;
   gap: 12px;
   min-width: 0;
@@ -158,6 +165,7 @@
   display: flex;
   flex-shrink: 0;
   gap: 6px;
+  margin-inline-start: auto;
 }
 
 .sb-friends-button {
