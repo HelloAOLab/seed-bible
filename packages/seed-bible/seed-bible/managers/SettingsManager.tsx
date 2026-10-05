@@ -726,10 +726,17 @@ function applyTextConfigToCSSVars(config: TextConfig) {
   }
 }
 
+// "No override" is persisted as this sentinel rather than `undefined`: the
+// `??` chain in `readSettings` skips `undefined`, so a signed-in user's
+// cleared profile value would fall through to a stale `login.localConfig`
+// font saved while signed out.
+const NO_FONT_OVERRIDE = "default";
+
 function parseFontOverride(
   value: unknown,
   fallback: AppSettings["fontOverride"]
 ): AppSettings["fontOverride"] {
+  if (value === NO_FONT_OVERRIDE) return undefined;
   return CUSTOMIZATION_FONT_PRESETS.some((option) => option.value === value)
     ? (value as string)
     : fallback;
@@ -1171,9 +1178,10 @@ export function createSettings(
   };
 
   const setFontOverride: SettingsManager["setFontOverride"] = (override) => {
+    const stored = override ?? NO_FONT_OVERRIDE;
     settings.value = { ...settings.value, fontOverride: override };
-    sessionOverrides[TAG_FONT_OVERRIDE] = override;
-    saveProfileConfigValue(login, PROFILE_FONT_OVERRIDE, override);
+    sessionOverrides[TAG_FONT_OVERRIDE] = stored;
+    saveProfileConfigValue(login, PROFILE_FONT_OVERRIDE, stored);
   };
 
   const setAllSettings = (next: AppSettings) => {
@@ -1212,7 +1220,7 @@ export function createSettings(
     sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
     sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
       DEFAULT_SETTINGS.discoverContentPanelInline;
-    sessionOverrides[TAG_FONT_OVERRIDE] = DEFAULT_SETTINGS.fontOverride;
+    sessionOverrides[TAG_FONT_OVERRIDE] = NO_FONT_OVERRIDE;
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
       login,
@@ -1265,11 +1273,7 @@ export function createSettings(
       PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
       DEFAULT_SETTINGS.discoverContentPanelInline
     );
-    saveProfileConfigValue(
-      login,
-      PROFILE_FONT_OVERRIDE,
-      DEFAULT_SETTINGS.fontOverride
-    );
+    saveProfileConfigValue(login, PROFILE_FONT_OVERRIDE, NO_FONT_OVERRIDE);
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`

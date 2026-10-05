@@ -572,6 +572,7 @@ describe("custom highlight colors", () => {
 
 describe("scripture font override", () => {
   const ROBOTO = "Roboto, sans-serif";
+  const OPEN_SANS = "Open Sans, sans-serif";
   const FONT_OVERRIDE_VAR = "--sb-scripture-font-override";
 
   const appliedFontOverride = () =>
@@ -632,10 +633,37 @@ describe("scripture font override", () => {
     settings.setFontOverride(undefined);
 
     expect(settings.settings.value.fontOverride).toBeUndefined();
-    expect(profileFontOverride(login)).toBeUndefined();
+    expect(profileFontOverride(login)).not.toBe(ROBOTO);
     expect(appliedFontOverride()).toBe("");
 
     // A later session reading the same profile starts on Default too.
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.fontOverride).toBeUndefined();
+  });
+
+  it("switching back to Default sticks for a signed-in user whose device still has a font saved from before signing in", () => {
+    const login = loggedInLogin();
+    login.localConfig.value = { fontOverride: ROBOTO };
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setFontOverride(OPEN_SANS);
+    settings.setFontOverride(undefined);
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.fontOverride).toBeUndefined();
+  });
+
+  it("resetToDefaults sticks for a signed-in user whose device still has a font saved from before signing in", () => {
+    const login = loggedInLogin({ fontOverride: OPEN_SANS });
+    login.localConfig.value = { fontOverride: ROBOTO };
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
     const nextSession = createSettings(CasualOSManager(), login, navWith());
     expect(nextSession.settings.value.fontOverride).toBeUndefined();
   });
@@ -680,7 +708,7 @@ describe("scripture font override", () => {
     settings.resetToDefaults();
 
     expect(settings.settings.value.fontOverride).toBeUndefined();
-    expect(profileFontOverride(login)).toBeUndefined();
+    expect(profileFontOverride(login)).not.toBe(ROBOTO);
     expect(appliedFontOverride()).toBe("");
   });
 

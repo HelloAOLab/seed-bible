@@ -140,7 +140,7 @@ describe("Display & Theme settings view", () => {
 
     chooseFont("default");
 
-    expect(login.localConfig.value.fontOverride).toBeUndefined();
+    expect(login.localConfig.value.fontOverride).not.toBe(ROBOTO);
     expect(
       document.documentElement.style.getPropertyValue(FONT_OVERRIDE_VAR)
     ).toBe("");
