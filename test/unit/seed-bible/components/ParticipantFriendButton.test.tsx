@@ -53,14 +53,17 @@ describe("ParticipantFriendButton", () => {
     ) as HTMLButtonElement | undefined;
   const text = () => container.textContent ?? "";
 
-  const renderButton = async (participantId: string | null) => {
+  const renderButton = async (
+    participantId: string | null,
+    displayName = "Ada"
+  ) => {
     await friends.refresh();
     act(() =>
       render(
         <ParticipantFriendButton
           state={state}
           userId={participantId}
-          displayName="Ada"
+          displayName={displayName}
         />,
         container
       )
@@ -123,6 +126,21 @@ describe("ParticipantFriendButton", () => {
     expect(button("Add friend")!.getAttribute("aria-label")).toBe(
       "Add Ada as a friend"
     );
+  });
+
+  // The name a participant shows in a session is whatever they typed, so it
+  // can't be what accepting their request goes by.
+  it("names the request it accepts by the requester's profile, not their name in the session", async () => {
+    server.requestFrom(ADA_ID);
+    await renderButton(ADA_ID, "Pastor John");
+
+    expect(button("Accept")!.getAttribute("aria-label")).toBe(
+      "Accept Ada's friend request"
+    );
+    act(() => button("Accept")!.click());
+    await settle();
+
+    expect(toast).toHaveBeenCalledWith("You're now friends with Ada.");
   });
 
   it("offers to accept a request they already sent", async () => {

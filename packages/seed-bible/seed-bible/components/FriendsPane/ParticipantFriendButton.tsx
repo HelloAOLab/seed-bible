@@ -1,6 +1,7 @@
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
+import { displayNameOf } from "../../managers/Utils";
 import { BusyButton } from "./FriendsPane";
 
 /**
@@ -50,6 +51,9 @@ export function ParticipantFriendButton(props: {
   const theirRequest = friends.incomingRequests.value.find(
     (r) => r.userId === userId
   );
+  // Accepting names them as their profile does, not as they named themselves
+  // in the session: anyone can call themselves anything there.
+  const requesterName = theirRequest ? displayNameOf(theirRequest, t) : null;
 
   const run = async () => {
     busy.value = true;
@@ -59,7 +63,7 @@ export function ParticipantFriendButton(props: {
         toast(
           result.success
             ? t("now-friends-with", {
-                name: displayName,
+                name: requesterName,
                 defaultValue: "You're now friends with {{name}}.",
               })
             : t("friend-request-unavailable", {
@@ -103,7 +107,7 @@ export function ParticipantFriendButton(props: {
       ariaLabel={
         theirRequest
           ? t("accept-friend-user", {
-              name: displayName,
+              name: requesterName,
               defaultValue: "Accept {{name}}'s friend request",
             })
           : t("add-friend-user", {

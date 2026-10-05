@@ -199,9 +199,23 @@ function AddFriendLinkPrompt(props: {
               defaultValue: "You're now friends with {{name}}.",
             })
           );
+        } else if (result.status === "already_friends") {
+          toast(
+            t("add-friend-link-already-friends", {
+              name,
+              defaultValue: "You're already friends with {{name}}.",
+            })
+          );
+        } else if (result.status === "already_requested") {
+          toast(
+            t("add-friend-link-already-sent", {
+              name,
+              defaultValue: "You've already sent {{name}} a friend request.",
+            })
+          );
         }
-        // The other outcomes are states this prompt already shows on its
-        // own once the lists refresh, so there's nothing extra to say.
+        // The rest can't come from this prompt: your own link is caught
+        // above, a user ID is never "not found", and sending needs sign-in.
       },
     };
   }

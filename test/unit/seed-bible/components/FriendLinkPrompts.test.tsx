@@ -235,6 +235,50 @@ describe("friend links", () => {
       expect(text()).not.toContain("hasn't set up");
     });
 
+    // A visitor signs in from the link, and the lists fail to load just then,
+    // so the prompt offers Send. Sending reads the lists first, and finds out.
+    const signInWhileListsFailToLoad = async () => {
+      userId.value = null;
+      server.spies.listRecords
+        .mockRejectedValueOnce(new Error("offline"))
+        .mockRejectedValueOnce(new Error("offline"));
+      await openWith(`?addFriend=${ADA_ID}`);
+      await click("Log in");
+      expect(text()).toContain("Send Ada a friend request?");
+    };
+
+    it("says so when sending finds they're already friends", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      server.friendsWith(ADA_ID);
+      await signInWhileListsFailToLoad();
+
+      await click("Send request");
+
+      expect(toast).toHaveBeenCalledWith("You're already friends with Ada.");
+      expect(openModalId).toBeNull();
+      consoleError.mockRestore();
+    });
+
+    it("says so when sending finds a request already waiting on them", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      server.requestTo(ADA_ID);
+      await signInWhileListsFailToLoad();
+
+      await click("Send request");
+
+      expect(toast).toHaveBeenCalledWith(
+        "You've already sent Ada a friend request."
+      );
+      expect(server.rows.filter((r) => r.status === "requested")).toHaveLength(
+        1
+      );
+      consoleError.mockRestore();
+    });
+
     it("sends nothing when the user cancels", async () => {
       await openWith(`?addFriend=${ADA_ID}`);
 
