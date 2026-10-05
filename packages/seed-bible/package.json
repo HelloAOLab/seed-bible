@@ -37,7 +37,8 @@
   ],
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
-    "build": "pnpm run clean && tsc-silent --project tsconfig.build.json --suppressConfig ../../tsc-silent.config.cjs && vite build",
+    "build": "pnpm run clean && pnpm run build:types && vite build",
+    "build:types": "tsc-silent --project tsconfig.build.json --suppressConfig ../../tsc-silent.config.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
