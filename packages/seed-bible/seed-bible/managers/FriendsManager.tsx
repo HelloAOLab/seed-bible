@@ -498,6 +498,11 @@ export function createFriendsManager(
       throw new Error(`Failed to accept friend request: ${result.errorCode}`);
     }
     await refresh();
+    // Signed in as someone else by now, the lists are theirs, and ending
+    // "pending requests with the requester" would decline that account's own.
+    if (login.userId.peek() !== me) {
+      return { success: true };
+    }
     // Read after the refresh, so a request sent since the lists were last
     // read is ended too.
     if (requesterId && (await endPendingRequestsWith(requesterId, requestId))) {
@@ -644,6 +649,7 @@ export function createFriendsManager(
   };
 
   const unfriend = async (userId: string): Promise<void> => {
+    const me = login.userId.peek();
     const link = links.peek().find((l) => l.userId === userId);
     if (!link) {
       return;
@@ -667,8 +673,9 @@ export function createFriendsManager(
     // Either way the server now decides what's left, including putting the
     // friend back if the revoke didn't go through.
     await refresh();
-    // A request sent since the lists were last read only shows up now.
-    if (await endPendingRequestsWith(userId)) {
+    // A request sent since the lists were last read only shows up now. Unless
+    // another account signed in meanwhile: the lists are theirs now.
+    if (login.userId.peek() === me && (await endPendingRequestsWith(userId))) {
       await refresh();
     }
     if (failed && !failed.success) {

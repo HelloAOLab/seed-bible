@@ -562,6 +562,27 @@ describe("FriendsManager", () => {
       expect(friends.outgoingRequests.value).toEqual([]);
     });
 
+    // The accept went out as `ME`, but the clean-up after it would run as
+    // whoever is signed in once the server answers.
+    it("leaves the next account's requests alone when the account changes mid-accept", async () => {
+      const request = server.requestFrom("cal");
+      const toNextAccount = server.requestFrom("cal");
+      toNextAccount.targetUserId = "bea";
+      const friends = create();
+      await loaded(friends, () => {});
+      const accept = server.spies.accept.getMockImplementation()!;
+      server.spies.accept.mockImplementationOnce(async (...args) => {
+        const result = await accept(...args);
+        userId.value = "bea";
+        return result;
+      });
+
+      await friends.acceptRequest(request.id);
+
+      expect(request.status).toBe("accepted");
+      expect(toNextAccount.status).toBe("requested");
+    });
+
     it("treats a request that's already gone as done", async () => {
       const request = server.requestFrom("ada", { status: "revoked" });
       const friends = create();
@@ -685,6 +706,27 @@ describe("FriendsManager", () => {
 
       expect(leftover.status).toBe("rejected");
       expect(friends.incomingRequests.value).toEqual([]);
+    });
+
+    it("leaves the next account's requests alone when the account changes mid-unfriend", async () => {
+      const link = server.friendsWith("cal");
+      const toNextAccount = server.requestFrom("cal");
+      toNextAccount.targetUserId = "bea";
+      const friends = create();
+      await loaded(friends, () =>
+        expect(friends.friendIds.value).toEqual(["cal"])
+      );
+      const revoke = server.spies.revoke.getMockImplementation()!;
+      server.spies.revoke.mockImplementationOnce(async (...args) => {
+        const result = await revoke(...args);
+        userId.value = "bea";
+        return result;
+      });
+
+      await friends.unfriend("cal");
+
+      expect(link.status).toBe("revoked");
+      expect(toNextAccount.status).toBe("requested");
     });
 
     it("puts the friend back and throws when the server refuses", async () => {
