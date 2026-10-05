@@ -112,15 +112,26 @@ export function createFriendContentFreshness(
     }
   };
 
-  if (typeof window !== "undefined") {
-    const refreshOnReturn = () => {
-      if (document.visibilityState === "visible") {
-        refreshOnScreen();
-      }
-    };
-    window.addEventListener("focus", refreshOnReturn);
-    document.addEventListener("visibilitychange", refreshOnReturn);
-  }
+  const refreshOnReturn = () => {
+    if (document.visibilityState === "visible") {
+      refreshOnScreen();
+    }
+  };
+
+  // Listening only while something is shown: with nothing on screen there's
+  // nothing to refresh, and a tracker nobody watches holds no listeners.
+  const listenForReturn = (listen: boolean) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    if (listen) {
+      window.addEventListener("focus", refreshOnReturn);
+      document.addEventListener("visibilitychange", refreshOnReturn);
+    } else {
+      window.removeEventListener("focus", refreshOnReturn);
+      document.removeEventListener("visibilitychange", refreshOnReturn);
+    }
+  };
 
   /**
    * A signal holding one friend's cached content, which calls
@@ -135,6 +146,9 @@ export function createFriendContentFreshness(
       watched() {
         onScreen.add(refreshIfStale);
         shown.add(content);
+        if (shown.size === 1) {
+          listenForReturn(true);
+        }
         // Deferred: this runs while a render or computed is subscribing, which
         // is no place to start a load that writes signals.
         queueMicrotask(refreshIfStale);
@@ -142,6 +156,9 @@ export function createFriendContentFreshness(
       unwatched() {
         onScreen.delete(refreshIfStale);
         shown.delete(content);
+        if (shown.size === 0) {
+          listenForReturn(false);
+        }
       },
     });
     return content;

@@ -165,3 +165,32 @@ describe("createFriendContentFreshness().refreshOnScreen", () => {
     }
   });
 });
+
+describe("createFriendContentFreshness listening for the app coming back", () => {
+  it("listens only while something is shown", () => {
+    const add = vi.spyOn(window, "addEventListener");
+    const remove = vi.spyOn(window, "removeEventListener");
+    const focusListeners = (spy: typeof add) =>
+      spy.mock.calls.filter(([type]) => type === "focus").map(([, l]) => l);
+
+    try {
+      const freshness = createFriendContentFreshness();
+      const first = freshness.trackedSignal<string[]>([], () => {});
+      const second = freshness.trackedSignal<string[]>([], () => {});
+      expect(focusListeners(add)).toEqual([]);
+
+      const stopFirst = effect(() => void first.value);
+      const stopSecond = effect(() => void second.value);
+      expect(focusListeners(add)).toHaveLength(1);
+
+      stopFirst();
+      expect(focusListeners(remove)).toEqual([]);
+
+      stopSecond();
+      expect(focusListeners(remove)).toEqual(focusListeners(add));
+    } finally {
+      add.mockRestore();
+      remove.mockRestore();
+    }
+  });
+});

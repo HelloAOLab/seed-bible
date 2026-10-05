@@ -156,6 +156,7 @@ describe("FriendsPane", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
+    friends.dispose();
   });
 
   it("asks a signed-out visitor to sign in", async () => {

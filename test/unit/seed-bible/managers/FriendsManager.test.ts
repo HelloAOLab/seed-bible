@@ -12,6 +12,7 @@ import {
   ME,
 } from "../testUtils/fakeSharedPermissions";
 import { effect, signal, type Signal } from "@preact/signals";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 
 describe("FriendsManager", () => {
   let os: CasualOSManager;
@@ -25,7 +26,18 @@ describe("FriendsManager", () => {
     cal: "Cal",
   };
 
-  const create = (): FriendsManager => createFriendsManager(os, login);
+  let created: FriendsManager[] = [];
+  const create = (): FriendsManager => {
+    const friends = createFriendsManager(os, login);
+    created.push(friends);
+    return friends;
+  };
+  afterEach(() => {
+    for (const friends of created) {
+      friends.dispose();
+    }
+    created = [];
+  });
 
   /** Waits for the sign-in refresh (and the profile loads it starts) to land. */
   const loaded = async (friends: FriendsManager, check: () => void) => {
@@ -449,6 +461,51 @@ describe("FriendsManager", () => {
       await loaded(friends, () => {});
 
       await expect(friends.declineRequest(request.id)).resolves.toBeUndefined();
+    });
+  });
+
+  describe("coming back to the app", () => {
+    const START = Date.UTC(2026, 9, 5, 12);
+    let page: ReturnType<typeof stubPageVisibility>;
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(START);
+      page = stubPageVisibility();
+    });
+    afterEach(() => {
+      page.restore();
+      vi.useRealTimers();
+    });
+
+    const listings = () => server.spies.listRecords.mock.calls.length;
+
+    it("reads the lists again after more than 30 seconds away, not sooner", async () => {
+      const friends = create();
+      await loaded(friends, () => {});
+      const before = listings();
+
+      vi.setSystemTime(START + 10_000);
+      page.leaveAndReturn();
+      await Promise.resolve();
+      expect(listings()).toBe(before);
+
+      vi.setSystemTime(START + 31_000);
+      page.leaveAndReturn();
+      await vi.waitFor(() => expect(listings()).toBe(before + 1));
+    });
+
+    it("stops once disposed", async () => {
+      const friends = create();
+      await loaded(friends, () => {});
+      const before = listings();
+
+      friends.dispose();
+      vi.setSystemTime(START + 31_000);
+      page.leaveAndReturn();
+      await Promise.resolve();
+
+      expect(listings()).toBe(before);
     });
   });
 

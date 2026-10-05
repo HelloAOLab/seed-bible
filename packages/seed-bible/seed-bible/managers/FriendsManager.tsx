@@ -148,6 +148,9 @@ export interface FriendsManager {
    * waiting between you.
    */
   unfriend: (userId: string) => Promise<void>;
+
+  /** Stops following sign-in changes and the app coming back into focus. */
+  dispose: () => void;
 }
 
 type FriendLink = { userId: string; sharedPermissionIds: string[] };
@@ -344,7 +347,7 @@ export function createFriendsManager(
     }
   };
 
-  effect(() => {
+  const stopFollowingSignIn = effect(() => {
     const userId = login.userId.value;
     if (loadedUserId.peek() === userId) {
       return;
@@ -363,20 +366,28 @@ export function createFriendsManager(
     }
   });
 
+  // Requests arrive while the app sits in the background, and there's no
+  // push channel yet, so coming back to the app is when to look again.
+  const refreshOnReturn = () => {
+    if (
+      document.visibilityState === "visible" &&
+      Date.now() - lastRefreshStartedMs >= FOCUS_REFRESH_INTERVAL_MS
+    ) {
+      void refresh();
+    }
+  };
   if (typeof window !== "undefined") {
-    // Requests arrive while the app sits in the background, and there's no
-    // push channel yet, so coming back to the app is when to look again.
-    const refreshOnReturn = () => {
-      if (
-        document.visibilityState === "visible" &&
-        Date.now() - lastRefreshStartedMs >= FOCUS_REFRESH_INTERVAL_MS
-      ) {
-        void refresh();
-      }
-    };
     window.addEventListener("focus", refreshOnReturn);
     document.addEventListener("visibilitychange", refreshOnReturn);
   }
+
+  const dispose = () => {
+    stopFollowingSignIn();
+    if (typeof window !== "undefined") {
+      window.removeEventListener("focus", refreshOnReturn);
+      document.removeEventListener("visibilitychange", refreshOnReturn);
+    }
+  };
 
   /**
    * The account to act as, prompting sign-in if needed, with its lists read
@@ -640,5 +651,6 @@ export function createFriendsManager(
         "cancel"
       ),
     unfriend,
+    dispose,
   };
 }

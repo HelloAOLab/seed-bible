@@ -123,6 +123,7 @@ describe("friend links", () => {
   afterEach(() => {
     render(null, dialog);
     dialog.remove();
+    friends.dispose();
   });
 
   it("does nothing without a friend link", async () => {

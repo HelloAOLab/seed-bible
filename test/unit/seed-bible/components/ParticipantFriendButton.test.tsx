@@ -100,6 +100,7 @@ describe("ParticipantFriendButton", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
+    friends.dispose();
   });
 
   it("sends a request and then shows it as requested", async () => {
