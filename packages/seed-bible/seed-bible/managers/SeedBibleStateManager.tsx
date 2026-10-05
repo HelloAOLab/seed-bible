@@ -415,12 +415,10 @@ export interface AppState {
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<{ id: number; message: string } | null>;
   /**
-   * Shows a toast message at the bottom of the screen for 3.5s if single and for
-   * 1.5s if there are others waiting. Calling again enqueues the toast.
-   * If a new toast arrives, the current one's remaining time is recalculated to
-   * match the 1.5s. If the time elapsed since it was shown is already beyond that
-   * threshold, the toast is dismissed immediately.
-   * (only one toast is ever visible at a time, always the oldest in the queue).
+   * Shows a toast message at the bottom of the screen. Toasts are queued and
+   * shown one at a time. A toast with nothing waiting behind it stays 3.5 s;
+   * once another is waiting, the current one stays only until it has been
+   * visible 1.5 s (or leaves at once if it already has).
    * Toasts sharing a `key` describe the same state, so a new one drops any
    * waiting toast with that key and joins the end of the queue; the toast on
    * screen is never dropped. If the toast on screen already has the same key and
@@ -2272,21 +2270,20 @@ export function createSeedBibleState(
     }
   };
 
-  // App-level toast: a single popup shown at the bottom of the screen for 3.5s if single and
-  // for 1.5s if there are others waiting.
-  // A new call enqueues the message and recalculates the current toast duration,
-  // so it uses MIN_TOAST_MS based on the current toast shown time, not the new
-  // toast arrival time. The incrementing id keys the render so
+  // App-level toast: a single popup shown at the bottom of the screen. Shows a toast message at the bottom of the screen. Toasts are queued and
+  // shown one at a time. A toast with nothing waiting behind it stays 3.5 s;
+  // once another is waiting, the current one stays only until it has been
+  // visible 1.5 s (or leaves at once if it already has).
+  // Toasts sharing a `key` describe the same state, so a new one drops any
+  // waiting toast with that key and joins the end of the queue; the toast on
+  // screen is never dropped. If the toast on screen already has the same key and
+  // message, the new one is not queued at all. Toasts without a key are always
+  // shown.. The incrementing id keys the render so
   // the slide-in animation replays even for a repeated message.
-  // A keyed toast supersedes the waiting toasts with the same key, so a burst
-  // of state changes (e.g. a flaky connection) shows only the latest state
-  // instead of replaying every out-of-date one — and nothing at all when that
-  // latest state is the one already on screen.
   //
   // Defined here (rather than further down, where it's exposed on `state`)
   // because the host-disconnect handling below also calls it, and that
   // effect runs immediately when constructed.
-
   let toastSeq = 0;
   const toastQueue = signal<{ id: number; message: string; key?: string }[]>(
     []
@@ -3101,7 +3098,7 @@ export function createSeedBibleState(
       os,
       login,
       gallery,
-      toast: toast,
+      toast,
     });
     showReadingPlanDetailView();
   });
@@ -3248,7 +3245,7 @@ export function createSeedBibleState(
       startSharedPage,
       resumeSharedPage,
       currentToast,
-      toast: toast,
+      toast,
       isDiscoverOpen: playlists.isDiscoverOpen,
       openDiscover: handleOpenDiscover,
       closeDiscover: handleCloseDiscover,
