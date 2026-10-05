@@ -543,6 +543,13 @@ type AnnotationsEntry = {
    * force a re-read.
    */
   explicit: boolean;
+  /**
+   * Whether `data` was last read as a friend's (straight from the server) or
+   * as the signed-in user's own (through the local mirror and sync). An
+   * explicit entry survives a change of account, so the change can turn it
+   * from one into the other; it's then read again the right way.
+   */
+  readAsFriend: boolean;
   /** When the last successful read finished, for re-reading a friend's notes. */
   loadedAtMs: number | null;
 };
@@ -1012,6 +1019,7 @@ export function createAnnotationsManager(
         loadFailed: false,
         load: null,
         explicit,
+        readAsFriend: false,
         loadedAtMs: null,
       };
       entry = created;
@@ -1057,6 +1065,7 @@ export function createAnnotationsManager(
         return;
       }
       entry.data.value = loaded;
+      entry.readAsFriend = isOtherAccount;
       entry.loadedAtMs = Date.now();
       entry.loadFailed = false;
       // Only authoritative once we know the list is complete: either the server
@@ -1187,6 +1196,16 @@ export function createAnnotationsManager(
       // risk of leaking across a switch, so the sweep leaves them alone.
       if (entry.recordId !== recordId && !entry.explicit) {
         entries.delete(key);
+      } else if (
+        entry.explicit &&
+        (entry.settled || entry.loadFailed) &&
+        entry.readAsFriend !== isFriendEntry(entry)
+      ) {
+        // Signing in as a friend whose notes were on screen, or the reverse.
+        // Reset rather than dropped: views still hold this entry.
+        entry.settled = false;
+        entry.loadFailed = false;
+        entry.loadedAtMs = null;
       }
     }
   });

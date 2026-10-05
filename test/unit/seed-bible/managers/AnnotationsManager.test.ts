@@ -877,6 +877,43 @@ describe("AnnotationsManager", () => {
       }
     });
 
+    it("reads a friend's notes again as their own when you sign in as them", async () => {
+      let friendsNoteId = "before";
+      listDataByMarkerMock.mockImplementation(
+        async (record: string, _marker: string, lastAddress?: string) => ({
+          success: true,
+          items:
+            record === "friend-user" && !lastAddress
+              ? [
+                  {
+                    address: friendsNoteId,
+                    data: createCommentAnnotation({ id: friendsNoteId }),
+                  },
+                ]
+              : [],
+          totalCount: record === "friend-user" ? 1 : 0,
+        })
+      );
+      const manager = createManager();
+      const asFriend = manager.getUserAnnotationsForChapter(
+        "friend-user",
+        "GEN",
+        1
+      );
+      await vi.waitFor(() =>
+        expect(asFriend.value.map((a) => a.id)).toEqual(["before"])
+      );
+      friendsNoteId = "after";
+
+      // The same device, now signed in as that friend.
+      login.userId.value = "friend-user";
+      const asThemselves = manager.getAnnotationsForChapter("GEN", 1);
+
+      await vi.waitFor(() =>
+        expect(asThemselves.value.map((a) => a.id)).toEqual(["after"])
+      );
+    });
+
     it("asks once when the first page holds the whole listing", async () => {
       listOnePage([
         { address: "a1", data: createCommentAnnotation({ id: "a1" }) },
@@ -1976,6 +2013,27 @@ describe("AnnotationsManager", () => {
         stopShowingLeftBehind();
         consoleError.mockRestore();
       }
+    });
+
+    it("doesn't show a friend a note their device hasn't sent yet, after switching accounts", async () => {
+      // Signed in as the friend, who saves a note offline on this device.
+      login.userId.value = "friend-user";
+      serverList([createCommentAnnotation({ id: "on-server" })]);
+      const manager = createOfflineManager();
+      goOffline();
+      await manager.saveAnnotation(createCommentAnnotation({ id: "unsent" }));
+      const theirNotes = () =>
+        manager.getUserAnnotationsForChapter("friend-user", "GEN", 1);
+      await waitForCondition(() =>
+        theirNotes().value.some((a) => a.id === "unsent")
+      );
+
+      // Someone else signs in on the same device and views them as a friend.
+      login.userId.value = "user-1";
+
+      await vi.waitFor(() =>
+        expect(theirNotes().value.map((a) => a.id)).toEqual(["on-server"])
+      );
     });
 
     it("keeps an unsent edit when the server list is refreshed", async () => {

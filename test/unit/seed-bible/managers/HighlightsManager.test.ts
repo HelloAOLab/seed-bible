@@ -1297,6 +1297,27 @@ describe("HighlightsManager", () => {
       });
     });
 
+    it("reads a friend's highlights again as their own when you sign in as them", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+      manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1);
+      await flushPromises();
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { highlights: [{ colorId: "changed-since", verse: 3 }] },
+      });
+
+      // The same device, now signed in as that friend.
+      login.userId.value = "friend-user";
+      const asThemselves = manager.getChapterHighlights("BSB", "GEN", 1);
+
+      await vi.waitFor(() =>
+        expect(asThemselves.value).toEqual({
+          highlights: [{ colorId: "changed-since", verse: 3 }],
+        })
+      );
+    });
+
     it("keeps a friend's cached highlights across a sign-in", async () => {
       mockPerUserHighlights();
       const manager = createHighlightsManager(os, login);

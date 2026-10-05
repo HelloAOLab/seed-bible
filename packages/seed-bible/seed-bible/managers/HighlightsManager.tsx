@@ -475,6 +475,13 @@ type ChapterHighlightsEntry = {
    * so without this flag every sign-in would evict them and force a re-read.
    */
   explicit: boolean;
+  /**
+   * Whether `data` was last read as a friend's (straight from the server) or
+   * as the signed-in user's own (through the local mirror and sync). An
+   * explicit entry survives a change of account, so the change can turn it
+   * from one into the other; it's then read again the right way.
+   */
+  readAsFriend: boolean;
 };
 
 function entryKey(owner: string, address: string): string {
@@ -547,6 +554,7 @@ export function createHighlightsManager(
         loadedAtMs: null,
         loadFailed: false,
         explicit,
+        readAsFriend: false,
       };
       entry = created;
       entries.set(key, entry);
@@ -609,6 +617,7 @@ export function createHighlightsManager(
       // holds newer highlights than this response does.
       if (!entry.settled) {
         applyPayload(entry, fromServer);
+        entry.readAsFriend = true;
         entry.loadedAtMs = Date.now();
         entry.loadFailed = false;
       }
@@ -652,6 +661,7 @@ export function createHighlightsManager(
     if (isFriendEntry(entry)) {
       return loadFriendHighlights(entry);
     }
+    entry.readAsFriend = false;
     if (!store) {
       // No local storage: the server is the only source, and a signed-out
       // reader has none.
@@ -781,6 +791,16 @@ export function createHighlightsManager(
       // across a switch, so the sweep leaves them alone.
       if (entry.owner !== owner && !entry.explicit) {
         entries.delete(key);
+      } else if (
+        entry.explicit &&
+        entry.settled &&
+        entry.readAsFriend !== isFriendEntry(entry)
+      ) {
+        // Signing in as a friend whose highlights were on screen, or the
+        // reverse. Reset rather than dropped: views still hold this entry.
+        entry.settled = false;
+        entry.loadFailed = false;
+        entry.loadedAtMs = null;
       }
     }
   });
