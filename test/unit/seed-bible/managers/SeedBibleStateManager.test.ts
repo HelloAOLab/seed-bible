@@ -217,10 +217,19 @@ async function createState() {
 const MIN_TOAST_MS = 1500;
 const FULL_TOAST_MS = 3500;
 
-/** Every toast message that reaches the screen, in the order it was shown. */
+/**
+ * Every toast message that stays on screen for some time, in the order it was
+ * shown. A toast replaced in the same instant it appeared is never painted, so
+ * it is left out. Needs fake timers, so that "same instant" means "no timer
+ * advanced in between".
+ */
 function recordShownToasts(state: SeedBibleState) {
   const shown: string[] = [];
+  let lastShownAt: number | null = null;
   state.app.currentToast.subscribe((toast) => {
+    const now = Date.now();
+    if (lastShownAt === now) shown.pop();
+    lastShownAt = toast ? now : null;
     if (toast) shown.push(toast.message);
   });
   return shown;
@@ -932,6 +941,16 @@ describe("createSeedBibleState", () => {
         otherGuestConnectedUser,
       ];
 
+      // The drop and the recovery land in the same instant, so the drop toast
+      // must still get its turn on screen before the rejoin one.
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+
       vi.advanceTimersByTime(30_000);
 
       expect(shown).toEqual([
@@ -1021,6 +1040,45 @@ describe("createSeedBibleState", () => {
       expect(shown).toEqual([
         "You lost connection to the session",
         "You rejoined the session",
+      ]);
+      expect(originalDispose).not.toHaveBeenCalled();
+    });
+
+    it("shows lost, rejoined and host-disconnected in turn when the host flickers in and out while presence is rebuilt", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-rejoin-host-flicker"
+      );
+      const shown = recordShownToasts(state);
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+
+      // The rebuilt list briefly includes the host, then drops them, all
+      // before a single timer runs.
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      session.connectedUsers.value = [selfConnectedUser];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host disconnected from the session"
+      );
+
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+        "The host disconnected from the session",
       ]);
       expect(originalDispose).not.toHaveBeenCalled();
     });
