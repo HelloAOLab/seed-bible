@@ -326,6 +326,19 @@
   border-radius: 0.5rem;
 }
 
+.sb-extension-sensitive-unused-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.sb-extension-sensitive-unused-row .sb-settings-action-button {
+  width: auto;
+}
+
 .sb-extension-sensitive-actions {
   display: flex;
   gap: 0.5rem;

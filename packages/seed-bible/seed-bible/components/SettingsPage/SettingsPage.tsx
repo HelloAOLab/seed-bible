@@ -30,7 +30,10 @@ import {
   openCustomizationEditPane,
 } from "../CustomizationEditPane/CustomizationEditPane";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
-import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
+import {
+  SensitiveSettingsForm,
+  UnusedSensitiveSettingsList,
+} from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import { download, translateTitle } from "../../app/utils";
 import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
 import {
@@ -1365,6 +1368,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 isSet={(key) =>
                   extensionSettings.isSensitiveValueSet(extensionEntry.id, key)
                 }
+                hasStored={(proxyId) =>
+                  extensionSettings.hasStoredSensitiveValues(
+                    extensionEntry.id,
+                    proxyId
+                  )
+                }
                 getDestination={(proxyId) =>
                   extensionSettings.getSensitiveDestination(
                     extensionEntry.id,
@@ -1673,6 +1682,18 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             </div>
           </>
         )}
+
+        <UnusedSensitiveSettingsList
+          unused={extensionSettings.getUnusedSensitiveProxies()}
+          getExtensionTitle={(extensionId) =>
+            // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+            t("title", { ns: extensionId, defaultValue: extensionId })
+          }
+          onClear={(extensionId, proxyId) =>
+            extensionSettings.clearSensitiveValues(extensionId, proxyId)
+          }
+          t={t}
+        />
 
         <div className="sb-extension-footer-actions">
           <button

@@ -4,10 +4,14 @@ import type {
   ExtensionSensitiveProxyVisibility,
   ExtensionSettingDefinition,
 } from "../../managers/ExtensionManager";
-import { isValidSensitiveHost } from "../../managers/extensionSettingConstraints";
+import {
+  isValidSensitiveHost,
+  normalizeSensitiveHost,
+} from "../../managers/extensionSettingConstraints";
 import type {
   SensitiveDestination,
   SensitiveSaveOptions,
+  UnusedSensitiveProxy,
 } from "../../managers/ExtensionSensitiveSettings";
 import type { I18nHook } from "../../i18n/I18nManager";
 
@@ -18,6 +22,8 @@ function SensitiveProxyGroup(props: {
   settingKeys: string[];
   /** The saved destination, or the manifest's when nothing current is saved. */
   destination: SensitiveDestination;
+  /** True when values are saved for this entry, whether or not they still count as set. */
+  hasStored: boolean;
   isSet: (key: string) => boolean;
   onSave: (
     values: Record<string, string>,
@@ -32,6 +38,7 @@ function SensitiveProxyGroup(props: {
     proxy,
     settingKeys,
     destination,
+    hasStored,
     isSet,
     onSave,
     onClear,
@@ -49,7 +56,7 @@ function SensitiveProxyGroup(props: {
   const failed = useSignal(false);
   const anySet = settingKeys.some(isSet);
   const anyTyped = settingKeys.some((key) => (drafts.value[key] ?? "") !== "");
-  const host = (hostDraft.value ?? destination.host).trim().toLowerCase();
+  const host = normalizeSensitiveHost(hostDraft.value ?? destination.host);
   const visibility = visibilityDraft.value ?? destination.visibility;
   const hostValid = isValidSensitiveHost(host);
   const hostFieldId = `sb-extension-sensitive-${extensionId}-${proxyId}-host`;
@@ -95,7 +102,7 @@ function SensitiveProxyGroup(props: {
             {t("sensitive-settings-host", { defaultValue: "Host" })}
           </label>
         </div>
-        {host !== proxy.host && (
+        {host !== normalizeSensitiveHost(proxy.host) && (
           <p className="sb-settings-field-default-note">
             {t("setting-default-value", {
               defaultValue: "Default value: {{value}}",
@@ -198,6 +205,14 @@ function SensitiveProxyGroup(props: {
           </div>
         );
       })}
+      {hasStored && !anySet && (
+        <p className="sb-settings-field-default-note">
+          {t("sensitive-settings-outdated-note", {
+            defaultValue:
+              "Values saved for an earlier version of this extension aren't used any more. Enter them again, or clear them.",
+          })}
+        </p>
+      )}
       {anySet && (
         <p className="sb-settings-field-default-note">
           {t("sensitive-settings-replace-note", {
@@ -219,7 +234,7 @@ function SensitiveProxyGroup(props: {
             ? t("sensitive-settings-replace", { defaultValue: "Replace" })
             : t("sensitive-settings-save", { defaultValue: "Save" })}
         </button>
-        {anySet && (
+        {hasStored && (
           <button
             type="button"
             className="sb-settings-action-button"
@@ -251,6 +266,7 @@ export function SensitiveSettingsForm(props: {
   settings: Record<string, ExtensionSettingDefinition>;
   sensitive: Record<string, ExtensionSensitiveProxyDefinition>;
   getDestination: (proxyId: string) => SensitiveDestination | null;
+  hasStored: (proxyId: string) => boolean;
   isSet: (key: string) => boolean;
   onSave: (
     proxyId: string,
@@ -265,6 +281,7 @@ export function SensitiveSettingsForm(props: {
     settings,
     sensitive,
     getDestination,
+    hasStored,
     isSet,
     onSave,
     onClear,
@@ -291,6 +308,7 @@ export function SensitiveSettingsForm(props: {
             proxy={proxy}
             settingKeys={settingKeys}
             destination={destination}
+            hasStored={hasStored(proxyId)}
             isSet={isSet}
             onSave={(values, options) => onSave(proxyId, values, options)}
             onClear={() => onClear(proxyId)}
@@ -299,5 +317,76 @@ export function SensitiveSettingsForm(props: {
         );
       })}
     </>
+  );
+}
+
+/**
+ * Saved values the Configure window can no longer reach, because their
+ * extension was uninstalled or stopped declaring the entry. The proxy record
+ * keeps the secret on the server until it is cleared, so this is the only way
+ * left to revoke it.
+ */
+export function UnusedSensitiveSettingsList(props: {
+  unused: UnusedSensitiveProxy[];
+  getExtensionTitle: (extensionId: string) => string;
+  onClear: (extensionId: string, proxyId: string) => Promise<boolean>;
+  t: I18nHook["t"];
+}) {
+  const { unused, getExtensionTitle, onClear, t } = props;
+  const clearing = useSignal<string | null>(null);
+  const failed = useSignal<string | null>(null);
+  if (unused.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="sb-extension-sensitive-group">
+      <h3 className="sb-settings-field-label">
+        {t("sensitive-settings-unused-title", {
+          defaultValue: "Saved secrets no extension is using",
+        })}
+      </h3>
+      <p className="sb-settings-field-default-note">
+        {t("sensitive-settings-unused-description", {
+          defaultValue:
+            "These belong to extensions that aren't installed, or that no longer ask for them. They stay on the server until you clear them.",
+        })}
+      </p>
+      {unused.map(({ extensionId, proxyId, host }) => {
+        const id = `${extensionId}/${proxyId}`;
+        return (
+          <div className="sb-extension-sensitive-unused-row" key={id}>
+            <span>
+              {t("sensitive-settings-unused-entry", {
+                defaultValue: "{{extension}}: sent to {{host}}",
+                extension: getExtensionTitle(extensionId),
+                host,
+              })}
+            </span>
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              disabled={clearing.value === id}
+              onClick={async () => {
+                clearing.value = id;
+                failed.value = null;
+                const ok = await onClear(extensionId, proxyId);
+                clearing.value = null;
+                failed.value = ok ? null : id;
+              }}
+            >
+              {t("sensitive-settings-clear", { defaultValue: "Clear" })}
+            </button>
+            {failed.value === id && (
+              <p className="sb-settings-save-error" role="alert">
+                {t("extension-settings-save-failed", {
+                  defaultValue: "Couldn't save your settings.",
+                })}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </section>
   );
 }

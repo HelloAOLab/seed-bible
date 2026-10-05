@@ -55,6 +55,13 @@ export interface ExtensionBooleanSettingDefinition {
  * Each becomes one CasualOS proxy record per viewer, so all of its settings
  * travel together on every request made through it.
  */
+/**
+ * Who may send requests through a viewer's proxy: `private` means only the
+ * viewer, `public` anyone who knows the proxy's address. Nobody can read the
+ * values either way. Always `private` until the viewer chooses otherwise; an
+ * extension can't pick it, so it can't make a viewer's key usable by others
+ * by default.
+ */
 export type ExtensionSensitiveProxyVisibility = "private" | "public";
 
 export interface ExtensionSensitiveProxyDefinition {
@@ -64,13 +71,6 @@ export interface ExtensionSensitiveProxyDefinition {
    * they save their values, and the extension keeps addressing this one.
    */
   host: string;
-  /**
-   * Who may send requests through the viewer's proxy. `private` (the default)
-   * means only the viewer; `public` means anyone who knows the proxy's
-   * address, though nobody can read the values either way. The default:
-   * a viewer can choose the other when they save their values.
-   */
-  visibility?: ExtensionSensitiveProxyVisibility;
   /**
    * Request property -> the key of the setting whose value fills it. The
    * properties are the ones CasualOS proxies support (see
@@ -96,6 +96,15 @@ export function isValidSensitiveHost(host: string): boolean {
   return /^(?=.{1,253}(?::|$))[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*(?::\d{1,5})?$/i.test(
     host
   );
+}
+
+/**
+ * The form hosts are compared in. Drops `:443`, because the URL parser drops
+ * the default `https:` port too: `new URL("https://a.com:443/").host` is
+ * `a.com`, so a host declared with it would otherwise never match a request.
+ */
+export function normalizeSensitiveHost(host: string): string {
+  return host.trim().toLowerCase().replace(/:443$/, "");
 }
 
 /** True when the setting's value is held by a proxy rather than stored as a readable value. */

@@ -23,7 +23,6 @@
   "sensitive": {
     "exampleService": {
       "host": "httpbin.org",
-      "visibility": "private",
       "requestMapping": {
         "headers.authorization.bearer": "exampleApiKey",
         "body.client_id": "exampleClientId"

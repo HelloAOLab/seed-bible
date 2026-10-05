@@ -1,7 +1,10 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { SensitiveSettingsForm } from "@packages/seed-bible/seed-bible/components/ExtensionSettingsForm/SensitiveSettingsForm";
+import {
+  SensitiveSettingsForm,
+  UnusedSensitiveSettingsList,
+} from "@packages/seed-bible/seed-bible/components/ExtensionSettingsForm/SensitiveSettingsForm";
 import { mockTranslate } from "../testUtils/mockI18n";
 
 describe("SensitiveSettingsForm", () => {
@@ -17,7 +20,7 @@ describe("SensitiveSettingsForm", () => {
     container.remove();
   });
 
-  const renderForm = (saveResult = true) => {
+  const renderForm = (saveResult = true, stored = false) => {
     const setKeys = signal<string[]>([]);
     const onSave = vi.fn(
       async (
@@ -57,6 +60,7 @@ describe("SensitiveSettingsForm", () => {
             host: "api.example.com",
             visibility: "private",
           })}
+          hasStored={() => stored || setKeys.value.length > 0}
           isSet={(key) => setKeys.value.includes(key)}
           onSave={onSave}
           onClear={onClear}
@@ -181,5 +185,57 @@ describe("SensitiveSettingsForm", () => {
 
     expect(button("Save")!.disabled).toBe(true);
     expect(container.querySelector('[role="alert"]')).not.toBeNull();
+  });
+
+  it("offers to clear values saved for an older version of the extension", async () => {
+    const { onClear } = renderForm(true, true);
+
+    expect(container.textContent).toContain("Not set");
+    expect(container.textContent).toContain(
+      "Values saved for an earlier version of this extension"
+    );
+    await click("Clear");
+
+    expect(onClear).toHaveBeenCalledWith("exampleApi");
+  });
+
+  it("lists secrets no extension uses, each with its own Clear", async () => {
+    const onClear = vi.fn(async () => true);
+    act(() => {
+      render(
+        <UnusedSensitiveSettingsList
+          unused={[
+            { extensionId: "gone-ext", proxyId: "api", host: "api.gone.com" },
+          ]}
+          getExtensionTitle={(id) => `Title of ${id}`}
+          onClear={onClear}
+          t={mockTranslate}
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).toContain(
+      "Title of gone-ext: sent to api.gone.com"
+    );
+    await click("Clear");
+
+    expect(onClear).toHaveBeenCalledWith("gone-ext", "api");
+  });
+
+  it("shows nothing when every saved secret is still in use", () => {
+    act(() => {
+      render(
+        <UnusedSensitiveSettingsList
+          unused={[]}
+          getExtensionTitle={(id) => id}
+          onClear={vi.fn()}
+          t={mockTranslate}
+        />,
+        container
+      );
+    });
+
+    expect(container.innerHTML).toBe("");
   });
 });

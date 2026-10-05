@@ -16,9 +16,10 @@
 - Let extensions declare `sensitive` settings, such as API keys, whose values never come back to the browser. ([#1836](https://github.com/HelloAOLab/seed-bible/issues/1836))
   - An extension's `extension.json` lists each destination once in a `sensitive` section (a host plus which request property each setting fills in), and each sensitive setting names the destination it belongs to, so a "Client ID" and an "API key" can both be sent to the same host.
   - Values are saved in a private CasualOS proxy record owned by the viewer. The extension sends requests with `extensionSettings.fetchWithSensitiveValues`, and the server adds the values before forwarding them.
-  - Each destination can be private (only the viewer can use it) or public (anyone with its address can send requests through it, but nobody can read the values). The extension picks the default with `visibility`, and the viewer can change it.
+  - Each destination can be private (only the viewer can use it) or public (anyone with its address can send requests through it, but nobody can read the values). It's always private until the viewer changes it; extensions can't choose.
   - The viewer can also send a destination's values to a different host than the extension declares. The extension keeps using its own URL, and requests go to the viewer's host with the same path.
   - The Configure window shows these settings as masked fields that only say whether a value is set. Customization default overrides skip them.
+  - Secrets for an extension that's no longer installed, or that no longer asks for them, are listed under Settings → Extensions with a Clear button, so they can still be removed from the server.
 - Give each shared playlist its own page at `/{lang}/playlist/{id}/{title}`. ([#1785](https://github.com/HelloAOLab/seed-bible/issues/1785))
   - Opening a shared playlist link shows the playlist's cover, author and description, with "Start Playlist" and "Close" buttons. Before, the link opened straight onto a chapter with no sign it was a playlist.
   - Link previews and search results now show "{playlist} by {author}", the playlist's description and its cover image.
