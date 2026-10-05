@@ -194,8 +194,11 @@ describe("FriendsManager", () => {
       expect(friends.friends.value).toEqual([]);
     });
 
-    it("drops a response for an account that was switched away from", async () => {
-      server.friendsWith("ada");
+    /**
+     * Holds the next friends listing's answer until `release` is called. It
+     * reads the server when asked, so it answers with what was there then.
+     */
+    const holdNextListing = () => {
       let release!: () => void;
       const gate = new Promise<void>((resolve) => (release = resolve));
       const listRecords = server.spies.listRecords.getMockImplementation()!;
@@ -204,6 +207,17 @@ describe("FriendsManager", () => {
         await gate;
         return records;
       });
+      return release;
+    };
+    const flush = async () => {
+      for (let i = 0; i < 5; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    };
+
+    it("drops a response for an account that was switched away from", async () => {
+      server.friendsWith("ada");
+      const release = holdNextListing();
 
       const friends = create();
       userId.value = "someone-else";
@@ -214,6 +228,35 @@ describe("FriendsManager", () => {
       });
       // Ada is a friend of `me`, not of the account signed in now.
       expect(friends.friendIds.value).toEqual([]);
+    });
+
+    it("drops a response that lands after signing out", async () => {
+      server.friendsWith("ada");
+      const release = holdNextListing();
+      const friends = create();
+
+      userId.value = null;
+      release();
+      await flush();
+
+      expect(friends.friendIds.value).toEqual([]);
+    });
+
+    it("keeps the newer lists when an older refresh answers last", async () => {
+      server.friendsWith("ada");
+      const friends = create();
+      await loaded(friends, () =>
+        expect(friends.friendIds.value).toEqual(["ada"])
+      );
+      const release = holdNextListing();
+      const older = friends.refresh();
+      server.friendsWith("bob");
+      await friends.refresh();
+
+      release();
+      await older;
+
+      expect(friends.friendIds.value).toEqual(["ada", "bob"]);
     });
 
     it("keeps what it had when a refresh fails", async () => {

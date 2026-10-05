@@ -312,6 +312,8 @@ export function createFriendsManager(
         os.listAllRequestedSharedPermissions(),
         os.listAllSentSharedPermissions(),
       ]);
+      // Stale if a newer refresh has started (which switching to another
+      // account always does), or if the user has signed out since.
       if (version !== refreshVersion || login.userId.peek() !== userId) {
         return;
       }
@@ -375,8 +377,6 @@ export function createFriendsManager(
     if (loadedUserId.peek() === userId) {
       return;
     }
-    // Invalidates anything in flight for the previous account.
-    refreshVersion++;
     batch(() => {
       links.value = EMPTY_LINKS;
       incoming.value = EMPTY_REQUESTS;
