@@ -250,6 +250,34 @@ describe("friend links", () => {
       expect(button("Send request")).toBeUndefined();
     });
 
+    it("explains a link mangled in copying, without asking the server", async () => {
+      await openWith(`?addFriend=${ADA_ID.slice(0, 20)}`);
+
+      expect(text()).toContain(
+        "This friend link doesn't match anyone's account."
+      );
+      expect(button("Send request")).toBeUndefined();
+      expect(login.getPublicProfile).not.toHaveBeenCalled();
+    });
+
+    it("recognises the user's own link in capitals", async () => {
+      await openWith(`?addFriend=${ME.toUpperCase()}`);
+
+      expect(text()).toContain("This is your own friend link.");
+      expect(button("Send request")).toBeUndefined();
+    });
+
+    it("sends the request to the account a link in capitals names", async () => {
+      const bethId = "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff";
+
+      await openWith(`?addFriend=${bethId.toUpperCase()}`);
+      await click("Send request");
+
+      expect(server.rows).toMatchObject([
+        { requestingUserId: ME, targetUserId: bethId, status: "requested" },
+      ]);
+    });
+
     it("says so when they're already friends", async () => {
       server.friendsWith(ADA_ID);
       await openWith(`?addFriend=${ADA_ID}`);

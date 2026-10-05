@@ -6,8 +6,11 @@ import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/O
 import type { SharedMarkerPermission } from "@casual-simulation/aux-common";
 import type { SharedPermission } from "@casual-simulation/aux-records";
 
-/** The signed-in user the fake answers as by default. */
-export const ME = "me";
+/**
+ * The signed-in user the fake answers as by default. A UUID, like every real
+ * CasualOS user ID, since friend links refuse anything else.
+ */
+export const ME = "acdcacdc-0000-4000-8000-00000000beef";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type Failure = {

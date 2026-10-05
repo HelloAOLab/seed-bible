@@ -13,7 +13,11 @@ import { displayNameOf } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
 import { BusyButton } from "./FriendsPane";
 import { emptyProfileNote, hasEmptyProfile, PersonCard } from "./PersonCard";
-import { ADD_FRIEND_PARAM, FRIEND_REQUEST_PARAM } from "./friendLinks";
+import {
+  ADD_FRIEND_PARAM,
+  FRIEND_REQUEST_PARAM,
+  parseUserId,
+} from "./friendLinks";
 
 type Toast = (message: string) => void;
 type ProfileLookup = "found" | "no_account" | "failed";
@@ -410,26 +414,35 @@ async function signInThen(
 
 export async function openAddFriendLinkPrompt(
   deps: FriendLinkDeps,
-  userId: string
+  linkedUserId: string
 ): Promise<void> {
-  // What the prompt offers depends on the friends lists, which may have
-  // loaded long before this link was opened.
-  if (deps.login.userId.peek()) {
-    void deps.friends.refresh();
-  }
-  // Their name and picture make the prompt meaningful, but an account that
-  // never set them can still be befriended, so a failed lookup isn't fatal.
-  let person: Friend = { userId, ...toFriendProfile(null) };
-  let lookup: ProfileLookup = "failed";
-  try {
-    const profile = await deps.login.getPublicProfile(userId);
-    person = { userId, ...toFriendProfile(profile) };
-    lookup = profile ? "found" : "no_account";
-  } catch (error) {
-    console.warn("Could not load the profile for a friend link:", error);
+  // A link mangled in copying can't match an account, so it's answered as
+  // one that doesn't without asking the server.
+  const userId = parseUserId(linkedUserId);
+  let person: Friend = {
+    userId: userId ?? linkedUserId,
+    ...toFriendProfile(null),
+  };
+  let lookup: ProfileLookup = "no_account";
+  if (userId) {
+    // What the prompt offers depends on the friends lists, which may have
+    // loaded long before this link was opened.
+    if (deps.login.userId.peek()) {
+      void deps.friends.refresh();
+    }
+    // Their name and picture make the prompt meaningful, but an account that
+    // never set them can still be befriended, so a failed lookup isn't fatal.
+    lookup = "failed";
+    try {
+      const profile = await deps.login.getPublicProfile(userId);
+      person = { userId, ...toFriendProfile(profile) };
+      lookup = profile ? "found" : "no_account";
+    } catch (error) {
+      console.warn("Could not load the profile for a friend link:", error);
+    }
   }
 
-  const reopen = () => void openAddFriendLinkPrompt(deps, userId);
+  const reopen = () => void openAddFriendLinkPrompt(deps, linkedUserId);
   deps.modals.openModal({
     id: ADD_FRIEND_MODAL_ID,
     title: { key: "add-friend", defaultValue: "Add a friend" },

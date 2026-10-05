@@ -12,7 +12,11 @@ import type { ModalManager } from "../../managers/ModalManager";
 import { displayNameOf } from "../../managers/Utils";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
-import { getAddFriendUrl, getFriendRequestUrl } from "./friendLinks";
+import {
+  getAddFriendUrl,
+  getFriendRequestUrl,
+  parseUserId,
+} from "./friendLinks";
 import { PersonButton, type PersonProfileDeps } from "./PersonCard";
 
 export const FRIENDS_PANE_ID = "friends-pane";
@@ -24,10 +28,6 @@ export const FRIENDS_PANE_ID = "friends-pane";
  * different account with the same address. Flip this once it lands.
  */
 const ADD_FRIEND_BY_EMAIL_ENABLED = false;
-
-/** CasualOS user IDs are UUIDs; checked so a typo doesn't send a request to nobody. */
-const USER_ID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type Toast = SeedBibleState["app"]["toast"];
 type T = ReturnType<typeof useI18n>["t"];
@@ -210,10 +210,11 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
       return;
     }
     let target: { userId: string } | { email: string };
+    const userId = parseUserId(input);
     if (ADD_FRIEND_BY_EMAIL_ENABLED && input.includes("@")) {
       target = { email: input };
-    } else if (USER_ID_PATTERN.test(input)) {
-      target = { userId: input.toLowerCase() };
+    } else if (userId) {
+      target = { userId };
     } else {
       outcome.value = {
         message: ADD_FRIEND_BY_EMAIL_ENABLED
