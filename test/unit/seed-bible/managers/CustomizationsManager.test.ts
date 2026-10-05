@@ -1520,6 +1520,113 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value).toBeNull();
   });
 
+  describe("a customization's sensitive proxies", () => {
+    const pointer = {
+      recordName: "user-1",
+      address: "proxy-1",
+      host: "api.example.com",
+      defaultHost: "api.example.com",
+      visibility: "public" as const,
+      requestMapping: { "headers.authorization.bearer": "apiKey" },
+      keys: ["apiKey"],
+    };
+
+    it("records a proxy on the draft and saves it straight away", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+
+      const saved = await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      expect(saved).toBe(true);
+      expect(recordDataMock).toHaveBeenLastCalledWith(
+        "user-1",
+        created.id,
+        expect.objectContaining({
+          extensionSensitiveProxies: { "ext-1": { exampleApi: pointer } },
+        }),
+        { marker: CUSTOMIZATION_MARKER }
+      );
+      expect(
+        manager.editingCustomization.value?.extensionSensitiveProxies
+      ).toEqual({ "ext-1": { exampleApi: pointer } });
+      expect(manager.hasUnsavedChanges.value).toBe(false);
+    });
+
+    it("reports a failed save", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      const { manager } = createManager();
+      const created = await manager.create();
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+      });
+
+      expect(
+        await manager.setExtensionSensitiveProxy(
+          created.id,
+          "ext-1",
+          "exampleApi",
+          pointer
+        )
+      ).toBe(false);
+    });
+
+    it("remove() erases the customization's proxies before the record", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const eraseProxyMock = vi
+        .spyOn(os, "eraseProxy")
+        .mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      await manager.remove(created.id);
+
+      expect(eraseProxyMock).toHaveBeenCalledWith("user-1", "proxy-1");
+      expect(eraseProxyMock.mock.invocationCallOrder[0]!).toBeLessThan(
+        eraseDataMock.mock.invocationCallOrder[0]!
+      );
+      expect(manager.customizations.value).toEqual([]);
+    });
+
+    it("remove() keeps the customization when a proxy can't be erased", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      vi.spyOn(os, "eraseProxy").mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "",
+      });
+      const { manager } = createManager();
+      const created = await manager.create();
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      await manager.remove(created.id);
+
+      expect(eraseDataMock).not.toHaveBeenCalled();
+      expect(manager.customizations.value.map((c) => c.id)).toEqual([
+        created.id,
+      ]);
+    });
+  });
+
   it("create() defaults logoUrl to null", async () => {
     const { manager } = createManager();
 
@@ -2118,6 +2225,7 @@ describe("CustomizationsManager", () => {
             ],
             extensionSettings: {},
             extensionSettingDefaults: {},
+            extensionSensitiveProxies: {},
           },
         }
       );
@@ -2324,6 +2432,7 @@ describe("CustomizationsManager", () => {
       updatedAt: 1,
       extensionSettings: {},
       extensionSettingDefaults: {},
+      extensionSensitiveProxies: {},
     };
     const LOCATOR = "other-user.customization_shared";
 

@@ -1368,6 +1368,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 isSet={(key) =>
                   extensionSettings.isSensitiveValueSet(extensionEntry.id, key)
                 }
+                isProvided={(key) =>
+                  extensionSettings.getSensitiveValueSource(
+                    extensionEntry.id,
+                    key
+                  ) === "customization"
+                }
                 hasStored={(proxyId) =>
                   extensionSettings.hasStoredSensitiveValues(
                     extensionEntry.id,

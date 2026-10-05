@@ -15,6 +15,10 @@ import type { CustomizationVariantSelectionsManager } from "./CustomizationVaria
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
 import type { ExtensionSettingValue } from "./ExtensionManager";
 import {
+  sensitiveProxyPointerSchema,
+  type SensitiveProxyPointer,
+} from "./ExtensionSensitiveSettings";
+import {
   applyHighlightOverrides,
   DARK_THEME,
   filterValidColorOverrides,
@@ -343,6 +347,16 @@ const customizationSchema = z
         z.record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
       )
       .default({}),
+    /**
+     * Where this customization's own values for extension sensitive settings
+     * are held, keyed by extension id then `sensitive` entry id. Only the
+     * addresses: the values live in proxy records in the owner's record, and
+     * a viewer's own values (see `ExtensionSensitiveSettings`) win over them.
+     * Only ever written by `setExtensionSensitiveProxy`.
+     */
+    extensionSensitiveProxies: z
+      .record(z.string(), z.record(z.string(), sensitiveProxyPointerSchema))
+      .default({}),
   })
   .refine((r) => r.variants.some((v) => v.id === r.defaultVariantId), {
     message: "defaultVariantId must reference an existing variant",
@@ -394,6 +408,36 @@ export interface SeedBibleCustomization {
     string,
     Record<string, ExtensionSettingValue>
   >;
+  /** Per-extension sensitive proxies this customization provides. An extension/entry with none here provides nothing. */
+  extensionSensitiveProxies: Record<
+    string,
+    Record<string, SensitiveProxyPointer>
+  >;
+}
+
+function withExtensionSensitiveProxy(
+  customization: SeedBibleCustomization,
+  extensionId: string,
+  proxyId: string,
+  pointer: SensitiveProxyPointer | null
+): SeedBibleCustomization {
+  const byProxy = { ...customization.extensionSensitiveProxies[extensionId] };
+  if (pointer) {
+    byProxy[proxyId] = pointer;
+  } else {
+    delete byProxy[proxyId];
+  }
+  const next = { ...customization.extensionSensitiveProxies };
+  if (Object.keys(byProxy).length === 0) {
+    delete next[extensionId];
+  } else {
+    next[extensionId] = byProxy;
+  }
+  return {
+    ...customization,
+    extensionSensitiveProxies: next,
+    updatedAt: Date.now(),
+  };
 }
 
 /** Resolves an extension's effective availability for a customization, defaulting to "available" when unset. */
@@ -847,6 +891,18 @@ export interface CustomizationsManager {
     key: string
   ) => void;
   /** The active customization's default for an extension setting, or undefined if nothing is active or it sets no default there. */
+  /**
+   * Records where one of the customization's own sensitive proxies is (or,
+   * with null, forgets it) and saves the customization right away, since the
+   * proxy record already exists. Updates the edit draft too when it's the
+   * same customization. Resolves to whether it was saved.
+   */
+  setExtensionSensitiveProxy: (
+    customizationId: string,
+    extensionId: string,
+    proxyId: string,
+    pointer: SensitiveProxyPointer | null
+  ) => Promise<boolean>;
   getActiveExtensionSettingDefault: (
     extensionId: string,
     key: string
@@ -1320,14 +1376,10 @@ export function createCustomizationsManager(
     }
   };
 
-  const persist = async (
-    userId: string,
-    record: SeedBibleCustomization
-  ): Promise<void> => {
-    await os.recordData(userId, record.id, record, {
+  const persist = (userId: string, record: SeedBibleCustomization) =>
+    os.recordData(userId, record.id, record, {
       marker: CUSTOMIZATION_MARKER,
     });
-  };
 
   const create = async (): Promise<SeedBibleCustomization> => {
     const userId = login.userId.value;
@@ -1348,6 +1400,7 @@ export function createCustomizationsManager(
       updatedAt: now,
       extensionSettings: {},
       extensionSettingDefaults: {},
+      extensionSensitiveProxies: {},
     };
 
     await persist(userId, record);
@@ -1844,6 +1897,21 @@ export function createCustomizationsManager(
       return;
     }
 
+    // The proxies go first: once the record is gone nothing points at them,
+    // and a public one would stay usable by anyone who saw its address.
+    for (const byProxy of Object.values(existing.extensionSensitiveProxies)) {
+      for (const pointer of Object.values(byProxy)) {
+        const erased = await os.eraseProxy(pointer.recordName, pointer.address);
+        if (!erased.success && erased.errorCode !== "data_not_found") {
+          console.error(
+            "Failed to clear a customization's sensitive settings:",
+            erased.errorCode
+          );
+          return;
+        }
+      }
+    }
+
     await os.eraseData(userId, id);
     customizations.value = customizations.value.filter((c) => c.id !== id);
     if (editingCustomization.value?.id === id) {
@@ -1977,6 +2045,57 @@ export function createCustomizationsManager(
   ): ExtensionSettingValue | undefined =>
     getExtensionSettingDefault(activeCustomization.value, extensionId, key);
 
+  const setExtensionSensitiveProxy = async (
+    customizationId: string,
+    extensionId: string,
+    proxyId: string,
+    pointer: SensitiveProxyPointer | null
+  ): Promise<boolean> => {
+    const userId = login.userId.value;
+    const draft = editingCustomization.value;
+    const base =
+      draft?.id === customizationId
+        ? draft
+        : customizations.value.find((c) => c.id === customizationId);
+    if (!userId || !base) {
+      return false;
+    }
+    // Applied in memory before the write, so a save of the draft that starts
+    // while this one is in flight carries the pointer too instead of
+    // dropping it.
+    const next = withExtensionSensitiveProxy(
+      base,
+      extensionId,
+      proxyId,
+      pointer
+    );
+    if (draft?.id === customizationId) {
+      editingCustomization.value = next;
+    }
+    customizations.value = customizations.value.map((c) =>
+      c.id === customizationId
+        ? withExtensionSensitiveProxy(c, extensionId, proxyId, pointer)
+        : c
+    );
+    try {
+      const result = await persist(userId, next);
+      if (!result.success) {
+        console.error(
+          "Failed to save a customization's sensitive settings:",
+          result.errorCode
+        );
+        return false;
+      }
+    } catch (error) {
+      console.error(
+        "Failed to save a customization's sensitive settings:",
+        error
+      );
+      return false;
+    }
+    return true;
+  };
+
   const addExtensionToActiveCustomization = async (
     extensionId: string
   ): Promise<void> => {
@@ -2068,6 +2187,7 @@ export function createCustomizationsManager(
     setEditingExtensionSettingDefault,
     clearEditingExtensionSettingDefault,
     getActiveExtensionSettingDefault,
+    setExtensionSensitiveProxy,
     addExtensionToActiveCustomization,
     removeExtensionFromActiveCustomization,
   };

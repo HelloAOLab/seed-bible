@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import type { CasualOSManager, ProxyRequestMethod } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
 import type { ExtensionManager } from "./ExtensionManager";
+import type { CustomizationsManager } from "./CustomizationsManager";
 import {
   isSupportedSensitiveRequestProperty,
   isValidSensitiveHost,
@@ -49,29 +50,28 @@ export interface SensitiveProxyPointer {
   keys: string[];
 }
 
+export const sensitiveProxyPointerSchema = z
+  .object({
+    recordName: z.string(),
+    address: z.string(),
+    host: z.string(),
+    defaultHost: z.string().optional(),
+    visibility: z.enum(["private", "public"]).optional(),
+    requestMapping: z.record(z.string(), z.string()),
+    keys: z.array(z.string()),
+  })
+  // Pointers saved before hosts and visibility could be chosen.
+  .transform(
+    (pointer): SensitiveProxyPointer => ({
+      ...pointer,
+      defaultHost: pointer.defaultHost ?? pointer.host,
+      visibility: pointer.visibility ?? "private",
+    })
+  );
+
 const pointersPayloadSchema = z.record(
   z.string(),
-  z.record(
-    z.string(),
-    z
-      .object({
-        recordName: z.string(),
-        address: z.string(),
-        host: z.string(),
-        defaultHost: z.string().optional(),
-        visibility: z.enum(["private", "public"]).optional(),
-        requestMapping: z.record(z.string(), z.string()),
-        keys: z.array(z.string()),
-      })
-      // Pointers saved before hosts and visibility could be chosen.
-      .transform(
-        (pointer): SensitiveProxyPointer => ({
-          ...pointer,
-          defaultHost: pointer.defaultHost ?? pointer.host,
-          visibility: pointer.visibility ?? "private",
-        })
-      )
-  )
+  z.record(z.string(), sensitiveProxyPointerSchema)
 );
 
 type Pointers = Record<string, Record<string, SensitiveProxyPointer>>;
@@ -137,9 +137,62 @@ export interface UnusedSensitiveProxy {
   host: string;
 }
 
+/**
+ * Whose value a sensitive setting would be sent with: the viewer's own, or,
+ * when they haven't set one, the active Customization's.
+ */
+export type SensitiveValueSource = "viewer" | "customization";
+
+/**
+ * Saves and clears the sensitive values of the Customization being edited.
+ * Its proxies live in the owner's record, and the customization record only
+ * says where they are, so everyone using the Customization can send requests
+ * through them without ever seeing the values.
+ */
+export interface CustomizationSensitiveSettings {
+  /** True when the edited Customization has a current value for this setting. */
+  isSensitiveValueSet: (extensionId: string, key: string) => boolean;
+  /** See `ExtensionSensitiveSettings.hasStoredSensitiveValues`. */
+  hasStoredSensitiveValues: (extensionId: string, proxyId: string) => boolean;
+  /**
+   * Like `ExtensionSensitiveSettings.getSensitiveDestination`, except a
+   * Customization's proxy is `public` until its owner chooses otherwise: it
+   * exists for other people to use.
+   */
+  getSensitiveDestination: (
+    extensionId: string,
+    proxyId: string
+  ) => SensitiveDestination | null;
+  /**
+   * See `ExtensionSensitiveSettings.setSensitiveValues`. Resolves to false
+   * when no Customization is being edited.
+   */
+  setSensitiveValues: (
+    extensionId: string,
+    proxyId: string,
+    values: Record<string, string>,
+    options?: SensitiveSaveOptions
+  ) => Promise<boolean>;
+  clearSensitiveValues: (
+    extensionId: string,
+    proxyId: string
+  ) => Promise<boolean>;
+}
+
 export interface ExtensionSensitiveSettings {
   /** extensionId -> sensitive entry id -> where its values are held. Empty when signed out. */
   sensitiveProxiesByExtensionId: ReadonlySignal<Pointers>;
+  /** The edited Customization's own sensitive values. */
+  customizationSensitiveSettings: CustomizationSensitiveSettings;
+  /**
+   * Whose value `fetchWithSensitiveValues` would send for this setting: the
+   * viewer's own while it's current, else the active Customization's while
+   * that's current and usable by this viewer, else null.
+   */
+  getSensitiveValueSource: (
+    extensionId: string,
+    key: string
+  ) => SensitiveValueSource | null;
   /**
    * True when the viewer has stored a value for this sensitive setting and the
    * extension still sends it to the same place. A value saved before the
@@ -188,8 +241,10 @@ export interface ExtensionSensitiveSettings {
     proxyId: string
   ) => Promise<boolean>;
   /**
-   * Sends a request through the viewer's proxy for the URL's host, which fills
-   * in the sensitive values on the server. Rejects with a
+   * Sends a request through the proxy for the URL's host, which fills in the
+   * sensitive values on the server: the viewer's own proxy, or the active
+   * Customization's when the viewer hasn't set one (which also works signed
+   * out, if the Customization made it public). Rejects with a
    * `SensitiveSettingsError`. Request headers can't be set: the proxy only
    * sends the ones its values fill in.
    */
@@ -213,10 +268,28 @@ function sameMapping(
 /** Statuses a `Response` must be built without a body. */
 const NULL_BODY_STATUSES = new Set([101, 204, 205, 304]);
 
+/**
+ * One set of pointers that saves and clears work on: the viewer's own, or the
+ * edited Customization's.
+ */
+interface PointerScope {
+  pointers: () => Pointers;
+  /** The visibility of a proxy saved before anyone chose one. */
+  defaultVisibility: ExtensionSensitiveProxyVisibility;
+  /** Saves (or, with null, forgets) one entry's pointer. */
+  writePointer: (
+    userId: string,
+    extensionId: string,
+    proxyId: string,
+    pointer: SensitiveProxyPointer | null
+  ) => Promise<boolean>;
+}
+
 export function createExtensionSensitiveSettings(
   os: CasualOSManager,
   login: LoginManager,
-  extensions: ExtensionManager
+  extensions: ExtensionManager,
+  customizations: CustomizationsManager
 ): ExtensionSensitiveSettings {
   const pointers = signal<Pointers>({});
   let loadedUserId: string | null = null;
@@ -321,12 +394,36 @@ export function createExtensionSensitiveSettings(
     );
   };
 
-  const currentPointer = (
+  const currentPointerIn = (
+    scope: Pointers,
     extensionId: string,
     proxyId: string
   ): SensitiveProxyPointer | undefined => {
-    const pointer = pointers.value[extensionId]?.[proxyId];
+    const pointer = scope[extensionId]?.[proxyId];
     return pointer && isCurrent(extensionId, proxyId, pointer)
+      ? pointer
+      : undefined;
+  };
+
+  const currentPointer = (extensionId: string, proxyId: string) =>
+    currentPointerIn(pointers.value, extensionId, proxyId);
+
+  /**
+   * The active Customization's pointer for this entry while it's current and
+   * this viewer may send through it: a `private` one only works for its owner.
+   */
+  const customizationPointer = (
+    extensionId: string,
+    proxyId: string
+  ): SensitiveProxyPointer | undefined => {
+    const pointer = currentPointerIn(
+      customizations.activeCustomization.value?.extensionSensitiveProxies ?? {},
+      extensionId,
+      proxyId
+    );
+    return pointer &&
+      (pointer.visibility === "public" ||
+        pointer.recordName === login.userId.value)
       ? pointer
       : undefined;
   };
@@ -351,7 +448,8 @@ export function createExtensionSensitiveSettings(
     return unused;
   };
 
-  const getSensitiveDestination = (
+  const destinationIn = (
+    scope: PointerScope,
     extensionId: string,
     proxyId: string
   ): SensitiveDestination | null => {
@@ -359,21 +457,54 @@ export function createExtensionSensitiveSettings(
     if (!proxy) {
       return null;
     }
-    const pointer = currentPointer(extensionId, proxyId);
+    const pointer = currentPointerIn(scope.pointers(), extensionId, proxyId);
     return pointer
       ? { host: pointer.host, visibility: pointer.visibility }
-      : { host: proxy.host, visibility: "private" };
+      : { host: proxy.host, visibility: scope.defaultVisibility };
   };
 
-  const isSensitiveValueSet = (extensionId: string, key: string): boolean => {
+  /** The `sensitive` entry a setting belongs to, if it's a sensitive one. */
+  const sensitiveEntryOf = (
+    extensionId: string,
+    key: string
+  ): string | undefined => {
     const setting = getMeta(extensionId)?.settings?.[key];
-    if (setting?.type !== "string" || setting.sensitive === undefined) {
-      return false;
-    }
+    return setting?.type === "string" ? setting.sensitive : undefined;
+  };
+
+  const isSetIn = (
+    scope: Pointers,
+    extensionId: string,
+    key: string
+  ): boolean => {
+    const proxyId = sensitiveEntryOf(extensionId, key);
     return (
-      currentPointer(extensionId, setting.sensitive)?.keys.includes(key) ===
-      true
+      proxyId !== undefined &&
+      currentPointerIn(scope, extensionId, proxyId)?.keys.includes(key) === true
     );
+  };
+
+  const isSensitiveValueSet = (extensionId: string, key: string): boolean =>
+    isSetIn(pointers.value, extensionId, key);
+
+  const getSensitiveValueSource = (
+    extensionId: string,
+    key: string
+  ): SensitiveValueSource | null => {
+    const proxyId = sensitiveEntryOf(extensionId, key);
+    if (proxyId === undefined) {
+      return null;
+    }
+    // Whichever proxy `fetchWithSensitiveValues` would pick, which goes by
+    // entry, not by key: a viewer who set only some of an entry's values
+    // sends none of the Customization's.
+    const own = currentPointer(extensionId, proxyId);
+    if (own) {
+      return own.keys.includes(key) ? "viewer" : null;
+    }
+    return customizationPointer(extensionId, proxyId)?.keys.includes(key)
+      ? "customization"
+      : null;
   };
 
   const writePointers = async (
@@ -404,24 +535,43 @@ export function createExtensionSensitiveSettings(
     return true;
   };
 
-  const withoutPointer = (extensionId: string, proxyId: string): Pointers => {
-    const remaining = { ...pointers.value[extensionId] };
-    delete remaining[proxyId];
+  const withPointer = (
+    extensionId: string,
+    proxyId: string,
+    pointer: SensitiveProxyPointer | null
+  ): Pointers => {
+    const byProxy = { ...pointers.value[extensionId] };
+    if (pointer) {
+      byProxy[proxyId] = pointer;
+    } else {
+      delete byProxy[proxyId];
+    }
     const next = { ...pointers.value };
-    if (Object.keys(remaining).length === 0) {
+    if (Object.keys(byProxy).length === 0) {
       delete next[extensionId];
     } else {
-      next[extensionId] = remaining;
+      next[extensionId] = byProxy;
     }
     return next;
   };
 
+  const viewerScope: PointerScope = {
+    pointers: () => pointers.value,
+    defaultVisibility: "private",
+    writePointer: (userId, extensionId, proxyId, pointer) =>
+      writePointers(userId, withPointer(extensionId, proxyId, pointer)),
+  };
+
+  const getSensitiveDestination = (extensionId: string, proxyId: string) =>
+    destinationIn(viewerScope, extensionId, proxyId);
+
   const clearNow = async (
+    scope: PointerScope,
     userId: string,
     extensionId: string,
     proxyId: string
   ): Promise<boolean> => {
-    const pointer = pointers.value[extensionId]?.[proxyId];
+    const pointer = scope.pointers()[extensionId]?.[proxyId];
     if (!pointer) {
       return true;
     }
@@ -440,10 +590,11 @@ export function createExtensionSensitiveSettings(
       console.error("Failed to clear extension sensitive settings:", error);
       return false;
     }
-    return writePointers(userId, withoutPointer(extensionId, proxyId));
+    return scope.writePointer(userId, extensionId, proxyId, null);
   };
 
   const setNow = async (
+    scope: PointerScope,
     userId: string,
     extensionId: string,
     proxyId: string,
@@ -451,7 +602,7 @@ export function createExtensionSensitiveSettings(
     options: SensitiveSaveOptions
   ): Promise<boolean> => {
     const usable = usableMapping(extensionId, proxyId);
-    const destination = getSensitiveDestination(extensionId, proxyId);
+    const destination = destinationIn(scope, extensionId, proxyId);
     if (!usable || !destination) {
       return false;
     }
@@ -470,11 +621,13 @@ export function createExtensionSensitiveSettings(
       }
     }
     if (keys.size === 0) {
-      return clearNow(userId, extensionId, proxyId);
+      return clearNow(scope, userId, extensionId, proxyId);
     }
     // Reusing the address replaces the host and markers along with the
-    // values, so an older save can't keep sending to where it used to.
-    const address = pointers.value[extensionId]?.[proxyId]?.address ?? uuid();
+    // values, so an older save can't keep sending to where it used to. Only
+    // one this account owns, though: anything else can't be written here.
+    const previous = scope.pointers()[extensionId]?.[proxyId];
+    const address = previous?.recordName === userId ? previous.address : uuid();
     try {
       const result = await os.recordProxy(userId, address, host, data, {
         marker: PROXY_MARKERS[visibility],
@@ -490,20 +643,14 @@ export function createExtensionSensitiveSettings(
       console.error("Failed to save extension sensitive settings:", error);
       return false;
     }
-    return writePointers(userId, {
-      ...pointers.value,
-      [extensionId]: {
-        ...pointers.value[extensionId],
-        [proxyId]: {
-          recordName: userId,
-          address,
-          host,
-          defaultHost: usable.proxy.host,
-          visibility,
-          requestMapping: { ...usable.proxy.requestMapping },
-          keys: [...keys],
-        },
-      },
+    return scope.writePointer(userId, extensionId, proxyId, {
+      recordName: userId,
+      address,
+      host,
+      defaultHost: usable.proxy.host,
+      visibility,
+      requestMapping: { ...usable.proxy.requestMapping },
+      keys: [...keys],
     });
   };
 
@@ -526,7 +673,7 @@ export function createExtensionSensitiveSettings(
     }
     return queue(() =>
       loadedUserId === userId
-        ? setNow(userId, extensionId, proxyId, values, options)
+        ? setNow(viewerScope, userId, extensionId, proxyId, values, options)
         : Promise.resolve(false)
     );
   };
@@ -541,21 +688,81 @@ export function createExtensionSensitiveSettings(
     }
     return queue(() =>
       loadedUserId === userId
-        ? clearNow(userId, extensionId, proxyId)
+        ? clearNow(viewerScope, userId, extensionId, proxyId)
         : Promise.resolve(false)
     );
+  };
+
+  /**
+   * The pointers of the Customization being edited, captured when the save
+   * starts so one that finishes after the editor switched still lands on the
+   * Customization it was made for.
+   */
+  const customizationScope = (customizationId: string): PointerScope => ({
+    pointers: () => {
+      const customization =
+        customizations.editingCustomization.value?.id === customizationId
+          ? customizations.editingCustomization.value
+          : customizations.customizations.value.find(
+              (candidate) => candidate.id === customizationId
+            );
+      return customization?.extensionSensitiveProxies ?? {};
+    },
+    defaultVisibility: "public",
+    writePointer: (_userId, extensionId, proxyId, pointer) =>
+      customizations.setExtensionSensitiveProxy(
+        customizationId,
+        extensionId,
+        proxyId,
+        pointer
+      ),
+  });
+
+  const editingScope = (): PointerScope | null => {
+    const editing = customizations.editingCustomization.value;
+    return editing ? customizationScope(editing.id) : null;
+  };
+
+  const inEditedCustomization = (
+    run: (scope: PointerScope, userId: string) => Promise<boolean>
+  ): Promise<boolean> => {
+    const userId = login.userId.value;
+    const scope = editingScope();
+    if (!userId || !scope) {
+      return Promise.resolve(false);
+    }
+    return queue(() =>
+      login.userId.value === userId
+        ? run(scope, userId)
+        : Promise.resolve(false)
+    );
+  };
+
+  const editedPointers = () => editingScope()?.pointers() ?? {};
+
+  const customizationSensitiveSettings: CustomizationSensitiveSettings = {
+    isSensitiveValueSet: (extensionId, key) =>
+      isSetIn(editedPointers(), extensionId, key),
+    hasStoredSensitiveValues: (extensionId, proxyId) =>
+      editedPointers()[extensionId]?.[proxyId] !== undefined,
+    getSensitiveDestination: (extensionId, proxyId) => {
+      const scope = editingScope();
+      return scope ? destinationIn(scope, extensionId, proxyId) : null;
+    },
+    setSensitiveValues: (extensionId, proxyId, values, options = {}) =>
+      inEditedCustomization((scope, userId) =>
+        setNow(scope, userId, extensionId, proxyId, values, options)
+      ),
+    clearSensitiveValues: (extensionId, proxyId) =>
+      inEditedCustomization((scope, userId) =>
+        clearNow(scope, userId, extensionId, proxyId)
+      ),
   };
 
   const fetchWithSensitiveValues = async (
     extensionId: string,
     request: SensitiveFetchRequest
   ): Promise<Response> => {
-    if (!login.userId.value) {
-      throw new SensitiveSettingsError(
-        "signed_out",
-        "Sensitive settings are only available while signed in."
-      );
-    }
     let url: URL;
     try {
       url = new URL(request.url);
@@ -571,24 +778,31 @@ export function createExtensionSensitiveSettings(
         "Sensitive values can only be sent to an https URL without credentials."
       );
     }
-    const userId = await waitForLoaded();
-    if (!userId) {
-      throw new SensitiveSettingsError(
-        "not_loaded",
-        "This account's sensitive settings couldn't be loaded."
-      );
-    }
+    // Signed out, or with the viewer's pointers unloadable, the active
+    // Customization's proxy may still be usable, so neither is an error yet.
+    const signedIn = login.userId.value !== null;
+    const ownLoaded = signedIn && (await waitForLoaded()) !== null;
+    const ownPointer = (proxyId: string) =>
+      ownLoaded ? currentPointer(extensionId, proxyId) : undefined;
     const host = normalizeSensitiveHost(url.host);
     const candidates = Object.entries(getMeta(extensionId)?.sensitive ?? {})
       .filter(([id, proxy]) => {
-        const chosen = currentPointer(extensionId, id)?.host;
+        const chosen = [ownPointer(id), customizationPointer(extensionId, id)]
+          .filter((pointer) => pointer !== undefined)
+          .map((pointer) => normalizeSensitiveHost(pointer.host));
         return (
-          normalizeSensitiveHost(proxy.host) === host ||
-          (chosen !== undefined && normalizeSensitiveHost(chosen) === host)
+          normalizeSensitiveHost(proxy.host) === host || chosen.includes(host)
         );
       })
       .filter(([id]) => request.proxy === undefined || id === request.proxy);
     if (candidates.length === 0) {
+      // The URL may be the host the viewer chose, which isn't known yet.
+      if (signedIn && !ownLoaded) {
+        throw new SensitiveSettingsError(
+          "not_loaded",
+          "This account's sensitive settings couldn't be loaded."
+        );
+      }
       throw new SensitiveSettingsError(
         "unknown_destination",
         `${extensionId} declares no sensitive settings for ${host}.`
@@ -601,8 +815,23 @@ export function createExtensionSensitiveSettings(
       );
     }
     const [proxyId] = candidates[0]!;
-    const pointer = currentPointer(extensionId, proxyId);
+    // A whole entry comes from one place: the viewer's values, if they saved
+    // any, never get mixed with the Customization's.
+    const pointer =
+      ownPointer(proxyId) ?? customizationPointer(extensionId, proxyId);
     if (!pointer) {
+      if (!signedIn) {
+        throw new SensitiveSettingsError(
+          "signed_out",
+          "Sensitive settings are only available while signed in."
+        );
+      }
+      if (!ownLoaded) {
+        throw new SensitiveSettingsError(
+          "not_loaded",
+          "This account's sensitive settings couldn't be loaded."
+        );
+      }
       throw new SensitiveSettingsError(
         "not_set",
         `No sensitive values are set for ${host}.`
@@ -661,6 +890,8 @@ export function createExtensionSensitiveSettings(
 
   return {
     sensitiveProxiesByExtensionId: pointers,
+    customizationSensitiveSettings,
+    getSensitiveValueSource,
     isSensitiveValueSet,
     getSensitiveDestination,
     hasStoredSensitiveValues,

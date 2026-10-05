@@ -11,7 +11,17 @@ import type {
   ExtensionManager,
   ExtensionMeta,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
-import type { CustomizationsManager } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
+import {
+  createCustomizationsManager,
+  CUSTOMIZATION_MARKER,
+  type CustomizationsManager,
+  type SeedBibleCustomization,
+} from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
+import { createCustomizationVariantSelectionsManager } from "@packages/seed-bible/seed-bible/managers/CustomizationVariantSelectionsManager";
+import { createCustomizationExtensionPreferencesManager } from "@packages/seed-bible/seed-bible/managers/CustomizationExtensionPreferencesManager";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { createTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import type { SettingsManager } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { signal, type Signal } from "@preact/signals";
@@ -110,6 +120,9 @@ describe("ExtensionSettingsManager sensitive settings", () => {
       { extensions: extensionsListSignal } as unknown as ExtensionManager,
       {
         getActiveExtensionSettingDefault: () => "from-customization",
+        activeCustomization: signal(null),
+        editingCustomization: signal(null),
+        customizations: signal([]),
       } as unknown as CustomizationsManager
     );
 
@@ -755,5 +768,303 @@ describe("ExtensionSettingsManager sensitive settings", () => {
 
     expect(manager.isSensitiveValueSet("ext-1", "apiKey")).toBe(false);
     expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  describe("a Customization's own values", () => {
+    const CUSTOMIZATION_ID = "customization_shared";
+
+    const settings = {
+      settings: signal({
+        themeId: "light",
+        customTheme: {},
+        customHighlights: {},
+      }),
+    } as unknown as SettingsManager;
+
+    const createCustomizations = (href = "http://localhost/") => {
+      const login = {
+        userId: userIdSignal,
+        profile: signal(null),
+      } as unknown as LoginManager;
+      return createCustomizationsManager(
+        os,
+        login,
+        createTheme(settings),
+        createNavigationManager({ initialHref: href }),
+        createCustomizationVariantSelectionsManager(os, login),
+        createCustomizationExtensionPreferencesManager(os, login)
+      );
+    };
+
+    const createWith = (customizations: CustomizationsManager) =>
+      createExtensionSettingsManager(
+        os,
+        { userId: userIdSignal } as unknown as LoginManager,
+        { extensions: extensionsListSignal } as unknown as ExtensionManager,
+        customizations
+      );
+
+    /** The owner creates a Customization, opens it, and saves its key. */
+    const ownerSavesKey = async (visibility?: "private" | "public") => {
+      vi.spyOn(os, "listAllDataByMarker").mockResolvedValue({
+        success: true,
+        items: [],
+      });
+      const customizations = createCustomizations();
+      const manager = createWith(customizations);
+      await flushPromises();
+      const created = await customizations.create();
+      customizations.startEditing(created.id);
+      const saved =
+        await manager.customizationSensitiveSettings.setSensitiveValues(
+          "ext-1",
+          "exampleApi",
+          { apiKey: "shared-key" },
+          visibility ? { visibility } : {}
+        );
+      return { customizations, manager, saved, id: created.id };
+    };
+
+    /** The last write of the Customization record itself. */
+    const lastCustomizationWrite = (id: string) =>
+      recordDataMock.mock.calls
+        .filter(([, address]) => address === id)
+        .at(-1)?.[2] as SeedBibleCustomization | undefined;
+
+    /** A viewer arriving through the Customization's share link. */
+    const viewerOpensLink = async (
+      pointer: Partial<
+        SeedBibleCustomization["extensionSensitiveProxies"][string][string]
+      > = {}
+    ) => {
+      const customization: SeedBibleCustomization = {
+        id: CUSTOMIZATION_ID,
+        name: "Shared",
+        variants: [
+          {
+            id: "variant-1",
+            name: "Light",
+            baseTheme: "light",
+            themes: {},
+            highlightColors: {},
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        ],
+        defaultVariantId: "variant-1",
+        createdAt: 1,
+        updatedAt: 1,
+        extensionSettings: {},
+        extensionSettingDefaults: {},
+        extensionSensitiveProxies: {
+          "ext-1": {
+            exampleApi: {
+              recordName: "owner-1",
+              address: "owner-proxy",
+              host: "api.example.com",
+              defaultHost: "api.example.com",
+              visibility: "public",
+              requestMapping: {
+                "headers.authorization.bearer": "apiKey",
+                "body.client_id": "clientId",
+              },
+              keys: ["apiKey"],
+              ...pointer,
+            },
+          },
+        },
+      };
+      getDataMock.mockImplementation(async (record: string, address: string) =>
+        record === "owner-1" && address === CUSTOMIZATION_ID
+          ? { success: true, data: customization }
+          : { success: false, errorCode: "data_not_found", errorMessage: "" }
+      );
+      const customizations = createCustomizations(
+        `http://localhost/?customization=owner-1.${CUSTOMIZATION_ID}`
+      );
+      await customizations.initialCustomizationLoadPromise;
+      const manager = createWith(customizations);
+      await flushPromises();
+      return manager;
+    };
+
+    it("saves the key in the owner's own proxy, public by default, and records only where it is", async () => {
+      const { manager, saved, id } = await ownerSavesKey();
+
+      expect(saved).toBe(true);
+      expect(recordProxyMock).toHaveBeenCalledTimes(1);
+      const [recordName, address, host, data, options] =
+        recordProxyMock.mock.calls[0]!;
+      expect(recordName).toBe("user-1");
+      expect(host).toBe("api.example.com");
+      expect(data).toEqual({ "headers.authorization.bearer": "shared-key" });
+      expect(options).toEqual({ marker: "publicRead" });
+
+      const record = lastCustomizationWrite(id)!;
+      expect(recordDataMock.mock.calls.at(-1)![3]).toEqual({
+        marker: CUSTOMIZATION_MARKER,
+      });
+      expect(
+        record.extensionSensitiveProxies["ext-1"]?.exampleApi
+      ).toMatchObject({
+        recordName: "user-1",
+        address,
+        visibility: "public",
+        keys: ["apiKey"],
+      });
+      expect(JSON.stringify(record)).not.toContain("shared-key");
+      // The viewer's own settings are untouched.
+      expect(lastPointerWrite()).toBeUndefined();
+      expect(manager.isSensitiveValueSet("ext-1", "apiKey")).toBe(false);
+      expect(
+        manager.customizationSensitiveSettings.isSensitiveValueSet(
+          "ext-1",
+          "apiKey"
+        )
+      ).toBe(true);
+      expect(
+        manager.customizationSensitiveSettings.getSensitiveDestination(
+          "ext-1",
+          "exampleApi"
+        )
+      ).toEqual({ host: "api.example.com", visibility: "public" });
+    });
+
+    it("lets the owner keep the key to themselves", async () => {
+      const { saved } = await ownerSavesKey("private");
+
+      expect(saved).toBe(true);
+      expect(recordProxyMock.mock.calls[0]![4]).toEqual({ marker: "private" });
+    });
+
+    it("refuses to save when no Customization is being edited", async () => {
+      const manager = createWith(createCustomizations());
+      await flushPromises();
+
+      expect(
+        await manager.customizationSensitiveSettings.setSensitiveValues(
+          "ext-1",
+          "exampleApi",
+          { apiKey: "shared-key" }
+        )
+      ).toBe(false);
+      expect(recordProxyMock).not.toHaveBeenCalled();
+    });
+
+    it("clears by erasing the proxy and dropping it from the Customization", async () => {
+      const { manager, id } = await ownerSavesKey();
+      const address = recordProxyMock.mock.calls[0]![1];
+
+      expect(
+        await manager.customizationSensitiveSettings.clearSensitiveValues(
+          "ext-1",
+          "exampleApi"
+        )
+      ).toBe(true);
+
+      expect(eraseProxyMock).toHaveBeenCalledWith("user-1", address);
+      expect(lastCustomizationWrite(id)!.extensionSensitiveProxies).toEqual({});
+      expect(
+        manager.customizationSensitiveSettings.hasStoredSensitiveValues(
+          "ext-1",
+          "exampleApi"
+        )
+      ).toBe(false);
+    });
+
+    it("sends a viewer's requests through the Customization's proxy when they haven't set their own", async () => {
+      const manager = await viewerOpensLink();
+
+      const response = await manager.fetchWithSensitiveValues("ext-1", {
+        url: "https://api.example.com/v1/chat",
+      });
+
+      expect(response.status).toBe(200);
+      expect(proxyRequestMock).toHaveBeenCalledWith("owner-1", "owner-proxy", {
+        path: "/v1/chat",
+        method: "GET",
+        body: undefined,
+      });
+      expect(manager.getSensitiveValueSource("ext-1", "apiKey")).toBe(
+        "customization"
+      );
+      expect(manager.getSensitiveValueSource("ext-1", "clientId")).toBeNull();
+    });
+
+    it("uses the Customization's proxy for a signed-out viewer", async () => {
+      userIdSignal.value = null;
+      const manager = await viewerOpensLink();
+
+      await manager.fetchWithSensitiveValues("ext-1", {
+        url: "https://api.example.com/v1/chat",
+      });
+
+      expect(proxyRequestMock).toHaveBeenCalledWith(
+        "owner-1",
+        "owner-proxy",
+        expect.anything()
+      );
+    });
+
+    it("prefers the viewer's own values over the Customization's", async () => {
+      const manager = await viewerOpensLink();
+      await manager.setSensitiveValues("ext-1", "exampleApi", {
+        clientId: "own-client",
+      });
+      const ownAddress = recordProxyMock.mock.calls[0]![1];
+
+      await manager.fetchWithSensitiveValues("ext-1", {
+        url: "https://api.example.com/v1/chat",
+      });
+
+      expect(proxyRequestMock).toHaveBeenCalledWith(
+        "user-1",
+        ownAddress,
+        expect.anything()
+      );
+      // The viewer's entry replaces the Customization's whole entry, so its
+      // API key isn't sent alongside the viewer's client id.
+      expect(manager.getSensitiveValueSource("ext-1", "apiKey")).toBeNull();
+      expect(manager.getSensitiveValueSource("ext-1", "clientId")).toBe(
+        "viewer"
+      );
+    });
+
+    it("routes to the host the Customization chose", async () => {
+      const manager = await viewerOpensLink({ host: "proxy.example.org" });
+
+      await manager.fetchWithSensitiveValues("ext-1", {
+        url: "https://proxy.example.org/v1/chat",
+      });
+
+      expect(proxyRequestMock).toHaveBeenCalledWith(
+        "owner-1",
+        "owner-proxy",
+        expect.anything()
+      );
+    });
+
+    it("doesn't use a Customization's private proxy for anyone but its owner", async () => {
+      const manager = await viewerOpensLink({ visibility: "private" });
+
+      await expect(
+        manager.fetchWithSensitiveValues("ext-1", {
+          url: "https://api.example.com/v1/chat",
+        })
+      ).rejects.toMatchObject({ code: "not_set" });
+      expect(proxyRequestMock).not.toHaveBeenCalled();
+      expect(manager.getSensitiveValueSource("ext-1", "apiKey")).toBeNull();
+    });
+
+    it("doesn't use a Customization's proxy saved for an older host", async () => {
+      const manager = await viewerOpensLink({ defaultHost: "old.example.com" });
+
+      await expect(
+        manager.fetchWithSensitiveValues("ext-1", {
+          url: "https://api.example.com/v1/chat",
+        })
+      ).rejects.toMatchObject({ code: "not_set" });
+      expect(proxyRequestMock).not.toHaveBeenCalled();
+    });
   });
 });
