@@ -426,7 +426,10 @@ function stopRecordedAudio(): void {
 }
 
 /**
- * Moves the "now reading" highlight to match a jump to `currentTime`.
+ * Moves the "now reading" highlight to match a jump to `currentTime`, and
+ * scrolls the reader to the verse it lands in — a jump can land anywhere in
+ * the chapter, often well off screen, and a highlight nobody can see doesn't
+ * tell the listener where they are.
  *
  * Ordinary playback only ever moves forward a verse at a time, which is what
  * `highlightVerseForTime` is built around; a seek can land anywhere, so the
@@ -440,17 +443,18 @@ function seekVerseHighlight(currentTime: number): void {
   verseTrack.lastVerse = null;
   verseTrack.verseIndex = null;
 
-  if (isPlaying.peek()) {
-    highlightVerseForTime(currentTime);
-    return;
-  }
-
   const index = verseIndexForTime(
     verseTrack.startTimes,
     currentTime + VERSE_HIGHLIGHT_LEAD_IN_SECONDS
   );
   const verseNumber = verseTrack.verseNumbers[index];
-  if (verseNumber !== undefined) {
+  if (verseNumber === undefined) return;
+
+  verseTrack.readingState.scrollToVerse.value = verseNumber;
+
+  if (isPlaying.peek()) {
+    highlightVerseForTime(currentTime);
+  } else {
     verseTrack.lastVerse = verseNumber;
     verseTrack.verseIndex = index;
   }

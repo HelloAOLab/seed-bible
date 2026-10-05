@@ -184,6 +184,31 @@ describe("audio-reader playback controls", () => {
     expect(litVerses(state)).toEqual([[1]]);
   });
 
+  it("scrolls the reader to the verse a seek lands in", async () => {
+    const playback = await startChapterOne();
+    reportDuration(10);
+    const readingState = getReadingState(state);
+
+    playback.seek(6);
+    expect(readingState.scrollToVerse.value).toBe(2);
+
+    // The reader clears the request once it has scrolled; a later jump makes
+    // a fresh one, even back to a verse it has already been to.
+    readingState.scrollToVerse.value = null;
+    playback.seek(1);
+    expect(readingState.scrollToVerse.value).toBe(1);
+  });
+
+  it("scrolls to the verse scrubbed to while paused, too", async () => {
+    const playback = await startChapterOne();
+    reportDuration(10);
+
+    fire("pause");
+    playback.seek(6);
+
+    expect(getReadingState(state).scrollToVerse.value).toBe(2);
+  });
+
   it("keeps a seek inside the recording", async () => {
     const playback = await startChapterOne();
     reportDuration(10);
