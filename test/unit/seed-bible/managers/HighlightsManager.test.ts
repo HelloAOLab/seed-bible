@@ -16,6 +16,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/OfflineRecordStore";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { effect, signal } from "@preact/signals";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock, Mocked } from "vitest";
 
 describe("HighlightsManager", () => {
@@ -1176,6 +1177,82 @@ describe("HighlightsManager", () => {
         };
       });
     };
+
+    describe("keeping them fresh", () => {
+      const START = Date.UTC(2026, 9, 5, 12);
+      let page: ReturnType<typeof stubPageVisibility>;
+      let stopWatching: (() => void) | undefined;
+
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(START);
+        page = stubPageVisibility();
+        stopWatching = undefined;
+      });
+      afterEach(() => {
+        stopWatching?.();
+        page.restore();
+        vi.useRealTimers();
+      });
+
+      /** Shows a friend's chapter, as a render would. */
+      const watchFriend = async () => {
+        const manager = createHighlightsManager(os, login);
+        const view = manager.getUserChapterHighlights(
+          "friend-user",
+          "BSB",
+          "GEN",
+          1
+        );
+        stopWatching = effect(() => void view.value);
+        await flushPromises();
+        return view;
+      };
+      const friendColors = (view: {
+        value: { highlights: { colorId: string }[] };
+      }) => view.value.highlights.map((h) => h.colorId);
+
+      it("reads them again when you come back after the first read failed", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        getDataMock.mockResolvedValue({
+          success: false,
+          errorCode: "server_error",
+          errorMessage: "Down",
+        });
+        const view = await watchFriend();
+        expect(friendColors(view)).toEqual([]);
+        mockPerUserHighlights();
+
+        // No time passes: a failed read is tried again however recent it was.
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(friendColors(view)).toEqual(["friend-color"])
+        );
+        warn.mockRestore();
+      });
+
+      it("reads them again after more than 30 seconds away, not sooner", async () => {
+        mockPerUserHighlights();
+        const view = await watchFriend();
+        expect(friendColors(view)).toEqual(["friend-color"]);
+        getDataMock.mockResolvedValue({
+          success: true,
+          data: { highlights: [{ colorId: "new-friend-color", verse: 3 }] },
+        });
+
+        vi.setSystemTime(START + 10_000);
+        page.leaveAndReturn();
+        await flushPromises();
+        expect(friendColors(view)).toEqual(["friend-color"]);
+
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+        await vi.waitFor(() =>
+          expect(friendColors(view)).toEqual(["new-friend-color"])
+        );
+      });
+    });
 
     it("reads highlights from the named account's record", async () => {
       mockPerUserHighlights();

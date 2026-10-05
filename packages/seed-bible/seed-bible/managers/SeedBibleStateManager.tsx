@@ -743,13 +743,14 @@ export function createSeedBibleState(
   // Both managers ask through the same prompt, so one sign-in raises one
   // dialog even when the device holds highlights and notes.
   const askToAdopt = createAdoptionPrompt(modals);
+  // One limit on reading friends' content, shared by every manager that does.
+  const friendReads = createFriendReadLimiter();
   const highlights = createHighlightsManager(os, login, {
     confirmAdoption: (owner) => askToAdopt(owner, "highlights"),
+    friendReads,
   });
   const saves = createSavesManager(os, login);
   const friends = createFriendsManager(os, login);
-  // One limit on reading friends' content, shared by every manager that does.
-  const friendReads = createFriendReadLimiter();
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
