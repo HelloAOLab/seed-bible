@@ -756,6 +756,53 @@ describe("ExtensionSettingsManager sensitive settings", () => {
     });
   });
 
+  it("doesn't write the next account's pointers into the old one's record when the account changes mid-save", async () => {
+    const pointerFor = (address: string) => ({
+      exampleApi: {
+        recordName: "x",
+        address,
+        host: "api.example.com",
+        requestMapping: {},
+        keys: [],
+      },
+    });
+    getDataMock.mockImplementation(async (record: string, address: string) =>
+      address !== EXTENSION_SENSITIVE_PROXIES_ADDRESS
+        ? { success: false, errorCode: "data_not_found", errorMessage: "" }
+        : {
+            success: true,
+            data:
+              record === "user-1"
+                ? { "ext-2": pointerFor("user-1-proxy") }
+                : { "ext-9": pointerFor("user-2-proxy") },
+          }
+    );
+    const manager = create();
+    await flushPromises();
+    let releaseProxy = () => {};
+    recordProxyMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseProxy = () =>
+            resolve({ success: true, recordName: "user-1", address: "" });
+        })
+    );
+
+    const saving = manager.setSensitiveValues("ext-1", "exampleApi", {
+      apiKey: "secret-key",
+    });
+    await flushPromises();
+    userIdSignal.value = "user-2";
+    await flushPromises();
+    releaseProxy();
+
+    expect(await saving).toBe(false);
+    expect(lastPointerWrite()).toBeUndefined();
+    const newAddress = recordProxyMock.mock.calls[0]![1];
+    expect(eraseProxyMock).toHaveBeenCalledWith("user-1", newAddress);
+    expect(manager.sensitiveProxiesByExtensionId.value).toHaveProperty("ext-9");
+  });
+
   it("drops the previous account's pointers when the account changes", async () => {
     const manager = create();
     await flushPromises();

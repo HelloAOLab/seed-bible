@@ -558,8 +558,15 @@ export function createExtensionSensitiveSettings(
   const viewerScope: PointerScope = {
     pointers: () => pointers.value,
     defaultVisibility: "private",
-    writePointer: (userId, extensionId, proxyId, pointer) =>
-      writePointers(userId, withPointer(extensionId, proxyId, pointer)),
+    writePointer: (userId, extensionId, proxyId, pointer) => {
+      // Re-checked after the proxy call: if the account changed meanwhile,
+      // `pointers` now holds the other account's, and writing them into this
+      // one's record would drop every pointer it had.
+      if (loadedUserId !== userId) {
+        return Promise.resolve(false);
+      }
+      return writePointers(userId, withPointer(extensionId, proxyId, pointer));
+    },
   };
 
   const getSensitiveDestination = (extensionId: string, proxyId: string) =>
@@ -643,7 +650,7 @@ export function createExtensionSensitiveSettings(
       console.error("Failed to save extension sensitive settings:", error);
       return false;
     }
-    return scope.writePointer(userId, extensionId, proxyId, {
+    const recorded = await scope.writePointer(userId, extensionId, proxyId, {
       recordName: userId,
       address,
       host,
@@ -652,6 +659,17 @@ export function createExtensionSensitiveSettings(
       requestMapping: { ...usable.proxy.requestMapping },
       keys: [...keys],
     });
+    if (!recorded && address !== previous?.address) {
+      // Nothing points at the new proxy, so nobody could ever clear it. Best
+      // effort: after an account switch the session may no longer be allowed
+      // to erase it.
+      try {
+        await os.eraseProxy(userId, address);
+      } catch (error) {
+        console.error("Failed to clear an unrecorded sensitive proxy:", error);
+      }
+    }
+    return recorded;
   };
 
   /** One write at a time, so a slower save can't land after a newer one. */

@@ -1381,6 +1381,17 @@ export function createCustomizationsManager(
       marker: CUSTOMIZATION_MARKER,
     });
 
+  // Every draft save and pointer write goes through here, one at a time, so
+  // they reach the server in the order they were made: an older copy can't
+  // land last and overwrite a newer one, which for a pointer would leave its
+  // proxy (and the owner's key) running with nothing pointing at it.
+  let writeChain: Promise<unknown> = Promise.resolve();
+  const queueWrite = <T,>(run: () => Promise<T>): Promise<T> => {
+    const next = writeChain.then(run, run);
+    writeChain = next.catch(() => undefined);
+    return next;
+  };
+
   const create = async (): Promise<SeedBibleCustomization> => {
     const userId = login.userId.value;
     if (!userId) {
@@ -1459,10 +1470,12 @@ export function createCustomizationsManager(
     }
 
     const saved: SeedBibleCustomization = { ...current, updatedAt: Date.now() };
-    await persist(userId, saved);
-    customizations.value = customizations.value.some((c) => c.id === saved.id)
-      ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
-      : [...customizations.value, saved];
+    await queueWrite(async () => {
+      await persist(userId, saved);
+      customizations.value = customizations.value.some((c) => c.id === saved.id)
+        ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
+        : [...customizations.value, saved];
+    });
     // Only reflect the write onto the draft if it's still the exact one
     // captured above — a newer edit, or the editor closing, may have
     // changed `editingCustomization` while this (possibly auto-triggered)
@@ -1475,9 +1488,6 @@ export function createCustomizationsManager(
   /** How long to wait after the last edit before auto-saving the draft. */
   const AUTO_SAVE_DEBOUNCE_MS = 5000;
   let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
-  // Serializes autosave writes so two saves can't race and land out of
-  // order, and one failure doesn't reject the save queued behind it.
-  let autoSaveChain: Promise<void> = Promise.resolve();
 
   /** Queues a debounced save of the current draft. */
   const scheduleAutoSave = (): void => {
@@ -1497,13 +1507,10 @@ export function createCustomizationsManager(
    * now — callers like `stopEditing()` clear that signal on the very next
    * line, before this promise has a chance to resolve.
    */
-  const flushAutoSave = (): Promise<void> => {
-    const write = saveEditingCustomization().catch((error) => {
+  const flushAutoSave = (): Promise<void> =>
+    saveEditingCustomization().catch((error) => {
       console.error("Failed to auto-save customization:", error);
     });
-    autoSaveChain = autoSaveChain.then(() => write);
-    return autoSaveChain;
-  };
 
   const updateEditingName = (name: string): void => {
     const current = editingCustomization.value;
@@ -2052,48 +2059,82 @@ export function createCustomizationsManager(
     pointer: SensitiveProxyPointer | null
   ): Promise<boolean> => {
     const userId = login.userId.value;
-    const draft = editingCustomization.value;
-    const base =
-      draft?.id === customizationId
-        ? draft
-        : customizations.value.find((c) => c.id === customizationId);
-    if (!userId || !base) {
+    if (
+      !userId ||
+      !customizations.value.some((c) => c.id === customizationId)
+    ) {
       return false;
     }
-    // Applied in memory before the write, so a save of the draft that starts
-    // while this one is in flight carries the pointer too instead of
-    // dropping it.
-    const next = withExtensionSensitiveProxy(
-      base,
-      extensionId,
-      proxyId,
-      pointer
-    );
+    // The draft gets the pointer now, so any later save of it carries the
+    // pointer instead of dropping it. The write itself starts from the last
+    // saved copy instead of the draft: the draft may hold edits the author
+    // hasn't saved yet, and might still discard.
+    const draft = editingCustomization.value;
+    const previous =
+      draft?.id === customizationId
+        ? draft.extensionSensitiveProxies[extensionId]?.[proxyId]
+        : undefined;
     if (draft?.id === customizationId) {
-      editingCustomization.value = next;
+      editingCustomization.value = withExtensionSensitiveProxy(
+        draft,
+        extensionId,
+        proxyId,
+        pointer
+      );
     }
-    customizations.value = customizations.value.map((c) =>
-      c.id === customizationId
-        ? withExtensionSensitiveProxy(c, extensionId, proxyId, pointer)
-        : c
-    );
-    try {
-      const result = await persist(userId, next);
-      if (!result.success) {
+    // A failed write takes the pointer back off the draft, unless something
+    // newer has replaced it there since.
+    const undoDraft = () => {
+      const current = editingCustomization.value;
+      if (
+        current?.id === customizationId &&
+        (current.extensionSensitiveProxies[extensionId]?.[proxyId] ?? null) ===
+          pointer
+      ) {
+        editingCustomization.value = withExtensionSensitiveProxy(
+          current,
+          extensionId,
+          proxyId,
+          previous ?? null
+        );
+      }
+    };
+    const written = await queueWrite(async () => {
+      const saved = customizations.value.find((c) => c.id === customizationId);
+      if (!saved || login.userId.value !== userId) {
+        return false;
+      }
+      const next = withExtensionSensitiveProxy(
+        saved,
+        extensionId,
+        proxyId,
+        pointer
+      );
+      try {
+        const result = await persist(userId, next);
+        if (!result.success) {
+          console.error(
+            "Failed to save a customization's sensitive settings:",
+            result.errorCode
+          );
+          return false;
+        }
+      } catch (error) {
         console.error(
           "Failed to save a customization's sensitive settings:",
-          result.errorCode
+          error
         );
         return false;
       }
-    } catch (error) {
-      console.error(
-        "Failed to save a customization's sensitive settings:",
-        error
+      customizations.value = customizations.value.map((c) =>
+        c.id === customizationId ? next : c
       );
-      return false;
+      return true;
+    });
+    if (!written) {
+      undoDraft();
     }
-    return true;
+    return written;
   };
 
   const addExtensionToActiveCustomization = async (

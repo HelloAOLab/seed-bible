@@ -1559,6 +1559,100 @@ describe("CustomizationsManager", () => {
       expect(manager.hasUnsavedChanges.value).toBe(false);
     });
 
+    it("doesn't publish unsaved draft edits that are later discarded", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      manager.updateEditingName("Unsaved draft name");
+
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+      manager.discardEditingCustomization();
+
+      const written = recordDataMock.mock.calls.at(-1)![2];
+      expect(written.name).toBe(created.name);
+      expect(written.extensionSensitiveProxies).toEqual({
+        "ext-1": { exampleApi: pointer },
+      });
+      expect(
+        manager.customizations.value.find((c) => c.id === created.id)
+      ).toEqual(written);
+    });
+
+    it("keeps the pointer when a draft save already in flight lands after it would have", async () => {
+      // What the server holds: each write lands when its request resolves.
+      const server: Record<string, { extensionSensitiveProxies: unknown }> = {};
+      let releaseDraftSave = () => {};
+      recordDataMock.mockImplementation(
+        async (_record: string, address: string, data: never) => {
+          server[address] = data;
+          return { success: true };
+        }
+      );
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      manager.updateEditingName("Renamed");
+      recordDataMock.mockImplementationOnce(
+        (_record: string, address: string, data: never) =>
+          new Promise((resolve) => {
+            releaseDraftSave = () => {
+              server[address] = data;
+              resolve({ success: true });
+            };
+          })
+      );
+      const draftSave = manager.saveEditingCustomization();
+      // The draft save has captured the draft, without the pointer.
+      await Promise.resolve();
+
+      const pointerWrite = manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+      for (let i = 0; i < 5; i++) {
+        await Promise.resolve();
+      }
+      releaseDraftSave();
+      await draftSave;
+
+      expect(await pointerWrite).toBe(true);
+      expect(server[created.id]).toMatchObject({
+        name: "Renamed",
+        extensionSensitiveProxies: { "ext-1": { exampleApi: pointer } },
+      });
+    });
+
+    it("takes the pointer back off the draft when its write fails", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+      });
+
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      expect(
+        manager.editingCustomization.value?.extensionSensitiveProxies
+      ).toEqual({});
+    });
+
     it("reports a failed save", async () => {
       vi.spyOn(console, "error").mockImplementation(() => undefined);
       const { manager } = createManager();
