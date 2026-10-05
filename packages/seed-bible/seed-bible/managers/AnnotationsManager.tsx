@@ -780,6 +780,8 @@ export function createAnnotationsManager(
     const marker = getAnnotationMarker(bookId, chapterNumber, query?.group);
 
     const annotations: Annotation[] = [];
+    // Counted apart from `annotations`, which leaves out invalid records.
+    let listed = 0;
     let lastAddress: string | undefined;
 
     while (true) {
@@ -801,6 +803,12 @@ export function createAnnotationsManager(
           continue;
         }
         annotations.push(parsed.data);
+      }
+
+      // Saves asking for the empty page that would otherwise end the loop.
+      listed += page.items.length;
+      if (listed >= page.totalCount) {
+        break;
       }
 
       lastAddress = page.items[page.items.length - 1]?.address;

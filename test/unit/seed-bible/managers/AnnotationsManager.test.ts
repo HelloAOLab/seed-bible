@@ -796,6 +796,60 @@ describe("AnnotationsManager", () => {
     });
   });
 
+  describe("reading a friend's chapter", () => {
+    /** Lists `items` as one page, then an empty one past its last address. */
+    const listOnePage = (items: { address: string; data: unknown }[]) =>
+      listDataByMarkerMock.mockImplementation(
+        async (_record: string, _marker: string, lastAddress?: string) => ({
+          success: true,
+          items: lastAddress ? [] : items,
+          totalCount: items.length,
+        })
+      );
+
+    const friendListings = () =>
+      listDataByMarkerMock.mock.calls.filter(
+        ([record]) => record === "friend-user"
+      );
+
+    it("asks once when the first page holds the whole listing", async () => {
+      listOnePage([
+        { address: "a1", data: createCommentAnnotation({ id: "a1" }) },
+      ]);
+      const manager = createManager();
+
+      const view = manager.getUserAnnotationsForChapter(
+        "friend-user",
+        "GEN",
+        1
+      );
+
+      await vi.waitFor(() =>
+        expect(view.value.map((a) => a.id)).toEqual(["a1"])
+      );
+      expect(friendListings()).toHaveLength(1);
+    });
+
+    it("counts a record it can't read toward the total, so it still stops", async () => {
+      listOnePage([
+        { address: "a1", data: createCommentAnnotation({ id: "a1" }) },
+        { address: "a2", data: { not: "a note" } },
+      ]);
+      const manager = createManager();
+
+      const view = manager.getUserAnnotationsForChapter(
+        "friend-user",
+        "GEN",
+        1
+      );
+
+      await vi.waitFor(() =>
+        expect(view.value.map((a) => a.id)).toEqual(["a1"])
+      );
+      expect(friendListings()).toHaveLength(1);
+    });
+  });
+
   describe("visibleAnnotationsForChapter", () => {
     beforeEach(() => {
       listDataByMarkerMock.mockImplementation(

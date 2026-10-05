@@ -129,6 +129,53 @@ async function listAllPages<T>(
   }
 }
 
+/**
+ * Reads every page of a data listing, each continuing after the last address
+ * the one before it returned. Throws on a failed page.
+ */
+async function listAllByAddress(
+  fetchPage: (lastAddress: string | undefined) => Promise<
+    | {
+        success: true;
+        items: { address: string; data: unknown }[];
+        totalCount: number;
+      }
+    | { success: false; errorCode: string }
+  >
+): Promise<{ success: true; items: { address: string; data: unknown }[] }> {
+  const allItems: { address: string; data: unknown }[] = [];
+  let lastAddress: string | undefined;
+
+  while (true) {
+    const page = await fetchPage(lastAddress);
+
+    if (!page.success) {
+      console.error("Error listing data:", page);
+      throw new Error(`Error listing data: ${page.errorCode}`);
+    }
+
+    if (page.items.length === 0) {
+      break;
+    }
+
+    for (const item of page.items) {
+      allItems.push({ address: item.address, data: item.data });
+    }
+
+    // Saves asking for the empty page that would otherwise end the loop.
+    // Depending on the server's store, `totalCount` is either every item
+    // listed or only those after `lastAddress`; reaching it means this was
+    // the last page either way.
+    if (allItems.length >= page.totalCount) {
+      break;
+    }
+
+    lastAddress = page.items[page.items.length - 1]?.address;
+  }
+
+  return { success: true, items: allItems };
+}
+
 export function CasualOSManager(
   endpoint: string = "https://auth.seedbible.org"
 ) {
@@ -420,29 +467,9 @@ export function CasualOSManager(
       success: boolean;
       items: { address: string; data: unknown }[];
     }> => {
-      const allItems: { address: string; data: unknown }[] = [];
-      let lastAddress: string | undefined;
-
-      while (true) {
-        const page = await listDataByMarker(recordName, marker, lastAddress);
-
-        if (!page.success) {
-          console.error("Error listing data:", page);
-          throw new Error(`Error listing data: ${page.errorCode}`);
-        }
-
-        if (page.items.length === 0) {
-          break;
-        }
-
-        for (const item of page.items) {
-          allItems.push({ address: item.address, data: item.data });
-        }
-
-        lastAddress = page.items[page.items.length - 1]?.address;
-      }
-
-      return { success: true, items: allItems };
+      return listAllByAddress((lastAddress) =>
+        listDataByMarker(recordName, marker, lastAddress)
+      );
     },
 
     /**
@@ -474,34 +501,9 @@ export function CasualOSManager(
         return existing;
       }
 
-      const sweep = (async () => {
-        const allItems: { address: string; data: unknown }[] = [];
-        let lastAddress: string | undefined;
-
-        while (true) {
-          const page = await client.listData({
-            recordName,
-            address: lastAddress,
-          });
-
-          if (!page.success) {
-            console.error("Error listing data:", page);
-            throw new Error(`Error listing data: ${page.errorCode}`);
-          }
-
-          if (page.items.length === 0) {
-            break;
-          }
-
-          for (const item of page.items) {
-            allItems.push({ address: item.address, data: item.data });
-          }
-
-          lastAddress = page.items[page.items.length - 1]?.address;
-        }
-
-        return { success: true, items: allItems };
-      })().finally(() => {
+      const sweep = listAllByAddress((lastAddress) =>
+        client.listData({ recordName, address: lastAddress })
+      ).finally(() => {
         listAllDataInFlight.delete(recordName);
       });
 
