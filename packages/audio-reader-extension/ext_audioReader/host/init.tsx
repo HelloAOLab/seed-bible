@@ -1,10 +1,12 @@
-import { computed, effect, signal } from "@preact/signals";
+import { computed, effect, signal, untracked } from "@preact/signals";
 import { debounce } from "es-toolkit";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { LANG_META } from "seed-bible/i18n";
 import {
   bibleLanguageToUiLocale,
   extractContentText,
+  type AudioPlaybackController,
+  type AudioPlaybackManager,
   type BibleReadingState,
   type ChapterVerse,
   type QuickToolContext,
@@ -14,6 +16,10 @@ import {
 
 /** Drives the icon swap between play and pause. Shared across the tool. */
 const isPlaying = signal(false);
+
+/** The audio element's position and length, mirrored for the reader's scrubber. */
+const playbackTime = signal(0);
+const playbackDuration = signal<number | null>(null);
 
 /**
  * How far ahead of a verse's actual start time its highlight is triggered, in
@@ -59,6 +65,15 @@ let speechHighlight: {
  * any one install and an uninstalled extension must stop recording.
  */
 let saveListeningSpan: SaveListeningSpan | null = null;
+
+/**
+ * The reader's playback UI, for as long as the extension is installed. Held
+ * the same way as `saveListeningSpan`, for the same reason.
+ */
+let audioPlayback: AudioPlaybackManager | null = null;
+
+/** Removes the scrubber this extension put up, if it is still showing. */
+let hidePlaybackControls: (() => void) | null = null;
 
 /** The chapter a stretch of listening is credited to. */
 export interface ListeningTarget {
@@ -352,17 +367,122 @@ function ensureAudio(): HTMLAudioElement | null {
     audioEl.onended = () => {
       isPlaying.value = false;
       if (audioEl) audioEl.currentTime = 0;
+      playbackTime.value = 0;
       // A replay should fetch timings and highlight from verse one again, not
       // resume mid-track from whatever verse was last read.
       verseTrack = null;
       verseTrackToken++;
+      // Finishing the chapter ends the session, so its scrubber goes with it.
+      // The last verse's highlight is left to fade on its own schedule.
+      hidePlayback();
     };
     audioEl.ontimeupdate = () => {
-      if (audioEl) highlightVerseForTime(audioEl.currentTime);
+      if (!audioEl) return;
+      playbackTime.value = audioEl.currentTime;
+      highlightVerseForTime(audioEl.currentTime);
+    };
+    audioEl.ondurationchange = () => {
+      const duration = audioEl?.duration;
+      playbackDuration.value =
+        duration !== undefined && Number.isFinite(duration) && duration > 0
+          ? duration
+          : null;
     };
   }
   return audioEl;
 }
+
+function hidePlayback(): void {
+  hidePlaybackControls?.();
+  hidePlaybackControls = null;
+}
+
+/**
+ * Puts the scrubber up for the narration in `audioEl`, unless it already is.
+ * Does nothing while the extension is uninstalled.
+ */
+function showPlayback(): void {
+  if (!audioPlayback || audioPlayback.active.peek() === playbackController) {
+    return;
+  }
+  hidePlaybackControls = audioPlayback.show(playbackController);
+}
+
+/**
+ * Ends recorded playback completely: silences and rewinds it, clears the
+ * verse it was lighting up, and takes the scrubber down.
+ */
+function stopRecordedAudio(): void {
+  if (audioEl) {
+    if (!audioEl.paused) audioEl.pause();
+    audioEl.currentTime = 0;
+  }
+  isPlaying.value = false;
+  playbackTime.value = 0;
+  pauseVerseHighlight();
+  verseTrack = null;
+  verseTrackToken++;
+  hidePlayback();
+}
+
+/**
+ * Moves the "now reading" highlight to match a jump to `currentTime`.
+ *
+ * Ordinary playback only ever moves forward a verse at a time, which is what
+ * `highlightVerseForTime` is built around; a seek can land anywhere, so the
+ * verse lit before it is cleared rather than left to fade out over the new
+ * one. While paused nothing is lit — the verse is only remembered, so that
+ * resuming lights the one the reader scrubbed to.
+ */
+function seekVerseHighlight(currentTime: number): void {
+  if (!verseTrack) return;
+  pauseVerseHighlight();
+  verseTrack.lastVerse = null;
+  verseTrack.verseIndex = null;
+
+  if (isPlaying.peek()) {
+    highlightVerseForTime(currentTime);
+    return;
+  }
+
+  const index = verseIndexForTime(
+    verseTrack.startTimes,
+    currentTime + VERSE_HIGHLIGHT_LEAD_IN_SECONDS
+  );
+  const verseNumber = verseTrack.verseNumbers[index];
+  if (verseNumber !== undefined) {
+    verseTrack.lastVerse = verseNumber;
+    verseTrack.verseIndex = index;
+  }
+}
+
+/** What the reader's scrubber and transport buttons drive. */
+const playbackController: AudioPlaybackController = {
+  isPlaying,
+  currentTime: playbackTime,
+  duration: playbackDuration,
+  play: () => {
+    // See the Listen control's own `play()` call for why this is swallowed.
+    void audioEl?.play()?.catch(() => undefined);
+  },
+  pause: () => {
+    audioEl?.pause();
+  },
+  seek: (seconds) => {
+    if (!audioEl || !Number.isFinite(seconds)) return;
+    const duration = playbackDuration.peek();
+    const target = Math.max(
+      0,
+      duration !== null ? Math.min(seconds, duration) : seconds
+    );
+    audioEl.currentTime = target;
+    // Updated now rather than on the next `timeupdate`, so the handle doesn't
+    // snap back to the old position for a moment after being let go.
+    playbackTime.value = target;
+    seekVerseHighlight(target);
+  },
+  stop: stopRecordedAudio,
+};
 
 /**
  * Diminishes the rest of the chapter to spotlight the verse being read at
@@ -418,12 +538,12 @@ function highlightVerseForTime(currentTime: number): void {
  * leaving it lit (which would otherwise fade out on a wall-clock timer that
  * keeps running while the audio doesn't — see `resumeVerseHighlight`).
  *
- * There's no "stop" affordance yet distinct from "pause", so this is the only
- * option that doesn't leave a highlight stuck on screen indefinitely if the
- * user pauses and never resumes. Once the player grows real transport
- * controls, pausing should instead freeze the highlight in place (re-issuing
- * the same decoration id with no `removeAfterMs`, the way `resumeVerseHighlight`
- * already re-arms it) and only a "stop" should clear it.
+ * Only desktop offers a "stop" distinct from "pause" — the phone layout has
+ * just the one button — so this is the only option that doesn't leave a
+ * highlight stuck on screen indefinitely if the user pauses and never resumes.
+ * If every layout gains a stop, pausing could instead freeze the highlight in
+ * place (re-issuing the same decoration id with no `removeAfterMs`, the way
+ * `resumeVerseHighlight` already re-arms it) and leave clearing it to "stop".
  */
 function pauseVerseHighlight(): void {
   if (!verseTrack || verseTrack.currentDecorationId === null) return;
@@ -858,6 +978,14 @@ export default function initAudioReaderExtension() {
         saveListeningSpan = null;
       };
 
+      audioPlayback = context.audioPlayback;
+      // The element outlives the install, but nothing would be left to show
+      // or control it, so an uninstall ends playback outright.
+      yield () => {
+        stopRecordedAudio();
+        audioPlayback = null;
+      };
+
       const textToSpeech = context.textToSpeech;
 
       yield context.tools.registerQuickTool({
@@ -912,6 +1040,7 @@ export default function initAudioReaderExtension() {
             // what they asked for, not a failure worth reporting. (jsdom's
             // element returns nothing at all, hence the guard.)
             void el.play()?.catch(() => undefined);
+            showPlayback();
           } else {
             el.pause();
           }
@@ -936,13 +1065,7 @@ export default function initAudioReaderExtension() {
       yield effect(() => {
         // Reading `.value` subscribes this effect to chapter navigation.
         void context.app.currentReadingState.value;
-        if (audioEl && !audioEl.paused) {
-          audioEl.pause();
-          audioEl.currentTime = 0;
-        }
-        isPlaying.value = false;
-        verseTrack = null;
-        verseTrackToken++;
+        untracked(stopRecordedAudio);
         textToSpeech.stop();
         clearSpeechHighlight();
       });

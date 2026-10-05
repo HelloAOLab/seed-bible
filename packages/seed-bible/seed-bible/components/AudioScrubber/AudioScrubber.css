@@ -1,0 +1,105 @@
+.sb-audio-scrubber {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  color: var(--sb-font-color);
+}
+
+/* Much taller than the bar it draws, so a finger can find it. */
+.sb-audio-scrubber-hit-area {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 1.25rem;
+  cursor: pointer;
+  /* Dragging the handle must not scroll the page out from under it. */
+  touch-action: none;
+  outline: none;
+}
+
+.sb-audio-scrubber-hit-area[aria-disabled="true"] {
+  cursor: default;
+}
+
+.sb-audio-scrubber-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 0.1875rem;
+  border-radius: 62.4375rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  transition: height 0.15s ease;
+}
+
+.sb-audio-scrubber-handle-visible .sb-audio-scrubber-track {
+  height: 0.3125rem;
+}
+
+.sb-audio-scrubber-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: var(--sb-primary-color);
+}
+
+.sb-audio-scrubber-handle {
+  position: absolute;
+  top: 50%;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-inline-start: -0.4375rem;
+  border-radius: 50%;
+  background: var(--sb-primary-color);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transform: translateY(-50%) scale(0.4);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  pointer-events: none;
+}
+
+.sb-audio-scrubber-handle-visible .sb-audio-scrubber-handle,
+.sb-audio-scrubber-hit-area:focus-visible .sb-audio-scrubber-handle {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+.sb-audio-scrubber-dragging .sb-audio-scrubber-handle {
+  transform: translateY(-50%) scale(1.2);
+}
+
+.sb-audio-scrubber-hit-area:focus-visible .sb-audio-scrubber-track {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 0.25rem;
+}
+
+.sb-audio-scrubber-remaining {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-audio-progress-ring {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 3.25rem;
+  height: 3.25rem;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.sb-audio-progress-ring-track {
+  stroke: color-mix(in srgb, var(--sb-font-color), transparent 82%);
+}
+
+.sb-audio-progress-ring-fill {
+  stroke: var(--sb-primary-color);
+  stroke-linecap: round;
+}

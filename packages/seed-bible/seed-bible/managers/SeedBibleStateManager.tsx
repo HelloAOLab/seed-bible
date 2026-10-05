@@ -529,6 +529,11 @@ export interface SeedBibleState {
    * translations that ship no recorded narration.
    */
   textToSpeech: TextToSpeechManager;
+  /**
+   * The audio the reader is currently showing playback controls for (e.g. a
+   * chapter's narration), so its toolbars can display progress and scrub.
+   */
+  audioPlayback: AudioPlaybackManager;
   /** Saved photos the user has uploaded, for reuse as covers and later features. */
   gallery: UserGalleryManager;
   /** Aggregated computed app state and top-level UI actions. */
@@ -607,6 +612,10 @@ import {
   createTextToSpeechManager,
   type TextToSpeechManager,
 } from "./TextToSpeechManager";
+import {
+  createAudioPlaybackManager,
+  type AudioPlaybackManager,
+} from "./AudioPlaybackManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
@@ -1052,6 +1061,7 @@ export function createSeedBibleState(
   });
   const gallery = createUserGalleryManager(os, login);
   const textToSpeech = createTextToSpeechManager();
+  const audioPlayback = createAudioPlaybackManager();
 
   const { currentTheme } = themeManager;
   // While a Customization is active, its variant is rendered against its
@@ -3128,6 +3138,7 @@ export function createSeedBibleState(
     playlists,
     gallery,
     textToSpeech,
+    audioPlayback,
     tutorial,
     onboarding,
     yourContent,
