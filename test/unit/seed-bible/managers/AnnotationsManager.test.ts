@@ -2099,6 +2099,10 @@ describe("AnnotationsManager", () => {
       const manager = createOfflineManager();
       goOffline();
       await manager.saveAnnotation(createCommentAnnotation({ id: "unsent" }));
+      // Asked for afresh on every check, as `visibleChapterAnnotations` does
+      // on every render: that call is what starts the re-read after the
+      // switch. A view held from before the switch and only watched isn't
+      // read again, so memoizing that call would reopen this leak.
       const theirNotes = () =>
         manager.getUserAnnotationsForChapter("friend-user", "GEN", 1);
       await waitForCondition(() =>
