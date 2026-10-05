@@ -1,8 +1,8 @@
 import { effect, signal, type Signal } from "@preact/signals";
-import type { LoginManager, UserProfile } from "../managers/LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { CasualOSManager } from "./OsManager";
-import type { FriendsManager } from "./FriendsManager";
+import type { FriendProfile, FriendsManager } from "./FriendsManager";
 import type {
   SharedDocument,
   SharedMap,
@@ -15,7 +15,11 @@ import type {
 export interface AvailableSharedSession {
   sessionId: string;
   hostUserId: string;
-  hostProfile: UserProfile | null;
+  /**
+   * The host's name and picture, as the friends list has them. Null while
+   * their profile is still loading there.
+   */
+  hostProfile: FriendProfile | null;
   publishedAt: number;
 }
 
@@ -120,14 +124,12 @@ export function createInvitationsManager(
   onJoin: OnJoinSharedSession
 ): InvitationsManager {
   const availableSessions = signal<AvailableSharedSession[]>([]);
-  const profileCache = new Map<string, UserProfile | null>();
   const locallyDismissed = new Set<string>();
 
   let registryDoc: SharedDocument | null = null;
   let registryMap: SharedMap<StoredRegistryEntry> | null = null;
   let changesSubscription: { unsubscribe: () => void } | null = null;
   let remoteClientsSubscription: { unsubscribe: () => void } | null = null;
-  let profileRefreshVersion = 0;
   let disposed = false;
   // Connection ids that are currently connected to the registry document.
   // An entry whose `hostConnectionId` is not in this set is considered
@@ -148,7 +150,11 @@ export function createInvitationsManager(
   const applyEntries = (entries: StoredRegistryEntry[]) => {
     const currentUserId = login.userId.value;
     const currentConnectionId = os.connectionId;
-    const friendIds = new Set(friends.friendIds.value);
+    // Read here rather than fetched per host, so a host's name shows up as
+    // soon as the friends list has their profile.
+    const friendsById = new Map(
+      friends.friends.value.map((friend) => [friend.userId, friend])
+    );
 
     const filtered = entries.filter(
       (entry) =>
@@ -159,7 +165,7 @@ export function createInvitationsManager(
         entry.hostUserId !== currentConnectionId &&
         // The registry is global, so this is what keeps it from broadcasting
         // every session in the app to every user.
-        friendIds.has(entry.hostUserId) &&
+        friendsById.has(entry.hostUserId) &&
         !locallyDismissed.has(entry.sessionId) &&
         // Only show entries whose host is currently connected. This means
         // notifications only fire when a user is actually live in their
@@ -168,47 +174,21 @@ export function createInvitationsManager(
         liveConnectionIds.has(entry.hostConnectionId)
     );
     filtered.sort((a, b) => b.publishedAt - a.publishedAt);
-    availableSessions.value = filtered.map((entry) => ({
-      sessionId: entry.sessionId,
-      hostUserId: entry.hostUserId,
-      hostProfile: profileCache.get(entry.hostUserId) ?? null,
-      publishedAt: entry.publishedAt,
-    }));
-  };
-
-  const refreshProfiles = async (entries: StoredRegistryEntry[]) => {
-    const version = ++profileRefreshVersion;
-    // Only the hosts that survive the friends filter are worth a profile
-    // request — the rest are never rendered.
-    const friendIds = new Set(friends.friendIds.peek());
-    const uniqueIds = Array.from(
-      new Set(
-        entries
-          .map((entry) => entry.hostUserId)
-          .filter((id) => friendIds.has(id))
-      )
-    );
-
-    await Promise.all(
-      uniqueIds.map(async (userId) => {
-        if (profileCache.has(userId)) return;
-        try {
-          const profile = await login.getUserProfile(userId);
-          profileCache.set(userId, profile ?? null);
-        } catch {
-          profileCache.set(userId, null);
-        }
-      })
-    );
-
-    if (version !== profileRefreshVersion || disposed) return;
-    applyEntries(entries);
+    availableSessions.value = filtered.map((entry) => {
+      const host = friendsById.get(entry.hostUserId);
+      return {
+        sessionId: entry.sessionId,
+        hostUserId: entry.hostUserId,
+        hostProfile: host
+          ? { name: host.name, pictureUrl: host.pictureUrl }
+          : null,
+        publishedAt: entry.publishedAt,
+      };
+    });
   };
 
   const syncFromRegistry = () => {
-    const entries = readStoredEntries();
-    applyEntries(entries);
-    void refreshProfiles(entries);
+    applyEntries(readStoredEntries());
   };
 
   const openRegistry = async () => {
@@ -261,7 +241,8 @@ export function createInvitationsManager(
   // Re-filter when the signed-in account or the friends list changes, so
   // becoming friends with someone who is already hosting surfaces their
   // session right away (and unfriending hides it) without waiting for the next
-  // registry change.
+  // registry change. A friend's profile loading counts too, which is what
+  // fills in a host's name.
   //
   // This is also what opens the registry document in the first place — but
   // only once the user is signed in AND has at least one friend. With no

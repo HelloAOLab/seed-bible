@@ -44,7 +44,7 @@ import {
 } from "../Avatar/Avatar";
 import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
-import { trimmedOrNull } from "../../managers/Utils";
+import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { useAppConfig } from "../../app/appConfig";
 import { ParticipantFriendButton } from "../FriendsPane/ParticipantFriendButton";
 
@@ -2434,8 +2434,10 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
       aria-label={t("shared-sessions", { defaultValue: "Shared sessions" })}
     >
       {entries.map((entry) => {
-        const hostName =
-          entry.hostProfile?.name ?? `User ${entry.hostUserId.slice(0, 8)}`;
+        const hostName = displayNameOf(
+          { userId: entry.hostUserId, name: entry.hostProfile?.name },
+          t
+        );
         // Pure-hash visual keyed by hostUserId — same key every client uses
         // for this host, so everyone sees the same icon+color combo.
         const visual = getUserAnimalVisual(entry.hostUserId);

@@ -364,6 +364,63 @@ describe("InvitationsManager", () => {
     });
   });
 
+  describe("the host's profile", () => {
+    const hostLive = () => {
+      mockRemoteClients.emit({
+        type: "client_connected",
+        client: { connectionId: "conn-1" },
+      });
+      mockMap.set("session-1", {
+        sessionId: "session-1",
+        hostUserId: "friend-host",
+        hostConnectionId: "conn-1",
+        publishedAt: 100,
+      });
+    };
+
+    it("shows the name and picture the friends list has, without fetching a profile", async () => {
+      const { manager: friends } = makeFriends([
+        {
+          userId: "friend-host",
+          name: "Ada",
+          pictureUrl: "https://example.com/ada.jpg",
+        },
+      ]);
+      const login = makeLogin("me");
+      const manager = createInvitationsManager(os, login, friends, vi.fn());
+      await flushPromises();
+
+      hostLive();
+
+      expect(manager.availableSessions.value[0]?.hostProfile).toEqual({
+        name: "Ada",
+        pictureUrl: "https://example.com/ada.jpg",
+      });
+      expect(login.getUserProfile).not.toHaveBeenCalled();
+    });
+
+    it("fills in the name once the friends list has loaded their profile", async () => {
+      const { manager: friends, friendList } = makeFriends([
+        { userId: "friend-host", name: null, pictureUrl: null },
+      ]);
+      const manager = createInvitationsManager(
+        os,
+        makeLogin("me"),
+        friends,
+        vi.fn()
+      );
+      await flushPromises();
+      hostLive();
+      expect(manager.availableSessions.value[0]?.hostProfile?.name).toBeNull();
+
+      friendList.value = [
+        { userId: "friend-host", name: "Ada", pictureUrl: null },
+      ];
+
+      expect(manager.availableSessions.value[0]?.hostProfile?.name).toBe("Ada");
+    });
+  });
+
   describe("publishSession / unpublishSession", () => {
     it("publishes under the signed-in user's id", async () => {
       const { manager: friends } = makeFriends([
