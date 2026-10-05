@@ -14,6 +14,7 @@ import {
   hasRegisteredContentType,
 } from "../DiscoverPane/DiscoveredResultsSections";
 import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
+import { visibleChapterAnnotations } from "../../managers/AnnotationsManager";
 import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
 import { MaterialIcon } from "../icons";
 import { translateTitle } from "../../app/utils";
@@ -111,8 +112,8 @@ interface DiscoverContentPanelProps {
 }
 
 /**
- * Automatically-visible discover content — the reader's own notes
- * (annotations) plus discovered cross references/study notes/content — for
+ * Automatically-visible discover content — the reader's and their friends'
+ * notes (annotations) plus discovered cross references/study notes/content — for
  * one reading tab. Rendered once per visible tab. Hides itself entirely when
  * there's no tab or there's nothing to show for the chapter, and omits the
  * notes section when the chapter has no notes and nothing waiting to sync.
@@ -135,8 +136,12 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const hasAnnotations = Boolean(
     bookId &&
     chapterNumber &&
-    state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
-      .length > 0
+    visibleChapterAnnotations(
+      state.annotations,
+      state.friends.friendIds.value,
+      bookId,
+      chapterNumber
+    ).length > 0
   );
   // A note deleted offline is no longer in the chapter list, but it is still
   // a change that has to reach the server. Keep the section (and its chip)
@@ -296,6 +301,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               modals={state.modals}
               toast={state.app.toast}
               login={state.login}
+              friends={state.friends}
               tabs={state.tabs}
               discover={state.discover}
               panes={state.panes}

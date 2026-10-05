@@ -44,9 +44,11 @@ import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   annotationVerseNumbers,
+  visibleChapterAnnotations,
   type Annotation,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
+import type { FriendsManager } from "../../managers/FriendsManager";
 import type {
   BibleReadingSession,
   ConnectionSessionUserVisual,
@@ -261,7 +263,12 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
   const { t } = useI18n();
   const chapterAnnotations =
     bookId && chapterNumber
-      ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+      ? visibleChapterAnnotations(
+          state.annotations,
+          state.friends.friendIds.value,
+          bookId,
+          chapterNumber
+        )
       : [];
   const noteCount = chapterAnnotations.length;
 
@@ -1781,6 +1788,8 @@ interface ChapterContentProps {
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
   annotations?: AnnotationsManager;
+  /** Whose notes besides the user's own get verse markers. */
+  friends?: FriendsManager;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -1828,6 +1837,7 @@ function ChapterContent(props: ChapterContentProps) {
     highlights,
     decorations,
     annotations,
+    friends,
     selectVerse,
     selectFootnote,
     selectVersesFromTextSelection,
@@ -1843,10 +1853,12 @@ function ChapterContent(props: ChapterContentProps) {
   const currentChapter = chapterData.value;
   const chapterAnnotations =
     currentChapter && annotations
-      ? annotations.getAnnotationsForChapter(
+      ? visibleChapterAnnotations(
+          annotations,
+          friends?.friendIds.value ?? [],
           currentChapter.book.id,
           currentChapter.chapter.number
-        ).value
+        )
       : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -2980,6 +2992,7 @@ export function BibleReader(props: BibleReaderProps) {
               highlights={highlights}
               decorations={decorations}
               annotations={state?.annotations}
+              friends={state?.friends}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}

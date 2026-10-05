@@ -63,6 +63,12 @@ import {
   YourContentPaneTitle,
 } from "../components/YourContentPane/YourContentPane";
 import {
+  FRIENDS_PANE_ID,
+  FriendsPane,
+  FriendsPaneTitle,
+} from "../components/FriendsPane/FriendsPane";
+import { setupFriendLinks } from "../components/FriendsPane/FriendLinkPrompts";
+import {
   createYourContentManager,
   type YourContentManager,
 } from "../managers/YourContentManager";
@@ -148,6 +154,11 @@ import {
   createSavesManager,
   type SavesManager,
 } from "../managers/SavesManager";
+import {
+  createFriendsManager,
+  type FriendsManager,
+} from "../managers/FriendsManager";
+import { createFriendReadLimiter } from "./friendContentFreshness";
 import {
   createChatsManager,
   type ChatSession,
@@ -485,6 +496,12 @@ export interface SeedBibleState {
   highlights: HighlightsManager;
   /** Archival saves manager: categorized references to chapters and verses. */
   saves: SavesManager;
+  /**
+   * The signed-in user's friends and pending friend requests. A friendship is
+   * a mutual shared permission; for now it only decides whose already-public
+   * highlights, notes, playlists, reading plans and reading history are shown.
+   */
+  friends: FriendsManager;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Chat session manager for in-app chat state. */
@@ -552,6 +569,13 @@ export interface SeedBibleState {
   openYourContent: () => void;
   /** Closes "Your content" (clears `content` from the URL). */
   closeYourContent: () => void;
+
+  /** True when the Friends screen is showing. */
+  isFriendsOpen: ReadonlySignal<boolean>;
+  /** Opens Friends (reflected in the URL as `?friends=open`). */
+  openFriends: () => void;
+  /** Closes Friends (clears `friends` from the URL). */
+  closeFriends: () => void;
 
   /** True when the Profile screen is showing. */
   isProfileOpen: ReadonlySignal<boolean>;
@@ -719,10 +743,14 @@ export function createSeedBibleState(
   // Both managers ask through the same prompt, so one sign-in raises one
   // dialog even when the device holds highlights and notes.
   const askToAdopt = createAdoptionPrompt(modals);
+  // One limit on reading friends' content, shared by every manager that does.
+  const friendReads = createFriendReadLimiter();
   const highlights = createHighlightsManager(os, login, {
     confirmAdoption: (owner) => askToAdopt(owner, "highlights"),
+    friendReads,
   });
   const saves = createSavesManager(os, login);
+  const friends = createFriendsManager(os, login);
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
@@ -821,6 +849,8 @@ export function createSeedBibleState(
     {
       confirmAdoption: (owner) => askToAdopt(owner, "notes"),
       isMobile,
+      friendIds: friends.friendIds,
+      friendReads,
     }
   );
   const yourContent = createYourContentManager({
@@ -953,6 +983,21 @@ export function createSeedBibleState(
     contentOpen.value = false;
   };
 
+  // The Friends screen, reached from Profile. Bound to `?friends=open` on the
+  // same terms as "Your content" above.
+  const friendsOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("friends") === "open"
+  );
+  const isFriendsOpen = computed(() => friendsOpen.value);
+  const openFriends = () => {
+    friendsOpen.value = true;
+  };
+  const closeFriends = () => {
+    friendsOpen.value = false;
+  };
+
   // The Profile screen. Two-way bound to `?profile=open` so it can be
   // deep-linked and so the browser's back button leaves it, mirroring Today.
   //
@@ -1013,6 +1058,14 @@ export function createSeedBibleState(
         contentOpen.value = newValue === "open";
       },
     },
+    friends: {
+      get value() {
+        return friendsOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        friendsOpen.value = newValue === "open";
+      },
+    },
     "edit-profile": {
       get value() {
         return editProfileOpen.value ? "open" : null;
@@ -1049,6 +1102,7 @@ export function createSeedBibleState(
   const readingPlans = createReadingPlansManager(os, login, tabs, navigation, {
     language: i18n.language,
     initialReadingPlanPageSeed: options.initialReadingPlanPageSeed,
+    friendReads,
   });
   const gallery = createUserGalleryManager(os, login);
   const textToSpeech = createTextToSpeechManager();
@@ -1126,7 +1180,8 @@ export function createSeedBibleState(
     readingExtensions,
     discover,
     chats,
-    options.initialPlaylistPageSeed
+    options.initialPlaylistPageSeed,
+    { friendReads }
   );
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
@@ -2758,9 +2813,14 @@ export function createSeedBibleState(
     chats.selectChat(sharedChat.id);
   };
 
-  const invitations = createInvitationsManager(os, login, async (sessionId) => {
-    await handleJoinSharedSession(sessionId);
-  });
+  const invitations = createInvitationsManager(
+    os,
+    login,
+    friends,
+    async (sessionId) => {
+      await handleJoinSharedSession(sessionId);
+    }
+  );
 
   const setupInitialSession = async () => {
     // Joining a session opens a live WebSocket — never do this during SSR.
@@ -3016,6 +3076,8 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
+  void setupFriendLinks({ navigation, login, friends, modals, toast });
+
   // A shared `?readingPlan=` link loads the plan, then opens the pane once a
   // reading tab is actually there. The tab is usually ready after the network
   // round-trip, but if it isn't yet this waits rather than selecting the plan
@@ -3037,6 +3099,7 @@ export function createSeedBibleState(
       panesManager: panes,
       modals,
       playlists,
+      friends,
       os,
       login,
       gallery,
@@ -3083,6 +3146,7 @@ export function createSeedBibleState(
   const today = createTodayManager({
     os,
     login,
+    friends,
     navigation,
     search,
     bibleData: data,
@@ -3110,6 +3174,7 @@ export function createSeedBibleState(
     readingHistory,
     highlights,
     saves,
+    friends,
     annotations,
     chats,
     sessions,
@@ -3134,6 +3199,9 @@ export function createSeedBibleState(
     isYourContentOpen,
     openYourContent,
     closeYourContent,
+    isFriendsOpen,
+    openFriends,
+    closeFriends,
     isProfileOpen,
     openProfile,
     closeProfile,
@@ -3331,11 +3399,12 @@ export function createSeedBibleState(
   // stays stable across reopens.
   //
   // Opening any fullscreen pane closes the others, so the screens reached from
-  // Profile ("Edit profile", "Your content") each carry a back button that
-  // reopens it rather than relying on a pane stack.
+  // Profile ("Edit profile", "Your content", "Friends") each carry a back
+  // button that reopens it rather than relying on a pane stack.
   const backToProfile = () => {
     closeEditProfile();
     closeYourContent();
+    closeFriends();
     openProfile();
   };
   const renderProfileBackButton = () => (
@@ -3361,6 +3430,7 @@ export function createSeedBibleState(
       panesManager: panes,
       modals,
       playlists,
+      friends,
       os,
       login,
       gallery,
@@ -3375,6 +3445,7 @@ export function createSeedBibleState(
       onEditPicture={editProfilePicture}
       onOpenReadingPlans={openReadingPlansFromProfile}
       onOpenYourContent={openYourContent}
+      onOpenFriends={openFriends}
     />
   );
   const renderProfilePaneTitle = () => <ProfilePaneTitle />;
@@ -3490,6 +3561,33 @@ export function createSeedBibleState(
     );
     if (!paneOpen && isYourContentOpen.peek()) {
       closeYourContent();
+    }
+  });
+
+  // "Friends", wired like "Your content" above.
+  const renderFriendsPane = () => <FriendsPane state={state} />;
+  const renderFriendsPaneTitle = () => <FriendsPaneTitle />;
+
+  effect(() => {
+    if (isFriendsOpen.value) {
+      panes.openPane({
+        id: FRIENDS_PANE_ID,
+        placement: "fullscreen",
+        title: renderFriendsPaneTitle,
+        leading: renderProfileBackButton,
+        component: renderFriendsPane,
+      });
+    } else {
+      panes.closePane(FRIENDS_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === FRIENDS_PANE_ID
+    );
+    if (!paneOpen && isFriendsOpen.peek()) {
+      closeFriends();
     }
   });
 
