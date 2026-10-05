@@ -88,9 +88,10 @@ export function createFriendReadLimiter(
 /**
  * Keeps friends' cached content (their notes, playlists, reading plans)
  * reasonably fresh without polling. Nothing tells the app when a friend saves
- * something, so content is read again at the two moments someone is likely
- * to look for changes: when it comes back on screen (returning to a chapter,
- * reopening a section), and when the app regains focus while it's showing.
+ * something, so content is read again at the moments someone is likely to
+ * look for changes, or a failed read could now work: when it comes back on
+ * screen (returning to a chapter, reopening a section), and when the app
+ * regains focus or its connection while it's showing.
  * Each manager decides what "stale" means and how to read again; this only
  * knows what's on screen.
  */
@@ -126,9 +127,11 @@ export function createFriendContentFreshness(
     }
     if (listen) {
       window.addEventListener("focus", refreshOnReturn);
+      window.addEventListener("online", refreshOnReturn);
       document.addEventListener("visibilitychange", refreshOnReturn);
     } else {
       window.removeEventListener("focus", refreshOnReturn);
+      window.removeEventListener("online", refreshOnReturn);
       document.removeEventListener("visibilitychange", refreshOnReturn);
     }
   };
@@ -136,7 +139,7 @@ export function createFriendContentFreshness(
   /**
    * A signal holding one friend's cached content, which calls
    * `refreshIfStale` when it comes back on screen and when the app regains
-   * focus while it's shown.
+   * focus or its connection while it's shown.
    */
   const trackedSignal = <T>(
     initial: T,

@@ -1,4 +1,5 @@
 import { effect } from "@preact/signals";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 import {
   createFriendContentFreshness,
   createFriendReadLimiter,
@@ -167,6 +168,33 @@ describe("createFriendContentFreshness().refreshOnScreen", () => {
 });
 
 describe("createFriendContentFreshness listening for the app coming back", () => {
+  // A read that failed while offline can only work again now.
+  it("refreshes what's shown when the connection comes back, while the app is in view", async () => {
+    const page = stubPageVisibility();
+    const freshness = createFriendContentFreshness();
+    const refresh = vi.fn();
+    const shown = freshness.trackedSignal<string[]>([], refresh);
+    const stopShowing = effect(() => void shown.value);
+
+    try {
+      await flush();
+      refresh.mockClear();
+
+      window.dispatchEvent(new Event("online"));
+      expect(refresh).toHaveBeenCalledTimes(1);
+
+      page.set("hidden");
+      window.dispatchEvent(new Event("online"));
+      expect(refresh).toHaveBeenCalledTimes(1);
+    } finally {
+      stopShowing();
+      page.restore();
+    }
+
+    window.dispatchEvent(new Event("online"));
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
   it("listens only while something is shown", () => {
     const add = vi.spyOn(window, "addEventListener");
     const remove = vi.spyOn(window, "removeEventListener");
