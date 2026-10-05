@@ -10,10 +10,6 @@ import type { LoginManager } from "../../managers/LoginManager";
 
 type LoginStep = "email" | "code";
 
-// Placeholder asset/links. Replace `LOGO_SRC` with the real Seed Bible logo and
-// point the legal links at their real destinations when available.
-const LOGO_SRC = SeedBibleTitleIcon;
-
 /**
  * Guided login flow shown when {@link CasualOSManager.isLoginOpen} is set.
  *
@@ -48,6 +44,8 @@ export function LoginModal({
   const wasOpenRef = useRef(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
+  const logoImgRef = useRef<HTMLImageElement>(null);
+  const logoFailed = useSignal(false);
 
   const termsOfServiceLink = navigation.linkToQuery({
     terms: "open",
@@ -92,6 +90,18 @@ export function LoginModal({
     const target =
       step.value === "email" ? emailInputRef.current : codeInputRef.current;
     target?.focus();
+  });
+
+  // The logo can fail while the page is still loading, before this handler
+  // exists. A finished image with no pixels is that missed error.
+  useSignalEffect(() => {
+    if (!login.isLoginOpen.value) {
+      return;
+    }
+    const img = logoImgRef.current;
+    if (img?.complete && img.naturalWidth === 0) {
+      logoFailed.value = true;
+    }
   });
 
   if (!isOpen) {
@@ -271,13 +281,18 @@ export function LoginModal({
       >
         <div className="sb-login-modal-body">
           <div className="sb-login-header">
-            <img
-              className="sb-login-logo"
-              src={LOGO_SRC}
-              alt={t("login-account-title", {
-                defaultValue: "Login to your account",
-              })}
-            />
+            <span
+              className={`sb-login-logo${logoFailed.value ? " is-broken" : ""}`}
+            >
+              <img
+                ref={logoImgRef}
+                src={SeedBibleTitleIcon}
+                alt={t("seed-bible", { defaultValue: "Seed Bible" })}
+                onError={() => {
+                  logoFailed.value = true;
+                }}
+              />
+            </span>
             <h3 className="sb-login-title">{title}</h3>
             <p className="sb-login-subtitle">{subtitle}</p>
             {onCode && (

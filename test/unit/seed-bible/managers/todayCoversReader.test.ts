@@ -78,4 +78,33 @@ describe("reader visibility while Today is open", () => {
     await waitFor(() => state.tutorial.promptVisible.value, 2000);
     expect(state.tutorial.promptVisible.value).toBe(true);
   });
+
+  it("holds the offer back when the chapter is already loaded before Today opens", async () => {
+    // The production order: Today only opens after mount, but the chapter is
+    // already there from the server's API snapshot and the offer is armed
+    // before Today opens. Skipping the helper's `hydrateAutoOpen` and loading
+    // the chapter first reproduces that gap.
+    const state = await createTestSeedBibleState({
+      responses: responsesWithAChapter(),
+      todayOpen: true,
+      skipHydrateAutoOpen: true,
+    });
+    await waitFor(
+      () =>
+        state.app.currentReadingState.value?.tab.readingState.chapterData
+          .value != null,
+      2000
+    );
+    expect(state.today.isOpen.value).toBe(false);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.today.hydrateAutoOpen();
+    expect(state.today.isOpen.value).toBe(true);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.today.close();
+
+    await waitFor(() => state.tutorial.promptVisible.value, 2000);
+    expect(state.tutorial.promptVisible.value).toBe(true);
+  });
 });

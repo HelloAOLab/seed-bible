@@ -732,6 +732,23 @@ describe("YourContentPane", () => {
     expect(row?.querySelector(".sb-discover-item-title")?.textContent).toBe(
       "Morning devotions"
     );
+    expect(row?.querySelector(".sb-hero-thumb")).toBeNull();
+    expect(row?.textContent).not.toContain("No image");
+  });
+
+  it("shows a cover thumbnail when the playlist has an image", () => {
+    const list = playlist("p1", "Morning devotions");
+    list.heroImageUrl = "https://example.com/cover.jpg";
+    const { state } = createState({ playlists: [list] });
+    renderPane(state);
+
+    const thumb = container.querySelector(
+      ".sb-playlist-item .sb-hero-thumb"
+    ) as HTMLImageElement;
+    expect(thumb).not.toBeNull();
+    expect(thumb.tagName).toBe("IMG");
+    expect(thumb.src).toBe("https://example.com/cover.jpg");
+    expect(container.querySelector(".sb-hero-thumb--empty")).toBeNull();
   });
 
   it("opens the passage an annotation is about", () => {

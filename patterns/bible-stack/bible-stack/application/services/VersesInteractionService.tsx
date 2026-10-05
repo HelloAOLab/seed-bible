@@ -1,11 +1,11 @@
-import type { SequenceStateServicePort } from "../ports/verses";
 import type { VersesInteractionServicePort } from "../ports/in/VersesInteraction";
 import type { Piece } from "../../domain/models/canvas";
-import type { PaintPort } from "../ports/in/Paint";
+import type { PaintServicePort } from "../ports/in/Paint";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
-  paintPort: PaintPort;
+  paintPort: PaintServicePort;
 }
 
 export class VersesInteractionService implements VersesInteractionServicePort {
