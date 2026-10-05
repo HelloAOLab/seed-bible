@@ -244,8 +244,9 @@ describe("CasualOSManager shared permissions", () => {
     it("stops when the server ignores the page and leaves out the total", async () => {
       // Gives up after a few pages, so a loop that never stops fails
       // instead of running the test out of memory.
+      let pages = 0;
       const list = stubProcedure("listSharedRecords", () =>
-        list.mock.calls.length > 10
+        ++pages > 10
           ? { success: false, errorCode: "too_many_pages" }
           : {
               success: true,
