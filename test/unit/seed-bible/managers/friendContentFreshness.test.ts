@@ -63,6 +63,26 @@ describe("createFriendReadLimiter", () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());
 
+    it("is waited for as long as its pages keep arriving", async () => {
+      const limiter = createFriendReadLimiter(1);
+      const slow = pendingRead<string>();
+      const next = pendingRead();
+      let progress!: () => void;
+
+      const first = limiter.run((reportPage) => {
+        progress = reportPage;
+        return slow.load();
+      }, always);
+      void limiter.run(next.load, always);
+      await vi.advanceTimersByTimeAsync(FRIEND_READ_TIMEOUT_MS - 1);
+      progress();
+      await vi.advanceTimersByTimeAsync(FRIEND_READ_TIMEOUT_MS - 1);
+
+      expect(next.load).not.toHaveBeenCalled();
+      slow.resolve("every page");
+      await expect(first).resolves.toBe("every page");
+    });
+
     // On a stalled connection a read can hang without ever failing.
     it("is given up on, freeing its slot", async () => {
       const limiter = createFriendReadLimiter(1);

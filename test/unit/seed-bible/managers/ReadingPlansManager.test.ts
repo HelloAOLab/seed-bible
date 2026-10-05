@@ -1,4 +1,6 @@
 import { parseRecordLocator } from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
+import { FRIEND_READ_TIMEOUT_MS } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
+import { listAllByAddress } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers";
 import {
   CadenceSchema,
@@ -1293,36 +1295,25 @@ describe("createReadingPlansManager", () => {
     const os = CasualOSManager();
 
     // Wire the manager's CasualOS gateway to the mocks. The manager lists via
-    // os.listAllDataByMarker, which we reimplement here to page through the
-    // marker-aware listDataByMarkerMock so the pagination assertions hold.
+    // os.listAllDataByMarker, which pages through the real `listAllByAddress`
+    // here over the marker-aware listDataByMarkerMock, so the pagination
+    // assertions hold.
     Object.assign(os, {
       getData: getDataMock,
       recordData: recordDataMock,
       eraseData: eraseDataMock,
       recordFile: recordFileMock,
       listDataByMarker: listDataByMarkerMock,
-      listAllDataByMarker: async (recordName: string, marker: string) => {
-        const items: { address: string; data: unknown }[] = [];
-        let lastAddress: string | undefined;
-        while (true) {
-          const page = await listDataByMarkerMock(
-            recordName,
-            marker,
-            lastAddress
-          );
-          if (!page.success) {
-            throw new Error(`Error listing data: ${page.errorCode}`);
-          }
-          if (page.items.length === 0) {
-            break;
-          }
-          for (const item of page.items) {
-            items.push({ address: item.address, data: item.data });
-          }
-          lastAddress = page.items[page.items.length - 1]?.address;
-        }
-        return { success: true, items };
-      },
+      listAllDataByMarker: (
+        recordName: string,
+        marker: string,
+        onPage?: () => void
+      ) =>
+        listAllByAddress(
+          (lastAddress) =>
+            listDataByMarkerMock(recordName, marker, lastAddress),
+          onPage
+        ),
     });
     // Stubbed on the SDK client (a proxy, so assigned rather than spied on)
     // so OsManager's own link preview handling still runs.
@@ -2654,6 +2645,50 @@ describe("createReadingPlansManager", () => {
       } finally {
         stopWatching?.();
         page.restore();
+      }
+    });
+
+    it("reads all of a friend's progress when the whole read takes longer than the timeout", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      // Each page takes three quarters of the timeout, so the whole read
+      // takes longer than it while every page still makes progress.
+      const slowPage = () =>
+        new Promise((resolve) =>
+          setTimeout(resolve, (FRIEND_READ_TIMEOUT_MS * 3) / 4)
+        );
+      listDataByMarkerMock.mockImplementation(
+        async (
+          recordName: unknown,
+          _marker: unknown,
+          lastAddress?: unknown
+        ) => {
+          await slowPage();
+          const id = lastAddress ? "second" : "first";
+          return {
+            success: true,
+            items:
+              recordName === "friend-user" && lastAddress !== "second"
+                ? [
+                    {
+                      address: id,
+                      data: makeProgress({ id, recordName: "friend-user" }),
+                    },
+                  ]
+                : [],
+            totalCount: recordName === "friend-user" ? 2 : 0,
+          };
+        }
+      );
+      vi.useFakeTimers();
+      try {
+        const view = manager.getUserReadingPlanProgresses("friend-user");
+
+        await vi.advanceTimersByTimeAsync(FRIEND_READ_TIMEOUT_MS * 2);
+
+        expect(view.value.map((p) => p.id).sort()).toEqual(["first", "second"]);
+      } finally {
+        vi.useRealTimers();
       }
     });
 

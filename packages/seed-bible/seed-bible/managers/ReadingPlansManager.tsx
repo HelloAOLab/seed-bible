@@ -1688,10 +1688,14 @@ export function createReadingPlansManager(
     });
   };
 
-  const loadReadingProgress = async (recordName: string) => {
+  const loadReadingProgress = async (
+    recordName: string,
+    onPage?: () => void
+  ) => {
     const result = await os.listAllDataByMarker(
       recordName,
-      "publicRead:readingPlanProgress"
+      "publicRead:readingPlanProgress",
+      onPage
     );
     const readings = result.items
       .map((record) => ReadingPlanProgressSchema.safeParse(record.data))
@@ -1840,8 +1844,8 @@ export function createReadingPlansManager(
     entry: UserReadingPlanProgressesEntry
   ): Promise<void> => {
     try {
-      const loaded = await friendFreshness.read(entry.data, () =>
-        loadReadingProgress(userId)
+      const loaded = await friendFreshness.read(entry.data, (progress) =>
+        loadReadingProgress(userId, progress)
       );
       // A load that settled the entry while this request was in the air
       // holds newer progress than this response does.

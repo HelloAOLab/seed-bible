@@ -1,4 +1,5 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import { FRIEND_READ_TIMEOUT_MS } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
 import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import {
   CasualOSManager,
@@ -688,6 +689,35 @@ describe("createPlaylistManager", () => {
       await vi.waitFor(() =>
         expect(manager.userPlaylists.value).toHaveLength(12)
       );
+    });
+
+    it("lists all of a friend's playlists when the whole read takes longer than the timeout", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      servePagesOfTen();
+      const servePage = listDataByMarkerMock.getMockImplementation()!;
+      // Each page takes three quarters of the timeout, so the whole read
+      // takes longer than it while every page still makes progress.
+      const slowPage = () =>
+        new Promise((resolve) =>
+          setTimeout(resolve, (FRIEND_READ_TIMEOUT_MS * 3) / 4)
+        );
+      listDataByMarkerMock.mockImplementation(async (...args: unknown[]) => {
+        await slowPage();
+        return servePage(...args);
+      });
+      vi.useFakeTimers();
+      try {
+        const view = manager.getUserPlaylists("friend-user");
+
+        await vi.advanceTimersByTimeAsync(FRIEND_READ_TIMEOUT_MS * 2);
+
+        expect(view.value.map((p) => p.id)).toEqual(
+          twelvePlaylists.map((p) => p.id)
+        );
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("lists all of a friend's playlists", async () => {

@@ -1401,10 +1401,12 @@ export function createPlaylistManager(
     }
   };
 
-  const listPlaylists = async (recordName: string) => {
+  const listPlaylists = async (recordName: string, onPage?: () => void) => {
     // Every page: the server's paging stores return ten records at a time.
-    const records = await listAllByAddress((lastAddress) =>
-      os.listDataByMarker(recordName, "publicRead:playlists", lastAddress)
+    const records = await listAllByAddress(
+      (lastAddress) =>
+        os.listDataByMarker(recordName, "publicRead:playlists", lastAddress),
+      onPage
     );
     return records.items.map((record) => PlaylistSchema.parse(record.data));
   };
@@ -1456,8 +1458,8 @@ export function createPlaylistManager(
     entry: UserPlaylistsEntry
   ): Promise<void> => {
     try {
-      const loaded = await friendFreshness.read(entry.data, () =>
-        listPlaylists(userId)
+      const loaded = await friendFreshness.read(entry.data, (progress) =>
+        listPlaylists(userId, progress)
       );
       // A load that settled the entry while this request was in the air
       // holds newer playlists than this response does.

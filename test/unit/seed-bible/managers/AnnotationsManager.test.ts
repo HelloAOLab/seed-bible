@@ -26,7 +26,10 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { computed, effect, signal } from "@preact/signals";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
-import { createFriendReadLimiter } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
+import {
+  createFriendReadLimiter,
+  FRIEND_READ_TIMEOUT_MS,
+} from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
 import type { Mock, Mocked } from "vitest";
 
 function createCommentAnnotation(
@@ -948,6 +951,44 @@ describe("AnnotationsManager", () => {
         expect(asThemselves.value.map((a) => a.id)).toEqual(["their-note"])
       );
       consoleError.mockRestore();
+    });
+
+    it("reads every page of a friend's notes when the whole read takes longer than the timeout", async () => {
+      // Each page takes three quarters of the timeout, so the whole read
+      // takes longer than it while every page still makes progress.
+      const slowPage = () =>
+        new Promise((resolve) =>
+          setTimeout(resolve, (FRIEND_READ_TIMEOUT_MS * 3) / 4)
+        );
+      listDataByMarkerMock.mockImplementation(
+        async (record: string, _marker: string, lastAddress?: string) => {
+          await slowPage();
+          const id = lastAddress ? "second" : "first";
+          return {
+            success: true,
+            items:
+              record === "friend-user"
+                ? [{ address: id, data: createCommentAnnotation({ id }) }]
+                : [],
+            totalCount: record === "friend-user" ? 2 : 0,
+          };
+        }
+      );
+      const manager = createManager();
+      vi.useFakeTimers();
+      try {
+        const view = manager.getUserAnnotationsForChapter(
+          "friend-user",
+          "GEN",
+          1
+        );
+
+        await vi.advanceTimersByTimeAsync(FRIEND_READ_TIMEOUT_MS * 2);
+
+        expect(view.value.map((a) => a.id).sort()).toEqual(["first", "second"]);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("asks once when the first page holds the whole listing", async () => {

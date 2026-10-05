@@ -15,10 +15,11 @@ export const FRIEND_CONTENT_MAX_AGE_MS = 30 * 1000;
 export const MAX_CONCURRENT_FRIEND_READS = 4;
 
 /**
- * How long a read of friends' content holds its place before it's given up
- * on: 20 seconds. On a stalled connection a read can hang without ever
- * failing, and a few of those would hold every place, stopping all friend
- * reads in the app.
+ * How long a read of friends' content can go without progress before it's
+ * given up on: 20 seconds. On a stalled connection a read can hang without
+ * ever failing, and a few of those would hold every place, stopping all
+ * friend reads in the app. A read that arrives in several pages counts each
+ * page as progress, so a long but moving read isn't cut off.
  */
 export const FRIEND_READ_TIMEOUT_MS = 20 * 1000;
 
@@ -65,9 +66,13 @@ export function createFriendReadLimiter(
    * Runs `read` once there's room. A read that had to wait is skipped, with a
    * {@link SkippedFriendRead}, if `stillWanted` says no by the time its turn
    * comes. One with room straight away always runs: it was asked for during
-   * the render that's about to show it.
+   * the render that's about to show it. `read` is handed a `progress` to
+   * call as each page arrives, which restarts its timeout.
    */
-  const run = <T>(read: () => Promise<T>, stillWanted: () => boolean) =>
+  const run = <T>(
+    read: (progress: () => void) => Promise<T>,
+    stillWanted: () => boolean
+  ) =>
     new Promise<T>((resolve, reject) => {
       const start = (waited: boolean) => {
         if (waited && !stillWanted()) {
@@ -79,17 +84,29 @@ export function createFriendReadLimiter(
         // is just ignored. Callers treat this like any failed read and try
         // again later.
         let timeout: ReturnType<typeof setTimeout> | undefined;
+        let finished = false;
+        let timedOut!: (error: Error) => void;
+        const restartTimeout = () => {
+          // A read given up on can still report pages afterwards.
+          if (finished) {
+            return;
+          }
+          clearTimeout(timeout);
+          timeout = setTimeout(
+            () => timedOut(new Error("Timed out reading a friend's content")),
+            FRIEND_READ_TIMEOUT_MS
+          );
+        };
         Promise.race([
-          Promise.resolve().then(read),
-          new Promise<never>((_, timedOut) => {
-            timeout = setTimeout(
-              () => timedOut(new Error("Timed out reading a friend's content")),
-              FRIEND_READ_TIMEOUT_MS
-            );
+          Promise.resolve().then(() => read(restartTimeout)),
+          new Promise<never>((_, rejectRace) => {
+            timedOut = rejectRace;
+            restartTimeout();
           }),
         ])
           .then(resolve, reject)
           .finally(() => {
+            finished = true;
             clearTimeout(timeout);
             running--;
             startWaiting();
@@ -190,10 +207,13 @@ export function createFriendContentFreshness(
   /**
    * Makes a read for the friend content `content` holds, within the shared
    * limit. Rejects with {@link SkippedFriendRead} if the content leaves the
-   * screen while the read waits for its turn.
+   * screen while the read waits for its turn. `load` calls `progress` as
+   * each page arrives (see {@link FRIEND_READ_TIMEOUT_MS}).
    */
-  const read = <T>(content: Signal<unknown>, load: () => Promise<T>) =>
-    limiter.run(load, () => shown.has(content));
+  const read = <T>(
+    content: Signal<unknown>,
+    load: (progress: () => void) => Promise<T>
+  ) => limiter.run(load, () => shown.has(content));
 
   return { trackedSignal, read, refreshOnScreen };
 }

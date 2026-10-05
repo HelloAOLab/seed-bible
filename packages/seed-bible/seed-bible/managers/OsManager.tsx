@@ -146,7 +146,8 @@ async function listAllPages<T>(
 
 /**
  * Reads every page of a data listing, each continuing after the last address
- * the one before it returned. Throws on a failed page.
+ * the one before it returned. Throws on a failed page. `onPage` is called as
+ * each page arrives.
  */
 export async function listAllByAddress(
   fetchPage: (lastAddress: string | undefined) => Promise<
@@ -156,7 +157,8 @@ export async function listAllByAddress(
         totalCount: number;
       }
     | { success: false; errorCode: string }
-  >
+  >,
+  onPage?: () => void
 ): Promise<{ success: true; items: { address: string; data: unknown }[] }> {
   const allItems: { address: string; data: unknown }[] = [];
   let lastAddress: string | undefined;
@@ -168,6 +170,7 @@ export async function listAllByAddress(
       console.error("Error listing data:", page);
       throw new Error(`Error listing data: ${page.errorCode}`);
     }
+    onPage?.();
 
     if (page.items.length === 0) {
       break;
@@ -491,13 +494,15 @@ export function CasualOSManager(
 
     listAllDataByMarker: async (
       recordName: string,
-      marker: string
+      marker: string,
+      onPage?: () => void
     ): Promise<{
       success: boolean;
       items: { address: string; data: unknown }[];
     }> => {
-      return listAllByAddress((lastAddress) =>
-        listDataByMarker(recordName, marker, lastAddress)
+      return listAllByAddress(
+        (lastAddress) => listDataByMarker(recordName, marker, lastAddress),
+        onPage
       );
     },
 

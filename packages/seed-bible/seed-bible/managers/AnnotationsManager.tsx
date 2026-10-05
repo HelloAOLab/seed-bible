@@ -791,7 +791,8 @@ export function createAnnotationsManager(
     recordName: string,
     bookId: string,
     chapterNumber: number,
-    query?: AnnotationQuery
+    query?: AnnotationQuery,
+    onPage?: () => void
   ): Promise<Annotation[]> => {
     const marker = getAnnotationMarker(bookId, chapterNumber, query?.group);
 
@@ -807,6 +808,7 @@ export function createAnnotationsManager(
         console.error("Error listing annotations:", page);
         throw new Error(`Error listing annotations: ${page.errorCode}`);
       }
+      onPage?.();
 
       if (page.items.length === 0) {
         break;
@@ -1057,8 +1059,14 @@ export function createAnnotationsManager(
       const loaded = !serverOnly
         ? await loadChapterForOwner(recordId, bookId, chapterNumber)
         : isOtherAccount
-          ? await friendFreshness.read(entry.data, () =>
-              listFromServer(serverOnly, bookId, chapterNumber)
+          ? await friendFreshness.read(entry.data, (progress) =>
+              listFromServer(
+                serverOnly,
+                bookId,
+                chapterNumber,
+                undefined,
+                progress
+              )
             )
           : await listFromServer(serverOnly, bookId, chapterNumber);
       // A mutation that settled the entry while this request was in the air
