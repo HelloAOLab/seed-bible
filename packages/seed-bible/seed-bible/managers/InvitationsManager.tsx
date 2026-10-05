@@ -46,8 +46,8 @@ export interface InvitationsManager {
   availableSessions: Signal<AvailableSharedSession[]>;
   /**
    * Publish a newly-created shared session into the global registry. It's
-   * only listed while the host is signed in with at least one friend, so
-   * until then it waits, and is listed as soon as both are true.
+   * only listed while the host is signed in with at least one friend: until
+   * then it waits, and it comes off the list whenever that stops being true.
    */
   publishSession: (session: BibleReadingSession) => Promise<void>;
   /** Remove a previously-published session from the registry. */
@@ -251,19 +251,6 @@ export function createInvitationsManager(
     }
   };
 
-  // Re-filter when the signed-in account or the friends list changes, so
-  // becoming friends with someone who is already hosting surfaces their
-  // session right away (and unfriending hides it) without waiting for the next
-  // registry change. A friend's profile loading counts too, which is what
-  // fills in a host's name.
-  //
-  // This is also what opens the registry document in the first place — but
-  // only once the user is signed in AND has at least one friend. With no
-  // friends, `applyEntries` would filter every entry out anyway, so there is
-  // nothing to gain from connecting; every signed-out/no-friends case (which
-  // includes most tests and most anonymous visits) never opens a live
-  // WebSocket at all. Opening is one-way: once connected, it stays connected
-  // rather than disconnecting again if the friends list empties out.
   const publishHostedSessions = async (): Promise<void> => {
     const userId = login.userId.peek();
     // Anyone can read the registry, so a session is only listed when its host
@@ -292,6 +279,37 @@ export function createInvitationsManager(
     });
   };
 
+  // Takes this client's sessions off the registry while they can't be listed
+  // (signed out, or no friends left), so friends aren't still invited into a
+  // session whose host has gone. `publishHostedSessions` lists them again
+  // once they can be.
+  const unlistHostedSessions = () => {
+    const listed = [...hostedSessions].filter(
+      ([, listedAs]) => listedAs !== null
+    );
+    if (!registryDoc || !registryMap || listed.length === 0) return;
+    const mapRef = registryMap;
+    registryDoc.transact(() => {
+      for (const [sessionId] of listed) {
+        mapRef.delete(sessionId);
+        hostedSessions.set(sessionId, null);
+      }
+    });
+  };
+
+  // Re-filter when the signed-in account or the friends list changes, so
+  // becoming friends with someone who is already hosting surfaces their
+  // session right away (and unfriending hides it) without waiting for the next
+  // registry change. A friend's profile loading counts too, which is what
+  // fills in a host's name.
+  //
+  // This is also what opens the registry document in the first place — but
+  // only once the user is signed in AND has at least one friend. With no
+  // friends, `applyEntries` would filter every entry out anyway, so there is
+  // nothing to gain from connecting; every signed-out/no-friends case (which
+  // includes most tests and most anonymous visits) never opens a live
+  // WebSocket at all. Opening is one-way: once connected, it stays connected
+  // rather than disconnecting again if the friends list empties out.
   const stopAuthEffect = effect(() => {
     const userId = login.userId.value;
     // The list with names, not just the IDs: a friend's profile loading
@@ -304,6 +322,8 @@ export function createInvitationsManager(
     }
     if (userId && hasFriends) {
       void publishHostedSessions();
+    } else {
+      unlistHostedSessions();
     }
   });
 

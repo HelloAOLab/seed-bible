@@ -482,6 +482,32 @@ describe("InvitationsManager", () => {
       );
     });
 
+    // Otherwise friends keep seeing, and joining, a session whose host has
+    // signed out.
+    it("takes the session off the list when the host signs out, and lists it again when they sign back in", async () => {
+      const { manager } = await start({ friendIds: [FRIEND] });
+      await manager.publishSession({ id: "session-1" } as any);
+      expect(mockMap.get("session-1")).toBeDefined();
+
+      userId.value = null;
+      expect(mockMap.get("session-1")).toBeUndefined();
+
+      userId.value = ME;
+      await vi.waitFor(() =>
+        expect(mockMap.get("session-1")).toMatchObject({ hostUserId: ME })
+      );
+    });
+
+    it("takes the session off the list when the host's last friend is unfriended", async () => {
+      const { friends, manager } = await start({ friendIds: [FRIEND] });
+      await manager.publishSession({ id: "session-1" } as any);
+      expect(mockMap.get("session-1")).toBeDefined();
+
+      await friends.unfriend(FRIEND);
+
+      expect(mockMap.get("session-1")).toBeUndefined();
+    });
+
     it("doesn't publish a session that ended before it could be listed", async () => {
       const { friends, manager } = await start();
       await manager.publishSession({ id: "session-1" } as any);
