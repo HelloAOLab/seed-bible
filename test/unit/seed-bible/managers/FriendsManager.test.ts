@@ -115,6 +115,35 @@ describe("FriendsManager", () => {
       });
     });
 
+    // Everything that reads friends' content (Today's reading history, say)
+    // reads it again when the friends list changes, and the lists refresh
+    // every time the app comes back into focus.
+    it("doesn't report a change when a refresh finds the same friends", async () => {
+      server.friendsWith("ada");
+      const friends = create();
+      await loaded(friends, () =>
+        expect(friends.friends.value.map((f) => f.name)).toEqual(["Ada"])
+      );
+      let changes = 0;
+      const stopWatching = effect(() => {
+        void friends.friendIds.value;
+        void friends.friends.value;
+        changes++;
+      });
+
+      try {
+        await friends.refresh();
+        expect(changes).toBe(1);
+
+        server.friendsWith("bob");
+        await friends.refresh();
+        expect(friends.friendIds.value).toEqual(["ada", "bob"]);
+        expect(changes).toBeGreaterThan(1);
+      } finally {
+        stopWatching();
+      }
+    });
+
     it("is empty and makes no requests while signed out", async () => {
       userId.value = null;
       server.friendsWith("ada");

@@ -171,6 +171,17 @@ const isPendingFriendRequest = (request: SharedPermission, nowMs: number) =>
 const EMPTY_LINKS: FriendLink[] = [];
 const EMPTY_REQUESTS: SharedPermission[] = [];
 
+const sameLinks = (a: FriendLink[], b: FriendLink[]): boolean =>
+  a.length === b.length &&
+  a.every(
+    (link, i) =>
+      link.userId === b[i]!.userId &&
+      link.sharedPermissionIds.length === b[i]!.sharedPermissionIds.length &&
+      link.sharedPermissionIds.every(
+        (id, j) => id === b[i]!.sharedPermissionIds[j]
+      )
+  );
+
 export function createFriendsManager(
   os: CasualOSManager,
   login: LoginManager
@@ -298,11 +309,17 @@ export function createFriendsManager(
       }
 
       const nowMs = Date.now();
+      const nextLinks = [...byUser].map(([friendId, sharedPermissionIds]) => ({
+        userId: friendId,
+        sharedPermissionIds,
+      }));
       batch(() => {
-        links.value = [...byUser].map(([friendId, sharedPermissionIds]) => ({
-          userId: friendId,
-          sharedPermissionIds,
-        }));
+        // Kept when nothing changed: everything that reads friends' content
+        // reads it again whenever the friends list changes, and this runs
+        // every time the app comes back into focus.
+        if (!sameLinks(links.peek(), nextLinks)) {
+          links.value = nextLinks;
+        }
         incoming.value = requested.filter((r) =>
           isPendingFriendRequest(r, nowMs)
         );
