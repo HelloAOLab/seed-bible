@@ -206,7 +206,8 @@ export function AudioScrubber(props: AudioScrubberProps) {
   );
 }
 
-const RING_RADIUS = 22;
+// Half the stroke in from the 24-unit edge, so the stroke ends at the edge.
+const RING_RADIUS = 22.5;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 /**
