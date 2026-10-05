@@ -294,7 +294,9 @@ export function createInvitationsManager(
 
   const stopAuthEffect = effect(() => {
     const userId = login.userId.value;
-    const hasFriends = friends.friendIds.value.length > 0;
+    // The list with names, not just the IDs: a friend's profile loading
+    // changes no ID, and is what fills in the name on their session.
+    const hasFriends = friends.friends.value.length > 0;
     if (registryMap) {
       applyEntries(readStoredEntries());
     } else if (typeof window !== "undefined" && userId && hasFriends) {

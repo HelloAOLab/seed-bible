@@ -26,8 +26,15 @@ import type {
   ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
+import {
+  createFriendsManager,
+  type Friend,
+  type FriendsManager,
+} from "@packages/seed-bible/seed-bible/managers/FriendsManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Mock } from "vitest";
+import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -395,6 +402,8 @@ function createMockState(
     friendIds?: string[];
     /** A friends list a test can change; `friendIds` follows it. */
     friends?: Signal<Friend[]>;
+    /** The real friends manager, for tests that unfriend someone. */
+    friendsManager?: FriendsManager;
   } = {}
 ): SeedBibleState {
   const friendsList = overrides.friends;
@@ -420,23 +429,54 @@ function createMockState(
     panes: {
       closeFullscreenPanes: vi.fn(),
     },
-    friends: friendsList
-      ? {
-          friends: friendsList,
-          friendIds: computed(() => friendsList.value.map((f) => f.userId)),
-        }
-      : {
-          friends: signal([]),
-          friendIds: signal(overrides.friendIds ?? []),
-        },
+    friends: overrides.friendsManager
+      ? overrides.friendsManager
+      : friendsList
+        ? {
+            friends: friendsList,
+            friendIds: computed(() => friendsList.value.map((f) => f.userId)),
+          }
+        : {
+            friends: signal([]),
+            friendIds: signal(overrides.friendIds ?? []),
+          },
   } as unknown as SeedBibleState;
 }
 
 describe("DiscoverPane", () => {
   let container: HTMLDivElement;
+  let disposers: (() => void)[] = [];
 
   const ada: Friend = { userId: "ada", name: "Ada", pictureUrl: null };
   const bob: Friend = { userId: "bob", name: "Bob", pictureUrl: null };
+
+  /**
+   * The real friends manager over the fake shared-permissions server, signed
+   * in as `ME` with `friends` as friends, once their names have loaded.
+   */
+  const createRealFriends = async (friends: Friend[]) => {
+    const os = CasualOSManager();
+    const login = {
+      userId: signal<string | null>(ME),
+      login: vi.fn().mockResolvedValue(null),
+      getPublicProfile: vi.fn(async (id: string) => ({
+        name: friends.find((f) => f.userId === id)?.name ?? "",
+        pictureUrl: null,
+      })),
+    } as unknown as LoginManager;
+    const server = fakeSharedPermissions(os, () => login.userId.peek());
+    for (const friend of friends) {
+      server.friendsWith(friend.userId);
+    }
+    const manager = createFriendsManager(os, login);
+    disposers.push(manager.dispose);
+    await vi.waitFor(() =>
+      expect(manager.friends.value.map((f) => f.name)).toEqual(
+        friends.map((f) => f.name)
+      )
+    );
+    return manager;
+  };
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -450,6 +490,8 @@ describe("DiscoverPane", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
+    for (const dispose of disposers) dispose();
+    disposers = [];
     vi.restoreAllMocks();
   });
 
@@ -464,12 +506,17 @@ describe("DiscoverPane", () => {
       ).map((el) => el.textContent);
 
     const renderWithFriends = (
-      friends: Signal<Friend[]>,
+      friends: Signal<Friend[]> | FriendsManager,
       friendPlaylists: Record<string, Playlist[]>
     ) => {
       const mock = createMockPlaylists({ friendPlaylists });
       const { annotations } = createMockAnnotations();
-      const state = createMockState(false, { friends });
+      const state = createMockState(
+        false,
+        "friendIds" in friends
+          ? { userId: ME, friendsManager: friends }
+          : { friends }
+      );
       act(() => {
         render(
           <DiscoverPane
@@ -579,25 +626,23 @@ describe("DiscoverPane", () => {
       );
     });
 
-    it("drops a friend's playlists once they're no longer a friend", () => {
-      const friends = signal([ada, bob]);
+    it("drops a friend's playlists once you unfriend them", async () => {
+      const friends = await createRealFriends([ada, bob]);
       renderWithFriends(friends, {
         ada: [createPlaylist({ id: "p1", title: "Psalms of Ascent" })],
         bob: [createPlaylist({ id: "p2", title: "Gospels" })],
       });
       expect(groupNames()).toEqual(["Ada", "Bob"]);
 
-      act(() => {
-        friends.value = [bob];
-      });
+      await act(() => friends.unfriend("ada"));
 
       expect(groupNames()).toEqual(["Bob"]);
       expect(friendsSection()?.textContent).not.toContain("Psalms of Ascent");
     });
   });
 
-  it("drops a friend's note once they're no longer a friend", () => {
-    const friends = signal([ada]);
+  it("drops a friend's note once you unfriend them", async () => {
+    const friends = await createRealFriends([ada]);
     const friendsNote = createAnnotation({
       id: "a1",
       data: { type: "comment", html: "<p>Ada's note</p>", userId: "ada" },
@@ -606,7 +651,10 @@ describe("DiscoverPane", () => {
     const { annotations } = createMockAnnotations({
       friendAnnotationsForChapter: { ada: [friendsNote] },
     });
-    const state = createMockState(false, { userId: "user-1", friends });
+    const state = createMockState(false, {
+      userId: ME,
+      friendsManager: friends,
+    });
     act(() => {
       render(
         <DiscoverPane
@@ -622,9 +670,7 @@ describe("DiscoverPane", () => {
     });
     expect(container.textContent).toContain("Ada's note");
 
-    act(() => {
-      friends.value = [];
-    });
+    await act(() => friends.unfriend("ada"));
 
     expect(container.textContent).not.toContain("Ada's note");
   });

@@ -183,15 +183,18 @@ export function fakeSharedPermissions(
     /** The signed-in user asking `userId` to be friends. */
     requestTo: (userId: string) =>
       addRow({ requestingUserId: ME, targetUserId: userId }),
-    /** An accepted friendship between the signed-in user and `userId`. */
-    friendsWith: (userId: string) =>
+    /**
+     * An accepted friendship between `userId` and `account`, which is the
+     * user the fake answers as by default.
+     */
+    friendsWith: (userId: string, account = ME) =>
       addRow({
         requestingUserId: userId,
-        targetUserId: ME,
+        targetUserId: account,
         status: "accepted",
         expireTimeMs: null,
-        recipientUserId: ME,
-        recipientRecordName: ME,
+        recipientUserId: account,
+        recipientRecordName: account,
       }),
   };
 }
