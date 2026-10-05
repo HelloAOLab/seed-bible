@@ -859,8 +859,11 @@ function FriendReadingPlansSection(props: {
         friend.userId
       ).value;
       const rows: FriendReadingPlanRow[] = [];
-      for (const progress of progresses) {
-        const locator = parseReadingPlanId(progress.planId);
+      // Restarting a plan adds a progress and keeps the old one, so only the
+      // latest per plan says where they are now, as in the user's own list.
+      for (const planId of new Set(progresses.map((p) => p.planId))) {
+        const progress = latestReadingPlanProgress(progresses, planId)!;
+        const locator = parseReadingPlanId(planId);
         if (!locator) {
           continue; // malformed/legacy planId — skip rather than throw
         }
