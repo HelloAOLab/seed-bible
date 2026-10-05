@@ -175,6 +175,7 @@ function createMockPlaylists(
     userPlaylistHistory: signal(overrides.userPlaylistHistory ?? []),
     playing: signal(overrides.playing ?? null),
     openingPlayback: signal(false),
+    playingAuthorName: signal(null),
     createNewPlaylist,
     startPlaying,
     editPlaylist,

@@ -177,6 +177,8 @@ function createFixture(): ReaderFixture {
     enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
     isExtensionEnabled: vi.fn(() => false),
     getUrlQueryParams: vi.fn(() => ({})),
+    getUrlPathOverride: vi.fn(() => null),
+    requestUrlUpdate: vi.fn(),
     onNavigate: vi.fn(() => () => {}),
     shortSubTitle: signal<string>(""),
     shortTitle: signal<string>(""),
