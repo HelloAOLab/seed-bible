@@ -35,6 +35,8 @@ import { savePhotoToGallery } from "./UserGalleryManager";
 import {
   createFriendContentFreshness,
   isFriendContentStale,
+  SkippedFriendRead,
+  type FriendReadLimiter,
 } from "./friendContentFreshness";
 import {
   buildSharedPagePath,
@@ -887,7 +889,15 @@ export function createPlaylistManager(
   readingExtensionManager: BibleReadingExtensionManager,
   discover: DiscoverManager,
   chats: ChatsManager,
-  initialPlaylistPageSeed?: PlaylistPageSeed
+  initialPlaylistPageSeed?: PlaylistPageSeed,
+  options: {
+    /**
+     * Limits how many friends' reads run at once. Shared with the other
+     * managers that read friends' content, so one limit covers them all.
+     * Omitted means a limit of this manager's own.
+     */
+    friendReads?: FriendReadLimiter;
+  } = {}
 ) {
   const initialPlaybackRequest = playbackRequestFromUrl(
     navigation.initialUrl,
@@ -1330,7 +1340,7 @@ export function createPlaylistManager(
     /** The last read failed, so coming back to it reads again right away. */
     loadFailed: boolean;
   };
-  const friendFreshness = createFriendContentFreshness();
+  const friendFreshness = createFriendContentFreshness(options.friendReads);
   const userPlaylistEntries = new Map<string, UserPlaylistsEntry>();
   // Identity-stable views handed to callers, keyed by userId. Never pruned:
   // evicting one would mint a new computed on the next call, breaking
@@ -1362,7 +1372,9 @@ export function createPlaylistManager(
     entry: UserPlaylistsEntry
   ): Promise<void> => {
     try {
-      const loaded = await listPlaylists(userId);
+      const loaded = await friendFreshness.read(entry.data, () =>
+        listPlaylists(userId)
+      );
       // A load that settled the entry while this request was in the air
       // holds newer playlists than this response does.
       if (entry.settled) {
@@ -1373,7 +1385,9 @@ export function createPlaylistManager(
       entry.loadFailed = false;
       entry.settled = true;
     } catch (error) {
-      console.error(`Failed to load playlists for ${userId}:`, error);
+      if (!(error instanceof SkippedFriendRead)) {
+        console.error(`Failed to load playlists for ${userId}:`, error);
+      }
       if (!entry.settled) {
         entry.loadFailed = true;
         // A failed re-read keeps the playlists already shown.

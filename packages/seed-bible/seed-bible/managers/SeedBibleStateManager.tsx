@@ -158,6 +158,7 @@ import {
   createFriendsManager,
   type FriendsManager,
 } from "../managers/FriendsManager";
+import { createFriendReadLimiter } from "./friendContentFreshness";
 import {
   createChatsManager,
   type ChatSession,
@@ -747,6 +748,8 @@ export function createSeedBibleState(
   });
   const saves = createSavesManager(os, login);
   const friends = createFriendsManager(os, login);
+  // One limit on reading friends' content, shared by every manager that does.
+  const friendReads = createFriendReadLimiter();
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
@@ -846,6 +849,7 @@ export function createSeedBibleState(
       confirmAdoption: (owner) => askToAdopt(owner, "notes"),
       isMobile,
       friendIds: friends.friendIds,
+      friendReads,
     }
   );
   const yourContent = createYourContentManager({
@@ -1097,6 +1101,7 @@ export function createSeedBibleState(
   const readingPlans = createReadingPlansManager(os, login, tabs, navigation, {
     language: i18n.language,
     initialReadingPlanPageSeed: options.initialReadingPlanPageSeed,
+    friendReads,
   });
   const gallery = createUserGalleryManager(os, login);
   const textToSpeech = createTextToSpeechManager();
@@ -1174,7 +1179,8 @@ export function createSeedBibleState(
     readingExtensions,
     discover,
     chats,
-    options.initialPlaylistPageSeed
+    options.initialPlaylistPageSeed,
+    { friendReads }
   );
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits

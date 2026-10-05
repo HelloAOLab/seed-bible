@@ -26,6 +26,7 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { computed, effect, signal } from "@preact/signals";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
+import { createFriendReadLimiter } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
 import type { Mock, Mocked } from "vitest";
 
 function createCommentAnnotation(
@@ -807,10 +808,74 @@ describe("AnnotationsManager", () => {
         })
       );
 
-    const friendListings = () =>
-      listDataByMarkerMock.mock.calls.filter(
-        ([record]) => record === "friend-user"
+    const listingsFor = (record: string) =>
+      listDataByMarkerMock.mock.calls.filter(([r]) => r === record);
+    const friendListings = () => listingsFor("friend-user");
+
+    it("skips a chapter that leaves the screen while waiting its turn, and reads it once it's back", async () => {
+      let finishFriendA!: () => void;
+      const friendAReading = new Promise<void>((resolve) => {
+        finishFriendA = resolve;
+      });
+      listDataByMarkerMock.mockImplementation(
+        async (record: string, _marker: string, lastAddress?: string) => {
+          if (record === "friend-a" && !lastAddress) {
+            await friendAReading;
+          }
+          const id = `${record}-note`;
+          return {
+            success: true,
+            items: lastAddress
+              ? []
+              : [{ address: id, data: createCommentAnnotation({ id }) }],
+            totalCount: 1,
+          };
+        }
       );
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { friendReads: createFriendReadLimiter(1) }
+      );
+      const ids = (view: { value: Annotation[] }) =>
+        view.value.map((a) => a.id);
+      const friendA = manager.getUserAnnotationsForChapter(
+        "friend-a",
+        "GEN",
+        1
+      );
+      const friendB = manager.getUserAnnotationsForChapter(
+        "friend-b",
+        "GEN",
+        1
+      );
+      const stopShowingA = effect(() => void friendA.value);
+      let stopShowingB = effect(() => void friendB.value);
+
+      try {
+        await vi.waitFor(() => expect(listingsFor("friend-a")).toHaveLength(1));
+        // Friend B's chapter is swiped past while it waits for friend A's.
+        stopShowingB();
+        finishFriendA();
+
+        await vi.waitFor(() => expect(ids(friendA)).toEqual(["friend-a-note"]));
+        expect(listingsFor("friend-b")).toHaveLength(0);
+        expect(consoleError).not.toHaveBeenCalled();
+
+        stopShowingB = effect(() => void friendB.value);
+        await vi.waitFor(() => expect(ids(friendB)).toEqual(["friend-b-note"]));
+      } finally {
+        stopShowingA();
+        stopShowingB();
+        consoleError.mockRestore();
+      }
+    });
 
     it("asks once when the first page holds the whole listing", async () => {
       listOnePage([

@@ -34,6 +34,8 @@ import { DEFAULT_UI_LANGUAGE } from "./ReadingUrlPath";
 import {
   createFriendContentFreshness,
   isFriendContentStale,
+  SkippedFriendRead,
+  type FriendReadLimiter,
 } from "./friendContentFreshness";
 
 // ---------------------------------------------------------------------------
@@ -1528,6 +1530,12 @@ export function createReadingPlansManager(
     language?: ReadonlySignal<string>;
     /** A prior SSR render's reading-plan-page load, so it isn't re-fetched. */
     initialReadingPlanPageSeed?: ReadingPlanPageSeed;
+    /**
+     * Limits how many friends' reads run at once. Shared with the other
+     * managers that read friends' content, so one limit covers them all.
+     * Omitted means a limit of this manager's own.
+     */
+    friendReads?: FriendReadLimiter;
   } = {}
 ) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
@@ -1796,7 +1804,7 @@ export function createReadingPlansManager(
     /** The last read failed, so coming back to it reads again right away. */
     loadFailed: boolean;
   };
-  const friendFreshness = createFriendContentFreshness();
+  const friendFreshness = createFriendContentFreshness(options.friendReads);
   const userReadingPlanProgressEntries = new Map<
     string,
     UserReadingPlanProgressesEntry
@@ -1831,7 +1839,9 @@ export function createReadingPlansManager(
     entry: UserReadingPlanProgressesEntry
   ): Promise<void> => {
     try {
-      const loaded = await loadReadingProgress(userId);
+      const loaded = await friendFreshness.read(entry.data, () =>
+        loadReadingProgress(userId)
+      );
       // A load that settled the entry while this request was in the air
       // holds newer progress than this response does.
       if (entry.settled) {
@@ -1842,10 +1852,12 @@ export function createReadingPlansManager(
       entry.loadFailed = false;
       entry.settled = true;
     } catch (error) {
-      console.error(
-        `Failed to load reading plan progress for ${userId}:`,
-        error
-      );
+      if (!(error instanceof SkippedFriendRead)) {
+        console.error(
+          `Failed to load reading plan progress for ${userId}:`,
+          error
+        );
+      }
       if (!entry.settled) {
         entry.loadFailed = true;
         // A failed re-read keeps the progress already shown.
@@ -1972,17 +1984,21 @@ export function createReadingPlansManager(
     entry: ReadingPlanLocatorEntry
   ): Promise<void> => {
     try {
-      const plan = await getReadingPlan(recordName, address);
+      const plan = await friendFreshness.read(entry.data, () =>
+        getReadingPlan(recordName, address)
+      );
       if (entry.settled) {
         return;
       }
       entry.data.value = plan;
       entry.settled = true;
     } catch (error) {
-      console.error(
-        `Failed to load reading plan ${recordName}/${address}:`,
-        error
-      );
+      if (!(error instanceof SkippedFriendRead)) {
+        console.error(
+          `Failed to load reading plan ${recordName}/${address}:`,
+          error
+        );
+      }
       if (!entry.settled) {
         entry.data.value = null;
         entry.loadFailed = true;

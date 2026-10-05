@@ -15,6 +15,8 @@ import type { ReaderTab, TabsManager } from "./TabsManager";
 import type { TranslationBookChapter } from "./FreeUseBibleAPI";
 import {
   createFriendContentFreshness,
+  SkippedFriendRead,
+  type FriendReadLimiter,
   isFriendContentStale,
 } from "./friendContentFreshness";
 import {
@@ -574,6 +576,12 @@ export interface CreateAnnotationsManagerOptions {
    * own.
    */
   friendIds?: ReadonlySignal<readonly string[]>;
+  /**
+   * Limits how many friends' chapters are read at once. Shared with the other
+   * managers that read friends' content, so one limit covers them all.
+   * Omitted means a limit of this manager's own.
+   */
+  friendReads?: FriendReadLimiter;
 }
 
 /**
@@ -974,7 +982,7 @@ export function createAnnotationsManager(
 
   // Cached annotations, keyed by account + chapter address.
   const entries = new Map<string, AnnotationsEntry>();
-  const friendFreshness = createFriendContentFreshness();
+  const friendFreshness = createFriendContentFreshness(options.friendReads);
   // Identity-stable per-chapter views handed to callers, keyed by address.
   const views = new Map<string, ReadonlySignal<Annotation[]>>();
   // Per-account views handed to callers that named an account explicitly,
@@ -1033,9 +1041,13 @@ export function createAnnotationsManager(
       const isOtherAccount =
         entry.explicit && recordId !== untracked(effectiveRecordId);
       const serverOnly = recordOverride ?? (isOtherAccount ? recordId : null);
-      const loaded = serverOnly
-        ? await listFromServer(serverOnly, bookId, chapterNumber)
-        : await loadChapterForOwner(recordId, bookId, chapterNumber);
+      const loaded = !serverOnly
+        ? await loadChapterForOwner(recordId, bookId, chapterNumber)
+        : isOtherAccount
+          ? await friendFreshness.read(entry.data, () =>
+              listFromServer(serverOnly, bookId, chapterNumber)
+            )
+          : await listFromServer(serverOnly, bookId, chapterNumber);
       // A mutation that settled the entry while this request was in the air
       // holds newer annotations than this response does.
       if (entry.settled) {
@@ -1055,7 +1067,9 @@ export function createAnnotationsManager(
           (await hasLocalChapter(recordId, bookId, chapterNumber)));
       entry.loadFailed = !entry.settled;
     } catch (error) {
-      console.error("Failed to load annotations for chapter:", error);
+      if (!(error instanceof SkippedFriendRead)) {
+        console.error("Failed to load annotations for chapter:", error);
+      }
       // `settled` is deliberately left alone, so this is never mistaken for an
       // empty chapter — `loadFailed` is what stops it retrying on every read.
       entry.loadFailed = true;
