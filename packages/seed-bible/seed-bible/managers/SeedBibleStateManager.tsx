@@ -421,8 +421,11 @@ export interface AppState {
    * match the 1.5s. If the time elapsed since it was shown is already beyond that
    * threshold, the toast is dismissed immediately.
    * (only one toast is ever visible at a time, always the oldest in the queue).
+   * Toasts sharing a `key` describe the same state, so a new one drops any
+   * waiting toast with that key and joins the end of the queue; the toast on
+   * screen is never dropped. Toasts without a key are always shown.
    */
-  toast: (message: string) => void;
+  toast: (message: string, key?: string) => void;
 
   /** Opens a chat session. */
   openChat: (sharedChat: ChatSession) => void;
@@ -2273,17 +2276,27 @@ export function createSeedBibleState(
   // so it uses MIN_TOAST_MS based on the current toast shown time, not the new
   // toast arrival time. The incrementing id keys the render so
   // the slide-in animation replays even for a repeated message.
+  // A keyed toast supersedes the waiting toasts with the same key, so a burst
+  // of state changes (e.g. a flaky connection) shows only the latest state
+  // instead of replaying every out-of-date one.
   //
   // Defined here (rather than further down, where it's exposed on `state`)
   // because the host-disconnect handling below also calls it, and that
   // effect runs immediately when constructed.
 
   let toastSeq = 0;
-  const toastQueue = signal<{ id: number; message: string }[]>([]);
-  const toast = (message: string) => {
+  const toastQueue = signal<{ id: number; message: string; key?: string }[]>(
+    []
+  );
+  const toast = (message: string, key?: string) => {
     // `peek()`: toast() is called from inside effects, and a tracked read
     // would subscribe that effect to the queue it is writing.
-    toastQueue.value = [...toastQueue.peek(), { id: ++toastSeq, message }];
+    const queue = toastQueue.peek();
+    const kept =
+      key === undefined
+        ? queue
+        : queue.filter((queued, index) => index === 0 || queued.key !== key);
+    toastQueue.value = [...kept, { id: ++toastSeq, message, key }];
   };
 
   const MIN_TOAST_MS = 1500;
@@ -2500,6 +2513,13 @@ export function createSeedBibleState(
   ): boolean =>
     session.isSynced.value &&
     session.connectedUsers.value.some((user) => user.isSelf);
+  // Our own connection and the host's are separate states: a host toast must
+  // never supersede a waiting "you rejoined", or someone told they dropped
+  // would never hear they're back.
+  const sessionSelfToastKey = (sessionId: string): string =>
+    `session-self:${sessionId}`;
+  const sessionHostToastKey = (sessionId: string): string =>
+    `session-host:${sessionId}`;
   effect(() => {
     // Read so this effect re-runs when the self-reconnect settle timer fires.
     const _presenceSettleGeneration = presenceSettleTick.value;
@@ -2554,7 +2574,8 @@ export function createSeedBibleState(
             toast(
               t("session-disconnected", {
                 defaultValue: "You lost connection to the session",
-              })
+              }),
+              sessionSelfToastKey(session.id)
             );
           }
         }
@@ -2578,7 +2599,8 @@ export function createSeedBibleState(
           toast(
             t("session-reconnected", {
               defaultValue: "You rejoined the session",
-            })
+            }),
+            sessionSelfToastKey(session.id)
           );
         }
         if (!locallyHostedSessionIds.has(session.id) && !hostIsConnected) {
@@ -2624,7 +2646,8 @@ export function createSeedBibleState(
           toast(
             t("session-host-reconnected", {
               defaultValue: "The host reconnected to the session",
-            })
+            }),
+            sessionHostToastKey(session.id)
           );
         }
       } else if (
@@ -2645,7 +2668,8 @@ export function createSeedBibleState(
         toast(
           t("session-host-disconnected", {
             defaultValue: "The host disconnected from the session",
-          })
+          }),
+          sessionHostToastKey(sessionId)
         );
         const timer = setTimeout(() => {
           pendingHostDisconnectTimers.delete(sessionId);

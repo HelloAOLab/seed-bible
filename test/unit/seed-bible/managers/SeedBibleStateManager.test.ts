@@ -1158,6 +1158,74 @@ describe("createSeedBibleState", () => {
       ]);
       expect(originalDispose).not.toHaveBeenCalled();
     });
+
+    it("shows only the latest connection state after our connection flaps repeatedly", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session } = await joinAsHostedSession(
+        state,
+        "session-self-flapping"
+      );
+      const shown = recordShownToasts(state);
+
+      for (let i = 0; i < 5; i++) {
+        session.isSynced.value = false;
+        session.connectedUsers.value = [];
+        vi.advanceTimersByTime(100);
+        session.isSynced.value = true;
+        session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+        vi.advanceTimersByTime(100);
+      }
+
+      // The first toast keeps its minimum time; the rest of the burst
+      // collapses into the single latest state behind it.
+      vi.advanceTimersByTime(MIN_TOAST_MS - 1000);
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+      ]);
+    });
+
+    it("shows only the latest host state after the host flaps repeatedly", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-host-flapping"
+      );
+      const shown = recordShownToasts(state);
+
+      for (let i = 0; i < 5; i++) {
+        session.connectedUsers.value = [
+          selfConnectedUser,
+          otherGuestConnectedUser,
+        ];
+        vi.advanceTimersByTime(100);
+        session.connectedUsers.value = [
+          selfConnectedUser,
+          hostConnectedUser,
+          otherGuestConnectedUser,
+        ];
+        vi.advanceTimersByTime(100);
+      }
+
+      vi.advanceTimersByTime(MIN_TOAST_MS - 1000);
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host reconnected to the session"
+      );
+
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual([
+        "The host disconnected from the session",
+        "The host reconnected to the session",
+      ]);
+      expect(originalDispose).not.toHaveBeenCalled();
+    });
   });
 
   it("tabs can be opened in new slots", async () => {
@@ -2122,6 +2190,72 @@ describe("createSeedBibleState", () => {
 
       expect(state.app.currentToast.value?.message).toBe("Igual");
       expect(state.app.currentToast.value?.id).not.toBe(firstToastId);
+    });
+
+    it("drops a waiting toast when a newer one with the same key arrives", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      state.app.toast("Other");
+      state.app.toast("Offline", "connection");
+      state.app.toast("Online", "connection");
+
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+      expect(state.app.currentToast.value?.message).toBe("Online");
+
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual(["Other", "Online"]);
+    });
+
+    it("never drops the toast on screen, even when a newer one shares its key", async () => {
+      const state = await createState();
+
+      state.app.toast("Offline", "connection");
+      state.app.toast("Online", "connection");
+
+      vi.advanceTimersByTime(MIN_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("Offline");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value?.message).toBe("Online");
+    });
+
+    it("moves the superseding toast to the end of the queue", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      state.app.toast("Other");
+      state.app.toast("Offline", "connection");
+      state.app.toast("Unrelated");
+      state.app.toast("Online", "connection");
+
+      vi.advanceTimersByTime(2 * MIN_TOAST_MS + FULL_TOAST_MS);
+
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual(["Other", "Unrelated", "Online"]);
+    });
+
+    it("keeps every waiting toast without a key or with a different key", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      state.app.toast("Other");
+      state.app.toast("Igual");
+      state.app.toast("Igual");
+      state.app.toast("Offline", "connection");
+      state.app.toast("Host left", "host");
+
+      vi.advanceTimersByTime(4 * MIN_TOAST_MS + FULL_TOAST_MS);
+
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual([
+        "Other",
+        "Igual",
+        "Igual",
+        "Offline",
+        "Host left",
+      ]);
     });
   });
 
