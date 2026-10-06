@@ -71,6 +71,12 @@ export function Tutorial({
       return;
     }
 
+    // Scrolled into view (if needed) at most once per step — set the first
+    // time the target is found, so the poll below doesn't keep re-triggering
+    // `scrollIntoView` (fighting the user, or its own settling animation) on
+    // every tick.
+    let scrolledIntoView = false;
+
     const measure = () => {
       const el = document.querySelector(step.target);
       if (!el) {
@@ -81,6 +87,27 @@ export function Tutorial({
       if (r.width === 0 && r.height === 0) {
         rect.value = null;
         return;
+      }
+      // A step's target can sit inside a scrollable panel (e.g. a theme
+      // editor section further down the list) and not be on screen at all
+      // when the step starts. Scroll it into view so both it and the
+      // popover pinned next to it are visible, instead of spotlighting
+      // something the user has to go hunting for. The 150ms poll below picks
+      // up the settled position once the (possibly smooth) scroll finishes.
+      if (!scrolledIntoView) {
+        scrolledIntoView = true;
+        const outOfView =
+          r.top < 0 ||
+          r.left < 0 ||
+          r.bottom > window.innerHeight ||
+          r.right > window.innerWidth;
+        if (outOfView) {
+          el.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "nearest",
+          });
+        }
       }
       // Subtract the overlay's own offset so coordinates are relative to it
       // (getBoundingClientRect is always viewport-relative for both).

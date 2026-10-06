@@ -7,11 +7,11 @@ settings:
 catalogs:
   default:
     '@casual-simulation/aux-common':
-      specifier: 4.2.7
-      version: 4.2.7
+      specifier: 4.2.8-alpha.35775260651
+      version: 4.2.8-alpha.35775260651
     '@casual-simulation/aux-websocket':
-      specifier: 4.2.7
-      version: 4.2.7
+      specifier: 4.2.8-alpha.35775260651
+      version: 4.2.8-alpha.35775260651
     '@casual-simulation/websocket':
       specifier: 4.0.0
       version: 4.0.0
@@ -114,7 +114,7 @@ overrides:
   chromium-bidi>zod: 3.25.76
 
 patchedDependencies:
-  '@casual-simulation/aux-records@4.2.7': 211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50
+  '@casual-simulation/aux-records@4.2.8-alpha.35775260651': 211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50
   '@casual-simulation/fast-json-stable-stringify': a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef
   follow-redirects: 6c86d1ca9b95ef9c8aca9f39dd13a02652b3d033c6067e152f056e89a3f67a66
 
@@ -125,6 +125,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1069.0
         version: 3.1069.0
+      '@modelcontextprotocol/client':
+        specifier: ^2.0.0
+        version: 2.0.0
       '@opentelemetry/api':
         specifier: ^1.9.1
         version: 1.9.1
@@ -205,17 +208,17 @@ importers:
         specifier: ^7.27.1
         version: 7.28.5(@babel/core@7.28.6)
       '@casual-simulation/aux-common':
-        specifier: ^4.2.7
-        version: 4.2.7
+        specifier: 4.2.8-alpha.35775260651
+        version: 4.2.8-alpha.35775260651
       '@casual-simulation/aux-records':
-        specifier: ^4.2.7
-        version: 4.2.7(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
+        specifier: 4.2.8-alpha.35775260651
+        version: 4.2.8-alpha.35775260651(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime':
-        specifier: ^4.2.7
-        version: 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
+        specifier: 4.2.8-alpha.35775260651
+        version: 4.2.8-alpha.35775260651(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-vm':
-        specifier: ^4.2.7
-        version: 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
+        specifier: 4.2.8-alpha.35775260651
+        version: 4.2.8-alpha.35775260651(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto':
         specifier: ^4.0.5
         version: 4.0.5
@@ -475,6 +478,18 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/mcp-extension:
+    dependencies:
+      '@modelcontextprotocol/client':
+        specifier: ^2.0.0
+        version: 2.0.0
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/references-extension:
     dependencies:
       seed-bible:
@@ -491,10 +506,10 @@ importers:
     dependencies:
       '@casual-simulation/aux-common':
         specifier: 'catalog:'
-        version: 4.2.7
+        version: 4.2.8-alpha.35775260651
       '@casual-simulation/aux-websocket':
         specifier: 'catalog:'
-        version: 4.2.7
+        version: 4.2.8-alpha.35775260651
       '@casual-simulation/websocket':
         specifier: 'catalog:'
         version: 4.0.0
@@ -1477,17 +1492,29 @@ packages:
   '@casual-simulation/aux-common@4.2.7':
     resolution: {integrity: sha512-HMlBf07aB0PskBwi84tPBIN6UgsCH+/0zYshJspuwokwJlO9j02MeCKvCwaWSYKoVa7rML1lhPLjd7D/6I4bvA==}
 
+  '@casual-simulation/aux-common@4.2.8-alpha.35775260651':
+    resolution: {integrity: sha512-cvAR7t0/ZuGZIvrj1WASNgdY9L2/qTwbEJVT606v/XzwQb26Hps8VE4QX3QmHunhp5dkxLdhggue+59aHCkmfg==}
+
   '@casual-simulation/aux-records@4.2.7':
     resolution: {integrity: sha512-GeA22YUTFfmxv5XV+kcZOQNul+SUOldH0hPXlQ6Ug9eJ5OFR+GP5iZMmoVWh6Ejn40Gnr4+W09IXmqE4vnUcKg==}
+
+  '@casual-simulation/aux-records@4.2.8-alpha.35775260651':
+    resolution: {integrity: sha512-kQ6s0nAYj5+paJdIJOahJ8RCY4VzGMo6krtb/1GsZyaZ+iBq/mx6nTOuJu2X5XF0ef9kKw0W3zD3MEXH5NrnVA==}
 
   '@casual-simulation/aux-runtime@4.2.7':
     resolution: {integrity: sha512-rIr84PIUQVuCLO94G/mwLnL9yr/4i94MAl/XMGY2br6LdPmD5O9fPyg5uXXEHMbV6h2Fu2kiZPdFpVyUupaUpg==}
 
+  '@casual-simulation/aux-runtime@4.2.8-alpha.35775260651':
+    resolution: {integrity: sha512-tbNaFeSpuVEi38MiIBQLQVXZh0Mx907e2sXBW8fTU8IZNbnKwtl1bKIw3GS/SuaM2M6ZdNfk6zpF+B1NSGp4kw==}
+
   '@casual-simulation/aux-vm@4.2.7':
     resolution: {integrity: sha512-s1vQwSvVjr22HMu3rSW3NYeRejzSrbaC5wWMOQySsVNSAo9+R7oWp5+6uR7fuDfjy3Tw3Q21J10tGqdYScSAFw==}
 
-  '@casual-simulation/aux-websocket@4.2.7':
-    resolution: {integrity: sha512-GcjkLk4dMFfzOrxUot62Po1b49XKtPqdAwCD7jfAjpNE2tDt+abNRhdgeT78HowZE2tAmG46Dc/Y26F6sWSovQ==}
+  '@casual-simulation/aux-vm@4.2.8-alpha.35775260651':
+    resolution: {integrity: sha512-56nT7VO8UU+wCGzgcJY+i0uRLTwepkX5ZgficIUqH7l/SFswHIlEBdxuHWipCmVtVZwT+o2jpi7OxLqicwGsIg==}
+
+  '@casual-simulation/aux-websocket@4.2.8-alpha.35775260651':
+    resolution: {integrity: sha512-ljiGp9RQU8IDkYg3k3AGCaMQS3dBz/4M3u8KsxXH5fLPo8AHaPVcTPSvOHVfN6kIJbUW3R6rO3ycnCZ1p3u9vQ==}
 
   '@casual-simulation/chalk@4.0.0':
     resolution: {integrity: sha512-a/RroPXchwm3pg3NjCSjosmBb5XS2v++Kvr7CruhWs4LpUFtris7WC6+OnXMMoYdHWPlMIAVU0OYpJcjCKTw9A==}
@@ -2484,6 +2511,14 @@ packages:
 
   '@livekit/protocol@1.44.0':
     resolution: {integrity: sha512-/vfhDUGcUKO8Q43r6i+5FrDhl5oZjm/X3U4x2Iciqvgn5C8qbj+57YPcWSJ1kyIZm5Cm6AV2nAPjMm3ETD/iyg==}
+
+  '@modelcontextprotocol/client@2.0.0':
+    resolution: {integrity: sha512-8f1OghQ2rjzIOfqgUCP+8GiUWqRs89njoWLNqAe8kWmDePv3s1fZXseej+QXemssEuuOvLLmLO/kqM3IQHtISw==}
+    engines: {node: '>=20'}
+
+  '@modelcontextprotocol/core@2.0.0':
+    resolution: {integrity: sha512-pJCEwGG7Lfr/+PQp9ZTwKXNeO5wzbfKL7H3MYpCorM4oFBoQrdjnBgEoqG+RjhsvS1FKrDbKux+M1HhlnGWqcA==}
+    engines: {node: '>=20'}
 
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
@@ -4700,6 +4735,14 @@ packages:
   events-universal@1.0.1:
     resolution: {integrity: sha512-LUd5euvbMLpwOF8m6ivPCbhQeSiYVNb8Vs0fQ8QjXo0JTkEHpz8pxdQf0gStltaPpw0Cca8b39KxvK9cfKRiAw==}
 
+  eventsource-parser@3.1.1:
+    resolution: {integrity: sha512-EKN1vKAMcZ8MlYMpaNuxN6R9yakzH6uajHcHVTqWJzvu5pWw9DyhbP35HH8MVBQ+dZjAfDxk+A8NiR9KWaXiyQ==}
+    engines: {node: '>=18.0.0'}
+
+  eventsource@3.0.7:
+    resolution: {integrity: sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA==}
+    engines: {node: '>=18.0.0'}
+
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
@@ -5574,6 +5617,9 @@ packages:
   jose@5.4.0:
     resolution: {integrity: sha512-6rpxTHPAQyWMb9A35BroFl1Sp0ST3DpPcm5EVIxZxdH+e0Hv9fwhyB3XLKFUcHNpdSDnETmBfuPPTTlYz5+USw==}
 
+  jose@6.2.9:
+    resolution: {integrity: sha512-XrchZOFZUl/T3vTwRe8XK+cJrGtMF4th1ARnDfwbBXFKThGhlsxEE4Zu03AD/bjJSt/9jT/mxrOCkJWOg77aPA==}
+
   js-base64@3.7.8:
     resolution: {integrity: sha512-hNngCeKxIUQiEUN3GPJOkz4wF/YvdUdbNL9hsBcMQTkKzboD7T/q3OYOuuPZLUE6dBxSGpwhk5mwuDud7JVAow==}
 
@@ -6234,6 +6280,10 @@ packages:
   pirates@4.0.7:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
+
+  pkce-challenge@5.0.1:
+    resolution: {integrity: sha512-wQ0b/W4Fr01qtpHlqSqspcj3EhBvimsdh0KlHhH8HRZnMsEa0ea2fTULOXOS9ccQr3om+GcGRk4e+isrZWV8qQ==}
+    engines: {node: '>=16.20.0'}
 
   pkg-dir@4.2.0:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
@@ -8750,7 +8800,40 @@ snapshots:
       yjs: 13.6.8
       zod: 4.4.3
 
-  '@casual-simulation/aux-records@4.2.7(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)':
+  '@casual-simulation/aux-common@4.2.8-alpha.35775260651':
+    dependencies:
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
+      '@casual-simulation/error-stack-parser': 2.0.7
+      '@casual-simulation/expect': 4.0.0
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/js-interpreter': 4.0.0
+      '@casual-simulation/stacktrace': 4.0.0
+      '@casual-simulation/timesync': 4.0.0
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+      '@tweenjs/tween.js': 18.6.0
+      '@types/estraverse': 5.1.7
+      '@types/uuid': 10.0.0
+      astring: 1.7.5
+      base64-js: 1.5.1
+      es-toolkit: 1.39.10
+      estraverse: 5.3.0
+      expect: 27.3.1
+      hash.js: 1.1.7
+      htm: 3.1.0
+      lib0: 0.2.49
+      lru-cache: 5.1.1
+      luxon: 3.4.4
+      preact: 10.28.4
+      rxjs: 8.0.0-alpha.14
+      three: 0.182.0
+      uuid: 10.0.0
+      yjs: 13.6.8
+      zod: 4.4.3
+
+  '@casual-simulation/aux-records@4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
       '@anthropic-ai/sdk': 0.92.0(zod@4.4.3)
       '@casual-simulation/aux-common': 4.2.7
@@ -8795,10 +8878,103 @@ snapshots:
       - utf-8-validate
       - ws
 
+  '@casual-simulation/aux-records@4.2.8-alpha.35775260651(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)':
+    dependencies:
+      '@anthropic-ai/sdk': 0.92.0(zod@4.4.3)
+      '@casual-simulation/aux-common': 4.2.8-alpha.35775260651
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/rate-limit-redis': 4.0.0
+      '@casual-simulation/timesync': 4.0.0
+      '@google/genai': 2.19.0
+      '@libsql/client': 0.15.15
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+      '@simplewebauthn/server': 9.0.3
+      '@simplewebauthn/types': 9.0.1
+      axios: 1.7.7
+      base64-js: 1.5.1
+      es-toolkit: 1.39.10
+      hash.js: 1.1.7
+      jose: 5.4.0
+      libsql: 0.5.22
+      livekit-server-sdk: 2.7.2
+      luxon: 3.4.4
+      mime: 2.4.6
+      node-html-parser: 6.1.13
+      openai: 4.89.0(ws@8.19.0)(zod@4.4.3)
+      openid-client: 5.6.1
+      preact: 10.28.4
+      preact-render-to-string: 6.6.3(preact@10.28.4)
+      tigerbeetle-node: 0.16.44
+      tweetnacl: 1.0.3
+      typesense: 3.0.5(@babel/runtime@7.29.2)
+      uuid: 10.0.0
+      yjs: 13.6.8
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - '@babel/runtime'
+      - '@modelcontextprotocol/sdk'
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+      - ws
+
   '@casual-simulation/aux-runtime@4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
       '@casual-simulation/aux-common': 4.2.7
-      '@casual-simulation/aux-records': 4.2.7(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-records': 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
+      '@casual-simulation/error-stack-parser': 2.0.7
+      '@casual-simulation/expect': 4.0.0
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/js-interpreter': 4.0.0
+      '@casual-simulation/stacktrace': 4.0.0
+      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.11.3)
+      '@tweenjs/tween.js': 18.6.0
+      '@types/estraverse': 5.1.7
+      '@types/seedrandom': 3.0.8
+      '@types/uuid': 10.0.0
+      acorn: 8.11.3
+      acorn-jsx: 5.3.2(acorn@8.11.3)
+      astring: 1.7.5
+      axios: 1.7.7
+      base64-js: 1.5.1
+      es-toolkit: 1.39.10
+      estraverse: 5.3.0
+      expect: 27.3.1
+      hash.js: 1.1.7
+      htm: 3.1.0
+      lib0: 0.2.49
+      lru-cache: 5.1.1
+      luxon: 3.4.4
+      mime: 2.4.6
+      preact: 10.28.4
+      rxjs: 8.0.0-alpha.14
+      seedrandom: 3.0.5
+      stackframe: 1.3.4
+      three: 0.182.0
+      typesense: 3.0.5(@babel/runtime@7.29.2)
+      uuid: 10.0.0
+      yjs: 13.6.8
+    transitivePeerDependencies:
+      - '@babel/runtime'
+      - '@modelcontextprotocol/sdk'
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+      - ws
+
+  '@casual-simulation/aux-runtime@4.2.8-alpha.35775260651(@babel/runtime@7.29.2)(ws@8.19.0)':
+    dependencies:
+      '@casual-simulation/aux-common': 4.2.8-alpha.35775260651
+      '@casual-simulation/aux-records': 4.2.8-alpha.35775260651(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
       '@casual-simulation/error-stack-parser': 2.0.7
@@ -8846,7 +9022,7 @@ snapshots:
   '@casual-simulation/aux-vm@4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
       '@casual-simulation/aux-common': 4.2.7
-      '@casual-simulation/aux-records': 4.2.7(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-records': 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime': 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
@@ -8871,9 +9047,37 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@casual-simulation/aux-websocket@4.2.7':
+  '@casual-simulation/aux-vm@4.2.8-alpha.35775260651(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
-      '@casual-simulation/aux-common': 4.2.7
+      '@casual-simulation/aux-common': 4.2.8-alpha.35775260651
+      '@casual-simulation/aux-records': 4.2.8-alpha.35775260651(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-runtime': 4.2.8-alpha.35775260651(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/timesync': 4.0.0
+      '@casual-simulation/undom': 4.0.0
+      axios: 1.7.7
+      comlink: 4.3.1
+      es-toolkit: 1.39.10
+      hash.js: 1.1.7
+      htm: 3.1.0
+      luxon: 3.4.4
+      preact: 10.28.4
+      rxjs: 8.0.0-alpha.14
+      uuid: 10.0.0
+    transitivePeerDependencies:
+      - '@babel/runtime'
+      - '@modelcontextprotocol/sdk'
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+      - ws
+
+  '@casual-simulation/aux-websocket@4.2.8-alpha.35775260651':
+    dependencies:
+      '@casual-simulation/aux-common': 4.2.8-alpha.35775260651
       '@casual-simulation/websocket': 4.0.0
       rxjs: 8.0.0-alpha.14
 
@@ -9769,6 +9973,20 @@ snapshots:
   '@livekit/protocol@1.44.0':
     dependencies:
       '@bufbuild/protobuf': 1.10.1
+
+  '@modelcontextprotocol/client@2.0.0':
+    dependencies:
+      '@modelcontextprotocol/core': 2.0.0
+      cross-spawn: 7.0.6
+      eventsource: 3.0.7
+      eventsource-parser: 3.1.1
+      jose: 6.2.9
+      pkce-challenge: 5.0.1
+      zod: 4.4.3
+
+  '@modelcontextprotocol/core@2.0.0':
+    dependencies:
+      zod: 4.4.3
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
@@ -11495,7 +11713,7 @@ snapshots:
   casualos@4.2.7(@babel/runtime@7.29.2)(ws@8.19.0):
     dependencies:
       '@casual-simulation/aux-common': 4.2.7
-      '@casual-simulation/aux-records': 4.2.7(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-records': 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime': 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-vm': 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
       '@octokit/app': 15.1.6
@@ -12196,6 +12414,12 @@ snapshots:
       bare-events: 2.8.2
     transitivePeerDependencies:
       - bare-abort-controller
+
+  eventsource-parser@3.1.1: {}
+
+  eventsource@3.0.7:
+    dependencies:
+      eventsource-parser: 3.1.1
 
   execa@5.1.1:
     dependencies:
@@ -13361,6 +13585,8 @@ snapshots:
 
   jose@5.4.0: {}
 
+  jose@6.2.9: {}
+
   js-base64@3.7.8: {}
 
   js-tokens@10.0.0: {}
@@ -13966,6 +14192,8 @@ snapshots:
   picomatch@4.0.4: {}
 
   pirates@4.0.7: {}
+
+  pkce-challenge@5.0.1: {}
 
   pkg-dir@4.2.0:
     dependencies:

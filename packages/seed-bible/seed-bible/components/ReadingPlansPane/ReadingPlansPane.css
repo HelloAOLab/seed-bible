@@ -64,6 +64,10 @@
 
 .sb-reading-plans-scroll {
   flex: 1;
+  /* Centre the list with padding rather than a max-width, so this scroll
+     container still spans the pane: the scrollbar stays at the edge and
+     wheel/trackpad scrolling works over the side gutters. */
+  padding-inline: max(0px, calc((100% - 42rem) / 2));
   min-height: 0;
   overflow-y: auto;
   display: flex;
@@ -145,6 +149,35 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.sb-rp-friend-groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sb-rp-friend-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-rp-friend-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-rp-friend-group-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* A card plus the things that hang off it: its edit/delete row, and the load
@@ -264,6 +297,13 @@
 
 .sb-rp-card-chevron {
   flex: none;
+  color: var(--rp-muted);
+}
+
+.sb-rp-card-open-label {
+  flex: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--rp-muted);
 }
 
