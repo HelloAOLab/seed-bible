@@ -3,6 +3,7 @@ import { act } from "preact/test-utils";
 import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import { pressAndRelease } from "../testUtils/pressAndRelease";
 import { TestHost } from "./TestHost";
 
 describe("ModalHost", () => {
@@ -42,21 +43,10 @@ describe("ModalHost", () => {
     return { manager, overlay, input };
   }
 
-  function press(down: HTMLElement, up: HTMLElement) {
-    act(() => {
-      down.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
-      up.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
-      // Browsers fire click on the nearest common ancestor of the press and
-      // release targets.
-      const target = down.contains(up) ? down : up;
-      target.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-  }
-
   it("closes when the overlay is clicked", async () => {
     const { manager, overlay } = await renderWithModal();
 
-    press(overlay, overlay);
+    pressAndRelease(overlay, overlay);
 
     expect(manager.modals.value).toHaveLength(0);
   });
@@ -64,7 +54,7 @@ describe("ModalHost", () => {
   it("stays open when a drag starts in an input and is released over the overlay", async () => {
     const { manager, overlay, input } = await renderWithModal();
 
-    press(input, overlay);
+    pressAndRelease(input, overlay);
 
     expect(manager.modals.value).toHaveLength(1);
     expect(container.querySelector(".test-input")).not.toBeNull();
@@ -73,7 +63,7 @@ describe("ModalHost", () => {
   it("stays open when the modal body is clicked", async () => {
     const { manager, input } = await renderWithModal();
 
-    press(input, input);
+    pressAndRelease(input, input);
 
     expect(manager.modals.value).toHaveLength(1);
   });
