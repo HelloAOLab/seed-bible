@@ -396,7 +396,7 @@ export const ExtensionSensitiveProxyDefinitionSchema = z.looseObject({
     .record(
       z.string().refine(isSupportedSensitiveRequestProperty, {
         message:
-          "must be headers.authorization, headers.authorization.bearer or body.<property>",
+          "must be headers.authorization, headers.authorization.bearer, headers.x-<name> or body.<property>",
       }),
       z.string()
     )

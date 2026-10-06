@@ -10,6 +10,7 @@ import {
   setupExtensionContext,
   unregisterExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import { SensitiveSettingsError } from "@packages/seed-bible/seed-bible/managers/ExtensionSensitiveSettings";
 import { mockI18nState, resetMockI18n } from "../seed-bible/testUtils/mockI18n";
 import {
   BSB,
@@ -121,6 +122,13 @@ function setUpApologistChat(
       availableTranslations: signal([BSB, ENG_KJV, ENGWEBP, FRA_LSG]),
     },
     chats: { registerProvider: vi.fn(() => () => {}) },
+    // Nothing saved in the extension's settings, so requests go straight to
+    // the default Apologist domain.
+    extensionSettings: {
+      getValue: () => undefined,
+      fetchWithSensitiveValues: () =>
+        Promise.reject(new SensitiveSettingsError("not_set", "Not set.")),
+    },
   } as unknown as SeedBibleState;
 
   setupExtensionContext(context);

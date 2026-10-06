@@ -278,7 +278,7 @@ describe("ExtensionMetaSchema", () => {
         exampleApi: {
           host: "https://api.example.com/v1",
           requestMapping: {
-            "headers.x-api-key": "apiKey",
+            "headers.x-forwarded-for": "apiKey",
             "body.client_id": "clientId",
           },
         },
@@ -290,7 +290,7 @@ describe("ExtensionMetaSchema", () => {
       expect(
         issues.some((issue) =>
           issue.startsWith(
-            "sensitive.exampleApi.requestMapping.headers.x-api-key:"
+            "sensitive.exampleApi.requestMapping.headers.x-forwarded-for:"
           )
         )
       ).toBe(true);

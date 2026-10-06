@@ -179,8 +179,11 @@ export function isLikelyUnsupportedApologistBibleError(
 }
 
 export interface ApologistChatCompletionRequest {
-  url: string;
-  headers?: HeadersInit;
+  /**
+   * Sends one chat/completions request with this JSON body. The caller decides
+   * where it goes and how it's authenticated.
+   */
+  send: (body: unknown) => Promise<Response>;
   model: string;
   stream: boolean;
   language: string;
@@ -207,19 +210,15 @@ export async function postApologistChatCompletion(
   request: ApologistChatCompletionRequest
 ): Promise<ApologistChatCompletionResult> {
   const post = (bible: string) =>
-    fetch(request.url, {
-      method: "POST",
-      headers: request.headers,
-      body: JSON.stringify({
-        model: request.model,
-        stream: request.stream,
-        metadata: {
-          bible,
-          language: request.language,
-        },
-        messages: request.messages,
-        tools: request.tools,
-      }),
+    request.send({
+      model: request.model,
+      stream: request.stream,
+      metadata: {
+        bible,
+        language: request.language,
+      },
+      messages: request.messages,
+      tools: request.tools,
     });
 
   const firstBible = request.bible || APOLOGIST_DEFAULT_BIBLE;

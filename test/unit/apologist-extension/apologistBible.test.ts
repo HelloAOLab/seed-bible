@@ -166,6 +166,12 @@ describe("isLikelyUnsupportedApologistBibleError", () => {
 });
 
 describe("postApologistChatCompletion", () => {
+  const sendToApologist = (body: unknown) =>
+    fetch("https://apologist.example/api/v1/chat/completions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -187,7 +193,7 @@ describe("postApologistChatCompletion", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await postApologistChatCompletion({
-      url: "https://apologist.example/api/v1/chat/completions",
+      send: sendToApologist,
       model: "test-model",
       stream: true,
       language: "en",
@@ -218,7 +224,7 @@ describe("postApologistChatCompletion", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const auth = await postApologistChatCompletion({
-      url: "https://apologist.example/api/v1/chat/completions",
+      send: sendToApologist,
       model: "test-model",
       stream: true,
       language: "en",
@@ -230,7 +236,7 @@ describe("postApologistChatCompletion", () => {
     expect(auth.response.status).toBe(401);
 
     const other = await postApologistChatCompletion({
-      url: "https://apologist.example/api/v1/chat/completions",
+      send: sendToApologist,
       model: "test-model",
       stream: true,
       language: "en",
