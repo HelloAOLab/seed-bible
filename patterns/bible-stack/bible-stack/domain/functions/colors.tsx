@@ -335,3 +335,47 @@ export const ComputeRawGradientColors: ComputeRawGradientColorsType = ({
     .join(", ");
   return gradientColors;
 };
+
+export function GetRelativeLuminance(hexColor: HexString): number {
+  const rgb = HexToRgb({ hexColor });
+  const srgb = rgb.map((channel) => channel / 255) as RGB;
+  const linear = srgb.map((channel) =>
+    channel <= 0.04045
+      ? channel / 12.92
+      : Math.pow((channel + 0.055) / 1.055, 2.4)
+  ) as RGB;
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+
+const LIGHT_LABEL_LUMINANCE_THRESHOLD = 0.6;
+const TONAL_FILL_PROGRESS = 0.12;
+const DARK_FILL_PROGRESS = 0.5;
+
+export function GetTonalChipColors(params: {
+  labelBackground: HexString;
+  labelInk: HexString;
+}): { background: HexString; text: HexString } {
+  const { labelBackground, labelInk } = params;
+  const isLightLabel =
+    GetRelativeLuminance(labelBackground) > LIGHT_LABEL_LUMINANCE_THRESHOLD;
+
+  if (isLightLabel) {
+    return {
+      background: InterpolateHexColors(
+        labelBackground,
+        labelInk,
+        TONAL_FILL_PROGRESS
+      ),
+      text: labelInk,
+    };
+  }
+
+  return {
+    background: InterpolateHexColors(
+      labelBackground,
+      "#000000",
+      DARK_FILL_PROGRESS
+    ),
+    text: "#ffffff",
+  };
+}

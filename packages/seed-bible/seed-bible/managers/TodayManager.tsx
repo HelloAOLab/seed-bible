@@ -7,6 +7,7 @@ import {
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
+import type { Friend, FriendsManager } from "./FriendsManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { SearchManager } from "./SearchManager";
 import type { BibleDataManager } from "./BibleDataManager";
@@ -18,7 +19,8 @@ import {
 } from "./ReadingHistoryManager";
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 import { hasReadingUrlPosition } from "./ReadingUrlPath";
-import { parseStaticPagePath } from "./StaticPagePath";
+import { isNonReadingPagePath } from "./StaticPagePath";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { TranslationBooks } from "./FreeUseBibleAPI";
 import {
   createReadingHistoryState,
@@ -56,10 +58,12 @@ type TranslationBookSummary = {
 };
 
 /**
- * Whether Today should auto-open over the reader for this boot URL: an explicit
- * `?today=` param always wins, and otherwise it opens unless the URL already
- * points somewhere specific — a canonical reading path, a static page such as
- * "/en/about", or a shared-session invite.
+ * Whether Today should auto-open over the reader for this boot URL. A compact
+ * embed (`?embed=minimal` / `?embed=true`) never opens Today — that chrome
+ * has no Today surface. Otherwise an explicit `?today=` param always wins,
+ * and with no param it opens unless the URL already points somewhere
+ * specific — a canonical reading path, a static page such as "/en/about", a
+ * shared playlist page, or a shared-session invite.
  *
  * Must be given `initialUrl` (the URL as first loaded), never the live
  * `currentUrl`: `TabsManager` echoes the reader's book/chapter back into the URL
@@ -73,18 +77,21 @@ export function todayWillAutoOpenForUrl(
   initialUrl: URL,
   basePath: string
 ): boolean {
+  if (isMinimalEmbedUrl(initialUrl)) {
+    return false;
+  }
   const requested = initialUrl.searchParams.get("today");
   if (requested !== null) {
     return requested === "open";
   }
   return !(
     hasReadingUrlPosition(initialUrl, basePath) ||
-    // A static page is a destination the visitor asked for just as much as a
-    // chapter is. It carries no reading position, so without this it reads as
-    // "nowhere in particular" and Today opens over it — and because Today's
-    // pane is fullscreen, it displaces the static page's own pane, which in
-    // turn sends the reader back to the selected tab's chapter.
-    parseStaticPagePath(initialUrl.pathname, basePath) !== null ||
+    // A static page or shared playlist is a destination the visitor asked for
+    // just as much as a chapter is. It carries no reading position, so without
+    // this it reads as "nowhere in particular" and Today opens over it — and
+    // because Today's pane is fullscreen, it displaces the static page's own
+    // pane, which in turn sends the reader back to the selected tab's chapter.
+    isNonReadingPagePath(initialUrl.pathname, basePath) ||
     initialUrl.searchParams.has("sessionId")
   );
 }
@@ -99,6 +106,11 @@ export interface TodayManager {
   readingHistory: ReadonlySignal<ReadingHistoryState>;
   /** Reading activity for one window, bucketed book -> chapter -> userId[]. */
   getCommunityReading: (timespan: Timespan) => Promise<FilteredReading>;
+  /**
+   * The signed-in user's friends. Their reading joins the user's own in the
+   * Community section, since reading history is world-readable.
+   */
+  friendReaders: ReadonlySignal<Friend[]>;
   /** Book id -> display name for the translation the reader has loaded. */
   bookNames: ReadonlySignal<Map<string, string>>;
   /**
@@ -147,6 +159,7 @@ export interface TodayManager {
 export function createTodayManager(options: {
   os: CasualOSManager;
   login: LoginManager;
+  friends: Pick<FriendsManager, "friends" | "friendIds">;
   navigation: NavigationManager;
   search: SearchManager;
   bibleData: BibleDataManager;
@@ -161,8 +174,15 @@ export function createTodayManager(options: {
     translationId: string | null;
   } | null>;
 }): TodayManager {
-  const { os, login, navigation, search, bibleData, currentReadingState } =
-    options;
+  const {
+    os,
+    login,
+    friends,
+    navigation,
+    search,
+    bibleData,
+    currentReadingState,
+  } = options;
 
   const fetchReadingHistoryEvents = (
     recordName: string,
@@ -178,15 +198,17 @@ export function createTodayManager(options: {
         queryUserLastReading(fetchReadingHistoryEvents, userId, range),
     });
 
-  // The reader list is just the signed-in user: nothing subscribes to anyone
-  // else yet, so a fan-out over "community" members has nothing to fan out to.
+  // The readers are the signed-in user plus their friends. Both signals are
+  // read synchronously here, so a caller running this inside an effect
+  // re-fetches when the user signs in or out, or gains or loses a friend.
   const getCommunityReading = (
     timespan: Timespan
   ): Promise<FilteredReading> => {
     const userId = login.userId.value;
+    const friendIds = friends.friendIds.value.filter((id) => id !== userId);
     return queryCommunityReading(
       fetchReadingHistoryEvents,
-      userId ? [userId] : [],
+      userId ? [userId, ...friendIds] : [],
       timespan
     );
   };
@@ -323,6 +345,10 @@ export function createTodayManager(options: {
           return isOpen.value ? "open" : null;
         },
         set value(newValue) {
+          if (isMinimalEmbedUrl(navigation.currentUrl.peek())) {
+            isOpen.value = false;
+            return;
+          }
           isOpen.value = newValue === "open";
         },
       },
@@ -334,6 +360,9 @@ export function createTodayManager(options: {
   // would subscribe that effect to the signal it is about to write and trip
   // preact's "Cycle detected". Use `.peek()` if a guard is ever needed.
   const open = () => {
+    if (isMinimalEmbedUrl(navigation.currentUrl.peek())) {
+      return;
+    }
     isOpen.value = true;
   };
   const close = () => {
@@ -344,6 +373,7 @@ export function createTodayManager(options: {
     isOpen,
     readingHistory,
     getCommunityReading,
+    friendReaders: friends.friends,
     bookNames,
     lastTranslationBooks,
     lastTranslationId,

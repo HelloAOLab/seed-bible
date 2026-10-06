@@ -118,6 +118,7 @@ describe("Today screen reactivity", () => {
       getTranslationBooks: async () => ({ books: [] }) as never,
       searchVerses: async () => [],
       getCommunityReading: async () => ({}),
+      friendReaders: signal([]),
       getReadingHistoryEvents: async () => [],
     });
     const login = loginStub({ userId: signal("u1"), profile });
@@ -131,6 +132,7 @@ describe("Today screen reactivity", () => {
           isMobile={isMobile}
           onOpenPassage={vi.fn()}
           onOpenBookSelector={vi.fn()}
+          onTakeTour={vi.fn()}
         />,
         container
       )

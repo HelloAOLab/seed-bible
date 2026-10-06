@@ -38,8 +38,10 @@ import { createNavigationManager } from "@packages/seed-bible/seed-bible/manager
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 import {
   createDiscoverManager,
+  type DiscoverContext,
   type DiscoverManager,
   type DiscoverProviderResults,
+  type DiscoverResult,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import {
   createBibleReadingExtensionManager,
@@ -2406,6 +2408,68 @@ describe("createBibleReadingState", () => {
     expect(state.chapterData.value?.chapter.number).toBe(2);
   });
 
+  it("retryLoad() retries the original chapter after a switch that cannot find the book", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeExampleUrl("/api/NIV/books.json")] = createResponse(nivBooks);
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    await state.selectTranslationAndChapter("NIV", "TOB", 3);
+
+    expect(state.error.value).toContain('Book with ID "TOB"');
+    expect(state.translationId.value).toBe("AAB");
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+
+    await state.retryLoad();
+
+    expect(state.error.value).toBeNull();
+    expect(state.translationId.value).toBe("AAB");
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+    expect(state.chapterData.value?.translation.id).toBe("AAB");
+    expect(state.chapterData.value?.chapter.number).toBe(1);
+  });
+
+  it("retryLoad() retries a translation switch that failed because the device was offline", async () => {
+    const responses = createReadingManagerResponseMap();
+    // nivBooks is Matthew only. This catalog includes Genesis so the switch
+    // can finish once the connection is back; a book the translation does
+    // not have is the test above.
+    const nivGenesisBooks: TranslationBooks = {
+      translation: nivTranslation,
+      books: aabBooks.books.filter((book) => book.id === "GEN"),
+    };
+    responses[makeExampleUrl("/api/NIV/books.json")] =
+      createResponse(nivGenesisBooks);
+    responses[makeExampleUrl("/api/NIV/GEN/1.json")] = createResponse(
+      makeChapter(nivGenesisBooks, "GEN", 1)
+    );
+    let offline = false;
+    fetchMock.mockImplementation((url: string) =>
+      offline
+        ? Promise.reject(new TypeError("Failed to fetch"))
+        : Promise.resolve(responses[url]!)
+    );
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    offline = true;
+    await state.selectTranslationAndChapter("NIV", "GEN", 1);
+
+    expect(state.error.value).toBe("Failed to fetch");
+    expect(state.translationId.value).toBe("AAB");
+
+    offline = false;
+    await state.retryLoad();
+
+    expect(state.error.value).toBeNull();
+    expect(state.translationId.value).toBe("NIV");
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+  });
+
   it("retryLoad() repeats the initial load when that is what failed", async () => {
     const responses = createReadingManagerResponseMap();
     // A plain, already-valid translation ID resolves via its own book
@@ -2499,6 +2563,67 @@ describe("createBibleReadingState", () => {
       expect(state.discoveredCrossReferences.value).toEqual([]);
       expect(state.discoveredContent.value).toEqual([]);
       expect(state.discoveredStudyNotes.value).toEqual([]);
+    });
+
+    // The provider an extension would register: one result for Genesis 1.
+    const genesisOneProvider = () => ({
+      id: "late-provider",
+      title: "Late provider",
+      description: "Registered after the chapter loaded.",
+      discover: () => [
+        {
+          type: "content" as const,
+          title: "From the extension",
+          description: "desc",
+          reference: { book: "GEN", chapter: 1, verse: 1 },
+        },
+      ],
+    });
+
+    it("shows a provider registered after the chapter loaded, without navigating", async () => {
+      // An extension installed while a chapter is already open.
+      const discoverManager = createDiscoverManager();
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      expect(state.discoveredContent.value).toEqual([]);
+
+      discoverManager.registerDiscoverProvider(genesisOneProvider());
+
+      await waitFor(() => state.discoveredContent.value.length > 0);
+      expect(
+        state.discoveredContent.value.flatMap((group) =>
+          group.results.map((result) => result.title)
+        )
+      ).toEqual(["From the extension"]);
+    });
+
+    it("drops a provider's results once it is unregistered, without navigating", async () => {
+      // An extension uninstalled while its results are on screen.
+      const discoverManager = createDiscoverManager();
+      const unregister =
+        discoverManager.registerDiscoverProvider(genesisOneProvider());
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredContent.value.length > 0);
+
+      unregister();
+
+      await waitFor(() => state.discoveredContent.value.length === 0);
+      expect(state.discoveredContent.value).toEqual([]);
     });
 
     it("discoveredContent only contains 'content' results for the current chapter", async () => {
@@ -2775,6 +2900,370 @@ describe("createBibleReadingState", () => {
       );
       expect(providerIds).toContain("providerA");
       expect(providerIds).toContain("providerB");
+    });
+
+    function contentFor(
+      context: DiscoverContext,
+      title: string
+    ): DiscoverResult[] {
+      return [
+        {
+          type: "content",
+          title,
+          description: "desc",
+          reference: {
+            book: context.book,
+            chapter: context.chapter,
+            verse: 1,
+          },
+          content: null as any,
+        },
+      ];
+    }
+
+    it("shows results from a provider registered after the chapter has already loaded", async () => {
+      const discoverManager = createDiscoverManager();
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoveredContent.value).toEqual([]);
+
+      discoverManager.registerDiscoverProvider({
+        id: "late",
+        title: "Late",
+        description: "Registered after the chapter loaded",
+        discover: (context) => contentFor(context, "Arrived late"),
+      });
+
+      await waitFor(() => state.discoveredContent.value.length === 1);
+
+      expect(state.discoveredContent.value).toHaveLength(1);
+      expect(state.discoveredContent.value[0]!.providerId).toBe("late");
+      expect(state.discoveredContent.value[0]!.results).toHaveLength(1);
+      expect(state.discoveredContent.value[0]!.results[0]!.title).toBe(
+        "Arrived late"
+      );
+    });
+
+    it("shows a provider installed while staying on the current chapter, without duplicating earlier results", async () => {
+      const discoverManager = createDiscoverManager();
+      discoverManager.registerDiscoverProvider({
+        id: "first",
+        title: "First",
+        description: "Already registered",
+        discover: (context) => contentFor(context, "From first"),
+      });
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredContent.value.length === 1);
+
+      discoverManager.registerDiscoverProvider({
+        id: "second",
+        title: "Second",
+        description: "Installed mid-session",
+        discover: (context) => contentFor(context, "From second"),
+      });
+
+      await waitFor(() => state.discoveredContent.value.length === 2);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const providerIds = state.discoveredContent.value.map(
+        (group) => group.providerId
+      );
+      expect(providerIds).toEqual(["first", "second"]);
+      expect(
+        state.discoveredContent.value.every(
+          (group) => group.results.length === 1
+        )
+      ).toBe(true);
+    });
+
+    it("calls each provider once when extensions register one after another on the open chapter", async () => {
+      const discoverManager = createDiscoverManager();
+      const calls: string[] = [];
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+
+      for (const id of ["p1", "p2", "p3"]) {
+        discoverManager.registerDiscoverProvider({
+          id,
+          title: id,
+          description: id,
+          discover: (context) => {
+            calls.push(id);
+            return contentFor(context, id);
+          },
+        });
+        await waitFor(() =>
+          state.discoveredContent.value.some((group) => group.providerId === id)
+        );
+      }
+
+      expect(calls).toEqual(["p1", "p2", "p3"]);
+      expect(
+        state.discoveredContent.value.map((group) => group.providerId)
+      ).toEqual(["p1", "p2", "p3"]);
+      expect(
+        state.discoveredContent.value.every(
+          (group) => group.results.length === 1
+        )
+      ).toBe(true);
+    });
+
+    it("does not call a provider again while its lookup for this chapter is still in flight", async () => {
+      const discoverManager = createDiscoverManager();
+      const calls: string[] = [];
+      let releaseFirst: (() => void) | undefined;
+      const firstGate = new Promise<void>((resolve) => {
+        releaseFirst = resolve;
+      });
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+
+      discoverManager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "slow",
+        discover: (context) => {
+          calls.push("p1");
+          return firstGate.then(() => contentFor(context, "From first"));
+        },
+      });
+      await waitFor(() => calls.length === 1);
+
+      discoverManager.registerDiscoverProvider({
+        id: "p2",
+        title: "P2",
+        description: "fast",
+        discover: (context) => {
+          calls.push("p2");
+          return contentFor(context, "From second");
+        },
+      });
+
+      expect(calls).toEqual(["p1", "p2"]);
+      releaseFirst!();
+      await waitFor(() => state.discoveredContent.value.length === 2);
+      expect(calls).toEqual(["p1", "p2"]);
+      expect(
+        state.discoveredContent.value.map((group) => group.providerId).sort()
+      ).toEqual(["p1", "p2"]);
+    });
+
+    it("refreshes results when navigating and does not keep or duplicate the previous chapter", async () => {
+      const discoverManager = createDiscoverManager();
+      const calls: string[] = [];
+      discoverManager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "Chapter-specific",
+        discover: (context) => {
+          calls.push(`${context.book} ${context.chapter}`);
+          return contentFor(context, `${context.book} ${context.chapter}`);
+        },
+      });
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(
+        () => state.discoveredContent.value[0]?.results[0]?.title === "GEN 1"
+      );
+      expect(calls).toEqual(["GEN 1"]);
+
+      await state.selectChapter("GEN", 2);
+      await waitFor(
+        () =>
+          state.chapterNumber.value === 2 &&
+          state.discoveredContent.value[0]?.results[0]?.title === "GEN 2"
+      );
+      expect(state.discoveredContent.value).toHaveLength(1);
+      expect(state.discoveredContent.value[0]!.results).toHaveLength(1);
+      expect(calls).toEqual(["GEN 1", "GEN 2"]);
+
+      await state.selectChapter("GEN", 1);
+      await waitFor(
+        () =>
+          state.chapterNumber.value === 1 &&
+          state.discoveredContent.value[0]?.results[0]?.title === "GEN 1"
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(state.discoveredContent.value).toHaveLength(1);
+      expect(state.discoveredContent.value[0]!.results).toHaveLength(1);
+      expect(calls).toEqual(["GEN 1", "GEN 2"]);
+    });
+
+    it("does not blank discovered content when returning to a cached chapter", async () => {
+      const discoverManager = createDiscoverManager();
+      discoverManager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "Chapter-specific",
+        discover: (context) =>
+          contentFor(context, `${context.book} ${context.chapter}`),
+      });
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(
+        () => state.discoveredContent.value[0]?.results[0]?.title === "GEN 1"
+      );
+
+      await state.selectChapter("GEN", 2);
+      await waitFor(
+        () => state.discoveredContent.value[0]?.results[0]?.title === "GEN 2"
+      );
+
+      const lengthsOnReturn: number[] = [];
+      const stop = effect(() => {
+        if (state.chapterData.value?.chapter.number !== 1) return;
+        lengthsOnReturn.push(state.discoveredContent.value.length);
+      });
+      await state.selectChapter("GEN", 1);
+      stop();
+
+      expect(lengthsOnReturn.length).toBeGreaterThan(0);
+      expect(lengthsOnReturn.every((length) => length > 0)).toBe(true);
+      expect(state.discoveredContent.value[0]?.results[0]?.title).toBe("GEN 1");
+    });
+
+    it("calls providers again when the UI language changes, without changing the chapter", async () => {
+      const discoverManager = createDiscoverManager();
+      const calls: string[] = [];
+      const i18n = createI18nManager(createNavigationManager(), ["en"]);
+      await i18n.changeLanguage("en");
+
+      discoverManager.registerDiscoverProvider({
+        id: "p1",
+        title: "P1",
+        description: "Localized at call time",
+        discover: (context) => {
+          const title = `${context.book} ${context.chapter} ${i18n.language.value}`;
+          calls.push(title);
+          return contentFor(context, title);
+        },
+      });
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        i18n,
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(
+        () => state.discoveredContent.value[0]?.results[0]?.title === "GEN 1 en"
+      );
+      expect(calls).toEqual(["GEN 1 en"]);
+
+      await i18n.changeLanguage("es");
+      await waitFor(
+        () => state.discoveredContent.value[0]?.results[0]?.title === "GEN 1 es"
+      );
+      expect(calls).toEqual(["GEN 1 en", "GEN 1 es"]);
+
+      await state.selectChapter("GEN", 2);
+      await waitFor(
+        () => state.discoveredContent.value[0]?.results[0]?.title === "GEN 2 es"
+      );
+      await state.selectChapter("GEN", 1);
+      await waitFor(
+        () => state.discoveredContent.value[0]?.results[0]?.title === "GEN 1 es"
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(calls).toEqual(["GEN 1 en", "GEN 1 es", "GEN 2 es"]);
+      await i18n.changeLanguage("en");
+    });
+
+    it("stays empty when providers have no results for the current chapter", async () => {
+      const discoverManager = createDiscoverManager();
+      let answered = false;
+      discoverManager.registerDiscoverProvider({
+        id: "empty",
+        title: "Empty",
+        description: "Nothing for this chapter",
+        discover: () => {
+          answered = true;
+          return [];
+        },
+      });
+      discoverManager.registerDiscoverProvider({
+        id: "elsewhere",
+        title: "Elsewhere",
+        description: "Results for a different chapter",
+        discover: () => [
+          {
+            type: "content",
+            title: "Not this chapter",
+            description: "desc",
+            reference: { book: "EXO", chapter: 25, verse: 1 },
+            content: null as any,
+          },
+        ],
+      });
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => answered);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(state.discoveredContent.value).toEqual([]);
+      expect(state.discoveredCrossReferences.value).toEqual([]);
+      expect(state.discoveredStudyNotes.value).toEqual([]);
     });
 
     it("signals reset when chapter changes", async () => {
