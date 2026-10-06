@@ -831,6 +831,8 @@
   "discover-content-panel": "Discover content",
   "discover-book-title": "Discover {{book}}",
   "show-all": "Show All",
+  "scroll-filters-left": "Scroll filters left",
+  "scroll-filters-right": "Scroll filters right",
   "session-url": "Session URL",
   "color-hue": "Hue",
   "color-saturation": "Saturation and brightness",

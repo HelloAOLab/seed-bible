@@ -12,7 +12,7 @@
     0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
     0 4px 8px #0000002c;
   border-radius: 16px;
-  padding: 16px;
+  padding: 1rem;
   gap: 12px;
 }
 
@@ -76,20 +76,59 @@
 }
 
 /* ── Filter chips ── */
-
+.sb-dcp-filters-wrapper {
+  width: 100%;
+  min-width: 0;
+}
+.sb-dcp-filters-wrapper--scrollable {
+  display: grid;
+  grid-template-columns:
+    2.2rem
+    minmax(0, 1fr)
+    2.2rem;
+  align-items: center;
+  gap: 0.5rem;
+}
 .sb-dcp-filters {
   display: flex;
-  gap: 6px;
-  overflow-x: auto;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.2rem;
+  padding: 0.5rem 0;
+  overflow-x: visible;
+  overflow-y: hidden;
   scrollbar-width: none;
-  flex-shrink: 0;
-  padding-bottom: 2px; /* keeps focus outlines visible */
+  scroll-behavior: smooth;
 }
 
 .sb-dcp-filters::-webkit-scrollbar {
   display: none;
 }
-
+.sb-dcp-filters-wrapper--scrollable .sb-dcp-filters {
+  overflow-x: auto;
+}
+.sb-dcp-filters-arrow {
+  width: 1.9rem;
+  height: 1.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+  box-shadow: 0 0.3rem 0.5rem rgb(0 0 0 / 12%);
+  cursor: pointer;
+}
+.sb-dcp-filters-arrow .material-symbols-outlined {
+  font-size: 1.4rem;
+}
+.sb-dcp-filters-arrow:active {
+  transform: scale(0.95);
+}
 .sb-dcp-chip {
   flex-shrink: 0;
   padding: 6px 14px;
@@ -111,6 +150,35 @@
   background: color-mix(in srgb, var(--sb-primary-color), transparent 75%);
   border-color: color-mix(in srgb, var(--sb-primary-color), transparent 50%);
   color: var(--sb-font-color);
+}
+.sb-dcp-filters-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+  pointer-events: none;
+}
+@media (pointer: coarse) {
+  .sb-dcp-filters-wrapper {
+    display: block;
+    width: 100%;
+  }
+
+  .sb-dcp-filters-wrapper--scrollable {
+    display: block;
+  }
+
+  .sb-dcp-filters {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .sb-dcp-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sb-dcp-filters-arrow {
+    display: none;
+  }
 }
 
 /* ── Scrollable content ── */
