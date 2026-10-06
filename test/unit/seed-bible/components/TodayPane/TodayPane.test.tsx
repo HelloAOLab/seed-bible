@@ -202,7 +202,6 @@ describe("TodayPane", () => {
       });
       expect(propsOf(SearchSection)).toMatchObject({
         today: props.today,
-        theme: props.theme,
         isMobile: props.isMobile,
         onOpenBookSelector: props.onOpenBookSelector,
         onOpenPassage: props.onOpenPassage,

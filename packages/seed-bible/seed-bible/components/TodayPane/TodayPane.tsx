@@ -95,7 +95,6 @@ function TodayContent(props: TodayScreenProps) {
       />
       <SearchSection
         today={props.today}
-        theme={props.theme}
         isMobile={props.isMobile}
         onOpenBookSelector={props.onOpenBookSelector}
         onOpenPassage={props.onOpenPassage}

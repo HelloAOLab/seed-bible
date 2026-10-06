@@ -66,6 +66,7 @@ function renderCounts(body: () => void): Map<string, number> {
 describe("Today screen reactivity", () => {
   let container: HTMLDivElement;
   let originalResizeObserver: unknown;
+  let originalScrollIntoView: unknown;
 
   // One signal per input the screen takes.
   let readingHistory: Signal<ReadingHistoryState>;
@@ -85,6 +86,12 @@ describe("Today screen reactivity", () => {
     ).ResizeObserver;
     (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
       MockResizeObserver;
+    // jsdom has no scrollIntoView, which the timeline calls on mount.
+    originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: () => {},
+    });
 
     readingHistory = signal<ReadingHistoryState>({
       status: "ready",
@@ -92,7 +99,12 @@ describe("Today screen reactivity", () => {
     } as ReadingHistoryState);
     bookNames = signal(new Map([["GEN", "Genesis"]]));
     profile = signal({ name: "Alice" } as UserProfile);
-    theme = signal(themeWith({ secondaryFontColor: "rgb(1, 2, 3)" }));
+    theme = signal(
+      themeWith({
+        secondaryFontColor: "rgb(1, 2, 3)",
+        readerFontColor: "rgb(1, 2, 3)",
+      })
+    );
     isMobile = signal(false);
   });
 
@@ -101,6 +113,10 @@ describe("Today screen reactivity", () => {
     container.remove();
     (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
       originalResizeObserver;
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: originalScrollIntoView,
+    });
     vi.clearAllMocks();
   });
 
@@ -185,12 +201,14 @@ describe("Today screen reactivity", () => {
   // The regression that prompted this suite: a theme switch has to repaint
   // immediately, without waiting for an unrelated re-render to carry it.
   it("restyles on a theme switch", () => {
+    readingHistory.value = { status: "empty" };
     setup();
-    const icon = () => q(".sb-today-seed-bible-icon") as SVGSVGElement;
+    const icon = () =>
+      q(".sb-today-welcome-screen .sb-today-seed-bible-icon") as SVGSVGElement;
     expect(icon().style.fill).toBe("rgb(1, 2, 3)");
 
     act(() => {
-      theme.value = themeWith({ secondaryFontColor: "rgb(9, 9, 9)" });
+      theme.value = themeWith({ readerFontColor: "rgb(9, 9, 9)" });
     });
 
     expect(icon().style.fill).toBe("rgb(9, 9, 9)");
@@ -230,6 +248,15 @@ describe("Today screen reactivity", () => {
 
   it("leaves the cards that don't read the theme alone on a theme switch", () => {
     setup();
+    // The timeline is the card that reads the theme, and it only mounts under
+    // the "all" timespan.
+    act(() => {
+      (
+        container.querySelectorAll(
+          ".sb-today-timespan-filter-option"
+        )[3] as HTMLButtonElement
+      ).click();
+    });
 
     const counts = renderCounts(() => {
       act(() => {
@@ -237,9 +264,10 @@ describe("Today screen reactivity", () => {
       });
     });
 
-    // The search card is the one that reads the theme directly, so it is the
+    // The timeline card is the one that reads the theme directly, so it is the
     // proof the switch was actually delivered rather than dropped.
-    expect(counts.get("SearchSection")).toBe(1);
+    expect(counts.get("ReadingHistoryTimelineSection")).toBe(1);
+    expect(counts.get("SearchSection") ?? 0).toBe(0);
     expect(counts.get("TodayContainer") ?? 0).toBe(0);
     expect(counts.get("TodayContent") ?? 0).toBe(0);
     expect(counts.get("Header") ?? 0).toBe(0);
