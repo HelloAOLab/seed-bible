@@ -44,9 +44,11 @@ import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   annotationVerseNumbers,
+  visibleChapterAnnotations,
   type Annotation,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
+import type { FriendsManager } from "../../managers/FriendsManager";
 import type {
   BibleReadingSession,
   ConnectionSessionUserVisual,
@@ -66,6 +68,8 @@ import {
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
+import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
+import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
 import { findScrollContainer, readBottomChromeInset } from "./readerViewport";
 
@@ -126,6 +130,72 @@ function ReaderSaveButton(props: ReaderChapterActionProps) {
  * is this one line rather than a rebuild of the layout around it.
  */
 const SHOW_BOOKMARK_BUTTON = false;
+
+/**
+ * Offers downloaded translations the reader can switch to after a chapter
+ * load fails. One match is a switch button; two or more are chosen from the
+ * same searchable picker Settings uses for language. The message above this
+ * stays generic. These controls are what name the translations.
+ */
+function OfflineFallbackSwitch(props: {
+  translations: Translation[];
+  onSwitch: (translation: Translation) => void;
+}) {
+  const { translations, onSwitch } = props;
+  const { t } = useI18n();
+  const [selectedId, setSelectedId] = useState(translations[0]?.id ?? "");
+  const selected =
+    translations.find((item) => item.id === selectedId) ?? translations[0];
+  if (!selected) {
+    return null;
+  }
+
+  return translations.length === 1 ? (
+    <button
+      type="button"
+      className="sb-reader-error-switch"
+      onClick={() => onSwitch(selected)}
+    >
+      {t("chapter-unavailable-offline-switch-action", {
+        defaultValue: "Switch to {{name}}",
+        name: selected.name,
+      })}
+    </button>
+  ) : (
+    <div className="sb-reader-error-offline-pick">
+      <label
+        className="sb-reader-error-offline-label"
+        htmlFor="sb-reader-error-offline-select"
+      >
+        {t("chapter-unavailable-offline-switch-choose", {
+          defaultValue: "Choose a saved translation",
+        })}
+      </label>
+      <SearchableSelect
+        id="sb-reader-error-offline-select"
+        value={selected.id}
+        options={translations.map((item) => ({
+          id: item.id,
+          label: item.name,
+        }))}
+        onChange={setSelectedId}
+        searchPlaceholder={t("search", { defaultValue: "Search" })}
+        emptyLabel={t("chapter-unavailable-offline-switch-empty", {
+          defaultValue: "No matching translations",
+        })}
+      />
+      <button
+        type="button"
+        className="sb-reader-error-switch"
+        onClick={() => onSwitch(selected)}
+      >
+        {t("chapter-unavailable-offline-switch-confirm", {
+          defaultValue: "Switch",
+        })}
+      </button>
+    </div>
+  );
+}
 
 /**
  * Placeholder for the redesigned bookmarks of #1658. The archival behavior
@@ -193,7 +263,12 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
   const { t } = useI18n();
   const chapterAnnotations =
     bookId && chapterNumber
-      ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+      ? visibleChapterAnnotations(
+          state.annotations,
+          state.friends.friendIds.value,
+          bookId,
+          chapterNumber
+        )
       : [];
   const noteCount = chapterAnnotations.length;
 
@@ -1713,6 +1788,8 @@ interface ChapterContentProps {
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
   annotations?: AnnotationsManager;
+  /** Whose notes besides the user's own get verse markers. */
+  friends?: FriendsManager;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -1760,6 +1837,7 @@ function ChapterContent(props: ChapterContentProps) {
     highlights,
     decorations,
     annotations,
+    friends,
     selectVerse,
     selectFootnote,
     selectVersesFromTextSelection,
@@ -1775,10 +1853,12 @@ function ChapterContent(props: ChapterContentProps) {
   const currentChapter = chapterData.value;
   const chapterAnnotations =
     currentChapter && annotations
-      ? annotations.getAnnotationsForChapter(
+      ? visibleChapterAnnotations(
+          annotations,
+          friends?.friendIds.value ?? [],
           currentChapter.book.id,
           currentChapter.chapter.number
-        ).value
+        )
       : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -2601,7 +2681,7 @@ export function BibleReader(props: BibleReaderProps) {
     isContentStale && (chapterData.value === null || isWaitLong);
   const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const scriptureElements: ScriptureElementsBehavior =
     props.scriptureElements ??
       state?.settings?.settings.value.scriptureElements ?? {
@@ -2809,6 +2889,50 @@ export function BibleReader(props: BibleReaderProps) {
       (savedId) => savedId !== failedId
     );
 
+  const offlineRecords = state?.bibleData?.offline?.records.value;
+  // The signal, not `getCachedTranslationBooks`: that helper reads untracked,
+  // so a catalog that arrives after this panel is on screen would never
+  // update the offer. Downloaded copies carry their own book list too; the
+  // cache wins when both exist, because that is the catalog a switch would use.
+  const cachedTranslationBooks = state?.bibleData?.translationBooks?.value;
+  const requestedTranslationLanguage =
+    translation.value?.language ||
+    availableTranslations.value?.translations.find(
+      (item) => item.id === translationId.value
+    )?.language ||
+    (translationId.value
+      ? offlineRecords?.get(translationId.value)?.translation.language
+      : undefined);
+  const offlineFallbackTranslations =
+    showLoadError && offlineRecords
+      ? findOfflineTranslationFallbacks({
+          currentTranslationId: translationId.value,
+          currentTranslationLanguage: requestedTranslationLanguage,
+          uiLanguage: language,
+          downloaded: Array.from(offlineRecords.values()),
+          bookId: bookId.value,
+          chapterNumber: chapterNumber.value ?? 1,
+          booksFor: (id) =>
+            cachedTranslationBooks?.get(id)?.books ??
+            offlineRecords.get(id)?.books ??
+            null,
+        })
+      : [];
+
+  const switchToOfflineTranslation = (nextTranslation: Translation) => {
+    const book = bookId.value;
+    const chapter = chapterNumber.value ?? 1;
+    if (!book) {
+      void readingState.selectTranslation(nextTranslation.id);
+      return;
+    }
+    void readingState.selectTranslationAndChapter(
+      nextTranslation.id,
+      book,
+      chapter
+    );
+  };
+
   const renderMainContent = () => (
     <>
       {isCompactReader &&
@@ -2877,23 +3001,44 @@ export function BibleReader(props: BibleReaderProps) {
                 "We were unable to load the data for this chapter. Please check your internet connection and try again.",
             })}
           </p>
-          <button
-            type="button"
-            className="sb-reader-error-retry"
-            onClick={() => void retryChapterLoad()}
-            disabled={retrying}
-            aria-busy={retrying}
-          >
-            {retrying && (
-              <span
-                className="material-symbols-outlined sb-reader-error-retry-spinner"
-                aria-hidden="true"
-              >
-                progress_activity
-              </span>
+          {offlineFallbackTranslations.length > 0 && (
+            <p className="sb-reader-error-offline">
+              {t("chapter-unavailable-offline-switch", {
+                count: offlineFallbackTranslations.length,
+                bookName: currentBookName.value ?? bookId.value ?? "",
+                chapterNumber: chapterNumber.value ?? 1,
+                defaultValue_one:
+                  "You have a translation saved on your device that contains {{bookName}} {{chapterNumber}}.",
+                defaultValue_other:
+                  "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
+              })}
+            </p>
+          )}
+          <div className="sb-reader-error-actions">
+            <button
+              type="button"
+              className="sb-reader-error-retry"
+              onClick={() => void retryChapterLoad()}
+              disabled={retrying}
+              aria-busy={retrying}
+            >
+              {retrying && (
+                <span
+                  className="material-symbols-outlined sb-reader-error-retry-spinner"
+                  aria-hidden="true"
+                >
+                  progress_activity
+                </span>
+              )}
+              {t("reload", { defaultValue: "Reload" })}
+            </button>
+            {offlineFallbackTranslations.length > 0 && (
+              <OfflineFallbackSwitch
+                translations={offlineFallbackTranslations}
+                onSwitch={switchToOfflineTranslation}
+              />
             )}
-            {t("reload", { defaultValue: "Reload" })}
-          </button>
+          </div>
 
           {failedTranslationNotSaved && !offline.isOnline.value && (
             <p className="sb-reader-error-hint">
@@ -2905,30 +3050,34 @@ export function BibleReader(props: BibleReaderProps) {
             </p>
           )}
 
-          {hasOtherSavedTranslation && (
-            <div className="sb-reader-error-alternatives">
-              <p className="sb-reader-error-hint">
-                {t("chapter-unavailable-switch-heading", {
-                  defaultValue:
-                    "Or keep reading in a translation saved on this device:",
-                })}
-              </p>
-              <button
-                type="button"
-                className="sb-reader-error-action"
-                onClick={() =>
-                  void selectorState.openDownloadedTranslations(currentSlot)
-                }
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  translate
-                </span>
-                {t("chapter-unavailable-choose-saved", {
-                  defaultValue: "Choose a saved translation",
-                })}
-              </button>
-            </div>
-          )}
+          {hasOtherSavedTranslation &&
+            offlineFallbackTranslations.length === 0 && (
+              <div className="sb-reader-error-alternatives">
+                <p className="sb-reader-error-hint">
+                  {t("chapter-unavailable-switch-heading", {
+                    defaultValue:
+                      "Or keep reading in a translation saved on this device:",
+                  })}
+                </p>
+                <button
+                  type="button"
+                  className="sb-reader-error-action"
+                  onClick={() =>
+                    void selectorState.openDownloadedTranslations(currentSlot)
+                  }
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    aria-hidden="true"
+                  >
+                    translate
+                  </span>
+                  {t("chapter-unavailable-choose-saved", {
+                    defaultValue: "Choose a saved translation",
+                  })}
+                </button>
+              </div>
+            )}
         </div>
       )}
 
@@ -2957,6 +3106,7 @@ export function BibleReader(props: BibleReaderProps) {
               highlights={highlights}
               decorations={decorations}
               annotations={state?.annotations}
+              friends={state?.friends}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
@@ -3119,6 +3269,7 @@ export function BibleReader(props: BibleReaderProps) {
                     toast={state.app.toast}
                     modals={state.modals}
                     app={state.app}
+                    readingPlans={state.readingPlans}
                     className="sb-quick-toolbar-mobile-header"
                   />
                   {/*
@@ -3263,6 +3414,7 @@ export function BibleReader(props: BibleReaderProps) {
                   annotations={state.annotations}
                   features={state.features}
                   sharedSession={sharedSession ?? null}
+                  readingPlans={state.readingPlans}
                   toast={state.app.toast}
                   modals={state.modals}
                   app={state.app}

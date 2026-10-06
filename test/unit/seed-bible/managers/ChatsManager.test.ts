@@ -1453,6 +1453,82 @@ describe("createChatsManager", () => {
     ).rejects.toThrow();
   });
 
+  it("appendMessage() records a suggestion outcome without asking the AI to reply", () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+    const generateResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "should not run",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse,
+    });
+    session.addParticipant("provider-1");
+
+    session.appendMessage(
+      {
+        type: "text",
+        text: "User switched to LSG",
+      },
+      [session.participants.value.find((participant) => participant.isSelf)!.id]
+    );
+
+    expect(session.messages.value).toHaveLength(1);
+    expect(session.messages.value[0]).toMatchObject({
+      timeMs: 1_717_000_000_000,
+      targets: [],
+      type: "text",
+      text: "User switched to LSG",
+    });
+    expect(generateResponse).not.toHaveBeenCalled();
+  });
+
+  it("shared chats drop message types they do not know", () => {
+    const { session: sharedSession } = createSharedSessionMock({
+      initialChats: [
+        {
+          id: "text-1",
+          authors: ["user-1"],
+          timeMs: 1,
+          targets: [],
+          type: "text",
+          text: "User switched to LSG",
+        },
+        {
+          id: "choices-1",
+          authors: ["provider-1"],
+          timeMs: 2,
+          targets: [],
+          type: "choices",
+          choiceType: "translation",
+          choices: [{ id: "fra_lsg", label: "LSG" }],
+        },
+        {
+          id: "unknown-1",
+          authors: [],
+          timeMs: 3,
+          targets: [],
+          type: "passage_card",
+          text: "older clients never render this",
+        },
+      ],
+    });
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const chat = chats.createSharedSession(sharedSession);
+
+    expect(chat.messages.value.map((message) => message.id)).toEqual([
+      "text-1",
+    ]);
+  });
+
   it("registerProvider() adds AI provider participants to availableParticipants", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager, mockI18nManager);

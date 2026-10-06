@@ -18,10 +18,19 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import {
   FreeUseBibleAPI,
   type Translation,
+  type TranslationBook,
   type TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { DownloadedTranslation } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import {
+  createPlayingState,
+  type SimplePlaylist,
+} from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { vi, type Mock } from "vitest";
+import { mockI18nState, resetMockI18n } from "../testUtils/mockI18n";
+import { createRealFriendContent } from "../testUtils/realFriendContent";
+import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import {
@@ -223,6 +232,8 @@ function createFixture(): ReaderFixture {
     enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
     isExtensionEnabled: vi.fn(() => false),
     getUrlQueryParams: vi.fn(() => ({})),
+    getUrlPathOverride: vi.fn(() => null),
+    requestUrlUpdate: vi.fn(),
     onNavigate: vi.fn(() => () => {}),
     shortSubTitle: signal<string>("shortSubTitle"),
     shortTitle: signal<string>("shortTitle"),
@@ -258,6 +269,77 @@ function createFixture(): ReaderFixture {
     selectFootnote,
     setOpen,
   };
+}
+
+function makeBook(
+  id: string,
+  name = id,
+  numberOfChapters = 50
+): TranslationBook {
+  return {
+    id,
+    name,
+    commonName: name,
+    title: null,
+    order: 1,
+    numberOfChapters,
+    firstChapterNumber: 1,
+    firstChapterApiLink: `/api/${id}/1.json`,
+    lastChapterNumber: numberOfChapters,
+    lastChapterApiLink: `/api/${id}/${numberOfChapters}.json`,
+    totalNumberOfVerses: 1,
+  };
+}
+
+function makeDownloadedTranslation(
+  id: string,
+  language: string,
+  name = id,
+  books: TranslationBook[] = [makeBook("GEN", "Genesis")]
+): DownloadedTranslation {
+  const translation: Translation = {
+    id,
+    name,
+    englishName: name,
+    website: "https://example.com",
+    licenseUrl: "https://example.com/license",
+    shortName: id,
+    language,
+    textDirection: "ltr",
+    availableFormats: ["json"],
+    listOfBooksApiLink: `/api/${id}/books.json`,
+    numberOfBooks: 66,
+    totalNumberOfChapters: 1189,
+    totalNumberOfVerses: 31102,
+  };
+  return {
+    translationId: id,
+    endpoint: "https://example.com",
+    sha256: null,
+    downloadedAt: 1,
+    sizeBytes: 100,
+    numberOfChapters: 10,
+    translation,
+    books,
+  };
+}
+
+function createStateWithDownloads(
+  downloads: DownloadedTranslation[]
+): SeedBibleState {
+  return {
+    ...createMobileState(),
+    bibleData: {
+      getPreviousChapter: vi.fn(async () => null),
+      getNextChapter: vi.fn(async () => null),
+      availableTranslations: signal([]),
+      offline: {
+        records: signal(
+          new Map(downloads.map((entry) => [entry.translationId, entry]))
+        ),
+      },
+    },
+  } as unknown as SeedBibleState;
 }
 
 /**
@@ -310,12 +392,17 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    friends: { friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      visibleAnnotationsForChapter: vi.fn(() => []),
       pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
       },
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;
 }
@@ -359,6 +446,7 @@ function renderMobileReader(
 beforeEach(() => {
   setupRerender();
   resetLastVersePointerTypeForTests();
+  resetMockI18n();
 });
 
 afterEach(() => {
@@ -538,6 +626,250 @@ describe("BibleReader", () => {
     });
 
     expect(readingState.retryLoad).toHaveBeenCalledTimes(1);
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+  });
+
+  it("offers a downloaded translation in the same language when the chapter fails to load", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("AAB", "eng", "Accessible Ancients Bible"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const errorPanel = container.querySelector(".sb-reader-error");
+    expect(errorPanel?.textContent).toContain(
+      "You have a translation saved on your device that contains Genesis 1."
+    );
+
+    const switchButton = container.querySelector<HTMLButtonElement>(
+      ".sb-reader-error-switch"
+    );
+    expect(switchButton?.textContent).toBe(
+      "Switch to Accessible Ancients Bible"
+    );
+    expect(
+      container.querySelector("#sb-reader-error-offline-select")
+    ).toBeNull();
+
+    act(() => {
+      switchButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(readingState.selectTranslationAndChapter).toHaveBeenCalledWith(
+      "AAB",
+      "GEN",
+      1
+    );
+  });
+
+  it("does not offer a downloaded translation in a different language", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("spa_onbv", "spa", "Nueva Biblia Viva"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+    expect(
+      container.querySelector(".sb-reader-error")?.textContent
+    ).not.toContain("saved on your device");
+  });
+
+  it("does not offer the failed translation even when it is downloaded", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("BSB", "eng", "Berean Standard Bible"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+  });
+
+  it("offers a download matching the UI language when the requested translation's language is unknown", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    chapterData.value = null;
+    readingState.availableTranslations.value = { translations: [] };
+    mockI18nState.language = "es";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("spa_onbv", "spa", "Nueva Biblia Viva"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector<HTMLButtonElement>(".sb-reader-error-switch")
+        ?.textContent
+    ).toBe("Switch to Nueva Biblia Viva");
+  });
+
+  it("does not offer a download that does not match the UI language when the requested language is unknown", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    chapterData.value = null;
+    readingState.availableTranslations.value = { translations: [] };
+    mockI18nState.language = "es";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("AAB", "eng", "Accessible Ancients Bible"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+  });
+
+  it("does not offer a downloaded translation that does not contain the current book", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    readingState.translationId.value = "ENGWEB";
+    readingState.bookId.value = "TOB";
+    readingState.chapterNumber.value = 3;
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("BSB", "eng", "Berean Standard Bible"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-error-switch")).toBeNull();
+    expect(
+      container.querySelector("#sb-reader-error-offline-select")
+    ).toBeNull();
+    expect(
+      container.querySelector(".sb-reader-error")?.textContent
+    ).not.toContain("saved on your device");
+    expect(readingState.selectTranslationAndChapter).not.toHaveBeenCalled();
+  });
+
+  it("lets the reader pick among several same-language downloads from a dropdown", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+    const state = createStateWithDownloads([
+      makeDownloadedTranslation("AAB", "eng", "Accessible Ancients Bible"),
+      makeDownloadedTranslation("NIV", "eng", "New International Version"),
+    ]);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const errorPanel = container.querySelector(".sb-reader-error");
+    expect(errorPanel?.textContent).toContain(
+      "You have 2 translations saved on your device that contain Genesis 1."
+    );
+
+    const trigger = container.querySelector<HTMLButtonElement>(
+      "#sb-reader-error-offline-select"
+    );
+    expect(trigger).not.toBeNull();
+    expect(trigger?.textContent).toContain("Accessible Ancients Bible");
+
+    act(() => {
+      trigger?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(
+      container.querySelector(".sb-language-picker-search-input")
+    ).not.toBeNull();
+
+    const nivOption = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-language-picker-item")
+    ).find((item) => item.textContent?.includes("New International Version"));
+    expect(nivOption).not.toBeUndefined();
+
+    act(() => {
+      nivOption?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(trigger?.textContent).toContain("New International Version");
+
+    const confirm = container.querySelector<HTMLButtonElement>(
+      ".sb-reader-error-switch"
+    );
+    expect(confirm?.textContent).toBe("Switch");
+
+    act(() => {
+      confirm?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(readingState.selectTranslationAndChapter).toHaveBeenCalledWith(
+      "NIV",
+      "GEN",
+      1
+    );
   });
 
   it("keeps the failure state visible while a retry is in flight", async () => {
@@ -2188,8 +2520,11 @@ describe("BibleReader", () => {
         isMobile: signal(isMobile),
         isCompactReader: signal(isMobile),
       },
+      friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+        pendingCountForChapter: vi.fn(() => 0),
+        visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
       },
     } as any as SeedBibleState;
   }
@@ -2391,6 +2726,67 @@ describe("BibleReader", () => {
     expect(state.app.openDiscover).not.toHaveBeenCalled();
   });
 
+  it("offers the mobile header notes button for a friend's note when the user has none, and jumps to it", async () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const mockState = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    // The real managers, so the friend's note is loaded from the server the
+    // way the app loads it.
+    const { login, friends, annotations } = await createRealFriendContent({
+      friendIds: ["friend-1"],
+      notes: {
+        "friend-1": [
+          {
+            id: "friend-note",
+            bookId: "GEN",
+            chapterNumber: 1,
+            verseNumber: 3,
+            data: { type: "comment", html: "<p>Note</p>", userId: "friend-1" },
+          } as Annotation,
+        ],
+      },
+      discover: mockState.discover,
+    });
+    const state = {
+      ...mockState,
+      login,
+      friends,
+      annotations,
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    // Renders wait for `act` here (see `setupRerender`), so each check
+    // flushes the render the loaded note asked for.
+    const notesButton = await vi.waitFor(async () => {
+      await act(async () => {});
+      const button = container.querySelector(
+        ".sb-bible-reader-mobile-header-notes"
+      );
+      expect(button).not.toBeNull();
+      return button as HTMLElement;
+    });
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+    });
+  });
+
   it("falls back to opening the full Discover pane when no annotation targets a specific verse", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
@@ -2545,8 +2941,11 @@ describe("BibleReader", () => {
           isMobile: signal(isMobile),
           isCompactReader: signal(isMobile),
         },
+        friends: { friendIds: signal([]) },
         annotations: {
           getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+          pendingCountForChapter: vi.fn(() => 0),
+          visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
         },
       } as any as SeedBibleState;
     }
@@ -2583,6 +2982,46 @@ describe("BibleReader", () => {
       expect(markers).toHaveLength(1);
       expect((markers[0] as HTMLElement).style.top).toBe("40px");
       expect(markers[0]?.textContent).toBe("sticky_note_2");
+    });
+
+    it("marks a verse that only a friend has a note on", async () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      const mockState = annotatedState([]);
+      const { login, friends, annotations } = await createRealFriendContent({
+        friendIds: ["friend-1"],
+        notes: {
+          "friend-1": [
+            note({
+              id: "friend-note",
+              data: {
+                type: "comment",
+                html: "<p>Note</p>",
+                userId: "friend-1",
+              },
+            }) as Annotation,
+          ],
+        },
+        discover: mockState.discover,
+      });
+      renderReader(
+        {
+          ...mockState,
+          login,
+          friends,
+          annotations,
+        } as unknown as SeedBibleState,
+        fixture
+      );
+
+      await vi.waitFor(async () => {
+        await act(async () => {});
+        expect(
+          container.querySelectorAll(".sb-note-gutter-marker")
+        ).toHaveLength(1);
+      });
+      const markers = container.querySelectorAll(".sb-note-gutter-marker");
+      expect((markers[0] as HTMLElement).style.top).toBe("40px");
     });
 
     // A verse of poetry is a block of its own lines, so its element rect is
@@ -3773,9 +4212,13 @@ describe("BibleReader", () => {
       saves: {
         isLocationSaved: vi.fn(() => false),
       },
+      friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
+        pendingCountForChapter: vi.fn(() => 0),
+        visibleAnnotationsForChapter: vi.fn(() => []),
       },
+      readingPlans: { getReadingPlansForChapter: vi.fn(() => []) },
     } as any as SeedBibleState;
 
     selectedFootnote.value = {
@@ -4386,6 +4829,62 @@ describe("BibleReader", () => {
     ).not.toBeNull();
   });
 
+  it("previews the next chapter again once a finished playlist's modal has been shown", async () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState(selectorState);
+    const playing = createPlayingState(
+      [
+        {
+          id: "playlist-1",
+          recordName: "user-1",
+          title: "The Love of Jesus",
+          description: null,
+          items: [{ type: "html", html: "a" }],
+        } as SimplePlaylist,
+      ],
+      null,
+      () => {}
+    );
+    Object.assign(state.playlists, {
+      playing: signal(playing),
+      isMobile: signal(true),
+      view: signal(null),
+    });
+
+    const current = chapterData.value!;
+    chapterData.value = {
+      ...current,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      previousChapterApiLink: null,
+    };
+    // Like the playlist extension: the swipe that finishes the playlist
+    // previews nothing, and after that the reader's own next chapter.
+    vi.mocked(readingState.getAdjacentChapter).mockImplementation(async () =>
+      playing.finishPromptShown.value
+        ? { ...current, chapter: { ...current.chapter, number: 2 } }
+        : null
+    );
+    const nextPanelTitle = () =>
+      container.querySelector(
+        ".sb-reader-swipe-panel-side .sb-bible-reader-mobile-content-title"
+      )?.textContent ?? null;
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(nextPanelTitle()).toBeNull();
+
+    await act(async () => {
+      await playing.next();
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(nextPanelTitle()).toContain("2");
+  });
+
   it("swiping left on mobile loads the next chapter", async () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
@@ -4733,8 +5232,9 @@ describe("BibleReader — ways out of a failed chapter load", () => {
   });
 
   it("opens the translation list narrowed to saved translations", async () => {
+    // NIV lacks Genesis, so the panel has no in-place switch to offer.
     const { selectorState, slot } = await renderFailedChapter({
-      downloaded: ["AAB"],
+      downloaded: ["NIV"],
     });
 
     act(() => {
@@ -4744,13 +5244,13 @@ describe("BibleReader — ways out of a failed chapter load", () => {
     expect(selectorState.openDownloadedTranslations).toHaveBeenCalledWith(slot);
   });
 
-  it("offers one picker rather than a button per saved translation", async () => {
+  it("leaves a saved translation with this chapter to the in-panel switch", async () => {
     await renderFailedChapter({ downloaded: ["AAB", "NIV"] });
 
-    expect(actionButtons()).toHaveLength(1);
-    expect(actionButtons()[0]?.textContent).toContain(
-      "Choose a saved translation"
-    );
+    const switches = container.querySelectorAll(".sb-reader-error-switch");
+    expect(switches).toHaveLength(1);
+    expect(switches[0]?.textContent).toContain(aabBooks.translation.name);
+    expect(actionButton("Choose a saved translation")).toBeNull();
   });
 
   it("offers no saved-translation picker when nothing is saved", async () => {

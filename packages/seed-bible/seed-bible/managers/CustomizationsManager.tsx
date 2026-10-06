@@ -3,6 +3,7 @@ import { v4 as uuid } from "uuid";
 import {
   batch,
   computed,
+  effect,
   signal,
   type ReadonlySignal,
   type Signal,
@@ -411,6 +412,9 @@ export function getExtensionSettingDefault(
 ): ExtensionSettingValue | undefined {
   return customization?.extensionSettingDefaults[extensionId]?.[key];
 }
+
+/** PostHog event/person property holding the `recordName.id` locator of the customization the viewer arrived through. */
+export const POSTHOG_CUSTOMIZATION_PROPERTY = "customization_id";
 
 function buildCustomizationLocator(recordName: string, id: string): string {
   return `${recordName}.${id}`;
@@ -1118,6 +1122,30 @@ export function createCustomizationsManager(
       return linkedCustomizationLocator.value;
     }
     return null;
+  });
+
+  // A super property rides on every later event (pageviews, chapter reads,
+  // …), which is what lets analytics be split per customization; the person
+  // property only remembers the latest one a signed-in viewer arrived through.
+  // Session-scoped (sessionStorage, one tab) rather than `register`'s
+  // persistent storage, which would leak the tag into a later plain visit's
+  // events, or another tab's, until this effect got round to clearing it.
+  // Keyed on the share link rather than `activeCustomizationLocator` so an
+  // owner previewing their own draft isn't counted as a visit to it.
+  effect(() => {
+    const locator = linkedCustomizationLocator.value;
+    const userId = login.userId.value;
+    if (typeof posthog === "undefined" || !posthog) {
+      return;
+    }
+    if (!locator) {
+      posthog.unregister_for_session(POSTHOG_CUSTOMIZATION_PROPERTY);
+      return;
+    }
+    posthog.register_for_session({ [POSTHOG_CUSTOMIZATION_PROPERTY]: locator });
+    if (userId) {
+      posthog.identify(userId, { [POSTHOG_CUSTOMIZATION_PROPERTY]: locator });
+    }
   });
 
   const activeExtensionIds = computed<string[]>(() => {

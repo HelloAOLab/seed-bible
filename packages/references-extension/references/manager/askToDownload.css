@@ -1,0 +1,84 @@
+.sb-references-download {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+}
+
+.sb-references-download-header {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.sb-references-download-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.875rem;
+  background: var(--sb-secondary-color);
+  color: var(--sb-primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.sb-references-download-icon .material-symbols-outlined {
+  font-size: 1.5rem;
+}
+
+.sb-references-download-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.sb-references-download-body {
+  margin: 0;
+  line-height: 1.6;
+  font-size: 0.95em;
+  opacity: 0.7;
+}
+
+/* The size estimate sits under the explanation as a quieter second line. */
+.sb-references-download-size {
+  margin: 0;
+  line-height: 1.5;
+  font-size: 0.85em;
+  opacity: 0.55;
+}
+
+.sb-references-download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.sb-references-download-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 1.75rem;
+  padding: 0.65rem 1.5rem;
+  font-family: inherit;
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.sb-references-download-btn:hover {
+  filter: brightness(0.96);
+}
+
+.sb-references-download-btn-primary {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-references-download-btn-secondary {
+  background: transparent;
+  color: var(--sb-font-color);
+  opacity: 0.7;
+}

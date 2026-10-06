@@ -346,6 +346,11 @@
   display: block;
   color: var(--sb-font-color);
 }
+.testament-title--with-action {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
 
 .books-item {
   width: 100%;
@@ -881,6 +886,74 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
+.apocrypha-info-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.sb-apocrypha-info-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.4);
+}
+.sb-apocrypha-info-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1rem 0.8rem 1rem 0.8rem;
+  z-index: 1000;
+  width: min(85vw, 35rem);
+  max-height: 80vh;
+  box-sizing: border-box;
+  background: var(--sb-book-selector-background);
+  color: var(--sb-font-color);
+  border-radius: 0.525rem;
+  overflow-y: auto;
+}
+
+.sb-apocrypha-info {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sb-apocrypha-info-content {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.sb-apocrypha-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: auto;
+  min-height: 0;
+  margin-bottom: 1rem;
+}
+
+.sb-apocrypha-info-title {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.sb-apocrypha-info-close {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--sb-font-color);
+}
 
 /* ─── Offline translation downloads ──────────────────────────────────────── */
 
@@ -1301,80 +1374,6 @@
 
   .footer {
     bottom: -2.8125rem;
-  }
-
-  .sb-select-modal-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 999;
-    background: rgba(0, 0, 0, 0.4);
-  }
-
-  .sb-select-modal {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: fit-content;
-    background: var(--sb-book-selector-background);
-    border-top-left-radius: 0.625rem;
-    border-top-right-radius: 0.625rem;
-    box-shadow: 0 -5px 10px
-      color-mix(
-        in srgb,
-        var(--sb-detached-pane-toolbar-background) 15%,
-        transparent
-      );
-    padding: 1.25rem 0.625rem;
-  }
-
-  .sb-select-modal-content {
-    padding: 0.625rem 1.5rem 1.875rem 1.5rem;
-    /* height: 100%; */
-    overflow-y: auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .sb-select-modal-title-icon {
-    display: flex;
-    font-size: 1.375rem;
-    color: var(--sb-primary-color);
-    /* padding: 10px; */
-    border-radius: 0.3125rem;
-    background: var(--sb-tertiary-color);
-    width: 2.8125rem;
-    height: 2.8125rem;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .sb-select-modal-title {
-    font-size: 1.5rem;
-    font-weight: 500;
-    color: var(--sb-font-color);
-    margin-left: 0.625rem;
-    text-align: center;
-  }
-
-  .sb-select-modal-actions {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 0.625rem;
-  }
-
-  .sb-select-modal-action-btn {
-    border: none;
-    padding: 0.625rem;
-    border-radius: 0.3125rem;
-    width: 40%;
-    justify-content: center;
-    gap: 0.625rem;
-    font-weight: 500;
   }
 }
 

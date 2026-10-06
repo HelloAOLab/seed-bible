@@ -1,5 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
+import { signal } from "@preact/signals";
+import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import { act } from "preact/test-utils";
 import { useReadingHistoryProvider } from "../../../../packages/scripture-map/contexts/ReadingHistory/useReadingHistoryProvider";
 import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
@@ -64,6 +66,9 @@ function makeContext(overrides: Record<string, unknown> = {}) {
     seedBibleState: {
       os: {},
       tabs: { selectedTabId: { value: "tab-1" } },
+      // Friends are merged into `usersDataMap` alongside the connected
+      // users, so the provider always reads this signal.
+      friends: { friends: signal<Friend[]>([]) },
     },
     seedBibleUtilsEventManager: { subscribe },
     getDayRangeSeconds: vi.fn((ms: number) => {
@@ -219,6 +224,66 @@ describe("useReadingHistoryProvider", () => {
       ]);
       const result = await setupAsync();
       expect(result.current.usersDataMap.get("u2")?.configId).toBe("c-u2");
+    });
+
+    it("includes friends who are not currently online", async () => {
+      getConnectedUsers.mockReturnValue([
+        { authId: MY_AUTH_ID, configId: "c-me" },
+      ]);
+      const friends = signal<Friend[]>([
+        {
+          userId: "friend-1",
+          name: "Ada",
+          pictureUrl: null,
+        },
+      ]);
+      (useScriptureMapContext as Mock).mockReturnValue(
+        makeContext({
+          seedBibleState: {
+            os: {},
+            tabs: { selectedTabId: { value: "tab-1" } },
+            friends: { friends },
+          },
+        })
+      );
+
+      const result = await setupAsync();
+
+      expect(result.current.usersDataMap.has("friend-1")).toBe(true);
+      expect(result.current.usersDataMap.get("friend-1")?.profile?.name).toBe(
+        "Ada"
+      );
+    });
+
+    it("prefers the live connected entry over the friend's loaded profile", async () => {
+      // A friend who is also online should keep their presence details
+      // (configId and live profile) rather than being replaced by the profile.
+      getConnectedUsers.mockReturnValue([
+        { authId: "friend-1", configId: "c-live" },
+      ]);
+      const friends = signal<Friend[]>([
+        {
+          userId: "friend-1",
+          name: "Stale Name",
+          pictureUrl: null,
+        },
+      ]);
+      (useScriptureMapContext as Mock).mockReturnValue(
+        makeContext({
+          seedBibleState: {
+            os: {},
+            tabs: { selectedTabId: { value: "tab-1" } },
+            friends: { friends },
+          },
+        })
+      );
+
+      const result = await setupAsync();
+
+      expect(result.current.usersDataMap.size).toBe(1);
+      expect(result.current.usersDataMap.get("friend-1")?.configId).toBe(
+        "c-live"
+      );
     });
   });
 

@@ -40,6 +40,7 @@ import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import {
   firstAcceptableSettingValue,
+  nonSensitiveSettings,
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
@@ -871,7 +872,10 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
   );
 
   const handleConfigureDefaults = (entry: ExtensionListEntry) => {
-    const settings = entry.extension?.meta.settings ?? {};
+    // A Customization is shared with everyone who uses it, so it can't carry
+    // someone's secret, and a default for a value only its owner can set
+    // means nothing.
+    const settings = nonSensitiveSettings(entry.extension?.meta.settings ?? {});
     // The customization being edited, not the one the viewer currently has
     // active — those are only the same customization some of the time, and the
     // defaults written here belong to the draft.
@@ -989,22 +993,23 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
                   })}
                 </option>
               </select>
-              {entry.extension?.meta.settings &&
-                Object.keys(entry.extension.meta.settings).length > 0 && (
-                  <button
-                    type="button"
-                    className="sb-extension-row-action-button"
-                    onClick={() => handleConfigureDefaults(entry)}
-                    aria-label={t("configure-extension-defaults", {
-                      defaultValue: "Configure defaults",
-                    })}
-                    title={t("configure-extension-defaults", {
-                      defaultValue: "Configure defaults",
-                    })}
-                  >
-                    <span className="material-symbols-outlined">tune</span>
-                  </button>
-                )}
+              {Object.keys(
+                nonSensitiveSettings(entry.extension?.meta.settings ?? {})
+              ).length > 0 && (
+                <button
+                  type="button"
+                  className="sb-extension-row-action-button"
+                  onClick={() => handleConfigureDefaults(entry)}
+                  aria-label={t("configure-extension-defaults", {
+                    defaultValue: "Configure defaults",
+                  })}
+                  title={t("configure-extension-defaults", {
+                    defaultValue: "Configure defaults",
+                  })}
+                >
+                  <span className="material-symbols-outlined">tune</span>
+                </button>
+              )}
             </div>
           ))
         )}
