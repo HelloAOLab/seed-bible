@@ -34,6 +34,7 @@ import { readingLabel } from "./readingLabel";
 import { ReadingPlanEditor } from "./ReadingPlanEditor";
 import { ReadingPlanDetail } from "./ReadingPlanDetail";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
+import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
@@ -46,6 +47,8 @@ interface ReadingPlansPaneProps {
   books: TranslationBook[];
   /** Modals host, for previewing/opening a text or link reading. */
   modals?: ModalManager;
+  /** Loads chapters for the plan editor's inline scripture previews. */
+  loadChapter?: ScriptureChapterLoader;
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
@@ -321,6 +324,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     friends,
     books,
     modals,
+    loadChapter,
     os,
     login,
     gallery,
@@ -360,6 +364,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         readingPlans={readingPlans}
         books={books}
         modals={modals}
+        loadChapter={loadChapter}
         os={os}
         login={login}
         gallery={gallery}

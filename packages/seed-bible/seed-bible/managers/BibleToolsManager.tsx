@@ -66,6 +66,7 @@ import {
 import type { FriendsManager } from "./FriendsManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
+import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -994,6 +995,8 @@ export interface OpenReadingPlansPaneOptions {
   panesManager: PanesManager;
   modals?: ModalManager;
   playlists?: PlaylistManager;
+  /** Loads chapter text for the plan editor's inline scripture previews. */
+  bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
   /** Lets the pane list plans from the user's friends. */
   friends?: FriendsManager;
   /**
@@ -1026,12 +1029,23 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     panesManager,
     modals,
     playlists,
+    bibleData,
     friends,
     os,
     login,
     gallery,
     toast,
   } = options;
+
+  // Scripture without a pinned translation previews in the one being read.
+  const loadChapter: ScriptureChapterLoader | undefined = bibleData
+    ? (translationId, bookId, chapter) =>
+        bibleData.getTranslationBookChapter(
+          translationId ?? readingState.translationId.peek(),
+          bookId,
+          chapter
+        )
+    : undefined;
 
   panesManager.openPane({
     id: "reading-plans-pane",
@@ -1050,6 +1064,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
         friends={friends}
         books={readingState.translationBooks.value?.books ?? []}
         modals={modals}
+        loadChapter={loadChapter}
         os={os}
         login={login}
         gallery={gallery}
@@ -1219,6 +1234,7 @@ function getDefaultToolbarTools(
           panesManager: context.panesManager,
           modals: context.modals,
           playlists: context.playlists,
+          bibleData: context.data,
           os: context.os,
           login: context.login,
           gallery: context.gallery,
