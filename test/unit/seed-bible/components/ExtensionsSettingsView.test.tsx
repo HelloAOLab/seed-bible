@@ -89,6 +89,13 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       getValue: vi.fn(),
       setValue: vi.fn().mockResolvedValue(undefined),
       clearValue: vi.fn().mockResolvedValue(undefined),
+      getUnusedSensitiveProxies: () => [],
+      isSensitiveValueSet: () => false,
+      hasStoredSensitiveValues: () => false,
+      getSensitiveDestination: () => ({
+        host: "api.example.com",
+        visibility: "private",
+      }),
     },
   } as unknown as SeedBibleState;
 }
@@ -400,6 +407,42 @@ describe("ExtensionsSettingsView", () => {
       expect(modalBody.querySelector(".sb-custom-panel")?.textContent).toBe(
         "Custom panel content"
       );
+      expect(
+        modalBody.querySelector("#sb-extension-setting-panel-only-greeting")
+      ).toBeNull();
+    });
+
+    // A custom panel replaces only the generic form. Sensitive values can't go
+    // through an extension's own UI, so without their own section the viewer
+    // would have no way to set them.
+    it("keeps the sensitive settings section alongside a registered panel", () => {
+      const entry = panelOnlyEntry();
+      entry.extension!.meta = {
+        ...entry.extension!.meta,
+        settings: {
+          greeting: { type: "string", default: "Hello" },
+          apiKey: { type: "string", sensitive: "exampleApi" },
+        },
+        sensitive: {
+          exampleApi: {
+            host: "api.example.com",
+            requestMapping: { "headers.authorization.bearer": "apiKey" },
+          },
+        },
+      };
+      const state = renderExtensions([entry]);
+      registerPanel(state, "panel-only", () => (
+        <div className="sb-custom-panel">Custom panel content</div>
+      ));
+
+      openConfigureModal(state);
+
+      expect(modalBody.querySelector(".sb-custom-panel")).not.toBeNull();
+      expect(
+        modalBody.querySelector<HTMLInputElement>(
+          "#sb-extension-setting-panel-only-apiKey"
+        )?.type
+      ).toBe("password");
       expect(
         modalBody.querySelector("#sb-extension-setting-panel-only-greeting")
       ).toBeNull();

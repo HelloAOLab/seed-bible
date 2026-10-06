@@ -12,7 +12,10 @@ import {
 } from "./ProfileConfigSync";
 import hash from "hash.js";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
-import type { ExtensionSettingDefinition } from "./extensionSettingConstraints";
+import type {
+  ExtensionSensitiveProxyDefinition,
+  ExtensionSettingDefinition,
+} from "./extensionSettingConstraints";
 
 const { sha256 } = hash;
 
@@ -52,6 +55,8 @@ export type ExtensionSettingType = "string" | "boolean" | "number";
 export type {
   ExtensionBooleanSettingDefinition,
   ExtensionNumberSettingDefinition,
+  ExtensionSensitiveProxyDefinition,
+  ExtensionSensitiveProxyVisibility,
   ExtensionSettingDefinition,
   ExtensionSettingValue,
   ExtensionStringSettingDefinition,
@@ -59,6 +64,8 @@ export type {
 export {
   firstAcceptableSettingValue,
   isMultipleOf,
+  isSensitiveSetting,
+  nonSensitiveSettings,
   numberFieldLimits,
   settingValueSatisfiesDefinition,
 } from "./extensionSettingConstraints";
@@ -94,6 +101,14 @@ export interface ExtensionMeta {
    * `t("setting-<key>-description", { ns: id })`), not from this object.
    */
   settings?: Record<string, ExtensionSettingDefinition>;
+
+  /**
+   * The destinations this extension's sensitive settings may be sent to, keyed
+   * by an id that each sensitive setting names in its own `sensitive` field.
+   * Several settings can share one entry, so a "Client ID" and an "API key"
+   * both reach `api.example.com` on the same request.
+   */
+  sensitive?: Record<string, ExtensionSensitiveProxyDefinition>;
 }
 
 /**

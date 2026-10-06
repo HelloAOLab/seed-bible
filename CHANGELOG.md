@@ -10,6 +10,13 @@
 - Let AI chat look up translations this app actually has and ask, in a banner above the chat, before switching. Switch changes the open tab and stays on the same chapter when the translation includes it; Dismiss leaves the reader as it is. Either way, the chat records what you did. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
 - Add an "Images" section at the bottom of the "Your content" screen that shows every image you've uploaded, where you can view each one full size or delete it. ([#1748](https://github.com/HelloAOLab/seed-bible/issues/1748))
   - Deleting an image also takes it off any playlist or reading plan using it as a cover; the confirmation warns you about this and names them.
+- Let extensions declare `sensitive` settings, such as API keys, whose values never come back to the browser. ([#1836](https://github.com/HelloAOLab/seed-bible/issues/1836))
+  - An extension's `extension.json` lists each destination once in a `sensitive` section (a host plus which request property each setting fills in), and each sensitive setting names the destination it belongs to, so a "Client ID" and an "API key" can both be sent to the same host.
+  - Values are saved in a private CasualOS proxy record owned by the viewer. The extension sends requests with `extensionSettings.fetchWithSensitiveValues`, and the server adds the values before forwarding them.
+  - Each destination can be private (only the viewer can use it) or public (anyone with its address can send requests through it, but nobody can read the values). It's always private until the viewer changes it; extensions can't choose.
+  - The viewer can also send a destination's values to a different host than the extension declares. The extension keeps using its own URL, and requests go to the viewer's host with the same path.
+  - The Configure window shows these settings as masked fields that only say whether a value is set. Customization default overrides skip them.
+  - Secrets for an extension that's no longer installed, or that no longer asks for them, are listed under Settings → Extensions with a Clear button, so they can still be removed from the server.
 
 ### 🔧 Changed
 
