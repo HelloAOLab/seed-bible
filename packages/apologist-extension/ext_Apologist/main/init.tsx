@@ -231,8 +231,8 @@ export default function initApologistExtension() {
       };
       const customName = computed(() => urlName ?? readSavedText("name"));
       const contentAuthor = computed(() => readSavedText("contentAuthor"));
-      // Checked against the opposite of each default so that a missing value
-      // (settings not loaded yet) keeps chat on and Discover off.
+      // Checked against the opposite of each default so that `undefined` (the
+      // manifest isn't registered yet) keeps chat on and Discover off.
       const chatEnabled = computed(
         () =>
           context.extensionSettings.getValue(
@@ -240,13 +240,25 @@ export default function initApologistExtension() {
             "chatEnabled"
           ) !== false
       );
-      const discoverEnabled = computed(
-        () =>
+      // A team ID in the link turns Discover on, since whoever shared it meant
+      // the team's content to show, and signed-out viewers can't change
+      // settings. Only the viewer's own saved choice beats it, not a default.
+      const discoverEnabled = computed(() => {
+        const ownValue =
+          context.extensionSettings.valuesByExtensionId.value[
+            APOLOGIST_EXTENSION_ID
+          ]?.discoverEnabled;
+        if (typeof ownValue === "boolean") {
+          return ownValue;
+        }
+        return (
+          urlTeamId !== null ||
           context.extensionSettings.getValue(
             APOLOGIST_EXTENSION_ID,
             "discoverEnabled"
           ) === true
-      );
+        );
+      });
 
       const apologistRequest = createApologistRequest(context, {
         domain: apologistDomain,

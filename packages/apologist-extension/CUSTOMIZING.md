@@ -42,7 +42,7 @@ If you want to prompt users to continue the conversation in the Seed Bible, you 
 Signed-in users can save their Apologist agent in the Apologist extension's settings:
 
 - **Chat** - Whether the Apologist agent is offered in chats. On by default. Turning it off removes the agent from the list of chat agents and from any open chats.
-- **Discover content** - Whether your team's articles, videos and other content appear in the Discover pane. Off by default, and it needs a team ID (from the Team ID setting or `apologistTeamID`) to show anything.
+- **Discover content** - Whether your team's articles, videos and other content appear in the Discover pane. It needs a team ID to show anything. Off by default, except that a link with `apologistTeamID` turns it on unless the user has switched it off here.
 - **Host** - The domain of the agent, e.g. `my.agent.domain.bot`. Defaults to `apologist.seedbible.io`.
 - **Agent name** - The name shown for the agent in chats and on its Discover section. Leave blank for "Apologist". If the link includes `apologistName`, that one is used instead.
 - **AI model** - The model the agent uses. Leave blank for `openai/gpt/5-mini`. If the link includes `apologistModel`, that one is used instead. A change applies from the next message.
@@ -75,7 +75,7 @@ You can configure the Apologist Chat Provider by setting the following variables
 - `apologistModel` - The model that should be used. Takes priority over the AI model setting. If neither is set, then `openai/gpt/5-mini` will be used.
   - See the [Apologist Documentation](https://apologistproject.org/documentation/apologist-fusion/chat-completion#8-toc-title) for a list of supported models.
 
-- `apologistTeamID` - Takes priority over the Team ID setting. The integer ID of the Apologist team whose content should be shown in the Discover pane. If specified, then each chapter is searched (e.g. "John 3") against the team's articles, YouTube videos, episodes, media, and links using the semantic search API of the agent at `apologistDomain`, and the matches are shown as discovered content. The Discover content setting must also be turned on.
+- `apologistTeamID` - Takes priority over the Team ID setting. The integer ID of the Apologist team whose content should be shown in the Discover pane. If specified, then each chapter is searched (e.g. "John 3") against the team's articles, YouTube videos, episodes, media, and links using the semantic search API of the agent at `apologistDomain`, and the matches are shown as discovered content. This works for signed-out visitors too: a team ID in the link turns Discover content on unless the user has switched that setting off.
   - The request is sent to `apologistDomain` and authenticated with `apologistApiKey`, so you should also include both.
 
 ### Examples
