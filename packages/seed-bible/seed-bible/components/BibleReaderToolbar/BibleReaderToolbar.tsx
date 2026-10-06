@@ -661,15 +661,29 @@ const VERSE_SHEET_TOP_GAP_PX = 8;
 const VERSE_SHEET_PINNED_MIN_NOTE_ROOM_PX = 48;
 
 /**
- * These stay out of the collapsed row. Once the drawer is open they pin to
- * the top of the scrolling notes so Copy, Compare, and Share stay one tap away.
- * Order follows each tool's priority.
+ * Registered tools that come right after Highlight and Save on the mobile
+ * sheet, in this order, ahead of everything else. With Highlight and Save that
+ * makes the collapsed row Highlight, Save, Note, Copy and starts the drawer
+ * with Share and Compare, so extension tools (Ask AI, Locations, ...) can't
+ * push the core actions off the first row however low their priority.
  */
-const VERSE_SHEET_PINNED_TOOL_IDS = new Set([
+const VERSE_SHEET_LEADING_TOOL_IDS = [
+  "annotate-verse",
   "copy-verse",
-  "compare-verses",
   "share-verse",
-]);
+  "compare-verses",
+];
+
+/** Leading tools in their fixed order, then the rest by priority. */
+function orderVerseSheetTools<T extends { id: string }>(tools: T[]): T[] {
+  const leading = VERSE_SHEET_LEADING_TOOL_IDS.flatMap((id) =>
+    tools.filter((tool) => tool.id === id)
+  );
+  const rest = tools.filter(
+    (tool) => !VERSE_SHEET_LEADING_TOOL_IDS.includes(tool.id)
+  );
+  return [...leading, ...rest];
+}
 
 /** Visible viewport below the notch, or 0 when it can't be measured. */
 function readMobileSheetViewportCap(): number {
@@ -989,35 +1003,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   /**
    * Whether the collapsed sheet is hiding something: action cards past the
-   * first row, Copy / Compare / Share (which only show once the drawer opens),
-   * or notes on the selection. Measured height is not enough —
+   * first row, or notes on the selection. Measured height is not enough —
    * the overflow row's padding, and a height left behind after that row
    * unmounts, both read as "more" when the sheet is already showing everything.
    */
   const verseSheetHasHiddenContent = useComputed(() => {
     if (!isSmallScreen.value) return false;
-    const visibleTools = nonCancelVerseTools.value.filter(
-      (tool) => tool.visible.value
-    );
-    const pinnedCount = visibleTools.filter((tool) =>
-      VERSE_SHEET_PINNED_TOOL_IDS.has(tool.id)
-    ).length;
-    const otherCount =
-      visibleTools.length -
-      pinnedCount +
+    const cardCount =
+      nonCancelVerseTools.value.filter((tool) => tool.visible.value).length +
       (showHighlightCard.value ? 1 : 0) +
       (showSaveCard.value ? 1 : 0);
-    // With nothing else for the collapsed row (the compact embed), Copy,
-    // Compare, and Share take the row themselves instead of hiding in the drawer.
-    const cardCount = otherCount > 0 ? otherCount : pinnedCount;
-    const hasPinnedCard = otherCount > 0 && pinnedCount > 0;
     const annotationCount =
       readingState.value?.selectionAnnotations.value.length ?? 0;
-    return (
-      cardCount > VERSE_SHEET_COLLAPSED_COUNT ||
-      hasPinnedCard ||
-      annotationCount > 0
-    );
+    return cardCount > VERSE_SHEET_COLLAPSED_COUNT || annotationCount > 0;
   });
 
   /** Whether there is anything to reveal — no overflow row, nothing to drag to. */
@@ -1047,8 +1045,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
 
   /**
-   * Height of Copy / Compare / Share. 0 until measured. Used to decide whether
-   * that row can stay pinned without covering the note or clipping itself.
+   * Height of the drawer's pinned actions. 0 until measured. Used to decide
+   * whether that row can stay pinned without covering the note or clipping itself.
    */
   const verseSheetPinnedHeight = useSignal(0);
 
@@ -1485,7 +1483,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   };
 
   /**
-   * Place a note just below Copy / Compare / Share. `scrollIntoView` aligns
+   * Place a note just below the pinned actions. `scrollIntoView` aligns
    * the note with the top of the scrollport, and the pinned row then covers
    * the top of it.
    */
@@ -1785,7 +1783,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   }, [hasVerseSelection.value]);
 
   // A scrolled note should not be where the next open — or the next verse —
-  // starts. Copy, Compare, and Share live at the top of that scroll. A jump
+  // starts. The drawer's actions live at the top of that scroll. A jump
   // to a specific note (below) opts that selection out of the rewind: in a
   // browser the rewind can run after the jump has already placed the note.
   const verseSheetSelectionKey = useComputed(() => {
@@ -3307,36 +3305,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 // showing; the rest live in an overflow row that the grab handle
                 // drags open. The X in the corner handles dismissal, so the
                 // Cancel tool is dropped here.
-                // Copy, Compare, and Share are not part of that always-visible
-                // row. They appear when the drawer opens and stay pinned while
-                // a long note scrolls.
-                const pinnedTools = nonCancel.filter((tool) =>
-                  VERSE_SHEET_PINNED_TOOL_IDS.has(tool.id)
-                );
-                const otherTools = nonCancel.filter(
-                  (tool) => !VERSE_SHEET_PINNED_TOOL_IDS.has(tool.id)
-                );
-                const otherCards = [
+                const actionCards = [
                   highlightCard,
                   saveCard,
-                  ...otherTools.map(renderTool),
+                  ...orderVerseSheetTools(nonCancel).map(renderTool),
                 ].filter(Boolean);
-                const pinnedToolCards = pinnedTools
-                  .map(renderTool)
-                  .filter(Boolean);
-                const actionCards =
-                  otherCards.length > 0 ? otherCards : pinnedToolCards;
-                const pinnedCards =
-                  otherCards.length > 0 ? pinnedToolCards : [];
 
                 // One full row of cards, matching the four-per-row grid below.
                 // Keeping the collapsed sheet to a single row is what makes it
-                // short by default.
+                // short by default. The rest stay pinned above a long note
+                // while it scrolls.
                 const hasOverflow = verseSheetHasHiddenContent.value;
                 const primaryCards = hasOverflow
                   ? actionCards.slice(0, VERSE_SHEET_COLLAPSED_COUNT)
                   : actionCards;
-                const overflowCards = hasOverflow
+                const pinnedCards = hasOverflow
                   ? actionCards.slice(VERSE_SHEET_COLLAPSED_COUNT)
                   : [];
 
@@ -3393,7 +3376,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                               {pinnedCards}
                             </div>
                           )}
-                          {overflowCards}
                           {selectionAnnotations.value.length > 0 && (
                             <div className="sb-verse-toolbar-annotations">
                               {groupAnnotationsByVerseRange(
