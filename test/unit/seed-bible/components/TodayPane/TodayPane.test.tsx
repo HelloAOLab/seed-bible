@@ -185,7 +185,6 @@ describe("TodayPane", () => {
       expect(propsOf(Welcome)).toMatchObject({
         today: props.today,
         login: props.login,
-        theme: props.theme,
         onOpenBookSelector: props.onOpenBookSelector,
         onOpenPassage: props.onOpenPassage,
         onTakeTour: props.onTakeTour,

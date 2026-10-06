@@ -99,12 +99,7 @@ describe("Today screen reactivity", () => {
     } as ReadingHistoryState);
     bookNames = signal(new Map([["GEN", "Genesis"]]));
     profile = signal({ name: "Alice" } as UserProfile);
-    theme = signal(
-      themeWith({
-        secondaryFontColor: "rgb(1, 2, 3)",
-        readerFontColor: "rgb(1, 2, 3)",
-      })
-    );
+    theme = signal(themeWith({ dividerColor: "rgb(1, 2, 3)" }));
     isMobile = signal(false);
   });
 
@@ -156,6 +151,20 @@ describe("Today screen reactivity", () => {
   }
 
   const q = (sel: string) => container.querySelector(sel);
+
+  /**
+   * The timeline is the one card that still colours itself from the theme in
+   * code, and it only mounts under the "all" timespan.
+   */
+  function showTimeline() {
+    act(() => {
+      (
+        container.querySelectorAll(
+          ".sb-today-timespan-filter-option"
+        )[3] as HTMLButtonElement
+      ).click();
+    });
+  }
   const text = (sel: string) => q(sel)?.textContent ?? null;
 
   it("swaps Welcome for the personalized layout when history arrives", () => {
@@ -201,17 +210,19 @@ describe("Today screen reactivity", () => {
   // The regression that prompted this suite: a theme switch has to repaint
   // immediately, without waiting for an unrelated re-render to carry it.
   it("restyles on a theme switch", () => {
-    readingHistory.value = { status: "empty" };
     setup();
-    const icon = () =>
-      q(".sb-today-welcome-screen .sb-today-seed-bible-icon") as SVGSVGElement;
-    expect(icon().style.fill).toBe("rgb(1, 2, 3)");
+    showTimeline();
+    // The legend's first swatch is the colour of an unread day, which the
+    // timeline takes from the theme's divider colour.
+    const unreadSwatch = () =>
+      q(".sb-today-content .legend span[style]") as HTMLElement;
+    expect(unreadSwatch().style.backgroundColor).toBe("rgb(1, 2, 3)");
 
     act(() => {
-      theme.value = themeWith({ readerFontColor: "rgb(9, 9, 9)" });
+      theme.value = themeWith({ dividerColor: "rgb(9, 9, 9)" });
     });
 
-    expect(icon().style.fill).toBe("rgb(9, 9, 9)");
+    expect(unreadSwatch().style.backgroundColor).toBe("rgb(9, 9, 9)");
   });
 
   it("resizes chrome when the viewport crosses the mobile breakpoint", () => {
@@ -248,19 +259,11 @@ describe("Today screen reactivity", () => {
 
   it("leaves the cards that don't read the theme alone on a theme switch", () => {
     setup();
-    // The timeline is the card that reads the theme, and it only mounts under
-    // the "all" timespan.
-    act(() => {
-      (
-        container.querySelectorAll(
-          ".sb-today-timespan-filter-option"
-        )[3] as HTMLButtonElement
-      ).click();
-    });
+    showTimeline();
 
     const counts = renderCounts(() => {
       act(() => {
-        theme.value = themeWith({ secondaryFontColor: "rgb(9, 9, 9)" });
+        theme.value = themeWith({ dividerColor: "rgb(9, 9, 9)" });
       });
     });
 

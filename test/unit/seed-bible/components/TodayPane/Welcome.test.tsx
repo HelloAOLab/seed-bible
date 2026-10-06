@@ -4,7 +4,6 @@ import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { Welcome } from "@packages/seed-bible/seed-bible/components/TodayPane/Welcome";
 import { TimeProvider } from "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
-import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import {
   todayStub,
   loginStub,
@@ -37,7 +36,6 @@ describe("Welcome", () => {
   let getVerseText: Mock;
   let getDefaultTranslation: Mock;
   let lastTranslationId: Signal<string | undefined>;
-  let theme: Signal<BibleTheme>;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -48,9 +46,6 @@ describe("Welcome", () => {
     getVerseText = vi.fn(async () => "raw verse");
     getDefaultTranslation = vi.fn(() => "DEF");
     lastTranslationId = signal<string | undefined>("KJV");
-    theme = signal({
-      variables: { readerFontColor: "#112233" },
-    } as unknown as BibleTheme);
   });
 
   afterEach(() => {
@@ -86,7 +81,6 @@ describe("Welcome", () => {
           <Welcome
             today={today}
             login={loginWithName(options.username)}
-            theme={theme}
             onOpenBookSelector={onOpenBookSelector}
             onOpenPassage={onOpenPassage}
             onTakeTour={onTakeTour}
@@ -140,7 +134,6 @@ describe("Welcome", () => {
                   profile: signal({ name: blankName }) as never,
                   cachedProfile: signal({ name: "John" }) as never,
                 })}
-                theme={theme}
                 onOpenBookSelector={onOpenBookSelector}
                 onOpenPassage={onOpenPassage}
                 onTakeTour={onTakeTour}
@@ -178,7 +171,6 @@ describe("Welcome", () => {
                 profile: profile as never,
                 cachedProfile: cachedProfile as never,
               })}
-              theme={theme}
               onOpenBookSelector={onOpenBookSelector}
               onOpenPassage={onOpenPassage}
               onTakeTour={onTakeTour}
@@ -407,22 +399,12 @@ describe("Welcome", () => {
       );
 
       const icon = q<SVGSVGElement>(".sb-today-seed-bible-icon")!;
-      expect(icon.style.fill).toBe("rgb(17, 34, 51)");
-      expect(icon.style.width).toBe("1.25rem");
-    });
-
-    it("recolours the icon when the theme changes", () => {
-      setup();
-
-      act(() => {
-        theme.value = {
-          variables: { readerFontColor: "#445566" },
-        } as unknown as BibleTheme;
-      });
-
-      expect(q<SVGSVGElement>(".sb-today-seed-bible-icon")!.style.fill).toBe(
-        "rgb(68, 85, 102)"
+      // A CSS variable rather than a resolved colour, so customised themes and
+      // theme switches restyle the icon without a re-render.
+      expect(icon.style.getPropertyValue("fill")).toBe(
+        "var(--sb-reader-font-color)"
       );
+      expect(icon.style.width).toBe("1.25rem");
     });
 
     it("opens the book selector when clicked", () => {
