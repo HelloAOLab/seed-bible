@@ -1780,6 +1780,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     if (!hasVerseSelection.value) {
       isHighlightPickerOpen.value = false;
       isVerseSheetExpanded.value = false;
+      selectedVerseToolId.value = null;
       verseSheetDragReveal.value = null;
       verseSheetDismissOffset.value = 0;
     }
