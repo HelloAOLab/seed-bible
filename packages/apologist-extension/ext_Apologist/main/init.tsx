@@ -231,6 +231,22 @@ export default function initApologistExtension() {
       };
       const customName = computed(() => urlName ?? readSavedText("name"));
       const contentAuthor = computed(() => readSavedText("contentAuthor"));
+      // Checked against the opposite of each default so that a missing value
+      // (settings not loaded yet) keeps chat on and Discover off.
+      const chatEnabled = computed(
+        () =>
+          context.extensionSettings.getValue(
+            APOLOGIST_EXTENSION_ID,
+            "chatEnabled"
+          ) !== false
+      );
+      const discoverEnabled = computed(
+        () =>
+          context.extensionSettings.getValue(
+            APOLOGIST_EXTENSION_ID,
+            "discoverEnabled"
+          ) === true
+      );
 
       const apologistRequest = createApologistRequest(context, {
         domain: apologistDomain,
@@ -501,19 +517,26 @@ export default function initApologistExtension() {
 
       // Registering under the same id swaps the provider in place, so a new
       // name shows in every open chat. Unregistering first would instead
-      // remove the agent from those chats.
-      let unregisterChatProvider: () => void = () => undefined;
-      const disposeNameEffect = effect(() => {
+      // remove the agent from those chats, which is only wanted when chat is
+      // turned off.
+      let unregisterChatProvider: (() => void) | null = null;
+      const disposeChatEffect = effect(() => {
+        const enabled = chatEnabled.value;
         const name = customName.value;
         untracked(() => {
+          if (!enabled) {
+            unregisterChatProvider?.();
+            unregisterChatProvider = null;
+            return;
+          }
           unregisterChatProvider = context.chats.registerProvider(
             createChatProvider(name)
           );
         });
       });
       yield () => {
-        disposeNameEffect();
-        unregisterChatProvider();
+        disposeChatEffect();
+        unregisterChatProvider?.();
       };
 
       // `reference` has to name the chapter being read: results whose
@@ -566,7 +589,8 @@ export default function initApologistExtension() {
       };
 
       // The provider is swapped whenever the team, name or content author
-      // changes, which also re-runs the search for the open chapter.
+      // changes, which also re-runs the search for the open chapter. It's
+      // removed while Discover is turned off or there's no team.
       const teamId = computed(() => {
         if (urlTeamId !== null) {
           return urlTeamId;
@@ -581,7 +605,7 @@ export default function initApologistExtension() {
       });
       let unregisterDiscoverProvider: (() => void) | null = null;
       const disposeDiscoverEffect = effect(() => {
-        const id = teamId.value;
+        const id = discoverEnabled.value ? teamId.value : null;
         const name = customName.value;
         const author = contentAuthor.value;
         untracked(() => {

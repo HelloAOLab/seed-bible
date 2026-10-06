@@ -41,10 +41,12 @@ If you want to prompt users to continue the conversation in the Seed Bible, you 
 
 Signed-in users can save their Apologist agent in the Apologist extension's settings:
 
+- **Chat** - Whether the Apologist agent is offered in chats. On by default. Turning it off removes the agent from the list of chat agents and from any open chats.
+- **Discover content** - Whether your team's articles, videos and other content appear in the Discover pane. Off by default, and it needs a team ID (from the Team ID setting or `apologistTeamID`) to show anything.
 - **Host** - The domain of the agent, e.g. `my.agent.domain.bot`. Defaults to `apologist.seedbible.io`.
 - **Agent name** - The name shown for the agent in chats and on its Discover section. Leave blank for "Apologist". If the link includes `apologistName`, that one is used instead.
 - **AI model** - The model the agent uses. Leave blank for `openai/gpt/5-mini`. If the link includes `apologistModel`, that one is used instead. A change applies from the next message.
-- **Team ID** - The Apologist team whose content appears in the Discover pane. Changing it updates the Discover pane right away. If the link includes `apologistTeamID`, that one is used instead.
+- **Team ID** - The Apologist team whose content appears in the Discover pane when Discover content is turned on. Changing it updates the Discover pane right away. If the link includes `apologistTeamID`, that one is used instead.
 - **Content author** - The name your team's content is grouped under in the Discover pane. Leave blank to group each item by the website it comes from (e.g. "ligonier.org").
 - **API key** - Stored as a sensitive setting: it's kept in a CasualOS proxy record owned by the user and never sent back to the browser. CasualOS adds it to each request on the server, in the `x-api-key` header.
 
@@ -73,7 +75,7 @@ You can configure the Apologist Chat Provider by setting the following variables
 - `apologistModel` - The model that should be used. Takes priority over the AI model setting. If neither is set, then `openai/gpt/5-mini` will be used.
   - See the [Apologist Documentation](https://apologistproject.org/documentation/apologist-fusion/chat-completion#8-toc-title) for a list of supported models.
 
-- `apologistTeamID` - Takes priority over the Team ID setting. The integer ID of the Apologist team whose content should be shown in the Discover pane. If specified, then each chapter is searched (e.g. "John 3") against the team's articles, YouTube videos, episodes, media, and links using the semantic search API of the agent at `apologistDomain`, and the matches are shown as discovered content.
+- `apologistTeamID` - Takes priority over the Team ID setting. The integer ID of the Apologist team whose content should be shown in the Discover pane. If specified, then each chapter is searched (e.g. "John 3") against the team's articles, YouTube videos, episodes, media, and links using the semantic search API of the agent at `apologistDomain`, and the matches are shown as discovered content. The Discover content setting must also be turned on.
   - The request is sent to `apologistDomain` and authenticated with `apologistApiKey`, so you should also include both.
 
 ### Examples
