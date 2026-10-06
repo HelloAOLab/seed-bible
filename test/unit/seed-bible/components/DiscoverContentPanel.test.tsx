@@ -9,6 +9,7 @@ import {
   createDiscoverManager,
   type DiscoverContentTypeDefinition,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { createRealFriendContent } from "../testUtils/realFriendContent";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -123,6 +124,7 @@ function createMockTab(
 function createMockState(
   overrides: {
     annotationsForChapter?: Annotation[];
+    pendingCountForChapter?: number;
     contentTypes?: DiscoverContentTypeDefinition[];
   } = {}
 ): SeedBibleState {
@@ -144,13 +146,20 @@ function createMockState(
     panes: { closeFullscreenPanes: vi.fn() },
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
+    friends: {
+      friends: signal([]),
+      friendIds: signal([]),
+    },
     annotations: {
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
       ),
+      getUserAnnotationsForChapter: vi.fn(() => signal([])),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
       hasRecordOverride: false,
-      pendingCountForChapter: vi.fn(() => 0),
+      pendingCountForChapter: vi.fn(
+        () => overrides.pendingCountForChapter ?? 0
+      ),
       sync: {
         pendingCount: signal(0),
       },
@@ -198,6 +207,51 @@ describe("DiscoverContentPanel", () => {
     expect(container.textContent).toContain("Exodus 5:3");
   });
 
+  it("hides the notes section when the chapter has no notes", () => {
+    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+    const state = createMockState({ annotationsForChapter: [] });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-discover-content-panel")
+    ).not.toBeNull();
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).not.toContain("Notes");
+    expect(container.textContent).not.toContain(
+      "You don't have any notes for this chapter."
+    );
+    expect(container.textContent).toContain("Exodus 5:3");
+  });
+
+  it("keeps the notes section when a deletion is still waiting to sync", () => {
+    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+    const state = createMockState({
+      annotationsForChapter: [],
+      pendingCountForChapter: 1,
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toContain("Notes");
+    expect(
+      container.querySelector(".sb-annotations-pending-sync")?.textContent
+    ).toContain("waiting to sync");
+    const chipLabels = Array.from(
+      container.querySelectorAll(".sb-dcp-chip")
+    ).map((el) => el.textContent);
+    expect(chipLabels).toEqual(["All", "Notes", "Cross Refs"]);
+  });
+
   it("renders the tab's notes (annotations) even when there are no other discovered results", () => {
     const tab = createMockTab();
     const state = createMockState({
@@ -216,6 +270,47 @@ describe("DiscoverContentPanel", () => {
     ).map((el) => el.textContent);
     expect(sectionTitles).toContain("Notes");
     expect(container.textContent).toContain("A helpful note.");
+  });
+
+  it("shows a friend's notes on a chapter where the user has none of their own", async () => {
+    const tab = createMockTab();
+    const mockState = createMockState();
+    // The real managers, so the friend's note is loaded from the server
+    // the way the app loads it.
+    const { login, friends, annotations } = await createRealFriendContent({
+      friendIds: ["friend-1"],
+      notes: {
+        "friend-1": [
+          createAnnotation({
+            id: "friend-note",
+            data: {
+              type: "comment",
+              html: "<p>A friend's note.</p>",
+              userId: "friend-1",
+            },
+          } as Partial<Annotation>),
+        ],
+      },
+      discover: mockState.discover,
+    });
+    const state = {
+      ...mockState,
+      login,
+      friends,
+      annotations,
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    await vi.waitFor(() =>
+      expect(container.textContent).toContain("A friend's note.")
+    );
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toContain("Notes");
   });
 
   it("renders nothing when there are discovered results absent but also no annotations", () => {
@@ -325,6 +420,52 @@ describe("DiscoverContentPanel", () => {
 
     expect(container.querySelector(".sb-dcp-filters")).toBeNull();
     expect(container.textContent).toContain("A helpful note.");
+  });
+
+  it("falls back to the 'all' filter when the last note goes away", () => {
+    const tab = createMockTab({
+      discoveredCrossReferences: RESULTS_FIXTURE,
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [{ title: "A related article" }],
+        },
+      ],
+    });
+    const annotationsForChapter = signal<Annotation[]>([createAnnotation()]);
+    const state = createMockState();
+    state.annotations.getAnnotationsForChapter = vi.fn(
+      () => annotationsForChapter
+    );
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    const getChip = (label: string) =>
+      Array.from(container.querySelectorAll(".sb-dcp-chip")).find(
+        (el) => el.textContent === label
+      ) as HTMLButtonElement | undefined;
+
+    act(() => {
+      getChip("Notes")!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    expect(getChip("Notes")!.getAttribute("aria-selected")).toBe("true");
+
+    // A second content type stays so the chip row remains; with only cross
+    // references left the row would hide because a single kind of content
+    // does not get filter chips.
+    act(() => {
+      annotationsForChapter.value = [];
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    expect(getChip("All")!.getAttribute("aria-selected")).toBe("true");
+    expect(getChip("Notes")).toBeUndefined();
+    expect(container.textContent).toContain("Exodus 5:3");
+    expect(container.textContent).toContain("A related article");
   });
 
   describe("registered content types", () => {
@@ -575,5 +716,167 @@ describe("DiscoverContentPanel", () => {
     });
 
     expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
+  });
+
+  describe("side panel max height", () => {
+    let observedElements: Map<Element, () => void>;
+
+    class MockResizeObserver {
+      constructor(public cb: () => void) {}
+      observe(element: Element) {
+        observedElements.set(element, this.cb);
+      }
+      disconnect() {
+        for (const [element, cb] of observedElements) {
+          if (cb === this.cb) observedElements.delete(element);
+        }
+      }
+    }
+
+    let scroller: HTMLDivElement;
+    let paneRect: { top: number; bottom: number };
+
+    beforeEach(() => {
+      observedElements = new Map();
+      vi.stubGlobal("ResizeObserver", MockResizeObserver);
+      vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+        cb(0);
+        return 0;
+      });
+      vi.stubGlobal("cancelAnimationFrame", () => {});
+      vi.stubGlobal("innerHeight", 900);
+
+      // Stand-in for `.sb-pane-reader`: the scrolling pane the panel sticks in.
+      scroller = document.createElement("div");
+      scroller.style.overflowY = "auto";
+      paneRect = { top: 60, bottom: 900 };
+      scroller.getBoundingClientRect = () =>
+        ({ top: paneRect.top, bottom: paneRect.bottom }) as DOMRect;
+      container.remove();
+      scroller.appendChild(container);
+      document.body.appendChild(scroller);
+      document.documentElement.style.setProperty(
+        "--sb-reader-bottom-inset",
+        "100px"
+      );
+    });
+
+    afterEach(() => {
+      scroller.remove();
+      document.documentElement.style.removeProperty("--sb-reader-bottom-inset");
+      vi.unstubAllGlobals();
+    });
+
+    function renderPanel() {
+      act(() => {
+        render(
+          <DiscoverContentPanel
+            tab={createMockTab()}
+            state={createMockState({
+              annotationsForChapter: [createAnnotation()],
+            })}
+          />,
+          container
+        );
+      });
+      return container.querySelector(
+        ".sb-discover-content-panel"
+      ) as HTMLElement;
+    }
+
+    it("caps the panel to the pane area between the tab bar and the bottom toolbar", () => {
+      const panel = renderPanel();
+
+      // Pane starts 60px down (tab bar); toolbar covers the bottom 100px.
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "740px"
+      );
+    });
+
+    it("caps the panel to a pane that ends above the bottom of the screen", () => {
+      paneRect = { top: 60, bottom: 400 };
+      const panel = renderPanel();
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "340px"
+      );
+    });
+
+    it("re-measures when the bottom toolbar changes height", async () => {
+      const panel = renderPanel();
+
+      document.documentElement.style.setProperty(
+        "--sb-reader-bottom-inset",
+        "300px"
+      );
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "540px"
+      );
+    });
+
+    it("leaves room for the panel's sticky top offset", () => {
+      const panel = renderPanel();
+
+      // jsdom doesn't apply the stylesheet's `top: 1rem`, so set it inline and
+      // let the pane resize trigger the re-measure.
+      panel.style.top = "16px";
+      act(() => observedElements.get(scroller)?.());
+
+      // 900 − 100 (toolbar) − 60 (pane top) − 16 (sticky top)
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "724px"
+      );
+    });
+
+    it("re-measures when the pane is resized", () => {
+      const panel = renderPanel();
+
+      paneRect = { top: 60, bottom: 500 };
+      act(() => observedElements.get(scroller)?.());
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "440px"
+      );
+    });
+
+    it("re-measures when the window is resized", () => {
+      const panel = renderPanel();
+
+      vi.stubGlobal("innerHeight", 700);
+      paneRect = { top: 60, bottom: 700 };
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "540px"
+      );
+    });
+
+    it("stops measuring once the panel unmounts", () => {
+      const panel = renderPanel();
+
+      act(() => render(null, container));
+
+      expect(observedElements.size).toBe(0);
+      vi.stubGlobal("innerHeight", 700);
+      window.dispatchEvent(new Event("resize"));
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "740px"
+      );
+    });
+
+    it("never shrinks the panel below a usable minimum", () => {
+      paneRect = { top: 60, bottom: 120 };
+      const panel = renderPanel();
+
+      expect(panel.style.getPropertyValue("--sb-dcp-side-max-height")).toBe(
+        "192px"
+      );
+    });
   });
 });

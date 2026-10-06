@@ -1,4 +1,4 @@
-import type { LoggerPort } from "../../../application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/out/Logger";
 
 /**
  * Console-backed implementation of {@link LoggerPort}. Keeps the domain/

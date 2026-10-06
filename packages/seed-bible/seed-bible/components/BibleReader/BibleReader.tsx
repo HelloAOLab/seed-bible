@@ -1,6 +1,7 @@
 import "./BibleReader.inline.css";
 import "./BibleReader.css";
 import {
+  type Translation,
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
@@ -43,9 +44,11 @@ import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   annotationVerseNumbers,
+  visibleChapterAnnotations,
   type Annotation,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
+import type { FriendsManager } from "../../managers/FriendsManager";
 import type {
   BibleReadingSession,
   ConnectionSessionUserVisual,
@@ -54,7 +57,7 @@ import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
-import { InfoSettingsIcon } from "../../components/icons";
+import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import {
@@ -65,6 +68,10 @@ import {
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
+import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
+import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
+import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
+import { findScrollContainer, readBottomChromeInset } from "./readerViewport";
 
 interface ReaderChapterActionProps {
   state: SeedBibleState;
@@ -123,6 +130,72 @@ function ReaderSaveButton(props: ReaderChapterActionProps) {
  * is this one line rather than a rebuild of the layout around it.
  */
 const SHOW_BOOKMARK_BUTTON = false;
+
+/**
+ * Offers downloaded translations the reader can switch to after a chapter
+ * load fails. One match is a switch button; two or more are chosen from the
+ * same searchable picker Settings uses for language. The message above this
+ * stays generic. These controls are what name the translations.
+ */
+function OfflineFallbackSwitch(props: {
+  translations: Translation[];
+  onSwitch: (translation: Translation) => void;
+}) {
+  const { translations, onSwitch } = props;
+  const { t } = useI18n();
+  const [selectedId, setSelectedId] = useState(translations[0]?.id ?? "");
+  const selected =
+    translations.find((item) => item.id === selectedId) ?? translations[0];
+  if (!selected) {
+    return null;
+  }
+
+  return translations.length === 1 ? (
+    <button
+      type="button"
+      className="sb-reader-error-switch"
+      onClick={() => onSwitch(selected)}
+    >
+      {t("chapter-unavailable-offline-switch-action", {
+        defaultValue: "Switch to {{name}}",
+        name: selected.name,
+      })}
+    </button>
+  ) : (
+    <div className="sb-reader-error-offline-pick">
+      <label
+        className="sb-reader-error-offline-label"
+        htmlFor="sb-reader-error-offline-select"
+      >
+        {t("chapter-unavailable-offline-switch-choose", {
+          defaultValue: "Choose a saved translation",
+        })}
+      </label>
+      <SearchableSelect
+        id="sb-reader-error-offline-select"
+        value={selected.id}
+        options={translations.map((item) => ({
+          id: item.id,
+          label: item.name,
+        }))}
+        onChange={setSelectedId}
+        searchPlaceholder={t("search", { defaultValue: "Search" })}
+        emptyLabel={t("chapter-unavailable-offline-switch-empty", {
+          defaultValue: "No matching translations",
+        })}
+      />
+      <button
+        type="button"
+        className="sb-reader-error-switch"
+        onClick={() => onSwitch(selected)}
+      >
+        {t("chapter-unavailable-offline-switch-confirm", {
+          defaultValue: "Switch",
+        })}
+      </button>
+    </div>
+  );
+}
 
 /**
  * Placeholder for the redesigned bookmarks of #1658. The archival behavior
@@ -190,7 +263,12 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
   const { t } = useI18n();
   const chapterAnnotations =
     bookId && chapterNumber
-      ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+      ? visibleChapterAnnotations(
+          state.annotations,
+          state.friends.friendIds.value,
+          bookId,
+          chapterNumber
+        )
       : [];
   const noteCount = chapterAnnotations.length;
 
@@ -1544,40 +1622,6 @@ function placePresenceArrows(
   return arrows;
 }
 
-/** The nearest ancestor that scrolls, or null when the page itself does. */
-function findScrollContainer(element: HTMLElement): HTMLElement | null {
-  for (
-    let node = element.parentElement;
-    node && node !== document.body;
-    node = node.parentElement
-  ) {
-    const { overflowY } = getComputedStyle(node);
-    if (overflowY === "auto" || overflowY === "scroll") {
-      return node;
-    }
-  }
-  return null;
-}
-
-/**
- * How much of the bottom of the reader the fixed bottom chrome covers, read
- * from the variable BibleReaderToolbar keeps up to date. Written in px at
- * runtime; the stylesheet fallback is in rem.
- */
-function readBottomChromeInset(): number {
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue("--sb-reader-bottom-inset")
-    .trim();
-  const value = parseFloat(raw);
-  if (!Number.isFinite(value)) return 0;
-  if (raw.endsWith("rem")) {
-    return (
-      value * parseFloat(getComputedStyle(document.documentElement).fontSize)
-    );
-  }
-  return raw.endsWith("px") ? value : 0;
-}
-
 /**
  * Where the screen is over the chapter content, in the content's own
  * coordinates. Accounts for the mobile header floating over the top of the
@@ -1744,6 +1788,8 @@ interface ChapterContentProps {
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
   annotations?: AnnotationsManager;
+  /** Whose notes besides the user's own get verse markers. */
+  friends?: FriendsManager;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -1791,6 +1837,7 @@ function ChapterContent(props: ChapterContentProps) {
     highlights,
     decorations,
     annotations,
+    friends,
     selectVerse,
     selectFootnote,
     selectVersesFromTextSelection,
@@ -1806,10 +1853,12 @@ function ChapterContent(props: ChapterContentProps) {
   const currentChapter = chapterData.value;
   const chapterAnnotations =
     currentChapter && annotations
-      ? annotations.getAnnotationsForChapter(
+      ? visibleChapterAnnotations(
+          annotations,
+          friends?.friendIds.value ?? [],
           currentChapter.book.id,
           currentChapter.chapter.number
-        ).value
+        )
       : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -2478,7 +2527,9 @@ export function BibleReader(props: BibleReaderProps) {
     () => translation.value?.website.trim() ?? ""
   );
 
-  const isMobile = state?.app.isMobile.value ?? false;
+  const isMinimalEmbed = state?.app.isMinimalEmbed?.value ?? false;
+  const isCompactReader =
+    state?.app.isCompactReader?.value ?? state?.app.isMobile.value ?? false;
 
   // Where the other people in this session are (#1692). Only participants
   // reading the same chapter can be placed against verses on this page, and
@@ -2553,7 +2604,7 @@ export function BibleReader(props: BibleReaderProps) {
       return;
     }
 
-    if (isMobile) {
+    if (isCompactReader) {
       selectVerse(verse, event.clientX, event.clientY);
       readingState.pendingAnnotationScrollVerse.value = verseNumber;
       return;
@@ -2605,7 +2656,7 @@ export function BibleReader(props: BibleReaderProps) {
     isContentStale && (chapterData.value === null || isWaitLong);
   const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const scriptureElements: ScriptureElementsBehavior =
     props.scriptureElements ??
       state?.settings?.settings.value.scriptureElements ?? {
@@ -2706,11 +2757,19 @@ export function BibleReader(props: BibleReaderProps) {
     }
   };
 
+  // Only the current panel's title opens the selector; the side panels are
+  // non-interactive previews for the swipe transition.
   const renderMobileChapterTitle = (
     bookName: string,
-    chapter: number | string
+    chapter: number | string,
+    interactive = false
   ) => (
-    <h2 className="sb-bible-reader-mobile-content-title">
+    <h2
+      className={`sb-bible-reader-mobile-content-title${
+        interactive ? " sb-bible-reader-mobile-content-title-tappable" : ""
+      }`}
+      {...(interactive ? flingSafeTapHandlers(openBookSelector) : {})}
+    >
       <span className="sb-bible-reader-book">{bookName}</span>
       <span className="sb-bible-reader-chapter">{chapter}</span>
     </h2>
@@ -2726,7 +2785,7 @@ export function BibleReader(props: BibleReaderProps) {
     <SkeletonContainer
       label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
       className={`sb-chapter-content sb-chapter-skeleton${
-        isMobile ? " sb-chapter-content-note-gutter" : ""
+        isCompactReader ? " sb-chapter-content-note-gutter" : ""
       }`}
     >
       <Skeleton shape="block" width="42%" />
@@ -2755,12 +2814,57 @@ export function BibleReader(props: BibleReaderProps) {
   };
   const showLoadError = (!!error.value && !loading.value) || retrying;
 
+  const offlineRecords = state?.bibleData?.offline?.records.value;
+  // The signal, not `getCachedTranslationBooks`: that helper reads untracked,
+  // so a catalog that arrives after this panel is on screen would never
+  // update the offer. Downloaded copies carry their own book list too; the
+  // cache wins when both exist, because that is the catalog a switch would use.
+  const cachedTranslationBooks = state?.bibleData?.translationBooks?.value;
+  const requestedTranslationLanguage =
+    translation.value?.language ||
+    availableTranslations.value?.translations.find(
+      (item) => item.id === translationId.value
+    )?.language ||
+    (translationId.value
+      ? offlineRecords?.get(translationId.value)?.translation.language
+      : undefined);
+  const offlineFallbackTranslations =
+    showLoadError && offlineRecords
+      ? findOfflineTranslationFallbacks({
+          currentTranslationId: translationId.value,
+          currentTranslationLanguage: requestedTranslationLanguage,
+          uiLanguage: language,
+          downloaded: Array.from(offlineRecords.values()),
+          bookId: bookId.value,
+          chapterNumber: chapterNumber.value ?? 1,
+          booksFor: (id) =>
+            cachedTranslationBooks?.get(id)?.books ??
+            offlineRecords.get(id)?.books ??
+            null,
+        })
+      : [];
+
+  const switchToOfflineTranslation = (nextTranslation: Translation) => {
+    const book = bookId.value;
+    const chapter = chapterNumber.value ?? 1;
+    if (!book) {
+      void readingState.selectTranslation(nextTranslation.id);
+      return;
+    }
+    void readingState.selectTranslationAndChapter(
+      nextTranslation.id,
+      book,
+      chapter
+    );
+  };
+
   const renderMainContent = () => (
     <>
-      {isMobile &&
+      {isCompactReader &&
         renderMobileChapterTitle(
           currentBookName.value ?? bookId.value ?? "",
-          chapterNumber.value ?? ""
+          chapterNumber.value ?? "",
+          true
         )}
 
       {bookNotFound.value && (
@@ -2822,23 +2926,44 @@ export function BibleReader(props: BibleReaderProps) {
                 "We were unable to load the data for this chapter. Please check your internet connection and try again.",
             })}
           </p>
-          <button
-            type="button"
-            className="sb-reader-error-retry"
-            onClick={() => void retryChapterLoad()}
-            disabled={retrying}
-            aria-busy={retrying}
-          >
-            {retrying && (
-              <span
-                className="material-symbols-outlined sb-reader-error-retry-spinner"
-                aria-hidden="true"
-              >
-                progress_activity
-              </span>
+          {offlineFallbackTranslations.length > 0 && (
+            <p className="sb-reader-error-offline">
+              {t("chapter-unavailable-offline-switch", {
+                count: offlineFallbackTranslations.length,
+                bookName: currentBookName.value ?? bookId.value ?? "",
+                chapterNumber: chapterNumber.value ?? 1,
+                defaultValue_one:
+                  "You have a translation saved on your device that contains {{bookName}} {{chapterNumber}}.",
+                defaultValue_other:
+                  "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
+              })}
+            </p>
+          )}
+          <div className="sb-reader-error-actions">
+            <button
+              type="button"
+              className="sb-reader-error-retry"
+              onClick={() => void retryChapterLoad()}
+              disabled={retrying}
+              aria-busy={retrying}
+            >
+              {retrying && (
+                <span
+                  className="material-symbols-outlined sb-reader-error-retry-spinner"
+                  aria-hidden="true"
+                >
+                  progress_activity
+                </span>
+              )}
+              {t("reload", { defaultValue: "Reload" })}
+            </button>
+            {offlineFallbackTranslations.length > 0 && (
+              <OfflineFallbackSwitch
+                translations={offlineFallbackTranslations}
+                onSwitch={switchToOfflineTranslation}
+              />
             )}
-            {t("reload", { defaultValue: "Reload" })}
-          </button>
+          </div>
         </div>
       )}
 
@@ -2867,11 +2992,12 @@ export function BibleReader(props: BibleReaderProps) {
               highlights={highlights}
               decorations={decorations}
               annotations={state?.annotations}
+              friends={state?.friends}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
               onAnnotationVerseClick={handleAnnotationVerseClick}
-              isMobile={isMobile}
+              isMobile={isCompactReader}
               presence={sharedSession ? presence : undefined}
               onVisibleVersesChange={reportVisibleVerses}
             />
@@ -2914,35 +3040,38 @@ export function BibleReader(props: BibleReaderProps) {
   // const extraContent = discoverPanel ? (
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
-  const extraContent = state ? (
-    <DiscoverContentPanel tab={currentSlot.tab} state={state} />
-  ) : null;
+  const extraContent =
+    state && !state.app.isDiscoverOpen.value ? (
+      <DiscoverContentPanel tab={currentSlot.tab} state={state} />
+    ) : null;
 
   return (
     <div
       className={`sb-bible-reader ${readerFontSizeClass}${
-        isMobile ? " sb-bible-reader-mobile" : ""
+        isCompactReader ? " sb-bible-reader-mobile" : ""
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
-      {isMobile && state ? (
+      {isCompactReader && state ? (
         <Fragment key="mobile">
           <div
             className={`sb-bible-reader-mobile-header${
-              mobileChrome?.isScrolled
+              !isMinimalEmbed && mobileChrome?.isScrolled
                 ? " sb-bible-reader-mobile-header-hidden"
                 : ""
             }`}
           >
             <div className="sb-bible-reader-mobile-header-text">
               <h1 className="sb-bible-reader-mobile-header-title">
-                <span
-                  className="sb-bible-reader-mobile-header-book"
-                  onClick={openBookSelector}
-                >
-                  {currentBookName.value ?? bookId.value ?? ""}{" "}
-                  {chapterNumber.value}
-                </span>
+                {!isMinimalEmbed && (
+                  <span
+                    className="sb-bible-reader-mobile-header-book"
+                    onClick={openBookSelector}
+                  >
+                    {currentBookName.value ?? bookId.value ?? ""}{" "}
+                    {chapterNumber.value}
+                  </span>
+                )}
                 <button
                   type="button"
                   className="sb-bible-reader-mobile-header-translation"
@@ -2956,62 +3085,100 @@ export function BibleReader(props: BibleReaderProps) {
                 </button>
               </h1>
             </div>
-            <ChapterNotesButton
-              state={state}
-              bookId={bookId.value}
-              chapterNumber={chapterNumber.value}
-            />
+            {!isMinimalEmbed && (
+              <ChapterNotesButton
+                state={state}
+                bookId={bookId.value}
+                chapterNumber={chapterNumber.value}
+              />
+            )}
             <div className="sb-bible-reader-mobile-header-actions">
-              {!state.playlists.playing.value && (
+              {isMinimalEmbed ? (
                 <>
-                  <ReaderSaveButton
-                    state={state}
-                    translationId={translationId.value}
-                    bookId={bookId.value}
-                    chapterNumber={chapterNumber.value}
-                  />
-                  {SHOW_BOOKMARK_BUTTON && (
-                    <ReaderBookmarkButton
-                      state={state}
-                      translationId={translationId.value}
-                      bookId={bookId.value}
-                      chapterNumber={chapterNumber.value}
-                    />
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-header-open-tab"
+                    aria-label={t("open-in-new-tab", {
+                      defaultValue: "Open in New Tab",
+                    })}
+                    title={t("open-in-new-tab", {
+                      defaultValue: "Open in New Tab",
+                    })}
+                    onClick={() => {
+                      window.open(
+                        urlWithoutEmbedParam(state.navigation.currentUrl.value)
+                          .href,
+                        "_blank",
+                        "noopener,noreferrer"
+                      );
+                    }}
+                  >
+                    <MaterialIcon>open_in_new</MaterialIcon>
+                  </button>
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-header-settings"
+                    onClick={() => mobileChrome?.onOpenMobileSettings()}
+                    aria-label={t("settings", { defaultValue: "Settings" })}
+                    title={t("settings", { defaultValue: "Settings" })}
+                  >
+                    <InfoSettingsIcon />
+                  </button>
+                </>
+              ) : (
+                <>
+                  {!state.playlists.playing.value && (
+                    <>
+                      <ReaderSaveButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                      {SHOW_BOOKMARK_BUTTON && (
+                        <ReaderBookmarkButton
+                          state={state}
+                          translationId={translationId.value}
+                          bookId={bookId.value}
+                          chapterNumber={chapterNumber.value}
+                        />
+                      )}
+                    </>
                   )}
+                  <QuickToolbar
+                    toolsManager={state.tools}
+                    readingState={readingState}
+                    playlists={state.playlists}
+                    annotations={state.annotations}
+                    features={state.features}
+                    sharedSession={sharedSession ?? null}
+                    toast={state.app.toast}
+                    modals={state.modals}
+                    app={state.app}
+                    className="sb-quick-toolbar-mobile-header"
+                  />
+                  {/*
+                   * No account avatar here: "You" is a bottom-bar tab again
+                   * (#1554), and two avatars on one screen made it unclear which
+                   * one was the way to your profile.
+                   */}
+                  {sharedSession ? (
+                    <MobileSessionParticipants
+                      state={state}
+                      session={sharedSession}
+                    />
+                  ) : null}
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-header-settings"
+                    onClick={() => mobileChrome?.onOpenMobileSettings()}
+                    aria-label={t("settings", { defaultValue: "Settings" })}
+                    title={t("settings", { defaultValue: "Settings" })}
+                  >
+                    <InfoSettingsIcon />
+                  </button>
                 </>
               )}
-              <QuickToolbar
-                toolsManager={state.tools}
-                readingState={readingState}
-                playlists={state.playlists}
-                annotations={state.annotations}
-                features={state.features}
-                sharedSession={sharedSession ?? null}
-                toast={state.app.toast}
-                modals={state.modals}
-                app={state.app}
-                className="sb-quick-toolbar-mobile-header"
-              />
-              {/*
-               * No account avatar here: "You" is a bottom-bar tab again
-               * (#1554), and two avatars on one screen made it unclear which
-               * one was the way to your profile.
-               */}
-              {sharedSession ? (
-                <MobileSessionParticipants
-                  state={state}
-                  session={sharedSession}
-                />
-              ) : null}
-              <button
-                type="button"
-                className="sb-bible-reader-mobile-header-settings"
-                onClick={() => mobileChrome?.onOpenMobileSettings()}
-                aria-label={t("settings", { defaultValue: "Settings" })}
-                title={t("settings", { defaultValue: "Settings" })}
-              >
-                <InfoSettingsIcon />
-              </button>
             </div>
           </div>
 

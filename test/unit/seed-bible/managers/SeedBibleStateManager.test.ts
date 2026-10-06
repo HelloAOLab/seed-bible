@@ -139,6 +139,20 @@ const mockSessionsManager = {
   createSession: vi.fn(),
   joinSession: vi.fn(),
 };
+// `InvitationsManager` opens a real shared-document WebSocket connection when
+// a session is published (`publishSession`, called from
+// `createSharedSession()`) — that's fine in the browser, but there's no
+// network egress to the records server in this test environment, so the real
+// implementation is mocked out here exactly like the other managers below
+// that would otherwise touch real state/network during `createSeedBibleState`.
+const mockInvitationsManager = {
+  availableSessions: signal([]),
+  publishSession: vi.fn().mockResolvedValue(undefined),
+  unpublishSession: vi.fn().mockResolvedValue(undefined),
+  joinAvailableSession: vi.fn().mockResolvedValue(undefined),
+  dismissAvailableSession: vi.fn(),
+  dispose: vi.fn(),
+};
 
 vi.mock(
   "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
@@ -164,6 +178,10 @@ vi.mock(
     createSessionsManager: () => mockSessionsManager,
   })
 );
+
+vi.mock("@packages/seed-bible/seed-bible/managers/InvitationsManager", () => ({
+  createInvitationsManager: () => mockInvitationsManager,
+}));
 
 vi.mock(
   "@packages/seed-bible/seed-bible/i18n/I18nManager",
@@ -191,6 +209,11 @@ beforeEach(() => {
   mockHighlightsManager.saveChapterHighlights.mockReset();
   mockSessionsManager.createSession.mockReset();
   mockSessionsManager.joinSession.mockReset();
+  mockInvitationsManager.publishSession.mockClear();
+  mockInvitationsManager.unpublishSession.mockClear();
+  mockInvitationsManager.joinAvailableSession.mockClear();
+  mockInvitationsManager.dismissAvailableSession.mockClear();
+  mockInvitationsManager.dispose.mockClear();
 });
 
 afterEach(() => {
@@ -229,6 +252,8 @@ function createMockSharedSession(id: string) {
       translationBooks: signal(null),
       selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),
       getUrlQueryParams: vi.fn().mockReturnValue({}),
+      getUrlPathOverride: vi.fn().mockReturnValue(null),
+      requestUrlUpdate: vi.fn(),
       // TabsManager subscribes to reading-state navigation events to drive the
       // URL; the mock just returns a no-op unsubscribe.
       onNavigate: vi.fn().mockReturnValue(() => undefined),
@@ -477,6 +502,10 @@ describe("createSeedBibleState", () => {
     const result = await state.app.createSharedSession();
 
     expect(mockSessionsManager.createSession).toHaveBeenCalledTimes(1);
+    // Auto-publishes to the shared-sessions registry so friends can see it
+    // — through the mock, not the real `InvitationsManager`, which would
+    // otherwise open a real WebSocket connection.
+    expect(mockInvitationsManager.publishSession).toHaveBeenCalledWith(session);
     expect(result).toBe(session);
     expect(state.tabs.tabs.value).toHaveLength(previousTabCount + 1);
     expect(state.tabs.tabs.value[previousTabCount]?.readingState).toBe(
@@ -516,6 +545,8 @@ describe("createSeedBibleState", () => {
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
       onFeatureFlags: vi.fn(),
+      register_for_session: vi.fn(),
+      unregister_for_session: vi.fn(),
     };
 
     try {
@@ -576,6 +607,8 @@ describe("createSeedBibleState", () => {
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
       onFeatureFlags: vi.fn(),
+      register_for_session: vi.fn(),
+      unregister_for_session: vi.fn(),
     };
 
     try {
@@ -1658,6 +1691,8 @@ describe("createSeedBibleState", () => {
       (globalThis as any).posthog = {
         capture: mockPosthogCapture,
         onFeatureFlags: vi.fn(),
+        register_for_session: vi.fn(),
+        unregister_for_session: vi.fn(),
       };
     });
 
