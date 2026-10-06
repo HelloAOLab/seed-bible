@@ -7,6 +7,12 @@ import {
   resolveMessageAuthors,
   type ChatProviderMessageOptions,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import {
+  getEffectiveSeedTranslationForAi,
+  postApologistChatCompletion,
+  resolveApologistBible,
+  uiLocaleForApologist,
+} from "./apologistBible";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -209,13 +215,26 @@ export default function initApologistExtension() {
         generateResponse: async function* (
           chatContext
         ): AsyncGenerator<ChatProviderMessageOptions> {
-          const instructions =
+          const seedTranslation = getEffectiveSeedTranslationForAi(context);
+          const bibleResolution = resolveApologistBible(seedTranslation);
+          if (bibleResolution.usedFallback && seedTranslation) {
+            console.warn(
+              `[Apologist] Bible translation "${seedTranslation.id}" isn't supported; using "${bibleResolution.code}" instead.`
+            );
+          }
+
+          const uiLanguage = uiLocaleForApologist(i18n.language);
+          const readingInstructions =
             chatContext.instructions ??
-            `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`;
+            `Currently reading: ${context.app.selectedTab.value?.readingState.bookId.value} ${context.app.selectedTab.value?.readingState.chapterNumber.value}`;
+          const languageAndBibleInstructions = [
+            `User has their UI language set to ${uiLanguage}, however when speaking to the user you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to speaking to them in ${uiLanguage}.`,
+            `When quoting scripture for the user, use their active Bible translation which is ${bibleResolution.code}.`,
+          ].join(" ");
 
           const contextMessage: ChatMessage = {
             role: "developer",
-            content: instructions,
+            content: `${readingInstructions}\n\n${languageAndBibleInstructions}`,
           };
 
           const tools = chatContext.tools?.map((t) => ({
@@ -255,28 +274,32 @@ export default function initApologistExtension() {
             }
           }
 
-          for (let turn = 0; turn < MAX_COMPLETION_TURNS; turn++) {
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/chat/completions`,
-              {
-                method: "POST",
-                body: JSON.stringify({
-                  model: apologistModel,
-                  stream: true,
-                  metadata: {
-                    bible: "bsb",
-                    language: i18n.language,
-                  },
-                  messages: messages,
-                  tools,
-                }),
+          let bibleCode = bibleResolution.code;
+
+          let turn = 0;
+          for (; turn < MAX_COMPLETION_TURNS; turn++) {
+            const { response, bible, retriedWithDefault } =
+              await postApologistChatCompletion({
+                url: `https://${apologistDomain}/api/v1/chat/completions`,
+                model: apologistModel,
+                stream: true,
+                language: uiLanguage,
+                bible: bibleCode,
+                messages,
+                tools,
                 headers: apologistApiKey
                   ? {
                       Authorization: `Bearer ${apologistApiKey}`,
                     }
                   : {},
-              }
-            );
+              });
+
+            if (retriedWithDefault) {
+              console.warn(
+                `[Apologist] Agent rejected bible "${bibleCode}"; retrying with "${bible}".`
+              );
+              bibleCode = bible;
+            }
 
             if (!response.ok) {
               const body = await response.text().catch(() => "");
@@ -367,7 +390,10 @@ export default function initApologistExtension() {
                 }
 
                 const args = JSON.parse(fn.arguments);
-                const result = await tool.function(args);
+                const result = await tool.function(args, {
+                  chatId: chatContext.chatId,
+                  providerId: PROVIDER_ID,
+                });
 
                 messages.push({
                   role: "tool",
@@ -418,6 +444,15 @@ export default function initApologistExtension() {
             };
             messages.push({ role: "assistant", content: assembledContent });
             return;
+          }
+
+          // Only reached by using up every turn; the loop's normal endings
+          // `break` with turns to spare. Throwing lets ChatsManager post its
+          // standard error message instead of leaving the chat silent.
+          if (turn === MAX_COMPLETION_TURNS) {
+            throw new Error(
+              `stopped after ${MAX_COMPLETION_TURNS} rounds of tool calls without an answer`
+            );
           }
         },
       });
