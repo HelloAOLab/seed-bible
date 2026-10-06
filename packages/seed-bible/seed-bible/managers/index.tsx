@@ -28,5 +28,6 @@ export * from "./TabsLayoutManager";
 export * from "./TextToSpeechManager";
 export * from "./ThemeManager";
 export * from "./translationGrouping";
+export * from "./translationSearch";
 export * from "./TutorialManager";
 export * from "./UserGalleryManager";

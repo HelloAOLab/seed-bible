@@ -63,6 +63,10 @@ import {
   YourContentPaneTitle,
 } from "../components/YourContentPane/YourContentPane";
 import {
+  openReadingPlanDetail,
+  openReadingPlanEditor,
+} from "../components/ReadingPlansPane/ReadingPlansPane";
+import {
   FRIENDS_PANE_ID,
   FriendsPane,
   FriendsPaneTitle,
@@ -215,6 +219,7 @@ import {
 import { range } from "es-toolkit";
 import {
   createReadingPlansManager,
+  type ReadingPlanMetadata,
   type ReadingPlan,
   type ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
@@ -267,6 +272,18 @@ export const SHARED_PAGE_MODAL_ID = "shared-page";
  * These values are mostly computed from lower-level managers and represent
  * the currently active reading context and pane selection.
  */
+export interface ToastOptions {
+  /** Makes the toast tappable. Tapping it dismisses the toast first. */
+  onClick?: () => void;
+  /** Secondary line telling people what tapping the toast does. */
+  hint?: string;
+}
+
+export interface AppToast extends ToastOptions {
+  id: number;
+  message: string;
+}
+
 export interface AppState {
   /** True when multi-slot tab layouts are enabled by config. */
   panelsEnabled: ReadonlySignal<boolean>;
@@ -424,13 +441,14 @@ export interface AppState {
   resumeSharedPage: () => void;
 
   /** The toast currently shown at the bottom of the screen, or null when none. */
-  currentToast: ReadonlySignal<{ id: number; message: string } | null>;
+  currentToast: ReadonlySignal<AppToast | null>;
   /**
-   * Shows a toast message at the bottom of the screen for 3.5s.
+   * Shows a toast message at the bottom of the screen for 3.5s (6s when it
+   * has an `onClick`, so there's time to tap it).
    * Calling again replaces the current toast and restarts the timer
    * (only one toast is ever visible at a time, always the most recent).
    */
-  toast: (message: string) => void;
+  toast: (message: string, options?: ToastOptions) => void;
 
   /** Opens a chat session. */
   openChat: (sharedChat: ChatSession) => void;
@@ -612,6 +630,12 @@ export interface SeedBibleState {
   /** Closes the Code of Conduct modal (clears `conduct` from the URL). */
   closeCodeOfConduct: () => void;
 }
+
+// Evaluated before the extension bundle below. Bonfire imports
+// `formatAvailableTranslationsNote` from this module while that bundle is
+// still loading, and a live binding from a half-finished barrel would be
+// unset if this import ran afterwards.
+import { createTranslationAgentTools } from "./translationSearch";
 
 // The extension set is auto-discovered from every extension package under
 // `packages/` by the `vite-plugin-extensions` plugin. See
@@ -2327,18 +2351,33 @@ export function createSeedBibleState(
   // Defined here (rather than further down, where it's exposed on `state`)
   // because the host-disconnect handling below also calls it, and that
   // effect runs immediately when constructed.
-  const currentToast = signal<{ id: number; message: string } | null>(null);
+  const currentToast = signal<AppToast | null>(null);
   let toastSeq = 0;
   let toastTimer: ReturnType<typeof setTimeout> | null = null;
-  const toast = (message: string) => {
+  const dismissToast = () => {
+    if (toastTimer !== null) {
+      clearTimeout(toastTimer);
+      toastTimer = null;
+    }
+    currentToast.value = null;
+  };
+  const toast = (message: string, options?: ToastOptions) => {
     if (toastTimer !== null) {
       clearTimeout(toastTimer);
     }
-    currentToast.value = { id: ++toastSeq, message };
-    toastTimer = setTimeout(() => {
-      currentToast.value = null;
-      toastTimer = null;
-    }, 3500);
+    const onClick = options?.onClick;
+    currentToast.value = {
+      id: ++toastSeq,
+      message,
+      hint: options?.hint,
+      onClick: onClick
+        ? () => {
+            dismissToast();
+            onClick();
+          }
+        : undefined,
+    };
+    toastTimer = setTimeout(dismissToast, onClick ? 6000 : 3500);
   };
 
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
@@ -3022,7 +3061,39 @@ export function createSeedBibleState(
       },
     });
 
-    return [goToReference.tool, searchVerses.tool, createPlaylist.tool];
+    const translationTools = createTranslationAgentTools({
+      loadCatalog: async () => {
+        // A chapter load only merges the one translation being read. Searching
+        // that partial list would hide every other language.
+        if (data.catalogLoaded.peek()) {
+          return data.availableTranslations.peek();
+        }
+        return data.getTranslations();
+      },
+      showTranslationSuggestion: (suggestion, call) => {
+        const openChats = chats.chats.peek();
+        const callingChat = call?.chatId
+          ? openChats.find((chat) => chat.id === call.chatId)
+          : undefined;
+        // A chat id that is not open must not fall through to whichever chat
+        // the reader happens to be looking at.
+        if (call?.chatId && !callingChat) {
+          throw new Error("No chat is open.");
+        }
+        const chat = callingChat ?? chats.selectedChat.peek();
+        if (!chat) {
+          throw new Error("No chat is open.");
+        }
+        chat.translationSuggestion.value = suggestion;
+      },
+    });
+
+    return [
+      goToReference.tool,
+      searchVerses.tool,
+      createPlaylist.tool,
+      ...translationTools,
+    ];
   };
 
   const enableCoreChatContext = () => {
@@ -3416,11 +3487,16 @@ export function createSeedBibleState(
     const { t } = i18n;
     openProfilePictureModal({ modals, login, t });
   };
-  const openReadingPlansFromProfile = () => {
+  /**
+   * Opens the plans pane from one of the Profile screens. False when there is
+   * no reader to open it beside, in which case nothing has changed on screen.
+   */
+  const openReadingPlansFullscreen = (): boolean => {
     const readingState = selectedTab.peek()?.readingState;
     if (!readingState) {
-      return;
+      return false;
     }
+    closeYourContent();
     closeProfile();
     // Fullscreen rather than the toolbar's docked "side": the user came from a
     // fullscreen screen, so a side panel would leave them looking at the reader.
@@ -3437,6 +3513,10 @@ export function createSeedBibleState(
       placement: "fullscreen",
       toast,
     });
+    return true;
+  };
+  const openReadingPlansFromProfile = () => {
+    openReadingPlansFullscreen();
   };
   const renderProfilePane = () => (
     <ProfilePane
@@ -3530,6 +3610,27 @@ export function createSeedBibleState(
     // uses — rather than growing a second editor on this screen.
     annotations.editAnnotation(annotation);
   };
+  // Both land in the plans pane, opened fullscreen the way the Profile card
+  // opens it, and then drill straight into the plan so the user doesn't have
+  // to find it in the list a second time.
+  const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
+    if (!openReadingPlansFullscreen()) {
+      return;
+    }
+    // A draft has nothing to read yet, so it picks up where the author left
+    // off — in the editor — rather than opening an empty detail view.
+    if (plan.status === "draft") {
+      void openReadingPlanEditor(readingPlans, plan);
+    } else {
+      void openReadingPlanDetail(readingPlans, plan);
+    }
+  };
+  const editReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
+    if (!openReadingPlansFullscreen()) {
+      return;
+    }
+    void openReadingPlanEditor(readingPlans, plan);
+  };
   const renderYourContentPane = () => (
     <YourContentPane
       state={state}
@@ -3537,6 +3638,8 @@ export function createSeedBibleState(
       onPlayPlaylist={playPlaylistFromContent}
       onEditPlaylist={editPlaylistFromContent}
       onEditAnnotation={editAnnotationFromContent}
+      onOpenReadingPlan={openReadingPlanFromContent}
+      onEditReadingPlan={editReadingPlanFromContent}
     />
   );
   const renderYourContentPaneTitle = () => <YourContentPaneTitle />;

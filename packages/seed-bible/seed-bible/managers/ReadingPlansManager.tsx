@@ -254,6 +254,22 @@ export function formatReadingPlanId(
   return `rp_${recordName}_${address}`;
 }
 
+/**
+ * The most recent progress the user has for a plan, or null when they have
+ * never started it. A plan restarted from the Completed list has more than one
+ * progress record; the newest is the one they are reading with.
+ */
+export function latestReadingPlanProgress(
+  progresses: readonly ReadingPlanProgress[],
+  planId: string
+): ReadingPlanProgress | null {
+  return (
+    [...progresses]
+      .filter((p) => p.planId === planId)
+      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
+  );
+}
+
 /** Session/reading totals for analytics, counted as the plan currently stands. */
 function readingPlanCounts(plan: ReadingPlan): {
   totalSessions: number;
@@ -1489,18 +1505,6 @@ export interface PlanMatch {
   sessions: ReadingPlanSession[];
   /** True when this chapter is recorded as read everywhere it appears. */
   allComplete: boolean;
-}
-
-/** The most recent progress the user has for a given plan id, if any. */
-export function latestReadingPlanProgress(
-  progresses: ReadingPlanProgress[],
-  planId: string
-): ReadingPlanProgress | null {
-  return (
-    progresses
-      .filter((p) => p.planId === planId)
-      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
-  );
 }
 
 /**

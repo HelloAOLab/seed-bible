@@ -3056,3 +3056,100 @@ describe("opening another screen while Today is up", () => {
     expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
   });
 });
+
+describe("translation suggestions", () => {
+  const partialOnly: Translation = {
+    id: "partial_only",
+    name: "Only Partial",
+    englishName: "Only Partial",
+    website: "https://example.com",
+    licenseUrl: "https://example.com/license",
+    shortName: "PART",
+    language: "zzz",
+    textDirection: "ltr",
+    availableFormats: ["json"],
+    listOfBooksApiLink: "/api/partial_only/books.json",
+    numberOfBooks: 1,
+    totalNumberOfChapters: 1,
+    totalNumberOfVerses: 1,
+  };
+
+  function toolNamed(state: SeedBibleState, name: string) {
+    const tool = state.chats.context.value.tools?.find(
+      (entry) => entry.name === name
+    );
+    if (!tool) {
+      throw new Error(`${name} was not registered`);
+    }
+    return tool;
+  }
+
+  it("searches the full catalog when a chapter load has only merged one translation", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    state.bibleData.catalogLoaded.value = false;
+    state.bibleData.availableTranslations.value = [partialOnly];
+
+    const result = (await toolNamed(state, "searchTranslations").function({
+      query: "AAB",
+    })) as { translations: { id: string }[] };
+
+    expect(result.translations.map((hit) => hit.id)).toContain("AAB");
+    expect(result.translations.map((hit) => hit.id)).not.toContain(
+      "partial_only"
+    );
+  });
+
+  it("reports an error when no chat can show the banner", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    const other = state.chats.createLocalSession();
+    state.chats.selectChat(other.id);
+
+    await expect(
+      toolNamed(state, "suggestTranslation").function(
+        { id: "AAB" },
+        { chatId: "missing-chat" }
+      )
+    ).resolves.toBe("error: No chat is open.");
+    expect(other.translationSuggestion.value).toBeNull();
+  });
+
+  it("shows the banner on the calling chat even when another chat is selected", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    state.chats.registerProvider({
+      id: "ai-first",
+      name: "First",
+      supportsSharedChats: false,
+      generateResponse: async () => null,
+    });
+    state.chats.registerProvider({
+      id: "ai-second",
+      name: "Second",
+      supportsSharedChats: false,
+      generateResponse: async () => null,
+    });
+    const chatA = state.chats.createLocalSession();
+    const chatB = state.chats.createLocalSession();
+    chatA.addParticipant("ai-first");
+    chatA.addParticipant("ai-second");
+    state.chats.selectChat(chatB.id);
+
+    await toolNamed(state, "suggestTranslation").function(
+      { id: "AAB", unavailable: "NIV" },
+      { chatId: chatA.id, providerId: "ai-second" }
+    );
+
+    expect(chatA.translationSuggestion.value).toMatchObject({
+      id: "AAB",
+      shortName: "AAB",
+      unavailable: "NIV",
+    });
+    expect(chatA.messages.value).toEqual([]);
+    expect(chatB.translationSuggestion.value).toBeNull();
+  });
+});
