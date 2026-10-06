@@ -28,19 +28,7 @@
     "@casual-simulation/aux-common": "catalog:",
     "@casual-simulation/aux-websocket": "catalog:",
     "@casual-simulation/websocket": "catalog:",
-    "axios": "catalog:",
-    "i18next": "catalog:",
-    "preact": "catalog:",
-    "preact-iso": "catalog:",
-    "react": "catalog:",
-    "react-avatar-editor": "15.1.0",
-    "react-dom": "catalog:",
-    "typesense": "catalog:",
-    "zod": "catalog:",
-    "rxjs": "catalog:",
-    "dompurify": "catalog:",
     "@tiptap/core": "catalog:",
-    "@tiptap/pm": "catalog:",
     "@tiptap/extension-bullet-list": "catalog:",
     "@tiptap/extension-color": "catalog:",
     "@tiptap/extension-highlight": "catalog:",
@@ -53,6 +41,22 @@
     "@tiptap/extension-text-align": "catalog:",
     "@tiptap/extension-text-style": "catalog:",
     "@tiptap/extension-underline": "catalog:",
-    "@tiptap/starter-kit": "catalog:"
+    "@tiptap/pm": "catalog:",
+    "@tiptap/starter-kit": "catalog:",
+    "axios": "catalog:",
+    "dompurify": "catalog:",
+    "i18next": "catalog:",
+    "preact": "catalog:",
+    "preact-iso": "catalog:",
+    "qrcode": "catalog:",
+    "react": "catalog:",
+    "react-avatar-editor": "15.1.0",
+    "react-dom": "catalog:",
+    "rxjs": "catalog:",
+    "typesense": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.6"
   }
 }
