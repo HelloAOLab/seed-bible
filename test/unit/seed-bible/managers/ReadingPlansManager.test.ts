@@ -57,6 +57,10 @@ import {
   type CivilDate,
 } from "@packages/seed-bible/seed-bible/managers/civilDate";
 import type { Mock } from "vitest";
+import {
+  FEATURE_KEY_READING_PLANS,
+  type FeaturesManager,
+} from "@packages/seed-bible/seed-bible/managers/FeaturesManager";
 
 // An arbitrary mid-week start instant to exercise "start any time".
 // 2026-06-17 is a Wednesday.
@@ -2632,6 +2636,298 @@ describe("createReadingPlansManager", () => {
     const saved = recordDataMock.mock.calls.at(-1)![2] as ReadingPlanProgress;
     expect(saved.percentComplete).toBeCloseTo(1 / 3, 10);
     expect(saved.totalReadings).toBe(3);
+  });
+
+  describe("getReadingPlansForChapter", () => {
+    const featuresWith = (readingPlansOn: boolean): FeaturesManager => ({
+      isFeatureEnabled: (featureKey: string) =>
+        signal(featureKey === FEATURE_KEY_READING_PLANS && readingPlansOn),
+    });
+
+    const verseReading = (
+      id: string,
+      ref: { bookId: string; chapter: number; endChapter?: number }
+    ) => ({
+      id,
+      item: { type: "bible-verse" as const, ref },
+    });
+
+    const progressFor = (
+      plan: ReadingPlan,
+      overrides: Partial<ReadingPlanProgress> = {}
+    ) =>
+      makeProgress({
+        id: `progress-${plan.address}`,
+        planId: `rp_${plan.recordName}_${plan.address}`,
+        ...overrides,
+      });
+
+    const loadManager = async (
+      plans: ReadingPlan[],
+      progresses: ReadingPlanProgress[]
+    ) => {
+      setListData({
+        "publicRead:readingPlanMetadata": [
+          plans.map((plan) => ({
+            address: `${plan.address}_metadata`,
+            data: metadataOf(plan),
+          })),
+        ],
+        "publicRead:readingPlanProgress": [
+          progresses.map((progress) => ({
+            address: progress.id,
+            data: progress,
+          })),
+        ],
+      });
+      getDataMock.mockImplementation(
+        async (_recordName: string, address: string) => ({
+          success: true,
+          data: plans.find((plan) => plan.address === address),
+        })
+      );
+      const manager = makeManager("user-1");
+      await flush();
+      return manager;
+    };
+
+    const genesisPlan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [verseReading("r1", { bookId: "GEN", chapter: 1 })],
+        },
+        {
+          id: "s2",
+          readings: [verseReading("r2", { bookId: "GEN", chapter: 2 })],
+        },
+      ],
+    });
+
+    it("returns a followed plan whose sessions cover the open chapter", async () => {
+      const progress = progressFor(genesisPlan);
+      const manager = await loadManager([genesisPlan], [progress]);
+
+      const matches = manager.getReadingPlansForChapter(
+        "GEN",
+        2,
+        featuresWith(true)
+      );
+
+      expect(matches).toEqual([
+        {
+          planKey: "rp_record-1_plan-1",
+          planTitle: "Test Plan",
+          progress,
+          sessions: [genesisPlan.sessions[1]],
+          allComplete: false,
+        },
+      ]);
+    });
+
+    it("leaves out plans the user isn't following", async () => {
+      const otherPlan = makePlan({
+        address: "plan-2",
+        title: "Not Followed",
+        sessions: genesisPlan.sessions,
+      });
+      const manager = await loadManager(
+        [genesisPlan, otherPlan],
+        [progressFor(genesisPlan)]
+      );
+
+      const matches = manager.getReadingPlansForChapter(
+        "GEN",
+        1,
+        featuresWith(true)
+      );
+
+      expect(matches.map((match) => match.planTitle)).toEqual(["Test Plan"]);
+    });
+
+    it("returns nothing when no followed plan covers the open chapter", async () => {
+      const manager = await loadManager(
+        [genesisPlan],
+        [progressFor(genesisPlan)]
+      );
+
+      expect(
+        manager.getReadingPlansForChapter("GEN", 3, featuresWith(true))
+      ).toEqual([]);
+      expect(
+        manager.getReadingPlansForChapter("EXO", 1, featuresWith(true))
+      ).toEqual([]);
+    });
+
+    it("returns nothing when there's no open book", async () => {
+      const manager = await loadManager(
+        [genesisPlan],
+        [progressFor(genesisPlan)]
+      );
+
+      expect(
+        manager.getReadingPlansForChapter(null, 1, featuresWith(true))
+      ).toEqual([]);
+    });
+
+    it("returns nothing while the reading plans feature is off", async () => {
+      const manager = await loadManager(
+        [genesisPlan],
+        [progressFor(genesisPlan)]
+      );
+
+      expect(
+        manager.getReadingPlansForChapter("GEN", 1, featuresWith(false))
+      ).toEqual([]);
+    });
+
+    it("marks a multi-chapter reading complete only for the chapters recorded as read", async () => {
+      const plan = makePlan({
+        sessions: [
+          {
+            id: "s1",
+            readings: [
+              verseReading("r1", { bookId: "GEN", chapter: 1, endChapter: 3 }),
+            ],
+          },
+        ],
+      });
+      const manager = await loadManager(
+        [plan],
+        [
+          progressFor(plan, {
+            sessions: [
+              {
+                sessionId: "s1",
+                completedReadingIds: [],
+                partialChapters: [{ readingId: "r1", chapters: [2] }],
+              },
+            ],
+          }),
+        ]
+      );
+
+      const allCompleteAt = (chapter: number) =>
+        manager.getReadingPlansForChapter("GEN", chapter, featuresWith(true))[0]
+          ?.allComplete;
+
+      expect([1, 2, 3].map(allCompleteAt)).toEqual([false, true, false]);
+    });
+
+    it("isn't complete until every session covering the chapter has it recorded", async () => {
+      const plan = makePlan({
+        sessions: [
+          {
+            id: "s1",
+            readings: [verseReading("r1", { bookId: "GEN", chapter: 1 })],
+          },
+          {
+            id: "s2",
+            readings: [verseReading("r2", { bookId: "GEN", chapter: 1 })],
+          },
+        ],
+      });
+      const manager = await loadManager(
+        [plan],
+        [
+          progressFor(plan, {
+            sessions: [
+              {
+                sessionId: "s1",
+                completedReadingIds: ["r1"],
+                partialChapters: [],
+              },
+            ],
+          }),
+        ]
+      );
+
+      const [match] = manager.getReadingPlansForChapter(
+        "GEN",
+        1,
+        featuresWith(true)
+      );
+
+      expect(match?.sessions.map((session) => session.id)).toEqual([
+        "s1",
+        "s2",
+      ]);
+      expect(match?.allComplete).toBe(false);
+    });
+
+    it("judges completion by the open chapter alone, ignoring other readings in the session", async () => {
+      const plan = makePlan({
+        sessions: [
+          {
+            id: "s1",
+            readings: [
+              verseReading("r1", { bookId: "GEN", chapter: 1 }),
+              verseReading("r2", { bookId: "PSA", chapter: 23 }),
+              {
+                id: "r3",
+                item: { type: "html", title: "Intro", html: "<p>Hi</p>" },
+              },
+            ],
+          },
+        ],
+      });
+      const manager = await loadManager(
+        [plan],
+        [
+          progressFor(plan, {
+            sessions: [
+              {
+                sessionId: "s1",
+                completedReadingIds: ["r1"],
+                partialChapters: [],
+              },
+            ],
+          }),
+        ]
+      );
+
+      const [match] = manager.getReadingPlansForChapter(
+        "GEN",
+        1,
+        featuresWith(true)
+      );
+
+      expect(match?.allComplete).toBe(true);
+    });
+
+    it("uses the most recent progress when the plan was started more than once", async () => {
+      // Starting a plan again appends a new progress after the old one, so the
+      // abandoned run comes first in the list.
+      const abandonedRun = progressFor(genesisPlan, {
+        id: "progress-abandoned",
+        startedAtMs: START_MS,
+      });
+      const currentRun = progressFor(genesisPlan, {
+        id: "progress-current",
+        startedAtMs: START_MS + 7 * 24 * 60 * 60 * 1000,
+        sessions: [
+          {
+            sessionId: "s1",
+            completedReadingIds: ["r1"],
+            partialChapters: [],
+          },
+        ],
+      });
+      const manager = await loadManager(
+        [genesisPlan],
+        [abandonedRun, currentRun]
+      );
+
+      const matches = manager.getReadingPlansForChapter(
+        "GEN",
+        1,
+        featuresWith(true)
+      );
+
+      expect(matches).toHaveLength(1);
+      expect(matches[0]?.progress.id).toBe("progress-current");
+      expect(matches[0]?.allComplete).toBe(true);
+    });
   });
 
   describe("getUserReadingPlanProgresses", () => {

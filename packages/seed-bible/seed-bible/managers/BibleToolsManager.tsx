@@ -11,10 +11,10 @@ import {
   DEFAULT_BOOK_ID,
   resolveTranslationUiLanguage,
   uiLocaleForDefaultTranslation,
-  hasAnyDiscoverResults,
   type BibleReadingState,
   type BibleSelectedVerse,
   type ReadingPosition,
+  getDiscoverPanelContent,
 } from "../managers/BibleReadingManager";
 import {
   buildReadingPath,
@@ -429,6 +429,8 @@ export interface QuickToolContext {
   annotations: AnnotationsManager;
 
   features: FeaturesManager;
+
+  readingPlans: ReadingPlansManager;
 
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
@@ -920,18 +922,12 @@ function getDefaultQuickToolbarTools(
         if (c.app?.isMobile?.value || c.app?.isDiscoverOpen?.value) {
           return false;
         }
-        if (hasAnyDiscoverResults(c.readingState)) {
-          return true;
-        }
-        const bookId = c.readingState.bookId.value;
-        const chapterNumber = c.readingState.chapterNumber.value;
-        if (!bookId || !chapterNumber) {
-          return false;
-        }
-        return (
-          c.annotations.visibleAnnotationsForChapter(bookId, chapterNumber)
-            .length > 0
-        );
+        return getDiscoverPanelContent(
+          c.readingState,
+          c.annotations,
+          c.readingPlans,
+          c.features
+        ).hasAny;
       },
       onSelect: (c) => {
         c.readingState.discoverContentPanelInline.value =
@@ -1353,7 +1349,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       // how "Add to Playlist" follows `editingPlaylist`.
       isVisible: (context) =>
         !!context.readingPlans?.editingReadingPlan.value &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS) &&
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value &&
         context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
         const readingPlans = context.readingPlans;

@@ -274,6 +274,9 @@ function createMobileState(): SeedBibleState {
         pendingCount: signal(0),
       },
     },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
+    },
   } as any as SeedBibleState;
 }
 
@@ -323,6 +326,9 @@ function createDesktopState(): SeedBibleState {
       sync: {
         pendingCount: signal(0),
       },
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;
 }

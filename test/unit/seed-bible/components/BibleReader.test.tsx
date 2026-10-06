@@ -384,6 +384,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
         pendingCount: signal(0),
       },
     },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
+    },
   } as any as SeedBibleState;
 }
 
@@ -2503,6 +2506,7 @@ describe("BibleReader", () => {
       friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+        pendingCountForChapter: vi.fn(() => 0),
         visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
       },
     } as any as SeedBibleState;
@@ -2923,6 +2927,7 @@ describe("BibleReader", () => {
         friends: { friendIds: signal([]) },
         annotations: {
           getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+          pendingCountForChapter: vi.fn(() => 0),
           visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
         },
       } as any as SeedBibleState;
@@ -4193,8 +4198,10 @@ describe("BibleReader", () => {
       friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
+        pendingCountForChapter: vi.fn(() => 0),
         visibleAnnotationsForChapter: vi.fn(() => []),
       },
+      readingPlans: { getReadingPlansForChapter: vi.fn(() => []) },
     } as any as SeedBibleState;
 
     selectedFootnote.value = {

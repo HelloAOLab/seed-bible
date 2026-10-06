@@ -3155,6 +3155,7 @@ export function BibleReader(props: BibleReaderProps) {
                     toast={state.app.toast}
                     modals={state.modals}
                     app={state.app}
+                    readingPlans={state.readingPlans}
                     className="sb-quick-toolbar-mobile-header"
                   />
                   {/*
@@ -3299,6 +3300,7 @@ export function BibleReader(props: BibleReaderProps) {
                   annotations={state.annotations}
                   features={state.features}
                   sharedSession={sharedSession ?? null}
+                  readingPlans={state.readingPlans}
                   toast={state.app.toast}
                   modals={state.modals}
                   app={state.app}
