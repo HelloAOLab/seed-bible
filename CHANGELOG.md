@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.12.0 — 2026-10-06
+
+### ✨ Added
+
 - Show a "Playlist finished" message when you press next on a playlist's last item, instead of the next button greying out. ([#1932](https://github.com/HelloAOLab/seed-bible/pull/1932))
   - Close stops the playlist, and Share opens your device's share sheet or copies the playlist's link.
   - Dismissing it with the X keeps the playlist playing, and pressing next again goes on to the next chapter.
