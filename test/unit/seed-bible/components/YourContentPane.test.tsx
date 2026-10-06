@@ -10,6 +10,7 @@ import type { StoredHighlight } from "@packages/seed-bible/seed-bible/managers/H
 import type { Save } from "@packages/seed-bible/seed-bible/managers/SavesManager";
 import type { Playlist } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { ContentLoadStatus } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
+import type { GalleryPhoto } from "@packages/seed-bible/seed-bible/managers/UserGalleryManager";
 import {
   createReadingPlan,
   createReadingPlanProgress,
@@ -151,6 +152,9 @@ interface StateOptions {
   highlights?: StoredHighlight[];
   saves?: Save[];
   playlists?: Playlist[];
+  photos?: GalleryPhoto[];
+  /** `null` for a signed-out reader. */
+  userId?: string | null;
   unhighlightError?: Error;
   /** Verse wording per highlight key, as the manager would have read it back. */
   highlightVerseText?: Record<string, string>;
@@ -202,6 +206,7 @@ function createState(options: StateOptions = {}) {
   const toast = vi.fn();
   const query = signal("");
   const filter = signal("all");
+  const syncPhotos = vi.fn(async () => {});
 
   const state = {
     yourContent: {
@@ -221,6 +226,10 @@ function createState(options: StateOptions = {}) {
       readHighlightVerseText,
     },
     highlights: { unhighlightVerse },
+    login: {
+      userId: signal(options.userId === undefined ? "user-1" : options.userId),
+    },
+    gallery: { photos: signal(options.photos ?? []), syncPhotos },
     saves: {
       saves: signal(options.saves ?? []),
       categories: signal([{ name: "My Saves" }]),
@@ -280,6 +289,15 @@ function createState(options: StateOptions = {}) {
     toast,
     query,
     filter,
+    syncPhotos,
+  };
+}
+
+function photo(id: string): GalleryPhoto {
+  return {
+    id,
+    url: `https://example.com/${id}.jpg`,
+    createdAtMs: 1_762_041_600_000,
   };
 }
 
@@ -348,6 +366,7 @@ describe("YourContentPane", () => {
       saves: [save("b1")],
       playlists: [playlist("p1", "Morning devotions")],
       readingPlans: [readingPlan("plan-1", "Psalms in a month")],
+      photos: [photo("i1")],
     });
     renderPane(state);
 
@@ -357,7 +376,76 @@ describe("YourContentPane", () => {
       "Saves",
       "Playlists",
       "Reading plans",
+      "Images",
     ]);
+  });
+
+  describe("images", () => {
+    const tileSrcs = () =>
+      Array.from(
+        container.querySelectorAll<HTMLImageElement>(".sb-images-tile img")
+      ).map((img) => img.src);
+
+    it("refreshes the uploaded images when it opens", () => {
+      const { state, syncPhotos } = createState();
+      renderPane(state);
+
+      expect(syncPhotos).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not fetch or show images for a signed-out reader", () => {
+      const { state, syncPhotos } = createState({
+        userId: null,
+        photos: [photo("i1")],
+      });
+      renderPane(state);
+
+      expect(syncPhotos).not.toHaveBeenCalled();
+      expect(sectionTitles()).not.toContain("Images");
+    });
+
+    it("previews the first few images, in gallery order, until See all", () => {
+      const { state, filter } = createState({
+        photos: [photo("i1"), photo("i2"), photo("i3"), photo("i4")],
+      });
+      renderPane(state);
+
+      expect(tileSrcs()).toEqual([
+        "https://example.com/i1.jpg",
+        "https://example.com/i2.jpg",
+        "https://example.com/i3.jpg",
+      ]);
+
+      act(() => {
+        (
+          container.querySelector(".sb-content-see-all") as HTMLButtonElement
+        ).click();
+      });
+
+      expect(filter.value).toBe("images");
+      expect(tileSrcs()).toHaveLength(4);
+    });
+
+    it("says what will show up under the Images chip when there are none", () => {
+      const { state, filter } = createState({ saves: [save("b1")] });
+      filter.value = "images";
+      renderPane(state);
+
+      expect(
+        container.querySelector(".sb-content-status")?.textContent
+      ).toContain("Images you upload");
+    });
+
+    it("hides images during a search, since they have no text to match", () => {
+      const { state, query } = createState({
+        photos: [photo("i1")],
+        saves: [save("b1")],
+      });
+      query.value = "Genesis";
+      renderPane(state);
+
+      expect(sectionTitles()).not.toContain("Images");
+    });
   });
 
   it("leaves out sections the user has nothing in", () => {

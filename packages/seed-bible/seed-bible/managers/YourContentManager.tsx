@@ -23,7 +23,8 @@ export type ContentFilter =
   | "highlights"
   | "saves"
   | "playlists"
-  | "reading-plans";
+  | "reading-plans"
+  | "images";
 
 export const CONTENT_FILTERS: ContentFilter[] = [
   "all",
@@ -32,6 +33,7 @@ export const CONTENT_FILTERS: ContentFilter[] = [
   "saves",
   "playlists",
   "reading-plans",
+  "images",
 ];
 
 /** How far a load has got. `error` keeps a failure from looking like "empty". */

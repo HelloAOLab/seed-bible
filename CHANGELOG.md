@@ -8,6 +8,8 @@
   - Each plan shows where you're up to, and tapping it opens the plan; its menu offers Edit and Delete.
 - Have AI chat follow the active reader tab's Bible translation, mapping it onto Apologist's supported list (KJV, BSB, and the rest of the Fusion docs) and falling back to BSB when the tab's translation isn't supported. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
 - Let AI chat look up translations this app actually has and ask, in a banner above the chat, before switching. Switch changes the open tab and stays on the same chapter when the translation includes it; Dismiss leaves the reader as it is. Either way, the chat records what you did. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
+- Add an "Images" section at the bottom of the "Your content" screen that shows every image you've uploaded, where you can view each one full size or delete it. ([#1748](https://github.com/HelloAOLab/seed-bible/issues/1748))
+  - Deleting an image also takes it off any playlist or reading plan using it as a cover; the confirmation warns you about this and names them.
 
 ### 🔧 Changed
 
