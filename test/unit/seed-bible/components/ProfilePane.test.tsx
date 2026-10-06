@@ -24,6 +24,9 @@ interface StateOptions {
   location?: string | null;
   description?: string | null;
   plansEnabled?: boolean;
+  friendIds?: string[];
+  /** How many friend requests are waiting for an answer. */
+  incomingRequestCount?: number;
   /** Plan metadata, full plans and progress, as the manager would hold them. */
   plans?: {
     metas: ReadingPlanMetadata[];
@@ -179,6 +182,15 @@ function createState(options: StateOptions = {}) {
       userPlaylistHistory: signal(options.playlistHistory ?? []),
     },
     os: { connectionId: "conn-1" },
+    friends: {
+      friendIds: signal(options.friendIds ?? []),
+      incomingRequests: signal(
+        Array.from({ length: options.incomingRequestCount ?? 0 }, (_, i) => ({
+          id: `request-${i}`,
+          userId: `requester-${i}`,
+        }))
+      ),
+    },
   } as unknown as SeedBibleState;
 
   return { state, logout, login };
@@ -194,6 +206,7 @@ describe("ProfilePane", () => {
     (entry: PlaylistPlayHistory) => void | Promise<void>
   >;
   let onOpenYourContent: Mock<() => void>;
+  let onOpenFriends: Mock<() => void>;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -204,6 +217,7 @@ describe("ProfilePane", () => {
     onOpenPlaylistHistory = vi.fn(() => {});
     onContinuePlaylist = vi.fn(() => {});
     onOpenYourContent = vi.fn(() => {});
+    onOpenFriends = vi.fn(() => {});
   });
 
   afterEach(() => {
@@ -222,6 +236,7 @@ describe("ProfilePane", () => {
           onOpenPlaylistHistory={onOpenPlaylistHistory}
           onContinuePlaylist={onContinuePlaylist}
           onOpenYourContent={onOpenYourContent}
+          onOpenFriends={onOpenFriends}
         />,
         container
       );
@@ -566,6 +581,49 @@ describe("ProfilePane", () => {
     });
 
     expect(onOpenYourContent).toHaveBeenCalledTimes(1);
+  });
+
+  describe("friends row", () => {
+    const friendsRow = () =>
+      Array.from(container.querySelectorAll(".sb-profile-row")).find(
+        (row) =>
+          row.querySelector(".sb-profile-row-title")?.textContent === "Friends"
+      ) as HTMLButtonElement | undefined;
+    const subtitle = () =>
+      friendsRow()?.querySelector(".sb-profile-row-subtitle")?.textContent;
+
+    it("opens the friends screen", () => {
+      const { state } = createState();
+      renderPane(state);
+
+      act(() => friendsRow()!.click());
+
+      expect(onOpenFriends).toHaveBeenCalledTimes(1);
+    });
+
+    it("invites the user to add friends when they have none", () => {
+      const { state } = createState();
+      renderPane(state);
+
+      expect(subtitle()).toBe("Add friends and see what they're reading");
+    });
+
+    it("counts friends, and requests waiting for an answer", () => {
+      const { state } = createState({
+        friendIds: ["ada", "bob"],
+        incomingRequestCount: 1,
+      });
+      renderPane(state);
+
+      expect(subtitle()).toBe("2 friends · 1 request");
+    });
+
+    it("uses the singular for one friend", () => {
+      const { state } = createState({ friendIds: ["ada"] });
+      renderPane(state);
+
+      expect(subtitle()).toBe("1 friend");
+    });
   });
 
   it("signs the user out from the sign out button", () => {

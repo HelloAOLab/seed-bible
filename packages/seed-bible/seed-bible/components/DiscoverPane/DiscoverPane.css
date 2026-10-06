@@ -342,11 +342,41 @@
   opacity: 0.75;
 }
 
+/* Friends' playlists (see `FriendPlaylistsSection`): one group per friend,
+   each an avatar/name header plus its own `.sb-discover-list`. */
+.sb-friend-playlists-groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sb-friend-playlists-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-friend-playlists-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-friend-playlists-group-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sb-confirm-delete {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-width: 17.5rem;
   color: var(--sb-font-color);
 }
 

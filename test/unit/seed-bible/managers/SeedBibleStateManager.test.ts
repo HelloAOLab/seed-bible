@@ -147,6 +147,20 @@ const mockSessionsManager = {
   createSession: vi.fn(),
   joinSession: vi.fn(),
 };
+// `InvitationsManager` opens a real shared-document WebSocket connection when
+// a session is published (`publishSession`, called from
+// `createSharedSession()`) — that's fine in the browser, but there's no
+// network egress to the records server in this test environment, so the real
+// implementation is mocked out here exactly like the other managers below
+// that would otherwise touch real state/network during `createSeedBibleState`.
+const mockInvitationsManager = {
+  availableSessions: signal([]),
+  publishSession: vi.fn().mockResolvedValue(undefined),
+  unpublishSession: vi.fn().mockResolvedValue(undefined),
+  joinAvailableSession: vi.fn().mockResolvedValue(undefined),
+  dismissAvailableSession: vi.fn(),
+  dispose: vi.fn(),
+};
 
 vi.mock(
   "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
@@ -172,6 +186,10 @@ vi.mock(
     createSessionsManager: () => mockSessionsManager,
   })
 );
+
+vi.mock("@packages/seed-bible/seed-bible/managers/InvitationsManager", () => ({
+  createInvitationsManager: () => mockInvitationsManager,
+}));
 
 vi.mock(
   "@packages/seed-bible/seed-bible/i18n/I18nManager",
@@ -199,6 +217,11 @@ beforeEach(() => {
   mockHighlightsManager.saveChapterHighlights.mockReset();
   mockSessionsManager.createSession.mockReset();
   mockSessionsManager.joinSession.mockReset();
+  mockInvitationsManager.publishSession.mockClear();
+  mockInvitationsManager.unpublishSession.mockClear();
+  mockInvitationsManager.joinAvailableSession.mockClear();
+  mockInvitationsManager.dismissAvailableSession.mockClear();
+  mockInvitationsManager.dispose.mockClear();
 });
 
 afterEach(() => {
@@ -487,6 +510,10 @@ describe("createSeedBibleState", () => {
     const result = await state.app.createSharedSession();
 
     expect(mockSessionsManager.createSession).toHaveBeenCalledTimes(1);
+    // Auto-publishes to the shared-sessions registry so friends can see it
+    // — through the mock, not the real `InvitationsManager`, which would
+    // otherwise open a real WebSocket connection.
+    expect(mockInvitationsManager.publishSession).toHaveBeenCalledWith(session);
     expect(result).toBe(session);
     expect(state.tabs.tabs.value).toHaveLength(previousTabCount + 1);
     expect(state.tabs.tabs.value[previousTabCount]?.readingState).toBe(
@@ -3292,5 +3319,102 @@ describe("continuing a playlist from Profile", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(state.isProfileOpen.value).toBe(false);
+  });
+});
+
+describe("translation suggestions", () => {
+  const partialOnly: Translation = {
+    id: "partial_only",
+    name: "Only Partial",
+    englishName: "Only Partial",
+    website: "https://example.com",
+    licenseUrl: "https://example.com/license",
+    shortName: "PART",
+    language: "zzz",
+    textDirection: "ltr",
+    availableFormats: ["json"],
+    listOfBooksApiLink: "/api/partial_only/books.json",
+    numberOfBooks: 1,
+    totalNumberOfChapters: 1,
+    totalNumberOfVerses: 1,
+  };
+
+  function toolNamed(state: SeedBibleState, name: string) {
+    const tool = state.chats.context.value.tools?.find(
+      (entry) => entry.name === name
+    );
+    if (!tool) {
+      throw new Error(`${name} was not registered`);
+    }
+    return tool;
+  }
+
+  it("searches the full catalog when a chapter load has only merged one translation", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    state.bibleData.catalogLoaded.value = false;
+    state.bibleData.availableTranslations.value = [partialOnly];
+
+    const result = (await toolNamed(state, "searchTranslations").function({
+      query: "AAB",
+    })) as { translations: { id: string }[] };
+
+    expect(result.translations.map((hit) => hit.id)).toContain("AAB");
+    expect(result.translations.map((hit) => hit.id)).not.toContain(
+      "partial_only"
+    );
+  });
+
+  it("reports an error when no chat can show the banner", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    const other = state.chats.createLocalSession();
+    state.chats.selectChat(other.id);
+
+    await expect(
+      toolNamed(state, "suggestTranslation").function(
+        { id: "AAB" },
+        { chatId: "missing-chat" }
+      )
+    ).resolves.toBe("error: No chat is open.");
+    expect(other.translationSuggestion.value).toBeNull();
+  });
+
+  it("shows the banner on the calling chat even when another chat is selected", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    state.chats.registerProvider({
+      id: "ai-first",
+      name: "First",
+      supportsSharedChats: false,
+      generateResponse: async () => null,
+    });
+    state.chats.registerProvider({
+      id: "ai-second",
+      name: "Second",
+      supportsSharedChats: false,
+      generateResponse: async () => null,
+    });
+    const chatA = state.chats.createLocalSession();
+    const chatB = state.chats.createLocalSession();
+    chatA.addParticipant("ai-first");
+    chatA.addParticipant("ai-second");
+    state.chats.selectChat(chatB.id);
+
+    await toolNamed(state, "suggestTranslation").function(
+      { id: "AAB", unavailable: "NIV" },
+      { chatId: chatA.id, providerId: "ai-second" }
+    );
+
+    expect(chatA.translationSuggestion.value).toMatchObject({
+      id: "AAB",
+      shortName: "AAB",
+      unavailable: "NIV",
+    });
+    expect(chatA.messages.value).toEqual([]);
+    expect(chatB.translationSuggestion.value).toBeNull();
   });
 });
