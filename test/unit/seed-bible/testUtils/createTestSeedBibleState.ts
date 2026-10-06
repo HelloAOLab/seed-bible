@@ -252,6 +252,8 @@ if (typeof afterEach === "function") {
       // Speech outlives the state that started it, and its listeners sit on
       // globals every other test shares.
       state.textToSpeech.dispose();
+      // Listens for the app regaining focus, on the window every test shares.
+      state.friends.dispose();
     }
     // The reading position lives in the URL path, so it outlives the listeners
     // that wrote it: without this the next test starts on whatever chapter —
