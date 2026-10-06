@@ -6,13 +6,14 @@ import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   formatReadingPlanId,
+  parseReadingPlanId,
   getReadingCalendar,
+  latestReadingPlanProgress,
   summarizeCalendar,
   type CalendarReadingDay,
   type CalendarSummary,
   type ReadingPlan,
   type ReadingPlanMetadata,
-  latestReadingPlanProgress,
   type ReadingPlanProgress,
   type ReadingPlansManager,
 } from "../../managers/ReadingPlansManager";
@@ -22,9 +23,13 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { Friend, FriendsManager } from "../../managers/FriendsManager";
+import { getUserAnimalVisual } from "../../managers/SessionsManager";
+import { Avatar } from "../Avatar/Avatar";
 import type { CasualOSManager } from "../../managers/OsManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { UserGalleryManager } from "../../managers/UserGalleryManager";
+import { displayNameOf } from "../../managers/Utils";
 import { readingLabel } from "./readingLabel";
 import { ReadingPlanEditor } from "./ReadingPlanEditor";
 import { ReadingPlanDetail } from "./ReadingPlanDetail";
@@ -32,6 +37,11 @@ import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
+  /**
+   * Powers the "Reading plans from your friends" section. Without it the
+   * section is omitted entirely.
+   */
+  friends?: FriendsManager;
   /** Books of the active translation, for the scripture typeahead + labels. */
   books: TranslationBook[];
   /** Modals host, for previewing/opening a text or link reading. */
@@ -85,6 +95,18 @@ const planLoadError = signal<string | null>(null);
 /** The plan currently being opened, so its card can show it's working. */
 const openingPlanId = signal<string | null>(null);
 
+/** "Couldn't load this plan", shown in place of opening a dead screen. */
+function PlanLoadError(props: { planId: string }) {
+  const { t } = useI18n();
+  return planLoadError.value === props.planId ? (
+    <p className="sb-rp-card-error" role="alert">
+      {t("reading-plan-load-failed", {
+        defaultValue: "Couldn't load this plan. Please try again.",
+      })}
+    </p>
+  ) : null;
+}
+
 function copyReadingPlanShareUrl(
   readingPlans: ReadingPlansManager,
   plan: ReadingPlan,
@@ -99,8 +121,11 @@ function copyReadingPlanShareUrl(
  * Opens a plan's detail view. The view only switches once the plan is actually
  * in hand: a plan whose record is missing or unreadable leaves the user on the
  * list with an error, rather than on an empty screen.
+ *
+ * Exported for the "Your content" screen, which lists the user's plans too and
+ * hands a tapped one here after opening the pane.
  */
-async function openPlanDetail(
+export async function openReadingPlanDetail(
   readingPlans: ReadingPlansManager,
   plan: ReadingPlanMetadata
 ) {
@@ -126,6 +151,52 @@ async function openPlanDetail(
 /** Opens the detail screen for a plan that is already selected. */
 export function showReadingPlanDetailView() {
   readingPlansView.value = "detail";
+}
+
+/**
+ * Opens an existing plan in the editor, loading its contents if needed. A plan
+ * still in draft picks up where it left off; a published one opens in edit
+ * mode, where backing out changes nothing.
+ *
+ * Exported for the same reason as {@link openReadingPlanDetail}.
+ */
+export async function openReadingPlanEditor(
+  readingPlans: ReadingPlansManager,
+  meta: ReadingPlanMetadata
+) {
+  // Already open in the editor — the author stepped out, to go read, say, and
+  // is coming back. Their unsaved changes are kept rather than reloaded over.
+  const current = readingPlans.editingReadingPlan.peek();
+  if (
+    current &&
+    current.plan.recordName === meta.recordName &&
+    current.plan.address === meta.address
+  ) {
+    readingPlansView.value = "edit";
+    return;
+  }
+  const planId = formatReadingPlanId(meta.recordName, meta.address);
+  planLoadError.value = null;
+  openingPlanId.value = planId;
+  let full: ReadingPlan | null = null;
+  try {
+    full = await readingPlans.selectReadingPlan(meta);
+  } catch {
+    planLoadError.value = planId;
+    return;
+  } finally {
+    openingPlanId.value = null;
+  }
+  if (!full) {
+    planLoadError.value = planId;
+    return;
+  }
+  if (full.status === "draft") {
+    readingPlans.resumeEditingReadingPlan(full);
+  } else {
+    readingPlans.editExistingReadingPlan(full);
+  }
+  readingPlansView.value = "edit";
 }
 
 /**
@@ -247,6 +318,7 @@ export function ReadingPlansPaneActions(props: {
 export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   const {
     readingPlans,
+    friends,
     books,
     modals,
     os,
@@ -266,7 +338,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
 
   /**
    * Restarts a finished plan: creates a fresh progress (so the calendar starts
-   * over from today) and opens the detail view on it. `openPlanDetail` picks
+   * over from today) and opens the detail view on it. `openReadingPlanDetail` picks
    * the most recently started progress, which is the one just created.
    */
   const restartPlan = async (plan: ReadingPlanMetadata) => {
@@ -276,36 +348,11 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
       console.error("Failed to restart reading plan:", error);
       return;
     }
-    await openPlanDetail(readingPlans, plan);
+    await openReadingPlanDetail(readingPlans, plan);
   };
 
-  /** Opens an existing plan in the editor, loading its contents if needed. */
-  const editPlan = async (meta: ReadingPlanMetadata) => {
-    const planId = formatReadingPlanId(meta.recordName, meta.address);
-    planLoadError.value = null;
-    openingPlanId.value = planId;
-    let full: ReadingPlan | null = null;
-    try {
-      full = await readingPlans.selectReadingPlan(meta);
-    } catch {
-      planLoadError.value = planId;
-      return;
-    } finally {
-      openingPlanId.value = null;
-    }
-    if (!full) {
-      planLoadError.value = planId;
-      return;
-    }
-    // A plan still in draft picks up where it left off; a published one opens
-    // in edit mode, where backing out changes nothing.
-    if (full.status === "draft") {
-      readingPlans.resumeEditingReadingPlan(full);
-    } else {
-      readingPlans.editExistingReadingPlan(full);
-    }
-    readingPlansView.value = "edit";
-  };
+  const editPlan = (meta: ReadingPlanMetadata) =>
+    openReadingPlanEditor(readingPlans, meta);
 
   if (view === "edit") {
     return (
@@ -347,8 +394,9 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   return (
     <ReadingPlansList
       readingPlans={readingPlans}
+      friends={friends}
       books={books}
-      onOpen={(plan) => void openPlanDetail(readingPlans, plan)}
+      onOpen={(plan) => void openReadingPlanDetail(readingPlans, plan)}
       onEdit={(plan) => void editPlan(plan)}
       onRestart={(plan) => void restartPlan(plan)}
       toast={toast}
@@ -367,6 +415,11 @@ interface PlanRow {
 
 interface ReadingPlansListProps {
   readingPlans: ReadingPlansManager;
+  /**
+   * Powers the "Reading plans from your friends" section. Omitted entirely
+   * when not provided.
+   */
+  friends?: FriendsManager;
   books: TranslationBook[];
   onOpen: (plan: ReadingPlanMetadata) => void;
   onEdit: (plan: ReadingPlanMetadata) => void;
@@ -375,8 +428,30 @@ interface ReadingPlansListProps {
   toast?: (message: string) => void;
 }
 
+/** Resolves a book id to its display name, for reading labels/typeaheads. */
+function resolveBookName(books: TranslationBook[], bookId: string): string {
+  const book = books.find((b) => b.id === bookId);
+  return book?.name ?? book?.commonName ?? bookId;
+}
+
+/** A short, comma-joined summary of a reading day's first few readings. */
+function dayReadingsLabel(
+  books: TranslationBook[],
+  day: CalendarReadingDay
+): string {
+  return day.sessions
+    .flatMap((cs) => cs.session.readings)
+    .map((r) =>
+      readingLabel(r.item, (bookId) => resolveBookName(books, bookId), "")
+    )
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(", ");
+}
+
 function ReadingPlansList(props: ReadingPlansListProps) {
-  const { readingPlans, books, onOpen, onEdit, onRestart, toast } = props;
+  const { readingPlans, friends, books, onOpen, onEdit, onRestart, toast } =
+    props;
   const { t } = useI18n();
   // Deleting a plan erases it for good, so the button asks once first rather
   // than deleting on the tap that was meant to open it.
@@ -386,21 +461,10 @@ function ReadingPlansList(props: ReadingPlansListProps) {
   const metas = readingPlans.userReadingPlans.value;
   const fullPlans = readingPlans.fullReadingPlans.value;
   const progresses = readingPlans.userReadingPlanProgresses.value;
-  const failedPlanId = planLoadError.value;
   const openingId = openingPlanId.value;
 
-  const resolveBookName = (bookId: string): string => {
-    const book = books.find((b) => b.id === bookId);
-    return book?.name ?? book?.commonName ?? bookId;
-  };
-
-  const dayReadingsLabel = (day: CalendarReadingDay): string =>
-    day.sessions
-      .flatMap((cs) => cs.session.readings)
-      .map((r) => readingLabel(r.item, resolveBookName, ""))
-      .filter(Boolean)
-      .slice(0, 3)
-      .join(", ");
+  const dayReadingsLabelForBooks = (day: CalendarReadingDay): string =>
+    dayReadingsLabel(books, day);
 
   const nowMs = Date.now();
   const fullById = new Map(
@@ -511,16 +575,6 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     );
   };
 
-  /** "Couldn't load this plan", shown in place of opening a dead screen. */
-  const LoadError = (errorProps: { planId: string }) =>
-    failedPlanId === errorProps.planId ? (
-      <p className="sb-rp-card-error" role="alert">
-        {t("reading-plan-load-failed", {
-          defaultValue: "Couldn't load this plan. Please try again.",
-        })}
-      </p>
-    ) : null;
-
   const resumeDraft = (meta: ReadingPlanMetadata) => {
     const full = fullById.get(
       formatReadingPlanId(meta.recordName, meta.address)
@@ -569,7 +623,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                   </span>
                 ) : null}
                 <span className="sb-rp-today-readings">
-                  {dayReadingsLabel(hero.summary.next)}
+                  {dayReadingsLabelForBooks(hero.summary.next)}
                 </span>
               </div>
               <span className="sb-rp-today-go" aria-hidden="true">
@@ -665,12 +719,12 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                   <ActivePlanCard
                     row={row}
                     title={planTitle(row.meta)}
-                    dayReadingsLabel={dayReadingsLabel}
+                    dayReadingsLabel={dayReadingsLabelForBooks}
                     opening={openingId === row.planId}
                     onOpen={() => onOpen(row.meta)}
                     t={t}
                   />
-                  <LoadError planId={row.planId} />
+                  <PlanLoadError planId={row.planId} />
                   <PlanActions row={row} />
                 </div>
               ))}
@@ -716,7 +770,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                       chevron_right
                     </MaterialIcon>
                   </button>
-                  <LoadError planId={row.planId} />
+                  <PlanLoadError planId={row.planId} />
                   <PlanActions row={row} />
                 </div>
               ))}
@@ -778,7 +832,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                         {t("reading-plan-restart", { defaultValue: "Restart" })}
                       </button>
                     </div>
-                    <LoadError planId={row.planId} />
+                    <PlanLoadError planId={row.planId} />
                     <PlanActions row={row} />
                   </div>
                 );
@@ -787,7 +841,155 @@ function ReadingPlansList(props: ReadingPlansListProps) {
           ) : null}
         </div>
       )}
+      {friends ? (
+        <FriendReadingPlansSection
+          readingPlans={readingPlans}
+          friends={friends}
+          books={books}
+          onOpen={onOpen}
+          openingId={openingId}
+        />
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * Reading plans the signed-in user's friends are currently going through —
+ * one section per friend, showing their own progress. A friend's row always
+ * has a progress record (that's how it was found), so it's always "active"
+ * or "completed", never "not started" — there is nothing to bucket. Renders
+ * nothing when no friend has any resolvable progress, mirroring
+ * `FriendPlaylistsSection`'s reasoning:
+ * there's no create-one call-to-action to fall back on for someone else's
+ * reading.
+ */
+function FriendReadingPlansSection(props: {
+  readingPlans: ReadingPlansManager;
+  friends: FriendsManager;
+  books: TranslationBook[];
+  onOpen: (plan: ReadingPlanMetadata) => void;
+  openingId: string | null;
+}) {
+  const { readingPlans, friends, books, onOpen, openingId } = props;
+  const { t } = useI18n();
+  const nowMs = Date.now();
+
+  // Reading each friend's progress view (and each resolved plan's
+  // `.value`) here — not just `friendIds` — subscribes this render to
+  // their data arriving as it settles.
+  const groups = friends.friends.value
+    .map((friend) => {
+      const progresses = readingPlans.getUserReadingPlanProgresses(
+        friend.userId
+      ).value;
+      const rows: FriendReadingPlanRow[] = [];
+      // Restarting a plan adds a progress and keeps the old one, so only the
+      // latest per plan says where they are now, as in the user's own list.
+      for (const planId of new Set(progresses.map((p) => p.planId))) {
+        const progress = latestReadingPlanProgress(progresses, planId)!;
+        const locator = parseReadingPlanId(planId);
+        if (!locator) {
+          continue; // malformed/legacy planId — skip rather than throw
+        }
+        const full = readingPlans.getReadingPlanByLocator(
+          locator.recordName,
+          locator.address
+        ).value;
+        if (!full) {
+          continue; // not yet loaded (or unresolvable) — re-renders once settled
+        }
+        const summary = summarizeCalendar(
+          getReadingCalendar(full, progress, nowMs),
+          nowMs,
+          progress.timeZone
+        );
+        rows.push({ full, progress, planId: progress.planId, summary });
+      }
+      return { friend, rows };
+    })
+    .filter((group) => group.rows.length > 0);
+
+  if (groups.length === 0) {
+    return null;
+  }
+
+  return (
+    <PlanSection
+      label={t("friends-reading-plans", {
+        defaultValue: "Reading plans from your friends",
+      })}
+      count={groups.reduce((sum, group) => sum + group.rows.length, 0)}
+    >
+      <ul className="sb-rp-friend-groups">
+        {groups.map((group) => (
+          <FriendReadingPlanGroup
+            key={group.friend.userId}
+            friend={group.friend}
+            rows={group.rows}
+            books={books}
+            onOpen={onOpen}
+            openingId={openingId}
+            t={t}
+          />
+        ))}
+      </ul>
+    </PlanSection>
+  );
+}
+
+interface FriendReadingPlanRow {
+  full: ReadingPlan;
+  progress: ReadingPlanProgress;
+  planId: string;
+  summary: CalendarSummary;
+}
+
+/** One friend's in-progress reading plans: an avatar/name header plus its cards. */
+function FriendReadingPlanGroup(props: {
+  friend: Friend;
+  rows: FriendReadingPlanRow[];
+  books: TranslationBook[];
+  onOpen: (plan: ReadingPlanMetadata) => void;
+  openingId: string | null;
+  t: ReturnType<typeof useI18n>["t"];
+}) {
+  const { friend, rows, books, onOpen, openingId, t } = props;
+
+  const displayName = displayNameOf(friend, t);
+
+  return (
+    <li className="sb-rp-friend-group">
+      <div className="sb-rp-friend-group-header">
+        <Avatar
+          imageUrl={friend.pictureUrl}
+          visual={getUserAnimalVisual(friend.userId)}
+          title={displayName}
+        />
+        <span className="sb-rp-friend-group-name">{displayName}</span>
+      </div>
+      <div className="sb-rp-section-cards">
+        {rows.map((row) => (
+          <div key={row.planId} className="sb-rp-card-group">
+            <ActivePlanCard
+              row={{ ...row, meta: row.full }}
+              title={
+                row.full.title ??
+                t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+              }
+              dayReadingsLabel={(day) => dayReadingsLabel(books, day)}
+              opening={openingId === row.planId}
+              onOpen={() => onOpen(row.full)}
+              // The card shows their progress, but opening it shows the plan
+              // with yours, so it says what it opens.
+              openLabel={t("view-plan", { defaultValue: "View plan" })}
+              t={t}
+            />
+            <PlanLoadError planId={row.planId} />
+          </div>
+        ))}
+      </div>
+    </li>
   );
 }
 
@@ -807,11 +1009,19 @@ function PlanSection(props: {
 }
 
 function ActivePlanCard(props: {
-  row: PlanRow;
+  // Only `summary`/`progress` and the plan's image and description are read
+  // below, so this accepts both an owned plan's full `PlanRow` and a friend's
+  // plan's row (see `FriendReadingPlanRow`, which passes its full plan as
+  // `meta`) without either needing the other's fields (`planId`/`full`/`state`).
+  row: Pick<PlanRow, "summary" | "progress"> & {
+    meta: Pick<ReadingPlanMetadata, "heroImageUrl" | "description">;
+  };
   title: string;
   dayReadingsLabel: (day: CalendarReadingDay) => string;
   opening: boolean;
   onOpen: () => void;
+  /** Words beside the arrow, for when opening the card isn't obvious. */
+  openLabel?: string;
   t: ReturnType<typeof useI18n>["t"];
 }) {
   const { row, title, dayReadingsLabel, opening, onOpen, t } = props;
@@ -865,6 +1075,9 @@ function ActivePlanCard(props: {
               : ""}
           </span>
         </span>
+        {props.openLabel ? (
+          <span className="sb-rp-card-open-label">{props.openLabel}</span>
+        ) : null}
         <MaterialIcon className="sb-rp-card-chevron">
           {opening ? "hourglass_top" : "arrow_forward"}
         </MaterialIcon>

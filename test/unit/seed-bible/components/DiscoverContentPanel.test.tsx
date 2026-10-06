@@ -9,6 +9,7 @@ import {
   createDiscoverManager,
   type DiscoverContentTypeDefinition,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { createRealFriendContent } from "../testUtils/realFriendContent";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -145,10 +146,15 @@ function createMockState(
     panes: { closeFullscreenPanes: vi.fn() },
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
+    friends: {
+      friends: signal([]),
+      friendIds: signal([]),
+    },
     annotations: {
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
       ),
+      getUserAnnotationsForChapter: vi.fn(() => signal([])),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
       hasRecordOverride: false,
       pendingCountForChapter: vi.fn(
@@ -264,6 +270,47 @@ describe("DiscoverContentPanel", () => {
     ).map((el) => el.textContent);
     expect(sectionTitles).toContain("Notes");
     expect(container.textContent).toContain("A helpful note.");
+  });
+
+  it("shows a friend's notes on a chapter where the user has none of their own", async () => {
+    const tab = createMockTab();
+    const mockState = createMockState();
+    // The real managers, so the friend's note is loaded from the server
+    // the way the app loads it.
+    const { login, friends, annotations } = await createRealFriendContent({
+      friendIds: ["friend-1"],
+      notes: {
+        "friend-1": [
+          createAnnotation({
+            id: "friend-note",
+            data: {
+              type: "comment",
+              html: "<p>A friend's note.</p>",
+              userId: "friend-1",
+            },
+          } as Partial<Annotation>),
+        ],
+      },
+      discover: mockState.discover,
+    });
+    const state = {
+      ...mockState,
+      login,
+      friends,
+      annotations,
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    await vi.waitFor(() =>
+      expect(container.textContent).toContain("A friend's note.")
+    );
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toContain("Notes");
   });
 
   it("renders nothing when there are discovered results absent but also no annotations", () => {

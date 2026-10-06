@@ -374,6 +374,18 @@
   font-size: 0.75rem;
 }
 
+/* ----------------------------------------------------------- reading plans */
+
+.sb-content-plan {
+  cursor: pointer;
+}
+
+/* Where the reader is with the plan — "Day 3 of 10", "Draft" — under its name. */
+.sb-content-plan-status {
+  color: var(--sb-content-muted);
+  font-size: 0.8125rem;
+}
+
 /* --------------------------------------------------------- load / failure */
 
 .sb-content-status {
