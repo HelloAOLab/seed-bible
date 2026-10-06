@@ -1,3 +1,4 @@
+import { useRef } from "preact/hooks";
 import { CasualOSApp } from "../CasualOSApp/CasualOSApp";
 import type { ModalManager } from "../../managers/ModalManager";
 import { useI18n } from "../../i18n/I18nManager";
@@ -7,6 +8,10 @@ export function ModalHost(props: { manager: ModalManager }) {
   const { manager } = props;
 
   const { t } = useI18n();
+  // A drag that starts inside the modal (e.g. selecting text in an input) and
+  // ends over the overlay still fires `click` on the overlay, so only close
+  // when the press also started on the overlay.
+  const pressStartedOnOverlay = useRef(false);
 
   return (
     <>
@@ -14,8 +19,18 @@ export function ModalHost(props: { manager: ModalManager }) {
         const content = (
           <div
             className="sb-footnote-modal-overlay"
-            onClick={() => {
-              manager.closeModal(modal.id);
+            onMouseDown={(event: MouseEvent) => {
+              pressStartedOnOverlay.current =
+                event.target === event.currentTarget;
+            }}
+            onClick={(event: MouseEvent) => {
+              if (
+                pressStartedOnOverlay.current &&
+                event.target === event.currentTarget
+              ) {
+                manager.closeModal(modal.id);
+              }
+              pressStartedOnOverlay.current = false;
             }}
           >
             <div
