@@ -1253,10 +1253,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
   const activeCustomization = customizations.activeCustomization.value;
-  // Extensions the active customization has marked "hidden" don't appear in
-  // this list at all — not installable, not shown as installed, nothing.
+  // An extension the active customization marks "hidden" is never offered
+  // for install, but one the viewer already has installed still shows so it
+  // can be seen and removed.
   const visibleExtensionsList = extensionsList.filter(
     (entry) =>
+      entry.installed ||
       customizations.getActiveExtensionAvailability(entry.id) !== "hidden"
   );
   const activeTab = useSignal<ExtensionsTab>("installed");

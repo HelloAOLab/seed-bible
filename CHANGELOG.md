@@ -25,6 +25,8 @@
 
 ### 🐛 Fixed
 
+- Keep an extension you've already installed listed under Installed in Settings → Extensions, even when the active customization hides that extension. Before, it disappeared from the list entirely, so you couldn't see or remove it. Hidden extensions still never appear under Available.
+
 ### 🗑️ Removed
 
 ## v1.12.0 — 2026-10-06
