@@ -1327,9 +1327,18 @@ export function createSeedBibleState(
   // means the profile has had time to load, so there's no "stale prompt"
   // concern the way there was on startup. One-shot via `installOfferChecked`.
   //
+  // "No, thanks" and leaving the introduction tour before it finishes are
+  // the exception: don't open install, and don't mark the offer resolved.
+  // The download prompt waits on `installOfferResolved`, so it stays quiet
+  // for the rest of this visit without a rule of its own. The next visit
+  // starts fresh and shows install, unless that prompt was already dismissed
+  // on this device (`sb-install-dismissed`). Finishing the tour still chains
+  // install, then download, as before.
+  //
   // `installOfferResolved` flips once that check has had its turn, whether or
-  // not it showed anything. The offline-download offer waits on it so the two
-  // never stack, and so "offer the download after the install prompt" holds.
+  // not it showed anything — except the early-leave case above. The
+  // offline-download offer waits on it so the two never stack, and so "offer
+  // the download after the install prompt" holds.
   const installOfferResolved = signal(false);
 
   let installOfferChecked = false;
@@ -1359,6 +1368,13 @@ export function createSeedBibleState(
       !tutorial.running.value &&
       (tutorial.completed.value || tutorial.optedOut.value);
     if (!tutorialResolved) {
+      return;
+    }
+    // Read after the tour has actually ended, in the same flush that marks
+    // it seen (see `dismissPrompt` / `skip`). Leaving `installOfferResolved`
+    // false is what keeps the download prompt from taking a turn this visit.
+    if (tutorial.leftIntroductionEarly.value) {
+      installOfferChecked = true;
       return;
     }
     installOfferChecked = true;
@@ -2235,7 +2251,11 @@ export function createSeedBibleState(
   // Offer to save the current translation for offline reading, once the
   // tutorial and install prompts have had their turn so we never stack two
   // dialogs. One-shot per load via `downloadOfferChecked`; the manager decides
-  // whether the offer is actually warranted.
+  // whether the offer is actually warranted (first save on a device with
+  // nothing downloaded, or the current translation after a day). Leaving the
+  // introduction early never resolves the install offer, so this effect
+  // simply doesn't run that visit — it has no separate "come back next time"
+  // flag. The next visit follows these same rules.
   let downloadOfferChecked = false;
   effect(() => {
     if (downloadOfferChecked) {
