@@ -1333,6 +1333,35 @@ describe("BibleReader", () => {
     expect(selectFootnote).toHaveBeenCalledWith(7);
     expect(selectVerse).not.toHaveBeenCalled();
   });
+  it("keeps the footnote button inside a non-breaking inline wrapper", () => {
+    const { slot, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const footnote = container.querySelector(".sb-inline-footnote");
+
+    expect(footnote).not.toBeNull();
+    expect(footnote?.tagName).toBe("SPAN");
+
+    const button = footnote?.querySelector(".sb-inline-footnote-button");
+
+    expect(button).not.toBeNull();
+
+    // The non-breaking space must be immediately before the button.
+    expect(footnote?.childNodes[0]?.textContent).toBe("\u00A0");
+
+    // The button must be inside the non-breaking wrapper.
+    expect(button?.parentElement).toBe(footnote);
+  });
 
   it("marks selected and poetry verses with their CSS classes", () => {
     const { slot, selectorState, readingState, selectedVerses } =

@@ -702,18 +702,20 @@ function renderInlineContent(
       return <span> </span>;
     }
     return (
-      <button
-        key={index}
-        className="sb-inline-footnote-button"
-        aria-label={`Open footnote ${part.noteId}`}
-        title={`Open footnote ${part.noteId}`}
-        onClick={(event: MouseEvent) => {
-          event.stopPropagation();
-          onOpenFootnote(part.noteId);
-        }}
-      >
-        <span className="material-symbols-outlined">info</span>
-      </button>
+      <span key={index} className="sb-inline-footnote">
+        {"\u00A0"}
+        <button
+          className="sb-inline-footnote-button"
+          aria-label={`Open footnote ${part.noteId}`}
+          title={`Open footnote ${part.noteId}`}
+          onClick={(event: MouseEvent) => {
+            event.stopPropagation();
+            onOpenFootnote(part.noteId);
+          }}
+        >
+          <span className="material-symbols-outlined">info</span>
+        </button>
+      </span>
     );
   }
 
