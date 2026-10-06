@@ -145,6 +145,9 @@ function createQuickToolContext(
       pendingCountForChapter: vi.fn(
         () => overrides.pendingAnnotationChangesForChapter ?? 0
       ),
+      visibleAnnotationsForChapter: vi.fn(
+        () => overrides.annotationsForChapter ?? []
+      ),
     } as any,
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
@@ -1906,6 +1909,7 @@ describe("createBibleToolsManager", () => {
         annotations: {
           getAnnotationsForChapter: () => signal([]),
           pendingCountForChapter: vi.fn(() => 0),
+          visibleAnnotationsForChapter: () => [],
         } as any,
         features: {} as any,
         surface: "quick-toolbar",

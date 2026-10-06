@@ -1354,7 +1354,7 @@ export function getDiscoverPanelContent(
   const hasAnnotations = Boolean(
     bookId &&
     chapterNumber &&
-    annotations.getAnnotationsForChapter(bookId, chapterNumber).value.length > 0
+    annotations.visibleAnnotationsForChapter(bookId, chapterNumber).length > 0
   );
   // A note deleted offline is no longer in the chapter list, but it is still
   // a change that has to reach the server. Keep the notes section (and its
@@ -2291,9 +2291,11 @@ export function createBibleReadingState(
       );
       const annotationsManager = getAnnotationsManager?.();
       activeChapterAnnotations.value = annotationsManager
-        ? annotationsManager.getAnnotationsForChapter(
-            next.bookId,
-            next.chapterNumber
+        ? computed(() =>
+            annotationsManager.visibleAnnotationsForChapter(
+              next.bookId,
+              next.chapterNumber
+            )
           )
         : signal<Annotation[]>([]);
 
