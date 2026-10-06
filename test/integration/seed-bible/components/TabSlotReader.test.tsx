@@ -261,6 +261,8 @@ function createMobileState(): SeedBibleState {
     discover,
     playlists: {
       playing: signal(null),
+      openingPlayback: signal(false),
+      view: signal(null),
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
@@ -314,6 +316,8 @@ function createDesktopState(): SeedBibleState {
     discover,
     playlists: {
       playing: signal(null),
+      openingPlayback: signal(false),
+      view: signal(null),
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),

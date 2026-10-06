@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Bu düzülüş menyusundan yan-yana oxunacaq neçə mətni seçin.",
   "tutorial.addTabTitle": "Daha çox keçid açın",
   "tutorial.addTabBody": "Bir neçə kitabı və ya tərcüməni yan-yana oxumaq üçün yeni bir sekme əlavə edin.",
-  "playlist-history": "Pleylist tarixçəsi",
   "discover-playlist-history-empty": "Hesaba daxil olarkən yadda saxlanılmış pleylistə qulaq asın və o, burada görünəcək.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % tamamlandı - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % tamamlandı",

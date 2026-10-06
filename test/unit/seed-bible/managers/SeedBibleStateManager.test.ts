@@ -5,6 +5,14 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/ProfilePane/ProfilePane";
+import { PLAYLIST_HISTORY_PANE_ID } from "@packages/seed-bible/seed-bible/components/PlaylistHistoryPane/PlaylistHistoryPane";
+import {
+  PlaylistPlayHistorySchema,
+  PlaylistSchema,
+} from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import { formatV1SessionKey } from "@casual-simulation/aux-common";
+import { h, render } from "preact";
+import { act } from "preact/test-utils";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type {
   Translation,
@@ -3054,6 +3062,263 @@ describe("opening another screen while Today is up", () => {
     expect(state.isProfileOpen.value).toBe(true);
     expect(state.today.isOpen.value).toBe(false);
     expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
+  });
+
+  it("opens playlist history as its own screen", async () => {
+    const state = await createState();
+
+    state.openPlaylistHistory();
+    await Promise.resolve();
+
+    expect(state.isPlaylistHistoryOpen.value).toBe(true);
+    expect(paneIds(state)).toEqual([PLAYLIST_HISTORY_PANE_ID]);
+  });
+
+  it("opens playlist history from a ?playlist-history=open link", async () => {
+    jsdom.reconfigure({
+      url: "https://example.com/?playlist-history=open",
+    });
+    const state = await createState();
+
+    expect(state.isPlaylistHistoryOpen.value).toBe(true);
+    expect(paneIds(state)).toEqual([PLAYLIST_HISTORY_PANE_ID]);
+  });
+
+  it("clears playlist history when its pane is closed", async () => {
+    const state = await createState();
+    state.openPlaylistHistory();
+    await Promise.resolve();
+
+    state.panes.closePane(PLAYLIST_HISTORY_PANE_ID);
+    await Promise.resolve();
+
+    expect(state.isPlaylistHistoryOpen.value).toBe(false);
+    expect(paneIds(state)).not.toContain(PLAYLIST_HISTORY_PANE_ID);
+  });
+
+  it("returns to Profile from the playlist history back button", async () => {
+    const state = await createState();
+    state.openProfile();
+    await Promise.resolve();
+    state.openPlaylistHistory();
+    await Promise.resolve();
+    expect(state.isProfileOpen.value).toBe(false);
+    expect(state.isPlaylistHistoryOpen.value).toBe(true);
+
+    const pane = state.panes.panes.value.find(
+      (item) => item.id === PLAYLIST_HISTORY_PANE_ID
+    );
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    try {
+      const Provider = await realI18nProvider();
+      act(() => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: pane?.leading?.() ?? null,
+          }),
+          container
+        );
+      });
+      const back = container.querySelector(
+        ".sb-profile-pane-back"
+      ) as HTMLButtonElement;
+      expect(back).not.toBeNull();
+      act(() => {
+        back.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    } finally {
+      render(null, container);
+      container.remove();
+    }
+
+    expect(state.isPlaylistHistoryOpen.value).toBe(false);
+    expect(state.isProfileOpen.value).toBe(true);
+    expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
+  });
+});
+
+const PLAYLIST_USER_ID = "user-1";
+
+/**
+ * This file stubs `I18nProvider` so it renders children with no context.
+ * Profile and the history back button call `useI18n`, so they need the real
+ * provider from the unmocked module.
+ */
+async function realI18nProvider() {
+  const actual = await vi.importActual<
+    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
+  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
+  return actual.I18nProvider;
+}
+
+function profileHistoryEntry() {
+  return PlaylistPlayHistorySchema.parse({
+    id: "playlist_history_1",
+    recordName: PLAYLIST_USER_ID,
+    userId: PLAYLIST_USER_ID,
+    playlistId: "playlist-1",
+    playlistRecordName: PLAYLIST_USER_ID,
+    playlistTitle: "Morning",
+    playlistDescription: null,
+    previousHistoryId: null,
+    totalSteps: 1,
+    currentStep: 0,
+    lastItem: { type: "html", html: "<p>hi</p>" },
+    startedAtMs: 1,
+    endedAtMs: null,
+    durationMs: 0,
+    createdAtMs: 1,
+    updatedAtMs: 1,
+  });
+}
+
+function htmlPlaylist() {
+  return PlaylistSchema.parse({
+    id: "playlist-1",
+    recordName: PLAYLIST_USER_ID,
+    authorUserId: PLAYLIST_USER_ID,
+    title: "Morning",
+    description: null,
+    items: [{ type: "html", html: "<p>hi</p>" }],
+    createdAtMs: 1,
+    updatedAtMs: 1,
+  });
+}
+
+describe("continuing a playlist from Profile", () => {
+  let container: HTMLDivElement;
+  let active: SeedBibleState | null = null;
+
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    if (active) {
+      active.os.sessionKey.value = null;
+      active = null;
+    }
+    render(null, container);
+    container.remove();
+    localStorage.removeItem("sessionKey");
+    vi.restoreAllMocks();
+  });
+
+  async function signedInProfile(state: SeedBibleState) {
+    vi.spyOn(state.os, "listAllDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "listDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "recordData").mockResolvedValue({
+      success: true,
+    } as never);
+    vi.spyOn(state.os, "eraseData").mockResolvedValue({
+      success: true,
+    } as never);
+    state.os.sessionKey.value = formatV1SessionKey(
+      PLAYLIST_USER_ID,
+      "session-1",
+      "secret-1",
+      Date.now() + 60 * 60 * 1000
+    );
+    await waitFor(() => state.login.userId.value === PLAYLIST_USER_ID);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    state.playlists.userPlaylistHistory.value = [profileHistoryEntry()];
+    state.openProfile();
+    await Promise.resolve();
+    const pane = state.panes.panes.value.find(
+      (item) => item.id === PROFILE_PANE_ID
+    );
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: pane?.component() ?? null,
+        }),
+        container
+      );
+    });
+  }
+
+  function continueButton() {
+    return container.querySelector(
+      ".sb-profile-playlist-continue"
+    ) as HTMLButtonElement;
+  }
+
+  it("leaves Profile open and toasts when the playlist cannot be loaded", async () => {
+    const state = await createState();
+    active = state;
+    vi.spyOn(state.os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "not_found",
+      errorMessage: "not found",
+    });
+    await signedInProfile(state);
+
+    await act(async () => {
+      continueButton().dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(
+      () =>
+        state.app.currentToast.value?.message ===
+        "Couldn't open that playlist. It may have been deleted."
+    );
+
+    expect(state.isProfileOpen.value).toBe(true);
+  });
+
+  it("closes Profile only after the playlist has loaded", async () => {
+    const state = await createState();
+    active = state;
+    let finishLoad: (() => void) | null = null;
+    vi.spyOn(state.os, "getData").mockImplementation(
+      async (_recordName: string, address: string) => {
+        if (address !== "playlist-1") {
+          return {
+            success: false,
+            errorCode: "data_not_found" as const,
+            errorMessage: "Data not found",
+          };
+        }
+        return new Promise((resolve) => {
+          finishLoad = () => {
+            resolve({
+              success: true,
+              data: htmlPlaylist(),
+            } as never);
+          };
+        });
+      }
+    );
+    await signedInProfile(state);
+
+    act(() => {
+      continueButton().dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(state.isProfileOpen.value).toBe(true);
+
+    await act(async () => {
+      finishLoad?.();
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(state.isProfileOpen.value).toBe(false);
   });
 });
 

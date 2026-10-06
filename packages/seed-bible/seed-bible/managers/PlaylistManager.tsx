@@ -453,7 +453,7 @@ export function groupPlaylistPlayHistoryByDay(
   }));
 }
 
-/** Which heading Discover should use for a history day group. */
+/** Which heading a history day group should use. */
 export function playlistPlayHistoryDayKind(
   dayKey: string,
   nowMs: number = Date.now(),
@@ -488,6 +488,15 @@ export function isPlaylistPlayHistoryComplete(
   entry: Pick<PlaylistPlayHistory, "currentStep" | "totalSteps">
 ): boolean {
   return entry.totalSteps > 0 && entry.currentStep >= entry.totalSteps - 1;
+}
+
+/** Shown when a history row's playlist cannot be loaded. One string for every caller. */
+export function playlistHistoryOpenFailedMessage(t: {
+  (key: string, options?: { defaultValue?: string }): string;
+}): string {
+  return t("playlist-history-open-failed", {
+    defaultValue: "Couldn't open that playlist. It may have been deleted.",
+  });
 }
 
 /**
@@ -837,6 +846,11 @@ export function createPlayingState(
    * differs from the current value, so applying an inbound snapshot doesn't
    * re-trigger the outbound sync effect for unchanged fields.
    */
+  // The chapter open kicked off by the latest `setState`. Callers that start
+  // playback can await this so a loader stays up until the verse is actually
+  // on screen, not merely until the extension has been enabled.
+  let settled: Promise<void> = Promise.resolve();
+
   const setState = async (state: PlaylistReadingData): Promise<void> => {
     if (!jsonEqual(playlists.peek(), state.playlists)) {
       playlists.value = state.playlists;
@@ -848,9 +862,10 @@ export function createPlayingState(
       state.queue.length > 0
         ? Math.min(Math.max(Math.floor(state.step), 0), state.queue.length - 1)
         : -1;
+    let navigation: Promise<void> | null = null;
     if (currentIndex.peek() !== clampedStep) {
       currentIndex.value = clampedStep;
-      await navigateToCurrentItem();
+      navigation = navigateToCurrentItem();
     } else {
       // Check if navigation is needed to display the current reference
       const current = currentItem.peek();
@@ -859,11 +874,17 @@ export function createPlayingState(
           current.ref.bookId !== tab.readingState.bookId.peek() ||
           current.ref.chapter !== tab.readingState.chapterNumber.peek()
         ) {
-          await navigateToCurrentItem();
+          navigation = navigateToCurrentItem();
         }
       }
     }
+    if (navigation) {
+      settled = navigation;
+      await navigation;
+    }
   };
+
+  const whenSettled = (): Promise<void> => settled;
 
   /** Tears down the navigation effect. Call when playback ends or is replaced. */
   const dispose = (): void => {
@@ -890,6 +911,7 @@ export function createPlayingState(
     reorderQueue,
     reset,
     setState,
+    whenSettled,
     dispose,
   };
 }
@@ -1035,6 +1057,26 @@ export function createPlaylistManager(
    * `PlayingState` off that runtime. Switching the selected tab recomputes
    * this — it does not tear anything down.
    */
+  /**
+   * True from the moment a playlist is asked to play until its first item is
+   * on screen. Fetching the playlist and opening the chapter both count —
+   * that gap is when the UI shows a loader.
+   */
+  const openingPlayback = signal(false);
+  let openingGeneration = 0;
+
+  const beginOpeningPlayback = () => {
+    openingGeneration += 1;
+    openingPlayback.value = true;
+    return openingGeneration;
+  };
+
+  const finishOpeningPlayback = (generation: number) => {
+    if (generation === openingGeneration) {
+      openingPlayback.value = false;
+    }
+  };
+
   const playing = computed<PlayingState | null>(() => {
     const runtime = activeTab.value?.readingState.enabledExtensions.value.find(
       (r) => r.id === PLAYLIST_READING_EXTENSION_ID
@@ -1912,6 +1954,11 @@ export function createPlaylistManager(
       queue,
       step,
     } satisfies PlaylistReadingData);
+    const generation = beginOpeningPlayback();
+    const opened = playing.peek();
+    void (opened?.whenSettled() ?? Promise.resolve()).finally(() => {
+      finishOpeningPlayback(generation);
+    });
     view.value = "play_playlist";
 
     if (isMobile.value) {
@@ -2024,6 +2071,9 @@ export function createPlaylistManager(
       tab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
     }
     initialPlaylistLocator.value = null;
+    // Drop the loader. A later open bumps the generation itself, so a finish
+    // from this one can only set the flag false, which this already did.
+    openingPlayback.value = false;
     // A playing path only means anything while playing. Left in the address
     // bar, it would be read straight back as a request to play again.
     if (
@@ -2047,12 +2097,22 @@ export function createPlaylistManager(
   const continueFromHistory = async (
     entry: PlaylistPlayHistory
   ): Promise<void> => {
-    const playlist = await loadPlaylist(
-      entry.playlistRecordName,
-      entry.playlistId
-    );
-    const step = Math.max(0, entry.currentStep);
-    startPlaying(playlist, step);
+    const generation = beginOpeningPlayback();
+    try {
+      const playlist = await loadPlaylist(
+        entry.playlistRecordName,
+        entry.playlistId
+      );
+      const step = Math.max(0, entry.currentStep);
+      const playingState = startPlaying(playlist, step);
+      if (!playingState) {
+        throw new Error("Cannot play a playlist without an open tab.");
+      }
+      await playingState.whenSettled();
+    } catch (error) {
+      finishOpeningPlayback(generation);
+      throw error;
+    }
   };
 
   /**
@@ -2062,12 +2122,31 @@ export function createPlaylistManager(
   const replayFromHistory = async (
     entry: PlaylistPlayHistory
   ): Promise<void> => {
-    const playlist = await loadPlaylist(
-      entry.playlistRecordName,
-      entry.playlistId
-    );
-    startPlaying(playlist, 0);
+    const generation = beginOpeningPlayback();
+    try {
+      const playlist = await loadPlaylist(
+        entry.playlistRecordName,
+        entry.playlistId
+      );
+      const playingState = startPlaying(playlist, 0);
+      if (!playingState) {
+        throw new Error("Cannot play a playlist without an open tab.");
+      }
+      await playingState.whenSettled();
+    } catch (error) {
+      finishOpeningPlayback(generation);
+      throw error;
+    }
   };
+
+  /**
+   * Continues a history row, or replays it when that session already finished.
+   * Resolves once the first item is on screen.
+   */
+  const playFromHistory = (entry: PlaylistPlayHistory): Promise<void> =>
+    isPlaylistPlayHistoryComplete(entry)
+      ? replayFromHistory(entry)
+      : continueFromHistory(entry);
 
   const syncPlaylists = async () => {
     if (!login.userId.value) {
@@ -2521,11 +2600,22 @@ export function createPlaylistManager(
   // (e.g. `startPlaying` itself) and, seeing the URL hasn't caught up yet
   // (that happens separately, via `transformQueryParams`/`TabsManager`), would
   // wrongly treat the still-stale URL as an external "stop playback" request.
+  //
+  // The locator on the URL *before* this change. Closing Profile or playlist
+  // history rewrites the URL, and that write can land before playback has
+  // put its locator there. A URL that never asked for playback is not a
+  // request to stop; leaving one that did (Back, a link without it) is.
+  let previousPlaylistLocator: string | null =
+    playbackRequestFromUrl(navigation.currentUrl.peek(), navigation.basePath)
+      ?.locator ?? null;
+
   const syncPlayingFromUrl = () => {
     const request = playbackRequestFromUrl(
       navigation.currentUrl.value,
       navigation.basePath
     );
+    const priorPlaylistLocator = previousPlaylistLocator;
+    previousPlaylistLocator = request?.locator ?? null;
 
     const playingState = playing.peek();
     const firstPlaylist = playingState?.playlists.peek()[0];
@@ -2547,6 +2637,9 @@ export function createPlaylistManager(
     }
 
     if (!request) {
+      if (playing.peek() && priorPlaylistLocator == null) {
+        return;
+      }
       stopPlaying();
       return;
     }
@@ -2791,10 +2884,12 @@ export function createPlaylistManager(
     actualView,
     editingPlaylist,
     playing,
+    openingPlayback,
     startPlaying,
     stopPlaying,
     continueFromHistory,
     replayFromHistory,
+    playFromHistory,
     removePlayHistory,
     getPlaylistUrl,
     playlistPage,

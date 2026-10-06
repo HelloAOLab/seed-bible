@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Escolha quantas passagens deseja ler lado a lado neste menu de layout.",
   "tutorial.addTabTitle": "Abra mais passagens",
   "tutorial.addTabBody": "Adicione uma nova aba para ler vários livros ou traduções lado a lado.",
-  "playlist-history": "Histórico da playlist",
   "discover-playlist-history-empty": "Reproduza uma lista de reprodução salva enquanto estiver conectado e ela aparecerá aqui.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % concluído - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % concluído",

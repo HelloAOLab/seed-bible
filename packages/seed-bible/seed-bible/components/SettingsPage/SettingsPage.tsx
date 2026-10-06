@@ -41,6 +41,7 @@ import {
   Skeleton,
   SkeletonContainer,
 } from "../../components/Skeleton/Skeleton";
+import { Spinner } from "../Spinner/Spinner";
 import {
   ExtensionInitalizer,
   nonSensitiveSettings,
@@ -469,12 +470,7 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
                   })
                 ) : isSaving.value ? (
                   <span className="sb-account-save-saving">
-                    <span
-                      className="material-symbols-outlined sb-account-save-spinner"
-                      aria-hidden="true"
-                    >
-                      progress_activity
-                    </span>
+                    <Spinner size="1.125rem" />
                     {t("saving", { defaultValue: "Saving…" })}
                   </span>
                 ) : (

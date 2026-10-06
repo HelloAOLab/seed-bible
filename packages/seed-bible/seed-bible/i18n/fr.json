@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Choisissez le nombre de passages à lire côte à côte dans ce menu de mise en page.",
   "tutorial.addTabTitle": "Ouvrir plus de passages",
   "tutorial.addTabBody": "Ajoutez un nouvel onglet pour lire plusieurs livres ou traductions côte à côte.",
-  "playlist-history": "Historique des playlists",
   "discover-playlist-history-empty": "Lancez une playlist enregistrée en étant connecté et elle apparaîtra ici.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % terminé - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % terminé",

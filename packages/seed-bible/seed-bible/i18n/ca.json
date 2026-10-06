@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Trieu quants passatges voleu llegir un al costat de l'altre en aquest menú de disseny.",
   "tutorial.addTabTitle": "Obre més passatges",
   "tutorial.addTabBody": "Afegeix una pestanya nova per llegir diversos llibres o traduccions alhora.",
-  "playlist-history": "Historial de llistes de reproducció",
   "discover-playlist-history-empty": "Reprodueix una llista de reproducció desada amb la sessió iniciada i apareixerà aquí.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % completat - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % completat",

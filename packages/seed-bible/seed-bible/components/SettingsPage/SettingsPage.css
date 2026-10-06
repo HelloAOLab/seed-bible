@@ -1631,24 +1631,6 @@
   gap: 0.5rem;
 }
 
-.sb-account-save-spinner {
-  font-size: 1.125rem;
-  line-height: 1;
-  animation: sb-account-save-spin 0.9s linear infinite;
-}
-
-@keyframes sb-account-save-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sb-account-save-spinner {
-    animation: none;
-  }
-}
-
 .sb-account-signout-section {
   margin-top: 0.625rem;
   border-top: 1px solid

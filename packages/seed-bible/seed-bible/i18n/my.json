@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "ဤအပြင်အဆင်မီနူးမှ စာပိုဒ်မည်မျှကို ဘေးချင်းယှဉ်ဖတ်ရှုမည်ကို ရွေးချယ်ပါ။",
   "tutorial.addTabTitle": "စာပိုဒ်များ ပိုမိုဖွင့်ပါ",
   "tutorial.addTabBody": "စာအုပ်များစွာ သို့မဟုတ် ဘာသာပြန်များစွာကို ယှဉ်တွဲဖတ်ရှုရန် တဘ်အသစ်တစ်ခုထည့်ပါ။",
-  "playlist-history": "သီချင်းစာရင်းမှတ်တမ်း",
   "discover-playlist-history-empty": "အကောင့်ဝင်ထားစဉ် သိမ်းဆည်းထားသော သီချင်းစာရင်းကို ဖွင့်ပါ၊ ၎င်းသည် ဤနေရာတွင် ပေါ်လာပါလိမ့်မည်။",
   "playlist-history-session-summary": "{{time}} - {{percent}} % ပြီးစီး - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ပြီးစီးပါပြီ",

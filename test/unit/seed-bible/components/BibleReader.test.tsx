@@ -365,12 +365,14 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(testBranding),
-    tabs: {} as any,
+    tabs: { selectedTabId: signal("") },
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover: { scrollToVerse: signal(null) },
     playlists: {
       playing: signal(null),
+      openingPlayback: signal(false),
+      view: signal(null),
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
@@ -455,6 +457,42 @@ describe("BibleReader", () => {
       render(null, container);
     });
     container.remove();
+  });
+
+  it("shows the opening spinner only on the tab that will play", () => {
+    const fixture = createFixture();
+    const state = createMobileState(fixture.selectorState);
+    (state.app.isDiscoverOpen as { value: boolean }).value = true;
+    state.playlists.openingPlayback.value = true;
+    state.tabs.selectedTabId.value = "tab-1";
+    const slot: TabSlot = {
+      ...fixture.slot,
+      tab: {
+        id: "tab-1",
+        title: "Tab 1",
+        readingState: fixture.readingState,
+        sharedSession: null,
+        sharedChat: null,
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={fixture.selectorState}
+          readingState={fixture.readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+    expect(container.querySelector(".sb-spinner")).not.toBeNull();
+
+    act(() => {
+      state.tabs.selectedTabId.value = "other-tab";
+    });
+    expect(container.querySelector(".sb-spinner")).toBeNull();
   });
 
   it("opens the selector when the title is clicked", () => {
@@ -4186,8 +4224,11 @@ describe("BibleReader", () => {
         openVerseReference,
       },
       tools: createBibleToolsManager(testBranding),
+      tabs: { selectedTabId: signal("") },
       playlists: {
         playing: signal(null),
+        openingPlayback: signal(false),
+        view: signal(null),
       },
       features: {
         isFeatureEnabled: vi.fn(() => true),

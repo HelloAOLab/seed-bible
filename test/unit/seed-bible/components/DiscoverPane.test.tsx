@@ -189,6 +189,7 @@ function createMockPlaylists(
     editingPlaylist,
     userPlaylistHistory: signal(overrides.userPlaylistHistory ?? []),
     playing: signal(overrides.playing ?? null),
+    openingPlayback: signal(false),
     playingAuthorName: signal(null),
     createNewPlaylist,
     startPlaying,
@@ -2537,6 +2538,7 @@ describe("DiscoverPaneTitle", () => {
       view,
       actualView,
       playing,
+      openingPlayback: signal(false),
       editingPlaylist: signal(null),
       goBackFromPlayingView: vi.fn(),
     } as unknown as PlaylistManager;
@@ -2855,108 +2857,18 @@ describe("DiscoverPaneTitle", () => {
     expect(playlists.editingPlaylist.value?.title).toBeNull();
   });
 
-  function createHistoryEntry(
-    overrides: Partial<PlaylistPlayHistory> = {}
-  ): PlaylistPlayHistory {
-    return {
-      id: "hist-1",
-      recordName: "user-1",
-      userId: "user-1",
-      playlistId: "playlist-1",
-      playlistRecordName: "user-1",
-      playlistTitle: "Shared Study",
-      playlistDescription: null,
-      previousHistoryId: null,
-      totalSteps: 4,
-      currentStep: 1,
-      lastItem: {
-        type: "bible-verse",
-        ref: { bookId: "JHN", chapter: 3, verse: 16 },
-      },
-      startedAtMs: 1_000,
-      endedAtMs: 1_000 + 65_000,
-      durationMs: 65_000,
-      createdAtMs: 1_000,
-      updatedAtMs: 1_000 + 65_000,
-      ...overrides,
-    };
-  }
-
-  it("hides playlist history when there is none", () => {
-    const { playlists } = createMockPlaylists({ userPlaylistHistory: [] });
-    const tabs = createMockTabs(createMockTab());
-    const modals = createModalManager();
-    const state = createMockState();
-    const { annotations } = createMockAnnotations();
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          annotations={annotations}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    const sectionTitles = Array.from(
-      container.querySelectorAll(".sb-discover-section-title")
-    ).map((el) => el.textContent);
-    expect(sectionTitles).not.toContain("Playlist history");
-    expect(container.querySelector(".sb-playlist-history-item")).toBeNull();
-    expect(container.textContent).not.toContain(
-      "Play a saved playlist while signed in and it will show up here."
-    );
-  });
-
-  it("shows Notes above Playlist history when there is history", () => {
+  it("does not show playlist history", () => {
     const { playlists } = createMockPlaylists({
-      userPlaylistHistory: [createHistoryEntry()],
+      userPlaylistHistory: [
+        {
+          id: "hist-1",
+          playlistTitle: "Shared Study",
+        } as PlaylistPlayHistory,
+      ],
     });
     const tabs = createMockTabs(createMockTab());
     const modals = createModalManager();
     const state = createMockState();
-    const { annotations } = createMockAnnotations({
-      annotationsForChapter: [createAnnotation()],
-    });
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          annotations={annotations}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    const sectionTitles = Array.from(
-      container.querySelectorAll(".sb-discover-section-title")
-    ).map((el) => el.textContent);
-    expect(sectionTitles.indexOf("Notes")).toBeGreaterThanOrEqual(0);
-    expect(sectionTitles.indexOf("Playlist history")).toBeGreaterThan(
-      sectionTitles.indexOf("Notes")
-    );
-    expect(sectionTitles).not.toContain("Playlists");
-  });
-
-  it("lists playlist history with status, play to continue, and no Continue listening section", async () => {
-    const entry = createHistoryEntry();
-    const { playlists, continueFromHistory, replayFromHistory } =
-      createMockPlaylists({
-        userPlaylistHistory: [entry],
-      });
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState();
     const { annotations } = createMockAnnotations();
 
     act(() => {
@@ -2973,111 +2885,9 @@ describe("DiscoverPaneTitle", () => {
       );
     });
 
-    expect(container.textContent).not.toContain("Continue listening");
-    const item = container.querySelector(
-      ".sb-playlist-history-item"
-    ) as HTMLLIElement;
-    expect(item).not.toBeNull();
-    expect(item.querySelector(".sb-discover-item-title")?.textContent).toBe(
-      "Shared Study"
-    );
-    expect(item.querySelector(".sb-hero-thumb")).toBeNull();
-    expect(item.textContent).not.toContain("No image");
-    expect(
-      item.querySelector(".sb-discover-item-description")?.textContent
-    ).toMatch(/50% complete/);
-    expect(
-      item.querySelector(".sb-discover-item-description")?.textContent
-    ).toContain("JHN 3:16");
-    expect(container.querySelector(".sb-playlist-history-details")).toBeNull();
-
-    const play = item.querySelector(
-      ".sb-discover-item-play"
-    ) as HTMLButtonElement;
-    expect(play.getAttribute("aria-label")).toBe("Continue");
-
-    await act(async () => {
-      play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(continueFromHistory).toHaveBeenCalledWith(entry);
-    expect(replayFromHistory).not.toHaveBeenCalled();
-  });
-
-  it("replays a completed history entry from the play button", async () => {
-    const entry = createHistoryEntry({
-      currentStep: 3,
-      totalSteps: 4,
-    });
-    const { playlists, replayFromHistory, continueFromHistory } =
-      createMockPlaylists({
-        userPlaylistHistory: [entry],
-      });
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState();
-    const { annotations } = createMockAnnotations();
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          annotations={annotations}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    const play = container.querySelector(
-      ".sb-playlist-history-item .sb-discover-item-play"
-    ) as HTMLButtonElement;
-    expect(play.getAttribute("aria-label")).toBe("Replay");
-
-    await act(async () => {
-      play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(replayFromHistory).toHaveBeenCalledWith(entry);
-    expect(continueFromHistory).not.toHaveBeenCalled();
-  });
-
-  it("removes a history session from the overflow menu", async () => {
-    const entry = createHistoryEntry();
-    const { playlists, removePlayHistory } = createMockPlaylists({
-      userPlaylistHistory: [entry],
-    });
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState();
-    const { annotations } = createMockAnnotations();
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          annotations={annotations}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    const remove = Array.from(
-      container.querySelectorAll('[role="menuitem"]')
-    ).find((el) => el.textContent?.includes("Remove from history")) as
-      | HTMLButtonElement
-      | undefined;
-    expect(remove).toBeDefined();
-
-    await act(async () => {
-      remove!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(removePlayHistory).toHaveBeenCalledWith(entry);
+    expect(container.textContent).not.toContain("Playlist history");
+    expect(container.textContent).not.toContain("Shared Study");
+    expect(container.querySelector(".sb-playlist-history-item")).toBeNull();
   });
 
   function renderAnnotationTitle(editing: Annotation) {

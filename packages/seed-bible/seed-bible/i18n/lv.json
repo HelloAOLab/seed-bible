@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Šajā izkārtojuma izvēlnē izvēlieties, cik fragmentu lasīt blakus.",
   "tutorial.addTabTitle": "Atvērt vairāk fragmentu",
   "tutorial.addTabBody": "Pievienojiet jaunu cilni, lai lasītu vairākas grāmatas vai tulkojumus vienlaikus.",
-  "playlist-history": "Atskaņošanas saraksta vēsture",
   "discover-playlist-history-empty": "Atskaņojiet saglabātu atskaņošanas sarakstu, kad esat pierakstījies, un tas tiks parādīts šeit.",
   "playlist-history-session-summary": "{{time}} — {{percent}} % pabeigts — {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} — {{percent}} % pabeigts",

@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "या लेआउट मेन्यूमधून, एकाच वेळी किती परिच्छेद वाचायचे आहेत ते निवडा.",
   "tutorial.addTabTitle": "अधिक मार्ग उघडा",
   "tutorial.addTabBody": "एकाच वेळी अनेक पुस्तके किंवा भाषांतरे वाचण्यासाठी नवीन टॅब जोडा.",
-  "playlist-history": "प्लेलिस्ट इतिहास",
   "discover-playlist-history-empty": "साइन इन केलेले असताना सेव्ह केलेली प्लेलिस्ट प्ले करा, ती येथे दिसेल.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % पूर्ण - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % पूर्ण",

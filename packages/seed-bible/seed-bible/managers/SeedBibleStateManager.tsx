@@ -63,6 +63,11 @@ import {
   YourContentPaneTitle,
 } from "../components/YourContentPane/YourContentPane";
 import {
+  PLAYLIST_HISTORY_PANE_ID,
+  PlaylistHistoryPane,
+  PlaylistHistoryPaneTitle,
+} from "../components/PlaylistHistoryPane/PlaylistHistoryPane";
+import {
   openReadingPlanDetail,
   openReadingPlanEditor,
 } from "../components/ReadingPlansPane/ReadingPlansPane";
@@ -588,6 +593,13 @@ export interface SeedBibleState {
   /** Closes "Your content" (clears `content` from the URL). */
   closeYourContent: () => void;
 
+  /** True when the playlist history screen is showing. */
+  isPlaylistHistoryOpen: ReadonlySignal<boolean>;
+  /** Opens playlist history (reflected in the URL as `?playlist-history=open`). */
+  openPlaylistHistory: () => void;
+  /** Closes playlist history (clears `playlist-history` from the URL). */
+  closePlaylistHistory: () => void;
+
   /** True when the Friends screen is showing. */
   isFriendsOpen: ReadonlySignal<boolean>;
   /** Opens Friends (reflected in the URL as `?friends=open`). */
@@ -643,9 +655,11 @@ import { createTranslationAgentTools } from "./translationSearch";
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
 import {
   createPlaylistManager,
+  playlistHistoryOpenFailedMessage,
   type PlaylistManager,
   type PlaylistItemData,
   type Playlist,
+  type PlaylistPlayHistory,
 } from "./PlaylistManager";
 import {
   createUserGalleryManager,
@@ -1007,6 +1021,23 @@ export function createSeedBibleState(
     contentOpen.value = false;
   };
 
+  // Playlist history, reached from Profile. Bound to `?playlist-history=open`
+  // on the same terms as the Profile screen below, and kept out of SSR so a
+  // crawled URL doesn't serialize the signed-in history list.
+  const playlistHistoryOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("playlist-history") ===
+          "open"
+  );
+  const isPlaylistHistoryOpen = computed(() => playlistHistoryOpen.value);
+  const openPlaylistHistory = () => {
+    playlistHistoryOpen.value = true;
+  };
+  const closePlaylistHistory = () => {
+    playlistHistoryOpen.value = false;
+  };
+
   // The Friends screen, reached from Profile. Bound to `?friends=open` on the
   // same terms as "Your content" above.
   const friendsOpen = signal(
@@ -1080,6 +1111,14 @@ export function createSeedBibleState(
       },
       set value(newValue) {
         contentOpen.value = newValue === "open";
+      },
+    },
+    "playlist-history": {
+      get value() {
+        return playlistHistoryOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        playlistHistoryOpen.value = newValue === "open";
       },
     },
     friends: {
@@ -3291,6 +3330,9 @@ export function createSeedBibleState(
     isYourContentOpen,
     openYourContent,
     closeYourContent,
+    isPlaylistHistoryOpen,
+    openPlaylistHistory,
+    closePlaylistHistory,
     isFriendsOpen,
     openFriends,
     closeFriends,
@@ -3491,12 +3533,13 @@ export function createSeedBibleState(
   // stays stable across reopens.
   //
   // Opening any fullscreen pane closes the others, so the screens reached from
-  // Profile ("Edit profile", "Your content", "Friends") each carry a back
-  // button that reopens it rather than relying on a pane stack.
+  // Profile ("Edit profile", "Your content", "Friends", playlist history) each
+  // carry a back button that reopens it rather than relying on a pane stack.
   const backToProfile = () => {
     closeEditProfile();
     closeYourContent();
     closeFriends();
+    closePlaylistHistory();
     openProfile();
   };
   const renderProfileBackButton = () => (
@@ -3540,12 +3583,31 @@ export function createSeedBibleState(
   const openReadingPlansFromProfile = () => {
     openReadingPlansFullscreen();
   };
+  const continuePlaylistFromProfile = (
+    entry: PlaylistPlayHistory
+  ): Promise<void> => {
+    // Stay on the profile until the playlist has loaded. Closing first drops
+    // the user on the reader with no sign that anything is happening, and a
+    // failed load only toasts after they've already left.
+    const { t } = i18n;
+    return playlists.playFromHistory(entry).then(
+      () => {
+        closeProfile();
+      },
+      (error) => {
+        toast(playlistHistoryOpenFailedMessage(t));
+        throw error;
+      }
+    );
+  };
   const renderProfilePane = () => (
     <ProfilePane
       state={state}
       onEditProfile={openEditProfile}
       onEditPicture={editProfilePicture}
       onOpenReadingPlans={openReadingPlansFromProfile}
+      onOpenPlaylistHistory={openPlaylistHistory}
+      onContinuePlaylist={continuePlaylistFromProfile}
       onOpenYourContent={openYourContent}
       onOpenFriends={openFriends}
     />
@@ -3686,6 +3748,41 @@ export function createSeedBibleState(
     );
     if (!paneOpen && isYourContentOpen.peek()) {
       closeYourContent();
+    }
+  });
+
+  // Playlist history, another fullscreen screen reached from Profile.
+  // Playing a row leaves once playback has started, so the reader (and, on
+  // desktop, the playlist player) is what's in front.
+  const leavePlaylistHistory = () => {
+    closePlaylistHistory();
+    closeProfile();
+  };
+  const renderPlaylistHistoryPane = () => (
+    <PlaylistHistoryPane state={state} onLeave={leavePlaylistHistory} />
+  );
+  const renderPlaylistHistoryPaneTitle = () => <PlaylistHistoryPaneTitle />;
+
+  effect(() => {
+    if (isPlaylistHistoryOpen.value) {
+      panes.openPane({
+        id: PLAYLIST_HISTORY_PANE_ID,
+        placement: "fullscreen",
+        title: renderPlaylistHistoryPaneTitle,
+        leading: renderProfileBackButton,
+        component: renderPlaylistHistoryPane,
+      });
+    } else {
+      panes.closePane(PLAYLIST_HISTORY_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === PLAYLIST_HISTORY_PANE_ID
+    );
+    if (!paneOpen && isPlaylistHistoryOpen.peek()) {
+      closePlaylistHistory();
     }
   });
 

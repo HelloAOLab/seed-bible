@@ -60,6 +60,7 @@ import { MobileSessionParticipants } from "../../components/SessionParticipants/
 import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import { Spinner } from "../Spinner/Spinner";
 import {
   SaveStarIcon,
   openSaveModalForLocation,
@@ -2947,14 +2948,7 @@ export function BibleReader(props: BibleReaderProps) {
               disabled={retrying}
               aria-busy={retrying}
             >
-              {retrying && (
-                <span
-                  className="material-symbols-outlined sb-reader-error-retry-spinner"
-                  aria-hidden="true"
-                >
-                  progress_activity
-                </span>
-              )}
+              {retrying && <Spinner size="1.125rem" />}
               {t("reload", { defaultValue: "Reload" })}
             </button>
             {offlineFallbackTranslations.length > 0 && (
@@ -3045,6 +3039,15 @@ export function BibleReader(props: BibleReaderProps) {
       <DiscoverContentPanel tab={currentSlot.tab} state={state} />
     ) : null;
 
+  // Playback opens on the selected tab only. Other slots in a split view
+  // must not show this loader.
+  const playlistOpeningHere =
+    !!state &&
+    state.playlists.openingPlayback.value &&
+    state.playlists.view.value !== "play_playlist" &&
+    currentSlot.tab != null &&
+    state.tabs.selectedTabId.value === currentSlot.tab.id;
+
   return (
     <div
       className={`sb-bible-reader ${readerFontSizeClass}${
@@ -3052,6 +3055,13 @@ export function BibleReader(props: BibleReaderProps) {
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
+      {playlistOpeningHere && !isCompactReader ? (
+        <Spinner
+          className="sb-playlist-opening-spinner"
+          size="1rem"
+          label={t("opening-playlist", { defaultValue: "Opening playlist" })}
+        />
+      ) : null}
       {isCompactReader && state ? (
         <Fragment key="mobile">
           <div
@@ -3085,6 +3095,14 @@ export function BibleReader(props: BibleReaderProps) {
                 </button>
               </h1>
             </div>
+            {playlistOpeningHere ? (
+              <Spinner
+                size="1rem"
+                label={t("opening-playlist", {
+                  defaultValue: "Opening playlist",
+                })}
+              />
+            ) : null}
             {!isMinimalEmbed && (
               <ChapterNotesButton
                 state={state}

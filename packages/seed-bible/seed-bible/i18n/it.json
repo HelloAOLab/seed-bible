@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Da questo menu di layout, scegli quanti brani leggere affiancati.",
   "tutorial.addTabTitle": "Apri altri passaggi",
   "tutorial.addTabBody": "Aggiungi una nuova scheda per leggere più libri o traduzioni contemporaneamente.",
-  "playlist-history": "Cronologia delle playlist",
   "discover-playlist-history-empty": "Riproduci una playlist salvata mentre sei connesso e verrà visualizzata qui.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % completato - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % completato",
