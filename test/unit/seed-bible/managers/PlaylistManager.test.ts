@@ -1,4 +1,5 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import { FRIEND_READ_TIMEOUT_MS } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
 import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import {
   CasualOSManager,
@@ -35,9 +36,10 @@ import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
-import { computed, signal } from "@preact/signals";
+import { computed, effect, signal } from "@preact/signals";
 import { h, render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock } from "vitest";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
@@ -408,6 +410,7 @@ describe("createPlaylistManager", () => {
   let eraseDataMock: Mock;
   let recordFileMock: Mock;
   let loginMock: Mock;
+  let getLinkPreviewMock: Mock;
   let selectTranslationAndChapterMock: Mock;
   let warnSpy: Mock;
   let errorSpy: Mock;
@@ -443,13 +446,24 @@ describe("createPlaylistManager", () => {
     const os = CasualOSManager();
     Object.assign(os, {
       recordData: recordDataMock,
-      listDataByMarker: listDataByMarkerMock,
+      // The server always says how many records a listing holds. A mocked
+      // page that leaves the total out stands for the whole listing.
+      listDataByMarker: async (...args: unknown[]) => {
+        const page = await listDataByMarkerMock(...args);
+        return page?.success && page.totalCount === undefined
+          ? { ...page, totalCount: page.items.length }
+          : page;
+      },
       listAllDataByMarker: listAllDataByMarkerMock,
       getData: getDataMock,
       eraseData: eraseDataMock,
       recordFile: recordFileMock,
     });
     const login = { userId, login: loginMock } as unknown as LoginArg;
+    // Stubbed on the SDK client (a proxy, so assigned rather than spied on)
+    // so OsManager's own link preview handling still runs.
+    (os.client as unknown as { getLinkPreview: unknown }).getLinkPreview =
+      getLinkPreviewMock;
     const tabs =
       tabsManager ??
       makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
@@ -500,6 +514,11 @@ describe("createPlaylistManager", () => {
       url: "https://example.com/hero.jpg",
     });
     loginMock = vi.fn().mockResolvedValue(null);
+    getLinkPreviewMock = vi.fn().mockResolvedValue({
+      success: false,
+      errorCode: "not_supported",
+      errorMessage: "Link previews are not supported.",
+    });
     selectTranslationAndChapterMock = vi.fn().mockResolvedValue(undefined);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -524,8 +543,96 @@ describe("createPlaylistManager", () => {
     const manager = makeManager("user-1");
     await flush();
 
-    expect(listDataByMarkerMock).toHaveBeenCalledWith("user-1", MARKER);
+    expect(listDataByMarkerMock).toHaveBeenCalledWith(
+      "user-1",
+      MARKER,
+      undefined
+    );
     expect(manager.userPlaylists.value).toEqual([playlist]);
+  });
+
+  describe("clearHeroImage", () => {
+    const COVER = "https://example.com/cover.jpg";
+    const OTHER_COVER = "https://example.com/other.jpg";
+
+    it("saves each playlist using the cover without it and updates the list", async () => {
+      const withCover = makePlaylist({ id: "p-1", heroImageUrl: COVER });
+      const other = makePlaylist({ id: "p-2", heroImageUrl: OTHER_COVER });
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: withCover }, { data: other }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      const updated = await manager.clearHeroImage(COVER);
+
+      expect(updated.map((p) => p.id)).toEqual(["p-1"]);
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      const saved = recordDataMock.mock.calls[0]![2] as Playlist;
+      expect(saved.id).toBe("p-1");
+      expect(saved.heroImageUrl).toBeNull();
+      expect(saved.updatedAtMs).toBeGreaterThanOrEqual(withCover.updatedAtMs);
+      const byId = new Map(manager.userPlaylists.value.map((p) => [p.id, p]));
+      expect(byId.get("p-1")?.heroImageUrl).toBeNull();
+      expect(byId.get("p-2")?.heroImageUrl).toBe(OTHER_COVER);
+    });
+
+    it("saves nothing when no playlist uses the cover", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: makePlaylist({ heroImageUrl: OTHER_COVER }) }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      await expect(manager.clearHeroImage(COVER)).resolves.toEqual([]);
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("takes the cover off the playlist being edited without marking it changed", async () => {
+      const playlist = makePlaylist({ id: "p-1", heroImageUrl: COVER });
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: playlist }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(playlist);
+
+      await manager.clearHeroImage(COVER);
+
+      expect(manager.editingPlaylist.value?.heroImageUrl).toBeNull();
+      // The saved copy lost its cover too, so there is nothing left to save.
+      expect(manager.isEditingPlaylistDirty()).toBe(false);
+    });
+
+    it("updates the playlists that saved and re-throws when one fails", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [
+          { data: makePlaylist({ id: "p-1", heroImageUrl: COVER }) },
+          { data: makePlaylist({ id: "p-2", heroImageUrl: COVER }) },
+        ],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockImplementation(async (_record: string, id: string) => {
+        if (id === "p-2") {
+          throw new Error("offline");
+        }
+      });
+
+      await expect(manager.clearHeroImage(COVER)).rejects.toThrow(
+        "Failed to remove the cover image from every playlist"
+      );
+
+      const byId = new Map(manager.userPlaylists.value.map((p) => [p.id, p]));
+      expect(byId.get("p-1")?.heroImageUrl).toBeNull();
+      expect(byId.get("p-2")?.heroImageUrl).toBe(COVER);
+    });
   });
 
   it("does not list playlists when signed out", async () => {
@@ -638,6 +745,80 @@ describe("createPlaylistManager", () => {
     expect(manager.userPlaylists.value).toHaveLength(1);
   });
 
+  describe("more than one page of playlists", () => {
+    // The server's paging stores return ten records at a time, counting the
+    // whole listing in `totalCount` on every page.
+    const twelvePlaylists = Array.from({ length: 12 }, (_, i) =>
+      makePlaylist({ id: `playlist-${String(i).padStart(2, "0")}` })
+    );
+    const servePagesOfTen = () =>
+      listDataByMarkerMock.mockImplementation(
+        async (_record: string, _marker: string, lastAddress?: string) => {
+          const after = twelvePlaylists.filter(
+            (p) => !lastAddress || p.id > lastAddress
+          );
+          return {
+            success: true,
+            items: after.slice(0, 10).map((p) => ({ address: p.id, data: p })),
+            totalCount: twelvePlaylists.length,
+          };
+        }
+      );
+
+    it("lists all of your own playlists", async () => {
+      servePagesOfTen();
+
+      const manager = makeManager("user-1");
+
+      await vi.waitFor(() =>
+        expect(manager.userPlaylists.value).toHaveLength(12)
+      );
+    });
+
+    it("lists all of a friend's playlists when the whole read takes longer than the timeout", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      servePagesOfTen();
+      const servePage = listDataByMarkerMock.getMockImplementation()!;
+      // Each page takes three quarters of the timeout, so the whole read
+      // takes longer than it while every page still makes progress.
+      const slowPage = () =>
+        new Promise((resolve) =>
+          setTimeout(resolve, (FRIEND_READ_TIMEOUT_MS * 3) / 4)
+        );
+      listDataByMarkerMock.mockImplementation(async (...args: unknown[]) => {
+        await slowPage();
+        return servePage(...args);
+      });
+      vi.useFakeTimers();
+      try {
+        const view = manager.getUserPlaylists("friend-user");
+
+        await vi.advanceTimersByTimeAsync(FRIEND_READ_TIMEOUT_MS * 2);
+
+        expect(view.value.map((p) => p.id)).toEqual(
+          twelvePlaylists.map((p) => p.id)
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("lists all of a friend's playlists", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      servePagesOfTen();
+
+      const view = manager.getUserPlaylists("friend-user");
+
+      await vi.waitFor(() =>
+        expect(view.value.map((p) => p.id)).toEqual(
+          twelvePlaylists.map((p) => p.id)
+        )
+      );
+    });
+  });
+
   it("listPlaylists parses records on success and throws on failure", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -655,8 +836,216 @@ describe("createPlaylistManager", () => {
       errorMessage: "boom",
     });
     await expect(manager.listPlaylists("user-1")).rejects.toThrow(
-      "Failed to list playlists: boom"
+      "Error listing data: err"
     );
+  });
+
+  describe("getUserPlaylists", () => {
+    const mockPerUserPlaylists = () => {
+      listDataByMarkerMock.mockImplementation(async (recordName: unknown) => {
+        if (recordName === "user-1") {
+          return {
+            success: true,
+            items: [
+              {
+                data: makePlaylist({
+                  id: "user-1-playlist",
+                  recordName: "user-1",
+                  authorUserId: "user-1",
+                }),
+              },
+            ],
+          };
+        }
+        if (recordName === "friend-user") {
+          return {
+            success: true,
+            items: [
+              {
+                data: makePlaylist({
+                  id: "friend-playlist",
+                  recordName: "friend-user",
+                  authorUserId: "friend-user",
+                }),
+              },
+            ],
+          };
+        }
+        return { success: true, items: [] };
+      });
+    };
+
+    describe("keeping them fresh", () => {
+      const START = new Date("2026-10-01T10:00:00Z").getTime();
+      let stopWatching: (() => void) | undefined;
+      let page: ReturnType<typeof stubPageVisibility>;
+
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(START);
+        page = stubPageVisibility();
+        stopWatching = undefined;
+      });
+      afterEach(() => {
+        stopWatching?.();
+        page.restore();
+        vi.useRealTimers();
+      });
+
+      /** Shows the friend's playlists, as a render would. */
+      const watchFriend = async () => {
+        mockPerUserPlaylists();
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserPlaylists("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"]);
+        return view;
+      };
+
+      it("reads them again when you come back to the app more than 30 seconds later", async () => {
+        const view = await watchFriend();
+        listDataByMarkerMock.mockImplementation(async (recordName: unknown) =>
+          recordName === "friend-user"
+            ? {
+                success: true,
+                items: [
+                  {
+                    data: makePlaylist({
+                      id: "new-friend-playlist",
+                      recordName: "friend-user",
+                      authorUserId: "friend-user",
+                    }),
+                  },
+                ],
+              }
+            : { success: true, items: [] }
+        );
+
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["new-friend-playlist"])
+        );
+      });
+
+      /** Shows a friend whose first read fails, as a render would. */
+      const watchFriendWhoseReadFails = async () => {
+        listDataByMarkerMock.mockImplementation(async (recordName: unknown) =>
+          recordName === "friend-user"
+            ? {
+                success: false,
+                errorCode: "server_error",
+                errorMessage: "Down.",
+              }
+            : { success: true, items: [] }
+        );
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserPlaylists("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value).toEqual([]);
+        return view;
+      };
+
+      it("reads them again when you come back to the app after the first read failed", async () => {
+        const view = await watchFriendWhoseReadFails();
+        mockPerUserPlaylists();
+
+        // No time passes: a failed read is tried again however recent it was.
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"])
+        );
+      });
+
+      it("reads them again when they come back on screen after the first read failed", async () => {
+        const view = await watchFriendWhoseReadFails();
+        stopWatching?.();
+        mockPerUserPlaylists();
+
+        stopWatching = effect(() => void view.value);
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"])
+        );
+      });
+
+      it("keeps showing the playlists it has when a re-read fails", async () => {
+        const view = await watchFriend();
+        listDataByMarkerMock.mockResolvedValue({
+          success: false,
+          errorCode: "server_error",
+          errorMessage: "Down.",
+        });
+
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+        await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled());
+        await flush();
+
+        expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"]);
+      });
+    });
+
+    it("reads playlists from the named account's record", async () => {
+      mockPerUserPlaylists();
+      const manager = makeManager("user-1");
+      await flush();
+
+      const view = manager.getUserPlaylists("friend-user");
+      await flush();
+
+      expect(listDataByMarkerMock).toHaveBeenCalledWith(
+        "friend-user",
+        MARKER,
+        undefined
+      );
+      expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"]);
+    });
+
+    it("returns the same signal for repeated calls", async () => {
+      mockPerUserPlaylists();
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.getUserPlaylists("friend-user")).toBe(
+        manager.getUserPlaylists("friend-user")
+      );
+    });
+
+    it("keeps different accounts' playlists separate", async () => {
+      mockPerUserPlaylists();
+      const manager = makeManager("user-1");
+      await flush();
+
+      const mine = manager.getUserPlaylists("user-1");
+      const theirs = manager.getUserPlaylists("friend-user");
+      await flush();
+
+      expect(mine.value.map((p) => p.id)).toEqual(["user-1-playlist"]);
+      expect(theirs.value.map((p) => p.id)).toEqual(["friend-playlist"]);
+    });
+
+    it("settles to an empty list without throwing when the account's playlists can't be loaded", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      listDataByMarkerMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "nope",
+      });
+
+      const view = manager.getUserPlaylists("broken-user");
+      await flush();
+
+      expect(view.value).toEqual([]);
+      expect(errorSpy).toHaveBeenCalled();
+    });
   });
 
   it("loadPlaylist fetches by locator and parses the record on success", async () => {
@@ -1086,6 +1475,330 @@ describe("createPlaylistManager", () => {
     expect(manager.isEditingPlaylistDirty()).toBe(true);
     manager.updateEditingPlaylistMetadata({ title: "Kept" });
     expect(manager.isEditingPlaylistDirty()).toBe(false);
+  });
+
+  describe("link previews", () => {
+    const previewResponse = (overrides: Record<string, unknown> = {}) => ({
+      success: true,
+      cachedUntilMs: START_MS + 60_000,
+      title: "The Bible Project",
+      description: "Animated videos about every book of the Bible.",
+      imageUrl: "https://example.com/og.png",
+      siteName: "BibleProject",
+      meta: {},
+      ...overrides,
+    });
+
+    const startEditing = async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      return manager;
+    };
+
+    const savedItems = () =>
+      (recordDataMock.mock.calls.at(-1)![2] as Playlist).items;
+
+    it("fetches a saved link's preview and stores it with the playlist", async () => {
+      getLinkPreviewMock.mockResolvedValue(previewResponse());
+      const manager = await startEditing();
+
+      manager.addEditingPlaylistItem({
+        type: "link",
+        url: "https://example.com/video",
+      });
+      await flush();
+
+      expect(getLinkPreviewMock).toHaveBeenCalledWith({
+        url: "https://example.com/video",
+        locale: "en",
+      });
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        {
+          type: "link",
+          url: "https://example.com/video",
+          preview: {
+            title: "The Bible Project",
+            description: "Animated videos about every book of the Bible.",
+            imageUrl: "https://example.com/og.png",
+            siteName: "BibleProject",
+          },
+        },
+      ]);
+
+      await manager.saveEditingPlaylist();
+      expect(savedItems()[0]).toMatchObject({
+        preview: { title: "The Bible Project" },
+      });
+    });
+
+    it("waits for a preview still in flight when the playlist is saved", async () => {
+      let respond!: (value: unknown) => void;
+      getLinkPreviewMock.mockReturnValue(
+        new Promise((resolve) => {
+          respond = resolve;
+        })
+      );
+      const manager = await startEditing();
+
+      manager.addEditingPlaylistItem({
+        type: "link",
+        url: "https://example.com/late",
+      });
+      const saving = manager.saveEditingPlaylist();
+      respond(previewResponse({ title: "Arrived in time" }));
+      await saving;
+
+      expect(savedItems()).toEqual([
+        expect.objectContaining({
+          url: "https://example.com/late",
+          preview: expect.objectContaining({ title: "Arrived in time" }),
+        }),
+      ]);
+    });
+
+    it("saves a link without a preview when the server can't preview it", async () => {
+      const manager = await startEditing();
+
+      manager.addEditingPlaylistItem({
+        type: "link",
+        url: "https://example.com/private",
+      });
+      await manager.saveEditingPlaylist();
+
+      expect(savedItems()).toEqual([
+        { type: "link", url: "https://example.com/private" },
+      ]);
+    });
+
+    it("saves a link without a preview when the request errors", async () => {
+      getLinkPreviewMock.mockRejectedValue(new Error("offline"));
+      const manager = await startEditing();
+
+      manager.addEditingPlaylistItem({
+        type: "link",
+        url: "https://example.com/offline",
+      });
+      await manager.saveEditingPlaylist();
+
+      expect(savedItems()).toEqual([
+        { type: "link", url: "https://example.com/offline" },
+      ]);
+    });
+
+    it("keeps the preview when a link is edited without changing its URL", async () => {
+      getLinkPreviewMock.mockResolvedValue(previewResponse());
+      const manager = await startEditing();
+      manager.addEditingPlaylistItem({
+        type: "link",
+        url: "https://example.com/video",
+      });
+      await flush();
+      getLinkPreviewMock.mockClear();
+
+      // The link editor rebuilds the item from its fields, with no preview.
+      manager.updateEditingPlaylistItem(0, {
+        type: "link",
+        url: "https://example.com/video",
+        title: "My title",
+      });
+
+      // Checked straight away: the preview is carried over, not re-fetched.
+      expect(manager.editingPlaylist.value!.items[0]).toMatchObject({
+        title: "My title",
+        preview: { title: "The Bible Project" },
+      });
+      await flush();
+      expect(getLinkPreviewMock).not.toHaveBeenCalled();
+      expect(manager.editingPlaylist.value!.items[0]).toMatchObject({
+        title: "My title",
+        preview: { title: "The Bible Project" },
+      });
+    });
+
+    it("fetches a new preview when a link's URL changes", async () => {
+      getLinkPreviewMock.mockResolvedValue(previewResponse());
+      const manager = await startEditing();
+      manager.addEditingPlaylistItem({
+        type: "link",
+        url: "https://example.com/video",
+      });
+      await flush();
+
+      getLinkPreviewMock.mockResolvedValue(
+        previewResponse({ title: "Another page" })
+      );
+      manager.updateEditingPlaylistItem(0, {
+        type: "link",
+        url: "https://example.com/other",
+      });
+      await flush();
+
+      expect(manager.editingPlaylist.value!.items[0]).toMatchObject({
+        url: "https://example.com/other",
+        preview: { title: "Another page" },
+      });
+    });
+
+    it("doesn't bring back a link removed while its preview was loading", async () => {
+      let respond!: (value: unknown) => void;
+      getLinkPreviewMock.mockReturnValue(
+        new Promise((resolve) => {
+          respond = resolve;
+        })
+      );
+      const manager = await startEditing();
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>keep</p>" });
+      manager.addEditingPlaylistItem({
+        type: "link",
+        url: "https://example.com/gone",
+      });
+
+      manager.removeEditingPlaylistItem(1);
+      respond(previewResponse());
+      await flush();
+
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "html", html: "<p>keep</p>" },
+      ]);
+    });
+
+    it("saves without the preview once Save stops waiting for it", async () => {
+      // Never answers: the cutoff is the only thing that lets Save finish.
+      getLinkPreviewMock.mockReturnValue(new Promise(() => undefined));
+      const manager = await startEditing();
+      vi.useFakeTimers();
+      try {
+        manager.addEditingPlaylistItem({
+          type: "link",
+          url: "https://example.com/hangs",
+        });
+        let saved = false;
+        const saving = manager.saveEditingPlaylist().then(() => {
+          saved = true;
+        });
+
+        await vi.advanceTimersByTimeAsync(2900);
+        expect(saved).toBe(false);
+        await vi.advanceTimersByTimeAsync(100);
+        await saving;
+
+        expect(savedItems()).toEqual([
+          { type: "link", url: "https://example.com/hangs" },
+        ]);
+        expect(manager.editingPlaylist.value).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("ignores a preview that lands after the playlist was saved", async () => {
+      let respond!: (value: unknown) => void;
+      getLinkPreviewMock.mockReturnValue(
+        new Promise((resolve) => {
+          respond = resolve;
+        })
+      );
+      const manager = await startEditing();
+      vi.useFakeTimers();
+      try {
+        manager.addEditingPlaylistItem({
+          type: "link",
+          url: "https://example.com/late",
+        });
+        const saving = manager.saveEditingPlaylist();
+        await vi.advanceTimersByTimeAsync(3000);
+        await saving;
+        // Reopened straight away: the late preview must not land in it either.
+        manager.editPlaylist(manager.userPlaylists.value[0]!);
+        const writes = recordDataMock.mock.calls.length;
+
+        respond(previewResponse());
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(recordDataMock.mock.calls.length).toBe(writes);
+        expect(manager.userPlaylists.value[0]!.items).toEqual([
+          { type: "link", url: "https://example.com/late" },
+        ]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("fetches previews for links that don't have one when a playlist is opened for editing", async () => {
+      getLinkPreviewMock.mockResolvedValue(previewResponse());
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(
+        makePlaylist({
+          items: [
+            { type: "link", url: "https://example.com/old" },
+            {
+              type: "link",
+              url: "https://example.com/has-one",
+              preview: { title: "Already here" },
+            },
+          ],
+        })
+      );
+      await flush();
+
+      expect(getLinkPreviewMock).toHaveBeenCalledTimes(1);
+      expect(
+        manager.editingPlaylist.value!.items.map(
+          (item) => item.type === "link" && item.preview?.title
+        )
+      ).toEqual(["The Bible Project", "Already here"]);
+      // Filled in, not edited: closing shouldn't ask about unsaved changes.
+      expect(manager.isEditingPlaylistDirty()).toBe(false);
+
+      await manager.saveEditingPlaylist();
+      expect(savedItems()[0]).toMatchObject({
+        preview: { title: "The Bible Project" },
+      });
+    });
+
+    it("drops an image URL that isn't http(s)", async () => {
+      getLinkPreviewMock.mockResolvedValue(
+        previewResponse({ imageUrl: "javascript:alert(1)" })
+      );
+      const manager = await startEditing();
+
+      manager.addEditingPlaylistItem({
+        type: "link",
+        url: "https://example.com/video",
+      });
+      await flush();
+
+      const item = manager.editingPlaylist.value!.items[0]!;
+      expect(item.type === "link" && item.preview).toEqual({
+        title: "The Bible Project",
+        description: "Animated videos about every book of the Bible.",
+        siteName: "BibleProject",
+      });
+    });
+
+    it("asks the server only once for a URL used twice", async () => {
+      getLinkPreviewMock.mockResolvedValue(previewResponse());
+      const manager = await startEditing();
+
+      manager.addEditingPlaylistItem({
+        type: "link",
+        url: "https://example.com/video",
+      });
+      manager.addEditingPlaylistItem({
+        type: "link",
+        url: "https://example.com/video",
+      });
+      await flush();
+
+      expect(getLinkPreviewMock).toHaveBeenCalledTimes(1);
+      expect(
+        manager.editingPlaylist.value!.items.map(
+          (item) => item.type === "link" && item.preview?.title
+        )
+      ).toEqual(["The Bible Project", "The Bible Project"]);
+    });
   });
 
   describe("chat AI context", () => {

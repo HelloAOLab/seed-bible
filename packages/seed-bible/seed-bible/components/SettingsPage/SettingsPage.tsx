@@ -1304,6 +1304,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
     const sensitive = extensionEntry.extension?.meta.sensitive ?? {};
     const hasSensitive =
       Object.keys(settings).length < Object.keys(allSettings).length;
+    const customPanel = extensions.settingsPanels.value[extensionEntry.id];
     state.modals.openModal({
       title: {
         key: "extension-settings-title",
@@ -1339,27 +1340,39 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
         ) : (
           <>
-            {(!hasSensitive || Object.keys(settings).length > 0) && (
-              <ExtensionSettingsForm
-                extensionId={extensionEntry.id}
-                settings={settings}
-                getValue={(key) =>
-                  extensionSettings.getValue(extensionEntry.id, key)
-                }
-                onChange={(key, value) =>
-                  void extensionSettings.setValue(extensionEntry.id, key, value)
-                }
-                resetting={{
-                  hasOwnValue: (key) =>
-                    extensionSettings.valuesByExtensionId.value[
-                      extensionEntry.id
-                    ]?.[key] !== undefined,
-                  onReset: (key) =>
-                    void extensionSettings.clearValue(extensionEntry.id, key),
-                }}
-                t={t}
-              />
-            )}
+            {/* A custom panel stands in for the generic form only: sensitive
+                values can't go through an extension's own UI, so they keep
+                their own section either way. */}
+            {customPanel
+              ? customPanel()
+              : (!hasSensitive || Object.keys(settings).length > 0) && (
+                  <ExtensionSettingsForm
+                    extensionId={extensionEntry.id}
+                    settings={settings}
+                    getValue={(key) =>
+                      extensionSettings.getValue(extensionEntry.id, key)
+                    }
+                    onChange={(key, value) =>
+                      void extensionSettings.setValue(
+                        extensionEntry.id,
+                        key,
+                        value
+                      )
+                    }
+                    resetting={{
+                      hasOwnValue: (key) =>
+                        extensionSettings.valuesByExtensionId.value[
+                          extensionEntry.id
+                        ]?.[key] !== undefined,
+                      onReset: (key) =>
+                        void extensionSettings.clearValue(
+                          extensionEntry.id,
+                          key
+                        ),
+                    }}
+                    t={t}
+                  />
+                )}
             {hasSensitive && (
               <SensitiveSettingsForm
                 extensionId={extensionEntry.id}
@@ -1532,9 +1545,10 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
           <div className="sb-extension-row-actions">
             {installState === "installed" &&
-              extensionEntry.extension?.meta.settings &&
-              Object.keys(extensionEntry.extension.meta.settings).length >
-                0 && (
+              ((extensionEntry.extension?.meta.settings &&
+                Object.keys(extensionEntry.extension.meta.settings).length >
+                  0) ||
+                extensions.settingsPanels.value[id]) && (
                 <button
                   type="button"
                   className="sb-extension-row-action-button"

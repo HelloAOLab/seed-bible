@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
+import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/BibleReaderToolbar/BibleReaderToolbar";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -13,6 +14,7 @@ import {
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import { resetFlingSafeTapForTests } from "@packages/seed-bible/seed-bible/app/flingSafeTap";
 import { TestHost } from "./TestHost";
+import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
 import {
   aabBooks,
   createResponse,
@@ -167,6 +169,48 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     });
 
     expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+  });
+  it("does not reopen a verse tool menu after the verse selection is cleared", async () => {
+    state.tools.registerVerseToolbarTool({
+      id: "test-verse-menu-tool",
+      priority: 100,
+      title: "Test verse tool",
+      icon: () => <span>test</span>,
+      isVisible: () => true,
+      getItems: () => [
+        {
+          id: "test-verse-menu-item",
+          title: "Test item",
+          icon: () => <span>item</span>,
+          onSelect: vi.fn(),
+        },
+      ],
+    });
+
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    const toolButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-verse-toolbar-action")
+    ).find((button) => button.getAttribute("aria-label") === "Test verse tool");
+
+    expect(toolButton).not.toBeUndefined();
+
+    await act(async () => {
+      toolButton!.click();
+    });
+
+    expect(container.querySelector('[role="menu"]')).not.toBeNull();
+
+    await act(async () => {
+      readingState.clearSelectedVerses();
+    });
+
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+    await selectFirstVerse();
+
+    // The old menu must not reopen automatically.
+    expect(container.querySelector('[role="menu"]')).toBeNull();
   });
 
   it("clears the verse selection when a tap lands in empty chapter-content space (not on a verse)", async () => {
@@ -2410,6 +2454,91 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     await vi.waitFor(() => {
       expect(annotationItems()[0]?.textContent).toContain("Note");
     });
+  });
+
+  it("keeps the edit menu on your own note", async () => {
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: { type: "comment", html: "<p>Mine</p>" },
+      },
+    ]);
+    await renderSheet();
+
+    expect(annotationItems()).toHaveLength(1);
+    expect(
+      annotationItems()[0]!.querySelector(".sb-annotation-item-menu")
+    ).not.toBeNull();
+  });
+
+  it("shows a friend's note on a verse where you have none, without the edit menu", async () => {
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([]);
+    const server = fakeSharedPermissions(state.os, () =>
+      state.login.userId.peek()
+    );
+    server.friendsWith("ada");
+    vi.spyOn(state.os, "listDataByMarker").mockImplementation((async (
+      recordName: string,
+      _marker: string,
+      lastAddress?: string
+    ) =>
+      recordName === "ada" && !lastAddress
+        ? {
+            success: true,
+            items: [
+              {
+                address: "friend-note",
+                data: {
+                  id: "friend-note",
+                  bookId: chapter.book.id,
+                  chapterNumber: chapter.chapter.number,
+                  verseNumber: firstVerse.number,
+                  data: {
+                    type: "comment",
+                    html: "<p>Ada's note</p>",
+                    userId: "ada",
+                  },
+                },
+              },
+            ],
+          }
+        : { success: true, items: [] }) as never);
+    // Signing in loads saves and settings too; nobody has any here.
+    vi.spyOn(state.os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    } as never);
+    await act(async () => {
+      state.os.sessionKey.value = formatV1SessionKey(
+        ME,
+        "session-1",
+        "secret-1",
+        Date.now() + 1000 * 60 * 60
+      );
+    });
+    try {
+      await vi.waitFor(() =>
+        expect(state.friends.friendIds.value).toEqual(["ada"])
+      );
+
+      await renderSheet();
+
+      await vi.waitFor(() => expect(annotationItems()).toHaveLength(1));
+      expect(annotationItems()[0]!.textContent).toContain("Ada's note");
+      expect(
+        annotationItems()[0]!.querySelector(".sb-annotation-item-menu")
+      ).toBeNull();
+    } finally {
+      // Left signed in, the persisted key would sign the next test's state in.
+      state.os.sessionKey.value = null;
+      localStorage.removeItem("sessionKey");
+    }
   });
 
   function rectAt(top: number): DOMRect {

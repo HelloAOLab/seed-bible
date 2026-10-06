@@ -54,6 +54,8 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       loadExtension: vi.fn().mockResolvedValue(undefined),
       unloadExtension: vi.fn(),
       getAllExtensionsAsSet: vi.fn().mockReturnValue(null),
+      registerSettingsPanel: vi.fn().mockReturnValue(vi.fn()),
+      settingsPanels: signal<Record<string, () => ComponentChildren>>({}),
     },
     // No customization is active in these tests — the list renders exactly
     // as it would outside the Customization Center.
@@ -81,6 +83,12 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       setValue: vi.fn().mockResolvedValue(undefined),
       clearValue: vi.fn().mockResolvedValue(undefined),
       getUnusedSensitiveProxies: () => [],
+      isSensitiveValueSet: () => false,
+      hasStoredSensitiveValues: () => false,
+      getSensitiveDestination: () => ({
+        host: "api.example.com",
+        visibility: "private",
+      }),
     },
   } as unknown as SeedBibleState;
 }
@@ -296,6 +304,96 @@ describe("ExtensionsSettingsView", () => {
       expect(modalBody.textContent).not.toContain(
         "Please log in to configure this extension."
       );
+    });
+
+    const panelOnlyEntry = (): ExtensionListEntry => ({
+      ...makeEntry("panel-only", true),
+      extension: {
+        url: "https://example.com/panel-only.js",
+        meta: {
+          id: "panel-only",
+          translations: { en: { title: "Panel Only", description: "" } },
+        },
+      },
+    });
+
+    const registerPanel = (
+      state: SeedBibleState,
+      extensionId: string,
+      render: () => ComponentChildren
+    ) => {
+      act(() => {
+        (
+          state.extensions.settingsPanels as Signal<
+            Record<string, () => ComponentChildren>
+          >
+        ).value = {
+          ...state.extensions.settingsPanels.value,
+          [extensionId]: render,
+        };
+      });
+    };
+
+    it("shows the Configure button for an extension with a registered settings panel, even with no declared settings", () => {
+      const state = renderExtensions([panelOnlyEntry()]);
+
+      registerPanel(state, "panel-only", () => <div>Custom panel</div>);
+
+      expect(
+        container.querySelector('button[aria-label="Configure"]')
+      ).not.toBeNull();
+    });
+
+    it("renders the extension's own registered panel instead of the generic settings form", () => {
+      const state = renderExtensions([panelOnlyEntry()]);
+      registerPanel(state, "panel-only", () => (
+        <div className="sb-custom-panel">Custom panel content</div>
+      ));
+
+      openConfigureModal(state);
+
+      expect(modalBody.querySelector(".sb-custom-panel")?.textContent).toBe(
+        "Custom panel content"
+      );
+      expect(
+        modalBody.querySelector("#sb-extension-setting-panel-only-greeting")
+      ).toBeNull();
+    });
+
+    // A custom panel replaces only the generic form. Sensitive values can't go
+    // through an extension's own UI, so without their own section the viewer
+    // would have no way to set them.
+    it("keeps the sensitive settings section alongside a registered panel", () => {
+      const entry = panelOnlyEntry();
+      entry.extension!.meta = {
+        ...entry.extension!.meta,
+        settings: {
+          greeting: { type: "string", default: "Hello" },
+          apiKey: { type: "string", sensitive: "exampleApi" },
+        },
+        sensitive: {
+          exampleApi: {
+            host: "api.example.com",
+            requestMapping: { "headers.authorization.bearer": "apiKey" },
+          },
+        },
+      };
+      const state = renderExtensions([entry]);
+      registerPanel(state, "panel-only", () => (
+        <div className="sb-custom-panel">Custom panel content</div>
+      ));
+
+      openConfigureModal(state);
+
+      expect(modalBody.querySelector(".sb-custom-panel")).not.toBeNull();
+      expect(
+        modalBody.querySelector<HTMLInputElement>(
+          "#sb-extension-setting-panel-only-apiKey"
+        )?.type
+      ).toBe("password");
+      expect(
+        modalBody.querySelector("#sb-extension-setting-panel-only-greeting")
+      ).toBeNull();
     });
   });
 });
