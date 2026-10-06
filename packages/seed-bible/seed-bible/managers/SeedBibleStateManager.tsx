@@ -63,6 +63,10 @@ import {
   YourContentPaneTitle,
 } from "../components/YourContentPane/YourContentPane";
 import {
+  openReadingPlanDetail,
+  openReadingPlanEditor,
+} from "../components/ReadingPlansPane/ReadingPlansPane";
+import {
   FRIENDS_PANE_ID,
   FriendsPane,
   FriendsPaneTitle,
@@ -215,6 +219,7 @@ import {
 import { range } from "es-toolkit";
 import {
   createReadingPlansManager,
+  type ReadingPlanMetadata,
   type ReadingPlan,
   type ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
@@ -3454,11 +3459,16 @@ export function createSeedBibleState(
     const { t } = i18n;
     openProfilePictureModal({ modals, login, t });
   };
-  const openReadingPlansFromProfile = () => {
+  /**
+   * Opens the plans pane from one of the Profile screens. False when there is
+   * no reader to open it beside, in which case nothing has changed on screen.
+   */
+  const openReadingPlansFullscreen = (): boolean => {
     const readingState = selectedTab.peek()?.readingState;
     if (!readingState) {
-      return;
+      return false;
     }
+    closeYourContent();
     closeProfile();
     // Fullscreen rather than the toolbar's docked "side": the user came from a
     // fullscreen screen, so a side panel would leave them looking at the reader.
@@ -3475,6 +3485,10 @@ export function createSeedBibleState(
       placement: "fullscreen",
       toast,
     });
+    return true;
+  };
+  const openReadingPlansFromProfile = () => {
+    openReadingPlansFullscreen();
   };
   const renderProfilePane = () => (
     <ProfilePane
@@ -3568,6 +3582,27 @@ export function createSeedBibleState(
     // uses — rather than growing a second editor on this screen.
     annotations.editAnnotation(annotation);
   };
+  // Both land in the plans pane, opened fullscreen the way the Profile card
+  // opens it, and then drill straight into the plan so the user doesn't have
+  // to find it in the list a second time.
+  const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
+    if (!openReadingPlansFullscreen()) {
+      return;
+    }
+    // A draft has nothing to read yet, so it picks up where the author left
+    // off — in the editor — rather than opening an empty detail view.
+    if (plan.status === "draft") {
+      void openReadingPlanEditor(readingPlans, plan);
+    } else {
+      void openReadingPlanDetail(readingPlans, plan);
+    }
+  };
+  const editReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
+    if (!openReadingPlansFullscreen()) {
+      return;
+    }
+    void openReadingPlanEditor(readingPlans, plan);
+  };
   const renderYourContentPane = () => (
     <YourContentPane
       state={state}
@@ -3575,6 +3610,8 @@ export function createSeedBibleState(
       onPlayPlaylist={playPlaylistFromContent}
       onEditPlaylist={editPlaylistFromContent}
       onEditAnnotation={editAnnotationFromContent}
+      onOpenReadingPlan={openReadingPlanFromContent}
+      onEditReadingPlan={editReadingPlanFromContent}
     />
   );
   const renderYourContentPaneTitle = () => <YourContentPaneTitle />;
