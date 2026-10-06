@@ -23,6 +23,7 @@ export type ContentFilter =
   | "highlights"
   | "saves"
   | "playlists"
+  | "reading-plans"
   | "images";
 
 export const CONTENT_FILTERS: ContentFilter[] = [
@@ -31,6 +32,7 @@ export const CONTENT_FILTERS: ContentFilter[] = [
   "highlights",
   "saves",
   "playlists",
+  "reading-plans",
   "images",
 ];
 
@@ -124,9 +126,10 @@ const CHAPTER_READ_BATCH = 6;
  * highlights gathered from across the whole Bible, plus the search and chip
  * state the screen filters with.
  *
- * Saves and playlists are deliberately absent — their managers already
- * hold the full list reactively (`saves.saves`, `playlists
- * .userPlaylists`), so re-fetching them here would be a second, staler copy.
+ * Saves, playlists and reading plans are deliberately absent — their
+ * managers already hold the full list reactively (`saves.saves`,
+ * `playlists.userPlaylists`, `readingPlans.userReadingPlans`), so re-fetching
+ * them here would be a second, staler copy.
  */
 export function createYourContentManager(
   options: CreateYourContentManagerOptions

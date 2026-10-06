@@ -1176,6 +1176,10 @@
   visibility: hidden;
 }
 
+.sb-verse-toolbar-cards .sb-verse-toolbar-overflow-unclipped {
+  overflow: visible;
+}
+
 /* A note taller than the viewport scrolls here. The grab handle, reference,
    and action row stay outside this element, so they remain on screen. */
 .sb-verse-toolbar-cards

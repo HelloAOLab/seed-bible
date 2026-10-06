@@ -86,6 +86,7 @@ function createTestLogin(userId: string | null): Mocked<LoginManager> {
     login: vi.fn().mockResolvedValue(undefined),
     logout: vi.fn().mockResolvedValue(undefined),
     getUserProfile: vi.fn().mockResolvedValue(null),
+    getPublicProfile: vi.fn().mockResolvedValue(null),
     uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
     userInfo: signal({ id: userId ?? "user-1", email: "test@example.com" }),
     cancelLogin: vi.fn().mockResolvedValue(undefined),

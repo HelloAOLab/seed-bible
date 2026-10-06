@@ -1092,6 +1092,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       verseSheetOverflowHeight.value > verseSheetMaxReveal.value + 0.5
   );
 
+  const isVerseSheetOverflowUnclipped = useComputed(
+    () => selectedVerseToolId.value !== null && !isVerseSheetDragging.value
+  );
+
   // True when the sidebar drawer is open showing the tabs/saves view
   // (not the settings view) with the saves filter active.
   const isSavesViewOpen = useComputed(
@@ -3353,6 +3357,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         className={`sb-verse-toolbar-overflow${
                           verseSheetRevealHeight.value === 0
                             ? " sb-verse-toolbar-overflow-closed"
+                            : ""
+                        }${
+                          isVerseSheetOverflowUnclipped.value
+                            ? " sb-verse-toolbar-overflow-unclipped"
                             : ""
                         }${
                           isVerseSheetOverflowScrollable.value
