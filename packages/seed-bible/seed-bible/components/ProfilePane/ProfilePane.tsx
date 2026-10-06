@@ -10,6 +10,7 @@ import { getSelfDisplayName } from "../Tabs/Tabs";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n";
+import { friendsRowSubtitle } from "../FriendsPane/FriendsPane";
 import "./ProfilePane.css";
 
 export const PROFILE_PANE_ID = "profile-screen-pane";
@@ -24,6 +25,8 @@ export interface ProfileScreenProps {
   onOpenReadingPlans: () => void;
   /** Opens the "Your content" screen. */
   onOpenYourContent: () => void;
+  /** Opens the Friends screen. */
+  onOpenFriends: () => void;
 }
 
 /** Pane header title. A component so it can call `useI18n`. */
@@ -282,12 +285,12 @@ function ReadingPlansCard(props: {
 
 /**
  * The Profile screen (issue #1555): who you are, what you're reading, and the
- * way in to your own content. Opened as a fullscreen pane from the mobile
- * "You" tab and the desktop sidebar avatar.
+ * way in to your own content and your friends. Opened as a fullscreen pane
+ * from the mobile "You" tab and the desktop sidebar avatar.
  *
- * Circles, friends and profile subscriptions appear in the Figma frame but are
+ * Circles and profile subscriptions appear in the Figma frame but are
  * deliberately not built here — #1552 holds them back until their designs are
- * settled, and neither has a backend yet.
+ * settled. Friends has no design yet either; its row follows "Your content".
  */
 export function ProfilePane(props: ProfileScreenProps) {
   const { state, onEditProfile, onEditPicture, onOpenReadingPlans } = props;
@@ -383,6 +386,13 @@ export function ProfilePane(props: ProfileScreenProps) {
             defaultValue: "Create and manage your content",
           })}
           onClick={props.onOpenYourContent}
+        />
+
+        <ProfileRow
+          icon="group"
+          title={t("friends", { defaultValue: "Friends" })}
+          subtitle={friendsRowSubtitle(state.friends, t)}
+          onClick={props.onOpenFriends}
         />
 
         <button
