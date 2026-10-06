@@ -169,6 +169,9 @@ function createMockState(
         signal(overrides.annotationsForChapter ?? [])
       ),
       getUserAnnotationsForChapter: vi.fn(() => signal([])),
+      visibleAnnotationsForChapter: vi.fn(
+        () => overrides.annotationsForChapter ?? []
+      ),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
       hasRecordOverride: false,
       pendingCountForChapter: vi.fn(
@@ -479,6 +482,9 @@ describe("DiscoverContentPanel", () => {
     const state = createMockState();
     state.annotations.getAnnotationsForChapter = vi.fn(
       () => annotationsForChapter
+    );
+    state.annotations.visibleAnnotationsForChapter = vi.fn(
+      () => annotationsForChapter.value
     );
 
     act(() => {
