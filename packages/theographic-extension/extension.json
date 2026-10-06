@@ -1,6 +1,6 @@
 {
   "id": "theographic-extension",
-  "autoinstall": true,
+  "autoinstall": false,
   "translations": {
     "en": {
       "title": "Theographic Data",

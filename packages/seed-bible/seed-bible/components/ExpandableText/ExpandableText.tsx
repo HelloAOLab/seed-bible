@@ -41,12 +41,24 @@ export function ExpandableText(props: {
   /** Already-translated "Read less" label. */
   readLessLabel: string;
   className?: string;
+  /**
+   * How many lines to show before collapsing. Defaults to 1. Above 1, the
+   * text wraps within the budget rather than showing only its first line.
+   */
+  lines?: number;
 }) {
-  const { children: text, readMoreLabel, readLessLabel, className } = props;
-  const bodyRef = useRef<HTMLSpanElement>(null);
+  const {
+    children: text,
+    readMoreLabel,
+    readLessLabel,
+    className,
+    lines: maxLines = 1,
+  } = props;
+  const multiline = maxLines > 1;
+  const bodyRef = useRef<HTMLElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
-  const [clippedWidth, setClippedWidth] = useState(false);
+  const [clipped, setClipped] = useState(false);
 
   useLayoutEffect(() => {
     setExpanded(false);
@@ -55,13 +67,15 @@ export function ExpandableText(props: {
   useLayoutEffect(() => {
     const body = bodyRef.current;
     // Expanded, the body wraps instead of being clipped, so there is nothing
-    // to measure — and `clippedWidth` has to survive so "Read less" stays.
+    // to measure — and `clipped` has to survive so "Read less" stays.
     if (!body || expanded) {
       return;
     }
     const measure = () => {
-      setClippedWidth(
-        body.scrollWidth > body.clientWidth + OVERFLOW_TOLERANCE_PX
+      setClipped(
+        multiline
+          ? body.scrollHeight > body.clientHeight + OVERFLOW_TOLERANCE_PX
+          : body.scrollWidth > body.clientWidth + OVERFLOW_TOLERANCE_PX
       );
     };
     measure();
@@ -76,10 +90,59 @@ export function ExpandableText(props: {
       observer.observe(wrapRef.current);
     }
     return () => observer.disconnect();
-  }, [text, expanded]);
+  }, [text, expanded, multiline]);
 
   if (!text) {
     return null;
+  }
+
+  const collapsed = !expanded;
+  const toggle = (
+    <button
+      type="button"
+      className="sb-expandable-text-toggle"
+      aria-expanded={expanded}
+      // Excluded from the wrapper's `dir="auto"` detection, which would
+      // otherwise read the label (in the UI language) before the text.
+      dir="auto"
+      onClick={(event) => {
+        event.stopPropagation();
+        setExpanded((current) => !current);
+      }}
+    >
+      {expanded ? readLessLabel : readMoreLabel}
+    </button>
+  );
+
+  if (multiline) {
+    // Clamped by `-webkit-line-clamp`, which draws its own ellipsis. The
+    // toggle comes before the text so it can float to the end of the last
+    // visible line (see the CSS); expanded, it flows in after the last word.
+    const classes = [
+      "sb-expandable-text",
+      "sb-expandable-text--multiline",
+      collapsed ? "sb-expandable-text--clamped" : null,
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return (
+      <div
+        ref={wrapRef}
+        className={classes}
+        dir="auto"
+        style={{ "--sb-expandable-text-lines": maxLines }}
+      >
+        <div
+          ref={bodyRef as { current: HTMLDivElement | null }}
+          className="sb-expandable-text-body"
+        >
+          {collapsed && clipped ? toggle : null}
+          {text}
+          {expanded && clipped ? toggle : null}
+        </div>
+      </div>
+    );
   }
 
   const lines = text.split(/\r?\n/);
@@ -87,8 +150,7 @@ export function ExpandableText(props: {
   // A description written as several lines has more to show even when its
   // first line fits, so that answer comes from the text rather than a
   // measurement.
-  const overflowing = lines.length > 1 || clippedWidth;
-  const collapsed = !expanded;
+  const overflowing = lines.length > 1 || clipped;
 
   const classes = [
     "sb-expandable-text",
@@ -108,7 +170,10 @@ export function ExpandableText(props: {
        * start edge until it was expanded.
        */}
       <span className="sb-expandable-text-line">
-        <span ref={bodyRef} className="sb-expandable-text-body">
+        <span
+          ref={bodyRef as { current: HTMLSpanElement | null }}
+          className="sb-expandable-text-body"
+        >
           {collapsed ? firstLine : text}
         </span>
         {collapsed && overflowing ? (
@@ -116,19 +181,7 @@ export function ExpandableText(props: {
             ...
           </span>
         ) : null}
-        {overflowing ? (
-          <button
-            type="button"
-            className="sb-expandable-text-toggle"
-            aria-expanded={expanded}
-            onClick={(event) => {
-              event.stopPropagation();
-              setExpanded((current) => !current);
-            }}
-          >
-            {expanded ? readLessLabel : readMoreLabel}
-          </button>
-        ) : null}
+        {overflowing ? toggle : null}
       </span>
     </div>
   );

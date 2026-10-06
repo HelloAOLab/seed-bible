@@ -20,8 +20,26 @@ import { ExtensionMetaSchema } from "../../../script/lib/extension";
 import apologistManifest from "@packages/apologist-extension/extension.json";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const { mockI18nManager } = await import("../seed-bible/testUtils/mockI18n");
-  return mockI18nManager();
+  const { mockI18nManager, mockI18nState } =
+    await import("../seed-bible/testUtils/mockI18n");
+  const mocked = await mockI18nManager();
+  const actualI18n = (
+    mocked as {
+      i18n: typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager").i18n;
+    }
+  ).i18n;
+  return {
+    ...mocked,
+    // Chat sends the app language, which the uninitialized i18next instance
+    // doesn't have outside the app.
+    i18n: {
+      t: actualI18n.t.bind(actualI18n),
+      changeLanguage: actualI18n.changeLanguage.bind(actualI18n),
+      get language() {
+        return mockI18nState.language;
+      },
+    },
+  };
 });
 
 const { default: initApologistExtension } =
@@ -88,7 +106,10 @@ function createFakeContext(
     chats: createFakeChats(),
     discover: createDiscoverManager(),
     modals: { openModal: vi.fn() },
+    // No reader tab open, so chat falls back to Apologist's default Bible.
+    app: { selectedTab: signal(null) },
     bibleData: {
+      availableTranslations: signal([]),
       getCachedTranslationBooks: vi.fn(() => ({
         books: [
           { id: "JHN", name: "John" },
@@ -708,6 +729,45 @@ describe("initApologistExtension discover provider", () => {
       expect(results.map((r) => r.type === "content" && r.title)).toEqual([
         "Born Again",
       ]);
+    });
+
+    it("retries a rejected Bible translation through the proxy too", async () => {
+      const proxyFetch = vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response('Unknown bible "esv"', { status: 400 })
+        )
+        .mockResolvedValueOnce(
+          new Response(
+            'data: {"choices":[{"delta":{"content":"Hi"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n',
+            { status: 200 }
+          )
+        );
+      const context = install("", proxyFetch);
+      (context.app.selectedTab as Signal<unknown>).value = {
+        readingState: {
+          translation: signal({
+            id: "ENG_ESV",
+            shortName: "ESV",
+            language: "eng",
+          }),
+          translationId: signal("ENG_ESV"),
+          bookId: signal("JHN"),
+          chapterNumber: signal(3),
+        },
+      };
+
+      const reply = await sendChatMessage(context);
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(
+        proxyFetch.mock.calls.map(
+          ([, request]) =>
+            (request as { body: { metadata: { bible: string } } }).body.metadata
+              .bible
+        )
+      ).toEqual(["esv", "bsb"]);
+      expect(reply).toBe("Hi");
     });
 
     it("streams chat replies through the viewer's proxy", async () => {
