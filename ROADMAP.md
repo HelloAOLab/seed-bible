@@ -4,6 +4,8 @@ Seed Bible is a Bible reading and study app made for reading together. You can r
 
 This roadmap shows what we're working on and what comes next, in priority order. Each item explains what it is, why it matters, and where it stands today. Only the first item has to be finished before we bring Seed Bible to a wider audience. Everything after it will arrive as each piece is ready.
 
+Want to help any of this happen sooner? [Here's how to get involved](#want-to-help).
+
 _Last updated 2026-10-07_
 
 ## At a glance
@@ -355,3 +357,13 @@ Connect Seed Bible with other AI tools using the **Model Context Protocol (MCP)*
 - How does an outside assistant sign in, and what is it allowed to do on your behalf? This needs the same care as item 8, and must respect your privacy choices from item 4.
 
 _On GitHub:_ [#1670](https://github.com/HelloAOLab/seed-bible/pull/1670)
+
+---
+
+## Want to help?
+
+Seed Bible is built by [AO Lab](https://helloao.org/), a non-profit dedicated to making the Bible and related resources freely available to anyone who needs them. If any part of this roadmap is something you'd like to see happen sooner, we'd love your help, whether you'd like to support the work, partner with us, or bring your church or ministry's content to Seed Bible.
+
+See the ways you can get involved on our [partner page](https://www.helloao.org/partner.html).
+
+Developers can also follow along and contribute right here on GitHub.

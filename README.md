@@ -2,6 +2,10 @@
 
 The source code behind the Seed Bible.
 
+## Roadmap
+
+Curious what's coming next? The [roadmap](./ROADMAP.md) lays out what we're working on and what comes after it, in priority order, with where each piece stands today.
+
 ## Developing
 
 Follow the given steps to get started developing the Seed Bible:
