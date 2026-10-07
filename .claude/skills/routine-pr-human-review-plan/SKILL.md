@@ -1,9 +1,9 @@
 ---
 name: routine-pr-human-review-plan
-description: Unattended skill for Claude Code routines. Writes a step-by-step manual test plan for a pull request, publishes it to the HelloAO Test Plans site (helloaolab.github.io/pr-test-plans) by committing the plan JSON to HelloAOLab/pr-test-plans, and posts the link on the PR. Takes the PR from the routine's GitHub context or a PR number argument.
+description: Unattended skill for Claude Code routines. Writes a step-by-step manual test plan for a pull request, publishes it to the HelloAO Test Plans site (helloaolab.github.io/pr-test-plans) by committing the plan JSON to HelloAOLab/pr-test-plans, and keeps one test plan comment on the PR up to date with the link. Takes the PR from the routine's GitHub context or a PR number argument.
 ---
 
-Write a manual test plan for a pull request on this repository, publish it on the HelloAO Test Plans site, and post the link on the PR.
+Write a manual test plan for a pull request on this repository, publish it on the HelloAO Test Plans site, and link to it from the PR's test plan comment.
 
 The plan is for **people, not developers**. Assume the tester has never seen the codebase, has never run `pnpm`, and may only know Seed Bible as a user. They should be able to go from the PR comment to finishing every test without asking anyone for help. The site lets them mark each test Pass / Fail / Blocked / Skip, add notes, pick up where they left off after a reload (results save in their browser), and copy their results as markdown to paste back into the PR.
 
@@ -12,7 +12,7 @@ The plan is for **people, not developers**. Assume the tester has never seen the
 This skill runs unattended inside a Claude Code routine, so nobody can answer questions or approve anything. Running this skill **is** the approval to do exactly two things:
 
 - commit **one new plan file** to `HelloAOLab/pr-test-plans` `main`
-- post **one comment** on the PR
+- post this skill's **one comment** on the PR, or edit it if it's already there (like the deployment comment, each PR has one test plan comment that's kept up to date), and mark any older duplicates of it as duplicates (GitHub folds them away)
 
 Take no other GitHub action. Don't approve, request changes, label, edit or push to the PR, comment on issues, or change any other file in `pr-test-plans` (its page and tools change only through normal PRs).
 
@@ -32,10 +32,18 @@ gh repo clone HelloAOLab/pr-test-plans ../pr-test-plans -- --depth 1
 
 If you can't clone it, carry on anyway. Step 7 explains how to post without the site.
 
-Then check what already exists for this commit:
+Then find this skill's comment on the PR, if there is one. It's the comment containing `<!-- routine-pr-human-review-plan`:
 
-- **A plan file already exists** at `plans/seed-bible/<n>/<short commit>.json`, which happens when both routines run without new commits in between. Don't write another. If the PR already has a comment containing `<!-- routine-pr-human-review-plan sha=<full head commit>`, stop: there's nothing to do. Otherwise skip to step 8 and post the comment for the existing plan.
-- **No plan file, but the PR already has this skill's comment for this commit** (for example a "no manual testing needed" note). Stop.
+```bash
+gh api repos/HelloAOLab/seed-bible/issues/<n>/comments --paginate \
+  --jq '.[] | select(.body | contains("<!-- routine-pr-human-review-plan")) | {id, node_id, login: .user.login, created_at, body}'
+```
+
+If there's more than one (older runs posted new comments), use the newest; step 8 marks the others as duplicates. Then check what already exists for this commit:
+
+- **The comment's marker already says `sha=<full head commit>`.** This commit is done. Stop.
+- **A plan file already exists** at `plans/seed-bible/<n>/<short commit>.json`, but the comment doesn't point at it yet. Don't write another plan; skip to step 8 to update or post the comment.
+- Otherwise, carry on and write the plan.
 
 ## 3. Gather context
 
@@ -79,7 +87,7 @@ Test what a person can see and do in the app, not how the code is built.
 - Any setting, extension, or screen size needed to reach the feature.
 - Only when there's no preview build: a local run, written for someone who has never used a terminal. Take the install steps from `README.md` (Git, Node.js via nvm, pnpm 10 via corepack), then `git clone`, `gh pr checkout <n>` (or `git fetch origin pull/<n>/head:pr-<n> && git checkout pr-<n>`), `pnpm install`, `pnpm dev`, and open the address it prints. Put each command in a step's `code` field.
 
-If the PR has **nothing a person can check in the app** (docs, CI, tooling, tests only, or an internal refactor with no visible effect), don't write a plan. Post a short comment instead (the step 8 heading, note and marker, then a sentence or two on why no manual testing is needed), and stop.
+If the PR has **nothing a person can check in the app** (docs, CI, tooling, tests only, or an internal refactor with no visible effect), don't write a plan. Post or update the test plan comment instead (step 8), with just the note, marker and heading, then a sentence or two on why no manual testing is needed, and stop. If earlier commits did get plans, keep the "Earlier plans for this PR" list.
 
 ## 5. Write the plan
 
@@ -158,21 +166,21 @@ git push origin HEAD:main
 
 If the push is rejected because `main` moved (another plan landed first), run `git pull --rebase origin main` and push again, up to three times. Plans never touch the same file, so the rebase won't conflict.
 
-Then wait for the plan to go live, so the link works when people click it. Check `https://helloaolab.github.io/pr-test-plans/plans/seed-bible/<n>/<short commit>.json` about every 20 seconds, for up to 5 minutes, until it returns 200. If it still isn't live, post anyway; the comment says it can take a few minutes.
+Go straight on to the comment once the push succeeds; don't wait for the site to update. The routine's sandbox can't reach `github.io` anyway, and the page tells anyone who clicks too early that new plans take a minute or two to appear.
 
 ## 7. If the site can't be used
 
-If cloning, committing, or pushing fails, don't retry in other ways (no other repos, no file hosts, no artifacts). Post the comment without the link: keep the heading, note, marker and the plain checklist, and say in one line that the interactive page couldn't be published and why (the error, in plain words). If you couldn't clone the repo, write the checklist by hand in the same shape as `tools/plan.mjs checklist` produces.
+If cloning, committing, or pushing fails, don't retry in other ways (no other repos, no file hosts, no artifacts). Post or update the comment without the link: keep the heading, note, marker and the plain checklist, and say in one line that the interactive page couldn't be published and why (the error, in plain words). If you couldn't clone the repo, write the checklist by hand in the same shape as `tools/plan.mjs checklist` produces.
 
-## 8. Post the comment
+## 8. Post or update the comment
 
-Make the plain checklist from the `pr-test-plans` checkout:
+Each PR has **one** test plan comment, kept up to date like the deployment comment. Make the plain checklist from the `pr-test-plans` checkout:
 
 ```bash
 node tools/plan.mjs checklist plans/seed-bible/<n>/<short commit>.json > checklist.md
 ```
 
-Write the comment to a file and post it with `gh pr comment <n> --body-file <file>` (avoids shell-quoting problems). Post exactly once. Use this format, filling in the placeholders:
+Write the whole comment to a file, in this format with the placeholders filled in:
 
 ```markdown
 > [!NOTE]
@@ -182,9 +190,11 @@ Write the comment to a file and post it with `gh pr comment <n> --body-file <fil
 
 ## 🧪 Manual test plan
 
-**[Open the test plan](https://helloaolab.github.io/pr-test-plans/?plan=seed-bible/<n>/<short commit>)** · <N> tests · written for commit `<short commit>`
+**[Open the test plan](https://helloaolab.github.io/pr-test-plans/?plan=seed-bible/<n>/<short commit>)** · <N> tests · written for commit `<short commit>` on <date, e.g. Oct 7, 2026>
 
-Work through the tests on the page and mark each one. Your results save in your browser, so you can stop and come back. When you're done, choose **Copy results** and paste them in a comment here.
+Work through the tests on the page and mark each one. Your results save in your browser, so you can stop and come back. When you're done, choose **Copy results** and paste them in a comment here. A brand-new plan can take a couple of minutes to appear on the site.
+
+<sub>[Plan file](https://github.com/HelloAOLab/pr-test-plans/blob/main/plans/seed-bible/<n>/<short commit>.json)</sub>
 
 <details>
 <summary>Plain checklist (if the page doesn't open for you)</summary>
@@ -194,9 +204,38 @@ Work through the tests on the page and mark each one. Your results save in your 
 </details>
 ```
 
-- Keep the blank lines around the checklist inside `<details>`, or GitHub won't render it as markdown.
-- If this PR already has plans for earlier commits, add one line under the bold link: "Plans for earlier commits are still available from the page. Results don't carry over between plans, so start fresh on this one. Tests that are new, changed, or failed last time say so at the top."
-- The link points at this exact commit's plan, so it stays correct when later commits add newer plans.
+Then post it, or update the existing comment from step 2 in place (both read the body from the file, which avoids shell-quoting problems):
+
+```bash
+gh pr comment <n> --body-file comment.md                                                  # no comment yet
+gh api -X PATCH repos/HelloAOLab/seed-bible/issues/comments/<id> -F body=@comment.md      # update the existing one
+```
+
+- The main link always points at **this exact commit's plan**, so it's the newest plan for as long as this comment shows it.
+- **If the PR has plans for earlier commits**, add this line under the instructions paragraph: "This plan replaced earlier ones as the PR changed. Results don't carry over between plans, so start fresh on this one. Tests that are new, changed, or failed last time say so at the top." Then, after the checklist, add a folded list of those plans, newest first, so their links aren't lost when the comment is updated:
+
+  ```markdown
+  <details>
+  <summary>Earlier plans for this PR</summary>
+
+  - [Commit `abc1234`](https://helloaolab.github.io/pr-test-plans/?plan=seed-bible/<n>/abc1234) · Oct 3, 2026
+  - …
+
+  </details>
+  ```
+
+- Keep the blank lines after each `</summary>` and before each `</details>`, or GitHub won't render the markdown inside.
+- GitHub doesn't notify anyone when a comment is edited. That's fine: new commits and the new code review comment already do.
+- **If step 2 found older duplicate test plan comments**, mark them as duplicates once the current comment is posted or updated, so only one is shown in full. Only touch comments containing `<!-- routine-pr-human-review-plan` that were written by the same account as the current one. Use their `node_id` from the step 2 listing:
+
+  ```bash
+  gh api graphql -F id=<node_id> -f query='
+    mutation($id: ID!) {
+      minimizeComment(input: { subjectId: $id, classifier: DUPLICATE }) { minimizedComment { isMinimized } }
+    }'
+  ```
+
+  GitHub folds them to one line ("marked as duplicate"), and anyone can still expand them. If marking fails, leave it and mention it in your output.
 
 **Gotchas**
 
