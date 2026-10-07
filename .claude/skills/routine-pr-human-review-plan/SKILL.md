@@ -43,7 +43,7 @@ Then check what already exists for this commit:
 - Linked issues: everything in `closingIssuesReferences`, plus issues the body refers to. Read each with `gh issue view <n> --comments`. Acceptance criteria and repro steps in issues are the best source of tests.
 - The change itself: `gh pr diff <n>`, and read the changed files in full where you need to understand what the user will actually see. Read them from a separate folder holding the PR's code: reuse `../seed-bible-pr-<n>` if the code review already made it, or create it with `git fetch origin pull/<n>/head && git worktree add --detach ../seed-bible-pr-<n> FETCH_HEAD`. **Don't switch this checkout to the PR branch.** The routine's skills are read from it, so it must stay on the default branch. To learn which buttons, labels, and menu names a tester will see, use the English strings in `packages/seed-bible/seed-bible/i18n/en.json`, not component or function names.
 - Earlier discussion: if a reviewer already reported a bug, or a comment explains how to reach a hidden feature, use it.
-- Earlier plans for this PR (other files in `plans/seed-bible/<n>/`): reuse what still applies, and focus new or changed tests on what the new commits changed.
+- Earlier plans for this PR: other files in `plans/seed-bible/<n>/`. If there are any, read "Building on earlier plans" in step 4 before deciding what to test.
 
 **Preview build.** The CD workflow deploys every same-repo PR branch and keeps one PR comment up to date with the link. Find the comment containing `<!-- deployment-link -->` and take the `https://alpha.seedbible.org/b/...` URL from it. If there's no such comment and `isCrossRepository` is false, use `https://alpha.seedbible.org/b/<branch>`, where `<branch>` is `headRefName` with every character outside `a-zA-Z0-9-` replaced by `_`. That link starts working once the deploy finishes. A PR from a fork gets no preview. In that case leave out `preview` and make setup a local run (see below).
 
@@ -58,6 +58,18 @@ Test what a person can see and do in the app, not how the code is built.
 - Each expected result is something the tester can see on screen, not "it works" or "the record is saved".
 - List anything that can't be checked through the app (refactors, build or CI changes, logic fully covered by unit tests) in `notCovered`, in plain words.
 - Don't invent behavior. If the PR or issue is unclear about what should happen, write the test for what the code does and say in `why` that the intended behavior isn't stated, so testers can flag it.
+
+**Building on earlier plans.** When the PR already has plans for earlier commits, the new plan builds on them rather than starting from scratch. Testers' results don't carry over between plans, so the new plan must still be **complete**: it tests everything that matters for the PR as it is now, not just the latest changes.
+
+1. **Read the newest earlier plan.** That's the file in `plans/seed-bible/<n>/` with the latest `generatedAt`; its `pr.commit` is the commit it was written for.
+2. **Find what changed since then.** In the PR folder, run `git diff <earlier commit>..<head commit>`, fetching the earlier commit first if git doesn't have it (`git fetch origin <earlier commit>`). If the earlier commit is gone (the branch was force-pushed), compare `gh pr diff <n>` with what the earlier plan covers instead.
+3. **Read testers' results for earlier plans.** They're PR comments starting with `### 🧪 Manual test results`, and their `[Test plan](…?plan=seed-bible/<n>/<commit>)` link says which plan they used. Test IDs like `T3` refer to **that** plan's numbering, so match them to test titles in that plan's file. Also read any other comments where people describe testing the PR by hand.
+4. **Write the new plan:**
+   - Keep tests whose feature didn't change, with the same wording and order, so returning testers recognize them.
+   - Update tests whose feature changed, and add tests for new behavior. Start their `why` with "New since commit `<earlier short commit>`." or "Changed since commit `<earlier short commit>`: <what changed>."
+   - Make sure everything that **failed or was blocked** in earlier results gets tested again, whether or not the new commits touched it. Start its `why` with "Failed on the plan for commit `<earlier short commit>`: <the tester's note, shortened>." (or "Blocked on …"). If the new commits were meant to fix it, say so.
+   - Drop tests for behavior the PR no longer includes, and mention it in the summary.
+   - Start the `summary` with one sentence on what changed since the last plan, then describe the PR as a whole.
 
 **Setup** must get a non-developer from zero to the first test. Put what every test needs in the plan's `setup`, and what only one section needs in that section's own `setup` (it shows as "Before these tests" at the top of the section). For example, signing in with a second account goes in the sharing section, not at the top. Include, as needed:
 
@@ -183,7 +195,7 @@ Work through the tests on the page and mark each one. Your results save in your 
 ```
 
 - Keep the blank lines around the checklist inside `<details>`, or GitHub won't render it as markdown.
-- If this PR already has plans for earlier commits, add one line under the bold link: "Plans for earlier commits are still available from the page. Results don't carry over between plans, so start fresh on this one."
+- If this PR already has plans for earlier commits, add one line under the bold link: "Plans for earlier commits are still available from the page. Results don't carry over between plans, so start fresh on this one. Tests that are new, changed, or failed last time say so at the top."
 - The link points at this exact commit's plan, so it stays correct when later commits add newer plans.
 
 **Gotchas**
