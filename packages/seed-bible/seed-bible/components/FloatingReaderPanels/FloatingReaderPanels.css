@@ -823,7 +823,8 @@
     opacity: 1;
   }
 
-  /* Chat keeps the floating-card look on mobile, anchored above the bar. */
+  /* Tablets still float the chat above the reader toolbar. Phones override
+     this below so the sheet meets the tab bar instead of hovering over it. */
   .sb-floating-chat-panel {
     left: 50%;
     right: auto;
@@ -834,5 +835,26 @@
     border-radius: 0;
     border: none;
     box-shadow: 0px -3px 8px 0px rgba(0, 0, 0, 0.18);
+  }
+}
+
+@media (max-width: 480px) {
+  /* Fill the screen above the 5-tab bar. The wider rule pins the panel
+     7.5rem up (tab bar + chapter nav) and sizes it with a capped viewport
+     height, which leaves a strip of the reader under the browser chrome and
+     another between the composer and the tabs. Stretch between the top of
+     the viewport and the toolbar instead — same 4.375rem inset the
+     fullscreen panes use. */
+  .sb-floating-chat-panel {
+    inset: 0 0 4.375rem;
+    transform: none;
+    width: auto;
+    height: auto;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    animation: none;
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }

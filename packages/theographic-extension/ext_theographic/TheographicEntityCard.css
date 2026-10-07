@@ -122,9 +122,14 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  max-height: 18.75rem;
 }
 
 .sb-theographic-quote-text {
+  margin: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
   font-family: var(--sb-reader-font-family, inherit);
   font-size: 0.875rem;
   line-height: 1.55;
@@ -141,6 +146,7 @@
 .sb-theographic-quote-footer {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   justify-content: space-between;
   gap: 8px;
   font-size: 0.6875rem;

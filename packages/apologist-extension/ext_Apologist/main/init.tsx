@@ -3,10 +3,29 @@ import { i18n } from "seed-bible/i18n";
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
 import { DateTime } from "luxon";
+import { computed, effect, untracked } from "@preact/signals";
 import {
   resolveMessageAuthors,
+  type ChatProvider,
   type ChatProviderMessageOptions,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import type {
+  DiscoverContentResult,
+  DiscoverProvider,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { PlaylistLinkContent } from "seed-bible/components";
+import { rankResultsForChapter, searchApologistContent } from "./search";
+import {
+  APOLOGIST_EXTENSION_ID,
+  createApologistRequest,
+  DEFAULT_APOLOGIST_DOMAIN,
+} from "./apologistRequest";
+import {
+  getEffectiveSeedTranslationForAi,
+  postApologistChatCompletion,
+  resolveApologistBible,
+  uiLocaleForApologist,
+} from "./apologistBible";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -163,6 +182,8 @@ type ChatMessage =
     };
 
 const PROVIDER_ID = "apologist-chat-provider";
+const DISCOVER_PROVIDER_ID = "apologist-discover-provider";
+const DEFAULT_APOLOGIST_MODEL = "openai/gpt/5-mini";
 
 // Bounds the tool-call resolution loop below so a model that never emits
 // final content (or keeps calling tools) can't hang generateResponse forever.
@@ -175,19 +196,46 @@ export default function initApologistExtension() {
       console.log("Apologist extension initialized with context:", context);
 
       const url = context.navigation.currentUrl.value;
-      const apologistName = url.searchParams.get("apologistName") ?? null;
+      const urlName = url.searchParams.get("apologistName") ?? null;
       const apologistIconUrl =
         url.searchParams.get("apologistIconUrl") ?? undefined;
       const customApologistDomain =
         url.searchParams.get("apologistDomain") ?? null;
-      const apologistDomain = customApologistDomain ?? "apologist.seedbible.io";
+      const apologistDomain = customApologistDomain ?? DEFAULT_APOLOGIST_DOMAIN;
       const apologistApiKey = url.searchParams.get("apologistApiKey") ?? null;
       const apologistShareToken =
         url.searchParams.get("apologistShareToken") ?? null;
-      const apologistModel =
-        url.searchParams.get("apologistModel") ?? "openai/gpt/5-mini";
+      const urlModel = url.searchParams.get("apologistModel") ?? null;
       const apologistConversationId: string | null =
         url.searchParams.get("apologistConversation") ?? null;
+      const rawApologistTeamId = url.searchParams.get("apologistTeamID");
+      const urlTeamId =
+        rawApologistTeamId && /^\d+$/.test(rawApologistTeamId)
+          ? Number(rawApologistTeamId)
+          : null;
+      if (rawApologistTeamId && urlTeamId === null) {
+        console.error(
+          `[Apologist] apologistTeamID must be an integer, got "${rawApologistTeamId}". Ignoring it.`
+        );
+      }
+
+      // A value in the link wins over the one saved in settings. Saved values
+      // load after sign-in and can change at any time, so they are read
+      // through signals rather than once here.
+      const readSavedText = (key: string): string | null => {
+        const saved = context.extensionSettings.getValue(
+          APOLOGIST_EXTENSION_ID,
+          key
+        );
+        return typeof saved === "string" && saved.trim() ? saved.trim() : null;
+      };
+      const customName = computed(() => urlName ?? readSavedText("name"));
+      const contentAuthor = computed(() => readSavedText("contentAuthor"));
+
+      const apologistRequest = createApologistRequest(context, {
+        domain: apologistDomain,
+        apiKey: apologistApiKey,
+      });
 
       if (customApologistDomain && !apologistApiKey) {
         console.error(
@@ -196,9 +244,9 @@ export default function initApologistExtension() {
         return;
       }
 
-      yield context.chats.registerProvider({
+      const createChatProvider = (name: string | null): ChatProvider => ({
         id: PROVIDER_ID,
-        name: apologistName ?? {
+        name: name ?? {
           key: "title",
           defaultValue: "Apologist",
           ns: "ext_Apologist",
@@ -209,13 +257,26 @@ export default function initApologistExtension() {
         generateResponse: async function* (
           chatContext
         ): AsyncGenerator<ChatProviderMessageOptions> {
-          const instructions =
+          const seedTranslation = getEffectiveSeedTranslationForAi(context);
+          const bibleResolution = resolveApologistBible(seedTranslation);
+          if (bibleResolution.usedFallback && seedTranslation) {
+            console.warn(
+              `[Apologist] Bible translation "${seedTranslation.id}" isn't supported; using "${bibleResolution.code}" instead.`
+            );
+          }
+
+          const uiLanguage = uiLocaleForApologist(i18n.language);
+          const readingInstructions =
             chatContext.instructions ??
-            `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`;
+            `Currently reading: ${context.app.selectedTab.value?.readingState.bookId.value} ${context.app.selectedTab.value?.readingState.chapterNumber.value}`;
+          const languageAndBibleInstructions = [
+            `User has their UI language set to ${uiLanguage}, however when speaking to the user you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to speaking to them in ${uiLanguage}.`,
+            `When quoting scripture for the user, use their active Bible translation which is ${bibleResolution.code}.`,
+          ].join(" ");
 
           const contextMessage: ChatMessage = {
             role: "developer",
-            content: instructions,
+            content: `${readingInstructions}\n\n${languageAndBibleInstructions}`,
           };
 
           const tools = chatContext.tools?.map((t) => ({
@@ -255,28 +316,32 @@ export default function initApologistExtension() {
             }
           }
 
-          for (let turn = 0; turn < MAX_COMPLETION_TURNS; turn++) {
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/chat/completions`,
-              {
-                method: "POST",
-                body: JSON.stringify({
-                  model: apologistModel,
-                  stream: true,
-                  metadata: {
-                    bible: "bsb",
-                    language: i18n.language,
-                  },
-                  messages: messages,
-                  tools,
-                }),
-                headers: apologistApiKey
-                  ? {
-                      Authorization: `Bearer ${apologistApiKey}`,
-                    }
-                  : {},
-              }
-            );
+          let bibleCode = bibleResolution.code;
+
+          let turn = 0;
+          for (; turn < MAX_COMPLETION_TURNS; turn++) {
+            const { response, bible, retriedWithDefault } =
+              await postApologistChatCompletion({
+                send: (body) =>
+                  apologistRequest("/api/v1/chat/completions", {
+                    method: "POST",
+                    body,
+                  }),
+                model:
+                  urlModel ?? readSavedText("model") ?? DEFAULT_APOLOGIST_MODEL,
+                stream: true,
+                language: uiLanguage,
+                bible: bibleCode,
+                messages,
+                tools,
+              });
+
+            if (retriedWithDefault) {
+              console.warn(
+                `[Apologist] Agent rejected bible "${bibleCode}"; retrying with "${bible}".`
+              );
+              bibleCode = bible;
+            }
 
             if (!response.ok) {
               const body = await response.text().catch(() => "");
@@ -367,7 +432,10 @@ export default function initApologistExtension() {
                 }
 
                 const args = JSON.parse(fn.arguments);
-                const result = await tool.function(args);
+                const result = await tool.function(args, {
+                  chatId: chatContext.chatId,
+                  providerId: PROVIDER_ID,
+                });
 
                 messages.push({
                   role: "tool",
@@ -419,8 +487,117 @@ export default function initApologistExtension() {
             messages.push({ role: "assistant", content: assembledContent });
             return;
           }
+
+          // Only reached by using up every turn; the loop's normal endings
+          // `break` with turns to spare. Throwing lets ChatsManager post its
+          // standard error message instead of leaving the chat silent.
+          if (turn === MAX_COMPLETION_TURNS) {
+            throw new Error(
+              `stopped after ${MAX_COMPLETION_TURNS} rounds of tool calls without an answer`
+            );
+          }
         },
       });
+
+      // Registering under the same id swaps the provider in place, so a new
+      // name shows in every open chat. Unregistering first would instead
+      // remove the agent from those chats.
+      let unregisterChatProvider: () => void = () => undefined;
+      const disposeNameEffect = effect(() => {
+        const name = customName.value;
+        untracked(() => {
+          unregisterChatProvider = context.chats.registerProvider(
+            createChatProvider(name)
+          );
+        });
+      });
+      yield () => {
+        disposeNameEffect();
+        unregisterChatProvider();
+      };
+
+      // `reference` has to name the chapter being read: results whose
+      // reference doesn't match it are dropped before display.
+      const createDiscoverProvider = (
+        teamId: number,
+        name: string | null,
+        author: string | null
+      ): DiscoverProvider => {
+        const providerName =
+          name ??
+          i18n.t("title", { ns: "ext_Apologist", defaultValue: "Apologist" });
+        return {
+          id: DISCOVER_PROVIDER_ID,
+          title: providerName,
+          description: "Content from your Apologist team.",
+          discover: async ({ translationId, book, chapter }) => {
+            const bookName =
+              context.bibleData
+                .getCachedTranslationBooks(translationId)
+                ?.books.find((b) => b.id === book)?.name ?? book;
+
+            const results = await searchApologistContent(apologistRequest, {
+              query: `${bookName} ${chapter}`,
+              teamId,
+            });
+
+            return rankResultsForChapter(results, bookName, chapter).map(
+              (item): DiscoverContentResult => ({
+                type: "content",
+                title: item.title,
+                description: item.description,
+                reference: { book, chapter },
+                // Results are grouped by author in the Discover pane.
+                author: author ?? item.source ?? item.author ?? providerName,
+                image: item.image,
+                onClick: () => {
+                  context.modals.openModal({
+                    id: `apologist-content-${item.id}`,
+                    title: item.title,
+                    content: () => (
+                      <PlaylistLinkContent url={item.url} title={item.title} />
+                    ),
+                  });
+                },
+              })
+            );
+          },
+        };
+      };
+
+      // The provider is swapped whenever the team, name or content author
+      // changes, which also re-runs the search for the open chapter.
+      const teamId = computed(() => {
+        if (urlTeamId !== null) {
+          return urlTeamId;
+        }
+        const saved = context.extensionSettings.getValue(
+          APOLOGIST_EXTENSION_ID,
+          "teamId"
+        );
+        return typeof saved === "number" && Number.isInteger(saved) && saved > 0
+          ? saved
+          : null;
+      });
+      let unregisterDiscoverProvider: (() => void) | null = null;
+      const disposeDiscoverEffect = effect(() => {
+        const id = teamId.value;
+        const name = customName.value;
+        const author = contentAuthor.value;
+        untracked(() => {
+          unregisterDiscoverProvider?.();
+          unregisterDiscoverProvider =
+            id === null
+              ? null
+              : context.discover.registerDiscoverProvider(
+                  createDiscoverProvider(id, name, author)
+                );
+        });
+      });
+      yield () => {
+        disposeDiscoverEffect();
+        unregisterDiscoverProvider?.();
+      };
 
       if (apologistShareToken) {
         // init conversation
@@ -430,8 +607,8 @@ export default function initApologistExtension() {
               "[Apologist] Getting conversation history for share token:",
               apologistShareToken
             );
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/shares/${encodeURIComponent(apologistShareToken)}`
+            const response = await apologistRequest(
+              `/api/v1/shares/${encodeURIComponent(apologistShareToken)}`
             );
 
             const responseData = await response.json();
@@ -515,15 +692,8 @@ export default function initApologistExtension() {
               "[Apologist] Getting conversation history for conversation ID:",
               apologistConversationId
             );
-            const response = await fetch(
-              `https://${apologistDomain}/api/v1/chat/completions?conversation_id=${encodeURIComponent(apologistConversationId)}`,
-              {
-                headers: apologistApiKey
-                  ? {
-                      Authorization: `Bearer ${apologistApiKey}`,
-                    }
-                  : {},
-              }
+            const response = await apologistRequest(
+              `/api/v1/chat/completions?conversation_id=${encodeURIComponent(apologistConversationId)}`
             );
 
             const responseData = await response.json();

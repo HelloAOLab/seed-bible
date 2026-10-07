@@ -6,8 +6,15 @@ import fs from "fs";
 import type {
   ExtensionMeta,
   ExtensionSet,
+  ExtensionSettingDefinition,
   UploadedExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import {
+  isSupportedSensitiveRequestProperty,
+  isValidSensitiveHost,
+  numberRangeAdmitsAValue,
+  settingConstraintProblems,
+} from "../../packages/seed-bible/seed-bible/managers/extensionSettingConstraints";
 import * as z from "zod/v4";
 
 // const downloadRecordName = "testingPublickKey";
@@ -324,34 +331,237 @@ export const ExtensionTranslationSchema = z
  * fields this script doesn't know about yet without them being stripped from
  * the uploaded meta.
  */
+const finiteNumber = z.number().finite();
+
+function rejectDefaultOutsideConstraints(
+  value: ExtensionSettingDefinition,
+  ctx: {
+    addIssue: (issue: {
+      code: "custom";
+      message: string;
+      path: string[];
+    }) => void;
+  }
+) {
+  if (value.default === undefined) {
+    return;
+  }
+  for (const problem of settingConstraintProblems(value.default, value)) {
+    ctx.addIssue({
+      code: "custom",
+      message: `default ${problem}`,
+      path: ["default"],
+    });
+  }
+}
+
+/**
+ * Settings are loose objects, so without this a `sensitive` on a number or a
+ * boolean would be kept and silently ignored — and that setting's value
+ * stored as an ordinary, publicly readable one.
+ */
+function rejectSensitiveOnNonString(
+  value: { type: string } & Record<string, unknown>,
+  ctx: {
+    addIssue: (issue: {
+      code: "custom";
+      message: string;
+      path: string[];
+    }) => void;
+  }
+) {
+  if (value.sensitive !== undefined) {
+    ctx.addIssue({
+      code: "custom",
+      message: `only string settings can be sensitive, but this setting is a ${value.type}`,
+      path: ["sensitive"],
+    });
+  }
+}
+
+export const ExtensionSensitiveProxyDefinitionSchema = z.looseObject({
+  host: z.string().refine(isValidSensitiveHost, {
+    message:
+      "host must be a host name with an optional port (e.g. api.example.com), with no scheme or path",
+  }),
+  // Settings are loose objects, so without this an extension declaring a
+  // visibility would be accepted and silently get `private` anyway.
+  visibility: z
+    .never({
+      error:
+        "visibility can't be set by an extension; it is private until the viewer chooses otherwise",
+    })
+    .optional(),
+  requestMapping: z
+    .record(
+      z.string().refine(isSupportedSensitiveRequestProperty, {
+        message:
+          "must be headers.authorization, headers.authorization.bearer, headers.x-<name> or body.<property>",
+      }),
+      z.string()
+    )
+    .refine((mapping) => Object.keys(mapping).length > 0, {
+      message: "requestMapping must map at least one request property",
+    }),
+});
+
 export const ExtensionSettingDefinitionSchema = z.discriminatedUnion("type", [
-  z.looseObject({
-    type: z.literal("string"),
-    default: z.string().optional(),
-  }),
-  z.looseObject({
-    type: z.literal("boolean"),
-    default: z.boolean().optional(),
-  }),
-  z.looseObject({
-    type: z.literal("number"),
-    default: z.number().optional(),
-  }),
+  z
+    .looseObject({
+      type: z.literal("string"),
+      default: z.string().optional(),
+      enum: z.array(z.string()).optional(),
+      sensitive: z.string().optional(),
+    })
+    .superRefine((value, ctx) => {
+      // Both would publish the secret in the manifest, which anyone can read.
+      if (value.sensitive !== undefined) {
+        for (const field of ["default", "enum"] as const) {
+          if (value[field] !== undefined) {
+            ctx.addIssue({
+              code: "custom",
+              message: `a sensitive setting can't declare ${field}`,
+              path: [field],
+            });
+          }
+        }
+      }
+      if (value.enum !== undefined && value.enum.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "enum must list at least one value",
+          path: ["enum"],
+        });
+      }
+      rejectDefaultOutsideConstraints(value, ctx);
+    }),
+  z
+    .looseObject({
+      type: z.literal("boolean"),
+      default: z.boolean().optional(),
+    })
+    .superRefine(rejectSensitiveOnNonString),
+  z
+    .looseObject({
+      type: z.literal("number"),
+      default: z.number().finite().optional(),
+      minimum: finiteNumber.optional(),
+      maximum: finiteNumber.optional(),
+      multipleOf: z.number().optional(),
+    })
+    .superRefine((value, ctx) => {
+      if (
+        value.multipleOf !== undefined &&
+        !(Number.isFinite(value.multipleOf) && value.multipleOf > 0)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `multipleOf must be a finite number greater than 0 (got ${value.multipleOf})`,
+          path: ["multipleOf"],
+        });
+      }
+      if (
+        value.minimum !== undefined &&
+        value.maximum !== undefined &&
+        value.minimum > value.maximum
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `minimum ${value.minimum} is greater than maximum ${value.maximum}`,
+          path: ["minimum"],
+        });
+      } else if (
+        value.multipleOf !== undefined &&
+        Number.isFinite(value.multipleOf) &&
+        value.multipleOf > 0 &&
+        !numberRangeAdmitsAValue(value)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `no multiple of ${value.multipleOf} lies between minimum ${value.minimum} and maximum ${value.maximum}`,
+          path: ["multipleOf"],
+        });
+      }
+      rejectDefaultOutsideConstraints(value, ctx);
+      rejectSensitiveOnNonString(value, ctx);
+    }),
 ]);
 
-export const ExtensionMetaSchema = z.looseObject({
-  id: z.string(),
-  translations: z
-    .object({
-      en: ExtensionTranslationSchema,
+/** `settings.repeatCount.default: default 11 is greater than maximum 10` */
+export function formatSchemaIssues(error: z.ZodError): string {
+  return error.issues
+    .map((issue) => {
+      const where = issue.path.join(".");
+      return where ? `${where}: ${issue.message}` : issue.message;
     })
-    .catchall(ExtensionTranslationSchema),
-  dependencies: z.array(z.string()).optional(),
+    .join("; ");
+}
 
-  autoinstall: z.boolean().optional(),
+export const ExtensionMetaSchema = z
+  .looseObject({
+    id: z.string(),
+    translations: z
+      .object({
+        en: ExtensionTranslationSchema,
+      })
+      .catchall(ExtensionTranslationSchema),
+    dependencies: z.array(z.string()).optional(),
 
-  settings: z.record(z.string(), ExtensionSettingDefinitionSchema).optional(),
-});
+    autoinstall: z.boolean().optional(),
+
+    settings: z.record(z.string(), ExtensionSettingDefinitionSchema).optional(),
+
+    sensitive: z
+      .record(z.string(), ExtensionSensitiveProxyDefinitionSchema)
+      .optional(),
+  })
+  .superRefine((meta, ctx) => {
+    // Each sensitive setting and the `sensitive` entry it names have to agree:
+    // a setting no mapping uses would be accepted in the form and then never
+    // sent anywhere, and a mapping to a non-sensitive setting has no secret to
+    // fill in.
+    const settings = meta.settings ?? {};
+    const sensitive = meta.sensitive ?? {};
+    for (const [proxyId, proxy] of Object.entries(sensitive)) {
+      for (const [property, settingKey] of Object.entries(
+        proxy.requestMapping
+      )) {
+        const setting = settings[settingKey];
+        if (!setting) {
+          ctx.addIssue({
+            code: "custom",
+            message: `maps to setting "${settingKey}", which isn't declared`,
+            path: ["sensitive", proxyId, "requestMapping", property],
+          });
+        } else if (setting.type !== "string" || setting.sensitive !== proxyId) {
+          ctx.addIssue({
+            code: "custom",
+            message: `maps to setting "${settingKey}", which must declare "sensitive": "${proxyId}"`,
+            path: ["sensitive", proxyId, "requestMapping", property],
+          });
+        }
+      }
+    }
+    for (const [settingKey, setting] of Object.entries(settings)) {
+      if (setting.type !== "string" || setting.sensitive === undefined) {
+        continue;
+      }
+      const proxy = sensitive[setting.sensitive];
+      if (!proxy) {
+        ctx.addIssue({
+          code: "custom",
+          message: `names "${setting.sensitive}", which isn't declared in the sensitive section`,
+          path: ["settings", settingKey, "sensitive"],
+        });
+      } else if (!Object.values(proxy.requestMapping).includes(settingKey)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `isn't used by any requestMapping entry in sensitive.${setting.sensitive}`,
+          path: ["settings", settingKey, "sensitive"],
+        });
+      }
+    }
+  });
 
 /**
  * Uploads the given extension to the records server.
@@ -379,12 +589,15 @@ export async function upload(
   );
   const parseResult = ExtensionMetaSchema.safeParse(extensionData);
   if (!parseResult.success) {
+    const details = formatSchemaIssues(parseResult.error);
     console.error(
       "Invalid extension.json for package:",
       directoryName,
-      z.treeifyError(parseResult.error)
+      details
     );
-    throw new Error("Invalid extension.json for package: " + directoryName);
+    throw new Error(
+      `Invalid extension.json for package ${directoryName}: ${details}`
+    );
   }
 
   const extensionId = parseResult.data.id;

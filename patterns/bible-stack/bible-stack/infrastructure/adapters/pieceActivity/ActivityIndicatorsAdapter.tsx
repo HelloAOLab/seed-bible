@@ -4,35 +4,36 @@ import type {
   Vector3 as Vector3Type,
 } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 import type { ActivityContainer } from "../../../domain/models/activity";
-import type {
-  ActivityIndicatorsAdapterPort as PieceActivityIndicatorsAdapterPort,
-  ShowIndicatorsCommand,
-} from "../../../application/ports/out/PieceActivity";
-import type { ActivityIndicatorsAdapterPort as LabelActivityIndicatorsAdapterPort } from "../../../application/ports/out/PieceLabel";
 import {
   BiblePieces,
   type ActivityIndicator,
   type Piece,
 } from "../../../domain/models/canvas";
+import type { HexString } from "../../../domain/models/commonTypes";
+import { GetTonalChipColors } from "../../../domain/functions/colors";
 import { InfoLabelData } from "../../../domain/entities/InfoLabelData";
+import { ActivityIndicatorData } from "../../../domain/entities/ActivityIndicatorData";
 import type { PieceBot } from "../../models/casualos";
 import type {
   ActivityIndicatorBot,
-  ExtraBackgroundActivityIndicatorTags,
+  BackgroundActivityIndicatorTags,
   ExtraContentActivityIndicatorTags,
   InfoLabelTextBot,
   RegularActivityIndicatorTags,
 } from "../../models/stack";
-import type { IndicatorsRepositoryPort } from "../../../application/ports/out/PieceActivity";
 import type { ObjectPooler } from "../environment/ObjectPooler";
+import type { VisualStateRegistry } from "../stacks/VisualStateRegistry";
 import type { ActivityIndicatorVisualConfig } from "../../config/activityIndicators/visuals";
 import type { BibleStackObjectPoolerMap } from "../../models/objectPooler";
+import type {
+  ShowIndicatorsCommand,
+  ActivityIndicatorsPort,
+} from "../../../application/ports/out/ActivityIndicators";
 
 interface ActivityIndicatorMapperPort {
   toInfrastructure: (
     indicator: ActivityIndicator
   ) => ActivityIndicatorBot | undefined;
-  toDomain: (bot: ActivityIndicatorBot) => ActivityIndicator;
 }
 
 interface InfoLabelTextMapperPort {
@@ -48,19 +49,22 @@ interface DimensionProviderPort {
 interface PositionStrategyParams {
   ownerBot: PieceBot;
   indicatorBot: ActivityIndicatorBot;
+  indicator: ActivityIndicatorData;
   dimension: string;
   container: ActivityContainer;
   configProviderPort: AdapterParams["configProviderPort"];
   labelTextMapperPort: InfoLabelTextMapperPort;
+  visualStateRegistryPort: VisualStateRegistry;
 }
 
 type PositionStrategyType = (params: PositionStrategyParams) => Vector3Type;
 
 const labelPositionStrategy: PositionStrategyType = ({
-  indicatorBot,
+  indicator,
   container,
   configProviderPort,
   labelTextMapperPort,
+  visualStateRegistryPort,
 }) => {
   const offset = configProviderPort.getVisualConfig("LabelOffset");
   const step = configProviderPort.getVisualConfig("LabelStep");
@@ -75,17 +79,13 @@ const labelPositionStrategy: PositionStrategyType = ({
       `ActivityIndicatorsAdapter: labelTextBot not found at labelPositionStrategy`
     );
   }
-  // @ts-expect-error TODO: Locate initialPosition at the labelTextBot's visual state
-  const piecePosition = labelTextBot.tags.initialPosition;
+  const piecePosition = visualStateRegistryPort.getStateProperty({
+    piece: container.label,
+    property: "initialPosition",
+  });
   if (!piecePosition) {
     throw new Error(
       `ActivityIndicatorsAdapter: piecePosition not defined at labelPositionStrategy`
-    );
-  }
-  // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
-  if (indicatorBot.tags.index === undefined) {
-    throw new Error(
-      `ActivityIndicatorsAdapter: indicatorBot.tags.index not defined at labelPositionStrategy`
     );
   }
   const pieceScales = GetBotScales(labelTextBot);
@@ -94,19 +94,14 @@ const labelPositionStrategy: PositionStrategyType = ({
       pieceScales.x / 2 +
       configProviderPort.getVisualConfig("LabelScales").x / 2 +
       offset.x +
-      // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
-      indicatorBot.tags.index * step.x,
+      indicator.index * step.x,
     piecePosition.y + pieceScales.y / 2,
     piecePosition.z +
       pieceScales.z +
       offset.z +
-      // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
-      indicatorBot.tags.index *
-        (step.z *
-          // @ts-expect-error TODO: Locate indicatorType at the indicatorBot's visual state
-          (indicatorBot.tags.indicatorType === "extraContent" ? 2 : 1)) +
-      // @ts-expect-error TODO: Locate indicatorType at the indicatorBot's visual state
-      (indicatorBot.tags.indicatorType === "extraContent" ? step.z : 0)
+      indicator.index *
+        (step.z * (indicator.indicatorType === "extraContent" ? 2 : 1)) +
+      (indicator.indicatorType === "extraContent" ? step.z : 0)
   );
   return position;
 };
@@ -115,18 +110,12 @@ const createPositionGroundedStrategy = (type: "chapter" | "book") => {
   const strategy: PositionStrategyType = ({
     ownerBot,
     indicatorBot,
+    indicator,
     dimension,
     configProviderPort,
   }) => {
     const ownerPosition = getBotPosition(ownerBot, dimension);
     const ownerScales = GetBotScales(ownerBot);
-
-    // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
-    if (indicatorBot.tags.index === undefined) {
-      throw new Error(
-        `ActivityIndicatorsAdapter: indicatorBot.tags.index not defined at createPositionGroundedStrategy`
-      );
-    }
 
     let offset: Point3D | undefined = undefined;
     let step: Point3D | undefined = undefined;
@@ -149,8 +138,7 @@ const createPositionGroundedStrategy = (type: "chapter" | "book") => {
         ownerScales.x / 2 +
         configProviderPort.getVisualConfig("GroundedScales").x / 2 +
         offset.x +
-        // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
-        indicatorBot.tags.index * step.x,
+        indicator.index * step.x,
       ownerPosition.y +
         ownerScales.y / 2 -
         configProviderPort.getVisualConfig("GroundedScales").y / 2 -
@@ -175,9 +163,6 @@ type UpdateStrategyType = (
   extraContentScales:
     | ActivityIndicatorVisualConfig["LabelExtraUsersContentScales"]
     | ActivityIndicatorVisualConfig["GroundedExtraUsersContentScales"];
-  extraBackgroundScales:
-    | ActivityIndicatorVisualConfig["LabelExtraUsersBackgroundScales"]
-    | ActivityIndicatorVisualConfig["GroundedExtraUsersBackgroundScales"];
   form:
     | ActivityIndicatorVisualConfig["LabelForm"]
     | ActivityIndicatorVisualConfig["GroundedForm"];
@@ -188,15 +173,11 @@ const updateLabelStrategy: UpdateStrategyType = (configProviderPort) => {
   const extraContentScales = configProviderPort.getVisualConfig(
     "LabelExtraUsersContentScales"
   );
-  const extraBackgroundScales = configProviderPort.getVisualConfig(
-    "LabelExtraUsersBackgroundScales"
-  );
   const form = configProviderPort.getVisualConfig("LabelForm");
 
   return {
     indicatorScales,
     extraContentScales,
-    extraBackgroundScales,
     form,
   };
 };
@@ -206,15 +187,11 @@ const updatePieceStrategy: UpdateStrategyType = (configProviderPort) => {
   const extraContentScales = configProviderPort.getVisualConfig(
     "GroundedExtraUsersContentScales"
   );
-  const extraBackgroundScales = configProviderPort.getVisualConfig(
-    "GroundedExtraUsersBackgroundScales"
-  );
   const form = configProviderPort.getVisualConfig("GroundedForm");
 
   return {
     indicatorScales,
     extraContentScales,
-    extraBackgroundScales,
     form,
   };
 };
@@ -230,62 +207,65 @@ interface ActivityIndicatorsConfigProviderPort {
   ) => ActivityIndicatorVisualConfig[K];
 }
 
-interface ActivityIndicatorBotsRepositoryPort {
-  getIndicatorBotsByPieceId: (
-    pieceId: ActivityIndicatorBot["tags"]["ownerBotId"]
-  ) => ActivityIndicatorBot[];
-  getIndicatorBotsByPieceDataId: (
-    pieceDataId: ActivityIndicatorBot["tags"]["ownerDataId"]
-  ) => ActivityIndicatorBot[];
-}
-
 interface AdapterParams {
   objectPooler: ObjectPooler<BibleStackObjectPoolerMap>;
   configProviderPort: ActivityIndicatorsConfigProviderPort;
-  botsRepositoryPort: ActivityIndicatorBotsRepositoryPort;
   activityIndicatorMapperPort: ActivityIndicatorMapperPort;
   labelTextMapperPort: InfoLabelTextMapperPort;
   dimensionProviderPort: DimensionProviderPort;
+  visualStateRegistryPort: VisualStateRegistry;
 }
 
 // prettier-ignore
-export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapterPort, IndicatorsRepositoryPort, LabelActivityIndicatorsAdapterPort {
+export class ActivityIndicatorsAdapter implements ActivityIndicatorsPort {
   #objectPooler: AdapterParams["objectPooler"];
   #configProviderPort: AdapterParams["configProviderPort"];
-  #botsRepositoryPort: AdapterParams["botsRepositoryPort"];
   #activityIndicatorMapperPort: AdapterParams["activityIndicatorMapperPort"];
   #labelTextMapperPort: AdapterParams["labelTextMapperPort"];
   #dimensionProviderPort: AdapterParams["dimensionProviderPort"];
+  #visualStateRegistryPort: AdapterParams["visualStateRegistryPort"];
   constructor({
     objectPooler,
     configProviderPort,
-    botsRepositoryPort,
     activityIndicatorMapperPort,
     labelTextMapperPort,
     dimensionProviderPort,
+    visualStateRegistryPort,
   }: AdapterParams) {
     this.#objectPooler = objectPooler;
     this.#configProviderPort = configProviderPort;
-    this.#botsRepositoryPort = botsRepositoryPort;
     this.#activityIndicatorMapperPort = activityIndicatorMapperPort;
     this.#labelTextMapperPort = labelTextMapperPort;
     this.#dimensionProviderPort = dimensionProviderPort;
+    this.#visualStateRegistryPort = visualStateRegistryPort;
   }
 
-  showIndicators: (command: ShowIndicatorsCommand) => ActivityIndicator[] = ({
+  showIndicators: (command: ShowIndicatorsCommand) => void = ({
     container,
     command,
   }) => {
     const commands = Array.isArray(command) ? command : [command];
 
-    const indicatorBotList: ActivityIndicatorBot[] = [];
     const dimension = this.#dimensionProviderPort.getDimension();
     let piece: Piece | undefined = undefined;
+    let borderColor: HexString = "#ffffff";
+    let labelBackground: HexString = "#ffffff";
+    let labelInk: HexString = "#000000";
     if (container instanceof InfoLabelData) {
-      piece = container.owner;
+      piece = container.transformer;
+      const labelTextBot = this.#labelTextMapperPort.toInfrastructure(
+        container.label
+      );
+      if (labelTextBot) {
+        borderColor = labelTextBot.tags.color as HexString;
+        labelBackground = labelTextBot.tags.color as HexString;
+        labelInk = (labelTextBot.tags.labelColor ?? "#000000") as HexString;
+      }
     } else {
       piece = container.piece;
     }
+
+    const chipColors = GetTonalChipColors({ labelBackground, labelInk });
 
     if (!piece) {
       throw new Error(
@@ -303,65 +283,54 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
       );
     }
 
-    const { indicatorScales, extraContentScales, extraBackgroundScales, form } =
-      strategy(this.#configProviderPort);
+    const { indicatorScales, form } = strategy(
+      this.#configProviderPort
+    );
 
     for (const currCommand of commands) {
-      const { index, indicator } = currCommand;
-      let indicatorBot: ActivityIndicatorBot | undefined;
+      const { indicator } = currCommand;
       let mod:
         | Partial<ExtraContentActivityIndicatorTags>
-        | Partial<ExtraBackgroundActivityIndicatorTags>
         | Partial<RegularActivityIndicatorTags>
         | undefined;
 
-      if (indicator) {
-        indicatorBot =
-          this.#activityIndicatorMapperPort.toInfrastructure(indicator);
-      } else {
-        indicatorBot = this.#objectPooler.getObject(
-          BiblePieces.ActivityIndicator
-        );
-      }
+      const indicatorBot = this.#activityIndicatorMapperPort.toInfrastructure(
+        indicator.piece
+      );
 
       if (!indicatorBot) {
         throw new Error(
-          `ActivityIndicatorsAdapter: indicator not found at showIndicators`
+          `ActivityIndicatorsAdapter: indicatorBot not found at showIndicators`
         );
       }
 
       const baseMod = {
         transformer:
           piece.type === "InfoLabelTransformer" ? piece.id : undefined,
-        ownerBotId: piece.id,
-        ownerDataId: container.id,
         form,
-        index,
         isActivityIndicator: true,
         system: undefined,
+        formRenderOrder: 0,
+        scaleX: indicatorScales.x,
+        scaleY: indicatorScales.y,
+        scaleZ: indicatorScales.z,
       };
+
+      let targetOpacity = 1;
 
       switch (currCommand.type) {
         case "regular":
           {
-            const { isOwnUserActiveActivity, color } = currCommand;
-            const opacity = isOwnUserActiveActivity ? 1 : 0.5;
-            const formRenderOrder = isOwnUserActiveActivity
-              ? -1
-              : 10 - Number(index);
+            const { isSelected, color, pictureUrl } = currCommand;
+            const opacity = isSelected ? 1 : 0.5;
+            targetOpacity = opacity;
 
             mod = {
-              color: color ?? "#ffffff",
+              color: color && !pictureUrl ? color : "#ffffff",
               [dimension]: true,
-              // @ts-expect-error TODO: Locate indicatorType at the indicatorBot's visual state
-              indicatorType: "regular",
-              scaleX: indicatorScales.x,
-              scaleY: indicatorScales.y,
-              scaleZ: indicatorScales.z,
               formOpacity: opacity,
-              targetOpacity: opacity,
-              formRenderOrder,
               type: "ActivityIndicator",
+              formAddress: pictureUrl ?? undefined,
               ...baseMod,
             };
           }
@@ -372,32 +341,10 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
             const label = `+${extraUsers}`;
 
             mod = {
-              color: "#ffffff",
+              color: chipColors.background,
+              labelColor: chipColors.text,
               [dimension]: true,
-              // @ts-expect-error TODO: Locate indicatorType at the indicatorBot's visual state
-              indicatorType: "extraContent",
               label,
-              scaleX: extraContentScales.x,
-              scaleY: extraContentScales.y,
-              scaleZ: extraContentScales.z,
-              targetOpacity: 1,
-              formOpacity: 1,
-              type: "ActivityIndicator",
-              ...baseMod,
-            };
-          }
-          break;
-        case "extraBackground":
-          {
-            mod = {
-              color: "#000000",
-              [dimension]: true,
-              // @ts-expect-error TODO: Locate indicatorType at the indicatorBot's visual state
-              indicatorType: "extraBackground",
-              scaleX: extraBackgroundScales.x,
-              scaleY: extraBackgroundScales.y,
-              scaleZ: extraBackgroundScales.z,
-              targetOpacity: 1,
               formOpacity: 1,
               type: "ActivityIndicator",
               ...baseMod,
@@ -406,24 +353,92 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
           break;
       }
 
-      // @ts-expect-error TODO: Use ApplyStrictMod
       applyMod(indicatorBot, mod);
-      indicatorBotList.push(indicatorBot);
+
+      this.#visualStateRegistryPort.registerState({
+        piece: indicator.piece,
+        state: {
+          initialPosition: new Vector3(0, 0, 0),
+          targetOpacity,
+        },
+      });
+
+      this.#applyBackground(
+        indicator,
+        form,
+        dimension,
+        baseMod,
+        indicatorScales,
+        borderColor
+      );
     }
-    return indicatorBotList.map((indicatorBot) =>
-      this.#activityIndicatorMapperPort.toDomain(indicatorBot)
-    );
   };
-  hideIndicators: (indicators: ActivityIndicator[]) => void = (indicators) => {
+  #applyBackground(
+    indicator: ActivityIndicatorData,
+    form: "sphere" | "circle",
+    dimension: string,
+    baseMod: Partial<BackgroundActivityIndicatorTags>,
+    indicatorScale: { x: number; y: number; z: number },
+    borderColor: HexString
+  ): void {
+    const background = indicator.background;
+    if (!background) {
+      return;
+    }
+    const backgroundBot =
+      this.#activityIndicatorMapperPort.toInfrastructure(background);
+    if (!backgroundBot) {
+      return;
+    }
+
+    const factor = this.#configProviderPort.getVisualConfig("BorderScaleFactor");
+    const depth =
+      form === "sphere"
+        ? this.#configProviderPort.getVisualConfig("GroundedBorderDepth")
+        : this.#configProviderPort.getVisualConfig("LabelBorderDepth");
+
+    const mod: Partial<BackgroundActivityIndicatorTags> = {
+      color: borderColor,
+      [dimension]: true,
+      formOpacity: 1,
+      type: "ActivityIndicator",
+      ...baseMod,
+      scaleX: indicatorScale.x * factor,
+      scaleY: indicatorScale.y * factor,
+      scaleZ: depth,
+    };
+
+    applyMod(backgroundBot, mod);
+
+    this.#visualStateRegistryPort.registerState({
+      piece: background,
+      state: {
+        initialPosition: new Vector3(0, 0, 0),
+        targetOpacity: 1,
+      },
+    });
+  }
+  hideIndicators: (indicators: ActivityIndicatorData[]) => void = (
+    indicators
+  ) => {
     for (const indicator of indicators) {
       this.hideIndicator(indicator);
     }
   };
-  hideIndicator: (indicator: ActivityIndicator) => void = (indicator) => {
-    const indicatorBot =
-      this.#activityIndicatorMapperPort.toInfrastructure(indicator);
+  hideIndicator: (indicator: ActivityIndicatorData) => void = (indicator) => {
+    const indicatorBot = this.#activityIndicatorMapperPort.toInfrastructure(
+      indicator.piece
+    );
     if (indicatorBot) {
       this.#objectPooler.releaseObject(indicatorBot, "ActivityIndicator");
+    }
+    if (indicator.background) {
+      const backgroundBot = this.#activityIndicatorMapperPort.toInfrastructure(
+        indicator.background
+      );
+      if (backgroundBot) {
+        this.#objectPooler.releaseObject(backgroundBot, "ActivityIndicator");
+      }
     }
   };
   updateIndicatorsPosition: (container: ActivityContainer) => void = (
@@ -435,65 +450,79 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
     }
   };
   updateIndicatorPosition(
-    indicator: ActivityIndicator,
+    indicator: ActivityIndicatorData,
     container: ActivityContainer
   ): void {
-    const indicatorBot =
-      this.#activityIndicatorMapperPort.toInfrastructure(indicator);
-    if (indicatorBot) {
-      if (indicatorBot.tags.ownerBotId === undefined) {
-        throw new Error(
-          `ActivityIndicatorsAdapter: indicatorBot.tags.ownerBotId is not defined at updateIndicatorPosition`
-        );
-      }
-      const ownerBot = getBot(byID(indicatorBot.tags.ownerBotId)) as
-        | PieceBot
-        | undefined;
-      if (!ownerBot) {
-        throw new Error(
-          "ActivityIndicatorsAdapter: ownerBot not found at updateIndicatorPosition"
-        );
-      }
-      const strategy = positionStrategiesMap[ownerBot.tags.type];
-
-      if (!strategy)
-        throw new Error(
-          `ActivityIndicatorsAdapter: Strategy not found for ${ownerBot.tags.type} at updateIndicatorPosition`
-        );
-
-      const dimension = this.#dimensionProviderPort.getDimension();
-
-      const position = strategy({
-        ownerBot,
-        indicatorBot,
-        dimension,
-        container,
-        configProviderPort: this.#configProviderPort,
-        labelTextMapperPort: this.#labelTextMapperPort,
-      });
-      setTag(indicatorBot, dimension + "X", position.x);
-      setTag(indicatorBot, dimension + "Y", position.y);
-      setTag(indicatorBot, dimension + "Z", position.z);
-      setTag(indicatorBot, "initialPosition", position);
+    const indicatorBot = this.#activityIndicatorMapperPort.toInfrastructure(
+      indicator.piece
+    );
+    if (!indicatorBot) {
+      return;
     }
-  }
-  getIndicatorsByPieceId(
-    pieceId: ActivityIndicatorBot["tags"]["ownerBotId"]
-  ): ActivityIndicator[] {
-    const bots = this.#botsRepositoryPort.getIndicatorBotsByPieceId(pieceId);
-    const indicators = bots.map((bot) =>
-      this.#activityIndicatorMapperPort.toDomain(bot)
-    );
-    return indicators;
-  }
-  getIndicatorsByPieceDataId(
-    pieceDataId: ActivityIndicatorBot["tags"]["ownerDataId"]
-  ): ActivityIndicator[] {
-    const bots =
-      this.#botsRepositoryPort.getIndicatorBotsByPieceDataId(pieceDataId);
-    const indicators = bots.map((bot) =>
-      this.#activityIndicatorMapperPort.toDomain(bot)
-    );
-    return indicators;
+    const ownerBot = getBot(byID(indicator.containerPieceId)) as
+      | PieceBot
+      | undefined;
+    if (!ownerBot) {
+      throw new Error(
+        "ActivityIndicatorsAdapter: ownerBot not found at updateIndicatorPosition"
+      );
+    }
+    const strategy = positionStrategiesMap[indicator.containerType];
+
+    if (!strategy)
+      throw new Error(
+        `ActivityIndicatorsAdapter: Strategy not found for ${indicator.containerType} at updateIndicatorPosition`
+      );
+
+    const dimension = this.#dimensionProviderPort.getDimension();
+
+    const strategyParams = {
+      ownerBot,
+      indicator,
+      dimension,
+      container,
+      configProviderPort: this.#configProviderPort,
+      labelTextMapperPort: this.#labelTextMapperPort,
+      visualStateRegistryPort: this.#visualStateRegistryPort,
+    };
+
+    const position = strategy({ ...strategyParams, indicatorBot });
+    setTag(indicatorBot, dimension + "X", position.x);
+    setTag(indicatorBot, dimension + "Y", position.y);
+    setTag(indicatorBot, dimension + "Z", position.z);
+    this.#visualStateRegistryPort.registerStateProperty({
+      piece: indicator.piece,
+      property: "initialPosition",
+      value: position,
+    });
+
+    if (indicator.background) {
+      const backgroundBot = this.#activityIndicatorMapperPort.toInfrastructure(
+        indicator.background
+      );
+      if (backgroundBot) {
+        const backgroundPosition = strategy({
+          ...strategyParams,
+          indicatorBot: backgroundBot,
+        });
+        const zBias =
+          indicator.containerType === BiblePieces.InfoLabelTransformer
+            ? this.#configProviderPort.getVisualConfig("LabelStep").z / 2
+            : 0;
+        const backgroundZ = backgroundPosition.z - zBias;
+        setTag(backgroundBot, dimension + "X", backgroundPosition.x);
+        setTag(backgroundBot, dimension + "Y", backgroundPosition.y);
+        setTag(backgroundBot, dimension + "Z", backgroundZ);
+        this.#visualStateRegistryPort.registerStateProperty({
+          piece: indicator.background,
+          property: "initialPosition",
+          value: new Vector3(
+            backgroundPosition.x,
+            backgroundPosition.y,
+            backgroundZ
+          ),
+        });
+      }
+    }
   }
 }

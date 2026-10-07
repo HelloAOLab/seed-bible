@@ -3,6 +3,7 @@ import { v4 as uuid } from "uuid";
 import {
   batch,
   computed,
+  effect,
   signal,
   type ReadonlySignal,
   type Signal,
@@ -13,6 +14,10 @@ import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
 import type { ExtensionSettingValue } from "./ExtensionManager";
+import {
+  sensitiveProxyPointerSchema,
+  type SensitiveProxyPointer,
+} from "./ExtensionSensitiveSettings";
 import {
   applyHighlightOverrides,
   DARK_THEME,
@@ -342,6 +347,16 @@ const customizationSchema = z
         z.record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
       )
       .default({}),
+    /**
+     * Where this customization's own values for extension sensitive settings
+     * are held, keyed by extension id then `sensitive` entry id. Only the
+     * addresses: the values live in proxy records in the owner's record, and
+     * a viewer's own values (see `ExtensionSensitiveSettings`) win over them.
+     * Only ever written by `setExtensionSensitiveProxy`.
+     */
+    extensionSensitiveProxies: z
+      .record(z.string(), z.record(z.string(), sensitiveProxyPointerSchema))
+      .default({}),
   })
   .refine((r) => r.variants.some((v) => v.id === r.defaultVariantId), {
     message: "defaultVariantId must reference an existing variant",
@@ -393,6 +408,36 @@ export interface SeedBibleCustomization {
     string,
     Record<string, ExtensionSettingValue>
   >;
+  /** Per-extension sensitive proxies this customization provides. An extension/entry with none here provides nothing. */
+  extensionSensitiveProxies: Record<
+    string,
+    Record<string, SensitiveProxyPointer>
+  >;
+}
+
+function withExtensionSensitiveProxy(
+  customization: SeedBibleCustomization,
+  extensionId: string,
+  proxyId: string,
+  pointer: SensitiveProxyPointer | null
+): SeedBibleCustomization {
+  const byProxy = { ...customization.extensionSensitiveProxies[extensionId] };
+  if (pointer) {
+    byProxy[proxyId] = pointer;
+  } else {
+    delete byProxy[proxyId];
+  }
+  const next = { ...customization.extensionSensitiveProxies };
+  if (Object.keys(byProxy).length === 0) {
+    delete next[extensionId];
+  } else {
+    next[extensionId] = byProxy;
+  }
+  return {
+    ...customization,
+    extensionSensitiveProxies: next,
+    updatedAt: Date.now(),
+  };
 }
 
 /** Resolves an extension's effective availability for a customization, defaulting to "available" when unset. */
@@ -411,6 +456,9 @@ export function getExtensionSettingDefault(
 ): ExtensionSettingValue | undefined {
   return customization?.extensionSettingDefaults[extensionId]?.[key];
 }
+
+/** PostHog event/person property holding the `recordName.id` locator of the customization the viewer arrived through. */
+export const POSTHOG_CUSTOMIZATION_PROPERTY = "customization_id";
 
 function buildCustomizationLocator(recordName: string, id: string): string {
   return `${recordName}.${id}`;
@@ -843,6 +891,18 @@ export interface CustomizationsManager {
     key: string
   ) => void;
   /** The active customization's default for an extension setting, or undefined if nothing is active or it sets no default there. */
+  /**
+   * Records where one of the customization's own sensitive proxies is (or,
+   * with null, forgets it) and saves the customization right away, since the
+   * proxy record already exists. Updates the edit draft too when it's the
+   * same customization. Resolves to whether it was saved.
+   */
+  setExtensionSensitiveProxy: (
+    customizationId: string,
+    extensionId: string,
+    proxyId: string,
+    pointer: SensitiveProxyPointer | null
+  ) => Promise<boolean>;
   getActiveExtensionSettingDefault: (
     extensionId: string,
     key: string
@@ -1120,6 +1180,30 @@ export function createCustomizationsManager(
     return null;
   });
 
+  // A super property rides on every later event (pageviews, chapter reads,
+  // …), which is what lets analytics be split per customization; the person
+  // property only remembers the latest one a signed-in viewer arrived through.
+  // Session-scoped (sessionStorage, one tab) rather than `register`'s
+  // persistent storage, which would leak the tag into a later plain visit's
+  // events, or another tab's, until this effect got round to clearing it.
+  // Keyed on the share link rather than `activeCustomizationLocator` so an
+  // owner previewing their own draft isn't counted as a visit to it.
+  effect(() => {
+    const locator = linkedCustomizationLocator.value;
+    const userId = login.userId.value;
+    if (typeof posthog === "undefined" || !posthog) {
+      return;
+    }
+    if (!locator) {
+      posthog.unregister_for_session(POSTHOG_CUSTOMIZATION_PROPERTY);
+      return;
+    }
+    posthog.register_for_session({ [POSTHOG_CUSTOMIZATION_PROPERTY]: locator });
+    if (userId) {
+      posthog.identify(userId, { [POSTHOG_CUSTOMIZATION_PROPERTY]: locator });
+    }
+  });
+
   const activeExtensionIds = computed<string[]>(() => {
     const customization = activeCustomization.value;
     if (!customization) {
@@ -1292,13 +1376,20 @@ export function createCustomizationsManager(
     }
   };
 
-  const persist = async (
-    userId: string,
-    record: SeedBibleCustomization
-  ): Promise<void> => {
-    await os.recordData(userId, record.id, record, {
+  const persist = (userId: string, record: SeedBibleCustomization) =>
+    os.recordData(userId, record.id, record, {
       marker: CUSTOMIZATION_MARKER,
     });
+
+  // Every draft save and pointer write goes through here, one at a time, so
+  // they reach the server in the order they were made: an older copy can't
+  // land last and overwrite a newer one, which for a pointer would leave its
+  // proxy (and the owner's key) running with nothing pointing at it.
+  let writeChain: Promise<unknown> = Promise.resolve();
+  const queueWrite = <T,>(run: () => Promise<T>): Promise<T> => {
+    const next = writeChain.then(run, run);
+    writeChain = next.catch(() => undefined);
+    return next;
   };
 
   const create = async (): Promise<SeedBibleCustomization> => {
@@ -1320,6 +1411,7 @@ export function createCustomizationsManager(
       updatedAt: now,
       extensionSettings: {},
       extensionSettingDefaults: {},
+      extensionSensitiveProxies: {},
     };
 
     await persist(userId, record);
@@ -1378,10 +1470,12 @@ export function createCustomizationsManager(
     }
 
     const saved: SeedBibleCustomization = { ...current, updatedAt: Date.now() };
-    await persist(userId, saved);
-    customizations.value = customizations.value.some((c) => c.id === saved.id)
-      ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
-      : [...customizations.value, saved];
+    await queueWrite(async () => {
+      await persist(userId, saved);
+      customizations.value = customizations.value.some((c) => c.id === saved.id)
+        ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
+        : [...customizations.value, saved];
+    });
     // Only reflect the write onto the draft if it's still the exact one
     // captured above — a newer edit, or the editor closing, may have
     // changed `editingCustomization` while this (possibly auto-triggered)
@@ -1394,9 +1488,6 @@ export function createCustomizationsManager(
   /** How long to wait after the last edit before auto-saving the draft. */
   const AUTO_SAVE_DEBOUNCE_MS = 5000;
   let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
-  // Serializes autosave writes so two saves can't race and land out of
-  // order, and one failure doesn't reject the save queued behind it.
-  let autoSaveChain: Promise<void> = Promise.resolve();
 
   /** Queues a debounced save of the current draft. */
   const scheduleAutoSave = (): void => {
@@ -1416,13 +1507,10 @@ export function createCustomizationsManager(
    * now — callers like `stopEditing()` clear that signal on the very next
    * line, before this promise has a chance to resolve.
    */
-  const flushAutoSave = (): Promise<void> => {
-    const write = saveEditingCustomization().catch((error) => {
+  const flushAutoSave = (): Promise<void> =>
+    saveEditingCustomization().catch((error) => {
       console.error("Failed to auto-save customization:", error);
     });
-    autoSaveChain = autoSaveChain.then(() => write);
-    return autoSaveChain;
-  };
 
   const updateEditingName = (name: string): void => {
     const current = editingCustomization.value;
@@ -1816,6 +1904,21 @@ export function createCustomizationsManager(
       return;
     }
 
+    // The proxies go first: once the record is gone nothing points at them,
+    // and a public one would stay usable by anyone who saw its address.
+    for (const byProxy of Object.values(existing.extensionSensitiveProxies)) {
+      for (const pointer of Object.values(byProxy)) {
+        const erased = await os.eraseProxy(pointer.recordName, pointer.address);
+        if (!erased.success && erased.errorCode !== "data_not_found") {
+          console.error(
+            "Failed to clear a customization's sensitive settings:",
+            erased.errorCode
+          );
+          return;
+        }
+      }
+    }
+
     await os.eraseData(userId, id);
     customizations.value = customizations.value.filter((c) => c.id !== id);
     if (editingCustomization.value?.id === id) {
@@ -1949,6 +2052,91 @@ export function createCustomizationsManager(
   ): ExtensionSettingValue | undefined =>
     getExtensionSettingDefault(activeCustomization.value, extensionId, key);
 
+  const setExtensionSensitiveProxy = async (
+    customizationId: string,
+    extensionId: string,
+    proxyId: string,
+    pointer: SensitiveProxyPointer | null
+  ): Promise<boolean> => {
+    const userId = login.userId.value;
+    if (
+      !userId ||
+      !customizations.value.some((c) => c.id === customizationId)
+    ) {
+      return false;
+    }
+    // The draft gets the pointer now, so any later save of it carries the
+    // pointer instead of dropping it. The write itself starts from the last
+    // saved copy instead of the draft: the draft may hold edits the author
+    // hasn't saved yet, and might still discard.
+    const draft = editingCustomization.value;
+    const previous =
+      draft?.id === customizationId
+        ? draft.extensionSensitiveProxies[extensionId]?.[proxyId]
+        : undefined;
+    if (draft?.id === customizationId) {
+      editingCustomization.value = withExtensionSensitiveProxy(
+        draft,
+        extensionId,
+        proxyId,
+        pointer
+      );
+    }
+    // A failed write takes the pointer back off the draft, unless something
+    // newer has replaced it there since.
+    const undoDraft = () => {
+      const current = editingCustomization.value;
+      if (
+        current?.id === customizationId &&
+        (current.extensionSensitiveProxies[extensionId]?.[proxyId] ?? null) ===
+          pointer
+      ) {
+        editingCustomization.value = withExtensionSensitiveProxy(
+          current,
+          extensionId,
+          proxyId,
+          previous ?? null
+        );
+      }
+    };
+    const written = await queueWrite(async () => {
+      const saved = customizations.value.find((c) => c.id === customizationId);
+      if (!saved || login.userId.value !== userId) {
+        return false;
+      }
+      const next = withExtensionSensitiveProxy(
+        saved,
+        extensionId,
+        proxyId,
+        pointer
+      );
+      try {
+        const result = await persist(userId, next);
+        if (!result.success) {
+          console.error(
+            "Failed to save a customization's sensitive settings:",
+            result.errorCode
+          );
+          return false;
+        }
+      } catch (error) {
+        console.error(
+          "Failed to save a customization's sensitive settings:",
+          error
+        );
+        return false;
+      }
+      customizations.value = customizations.value.map((c) =>
+        c.id === customizationId ? next : c
+      );
+      return true;
+    });
+    if (!written) {
+      undoDraft();
+    }
+    return written;
+  };
+
   const addExtensionToActiveCustomization = async (
     extensionId: string
   ): Promise<void> => {
@@ -2040,6 +2228,7 @@ export function createCustomizationsManager(
     setEditingExtensionSettingDefault,
     clearEditingExtensionSettingDefault,
     getActiveExtensionSettingDefault,
+    setExtensionSensitiveProxy,
     addExtensionToActiveCustomization,
     removeExtensionFromActiveCustomization,
   };

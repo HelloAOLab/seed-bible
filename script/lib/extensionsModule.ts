@@ -14,9 +14,34 @@ export interface ExtensionTranslationFile {
 export type ExtensionSettingTypeFile = "string" | "boolean" | "number";
 export type ExtensionSettingValueFile = string | boolean | number;
 
-export interface ExtensionSettingDefinitionFile {
-  type: ExtensionSettingTypeFile;
-  default?: ExtensionSettingValueFile;
+export interface ExtensionStringSettingDefinitionFile {
+  type: "string";
+  default?: string;
+  enum?: string[];
+  sensitive?: string;
+}
+
+export interface ExtensionNumberSettingDefinitionFile {
+  type: "number";
+  default?: number;
+  minimum?: number;
+  maximum?: number;
+  multipleOf?: number;
+}
+
+export interface ExtensionBooleanSettingDefinitionFile {
+  type: "boolean";
+  default?: boolean;
+}
+
+export type ExtensionSettingDefinitionFile =
+  | ExtensionStringSettingDefinitionFile
+  | ExtensionNumberSettingDefinitionFile
+  | ExtensionBooleanSettingDefinitionFile;
+
+export interface ExtensionSensitiveProxyDefinitionFile {
+  host: string;
+  requestMapping: Record<string, string>;
 }
 
 export interface ExtensionMetaFile {
@@ -25,6 +50,7 @@ export interface ExtensionMetaFile {
   dependencies?: string[];
   autoinstall?: boolean;
   settings?: Record<string, ExtensionSettingDefinitionFile>;
+  sensitive?: Record<string, ExtensionSensitiveProxyDefinitionFile>;
 }
 
 /** An extension package discovered under `packages/`, with its parsed meta. */
@@ -122,10 +148,11 @@ export const FALLBACK_LANGUAGE = "en";
  * about 1.8 KB; it was all 77 of them that cost 138 KB.
  *
  * Every other language lives in the per-language modules above, and every key
- * beyond `title`/`description` is behind `loadFullTranslations`. `settings` is
- * kept inline unconditionally, alongside `dependencies`/`autoinstall`: unlike
- * translations it isn't per-locale text, and it's needed up front to know
- * whether to show a "Configure" action and to build its form.
+ * beyond `title`/`description` is behind `loadFullTranslations`. `settings` (and
+ * the `sensitive` destinations its settings name) is kept inline
+ * unconditionally, alongside `dependencies`/`autoinstall`: unlike translations
+ * it isn't per-locale text, and it's needed up front to know whether to show a
+ * "Configure" action and to build its form.
  */
 export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
   const english = meta.translations?.[FALLBACK_LANGUAGE];
@@ -144,6 +171,7 @@ export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
       ? { autoinstall: meta.autoinstall }
       : {}),
     ...(meta.settings ? { settings: meta.settings } : {}),
+    ...(meta.sensitive ? { sensitive: meta.sensitive } : {}),
   };
 }
 

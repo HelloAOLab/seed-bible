@@ -75,7 +75,7 @@ export const bootstrapExtension = () => {
         // avatars. Injected here so the adapter stays decoupled from SessionsManager.
         getUserVisual: getUserAnimalVisual,
       });
-      const userDatabase = new UserDatabase();
+      const userDatabase = new UserDatabase(context.friends);
       const seedBibleUtilsDataRepository = new DataRepository();
       const arrangementAdapter = new ArrangementAdapter();
       const customArrangementStore = new CustomArrangementStore({

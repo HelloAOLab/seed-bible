@@ -10,6 +10,8 @@ import {
 import type { OfflineTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import type { AppConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
+import type { PlaylistPageSeed } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import type { ReadingPlanPageSeed } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
 // Lazy per-language loaders for the real "seed-bible" locale files, mirroring
@@ -63,6 +65,12 @@ export interface CreateTestSeedBibleStateOptions {
    */
   chatFirst?: boolean | string;
   /**
+   * Compact partner-site embed via `?embed=minimal` / `?embed=true`. Applied
+   * through the real URL param before the state is built, same as chat-first.
+   * Pass a string to set a non-canonical value for edge-case tests.
+   */
+  embed?: boolean | string;
+  /**
    * Desktop sidebar rail preference seeded before hydration.
    *
    * The app collapses the rail for a new visitor who has no saved choice.
@@ -81,6 +89,10 @@ export interface CreateTestSeedBibleStateOptions {
    * this helper otherwise mirrors, so this defaults to `false`.
    */
   skipHydrateAutoOpen?: boolean;
+  /** A playlist-page load to seed, as the server would embed it. */
+  initialPlaylistPageSeed?: PlaylistPageSeed;
+  /** A reading-plan-page load to seed, as the server would embed it. */
+  initialReadingPlanPageSeed?: ReadingPlanPageSeed;
 }
 
 export async function waitFor(
@@ -240,6 +252,8 @@ if (typeof afterEach === "function") {
       // Speech outlives the state that started it, and its listeners sit on
       // globals every other test shares.
       state.textToSpeech.dispose();
+      // Listens for the app regaining focus, on the window every test shares.
+      state.friends.dispose();
     }
     // The reading position lives in the URL path, so it outlives the listeners
     // that wrote it: without this the next test starts on whatever chapter —
@@ -286,6 +300,22 @@ export async function createTestSeedBibleState(
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
   }
 
+  // Same boot-latch pattern for compact embed: `isMinimalEmbed` is read from
+  // the URL at construction, so the param has to be on the URL before the
+  // state is built.
+  if (typeof window !== "undefined" && options.embed !== undefined) {
+    const url = new URL(window.location.href);
+    if (options.embed === false) {
+      url.searchParams.delete("embed");
+    } else {
+      url.searchParams.set(
+        "embed",
+        options.embed === true ? "true" : options.embed
+      );
+    }
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }
+
   if (typeof window !== "undefined") {
     if (options.sidebarCollapsed === "unset") {
       window.localStorage.removeItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
@@ -306,6 +336,8 @@ export async function createTestSeedBibleState(
   const state = createSeedBibleState({
     offlineStore: options.offlineStore,
     config: options.config,
+    initialPlaylistPageSeed: options.initialPlaylistPageSeed,
+    initialReadingPlanPageSeed: options.initialReadingPlanPageSeed,
   });
   // Before anything can sign in: the resume effect fires the moment a session
   // key lands, and it is the path that would otherwise open a socket.

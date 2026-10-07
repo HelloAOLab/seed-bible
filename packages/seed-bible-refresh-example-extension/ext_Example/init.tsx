@@ -19,7 +19,7 @@ export default function initExampleExtension() {
     init: function* (context: SeedBibleState) {
       console.log("Example extension initialized with context:", context);
 
-      context.discover.registerDiscoverProvider({
+      yield context.discover.registerDiscoverProvider({
         id: "example-discover-provider",
         description: "An example discover provider that returns dummy results.",
         title: "Example Discover Provider",
@@ -103,6 +103,17 @@ export default function initExampleExtension() {
                   "example-extension",
                   "showBanner"
                 ) === true;
+              // `repeatCount` is a whole number from 1 to 10. A stored value
+              // outside that range is ignored, so this is always 1–10 or the
+              // default once the definition is in place.
+              const repeatCount = context.extensionSettings.getValue(
+                "example-extension",
+                "repeatCount"
+              );
+              const tone = context.extensionSettings.getValue(
+                "example-extension",
+                "tone"
+              );
               return (
                 <div
                   style={{
@@ -130,14 +141,46 @@ export default function initExampleExtension() {
                           typeof greetingSize === "number"
                             ? `${greetingSize}rem`
                             : undefined,
+                        fontWeight: tone === "bold" ? 700 : undefined,
+                        fontStyle: tone === "plain" ? "normal" : "italic",
                       }}
                     >
-                      {greeting}
+                      {typeof repeatCount === "number"
+                        ? greeting.repeat(repeatCount)
+                        : greeting}
                     </p>
                   )}
                   {typeof subtitle === "string" && subtitle && (
                     <p style={{ opacity: 0.75 }}>{subtitle}</p>
                   )}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      // Sensitive settings can't be read. Instead the request
+                      // goes through the viewer's proxy for httpbin.org, which
+                      // adds the API key and client ID on the server. If the
+                      // viewer chose another host in Settings, the same path
+                      // is sent there instead.
+                      try {
+                        const response =
+                          await context.extensionSettings.fetchWithSensitiveValues(
+                            "example-extension",
+                            {
+                              url: "https://httpbin.org/post",
+                              method: "POST",
+                              body: { hello: "world" },
+                            }
+                          );
+                        context.app?.toast(
+                          `Example service: ${response.status}`
+                        );
+                      } catch (error) {
+                        context.app?.toast(String(error));
+                      }
+                    }}
+                  >
+                    {t("send-sensitive-request")}
+                  </button>
                 </div>
               );
             },
@@ -166,7 +209,7 @@ export default function initExampleExtension() {
             },
             onSelect: () => {
               console.log("Item 1 clicked with context:", context);
-              context.toast("Item 1 clicked!");
+              context.app?.toast("Item 1 clicked!");
             },
           },
           {
@@ -179,7 +222,7 @@ export default function initExampleExtension() {
             },
             onSelect: () => {
               console.log("Item 2 clicked with context:", context);
-              context.toast("Item 2 clicked!");
+              context.app?.toast("Item 2 clicked!");
             },
           },
         ],

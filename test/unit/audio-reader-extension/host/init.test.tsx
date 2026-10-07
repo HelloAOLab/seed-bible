@@ -44,6 +44,7 @@ function createContext(overrides: {
     annotations: {} as any,
     features: {} as any,
     surface: overrides.surface,
+    readingPlans: {} as any,
   };
 }
 
@@ -71,6 +72,22 @@ describe("isAudioPlayToolVisible (#1607)", () => {
   it("is visible on the quick-toolbar surface on desktop", () => {
     const ctx = createContext({ surface: "quick-toolbar", isMobile: false });
     expect(isAudioPlayToolVisible(ctx, NO_VOICES)).toBe(true);
+  });
+
+  it("stays on the floating nav in an embed and off the quick toolbar", () => {
+    const embedded = {
+      app: { isMinimalEmbed: signal(true) } as QuickToolContext["app"],
+    };
+    const quickToolbar: QuickToolContext = {
+      ...createContext({ surface: "quick-toolbar", isMobile: false }),
+      ...embedded,
+    };
+    const floatingNav: QuickToolContext = {
+      ...createContext({ surface: "mobile-navigation-bar", isMobile: true }),
+      ...embedded,
+    };
+    expect(isAudioPlayToolVisible(quickToolbar, NO_VOICES)).toBe(false);
+    expect(isAudioPlayToolVisible(floatingNav, NO_VOICES)).toBe(true);
   });
 
   it("is hidden when the chapter has no audio and the browser cannot speak", () => {

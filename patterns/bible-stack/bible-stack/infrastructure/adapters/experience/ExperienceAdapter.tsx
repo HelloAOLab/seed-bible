@@ -1,13 +1,13 @@
-import type { ExperienceAdapterPort } from "../../../application/ports/experience";
 import type { ExperienceConfigProvider } from "../../config/experience/ExperienceConfigProvider";
 import type { EnvironmentAdapter } from "../environment/EnvironmentAdapter";
+import type { ExperiencePort } from "../../../application/ports/out/Experience";
 
 interface AdapterParams {
   experienceConfigProviderPort: ExperienceConfigProvider;
   environmentAdapterPort: EnvironmentAdapter;
 }
 
-export class ExperienceAdapter implements ExperienceAdapterPort {
+export class ExperienceAdapter implements ExperiencePort {
   #experienceConfigProviderPort: AdapterParams["experienceConfigProviderPort"];
   #environmentAdapterPort: AdapterParams["environmentAdapterPort"];
 

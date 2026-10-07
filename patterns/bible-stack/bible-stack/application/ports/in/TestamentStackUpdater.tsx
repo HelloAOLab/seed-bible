@@ -1,7 +1,7 @@
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
 
-export interface TestamentStackUpdaterPort {
+export interface TestamentStackUpdaterServicePort {
   prepareTestament(data: StackTestamentData): void;
   finalizeTestament(data: StackTestamentData): Promise<void>;
   update(params: {
