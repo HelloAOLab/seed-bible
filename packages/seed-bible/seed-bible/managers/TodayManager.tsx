@@ -7,6 +7,7 @@ import {
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
+import type { Friend, FriendsManager } from "./FriendsManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { SearchManager } from "./SearchManager";
 import type { BibleDataManager } from "./BibleDataManager";
@@ -107,8 +108,8 @@ export interface TodayManager {
    */
   readingHistory: ReadonlySignal<ReadingHistoryState>;
   /**
-   * The readers whose notes and reading the community feed shows. The signed-in
-   * user alone until subscriptions exist (#1846); empty when signed out.
+   * The readers whose notes and reading the community feed shows: the
+   * signed-in user, then their friends. Empty when signed out.
    */
   communityMembers: ReadonlySignal<string[]>;
   /**
@@ -120,6 +121,8 @@ export interface TodayManager {
     span: Timespan,
     options: { crossedPaths: boolean }
   ) => Promise<CommunityFeedItem[]>;
+  /** The signed-in user's friends, for naming them in the community feed. */
+  friendReaders: ReadonlySignal<Friend[]>;
   /** Book id -> display name for the translation the reader has loaded. */
   bookNames: ReadonlySignal<Map<string, string>>;
   /**
@@ -168,6 +171,7 @@ export interface TodayManager {
 export function createTodayManager(options: {
   os: CasualOSManager;
   login: LoginManager;
+  friends: Pick<FriendsManager, "friends" | "friendIds">;
   navigation: NavigationManager;
   search: SearchManager;
   bibleData: BibleDataManager;
@@ -186,6 +190,7 @@ export function createTodayManager(options: {
   const {
     os,
     login,
+    friends,
     navigation,
     search,
     bibleData,
@@ -207,12 +212,13 @@ export function createTodayManager(options: {
         queryUserLastReading(fetchReadingHistoryEvents, userId, range),
     });
 
-  // Just the signed-in user: nothing subscribes to anyone else yet, so the
-  // fan-out below has one member to fan out to. The feed, its grouping and its
-  // tests are written for several so #1846 only has to widen this list.
+  // Reading history and notes are world-readable, so a friend's activity can be
+  // fetched the same way as the user's own.
   const communityMembers = computed(() => {
     const userId = login.userId.value;
-    return userId ? [userId] : [];
+    if (!userId) return [];
+    const friendIds = friends.friendIds.value.filter((id) => id !== userId);
+    return [userId, ...friendIds];
   });
 
   const getCommunityFeed = async (
@@ -423,6 +429,7 @@ export function createTodayManager(options: {
     readingHistory,
     communityMembers,
     getCommunityFeed,
+    friendReaders: friends.friends,
     bookNames,
     lastTranslationBooks,
     lastTranslationId,

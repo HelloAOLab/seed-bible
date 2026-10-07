@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
+import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/BibleReaderToolbar/BibleReaderToolbar";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -13,6 +14,7 @@ import {
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import { resetFlingSafeTapForTests } from "@packages/seed-bible/seed-bible/app/flingSafeTap";
 import { TestHost } from "./TestHost";
+import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
 import {
   aabBooks,
   createResponse,
@@ -167,6 +169,48 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     });
 
     expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+  });
+  it("does not reopen a verse tool menu after the verse selection is cleared", async () => {
+    state.tools.registerVerseToolbarTool({
+      id: "test-verse-menu-tool",
+      priority: 100,
+      title: "Test verse tool",
+      icon: () => <span>test</span>,
+      isVisible: () => true,
+      getItems: () => [
+        {
+          id: "test-verse-menu-item",
+          title: "Test item",
+          icon: () => <span>item</span>,
+          onSelect: vi.fn(),
+        },
+      ],
+    });
+
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    const toolButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-verse-toolbar-action")
+    ).find((button) => button.getAttribute("aria-label") === "Test verse tool");
+
+    expect(toolButton).not.toBeUndefined();
+
+    await act(async () => {
+      toolButton!.click();
+    });
+
+    expect(container.querySelector('[role="menu"]')).not.toBeNull();
+
+    await act(async () => {
+      readingState.clearSelectedVerses();
+    });
+
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+    await selectFirstVerse();
+
+    // The old menu must not reopen automatically.
+    expect(container.querySelector('[role="menu"]')).toBeNull();
   });
 
   it("clears the verse selection when a tap lands in empty chapter-content space (not on a verse)", async () => {
@@ -1521,7 +1565,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     }
   });
 
-  async function renderSheet() {
+  async function renderSheet(options?: { desktop?: boolean }) {
     readingState = state.app.currentReadingState.value!.tab.readingState;
     const chapter = readingState.chapterData.value!;
     const firstVerse = chapter.chapter.content.find(
@@ -1556,8 +1600,10 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     const handle = container.querySelector<HTMLElement>(
       ".sb-verse-toolbar-handle-area"
     );
-    if (!handle) throw new Error("The verse sheet handle did not render.");
-    return handle;
+    if (!options?.desktop && !handle) {
+      throw new Error("The verse sheet handle did not render.");
+    }
+    return handle!;
   }
 
   const sheet = () =>
@@ -2236,6 +2282,308 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       }
     }
   });
+
+  function toolButton(label: string) {
+    return [
+      ...container.querySelectorAll<HTMLButtonElement>(
+        ".sb-verse-toolbar-action"
+      ),
+    ].find((button) => button.getAttribute("aria-label") === label);
+  }
+
+  async function clickButton(button: HTMLButtonElement) {
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
+
+  function registerMenuTool(
+    id: string,
+    title: string,
+    priority: number,
+    onSelect: (id: string) => void
+  ) {
+    state.tools.registerVerseToolbarTool({
+      id,
+      priority,
+      title,
+      icon: () => <span className="material-symbols-outlined">star</span>,
+      getItems: () => [
+        {
+          id: `${id}-first`,
+          title: "First option",
+          icon: () => <span className="material-symbols-outlined">check</span>,
+          onSelect: () => onSelect("first"),
+        },
+        {
+          id: `${id}-second`,
+          title: "Second option",
+          icon: () => <span className="material-symbols-outlined">check</span>,
+          onSelect: () => onSelect("second"),
+        },
+      ],
+    });
+  }
+
+  function domRect(box: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  }): DOMRect {
+    const { left, top, width, height } = box;
+    return {
+      x: left,
+      y: top,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect;
+  }
+
+  /** jsdom doesn't lay out, so the submenu's placement has to be fed rects. */
+  function mockMenuRects(
+    anchorId: string,
+    anchor: { left: number; top: number; width: number; height: number },
+    menu: { width: number; height: number }
+  ) {
+    return vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.classList.contains("sb-tool-context-menu")) {
+          return domRect({
+            left: 0,
+            top: 0,
+            width: menu.width,
+            height: menu.height,
+          });
+        }
+        if (this.dataset.verseToolId === anchorId) {
+          return domRect(anchor);
+        }
+        return domRect({ left: 0, top: 0, width: 0, height: 0 });
+      });
+  }
+
+  it("shows an overflow-row submenu above the sheet, inside the viewport", async () => {
+    const onSelect = vi.fn();
+    registerMenuTool("overflow-menu", "Overflow menu", 900, onSelect);
+    const handle = await renderSheet();
+
+    // Shut, the row is clipped and out of the accessibility tree.
+    expect(overflow()?.className).toContain("sb-verse-toolbar-overflow-closed");
+
+    await press(handle, 500);
+    await release(handle, 500);
+    expect(overflow()?.className).not.toContain(
+      "sb-verse-toolbar-overflow-closed"
+    );
+
+    // Near the top-left of a 400×800 viewport: not enough room above a 160px
+    // menu, and aligning to the card's right edge would run off the left.
+    const rects = mockMenuRects(
+      "overflow-menu",
+      { left: 8, top: 10, width: 80, height: 64 },
+      { width: 200, height: 160 }
+    );
+    try {
+      const button = toolButton("Overflow menu");
+      expect(button).toBeTruthy();
+      expect(button!.closest(".sb-verse-toolbar-overflow")).not.toBeNull();
+      await clickButton(button!);
+
+      const menu = document.body.querySelector<HTMLElement>(
+        ".sb-tool-context-menu-floating"
+      );
+      expect(menu).not.toBeNull();
+      // Portaled out of the clipping row, which itself stays overflow-clipped.
+      expect(overflow()!.contains(menu)).toBe(false);
+      expect(menu!.parentElement).toBe(document.body);
+      expect(overflow()!.style.overflow).toBe("");
+
+      // Flipped below the card (bottom 74 + 6px gap) and shifted in from the
+      // left edge by the 8px viewport pad.
+      expect(menu!.style.top).toBe("80px");
+      expect(menu!.style.left).toBe("8px");
+      expect(parseFloat(menu!.style.top) + 160).toBeLessThanOrEqual(
+        window.innerHeight - 8
+      );
+      expect(parseFloat(menu!.style.left) + 200).toBeLessThanOrEqual(
+        window.innerWidth - 8
+      );
+
+      const second = [
+        ...menu!.querySelectorAll<HTMLButtonElement>(
+          ".sb-tool-context-menu-item"
+        ),
+      ].find((item) => item.textContent?.includes("Second option"));
+      expect(second).toBeTruthy();
+
+      await act(async () => {
+        second!.dispatchEvent(
+          new window.PointerEvent("pointerdown", {
+            bubbles: true,
+            cancelable: true,
+            pointerType: "touch",
+          })
+        );
+      });
+      // A tap on the option must not dismiss the sheet out from under it.
+      expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+      await act(async () => {
+        second!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(onSelect).toHaveBeenCalledWith("second");
+      expect(
+        document.body.querySelector(".sb-tool-context-menu-floating")
+      ).toBeNull();
+    } finally {
+      rects.mockRestore();
+    }
+  });
+
+  it("shifts an overflow submenu that would cross the right edge, and opens it upward when there is room", async () => {
+    registerMenuTool("overflow-menu", "Overflow menu", 900, () => {});
+    const handle = await renderSheet();
+    await press(handle, 500);
+    await release(handle, 500);
+
+    // Card flush with the right edge, with room above a 160px menu.
+    const rects = mockMenuRects(
+      "overflow-menu",
+      { left: 320, top: 500, width: 80, height: 64 },
+      { width: 200, height: 160 }
+    );
+    try {
+      await clickButton(toolButton("Overflow menu")!);
+      const menu = document.body.querySelector<HTMLElement>(
+        ".sb-tool-context-menu-floating"
+      );
+      // Above the card: top 500 − 160 − 6px gap. Right edge lands on the
+      // 8px pad (400 − 8 − 200).
+      expect(menu!.style.top).toBe("334px");
+      expect(menu!.style.left).toBe("192px");
+      expect(parseFloat(menu!.style.top)).toBeGreaterThanOrEqual(8);
+      expect(parseFloat(menu!.style.left) + 200).toBeLessThanOrEqual(
+        window.innerWidth - 8
+      );
+    } finally {
+      rects.mockRestore();
+    }
+  });
+
+  it("portals a submenu opened from the pinned overflow row", async () => {
+    const onSelect = vi.fn();
+    registerMenuTool("compare-verses", "Compare", 250, onSelect);
+    const handle = await renderSheet();
+    await press(handle, 500);
+    await release(handle, 500);
+
+    const button = toolButton("Compare");
+    expect(button!.closest(".sb-verse-toolbar-overflow-pinned")).not.toBeNull();
+    await clickButton(button!);
+
+    const menu = document.body.querySelector(".sb-tool-context-menu-floating");
+    expect(menu).not.toBeNull();
+    expect(overflow()!.contains(menu)).toBe(false);
+
+    const item = menu!.querySelector<HTMLButtonElement>(
+      ".sb-tool-context-menu-item"
+    );
+    await act(async () => {
+      item!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(onSelect).toHaveBeenCalledWith("first");
+  });
+
+  it("drops the overflow submenu when the drawer closes, and hides that row again", async () => {
+    registerMenuTool("overflow-menu", "Overflow menu", 900, () => {});
+    const handle = await renderSheet();
+    await press(handle, 500);
+    await release(handle, 500);
+    await clickButton(toolButton("Overflow menu")!);
+    expect(
+      document.body.querySelector(".sb-tool-context-menu-floating")
+    ).not.toBeNull();
+
+    await press(handle, 500);
+    await release(handle, 500);
+
+    expect(
+      document.body.querySelector(".sb-tool-context-menu-floating")
+    ).toBeNull();
+    expect(overflow()?.className).toContain("sb-verse-toolbar-overflow-closed");
+    expect(overflow()?.style.height).toBe("0px");
+  });
+
+  it("keeps a first-row submenu inline, on the card", async () => {
+    const onSelect = vi.fn();
+    registerMenuTool("primary-menu", "Primary menu", 1, onSelect);
+    await renderSheet();
+
+    const button = toolButton("Primary menu");
+    expect(button!.closest(".sb-verse-toolbar-overflow")).toBeNull();
+    expect(button!.closest(".sb-verse-toolbar-cards")).not.toBeNull();
+    await clickButton(button!);
+
+    const menu = container.querySelector<HTMLElement>(".sb-tool-context-menu");
+    expect(menu).not.toBeNull();
+    expect(menu!.classList.contains("sb-tool-context-menu-floating")).toBe(
+      false
+    );
+    expect(
+      menu!.parentElement?.classList.contains("sb-verse-toolbar-action-item")
+    ).toBe(true);
+    expect(
+      document.body.querySelector(".sb-tool-context-menu-floating")
+    ).toBeNull();
+
+    const item = menu!.querySelector<HTMLButtonElement>(
+      ".sb-tool-context-menu-item"
+    );
+    await act(async () => {
+      item!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(onSelect).toHaveBeenCalledWith("first");
+  });
+
+  it("keeps a desktop submenu inline in the horizontal toolbar", async () => {
+    const onSelect = vi.fn();
+    registerMenuTool("desktop-menu", "Desktop menu", 1, onSelect);
+    window.innerWidth = 1200;
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    await renderSheet({ desktop: true });
+
+    expect(container.querySelector(".sb-verse-toolbar-mobile")).toBeNull();
+    expect(container.querySelector(".sb-verse-toolbar-overflow")).toBeNull();
+
+    await clickButton(toolButton("Desktop menu")!);
+    const menu = container.querySelector<HTMLElement>(".sb-tool-context-menu");
+    expect(menu).not.toBeNull();
+    expect(menu!.classList.contains("sb-tool-context-menu-floating")).toBe(
+      false
+    );
+    expect(
+      menu!.parentElement?.classList.contains("sb-verse-toolbar-action-item")
+    ).toBe(true);
+
+    const item = menu!.querySelector<HTMLButtonElement>(
+      ".sb-tool-context-menu-item"
+    );
+    await act(async () => {
+      item!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(onSelect).toHaveBeenCalledWith("first");
+  });
 });
 
 describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
@@ -2410,6 +2758,91 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     await vi.waitFor(() => {
       expect(annotationItems()[0]?.textContent).toContain("Note");
     });
+  });
+
+  it("keeps the edit menu on your own note", async () => {
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: { type: "comment", html: "<p>Mine</p>" },
+      },
+    ]);
+    await renderSheet();
+
+    expect(annotationItems()).toHaveLength(1);
+    expect(
+      annotationItems()[0]!.querySelector(".sb-annotation-item-menu")
+    ).not.toBeNull();
+  });
+
+  it("shows a friend's note on a verse where you have none, without the edit menu", async () => {
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([]);
+    const server = fakeSharedPermissions(state.os, () =>
+      state.login.userId.peek()
+    );
+    server.friendsWith("ada");
+    vi.spyOn(state.os, "listDataByMarker").mockImplementation((async (
+      recordName: string,
+      _marker: string,
+      lastAddress?: string
+    ) =>
+      recordName === "ada" && !lastAddress
+        ? {
+            success: true,
+            items: [
+              {
+                address: "friend-note",
+                data: {
+                  id: "friend-note",
+                  bookId: chapter.book.id,
+                  chapterNumber: chapter.chapter.number,
+                  verseNumber: firstVerse.number,
+                  data: {
+                    type: "comment",
+                    html: "<p>Ada's note</p>",
+                    userId: "ada",
+                  },
+                },
+              },
+            ],
+          }
+        : { success: true, items: [] }) as never);
+    // Signing in loads saves and settings too; nobody has any here.
+    vi.spyOn(state.os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    } as never);
+    await act(async () => {
+      state.os.sessionKey.value = formatV1SessionKey(
+        ME,
+        "session-1",
+        "secret-1",
+        Date.now() + 1000 * 60 * 60
+      );
+    });
+    try {
+      await vi.waitFor(() =>
+        expect(state.friends.friendIds.value).toEqual(["ada"])
+      );
+
+      await renderSheet();
+
+      await vi.waitFor(() => expect(annotationItems()).toHaveLength(1));
+      expect(annotationItems()[0]!.textContent).toContain("Ada's note");
+      expect(
+        annotationItems()[0]!.querySelector(".sb-annotation-item-menu")
+      ).toBeNull();
+    } finally {
+      // Left signed in, the persisted key would sign the next test's state in.
+      state.os.sessionKey.value = null;
+      localStorage.removeItem("sessionKey");
+    }
   });
 
   function rectAt(top: number): DOMRect {

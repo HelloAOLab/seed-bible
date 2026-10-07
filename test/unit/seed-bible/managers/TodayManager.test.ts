@@ -6,6 +6,10 @@ import {
   createTestSeedBibleState,
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
+import { act } from "preact/test-utils";
+import { formatV1SessionKey } from "@casual-simulation/aux-common";
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
+import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
 
 describe("todayWillAutoOpenForUrl", () => {
   describe("with no explicit ?today param", () => {
@@ -245,5 +249,107 @@ describe("Today pane wiring", () => {
 
     expect(state.today.isOpen.value).toBe(false);
     expect(paneIsOpen(state)).toBe(false);
+  });
+});
+
+describe("Today's Community section", () => {
+  const FRIEND = "f00df00d-0000-4000-8000-00000000f00d";
+  // People the friends lists know about who aren't friends yet.
+  const ASKED_ME = "a5cedace-0000-4000-8000-00000000a5ce";
+  const ASKED_BY_ME = "b0b0b0b0-0000-4000-8000-00000000b0b0";
+
+  /** A reading history document holding one finished chapter. */
+  const historyDocument = (
+    reading: { bookId: string; chapter: number },
+    atSeconds: number
+  ) => {
+    const event = {
+      userId: "",
+      ...reading,
+      start: atSeconds - 60,
+      end: atSeconds,
+    };
+    const events = [{ get: (key: string) => event[key as keyof typeof event] }];
+    return {
+      getArray: () => ({
+        type: { length: events.length, get: (i: number) => events[i] },
+      }),
+    } as unknown as SharedDocument;
+  };
+
+  it("includes friends' reading alongside the user's own, but not people with a request still waiting", async () => {
+    const state = await createTestSeedBibleState();
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const readings: Record<string, { bookId: string; chapter: number }> = {
+      [ME]: { bookId: "JHN", chapter: 3 },
+      [FRIEND]: { bookId: "PSA", chapter: 23 },
+      [ASKED_ME]: { bookId: "GEN", chapter: 1 },
+      [ASKED_BY_ME]: { bookId: "EXO", chapter: 20 },
+    };
+    const server = fakeSharedPermissions(state.os, () =>
+      state.login.userId.peek()
+    );
+    server.friendsWith(FRIEND);
+    server.requestFrom(ASKED_ME);
+    server.requestTo(ASKED_BY_ME);
+    vi.spyOn(state.os, "getSharedDocument").mockImplementation((async (
+      recordName: string
+    ) =>
+      historyDocument(
+        readings[recordName] ?? { bookId: "none", chapter: 0 },
+        nowSeconds
+      )) as never);
+    // Signing in loads saves and settings too; nobody has any here.
+    vi.spyOn(state.os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    } as never);
+    // Nor any notes, which the feed reads alongside reading history.
+    vi.spyOn(state.os, "listAllData").mockResolvedValue({
+      success: true,
+      items: [],
+    });
+
+    await act(async () => {
+      state.os.sessionKey.value = formatV1SessionKey(
+        ME,
+        "session-1",
+        "secret-1",
+        Date.now() + 1000 * 60 * 60
+      );
+    });
+    try {
+      // Waits for the requests too: leaving them out only means something
+      // once the app knows about them.
+      await waitFor(
+        () =>
+          state.friends.friendIds.value.includes(FRIEND) &&
+          state.friends.incomingRequests.value.some(
+            (r) => r.userId === ASKED_ME
+          ) &&
+          state.friends.outgoingRequests.value.some(
+            (r) => r.userId === ASKED_BY_ME
+          )
+      );
+
+      const feed = await state.today.getCommunityFeed(
+        { from: nowSeconds - 3600, to: nowSeconds + 3600 },
+        { crossedPaths: true }
+      );
+
+      expect(
+        feed
+          .map((item) =>
+            item.type === "reading" ? `${item.userId}:${item.bookId}` : null
+          )
+          .sort()
+      ).toEqual([`${FRIEND}:PSA`, `${ME}:JHN`].sort());
+    } finally {
+      // Left signed in, the persisted key would sign the next test's state in.
+      state.os.sessionKey.value = null;
+      localStorage.removeItem("sessionKey");
+      vi.restoreAllMocks();
+    }
   });
 });

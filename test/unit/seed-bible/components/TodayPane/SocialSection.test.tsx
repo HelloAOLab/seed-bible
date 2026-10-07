@@ -10,6 +10,7 @@ import { TimeProvider } from "@packages/seed-bible/seed-bible/components/TodayPa
 import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { CommunityFeedItem } from "@packages/seed-bible/seed-bible/managers/TodayCommunityFeed";
+import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import { todayStub, loginStub } from "../../testUtils/todayStubs";
 import { mockI18nState, mockTranslate } from "../../testUtils/mockI18n";
 
@@ -139,6 +140,15 @@ function readingItem(
   };
 }
 
+function friend(overrides: Partial<Friend> = {}): Friend {
+  return {
+    userId: JONAH,
+    name: "Jonah",
+    pictureUrl: null,
+    ...overrides,
+  };
+}
+
 describe("SocialSection", () => {
   let container: HTMLDivElement;
   let getCommunityFeed: Mock<
@@ -148,6 +158,7 @@ describe("SocialSection", () => {
     ) => Promise<CommunityFeedItem[]>
   >;
   let communityMembers: Signal<string[]>;
+  let friendReaders: Signal<Friend[]>;
   let onOpenPassage: Mock;
   let bookNames: Signal<Map<string, string>>;
 
@@ -159,6 +170,7 @@ describe("SocialSection", () => {
     mockI18nState.language = "en";
     getCommunityFeed = vi.fn(async () => []);
     communityMembers = signal([ME]);
+    friendReaders = signal([friend(), friend({ userId: RUTH, name: "Ruth" })]);
     onOpenPassage = vi.fn();
     bookNames = signal(
       new Map([
@@ -188,6 +200,7 @@ describe("SocialSection", () => {
     const today = todayStub({
       getCommunityFeed,
       communityMembers,
+      friendReaders,
       bookNames,
     });
     const login = loginStub({
@@ -577,14 +590,24 @@ describe("SocialSection", () => {
       );
     });
 
-    it("name another member, not 'You'", async () => {
+    it("name a friend by their profile name, not 'You'", async () => {
       communityMembers.value = [ME, JONAH];
       getCommunityFeed.mockResolvedValue([noteItem({ userId: JONAH })]);
       setup();
       await flush();
 
-      // Other members have no profile until subscriptions bring one (#1846).
-      expect(sentences()).toEqual(["Anonymous noted on Colossians 3:12"]);
+      expect(sentences()).toEqual(["Jonah noted on Colossians 3:12"]);
+    });
+
+    it("name a friend with no profile name by a short id", async () => {
+      const unnamed = "abcdef123456";
+      communityMembers.value = [ME, unnamed];
+      friendReaders.value = [friend({ userId: unnamed, name: null })];
+      getCommunityFeed.mockResolvedValue([noteItem({ userId: unnamed })]);
+      setup();
+      await flush();
+
+      expect(sentences()).toEqual(["User abcdef12 noted on Colossians 3:12"]);
     });
 
     it("say 'replied' for a reply", async () => {
@@ -646,7 +669,7 @@ describe("SocialSection", () => {
       setup();
       await flush();
 
-      expect(sentences()).toEqual(["You and Anonymous both read Colossians 3"]);
+      expect(sentences()).toEqual(["You and Jonah both read Colossians 3"]);
       expect(qa(".sb-today-feed-avatar")).toHaveLength(2);
     });
 
@@ -659,7 +682,7 @@ describe("SocialSection", () => {
       await flush();
 
       expect(sentences()).toEqual([
-        "You, Anonymous, and Anonymous all read Colossians 3",
+        "You, Jonah, and Ruth all read Colossians 3",
       ]);
     });
 
@@ -704,7 +727,7 @@ describe("SocialSection", () => {
       setup();
       await flush();
 
-      expect(sentences()).toEqual(["Anonymous read Exodus 14-16"]);
+      expect(sentences()).toEqual(["Jonah read Exodus 14-16"]);
     });
 
     it("fall back to the book id when the name is unknown", async () => {

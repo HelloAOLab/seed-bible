@@ -128,6 +128,8 @@
   align-items: center;
   gap: 0.625rem;
   flex: 1;
+  /* Lets a one-line description shrink to the row instead of widening it. */
+  min-width: 0;
 }
 
 .sb-extension-row-actions {
@@ -177,8 +179,6 @@
   font-size: 0.75rem;
   opacity: 0.78;
   line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .sb-extension-state-icon {
@@ -315,6 +315,35 @@
   padding: 0;
 }
 
+/* One destination's sensitive settings, saved together. */
+.sb-extension-sensitive-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.5rem;
+}
+
+.sb-extension-sensitive-unused-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.sb-extension-sensitive-unused-row .sb-settings-action-button {
+  width: auto;
+}
+
+.sb-extension-sensitive-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* Keeps a setting's reset action beside its title instead of below the field.
    The row holds the button's height whether or not it is showing, so a field
    doesn't shift as the viewer sets and resets its value. */
@@ -404,6 +433,14 @@
   /* max-width: 220px; */
   transition: background-color 0.2s ease;
   width: 100%;
+}
+
+/* The native option popup ignores the select's translucent background and
+   renders white, so options need an explicit theme background to keep the
+   inherited font color readable in dark mode. */
+.sb-settings-language-select option {
+  background: var(--sb-background);
+  color: var(--sb-font-color);
 }
 
 .sb-settings-language-select:hover {
@@ -1592,24 +1629,6 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-}
-
-.sb-account-save-spinner {
-  font-size: 1.125rem;
-  line-height: 1;
-  animation: sb-account-save-spin 0.9s linear infinite;
-}
-
-@keyframes sb-account-save-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sb-account-save-spinner {
-    animation: none;
-  }
 }
 
 .sb-account-signout-section {

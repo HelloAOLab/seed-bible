@@ -1,4 +1,5 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import { FRIEND_READ_TIMEOUT_MS } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
 import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import {
   CasualOSManager,
@@ -35,9 +36,10 @@ import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
-import { computed, signal } from "@preact/signals";
+import { computed, effect, signal } from "@preact/signals";
 import { h, render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock } from "vitest";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
@@ -444,7 +446,14 @@ describe("createPlaylistManager", () => {
     const os = CasualOSManager();
     Object.assign(os, {
       recordData: recordDataMock,
-      listDataByMarker: listDataByMarkerMock,
+      // The server always says how many records a listing holds. A mocked
+      // page that leaves the total out stands for the whole listing.
+      listDataByMarker: async (...args: unknown[]) => {
+        const page = await listDataByMarkerMock(...args);
+        return page?.success && page.totalCount === undefined
+          ? { ...page, totalCount: page.items.length }
+          : page;
+      },
       listAllDataByMarker: listAllDataByMarkerMock,
       getData: getDataMock,
       eraseData: eraseDataMock,
@@ -534,8 +543,96 @@ describe("createPlaylistManager", () => {
     const manager = makeManager("user-1");
     await flush();
 
-    expect(listDataByMarkerMock).toHaveBeenCalledWith("user-1", MARKER);
+    expect(listDataByMarkerMock).toHaveBeenCalledWith(
+      "user-1",
+      MARKER,
+      undefined
+    );
     expect(manager.userPlaylists.value).toEqual([playlist]);
+  });
+
+  describe("clearHeroImage", () => {
+    const COVER = "https://example.com/cover.jpg";
+    const OTHER_COVER = "https://example.com/other.jpg";
+
+    it("saves each playlist using the cover without it and updates the list", async () => {
+      const withCover = makePlaylist({ id: "p-1", heroImageUrl: COVER });
+      const other = makePlaylist({ id: "p-2", heroImageUrl: OTHER_COVER });
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: withCover }, { data: other }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      const updated = await manager.clearHeroImage(COVER);
+
+      expect(updated.map((p) => p.id)).toEqual(["p-1"]);
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      const saved = recordDataMock.mock.calls[0]![2] as Playlist;
+      expect(saved.id).toBe("p-1");
+      expect(saved.heroImageUrl).toBeNull();
+      expect(saved.updatedAtMs).toBeGreaterThanOrEqual(withCover.updatedAtMs);
+      const byId = new Map(manager.userPlaylists.value.map((p) => [p.id, p]));
+      expect(byId.get("p-1")?.heroImageUrl).toBeNull();
+      expect(byId.get("p-2")?.heroImageUrl).toBe(OTHER_COVER);
+    });
+
+    it("saves nothing when no playlist uses the cover", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: makePlaylist({ heroImageUrl: OTHER_COVER }) }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      await expect(manager.clearHeroImage(COVER)).resolves.toEqual([]);
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("takes the cover off the playlist being edited without marking it changed", async () => {
+      const playlist = makePlaylist({ id: "p-1", heroImageUrl: COVER });
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: playlist }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(playlist);
+
+      await manager.clearHeroImage(COVER);
+
+      expect(manager.editingPlaylist.value?.heroImageUrl).toBeNull();
+      // The saved copy lost its cover too, so there is nothing left to save.
+      expect(manager.isEditingPlaylistDirty()).toBe(false);
+    });
+
+    it("updates the playlists that saved and re-throws when one fails", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [
+          { data: makePlaylist({ id: "p-1", heroImageUrl: COVER }) },
+          { data: makePlaylist({ id: "p-2", heroImageUrl: COVER }) },
+        ],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockImplementation(async (_record: string, id: string) => {
+        if (id === "p-2") {
+          throw new Error("offline");
+        }
+      });
+
+      await expect(manager.clearHeroImage(COVER)).rejects.toThrow(
+        "Failed to remove the cover image from every playlist"
+      );
+
+      const byId = new Map(manager.userPlaylists.value.map((p) => [p.id, p]));
+      expect(byId.get("p-1")?.heroImageUrl).toBeNull();
+      expect(byId.get("p-2")?.heroImageUrl).toBe(COVER);
+    });
   });
 
   it("does not list playlists when signed out", async () => {
@@ -648,6 +745,80 @@ describe("createPlaylistManager", () => {
     expect(manager.userPlaylists.value).toHaveLength(1);
   });
 
+  describe("more than one page of playlists", () => {
+    // The server's paging stores return ten records at a time, counting the
+    // whole listing in `totalCount` on every page.
+    const twelvePlaylists = Array.from({ length: 12 }, (_, i) =>
+      makePlaylist({ id: `playlist-${String(i).padStart(2, "0")}` })
+    );
+    const servePagesOfTen = () =>
+      listDataByMarkerMock.mockImplementation(
+        async (_record: string, _marker: string, lastAddress?: string) => {
+          const after = twelvePlaylists.filter(
+            (p) => !lastAddress || p.id > lastAddress
+          );
+          return {
+            success: true,
+            items: after.slice(0, 10).map((p) => ({ address: p.id, data: p })),
+            totalCount: twelvePlaylists.length,
+          };
+        }
+      );
+
+    it("lists all of your own playlists", async () => {
+      servePagesOfTen();
+
+      const manager = makeManager("user-1");
+
+      await vi.waitFor(() =>
+        expect(manager.userPlaylists.value).toHaveLength(12)
+      );
+    });
+
+    it("lists all of a friend's playlists when the whole read takes longer than the timeout", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      servePagesOfTen();
+      const servePage = listDataByMarkerMock.getMockImplementation()!;
+      // Each page takes three quarters of the timeout, so the whole read
+      // takes longer than it while every page still makes progress.
+      const slowPage = () =>
+        new Promise((resolve) =>
+          setTimeout(resolve, (FRIEND_READ_TIMEOUT_MS * 3) / 4)
+        );
+      listDataByMarkerMock.mockImplementation(async (...args: unknown[]) => {
+        await slowPage();
+        return servePage(...args);
+      });
+      vi.useFakeTimers();
+      try {
+        const view = manager.getUserPlaylists("friend-user");
+
+        await vi.advanceTimersByTimeAsync(FRIEND_READ_TIMEOUT_MS * 2);
+
+        expect(view.value.map((p) => p.id)).toEqual(
+          twelvePlaylists.map((p) => p.id)
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("lists all of a friend's playlists", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      servePagesOfTen();
+
+      const view = manager.getUserPlaylists("friend-user");
+
+      await vi.waitFor(() =>
+        expect(view.value.map((p) => p.id)).toEqual(
+          twelvePlaylists.map((p) => p.id)
+        )
+      );
+    });
+  });
+
   it("listPlaylists parses records on success and throws on failure", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -665,8 +836,216 @@ describe("createPlaylistManager", () => {
       errorMessage: "boom",
     });
     await expect(manager.listPlaylists("user-1")).rejects.toThrow(
-      "Failed to list playlists: boom"
+      "Error listing data: err"
     );
+  });
+
+  describe("getUserPlaylists", () => {
+    const mockPerUserPlaylists = () => {
+      listDataByMarkerMock.mockImplementation(async (recordName: unknown) => {
+        if (recordName === "user-1") {
+          return {
+            success: true,
+            items: [
+              {
+                data: makePlaylist({
+                  id: "user-1-playlist",
+                  recordName: "user-1",
+                  authorUserId: "user-1",
+                }),
+              },
+            ],
+          };
+        }
+        if (recordName === "friend-user") {
+          return {
+            success: true,
+            items: [
+              {
+                data: makePlaylist({
+                  id: "friend-playlist",
+                  recordName: "friend-user",
+                  authorUserId: "friend-user",
+                }),
+              },
+            ],
+          };
+        }
+        return { success: true, items: [] };
+      });
+    };
+
+    describe("keeping them fresh", () => {
+      const START = new Date("2026-10-01T10:00:00Z").getTime();
+      let stopWatching: (() => void) | undefined;
+      let page: ReturnType<typeof stubPageVisibility>;
+
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(START);
+        page = stubPageVisibility();
+        stopWatching = undefined;
+      });
+      afterEach(() => {
+        stopWatching?.();
+        page.restore();
+        vi.useRealTimers();
+      });
+
+      /** Shows the friend's playlists, as a render would. */
+      const watchFriend = async () => {
+        mockPerUserPlaylists();
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserPlaylists("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"]);
+        return view;
+      };
+
+      it("reads them again when you come back to the app more than 30 seconds later", async () => {
+        const view = await watchFriend();
+        listDataByMarkerMock.mockImplementation(async (recordName: unknown) =>
+          recordName === "friend-user"
+            ? {
+                success: true,
+                items: [
+                  {
+                    data: makePlaylist({
+                      id: "new-friend-playlist",
+                      recordName: "friend-user",
+                      authorUserId: "friend-user",
+                    }),
+                  },
+                ],
+              }
+            : { success: true, items: [] }
+        );
+
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["new-friend-playlist"])
+        );
+      });
+
+      /** Shows a friend whose first read fails, as a render would. */
+      const watchFriendWhoseReadFails = async () => {
+        listDataByMarkerMock.mockImplementation(async (recordName: unknown) =>
+          recordName === "friend-user"
+            ? {
+                success: false,
+                errorCode: "server_error",
+                errorMessage: "Down.",
+              }
+            : { success: true, items: [] }
+        );
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserPlaylists("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value).toEqual([]);
+        return view;
+      };
+
+      it("reads them again when you come back to the app after the first read failed", async () => {
+        const view = await watchFriendWhoseReadFails();
+        mockPerUserPlaylists();
+
+        // No time passes: a failed read is tried again however recent it was.
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"])
+        );
+      });
+
+      it("reads them again when they come back on screen after the first read failed", async () => {
+        const view = await watchFriendWhoseReadFails();
+        stopWatching?.();
+        mockPerUserPlaylists();
+
+        stopWatching = effect(() => void view.value);
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"])
+        );
+      });
+
+      it("keeps showing the playlists it has when a re-read fails", async () => {
+        const view = await watchFriend();
+        listDataByMarkerMock.mockResolvedValue({
+          success: false,
+          errorCode: "server_error",
+          errorMessage: "Down.",
+        });
+
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+        await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled());
+        await flush();
+
+        expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"]);
+      });
+    });
+
+    it("reads playlists from the named account's record", async () => {
+      mockPerUserPlaylists();
+      const manager = makeManager("user-1");
+      await flush();
+
+      const view = manager.getUserPlaylists("friend-user");
+      await flush();
+
+      expect(listDataByMarkerMock).toHaveBeenCalledWith(
+        "friend-user",
+        MARKER,
+        undefined
+      );
+      expect(view.value.map((p) => p.id)).toEqual(["friend-playlist"]);
+    });
+
+    it("returns the same signal for repeated calls", async () => {
+      mockPerUserPlaylists();
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.getUserPlaylists("friend-user")).toBe(
+        manager.getUserPlaylists("friend-user")
+      );
+    });
+
+    it("keeps different accounts' playlists separate", async () => {
+      mockPerUserPlaylists();
+      const manager = makeManager("user-1");
+      await flush();
+
+      const mine = manager.getUserPlaylists("user-1");
+      const theirs = manager.getUserPlaylists("friend-user");
+      await flush();
+
+      expect(mine.value.map((p) => p.id)).toEqual(["user-1-playlist"]);
+      expect(theirs.value.map((p) => p.id)).toEqual(["friend-playlist"]);
+    });
+
+    it("settles to an empty list without throwing when the account's playlists can't be loaded", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      listDataByMarkerMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "nope",
+      });
+
+      const view = manager.getUserPlaylists("broken-user");
+      await flush();
+
+      expect(view.value).toEqual([]);
+      expect(errorSpy).toHaveBeenCalled();
+    });
   });
 
   it("loadPlaylist fetches by locator and parses the record on success", async () => {
@@ -2875,6 +3254,262 @@ describe("createPlaylistManager", () => {
     await flush();
 
     expect(manager.playing.value).toBeNull();
+  });
+
+  it("does not stop playback when a URL change never had a playlist param", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startPlaying(
+      makePlaylist({ items: [{ type: "html", html: "a" }] })
+    );
+    expect(manager.playing.value).not.toBeNull();
+
+    // Closing Profile rewrites the query string (for example dropping
+    // `profile=open`) before playback has written `playlist`. That must not
+    // be read as "stop".
+    const url = new URL(lastNavigation.currentUrl.value);
+    url.searchParams.set("profile", "open");
+    lastNavigation.push(url.toString());
+    await flush();
+
+    expect(manager.playing.value).not.toBeNull();
+  });
+
+  it("shows that a playlist is still opening until its first chapter is ready", async () => {
+    let resolveChapter: () => void = () => {};
+    selectTranslationAndChapterMock.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveChapter = resolve;
+      })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.startPlaying(
+      makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 3, verse: 16 },
+          },
+        ],
+      })
+    );
+
+    expect(manager.openingPlayback.value).toBe(true);
+    // A `.finally()` on an already-resolved promise still runs later. Flush
+    // first so this fails if the loader ignores the chapter load.
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    resolveChapter();
+    await flush();
+
+    expect(manager.openingPlayback.value).toBe(false);
+  });
+
+  it("keeps the loader up for a second playlist after the first chapter resolves", async () => {
+    const resolvers: Array<() => void> = [];
+    selectTranslationAndChapterMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvers.push(resolve);
+        })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    const verse = {
+      type: "bible-verse" as const,
+      ref: { bookId: "JHN", chapter: 3, verse: 16 },
+    };
+
+    manager.startPlaying(makePlaylist({ id: "a", items: [verse] }));
+    await flush();
+    const firstBatch = resolvers.length;
+    expect(firstBatch).toBeGreaterThan(0);
+    expect(manager.openingPlayback.value).toBe(true);
+
+    manager.startPlaying(
+      makePlaylist({
+        id: "b",
+        items: [{ ...verse, ref: { bookId: "GEN", chapter: 1, verse: 1 } }],
+      })
+    );
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    for (let i = 0; i < firstBatch; i++) {
+      resolvers[i]!();
+    }
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    for (let i = firstBatch; i < resolvers.length; i++) {
+      resolvers[i]!();
+    }
+    await flush();
+    expect(manager.openingPlayback.value).toBe(false);
+  });
+
+  it("clears the loader on stop, and a late chapter resolve does not hide the next open", async () => {
+    const resolvers: Array<() => void> = [];
+    selectTranslationAndChapterMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvers.push(resolve);
+        })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    const verse = {
+      type: "bible-verse" as const,
+      ref: { bookId: "JHN", chapter: 3, verse: 16 },
+    };
+
+    manager.startPlaying(makePlaylist({ id: "a", items: [verse] }));
+    await flush();
+    const stoppedBatch = resolvers.length;
+    expect(stoppedBatch).toBeGreaterThan(0);
+    expect(manager.openingPlayback.value).toBe(true);
+
+    manager.stopPlaying();
+    expect(manager.openingPlayback.value).toBe(false);
+
+    manager.startPlaying(
+      makePlaylist({
+        id: "b",
+        items: [{ ...verse, ref: { bookId: "GEN", chapter: 1, verse: 1 } }],
+      })
+    );
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    for (let i = 0; i < stoppedBatch; i++) {
+      resolvers[i]!();
+    }
+    await flush();
+    expect(manager.openingPlayback.value).toBe(true);
+
+    for (let i = stoppedBatch; i < resolvers.length; i++) {
+      resolvers[i]!();
+    }
+    await flush();
+    expect(manager.openingPlayback.value).toBe(false);
+  });
+
+  it("continueFromHistory stays pending until the chapter loads", async () => {
+    let resolveChapter: () => void = () => {};
+    selectTranslationAndChapterMock.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveChapter = resolve;
+      })
+    );
+    const playlist = makePlaylist({
+      items: [
+        {
+          type: "bible-verse",
+          ref: { bookId: "JHN", chapter: 3, verse: 16 },
+        },
+      ],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: playlist });
+    const manager = makeManager("user-1");
+    await flush();
+
+    let settled = false;
+    const pending = manager.continueFromHistory(
+      makeHistory({ currentStep: 0, totalSteps: 2 })
+    );
+    void pending.then(() => {
+      settled = true;
+    });
+
+    await flush();
+    expect(settled).toBe(false);
+    expect(manager.openingPlayback.value).toBe(true);
+
+    resolveChapter();
+    await pending;
+    expect(settled).toBe(true);
+    expect(manager.openingPlayback.value).toBe(false);
+  });
+
+  it("replayFromHistory waits on the chapter and starts at the beginning", async () => {
+    let resolveChapter: () => void = () => {};
+    selectTranslationAndChapterMock.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveChapter = resolve;
+      })
+    );
+    const playlist = makePlaylist({
+      items: [
+        {
+          type: "bible-verse",
+          ref: { bookId: "JHN", chapter: 3, verse: 16 },
+        },
+        { type: "html", html: "b" },
+      ],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: playlist });
+    const manager = makeManager("user-1");
+    await flush();
+
+    let settled = false;
+    const pending = manager.replayFromHistory(
+      makeHistory({ currentStep: 1, totalSteps: 2 })
+    );
+    void pending.then(() => {
+      settled = true;
+    });
+    await flush();
+    expect(settled).toBe(false);
+    expect(manager.playing.value?.currentIndex.value).toBe(0);
+
+    resolveChapter();
+    await pending;
+    expect(settled).toBe(true);
+  });
+
+  it("playFromHistory replays a finished session and continues an unfinished one", async () => {
+    const playlist = makePlaylist({
+      items: [
+        { type: "html", html: "a" },
+        { type: "html", html: "b" },
+        { type: "html", html: "c" },
+      ],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: playlist });
+    const manager = makeManager("user-1");
+    await flush();
+
+    await manager.playFromHistory(
+      makeHistory({ currentStep: 2, totalSteps: 3 })
+    );
+    expect(manager.playing.value?.currentIndex.value).toBe(0);
+
+    await manager.playFromHistory(
+      makeHistory({ currentStep: 1, totalSteps: 3 })
+    );
+    expect(manager.playing.value?.currentIndex.value).toBe(1);
+  });
+
+  it("continueFromHistory rejects when there is no tab to play on", async () => {
+    const tabs = {
+      tabs: signal([]),
+      selectedTabId: signal(""),
+    } as unknown as TabsArg;
+    const playlist = makePlaylist({
+      items: [{ type: "html", html: "a" }],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: playlist });
+    const manager = makeManager("user-1", tabs);
+    await flush();
+
+    await expect(manager.continueFromHistory(makeHistory())).rejects.toThrow(
+      "Cannot play a playlist without an open tab."
+    );
+    await flush();
+    expect(manager.openingPlayback.value).toBe(false);
   });
 
   describe("playlist finished modal", () => {

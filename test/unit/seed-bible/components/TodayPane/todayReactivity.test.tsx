@@ -119,6 +119,7 @@ describe("Today screen reactivity", () => {
       searchVerses: async () => [],
       communityMembers: signal(["u1"]),
       getCommunityFeed: async () => [],
+      friendReaders: signal([]),
       getReadingHistoryEvents: async () => [],
     });
     const login = loginStub({ userId: signal("u1"), profile });

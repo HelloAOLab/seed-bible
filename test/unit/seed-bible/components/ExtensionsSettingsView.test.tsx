@@ -9,6 +9,11 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { ModalContentProps } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { mockBodyMetrics } from "../testUtils/mockExpandableTextMetrics";
+
+// Per-extension strings the tests can supply, keyed by `${ns}:${key}`.
+// Extension titles/descriptions live in the extension's own namespace.
+const extensionStrings = vi.hoisted(() => new Map<string, string>());
 
 // Match the i18n mock used by the other component tests: return the
 // defaultValue (or key) so assertions can rely on the English strings.
@@ -19,8 +24,10 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return {
     ...actual,
     useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
+      t: (key: string, options?: { defaultValue?: string; ns?: string }) =>
+        (options?.ns && extensionStrings.get(`${options.ns}:${key}`)) ??
+        options?.defaultValue ??
+        key,
       language: "en",
     }),
   };
@@ -54,6 +61,8 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       loadExtension: vi.fn().mockResolvedValue(undefined),
       unloadExtension: vi.fn(),
       getAllExtensionsAsSet: vi.fn().mockReturnValue(null),
+      registerSettingsPanel: vi.fn().mockReturnValue(vi.fn()),
+      settingsPanels: signal<Record<string, () => ComponentChildren>>({}),
     },
     // No customization is active in these tests — the list renders exactly
     // as it would outside the Customization Center.
@@ -80,6 +89,13 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       getValue: vi.fn(),
       setValue: vi.fn().mockResolvedValue(undefined),
       clearValue: vi.fn().mockResolvedValue(undefined),
+      getUnusedSensitiveProxies: () => [],
+      isSensitiveValueSet: () => false,
+      hasStoredSensitiveValues: () => false,
+      getSensitiveDestination: () => ({
+        host: "api.example.com",
+        visibility: "private",
+      }),
     },
   } as unknown as SeedBibleState;
 }
@@ -95,6 +111,7 @@ describe("ExtensionsSettingsView", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
+    extensionStrings.clear();
   });
 
   function renderExtensions(entries: ExtensionListEntry[]) {
@@ -185,6 +202,50 @@ describe("ExtensionsSettingsView", () => {
 
     expect(container.querySelector(".sb-extensions-tabs")).toBeNull();
     expect(container.textContent).toContain("No extensions available.");
+  });
+
+  it("clamps a long extension description to two lines behind Read more, and expands it on click", () => {
+    extensionStrings.set(
+      "long-one:description",
+      "Interactive 3D visualization of the Bible.\nWith a guided tour on first visit."
+    );
+    // jsdom does no layout, so stand in for a description that runs past
+    // its two lines.
+    const restore = mockBodyMetrics({ scrollHeight: 60, clientHeight: 30 });
+    onTestFinished(restore);
+    renderExtensions([makeEntry("long-one", true)]);
+
+    const description = () =>
+      container.querySelector(".sb-extension-row .sb-extension-description")!;
+    const toggle = () =>
+      description().querySelector<HTMLButtonElement>(
+        ".sb-expandable-text-toggle"
+      )!;
+
+    expect(description().classList).toContain("sb-expandable-text--clamped");
+    expect(description().getAttribute("style")).toContain(
+      "--sb-expandable-text-lines: 2"
+    );
+    expect(toggle().textContent).toBe("Read more");
+
+    act(() => {
+      toggle().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(description().classList).not.toContain(
+      "sb-expandable-text--clamped"
+    );
+    expect(description().textContent).toContain("guided tour");
+    expect(toggle().textContent).toBe("Read less");
+  });
+
+  it("renders no description element for an extension without one", () => {
+    renderExtensions([makeEntry("plain-one", true)]);
+
+    expect(container.querySelector(".sb-extension-name")?.textContent).toBe(
+      "plain-one"
+    );
+    expect(container.querySelector(".sb-extension-description")).toBeNull();
   });
 
   describe("Configure modal", () => {
@@ -295,6 +356,96 @@ describe("ExtensionsSettingsView", () => {
       expect(modalBody.textContent).not.toContain(
         "Please log in to configure this extension."
       );
+    });
+
+    const panelOnlyEntry = (): ExtensionListEntry => ({
+      ...makeEntry("panel-only", true),
+      extension: {
+        url: "https://example.com/panel-only.js",
+        meta: {
+          id: "panel-only",
+          translations: { en: { title: "Panel Only", description: "" } },
+        },
+      },
+    });
+
+    const registerPanel = (
+      state: SeedBibleState,
+      extensionId: string,
+      render: () => ComponentChildren
+    ) => {
+      act(() => {
+        (
+          state.extensions.settingsPanels as Signal<
+            Record<string, () => ComponentChildren>
+          >
+        ).value = {
+          ...state.extensions.settingsPanels.value,
+          [extensionId]: render,
+        };
+      });
+    };
+
+    it("shows the Configure button for an extension with a registered settings panel, even with no declared settings", () => {
+      const state = renderExtensions([panelOnlyEntry()]);
+
+      registerPanel(state, "panel-only", () => <div>Custom panel</div>);
+
+      expect(
+        container.querySelector('button[aria-label="Configure"]')
+      ).not.toBeNull();
+    });
+
+    it("renders the extension's own registered panel instead of the generic settings form", () => {
+      const state = renderExtensions([panelOnlyEntry()]);
+      registerPanel(state, "panel-only", () => (
+        <div className="sb-custom-panel">Custom panel content</div>
+      ));
+
+      openConfigureModal(state);
+
+      expect(modalBody.querySelector(".sb-custom-panel")?.textContent).toBe(
+        "Custom panel content"
+      );
+      expect(
+        modalBody.querySelector("#sb-extension-setting-panel-only-greeting")
+      ).toBeNull();
+    });
+
+    // A custom panel replaces only the generic form. Sensitive values can't go
+    // through an extension's own UI, so without their own section the viewer
+    // would have no way to set them.
+    it("keeps the sensitive settings section alongside a registered panel", () => {
+      const entry = panelOnlyEntry();
+      entry.extension!.meta = {
+        ...entry.extension!.meta,
+        settings: {
+          greeting: { type: "string", default: "Hello" },
+          apiKey: { type: "string", sensitive: "exampleApi" },
+        },
+        sensitive: {
+          exampleApi: {
+            host: "api.example.com",
+            requestMapping: { "headers.authorization.bearer": "apiKey" },
+          },
+        },
+      };
+      const state = renderExtensions([entry]);
+      registerPanel(state, "panel-only", () => (
+        <div className="sb-custom-panel">Custom panel content</div>
+      ));
+
+      openConfigureModal(state);
+
+      expect(modalBody.querySelector(".sb-custom-panel")).not.toBeNull();
+      expect(
+        modalBody.querySelector<HTMLInputElement>(
+          "#sb-extension-setting-panel-only-apiKey"
+        )?.type
+      ).toBe("password");
+      expect(
+        modalBody.querySelector("#sb-extension-setting-panel-only-greeting")
+      ).toBeNull();
     });
   });
 });

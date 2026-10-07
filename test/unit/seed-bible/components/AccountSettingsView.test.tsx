@@ -168,7 +168,7 @@ describe("AccountSettingsView", () => {
 
     expect(saveButton().disabled).toBe(true);
     expect(saveButton().textContent).toContain("Saving");
-    expect(container.querySelector(".sb-account-save-spinner")).not.toBeNull();
+    expect(container.querySelector(".sb-spinner")).not.toBeNull();
 
     act(() => {
       state.login.isSavingProfile.value = false;

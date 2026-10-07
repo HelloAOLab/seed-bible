@@ -46,7 +46,7 @@ import type {
   TodayManager,
   TodayPassageTarget,
 } from "../../managers/TodayManager";
-import { trimmedOrNull } from "../../managers/Utils";
+import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { htmlToPlainText } from "../CreateAnnotationForm/PlainTextAnnotationEditor";
 
 const TIMESPAN_OPTION_IDS = ["twoDays", "week", "month", "all"] as const;
@@ -79,25 +79,46 @@ export const SocialSection = (props: {
   const userId = props.login.userId.value;
   const profile = props.login.profile.value;
 
-  // Profiles for the member list. The list is the signed-in user alone until
-  // subscriptions exist, and theirs is to hand on `login`; other members will
-  // need `login.getUserProfile` once #1846 adds them.
+  // Read during render on purpose: reading the signal subscribes this
+  // component, so a friend's profile arriving re-renders the section.
+  const friendReaders = props.today.friendReaders.value;
+  // Keyed on content rather than the array's identity, so the map below (and
+  // the filters effect that stores a new Map whenever it changes) only re-runs
+  // when a friend's name or picture actually changes.
+  const friendsKey = friendReaders
+    .map((f) => `${f.userId}\u0000${f.name ?? ""}\u0000${f.pictureUrl ?? ""}`)
+    .join("\u0001");
+
+  // Profiles for the member list: the signed-in user's own from `login`, their
+  // friends' from the friends list. Derived rather than held in state: every
+  // input is already to hand during render, so an effect writing it would only
+  // make the map lag a render behind its own inputs.
   const userProfileMap = useMemo(() => {
+    const friendsById = new Map(friendReaders.map((f) => [f.userId, f]));
     const map = new Map<string, SocialSectionUserProfile>();
     for (const memberId of communityMembers.value) {
       const visual = getUserAnimalVisual(memberId);
       const isSelf = memberId === userId;
+      const friend = friendsById.get(memberId);
       map.set(memberId, {
-        name:
-          (isSelf ? trimmedOrNull(profile?.name) : null) ??
-          t("anonymous", { defaultValue: "Anonymous" }),
-        pictureUrl: isSelf ? profile?.pictureUrl : undefined,
+        name: isSelf
+          ? (trimmedOrNull(profile?.name) ??
+            t("anonymous", { defaultValue: "Anonymous" }))
+          : displayNameOf(friend ?? { userId: memberId }, t),
+        pictureUrl: isSelf ? profile?.pictureUrl : friend?.pictureUrl,
         color: visual.color,
         icon: visual.defaultIcon,
       });
     }
     return map;
-  }, [communityMembers.value, userId, profile?.name, profile?.pictureUrl, t]);
+  }, [
+    communityMembers.value,
+    userId,
+    profile?.name,
+    profile?.pictureUrl,
+    friendsKey,
+    t,
+  ]);
 
   const initialOption = useMemo(() => buildTimespanOptions().twoDays, []);
   const windowId = useSignal<TimespanOptionId>("twoDays");
