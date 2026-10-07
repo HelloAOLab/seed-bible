@@ -21,6 +21,8 @@ Invoke each skill with the PR number as its argument, and follow its instruction
 1. `routine-pr-code-review`: reviews the code and posts the review.
 2. `routine-pr-human-review-plan`: writes the manual test plan, publishes it, and posts the link.
 
+This checkout must stay on the repository's default branch, because the skills are read from it. The skills put the PR's code in a separate folder (`../seed-bible-pr-<n>`) for that reason. After each task, check that this checkout is still on the default branch with no changes (`git status`). If anything moved it, for example a tool that checked out the PR, switch it back (`git switch <default branch>`) before starting the next task.
+
 The tasks are independent. If one fails or stops early, still run the other. Each skill already checks whether it has done its work for this commit, so running both on both routine triggers is safe.
 
 ## 3. Finish

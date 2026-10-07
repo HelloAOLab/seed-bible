@@ -26,7 +26,14 @@ Use the conversation to learn what's already been discussed or decided. Don't re
 
 ## 3. Review
 
-Check out the PR head (`gh pr checkout <n>`) so you can read whole files, not just diff hunks.
+Put the PR's code in a separate folder so you can read whole files, not just diff hunks:
+
+```bash
+git fetch origin pull/<n>/head
+git worktree add --detach ../seed-bible-pr-<n> FETCH_HEAD   # reuse it if it already exists
+```
+
+Read files and run commands for the PR there. **Don't switch this checkout to the PR branch** (no `gh pr checkout`). The routine's skills are read from this checkout, which stays on the default branch, so the next skill gets the right instructions and a PR can't change the instructions it's reviewed under.
 
 Run the `code-review` skill on the PR (`/code-review <n>`) for the bug hunt. Don't use its `--comment` or `--fix` options: this skill posts one comment of its own and never changes the code.
 
@@ -35,7 +42,7 @@ Then add what that pass doesn't cover:
 - **Does the PR deliver what the linked issues ask for?** Call out anything missing, or anything that behaves differently from what was asked.
 - **Repo conventions** in `CLAUDE.md`: signals instead of hooks for state, CasualOS access only through `OsManager`, translation keys added only to `en.json`, `ThemeManager` overriding `--sb-*` CSS variables, no `any`, and so on.
 - **Tests.** We want tests that check real-world behavior and can fail. For each new or changed test, check it against the testing rules in `CLAUDE.md`: does it assert something a user or caller would see, mock only at the `OsManager`/CasualOS boundary, cover error paths and edge cases, and avoid fixed-time sleeps? Flag tests that would pass no matter what the code does (assertions on mocks, missing `await`, conditions that are always true, a `try` that swallows the failure). Point out important behavior in the PR that has no test.
-- **Run the tests when the environment allows it.** If `pnpm install` works, run the changed and added test files with `pnpm vitest run <file>`. For a test that claims to guard against a bug, check that it really fails without the fix: temporarily restore the base version of the non-test files (`git checkout origin/<base> -- <files>`), run the test, confirm it fails, then put the PR version back (`git checkout HEAD -- <files>`). Say in the review what you ran and what happened. If you couldn't run them, say so; never imply tests were run when they weren't.
+- **Run the tests when the environment allows it**, in the PR folder. If `pnpm install` works there, run the changed and added test files with `pnpm vitest run <file>`. For a test that claims to guard against a bug, check that it really fails without the fix: temporarily restore the base version of the non-test files (`git checkout origin/<base> -- <files>`), run the test, confirm it fails, then put the PR version back (`git checkout HEAD -- <files>`). Say in the review what you ran and what happened. If you couldn't run them, say so; never imply tests were run when they weren't.
 
 Before writing a finding up, confirm it by re-reading the code it depends on. Drop findings you can't support. If something might be a problem but you can't tell, ask it as a question instead of stating it as a bug.
 

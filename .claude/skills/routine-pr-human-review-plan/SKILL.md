@@ -41,7 +41,7 @@ Then check what already exists for this commit:
 
 - PR discussion: `gh pr view <n> --comments`.
 - Linked issues: everything in `closingIssuesReferences`, plus issues the body refers to. Read each with `gh issue view <n> --comments`. Acceptance criteria and repro steps in issues are the best source of tests.
-- The change itself: `gh pr diff <n>`, and read the changed files in full where you need to understand what the user will actually see. To learn which buttons, labels, and menu names a tester will see, use the English strings in `packages/seed-bible/seed-bible/i18n/en.json`, not component or function names.
+- The change itself: `gh pr diff <n>`, and read the changed files in full where you need to understand what the user will actually see. Read them from a separate folder holding the PR's code: reuse `../seed-bible-pr-<n>` if the code review already made it, or create it with `git fetch origin pull/<n>/head && git worktree add --detach ../seed-bible-pr-<n> FETCH_HEAD`. **Don't switch this checkout to the PR branch.** The routine's skills are read from it, so it must stay on the default branch. To learn which buttons, labels, and menu names a tester will see, use the English strings in `packages/seed-bible/seed-bible/i18n/en.json`, not component or function names.
 - Earlier discussion: if a reviewer already reported a bug, or a comment explains how to reach a hidden feature, use it.
 - Earlier plans for this PR (other files in `plans/seed-bible/<n>/`): reuse what still applies, and focus new or changed tests on what the new commits changed.
 
