@@ -73,7 +73,11 @@ import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslati
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
 import { OffscreenHighlightCueLayer } from "./OffscreenHighlightCueLayer";
-import { collectHighlightCueMarks } from "./offscreenHighlightCues";
+import {
+  collectHighlightCueMarks,
+  decorationHighlightsByVerse,
+  hasContentTargeting,
+} from "./offscreenHighlightCues";
 import {
   findScrollContainer,
   measureReaderViewport,
@@ -392,17 +396,6 @@ function getVersePlainText(content: ChapterVerse["content"]): string {
 interface ResolvedHighlight {
   highlight: ChapterHighlight;
   broadcast: boolean;
-}
-
-function hasContentTargeting(decoration: VerseDecoration): boolean {
-  const hasTargetContent =
-    typeof decoration.targetContent === "string" &&
-    decoration.targetContent.trim().length > 0;
-  const hasIndexRange =
-    typeof decoration.startIndex === "number" ||
-    typeof decoration.endIndex === "number";
-
-  return hasTargetContent || hasIndexRange;
 }
 
 function toContentDecorationRanges(
@@ -773,30 +766,11 @@ function renderChapterContent(
     );
   };
 
-  // Decorations asking to be drawn as highlights (`decoration.highlight`),
-  // flattened to one entry per verse. Content-targeted decorations are skipped:
-  // the ribbon layer works per verse-run and can't paint a text fragment.
-  // Later decorations win, matching how their CSS is layered below.
-  const decorationHighlights = new Map<number, ChapterHighlight>();
-  for (const decoration of decorations) {
-    if (!decoration.highlight || hasContentTargeting(decoration)) {
-      continue;
-    }
-    if (
-      (decoration.translationId &&
-        decoration.translationId !== chapterData.translation.id) ||
-      decoration.bookId !== chapterData.book.id ||
-      decoration.chapterNumber !== chapterData.chapter.number
-    ) {
-      continue;
-    }
-    for (const verseNumber of decoration.verses) {
-      decorationHighlights.set(verseNumber, {
-        ...decoration.highlight,
-        verse: verseNumber,
-      });
-    }
-  }
+  const decorationHighlights = decorationHighlightsByVerse(decorations, {
+    translationId: chapterData.translation.id,
+    bookId: chapterData.book.id,
+    chapterNumber: chapterData.chapter.number,
+  });
 
   // `showHighlights` hides the reader's *saved* highlights. Decoration
   // highlights are a live signal from a session peer or an extension, so they

@@ -19,8 +19,10 @@ const DRAG_THRESHOLD_PX = 6;
 /**
  * Circles at the top and bottom edges of the reader for highlights that are
  * currently off screen. Each one carries the highlight colour, an arrow toward
- * the verse, and the verse number. They overlap in a horizontal row like
- * cards until hovered, then spread apart; a row wider than the reader scrolls.
+ * the verse, and the verse number. With a fine pointer they overlap like cards
+ * until hovered, then spread apart. On a coarse pointer they stay spread,
+ * because the overlapping rim is too thin to tap. A row wider than the reader
+ * scrolls sideways.
  */
 export function OffscreenHighlightCueLayer({
   contentRef,
@@ -38,10 +40,16 @@ export function OffscreenHighlightCueLayer({
   } | null>(null);
   const scrollerRef = useRef<HTMLElement | null>(null);
   const signatureRef = useRef("");
+  const frameRef = useRef<number | null>(null);
+  const verseElementsRef = useRef<{
+    key: string;
+    elements: Map<number, HTMLElement>;
+  } | null>(null);
 
   const measure = () => {
     const content = contentRef.current;
     if (!content || marks.length === 0) {
+      verseElementsRef.current = null;
       if (signatureRef.current !== "") {
         signatureRef.current = "";
         setCues(null);
@@ -49,12 +57,11 @@ export function OffscreenHighlightCueLayer({
       return;
     }
 
+    const elements = verseElementsFor(content, marks, verseElementsRef);
     const box = content.getBoundingClientRect();
     const measured: MeasuredHighlightMark[] = [];
     for (const mark of marks) {
-      const el = content.querySelector<HTMLElement>(
-        `.sb-verse[data-verse-number="${mark.verse}"]`
-      );
+      const el = elements.get(mark.verse);
       if (!el) continue;
       const rect = el.getBoundingClientRect();
       measured.push({
@@ -89,30 +96,36 @@ export function OffscreenHighlightCueLayer({
   const measureRef = useRef(measure);
   measureRef.current = measure;
 
+  const scheduleMeasure = () => {
+    if (frameRef.current !== null) return;
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null;
+      measureRef.current();
+    });
+  };
+  const scheduleRef = useRef(scheduleMeasure);
+  scheduleRef.current = scheduleMeasure;
+
   useLayoutEffect(() => {
     const content = contentRef.current;
     if (!content) return;
     scrollerRef.current = findScrollContainer(content);
     const target: EventTarget = scrollerRef.current ?? window;
-    let frame: number | null = null;
-    const schedule = () => {
-      if (frame !== null) return;
-      frame = requestAnimationFrame(() => {
-        frame = null;
-        measureRef.current();
-      });
-    };
+    const schedule = () => scheduleRef.current();
     target.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
     return () => {
       target.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
-      if (frame !== null) cancelAnimationFrame(frame);
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
     };
   }, [contentRef]);
 
   useLayoutEffect(() => {
-    measureRef.current();
+    scheduleRef.current();
   });
 
   if (!cues) return null;
@@ -165,6 +178,32 @@ export function OffscreenHighlightCueLayer({
       )}
     </div>
   );
+}
+
+function verseElementsFor(
+  content: HTMLElement,
+  marks: readonly HighlightCueMark[],
+  cache: { current: { key: string; elements: Map<number, HTMLElement> } | null }
+): Map<number, HTMLElement> {
+  const key = marks.map((mark) => mark.verse).join(",");
+  const cached = cache.current;
+  if (
+    cached &&
+    cached.key === key &&
+    [...cached.elements.values()].every((el) => el.isConnected)
+  ) {
+    return cached.elements;
+  }
+  const elements = new Map<number, HTMLElement>();
+  for (const el of content.querySelectorAll<HTMLElement>(
+    ".sb-verse[data-verse-number]"
+  )) {
+    const verse = Number(el.getAttribute("data-verse-number"));
+    if (!Number.isInteger(verse) || verse < 1 || elements.has(verse)) continue;
+    elements.set(verse, el);
+  }
+  cache.current = { key, elements };
+  return elements;
 }
 
 function CueArrow({ direction }: { direction: "up" | "down" }) {
@@ -232,8 +271,16 @@ function CueStack({
   };
 
   const endDrag = (event: PointerEvent) => {
-    if (dragRef.current.pointerId !== event.pointerId) return;
-    dragRef.current.pointerId = -1;
+    const drag = dragRef.current;
+    if (drag.pointerId !== event.pointerId) return;
+    drag.pointerId = -1;
+    if (!drag.moved) return;
+    // The click that follows pointerup is still in this turn and must stay
+    // swallowed. A drag that ends without a click (released outside, or
+    // cancelled) would otherwise leave `moved` set and eat the next tap.
+    window.setTimeout(() => {
+      if (dragRef.current.pointerId === -1) dragRef.current.moved = false;
+    }, 0);
   };
 
   const updateEdges = () => {
@@ -288,10 +335,10 @@ function CueStack({
   };
 
   // A drag that passes the threshold must not also jump to the verse the
-  // pointer came down on. Keyboard activation never sets `moved`, so Enter
-  // still jumps.
+  // pointer came down on. A keyboard click (Enter/Space) has detail 0, so it
+  // still jumps even if a drag ended without clearing `moved` yet.
   const onClickCapture = (event: MouseEvent) => {
-    if (!dragRef.current.moved) return;
+    if (event.detail === 0 || !dragRef.current.moved) return;
     dragRef.current.moved = false;
     event.preventDefault();
     event.stopPropagation();

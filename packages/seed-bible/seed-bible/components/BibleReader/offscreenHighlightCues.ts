@@ -72,7 +72,12 @@ function verseNumbersOf(verse: ChapterHighlight["verse"]): number[] {
   return numbers;
 }
 
-function decorationTargetsText(decoration: VerseDecoration): boolean {
+/**
+ * True when a decoration paints a slice of the verse text rather than the
+ * whole verse. The ribbon and the off-screen bubbles both skip these: they
+ * work per verse, so a fragment would look like the whole verse was highlighted.
+ */
+export function hasContentTargeting(decoration: VerseDecoration): boolean {
   const hasTargetContent =
     typeof decoration.targetContent === "string" &&
     decoration.targetContent.trim().length > 0;
@@ -80,6 +85,41 @@ function decorationTargetsText(decoration: VerseDecoration): boolean {
     typeof decoration.startIndex === "number" ||
     typeof decoration.endIndex === "number";
   return hasTargetContent || hasIndexRange;
+}
+
+/**
+ * Decoration highlights for this chapter, one entry per verse. Later
+ * decorations win. Verses that aren't a whole verse number are dropped so a
+ * bubble and the ribbon always agree on what is highlighted.
+ */
+export function decorationHighlightsByVerse(
+  decorations: readonly VerseDecoration[],
+  chapter: {
+    translationId: string;
+    bookId: string;
+    chapterNumber: number;
+  }
+): Map<number, ChapterHighlight> {
+  const byVerse = new Map<number, ChapterHighlight>();
+  for (const decoration of decorations) {
+    if (!decoration.highlight || hasContentTargeting(decoration)) continue;
+    if (
+      (decoration.translationId &&
+        decoration.translationId !== chapter.translationId) ||
+      decoration.bookId !== chapter.bookId ||
+      decoration.chapterNumber !== chapter.chapterNumber
+    ) {
+      continue;
+    }
+    for (const verseNumber of decoration.verses) {
+      if (!Number.isInteger(verseNumber) || verseNumber < 1) continue;
+      byVerse.set(verseNumber, {
+        ...decoration.highlight,
+        verse: verseNumber,
+      });
+    }
+  }
+  return byVerse;
 }
 
 /**
@@ -111,21 +151,11 @@ export function collectHighlightCueMarks(options: {
     }
   }
 
-  for (const decoration of options.decorations) {
-    if (!decoration.highlight || decorationTargetsText(decoration)) continue;
-    if (
-      (decoration.translationId &&
-        decoration.translationId !== options.translationId) ||
-      decoration.bookId !== options.bookId ||
-      decoration.chapterNumber !== options.chapterNumber
-    ) {
-      continue;
-    }
-    const style = highlightCueStyle(decoration.highlight);
-    for (const verse of decoration.verses) {
-      if (!Number.isInteger(verse) || verse < 1) continue;
-      byVerse.set(verse, { verse, ...style });
-    }
+  for (const [verse, highlight] of decorationHighlightsByVerse(
+    options.decorations,
+    options
+  )) {
+    byVerse.set(verse, { verse, ...highlightCueStyle(highlight) });
   }
 
   return [...byVerse.values()].sort((a, b) => a.verse - b.verse);

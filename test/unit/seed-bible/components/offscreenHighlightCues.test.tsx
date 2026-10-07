@@ -193,6 +193,24 @@ describe("collectHighlightCueMarks", () => {
     });
     expect(marks).toEqual([]);
   });
+
+  it("skips a decoration verse that is not a whole verse number", () => {
+    const marks = collectHighlightCueMarks({
+      ...chapter,
+      highlights: [],
+      decorations: [
+        {
+          id: "bad-verses",
+          translationId: null,
+          bookId: "GEN",
+          chapterNumber: 28,
+          verses: [0, 1.5, 3],
+          highlight: { colorId: "green" },
+        },
+      ],
+    });
+    expect(marks.map((item) => item.verse)).toEqual([3]);
+  });
 });
 
 function domRect(top: number, bottom: number): DOMRect {
@@ -243,6 +261,10 @@ describe("OffscreenHighlightCueLayer", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      callback(0);
+      return 1;
+    });
     Object.defineProperty(window, "innerHeight", {
       value: 800,
       configurable: true,
@@ -265,6 +287,7 @@ describe("OffscreenHighlightCueLayer", () => {
     render(null, container);
     container.remove();
     rectSpy.mockRestore();
+    vi.mocked(window.requestAnimationFrame).mockRestore();
   });
 
   function renderCues(marks: HighlightCueMark[]) {
@@ -359,10 +382,86 @@ describe("OffscreenHighlightCueLayer", () => {
           pointerId: 1,
         })
       );
-      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      button.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, detail: 1 })
+      );
     });
 
     expect(verse.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it("still jumps from the keyboard after a drag that never clicked", async () => {
+    renderCues([{ verse: 20, ...highlightCueStyle({ colorId: "blue" }) }]);
+    const verse = container.querySelector<HTMLElement>(
+      '.sb-verse[data-verse-number="20"]'
+    )!;
+    const scroll = vi.fn();
+    verse.scrollIntoView = scroll;
+    const button =
+      container.querySelector<HTMLButtonElement>(".sb-offscreen-cue")!;
+    const stack = container.querySelector<HTMLElement>(
+      ".sb-offscreen-cues-down .sb-offscreen-cues-stack"
+    )!;
+
+    act(() => {
+      button.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          clientX: 100,
+          pointerId: 1,
+        })
+      );
+      stack.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          button: 0,
+          clientX: 40,
+          pointerId: 1,
+        })
+      );
+      stack.dispatchEvent(
+        new PointerEvent("pointercancel", {
+          bubbles: true,
+          pointerId: 1,
+        })
+      );
+      button.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, detail: 0 })
+      );
+    });
+    expect(scroll).toHaveBeenCalledTimes(1);
+
+    scroll.mockClear();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    act(() => {
+      button.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, detail: 1 })
+      );
+    });
+    expect(scroll).toHaveBeenCalledTimes(1);
+  });
+
+  it("looks up the verse elements once while the same verses stay on screen", () => {
+    const query = vi.spyOn(Element.prototype, "querySelectorAll");
+    const marks = [
+      { verse: 20, ...highlightCueStyle({ colorId: "blue" }) },
+      { verse: 21, ...highlightCueStyle({ colorId: "green" }) },
+    ];
+    renderCues(marks);
+    const verseLookups = () =>
+      query.mock.calls.filter(
+        (call) => call[0] === ".sb-verse[data-verse-number]"
+      ).length;
+    expect(verseLookups()).toBe(1);
+
+    act(() => {
+      render(<CueHarness marks={[...marks]} boxes={boxes} />, container);
+    });
+    expect(verseLookups()).toBe(1);
+    query.mockRestore();
   });
 
   it("shows a scroll arrow only on a side that can still move", () => {
