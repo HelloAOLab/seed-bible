@@ -3359,8 +3359,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         key={item.id}
                         disabled={item.disabled.value}
                         onClick={() => {
-                          item.onSelect();
                           closeMenu();
+                          void handleVerseAction(
+                            item.onSelect,
+                            tool.preserveSelection
+                          );
                         }}
                         className="sb-tool-context-menu-item"
                         role="menuitem"
