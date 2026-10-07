@@ -5069,6 +5069,151 @@ describe("BibleReader — compact embed header", () => {
     expect(
       container.querySelector(".sb-quick-toolbar-mobile-header")
     ).toBeNull();
+    expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+  });
+
+  it("does not paint saved or broadcast verse highlights", () => {
+    const { slot, selectorState, readingState, highlights, decorations } =
+      createFixture();
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "yellow" }],
+    };
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:2",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [2],
+        highlight: { colorId: "green" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={createEmbedState()}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector("[data-highlight-fill]")).toBeNull();
+    expect(container.querySelector(".sb-highlight")).toBeNull();
+  });
+
+  it("hides Discover in an embed and still shows it outside one", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    (
+      readingState.discoveredCrossReferences as Signal<
+        BibleReadingState["discoveredCrossReferences"]["value"]
+      >
+    ).value = [
+      {
+        providerId: "p1",
+        results: [
+          {
+            type: "cross-reference",
+            reference: { chapter: 1, bookData: { name: "Genesis" } },
+            crossReference: {
+              chapter: 5,
+              verse: 3,
+              bookData: { commonName: "Exodus", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ] as BibleReadingState["discoveredCrossReferences"]["value"];
+    slot.tab = {
+      id: "tab-1",
+      title: "Genesis 1",
+      readingState,
+      sharedSession: null,
+      sharedChat: null,
+    };
+
+    const withDiscover = (embedded: boolean) => {
+      const base = createMobileState();
+      return {
+        ...base,
+        app: {
+          ...base.app,
+          isMinimalEmbed: signal(embedded),
+          isCompactReader: signal(true),
+        },
+        discover: {
+          scrollToVerse: signal(null),
+          contentTypes: signal([]),
+        },
+      } as any as SeedBibleState;
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={withDiscover(false)}
+        />,
+        container
+      );
+    });
+    expect(
+      container.querySelector(".sb-discover-content-panel")
+    ).not.toBeNull();
+    expect(container.textContent).toContain("Discover");
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={withDiscover(true)}
+        />,
+        container
+      );
+    });
+    expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+  });
+
+  it("still paints highlights outside an embed", () => {
+    const { slot, selectorState, readingState, highlights } = createFixture();
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "yellow" }],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={createMobileState()}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector("[data-highlight-fill]")).not.toBeNull();
   });
 
   it("opens the current chapter in a new tab without the embed param", () => {

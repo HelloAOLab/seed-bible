@@ -47,6 +47,7 @@ describe("index.html pre-hydration theme script", () => {
     vi.unstubAllGlobals();
     localStorage.clear();
     document.head.innerHTML = "";
+    window.history.replaceState({}, "", "/");
   });
 
   it("paints Dark for a first-time visitor on a dark device, since System is the default", () => {
@@ -81,6 +82,20 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
+  });
+
+  it("paints the embed link's theme instead of the saved one", () => {
+    installServerRenderedHead();
+    stubColorScheme(false);
+    window.history.replaceState({}, "", "/?embed=minimal&app.themeId=dark");
+    localStorage.setItem(
+      "sb-profile-config-local",
+      JSON.stringify({ themeId: "light" })
+    );
+
+    runInlineThemeScript();
+
+    expect(paintedBackground()).toBe(DARK_THEME.variables.background);
   });
 
   it("keeps a saved Light on a dark device", () => {

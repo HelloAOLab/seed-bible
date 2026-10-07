@@ -974,6 +974,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       toast: props.state.app.toast,
       modals: props.state.modals,
       app: props.state.app,
+      embedThemes: props.state.theme.themes,
+      customizationLocator:
+        props.state.customizations.activeCustomizationLocator,
       annotations: props.state.annotations,
       navigation: props.state.navigation,
       data: props.state.bibleData,
@@ -1053,6 +1056,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       toast: props.state.app.toast,
       modals: props.state.modals,
       app: props.state.app,
+      embedThemes: props.state.theme.themes,
+      customizationLocator:
+        props.state.customizations.activeCustomizationLocator,
       annotations: props.state.annotations,
       navigation: props.state.navigation,
       data: props.state.bibleData,
