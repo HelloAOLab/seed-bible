@@ -31,3 +31,37 @@ export function readBottomChromeInset(): number {
   }
   return raw.endsWith("px") ? value : 0;
 }
+
+/** The part of the chapter content box that is on screen, in content px. */
+export interface ReaderViewport {
+  top: number;
+  bottom: number;
+}
+
+/**
+ * Where the screen is over the chapter content, in the content's own
+ * coordinates. Accounts for the mobile header floating over the top of the
+ * scroller and the toolbar over its bottom, since verses under either are not
+ * really on screen.
+ */
+export function measureReaderViewport(
+  content: HTMLElement,
+  scroller: HTMLElement | null
+): ReaderViewport {
+  const contentRect = content.getBoundingClientRect();
+  let top = 0;
+  let bottom = window.innerHeight;
+  if (scroller) {
+    const rect = scroller.getBoundingClientRect();
+    top = rect.top;
+    bottom = rect.bottom;
+  }
+  const header = content
+    .closest(".sb-bible-reader")
+    ?.querySelector(".sb-bible-reader-mobile-header");
+  if (header) {
+    top = Math.max(top, header.getBoundingClientRect().bottom);
+  }
+  bottom -= readBottomChromeInset();
+  return { top: top - contentRect.top, bottom: bottom - contentRect.top };
+}
