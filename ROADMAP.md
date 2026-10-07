@@ -4,26 +4,30 @@ This is the order we plan to work in, and what each item means in practice. Item
 
 Each item says where things stand today, what we want to build, what it depends on, and which GitHub issues hold the detail. When an item has unresolved design choices, they are listed under **Open questions** so they don't get lost.
 
+_Last updated 2026-10-07_
+
 ## At a glance
 
-| #   | Item                                                                                                 | Theme          | Depends on             |
-| --- | ---------------------------------------------------------------------------------------------------- | -------------- | ---------------------- |
-| 1   | [Customization + organization discovered content](#1-customization--organization-discovered-content) | Content        | — (**blocks rollout**) |
-| 2   | [Friends, and seeing their data](#2-friends-and-seeing-their-data)                                   | Community      | —                      |
-| 3   | [Today screen community section rework](#3-today-screen-community-section-rework)                    | Community      | 2                      |
-| 4   | [Public/private data split](#4-publicprivate-data-split)                                             | Privacy        | 2                      |
-| 5   | [Customization design improvements](#5-customization-design-improvements)                            | Customization  | 1                      |
-| 6   | [Bookmarks rework](#6-bookmarks-rework)                                                              | Reader         | —                      |
-| 7   | [Onboarding improvements](#7-onboarding-improvements)                                                | First run      | —                      |
-| 8   | [Third-party extensions](#8-third-party-extensions)                                                  | Platform       | 9 (helps)              |
-| 9   | [Technical docs](#9-technical-docs)                                                                  | Platform       | —                      |
-| 10  | [Sign in with YouVersion](#10-sign-in-with-youversion)                                               | Accounts       | Backend work           |
-| 11  | [Settings redesign](#11-settings-redesign)                                                           | Settings       | —                      |
-| 12  | [Bonfire AI tool calling](#12-bonfire-ai-tool-calling)                                               | AI             | —                      |
-| 13  | [Rework reading history to use data records](#13-rework-reading-history-to-use-data-records)         | Privacy / data | Supports 4             |
-| 14  | [Circles (friend groups)](#14-circles-friend-groups)                                                 | Community      | 2, 4                   |
-| 15  | [Multiple accounts on a device](#15-multiple-accounts-on-a-device)                                   | Accounts       | —                      |
-| 16  | [MCP support](#16-mcp-support)                                                                       | AI / platform  | 12 (helps)             |
+✅ Done · 🚧 In progress · ⏳ Waiting on someone else · 💭 Planned, not started
+
+| #   | Item                                                                                                 | Theme          | Depends on             | Status                    |
+| --- | ---------------------------------------------------------------------------------------------------- | -------------- | ---------------------- | ------------------------- |
+| 1   | [Customization + organization discovered content](#1-customization--organization-discovered-content) | Content        | — (**blocks rollout**) | 🚧 In progress            |
+| 2   | [Friends, and seeing their data](#2-friends-and-seeing-their-data)                                   | Community      | —                      | ✅ Done — follow-ups open |
+| 3   | [Today screen community section rework](#3-today-screen-community-section-rework)                    | Community      | 2                      | 💭 Planned                |
+| 4   | [Public/private data split](#4-publicprivate-data-split)                                             | Privacy        | 2                      | 💭 Planned                |
+| 5   | [Customization design improvements](#5-customization-design-improvements)                            | Customization  | 1                      | 💭 Planned                |
+| 6   | [Bookmarks rework](#6-bookmarks-rework)                                                              | Reader         | —                      | 💭 Planned                |
+| 7   | [Onboarding improvements](#7-onboarding-improvements)                                                | First run      | —                      | 🚧 In progress            |
+| 8   | [Third-party extensions](#8-third-party-extensions)                                                  | Platform       | 9 (helps)              | 🚧 In progress            |
+| 9   | [Technical docs](#9-technical-docs)                                                                  | Platform       | —                      | 💭 Planned                |
+| 10  | [Sign in with YouVersion](#10-sign-in-with-youversion)                                               | Accounts       | Backend work           | ⏳ Waiting on backend     |
+| 11  | [Settings redesign](#11-settings-redesign)                                                           | Settings       | —                      | 💭 Planned                |
+| 12  | [Bonfire AI tool calling](#12-bonfire-ai-tool-calling)                                               | AI             | —                      | 💭 Planned                |
+| 13  | [Rework reading history to use data records](#13-rework-reading-history-to-use-data-records)         | Privacy / data | Supports 4             | 💭 Planned                |
+| 14  | [Circles (friend groups)](#14-circles-friend-groups)                                                 | Community      | 2, 4                   | 💭 Planned                |
+| 15  | [Multiple accounts on a device](#15-multiple-accounts-on-a-device)                                   | Accounts       | —                      | 💭 Planned                |
+| 16  | [MCP support](#16-mcp-support)                                                                       | AI / platform  | 12 (helps)             | 🚧 In progress            |
 
 ### How the items connect
 
@@ -32,7 +36,7 @@ Several items are really one long thread, built in steps:
 - **Community thread (2 → 3 → 4 → 14).** Friends come first (2). The Today screen then shows what friends are doing (3). Once people are sharing with friends, they need control over _what_ is shared (4). Circles (14) refine that control from "all my friends" to "these particular friends".
 - **Privacy depends on storage (13 → 4).** Making data truly private means changing how it is stored, not just what the app displays. Reading history is the hardest piece to change, which is why item 13 exists. See item 4 for why.
 - **Customization thread (1 → 5).** Item 1 is about _what_ customizations can do (bring their own content). Item 5 is about making the editor pleasant to use.
-- **AI thread (12 → 16).** Tool calling (12) lets an AI act inside the app. MCP (16) opens the same kind of access to outside AI tools.
+- **AI thread (12 → 16).** Tool calling (12) lets an AI act inside the app. MCP (16) connects the in-app chat to outside tools today, and later could open the app itself to outside AI assistants.
 
 ---
 
@@ -48,28 +52,29 @@ Organizations (a church, a ministry, a partner like Apologist) need to be able t
 
 - The **compact discover panel** now surfaces content for the current chapter: notes, playlists, reading plans, and content from extensions (for example Bible Project videos). Extensions register their own content types with `DiscoverManager.registerContentType`.
 - **Customizations** already exist (`CustomizationsManager`). An organization can publish one with its own theme, variants, fonts, default extension settings and extension preferences.
-- What's missing is the link between the two: a customization can't yet say "here is our content", and readers have no way to choose which content sources show up.
+- **Apologist partners can already bring their own content.** The Apologist extension runs each chapter through the organization's Apologist team and shows the matching articles, videos and episodes as discovered content ([#1831](https://github.com/HelloAOLab/seed-bible/issues/1831)). A customization can supply the team's settings for everyone who uses it, including the API key, which stays on our server thanks to sensitive extension settings ([#1836](https://github.com/HelloAOLab/seed-bible/issues/1836)). This is the first working example of organization content through a customization.
+- What's still missing: organizations _without_ an Apologist team have no simple way to say "here is our content", and readers have no way to choose which content sources show up.
 
 ### What we want to build
 
 - **Organization content through customizations.** A customization should be able to bring its own discovered content (videos, articles, studies, reading plans) so that people who use that customization see it in the compact discover panel.
 - **Content source settings.** A settings page where readers enable or disable each content provider, plus a single switch to hide third-party content entirely. The Seed Bible ships with some sources on by default (for example the Bible Project). Designs exist in Figma (see [#1719](https://github.com/HelloAOLab/seed-bible/issues/1719)).
-- **Finish the move to the compact discover panel.** Remove the old Discover pane ([#1864](https://github.com/HelloAOLab/seed-bible/issues/1864)). That first requires moving Playlist History to the profile ([#1863](https://github.com/HelloAOLab/seed-bible/issues/1863)) and making the panel's "Create" button ask what kind of content to create, as the Discover pane does today.
+- **Finish the move to the compact discover panel.** Remove the old Discover pane ([#1864](https://github.com/HelloAOLab/seed-bible/issues/1864)). Playlist History has already moved to the profile ([#1863](https://github.com/HelloAOLab/seed-bible/issues/1863)). What's left before the pane can go is making the panel's "Create" button ask what kind of content to create, as the Discover pane does today.
 - **Fix the panel's rough edges** so the rollout isn't judged on them:
   - "All" filter doesn't show all content ([#1915](https://github.com/HelloAOLab/seed-bible/issues/1915))
   - Panel sometimes doesn't appear ([#1917](https://github.com/HelloAOLab/seed-bible/issues/1917))
   - Filters cut off on desktop ([#1908](https://github.com/HelloAOLab/seed-bible/issues/1908))
-  - Toggle should show when the user only has a reading plan ([#1866](https://github.com/HelloAOLab/seed-bible/issues/1866))
   - Option to hide the panel completely ([#1868](https://github.com/HelloAOLab/seed-bible/issues/1868))
+  - ~~Toggle should show when the user only has a reading plan~~ ([#1866](https://github.com/HelloAOLab/seed-bible/issues/1866), fixed)
 
 ### Open questions
 
-- How does an organization supply content: by listing items directly in the customization, by pointing at a feed or API, or by shipping an extension that registers a content provider? The extension route already works technically but asks a lot of a non-developer.
+- How does an organization supply content: by listing items directly in the customization, by pointing at a feed or API, or by shipping an extension that registers a content provider? The extension route now works end to end for Apologist teams (see above), but building a new extension still asks a lot of a non-developer.
 - If a reader turns off a source that their organization's customization turned on, who wins? (Suggested default: the reader.)
 
 ### Related issues
 
-[#1719](https://github.com/HelloAOLab/seed-bible/issues/1719), [#1864](https://github.com/HelloAOLab/seed-bible/issues/1864), [#1863](https://github.com/HelloAOLab/seed-bible/issues/1863), [#1915](https://github.com/HelloAOLab/seed-bible/issues/1915), [#1917](https://github.com/HelloAOLab/seed-bible/issues/1917), [#1908](https://github.com/HelloAOLab/seed-bible/issues/1908), [#1866](https://github.com/HelloAOLab/seed-bible/issues/1866), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868), [#1831](https://github.com/HelloAOLab/seed-bible/issues/1831) (Apologist as discovered content), [#1830](https://github.com/HelloAOLab/seed-bible/issues/1830) (cross references in the panel)
+[#1719](https://github.com/HelloAOLab/seed-bible/issues/1719), [#1864](https://github.com/HelloAOLab/seed-bible/issues/1864), [#1915](https://github.com/HelloAOLab/seed-bible/issues/1915), [#1917](https://github.com/HelloAOLab/seed-bible/issues/1917), [#1908](https://github.com/HelloAOLab/seed-bible/issues/1908), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868), [#1830](https://github.com/HelloAOLab/seed-bible/issues/1830) (cross references in the panel). Closed: [#1863](https://github.com/HelloAOLab/seed-bible/issues/1863), [#1866](https://github.com/HelloAOLab/seed-bible/issues/1866), [#1831](https://github.com/HelloAOLab/seed-bible/issues/1831) (Apologist as discovered content)
 
 ---
 
@@ -81,9 +86,9 @@ Two people become friends by one sending a request and the other accepting it. F
 
 ### Where things stand
 
-The first version is in review in [#1939](https://github.com/HelloAOLab/seed-bible/pull/1939). It replaced an earlier attempt, [#1599](https://github.com/HelloAOLab/seed-bible/pull/1599), which used one-way "follows". We switched to mutual friendships because "you can see my stuff" should be something both people agree to.
+The first version **is done** ([#1939](https://github.com/HelloAOLab/seed-bible/pull/1939)). It replaced an earlier attempt, [#1599](https://github.com/HelloAOLab/seed-bible/pull/1599), which used one-way "follows". We switched to mutual friendships because "you can see my stuff" should be something both people agree to.
 
-What #1939 adds:
+What it includes:
 
 - A **Friends screen** on the profile: incoming requests (accept/decline), your friends (remove), add a friend by user ID or link, and sent requests (copy link/cancel).
 - A **profile card** that opens when you tap someone's picture or name.
@@ -93,7 +98,7 @@ What #1939 adds:
 
 How it works underneath: each friendship is a CasualOS **shared permission** (a grant that lets one account read another's records). Accepting a request creates it in both people's records, so it is always mutual, and either person removing it ends it for both. Requests go to a specific account and expire after 7 days.
 
-### Known gaps (follow-ups from #1939)
+### Known gaps and follow-ups
 
 1. **Data isn't actually private to friends yet.** Everything is still stored readable by anyone. Today the friends list only decides _whose_ data the app shows you, not _who is able_ to read it. Fixing this is item 4.
 2. **Make the profile card the place to manage a friendship**: send, accept, decline, cancel or remove from the card, so it can be opened from anywhere.
@@ -101,10 +106,12 @@ How it works underneath: each friendship is a CasualOS **shared permission** (a 
 4. **Add friends by email.** Built but switched off until the CasualOS server looks up emails within the Seed Bible's account space (casual-simulation/casualos#890).
 5. **Notify people about new friend requests** with web push notifications, instead of waiting for the app to refresh.
 6. **Live updates.** A friend's new note currently appears the next time you return to the app or chapter. Live updates would give each user a small shared document that their friends watch.
+7. **Useful previews for friend links** ([#1964](https://github.com/HelloAOLab/seed-bible/issues/1964)). A shared friend link currently previews as a plain Genesis 1 link. The server should recognize it and show "Add {name} as a friend" with their profile picture.
+8. **Invite friends to a shared session** ([#1965](https://github.com/HelloAOLab/seed-bible/issues/1965)). When starting a session, list your friends with an Invite button that sends each one a push notification. This needs the same push notifications as gap 5.
 
 ### Related issues
 
-[#1846](https://github.com/HelloAOLab/seed-bible/issues/1846) (subscribe to other users), [#1939](https://github.com/HelloAOLab/seed-bible/pull/1939), [#1599](https://github.com/HelloAOLab/seed-bible/pull/1599) (closed, superseded)
+[#1846](https://github.com/HelloAOLab/seed-bible/issues/1846) (subscribe to other users), [#1964](https://github.com/HelloAOLab/seed-bible/issues/1964), [#1965](https://github.com/HelloAOLab/seed-bible/issues/1965), [#1939](https://github.com/HelloAOLab/seed-bible/pull/1939) (merged), [#1599](https://github.com/HelloAOLab/seed-bible/pull/1599) (closed, superseded)
 
 ---
 
@@ -191,12 +198,12 @@ Make the customization editor look and work like the rest of the app, and fill t
 
 - **Redesign the customization editor.** It doesn't look good and doesn't follow the app's conventions ([#1903](https://github.com/HelloAOLab/seed-bible/issues/1903)).
 - **A default variant for Light and one for Dark** ([#1859](https://github.com/HelloAOLab/seed-bible/issues/1859)). Today a customization has one default variant, and under the System theme the app ignores it and picks the first variant matching the device. So an author with "Night" and "Midnight" (default) variants sees dark devices get "Night".
-- **Theming from a link or API** ([#1251](https://github.com/HelloAOLab/seed-bible/issues/1251)). A partner like Apologist should be able to send someone into a Seed Bible already themed with their brand colors in one click.
+- **Theming from a link or API** ([#1251](https://github.com/HelloAOLab/seed-bible/issues/1251), closed and folded into the wider "customization center" / whitelabeling work). A partner like Apologist should be able to send someone into a Seed Bible already themed with their brand colors in one click, without having to save a customization to their account.
 - **Remove the orange from the dark theme** ([#1870](https://github.com/HelloAOLab/seed-bible/issues/1870)).
 
 ### Related issues
 
-[#1903](https://github.com/HelloAOLab/seed-bible/issues/1903), [#1859](https://github.com/HelloAOLab/seed-bible/issues/1859), [#1251](https://github.com/HelloAOLab/seed-bible/issues/1251), [#1870](https://github.com/HelloAOLab/seed-bible/issues/1870)
+[#1903](https://github.com/HelloAOLab/seed-bible/issues/1903), [#1859](https://github.com/HelloAOLab/seed-bible/issues/1859), [#1870](https://github.com/HelloAOLab/seed-bible/issues/1870). Closed: [#1251](https://github.com/HelloAOLab/seed-bible/issues/1251)
 
 ---
 
@@ -237,7 +244,7 @@ New users are asked too many things at once. Cut the first-run experience down s
 
 ### Where things stand
 
-A new visitor can meet, close together: the Welcome / Today screen, the guided tutorial, the install-the-app prompt, a sign-in prompt, and the sidebar and toolbar all competing for attention. [#1813](https://github.com/HelloAOLab/seed-bible/issues/1813) already made the tutorial optional ("Take a tour") and starts desktop with the sidebar collapsed, and the install prompt no longer shows on startup. It is still too much.
+A new visitor can meet, close together: the Welcome / Today screen, the guided tutorial, the install-the-app prompt, a sign-in prompt, and the sidebar and toolbar all competing for attention. [#1813](https://github.com/HelloAOLab/seed-bible/issues/1813) already made the tutorial optional ("Take a tour") and starts desktop with the sidebar collapsed, and the install prompt no longer shows on startup. [#1942](https://github.com/HelloAOLab/seed-bible/issues/1942) went further: choosing "No thanks" on the tour, or leaving it early, now goes straight to Scripture without the "Install App" and "Download Translation" prompts. The install prompt waits for the next visit instead, and never comes back on that device once dismissed. Even with that, it is still too much.
 
 ### What we want to build
 
@@ -251,7 +258,7 @@ A new visitor can meet, close together: the Welcome / Today screen, the guided t
 
 ### Related issues
 
-[#1813](https://github.com/HelloAOLab/seed-bible/issues/1813) (closed), [#1436](https://github.com/HelloAOLab/seed-bible/issues/1436) (closed), [#1886](https://github.com/HelloAOLab/seed-bible/issues/1886). No dedicated issue yet for this pass.
+[#1886](https://github.com/HelloAOLab/seed-bible/issues/1886). Closed: [#1813](https://github.com/HelloAOLab/seed-bible/issues/1813), [#1942](https://github.com/HelloAOLab/seed-bible/issues/1942), [#1436](https://github.com/HelloAOLab/seed-bible/issues/1436). No dedicated issue yet for this pass.
 
 ---
 
@@ -270,14 +277,14 @@ The extension system already works and is used for all of our own extensions (au
 ### What we want to build
 
 - **A way to publish and install extensions from outside this repo**, with versions and updates.
-- **A trust model.** Extensions run in the same page as the app (loaded with `import(url)`), so an extension can read anything the app can. Before opening this up we need to decide how much to trust outside code: review before listing, a permission list the user approves at install time, sandboxing, or some mix.
-- **Secrets for extensions** ([#1836](https://github.com/HelloAOLab/seed-bible/issues/1836)). Outside extensions will want API keys. The plan is for our server to hold the key and make the request on the extension's behalf, so the key never reaches the browser.
+- **A trust model.** Extensions run in the same page as the app (loaded with `import(url)`), so an extension can read anything the app can. Before opening this up we need to decide how much to trust outside code: review before listing, a permission list the user approves at install time, sandboxing, or some mix. One known gap to close as part of this: an extension can currently send requests using _another_ extension's stored secrets. It can't read the secret itself, but it does get the responses ([#1943](https://github.com/HelloAOLab/seed-bible/issues/1943)).
+- ~~**Secrets for extensions**~~ (done: [#1836](https://github.com/HelloAOLab/seed-bible/issues/1836)). Extensions can declare `sensitive` settings such as API keys. Our server holds the value and adds it to the extension's requests, so the key never reaches the browser. A customization can also supply these values for everyone who uses it.
 - **A cleaner Extensions screen** ([#1482](https://github.com/HelloAOLab/seed-bible/issues/1482)). Hide library-only extensions (ones with no visible effect of their own) behind a `utility` flag, and stop saving extensions that only make sense for one visit. This matters more once anyone can publish.
 - **Developer docs**, which is item 9.
 
 ### Related issues
 
-[#1482](https://github.com/HelloAOLab/seed-bible/issues/1482), [#1836](https://github.com/HelloAOLab/seed-bible/issues/1836), [#673](https://github.com/HelloAOLab/seed-bible/issues/673) (packages for extensions, closed)
+[#1482](https://github.com/HelloAOLab/seed-bible/issues/1482), [#1943](https://github.com/HelloAOLab/seed-bible/issues/1943). Closed: [#1836](https://github.com/HelloAOLab/seed-bible/issues/1836), [#673](https://github.com/HelloAOLab/seed-bible/issues/673) (packages for extensions)
 
 ---
 
@@ -347,17 +354,19 @@ Let the Bonfire AI take actions in the app, not just answer in text. For example
 
 ### Where things stand
 
-The chat system already supports this. App features can hand the AI a set of **tools** (functions it may call), and the playlist editor already offers tools to add, edit, move and delete playlist items. Chat providers declare `supportsToolCalling`. Bonfire doesn't support it yet, so those features are unavailable when chatting with Bonfire ([#1920](https://github.com/HelloAOLab/seed-bible/issues/1920) is a bug that comes from this gap).
+The chat system already supports this. App features can hand the AI a set of **tools** (functions it may call), and the playlist editor already offers tools to add, edit, move and delete playlist items. Chat providers declare `supportsToolCalling`. The Apologist provider supports it; Bonfire doesn't yet, so those features are unavailable when chatting with Bonfire. The playlist editor's AI button now hides itself when no chat agent can edit playlists, instead of opening an empty chat ([#1920](https://github.com/HelloAOLab/seed-bible/issues/1920)). That fixes the symptom; Bonfire still can't do the work.
+
+AI chat also now follows the open tab's translation, and can look up translations the app has, then ask before switching ([#1265](https://github.com/HelloAOLab/seed-bible/issues/1265)).
 
 ### What we want to build
 
 - Tool calling support in the Bonfire provider.
 - The other Bonfire improvements from [#1627](https://github.com/HelloAOLab/seed-bible/issues/1627): sources, follow-up suggestions, Markdown rendering, and links to HeyBonfire's terms and privacy policy.
-- More tools over time, for example opening a passage or switching translation ([#1265](https://github.com/HelloAOLab/seed-bible/issues/1265)).
+- More tools over time, for example opening a passage.
 
 ### Related issues
 
-[#1627](https://github.com/HelloAOLab/seed-bible/issues/1627), [#1920](https://github.com/HelloAOLab/seed-bible/issues/1920), [#1265](https://github.com/HelloAOLab/seed-bible/issues/1265)
+[#1627](https://github.com/HelloAOLab/seed-bible/issues/1627). Closed: [#1920](https://github.com/HelloAOLab/seed-bible/issues/1920), [#1265](https://github.com/HelloAOLab/seed-bible/issues/1265)
 
 ---
 
@@ -460,11 +469,23 @@ There are two directions, and they're quite different:
 - **Seed Bible as an MCP server.** Someone connects their own AI assistant to their Seed Bible account and asks it to "find my notes on grace", "add Romans 8 to my morning playlist", or "what did I read last week?". This reuses the same kinds of tools item 12 builds, offered to outside assistants.
 - **Seed Bible as an MCP client.** The in-app chat (or an extension) connects to outside MCP servers to gain new abilities, such as a commentary library or a church's sermon archive.
 
+### Where things stand
+
+The client direction came first and is done ([#1670](https://github.com/HelloAOLab/seed-bible/pull/1670)). It's an optional **MCP extension** installed from Settings → Extensions. Its "AI Chat Settings" screen lets someone add an MCP server by URL (with an optional sign-in header), and that server's tools become available in AI chat. The server list is saved privately, since it can hold passwords or keys.
+
+Its limits:
+
+- **Only servers on the internet.** MCP servers that run on someone's own computer aren't supported, because the chat runs entirely in the browser and has no server of ours to relay through.
+- **Only chat agents with tool calling can use them**, so not Bonfire until item 12 is done.
+
+### What we want to build
+
+- **The server direction**, building on item 12's tools.
+
 ### Open questions
 
-- Which direction comes first? (Suggested: the server, since it builds directly on item 12's tools and is what users would ask for.)
 - How does an outside assistant sign in, and what can it do on the user's behalf? This needs the same care as item 8's trust model, and must respect item 4's privacy levels.
 
 ### Related issues
 
-None yet.
+[#1670](https://github.com/HelloAOLab/seed-bible/pull/1670) (MCP client extension, merged). No issue yet for the server direction.
