@@ -47,6 +47,7 @@ describe("ShareModal embed", () => {
         <TestHost state={state}>
           <ShareModal
             app={state.app}
+            modals={state.modals}
             session={null}
             shareUrl={options?.shareUrl}
             themes={themes}
@@ -164,6 +165,24 @@ describe("ShareModal embed", () => {
     expect(container.querySelector("iframe")).toBeNull();
   });
 
+  it("keeps Copy in the footer, clear of the embed code", async () => {
+    await renderSheet({ shareUrl });
+
+    await act(async () => {
+      clickButton("Embed").click();
+    });
+
+    const copy = clickButton("Copy");
+    const footer = container.querySelector("footer.sb-share-embed-footer");
+    const code = container.querySelector("textarea.sb-share-embed-code");
+    const scroll = container.querySelector(".sb-share-embed-scroll");
+
+    expect(footer?.contains(copy)).toBe(true);
+    expect(code?.contains(copy)).toBe(false);
+    expect(scroll?.contains(code)).toBe(true);
+    expect(scroll?.contains(copy)).toBe(false);
+  });
+
   it("copies the embed code and stays on the embed step", async () => {
     await renderSheet({ shareUrl });
 
@@ -271,6 +290,7 @@ describe("QuickToolbar embed share", () => {
             toast={state.app.toast}
             modals={state.modals}
             app={state.app}
+            readingPlans={state.readingPlans}
             embedThemes={themes}
             customizationLocator={customizationLocator}
           />

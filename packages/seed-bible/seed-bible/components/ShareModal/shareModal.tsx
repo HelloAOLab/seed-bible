@@ -214,48 +214,51 @@ export const ShareModal = (props: ShareModalProps) => {
   if (view === "embed" && embedUrl) {
     return (
       <div className="sb-share sb-share-embed">
-        <button
-          type="button"
-          className="sb-share-embed-back"
-          onClick={() => setView("actions")}
-        >
-          <span className="material-symbols-outlined rtl-mirror">
-            arrow_back
-          </span>
-          {t("back", { defaultValue: "Back" })}
-        </button>
-        <iframe
-          key={embedUrl.href}
-          className="sb-share-embed-preview"
-          src={embedUrl.href}
-          title={t("share-embed-preview", { defaultValue: "Preview" })}
-        />
-        <label className="sb-share-embed-field">
-          <span>{t("share-embed-theme", { defaultValue: "Theme" })}</span>
-          <select
-            value={themeId}
-            onChange={(event) => {
-              setThemeId(event.currentTarget.value);
-            }}
+        <div className="sb-share-embed-scroll">
+          <button
+            type="button"
+            className="sb-share-embed-back"
+            onClick={() => setView("actions")}
           >
-            <option value={SYSTEM_THEME_ID}>
-              {embedThemeLabel(t, { id: SYSTEM_THEME_ID, name: "System" })}
-            </option>
-            {themeChoices.map((theme) => (
-              <option key={theme.id} value={theme.id}>
-                {embedThemeLabel(t, theme)}
+            <span className="material-symbols-outlined rtl-mirror">
+              arrow_back
+            </span>
+            {t("back", { defaultValue: "Back" })}
+          </button>
+          <iframe
+            key={embedUrl.href}
+            className="sb-share-embed-preview"
+            src={embedUrl.href}
+            title={t("share-embed-preview", { defaultValue: "Preview" })}
+          />
+          <label className="sb-share-embed-field">
+            <span>{t("share-embed-theme", { defaultValue: "Theme" })}</span>
+            <select
+              value={themeId}
+              onChange={(event) => {
+                setThemeId(event.currentTarget.value);
+              }}
+            >
+              <option value={SYSTEM_THEME_ID}>
+                {embedThemeLabel(t, { id: SYSTEM_THEME_ID, name: "System" })}
               </option>
-            ))}
-          </select>
-        </label>
-        <div className="sb-share-embed-code">
+              {themeChoices.map((theme) => (
+                <option key={theme.id} value={theme.id}>
+                  {embedThemeLabel(t, theme)}
+                </option>
+              ))}
+            </select>
+          </label>
           <textarea
+            className="sb-share-embed-code"
             readOnly
             rows={4}
             spellcheck={false}
             aria-label={t("share-embed-code", { defaultValue: "Embed code" })}
             value={embedHtml}
           />
+        </div>
+        <footer className="sb-share-embed-footer">
           <button
             type="button"
             className="sb-share-embed-copy"
@@ -265,7 +268,7 @@ export const ShareModal = (props: ShareModalProps) => {
           >
             {t("copy", { defaultValue: "Copy" })}
           </button>
-        </div>
+        </footer>
       </div>
     );
   }
