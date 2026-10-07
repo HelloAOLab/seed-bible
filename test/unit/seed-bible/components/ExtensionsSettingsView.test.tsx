@@ -91,6 +91,7 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       clearValue: vi.fn().mockResolvedValue(undefined),
       getUnusedSensitiveProxies: () => [],
       isSensitiveValueSet: () => false,
+      getSensitiveValueSource: () => null,
       hasStoredSensitiveValues: () => false,
       getSensitiveDestination: () => ({
         host: "api.example.com",
