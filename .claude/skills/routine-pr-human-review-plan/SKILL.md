@@ -55,7 +55,16 @@ If there's more than one (older runs posted new comments), update the newest and
 - Earlier discussion: if a reviewer already reported a bug, or a comment explains how to reach a hidden feature, use it.
 - Earlier plans for this PR: other files in `plans/seed-bible/<n>/`. If there are any, read "Building on earlier plans" in step 4 before deciding what to test.
 
-**Preview build.** The CD workflow deploys every same-repo PR branch and keeps one PR comment up to date with the link. Find the comment containing `<!-- deployment-link -->` and take the `https://alpha.seedbible.org/b/...` URL from it. If there's no such comment and the PR isn't from a fork, use `https://alpha.seedbible.org/b/<branch>`, where `<branch>` is `head.ref` with every character outside `a-zA-Z0-9-` replaced by `_`. That link starts working once the deploy finishes. A PR from a fork gets no preview. In that case leave out `preview` and make setup a local run (see below).
+**Preview build.** The CD workflow deploys every commit pushed to a same-repo PR branch, and each build has its own address: `https://alpha.seedbible.org/b/<branch>/<full head commit>`.
+
+- `<branch>` is `head.ref` with every character outside `a-zA-Z0-9-` replaced by `_` (so `feature/1234` becomes `feature_1234`).
+- `<full head commit>` is the full 40-character `head.sha`, the same commit the plan is written for.
+
+Always build the link this way, so testers get exactly the code the plan describes. Don't use the bare `https://alpha.seedbible.org/b/<branch>` link, which always opens the branch's **latest** build, and don't copy the link from the deployment comment, which follows the latest build too. Either could be a different commit by the time someone tests.
+
+The build for a just-pushed commit may still be deploying when the plan is written, so the plan's first setup step should say: if the preview shows an error or doesn't load, wait a few minutes and reload.
+
+A PR from a fork gets no preview. In that case leave out `preview` and make setup a local run (see below).
 
 ## 4. Decide what to test
 
@@ -116,7 +125,7 @@ Write the plan to `plans/seed-bible/<n>/<short commit>.json` in the `pr-test-pla
     }
   ],
   "preview": {
-    "url": "https://alpha.seedbible.org/b/feature_1234",
+    "url": "https://alpha.seedbible.org/b/feature_1234/<full head commit sha>",
     "label": "Open the preview build"
   },
   "setup": [
