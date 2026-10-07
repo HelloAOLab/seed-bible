@@ -1,0 +1,186 @@
+/* A verse's cross-references as a Discover card, matching the look of
+   Discover's other study cards. */
+.sb-references-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-self: stretch;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 0;
+}
+
+/* The open card tints its whole list item. Styled from here so Discover
+   itself stays untouched. */
+.sb-discover-item:has(> .sb-references-card--expanded) {
+  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 40%);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 94%);
+}
+
+.sb-references-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.sb-references-card-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sb-references-card-name {
+  overflow: hidden;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: var(--sb-reader-font-family, inherit);
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: start;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.sb-references-card-name:hover {
+  text-decoration: underline;
+}
+
+.sb-references-card-name:focus-visible,
+.sb-references-card-chevron:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sb-references-card-count {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-references-card-chevron {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  cursor: pointer;
+}
+
+/* Two classes, to outrank the app-wide `body .material-symbols-outlined`. */
+.sb-references-card-chevron .material-symbols-outlined {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.sb-references-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sb-references-chip {
+  padding: 1px 8px;
+  border: 1px solid
+    color-mix(in srgb, var(--sb-secondary-color), transparent 55%);
+  border-radius: 50px;
+  background: none;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.sb-references-chip:hover {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+}
+
+.sb-references-chip:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 1px;
+}
+
+/* The reference the quote below is showing. */
+.sb-references-chip--active,
+.sb-references-chip--active:hover {
+  border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+}
+
+.sb-references-chip--more {
+  border-style: dashed;
+  color: var(--sb-primary-color);
+}
+
+.sb-references-quote {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 6px;
+  background: var(--sb-reader-background);
+}
+
+/* Two classes, to outrank the pane's own `.sb-references-text` size. */
+.sb-references-quote .sb-references-quote-text {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--sb-font-color);
+}
+
+.sb-references-quote-text::before {
+  content: "\201C";
+}
+
+.sb-references-quote-text::after {
+  content: "\201D";
+}
+
+.sb-references-quote-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.6875rem;
+}
+
+.sb-references-quote-ref {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-references-quote-go {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-references-quote-go:hover {
+  text-decoration: underline;
+}
+
+.sb-references-quote-go:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

@@ -2,6 +2,11 @@ import "./shareModal.css";
 import { useEffect, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
+import type { ModalManager } from "../../managers/ModalManager";
+import {
+  SessionQRCode,
+  openSessionQRCodeModal,
+} from "../SessionQRCode/SessionQRCode";
 import {
   buildEmbedIframeHtml,
   buildEmbedUrl,
@@ -25,6 +30,8 @@ export interface ShareModalProps {
   /** Open the device's native share sheet. */
   onShareVia?: () => void;
   app: AppState;
+  /** Used to open the large QR code view for a shared session. */
+  modals: ModalManager;
   hideShareLink?: boolean;
   /** The session to share, or null. */
   session: BibleReadingSession | null;
@@ -87,7 +94,13 @@ export const ShareModal = (props: ShareModalProps) => {
         t("link-to-join-shared-session-copied", {
           defaultValue:
             "A link to join the shared session was copied to your clipboard",
-        })
+        }),
+        {
+          hint: t("session-qr-toast-hint", {
+            defaultValue: "Tap to show a QR code",
+          }),
+          onClick: () => openSessionQRCodeModal(props.modals, url.href),
+        }
       );
     } catch (error) {
       console.error("Failed to copy the shared session link.", error);
@@ -282,6 +295,12 @@ export const ShareModal = (props: ShareModalProps) => {
           </button>
         ))}
       </div>
+      {props.session && (
+        <SessionQRCode
+          url={getSessionUrl(props.session).href}
+          modals={props.modals}
+        />
+      )}
     </div>
   );
 };

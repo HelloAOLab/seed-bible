@@ -14,6 +14,7 @@ import {
   parseSessionKey,
   generateV1ConnectionToken,
 } from "@casual-simulation/aux-common";
+import type { SharedMarkerPermission } from "@casual-simulation/aux-common";
 import { sha256 } from "hash.js";
 import { first, firstValueFrom, timeout } from "rxjs";
 import { guardRecordsClient } from "./SessionGuard";
@@ -97,6 +98,149 @@ export async function awaitDocumentSync(
     doc.unsubscribe();
     throw error;
   }
+}
+
+export type ProxyRequestMethod =
+  | "GET"
+  | "POST"
+  | "PUT"
+  | "PATCH"
+  | "DELETE"
+  | "HEAD"
+  | "OPTIONS";
+
+type ProxyResult<T> =
+  | ({ success: true } & T)
+  | { success: false; errorCode: string; errorMessage: string };
+
+/**
+ * The CasualOS proxy record procedures. Newer than the SDK version this app
+ * pins, so its client has no types for them; the client forwards any method
+ * name to the server as a procedure call, so they work all the same.
+ */
+interface ProxyProcedures {
+  recordProxy(input: {
+    recordName: string;
+    item: {
+      address: string;
+      host: string;
+      data: Record<string, string>;
+      markers: string[];
+    };
+  }): Promise<ProxyResult<{ recordName: string; address: string }>>;
+  eraseProxy(input: {
+    recordName: string;
+    address: string;
+  }): Promise<ProxyResult<object>>;
+  proxyRequest(input: {
+    recordName: string;
+    address: string;
+    path: string;
+    method: ProxyRequestMethod;
+    body?: unknown;
+  }): Promise<
+    ProxyResult<{
+      response: {
+        statusCode: number;
+        headers: Record<string, string>;
+        body: string | null;
+      };
+    }>
+  >;
+}
+
+/**
+ * Collects every page of a listing that pages by number from 0 and reports a
+ * total, as the shared-permission listings do (unlike `listData`, which pages
+ * by address). Throws when a page fails, matching `listAllData`.
+ */
+async function listAllPages<T>(
+  label: string,
+  fetchPage: (
+    page: number
+  ) => Promise<
+    | { success: true; items: T[]; totalCount: number }
+    | { success: false; errorCode: string }
+  >,
+  /** Stops at the page where this first finds what it's after. */
+  isFound?: (item: T) => boolean
+): Promise<T[]> {
+  const all: T[] = [];
+  let previousPage: string | null = null;
+  for (let page = 0; ; page++) {
+    const result = await fetchPage(page);
+    if (!result.success) {
+      console.error(`Error listing ${label}:`, result);
+      throw new Error(`Error listing ${label}: ${result.errorCode}`);
+    }
+    // A server that ignores `page` sends the first page every time, and
+    // without a total to reach, that would never end.
+    const thisPage = JSON.stringify(result.items);
+    if (thisPage === previousPage) {
+      return all;
+    }
+    previousPage = thisPage;
+    all.push(...result.items);
+    // Stopping on an empty page too means a total that shrinks while we page
+    // (someone revoking mid-listing) can't keep us asking for pages forever.
+    if (
+      result.items.length === 0 ||
+      all.length >= result.totalCount ||
+      (isFound && result.items.some(isFound))
+    ) {
+      return all;
+    }
+  }
+}
+
+/**
+ * Reads every page of a data listing, each continuing after the last address
+ * the one before it returned. Throws on a failed page. `onPage` is called as
+ * each page arrives.
+ */
+export async function listAllByAddress(
+  fetchPage: (lastAddress: string | undefined) => Promise<
+    | {
+        success: true;
+        items: { address: string; data: unknown }[];
+        totalCount: number;
+      }
+    | { success: false; errorCode: string }
+  >,
+  onPage?: () => void
+): Promise<{ success: true; items: { address: string; data: unknown }[] }> {
+  const allItems: { address: string; data: unknown }[] = [];
+  let lastAddress: string | undefined;
+
+  while (true) {
+    const page = await fetchPage(lastAddress);
+
+    if (!page.success) {
+      console.error("Error listing data:", page);
+      throw new Error(`Error listing data: ${page.errorCode}`);
+    }
+    onPage?.();
+
+    if (page.items.length === 0) {
+      break;
+    }
+
+    for (const item of page.items) {
+      allItems.push({ address: item.address, data: item.data });
+    }
+
+    // Saves asking for the empty page that would otherwise end the loop.
+    // Depending on the server's store, `totalCount` is either every item
+    // listed or only those after `lastAddress`; reaching it means this was
+    // the last page either way.
+    if (allItems.length >= page.totalCount) {
+      break;
+    }
+
+    lastAddress = page.items[page.items.length - 1]?.address;
+  }
+
+  return { success: true, items: allItems };
 }
 
 export function CasualOSManager(
@@ -324,6 +468,17 @@ export function CasualOSManager(
     client.sessionKey = sessionKey.value as string;
   });
 
+  const fetchSentPage = async (page: number) => {
+    const result = await client.listSentSharedPermissions({ page });
+    return result.success
+      ? {
+          success: true as const,
+          items: result.sharedPermissions,
+          totalCount: result.totalCount,
+        }
+      : result;
+  };
+
   const listDataByMarker = async (
     // Despite the field's name, the records server resolves this the same
     // way it does a write's `recordKey` - either a bare record name or an
@@ -384,38 +539,82 @@ export function CasualOSManager(
       });
     },
 
+    /**
+     * Removes an uploaded file, given the URL `recordFile` returned for it.
+     * The SDK's own result type for this procedure leaves out the success
+     * case, so the shape callers can rely on is spelled out here.
+     */
+    eraseFile: async (
+      recordKey: string,
+      fileUrl: string
+    ): Promise<{
+      success: boolean;
+      errorCode?: string;
+      errorMessage?: string;
+    }> => {
+      const result: unknown = await client.eraseFile({
+        recordKey,
+        fileUrl,
+      });
+      return result as {
+        success: boolean;
+        errorCode?: string;
+        errorMessage?: string;
+      };
+    },
+
     listDataByMarker,
+
+    /**
+     * Creates or replaces a proxy record: a host plus values the server
+     * attaches to each request it forwards there. The values are never sent
+     * back to the browser, and replacing a proxy replaces all of its `data`.
+     */
+    recordProxy: (
+      recordName: string,
+      address: string,
+      host: string,
+      data: Record<string, string>,
+      options: { marker: string }
+    ) =>
+      (client as unknown as ProxyProcedures).recordProxy({
+        recordName,
+        item: { address, host, data, markers: [options.marker] },
+      }),
+
+    eraseProxy: (recordName: string, address: string) =>
+      (client as unknown as ProxyProcedures).eraseProxy({
+        recordName,
+        address,
+      }),
+
+    /**
+     * Sends a request through a proxy record. The server fills in the proxy's
+     * values and forwards it to the proxy's host; `path` is appended to it.
+     */
+    proxyRequest: (
+      recordName: string,
+      address: string,
+      request: { path: string; method: ProxyRequestMethod; body?: unknown }
+    ) =>
+      (client as unknown as ProxyProcedures).proxyRequest({
+        recordName,
+        address,
+        ...request,
+      }),
 
     listAllDataByMarker: async (
       recordName: string,
-      marker: string
+      marker: string,
+      onPage?: () => void
     ): Promise<{
       success: boolean;
       items: { address: string; data: unknown }[];
     }> => {
-      const allItems: { address: string; data: unknown }[] = [];
-      let lastAddress: string | undefined;
-
-      while (true) {
-        const page = await listDataByMarker(recordName, marker, lastAddress);
-
-        if (!page.success) {
-          console.error("Error listing data:", page);
-          throw new Error(`Error listing data: ${page.errorCode}`);
-        }
-
-        if (page.items.length === 0) {
-          break;
-        }
-
-        for (const item of page.items) {
-          allItems.push({ address: item.address, data: item.data });
-        }
-
-        lastAddress = page.items[page.items.length - 1]?.address;
-      }
-
-      return { success: true, items: allItems };
+      return listAllByAddress(
+        (lastAddress) => listDataByMarker(recordName, marker, lastAddress),
+        onPage
+      );
     },
 
     /**
@@ -447,40 +646,105 @@ export function CasualOSManager(
         return existing;
       }
 
-      const sweep = (async () => {
-        const allItems: { address: string; data: unknown }[] = [];
-        let lastAddress: string | undefined;
-
-        while (true) {
-          const page = await client.listData({
-            recordName,
-            address: lastAddress,
-          });
-
-          if (!page.success) {
-            console.error("Error listing data:", page);
-            throw new Error(`Error listing data: ${page.errorCode}`);
-          }
-
-          if (page.items.length === 0) {
-            break;
-          }
-
-          for (const item of page.items) {
-            allItems.push({ address: item.address, data: item.data });
-          }
-
-          lastAddress = page.items[page.items.length - 1]?.address;
-        }
-
-        return { success: true, items: allItems };
-      })().finally(() => {
+      const sweep = listAllByAddress((lastAddress) =>
+        client.listData({ recordName, address: lastAddress })
+      ).finally(() => {
         listAllDataInFlight.delete(recordName);
       });
 
       listAllDataInFlight.set(recordName, sweep);
       return sweep;
     },
+
+    /**
+     * Asks another user to share `permission` both ways: once they accept, each
+     * of them holds it in the other's record.
+     *
+     * A target is required. An untargeted request can be accepted by whoever
+     * reaches it first, so it would hand the grant to anyone holding its ID.
+     */
+    requestSharedPermission: (
+      recordName: string,
+      permission: SharedMarkerPermission,
+      target: { userId: string } | { email: string },
+      options?: { expireTimeMs?: number }
+    ) =>
+      client.requestSharedPermission({
+        recordName,
+        permission,
+        targetUserId: "userId" in target ? target.userId : undefined,
+        targetUserEmail: "email" in target ? target.email : undefined,
+        expireTimeMs: options?.expireTimeMs,
+      }),
+
+    /**
+     * Accepts a request sent to the signed-in user, granting the requester the
+     * permission in `recordName` (the accepter's own record).
+     *
+     * Accepting a request that is already accepted reports success without
+     * granting anything, so success alone doesn't prove a new share exists.
+     */
+    acceptSharedPermission: (sharedPermissionId: string, recordName: string) =>
+      client.acceptSharedPermission({ sharedPermissionId, recordName }),
+
+    /** Declines a request sent to the signed-in user. */
+    rejectSharedPermission: (sharedPermissionId: string) =>
+      client.rejectSharedPermission({ sharedPermissionId }),
+
+    /**
+     * Ends a share from either side, removing the grant from both records. The
+     * requester can also use it to withdraw a request nobody has accepted yet.
+     */
+    revokeSharedPermission: (sharedPermissionId: string) =>
+      client.revokeSharedPermission({ sharedPermissionId }),
+
+    /** Every accepted share the signed-in user is part of, as the other party's record. */
+    listAllSharedRecords: () =>
+      listAllPages("shared records", async (page) => {
+        const result = await client.listSharedRecords({ page });
+        return result.success
+          ? {
+              success: true,
+              items: result.sharedRecords,
+              totalCount: result.totalCount,
+            }
+          : result;
+      }),
+
+    /** Every request the signed-in user has sent, in any status. */
+    listAllSentSharedPermissions: () =>
+      listAllPages("sent shared permissions", fetchSentPage),
+
+    /**
+     * One request the signed-in user sent, found by ID, or null. The server
+     * has no lookup by ID, so this pages the sent list (newest first) only as
+     * far as the request, which for one just sent is the first page.
+     */
+    findSentSharedPermission: async (id: string) => {
+      const sent = await listAllPages(
+        "sent shared permissions",
+        fetchSentPage,
+        (permission) => permission.id === id
+      );
+      return sent.find((permission) => permission.id === id) ?? null;
+    },
+
+    /**
+     * Every request ever sent to the signed-in user, in any status. Callers
+     * wanting what still needs an answer must keep `status: "requested"` and
+     * drop expired ones themselves; an expired request keeps that status.
+     */
+    listAllRequestedSharedPermissions: () =>
+      listAllPages("requested shared permissions", async (page) => {
+        const result = await client.listRequestedSharedPermissions({ page });
+        return result.success
+          ? {
+              success: true,
+              items: result.sharedPermissions,
+              totalCount: result.totalCount,
+            }
+          : result;
+      }),
 
     /**
      * Fetches a page's link preview (title, description, image) from the

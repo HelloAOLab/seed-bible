@@ -13,6 +13,7 @@ import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import type { EmbedThemeChoice } from "../../managers/EmbedMode";
+import type { ReadingPlansManager } from "../../managers/ReadingPlansManager";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;
@@ -31,6 +32,7 @@ interface QuickToolbarProps {
   embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
   /** Active customization locator, kept on the embed URL. */
   customizationLocator?: { readonly value: string | null };
+  readingPlans: ReadingPlansManager;
 }
 
 /**
@@ -41,7 +43,7 @@ interface QuickToolbarProps {
  * no quick tool is currently visible.
  */
 export function QuickToolbar(props: QuickToolbarProps) {
-  const { toolsManager, readingState, playlists } = props;
+  const { toolsManager, readingState, playlists, readingPlans } = props;
   const { t } = useI18n();
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
 
@@ -57,6 +59,7 @@ export function QuickToolbar(props: QuickToolbarProps) {
     app: props.app,
     embedThemes: props.embedThemes,
     customizationLocator: props.customizationLocator,
+    readingPlans,
   });
   const visibleTools = tools.filter((tool) => tool.visible.value);
 

@@ -44,8 +44,13 @@ import {
 } from "../Avatar/Avatar";
 import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
-import { trimmedOrNull } from "../../managers/Utils";
+import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { useAppConfig } from "../../app/appConfig";
+import { SessionQRCode } from "../SessionQRCode/SessionQRCode";
+import {
+  ParticipantFriendButton,
+  rowsWithFriendButton,
+} from "../FriendsPane/ParticipantFriendButton";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -109,7 +114,8 @@ const HIGHLIGHT_DURATION_OPTIONS: { label: string; value: number | null }[] = [
  * - "End Session" removes the tab (which disposes the session and removes
  *   its registry entry automatically via `wrapSessionLifecycle`).
  *
- * Non-host participants see the current settings but can't change them.
+ * Non-host participants see the current settings and who's there, but can't
+ * change them. Everyone can add the other participants as friends.
  */
 /**
  * localStorage flag: once the host ticks "Don't show this again" in the
@@ -224,6 +230,7 @@ function SessionSettingsModalContent(props: {
       sessionRoleRank(getUserSessionRole(options, a)) -
       sessionRoleRank(getUserSessionRole(options, b))
   );
+  const friendButtonRows = rowsWithFriendButton(participants);
 
   return (
     <div className="sb-session-settings">
@@ -256,6 +263,8 @@ function SessionSettingsModalContent(props: {
             </button>
           </div>
         </div>
+
+        <SessionQRCode url={sessionUrl.href} modals={state.modals} />
 
         {!isHost && (
           <p className="sb-session-settings-note">
@@ -407,7 +416,7 @@ function SessionSettingsModalContent(props: {
           </p>
         </div>
 
-        {isHost && participants.length > 0 && (
+        {participants.length > 0 && (
           <div className="sb-session-settings-section">
             <div className="sb-session-settings-section-title">
               {t("session-settings-section-participants", {
@@ -459,7 +468,14 @@ function SessionSettingsModalContent(props: {
                         </span>
                       )}
                     </span>
-                    {!isHostUser && (
+                    {friendButtonRows.has(user.connectionId) && (
+                      <ParticipantFriendButton
+                        state={state}
+                        userId={user.userId}
+                        displayName={getUserDisplayName(user)}
+                      />
+                    )}
+                    {isHost && !isHostUser && (
                       <button
                         type="button"
                         className={`sb-session-participant-action${isCoHost ? " sb-session-participant-action-active" : ""}`}
@@ -679,6 +695,7 @@ export function openShareSessionModal(
     content: () => (
       <ShareModal
         app={state.app}
+        modals={state.modals}
         session={session}
         hideShareLink
         onClose={() => state.modals.closeModal(modalId)}
@@ -2429,8 +2446,10 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
       aria-label={t("shared-sessions", { defaultValue: "Shared sessions" })}
     >
       {entries.map((entry) => {
-        const hostName =
-          entry.hostProfile?.name ?? `User ${entry.hostUserId.slice(0, 8)}`;
+        const hostName = displayNameOf(
+          { userId: entry.hostUserId, name: entry.hostProfile?.name },
+          t
+        );
         // Pure-hash visual keyed by hostUserId — same key every client uses
         // for this host, so everyone sees the same icon+color combo.
         const visual = getUserAnimalVisual(entry.hostUserId);

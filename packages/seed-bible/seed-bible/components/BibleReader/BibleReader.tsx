@@ -44,9 +44,11 @@ import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   annotationVerseNumbers,
+  visibleChapterAnnotations,
   type Annotation,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
+import type { FriendsManager } from "../../managers/FriendsManager";
 import type {
   BibleReadingSession,
   ConnectionSessionUserVisual,
@@ -58,6 +60,7 @@ import { MobileSessionParticipants } from "../../components/SessionParticipants/
 import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import { Spinner } from "../Spinner/Spinner";
 import {
   SaveStarIcon,
   openSaveModalForLocation,
@@ -261,7 +264,12 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
   const { t } = useI18n();
   const chapterAnnotations =
     bookId && chapterNumber
-      ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+      ? visibleChapterAnnotations(
+          state.annotations,
+          state.friends.friendIds.value,
+          bookId,
+          chapterNumber
+        )
       : [];
   const noteCount = chapterAnnotations.length;
 
@@ -1789,6 +1797,8 @@ interface ChapterContentProps {
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
   annotations?: AnnotationsManager;
+  /** Whose notes besides the user's own get verse markers. */
+  friends?: FriendsManager;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -1841,6 +1851,7 @@ function ChapterContent(props: ChapterContentProps) {
     highlights,
     decorations,
     annotations,
+    friends,
     selectVerse,
     selectFootnote,
     selectVersesFromTextSelection,
@@ -1857,10 +1868,12 @@ function ChapterContent(props: ChapterContentProps) {
   const currentChapter = chapterData.value;
   const chapterAnnotations =
     currentChapter && annotations
-      ? annotations.getAnnotationsForChapter(
+      ? visibleChapterAnnotations(
+          annotations,
+          friends?.friendIds.value ?? [],
           currentChapter.book.id,
           currentChapter.chapter.number
-        ).value
+        )
       : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -2950,14 +2963,7 @@ export function BibleReader(props: BibleReaderProps) {
               disabled={retrying}
               aria-busy={retrying}
             >
-              {retrying && (
-                <span
-                  className="material-symbols-outlined sb-reader-error-retry-spinner"
-                  aria-hidden="true"
-                >
-                  progress_activity
-                </span>
-              )}
+              {retrying && <Spinner size="1.125rem" />}
               {t("reload", { defaultValue: "Reload" })}
             </button>
             {offlineFallbackTranslations.length > 0 && (
@@ -2996,6 +3002,7 @@ export function BibleReader(props: BibleReaderProps) {
               decorations={decorations}
               annotations={state?.annotations}
               hideHighlights={isMinimalEmbed}
+              friends={state?.friends}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
@@ -3048,6 +3055,15 @@ export function BibleReader(props: BibleReaderProps) {
       <DiscoverContentPanel tab={currentSlot.tab} state={state} />
     ) : null;
 
+  // Playback opens on the selected tab only. Other slots in a split view
+  // must not show this loader.
+  const playlistOpeningHere =
+    !!state &&
+    state.playlists.openingPlayback.value &&
+    state.playlists.view.value !== "play_playlist" &&
+    currentSlot.tab != null &&
+    state.tabs.selectedTabId.value === currentSlot.tab.id;
+
   return (
     <div
       className={`sb-bible-reader ${readerFontSizeClass}${
@@ -3055,6 +3071,13 @@ export function BibleReader(props: BibleReaderProps) {
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
+      {playlistOpeningHere && !isCompactReader ? (
+        <Spinner
+          className="sb-playlist-opening-spinner"
+          size="1rem"
+          label={t("opening-playlist", { defaultValue: "Opening playlist" })}
+        />
+      ) : null}
       {isCompactReader && state ? (
         <Fragment key="mobile">
           <div
@@ -3088,6 +3111,14 @@ export function BibleReader(props: BibleReaderProps) {
                 </button>
               </h1>
             </div>
+            {playlistOpeningHere ? (
+              <Spinner
+                size="1rem"
+                label={t("opening-playlist", {
+                  defaultValue: "Opening playlist",
+                })}
+              />
+            ) : null}
             {!isMinimalEmbed && (
               <ChapterNotesButton
                 state={state}
@@ -3162,6 +3193,7 @@ export function BibleReader(props: BibleReaderProps) {
                     customizationLocator={
                       state.customizations?.activeCustomizationLocator
                     }
+                    readingPlans={state.readingPlans}
                     className="sb-quick-toolbar-mobile-header"
                   />
                   {/*
@@ -3306,6 +3338,7 @@ export function BibleReader(props: BibleReaderProps) {
                   annotations={state.annotations}
                   features={state.features}
                   sharedSession={sharedSession ?? null}
+                  readingPlans={state.readingPlans}
                   toast={state.app.toast}
                   modals={state.modals}
                   app={state.app}

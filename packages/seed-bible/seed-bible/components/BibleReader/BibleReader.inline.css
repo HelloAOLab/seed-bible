@@ -11,6 +11,14 @@
   flex: 1;
 }
 
+.sb-playlist-opening-spinner {
+  position: absolute;
+  z-index: 6;
+  top: 0.65rem;
+  inset-inline-end: 0.75rem;
+  color: var(--sb-primary-color);
+}
+
 .sb-bible-reader-bookmark-button,
 .sb-bible-reader-save-button {
   position: relative;
@@ -947,24 +955,6 @@
   font-size: 0.8125rem;
   font-weight: 600;
   text-align: left;
-}
-
-.sb-reader-error-retry-spinner {
-  font-size: 1.125rem;
-  line-height: 1;
-  animation: sb-reader-error-retry-spin 0.9s linear infinite;
-}
-
-@keyframes sb-reader-error-retry-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sb-reader-error-retry-spinner {
-    animation: none;
-  }
 }
 
 .sb-reader-not-found {
