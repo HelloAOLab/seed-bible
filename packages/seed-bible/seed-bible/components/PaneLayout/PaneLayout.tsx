@@ -5,6 +5,7 @@ import type { Pane, PanesManager } from "../../managers/PanesManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { UI_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
 import { useEffect, useRef } from "preact/hooks";
+import type { BibleReadingState } from "../../managers";
 
 interface DragState {
   mode: "move" | "resize";
@@ -36,11 +37,19 @@ interface DragState {
  * if the pane declared one — e.g. to warn about unsaved changes and let the
  * pane close itself once the user confirms. See `Pane.confirmClose`.
  */
-function closePaneFromHeader(panesManager: PanesManager, pane: Pane) {
+function closePaneFromHeader(
+  panesManager: PanesManager,
+  pane: Pane,
+  currentReadingState?: BibleReadingState
+) {
   if (pane.confirmClose && !pane.confirmClose()) {
     return;
   }
+
   panesManager.closePane(pane.id, "user");
+  if (currentReadingState) {
+    currentReadingState.clearSelectedVerses();
+  }
 }
 
 function usePaneDrag(state: SeedBibleState) {
@@ -179,6 +188,7 @@ interface PaneLayoutProps {
  */
 export function PaneLayout(props: PaneLayoutProps) {
   const { state } = props;
+
   const { app, panes: panesManager } = state;
   const overlayPanes = app.effectivePanes.value.filter(
     (pane) => pane.placement === "floating"
@@ -310,6 +320,12 @@ export function SidePane(props: SidePaneProps) {
   const { state, pane } = props;
   const { app, panes: panesManager } = state;
   const { startResize, registerPaneElement } = usePaneDrag(state);
+  const tabs = state?.tabs;
+
+  //readingstate for the current selected tab
+  const currentReadingState = tabs.tabs.value.find(
+    (tab) => tab.id === tabs.selectedTabId.value
+  )?.readingState;
 
   return (
     <div
@@ -326,7 +342,9 @@ export function SidePane(props: SidePaneProps) {
         icon={pane.icon}
         leading={pane.leading}
         header={pane.header}
-        onClose={() => closePaneFromHeader(panesManager, pane)}
+        onClose={() =>
+          closePaneFromHeader(panesManager, pane, currentReadingState)
+        }
       />
       <div className="sb-pane-detached-body">
         <div className="sb-pane-component">

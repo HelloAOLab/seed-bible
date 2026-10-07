@@ -1238,7 +1238,7 @@ describe("BibleReaderToolbar — verse tool actions", () => {
     expect(readingState.selectedVerses.value).toHaveLength(0);
     expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
   });
-  it("keeps the verse selection and toolbar when a tool preserves selection", async () => {
+  it("keeps the verse selection when a tool preserves selection", async () => {
     const onSelect = vi.fn();
 
     state.tools.registerVerseToolbarTool({
@@ -1273,8 +1273,8 @@ describe("BibleReaderToolbar — verse tool actions", () => {
     // Selection must remain.
     expect(readingState.selectedVerses.value).toHaveLength(1);
 
-    // Toolbar must remain.
-    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+    // Toolbar is dismissed after the successful action.
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
   });
   it("keeps the verse selection and toolbar when a verse tool action rejects", async () => {
     const onSelect = vi.fn().mockRejectedValue(new Error("Test action failed"));
@@ -1345,6 +1345,7 @@ describe("BibleReaderToolbar — verse tool actions", () => {
     // Toolbar closes because there is no longer a selection.
     expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
   });
+
   it("keeps the selection and does not show a Copied toast when copy fails", async () => {
     const writeText = vi.fn().mockRejectedValue(new Error("Clipboard failed"));
 
