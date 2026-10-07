@@ -930,6 +930,51 @@
   cursor: default;
 }
 
+.sb-reader-error-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 75%);
+  border-radius: 0.625rem;
+  padding: 0.5rem 1.25rem;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-reader-error-action .material-symbols-outlined {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.sb-reader-error-action:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-reader-error-action:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.sb-reader-error-hint {
+  margin: 0.5rem 0 0;
+  max-width: 26rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-reader-error-alternatives {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .sb-reader-error-switch {
   background: transparent;
   color: var(--sb-font-color);
