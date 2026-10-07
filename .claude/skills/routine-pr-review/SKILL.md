@@ -1,6 +1,6 @@
 ---
 name: routine-pr-review
-description: Entry point for the PR Claude Code routines. Runs every routine PR task for the pull request in the routine's GitHub context (or a PR number argument), in order: the manual test plan (routine-pr-human-review-plan), then the code review (routine-pr-code-review), which checks the code against that plan. Unattended; posts without asking.
+description: Entry point for the PR Claude Code routines. Runs every routine PR task for the pull request in the routine's GitHub context (or a PR number argument), in order - the manual test plan (routine-pr-human-review-plan), then the code review (routine-pr-code-review), which checks the code against that plan. Unattended; posts without asking.
 ---
 
 Run the routine pull request tasks for one PR. The routines that fire when a PR opens and when it's marked for review both call only this skill, so what they do is defined here, in the repo, rather than in each routine's settings.
