@@ -194,8 +194,6 @@ Write the whole comment to a file, in this format with the placeholders filled i
 
 Work through the tests on the page and mark each one. Your results save in your browser, so you can stop and come back. When you're done, choose **Copy results** and paste them in a comment here. A brand-new plan can take a couple of minutes to appear on the site.
 
-<sub>[Plan file](https://github.com/HelloAOLab/pr-test-plans/blob/main/plans/seed-bible/<n>/<short commit>.json)</sub>
-
 <details>
 <summary>Plain checklist (if the page doesn't open for you)</summary>
 
