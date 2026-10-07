@@ -49,6 +49,7 @@ ROADMAP.md is public. Its readers include people who aren't developers: the peop
    - Keep `_On GitHub:_` lines to the issues and PRs a curious reader would want: open work, plus the main PR or issue for work that's done.
    - If you change a heading, update its link in the table. GitHub builds the anchor from the heading in lowercase, with spaces turned into hyphens and punctuation dropped (e.g. `## 12. Bonfire AI that can take action` → `#12-bonfire-ai-that-can-take-action`).
    - Don't renumber, reorder, add or remove items on your own. Suggest those changes in the summary instead.
+   - Leave the closing "Want to help?" section as it is. It isn't a roadmap item and doesn't change with the state of `develop`.
    - Set the "Last updated" line to today's date.
    - Format with `npx prettier --write ROADMAP.md`. Never run `pnpm format`; it rewrites the whole repo.
 
