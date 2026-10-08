@@ -15,7 +15,14 @@ import type {
 } from "../../managers/ExtensionSensitiveSettings";
 import type { I18nHook } from "../../i18n/I18nManager";
 
+/**
+ * Whose values the form edits: the viewer's own, or those of the
+ * Customization being edited, which everyone using it sends with.
+ */
+export type SensitiveSettingsFormScope = "viewer" | "customization";
+
 function SensitiveProxyGroup(props: {
+  scope: SensitiveSettingsFormScope;
   extensionId: string;
   proxyId: string;
   proxy: ExtensionSensitiveProxyDefinition;
@@ -25,6 +32,7 @@ function SensitiveProxyGroup(props: {
   /** True when values are saved for this entry, whether or not they still count as set. */
   hasStored: boolean;
   isSet: (key: string) => boolean;
+  isProvided?: (key: string) => boolean;
   onSave: (
     values: Record<string, string>,
     options: SensitiveSaveOptions
@@ -33,6 +41,7 @@ function SensitiveProxyGroup(props: {
   t: I18nHook["t"];
 }) {
   const {
+    scope,
     extensionId,
     proxyId,
     proxy,
@@ -40,6 +49,7 @@ function SensitiveProxyGroup(props: {
     destination,
     hasStored,
     isSet,
+    isProvided,
     onSave,
     onClear,
     t,
@@ -84,17 +94,23 @@ function SensitiveProxyGroup(props: {
         })}
       </legend>
       <p className="sb-settings-field-default-note">
-        {visibility === "public"
-          ? t("sensitive-settings-destination-public", {
+        {visibility === "public" && scope === "customization"
+          ? t("sensitive-settings-destination-customization", {
               defaultValue:
-                "Only sent to {{host}}. Anyone with this proxy's address can send requests with these values, but nobody can see them.",
+                "Only sent to {{host}}. Everyone using this customization sends requests with these values, unless they set their own, but nobody can see them.",
               host,
             })
-          : t("sensitive-settings-destination", {
-              defaultValue:
-                "Only sent to {{host}}. Stored privately on the server and never shown again.",
-              host,
-            })}
+          : visibility === "public"
+            ? t("sensitive-settings-destination-public", {
+                defaultValue:
+                  "Only sent to {{host}}. Anyone with this proxy's address can send requests with these values, but nobody can see them.",
+                host,
+              })
+            : t("sensitive-settings-destination", {
+                defaultValue:
+                  "Only sent to {{host}}. Stored privately on the server and never shown again.",
+                host,
+              })}
       </p>
       <div className="sb-settings-field-row">
         <div className="sb-settings-field-title-row">
@@ -159,9 +175,13 @@ function SensitiveProxyGroup(props: {
             })}
           </option>
           <option value="public">
-            {t("sensitive-settings-visibility-public", {
-              defaultValue: "Anyone with the proxy's address",
-            })}
+            {scope === "customization"
+              ? t("sensitive-settings-visibility-customization", {
+                  defaultValue: "Everyone using this customization",
+                })
+              : t("sensitive-settings-visibility-public", {
+                  defaultValue: "Anyone with the proxy's address",
+                })}
           </option>
         </select>
       </div>
@@ -187,7 +207,11 @@ function SensitiveProxyGroup(props: {
             <p className="sb-settings-field-default-note">
               {isSet(key)
                 ? t("sensitive-setting-set", { defaultValue: "Set" })
-                : t("sensitive-setting-not-set", { defaultValue: "Not set" })}
+                : isProvided?.(key)
+                  ? t("sensitive-setting-provided-by-customization", {
+                      defaultValue: "Provided by the customization",
+                    })
+                  : t("sensitive-setting-not-set", { defaultValue: "Not set" })}
             </p>
             <input
               id={fieldId}
@@ -262,12 +286,19 @@ function SensitiveProxyGroup(props: {
  * back to keep the ones left untouched.
  */
 export function SensitiveSettingsForm(props: {
+  /** Defaults to `viewer`. */
+  scope?: SensitiveSettingsFormScope;
   extensionId: string;
   settings: Record<string, ExtensionSettingDefinition>;
   sensitive: Record<string, ExtensionSensitiveProxyDefinition>;
   getDestination: (proxyId: string) => SensitiveDestination | null;
   hasStored: (proxyId: string) => boolean;
   isSet: (key: string) => boolean;
+  /**
+   * True when a setting the viewer hasn't set is filled in by the active
+   * Customization instead.
+   */
+  isProvided?: (key: string) => boolean;
   onSave: (
     proxyId: string,
     values: Record<string, string>,
@@ -277,12 +308,14 @@ export function SensitiveSettingsForm(props: {
   t: I18nHook["t"];
 }) {
   const {
+    scope = "viewer",
     extensionId,
     settings,
     sensitive,
     getDestination,
     hasStored,
     isSet,
+    isProvided,
     onSave,
     onClear,
     t,
@@ -303,6 +336,7 @@ export function SensitiveSettingsForm(props: {
         return (
           <SensitiveProxyGroup
             key={proxyId}
+            scope={scope}
             extensionId={extensionId}
             proxyId={proxyId}
             proxy={proxy}
@@ -310,6 +344,7 @@ export function SensitiveSettingsForm(props: {
             destination={destination}
             hasStored={hasStored(proxyId)}
             isSet={isSet}
+            isProvided={isProvided}
             onSave={(values, options) => onSave(proxyId, values, options)}
             onClear={() => onClear(proxyId)}
             t={t}
