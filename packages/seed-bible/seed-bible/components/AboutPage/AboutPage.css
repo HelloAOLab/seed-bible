@@ -122,10 +122,6 @@
   margin: 0;
 }
 
-.sb-about-signature {
-  margin-top: 2rem;
-}
-
 .sb-about-actions {
   display: flex;
   flex-wrap: wrap;
@@ -152,7 +148,12 @@
   border: 1px solid transparent;
 }
 
-.sb-about-action-primary {
+.sb-about-action .material-symbols-outlined {
+  font-size: 1.3rem;
+}
+
+.sb-about-action-primary,
+.sb-about-action-primary:visited {
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
 }
@@ -163,7 +164,8 @@
   color: var(--sb-primary-color);
 }
 
-.sb-about-action-secondary {
+.sb-about-action-secondary,
+.sb-about-action-secondary:visited {
   border-color: var(--sb-primary-color);
   background: transparent;
   color: var(--sb-primary-color);

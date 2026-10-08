@@ -43,7 +43,7 @@ describe("AboutPage", () => {
       ["H1", "About the Seed Bible"],
       ["H2", "Why we're building it"],
       ["H2", "Read Together"],
-      ["H2", "Playlist"],
+      ["H2", "Playlists"],
       ["H2", "Sessions"],
       ["H2", "Shared Reading"],
       ["H2", "Notes & Highlights"],
@@ -87,7 +87,34 @@ describe("AboutPage", () => {
     expect(state.selector.slot.value).toBe(state.tabsLayout.slots.value[0]);
   });
 
-  it("renders the Donate and Join Discord buttons as external links", async () => {
+  it("starts the in-app tutorial when the Tutorials button is clicked", async () => {
+    jsdom.reconfigure({
+      url: "https://example.com/en/about?useFreeBibleAPI=true",
+    });
+    const state = await createTestSeedBibleState();
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <AboutPage state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    expect(state.tutorial.running.value).toBe(false);
+
+    const tutorialsButton = Array.from(
+      container.querySelectorAll("button.sb-about-action-secondary")
+    ).find((el) => el.textContent?.includes("Tutorials")) as HTMLButtonElement;
+    act(() => {
+      tutorialsButton.click();
+    });
+
+    expect(state.tutorial.running.value).toBe(true);
+  });
+
+  it("renders the Donate, Join Discord and Release Notes buttons as external links", async () => {
     jsdom.reconfigure({
       url: "https://example.com/en/about?useFreeBibleAPI=true",
     });
@@ -109,6 +136,9 @@ describe("AboutPage", () => {
     const discord = secondaryActions.find(
       (a) => a.textContent === "Join Discord"
     );
+    const releaseNotes = secondaryActions.find((a) =>
+      a.textContent?.includes("Release Notes")
+    );
 
     expect(donate?.getAttribute("href")).toBe(
       "https://better.giving/marketplace/1118469"
@@ -121,5 +151,11 @@ describe("AboutPage", () => {
     );
     expect(discord?.getAttribute("target")).toBe("_blank");
     expect(discord?.getAttribute("rel")).toBe("noopener noreferrer");
+
+    expect(releaseNotes?.getAttribute("href")).toBe(
+      "https://github.com/HelloAOLab/seed-bible/blob/main/CHANGELOG.md"
+    );
+    expect(releaseNotes?.getAttribute("target")).toBe("_blank");
+    expect(releaseNotes?.getAttribute("rel")).toBe("noopener noreferrer");
   });
 });

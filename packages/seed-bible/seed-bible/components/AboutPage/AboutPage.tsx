@@ -14,13 +14,15 @@ import {
 } from "../icons";
 import type { ComponentChildren } from "preact";
 
+const CHANGELOG_URL =
+  "https://github.com/HelloAOLab/seed-bible/blob/main/CHANGELOG.md";
 const DONATE_URL = "https://better.giving/marketplace/1118469";
 const DISCORD_URL = "https://discord.com/invite/NbEZMCJmqC";
 
 /** The pane header title for the About page (see `SeedBibleStateManager.tsx`). */
 export function AboutPaneTitle() {
   const { t } = useI18n();
-  return <>{t("about-hero-title", { defaultValue: "About the Seed Bible" })}</>;
+  return <>{t("about-title", { defaultValue: "About Seed Bible" })}</>;
 }
 
 type CardVariant = "hero" | "highlight" | "feature";
@@ -85,7 +87,7 @@ export function AboutPage({
   state: ReturnType<typeof createSeedBibleState>;
 }) {
   const { t } = useI18n();
-  const { selector } = state;
+  const { selector, tutorial } = state;
 
   return (
     <main className="sb-about-page" role="main">
@@ -97,7 +99,7 @@ export function AboutPage({
           title={t("about-hero-title", {
             defaultValue: "About the Seed Bible",
           })}
-          body={t("about-intro-community", {
+          body={t("about-hero-body", {
             defaultValue:
               "A free Bible reading app that brings Scripture, study tools, and your own notes and highlights together in one place — online, on any device, in dozens of languages.",
           })}
@@ -127,7 +129,7 @@ export function AboutPage({
         <Card
           variant="feature"
           icon={<Playlist width={20} height={20} />}
-          title={t("about-playlist-title", { defaultValue: "Playlist" })}
+          title={t("about-playlist-title", { defaultValue: "Playlists" })}
           body={t("about-playlist-body", {
             defaultValue:
               "Read dozens of free Bible translations, in diverse languages, side by side.",
@@ -200,6 +202,23 @@ export function AboutPage({
             <DiscordIcon width={16} height={16} />
             {t("about-action-discord", { defaultValue: "Join Discord" })}
           </a>
+          <a
+            className="sb-about-action sb-about-action-secondary"
+            href={CHANGELOG_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <MaterialIcon>campaign</MaterialIcon>
+            {t("about-action-release-notes", { defaultValue: "Release Notes" })}
+          </a>
+          <button
+            type="button"
+            className="sb-about-action sb-about-action-secondary"
+            onClick={() => tutorial.start()}
+          >
+            <MaterialIcon>emoji_objects</MaterialIcon>
+            {t("about-action-tutorials", { defaultValue: "Tutorials" })}
+          </button>
         </div>
       </article>
     </main>
