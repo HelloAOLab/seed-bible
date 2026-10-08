@@ -438,7 +438,7 @@ export function createExtensionSettingsManager(
   });
 
   return {
-    ...createExtensionSensitiveSettings(os, login, extensions),
+    ...createExtensionSensitiveSettings(os, login, extensions, customizations),
     valuesByExtensionId,
     hasSaveError,
     getValue,

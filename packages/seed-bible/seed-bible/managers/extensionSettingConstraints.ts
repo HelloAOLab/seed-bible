@@ -60,7 +60,8 @@ export interface ExtensionBooleanSettingDefinition {
  * viewer, `public` anyone who knows the proxy's address. Nobody can read the
  * values either way. Always `private` until the viewer chooses otherwise; an
  * extension can't pick it, so it can't make a viewer's key usable by others
- * by default.
+ * by default. A Customization's own proxy starts `public` instead, since it
+ * exists for everyone using the Customization.
  */
 export type ExtensionSensitiveProxyVisibility = "private" | "public";
 

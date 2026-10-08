@@ -22,7 +22,13 @@
  * network — see `getTranslationBookChapter` there.
  */
 
-import { computed, signal, type ReadonlySignal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "@preact/signals";
 // Type-only, so this doesn't create a runtime cycle with BibleDataManager (which
 // imports this module to construct the manager).
 import type { MergeTranslationsOptions } from "./BibleDataManager";
@@ -264,7 +270,8 @@ export interface OfflineTranslationsManager {
   /**
    * Offers to save a translation for offline reading, if every condition is
    * met: the device can store downloads, no prompt has been shown yet this
-   * session, no update offer ({@link updatePrompt}) is already on screen, the
+   * session, no other offer ({@link updatePrompt}, {@link recoveryPrompt}) is
+   * already on screen, the
    * device is online, this translation isn't already downloaded or
    * downloading, it has never been offered before, and — unless this is the
    * first offer the device has ever made — the user has been reading this
@@ -277,6 +284,33 @@ export interface OfflineTranslationsManager {
 
   /** Closes the download offer without downloading anything. */
   dismissDownloadPrompt: () => void;
+
+  /**
+   * The translation currently being suggested for download after a chapter
+   * that failed to load came back on a retry, or null when no suggestion is
+   * on screen. Clears itself once that translation is saved or downloading,
+   * and gives way to {@link downloadPrompt} or {@link updatePrompt} — it never
+   * holds either back.
+   */
+  recoveryPrompt: ReadonlySignal<Translation | null>;
+
+  /**
+   * Suggests saving a translation for offline reading right after the reader
+   * recovered from a failed chapter load. Shown at most once per translation
+   * per session and never on top of another offer, and skips
+   * {@link offerDownloadPrompt}'s day-of-tenure and offered-before checks: a
+   * load that just failed is reason enough to ask, however new the
+   * translation is.
+   *
+   * Isn't blocked by that offer's one-per-session budget, but does use it up,
+   * so the regular offer doesn't follow this one later in the same visit.
+   *
+   * Returns whether the suggestion was actually shown.
+   */
+  offerRecoveryPrompt: (translation: Translation) => boolean;
+
+  /** Closes the recovery suggestion without downloading anything. */
+  dismissRecoveryPrompt: () => void;
 
   /** Closes the update offer without downloading anything. */
   dismissUpdatePrompt: () => void;
@@ -866,6 +900,7 @@ export function createOfflineTranslationsManager(
   }
 
   const dispose = () => {
+    stopWatchingRecoveryPrompt();
     if (typeof window !== "undefined") {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
@@ -1293,6 +1328,28 @@ export function createOfflineTranslationsManager(
 
   const downloadPrompt = signal<Translation | null>(null);
   const updatePrompt = signal<Translation | null>(null);
+  const recoveryPrompt = signal<Translation | null>(null);
+  const blockingPromptOnScreen = () =>
+    !!downloadPrompt.value || !!updatePrompt.value;
+  const showBlockingPrompt = (
+    prompt: typeof downloadPrompt,
+    translation: Translation
+  ) => {
+    batch(() => {
+      recoveryPrompt.value = null;
+      prompt.value = translation;
+    });
+  };
+
+  const stopWatchingRecoveryPrompt = effect(() => {
+    const suggested = recoveryPrompt.value;
+    if (
+      suggested &&
+      (records.value.has(suggested.id) || downloads.value.has(suggested.id))
+    ) {
+      recoveryPrompt.value = null;
+    }
+  });
 
   // "When we show one prompt, we should never show any more download prompts
   // for that session." Deliberately a closure rather than storage: it resets on
@@ -1349,12 +1406,12 @@ export function createOfflineTranslationsManager(
     // its behalf. Never stack this on top of another prompt already on screen
     // — and don't mark the hash handled until it's actually offered, so a
     // prompt that couldn't be shown this time still gets a next try.
-    if (downloadPrompt.value || updatePrompt.value) {
+    if (blockingPromptOnScreen()) {
       return;
     }
 
     handledUpdateHashForTranslation.set(translationId, translation.sha256);
-    updatePrompt.value = translation;
+    showBlockingPrompt(updatePrompt, translation);
   };
 
   const dismissUpdatePrompt = () => {
@@ -1377,27 +1434,32 @@ export function createOfflineTranslationsManager(
     });
   };
 
-  const offerDownloadPrompt = (translation: Translation): boolean => {
+  /** The checks every download offer shares, whatever prompted it. */
+  const canShowOffer = (translation: Translation): boolean => {
     if (store === null) {
       return false;
     }
-    if (promptedThisSession || downloadPrompt.value || updatePrompt.value) {
-      // Never stack this on top of an update offer already on screen — see
-      // the matching guard in `checkAndApplyUpdate`.
+    // Never stack one offer on top of another already on screen — see the
+    // matching guard in `checkAndApplyUpdate`.
+    if (blockingPromptOnScreen()) {
       return false;
     }
     // Offering a download with no connection would only fail.
     if (!isOnline.value) {
       return false;
     }
-
     const translationId = translation?.id;
     if (!translationId) {
       return false;
     }
-    if (isDownloaded(translationId) || downloads.value.has(translationId)) {
+    return !isDownloaded(translationId) && !downloads.value.has(translationId);
+  };
+
+  const offerDownloadPrompt = (translation: Translation): boolean => {
+    if (promptedThisSession || !canShowOffer(translation)) {
       return false;
     }
+    const translationId = translation.id;
 
     const shown = readTimestamps(PROMPT_SHOWN_KEY);
     if (shown[translationId]) {
@@ -1424,12 +1486,36 @@ export function createOfflineTranslationsManager(
       ...shown,
       [translationId]: Date.now(),
     });
-    downloadPrompt.value = translation;
+    showBlockingPrompt(downloadPrompt, translation);
     return true;
   };
 
   const dismissDownloadPrompt = () => {
     downloadPrompt.value = null;
+  };
+
+  const recoveryOfferedThisSession = new Set<string>();
+
+  const offerRecoveryPrompt = (translation: Translation): boolean => {
+    if (
+      !canShowOffer(translation) ||
+      recoveryOfferedThisSession.has(translation.id)
+    ) {
+      return false;
+    }
+    recoveryOfferedThisSession.add(translation.id);
+
+    promptedThisSession = true;
+    writeTimestamps(PROMPT_SHOWN_KEY, {
+      ...readTimestamps(PROMPT_SHOWN_KEY),
+      [translation.id]: Date.now(),
+    });
+    recoveryPrompt.value = translation;
+    return true;
+  };
+
+  const dismissRecoveryPrompt = () => {
+    recoveryPrompt.value = null;
   };
 
   return {
@@ -1446,6 +1532,9 @@ export function createOfflineTranslationsManager(
     noteTranslationInUse,
     offerDownloadPrompt,
     dismissDownloadPrompt,
+    recoveryPrompt,
+    offerRecoveryPrompt,
+    dismissRecoveryPrompt,
     dismissUpdatePrompt,
     downloadTranslation,
     cancelDownload,

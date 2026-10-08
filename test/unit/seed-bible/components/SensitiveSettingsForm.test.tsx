@@ -105,6 +105,86 @@ describe("SensitiveSettingsForm", () => {
     });
   };
 
+  it("says when the active Customization provides a value the viewer hasn't set", () => {
+    act(() => {
+      render(
+        <SensitiveSettingsForm
+          extensionId="ext-1"
+          settings={{
+            apiKey: { type: "string", sensitive: "exampleApi" },
+            clientId: { type: "string", sensitive: "exampleApi" },
+          }}
+          sensitive={{
+            exampleApi: {
+              host: "api.example.com",
+              requestMapping: {
+                "headers.authorization.bearer": "apiKey",
+                "body.client_id": "clientId",
+              },
+            },
+          }}
+          getDestination={() => ({
+            host: "api.example.com",
+            visibility: "private",
+          })}
+          hasStored={() => false}
+          isSet={() => false}
+          isProvided={(key) => key === "apiKey"}
+          onSave={vi.fn()}
+          onClear={vi.fn()}
+          t={mockTranslate}
+        />,
+        container
+      );
+    });
+
+    const notes = Array.from(
+      container.querySelectorAll(".sb-settings-field-row")
+    ).map((row) => row.textContent ?? "");
+    expect(notes.find((text) => text.includes("apiKey"))).toContain(
+      "Provided by the customization"
+    );
+    expect(notes.find((text) => text.includes("clientId"))).toContain(
+      "Not set"
+    );
+  });
+
+  it("describes a Customization's public proxy as one everyone using it shares", () => {
+    act(() => {
+      render(
+        <SensitiveSettingsForm
+          scope="customization"
+          extensionId="ext-1"
+          settings={{ apiKey: { type: "string", sensitive: "exampleApi" } }}
+          sensitive={{
+            exampleApi: {
+              host: "api.example.com",
+              requestMapping: { "headers.authorization.bearer": "apiKey" },
+            },
+          }}
+          getDestination={() => ({
+            host: "api.example.com",
+            visibility: "public",
+          })}
+          hasStored={() => false}
+          isSet={() => false}
+          onSave={vi.fn()}
+          onClear={vi.fn()}
+          t={mockTranslate}
+        />,
+        container
+      );
+    });
+
+    expect(visibilitySelect().value).toBe("public");
+    expect(container.textContent).toContain(
+      "Everyone using this customization sends requests with these values"
+    );
+    expect(visibilitySelect().selectedOptions[0]?.textContent).toBe(
+      "Everyone using this customization"
+    );
+  });
+
   it("shows only the destination's sensitive settings, masked", () => {
     renderForm();
 
