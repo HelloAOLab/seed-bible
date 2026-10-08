@@ -290,8 +290,8 @@ const customizationVariantSchema = z.object({
  * - `auto-installed`: force-installed with no prompt while the
  *   customization is active; shown but can't be uninstalled from there.
  * - `hidden`: never offered in Settings → Extensions while the
- *   customization is active; it still appears under Installed if the viewer
- *   already has it installed.
+ *   customization is active. If it's still installed anyway (e.g. as another
+ *   extension's dependency) it's listed under Installed, without Uninstall.
  */
 export const EXTENSION_AVAILABILITY_VALUES = [
   "available",

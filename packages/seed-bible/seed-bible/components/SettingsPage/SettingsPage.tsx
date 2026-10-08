@@ -1254,8 +1254,9 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const isUploadingSet = useSignal(false);
   const activeCustomization = customizations.activeCustomization.value;
   // An extension the active customization marks "hidden" is never offered
-  // for install, but one the viewer already has installed still shows so it
-  // can be seen and removed.
+  // for install, but one that's still installed (e.g. pulled in as another
+  // extension's dependency) is listed so the Installed tab matches what's
+  // actually running.
   const visibleExtensionsList = extensionsList.filter(
     (entry) =>
       entry.installed ||
@@ -1486,8 +1487,10 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
     const { id, installed, pendingInstallation } = extensionEntry;
-    const isBaseExtension =
-      customizations.getActiveExtensionAvailability(id) === "auto-installed";
+    // Removing an extension under a customization only drops the viewer's own
+    // pick, so it can't take off an auto-installed or hidden one.
+    const canUninstall =
+      customizations.getActiveExtensionAvailability(id) === "available";
     const isRegistered =
       ExtensionInitalizer.getInstance().isExtensionRegistered(id);
     const installState = getExtensionInstallState(
@@ -1579,7 +1582,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
               </button>
             )}
             {(installState === "installed" || installState === "downloaded") &&
-              !isBaseExtension && (
+              canUninstall && (
                 <button
                   type="button"
                   className="sb-extension-row-action-button"

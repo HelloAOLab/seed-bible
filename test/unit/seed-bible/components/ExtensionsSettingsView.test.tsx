@@ -203,6 +203,11 @@ describe("ExtensionsSettingsView", () => {
       hiddenIds: string[]
     ) {
       const state = createMockState(entries);
+      // "hidden" only applies while a customization is active.
+      (state.customizations.activeCustomization as Signal<unknown>).value = {
+        id: "custom-1",
+        name: "Youth group",
+      };
       vi.mocked(
         state.customizations.getActiveExtensionAvailability
       ).mockImplementation((id: string) =>
@@ -211,7 +216,22 @@ describe("ExtensionsSettingsView", () => {
       act(() => {
         render(<SettingsPage state={state} />, container);
       });
+      return state;
     }
+
+    const uninstallButtonFor = (name: string) =>
+      Array.from(container.querySelectorAll(".sb-extension-row"))
+        .find(
+          (row) => row.querySelector(".sb-extension-name")?.textContent === name
+        )
+        ?.querySelector('[aria-label="Uninstall"]') ?? null;
+
+    beforeEach(() => {
+      const registeredSpy = vi
+        .spyOn(ExtensionInitalizer.getInstance(), "isExtensionRegistered")
+        .mockReturnValue(true);
+      onTestFinished(() => registeredSpy.mockRestore());
+    });
 
     it("still lists a hidden extension under Installed when the viewer has it installed", () => {
       renderWithHidden(
@@ -223,6 +243,16 @@ describe("ExtensionsSettingsView", () => {
       expect(
         installedTab().querySelector(".sb-extensions-tab-count")?.textContent
       ).toBe("2");
+    });
+
+    it("offers no Uninstall for a hidden extension that's installed, since removing it under the customization can't take it off", () => {
+      renderWithHidden(
+        [makeEntry("hidden-installed", true), makeEntry("shown-one", true)],
+        ["hidden-installed"]
+      );
+
+      expect(uninstallButtonFor("hidden-installed")).toBeNull();
+      expect(uninstallButtonFor("shown-one")).not.toBeNull();
     });
 
     it("never offers a hidden extension on the Available tab", () => {
