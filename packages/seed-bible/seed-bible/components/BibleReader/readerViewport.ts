@@ -76,7 +76,9 @@ const READ_ALONG_TOP_GAP_PX = 16;
  * entirely on screen — so a listener following the narration never has to
  * scroll, and a reader who can already see the verse isn't moved at all.
  *
- * The chapter's first verse goes to the very top instead, so the chapter's
+ * A heading directly above the verse counts as part of it, so a listener
+ * jumping to the start of a section sees the section's title too. The
+ * chapter's first verse goes to the very top instead, so the chapter's own
  * title shows above it rather than being left just off screen.
  */
 export function revealReadAlongVerse(
@@ -84,7 +86,10 @@ export function revealReadAlongVerse(
   scroller: HTMLElement | null
 ): void {
   const { top, bottom } = measureVisibleReaderBounds(verse, scroller);
-  const rect = verse.getBoundingClientRect();
+  const rect = {
+    top: (headingAbove(verse) ?? verse).getBoundingClientRect().top,
+    bottom: verse.getBoundingClientRect().bottom,
+  };
   if (rect.top >= top && rect.bottom <= bottom) return;
 
   const reduceMotion =
@@ -113,6 +118,35 @@ export function revealReadAlongVerse(
     top: rect.top - landingTop - READ_ALONG_TOP_GAP_PX,
     behavior,
   });
+}
+
+/**
+ * The topmost of the headings directly above `verse` (a section can carry
+ * more than one), or null when the verse doesn't start a section.
+ *
+ * A highlighted verse sits inside a `display: contents` wrapper, so when the
+ * verse opens its wrapper the search continues from the wrapper instead.
+ */
+function headingAbove(verse: HTMLElement): HTMLElement | null {
+  let node: Element = verse;
+  while (
+    !node.previousElementSibling &&
+    node.parentElement &&
+    !node.parentElement.classList.contains("sb-chapter-content")
+  ) {
+    node = node.parentElement;
+  }
+
+  let heading: HTMLElement | null = null;
+  for (
+    let sibling = node.previousElementSibling;
+    sibling instanceof HTMLElement &&
+    sibling.classList.contains("sb-chapter-heading");
+    sibling = sibling.previousElementSibling
+  ) {
+    heading = sibling;
+  }
+  return heading;
 }
 
 /**

@@ -191,6 +191,113 @@ describe("revealReadAlongVerse", () => {
     expect(scrollTo).not.toHaveBeenCalled();
   });
 
+  describe("a verse that starts a section", () => {
+    let chapter: HTMLDivElement;
+
+    /** Builds a chapter from verse numbers and heading texts, in order. */
+    function buildChapter(parts: (number | string)[]) {
+      chapter = document.createElement("div");
+      chapter.className = "sb-chapter-content";
+      for (const part of parts) {
+        const element =
+          typeof part === "number"
+            ? document.createElement("span")
+            : document.createElement("h3");
+        if (typeof part === "number") {
+          element.className = "sb-verse";
+          element.dataset.verseNumber = String(part);
+        } else {
+          element.className = "sb-chapter-heading";
+          element.textContent = part;
+        }
+        chapter.appendChild(element);
+      }
+      scroller.appendChild(chapter);
+    }
+
+    const verseNumbered = (n: number) =>
+      chapter.querySelector<HTMLElement>(`[data-verse-number="${n}"]`)!;
+    const heading = (text: string) =>
+      [...chapter.querySelectorAll<HTMLElement>("h3")].find(
+        (h) => h.textContent === text
+      )!;
+
+    it("brings the section's heading into view along with the verse", () => {
+      buildChapter([6, "God's Law Is Holy", 7]);
+      placeAt(heading("God's Law Is Holy"), 900, 940);
+      placeAt(verseNumbered(7), 950, 1050);
+
+      revealReadAlongVerse(verseNumbered(7), scroller);
+
+      // The heading, not the verse, lands 16px from the top.
+      expect(scrollBy).toHaveBeenCalledExactlyOnceWith({
+        top: 884,
+        behavior: "smooth",
+      });
+    });
+
+    it("scrolls up for a heading cut off at the top even though the verse is in view", () => {
+      buildChapter([6, "God's Law Is Holy", 7]);
+      placeAt(heading("God's Law Is Holy"), -20, 20);
+      placeAt(verseNumbered(7), 30, 130);
+
+      revealReadAlongVerse(verseNumbered(7), scroller);
+
+      expect(scrollBy).toHaveBeenCalledExactlyOnceWith({
+        top: -36,
+        behavior: "smooth",
+      });
+    });
+
+    it("reveals every heading stacked above the verse", () => {
+      buildChapter([6, "Part Two", "God's Law Is Holy", 7]);
+      placeAt(heading("Part Two"), 860, 890);
+      placeAt(heading("God's Law Is Holy"), 900, 940);
+      placeAt(verseNumbered(7), 950, 1050);
+
+      revealReadAlongVerse(verseNumbered(7), scroller);
+
+      expect(scrollBy).toHaveBeenCalledExactlyOnceWith({
+        top: 844,
+        behavior: "smooth",
+      });
+    });
+
+    it("finds the heading above a highlighted verse inside its wrapper", () => {
+      buildChapter([6, "God's Law Is Holy"]);
+      const wrapper = document.createElement("span");
+      wrapper.className = "sb-highlight-wrapper";
+      const highlighted = document.createElement("span");
+      highlighted.className = "sb-verse";
+      highlighted.dataset.verseNumber = "7";
+      wrapper.appendChild(highlighted);
+      chapter.appendChild(wrapper);
+      placeAt(heading("God's Law Is Holy"), 900, 940);
+      placeAt(highlighted, 950, 1050);
+
+      revealReadAlongVerse(highlighted, scroller);
+
+      expect(scrollBy).toHaveBeenCalledExactlyOnceWith({
+        top: 884,
+        behavior: "smooth",
+      });
+    });
+
+    it("ignores a heading further up, past another verse", () => {
+      buildChapter(["God's Law Is Holy", 6, 7]);
+      placeAt(heading("God's Law Is Holy"), 800, 840);
+      placeAt(verseNumbered(6), 850, 940);
+      placeAt(verseNumbered(7), 950, 1050);
+
+      revealReadAlongVerse(verseNumbered(7), scroller);
+
+      expect(scrollBy).toHaveBeenCalledExactlyOnceWith({
+        top: 934,
+        behavior: "smooth",
+      });
+    });
+  });
+
   it("jumps instead of gliding for someone who prefers reduced motion", () => {
     vi.stubGlobal(
       "matchMedia",
