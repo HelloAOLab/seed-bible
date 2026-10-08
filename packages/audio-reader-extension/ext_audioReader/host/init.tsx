@@ -7,6 +7,7 @@ import {
   extractContentText,
   type AudioPlaybackController,
   type AudioPlaybackManager,
+  type PlaybackVerse,
   type BibleReadingState,
   type ChapterVerse,
   type QuickToolContext,
@@ -87,7 +88,12 @@ let textToSpeech: TextToSpeechManager | null = null;
  * phones), so pausing ends its run and playing starts a fresh one from the
  * verse it had reached.
  */
-let speechSession: { verses: SpeechVerse[]; lang: string } | null = null;
+let speechSession: {
+  verses: SpeechVerse[];
+  lang: string;
+  /** See {@link chapterVerseHeadings}. */
+  headings: Map<number, string>;
+} | null = null;
 
 /** Mirrors the synthesiser's `isSpeaking`, for the speech controller. */
 const isSpeechPlaying = signal(false);
@@ -271,6 +277,8 @@ interface VerseTimingTrack {
   verseNumbers: number[];
   /** Cumulative seconds (from the start of the audio) at which each verse starts. */
   startTimes: number[];
+  /** See {@link chapterVerseHeadings}. */
+  headings: Map<number, string>;
   /** The verse most recently highlighted, so the same verse isn't re-flashed every tick. */
   lastVerse: number | null;
   /** `startTimes`/`verseNumbers` index of `lastVerse`, so pause/resume can recompute its fade-out. */
@@ -343,6 +351,32 @@ export function chapterVerseNumbers(chapter: TranslationBookChapter): number[] {
   return chapter.chapter.content
     .filter((item): item is ChapterVerse => item.type === "verse")
     .map((verse) => verse.number);
+}
+
+/**
+ * The heading directly above each verse that starts a section, keyed by verse
+ * number — the one nearest the verse, when a section carries more than one.
+ * A verse with anything else between it and the heading doesn't count, the
+ * same rule the reader uses to decide what to bring into view with a verse.
+ */
+export function chapterVerseHeadings(
+  chapter: TranslationBookChapter
+): Map<number, string> {
+  const headings = new Map<number, string>();
+  let heading: string | null = null;
+  for (const item of chapter.chapter.content) {
+    if (item.type === "heading") {
+      heading = item.content
+        .filter((part) => typeof part === "string")
+        .join(" ");
+      continue;
+    }
+    if (item.type === "verse" && heading) {
+      headings.set(item.number, heading);
+    }
+    heading = null;
+  }
+  return headings;
 }
 
 /**
@@ -522,6 +556,21 @@ const playbackController: AudioPlaybackController = {
     seekVerseHighlight(target);
   },
   stop: stopRecordedAudio,
+  verseAt: (seconds): PlaybackVerse | null => {
+    if (!verseTrack || verseTrack.startTimes.length === 0) return null;
+    // Matched to the highlight a seek there would light, lead-in and all. A
+    // spot in the opening before the first verse plays on into it.
+    const index = Math.max(
+      0,
+      verseIndexForTime(
+        verseTrack.startTimes,
+        seconds + VERSE_HIGHLIGHT_LEAD_IN_SECONDS
+      )
+    );
+    const number = verseTrack.verseNumbers[index];
+    if (number === undefined) return null;
+    return { number, heading: verseTrack.headings.get(number) ?? null };
+  },
 };
 
 /**
@@ -716,7 +765,7 @@ function startSpeaking(
     chapterNumber: chapter.chapter.number,
     decorationId: null,
   };
-  speechSession = { verses, lang };
+  speechSession = { verses, lang, headings: chapterVerseHeadings(chapter) };
   speechLength.value = verses.length;
   speakFrom(0);
   showPlayback(speechController);
@@ -745,6 +794,11 @@ function endSpeech(): void {
   hidePlayback();
 }
 
+/** The whole verse, within a chapter of `count` verses, nearest `position`. */
+function speechIndexAt(position: number, count: number): number {
+  return Math.max(0, Math.min(Math.round(position), count - 1));
+}
+
 /**
  * What the reader's scrubber and transport buttons drive while the browser's
  * voice is reading. Counted in verses, since there's no telling how long the
@@ -759,10 +813,7 @@ const speechController: AudioPlaybackController = {
   pause: () => textToSpeech?.stop(),
   seek: (position) => {
     if (!speechSession || !Number.isFinite(position)) return;
-    const index = Math.max(
-      0,
-      Math.min(Math.round(position), speechSession.verses.length - 1)
-    );
+    const index = speechIndexAt(position, speechSession.verses.length);
     if (isSpeechPlaying.peek()) {
       speakFrom(index);
     } else {
@@ -774,6 +825,18 @@ const speechController: AudioPlaybackController = {
     }
   },
   stop: endSpeech,
+  verseAt: (position): PlaybackVerse | null => {
+    if (!speechSession) return null;
+    const verse =
+      speechSession.verses[
+        speechIndexAt(position, speechSession.verses.length)
+      ];
+    if (!verse) return null;
+    return {
+      number: verse.number,
+      heading: speechSession.headings.get(verse.number) ?? null,
+    };
+  },
 };
 
 /**
@@ -814,6 +877,7 @@ async function loadVerseTrack(
     chapterNumber: chapterData.chapter.number,
     verseNumbers: chapterVerseNumbers(chapterData),
     startTimes: timings.verses,
+    headings: chapterVerseHeadings(chapterData),
     lastVerse: null,
     verseIndex: null,
     currentDecorationId: null,

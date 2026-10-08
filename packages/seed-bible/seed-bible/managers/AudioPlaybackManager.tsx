@@ -40,6 +40,21 @@ export interface AudioPlaybackController {
    * reader so its progress UI goes away.
    */
   stop: () => void;
+
+  /**
+   * The verse playback would be in at `position`, and the heading directly
+   * above it if it starts a section — what the scrubber previews while being
+   * dragged. Null (or left out) when there's no telling, such as before a
+   * recording's verse timings have loaded.
+   */
+  verseAt?: (position: number) => PlaybackVerse | null;
+}
+
+/** A verse as the scrubber's preview names it. */
+export interface PlaybackVerse {
+  number: number;
+  /** The heading directly above the verse, or null when it doesn't start a section. */
+  heading: string | null;
 }
 
 export interface AudioPlaybackManager {

@@ -233,6 +233,19 @@ describe("audio-reader playback controls", () => {
     expect(getReadingState(state).readAlongVerse.value).toBeNull();
   });
 
+  it("names the verse a scrub would land on", async () => {
+    pressPlay();
+    const playback = state.audioPlayback.active.value!;
+    // Nothing to go on until the verse timings arrive.
+    expect(playback.verseAt?.(6)).toBeNull();
+
+    await startChapterOne();
+
+    // Verse 2 starts at 5s.
+    expect(playback.verseAt?.(1)).toEqual({ number: 1, heading: null });
+    expect(playback.verseAt?.(6)).toEqual({ number: 2, heading: null });
+  });
+
   it("keeps a seek inside the recording", async () => {
     const playback = await startChapterOne();
     reportDuration(10);

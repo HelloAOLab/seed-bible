@@ -43,7 +43,8 @@ interface AudioScrubberProps {
  * alone hides again after {@link SCRUB_HANDLE_HIDE_DELAY_MS}.
  *
  * Playback only moves when the handle is let go; until then the bar previews
- * where it would land. Speech counted in verses snaps to whole verses, since
+ * where it would land, with a card above the handle naming the verse there
+ * (and its section heading, when it starts one). Speech counted in verses snaps to whole verses, since
  * there's nowhere in between to land.
  */
 export function AudioScrubber(props: AudioScrubberProps) {
@@ -76,10 +77,15 @@ export function AudioScrubber(props: AudioScrubberProps) {
   const byVerse = playback.unit === "verses";
   const duration = playback.duration.value;
   const time = dragTime.value ?? playback.currentTime.value;
-  const percent = `${progressFraction(time, duration) * 100}%`;
+  const fraction = progressFraction(time, duration);
+  const percent = `${fraction * 100}%`;
   // A verse position names the verse being read, so the last one is one short
   // of the count; a recording can be wound right to its end.
   const lastPosition = byVerse ? Math.max(0, (duration ?? 0) - 1) : duration;
+  const preview =
+    dragTime.value !== null
+      ? (playback.verseAt?.(dragTime.value) ?? null)
+      : null;
 
   /** The playback time under `clientX`, or null if the bar can't say yet. */
   const timeAt = (clientX: number): number | null => {
@@ -215,6 +221,28 @@ export function AudioScrubber(props: AudioScrubberProps) {
             className="sb-audio-scrubber-handle"
             style={{ insetInlineStart: percent }}
           />
+          {preview && (
+            <div
+              className="sb-audio-scrubber-preview"
+              style={{
+                insetInlineStart: percent,
+                "--sb-audio-scrubber-preview-shift": fraction,
+              }}
+              aria-hidden="true"
+            >
+              {preview.heading && (
+                <span className="sb-audio-scrubber-preview-heading">
+                  {preview.heading}
+                </span>
+              )}
+              <span className="sb-audio-scrubber-preview-verse">
+                {t("audio-scrub-verse", {
+                  defaultValue: "Verse {{verse}}",
+                  verse: preview.number,
+                })}
+              </span>
+            </div>
+          )}
         </div>
       </div>
       {props.showTimeRemaining && (

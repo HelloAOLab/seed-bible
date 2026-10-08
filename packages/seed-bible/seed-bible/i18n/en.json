@@ -451,6 +451,7 @@
   "audio-playback-time": "{{current}} of {{total}}",
   "audio-playback-verse": "Verse {{current}} of {{total}}",
   "audio-verses-remaining": "{{remaining}} of {{total}} verses left",
+  "audio-scrub-verse": "Verse {{verse}}",
   "queue": "Queue",
   "previous": "Previous",
   "next": "Next",

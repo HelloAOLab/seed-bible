@@ -299,6 +299,73 @@ describe("AudioScrubber", () => {
     await press("ArrowLeft");
     expect(seek).toHaveBeenLastCalledWith(0);
   });
+  describe("verse preview while dragging", () => {
+    /** Verse 1 runs 0–40s, verse 2 (which starts a section) 40–100s. */
+    function withVerses(playback: AudioPlaybackController) {
+      return {
+        ...playback,
+        verseAt: (seconds: number) =>
+          seconds < 40
+            ? { number: 1, heading: null }
+            : { number: 2, heading: "The Creation" },
+      };
+    }
+
+    const preview = () => container.querySelector(".sb-audio-scrubber-preview");
+
+    it("names the verse under the handle while it's held, and goes once let go", async () => {
+      const { playback } = createPlayback();
+      await renderScrubber(withVerses(playback));
+      expect(preview()).toBeNull();
+
+      await pointer("pointerenter", "mouse");
+      // 10% along: 10s, inside verse 1.
+      await pointer("pointerdown", "mouse", TRACK_LEFT + 20);
+      expect(preview()?.textContent).toBe("Verse 1");
+
+      await pointer("pointerup", "mouse", TRACK_LEFT + 20);
+      expect(preview()).toBeNull();
+    });
+
+    it("follows the drag, adding the heading of a verse that starts a section", async () => {
+      const { playback } = createPlayback();
+      await renderScrubber(withVerses(playback));
+
+      await pointer("pointerenter", "mouse");
+      await pointer("pointerdown", "mouse", TRACK_LEFT + 20);
+      // 60% along: 60s, inside verse 2.
+      await pointer("pointermove", "mouse", TRACK_LEFT + 120);
+
+      expect(
+        preview()?.querySelector(".sb-audio-scrubber-preview-heading")
+          ?.textContent
+      ).toBe("The Creation");
+      expect(
+        preview()?.querySelector(".sb-audio-scrubber-preview-verse")
+          ?.textContent
+      ).toBe("Verse 2");
+    });
+
+    it("shows nothing while the verse can't be told", async () => {
+      const { playback } = createPlayback();
+      await renderScrubber({ ...playback, verseAt: () => null });
+
+      await pointer("pointerenter", "mouse");
+      await pointer("pointerdown", "mouse", TRACK_LEFT + 20);
+
+      expect(preview()).toBeNull();
+    });
+
+    it("isn't shown by the first tap that only reveals the handle", async () => {
+      const { playback } = createPlayback();
+      await renderScrubber(withVerses(playback));
+
+      await pointer("pointerdown", "touch", TRACK_LEFT + 20);
+
+      expect(preview()).toBeNull();
+    });
+  });
+
   describe("for speech counted in verses", () => {
     /** Twelve verses, reading the fourth. */
     function createVersePlayback() {

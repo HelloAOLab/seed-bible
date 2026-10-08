@@ -21,13 +21,21 @@ import {
 
 const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org";
 
-/** Five short verses and no recording, so Listen reads it aloud. */
+/**
+ * Five short verses and no recording, so Listen reads it aloud. Verse 3 starts
+ * a section.
+ */
 function fiveVerses() {
-  return [1, 2, 3, 4, 5].map((n) => ({
+  const verses = [1, 2, 3, 4, 5].map((n) => ({
     type: "verse" as const,
     number: n,
     content: [`Verse ${n}`],
   }));
+  return [
+    ...verses.slice(0, 2),
+    { type: "heading" as const, content: ["The Third Day"] },
+    ...verses.slice(2),
+  ];
 }
 
 function createResponses() {
@@ -162,6 +170,17 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
 
     playback.play();
     expect(queuedTexts()).toEqual(["Verse 5"]);
+  });
+
+  it("names the verse a scrub would land on, with its section heading", () => {
+    const playback = startListening();
+
+    expect(playback.verseAt?.(0)).toEqual({ number: 1, heading: null });
+    expect(playback.verseAt?.(2)).toEqual({
+      number: 3,
+      heading: "The Third Day",
+    });
+    expect(playback.verseAt?.(99)).toEqual({ number: 5, heading: null });
   });
 
   it("keeps a seek inside the chapter and on a whole verse", () => {
