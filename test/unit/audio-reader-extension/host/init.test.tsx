@@ -45,6 +45,7 @@ function createContext(overrides: {
     features: {} as any,
     surface: overrides.surface,
     settings: {} as any,
+    readingPlans: {} as any,
   };
 }
 

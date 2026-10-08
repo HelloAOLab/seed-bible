@@ -59,6 +59,7 @@ describe("share button — surface wiring", () => {
             toast={state.app.toast}
             modals={state.modals}
             app={state.app}
+            readingPlans={state.readingPlans}
           />
         </TestHost>,
         container
@@ -125,6 +126,7 @@ describe("share button — surface wiring", () => {
         <TestHost state={state}>
           <ShareModal
             app={state.app}
+            modals={state.modals}
             session={null}
             onShareLink={() => undefined}
           />

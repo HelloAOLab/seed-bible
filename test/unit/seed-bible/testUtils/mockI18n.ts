@@ -46,11 +46,23 @@ export function resetMockI18n() {
   }
 }
 
+/** English plural suffix, matching i18next's `_one` / `_other` keys. */
+function englishPluralSuffix(count: unknown): "_one" | "_other" | null {
+  if (typeof count !== "number" || !Number.isFinite(count)) {
+    return null;
+  }
+  return count === 1 ? "_one" : "_other";
+}
+
 /**
  * Stand-in for i18next's `t`: returns the call site's `defaultValue` with any
  * `{{param}}` placeholders substituted. An entry in
  * {@link mockI18nTranslations} wins over the `defaultValue`, the way a real
  * locale's string does.
+ *
+ * When `count` is set, a `_one` / `_other` override or `defaultValue_one` /
+ * `defaultValue_other` wins the way i18next's plural keys do. English rules:
+ * 1 is `_one`, anything else is `_other`.
  *
  * Falls back to the key when a call site has no `defaultValue`, so a missing one
  * shows up as a key in an assertion rather than as an empty string.
@@ -59,12 +71,18 @@ export function mockTranslate(
   key: string,
   options?: Record<string, unknown>
 ): string {
+  const suffix = englishPluralSuffix(options?.count);
+  const pluralKey = suffix ? `${key}${suffix}` : null;
   let text =
+    (pluralKey ? mockI18nTranslations[pluralKey] : undefined) ??
     mockI18nTranslations[key] ??
+    (suffix
+      ? (options?.[`defaultValue${suffix}`] as string | undefined)
+      : undefined) ??
     (options?.defaultValue as string | undefined) ??
     key;
   for (const [name, value] of Object.entries(options ?? {})) {
-    if (name === "defaultValue") continue;
+    if (name === "defaultValue" || name.startsWith("defaultValue_")) continue;
     text = text.replaceAll(`{{${name}}}`, String(value));
   }
   return text;

@@ -5,10 +5,12 @@ import { DiscoverContentPanel } from "@packages/seed-bible/seed-bible/components
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import type { PlanMatch } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 import {
   createDiscoverManager,
   type DiscoverContentTypeDefinition,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { createRealFriendContent } from "../testUtils/realFriendContent";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -55,6 +57,17 @@ function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
     data: { type: "comment", html: "<p>A helpful note.</p>" },
     ...overrides,
   } as Annotation;
+}
+
+function createPlanMatch(overrides: Partial<PlanMatch> = {}): PlanMatch {
+  return {
+    planKey: "plan-1",
+    planTitle: "Through the Bible in a Year",
+    progress: { id: "progress-1" },
+    sessions: [],
+    allComplete: false,
+    ...overrides,
+  } as PlanMatch;
 }
 
 /** One Theographic result as the provider builds it. */
@@ -125,8 +138,10 @@ function createMockState(
     annotationsForChapter?: Annotation[];
     pendingCountForChapter?: number;
     contentTypes?: DiscoverContentTypeDefinition[];
+    readingPlansForChapter?: PlanMatch[];
   } = {}
 ): SeedBibleState {
+  const readingPlansForChapter = overrides.readingPlansForChapter ?? [];
   const discover = createDiscoverManager();
   for (const definition of overrides.contentTypes ?? []) {
     discover.registerContentType(definition);
@@ -145,9 +160,17 @@ function createMockState(
     panes: { closeFullscreenPanes: vi.fn() },
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
+    friends: {
+      friends: signal([]),
+      friendIds: signal([]),
+    },
     annotations: {
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
+      ),
+      getUserAnnotationsForChapter: vi.fn(() => signal([])),
+      visibleAnnotationsForChapter: vi.fn(
+        () => overrides.annotationsForChapter ?? []
       ),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
       hasRecordOverride: false,
@@ -158,7 +181,14 @@ function createMockState(
         pendingCount: signal(0),
       },
     },
-    features: { isFeatureEnabled: vi.fn().mockReturnValue(false) },
+    // The real manager only returns plans while the reading-plans feature is
+    // on, so the flag follows whether any plans were given.
+    features: {
+      isFeatureEnabled: vi.fn(() => signal(readingPlansForChapter.length > 0)),
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => readingPlansForChapter),
+    },
   } as unknown as SeedBibleState;
 }
 
@@ -266,6 +296,47 @@ describe("DiscoverContentPanel", () => {
     expect(container.textContent).toContain("A helpful note.");
   });
 
+  it("shows a friend's notes on a chapter where the user has none of their own", async () => {
+    const tab = createMockTab();
+    const mockState = createMockState();
+    // The real managers, so the friend's note is loaded from the server
+    // the way the app loads it.
+    const { login, friends, annotations } = await createRealFriendContent({
+      friendIds: ["friend-1"],
+      notes: {
+        "friend-1": [
+          createAnnotation({
+            id: "friend-note",
+            data: {
+              type: "comment",
+              html: "<p>A friend's note.</p>",
+              userId: "friend-1",
+            },
+          } as Partial<Annotation>),
+        ],
+      },
+      discover: mockState.discover,
+    });
+    const state = {
+      ...mockState,
+      login,
+      friends,
+      annotations,
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    await vi.waitFor(() =>
+      expect(container.textContent).toContain("A friend's note.")
+    );
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toContain("Notes");
+  });
+
   it("renders nothing when there are discovered results absent but also no annotations", () => {
     const tab = createMockTab();
     const state = createMockState({ annotationsForChapter: [] });
@@ -275,6 +346,28 @@ describe("DiscoverContentPanel", () => {
     });
 
     expect(container.innerHTML).toBe("");
+  });
+
+  it("renders the reading-plans section when a followed plan covers the chapter and nothing else exists", () => {
+    const tab = createMockTab();
+    const state = createMockState({
+      annotationsForChapter: [],
+      readingPlansForChapter: [createPlanMatch()],
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-discover-content-panel")
+    ).not.toBeNull();
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toEqual(["Reading Plans"]);
+    expect(container.textContent).toContain("Through the Bible in a Year");
+    expect(container.textContent).not.toContain("Pick a filter above");
   });
 
   it("only shows filter chips for content that is actually available", () => {
@@ -389,6 +482,9 @@ describe("DiscoverContentPanel", () => {
     const state = createMockState();
     state.annotations.getAnnotationsForChapter = vi.fn(
       () => annotationsForChapter
+    );
+    state.annotations.visibleAnnotationsForChapter = vi.fn(
+      () => annotationsForChapter.value
     );
 
     act(() => {
