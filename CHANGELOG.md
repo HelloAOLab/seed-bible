@@ -16,11 +16,14 @@
   - Values are saved in a private CasualOS proxy record owned by the viewer. The extension sends requests with `extensionSettings.fetchWithSensitiveValues`, and the server adds the values before forwarding them.
   - Each destination can be private (only the viewer can use it) or public (anyone with its address can send requests through it, but nobody can read the values). It's always private until the viewer changes it; extensions can't choose.
   - The viewer can also send a destination's values to a different host than the extension declares. The extension keeps using its own URL, and requests go to the viewer's host with the same path.
-  - The Configure window shows these settings as masked fields that only say whether a value is set. Customization default overrides skip them.
+  - The Configure window shows these settings as masked fields that only say whether a value is set.
+  - A Customization can provide its own values for these settings, entered in the same masked fields from its extension defaults window. They are saved in a proxy record owned by the Customization's author, and the Customization only stores where that proxy is. Everyone using the Customization sends requests with those values unless they save their own, which then replace the Customization's for that destination. This also works for signed-out viewers. The viewer's Configure window says "Provided by the customization" for such a setting.
+  - A Customization's proxy is public by default, since it exists for other people to use; the author can switch it to "Only me". Deleting the Customization erases its proxies first.
   - Secrets for an extension that's no longer installed, or that no longer asks for them, are listed under Settings → Extensions with a Clear button, so they can still be removed from the server.
 
 ### 🔧 Changed
 
+- Opening a customization to edit now closes every other pane first, including fullscreen ones, so the editor is the only pane on screen. Before, a fullscreen pane (or a floating one) stayed open next to the editor.
 - Show long extension descriptions as two lines with a "Read more" link in the Extensions settings list. Before, a long description made its row several lines tall. ([#1924](https://github.com/HelloAOLab/seed-bible/pull/1924))
 
 ### 🐛 Fixed
