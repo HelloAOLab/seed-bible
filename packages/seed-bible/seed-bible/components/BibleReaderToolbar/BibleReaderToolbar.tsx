@@ -1635,7 +1635,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     startReveal: number;
     /** Furthest the pointer has travelled, used to tell a tap from a drag. */
     maxTravel: number;
+    /**
+     * Started on a button: the sheet stays put until the finger moves past
+     * the tap slop, so a plain tap still reaches the button as a click.
+     */
+    pending: boolean;
   } | null>(null);
+
+  /**
+   * Until when a click is swallowed after a drag that started on a button.
+   * Some browsers still deliver that click to the button once the finger lifts.
+   */
+  const suppressVerseSheetClickUntil = useRef(0);
 
   /** The overflow row, measured so the reveal has a pixel target to animate to. */
   const stopOverflowMeasure = useRef<(() => void) | null>(null);
@@ -1718,9 +1729,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     verseSheetDismissOffset.value = 0;
   };
 
-  const handleVerseSheetHandlePointerDown = (event: PointerEvent) => {
-    const handle = event.currentTarget as HTMLElement;
-    handle.setPointerCapture?.(event.pointerId);
+  const handleVerseSheetHandlePointerDown = (
+    event: PointerEvent,
+    pending = false
+  ) => {
     const expanded = isVerseSheetExpanded.value;
     // Track the height on screen, not the full note. A note taller than the
     // viewport would otherwise have to be dragged its whole length before the
@@ -1732,12 +1744,23 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       startExpanded: expanded,
       startReveal: expanded ? visible : 0,
       maxTravel: 0,
+      pending,
     };
-    // Take over the height from the expanded/collapsed state so the first move
-    // continues from where the sheet is now rather than jumping.
-    verseSheetDragReveal.value = expanded ? visible : 0;
+    // Capturing now, or cancelling the press, would keep a tap from clicking.
+    if (pending) return;
+    startVerseSheetDrag(event);
     // Keep the drag from also scrolling the chapter behind the sheet.
     event.preventDefault();
+  };
+
+  const startVerseSheetDrag = (event: PointerEvent) => {
+    const drag = verseSheetDrag.current;
+    if (!drag) return;
+    drag.pending = false;
+    (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+    // Take over the height from the expanded/collapsed state so the first move
+    // continues from where the sheet is now rather than jumping.
+    verseSheetDragReveal.value = drag.startReveal;
   };
 
   const handleVerseSheetHandlePointerMove = (event: PointerEvent) => {
@@ -1746,6 +1769,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
     const dy = event.clientY - drag.startY;
     drag.maxTravel = Math.max(drag.maxTravel, Math.abs(dy));
+    if (drag.pending) {
+      if (drag.maxTravel <= VERSE_SHEET_TAP_SLOP) return;
+      // The press on a button turned into a drag: from here on it moves the
+      // sheet, and the button must not also fire when the finger lifts.
+      startVerseSheetDrag(event);
+    }
 
     const visible = verseSheetVisibleOverflowHeight.value;
     // Up is negative, so subtracting `dy` grows the reveal as the finger rises.
@@ -1768,6 +1797,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const handleVerseSheetHandlePointerUp = (event: PointerEvent) => {
     const drag = verseSheetDrag.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
+    if (drag.pending) {
+      // A tap on a button: leave it to the button's own click.
+      verseSheetDrag.current = null;
+      return;
+    }
 
     const dismissOffset = verseSheetDismissOffset.value;
     const reveal = verseSheetDragReveal.value ?? drag.startReveal;
@@ -1777,6 +1811,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     // the end of it — there is no further to drag.
     const commitDistance = Math.min(VERSE_SHEET_SNAP_DISTANCE_PX, visible);
     endVerseSheetDrag(event);
+    if (drag.maxTravel > VERSE_SHEET_TAP_SLOP) {
+      suppressVerseSheetClickUntil.current = Date.now() + 500;
+    }
 
     if (drag.maxTravel <= VERSE_SHEET_TAP_SLOP) {
       // A tap on the handle is the keyboard-free way to toggle, and the only
@@ -1809,36 +1846,52 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const handleVerseSheetHandlePointerCancel = (event: PointerEvent) => {
     const drag = verseSheetDrag.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
+    if (drag.pending) {
+      verseSheetDrag.current = null;
+      return;
+    }
     endVerseSheetDrag(event);
     // An interrupted gesture shouldn't leave the sheet half-committed.
     isVerseSheetExpanded.value = drag.startExpanded;
   };
 
   /**
-   * Elements inside the mobile sheet that must keep their own tap/scroll
-   * behavior instead of starting the sheet drag: buttons and inputs (so taps
-   * still register as clicks — capturing the pointer on the panel would
-   * otherwise steal their `pointerup`), the horizontal highlight-color
-   * strip (its own swipe gesture would fight the sheet's vertical one), and
-   * the notes once they scroll (a drag there moves the note, not the sheet).
+   * Elements inside the mobile sheet that must keep their own gestures instead
+   * of starting the sheet drag: text fields (a drag there selects text), the
+   * horizontal highlight-color strip (its own swipe would fight the sheet's
+   * vertical one), and the notes once they scroll (a drag there moves the
+   * note, not the sheet).
    */
   const VERSE_SHEET_DRAG_IGNORE_SELECTOR =
-    "button, input, a, .sb-verse-toolbar-swatches, .sb-verse-toolbar-overflow-scrollable";
+    "input, textarea, select, .sb-verse-toolbar-swatches, .sb-verse-toolbar-overflow-scrollable";
+
+  /** Pressable controls, where the sheet drag waits to tell a tap from a drag. */
+  const VERSE_SHEET_DRAG_DEFERRED_SELECTOR = "button, a, [role='button']";
 
   /**
    * Entry point for the whole-panel version of the handle drag: any part of
    * the collapsed/expanded mobile sheet not covered by the ignore list above
-   * starts the same drag tracked by the handle, so the user doesn't have to
-   * land a thumb precisely on the handle to expand, collapse, or dismiss it.
-   * Not wired up while the highlight picker is showing — that view has no
-   * overflow row to reveal, and its swatch strip already owns horizontal
-   * swipes.
+   * starts the same drag tracked by the handle — including the action buttons
+   * — so the user doesn't have to land a thumb precisely on the handle to
+   * expand, collapse, or dismiss it. Not wired up while the highlight picker
+   * is showing — that view has no overflow row to reveal, and its swatch
+   * strip already owns horizontal swipes.
    */
   const handleVerseSheetPanelPointerDown = (event: PointerEvent) => {
     if (isHighlightPickerOpen.value) return;
     const target = event.target as HTMLElement | null;
     if (target?.closest(VERSE_SHEET_DRAG_IGNORE_SELECTOR)) return;
-    handleVerseSheetHandlePointerDown(event);
+    const onControl =
+      !!target?.closest(VERSE_SHEET_DRAG_DEFERRED_SELECTOR) &&
+      !target.closest(".sb-verse-toolbar-handle-area");
+    handleVerseSheetHandlePointerDown(event, onControl);
+  };
+
+  const handleVerseSheetPanelClickCapture = (event: MouseEvent) => {
+    if (Date.now() > suppressVerseSheetClickUntil.current) return;
+    suppressVerseSheetClickUntil.current = 0;
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   const handleVerseSheetHandleKeyDown = (event: KeyboardEvent) => {
@@ -2987,6 +3040,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             isSmallScreen.value
               ? handleVerseSheetHandlePointerCancel
               : handleVerseToolbarPointerUp
+          }
+          onClickCapture={
+            isSmallScreen.value ? handleVerseSheetPanelClickCapture : undefined
           }
         >
           {isSmallScreen.value && (

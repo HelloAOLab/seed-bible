@@ -1952,7 +1952,22 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
   });
 
-  it("does not start the sheet drag when pressing down on a toolbar button", async () => {
+  it("expands the sheet when the drag starts on an action button", async () => {
+    await renderSheet();
+    const button = saveTrigger()!;
+
+    await press(button, 500);
+    await moveTo(button, 460);
+
+    expect(overflow()?.style.height).toBe("40px");
+    expect(sheet()?.className).toContain("sb-verse-sheet-dragging");
+
+    await moveTo(button, 400);
+    await release(button, 400);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+  });
+
+  it("does not press the button a drag started on", async () => {
     await renderSheet();
     const closeButton = container.querySelector<HTMLElement>(
       ".sb-verse-toolbar-close"
@@ -1960,10 +1975,37 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     if (!closeButton) throw new Error("The close button did not render.");
 
     await press(closeButton, 500);
-    await moveTo(closeButton, 460);
+    await moveTo(closeButton, 400);
+    await release(closeButton, 400);
+    await act(async () => {
+      closeButton.click();
+    });
 
+    // Close would have cleared the selection and removed the sheet.
+    expect(readingState.selectedVerses.value.length).toBeGreaterThan(0);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+  });
+
+  it("still presses a button that is tapped without dragging", async () => {
+    await renderSheet();
+    const closeButton = container.querySelector<HTMLElement>(
+      ".sb-verse-toolbar-close"
+    );
+    if (!closeButton) throw new Error("The close button did not render.");
+
+    await press(closeButton, 500);
+    await moveTo(closeButton, 497);
+
+    // Within the tap slop, the sheet doesn't move.
     expect(overflow()?.style.height).toBe("0px");
     expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
+
+    await release(closeButton, 497);
+    await act(async () => {
+      closeButton.click();
+    });
+
+    expect(readingState.selectedVerses.value).toHaveLength(0);
   });
 
   it("keeps the closed drawer's actions out of the tab order", async () => {

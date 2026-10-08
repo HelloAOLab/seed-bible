@@ -24,6 +24,7 @@
 
 ### 🔧 Changed
 
+- The mobile verse toolbar can now be expanded, collapsed or dismissed by dragging anywhere on it, including on its action buttons. Before, a drag only worked from the grab handle, the "Swipe up to see more" hint or the empty space around the buttons. A quick tap on a button still presses it.
 - Opening a customization to edit now closes every other pane first, including fullscreen ones, so the editor is the only pane on screen. Before, a fullscreen pane (or a floating one) stayed open next to the editor.
 - Show long extension descriptions as two lines with a "Read more" link in the Extensions settings list. Before, a long description made its row several lines tall. ([#1924](https://github.com/HelloAOLab/seed-bible/pull/1924))
 
