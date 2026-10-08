@@ -1333,8 +1333,22 @@ describe("BibleReader", () => {
     expect(selectFootnote).toHaveBeenCalledWith(7);
     expect(selectVerse).not.toHaveBeenCalled();
   });
-  it("keeps the footnote button inside a non-breaking inline wrapper", () => {
-    const { slot, selectorState, readingState } = createFixture();
+  it("keeps an inline footnote attached to the preceding word", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: ["the last words ", { noteId: 7 }, " more"],
+          },
+        ],
+      },
+    };
 
     act(() => {
       render(
@@ -1347,22 +1361,22 @@ describe("BibleReader", () => {
       );
     });
 
-    const footnote = container.querySelector(".sb-inline-footnote");
+    const verse = container.querySelector<HTMLElement>(".sb-verse");
+    expect(verse).not.toBeNull();
 
-    expect(footnote).not.toBeNull();
-    expect(footnote?.tagName).toBe("SPAN");
+    const footnoteButton = verse!.querySelector<HTMLButtonElement>(
+      ".sb-inline-footnote-button"
+    );
+    expect(footnoteButton).not.toBeNull();
 
-    const button = footnote?.querySelector(".sb-inline-footnote-button");
+    const text = verse!.textContent ?? "";
+    const marker = footnoteButton!.textContent ?? "";
+    const markerIndex = text.indexOf(marker);
 
-    expect(button).not.toBeNull();
-
-    // The non-breaking space must be immediately before the button.
-    expect(footnote?.childNodes[0]?.textContent).toBe("\u00A0");
-
-    // The button must be inside the non-breaking wrapper.
-    expect(button?.parentElement).toBe(footnote);
+    expect(markerIndex).toBeGreaterThan(1);
+    expect(text[markerIndex - 1]).toBe("\u00A0");
+    expect(text[markerIndex - 2]).not.toBe(" ");
   });
-
   it("marks selected and poetry verses with their CSS classes", () => {
     const { slot, selectorState, readingState, selectedVerses } =
       createFixture();

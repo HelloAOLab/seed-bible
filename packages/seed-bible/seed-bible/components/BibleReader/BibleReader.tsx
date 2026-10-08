@@ -340,8 +340,33 @@ function getPoemIndentLevel(part: ChapterVerse["content"][0]) {
 
   return null;
 }
+// Move a footnote before an immediately preceding line break so the marker
+// stays attached to the text it belongs to instead of starting on the next line.
+function reorderFootnoteBeforeLineBreak(
+  content: ChapterVerse["content"]
+): ChapterVerse["content"] {
+  const reorderedContent = [...content];
 
-function isFootnotePart(part: ChapterVerse["content"][0]) {
+  for (let index = 0; index < reorderedContent.length - 1; index += 1) {
+    const currentPart = reorderedContent[index]!;
+    const nextPart = reorderedContent[index + 1]!;
+
+    const isLineBreak =
+      typeof currentPart === "object" &&
+      "lineBreak" in currentPart &&
+      currentPart.lineBreak === true;
+
+    if (isLineBreak && isFootnotePart(nextPart)) {
+      reorderedContent[index] = nextPart;
+      reorderedContent[index + 1] = currentPart;
+      index += 1;
+    }
+  }
+
+  return reorderedContent;
+}
+
+function isFootnotePart(part: ChapterVerse["content"][0] | undefined) {
   return (
     !!part &&
     typeof part === "object" &&
@@ -556,7 +581,8 @@ function renderInlineContent(
   showFootnotes: boolean,
   showRedLettering: boolean,
   contentRanges: ContentDecorationRange[] = [],
-  partStartIndex = 0
+  partStartIndex = 0,
+  isBeforeFootnote = false
 ) {
   const splitTextByDecorations = (text: string) => {
     const partEndIndex = partStartIndex + text.length;
@@ -644,7 +670,8 @@ function renderInlineContent(
   };
 
   if (typeof part === "string") {
-    const segments = splitTextByDecorations(part);
+    const text = isBeforeFootnote ? part.trimEnd() : part;
+    const segments = splitTextByDecorations(text);
     return (
       <span key={index}>
         {segments.map((segment, segmentIndex) => (
@@ -669,8 +696,8 @@ function renderInlineContent(
     if (part.wordsOfJesus && showRedLettering) {
       className += " sb-words-of-jesus";
     }
-
-    const segments = splitTextByDecorations(part.text);
+    const text = isBeforeFootnote ? part.text.trimEnd() : part.text;
+    const segments = splitTextByDecorations(text);
     return (
       <span key={index} className={className.trim()}>
         {segments.map((segment, segmentIndex) => (
@@ -980,7 +1007,8 @@ function renderChapterContent(
         v.bookId === chapterData.book.id &&
         v.chapterNumber === chapterData.chapter.number
     );
-    const segments = splitVerseIntoSegments(value.content);
+    const content = reorderFootnoteBeforeLineBreak(value.content);
+    const segments = splitVerseIntoSegments(content);
     const hasPoetry = segments.some((s) => s.type === "poetry");
     const verseDecorations = getVerseDecorations(value.number);
     const decorationPresentation = getDecorationPresentation(verseDecorations);
@@ -1070,7 +1098,8 @@ function renderChapterContent(
                       scriptureElements.showFootnotes,
                       scriptureElements.showRedLettering,
                       contentRanges,
-                      getPartTextStartIndex(part)
+                      getPartTextStartIndex(part),
+                      isFootnotePart(segment.parts[partIndex + 1])
                     )
                   )}
                 </span>
@@ -1103,7 +1132,8 @@ function renderChapterContent(
                       scriptureElements.showFootnotes,
                       scriptureElements.showRedLettering,
                       contentRanges,
-                      getPartTextStartIndex(part)
+                      getPartTextStartIndex(part),
+                      isFootnotePart(line.parts[partIndex + 1])
                     )
                   )}
                 </span>
@@ -1130,7 +1160,7 @@ function renderChapterContent(
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
           {renderVerseNumberOrIcon(value.number, verse)}
-          {value.content.map((part, index) =>
+          {content.map((part, index) =>
             renderInlineContent(
               part,
               index,
@@ -1139,7 +1169,8 @@ function renderChapterContent(
               scriptureElements.showFootnotes,
               scriptureElements.showRedLettering,
               contentRanges,
-              getPartTextStartIndex(part)
+              getPartTextStartIndex(part),
+              isFootnotePart(content[index + 1])
             )
           )}
         </span>
