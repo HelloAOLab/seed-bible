@@ -381,13 +381,13 @@ describe("AudioScrubber", () => {
       };
     }
 
-    it("shows how many verses are left instead of a time", async () => {
+    it("shows the verse being read out of the total instead of a time", async () => {
       const { playback } = createVersePlayback();
       await renderScrubber(playback, { showTimeRemaining: true });
 
       expect(
         container.querySelector(".sb-audio-scrubber-remaining")?.textContent
-      ).toBe("9 of 12 verses left");
+      ).toBe("4/12");
       expect(slider().getAttribute("aria-valuetext")).toBe("Verse 4 of 12");
       expect(fillWidth()).toBe("25%");
     });

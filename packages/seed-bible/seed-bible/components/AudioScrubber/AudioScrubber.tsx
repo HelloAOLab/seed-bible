@@ -25,8 +25,9 @@ function progressFraction(time: number, duration: number | null): number {
 interface AudioScrubberProps {
   playback: AudioPlaybackController;
   /**
-   * Shows how much is left after the bar: `m:ss` for a recording, or how many
-   * verses are left for speech, whose timing isn't known.
+   * Shows progress after the bar: the time left (`m:ss`) for a recording, or
+   * the verse being read out of the total (`4/12`) for speech, whose timing
+   * isn't known.
    */
   showTimeRemaining?: boolean;
   className?: string;
@@ -250,11 +251,7 @@ export function AudioScrubber(props: AudioScrubberProps) {
           {duration === null
             ? "--:--"
             : byVerse
-              ? t("audio-verses-remaining", {
-                  defaultValue: "{{remaining}} of {{total}} verses left",
-                  remaining: duration - time,
-                  total: duration,
-                })
+              ? `${time + 1}/${duration}`
               : formatPlaybackTime(duration - time)}
         </span>
       )}
