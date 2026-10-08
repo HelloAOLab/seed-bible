@@ -6,6 +6,7 @@ import {
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { QuickToolContext } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { AudioPlaybackController } from "@packages/seed-bible/seed-bible/managers/AudioPlaybackManager";
+import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { createTestSeedBibleState } from "../../seed-bible/testUtils/createTestSeedBibleState";
 import {
   aabBooks,
@@ -142,16 +143,18 @@ describe("audio-reader playback controls", () => {
       playAt(0);
       expect(litVerses(state)).toEqual([[1]]);
     });
-    return state.audioPlayback.active.value!;
+    return state.audioPlayback.controllerFor(getReadingState(state))!;
   }
 
   it("shows no playback before anything is played", () => {
-    expect(state.audioPlayback.active.value).toBeNull();
+    expect(
+      state.audioPlayback.controllerFor(getReadingState(state))
+    ).toBeNull();
   });
 
   it("shows playback once Listen is pressed, tracking the recording's length and position", async () => {
     pressPlay();
-    const playback = state.audioPlayback.active.value;
+    const playback = state.audioPlayback.controllerFor(getReadingState(state));
     expect(playback).not.toBeNull();
     expect(playback!.duration.value).toBeNull();
 
@@ -166,7 +169,9 @@ describe("audio-reader playback controls", () => {
     fire("pause");
     expect(playback!.isPlaying.value).toBe(false);
     // Pausing keeps the controls up — only stopping takes them down.
-    expect(state.audioPlayback.active.value).toBe(playback);
+    expect(state.audioPlayback.controllerFor(getReadingState(state))).toBe(
+      playback
+    );
   });
 
   it("seeks the recording and moves the highlight straight to the verse it lands in", async () => {
@@ -235,7 +240,7 @@ describe("audio-reader playback controls", () => {
 
   it("names the verse a scrub would land on", async () => {
     pressPlay();
-    const playback = state.audioPlayback.active.value!;
+    const playback = state.audioPlayback.controllerFor(getReadingState(state))!;
     // Nothing to go on until the verse timings arrive.
     expect(playback.verseAt?.(6)).toBeNull();
 
@@ -248,7 +253,7 @@ describe("audio-reader playback controls", () => {
 
   it("marks where each verse starts in the recording", async () => {
     pressPlay();
-    const playback = state.audioPlayback.active.value!;
+    const playback = state.audioPlayback.controllerFor(getReadingState(state))!;
     expect(playback.verseMarks?.()).toEqual([]);
 
     await startChapterOne();
@@ -290,7 +295,9 @@ describe("audio-reader playback controls", () => {
 
     playback.stop();
 
-    expect(state.audioPlayback.active.value).toBeNull();
+    expect(
+      state.audioPlayback.controllerFor(getReadingState(state))
+    ).toBeNull();
     expect(audio.current!.currentTime).toBe(0);
     expect(playback.currentTime.value).toBe(0);
     expect(playback.isPlaying.value).toBe(false);
@@ -311,7 +318,9 @@ describe("audio-reader playback controls", () => {
       configurable: true,
     });
 
-    expect(state.audioPlayback.active.value).toBeNull();
+    expect(
+      state.audioPlayback.controllerFor(getReadingState(state))
+    ).toBeNull();
   });
 
   it("takes the controls down when the reader moves to another chapter", async () => {
@@ -324,7 +333,9 @@ describe("audio-reader playback controls", () => {
       2
     );
 
-    expect(state.audioPlayback.active.value).toBeNull();
+    expect(
+      state.audioPlayback.controllerFor(getReadingState(state))
+    ).toBeNull();
   });
 
   it("takes the controls down when the extension is uninstalled", async () => {
@@ -332,7 +343,110 @@ describe("audio-reader playback controls", () => {
 
     unregisterExtension("ext_audioReader");
 
-    expect(state.audioPlayback.active.value).toBeNull();
+    expect(
+      state.audioPlayback.controllerFor(getReadingState(state))
+    ).toBeNull();
     expect(litVerses(state)).toEqual([]);
+  });
+
+  describe("across tabs", () => {
+    const controlsFor = (readingState: BibleReadingState) =>
+      state.audioPlayback.controllerFor(readingState);
+
+    /** Opens a second tab on Genesis 2 and switches to it. */
+    async function openSecondTab() {
+      const tab = state.tabs.addTab();
+      await tab.readingState.selectTranslationAndChapter(
+        getReadingState(state).translationId.value,
+        "GEN",
+        2
+      );
+      state.app.selectTab(tab.id);
+      return tab;
+    }
+
+    it("keeps playing when the reader switches to another tab", async () => {
+      await startChapterOne();
+      const first = getReadingState(state);
+
+      await openSecondTab();
+
+      expect(controlsFor(first)?.isPlaying.value).toBe(true);
+      expect(audio.current!.src).toBe(CHAPTER_1_AUDIO_URL);
+      // The tab in view has nothing playing of its own.
+      expect(controlsFor(getReadingState(state))).toBeNull();
+    });
+
+    it("plays one tab at a time, pausing the first where it was", async () => {
+      await startChapterOne();
+      const first = getReadingState(state);
+      reportDuration(10);
+      playAt(6);
+
+      await openSecondTab();
+      const second = getReadingState(state);
+      pressPlay();
+      fire("play");
+
+      expect(controlsFor(first)?.isPlaying.value).toBe(false);
+      expect(controlsFor(first)?.currentTime.value).toBe(6);
+      expect(controlsFor(second)?.isPlaying.value).toBe(true);
+      expect(audio.current!.src).toBe(CHAPTER_2_AUDIO_URL);
+
+      // Back in the first tab, it picks up from where it was paused.
+      state.app.selectTab(state.tabs.tabs.value[0]!.id);
+      controlsFor(first)!.play();
+      fire("play");
+
+      expect(audio.current!.src).toBe(CHAPTER_1_AUDIO_URL);
+      expect(audio.current!.currentTime).toBe(6);
+      expect(controlsFor(first)?.isPlaying.value).toBe(true);
+      expect(controlsFor(second)?.isPlaying.value).toBe(false);
+    });
+
+    it("keeps a paused tab's place until it is stopped", async () => {
+      const playback = await startChapterOne();
+      const first = getReadingState(state);
+      playAt(6);
+      fire("pause");
+
+      await openSecondTab();
+      state.app.selectTab(state.tabs.tabs.value[0]!.id);
+
+      expect(controlsFor(first)).toBe(playback);
+      expect(playback.currentTime.value).toBe(6);
+
+      playback.stop();
+      expect(controlsFor(first)).toBeNull();
+    });
+
+    it("stops listening in a tab that is closed", async () => {
+      await startChapterOne();
+      const firstTab = state.tabs.tabs.value[0]!;
+
+      await openSecondTab();
+      state.tabs.removeTab(firstTab.id);
+
+      expect(controlsFor(firstTab.readingState)).toBeNull();
+      expect(audio.current!.currentTime).toBe(0);
+    });
+
+    it("stops a tab's listening when that tab moves to another chapter, leaving others alone", async () => {
+      await startChapterOne();
+      const first = getReadingState(state);
+      await openSecondTab();
+      const second = getReadingState(state);
+      pressPlay();
+      fire("play");
+
+      await first.selectTranslationAndChapter(
+        first.translationId.value,
+        "GEN",
+        2
+      );
+
+      expect(controlsFor(first)).toBeNull();
+      expect(controlsFor(second)?.isPlaying.value).toBe(true);
+    });
   });
 });

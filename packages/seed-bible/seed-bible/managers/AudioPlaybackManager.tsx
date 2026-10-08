@@ -1,4 +1,5 @@
 import { signal, type ReadonlySignal } from "@preact/signals";
+import type { BibleReadingState } from "./BibleReadingManager";
 
 /**
  * One piece of audio the reader can show progress for and control, such as a
@@ -71,32 +72,56 @@ export interface PlaybackVerse {
 }
 
 export interface AudioPlaybackManager {
-  /** The playback the reader is showing controls for, or null for none. */
-  active: ReadonlySignal<AudioPlaybackController | null>;
+  /**
+   * The playback started in the tab reading `readingState`, or null for none.
+   *
+   * Each tab keeps its own, so a tab that was paused still has its place when
+   * the reader comes back to it, and the reader's controls always show the
+   * tab in view rather than whichever one last made a sound.
+   */
+  controllerFor: (
+    readingState: BibleReadingState
+  ) => AudioPlaybackController | null;
 
   /**
-   * Makes `controller` the active playback, replacing any other.
+   * Shows `controller` as the playback for `readingState`'s tab, replacing
+   * any other there.
    *
    * Returns a function that removes it again. Calling that after something
    * else has taken over does nothing, so an owner can always call it on its
    * way out without checking first.
    */
-  show: (controller: AudioPlaybackController) => () => void;
+  show: (
+    readingState: BibleReadingState,
+    controller: AudioPlaybackController
+  ) => () => void;
 }
 
 export function createAudioPlaybackManager(): AudioPlaybackManager {
-  const active = signal<AudioPlaybackController | null>(null);
+  const controllers = signal<
+    ReadonlyMap<BibleReadingState, AudioPlaybackController>
+  >(new Map());
 
-  const show = (controller: AudioPlaybackController) => {
-    active.value = controller;
+  const controllerFor = (readingState: BibleReadingState) =>
+    controllers.value.get(readingState) ?? null;
+
+  const show = (
+    readingState: BibleReadingState,
+    controller: AudioPlaybackController
+  ) => {
+    controllers.value = new Map(controllers.peek()).set(
+      readingState,
+      controller
+    );
     return () => {
-      if (active.peek() === controller) {
-        active.value = null;
-      }
+      if (controllers.peek().get(readingState) !== controller) return;
+      const next = new Map(controllers.peek());
+      next.delete(readingState);
+      controllers.value = next;
     };
   };
 
-  return { active, show };
+  return { controllerFor, show };
 }
 
 /**

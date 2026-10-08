@@ -84,7 +84,10 @@ describe("BibleReaderToolbar — audio playback", () => {
   async function showPlayback(playback: AudioPlaybackController) {
     let hide = () => {};
     await act(() => {
-      hide = state.audioPlayback.show(playback);
+      hide = state.audioPlayback.show(
+        state.app.currentReadingState.value!.tab.readingState,
+        playback
+      );
     });
     return hide;
   }

@@ -1185,11 +1185,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const playingPlaylist = useComputed(
     () => props.state.playlists.playing.value
   );
-  // Narration that has been started and not yet stopped. Its progress shows
-  // above the chapter pill on mobile, or along the top of the toolbar on
-  // desktop.
-  const audioPlayback = useComputed(
-    () => props.state.audioPlayback.active.value
+  // Narration started in the tab in view and not yet stopped — playing, or
+  // paused with its place kept. Its progress shows above the chapter pill on
+  // mobile, or along the top of the toolbar on desktop.
+  const audioPlayback = useComputed(() =>
+    readingState.value
+      ? props.state.audioPlayback.controllerFor(readingState.value)
+      : null
   );
   // A playing playlist owns the toolbar's transport controls.
   const desktopPlayback = useComputed(() =>

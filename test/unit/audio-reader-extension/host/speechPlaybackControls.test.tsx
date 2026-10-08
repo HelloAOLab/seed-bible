@@ -106,7 +106,7 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
   function startListening(): AudioPlaybackController {
     pressListen();
     voiceReaches("Verse 1");
-    return state.audioPlayback.active.value!;
+    return state.audioPlayback.controllerFor(getReadingState(state))!;
   }
 
   it("shows progress counted in verses", () => {
@@ -129,7 +129,9 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
     expect(playback.isPlaying.value).toBe(false);
     expect(queuedTexts()).toEqual([]);
     // Still showing, so it can be resumed or scrubbed.
-    expect(state.audioPlayback.active.value).toBe(playback);
+    expect(state.audioPlayback.controllerFor(getReadingState(state))).toBe(
+      playback
+    );
     expect(playback.currentTime.value).toBe(2);
 
     playback.play();
@@ -212,7 +214,9 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
 
     playback.stop();
 
-    expect(state.audioPlayback.active.value).toBeNull();
+    expect(
+      state.audioPlayback.controllerFor(getReadingState(state))
+    ).toBeNull();
     expect(state.textToSpeech.isSpeaking.value).toBe(false);
     expect(getReadingState(state).readAlongVerse.value).toBeNull();
 
@@ -226,7 +230,9 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
 
     speech.queued.at(-1)!.onend?.();
 
-    expect(state.audioPlayback.active.value).toBeNull();
+    expect(
+      state.audioPlayback.controllerFor(getReadingState(state))
+    ).toBeNull();
   });
 
   it("takes the controls down when the reader moves to another chapter", async () => {
@@ -239,7 +245,9 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
       2
     );
 
-    expect(state.audioPlayback.active.value).toBeNull();
+    expect(
+      state.audioPlayback.controllerFor(getReadingState(state))
+    ).toBeNull();
     expect(state.textToSpeech.isSpeaking.value).toBe(false);
   });
 
@@ -249,6 +257,35 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
     unregisterExtension("ext_audioReader");
 
     expect(state.textToSpeech.isSpeaking.value).toBe(false);
-    expect(state.audioPlayback.active.value).toBeNull();
+    expect(
+      state.audioPlayback.controllerFor(getReadingState(state))
+    ).toBeNull();
+  });
+
+  it("reads one tab at a time, pausing the first where it was", async () => {
+    const first = startListening();
+    const firstReadingState = getReadingState(state);
+    voiceReaches("Verse 3");
+
+    // A second tab on Genesis 2, which also has no recording.
+    const tab = state.tabs.addTab();
+    await tab.readingState.selectTranslationAndChapter(
+      firstReadingState.translationId.value,
+      "GEN",
+      2
+    );
+    state.app.selectTab(tab.id);
+    pressListen();
+
+    expect(first.isPlaying.value).toBe(false);
+    expect(first.currentTime.value).toBe(2);
+    expect(queuedTexts()).toEqual(["Verse 1", "Verse 2"]);
+    expect(
+      state.audioPlayback.controllerFor(tab.readingState)?.isPlaying.value
+    ).toBe(true);
+
+    // The first tab resumes from its own verse.
+    first.play();
+    expect(queuedTexts()).toEqual(["Verse 3", "Verse 4", "Verse 5"]);
   });
 });

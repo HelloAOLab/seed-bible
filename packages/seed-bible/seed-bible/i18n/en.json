@@ -451,6 +451,8 @@
   "audio-playback-time": "{{current}} of {{total}}",
   "audio-playback-verse": "Verse {{current}} of {{total}}",
   "audio-scrub-verse": "Verse {{verse}}",
+  "tab-playing-audio": "Playing audio",
+  "collapsed-tab-playing-label": "{{label}} — playing audio",
   "queue": "Queue",
   "previous": "Previous",
   "next": "Next",
