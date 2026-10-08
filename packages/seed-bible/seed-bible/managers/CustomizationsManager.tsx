@@ -291,7 +291,7 @@ const customizationVariantSchema = z.object({
  *   customization is active; shown but can't be uninstalled from there.
  * - `hidden`: never offered in Settings → Extensions while the
  *   customization is active. If it's still installed anyway (e.g. as another
- *   extension's dependency) it's listed under Installed, without Uninstall.
+ *   extension's dependency) it's listed under Installed and can still be uninstalled.
  */
 export const EXTENSION_AVAILABILITY_VALUES = [
   "available",

@@ -245,14 +245,22 @@ describe("ExtensionsSettingsView", () => {
       ).toBe("2");
     });
 
-    it("offers no Uninstall for a hidden extension that's installed, since removing it under the customization can't take it off", () => {
-      renderWithHidden(
-        [makeEntry("hidden-installed", true), makeEntry("shown-one", true)],
+    it("uninstalls a hidden extension that's installed, for this session only", () => {
+      const state = renderWithHidden(
+        [makeEntry("hidden-installed", true)],
         ["hidden-installed"]
       );
 
-      expect(uninstallButtonFor("hidden-installed")).toBeNull();
-      expect(uninstallButtonFor("shown-one")).not.toBeNull();
+      act(() => {
+        uninstallButtonFor("hidden-installed")!.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      expect(state.extensions.unloadExtension).toHaveBeenCalledWith(
+        "hidden-installed",
+        { persist: false }
+      );
     });
 
     it("never offers a hidden extension on the Available tab", () => {

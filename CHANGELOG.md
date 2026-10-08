@@ -25,7 +25,7 @@
 
 ### 🐛 Fixed
 
-- List an installed extension under Installed in Settings → Extensions even when the active customization hides it, such as one another extension needs as a dependency. Before, it was left out of the list even though it was running. It has no Uninstall button, since the customization controls it, and hidden extensions still never appear under Available.
+- List an installed extension under Installed in Settings → Extensions even when the active customization hides it, such as one another extension needs as a dependency. Before, it was left out of the list even though it was running, so you couldn't see or remove it. You can now uninstall it from there, and hidden extensions still never appear under Available.
 
 ### 🗑️ Removed
 

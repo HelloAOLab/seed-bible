@@ -1255,8 +1255,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const activeCustomization = customizations.activeCustomization.value;
   // An extension the active customization marks "hidden" is never offered
   // for install, but one that's still installed (e.g. pulled in as another
-  // extension's dependency) is listed so the Installed tab matches what's
-  // actually running.
+  // extension's dependency) is listed so it can be seen and removed.
   const visibleExtensionsList = extensionsList.filter(
     (entry) =>
       entry.installed ||
@@ -1292,6 +1291,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const handleUninstall = (extensionId: string) => {
     if (activeCustomization) {
+      // A hidden extension is never one of the viewer's picks for the
+      // customization, so dropping the pick wouldn't remove it. Unload it for
+      // this session instead, the same way the customization's own swap does,
+      // so the viewer's default profile keeps it.
+      if (
+        customizations.getActiveExtensionAvailability(extensionId) === "hidden"
+      ) {
+        extensions.unloadExtension(extensionId, { persist: false });
+        return;
+      }
       void customizations.removeExtensionFromActiveCustomization(extensionId);
       return;
     }
@@ -1487,10 +1496,8 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
     const { id, installed, pendingInstallation } = extensionEntry;
-    // Removing an extension under a customization only drops the viewer's own
-    // pick, so it can't take off an auto-installed or hidden one.
-    const canUninstall =
-      customizations.getActiveExtensionAvailability(id) === "available";
+    const isBaseExtension =
+      customizations.getActiveExtensionAvailability(id) === "auto-installed";
     const isRegistered =
       ExtensionInitalizer.getInstance().isExtensionRegistered(id);
     const installState = getExtensionInstallState(
@@ -1582,7 +1589,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
               </button>
             )}
             {(installState === "installed" || installState === "downloaded") &&
-              canUninstall && (
+              !isBaseExtension && (
                 <button
                   type="button"
                   className="sb-extension-row-action-button"
