@@ -66,6 +66,7 @@ function renderCounts(body: () => void): Map<string, number> {
 describe("Today screen reactivity", () => {
   let container: HTMLDivElement;
   let originalResizeObserver: unknown;
+  let originalScrollIntoView: unknown;
 
   // One signal per input the screen takes.
   let readingHistory: Signal<ReadingHistoryState>;
@@ -85,6 +86,12 @@ describe("Today screen reactivity", () => {
     ).ResizeObserver;
     (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
       MockResizeObserver;
+    // jsdom has no scrollIntoView, which the timeline calls on mount.
+    originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: () => {},
+    });
 
     readingHistory = signal<ReadingHistoryState>({
       status: "ready",
@@ -92,7 +99,7 @@ describe("Today screen reactivity", () => {
     } as ReadingHistoryState);
     bookNames = signal(new Map([["GEN", "Genesis"]]));
     profile = signal({ name: "Alice" } as UserProfile);
-    theme = signal(themeWith({ secondaryFontColor: "rgb(1, 2, 3)" }));
+    theme = signal(themeWith({ dividerColor: "rgb(1, 2, 3)" }));
     isMobile = signal(false);
   });
 
@@ -101,6 +108,10 @@ describe("Today screen reactivity", () => {
     container.remove();
     (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
       originalResizeObserver;
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: originalScrollIntoView,
+    });
     vi.clearAllMocks();
   });
 
@@ -140,6 +151,20 @@ describe("Today screen reactivity", () => {
   }
 
   const q = (sel: string) => container.querySelector(sel);
+
+  /**
+   * The timeline is the one card that still colours itself from the theme in
+   * code, and it only mounts under the "all" timespan.
+   */
+  function showTimeline() {
+    act(() => {
+      (
+        container.querySelectorAll(
+          ".sb-today-timespan-filter-option"
+        )[3] as HTMLButtonElement
+      ).click();
+    });
+  }
   const text = (sel: string) => q(sel)?.textContent ?? null;
 
   it("swaps Welcome for the personalized layout when history arrives", () => {
@@ -186,14 +211,18 @@ describe("Today screen reactivity", () => {
   // immediately, without waiting for an unrelated re-render to carry it.
   it("restyles on a theme switch", () => {
     setup();
-    const icon = () => q(".sb-today-seed-bible-icon") as SVGSVGElement;
-    expect(icon().style.fill).toBe("rgb(1, 2, 3)");
+    showTimeline();
+    // The legend's first swatch is the colour of an unread day, which the
+    // timeline takes from the theme's divider colour.
+    const unreadSwatch = () =>
+      q(".sb-today-content .legend span[style]") as HTMLElement;
+    expect(unreadSwatch().style.backgroundColor).toBe("rgb(1, 2, 3)");
 
     act(() => {
-      theme.value = themeWith({ secondaryFontColor: "rgb(9, 9, 9)" });
+      theme.value = themeWith({ dividerColor: "rgb(9, 9, 9)" });
     });
 
-    expect(icon().style.fill).toBe("rgb(9, 9, 9)");
+    expect(unreadSwatch().style.backgroundColor).toBe("rgb(9, 9, 9)");
   });
 
   it("resizes chrome when the viewport crosses the mobile breakpoint", () => {
@@ -230,16 +259,18 @@ describe("Today screen reactivity", () => {
 
   it("leaves the cards that don't read the theme alone on a theme switch", () => {
     setup();
+    showTimeline();
 
     const counts = renderCounts(() => {
       act(() => {
-        theme.value = themeWith({ secondaryFontColor: "rgb(9, 9, 9)" });
+        theme.value = themeWith({ dividerColor: "rgb(9, 9, 9)" });
       });
     });
 
-    // The search card is the one that reads the theme directly, so it is the
+    // The timeline card is the one that reads the theme directly, so it is the
     // proof the switch was actually delivered rather than dropped.
-    expect(counts.get("SearchSection")).toBe(1);
+    expect(counts.get("ReadingHistoryTimelineSection")).toBe(1);
+    expect(counts.get("SearchSection") ?? 0).toBe(0);
     expect(counts.get("TodayContainer") ?? 0).toBe(0);
     expect(counts.get("TodayContent") ?? 0).toBe(0);
     expect(counts.get("Header") ?? 0).toBe(0);

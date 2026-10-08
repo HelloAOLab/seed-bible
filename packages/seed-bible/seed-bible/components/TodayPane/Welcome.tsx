@@ -1,10 +1,9 @@
-import { useSignal, type ReadonlySignal } from "@preact/signals";
+import { useSignal } from "@preact/signals";
 import { useEffect, useMemo } from "preact/hooks";
 import { MaterialIcon, SeedBibleIcon } from "../icons";
 import { useI18n } from "../../i18n";
 import type { LoginManager } from "../../managers/LoginManager";
 import { trimmedOrNull } from "../../managers/Utils";
-import type { BibleTheme } from "../../managers/ThemeManager";
 import type {
   TodayManager,
   TodayPassageTarget,
@@ -27,7 +26,6 @@ const HIGHLIGHT_MARKERS = /<hl>|<\/hl>/;
 export const Welcome = (props: {
   today: TodayManager;
   login: LoginManager;
-  theme: ReadonlySignal<BibleTheme>;
   onOpenBookSelector: () => void;
   onOpenPassage: (target: TodayPassageTarget) => void;
   onTakeTour: () => void;
@@ -52,9 +50,6 @@ export const Welcome = (props: {
   // `TimeProvider` re-renders this subtree every ten seconds so the date stays
   // current; without `tick` below it would be fixed at whenever Today opened.
   const { tick } = useTimeContext();
-  // Read here in the render body, which is a reactive scope, so a theme switch
-  // recolours the icon immediately (see useReadingHistoryTimeline).
-  const theme = props.theme.value;
 
   const date = useMemo(() => {
     const now = new Date();
@@ -180,7 +175,7 @@ export const Welcome = (props: {
               style={{
                 width: "1.25rem",
                 height: "1.25rem",
-                fill: theme.variables.readerFontColor,
+                fill: "var(--sb-reader-font-color)",
               }}
             />
             {t("open-bible", { defaultValue: "Open Bible" })}

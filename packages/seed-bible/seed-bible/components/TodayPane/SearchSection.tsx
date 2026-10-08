@@ -4,7 +4,6 @@ import { TitledSection } from "./TitledSection";
 import { useClickOutside } from "../useClickOutside";
 import { MaterialIcon, SeedBibleIcon } from "../icons";
 import { useI18n } from "../../i18n";
-import type { BibleTheme } from "../../managers/ThemeManager";
 import type {
   TodayManager,
   TodayPassageTarget,
@@ -13,16 +12,13 @@ import type {
 
 export const SearchSection = (props: {
   today: TodayManager;
-  theme: ReadonlySignal<BibleTheme>;
   isMobile: ReadonlySignal<boolean>;
   onOpenBookSelector: () => void;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) => {
   const { t } = useI18n();
-  // Both read here in the render body, which is a reactive scope, so a theme
-  // switch or a breakpoint crossing restyles the icon immediately (see
-  // useReadingHistoryTimeline).
-  const theme = props.theme.value;
+  // Read here in the render body, which is a reactive scope, so a breakpoint
+  // crossing resizes the icon immediately (see useReadingHistoryTimeline).
   const isMobile = props.isMobile.value;
   const iconSize = isMobile ? "1.25rem" : "1.5rem";
 
@@ -41,7 +37,7 @@ export const SearchSection = (props: {
             style={{
               width: iconSize,
               height: iconSize,
-              fill: theme.variables.secondaryFontColor,
+              fill: "var(--sb-secondary-font-color)",
             }}
           />
           {t("books", { defaultValue: "Books" })}
