@@ -2,7 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { Mock } from "vitest";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { signal, type Signal } from "@preact/signals";
+import { computed, signal, type Signal } from "@preact/signals";
 import type {
   ChatContext,
   ChatProvider,
@@ -89,16 +89,30 @@ function createFakeChats() {
   };
 }
 
+/**
+ * Like `ExtensionSettingsManager.getValue`, a setting the viewer hasn't saved
+ * falls back to the active Customization's default, then the manifest's.
+ */
 function createFakeContext(
   search: string,
   fetchWithSensitiveValues: Mock = vi.fn(noSavedProxy),
-  savedSettings: SavedSettings = signal({})
+  savedSettings: SavedSettings = signal({}),
+  customizationDefaults: Record<string, unknown> = {}
 ): SeedBibleState {
+  const manifestSettings: Record<string, { default?: unknown }> =
+    apologistManifest.settings;
   return {
     extensionSettings: {
       fetchWithSensitiveValues,
+      valuesByExtensionId: computed(() => ({
+        ext_Apologist: savedSettings.value,
+      })),
       getValue: (extensionId: string, key: string) =>
-        extensionId === "ext_Apologist" ? savedSettings.value[key] : undefined,
+        extensionId === "ext_Apologist"
+          ? (savedSettings.value[key] ??
+            customizationDefaults[key] ??
+            manifestSettings[key]?.default)
+          : undefined,
     },
     navigation: {
       currentUrl: { value: new URL(`https://seedbible.org/${search}`) },
@@ -189,20 +203,127 @@ describe("initApologistExtension discover provider", () => {
     vi.restoreAllMocks();
   });
 
+  // Discover is off unless turned on, so these tests start from a
+  // Customization that turns it on.
   function install(
     search: string,
     fetchWithSensitiveValues?: Mock,
-    savedSettings?: SavedSettings
+    savedSettings?: SavedSettings,
+    customizationDefaults: Record<string, unknown> = { discoverEnabled: true }
   ): SeedBibleState {
     const context = createFakeContext(
       search,
       fetchWithSensitiveValues,
-      savedSettings
+      savedSettings,
+      customizationDefaults
     );
     setupExtensionContext(context);
     initApologistExtension();
     return context;
   }
+
+  function findRegisteredChatProvider(
+    context: SeedBibleState
+  ): ChatProvider | undefined {
+    return context.chats.providers.value.find(
+      (p) => p.id === "apologist-chat-provider"
+    );
+  }
+
+  describe("turning chat and Discover on and off", () => {
+    it("offers the chat agent and leaves Discover off by default", () => {
+      const context = install("", undefined, signal({ teamId: 42 }), {});
+
+      expect(findRegisteredChatProvider(context)).toBeDefined();
+      expect(findDiscoverProvider(context)).toBeUndefined();
+    });
+
+    it("shows a linked team's content to a signed-out viewer", async () => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ results: [] }), { status: 200 })
+      );
+      // Signed out: nothing saved, and no Customization turning Discover on.
+      const context = install("?apologistTeamID=42", undefined, undefined, {});
+
+      await findDiscoverProvider(context)!.discover(discoverContext);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides a linked team's content when the viewer has turned Discover off", () => {
+      const context = install(
+        "?apologistTeamID=42",
+        undefined,
+        signal({ discoverEnabled: false }),
+        {}
+      );
+      expect(findDiscoverProvider(context)).toBeUndefined();
+    });
+
+    it("shows the team's content once Discover is turned on", async () => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ results: [] }), { status: 200 })
+      );
+      const saved = signal<Record<string, unknown>>({ teamId: 42 });
+      const context = install("", undefined, saved, {});
+
+      saved.value = { teamId: 42, discoverEnabled: true };
+      await findDiscoverProvider(context)!.discover(discoverContext);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      saved.value = { teamId: 42, discoverEnabled: false };
+      expect(findDiscoverProvider(context)).toBeUndefined();
+    });
+
+    it("keeps Discover off without a team, even when turned on", () => {
+      const context = install(
+        "",
+        undefined,
+        signal({ discoverEnabled: true }),
+        {}
+      );
+      expect(findDiscoverProvider(context)).toBeUndefined();
+    });
+
+    it("removes the agent from chats when chat is turned off, and brings it back when turned on", () => {
+      const saved = signal<Record<string, unknown>>({});
+      const context = install("", undefined, saved, {});
+
+      saved.value = { chatEnabled: false };
+      expect(findRegisteredChatProvider(context)).toBeUndefined();
+      expect(removedFromChats(context)).toEqual(["apologist-chat-provider"]);
+
+      saved.value = { chatEnabled: true };
+      expect(findRegisteredChatProvider(context)).toBeDefined();
+    });
+
+    it("doesn't offer the agent when chat starts out turned off, and still shows Discover content", () => {
+      const context = install(
+        "?apologistTeamID=42",
+        undefined,
+        signal({ chatEnabled: false, discoverEnabled: true }),
+        {}
+      );
+
+      expect(findRegisteredChatProvider(context)).toBeUndefined();
+      expect(findDiscoverProvider(context)).toBeDefined();
+    });
+
+    it("leaves nothing registered after uninstalling with chat turned off", () => {
+      const context = install(
+        "",
+        undefined,
+        signal({ chatEnabled: false }),
+        {}
+      );
+
+      unregisterExtension("ext_Apologist");
+
+      expect(findRegisteredChatProvider(context)).toBeUndefined();
+      expect(removedFromChats(context)).toEqual([]);
+    });
+  });
 
   it("does not register a discover provider without an apologistTeamID", () => {
     const context = install("?apologistApiKey=apg_key");
