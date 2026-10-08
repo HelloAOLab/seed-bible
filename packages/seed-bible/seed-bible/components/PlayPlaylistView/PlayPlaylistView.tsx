@@ -10,6 +10,7 @@ import { useDragReorder } from "../useDragReorder";
 import { MaterialIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { HeroImageBanner } from "../HeroImageField/HeroImageField";
+import { ExpandableText } from "../ExpandableText/ExpandableText";
 
 interface PlayPlaylistViewProps {
   playlists: PlaylistManager;
@@ -44,7 +45,10 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   }
 
   const currentIndex = playing.currentIndex.value;
-  const heroImageUrl = playing.playlists.value[0]?.heroImageUrl ?? null;
+  const playlist = playing.playlists.value[0];
+  const heroImageUrl = playlist?.heroImageUrl ?? null;
+  const authorName = playlists.playingAuthorName.value;
+  const description = playlist?.description?.trim() || null;
 
   // Resolve verse book IDs to full book names using the selected tab's loaded
   // translation, when available. Falls back to the raw book ID otherwise.
@@ -67,6 +71,27 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
               t("untitled-playlist", { defaultValue: "Untitled playlist" })
             }
           />
+        ) : null}
+        {authorName || description ? (
+          <div className="sb-play-playlist-about" dir="auto">
+            {authorName ? (
+              <p className="sb-play-playlist-author">
+                {t("shared-page-by-author", {
+                  author: authorName,
+                  defaultValue: "By {{author}}",
+                })}
+              </p>
+            ) : null}
+            {description ? (
+              <ExpandableText
+                className="sb-play-playlist-description"
+                readMoreLabel={t("read-more", { defaultValue: "Read more" })}
+                readLessLabel={t("read-less", { defaultValue: "Read less" })}
+              >
+                {description}
+              </ExpandableText>
+            ) : null}
+          </div>
         ) : null}
         <DiscoverSection title={t("queue", { defaultValue: "Queue" })}>
           <ul className="sb-discover-list">

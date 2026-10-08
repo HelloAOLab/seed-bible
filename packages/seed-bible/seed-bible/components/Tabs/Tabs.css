@@ -838,6 +838,18 @@
   min-height: 0;
   flex: 1;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--sb-font-color), transparent 80%)
+    transparent;
+}
+
+.sb-session-settings-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sb-session-settings-scroll::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
 }
 
 .sb-session-settings-note {
