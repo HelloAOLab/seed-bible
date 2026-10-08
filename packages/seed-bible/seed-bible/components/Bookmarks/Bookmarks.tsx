@@ -15,6 +15,10 @@ import {
   type BookmarkColorId,
 } from "../../managers/ThemeManager";
 import { MaterialIcon } from "../icons";
+import {
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "../ContextMenu/ContextMenu";
 import { openReaderLocation } from "../Tabs/openReaderLocation";
 
 type Translate = ReturnType<typeof useI18n>["t"];
@@ -305,6 +309,35 @@ function useBookmarkLocationText(state: SeedBibleState) {
   };
 }
 
+/**
+ * A bookmark's name over where it sits — "Genesis 3 • AAB" — on a second line,
+ * so a long name and a long book name each get a line of their own. The
+ * translation is always shown, since the same chapter in two translations is
+ * two different places to come back to.
+ */
+export function BookmarkLabel(props: {
+  name: string;
+  chapterText: string;
+  translationId: string;
+}) {
+  return (
+    <span className="sb-bookmark-label">
+      <span className="sb-bookmark-label-name">{props.name}</span>
+      <span className="sb-bookmark-label-location">
+        <span className="sb-bookmark-label-chapter" dir="auto">
+          {props.chapterText}
+        </span>
+        <span className="sb-bookmark-label-sep" aria-hidden="true">
+          •
+        </span>
+        <span className="sb-bookmark-label-translation">
+          {props.translationId}
+        </span>
+      </span>
+    </span>
+  );
+}
+
 /** Row id the create form uses in the modal's list. */
 const NEW_BOOKMARK_ROW = "new";
 
@@ -423,10 +456,11 @@ function BookmarkPickerContent(props: {
                 }}
               >
                 <BookmarkGlyph colorId={bookmark.colorId} size={18} />
-                <span className="sb-bookmark-picker-name">{bookmark.name}</span>
-                <span className="sb-bookmark-picker-location" dir="auto">
-                  {locationText(bookmark)}
-                </span>
+                <BookmarkLabel
+                  name={bookmark.name}
+                  chapterText={locationText(bookmark)}
+                  translationId={bookmark.translationId}
+                />
               </button>
               <button
                 type="button"
@@ -468,7 +502,7 @@ function BookmarkPickerContent(props: {
               }}
             >
               <BookmarkGlyph colorId={effectiveDraft.colorId} size={18} />
-              <span className="sb-bookmark-picker-name">
+              <span className="sb-bookmark-label-name">
                 {t("new-bookmark", { defaultValue: "New bookmark" })}
               </span>
             </button>
@@ -594,22 +628,11 @@ export async function openBookmarkModal(
   });
 }
 
-/** The chapter the selected tab is reading, if it has loaded one. */
-function currentReaderLocation(state: SeedBibleState): BookmarkLocation | null {
-  const tab = state.tabs.tabs.value.find(
-    (candidate) => candidate.id === state.tabs.selectedTabId.value
-  );
-  const translationId = tab?.readingState.translationId.value;
-  const bookId = tab?.readingState.bookId.value;
-  const chapterNumber = tab?.readingState.chapterNumber.value;
-  if (!translationId || !bookId || !chapterNumber) return null;
-  return { translationId, bookId, chapterNumber };
-}
-
 /**
- * The sidebar's bookmarks panel: every bookmark, most recently moved first,
- * where each can be opened, renamed, recolored, or deleted, and a new one can
- * be placed on the chapter being read.
+ * The sidebar's bookmarks panel: every bookmark, most recently moved first.
+ * Tapping one opens its chapter; its options menu renames, recolors, or
+ * deletes it. Bookmarks are only placed from a chapter (the reader's button),
+ * so there is no "new bookmark" here.
  */
 export function BookmarksPanel(props: {
   state: SeedBibleState;
@@ -621,7 +644,6 @@ export function BookmarksPanel(props: {
   const locationText = useBookmarkLocationText(state);
 
   const bookmarks = manager.bookmarks.value;
-  /** Which bookmark is being edited, or the create form's row id. */
   const editingId = useSignal<string | null>(null);
   const editValue = useSignal<BookmarkDetails>({
     name: "",
@@ -629,24 +651,12 @@ export function BookmarksPanel(props: {
   });
   const isSaving = useSignal(false);
 
-  const currentLocation = currentReaderLocation(state);
-  const isCreating = editingId.value === NEW_BOOKMARK_ROW;
-
-  const startEditing = (id: string, value: BookmarkDetails) => {
-    editingId.value = id;
-    editValue.value = value;
-  };
-
-  const stopEditing = () => {
-    editingId.value = null;
-  };
-
   const run = async (action: () => Promise<unknown>) => {
     if (isSaving.value) return;
     isSaving.value = true;
     try {
       await action();
-      stopEditing();
+      editingId.value = null;
     } catch (err) {
       console.warn("Failed to update bookmarks:", err);
       state.app.toast(
@@ -663,40 +673,12 @@ export function BookmarksPanel(props: {
     const id = editingId.value;
     const value = editValue.value;
     if (!id || value.name.trim() === "") return;
-    if (id === NEW_BOOKMARK_ROW) {
-      if (!currentLocation) return;
-      void run(() => manager.createBookmark(value, currentLocation));
-    } else {
-      void run(() => manager.updateBookmark(id, value));
-    }
+    void run(() => manager.updateBookmark(id, value));
   };
-
-  const editActions = (
-    <div className="sb-bookmarks-panel-edit-actions">
-      <button
-        type="button"
-        className="sb-bookmarks-panel-cancel"
-        disabled={isSaving.value}
-        onClick={stopEditing}
-      >
-        {t("cancel", { defaultValue: "Cancel" })}
-      </button>
-      <button
-        type="button"
-        className="sb-bookmark-picker-save"
-        disabled={isSaving.value || editValue.value.name.trim() === ""}
-        onClick={submitEdit}
-      >
-        {isSaving.value
-          ? t("saving", { defaultValue: "Saving…" })
-          : t("save", { defaultValue: "Save" })}
-      </button>
-    </div>
-  );
 
   return (
     <div className="sb-bookmarks-panel">
-      {bookmarks.length === 0 && !isCreating && (
+      {bookmarks.length === 0 && (
         <p className="sb-bookmarks-panel-empty">
           {t("bookmarks-empty", {
             defaultValue:
@@ -717,7 +699,28 @@ export function BookmarksPanel(props: {
               }}
               onSubmit={submitEdit}
             />
-            {editActions}
+            <div className="sb-bookmarks-panel-edit-actions">
+              <button
+                type="button"
+                className="sb-bookmarks-panel-cancel"
+                disabled={isSaving.value}
+                onClick={() => {
+                  editingId.value = null;
+                }}
+              >
+                {t("cancel", { defaultValue: "Cancel" })}
+              </button>
+              <button
+                type="button"
+                className="sb-bookmark-picker-save"
+                disabled={isSaving.value || editValue.value.name.trim() === ""}
+                onClick={submitEdit}
+              >
+                {isSaving.value
+                  ? t("saving", { defaultValue: "Saving…" })
+                  : t("save", { defaultValue: "Save" })}
+              </button>
+            </div>
           </div>
         ) : (
           <div key={bookmark.id} className="sb-bookmarks-panel-row">
@@ -729,88 +732,64 @@ export function BookmarksPanel(props: {
               }}
             >
               <BookmarkGlyph colorId={bookmark.colorId} size={16} />
-              <span className="sb-bookmarks-panel-name">{bookmark.name}</span>
-              <span className="sb-bookmarks-panel-location" dir="auto">
-                {locationText(bookmark)}
-                <span aria-hidden="true"> • </span>
-                {bookmark.translationId}
-              </span>
+              <BookmarkLabel
+                name={bookmark.name}
+                chapterText={locationText(bookmark)}
+                translationId={bookmark.translationId}
+              />
             </button>
-            <button
-              type="button"
-              className="sb-bookmarks-panel-icon-button"
-              disabled={isSaving.value}
-              aria-label={t("edit-bookmark-named", {
-                defaultValue: "Edit {{name}}",
+            <ContextMenuWithButton
+              anchorClassName="sb-tab-menu-anchor"
+              buttonClassName="sb-tab-menu-button"
+              menuClassName="sb-tab-menu"
+              iconClassName="sb-tab-more-icon"
+              aria-label={t("bookmark-options-named", {
+                defaultValue: "Options for {{name}}",
                 name: bookmark.name,
               })}
-              title={t("edit-bookmark", { defaultValue: "Edit bookmark" })}
-              onClick={() => {
-                startEditing(bookmark.id, {
-                  name: bookmark.name,
-                  colorId: bookmark.colorId,
-                });
-              }}
-            >
-              <MaterialIcon aria-hidden="true">edit</MaterialIcon>
-            </button>
-            <button
-              type="button"
-              className="sb-bookmarks-panel-icon-button"
-              disabled={isSaving.value}
-              aria-label={t("remove-bookmark-named", {
-                defaultValue: "Remove {{name}}",
-                name: bookmark.name,
+              title={t("bookmark-options", {
+                defaultValue: "Bookmark options",
               })}
-              title={t("remove-bookmark", {
-                defaultValue: "Remove bookmark",
-              })}
-              onClick={() => {
-                void run(() => manager.removeBookmark(bookmark.id));
-              }}
             >
-              <MaterialIcon aria-hidden="true">delete</MaterialIcon>
-            </button>
+              <ContextMenuItem
+                className="sb-tab-menu-item"
+                onClick={() => {
+                  editingId.value = bookmark.id;
+                  editValue.value = {
+                    name: bookmark.name,
+                    colorId: bookmark.colorId,
+                  };
+                }}
+              >
+                <MaterialIcon
+                  className="sb-context-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  edit
+                </MaterialIcon>
+                <span>
+                  {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
+                </span>
+              </ContextMenuItem>
+              <ContextMenuItem
+                className="sb-tab-menu-item"
+                onClick={() => {
+                  void run(() => manager.removeBookmark(bookmark.id));
+                }}
+              >
+                <MaterialIcon
+                  className="sb-context-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  delete
+                </MaterialIcon>
+                <span>
+                  {t("delete-bookmark", { defaultValue: "Delete bookmark" })}
+                </span>
+              </ContextMenuItem>
+            </ContextMenuWithButton>
           </div>
         )
-      )}
-
-      {isCreating && currentLocation ? (
-        <div className="sb-bookmarks-panel-editor">
-          <p className="sb-bookmarks-panel-editor-title">
-            {t("new-bookmark-at", {
-              defaultValue: "New bookmark at {{location}}",
-              location: locationText(currentLocation),
-            })}
-          </p>
-          <BookmarkForm
-            value={editValue.value}
-            autoFocus
-            disabled={isSaving.value}
-            onChange={(next) => {
-              editValue.value = next;
-            }}
-            onSubmit={submitEdit}
-          />
-          {editActions}
-        </div>
-      ) : (
-        <div className="sb-bookmark-picker-add">
-          <button
-            type="button"
-            className="sb-bookmark-add-new"
-            disabled={
-              !manager.canCreate.value || !currentLocation || isSaving.value
-            }
-            onClick={() => {
-              startEditing(NEW_BOOKMARK_ROW, nextBookmarkDraft(t, bookmarks));
-            }}
-          >
-            <MaterialIcon aria-hidden="true">add</MaterialIcon>
-            <span>{t("new-bookmark", { defaultValue: "New bookmark" })}</span>
-          </button>
-          {!manager.canCreate.value && <BookmarkCapNote />}
-        </div>
       )}
     </div>
   );

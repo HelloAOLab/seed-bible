@@ -13,6 +13,53 @@
 }
 
 /* ------------------------------------------------------------------
+ * Name over location ("Genesis 3 • AAB"), shared by the modal, the sidebar
+ * panel, and the Today strip
+ * ------------------------------------------------------------------ */
+
+.sb-bookmark-label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  text-align: start;
+}
+
+.sb-bookmark-label-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.sb-bookmark-label-location {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.375rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  font-size: 0.8125rem;
+}
+
+.sb-bookmark-label-chapter {
+  overflow-wrap: anywhere;
+}
+
+/* Matches the translation label on a tab row. */
+.sb-bookmark-label-translation {
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The glyph sits level with the name line rather than the middle of both. */
+.sb-bookmark-picker-choice > .sb-bookmark-glyph,
+.sb-bookmarks-panel-open > .sb-bookmark-glyph {
+  margin-top: 0.125rem;
+}
+
+/* ------------------------------------------------------------------
  * Name + color form (shared by the modal and the sidebar panel)
  * ------------------------------------------------------------------ */
 
@@ -106,7 +153,7 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.625rem;
   padding: 0.75rem 0.875rem;
   border: none;
@@ -127,22 +174,7 @@
   cursor: not-allowed;
 }
 
-.sb-bookmark-picker-name {
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sb-bookmark-picker-location {
-  margin-inline-start: auto;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  font-size: 0.8125rem;
-  white-space: nowrap;
-}
-
-.sb-bookmark-picker-remove,
-.sb-bookmarks-panel-icon-button {
+.sb-bookmark-picker-remove {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -157,20 +189,17 @@
   cursor: pointer;
 }
 
-.sb-bookmark-picker-remove:hover:not(:disabled),
-.sb-bookmarks-panel-icon-button:hover:not(:disabled) {
+.sb-bookmark-picker-remove:hover:not(:disabled) {
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
   color: var(--sb-font-color);
 }
 
-.sb-bookmark-picker-remove:disabled,
-.sb-bookmarks-panel-icon-button:disabled {
+.sb-bookmark-picker-remove:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.sb-bookmark-picker-remove .material-symbols-outlined,
-.sb-bookmarks-panel-icon-button .material-symbols-outlined {
+.sb-bookmark-picker-remove .material-symbols-outlined {
   font-size: 1.125rem;
 }
 
@@ -298,7 +327,7 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   padding: 0.5rem;
   border: none;
@@ -310,25 +339,6 @@
   cursor: pointer;
 }
 
-.sb-bookmarks-panel-name {
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sb-bookmarks-panel-location {
-  margin-inline-start: auto;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  white-space: nowrap;
-}
-
-.sb-bookmarks-panel-icon-button {
-  width: 2rem;
-  height: 2rem;
-  margin-inline-end: 0;
-}
-
 .sb-bookmarks-panel-editor {
   display: flex;
   flex-direction: column;
@@ -336,15 +346,4 @@
   padding: 0.625rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
   border-radius: 0.625rem;
-}
-
-.sb-bookmarks-panel-editor-title {
-  margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--sb-font-color);
-}
-
-.sb-bookmarks-panel .sb-bookmark-picker-add {
-  padding: 0.25rem 0.5rem;
 }

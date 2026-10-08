@@ -221,9 +221,7 @@ describe("TodayPane", () => {
       expect(propsOf(BookmarksSection)).toMatchObject({
         today: props.today,
         bookmarks: props.bookmarks,
-        isMobile: props.isMobile,
         onOpenPassage: props.onOpenPassage,
-        onShowBookmarksList: props.onShowBookmarksList,
       });
       expect(propsOf(SearchSection)).toMatchObject({
         today: props.today,

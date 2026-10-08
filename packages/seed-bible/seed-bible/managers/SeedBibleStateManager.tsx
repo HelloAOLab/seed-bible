@@ -3504,10 +3504,6 @@ export function createSeedBibleState(
       selector.setOpen(true, slot);
     }
   };
-  const showTodayBookmarksList = () => {
-    sidebar.isSidebarCollapsed.value = false;
-    bookmarks.isPanelOpen.value = true;
-  };
   const renderTodayPane = () => (
     <TodayPane
       today={today}
@@ -3515,7 +3511,6 @@ export function createSeedBibleState(
       theme={themeManager.currentTheme}
       isMobile={isMobile}
       bookmarks={bookmarks.bookmarks}
-      onShowBookmarksList={showTodayBookmarksList}
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
       onTakeTour={() => tutorial.acceptPrompt()}

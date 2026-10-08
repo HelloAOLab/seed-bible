@@ -1,12 +1,11 @@
 import {
-  useComputed,
   useSignal,
   useSignalEffect,
   type ReadonlySignal,
 } from "@preact/signals";
-import { useLayoutEffect, useRef } from "preact/hooks";
+import { useRef } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
-import { BookmarkGlyph } from "../Bookmarks/Bookmarks";
+import { BookmarkGlyph, BookmarkLabel } from "../Bookmarks/Bookmarks";
 import { useHorizontalScroll } from "../useHorizontalScroll";
 import { useI18n } from "../../i18n";
 import type { TranslationBooks } from "../../managers/FreeUseBibleAPI";
@@ -33,26 +32,24 @@ interface BookmarkData {
   key: string;
   name: string;
   colorId: string;
-  text: string;
+  chapterText: string;
+  translationId: string;
   handleClick: () => void;
 }
 
 /**
- * Flat strip of bookmark chips on the Today screen, in the order given (most
- * recently moved first). Tapping one opens its chapter.
+ * The user's bookmarks on the Today screen, in the order given (most recently
+ * moved first). There are at most five, so all of them show; tapping one opens
+ * its chapter.
  */
 export const BookmarksSection = (props: {
   today: TodayManager;
   bookmarks: ReadonlySignal<BookmarkStripItem[]>;
-  isMobile: ReadonlySignal<boolean>;
   onOpenPassage: (target: TodayPassageTarget) => void;
-  onShowBookmarksList: () => void;
 }) => {
-  const { bookmarks, isMobile, onOpenPassage, onShowBookmarksList } = props;
+  const { bookmarks, onOpenPassage } = props;
   const { getTranslationBooks } = props.today;
   const { t } = useI18n();
-
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Reactive cache of translation → books. `getTranslationBooks` is async
   // (it fetches + caches on miss), so we resolve book names here and recompute
@@ -78,79 +75,30 @@ export const BookmarksSection = (props: {
     }
   });
 
-  // A `computed` rather than a plain render-body value: the layout effect below
-  // uses it as a dependency, so its identity has to stay stable across renders
-  // that did not change a bookmark or a translation's books.
-  const chips = useComputed<BookmarkData[]>(() =>
-    bookmarks.value.map((bookmark) => {
-      const { bookId, chapterNumber, translationId } = bookmark;
-      const translationBooks = booksByTranslation.value.get(translationId);
-      // Falls back to the raw bookId until the books for this translation load.
-      const name =
-        translationBooks?.books.find((book) => {
-          return book.id === bookId;
-        })?.name ?? bookId;
+  const chips: BookmarkData[] = bookmarks.value.map((bookmark) => {
+    const { bookId, chapterNumber, translationId } = bookmark;
+    const translationBooks = booksByTranslation.value.get(translationId);
+    // Falls back to the raw bookId until the books for this translation load.
+    const name =
+      translationBooks?.books.find((book) => book.id === bookId)?.name ??
+      bookId;
 
-      return {
-        name: bookmark.name,
-        colorId: bookmark.colorId,
-        text: `${name} ${chapterNumber}`,
-        handleClick: () => {
-          onOpenPassage({ bookId, chapter: chapterNumber, translationId });
-        },
-        key: bookmark.id,
-      };
-    })
-  );
-
-  // True when the strip has wrapped onto a second line (its
-  // `flex-wrap: wrap; overflow: hidden` container clips those rows), which is
-  // what puts a "view more" in the section header.
-  const isOverflowing = useSignal(false);
-  useLayoutEffect(() => {
-    const root = containerRef.current;
-    if (!root) return;
-
-    const checkOverflow = () => {
-      const strips = root.querySelectorAll<HTMLElement>(
-        ".sb-today-bookmarks-section-container"
-      );
-      isOverflowing.value = Array.from(strips).some((strip) => {
-        const children = Array.from(strip.children) as HTMLElement[];
-        const firstItemTop = children[0]?.offsetTop;
-        if (firstItemTop === undefined) return false;
-        return children.some((child) => child.offsetTop > firstItemTop);
-      });
+    return {
+      key: bookmark.id,
+      name: bookmark.name,
+      colorId: bookmark.colorId,
+      chapterText: `${name} ${chapterNumber}`,
+      translationId,
+      handleClick: () => {
+        onOpenPassage({ bookId, chapter: chapterNumber, translationId });
+      },
     };
-
-    // ResizeObserver catches viewport-driven reflow; the effect dependency
-    // below re-measures on content (bookmark) changes.
-    const observer = new ResizeObserver(checkOverflow);
-    observer.observe(root);
-    checkOverflow();
-
-    return () => observer.disconnect();
-  }, [chips.value]);
-
-  // Both reads sit in the render body, which is a reactive scope, so the header
-  // button appears and disappears as the strip wraps or the viewport crosses the
-  // breakpoint (see useReadingHistoryTimeline).
-  const showViewMore = isOverflowing.value && !isMobile.value;
+  });
 
   return (
-    <TitledSection
-      title={t("today-bookmarks", { defaultValue: "BOOKMARKS" })}
-      buttonData={
-        showViewMore
-          ? {
-              label: t("view-more", { defaultValue: "VIEW MORE" }),
-              onClick: onShowBookmarksList,
-            }
-          : undefined
-      }
-    >
-      <div className={"sb-today-bookmarks-section"} ref={containerRef}>
-        <BookmarkStrip chips={chips.value} />
+    <TitledSection title={t("today-bookmarks", { defaultValue: "BOOKMARKS" })}>
+      <div className={"sb-today-bookmarks-section"}>
+        <BookmarkStrip chips={chips} />
       </div>
     </TitledSection>
   );
@@ -170,24 +118,18 @@ function BookmarkStrip(props: { chips: BookmarkData[] }) {
   );
 }
 
-function Bookmark(props: {
-  name: string;
-  colorId: string;
-  text: string;
-  handleClick: () => void;
-}) {
+function Bookmark(props: Omit<BookmarkData, "key">) {
   return (
     <button
       className={"sb-today-bookmarks-section-bookmark sb-today-clickable"}
       onClick={props.handleClick}
     >
       <BookmarkGlyph colorId={props.colorId} size={16} />
-      <span className="sb-today-bookmarks-section-bookmark-name">
-        {props.name}
-      </span>
-      <span className="sb-today-bookmarks-section-bookmark-location">
-        {props.text}
-      </span>
+      <BookmarkLabel
+        name={props.name}
+        chapterText={props.chapterText}
+        translationId={props.translationId}
+      />
     </button>
   );
 }

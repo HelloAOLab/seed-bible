@@ -807,11 +807,10 @@
 }
 
 /* Marks a tab whose chapter holds a bookmark, in that bookmark's color. */
-.sb-tab-bookmark-dot {
+.sb-tab-bookmark-marker {
   flex-shrink: 0;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
 }
 
 .sb-tab-users-section {

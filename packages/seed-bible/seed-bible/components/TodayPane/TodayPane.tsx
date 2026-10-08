@@ -31,8 +31,6 @@ export interface TodayScreenProps {
   isMobile: ReadonlySignal<boolean>;
   /** The user's bookmarks, most recently moved first. */
   bookmarks: ReadonlySignal<BookmarkStripItem[]>;
-  /** Reveals the bookmarks panel in the sidebar. */
-  onShowBookmarksList: () => void;
   /** Opens a passage in the reader and leaves Today. */
   onOpenPassage: (target: TodayPassageTarget) => void;
   /** Opens the book selector over the reader. */
@@ -102,9 +100,7 @@ function TodayContent(props: TodayScreenProps) {
         <BookmarksSection
           today={props.today}
           bookmarks={props.bookmarks}
-          isMobile={props.isMobile}
           onOpenPassage={props.onOpenPassage}
-          onShowBookmarksList={props.onShowBookmarksList}
         />
       )}
       <SearchSection

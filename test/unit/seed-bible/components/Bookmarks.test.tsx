@@ -133,7 +133,7 @@ describe("bookmarks", () => {
   const rows = (root: ParentNode) =>
     Array.from(root.querySelectorAll<HTMLElement>(".sb-bookmark-picker-row"));
   const rowName = (row: HTMLElement) =>
-    row.querySelector(".sb-bookmark-picker-name")!.textContent;
+    row.querySelector(".sb-bookmark-label-name")!.textContent;
   const checkedRow = (root: ParentNode) =>
     rows(root).find(
       (row) =>
@@ -200,6 +200,20 @@ describe("bookmarks", () => {
       );
       expect(moved).toMatchObject(AAB_GEN_1);
       expect(state.bookmarks.bookmarks.value).toHaveLength(2);
+    });
+
+    it("tells the same chapter in two translations apart", async () => {
+      await signIn([
+        aBookmark({ id: "kjv", name: "Plan", translationId: "KJV" }),
+        aBookmark({ id: "aab", name: "Plan", translationId: "AAB" }),
+      ]);
+      const modal = await openModal();
+
+      const translations = rows(modal).map(
+        (row) =>
+          row.querySelector(".sb-bookmark-label-translation")!.textContent
+      );
+      expect(translations.sort()).toEqual(["AAB", "KJV"]);
     });
 
     it("moves whichever bookmark the user picks", async () => {
@@ -385,22 +399,56 @@ describe("bookmarks", () => {
       ]);
       await renderSidebar();
 
-      const dots = container.querySelectorAll<HTMLElement>(
-        ".sb-tab-bookmark-dot"
+      const markers = container.querySelectorAll<HTMLElement>(
+        ".sb-tab-bookmark-marker"
       );
-      expect(dots).toHaveLength(1);
-      // One dot, in the most recently moved bookmark's color.
-      expect(dots[0]!.style.background).toBe("var(--sb-bookmark-green-color)");
-      expect(dots[0]!.getAttribute("aria-label")).toBe(
+      expect(markers).toHaveLength(1);
+      // One small ribbon, in the most recently moved bookmark's color.
+      expect(markers[0]!.querySelector("path")!.getAttribute("fill")).toBe(
+        "var(--sb-bookmark-green-color)"
+      );
+      expect(markers[0]!.getAttribute("aria-label")).toBe(
         "2 bookmarks on this chapter: Reading plan, Sermon prep"
       );
     });
 
-    it("shows no dot for a bookmark in another translation", async () => {
+    it("shows no marker for a bookmark in another translation", async () => {
       await signIn([aBookmark({ ...AAB_GEN_1, translationId: "BSB" })]);
       await renderSidebar();
 
-      expect(container.querySelector(".sb-tab-bookmark-dot")).toBeNull();
+      expect(container.querySelector(".sb-tab-bookmark-marker")).toBeNull();
+    });
+
+    /** Opens a panel row's options menu and picks an item by its label. */
+    async function chooseOption(name: string, item: string) {
+      await click(
+        container.querySelector<HTMLElement>(
+          `.sb-bookmarks-panel [aria-label='Options for ${name}']`
+        )!
+      );
+      const menuItem = Array.from(
+        document.querySelectorAll<HTMLElement>(".sb-tab-menu-item")
+      ).find((element) => element.textContent?.includes(item));
+      expect(menuItem).toBeDefined();
+      await click(menuItem!);
+    }
+
+    it("shows each bookmark's name over its chapter and translation", async () => {
+      await signIn([aBookmark()]);
+      await act(async () => {
+        state.bookmarks.isPanelOpen.value = true;
+      });
+      await renderSidebar();
+
+      const row = container.querySelector<HTMLElement>(
+        ".sb-bookmarks-panel-row"
+      )!;
+      expect(row.querySelector(".sb-bookmark-label-name")!.textContent).toBe(
+        "Reading plan"
+      );
+      expect(
+        row.querySelector(".sb-bookmark-label-translation")!.textContent
+      ).toBe("AAB");
     });
 
     it("renames and recolors a bookmark from the panel with the shared form", async () => {
@@ -413,9 +461,7 @@ describe("bookmarks", () => {
       const panel = container.querySelector<HTMLElement>(
         ".sb-bookmarks-panel"
       )!;
-      await click(
-        panel.querySelector<HTMLElement>("[aria-label='Edit Reading plan']")!
-      );
+      await chooseOption("Reading plan", "Edit bookmark");
       await type(
         panel.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
         "Sermon prep"
@@ -439,32 +485,22 @@ describe("bookmarks", () => {
       });
       await renderSidebar();
 
-      await click(
-        container.querySelector<HTMLElement>(
-          ".sb-bookmarks-panel [aria-label='Remove Reading plan']"
-        )!
-      );
+      await chooseOption("Reading plan", "Delete bookmark");
 
       expect(state.bookmarks.bookmarks.value).toEqual([]);
     });
 
-    it("places a new bookmark on the chapter being read", async () => {
+    // Bookmarks are placed from a chapter, with the reader's button.
+    it("offers no way to create a bookmark from the panel", async () => {
       await signIn([aBookmark()]);
       await act(async () => {
         state.bookmarks.isPanelOpen.value = true;
       });
       await renderSidebar();
 
-      const panel = container.querySelector<HTMLElement>(
-        ".sb-bookmarks-panel"
-      )!;
-      await click(button(panel, ".sb-bookmark-add-new"));
-      await click(button(panel, ".sb-bookmark-picker-save"));
-
-      expect(state.bookmarks.bookmarks.value[0]).toMatchObject({
-        name: "My bookmark",
-        ...AAB_GEN_1,
-      });
+      expect(
+        container.querySelector(".sb-bookmarks-panel .sb-bookmark-add-new")
+      ).toBeNull();
     });
 
     it("closes the saves list when the bookmarks panel opens, and the reverse", async () => {

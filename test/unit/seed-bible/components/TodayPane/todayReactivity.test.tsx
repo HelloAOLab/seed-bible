@@ -131,7 +131,6 @@ describe("Today screen reactivity", () => {
           theme={theme}
           isMobile={isMobile}
           bookmarks={signal([])}
-          onShowBookmarksList={vi.fn()}
           onOpenPassage={vi.fn()}
           onOpenBookSelector={vi.fn()}
           onTakeTour={vi.fn()}

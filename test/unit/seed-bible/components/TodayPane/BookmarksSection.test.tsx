@@ -32,63 +32,21 @@ function bookmark(
   };
 }
 
-class MockResizeObserver {
-  constructor(public cb: () => void) {}
-  observe() {}
-  disconnect() {}
-}
-
-// jsdom does not lay out, so `offsetTop` is driven from here. With `wrapChips`
-// on, every chip after the first reports a lower position — which is how the
-// component detects a strip that has wrapped onto a second line.
-let wrapChips = false;
-
 describe("BookmarksSection", () => {
   let container: HTMLDivElement;
   let onOpenPassage: Mock;
-  let onShowBookmarksList: Mock;
   let getTranslationBooks: Mock;
-  let isMobile: Signal<boolean>;
-  let offsetTopDesc: PropertyDescriptor | undefined;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
     onOpenPassage = vi.fn();
-    onShowBookmarksList = vi.fn();
     getTranslationBooks = vi.fn(async () => books([]));
-    isMobile = signal(false);
-    wrapChips = false;
-
-    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      MockResizeObserver;
-
-    offsetTopDesc = Object.getOwnPropertyDescriptor(
-      HTMLElement.prototype,
-      "offsetTop"
-    );
-    Object.defineProperty(HTMLElement.prototype, "offsetTop", {
-      configurable: true,
-      get(this: HTMLElement) {
-        if (!wrapChips) return 0;
-        const parent = this.parentElement;
-        if (!parent) return 0;
-        const index = Array.prototype.indexOf.call(parent.children, this);
-        return index > 0 ? 20 : 0;
-      },
-    });
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    if (offsetTopDesc) {
-      Object.defineProperty(HTMLElement.prototype, "offsetTop", offsetTopDesc);
-    } else {
-      delete (HTMLElement.prototype as { offsetTop?: number }).offsetTop;
-    }
-    delete (globalThis as unknown as { ResizeObserver?: unknown })
-      .ResizeObserver;
     vi.clearAllMocks();
   });
 
@@ -100,9 +58,7 @@ describe("BookmarksSection", () => {
         <BookmarksSection
           today={todayStub({ getTranslationBooks })}
           bookmarks={bookmarks}
-          isMobile={isMobile}
           onOpenPassage={onOpenPassage}
-          onShowBookmarksList={onShowBookmarksList}
         />,
         container
       )
@@ -120,14 +76,14 @@ describe("BookmarksSection", () => {
   const heading = () =>
     container.querySelector(".sb-today-titled-section-header > h5")!
       .textContent;
-  const moreButton = () =>
+  const headerButton = () =>
     container.querySelector<HTMLButtonElement>(
       ".sb-today-titled-section-header > button"
     );
   /** Where each chip says its bookmark sits, e.g. "Genesis 3". */
   const chipTexts = () => {
     const chips = container.querySelectorAll(
-      ".sb-today-bookmarks-section-container .sb-today-bookmarks-section-bookmark-location"
+      ".sb-today-bookmarks-section-container .sb-bookmark-label-chapter"
     );
     return Array.from(chips).map((el) => el.textContent);
   };
@@ -147,9 +103,16 @@ describe("BookmarksSection", () => {
     it("names its bookmark", () => {
       setup({ bookmarks: signal([bookmark({ name: "Reading plan" })]) });
       expect(
-        firstChip().querySelector(".sb-today-bookmarks-section-bookmark-name")!
-          .textContent
+        firstChip().querySelector(".sb-bookmark-label-name")!.textContent
       ).toBe("Reading plan");
+    });
+
+    // The same chapter in two translations is two different places.
+    it("names its bookmark's translation", () => {
+      setup({ bookmarks: signal([bookmark({ translationId: "KJV" })]) });
+      expect(
+        firstChip().querySelector(".sb-bookmark-label-translation")!.textContent
+      ).toBe("KJV");
     });
 
     // Through the theme variable, so the color follows light and dark mode.
@@ -257,52 +220,16 @@ describe("BookmarksSection", () => {
     });
   });
 
-  describe("the view-more button", () => {
-    const twoChips = () =>
-      signal([bookmark({ id: "b1" }), bookmark({ id: "b2" })]);
-
-    it("is absent when the strip does not wrap to a new line", () => {
-      setup({ bookmarks: twoChips() });
-      expect(moreButton()).toBeNull();
+  // Five at most, so every bookmark shows and there is nothing for a
+  // "view more" to reveal.
+  it("shows every bookmark without a view-more button", () => {
+    setup({
+      bookmarks: signal(
+        ["b1", "b2", "b3", "b4", "b5"].map((id) => bookmark({ id }))
+      ),
     });
 
-    it("appears, translated, once a strip wraps to a new line", () => {
-      wrapChips = true;
-      setup({ bookmarks: twoChips() });
-
-      expect(moreButton()).not.toBeNull();
-      expect(moreButton()!.textContent).toBe("VIEW MORE");
-    });
-
-    it("reveals the full bookmarks list when clicked", () => {
-      wrapChips = true;
-      setup({ bookmarks: twoChips() });
-
-      act(() => moreButton()!.click());
-
-      expect(onShowBookmarksList).toHaveBeenCalledTimes(1);
-    });
-
-    // On mobile the strips scroll horizontally instead, so there is nothing
-    // hidden for a "view more" to reveal.
-    it("stays hidden on mobile even when the strip wraps", () => {
-      wrapChips = true;
-      isMobile.value = true;
-      setup({ bookmarks: twoChips() });
-
-      expect(moreButton()).toBeNull();
-    });
-
-    it("disappears when the viewport crosses to mobile", () => {
-      wrapChips = true;
-      setup({ bookmarks: twoChips() });
-      expect(moreButton()).not.toBeNull();
-
-      act(() => {
-        isMobile.value = true;
-      });
-
-      expect(moreButton()).toBeNull();
-    });
+    expect(chipTexts()).toHaveLength(5);
+    expect(headerButton()).toBeNull();
   });
 });

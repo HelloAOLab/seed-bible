@@ -736,7 +736,6 @@
   "create-folder": "Create folder",
   "all": "All",
   "none": "None",
-  "view-more": "VIEW MORE",
   "today-bookmarks": "BOOKMARKS",
   "today-search-verses": "Search books, chapters, verses...",
   "anonymous-greeting": "Welcome!",
@@ -1076,10 +1075,8 @@
   "my-bookmark": "My bookmark",
   "numbered-bookmark": "Bookmark {{number}}",
   "new-bookmark": "New bookmark",
-  "new-bookmark-at": "New bookmark at {{location}}",
   "discard-new-bookmark": "Discard new bookmark",
   "edit-bookmark": "Edit bookmark",
-  "edit-bookmark-named": "Edit {{name}}",
   "remove-bookmark": "Remove bookmark",
   "remove-bookmark-named": "Remove {{name}}",
   "bookmark-limit-reached": "You can have up to {{max}} bookmarks. Move or remove one to make room.",
@@ -1088,5 +1085,8 @@
   "bookmark-remove-failed": "Couldn't remove that bookmark. Please try again.",
   "bookmarks-load-failed": "Couldn't load your bookmarks. Please try again.",
   "show-bookmarks": "Show bookmarks",
-  "hide-bookmarks": "Hide bookmarks"
+  "hide-bookmarks": "Hide bookmarks",
+  "bookmark-options": "Bookmark options",
+  "bookmark-options-named": "Options for {{name}}",
+  "delete-bookmark": "Delete bookmark"
 }

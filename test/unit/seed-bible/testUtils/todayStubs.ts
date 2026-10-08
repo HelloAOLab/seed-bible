@@ -47,7 +47,6 @@ export function todayScreenPropsStub(
     theme: signal({ variables: {} } as unknown as BibleTheme),
     isMobile: signal(false),
     bookmarks: signal([]),
-    onShowBookmarksList: vi.fn(),
     onOpenPassage: vi.fn(),
     onOpenBookSelector: vi.fn(),
     onTakeTour: vi.fn(),

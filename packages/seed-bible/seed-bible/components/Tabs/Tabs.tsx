@@ -53,11 +53,11 @@ import {
 } from "../FriendsPane/ParticipantFriendButton";
 import { openReaderLocation } from "./openReaderLocation";
 import {
+  BookmarkGlyph,
   BookmarkStackIcon,
   BookmarksPanel,
   bookmarkButtonLabel,
 } from "../Bookmarks/Bookmarks";
-import { bookmarkColorValue } from "../../managers/ThemeManager";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -1114,8 +1114,8 @@ function TabRow(props: TabRowProps) {
   const { app, saves, bookmarks } = state;
   const { t } = useI18n();
 
-  // One dot in the color of the most recently moved bookmark here; several
-  // colors at this size would be unreadable.
+  // One small ribbon in the color of the most recently moved bookmark here;
+  // several colors at this size would be unreadable.
   const bookmarksHere = bookmarks.getBookmarksForLocation(
     tab.readingState.translationId.value,
     tab.readingState.bookId.value,
@@ -1166,12 +1166,13 @@ function TabRow(props: TabRowProps) {
           <span className="sb-tab-main-translation">{shortSubTitle}</span>
           {frontBookmark && (
             <span
-              className="sb-tab-bookmark-dot"
+              className="sb-tab-bookmark-marker"
               role="img"
-              style={{ background: bookmarkColorValue(frontBookmark.colorId) }}
               aria-label={bookmarkButtonLabel(t, bookmarksHere)}
               title={bookmarkButtonLabel(t, bookmarksHere)}
-            />
+            >
+              <BookmarkGlyph colorId={frontBookmark.colorId} size={12} />
+            </span>
           )}
         </div>
 
