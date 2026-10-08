@@ -3140,8 +3140,12 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
 
       await renderSheet();
 
-      await vi.waitFor(() => expect(annotationItems()).toHaveLength(1));
-      expect(annotationItems()[0]!.textContent).toContain("Ada's note");
+      // The friend's notes arrive outside `act()`, so the item can be on the
+      // page a moment before `AnnotationPreview`'s effect fills in its text.
+      await vi.waitFor(() => {
+        expect(annotationItems()).toHaveLength(1);
+        expect(annotationItems()[0]!.textContent).toContain("Ada's note");
+      });
       expect(
         annotationItems()[0]!.querySelector(".sb-annotation-item-menu")
       ).toBeNull();
