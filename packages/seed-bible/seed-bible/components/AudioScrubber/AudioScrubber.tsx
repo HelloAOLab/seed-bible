@@ -11,7 +11,7 @@ import {
 /** How long a tapped-open handle stays up when it isn't used. */
 export const SCRUB_HANDLE_HIDE_DELAY_MS = 3_000;
 
-/** How far one arrow-key press moves playback. */
+/** How far one arrow-key press moves a recording. Speech moves one verse. */
 const KEYBOARD_STEP_SECONDS = 5;
 
 function clamp(value: number, min: number, max: number): number {
@@ -24,7 +24,10 @@ function progressFraction(time: number, duration: number | null): number {
 
 interface AudioScrubberProps {
   playback: AudioPlaybackController;
-  /** Shows how much is left, as `m:ss`, after the bar. */
+  /**
+   * Shows how much is left after the bar: `m:ss` for a recording, or how many
+   * verses are left for speech, whose timing isn't known.
+   */
   showTimeRemaining?: boolean;
   className?: string;
 }
@@ -40,7 +43,8 @@ interface AudioScrubberProps {
  * alone hides again after {@link SCRUB_HANDLE_HIDE_DELAY_MS}.
  *
  * Playback only moves when the handle is let go; until then the bar previews
- * where it would land.
+ * where it would land. Speech counted in verses snaps to whole verses, since
+ * there's nowhere in between to land.
  */
 export function AudioScrubber(props: AudioScrubberProps) {
   const { playback } = props;
@@ -69,9 +73,13 @@ export function AudioScrubber(props: AudioScrubberProps) {
 
   useEffect(() => cancelHide, []);
 
+  const byVerse = playback.unit === "verses";
   const duration = playback.duration.value;
   const time = dragTime.value ?? playback.currentTime.value;
   const percent = `${progressFraction(time, duration) * 100}%`;
+  // A verse position names the verse being read, so the last one is one short
+  // of the count; a recording can be wound right to its end.
+  const lastPosition = byVerse ? Math.max(0, (duration ?? 0) - 1) : duration;
 
   /** The playback time under `clientX`, or null if the bar can't say yet. */
   const timeAt = (clientX: number): number | null => {
@@ -81,7 +89,10 @@ export function AudioScrubber(props: AudioScrubberProps) {
     if (rect.width <= 0) return null;
     let fraction = (clientX - rect.left) / rect.width;
     if (getComputedStyle(track).direction === "rtl") fraction = 1 - fraction;
-    return clamp(fraction, 0, 1) * duration;
+    const position = clamp(fraction, 0, 1) * duration;
+    // Each verse owns an equal stretch of the bar; landing anywhere in one
+    // picks that verse.
+    return byVerse ? Math.min(Math.floor(position), duration - 1) : position;
   };
 
   const onPointerEnter = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
@@ -127,34 +138,35 @@ export function AudioScrubber(props: AudioScrubberProps) {
   };
 
   const onKeyDown = (event: JSX.TargetedKeyboardEvent<HTMLDivElement>) => {
-    if (!duration) return;
+    if (!duration || lastPosition === null) return;
     const current = playback.currentTime.peek();
     const rtl = getComputedStyle(event.currentTarget).direction === "rtl";
+    const step = byVerse ? 1 : KEYBOARD_STEP_SECONDS;
     let target: number;
     switch (event.key) {
       case "ArrowUp":
-        target = current + KEYBOARD_STEP_SECONDS;
+        target = current + step;
         break;
       case "ArrowDown":
-        target = current - KEYBOARD_STEP_SECONDS;
+        target = current - step;
         break;
       case "ArrowRight":
-        target = current + (rtl ? -1 : 1) * KEYBOARD_STEP_SECONDS;
+        target = current + (rtl ? -1 : 1) * step;
         break;
       case "ArrowLeft":
-        target = current + (rtl ? 1 : -1) * KEYBOARD_STEP_SECONDS;
+        target = current + (rtl ? 1 : -1) * step;
         break;
       case "Home":
         target = 0;
         break;
       case "End":
-        target = duration;
+        target = lastPosition;
         break;
       default:
         return;
     }
     event.preventDefault();
-    playback.seek(clamp(target, 0, duration));
+    playback.seek(clamp(target, 0, lastPosition));
   };
 
   const classes = ["sb-audio-scrubber"];
@@ -173,13 +185,21 @@ export function AudioScrubber(props: AudioScrubberProps) {
           defaultValue: "Playback position",
         })}
         aria-valuemin={0}
-        aria-valuemax={Math.floor(duration ?? 0)}
+        aria-valuemax={Math.floor(lastPosition ?? 0)}
         aria-valuenow={Math.floor(time)}
-        aria-valuetext={t("audio-playback-time", {
-          defaultValue: "{{current}} of {{total}}",
-          current: formatPlaybackTime(time),
-          total: formatPlaybackTime(duration ?? 0),
-        })}
+        aria-valuetext={
+          byVerse
+            ? t("audio-playback-verse", {
+                defaultValue: "Verse {{current}} of {{total}}",
+                current: time + 1,
+                total: duration ?? 0,
+              })
+            : t("audio-playback-time", {
+                defaultValue: "{{current}} of {{total}}",
+                current: formatPlaybackTime(time),
+                total: formatPlaybackTime(duration ?? 0),
+              })
+        }
         aria-disabled={!duration}
         onPointerEnter={onPointerEnter}
         onPointerLeave={onPointerLeave}
@@ -199,7 +219,15 @@ export function AudioScrubber(props: AudioScrubberProps) {
       </div>
       {props.showTimeRemaining && (
         <span className="sb-audio-scrubber-remaining">
-          {duration === null ? "--:--" : formatPlaybackTime(duration - time)}
+          {duration === null
+            ? "--:--"
+            : byVerse
+              ? t("audio-verses-remaining", {
+                  defaultValue: "{{remaining}} of {{total}} verses left",
+                  remaining: duration - time,
+                  total: duration,
+                })
+              : formatPlaybackTime(duration - time)}
         </span>
       )}
     </div>

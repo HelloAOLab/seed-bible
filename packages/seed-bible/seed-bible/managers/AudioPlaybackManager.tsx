@@ -10,20 +10,30 @@ import { signal, type ReadonlySignal } from "@preact/signals";
  * `<audio>` element itself.
  */
 export interface AudioPlaybackController {
+  /**
+   * What `currentTime` and `duration` count.
+   *
+   * `"seconds"` for a recording. `"verses"` for speech whose timing can't be
+   * known ahead of time (the browser's own voice): the position is then the
+   * index of the verse being read, the length is how many verses there are,
+   * and seeking moves a whole verse at a time.
+   */
+  unit: "seconds" | "verses";
+
   /** Whether the audio is currently advancing. */
   isPlaying: ReadonlySignal<boolean>;
 
-  /** The playback position, in seconds. */
+  /** The playback position, in `unit`s. */
   currentTime: ReadonlySignal<number>;
 
-  /** The total length, in seconds, or null until the audio has reported it. */
+  /** The total length, in `unit`s, or null until the audio has reported it. */
   duration: ReadonlySignal<number | null>;
 
   play: () => void;
   pause: () => void;
 
-  /** Moves playback to `seconds`, without changing whether it is playing. */
-  seek: (seconds: number) => void;
+  /** Moves playback to `position`, without changing whether it is playing. */
+  seek: (position: number) => void;
 
   /**
    * Ends playback outright: rewinds, and removes this controller from the

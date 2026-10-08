@@ -27,6 +27,7 @@ function createPlayback() {
     currentTime.value = seconds;
   });
   const playback: AudioPlaybackController = {
+    unit: "seconds",
     isPlaying: signal(true),
     currentTime,
     duration: signal<number | null>(100),
@@ -297,6 +298,79 @@ describe("AudioScrubber", () => {
     // Already at the start: a further step back stays there.
     await press("ArrowLeft");
     expect(seek).toHaveBeenLastCalledWith(0);
+  });
+  describe("for speech counted in verses", () => {
+    /** Twelve verses, reading the fourth. */
+    function createVersePlayback() {
+      const { playback, seek, currentTime } = createPlayback();
+      currentTime.value = 3;
+      return {
+        playback: {
+          ...playback,
+          unit: "verses" as const,
+          duration: signal<number | null>(12),
+        },
+        seek,
+      };
+    }
+
+    it("shows how many verses are left instead of a time", async () => {
+      const { playback } = createVersePlayback();
+      await renderScrubber(playback, { showTimeRemaining: true });
+
+      expect(
+        container.querySelector(".sb-audio-scrubber-remaining")?.textContent
+      ).toBe("9 of 12 verses left");
+      expect(slider().getAttribute("aria-valuetext")).toBe("Verse 4 of 12");
+      expect(fillWidth()).toBe("25%");
+    });
+
+    it("snaps a drag to the verse under it", async () => {
+      const { playback, seek } = createVersePlayback();
+      await renderScrubber(playback);
+
+      await pointer("pointerenter", "mouse");
+      // 0.55 of the way along: inside the seventh verse's stretch (6/12–7/12).
+      await pointer("pointerdown", "mouse", TRACK_LEFT + 110);
+      expect(fillWidth()).toBe("50%");
+      await pointer("pointerup", "mouse", TRACK_LEFT + 110);
+
+      expect(seek).toHaveBeenCalledExactlyOnceWith(6);
+    });
+
+    it("lands on the last verse, not past it, at the far end", async () => {
+      const { playback, seek } = createVersePlayback();
+      await renderScrubber(playback);
+
+      await pointer("pointerenter", "mouse");
+      await pointer("pointerdown", "mouse", TRACK_LEFT + TRACK_WIDTH);
+      await pointer("pointerup", "mouse", TRACK_LEFT + TRACK_WIDTH);
+
+      expect(seek).toHaveBeenCalledExactlyOnceWith(11);
+    });
+
+    it("steps a verse at a time from the keyboard", async () => {
+      const { playback, seek } = createVersePlayback();
+      await renderScrubber(playback);
+
+      const press = (key: string) =>
+        act(() => {
+          slider().dispatchEvent(
+            new KeyboardEvent("keydown", {
+              key,
+              bubbles: true,
+              cancelable: true,
+            })
+          );
+        });
+
+      await press("ArrowRight");
+      expect(seek).toHaveBeenLastCalledWith(4);
+      await press("ArrowLeft");
+      expect(seek).toHaveBeenLastCalledWith(3);
+      await press("End");
+      expect(seek).toHaveBeenLastCalledWith(11);
+    });
   });
 });
 

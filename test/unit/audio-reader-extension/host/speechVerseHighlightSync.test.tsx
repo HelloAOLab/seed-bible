@@ -13,6 +13,10 @@ import {
   makeUrl,
   translations,
 } from "../../seed-bible/managers/testUtils/mockBibleApiData";
+import {
+  installSpeech,
+  type FakeSpeechSynthesis,
+} from "../../seed-bible/testUtils/fakeSpeechSynthesis";
 
 const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org";
 
@@ -33,37 +37,6 @@ function createResponses() {
       makeChapter(aabBooks, "GEN", 2)
     ),
   };
-}
-
-/** jsdom has no speech synthesiser at all, so the whole API is stubbed. */
-class FakeUtterance {
-  lang = "";
-  voice: unknown = null;
-  onstart: (() => void) | null = null;
-  onend: (() => void) | null = null;
-  onerror: (() => void) | null = null;
-
-  constructor(public text: string) {}
-}
-
-class FakeSpeechSynthesis extends EventTarget {
-  queued: FakeUtterance[] = [];
-  cancelCount = 0;
-  /** The AAB fixture is "eng", so an English voice is what makes it speakable. */
-  voices = [{ lang: "en-US", name: "English" }];
-
-  speak(utterance: FakeUtterance) {
-    this.queued.push(utterance);
-  }
-  cancel() {
-    this.cancelCount++;
-    this.queued = [];
-  }
-  pause() {}
-  resume() {}
-  getVoices() {
-    return this.voices;
-  }
 }
 
 function getReadingState(state: SeedBibleState) {
@@ -117,11 +90,10 @@ describe("audio-reader speech verse highlight sync (#1769)", () => {
   // element's own singleton), so a second `it` would inherit whatever the
   // first left behind instead of starting clean.
   it("offers the Listen button without recorded audio, speaks the chapter verse by verse, and clears the highlight when stopped", async () => {
-    speech = new FakeSpeechSynthesis();
-    // Stubbed before the state is built: the manager reads these globals once,
-    // when it is constructed.
-    vi.stubGlobal("speechSynthesis", speech);
-    vi.stubGlobal("SpeechSynthesisUtterance", FakeUtterance);
+    // Installed before the state is built: the manager reads these globals
+    // once, when it is constructed. The AAB fixture is "eng", so an English
+    // voice is what makes it speakable.
+    speech = installSpeech([{ lang: "en-US", name: "English" }]);
 
     state = await createTestSeedBibleState({ responses: createResponses() });
     setupExtensionContext(state);

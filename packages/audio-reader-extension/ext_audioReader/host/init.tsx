@@ -11,6 +11,7 @@ import {
   type ChapterVerse,
   type QuickToolContext,
   type SpeechVerse,
+  type TextToSpeechManager,
   type TranslationBookChapter,
 } from "seed-bible/managers";
 
@@ -74,6 +75,29 @@ let audioPlayback: AudioPlaybackManager | null = null;
 
 /** Removes the scrubber this extension put up, if it is still showing. */
 let hidePlaybackControls: (() => void) | null = null;
+
+/** The browser's speech synthesiser, for as long as the extension is installed. */
+let textToSpeech: TextToSpeechManager | null = null;
+
+/**
+ * A chapter being read aloud by the browser's voice, kept for as long as the
+ * listener might come back to it — across pauses as well as playback.
+ *
+ * The synthesiser can only stop, not pause (its own pause is unreliable on
+ * phones), so pausing ends its run and playing starts a fresh one from the
+ * verse it had reached.
+ */
+let speechSession: { verses: SpeechVerse[]; lang: string } | null = null;
+
+/** Mirrors the synthesiser's `isSpeaking`, for the speech controller. */
+const isSpeechPlaying = signal(false);
+
+/**
+ * How far through `speechSession` the voice has got, as an index into its
+ * verses — speech carries no timing, so verses are all the scrubber can count.
+ */
+const speechPosition = signal(0);
+const speechLength = signal<number | null>(null);
 
 /** The chapter a stretch of listening is credited to. */
 export interface ListeningTarget {
@@ -399,14 +423,14 @@ function hidePlayback(): void {
 }
 
 /**
- * Puts the scrubber up for the narration in `audioEl`, unless it already is.
+ * Puts the scrubber up for `controller`, unless it already is.
  * Does nothing while the extension is uninstalled.
  */
-function showPlayback(): void {
-  if (!audioPlayback || audioPlayback.active.peek() === playbackController) {
+function showPlayback(controller: AudioPlaybackController): void {
+  if (!audioPlayback || audioPlayback.active.peek() === controller) {
     return;
   }
-  hidePlaybackControls = audioPlayback.show(playbackController);
+  hidePlaybackControls = audioPlayback.show(controller);
 }
 
 /**
@@ -473,6 +497,7 @@ function seekVerseHighlight(currentTime: number): void {
 
 /** What the reader's scrubber and transport buttons drive. */
 const playbackController: AudioPlaybackController = {
+  unit: "seconds",
   isPlaying,
   currentTime: playbackTime,
   duration: playbackDuration,
@@ -691,12 +716,65 @@ function startSpeaking(
     chapterNumber: chapter.chapter.number,
     decorationId: null,
   };
+  speechSession = { verses, lang };
+  speechLength.value = verses.length;
+  speakFrom(0);
+  showPlayback(speechController);
+}
 
-  context.textToSpeech.speak(verses, {
-    lang,
-    onFinished: clearSpeechHighlight,
+/** Reads `speechSession` aloud from its `index`th verse to the end. */
+function speakFrom(index: number): void {
+  if (!textToSpeech || !speechSession) return;
+  speechPosition.value = index;
+  textToSpeech.speak(speechSession.verses.slice(index), {
+    lang: speechSession.lang,
+    onFinished: endSpeech,
   });
 }
+
+/**
+ * Ends spoken playback completely: silences it, clears its highlight, forgets
+ * the chapter and takes the scrubber down.
+ */
+function endSpeech(): void {
+  textToSpeech?.stop();
+  clearSpeechHighlight();
+  speechSession = null;
+  speechPosition.value = 0;
+  speechLength.value = null;
+  hidePlayback();
+}
+
+/**
+ * What the reader's scrubber and transport buttons drive while the browser's
+ * voice is reading. Counted in verses, since there's no telling how long the
+ * voice will take over any of them.
+ */
+const speechController: AudioPlaybackController = {
+  unit: "verses",
+  isPlaying: isSpeechPlaying,
+  currentTime: speechPosition,
+  duration: speechLength,
+  play: () => speakFrom(speechPosition.peek()),
+  pause: () => textToSpeech?.stop(),
+  seek: (position) => {
+    if (!speechSession || !Number.isFinite(position)) return;
+    const index = Math.max(
+      0,
+      Math.min(Math.round(position), speechSession.verses.length - 1)
+    );
+    if (isSpeechPlaying.peek()) {
+      speakFrom(index);
+    } else {
+      speechPosition.value = index;
+    }
+    const verse = speechSession.verses[index];
+    if (verse && speechHighlight) {
+      followVerse(speechHighlight.readingState, verse.number);
+    }
+  },
+  stop: endSpeech,
+};
 
 /**
  * Fetches the reader's per-verse timings for the chapter currently loaded
@@ -1007,7 +1085,8 @@ export default function initAudioReaderExtension() {
         audioPlayback = null;
       };
 
-      const textToSpeech = context.textToSpeech;
+      const speech = context.textToSpeech;
+      textToSpeech = speech;
 
       yield context.tools.registerQuickTool({
         id: "ext_audioReader-play",
@@ -1019,21 +1098,21 @@ export default function initAudioReaderExtension() {
           ns: "ext_audioReader",
         },
         icon: () =>
-          isPlaying.value || textToSpeech.isSpeaking.value ? (
+          isPlaying.value || speech.isSpeaking.value ? (
             <PauseIcon />
           ) : (
             <PlayIcon />
           ),
         isVisible: (ctx) =>
-          computed(() =>
-            isAudioPlayToolVisible(ctx, textToSpeech.canSpeakLanguage)
-          ),
+          computed(() => isAudioPlayToolVisible(ctx, speech.canSpeakLanguage)),
         onSelect: debounce((ctx: QuickToolContext) => {
           const chapterAudio = chapterAudioReader(ctx.readingState);
           if (!chapterAudio) {
             // No recording for this chapter, so read it aloud instead.
-            if (textToSpeech.isSpeaking.value) {
-              textToSpeech.stop();
+            if (speech.isSpeaking.value) {
+              speechController.pause();
+            } else if (speechSession) {
+              speechController.play();
             } else {
               startSpeaking(context, ctx.readingState);
             }
@@ -1061,7 +1140,7 @@ export default function initAudioReaderExtension() {
             // what they asked for, not a failure worth reporting. (jsdom's
             // element returns nothing at all, hence the guard.)
             void el.play()?.catch(() => undefined);
-            showPlayback();
+            showPlayback(playbackController);
           } else {
             el.pause();
           }
@@ -1071,14 +1150,22 @@ export default function initAudioReaderExtension() {
       // Follows the synthesiser from verse to verse. Recorded narration drives
       // its highlight off the audio clock instead — see `highlightVerseForTime`.
       yield effect(() => {
-        highlightSpokenVerse(textToSpeech.currentVerse.value);
+        const verse = speech.currentVerse.value;
+        highlightSpokenVerse(verse);
+        if (verse === null || !speechSession) return;
+        const index = speechSession.verses.findIndex((v) => v.number === verse);
+        if (index >= 0) speechPosition.value = index;
+      });
+
+      yield effect(() => {
+        isSpeechPlaying.value = speech.isSpeaking.value;
       });
 
       // Speech outlives an uninstall otherwise: `speechSynthesis` belongs to
       // the page, not to this extension.
       yield () => {
-        textToSpeech.stop();
-        clearSpeechHighlight();
+        endSpeech();
+        textToSpeech = null;
       };
 
       // Stop and rewind whenever the active chapter changes so a previous
@@ -1086,9 +1173,10 @@ export default function initAudioReaderExtension() {
       yield effect(() => {
         // Reading `.value` subscribes this effect to chapter navigation.
         void context.app.currentReadingState.value;
-        untracked(stopRecordedAudio);
-        textToSpeech.stop();
-        clearSpeechHighlight();
+        untracked(() => {
+          stopRecordedAudio();
+          endSpeech();
+        });
       });
     },
   });

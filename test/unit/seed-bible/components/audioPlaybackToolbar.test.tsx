@@ -40,6 +40,7 @@ function createResponses() {
 function createPlayback() {
   const isPlaying = signal(true);
   const playback: AudioPlaybackController = {
+    unit: "seconds",
     isPlaying,
     currentTime: signal(40),
     duration: signal<number | null>(100),
