@@ -1,4 +1,6 @@
 import { parseRecordLocator } from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
+import { FRIEND_READ_TIMEOUT_MS } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
+import { listAllByAddress } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers";
 import {
   CadenceSchema,
@@ -33,6 +35,8 @@ import {
   createReadingPlansManager,
   draftReadingCount,
   sessionsFromDraft,
+  formatReadingPlanId,
+  parseReadingPlanId,
   buildReadingPlanShareUrl,
   getReadingPlanLocator,
   type Cadence,
@@ -43,7 +47,8 @@ import {
   type CalendarReadingDay,
   type CalendarSkipRange,
 } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 import {
   addCivilDays,
   civilDateInZone,
@@ -52,6 +57,10 @@ import {
   type CivilDate,
 } from "@packages/seed-bible/seed-bible/managers/civilDate";
 import type { Mock } from "vitest";
+import {
+  FEATURE_KEY_READING_PLANS,
+  type FeaturesManager,
+} from "@packages/seed-bible/seed-bible/managers/FeaturesManager";
 
 // An arbitrary mid-week start instant to exercise "start any time".
 // 2026-06-17 is a Wednesday.
@@ -1150,6 +1159,31 @@ describe("estimateReadingMinutes", () => {
   });
 });
 
+describe("parseReadingPlanId", () => {
+  it("round-trips with formatReadingPlanId, including an address with its own underscore", () => {
+    const planId = formatReadingPlanId("user-123", "plan_abc-def");
+    expect(parseReadingPlanId(planId)).toEqual({
+      recordName: "user-123",
+      address: "plan_abc-def",
+    });
+  });
+
+  it("splits on the first underscore only, preserving the address's own underscore", () => {
+    expect(parseReadingPlanId("rp_user-123_plan_abc-def")).toEqual({
+      recordName: "user-123",
+      address: "plan_abc-def",
+    });
+  });
+
+  it("rejects a string missing the rp_ prefix", () => {
+    expect(parseReadingPlanId("user-123_plan_abc-def")).toBeNull();
+  });
+
+  it("rejects rp_ followed by no further underscore", () => {
+    expect(parseReadingPlanId("rp_onlyrecordname")).toBeNull();
+  });
+});
+
 describe("buildReadingPlanShareUrl", () => {
   it("links to the plan's own page, named after its title", () => {
     const url = new URL(
@@ -1218,8 +1252,11 @@ describe("createReadingPlansManager", () => {
   let eraseDataMock: Mock;
   let recordFileMock: Mock;
   let warnSpy: Mock;
+  let getLinkPreviewMock: Mock;
   let errorSpy: Mock;
   let userId: ReturnType<typeof signal<string | null>>;
+  // Every manager a test made, so `afterEach` can finish what it left open.
+  let managers: ReturnType<typeof createReadingPlansManager>[] = [];
 
   const flush = async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -1262,37 +1299,30 @@ describe("createReadingPlansManager", () => {
     const os = CasualOSManager();
 
     // Wire the manager's CasualOS gateway to the mocks. The manager lists via
-    // os.listAllDataByMarker, which we reimplement here to page through the
-    // marker-aware listDataByMarkerMock so the pagination assertions hold.
+    // os.listAllDataByMarker, which pages through the real `listAllByAddress`
+    // here over the marker-aware listDataByMarkerMock, so the pagination
+    // assertions hold.
     Object.assign(os, {
       getData: getDataMock,
       recordData: recordDataMock,
       eraseData: eraseDataMock,
       recordFile: recordFileMock,
       listDataByMarker: listDataByMarkerMock,
-      listAllDataByMarker: async (recordName: string, marker: string) => {
-        const items: { address: string; data: unknown }[] = [];
-        let lastAddress: string | undefined;
-        while (true) {
-          const page = await listDataByMarkerMock(
-            recordName,
-            marker,
-            lastAddress
-          );
-          if (!page.success) {
-            throw new Error(`Error listing data: ${page.errorCode}`);
-          }
-          if (page.items.length === 0) {
-            break;
-          }
-          for (const item of page.items) {
-            items.push({ address: item.address, data: item.data });
-          }
-          lastAddress = page.items[page.items.length - 1]?.address;
-        }
-        return { success: true, items };
-      },
+      listAllDataByMarker: (
+        recordName: string,
+        marker: string,
+        onPage?: () => void
+      ) =>
+        listAllByAddress(
+          (lastAddress) =>
+            listDataByMarkerMock(recordName, marker, lastAddress),
+          onPage
+        ),
     });
+    // Stubbed on the SDK client (a proxy, so assigned rather than spied on)
+    // so OsManager's own link preview handling still runs.
+    (os.client as unknown as { getLinkPreview: unknown }).getLinkPreview =
+      getLinkPreviewMock;
     const login = { userId } as unknown as LoginArg;
     const tabs = {
       tabs: signal([
@@ -1308,12 +1338,25 @@ describe("createReadingPlansManager", () => {
       initialUrl: new URL(sharer.url),
       basePath: sharer.basePath ?? "",
     };
-    return createReadingPlansManager(os, login, tabs, navigation, options);
+    const manager = createReadingPlansManager(
+      os,
+      login,
+      tabs,
+      navigation,
+      options
+    );
+    managers.push(manager);
+    return manager;
   };
 
   beforeEach(() => {
     recordDataMock = vi.fn().mockResolvedValue(undefined);
     eraseDataMock = vi.fn().mockResolvedValue({ success: true });
+    getLinkPreviewMock = vi.fn().mockResolvedValue({
+      success: false,
+      errorCode: "not_supported",
+      errorMessage: "Link previews are not supported.",
+    });
     recordFileMock = vi.fn().mockResolvedValue({
       success: true,
       url: "https://example.com/hero.jpg",
@@ -1326,11 +1369,22 @@ describe("createReadingPlansManager", () => {
     errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Draft saves are debounced, so some tests drive them with fake timers.
     // Restore real ones here too: a leaked fake clock makes every later test
     // that awaits `flush()` (a real setTimeout) hang until it times out.
     vi.useRealTimers();
+    // A draft edited with real timers saves 700ms later, after its test has
+    // ended, and would capture its analytics event into whichever later test
+    // was running then. Cancelling writes the pending save now and closes it.
+    const open = managers.filter((m) => m.editingReadingPlan.peek() !== null);
+    managers = [];
+    for (const manager of open) {
+      manager.cancelEditingReadingPlan();
+    }
+    await vi.waitFor(() =>
+      expect(open.every((m) => m.editingReadingPlan.peek() === null)).toBe(true)
+    );
     warnSpy.mockRestore();
     errorSpy.mockRestore();
   });
@@ -1362,6 +1416,110 @@ describe("createReadingPlansManager", () => {
     );
     expect(manager.userReadingPlans.value).toEqual([metadata]);
     expect(manager.userReadingPlanProgresses.value).toEqual([progress]);
+  });
+
+  describe("clearHeroImage", () => {
+    const COVER = "https://example.com/cover.jpg";
+    const OTHER_COVER = "https://example.com/other.jpg";
+
+    /** Lists both plans' metadata and serves their contents on request. */
+    const seedPlans = (plans: ReadingPlan[]) => {
+      setListData({
+        "publicRead:readingPlanMetadata": [
+          plans.map((plan) => ({
+            address: plan.address,
+            data: metadataOf(plan),
+          })),
+        ],
+      });
+      getDataMock.mockImplementation(
+        async (_record: string, address: string) => {
+          const plan = plans.find((p) => p.address === address);
+          return plan
+            ? { success: true, data: plan }
+            : { success: false, errorCode: "data_not_found" };
+        }
+      );
+    };
+
+    it("saves each plan using the cover without it, in both of its records", async () => {
+      const withCover = makePlan({ heroImageUrl: COVER });
+      const other = makePlan({ address: "plan-2", heroImageUrl: OTHER_COVER });
+      seedPlans([withCover, other]);
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      await manager.clearHeroImage(COVER);
+
+      const saves = recordDataMock.mock.calls.map(
+        (call) => [call[1], call[2]] as [string, ReadingPlan]
+      );
+      expect(saves.map(([address]) => address)).toEqual([
+        "plan-1",
+        "plan-1_metadata",
+      ]);
+      for (const [, data] of saves) {
+        expect(data.heroImageUrl).toBeNull();
+      }
+      const metaByAddress = new Map(
+        manager.userReadingPlans.value.map((p) => [p.address, p])
+      );
+      expect(metaByAddress.get("plan-1")?.heroImageUrl).toBeNull();
+      expect(metaByAddress.get("plan-2")?.heroImageUrl).toBe(OTHER_COVER);
+      expect(
+        manager.fullReadingPlans.value.find((p) => p.address === "plan-1")
+          ?.heroImageUrl
+      ).toBeNull();
+    });
+
+    it("saves nothing when no plan uses the cover", async () => {
+      seedPlans([makePlan({ heroImageUrl: OTHER_COVER })]);
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      await manager.clearHeroImage(COVER);
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("takes the cover off the draft being edited too", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startEditingReadingPlan();
+      manager.updateEditingReadingPlan({ heroImageUrl: COVER });
+
+      await manager.clearHeroImage(COVER);
+
+      expect(manager.editingReadingPlan.value?.plan.heroImageUrl).toBeNull();
+    });
+
+    it("updates the plans that saved and re-throws when one fails", async () => {
+      seedPlans([
+        makePlan({ heroImageUrl: COVER }),
+        makePlan({ address: "plan-2", heroImageUrl: COVER }),
+      ]);
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockImplementation(
+        async (_record: string, address: string) => {
+          if (address.startsWith("plan-2")) {
+            throw new Error("offline");
+          }
+        }
+      );
+
+      await expect(manager.clearHeroImage(COVER)).rejects.toThrow(
+        "Failed to remove the cover image from every reading plan"
+      );
+
+      const metaByAddress = new Map(
+        manager.userReadingPlans.value.map((p) => [p.address, p])
+      );
+      expect(metaByAddress.get("plan-1")?.heroImageUrl).toBeNull();
+      expect(metaByAddress.get("plan-2")?.heroImageUrl).toBe(COVER);
+    });
   });
 
   it("skips records that fail validation", async () => {
@@ -1959,6 +2117,195 @@ describe("createReadingPlansManager", () => {
     );
   });
 
+  it("finishEditingReadingPlan stores the preview fetched for a link reading", async () => {
+    let respond!: (value: unknown) => void;
+    getLinkPreviewMock.mockReturnValue(
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+    );
+    const manager = makeManager("user-1", undefined, {
+      language: signal("es"),
+    });
+    await flush();
+
+    manager.startEditingReadingPlan();
+    manager.addReadingToEditingPlan({
+      type: "link",
+      url: "https://example.com/psalms",
+    });
+    const finishing = manager.finishEditingReadingPlan();
+    respond({
+      success: true,
+      cachedUntilMs: Date.now() + 60_000,
+      title: "Psalms overview",
+      description: "A short introduction.",
+      imageUrl: "https://example.com/psalms.png",
+      meta: {},
+    });
+    const plan = await finishing;
+
+    expect(getLinkPreviewMock).toHaveBeenCalledWith({
+      url: "https://example.com/psalms",
+      locale: "es",
+    });
+    expect(plan!.sessions[0]!.readings[0]!.item).toEqual({
+      type: "link",
+      url: "https://example.com/psalms",
+      preview: {
+        title: "Psalms overview",
+        description: "A short introduction.",
+        imageUrl: "https://example.com/psalms.png",
+      },
+    });
+  });
+
+  it("doesn't bring back or autosave a link reading removed while its preview was loading", async () => {
+    let respond!: (value: unknown) => void;
+    getLinkPreviewMock.mockReturnValue(
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    vi.useFakeTimers();
+    try {
+      manager.startEditingReadingPlan();
+      manager.addReadingToEditingPlan({
+        type: "link",
+        url: "https://example.com/gone",
+      });
+      const readingId =
+        manager.editingReadingPlan.value!.plan.sessions[0]!.readings[0]!.id;
+      manager.removeReadingFromEditingPlan(0, readingId);
+      // Let the autosave for the add and remove land first.
+      await vi.advanceTimersByTimeAsync(2000);
+      const updatedAtMs = manager.editingReadingPlan.value!.plan.updatedAtMs;
+      recordDataMock.mockClear();
+
+      respond({
+        success: true,
+        cachedUntilMs: Date.now() + 60_000,
+        title: "Gone",
+        meta: {},
+      });
+      await vi.advanceTimersByTimeAsync(2000);
+
+      const draft = manager.editingReadingPlan.value!;
+      expect(draft.plan.sessions[0]!.readings).toEqual([]);
+      // Nothing changed, so nothing is written or re-stamped.
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(draft.plan.updatedAtMs).toBe(updatedAtMs);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps a finished plan finished when a preview lands after Save gave up waiting", async () => {
+    let respond!: (value: unknown) => void;
+    getLinkPreviewMock.mockReturnValue(
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    vi.useFakeTimers();
+    try {
+      manager.startEditingReadingPlan();
+      manager.addReadingToEditingPlan({
+        type: "link",
+        url: "https://example.com/slow",
+      });
+      await vi.advanceTimersByTimeAsync(1000); // the draft's autosave lands
+      recordDataMock.mockClear();
+
+      // The completing write is slow, so the late preview arrives mid-save.
+      let finishWrite!: () => void;
+      recordDataMock.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishWrite = resolve;
+          })
+      );
+      const finishing = manager.finishEditingReadingPlan();
+      await vi.advanceTimersByTimeAsync(3000); // Save stops waiting
+      respond({
+        success: true,
+        cachedUntilMs: Date.now() + 60_000,
+        title: "Late",
+        meta: {},
+      });
+      await vi.advanceTimersByTimeAsync(1000); // past the autosave debounce
+      finishWrite();
+      const plan = await finishing;
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(plan!.status).toBe("complete");
+      expect(
+        recordDataMock.mock.calls.map((c) => (c[2] as ReadingPlan).status)
+      ).toEqual(["complete", "complete"]);
+      expect(manager.userReadingPlans.value.map((p) => p.status)).toEqual([
+        "complete",
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("fetches previews for a published plan's links that don't have one when it is edited", async () => {
+    getLinkPreviewMock.mockResolvedValue({
+      success: true,
+      cachedUntilMs: Date.now() + 60_000,
+      title: "Commentary",
+      meta: {},
+    });
+    const plan = makePlan({
+      authorUserId: "user-1",
+      recordName: "user-1",
+      status: "complete",
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: { type: "link", url: "https://example.com/old" },
+            },
+            {
+              id: "r2",
+              item: {
+                type: "link",
+                url: "https://example.com/has-one",
+                preview: { title: "Already here" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.editExistingReadingPlan(plan);
+    const saved = await manager.finishEditingReadingPlan();
+
+    expect(getLinkPreviewMock).toHaveBeenCalledTimes(1);
+    expect(saved!.sessions[0]!.readings.map((r) => r.item)).toEqual([
+      {
+        type: "link",
+        url: "https://example.com/old",
+        preview: { title: "Commentary" },
+      },
+      {
+        type: "link",
+        url: "https://example.com/has-one",
+        preview: { title: "Already here" },
+      },
+    ]);
+  });
+
   it("finishEditingReadingPlan completes the plan, pruning empty sessions", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -2289,6 +2636,628 @@ describe("createReadingPlansManager", () => {
     const saved = recordDataMock.mock.calls.at(-1)![2] as ReadingPlanProgress;
     expect(saved.percentComplete).toBeCloseTo(1 / 3, 10);
     expect(saved.totalReadings).toBe(3);
+  });
+
+  describe("getReadingPlansForChapter", () => {
+    const featuresWith = (readingPlansOn: boolean): FeaturesManager => ({
+      isFeatureEnabled: (featureKey: string) =>
+        signal(featureKey === FEATURE_KEY_READING_PLANS && readingPlansOn),
+    });
+
+    const verseReading = (
+      id: string,
+      ref: { bookId: string; chapter: number; endChapter?: number }
+    ) => ({
+      id,
+      item: { type: "bible-verse" as const, ref },
+    });
+
+    const progressFor = (
+      plan: ReadingPlan,
+      overrides: Partial<ReadingPlanProgress> = {}
+    ) =>
+      makeProgress({
+        id: `progress-${plan.address}`,
+        planId: `rp_${plan.recordName}_${plan.address}`,
+        ...overrides,
+      });
+
+    const loadManager = async (
+      plans: ReadingPlan[],
+      progresses: ReadingPlanProgress[]
+    ) => {
+      setListData({
+        "publicRead:readingPlanMetadata": [
+          plans.map((plan) => ({
+            address: `${plan.address}_metadata`,
+            data: metadataOf(plan),
+          })),
+        ],
+        "publicRead:readingPlanProgress": [
+          progresses.map((progress) => ({
+            address: progress.id,
+            data: progress,
+          })),
+        ],
+      });
+      getDataMock.mockImplementation(
+        async (_recordName: string, address: string) => ({
+          success: true,
+          data: plans.find((plan) => plan.address === address),
+        })
+      );
+      const manager = makeManager("user-1");
+      await flush();
+      return manager;
+    };
+
+    const genesisPlan = makePlan({
+      sessions: [
+        {
+          id: "s1",
+          readings: [verseReading("r1", { bookId: "GEN", chapter: 1 })],
+        },
+        {
+          id: "s2",
+          readings: [verseReading("r2", { bookId: "GEN", chapter: 2 })],
+        },
+      ],
+    });
+
+    it("returns a followed plan whose sessions cover the open chapter", async () => {
+      const progress = progressFor(genesisPlan);
+      const manager = await loadManager([genesisPlan], [progress]);
+
+      const matches = manager.getReadingPlansForChapter(
+        "GEN",
+        2,
+        featuresWith(true)
+      );
+
+      expect(matches).toEqual([
+        {
+          planKey: "rp_record-1_plan-1",
+          planTitle: "Test Plan",
+          progress,
+          sessions: [genesisPlan.sessions[1]],
+          allComplete: false,
+        },
+      ]);
+    });
+
+    it("leaves out plans the user isn't following", async () => {
+      const otherPlan = makePlan({
+        address: "plan-2",
+        title: "Not Followed",
+        sessions: genesisPlan.sessions,
+      });
+      const manager = await loadManager(
+        [genesisPlan, otherPlan],
+        [progressFor(genesisPlan)]
+      );
+
+      const matches = manager.getReadingPlansForChapter(
+        "GEN",
+        1,
+        featuresWith(true)
+      );
+
+      expect(matches.map((match) => match.planTitle)).toEqual(["Test Plan"]);
+    });
+
+    it("returns nothing when no followed plan covers the open chapter", async () => {
+      const manager = await loadManager(
+        [genesisPlan],
+        [progressFor(genesisPlan)]
+      );
+
+      expect(
+        manager.getReadingPlansForChapter("GEN", 3, featuresWith(true))
+      ).toEqual([]);
+      expect(
+        manager.getReadingPlansForChapter("EXO", 1, featuresWith(true))
+      ).toEqual([]);
+    });
+
+    it("returns nothing when there's no open book", async () => {
+      const manager = await loadManager(
+        [genesisPlan],
+        [progressFor(genesisPlan)]
+      );
+
+      expect(
+        manager.getReadingPlansForChapter(null, 1, featuresWith(true))
+      ).toEqual([]);
+    });
+
+    it("returns nothing while the reading plans feature is off", async () => {
+      const manager = await loadManager(
+        [genesisPlan],
+        [progressFor(genesisPlan)]
+      );
+
+      expect(
+        manager.getReadingPlansForChapter("GEN", 1, featuresWith(false))
+      ).toEqual([]);
+    });
+
+    it("marks a multi-chapter reading complete only for the chapters recorded as read", async () => {
+      const plan = makePlan({
+        sessions: [
+          {
+            id: "s1",
+            readings: [
+              verseReading("r1", { bookId: "GEN", chapter: 1, endChapter: 3 }),
+            ],
+          },
+        ],
+      });
+      const manager = await loadManager(
+        [plan],
+        [
+          progressFor(plan, {
+            sessions: [
+              {
+                sessionId: "s1",
+                completedReadingIds: [],
+                partialChapters: [{ readingId: "r1", chapters: [2] }],
+              },
+            ],
+          }),
+        ]
+      );
+
+      const allCompleteAt = (chapter: number) =>
+        manager.getReadingPlansForChapter("GEN", chapter, featuresWith(true))[0]
+          ?.allComplete;
+
+      expect([1, 2, 3].map(allCompleteAt)).toEqual([false, true, false]);
+    });
+
+    it("isn't complete until every session covering the chapter has it recorded", async () => {
+      const plan = makePlan({
+        sessions: [
+          {
+            id: "s1",
+            readings: [verseReading("r1", { bookId: "GEN", chapter: 1 })],
+          },
+          {
+            id: "s2",
+            readings: [verseReading("r2", { bookId: "GEN", chapter: 1 })],
+          },
+        ],
+      });
+      const manager = await loadManager(
+        [plan],
+        [
+          progressFor(plan, {
+            sessions: [
+              {
+                sessionId: "s1",
+                completedReadingIds: ["r1"],
+                partialChapters: [],
+              },
+            ],
+          }),
+        ]
+      );
+
+      const [match] = manager.getReadingPlansForChapter(
+        "GEN",
+        1,
+        featuresWith(true)
+      );
+
+      expect(match?.sessions.map((session) => session.id)).toEqual([
+        "s1",
+        "s2",
+      ]);
+      expect(match?.allComplete).toBe(false);
+    });
+
+    it("judges completion by the open chapter alone, ignoring other readings in the session", async () => {
+      const plan = makePlan({
+        sessions: [
+          {
+            id: "s1",
+            readings: [
+              verseReading("r1", { bookId: "GEN", chapter: 1 }),
+              verseReading("r2", { bookId: "PSA", chapter: 23 }),
+              {
+                id: "r3",
+                item: { type: "html", title: "Intro", html: "<p>Hi</p>" },
+              },
+            ],
+          },
+        ],
+      });
+      const manager = await loadManager(
+        [plan],
+        [
+          progressFor(plan, {
+            sessions: [
+              {
+                sessionId: "s1",
+                completedReadingIds: ["r1"],
+                partialChapters: [],
+              },
+            ],
+          }),
+        ]
+      );
+
+      const [match] = manager.getReadingPlansForChapter(
+        "GEN",
+        1,
+        featuresWith(true)
+      );
+
+      expect(match?.allComplete).toBe(true);
+    });
+
+    it("uses the most recent progress when the plan was started more than once", async () => {
+      // Starting a plan again appends a new progress after the old one, so the
+      // abandoned run comes first in the list.
+      const abandonedRun = progressFor(genesisPlan, {
+        id: "progress-abandoned",
+        startedAtMs: START_MS,
+      });
+      const currentRun = progressFor(genesisPlan, {
+        id: "progress-current",
+        startedAtMs: START_MS + 7 * 24 * 60 * 60 * 1000,
+        sessions: [
+          {
+            sessionId: "s1",
+            completedReadingIds: ["r1"],
+            partialChapters: [],
+          },
+        ],
+      });
+      const manager = await loadManager(
+        [genesisPlan],
+        [abandonedRun, currentRun]
+      );
+
+      const matches = manager.getReadingPlansForChapter(
+        "GEN",
+        1,
+        featuresWith(true)
+      );
+
+      expect(matches).toHaveLength(1);
+      expect(matches[0]?.progress.id).toBe("progress-current");
+      expect(matches[0]?.allComplete).toBe(true);
+    });
+  });
+
+  describe("getUserReadingPlanProgresses", () => {
+    const mockPerUserProgresses = () => {
+      // `os.listAllDataByMarker` (see `makeManager`) pages until an empty
+      // page comes back, so a lastAddress on the call means "give me the
+      // next page" — returning empty there is what ends the loop after one.
+      listDataByMarkerMock.mockImplementation(
+        async (recordName: unknown, _marker: unknown, lastAddress?: string) => {
+          if (lastAddress) {
+            return { success: true, items: [] };
+          }
+          if (recordName === "user-1") {
+            return {
+              success: true,
+              items: [
+                {
+                  address: "p1",
+                  data: makeProgress({ id: "user-1-progress" }),
+                },
+              ],
+            };
+          }
+          if (recordName === "friend-user") {
+            return {
+              success: true,
+              items: [
+                {
+                  address: "p2",
+                  data: makeProgress({
+                    id: "friend-progress",
+                    recordName: "friend-user",
+                  }),
+                },
+              ],
+            };
+          }
+          return { success: true, items: [] };
+        }
+      );
+    };
+
+    it("reads a friend's progress again when you come back to the app more than 30 seconds later", async () => {
+      const START = new Date("2026-10-01T10:00:00Z").getTime();
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(START);
+      const page = stubPageVisibility();
+      let stopWatching: (() => void) | undefined;
+      try {
+        mockPerUserProgresses();
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserReadingPlanProgresses("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value.map((p) => p.id)).toEqual(["friend-progress"]);
+
+        listDataByMarkerMock.mockImplementation(
+          async (
+            recordName: unknown,
+            _marker: unknown,
+            lastAddress?: string
+          ) =>
+            recordName === "friend-user" && !lastAddress
+              ? {
+                  success: true,
+                  items: [
+                    {
+                      address: "p3",
+                      data: makeProgress({
+                        id: "new-friend-progress",
+                        recordName: "friend-user",
+                      }),
+                    },
+                  ],
+                }
+              : { success: true, items: [] }
+        );
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["new-friend-progress"])
+        );
+      } finally {
+        stopWatching?.();
+        page.restore();
+        vi.useRealTimers();
+      }
+    });
+
+    it("reads a friend's progress again when you come back to the app after the first read failed", async () => {
+      const page = stubPageVisibility();
+      let stopWatching: (() => void) | undefined;
+      try {
+        listDataByMarkerMock.mockImplementation(async (recordName: unknown) =>
+          recordName === "friend-user"
+            ? { success: false, errorCode: "server_error" }
+            : { success: true, items: [] }
+        );
+        const manager = makeManager("user-1");
+        await flush();
+        const view = manager.getUserReadingPlanProgresses("friend-user");
+        stopWatching = effect(() => void view.value);
+        await flush();
+        expect(view.value).toEqual([]);
+
+        mockPerUserProgresses();
+        // No time passes: a failed read is tried again however recent it was.
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(view.value.map((p) => p.id)).toEqual(["friend-progress"])
+        );
+      } finally {
+        stopWatching?.();
+        page.restore();
+      }
+    });
+
+    it("reads all of a friend's progress when the whole read takes longer than the timeout", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      // Each page takes three quarters of the timeout, so the whole read
+      // takes longer than it while every page still makes progress.
+      const slowPage = () =>
+        new Promise((resolve) =>
+          setTimeout(resolve, (FRIEND_READ_TIMEOUT_MS * 3) / 4)
+        );
+      listDataByMarkerMock.mockImplementation(
+        async (
+          recordName: unknown,
+          _marker: unknown,
+          lastAddress?: unknown
+        ) => {
+          await slowPage();
+          const id = lastAddress ? "second" : "first";
+          return {
+            success: true,
+            items:
+              recordName === "friend-user" && lastAddress !== "second"
+                ? [
+                    {
+                      address: id,
+                      data: makeProgress({ id, recordName: "friend-user" }),
+                    },
+                  ]
+                : [],
+            totalCount: recordName === "friend-user" ? 2 : 0,
+          };
+        }
+      );
+      vi.useFakeTimers();
+      try {
+        const view = manager.getUserReadingPlanProgresses("friend-user");
+
+        await vi.advanceTimersByTimeAsync(FRIEND_READ_TIMEOUT_MS * 2);
+
+        expect(view.value.map((p) => p.id).sort()).toEqual(["first", "second"]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("reads progress from the named account's record", async () => {
+      mockPerUserProgresses();
+      const manager = makeManager("user-1");
+      await flush();
+
+      const view = manager.getUserReadingPlanProgresses("friend-user");
+      await flush();
+
+      expect(listDataByMarkerMock).toHaveBeenCalledWith(
+        "friend-user",
+        "publicRead:readingPlanProgress",
+        undefined
+      );
+      expect(view.value.map((p) => p.id)).toEqual(["friend-progress"]);
+    });
+
+    it("returns the same signal for repeated calls", async () => {
+      mockPerUserProgresses();
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.getUserReadingPlanProgresses("friend-user")).toBe(
+        manager.getUserReadingPlanProgresses("friend-user")
+      );
+    });
+
+    it("keeps different accounts' progress separate", async () => {
+      mockPerUserProgresses();
+      const manager = makeManager("user-1");
+      await flush();
+
+      const mine = manager.getUserReadingPlanProgresses("user-1");
+      const theirs = manager.getUserReadingPlanProgresses("friend-user");
+      await flush();
+
+      expect(mine.value.map((p) => p.id)).toEqual(["user-1-progress"]);
+      expect(theirs.value.map((p) => p.id)).toEqual(["friend-progress"]);
+    });
+
+    it("settles to an empty list without throwing when the account's progress can't be loaded", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      listDataByMarkerMock.mockRejectedValueOnce(new Error("boom"));
+
+      const view = manager.getUserReadingPlanProgresses("broken-user");
+      await flush();
+
+      expect(view.value).toEqual([]);
+      expect(errorSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("getReadingPlanByLocator", () => {
+    it("loads the plan at the given locator", async () => {
+      const plan = makePlan({ recordName: "other-user", address: "plan-9" });
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValueOnce({ success: true, data: plan });
+
+      const view = manager.getReadingPlanByLocator("other-user", "plan-9");
+      await flush();
+
+      expect(getDataMock).toHaveBeenCalledWith("other-user", "plan-9");
+      expect(view.value?.address).toBe("plan-9");
+    });
+
+    it("returns the same signal for repeated calls to the same locator", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.getReadingPlanByLocator("other-user", "plan-9")).toBe(
+        manager.getReadingPlanByLocator("other-user", "plan-9")
+      );
+    });
+
+    it("keeps different locators' plans separate, including two addresses under the same account", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockImplementation(
+        async (recordName: string, address: string) => {
+          if (recordName === "other-user" && address === "plan-a") {
+            return {
+              success: true,
+              data: makePlan({ recordName: "other-user", address: "plan-a" }),
+            };
+          }
+          if (recordName === "other-user" && address === "plan-b") {
+            return {
+              success: true,
+              data: makePlan({ recordName: "other-user", address: "plan-b" }),
+            };
+          }
+          return { success: false, errorCode: "data_not_found" };
+        }
+      );
+
+      const a = manager.getReadingPlanByLocator("other-user", "plan-a");
+      const b = manager.getReadingPlanByLocator("other-user", "plan-b");
+      await flush();
+
+      expect(a.value?.address).toBe("plan-a");
+      expect(b.value?.address).toBe("plan-b");
+    });
+
+    it("settles to null without throwing when the plan can't be loaded", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "data_not_found",
+      });
+
+      const view = manager.getReadingPlanByLocator("gone-user", "gone-plan");
+      await flush();
+
+      expect(view.value).toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+    });
+
+    it("reads a plan again when it's back on screen after it failed to load", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "server_error",
+      });
+      const view = manager.getReadingPlanByLocator("other-user", "plan-9");
+      let stopWatching = effect(() => void view.value);
+      await flush();
+      expect(view.value).toBeNull();
+      stopWatching();
+
+      getDataMock.mockResolvedValueOnce({
+        success: true,
+        data: makePlan({ recordName: "other-user", address: "plan-9" }),
+      });
+      stopWatching = effect(() => void view.value);
+
+      try {
+        await vi.waitFor(() => expect(view.value?.address).toBe("plan-9"));
+      } finally {
+        stopWatching();
+      }
+    });
+
+    it("doesn't read a plan that loaded again when it's back on screen", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValueOnce({
+        success: true,
+        data: makePlan({ recordName: "other-user", address: "plan-9" }),
+      });
+      const view = manager.getReadingPlanByLocator("other-user", "plan-9");
+      let stopWatching = effect(() => void view.value);
+      await flush();
+      expect(view.value?.address).toBe("plan-9");
+      stopWatching();
+
+      stopWatching = effect(() => void view.value);
+      await flush();
+      stopWatching();
+
+      expect(
+        getDataMock.mock.calls.filter(([, address]) => address === "plan-9")
+      ).toHaveLength(1);
+    });
   });
 
   describe("getReadingPlanShareUrl", () => {

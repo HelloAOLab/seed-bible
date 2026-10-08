@@ -16,7 +16,14 @@ import type {
   PlaylistManager,
   PlaylistPlayHistory,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
-import { createPlayingState } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import {
+  createPlayingState,
+  createPlaylistManager,
+} from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers";
+import { createBibleReadingExtensionManager } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import type { ChatsManager } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type {
   Annotation,
   AnnotationsManager,
@@ -26,7 +33,15 @@ import type {
   ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type {
+  Friend,
+  FriendsManager,
+} from "@packages/seed-bible/seed-bible/managers/FriendsManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Mock } from "vitest";
+import { ME } from "../testUtils/fakeSharedPermissions";
+import { createRealFriendContent } from "../testUtils/realFriendContent";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -174,6 +189,7 @@ function createMockPlaylists(
     editingPlaylist,
     userPlaylistHistory: signal(overrides.userPlaylistHistory ?? []),
     playing: signal(overrides.playing ?? null),
+    openingPlayback: signal(false),
     playingAuthorName: signal(null),
     createNewPlaylist,
     startPlaying,
@@ -202,6 +218,7 @@ function createMockPlaylists(
     updateEditingPlaylistItem: vi.fn(),
     removeEditingPlaylistItem: vi.fn(),
     goBackFromPlayingView,
+    getUserPlaylists: vi.fn(() => signal([])),
   } as unknown as PlaylistManager;
 
   return {
@@ -251,6 +268,7 @@ function createMockAnnotations(
   const annotations = {
     editingAnnotation: signal(overrides.editingAnnotation ?? null),
     getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+    getUserAnnotationsForChapter: vi.fn(() => signal([])),
     createNewAnnotation,
     editAnnotation,
     saveEditingAnnotation,
@@ -379,7 +397,10 @@ function createMockState(
   overrides: {
     getUserProfile?: ReturnType<typeof vi.fn>;
     openVerseReference?: ReturnType<typeof vi.fn>;
+    userId?: string | null;
     discover?: DiscoverManager;
+    /** The real friends manager, for tests about friends' content. */
+    friendsManager?: FriendsManager;
   } = {}
 ): SeedBibleState {
   return {
@@ -390,7 +411,7 @@ function createMockState(
         overrides.openVerseReference ?? vi.fn().mockResolvedValue(undefined),
     },
     login: {
-      userId: signal(null),
+      userId: signal(overrides.userId ?? null),
       getUserProfile:
         overrides.getUserProfile ?? vi.fn().mockResolvedValue({ name: "" }),
     },
@@ -404,11 +425,46 @@ function createMockState(
     panes: {
       closeFullscreenPanes: vi.fn(),
     },
+    friends: overrides.friendsManager ?? {
+      friends: signal([]),
+      friendIds: signal([]),
+    },
   } as unknown as SeedBibleState;
 }
 
 describe("DiscoverPane", () => {
   let container: HTMLDivElement;
+
+  const ada: Friend = { userId: "ada", name: "Ada", pictureUrl: null };
+  const bob: Friend = { userId: "bob", name: "Bob", pictureUrl: null };
+
+  /**
+   * The real playlist manager over the `os` and `login` from
+   * `createRealFriendContent`, with the app pieces it needs alongside.
+   */
+  const createRealPlaylists = (
+    os: CasualOSManager,
+    login: LoginManager,
+    discover: DiscoverManager
+  ): PlaylistManager => {
+    const navigation = createNavigationManager();
+    return createPlaylistManager(
+      os,
+      login,
+      // No reader tab: nothing here plays into one.
+      {
+        tabs: signal([]),
+        selectedTabId: signal(null),
+      } as unknown as TabsManager,
+      navigation,
+      signal(false),
+      createModalManager(),
+      createI18nManager(navigation, ["en"]),
+      createBibleReadingExtensionManager(),
+      discover,
+      { addContext: vi.fn(), removeContext: vi.fn() } as unknown as ChatsManager
+    );
+  };
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -423,6 +479,243 @@ describe("DiscoverPane", () => {
     render(null, container);
     container.remove();
     vi.restoreAllMocks();
+  });
+
+  describe("playlists from your friends", () => {
+    const friendsSection = () =>
+      Array.from(container.querySelectorAll(".sb-discover-section")).find(
+        (el) => el.textContent?.includes("Playlists from your friends")
+      ) ?? null;
+    const groupNames = () =>
+      Array.from(
+        container.querySelectorAll(".sb-friend-playlists-group-name")
+      ).map((el) => el.textContent);
+
+    /**
+     * Discover with the real friends and playlist managers, signed in as `ME`
+     * with `friends` as friends and `friendPlaylists` on the server, once
+     * each friend's playlists have been read.
+     */
+    const renderWithFriends = async (
+      friends: Friend[],
+      friendPlaylists: Record<string, Playlist[]>
+    ) => {
+      const discover = createDiscoverManager();
+      const content = await createRealFriendContent({
+        friendIds: friends.map((f) => f.userId),
+        names: Object.fromEntries(friends.map((f) => [f.userId, f.name ?? ""])),
+        playlists: friendPlaylists,
+        discover,
+      });
+      const playlists = createRealPlaylists(
+        content.os,
+        content.login,
+        discover
+      );
+      const { annotations } = createMockAnnotations();
+      const state = createMockState(false, {
+        userId: ME,
+        discover,
+        friendsManager: content.friends,
+      });
+      act(() => {
+        render(
+          <DiscoverPane
+            tabs={createMockTabs(createMockTab())}
+            playlists={playlists}
+            annotations={annotations}
+            modals={createModalManager()}
+            state={state}
+            toast={state.app.toast}
+          />,
+          container
+        );
+      });
+      await vi.waitFor(() => {
+        for (const friend of friends) {
+          expect(content.os.listDataByMarker).toHaveBeenCalledWith(
+            friend.userId,
+            "publicRead:playlists",
+            undefined
+          );
+        }
+      });
+      await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+      return { ...content, playlists, state };
+    };
+
+    it("lists each friend's playlists under their name, leaving out friends with none", async () => {
+      await renderWithFriends([ada, bob], {
+        ada: [
+          createPlaylist({
+            id: "p1",
+            recordName: "ada",
+            title: "Psalms of Ascent",
+          }),
+        ],
+      });
+
+      expect(groupNames()).toEqual(["Ada"]);
+      expect(friendsSection()?.textContent).toContain("Psalms of Ascent");
+    });
+
+    it("is left out when no friend has a playlist", async () => {
+      await renderWithFriends([ada], {});
+
+      expect(friendsSection()).toBeNull();
+    });
+
+    it("plays a friend's playlist", async () => {
+      const { playlists } = await renderWithFriends([ada], {
+        ada: [
+          createPlaylist({
+            id: "p1",
+            recordName: "ada",
+            title: "Psalms of Ascent",
+          }),
+        ],
+      });
+      const startPlaying = vi.spyOn(playlists, "startPlaying");
+
+      act(() => {
+        friendsSection()!
+          .querySelector<HTMLButtonElement>(".sb-discover-item-play")!
+          .click();
+      });
+
+      expect(startPlaying).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "p1", recordName: "ada" })
+      );
+    });
+
+    it("shares a friend's playlist, and offers nothing to edit or delete it", async () => {
+      const { playlists, state } = await renderWithFriends([ada], {
+        ada: [createPlaylist({ id: "p1", recordName: "ada" })],
+      });
+      const items = Array.from(
+        friendsSection()!.querySelectorAll('[role="menuitem"]')
+      );
+
+      expect(items.map((el) => el.textContent)).toEqual([
+        expect.stringContaining("Share playlist"),
+      ]);
+      await act(async () => {
+        (items[0] as HTMLElement).click();
+      });
+
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        playlists.getPlaylistUrl(playlists.getUserPlaylists("ada").value[0]!)
+      );
+      expect(state.app.toast).toHaveBeenCalledWith(
+        "Playlist URL copied to clipboard"
+      );
+    });
+
+    it("says so when sharing a friend's playlist can't copy the link", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      (navigator.clipboard.writeText as Mock).mockRejectedValueOnce(
+        new Error("denied")
+      );
+      const { state } = await renderWithFriends([ada], {
+        ada: [createPlaylist({ id: "p1", recordName: "ada" })],
+      });
+
+      await act(async () => {
+        friendsSection()!
+          .querySelector<HTMLElement>('[role="menuitem"]')!
+          .click();
+      });
+
+      expect(state.app.toast).toHaveBeenCalledWith(
+        "Couldn't copy the playlist link"
+      );
+      expect(state.app.toast).not.toHaveBeenCalledWith(
+        "Playlist URL copied to clipboard"
+      );
+      consoleError.mockRestore();
+    });
+
+    it("shows a friend's playlist cover, as your own playlists do", async () => {
+      await renderWithFriends([ada], {
+        ada: [
+          createPlaylist({
+            id: "p1",
+            recordName: "ada",
+            heroImageUrl: "https://example.com/cover.jpg",
+          }),
+        ],
+      });
+
+      expect(friendsSection()!.querySelector("img")?.getAttribute("src")).toBe(
+        "https://example.com/cover.jpg"
+      );
+    });
+
+    it("drops a friend's playlists once you unfriend them", async () => {
+      const { friends } = await renderWithFriends([ada, bob], {
+        ada: [
+          createPlaylist({
+            id: "p1",
+            recordName: "ada",
+            title: "Psalms of Ascent",
+          }),
+        ],
+        bob: [
+          createPlaylist({ id: "p2", recordName: "bob", title: "Gospels" }),
+        ],
+      });
+      expect(groupNames()).toEqual(["Ada", "Bob"]);
+
+      await act(() => friends.unfriend("ada"));
+
+      expect(groupNames()).toEqual(["Bob"]);
+      expect(friendsSection()?.textContent).not.toContain("Psalms of Ascent");
+    });
+  });
+
+  it("drops a friend's note once you unfriend them", async () => {
+    const discover = createDiscoverManager();
+    const { friends, annotations } = await createRealFriendContent({
+      friendIds: ["ada"],
+      names: { ada: "Ada" },
+      notes: {
+        ada: [
+          createAnnotation({
+            id: "a1",
+            data: { type: "comment", html: "<p>Ada's note</p>", userId: "ada" },
+          }),
+        ],
+      },
+      discover,
+    });
+    const { playlists } = createMockPlaylists();
+    const state = createMockState(false, {
+      userId: ME,
+      discover,
+      friendsManager: friends,
+    });
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={createMockTabs(createMockTab())}
+          playlists={playlists}
+          annotations={annotations}
+          modals={createModalManager()}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+    await vi.waitFor(() =>
+      expect(container.textContent).toContain("Ada's note")
+    );
+
+    await act(() => friends.unfriend("ada"));
+
+    expect(container.textContent).not.toContain("Ada's note");
   });
 
   it("DiscoverPaneHeader shows the create menu only in the discover sub-view, with Annotation and Playlist items", () => {
@@ -1552,14 +1845,17 @@ describe("DiscoverPane", () => {
 
   it("the annotation Edit menu item calls editAnnotation", () => {
     const { playlists } = createMockPlaylists();
-    const annotation = createAnnotation({ id: "a1" });
+    const annotation = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+    });
     const { annotations, editAnnotation } = createMockAnnotations({
       annotationsForChapter: [annotation],
     });
     const tab = createMockTab();
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
-    const state = createMockState();
+    const state = createMockState(false, { userId: "user-1" });
 
     act(() => {
       render(
@@ -1589,16 +1885,97 @@ describe("DiscoverPane", () => {
     expect(editAnnotation).toHaveBeenCalledWith(annotation);
   });
 
+  // Notes written while signed out are saved with no author, and keep none
+  // once they move to the account on sign-in.
+  it("keeps the annotation menu on your own note that has no author", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Hello</p>", userId: null },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState(false, { userId: "user-1" });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const items = Array.from(container.querySelectorAll('[role="menuitem"]'));
+    expect(items.some((el) => el.textContent?.includes("Edit"))).toBe(true);
+    expect(items.some((el) => el.textContent?.includes("Delete"))).toBe(true);
+  });
+
+  it("shows no annotation menu on a friend's note, even one naming you as its author", async () => {
+    const { playlists } = createMockPlaylists();
+    const friendsNote = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Hello</p>", userId: ME },
+    });
+    const discover = createDiscoverManager();
+    // The real managers, so the note arrives the way a friend's note does.
+    const { friends, annotations } = await createRealFriendContent({
+      friendIds: ["ada"],
+      notes: { ada: [friendsNote] },
+      discover,
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState(false, {
+      userId: ME,
+      discover,
+      friendsManager: friends,
+    });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    await vi.waitFor(() =>
+      expect(container.querySelector(".sb-annotation-item")).not.toBeNull()
+    );
+    expect(container.querySelector('[role="menuitem"]')).toBeNull();
+    expect(container.querySelector(".sb-annotation-item-menu")).toBeNull();
+  });
+
   it("the annotation Delete menu item opens a confirm modal; confirming deletes and closes it", async () => {
     const { playlists } = createMockPlaylists();
-    const annotation = createAnnotation({ id: "a1" });
+    const annotation = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+    });
     const { annotations, deleteAnnotationAndRefresh } = createMockAnnotations({
       annotationsForChapter: [annotation],
     });
     const tab = createMockTab();
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
-    const state = createMockState();
+    const state = createMockState(false, { userId: "user-1" });
 
     act(() => {
       render(
@@ -1664,7 +2041,10 @@ describe("DiscoverPane", () => {
 
   it("shows a toast but still closes the modal when deleting an annotation fails", async () => {
     const { playlists } = createMockPlaylists();
-    const annotation = createAnnotation({ id: "a1" });
+    const annotation = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+    });
     const { annotations } = createMockAnnotations({
       annotationsForChapter: [annotation],
       deleteAnnotationAndRefreshImpl: () => Promise.reject(new Error("nope")),
@@ -1672,7 +2052,7 @@ describe("DiscoverPane", () => {
     const tab = createMockTab();
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
-    const state = createMockState();
+    const state = createMockState(false, { userId: "user-1" });
 
     act(() => {
       render(
@@ -2158,6 +2538,7 @@ describe("DiscoverPaneTitle", () => {
       view,
       actualView,
       playing,
+      openingPlayback: signal(false),
       editingPlaylist: signal(null),
       goBackFromPlayingView: vi.fn(),
     } as unknown as PlaylistManager;
@@ -2267,52 +2648,41 @@ describe("DiscoverPaneTitle", () => {
     });
   });
 
-  it("with no AI providers, the AI button starts a local chat seeded with a prompt message and no participant", () => {
+  it("hides the AI button when no agent can edit playlists", () => {
     const { playlists } = createMockPlaylists({
       view: "create_playlist",
       editingPlaylist: createPlaylist({ title: "Draft" }),
     });
     const { annotations } = createMockAnnotations();
 
-    act(() => {
-      render(
-        <DiscoverPaneTitle
-          playlists={playlists}
-          annotations={annotations}
-          tabs={createMockTabs()}
-          chats={chatsFixture.chats}
-          openChatPanel={openChatPanel}
-        />,
-        container
-      );
-    });
+    function renderTitle() {
+      act(() => {
+        render(
+          <DiscoverPaneTitle
+            playlists={playlists}
+            annotations={annotations}
+            tabs={createMockTabs()}
+            chats={chatsFixture.chats}
+            openChatPanel={openChatPanel}
+          />,
+          container
+        );
+      });
+    }
 
-    // No menu with zero (or one) provider: a plain button, not the
-    // context-menu trigger.
-    expect(container.querySelector('[role="menu"]')).toBeNull();
+    renderTitle();
+    expect(container.querySelector(".sb-discover-title-ai")).toBeNull();
+    expect(container.querySelector(".sb-playlist-input")).not.toBeNull();
 
-    const aiButton = container.querySelector(
-      ".sb-discover-title-ai"
-    ) as HTMLButtonElement;
-    expect(aiButton).not.toBeNull();
-
-    act(() => {
-      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
-    const history = chatsFixture.createLocalSession.mock.calls[0]![0];
-    expect(history.providerIds).toEqual([]);
-    expect(history.messages).toHaveLength(1);
-    expect(history.messages[0]).toMatchObject({
-      authors: [],
-      type: "text",
-      text: "What do you want to add/change?",
-    });
-
-    expect(chatsFixture.addParticipant).not.toHaveBeenCalled();
-    expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
-    expect(openChatPanel).toHaveBeenCalledTimes(1);
+    // An installed agent that cannot call tools (e.g. Bonfire) still cannot
+    // edit the playlist, so the button stays hidden.
+    chatsFixture.providers.value = [
+      createMockProvider("bonfire", "Bonfire", false),
+    ];
+    renderTitle();
+    expect(container.querySelector(".sb-discover-title-ai")).toBeNull();
+    expect(chatsFixture.createLocalSession).not.toHaveBeenCalled();
+    expect(openChatPanel).not.toHaveBeenCalled();
   });
 
   it("with exactly one AI provider, the AI button adds it automatically without showing a menu", () => {
@@ -2341,11 +2711,19 @@ describe("DiscoverPaneTitle", () => {
     const aiButton = container.querySelector(
       ".sb-discover-title-ai"
     ) as HTMLButtonElement;
+    expect(aiButton).not.toBeNull();
     act(() => {
       aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    const history = chatsFixture.createLocalSession.mock.calls[0]![0];
+    expect(history.messages).toHaveLength(1);
+    expect(history.messages[0]).toMatchObject({
+      authors: ["provider-1"],
+      type: "text",
+      text: "What do you want to add/change?",
+    });
     expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
     expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
     expect(openChatPanel).toHaveBeenCalledTimes(1);
@@ -2476,108 +2854,18 @@ describe("DiscoverPaneTitle", () => {
     expect(playlists.editingPlaylist.value?.title).toBeNull();
   });
 
-  function createHistoryEntry(
-    overrides: Partial<PlaylistPlayHistory> = {}
-  ): PlaylistPlayHistory {
-    return {
-      id: "hist-1",
-      recordName: "user-1",
-      userId: "user-1",
-      playlistId: "playlist-1",
-      playlistRecordName: "user-1",
-      playlistTitle: "Shared Study",
-      playlistDescription: null,
-      previousHistoryId: null,
-      totalSteps: 4,
-      currentStep: 1,
-      lastItem: {
-        type: "bible-verse",
-        ref: { bookId: "JHN", chapter: 3, verse: 16 },
-      },
-      startedAtMs: 1_000,
-      endedAtMs: 1_000 + 65_000,
-      durationMs: 65_000,
-      createdAtMs: 1_000,
-      updatedAtMs: 1_000 + 65_000,
-      ...overrides,
-    };
-  }
-
-  it("hides playlist history when there is none", () => {
-    const { playlists } = createMockPlaylists({ userPlaylistHistory: [] });
-    const tabs = createMockTabs(createMockTab());
-    const modals = createModalManager();
-    const state = createMockState();
-    const { annotations } = createMockAnnotations();
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          annotations={annotations}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    const sectionTitles = Array.from(
-      container.querySelectorAll(".sb-discover-section-title")
-    ).map((el) => el.textContent);
-    expect(sectionTitles).not.toContain("Playlist history");
-    expect(container.querySelector(".sb-playlist-history-item")).toBeNull();
-    expect(container.textContent).not.toContain(
-      "Play a saved playlist while signed in and it will show up here."
-    );
-  });
-
-  it("shows Notes above Playlist history when there is history", () => {
+  it("does not show playlist history", () => {
     const { playlists } = createMockPlaylists({
-      userPlaylistHistory: [createHistoryEntry()],
+      userPlaylistHistory: [
+        {
+          id: "hist-1",
+          playlistTitle: "Shared Study",
+        } as PlaylistPlayHistory,
+      ],
     });
     const tabs = createMockTabs(createMockTab());
     const modals = createModalManager();
     const state = createMockState();
-    const { annotations } = createMockAnnotations({
-      annotationsForChapter: [createAnnotation()],
-    });
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          annotations={annotations}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    const sectionTitles = Array.from(
-      container.querySelectorAll(".sb-discover-section-title")
-    ).map((el) => el.textContent);
-    expect(sectionTitles.indexOf("Notes")).toBeGreaterThanOrEqual(0);
-    expect(sectionTitles.indexOf("Playlist history")).toBeGreaterThan(
-      sectionTitles.indexOf("Notes")
-    );
-    expect(sectionTitles).not.toContain("Playlists");
-  });
-
-  it("lists playlist history with status, play to continue, and no Continue listening section", async () => {
-    const entry = createHistoryEntry();
-    const { playlists, continueFromHistory, replayFromHistory } =
-      createMockPlaylists({
-        userPlaylistHistory: [entry],
-      });
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState();
     const { annotations } = createMockAnnotations();
 
     act(() => {
@@ -2594,111 +2882,9 @@ describe("DiscoverPaneTitle", () => {
       );
     });
 
-    expect(container.textContent).not.toContain("Continue listening");
-    const item = container.querySelector(
-      ".sb-playlist-history-item"
-    ) as HTMLLIElement;
-    expect(item).not.toBeNull();
-    expect(item.querySelector(".sb-discover-item-title")?.textContent).toBe(
-      "Shared Study"
-    );
-    expect(item.querySelector(".sb-hero-thumb")).toBeNull();
-    expect(item.textContent).not.toContain("No image");
-    expect(
-      item.querySelector(".sb-discover-item-description")?.textContent
-    ).toMatch(/50% complete/);
-    expect(
-      item.querySelector(".sb-discover-item-description")?.textContent
-    ).toContain("JHN 3:16");
-    expect(container.querySelector(".sb-playlist-history-details")).toBeNull();
-
-    const play = item.querySelector(
-      ".sb-discover-item-play"
-    ) as HTMLButtonElement;
-    expect(play.getAttribute("aria-label")).toBe("Continue");
-
-    await act(async () => {
-      play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(continueFromHistory).toHaveBeenCalledWith(entry);
-    expect(replayFromHistory).not.toHaveBeenCalled();
-  });
-
-  it("replays a completed history entry from the play button", async () => {
-    const entry = createHistoryEntry({
-      currentStep: 3,
-      totalSteps: 4,
-    });
-    const { playlists, replayFromHistory, continueFromHistory } =
-      createMockPlaylists({
-        userPlaylistHistory: [entry],
-      });
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState();
-    const { annotations } = createMockAnnotations();
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          annotations={annotations}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    const play = container.querySelector(
-      ".sb-playlist-history-item .sb-discover-item-play"
-    ) as HTMLButtonElement;
-    expect(play.getAttribute("aria-label")).toBe("Replay");
-
-    await act(async () => {
-      play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(replayFromHistory).toHaveBeenCalledWith(entry);
-    expect(continueFromHistory).not.toHaveBeenCalled();
-  });
-
-  it("removes a history session from the overflow menu", async () => {
-    const entry = createHistoryEntry();
-    const { playlists, removePlayHistory } = createMockPlaylists({
-      userPlaylistHistory: [entry],
-    });
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState();
-    const { annotations } = createMockAnnotations();
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          annotations={annotations}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    const remove = Array.from(
-      container.querySelectorAll('[role="menuitem"]')
-    ).find((el) => el.textContent?.includes("Remove from history")) as
-      | HTMLButtonElement
-      | undefined;
-    expect(remove).toBeDefined();
-
-    await act(async () => {
-      remove!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(removePlayHistory).toHaveBeenCalledWith(entry);
+    expect(container.textContent).not.toContain("Playlist history");
+    expect(container.textContent).not.toContain("Shared Study");
+    expect(container.querySelector(".sb-playlist-history-item")).toBeNull();
   });
 
   function renderAnnotationTitle(editing: Annotation) {
