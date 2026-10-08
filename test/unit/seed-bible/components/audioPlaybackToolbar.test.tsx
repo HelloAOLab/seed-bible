@@ -166,6 +166,15 @@ describe("BibleReaderToolbar — audio playback", () => {
       expect(nav().querySelector(".sb-audio-progress-ring")).toBeNull();
     });
 
+    it("shows the time remaining beside the scrubber", async () => {
+      const { playback } = createPlayback();
+      await showPlayback(playback);
+
+      expect(
+        nav().querySelector(".sb-audio-scrubber-remaining")?.textContent
+      ).toBe("1:00");
+    });
+
     it("moves progress to a ring around the play button while paused", async () => {
       const { playback, isPlaying } = createPlayback();
       await showPlayback(playback);

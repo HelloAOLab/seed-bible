@@ -2349,6 +2349,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       {playback && isScrubbing && (
                         <AudioScrubber
                           playback={playback}
+                          showTimeRemaining
                           className="sb-reader-floating-nav-scrubber"
                         />
                       )}
