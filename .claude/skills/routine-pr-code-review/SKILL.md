@@ -99,7 +99,7 @@ Follow the writing style in `CLAUDE.md`: plain language, short answer first, and
 - Severity guide. **Critical**: data loss, security hole, crash, or a main flow broken for most users. **High**: a real bug users will hit, or the PR doesn't do what the issue asks. **Medium**: edge-case bugs, missing error handling, weak tests for important behavior. **Low**: small cleanups and nits. Leave out empty severity headings. If there are no findings, say so plainly.
 - Number findings in one sequence across all severities, written as **No. 1**, **No. 2**, and so on, so people can refer to them in replies.
 - Each finding has:
-  - A short title, and where it is, linked to the reviewed commit: `[path/to/file.tsx:42](https://github.com/<owner>/<repo>/blob/<full sha>/path/to/file.tsx#L42)`.
+  - A short title.
   - What's wrong and why it matters, in plain words.
   - **Steps to reproduce**, numbered, written so a human developer can see the problem in the app or a test. Include these only when the problem can actually be reproduced; don't invent steps for a theoretical issue.
   - **Suggested fix**: concrete, with a short code snippet when that's clearer than prose.
