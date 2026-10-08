@@ -1560,6 +1560,29 @@ describe("CustomizationsManager", () => {
       expect(manager.hasUnsavedChanges.value).toBe(false);
     });
 
+    it("leaves no unsaved changes when the clock ticks during the save", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      let now = Date.now();
+      const dateNow = vi.spyOn(Date, "now").mockImplementation(() => ++now);
+
+      try {
+        const saved = await manager.setExtensionSensitiveProxy(
+          created.id,
+          "ext-1",
+          "exampleApi",
+          pointer
+        );
+
+        expect(saved).toBe(true);
+        expect(manager.hasUnsavedChanges.value).toBe(false);
+      } finally {
+        dateNow.mockRestore();
+      }
+    });
+
     it("doesn't publish unsaved draft edits that are later discarded", async () => {
       recordDataMock.mockResolvedValue({ success: true });
       const { manager } = createManager();
