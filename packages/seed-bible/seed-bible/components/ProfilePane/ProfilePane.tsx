@@ -1,14 +1,21 @@
+import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import type { ReadingPlanProgress } from "../../managers/ReadingPlansManager";
 import {
   formatReadingPlanId,
   getReadingCalendar,
+  latestReadingPlanProgress,
   summarizeCalendar,
 } from "../../managers/ReadingPlansManager";
 import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
+import type { PlaylistPlayHistory } from "../../managers/PlaylistManager";
+import {
+  isPlaylistPlayHistoryComplete,
+  playlistPlayHistoryPercent,
+} from "../../managers/PlaylistManager";
 import { getSelfDisplayName } from "../Tabs/Tabs";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { MaterialIcon } from "../icons";
+import { Spinner } from "../Spinner/Spinner";
 import { useI18n } from "../../i18n";
 import { friendsRowSubtitle } from "../FriendsPane/FriendsPane";
 import "./ProfilePane.css";
@@ -23,6 +30,14 @@ export interface ProfileScreenProps {
   onEditPicture: () => void;
   /** Opens the reading plans pane. */
   onOpenReadingPlans: () => void;
+  /** Opens the playlist history screen. */
+  onOpenPlaylistHistory: () => void;
+  /**
+   * Resumes or replays the featured playlist. Resolves once playback has
+   * started (the profile can close); rejects when the playlist cannot be
+   * opened, leaving this screen up.
+   */
+  onContinuePlaylist: (entry: PlaylistPlayHistory) => void | Promise<void>;
   /** Opens the "Your content" screen. */
   onOpenYourContent: () => void;
   /** Opens the Friends screen. */
@@ -47,18 +62,6 @@ export function getInitials(displayName: string): string {
     .slice(0, 2)
     .map((word) => Array.from(word)[0] ?? "")
     .join("");
-}
-
-/** The most recent progress the user has for a given plan id, if any. */
-function latestProgress(
-  progresses: ReadingPlanProgress[],
-  planId: string
-): ReadingPlanProgress | null {
-  return (
-    progresses
-      .filter((p) => p.planId === planId)
-      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
-  );
 }
 
 /** What the reading-plans card shows, once a plan in progress has been found. */
@@ -91,7 +94,7 @@ function findActivePlan(state: SeedBibleState): ActivePlanSummary | null {
   for (const meta of metas) {
     if (meta.status === "draft") continue;
     const planId = formatReadingPlanId(meta.recordName, meta.address);
-    const progress = latestProgress(progresses, planId);
+    const progress = latestReadingPlanProgress(progresses, planId);
     const full = fullById.get(planId);
     if (!progress || !full) continue;
 
@@ -201,11 +204,11 @@ export function ProfileContactLine(props: { state: SeedBibleState }) {
   );
 }
 
-/** A tappable card: icon tile, title, subtitle, and a trailing arrow. */
+/** A tappable card: icon tile, title, optional subtitle, and a trailing arrow. */
 function ProfileRow(props: {
   icon: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   onClick: () => void;
 }) {
   return (
@@ -215,12 +218,129 @@ function ProfileRow(props: {
       </span>
       <span className="sb-profile-row-text">
         <span className="sb-profile-row-title">{props.title}</span>
-        <span className="sb-profile-row-subtitle">{props.subtitle}</span>
+        {props.subtitle ? (
+          <span className="sb-profile-row-subtitle">{props.subtitle}</span>
+        ) : null}
       </span>
       <span className="sb-profile-row-arrow" aria-hidden="true">
         <MaterialIcon>arrow_forward</MaterialIcon>
       </span>
     </button>
+  );
+}
+
+/**
+ * The most recently started playlist session. History is stored newest-first;
+ * sorting again keeps a stale or partial list honest.
+ */
+function latestPlaylistHistory(
+  history: PlaylistPlayHistory[]
+): PlaylistPlayHistory | null {
+  return [...history].sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null;
+}
+
+/**
+ * Playlist history, in the same card as reading plans. The latest session
+ * shows its name and completion, with "Continue latest playlist" so the
+ * action says what it resumes. View all opens the full list.
+ */
+function PlaylistHistoryCard(props: {
+  state: SeedBibleState;
+  onViewAll: () => void;
+  onContinue: (entry: PlaylistPlayHistory) => void | Promise<void>;
+}) {
+  const { t } = useI18n();
+  const opening = useSignal(false);
+  const latest = latestPlaylistHistory(
+    props.state.playlists.userPlaylistHistory.value
+  );
+  const percent = latest
+    ? Math.round(playlistPlayHistoryPercent(latest) * 100)
+    : 0;
+  const complete = latest != null && isPlaylistPlayHistoryComplete(latest);
+  const title =
+    latest?.playlistTitle ??
+    t("untitled-playlist", { defaultValue: "Untitled playlist" });
+
+  return (
+    <div className="sb-profile-playlist-history">
+      <span className="sb-profile-plans-head">
+        <span className="sb-profile-tile" aria-hidden="true">
+          <MaterialIcon>playlist_play</MaterialIcon>
+        </span>
+        <span className="sb-profile-plans-title">
+          {t("my-playlist-history", { defaultValue: "My playlist history" })}
+        </span>
+        <button
+          type="button"
+          className="sb-profile-plans-link"
+          onClick={props.onViewAll}
+        >
+          {t("view-all", { defaultValue: "View all" })}
+          <MaterialIcon>arrow_forward</MaterialIcon>
+        </button>
+      </span>
+
+      {latest ? (
+        <button
+          type="button"
+          className="sb-profile-playlist-continue"
+          aria-busy={opening.value}
+          onClick={() => {
+            if (opening.peek()) {
+              return;
+            }
+            opening.value = true;
+            void Promise.resolve(props.onContinue(latest)).then(
+              () => {
+                opening.value = false;
+              },
+              () => {
+                opening.value = false;
+              }
+            );
+          }}
+        >
+          <span
+            className="sb-profile-progress"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+            aria-label={t("playlist-history-percent", {
+              percent,
+              defaultValue: "{{percent}}% complete",
+            })}
+          >
+            <span
+              className="sb-profile-progress-fill"
+              style={{ width: `${percent}%` }}
+            />
+          </span>
+          <span className="sb-profile-plans-foot sb-profile-playlist-continue-foot">
+            <span className="sb-profile-playlist-continue-label">
+              {opening.value ? <Spinner size="0.875rem" /> : null}
+              {complete
+                ? t("replay-latest-playlist", {
+                    defaultValue: "Replay latest playlist",
+                  })
+                : t("continue-latest-playlist", {
+                    defaultValue: "Continue latest playlist",
+                  })}
+            </span>
+            <span className="sb-profile-plans-name">{title}</span>
+          </span>
+        </button>
+      ) : (
+        <span className="sb-profile-plans-foot">
+          <span className="sb-profile-plans-name">
+            {t("playlist-history-empty", {
+              defaultValue: "Playlists you listen to will show up here.",
+            })}
+          </span>
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -305,7 +425,14 @@ function ReadingPlansCard(props: {
  * settled. Friends has no design yet either; its row follows "Your content".
  */
 export function ProfilePane(props: ProfileScreenProps) {
-  const { state, onEditProfile, onEditPicture, onOpenReadingPlans } = props;
+  const {
+    state,
+    onEditProfile,
+    onEditPicture,
+    onOpenReadingPlans,
+    onOpenPlaylistHistory,
+    onContinuePlaylist,
+  } = props;
   const { login, features } = state;
   const { t } = useI18n();
 
@@ -389,6 +516,14 @@ export function ProfilePane(props: ProfileScreenProps) {
 
         {plansEnabled ? (
           <ReadingPlansCard state={state} onOpen={onOpenReadingPlans} />
+        ) : null}
+
+        {state.playlists.userPlaylistHistory.value.length > 0 ? (
+          <PlaylistHistoryCard
+            state={state}
+            onViewAll={onOpenPlaylistHistory}
+            onContinue={onContinuePlaylist}
+          />
         ) : null}
 
         <ProfileRow

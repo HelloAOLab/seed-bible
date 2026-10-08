@@ -13,10 +13,32 @@
   - While you drag the handle, a small card above it names the verse you'd land on ("Verse 7"), with the section heading too when that verse starts one ("God's Law Is Holy"). Small tick marks also appear along the bar where each verse starts, with a thicker one where a new section begins.
   - Listening carries on when you switch tabs. The tab that's playing shows a speaker icon in the sidebar. Only one tab plays at a time: pressing Listen in another tab pauses the first, which keeps its place until you stop it, change its chapter or close it.
   - Chapters read aloud by your device's voice (translations with no recorded narration) get the same controls. The voice can't say how long it will take, so the bar counts verses instead of time ("4/12" while reading the fourth of twelve verses), dragging snaps to whole verses, and the arrow keys move one verse. Pausing remembers the verse being read, and playing picks up from the start of it.
+- Show an Apologist team's own content in the Discover pane. When the Apologist extension is opened with `?apologistTeamID=<id>` (plus `apologistApiKey`), each chapter you read is run through Apologist's semantic search, and the team's matching articles, YouTube videos, episodes, media and links appear as discovered content that opens in a modal. Each card names the website it comes from, results that are about a different chapter of the same book are left out, repeats are removed, and results that mention the chapter itself are listed first. Signed-in users can also save their Apologist agent's name, AI model, team ID, host and API key in the extension's settings, plus a name to group the team's content under (otherwise it's grouped by website). The key is stored as a sensitive setting, so it never comes back to the browser, and the extension's requests go through it whenever it's saved. ([#1831](https://github.com/HelloAOLab/seed-bible/issues/1831))
+  - The extension's settings also have two switches: **Chat** (on by default) offers the Apologist agent in chats, and **Discover content** (off by default) shows the team's content in the Discover pane. A link with `apologistTeamID` still shows the team's content, even to signed-out visitors, unless the viewer has switched Discover content off.
+- Show the reading plans you've created on the "Your content" screen, with a Reading plans chip to see just those, alongside your notes, highlights, saves and playlists. ([#1798](https://github.com/HelloAOLab/seed-bible/issues/1798))
+  - Each plan shows where you're up to, and tapping it opens the plan; its menu offers Edit and Delete.
+- Have AI chat follow the active reader tab's Bible translation, mapping it onto Apologist's supported list (KJV, BSB, and the rest of the Fusion docs) and falling back to BSB when the tab's translation isn't supported. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
+- Let AI chat look up translations this app actually has and ask, in a banner above the chat, before switching. Switch changes the open tab and stays on the same chapter when the translation includes it; Dismiss leaves the reader as it is. Either way, the chat records what you did. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
+- Add an "Images" section at the bottom of the "Your content" screen that shows every image you've uploaded, where you can view each one full size or delete it. ([#1748](https://github.com/HelloAOLab/seed-bible/issues/1748))
+  - Deleting an image also takes it off any playlist or reading plan using it as a cover; the confirmation warns you about this and names them.
+- Let extensions declare `sensitive` settings, such as API keys, whose values never come back to the browser. ([#1836](https://github.com/HelloAOLab/seed-bible/issues/1836))
+  - An extension's `extension.json` lists each destination once in a `sensitive` section (a host plus which request property each setting fills in), and each sensitive setting names the destination it belongs to, so a "Client ID" and an "API key" can both be sent to the same host.
+  - Values are saved in a private CasualOS proxy record owned by the viewer. The extension sends requests with `extensionSettings.fetchWithSensitiveValues`, and the server adds the values before forwarding them.
+  - Each destination can be private (only the viewer can use it) or public (anyone with its address can send requests through it, but nobody can read the values). It's always private until the viewer changes it; extensions can't choose.
+  - The viewer can also send a destination's values to a different host than the extension declares. The extension keeps using its own URL, and requests go to the viewer's host with the same path.
+  - The Configure window shows these settings as masked fields that only say whether a value is set.
+  - A Customization can provide its own values for these settings, entered in the same masked fields from its extension defaults window. They are saved in a proxy record owned by the Customization's author, and the Customization only stores where that proxy is. Everyone using the Customization sends requests with those values unless they save their own, which then replace the Customization's for that destination. This also works for signed-out viewers. The viewer's Configure window says "Provided by the customization" for such a setting.
+  - A Customization's proxy is public by default, since it exists for other people to use; the author can switch it to "Only me". Deleting the Customization erases its proxies first.
+  - Secrets for an extension that's no longer installed, or that no longer asks for them, are listed under Settings → Extensions with a Clear button, so they can still be removed from the server.
 
 ### 🔧 Changed
 
+- Opening a customization to edit now closes every other pane first, including fullscreen ones, so the editor is the only pane on screen. Before, a fullscreen pane (or a floating one) stayed open next to the editor.
+- Show long extension descriptions as two lines with a "Read more" link in the Extensions settings list. Before, a long description made its row several lines tall. ([#1924](https://github.com/HelloAOLab/seed-bible/pull/1924))
+
 ### 🐛 Fixed
+
+- List an installed extension under Installed in Settings → Extensions even when the active customization hides it, such as one another extension needs as a dependency. Before, it was left out of the list even though it was running, so you couldn't see or remove it. You can now uninstall it from there, and hidden extensions still never appear under Available.
 
 ### 🗑️ Removed
 
@@ -100,6 +122,14 @@
   - People on the same verses appear side by side, and a crowd collapses into an avatar stack.
   - A person's bar is hidden while they're in another tab.
 - Let a Customization set its own default Bible translation, overriding Seed Bible's normal per-language default for anyone reading with that Customization active. ([#1778](https://github.com/HelloAOLab/seed-bible/pull/1778))
+- Show the people, places and events a chapter names, from the Theographic Bible Metadata dataset. ([#1744](https://github.com/HelloAOLab/seed-bible/issues/1744))
+  - New People, Places and Events filters in the Discover panel, each listing what the chapter mentions and the verses it appears in. Tap a verse to jump to it.
+  - Open an entry and pick one of the chapter's verses that mention it to read it, quoted in your translation with the name marked.
+  - Each entry also shows its facts — a person's family, a place's other names and what it's called today, an event's date and participants — and its full dictionary entry. Places appear on a map right in the entry, which can be moved into its own window.
+  - Select a verse and the lists narrow to what that verse mentions.
+  - These are left out of the "All" view until you pick one of the three filters, so a chapter with dozens of names doesn't bury your own notes.
+  - Comes as the "People, Places & Events" extension, installed automatically. Uninstall it from Settings ▸ Extensions if you don't want it.
+- Let extensions add their own kinds of content to Discover. Each kind gets its own filter in the Discover panel and its own section in the Discover pane, and can be kept out of the "All" view until it's picked.
 - Show a compact reader when Seed Bible is embedded on another site with `?embed=minimal` or `?embed=true`: translation, open in a new tab, quick settings, and chapter navigation, without the Today screen or the bottom tab bar. ([#1843](https://github.com/HelloAOLab/seed-bible/pull/1843))
   - Quick settings keep scripture and UI size, but hide "Go to all settings".
 - Show the people, places and events a chapter mentions in the Discover panel, from the Theographic Bible Metadata dataset. ([#1839](https://github.com/HelloAOLab/seed-bible/pull/1839))

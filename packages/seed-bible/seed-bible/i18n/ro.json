@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Alegeți câte pasaje doriți să citiți alăturat din acest meniu de aspect.",
   "tutorial.addTabTitle": "Deschideți mai multe pasaje",
   "tutorial.addTabBody": "Adaugă o filă nouă pentru a citi mai multe cărți sau traduceri una lângă alta.",
-  "playlist-history": "Istoricul listei de redare",
   "discover-playlist-history-empty": "Redă o listă de redare salvată în timp ce ești conectat(ă) și aceasta va apărea aici.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % finalizat - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % finalizat",

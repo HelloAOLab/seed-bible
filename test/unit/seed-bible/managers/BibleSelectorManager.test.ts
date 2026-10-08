@@ -23,6 +23,14 @@ import {
   makeChapter,
   nivBooks,
 } from "./testUtils/mockBibleApiData";
+import {
+  createInMemoryTranslationStore,
+  type OfflineTranslationStore,
+} from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
+import {
+  createStreamingResponse,
+  makeCompleteTranslation,
+} from "./testUtils/mockBibleApiData";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { Mock } from "vitest";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
@@ -63,8 +71,8 @@ function createApi(): FreeUseBibleAPI {
   return new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT);
 }
 
-function createDataManager() {
-  return createBibleDataManager(createApi());
+function createDataManager(offlineStore?: OfflineTranslationStore) {
+  return createBibleDataManager(createApi(), { offlineStore });
 }
 
 function createHighlightsManagerMock() {
@@ -190,14 +198,16 @@ function makeTranslationWithLanguage(props: {
   };
 }
 
-async function createManagersWithSelectedSlot(): Promise<{
+async function createManagersWithSelectedSlot(
+  offlineStore?: OfflineTranslationStore
+): Promise<{
   readingState: BibleReadingState;
   slot: TabSlot;
   tabsManager: ReturnType<typeof createTabs>;
   tabsLayoutManager: ReturnType<typeof createTabsLayout>;
   dataManager: ReturnType<typeof createDataManager>;
 }> {
-  const dataManager = createDataManager();
+  const dataManager = createDataManager(offlineStore);
   const navigation = createNavigationManager();
   const tabsManager = createTabs(
     navigation,
@@ -370,6 +380,90 @@ describe("createBibleSelectorState", () => {
     expect(readingState.translationId.value).toBe("NIV");
     expect(readingState.bookId.value).toBe("MAT");
     expect(readingState.chapterNumber.value).toBe(1);
+  });
+
+  describe("the saved-translations-only list", () => {
+    /** A selector on a device that has NIV saved and AAB not. */
+    async function createSelectorWithNivSaved() {
+      setWebResponses({
+        ...createExampleManagerResponseMap(),
+        [makeExampleUrl("/api/NIV/complete.json")]: createStreamingResponse(
+          makeCompleteTranslation(nivBooks, 2)
+        ),
+      });
+      const { dataManager, slot, tabsManager, tabsLayoutManager } =
+        await createManagersWithSelectedSlot(createInMemoryTranslationStore());
+      expect(await dataManager.offline.downloadTranslation("NIV")).toBe(true);
+
+      const selector = createSelectorState(
+        dataManager,
+        tabsManager,
+        tabsLayoutManager
+      );
+      return { selector, slot };
+    }
+
+    const listedTranslationIds = (selector: BibleSelectorState) =>
+      selector.filteredApiTranslations.value.flatMap((group) =>
+        group.translations.map((translation) => translation.id)
+      );
+
+    it("opens the translation list showing only translations saved on the device", async () => {
+      const { selector, slot } = await createSelectorWithNivSaved();
+
+      await selector.openDownloadedTranslations(slot);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.selectingTranslation.value).toBe(true);
+      expect(listedTranslationIds(selector)).toEqual(["NIV"]);
+    });
+
+    it("shows the full list once the translation list is closed and opened again by hand", async () => {
+      const { selector, slot } = await createSelectorWithNivSaved();
+      await selector.openDownloadedTranslations(slot);
+
+      selector.selectingTranslation.value = false;
+      selector.selectingTranslation.value = true;
+
+      expect(listedTranslationIds(selector)).toEqual(
+        expect.arrayContaining(["AAB", "NIV"])
+      );
+    });
+
+    it("shows the full list after the selector is closed and reopened", async () => {
+      const { selector, slot } = await createSelectorWithNivSaved();
+      await selector.openDownloadedTranslations(slot);
+
+      await selector.setOpen(false);
+      await selector.setOpen(true, slot);
+      selector.selectingTranslation.value = true;
+
+      expect(listedTranslationIds(selector)).toEqual(
+        expect.arrayContaining(["AAB", "NIV"])
+      );
+    });
+
+    it("leaves the selector on its books when it couldn't open", async () => {
+      const { selector } = await createSelectorWithNivSaved();
+
+      // A fresh selector has no slot bound, and none was passed.
+      await selector.openDownloadedTranslations();
+
+      expect(selector.isOpen.value).toBe(false);
+      // Otherwise the next ordinary open would land on the translation list.
+      expect(selector.selectingTranslation.value).toBe(false);
+    });
+
+    it("never narrows the list when it is opened the usual way", async () => {
+      const { selector, slot } = await createSelectorWithNivSaved();
+
+      await selector.setOpen(true, slot);
+      selector.selectingTranslation.value = true;
+
+      expect(listedTranslationIds(selector)).toEqual(
+        expect.arrayContaining(["AAB", "NIV"])
+      );
+    });
   });
 
   it("pickTranslation() behaves like selectTranslation() and persists the choice to the user's profile", async () => {

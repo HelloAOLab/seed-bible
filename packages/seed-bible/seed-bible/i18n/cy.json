@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Dewiswch faint o ddarnodau i'w darllen ochr yn ochr o'r ddewislen cynllun hon.",
   "tutorial.addTabTitle": "Agor mwy o ddarnau",
   "tutorial.addTabBody": "Ychwanegu tab newydd i ddarllen sawl llyfr neu gyfieithiad ochr yn ochr.",
-  "playlist-history": "Hanes rhestr chwarae",
   "discover-playlist-history-empty": "Chwaraewch restr chwarae sydd wedi'i chadw tra byddwch wedi mewngofnodi a bydd yn ymddangos yma.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % wedi'i gwblhau - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % wedi'i gwblhau",

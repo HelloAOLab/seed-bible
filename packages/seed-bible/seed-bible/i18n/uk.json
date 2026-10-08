@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Виберіть, скільки уривків читати поруч, у цьому меню макета.",
   "tutorial.addTabTitle": "Відкрийте більше уривків",
   "tutorial.addTabBody": "Додайте нову вкладку, щоб читати кілька книг або перекладів поруч.",
-  "playlist-history": "Історія списків відтворення",
   "discover-playlist-history-empty": "Відтворіть збережений список відтворення, увійшовши в систему, і він відобразиться тут.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % виконано - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} – {{percent}} % виконано",

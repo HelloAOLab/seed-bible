@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Vælg, hvor mange passager der skal læses side om side, fra denne layoutmenu.",
   "tutorial.addTabTitle": "Åbn flere passager",
   "tutorial.addTabBody": "Tilføj en ny fane for at læse flere bøger eller oversættelser side om side.",
-  "playlist-history": "Afspilningslistehistorik",
   "discover-playlist-history-empty": "Afspil en gemt playliste, mens du er logget ind, og den vises her.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % færdiggjort - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % færdiggjort",

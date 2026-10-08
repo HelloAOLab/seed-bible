@@ -5,6 +5,7 @@ import type { LoginRequestSuccess } from "@casual-simulation/aux-records";
 import { useI18n } from "../../i18n/I18nManager";
 import SeedBibleTitleIcon from "../../img/SeedBibleLogoWithTitleBlack.png";
 import { MaterialIcon } from "../icons";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import type { LoginManager } from "../../managers/LoginManager";
 
@@ -104,13 +105,14 @@ export function LoginModal({
     }
   });
 
-  if (!isOpen) {
-    return null;
-  }
-
   const cancel = () => {
     void login.cancelLogin();
   };
+  const overlayDismiss = useOverlayDismiss(cancel);
+
+  if (!isOpen) {
+    return null;
+  }
 
   const submitEmail = async (event: Event) => {
     event.preventDefault();
@@ -264,7 +266,7 @@ export function LoginModal({
   return (
     <div
       className="sb-footnote-modal-overlay"
-      onClick={cancel}
+      {...overlayDismiss}
       onKeyDown={(event: KeyboardEvent) => {
         if (event.key === "Escape") {
           event.preventDefault();

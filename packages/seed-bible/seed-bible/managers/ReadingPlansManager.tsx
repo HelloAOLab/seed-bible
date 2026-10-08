@@ -38,6 +38,10 @@ import {
   type FriendReadLimiter,
 } from "./friendContentFreshness";
 import { createLinkPreviewLoader } from "./linkPreview";
+import {
+  FEATURE_KEY_READING_PLANS,
+  type FeaturesManager,
+} from "./FeaturesManager";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -248,6 +252,22 @@ export function formatReadingPlanId(
   address: string
 ): string {
   return `rp_${recordName}_${address}`;
+}
+
+/**
+ * The most recent progress the user has for a plan, or null when they have
+ * never started it. A plan restarted from the Completed list has more than one
+ * progress record; the newest is the one they are reading with.
+ */
+export function latestReadingPlanProgress(
+  progresses: readonly ReadingPlanProgress[],
+  planId: string
+): ReadingPlanProgress | null {
+  return (
+    [...progresses]
+      .filter((p) => p.planId === planId)
+      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
+  );
 }
 
 /** Session/reading totals for analytics, counted as the plan currently stands. */
@@ -1477,16 +1497,14 @@ function captureProgressCompletionEvents(
   }
 }
 
-/** The most recent progress the user has for a given plan id, if any. */
-export function latestReadingPlanProgress(
-  progresses: ReadingPlanProgress[],
-  planId: string
-): ReadingPlanProgress | null {
-  return (
-    progresses
-      .filter((p) => p.planId === planId)
-      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
-  );
+export interface PlanMatch {
+  planKey: string;
+  planTitle: string | null;
+  progress: ReadingPlanProgress;
+  /** Sessions in this plan whose readings cover the current passage. */
+  sessions: ReadingPlanSession[];
+  /** True when this chapter is recorded as read everywhere it appears. */
+  allComplete: boolean;
 }
 
 /**
@@ -2631,6 +2649,88 @@ export function createReadingPlansManager(
     return (await savePhotoToGallery(os, userId, file)).url;
   };
 
+  /**
+   * Takes a cover image off every plan of the user's that shows it, for when
+   * the image is being deleted from their gallery — the covers would otherwise
+   * point at a file that no longer exists. A plan whose contents are not
+   * cached at the listed version is fetched first, since the cover lives in
+   * the plan record as well as its metadata. The plans that save are updated
+   * locally even if another fails, and a failure is then re-thrown so the
+   * caller knows the image is still in use somewhere.
+   */
+  const clearHeroImage = async (url: string): Promise<void> => {
+    const affected = userReadingPlans.value.filter(
+      (meta) => meta.heroImageUrl === url
+    );
+    const results = await Promise.allSettled(
+      affected.map(async (meta) => {
+        const cached = fullReadingPlans
+          .peek()
+          .find(
+            (p) =>
+              p.recordName === meta.recordName && p.address === meta.address
+          );
+        const plan =
+          cached && cached.updatedAtMs >= meta.updatedAtMs
+            ? cached
+            : await getReadingPlan(meta.recordName, meta.address);
+        const next: ReadingPlan = {
+          ...plan,
+          heroImageUrl: null,
+          updatedAtMs: Date.now(),
+        };
+        await saveReadingPlan(next);
+        return next;
+      })
+    );
+    const updated = results.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : []
+    );
+    if (updated.length > 0) {
+      const byId = new Map(
+        updated.map((p) => [formatReadingPlanId(p.recordName, p.address), p])
+      );
+      const replacement = (p: { recordName: string; address: string }) =>
+        byId.get(formatReadingPlanId(p.recordName, p.address));
+      batch(() => {
+        // Cached at the new version too, so the metadata change below does
+        // not send the full-plan sync back to the server for these.
+        const cachedIds = new Set(
+          fullReadingPlans.value.map((p) =>
+            formatReadingPlanId(p.recordName, p.address)
+          )
+        );
+        fullReadingPlans.value = [
+          ...fullReadingPlans.value.map((p) => replacement(p) ?? p),
+          ...updated.filter(
+            (p) => !cachedIds.has(formatReadingPlanId(p.recordName, p.address))
+          ),
+        ];
+        userReadingPlans.value = userReadingPlans.value.map((meta) => {
+          const next = replacement(meta);
+          return next ? omit(next, ["sessions"]) : meta;
+        });
+      });
+    }
+    // The draft being edited loses the cover too, or saving the edit would put
+    // the dead URL straight back.
+    if (editingReadingPlan.peek()?.plan.heroImageUrl === url) {
+      mutateDraft((plan) => ({ ...plan, heroImageUrl: null }));
+    }
+    const failed = results.find(
+      (result): result is PromiseRejectedResult => result.status === "rejected"
+    );
+    if (failed) {
+      console.error(
+        "Failed to remove a reading plan cover image:",
+        failed.reason
+      );
+      throw new Error(
+        "Failed to remove the cover image from every reading plan"
+      );
+    }
+  };
+
   /** Points new readings at a session of the draft. */
   const selectEditingPlanSession = (index: number) => {
     const current = editingReadingPlan.peek();
@@ -2898,6 +2998,61 @@ export function createReadingPlansManager(
     }
   };
 
+  const getReadingPlansForChapter = (
+    bookId: string | null,
+    chapter: number,
+    features: FeaturesManager
+  ): PlanMatch[] => {
+    const featureOn = features.isFeatureEnabled(
+      FEATURE_KEY_READING_PLANS
+    ).value;
+
+    const fullPlans = fullReadingPlans.value;
+    const progresses = userReadingPlanProgresses.value;
+
+    const matches: PlanMatch[] = [];
+    if (featureOn && bookId) {
+      for (const plan of fullPlans) {
+        const planId = formatReadingPlanId(plan.recordName, plan.address);
+        const progress = latestReadingPlanProgress(progresses, planId);
+        if (!progress) {
+          continue; // only plans the user is actually following
+        }
+        const sessions = plan.sessions.filter((s) =>
+          sessionMatchesPassage(s, bookId, chapter)
+        );
+        if (sessions.length === 0) {
+          continue;
+        }
+        // Done means "this chapter is read", not "the whole session is read":
+        // every reading covering the open chapter has that chapter recorded.
+        const allComplete = sessions.every((s) => {
+          const sp = progress.sessions.find(
+            (entry) => entry.sessionId === s.id
+          );
+          return s.readings.every((reading) => {
+            const item = reading.item;
+            if (item.type !== "bible-verse" || item.ref.bookId !== bookId) {
+              return true; // not this passage — not this card's business
+            }
+            if (!readingChapters(reading).includes(chapter)) {
+              return true;
+            }
+            return isReadingChapterComplete(sp, reading.id, chapter);
+          });
+        });
+        matches.push({
+          planKey: planId,
+          planTitle: plan.title ?? null,
+          progress,
+          sessions,
+          allComplete,
+        });
+      }
+    }
+    return matches;
+  };
+
   effect(() => {
     void syncReadingPlanProgresses();
     void syncReadingPlans();
@@ -2940,6 +3095,7 @@ export function createReadingPlansManager(
     discardEditingReadingPlan,
     updateEditingReadingPlan,
     uploadHeroImage,
+    clearHeroImage,
     selectEditingPlanSession,
     setEditingPlanCadenceOptions,
     addSessionToEditingPlan,
@@ -2957,6 +3113,7 @@ export function createReadingPlansManager(
     retryReadingPlanPage: readingPlanPageLoader.retry,
     initialReadingPlanPageLoadPromise: readingPlanPageLoader.initialLoadPromise,
     getReadingPlanPageSeed: readingPlanPageLoader.getSeed,
+    getReadingPlansForChapter,
   };
 }
 

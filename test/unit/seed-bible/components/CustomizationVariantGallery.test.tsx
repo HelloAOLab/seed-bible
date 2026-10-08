@@ -52,6 +52,7 @@ function makeCustomization(
     updatedAt: 1,
     extensionSettings: {},
     extensionSettingDefaults: {},
+    extensionSensitiveProxies: {},
   };
 }
 

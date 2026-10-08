@@ -51,6 +51,8 @@ import {
   type Annotation,
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
+import type { PlanMatch, ReadingPlansManager } from "./ReadingPlansManager";
+import type { FeaturesManager } from "./FeaturesManager";
 
 export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
@@ -263,6 +265,14 @@ export interface BibleReadingState {
   isChapterContentStale: ReadonlySignal<boolean>;
   /** Error message from the most recent failed operation, if any. */
   error: Signal<string | null>;
+  /**
+   * The translation the failed load in {@link error} was for, or null while
+   * there's no error. Not always `translationId`: a translation switch only
+   * moves the position once the new translation's book list arrives, so a
+   * switch that fails offline leaves `translationId` on the translation the
+   * reader was already in.
+   */
+  failedTranslationId: ReadonlySignal<string | null>;
   /**
    * Re-runs the most recent load operation — initial load, translation/book/
    * chapter selection, or next/previous navigation — so a failed load can be
@@ -1339,6 +1349,56 @@ export function hasAnyDiscoverResults(
   );
 }
 
+export interface DiscoverPanelContent {
+  hasAnnotations: boolean;
+  showAnnotations: boolean;
+  plans: PlanMatch[];
+  hasDiscoverResults: boolean;
+  hasAny: boolean;
+}
+
+/**
+ * What the discover content panel has to show for the reading state's current
+ * chapter. Both the panel and its quick-tool toggle read this, so they can't
+ * disagree about whether there is anything to show.
+ */
+export function getDiscoverPanelContent(
+  readingState: BibleReadingState,
+  annotations: AnnotationsManager,
+  readingPlans: ReadingPlansManager,
+  features: FeaturesManager
+): DiscoverPanelContent {
+  const bookId = readingState.bookId.value;
+  const chapterNumber = readingState.chapterNumber.value;
+  const hasAnnotations = Boolean(
+    bookId &&
+    chapterNumber &&
+    annotations.visibleAnnotationsForChapter(bookId, chapterNumber).length > 0
+  );
+  // A note deleted offline is no longer in the chapter list, but it is still
+  // a change that has to reach the server. Keep the notes section (and its
+  // chip) up so that pending sync stays visible.
+  const pendingAnnotationChanges =
+    bookId && chapterNumber
+      ? annotations.pendingCountForChapter(bookId, chapterNumber)
+      : 0;
+  const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
+  const plans = readingPlans.getReadingPlansForChapter(
+    bookId,
+    chapterNumber,
+    features
+  );
+  const hasDiscoverResults = hasAnyDiscoverResults(readingState);
+
+  return {
+    hasAnnotations,
+    showAnnotations,
+    plans,
+    hasDiscoverResults,
+    hasAny: showAnnotations || hasDiscoverResults || plans.length > 0,
+  };
+}
+
 export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
@@ -1472,6 +1532,23 @@ export function createBibleReadingState(
   };
   const loading = computed<boolean>(() => inFlightCount.value > 0);
   const error = signal<string | null>(null);
+  // Written alongside `error` by `failLoad`, and only read while an error is
+  // up — so every path that clears `error` clears this too.
+  const lastFailedTranslationId = signal<string | null>(null);
+  const failedTranslationId = computed(() =>
+    error.value ? lastFailedTranslationId.value : null
+  );
+  /** Records a failed load, and which translation it was for. */
+  const failLoad = (
+    err: unknown,
+    fallbackMessage: string,
+    attemptedTranslationId: string
+  ) => {
+    batch(() => {
+      lastFailedTranslationId.value = attemptedTranslationId;
+      error.value = err instanceof Error ? err.message : fallbackMessage;
+    });
+  };
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
   const readAlongVerse = signal<{ verse: number } | null>(null);
@@ -2415,8 +2492,7 @@ export function createBibleReadingState(
       if (isAbortError(err)) {
         return;
       }
-      error.value =
-        err instanceof Error ? err.message : "Failed to load chapter.";
+      failLoad(err, "Failed to load chapter.", position.translationId);
       // A failure here on the *initial* load doesn't mean a live client would
       // hit the same wall — it may be the server's own request path (e.g. an
       // HTML error page coming back where JSON was expected), not something
@@ -2690,8 +2766,7 @@ export function createBibleReadingState(
       if (disposed || generation !== loadGeneration) {
         return;
       }
-      error.value =
-        err instanceof Error ? err.message : "Failed to load chapter.";
+      failLoad(err, "Failed to load chapter.", from.translationId);
     } finally {
       endRequest();
     }
@@ -2759,8 +2834,11 @@ export function createBibleReadingState(
   const selectTranslation = async (translation: string) => {
     lastLoadAttempt = () => selectTranslation(translation);
     beginRequest();
+    // The input until it resolves — it may be an endpoint URL.
+    let attemptedTranslationId = translation;
     try {
       const nextTranslationId = await resolveTranslationInput(translation);
+      attemptedTranslationId = nextTranslationId;
 
       const books = await dataManager.getTranslationBooks(nextTranslationId);
       const firstBook = books.books[0];
@@ -2784,8 +2862,7 @@ export function createBibleReadingState(
       applyPosition(target);
       await whenContentSettled(target);
     } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to select translation.";
+      failLoad(err, "Failed to select translation.", attemptedTranslationId);
     } finally {
       endRequest();
     }
@@ -2832,10 +2909,13 @@ export function createBibleReadingState(
         options
       );
     beginRequest();
+    // The input until it resolves — it may be an endpoint URL.
+    let attemptedTranslationId = nextTranslationIdOrUrl;
     try {
       const nextTranslationId = await resolveTranslationInput(
         nextTranslationIdOrUrl
       );
+      attemptedTranslationId = nextTranslationId;
 
       const books = await dataManager.getTranslationBooks(nextTranslationId);
       const selectedBook = books.books.find((book) => book.id === nextBookId);
@@ -2862,10 +2942,11 @@ export function createBibleReadingState(
       });
       await whenContentSettled(target);
     } catch (err) {
-      error.value =
-        err instanceof Error
-          ? err.message
-          : "Failed to select translation and chapter.";
+      failLoad(
+        err,
+        "Failed to select translation and chapter.",
+        attemptedTranslationId
+      );
     } finally {
       endRequest();
     }
@@ -3005,8 +3086,7 @@ export function createBibleReadingState(
       await whenContentSettled(target);
     } catch (err) {
       console.error("Error loading initial Bible data:", err);
-      error.value =
-        err instanceof Error ? err.message : "Failed to load Bible data.";
+      failLoad(err, "Failed to load Bible data.", translationId.peek());
       // An error here doesn't mean a live client would hit the same wall —
       // it may be the server's own network path (rate limiting, a transient
       // upstream blip) rather than something the requested chapter itself is
@@ -3556,6 +3636,7 @@ export function createBibleReadingState(
     selectedFootnote,
     loading,
     error,
+    failedTranslationId,
     retryLoad,
     scrollPosition,
     scrollToVerse,

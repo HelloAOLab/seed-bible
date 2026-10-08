@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "ഈ ലേഔട്ട് മെനുവിൽ നിന്ന് എത്ര ഭാഗങ്ങൾ അടുത്തടുത്തായി വായിക്കണമെന്ന് തിരഞ്ഞെടുക്കുക.",
   "tutorial.addTabTitle": "കൂടുതൽ ഭാഗങ്ങൾ തുറക്കുക",
   "tutorial.addTabBody": "നിരവധി പുസ്തകങ്ങളോ വിവർത്തനങ്ങളോ അടുത്തടുത്തായി വായിക്കാൻ ഒരു പുതിയ ടാബ് ചേർക്കുക.",
-  "playlist-history": "പ്ലേലിസ്റ്റ് ചരിത്രം",
   "discover-playlist-history-empty": "സൈൻ ഇൻ ചെയ്‌തിരിക്കുമ്പോൾ സംരക്ഷിച്ച ഒരു പ്ലേലിസ്റ്റ് പ്ലേ ചെയ്‌താൽ അത് ഇവിടെ ദൃശ്യമാകും.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % പൂർത്തിയായി - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % പൂർത്തിയായി",

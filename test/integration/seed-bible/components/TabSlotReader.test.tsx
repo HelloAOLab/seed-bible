@@ -141,6 +141,7 @@ function createFixture(): ReaderFixture {
     scrollToVerse: signal<number | null>(null),
     readAlongVerse: signal<{ verse: number } | null>(null),
     error: signal<string | null>(null),
+    failedTranslationId: signal<string | null>(null),
     retryLoad: vi.fn(async () => undefined),
     selectVerse,
     selectFootnote,
@@ -262,6 +263,8 @@ function createMobileState(): SeedBibleState {
     discover,
     playlists: {
       playing: signal(null),
+      openingPlayback: signal(false),
+      view: signal(null),
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
@@ -274,6 +277,9 @@ function createMobileState(): SeedBibleState {
       sync: {
         pendingCount: signal(0),
       },
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;
 }
@@ -312,6 +318,8 @@ function createDesktopState(): SeedBibleState {
     discover,
     playlists: {
       playing: signal(null),
+      openingPlayback: signal(false),
+      view: signal(null),
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
@@ -324,6 +332,9 @@ function createDesktopState(): SeedBibleState {
       sync: {
         pendingCount: signal(0),
       },
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;
 }

@@ -1,148 +1,123 @@
 # Seed Bible Roadmap
 
-This is the order we plan to work in, and what each item means in practice. Items are listed by priority: the top of the list comes first. Only the first item blocks the wider rollout; everything after it can ship whenever it is ready.
+Seed Bible is a Bible reading and study app made for reading together. You can read alongside friends, join live shared reading sessions, and see content from churches and ministries right beside the chapter you're reading.
 
-Each item says where things stand today, what we want to build, what it depends on, and which GitHub issues hold the detail. When an item has unresolved design choices, they are listed under **Open questions** so they don't get lost.
+This roadmap shows what we're working on and what comes next, in priority order. Each item explains what it is, why it matters, and where it stands today. Only the first item has to be finished before we bring Seed Bible to a wider audience. Everything after it will arrive as each piece is ready.
+
+Want to help any of this happen sooner? [Here's how to get involved](#want-to-help).
+
+_Last updated 2026-10-07_
 
 ## At a glance
 
-| #   | Item                                                                                                 | Theme          | Depends on             |
-| --- | ---------------------------------------------------------------------------------------------------- | -------------- | ---------------------- |
-| 1   | [Customization + organization discovered content](#1-customization--organization-discovered-content) | Content        | — (**blocks rollout**) |
-| 2   | [Friends, and seeing their data](#2-friends-and-seeing-their-data)                                   | Community      | —                      |
-| 3   | [Today screen community section rework](#3-today-screen-community-section-rework)                    | Community      | 2                      |
-| 4   | [Public/private data split](#4-publicprivate-data-split)                                             | Privacy        | 2                      |
-| 5   | [Customization design improvements](#5-customization-design-improvements)                            | Customization  | 1                      |
-| 6   | [Bookmarks rework](#6-bookmarks-rework)                                                              | Reader         | —                      |
-| 7   | [Onboarding improvements](#7-onboarding-improvements)                                                | First run      | —                      |
-| 8   | [Third-party extensions](#8-third-party-extensions)                                                  | Platform       | 9 (helps)              |
-| 9   | [Technical docs](#9-technical-docs)                                                                  | Platform       | —                      |
-| 10  | [Sign in with YouVersion](#10-sign-in-with-youversion)                                               | Accounts       | Backend work           |
-| 11  | [Settings redesign](#11-settings-redesign)                                                           | Settings       | —                      |
-| 12  | [Bonfire AI tool calling](#12-bonfire-ai-tool-calling)                                               | AI             | —                      |
-| 13  | [Rework reading history to use data records](#13-rework-reading-history-to-use-data-records)         | Privacy / data | Supports 4             |
-| 14  | [Circles (friend groups)](#14-circles-friend-groups)                                                 | Community      | 2, 4                   |
-| 15  | [Multiple accounts on a device](#15-multiple-accounts-on-a-device)                                   | Accounts       | —                      |
-| 16  | [MCP support](#16-mcp-support)                                                                       | AI / platform  | 12 (helps)             |
+✅ Done · 🚧 In progress · ⏳ Waiting on someone else · 💭 Planned, not started
 
-### How the items connect
+| #   | Item                                                                            | Area                  | Status                  |
+| --- | ------------------------------------------------------------------------------- | --------------------- | ----------------------- |
+| 1   | [Content from churches and ministries](#1-content-from-churches-and-ministries) | Churches & ministries | 🚧 In progress          |
+| 2   | [Reading with friends](#2-reading-with-friends)                                 | Community             | ✅ Done — more to come  |
+| 3   | [A friends feed on the Today screen](#3-a-friends-feed-on-the-today-screen)     | Community             | 💭 Planned              |
+| 4   | [Private by default](#4-private-by-default)                                     | Privacy               | 💭 Planned              |
+| 5   | [A better customization editor](#5-a-better-customization-editor)               | Churches & ministries | 💭 Planned              |
+| 6   | [Simpler bookmarks](#6-simpler-bookmarks)                                       | Reading               | 💭 Planned              |
+| 7   | [A gentler first visit](#7-a-gentler-first-visit)                               | First visit           | 🚧 In progress          |
+| 8   | [Extensions from other developers](#8-extensions-from-other-developers)         | Developers            | 🚧 In progress          |
+| 9   | [Developer documentation](#9-developer-documentation)                           | Developers            | 💭 Planned              |
+| 10  | [Sign in with YouVersion](#10-sign-in-with-youversion)                          | Accounts              | ⏳ Waiting on a partner |
+| 11  | [Simpler settings](#11-simpler-settings)                                        | Settings              | 💭 Planned              |
+| 12  | [Bonfire AI that can take action](#12-bonfire-ai-that-can-take-action)          | AI                    | 💭 Planned              |
+| 13  | [Groundwork for reading history](#13-groundwork-for-reading-history)            | Privacy               | 💭 Planned              |
+| 14  | [Circles of friends](#14-circles-of-friends)                                    | Community             | 💭 Planned              |
+| 15  | [Switching between accounts](#15-switching-between-accounts)                    | Accounts              | 💭 Planned              |
+| 16  | [Connecting with other AI tools](#16-connecting-with-other-ai-tools)            | AI                    | 🚧 In progress          |
 
-Several items are really one long thread, built in steps:
+### How the pieces fit together
 
-- **Community thread (2 → 3 → 4 → 14).** Friends come first (2). The Today screen then shows what friends are doing (3). Once people are sharing with friends, they need control over _what_ is shared (4). Circles (14) refine that control from "all my friends" to "these particular friends".
-- **Privacy depends on storage (13 → 4).** Making data truly private means changing how it is stored, not just what the app displays. Reading history is the hardest piece to change, which is why item 13 exists. See item 4 for why.
-- **Customization thread (1 → 5).** Item 1 is about _what_ customizations can do (bring their own content). Item 5 is about making the editor pleasant to use.
-- **AI thread (12 → 16).** Tool calling (12) lets an AI act inside the app. MCP (16) opens the same kind of access to outside AI tools.
+Several items are steps along the same path:
 
----
-
-## 1. Customization + organization discovered content
-
-**Blocking for rollout.**
-
-### Short version
-
-Organizations (a church, a ministry, a partner like Apologist) need to be able to put their own content in front of their people in the Seed Bible, alongside the third-party content we already surface. Readers need to be able to choose which sources they see, or turn third-party content off altogether.
-
-### Where things stand
-
-- The **compact discover panel** now surfaces content for the current chapter: notes, playlists, reading plans, and content from extensions (for example Bible Project videos). Extensions register their own content types with `DiscoverManager.registerContentType`.
-- **Customizations** already exist (`CustomizationsManager`). An organization can publish one with its own theme, variants, fonts, default extension settings and extension preferences.
-- What's missing is the link between the two: a customization can't yet say "here is our content", and readers have no way to choose which content sources show up.
-
-### What we want to build
-
-- **Organization content through customizations.** A customization should be able to bring its own discovered content (videos, articles, studies, reading plans) so that people who use that customization see it in the compact discover panel.
-- **Content source settings.** A settings page where readers enable or disable each content provider, plus a single switch to hide third-party content entirely. The Seed Bible ships with some sources on by default (for example the Bible Project). Designs exist in Figma (see [#1719](https://github.com/HelloAOLab/seed-bible/issues/1719)).
-- **Finish the move to the compact discover panel.** Remove the old Discover pane ([#1864](https://github.com/HelloAOLab/seed-bible/issues/1864)). That first requires moving Playlist History to the profile ([#1863](https://github.com/HelloAOLab/seed-bible/issues/1863)) and making the panel's "Create" button ask what kind of content to create, as the Discover pane does today.
-- **Fix the panel's rough edges** so the rollout isn't judged on them:
-  - "All" filter doesn't show all content ([#1915](https://github.com/HelloAOLab/seed-bible/issues/1915))
-  - Panel sometimes doesn't appear ([#1917](https://github.com/HelloAOLab/seed-bible/issues/1917))
-  - Filters cut off on desktop ([#1908](https://github.com/HelloAOLab/seed-bible/issues/1908))
-  - Toggle should show when the user only has a reading plan ([#1866](https://github.com/HelloAOLab/seed-bible/issues/1866))
-  - Option to hide the panel completely ([#1868](https://github.com/HelloAOLab/seed-bible/issues/1868))
-
-### Open questions
-
-- How does an organization supply content: by listing items directly in the customization, by pointing at a feed or API, or by shipping an extension that registers a content provider? The extension route already works technically but asks a lot of a non-developer.
-- If a reader turns off a source that their organization's customization turned on, who wins? (Suggested default: the reader.)
-
-### Related issues
-
-[#1719](https://github.com/HelloAOLab/seed-bible/issues/1719), [#1864](https://github.com/HelloAOLab/seed-bible/issues/1864), [#1863](https://github.com/HelloAOLab/seed-bible/issues/1863), [#1915](https://github.com/HelloAOLab/seed-bible/issues/1915), [#1917](https://github.com/HelloAOLab/seed-bible/issues/1917), [#1908](https://github.com/HelloAOLab/seed-bible/issues/1908), [#1866](https://github.com/HelloAOLab/seed-bible/issues/1866), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868), [#1831](https://github.com/HelloAOLab/seed-bible/issues/1831) (Apologist as discovered content), [#1830](https://github.com/HelloAOLab/seed-bible/issues/1830) (cross references in the panel)
+- **Reading together (2 → 3 → 4 → 14).** Friends came first. Next, the Today screen shows what your friends are reading (3). As people share more, they need to choose _what_ they share (4). Circles (14) then let them share with some friends rather than all of them.
+- **Privacy needs groundwork (13 → 4).** Making something truly private means changing how it's stored, not just hiding it on screen. Reading history is the hardest piece to change, so it has its own item (13).
+- **Churches and ministries (1 → 5).** First, organizations need to be able to bring their own content (1). Then the tool they use to set up their own version of Seed Bible should get easier to use (5).
+- **AI (12 → 16).** First, Bonfire catches up with Seed Bible's other AI chat and learns to take actions for you (12). Then Seed Bible connects with other AI tools people already use (16).
 
 ---
 
-## 2. Friends, and seeing their data
+## 1. Content from churches and ministries
 
-### Short version
+🚧 **In progress.** This is the one item we need before a wider launch.
 
-Two people become friends by one sending a request and the other accepting it. Friends can then see each other's reading history, playlists, reading plans and notes, and join each other's live sessions.
+Churches, ministries and partners want to put their own videos, articles and studies in front of their people, right beside the chapter being read. Readers, in turn, want to choose which sources they see.
 
-### Where things stand
+Organizations do this through a **customization**: their own version of Seed Bible with their colors, logo, fonts and recommended features. Anyone who opens the organization's link reads in that version.
 
-The first version is in review in [#1939](https://github.com/HelloAOLab/seed-bible/pull/1939). It replaced an earlier attempt, [#1599](https://github.com/HelloAOLab/seed-bible/pull/1599), which used one-way "follows". We switched to mutual friendships because "you can see my stuff" should be something both people agree to.
+**Where it stands**
 
-What #1939 adds:
+- While you read, a panel under the chapter shows related content: notes, playlists, reading plans, and videos from sources like the Bible Project.
+- Organizations can already create a customization.
+- Ministries that use Apologist can now have their own articles, videos and episodes appear for each chapter. They set it up once in their customization, and everyone using it sees that content. This is the first working example of an organization bringing its own content.
 
-- A **Friends screen** on the profile: incoming requests (accept/decline), your friends (remove), add a friend by user ID or link, and sent requests (copy link/cancel).
-- A **profile card** that opens when you tap someone's picture or name.
-- **Friend links**: `?addFriend=<userId>` and `?friendRequest=<requestId>`. Neither acts without asking.
-- An **Add friend button** on each participant in a shared session.
-- **Friends' content around the app**: friends' playlists and notes in Discover, friends' reading plans, friends' reading in the Today Community section and the scripture map timeline, and invitations to sessions friends are hosting.
+**What's next**
 
-How it works underneath: each friendship is a CasualOS **shared permission** (a grant that lets one account read another's records). Accepting a request creates it in both people's records, so it is always mutual, and either person removing it ends it for both. Requests go to a specific account and expire after 7 days.
+- A simple way for _any_ organization to add its content, not just Apologist users.
+- A settings page where readers turn each source on or off, or hide outside content altogether. This is designed but not yet built.
+- One home for this content. We're retiring an older full-screen view in favor of the panel under the chapter.
+- Polish before launch: the "All" filter misses some content, the panel occasionally doesn't appear, its filters get cut off on wide screens, and there's no way yet to hide it entirely.
 
-### Known gaps (follow-ups from #1939)
+**Still deciding**
 
-1. **Data isn't actually private to friends yet.** Everything is still stored readable by anyone. Today the friends list only decides _whose_ data the app shows you, not _who is able_ to read it. Fixing this is item 4.
-2. **Make the profile card the place to manage a friendship**: send, accept, decline, cancel or remove from the card, so it can be opened from anywhere.
-3. **Open the profile card from chat** by tapping a name.
-4. **Add friends by email.** Built but switched off until the CasualOS server looks up emails within the Seed Bible's account space (casual-simulation/casualos#890).
-5. **Notify people about new friend requests** with web push notifications, instead of waiting for the app to refresh.
-6. **Live updates.** A friend's new note currently appears the next time you return to the app or chapter. Live updates would give each user a small shared document that their friends watch.
+- What's the easiest way for an organization to supply content: a list in their customization, a link to a feed they already publish, or a small add-on? Add-ons work today, but building one asks a lot of someone who isn't a developer.
+- If a reader turns off a source their organization turned on, whose choice wins? We lean toward the reader's.
 
-### Related issues
-
-[#1846](https://github.com/HelloAOLab/seed-bible/issues/1846) (subscribe to other users), [#1939](https://github.com/HelloAOLab/seed-bible/pull/1939), [#1599](https://github.com/HelloAOLab/seed-bible/pull/1599) (closed, superseded)
+_On GitHub:_ [#1719](https://github.com/HelloAOLab/seed-bible/issues/1719), [#1864](https://github.com/HelloAOLab/seed-bible/issues/1864), [#1915](https://github.com/HelloAOLab/seed-bible/issues/1915), [#1917](https://github.com/HelloAOLab/seed-bible/issues/1917), [#1908](https://github.com/HelloAOLab/seed-bible/issues/1908), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868), [#1830](https://github.com/HelloAOLab/seed-bible/issues/1830), [#1831](https://github.com/HelloAOLab/seed-bible/issues/1831)
 
 ---
 
-## 3. Today screen community section rework
+## 2. Reading with friends
 
-**Depends on:** item 2.
+✅ **Done**, with more to come.
 
-### Short version
+Send someone a friend request. Once they accept, you can see each other's reading, notes, playlists and reading plans, and join each other's live reading sessions. Friendships are mutual on purpose: letting someone see your reading should be something both people agree to.
 
-Turn the Today screen's Community section into a feed of what your friends have been reading and writing, and give friend requests a home there.
+**What's done**
 
-### What we want to build
+- A Friends screen on your profile for sending, accepting and managing requests.
+- Add a friend by sharing a link, or straight from a shared reading session.
+- Tap anyone's picture or name to see their profile.
+- Friends' notes, playlists and reading plans appear throughout the app, their reading shows on the Today screen, and sessions they're hosting show up as invitations.
 
-The feed is designed in Figma and specified in [#1848](https://github.com/HelloAOLab/seed-bible/issues/1848):
+**What's next**
 
-- **Filter pills:** "All", "Notes" (notes only), "Reading" (reading history only).
-- **Time frame dropdown** replacing "See All": last 48 hours, last week, last month, all.
-- **"Crossed paths" grouping.** When several people read the same chapter in the selected time frame, they share one entry, placed by the most recent of their reads. For example, if you and a friend both read John 2 this week, you see one line for both of you. This applies to every time frame except "all".
-- **"Prominent chapters" grouping.** For one person, each day shows only the chapters they spent the most time in. If someone spent 30 minutes in John 2–5 and 5 minutes in Romans 3, the day shows "read John 2–5".
-- **No Seed Bible release notes** in this section for now.
+- **Real privacy for what friends share** (item 4). Today the app decides whose content to show you, but the content itself isn't yet locked to friends only.
+- Manage a friendship from someone's profile, and open a profile by tapping a name in chat.
+- Add friends by email. This is built, and waiting on a change to CasualOS, the platform Seed Bible is built on.
+- Notifications for new friend requests, and a way to invite friends straight into a reading session.
+- See a friend's new note as soon as they write it, instead of the next time you open the app.
+- Better previews when you share a friend link, showing who it's from.
 
-New in this roadmap:
-
-- **A friend requests section.** Pending friend requests appear on the Today screen with Accept and Decline, so people see them without digging into their profile. This also gives item 2's requests a visible place before push notifications exist.
-
-### Related issues
-
-[#1848](https://github.com/HelloAOLab/seed-bible/issues/1848), [#1777](https://github.com/HelloAOLab/seed-bible/issues/1777) (earlier community section redesign, closed), [#1886](https://github.com/HelloAOLab/seed-bible/issues/1886) (reader flashes before the Today screen)
+_On GitHub:_ [#1939](https://github.com/HelloAOLab/seed-bible/pull/1939), [#1846](https://github.com/HelloAOLab/seed-bible/issues/1846), [#1964](https://github.com/HelloAOLab/seed-bible/issues/1964), [#1965](https://github.com/HelloAOLab/seed-bible/issues/1965)
 
 ---
 
-## 4. Public/private data split
+## 3. A friends feed on the Today screen
 
-**Depends on:** item 2. **Made easier by:** item 13.
+💭 **Planned.** Builds on item 2.
 
-### Short version
+The Today screen's community section becomes a feed of what your friends have been reading and writing. The design is finished.
 
-Notes become private by default. When writing or editing a note, the author can choose to share it. Ideally there are three levels:
+- **Filters** for all activity, notes only, or reading only, over the last 48 hours, week, month, or all time.
+- **Crossed paths.** When you and your friends read the same chapter, you see one line for all of you. It's a natural nudge to talk about it.
+- **Each day's highlights.** For each person, only the chapters they spent the most time in. If someone spent half an hour in John 2–5 and a few minutes in Romans 3, you see "read John 2–5".
+- **Friend requests** with Accept and Decline right on the Today screen, so nobody has to go looking for them.
+
+_On GitHub:_ [#1848](https://github.com/HelloAOLab/seed-bible/issues/1848), [#1886](https://github.com/HelloAOLab/seed-bible/issues/1886)
+
+---
+
+## 4. Private by default
+
+💭 **Planned.** Builds on item 2, and item 13 makes it easier.
+
+Notes become private unless you choose to share them. When writing a note, you pick who can read it:
 
 | Level       | Who can read it        |
 | ----------- | ---------------------- |
@@ -150,321 +125,245 @@ Notes become private by default. When writing or editing a note, the author can 
 | **Friends** | You and your friends   |
 | **Public**  | Anyone                 |
 
-### Why this is more than a dropdown
+**Why this takes real work**
 
-Today nearly all user data (notes, highlights, playlists, reading plans, reading history, saves) is stored with CasualOS's `publicRead` marker. A **marker** is a label on a record that decides who can read it; `publicRead` means anyone who knows your user ID can read it. Hiding a note in the app's UI wouldn't stop someone from reading it directly from the server. Real privacy means storing each item under the marker that matches its level:
+Today, most of what people create in Seed Bible is stored so that anyone who knew where to look could read it; the app simply doesn't display it. Real privacy means our servers refuse to hand a private note to anyone else. So each note has to be stored differently depending on who may read it, and changing a note's privacy means moving it, not just flipping a switch.
 
-- **Private** → a marker only the owner can read.
-- **Friends** → the `friends` marker that #1939's shared permissions grant access to.
-- **Public** → `publicRead`, as today.
+**What's planned**
 
-Changing a note's level means moving it from one marker to another, not flipping a field.
+- A privacy choice when writing a note, set to private by default.
+- Friends' content and the Today feed only ever show what each person is allowed to see.
+- Moving existing notes over. One decision is still open: should existing notes become private (safer, but friends lose sight of notes they could see before) or keep reaching who they reach today? We lean toward private, with a one-time notice explaining the change.
+- The same treatment for highlights, playlists, reading plans and reading history, each with a sensible default.
 
-### What we want to build
+**Still deciding**
 
-- A visibility picker in the note editor (private / friends / public), defaulting to private.
-- Storage for notes split by marker, and reads that combine your own notes across all three.
-- Friends' views (item 2) and the Today feed (item 3) read only what they're allowed to.
-- A migration for existing notes. **Decision needed:** existing notes are currently readable by anyone. Do they become private (safer, but friends who could see them before will lose them) or keep their current reach (no surprises, but not private-by-default)? Suggested default: private, with a one-time notice.
-- The same treatment, in later passes, for the other data types. Each needs its own sensible default; reading history, for example, may make sense as "friends" by default since the community feed depends on it.
-
-### Open questions
-
-- Which data types get a per-item choice (notes, playlists) and which get one account-wide setting (reading history, highlights)?
-- Reading history is stored in CasualOS shared documents (see item 13), and a shared document's markers can't be changed after it's created. That's the main reason item 13 is on this list.
-
-### Related issues
-
-Follow-up 3 in [#1939](https://github.com/HelloAOLab/seed-bible/pull/1939). No dedicated issue yet.
+- Which kinds of content get a choice on each item (like notes and playlists), and which get one setting for your whole account (like reading history)?
 
 ---
 
-## 5. Customization design improvements
+## 5. A better customization editor
 
-**Builds on:** item 1.
+💭 **Planned.** Builds on item 1.
 
-### Short version
+The tool organizations use to set up their own version of Seed Bible should be as polished as the rest of the app.
 
-Make the customization editor look and work like the rest of the app, and fill the gaps authors keep running into.
+- **A redesigned editor** that looks and works like the rest of Seed Bible.
+- **Separate default looks for light and dark mode.** Today an organization picks one default look, and devices in dark mode can end up with a different dark look than the one intended.
+- **One-click branded links.** A partner sends someone a link, and Seed Bible opens in the partner's colors without anyone having to save anything. This is part of a wider effort to make it easy for organizations to set up their own Seed Bible.
+- **A calmer dark theme**, without the orange accents.
 
-### What we want to build
-
-- **Redesign the customization editor.** It doesn't look good and doesn't follow the app's conventions ([#1903](https://github.com/HelloAOLab/seed-bible/issues/1903)).
-- **A default variant for Light and one for Dark** ([#1859](https://github.com/HelloAOLab/seed-bible/issues/1859)). Today a customization has one default variant, and under the System theme the app ignores it and picks the first variant matching the device. So an author with "Night" and "Midnight" (default) variants sees dark devices get "Night".
-- **Theming from a link or API** ([#1251](https://github.com/HelloAOLab/seed-bible/issues/1251)). A partner like Apologist should be able to send someone into a Seed Bible already themed with their brand colors in one click.
-- **Remove the orange from the dark theme** ([#1870](https://github.com/HelloAOLab/seed-bible/issues/1870)).
-
-### Related issues
-
-[#1903](https://github.com/HelloAOLab/seed-bible/issues/1903), [#1859](https://github.com/HelloAOLab/seed-bible/issues/1859), [#1251](https://github.com/HelloAOLab/seed-bible/issues/1251), [#1870](https://github.com/HelloAOLab/seed-bible/issues/1870)
+_On GitHub:_ [#1903](https://github.com/HelloAOLab/seed-bible/issues/1903), [#1859](https://github.com/HelloAOLab/seed-bible/issues/1859), [#1251](https://github.com/HelloAOLab/seed-bible/issues/1251), [#1870](https://github.com/HelloAOLab/seed-bible/issues/1870)
 
 ---
 
-## 6. Bookmarks rework
+## 6. Simpler bookmarks
 
-### Short version
+💭 **Planned.**
 
-Bookmarks go back to meaning what people expect: a marker for where you are, which you move as you read. Collecting passages is what Saves are for.
+A bookmark goes back to meaning what people expect: a marker for where you're up to, which you move along as you read. Collecting favorite passages is what Saves are for, and the old style of bookmarks has already moved there. The new design is finished.
 
-### Where things stand
+- **A few named, colored bookmarks**, up to about five. For example, "Reading plan" in blue and "Sermon prep" in green. Each one marks a book and chapter.
+- **Two taps** to move a bookmark to where you are now.
+- **See at a glance** which of your bookmarks are on the chapter you're reading.
+- **Visible where you need them**: in your open tabs, on the Today screen, and in a sidebar panel for renaming and recoloring.
 
-The old bookmarks (categorized, chapter or verse) have already been moved to the new **Saves** system. That leaves "bookmark" free to be rebuilt.
-
-### What we want to build
-
-Fully specified in [#1658](https://github.com/HelloAOLab/seed-bible/issues/1658):
-
-- **Flat, named, colored, book + chapter only.** For example "Reading plan" in blue and "Sermon prep" in green. No categories, no verse-level bookmarks.
-- **Soft limit of 5 per account.** Bookmarks are markers you move, not a collection you grow. Over the limit, "create" is disabled, but nothing is ever deleted.
-- **One flow for every bookmark.** Tapping the bookmark button always opens a modal listing your bookmarks; pick one, hit save, and it moves to the current chapter. With no bookmarks yet, the modal starts with a ready-made "My bookmark". Either way it's two taps.
-- **The button shows what's here**: an outline when there are none, a filled icon in the bookmark's color for one, and a small fanned stack for several (up to three drawn).
-- **Shown in the tab list** (a colored dot), **on the Today screen** (a flat strip), and **in a sidebar panel** for renaming, recoloring and deleting.
-- **Stored separately** (address `readingBookmarks`) so it can never pick up saves by mistake.
-
-Afterwards, once telemetry shows everyone has migrated, finish the Saves move by removing the old `bookmarks` record ([#1659](https://github.com/HelloAOLab/seed-bible/issues/1659)).
-
-### Related issues
-
-[#1658](https://github.com/HelloAOLab/seed-bible/issues/1658), [#1659](https://github.com/HelloAOLab/seed-bible/issues/1659)
+_On GitHub:_ [#1658](https://github.com/HelloAOLab/seed-bible/issues/1658)
 
 ---
 
-## 7. Onboarding improvements
+## 7. A gentler first visit
 
-### Short version
+🚧 **In progress.**
 
-New users are asked too many things at once. Cut the first-run experience down so people reach Scripture quickly and learn the rest as they go.
+New visitors are asked too many things at once. We want people to reach Scripture quickly and discover the rest as they go.
 
-### Where things stand
+**Where it stands**
 
-A new visitor can meet, close together: the Welcome / Today screen, the guided tutorial, the install-the-app prompt, a sign-in prompt, and the sidebar and toolbar all competing for attention. [#1813](https://github.com/HelloAOLab/seed-bible/issues/1813) already made the tutorial optional ("Take a tour") and starts desktop with the sidebar collapsed, and the install prompt no longer shows on startup. It is still too much.
+- The guided tour is now optional ("Take a tour"), and the sidebar starts tucked away on desktop.
+- Saying "No thanks" to the tour, or leaving it early, now goes straight to Scripture with no further prompts.
+- The prompt to install the app waits for a later visit, and once dismissed it never comes back on that device.
 
-### What we want to build
+It's better, but still more than we'd like.
 
-- **An inventory of every first-run prompt** and when each fires, so we can decide which to drop, merge or delay.
-- **One thing at a time.** At most one prompt per visit at first, with the others moved to the moment they become useful (for example, ask to install after a few visits, ask to sign in when someone first tries to save something).
-- **No flashes.** Nothing should flash before the right screen shows ([#1886](https://github.com/HelloAOLab/seed-bible/issues/1886)).
+**What's next**
 
-### Open questions
+- List every prompt a first-time visitor can see, and decide which to drop, combine or delay.
+- At most one prompt per visit, with the rest asked at the moment they become useful. For example, ask people to sign in when they first try to save something.
+- No flash of the wrong screen while the app loads.
 
-- Which prompts must stay on first visit? Language choice is a likely candidate, since everything else depends on reading it.
+**Still deciding**
 
-### Related issues
+- Which prompts must stay on the first visit? Choosing a language is likely one, since everything else depends on being able to read it.
 
-[#1813](https://github.com/HelloAOLab/seed-bible/issues/1813) (closed), [#1436](https://github.com/HelloAOLab/seed-bible/issues/1436) (closed), [#1886](https://github.com/HelloAOLab/seed-bible/issues/1886). No dedicated issue yet for this pass.
-
----
-
-## 8. Third-party extensions
-
-**Helped by:** item 9.
-
-### Short version
-
-Let developers outside our team build and publish extensions that anyone can install.
-
-### Where things stand
-
-The extension system already works and is used for all of our own extensions (audio reader, Bonfire, Apologist, locations, Twitch, and so on). Extensions can declare settings, register discovered content, add chat providers and more. But every extension today is written by us and lives in this repository.
-
-### What we want to build
-
-- **A way to publish and install extensions from outside this repo**, with versions and updates.
-- **A trust model.** Extensions run in the same page as the app (loaded with `import(url)`), so an extension can read anything the app can. Before opening this up we need to decide how much to trust outside code: review before listing, a permission list the user approves at install time, sandboxing, or some mix.
-- **Secrets for extensions** ([#1836](https://github.com/HelloAOLab/seed-bible/issues/1836)). Outside extensions will want API keys. The plan is for our server to hold the key and make the request on the extension's behalf, so the key never reaches the browser.
-- **A cleaner Extensions screen** ([#1482](https://github.com/HelloAOLab/seed-bible/issues/1482)). Hide library-only extensions (ones with no visible effect of their own) behind a `utility` flag, and stop saving extensions that only make sense for one visit. This matters more once anyone can publish.
-- **Developer docs**, which is item 9.
-
-### Related issues
-
-[#1482](https://github.com/HelloAOLab/seed-bible/issues/1482), [#1836](https://github.com/HelloAOLab/seed-bible/issues/1836), [#673](https://github.com/HelloAOLab/seed-bible/issues/673) (packages for extensions, closed)
+_On GitHub:_ [#1813](https://github.com/HelloAOLab/seed-bible/issues/1813), [#1942](https://github.com/HelloAOLab/seed-bible/issues/1942), [#1886](https://github.com/HelloAOLab/seed-bible/issues/1886)
 
 ---
 
-## 9. Technical docs
+## 8. Extensions from other developers
 
-### Short version
+🚧 **In progress.** Developer documentation (item 9) will help.
 
-Write documentation that lets a developer who has never seen the Seed Bible start building on it, and that we can use internally and publish externally ([#1261](https://github.com/HelloAOLab/seed-bible/issues/1261)).
+Extensions are add-ons that give Seed Bible new abilities, like audio narration, AI chat, or maps of places in the Bible. Our team builds all of them today. We want developers outside our team to be able to build and share their own, so Seed Bible can grow faster than one team could manage alone.
 
-### What we want to build
+**Where it stands**
 
-- **Getting started**: running the app locally, project layout, how the managers fit together.
-- **Writing an extension**: the extension entry point, the `init(context)` lifecycle, settings, discovered content, chat providers, with the refresh example extension as a walkthrough.
-- **Building a customization**: themes, variants, fonts and (after item 1) content.
-- **Data and privacy model**: what's stored where and who can read it (especially after item 4).
+- The extension system works, and every extension in Seed Bible today is built on it.
+- Extensions can now keep passwords and access keys for other services safely on our servers, so they never reach a reader's device. An organization can supply these for everyone using its customization.
 
-This repository already has `README.md`, `DEVELOPERS.md`, `CLAUDE.md` and `packages/bonfire-extension/CUSTOMIZING.md`, which are a starting point.
+**What's next**
 
-### Related issues
+- A way for outside developers to publish extensions, and for readers to install and update them.
+- **Deciding how much to trust outside code.** An extension runs inside the app, so it could see anything the app can. Options include reviewing extensions before listing them, asking readers to approve what an extension may do when they install it, keeping extensions walled off from the rest of the app, or a mix. Part of this is making sure one extension can never use another's access keys.
+- A tidier Extensions screen that hides extensions which only exist to support other extensions.
 
-[#1261](https://github.com/HelloAOLab/seed-bible/issues/1261)
+_On GitHub:_ [#1482](https://github.com/HelloAOLab/seed-bible/issues/1482), [#1836](https://github.com/HelloAOLab/seed-bible/issues/1836), [#1943](https://github.com/HelloAOLab/seed-bible/issues/1943)
+
+---
+
+## 9. Developer documentation
+
+💭 **Planned.**
+
+Documentation that lets a developer who has never seen Seed Bible start building on it, written so we can use it ourselves and publish it.
+
+- **Getting started:** running Seed Bible on your own computer and how it's organized.
+- **Writing an extension**, with a worked example from start to finish.
+- **Building a customization:** colors, looks, fonts and content.
+- **How data and privacy work:** what's stored where, and who can read it.
+
+_On GitHub:_ [#1261](https://github.com/HelloAOLab/seed-bible/issues/1261)
 
 ---
 
 ## 10. Sign in with YouVersion
 
-**Depends on:** backend work in CasualOS.
+⏳ **Waiting on a partner.**
 
-### Short version
+Sign in to Seed Bible with your YouVersion account, alongside the existing email sign-in. The design is finished.
 
-Add "Sign in with YouVersion" next to the existing email sign-in, working the same way as other "sign in with…" options. Designs exist in Figma (linked in [#1252](https://github.com/HelloAOLab/seed-bible/issues/1252)).
+**Where it stands**
 
-### Where things stand
+Most of the work is in CasualOS, the platform Seed Bible is built on. That work is mostly done but not finished. Seed Bible also needs to be registered as an app with YouVersion. Once sign-in works, it opens the door to things like keeping your highlights in sync with YouVersion.
 
-The work is mostly on the backend (CasualOS) side, which is mostly but not fully done. Once that lands, follow-up tasks like syncing highlights with YouVersion can be split out. Finishing it also needs an app registered on the YouVersion platform.
-
-### Related issues
-
-[#1252](https://github.com/HelloAOLab/seed-bible/issues/1252)
+_On GitHub:_ [#1252](https://github.com/HelloAOLab/seed-bible/issues/1252)
 
 ---
 
-## 11. Settings redesign
+## 11. Simpler settings
 
-### Short version
+💭 **Planned.**
 
-Settings have grown one option at a time. Reorganize them so they're easy to scan and hard to break.
+Settings have grown one option at a time. We want them easy to scan and hard to get lost in.
 
-### What we want to build
+- **Remove the "All settings" section** under Display & Theme. It lets people end up with odd combinations without knowing how to undo them, and customizations now cover what it was for. A single Scripture font choice stays.
+- **One text size setting** instead of separate ones for the app and for Scripture.
+- **A home for new settings** from other items: choosing content sources (item 1), privacy defaults (item 4), and hiding the related-content panel.
+- **Account settings opens your profile**, where you can edit it directly.
 
-- **Remove the "All settings" section** from Display & Theme ([#1872](https://github.com/HelloAOLab/seed-bible/issues/1872)). It lets people get into strange configurations without knowing how to undo them, and customizations now cover that need. Keep one "Scripture Font" dropdown that applies to book titles, chapter headings and verse text.
-- **Merge UI text size and Scripture text size** ([#1579](https://github.com/HelloAOLab/seed-bible/issues/1579)).
-- **A home for the new settings** from other items: content sources (item 1), privacy defaults (item 4), and hiding the compact discover panel ([#1868](https://github.com/HelloAOLab/seed-bible/issues/1868)).
-- **Account settings opens the profile editor** ([#1799](https://github.com/HelloAOLab/seed-bible/issues/1799)).
-
-### Related issues
-
-[#1872](https://github.com/HelloAOLab/seed-bible/issues/1872), [#1579](https://github.com/HelloAOLab/seed-bible/issues/1579), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868), [#1799](https://github.com/HelloAOLab/seed-bible/issues/1799), [#1435](https://github.com/HelloAOLab/seed-bible/issues/1435) (given/family name fields)
+_On GitHub:_ [#1872](https://github.com/HelloAOLab/seed-bible/issues/1872), [#1579](https://github.com/HelloAOLab/seed-bible/issues/1579), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868), [#1799](https://github.com/HelloAOLab/seed-bible/issues/1799)
 
 ---
 
-## 12. Bonfire AI tool calling
+## 12. Bonfire AI that can take action
 
-### Short version
+💭 **Planned.**
 
-Let the Bonfire AI take actions in the app, not just answer in text. For example, "make me a playlist on the Psalms of comfort" should actually build the playlist.
+Seed Bible's AI chat can already do things for you, not just answer. Ask it to "make me a playlist on the Psalms of comfort", and it builds the playlist. This item brings the same abilities to Bonfire, the AI from HeyBonfire.
 
-### Where things stand
+**Where it stands**
 
-The chat system already supports this. App features can hand the AI a set of **tools** (functions it may call), and the playlist editor already offers tools to add, edit, move and delete playlist items. Chat providers declare `supportsToolCalling`. Bonfire doesn't support it yet, so those features are unavailable when chatting with Bonfire ([#1920](https://github.com/HelloAOLab/seed-bible/issues/1920) is a bug that comes from this gap).
+Taking actions already works when chatting with Apologist's AI. It can build and edit playlists, follows the Bible translation you're reading, and offers to switch translations when you ask about one. Bonfire can only answer in text so far, so these features are hidden while chatting with Bonfire.
 
-### What we want to build
+**What's next**
 
-- Tool calling support in the Bonfire provider.
-- The other Bonfire improvements from [#1627](https://github.com/HelloAOLab/seed-bible/issues/1627): sources, follow-up suggestions, Markdown rendering, and links to HeyBonfire's terms and privacy policy.
-- More tools over time, for example opening a passage or switching translation ([#1265](https://github.com/HelloAOLab/seed-bible/issues/1265)).
+- Teach Bonfire to take actions.
+- Other Bonfire improvements: showing its sources, suggesting follow-up questions, better formatting, and links to HeyBonfire's terms and privacy policy.
+- More actions over time, such as opening a passage for you.
 
-### Related issues
-
-[#1627](https://github.com/HelloAOLab/seed-bible/issues/1627), [#1920](https://github.com/HelloAOLab/seed-bible/issues/1920), [#1265](https://github.com/HelloAOLab/seed-bible/issues/1265)
+_On GitHub:_ [#1627](https://github.com/HelloAOLab/seed-bible/issues/1627), [#1265](https://github.com/HelloAOLab/seed-bible/issues/1265)
 
 ---
 
-## 13. Rework reading history to use data records
+## 13. Groundwork for reading history
 
-**Supports:** item 4.
+💭 **Planned.** Makes item 4 possible for reading history.
 
-### Short version
+A behind-the-scenes rebuild of how reading history is saved. Readers won't see a new feature, but it lets reading history be made private (item 4) and makes the friends feed (item 3) faster and more reliable.
 
-Move reading history out of CasualOS shared documents and into ordinary data records, like the rest of the app's data.
+**Why**
 
-### Why
+Today, each person's reading history for each year lives in one live document that syncs constantly between their devices. That was good for syncing, but it causes problems:
 
-Reading history is currently stored in one **shared document** (a real-time, multi-device document, built on Yjs) per user per year (`ReadingHistoryManager`). That was chosen for live syncing, but it causes problems:
+- **Who can read it is fixed when it's created**, so existing reading history can't be made private.
+- **Showing a friend's reading is slow**, because the app has to open a live connection to each of their documents.
+- **It can hang while offline.**
 
-- **Privacy can't be changed later.** A shared document's marker is fixed when it's created. Existing reading history is under `publicRead` and can't be moved to a `friends` or private marker in place. That blocks item 4 for reading history.
-- **Reading it is heavy.** To show a friend's reading on the Today screen (item 3), the app has to open a live connection to that friend's document for each year, instead of just fetching some records.
-- **Slow failure.** Opening a document can hang when offline, so the code needs timeouts and fallbacks around every read.
+**What's planned**
 
-Data records are a simple request/response read, can be given any marker, and match how notes, playlists and reading plans are already stored.
-
-### What we want to build
-
-- A record layout for reading history that supports the queries the Today feed and scripture map need (by time range and by chapter) without loading everything.
-- A migration from the yearly documents, done in two halves like the Saves migration: write the new records and fall back to the old documents, then remove the old documents once telemetry shows everyone has moved.
-- Keep the existing offline store, so reading is still recorded without a connection and synced later.
-
-### Related issues
-
-[#383](https://github.com/HelloAOLab/seed-bible/issues/383) (original reading history system, closed), [#133](https://github.com/HelloAOLab/seed-bible/issues/133) (reading history in the Bible Stack). No dedicated issue yet.
+- Store reading history the same simple way as notes and playlists.
+- Move existing history over gradually, so nothing is lost.
+- Keep recording your reading while you're offline, and sync it once you reconnect.
 
 ---
 
-## 14. Circles (friend groups)
+## 14. Circles of friends
 
-**Depends on:** items 2 and 4.
+💭 **Planned.** Builds on items 2 and 4.
 
-### Short version
+Sort your friends into groups like "Family", "Small group" or "Sermon team", and share notes with just those groups.
 
-Let people sort friends into groups ("Family", "Small group", "Sermon team"), like Google+ circles, and share notes and other content with particular circles instead of all friends.
+- Create, rename and manage your circles. Circles are private to you; friends don't see what you named them.
+- When sharing a note, choose one or more circles, alongside private, friends and public.
+- Filter the Today feed and related content to see one circle's activity.
 
-### What we want to build
+**Why it comes after item 4:** sharing with a circle has to mean that only that circle can read it. That uses the same privacy groundwork item 4 builds for friends.
 
-- Create, rename and delete circles, and add or remove friends. Circles are private to their owner; the people in a circle don't see what you named it.
-- A fourth sharing level: alongside private, friends and public, choose one or more circles when sharing a note (and later playlists and reading plans).
-- Filters on the Today feed (item 3) and Discover to show only a circle's activity.
+**Still deciding**
 
-### Why it comes after item 4
-
-Sharing with a circle has to mean only that circle can read it, which needs a CasualOS marker per circle and a shared permission for each member. This is the same machinery item 4 sets up for "friends", applied to smaller groups.
-
-### Open questions
-
-- Is a circle only an organizing tool for the person who made it (Google+ style), or can it also be a shared group that everyone in it sees, like a church small group? The second overlaps with the "church / family" community ideas and may deserve its own item.
-- How do circles relate to shared sessions? For example, could you start a session with a circle?
-
-### Related issues
-
-None yet. #1599's discussion mentions inviting people "to your circle" as a Today screen goal.
+- Is a circle just a way for you to organize your friends, or can it also be a shared group that everyone in it sees, like a church small group? The second might deserve its own item.
+- Could you start a live reading session with a whole circle?
 
 ---
 
-## 15. Multiple accounts on a device
+## 15. Switching between accounts
 
-### Short version
+💭 **Planned.**
 
-Let people sign in to more than one account on the same device and switch between them, without signing out and back in.
+Stay signed in to more than one account on the same device and switch between them quickly. This helps a family sharing a tablet, or someone with both a personal account and a ministry account.
 
-### Who it's for
+- A quick account switcher, probably in the profile menu.
+- Each account's settings, open tabs and saved data kept separate on the device, so switching never mixes them up.
 
-A family sharing a tablet, or one person with a personal account and a ministry account.
+**Still deciding**
 
-### What we want to build
+A related idea is several profiles inside one account, the way a streaming service lets each family member have their own profile under one sign-in. The two solve overlapping problems. Should we build one, the other, or both? Separate accounts are the smaller change.
 
-- A list of signed-in accounts and a quick switcher, probably from the profile menu.
-- Each account's data (settings, open tabs, offline reading history, cached records) kept separate on the device, so switching never mixes them. Several managers already handle switching accounts carefully; this makes it something the user does on purpose.
-
-### How this differs from multiple profiles
-
-[#1660](https://github.com/HelloAOLab/seed-bible/issues/1660) proposes several **profiles inside one account** (Netflix style: one sign-in, several people). This item is several **accounts on one device**: separate sign-ins, separate everything. They solve overlapping problems. **Decision needed:** build one, the other, or both? Multiple accounts is the smaller change, because each account is already a complete identity.
-
-### Related issues
-
-[#1660](https://github.com/HelloAOLab/seed-bible/issues/1660) (multiple profiles on an account)
+_On GitHub:_ [#1660](https://github.com/HelloAOLab/seed-bible/issues/1660)
 
 ---
 
-## 16. MCP support
+## 16. Connecting with other AI tools
 
-**Helped by:** item 12.
+🚧 **In progress.** Item 12 will help.
 
-### Short version
+Connect Seed Bible with other AI tools using the **Model Context Protocol (MCP)**, an open standard for linking AI assistants to apps and information. This works in two directions:
 
-Let outside AI assistants (Claude, ChatGPT and others) work with the Seed Bible through the **Model Context Protocol (MCP)**, an open standard for connecting AI assistants to apps and data.
+- **Bring outside tools into Seed Bible's AI chat. ✅ Done.** An optional add-on in Settings lets you connect an online service, such as a commentary library or a church's sermon archive, so the AI chat can draw on it. It works with AI chats that can take actions, so not with Bonfire until item 12 is done.
+- **Let your own AI assistant work with your Seed Bible. 💭 Next.** Connect an assistant like Claude or ChatGPT to your account and ask it to "find my notes on grace", "add Romans 8 to my morning playlist", or "what did I read last week?".
 
-### What it could look like
+**Still deciding**
 
-There are two directions, and they're quite different:
+- How does an outside assistant sign in, and what is it allowed to do on your behalf? This needs the same care as item 8, and must respect your privacy choices from item 4.
 
-- **Seed Bible as an MCP server.** Someone connects their own AI assistant to their Seed Bible account and asks it to "find my notes on grace", "add Romans 8 to my morning playlist", or "what did I read last week?". This reuses the same kinds of tools item 12 builds, offered to outside assistants.
-- **Seed Bible as an MCP client.** The in-app chat (or an extension) connects to outside MCP servers to gain new abilities, such as a commentary library or a church's sermon archive.
+_On GitHub:_ [#1670](https://github.com/HelloAOLab/seed-bible/pull/1670)
 
-### Open questions
+---
 
-- Which direction comes first? (Suggested: the server, since it builds directly on item 12's tools and is what users would ask for.)
-- How does an outside assistant sign in, and what can it do on the user's behalf? This needs the same care as item 8's trust model, and must respect item 4's privacy levels.
+## Want to help?
 
-### Related issues
+Seed Bible is built by [AO Lab](https://helloao.org/), a non-profit dedicated to making the Bible and related resources freely available to anyone who needs them. If any part of this roadmap is something you'd like to see happen sooner, we'd love your help, whether you'd like to support the work, partner with us, or bring your church or ministry's content to Seed Bible.
 
-None yet.
+See the ways you can get involved on our [partner page](https://www.helloao.org/partner.html).
+
+Developers can also follow along and contribute right here on GitHub.
