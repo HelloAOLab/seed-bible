@@ -3,11 +3,16 @@ import type { LoginManager } from "../managers/LoginManager";
 import {
   computed,
   effect,
-  signal,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
+import {
+  createFriendContentFreshness,
+  isFriendContentStale,
+  SkippedFriendRead,
+  type FriendReadLimiter,
+} from "./friendContentFreshness";
 import {
   canonicalize,
   createIndexedDbRecordStore,
@@ -296,6 +301,22 @@ export interface HighlightsManager {
   ) => ReadonlySignal<ChapterHighlights>;
 
   /**
+   * Gets a reactive view of one chapter's highlights for a named account.
+   *
+   * Unlike {@link HighlightsManager.getChapterHighlights}, this view is pinned
+   * to the account passed in and does not follow the signed-in user — it's how
+   * a friend's highlights are read. Highlights are stored world-readable
+   * (`publicRead:highlights/{translationId}`), so this works for any account
+   * and does not require being signed in.
+   */
+  getUserChapterHighlights: (
+    userId: string,
+    translationId: string,
+    bookId: string,
+    chapterNumber: number
+  ) => ReadonlySignal<ChapterHighlights>;
+
+  /**
    * Replaces and persists highlights for a chapter.
    *
    * Input highlights are normalized before being cached/stored.
@@ -372,6 +393,12 @@ export interface CreateHighlightsManagerOptions {
   store?: OfflineRecordStore<ChapterHighlights> | null;
   /** See {@link CreateRecordSyncManagerOptions.confirmAdoption}. */
   confirmAdoption?: CreateRecordSyncManagerOptions<ChapterHighlights>["confirmAdoption"];
+  /**
+   * Limits how many friends' chapters are read at once. Shared with the other
+   * managers that read friends' content, so one limit covers them all.
+   * Omitted means a limit of this manager's own.
+   */
+  friendReads?: FriendReadLimiter;
 }
 
 /** One highlight, with the chapter it was found in. */
@@ -427,12 +454,34 @@ const emptyChapterHighlights: ChapterHighlights = {
 type ChapterHighlightsEntry = {
   /** Account these highlights belong to, or {@link LOCAL_OWNER} while signed out. */
   owner: string;
+  address: string;
   /** Latest known highlights for this owner + chapter. */
   data: Signal<ChapterHighlights>;
   /** True once a load or a save has put real highlights in `data`. */
   settled: boolean;
   /** In-flight load, shared by concurrent readers and mutators. */
   load: Promise<void> | null;
+  /** When a friend's highlights were last read successfully. */
+  loadedAtMs: number | null;
+  /** A friend's last read failed, so coming back to it reads again. */
+  loadFailed: boolean;
+  /**
+   * True when this entry was requested for a named account (via
+   * `getUserChapterHighlights`) rather than for whoever is signed in.
+   *
+   * The account-switch sweep drops every entry that isn't the signed-in
+   * account's, which is what stops one account's highlights being served to
+   * the next. Entries for a friend are never "the signed-in account's",
+   * so without this flag every sign-in would evict them and force a re-read.
+   */
+  explicit: boolean;
+  /**
+   * Whether `data` was last read as a friend's (straight from the server) or
+   * as the signed-in user's own (through the local mirror and sync). An
+   * explicit entry survives a change of account, so the change can turn it
+   * from one into the other; it's then read again the right way.
+   */
+  readAsFriend: boolean;
 };
 
 function entryKey(owner: string, address: string): string {
@@ -470,11 +519,15 @@ export function createHighlightsManager(
 
   // Cached highlights, keyed by owner + chapter address.
   const entries = new Map<string, ChapterHighlightsEntry>();
+  const friendFreshness = createFriendContentFreshness(options.friendReads);
   // Identity-stable per-chapter views handed to callers, keyed by address.
   // Never pruned on account switch (unlike `entries`): evicting a view would
   // mint a new computed on the next call, breaking that identity for callers
   // still holding the old one.
   const views = new Map<string, ReadonlySignal<ChapterHighlights>>();
+  // Per-account views handed to callers that named an account explicitly,
+  // keyed by account + address. Same no-pruning rule as `views`.
+  const userViews = new Map<string, ReadonlySignal<ChapterHighlights>>();
 
   /** The bucket rows belong to: the signed-in account, or the signed-out one. */
   const currentOwner = (): string => login.userId.value ?? LOCAL_OWNER;
@@ -483,18 +536,33 @@ export function createHighlightsManager(
 
   const getOrCreateEntry = (
     owner: string,
-    address: string
+    address: string,
+    explicit = false
   ): ChapterHighlightsEntry => {
     const key = entryKey(owner, address);
     let entry = entries.get(key);
     if (!entry) {
-      entry = {
+      const created: ChapterHighlightsEntry = {
         owner,
-        data: signal<ChapterHighlights>(emptyChapterHighlights),
+        address,
+        data: friendFreshness.trackedSignal<ChapterHighlights>(
+          emptyChapterHighlights,
+          () => refreshFriendEntry(created)
+        ),
         settled: false,
         load: null,
+        loadedAtMs: null,
+        loadFailed: false,
+        explicit,
+        readAsFriend: false,
       };
+      entry = created;
       entries.set(key, entry);
+    } else if (explicit) {
+      // The signed-in user can also be read through the explicit path (a
+      // caller passing their own id). Once that happens the entry has to
+      // survive the sweep like any other explicit entry.
+      entry.explicit = true;
     }
     return entry;
   };
@@ -531,11 +599,70 @@ export function createHighlightsManager(
     return parsed;
   };
 
+  /** Whether an entry holds another account's highlights (a friend's). */
+  const isFriendEntry = (entry: ChapterHighlightsEntry): boolean =>
+    entry.explicit && entry.owner !== peekOwner();
+
+  // Another account's highlights (a friend's) are read straight from the
+  // server. The local store mirrors the signed-in account's own rows for the
+  // sync engine; it has no business holding anyone else's.
+  const loadFriendHighlights = async (
+    entry: ChapterHighlightsEntry
+  ): Promise<void> => {
+    // Set before reading, so a read that fails still records it.
+    entry.readAsFriend = true;
+    try {
+      const fromServer = await friendFreshness.read(entry.data, () =>
+        fetchFromServer(entry.owner, entry.address)
+      );
+      // Anything that settled the entry while this request was in the air
+      // holds newer highlights than this response does.
+      if (!entry.settled) {
+        applyPayload(entry, fromServer);
+        entry.loadedAtMs = Date.now();
+        entry.loadFailed = false;
+      }
+    } catch (error) {
+      if (!(error instanceof SkippedFriendRead)) {
+        console.warn("Failed to load chapter highlights:", error);
+      }
+      if (!entry.settled) {
+        // Settled so reads don't retry on every evaluation; `loadFailed` is
+        // what reads it again once it's back on screen. A failed re-read
+        // keeps the highlights already shown.
+        entry.loadFailed = true;
+        entry.settled = true;
+      }
+    }
+  };
+
+  /**
+   * Reads a friend's chapter again when it's back on screen or the app
+   * regains focus (see `createFriendContentFreshness`), keeping the
+   * highlights already shown until the new ones arrive. The signed-in user's
+   * own highlights are kept current by the sync engine instead.
+   */
+  const refreshFriendEntry = (entry: ChapterHighlightsEntry): void => {
+    if (
+      !isFriendEntry(entry) ||
+      entry.load ||
+      !(entry.loadFailed || isFriendContentStale(entry.loadedAtMs))
+    ) {
+      return;
+    }
+    entry.settled = false;
+    void ensureLoaded(entry.owner, entry.address, entry);
+  };
+
   const loadChapterHighlights = async (
     owner: string,
     address: string,
     entry: ChapterHighlightsEntry
   ): Promise<void> => {
+    if (isFriendEntry(entry)) {
+      return loadFriendHighlights(entry);
+    }
+    entry.readAsFriend = false;
     if (!store) {
       // No local storage: the server is the only source, and a signed-out
       // reader has none.
@@ -629,6 +756,26 @@ export function createHighlightsManager(
     return view;
   };
 
+  // Views pinned to a named account. Kept separate from `views` rather than
+  // re-keying it: those views deliberately read `login.userId` so they track
+  // the signed-in account, and these deliberately don't.
+  const getOrCreateUserView = (
+    userId: string,
+    address: string
+  ): ReadonlySignal<ChapterHighlights> => {
+    const key = entryKey(userId, address);
+    let view = userViews.get(key);
+    if (!view) {
+      view = computed(() => {
+        const entry = getOrCreateEntry(userId, address, true);
+        void ensureLoaded(userId, address, entry);
+        return entry.data.value;
+      });
+      userViews.set(key, view);
+    }
+    return view;
+  };
+
   // Drops every cached entry that no longer belongs to the current owner, so
   // signing back in re-reads instead of serving a stale entry left over from a
   // previous session as that same account.
@@ -640,8 +787,21 @@ export function createHighlightsManager(
     }
     cachedOwner = owner;
     for (const [key, entry] of entries) {
-      if (entry.owner !== owner) {
+      // Entries for an explicitly named account (a friend's highlights)
+      // aren't the signed-in account's data and were never at risk of leaking
+      // across a switch, so the sweep leaves them alone.
+      if (entry.owner !== owner && !entry.explicit) {
         entries.delete(key);
+      } else if (
+        entry.explicit &&
+        entry.settled &&
+        entry.readAsFriend !== isFriendEntry(entry)
+      ) {
+        // Signing in as a friend whose highlights were on screen, or the
+        // reverse. Reset rather than dropped: views still hold this entry.
+        entry.settled = false;
+        entry.loadFailed = false;
+        entry.loadedAtMs = null;
       }
     }
   });
@@ -663,6 +823,26 @@ export function createHighlightsManager(
     // itself carries that dependency for whoever reads it).
     const owner = peekOwner();
     void ensureLoaded(owner, address, getOrCreateEntry(owner, address));
+
+    return view;
+  };
+
+  const getUserChapterHighlights = (
+    userId: string,
+    translationId: string,
+    bookId: string,
+    chapterNumber: number
+  ): ReadonlySignal<ChapterHighlights> => {
+    const address = createChapterHighlightsAddress(
+      translationId,
+      bookId,
+      chapterNumber
+    );
+    const view = getOrCreateUserView(userId, address);
+
+    // Kick the load eagerly, same as `getChapterHighlights`, so callers that
+    // read the view later still see it arrive as soon as possible.
+    void ensureLoaded(userId, address, getOrCreateEntry(userId, address, true));
 
     return view;
   };
@@ -924,6 +1104,7 @@ export function createHighlightsManager(
 
   return {
     getChapterHighlights,
+    getUserChapterHighlights,
     saveChapterHighlights,
     highlightVerse,
     highlightVerses,

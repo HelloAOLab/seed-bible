@@ -11,10 +11,10 @@ import {
   DEFAULT_BOOK_ID,
   resolveTranslationUiLanguage,
   uiLocaleForDefaultTranslation,
-  hasAnyDiscoverResults,
   type BibleReadingState,
   type BibleSelectedVerse,
   type ReadingPosition,
+  getDiscoverPanelContent,
 } from "../managers/BibleReadingManager";
 import {
   buildReadingPath,
@@ -63,8 +63,10 @@ import {
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "./FeaturesManager";
+import type { FriendsManager } from "./FriendsManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
+import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -211,6 +213,9 @@ export interface BibleToolContext {
 
   /** Annotations manager, for creating/editing notes on selected verses. */
   annotations?: AnnotationsManager;
+
+  /** The signed-in user's friends, for the Reading Plans pane. */
+  friends?: FriendsManager;
 
   /** Features manager */
   features: FeaturesManager;
@@ -424,6 +429,8 @@ export interface QuickToolContext {
   annotations: AnnotationsManager;
 
   features: FeaturesManager;
+
+  readingPlans: ReadingPlansManager;
 
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
@@ -915,18 +922,12 @@ function getDefaultQuickToolbarTools(
         if (c.app?.isMobile?.value || c.app?.isDiscoverOpen?.value) {
           return false;
         }
-        if (hasAnyDiscoverResults(c.readingState)) {
-          return true;
-        }
-        const bookId = c.readingState.bookId.value;
-        const chapterNumber = c.readingState.chapterNumber.value;
-        if (!bookId || !chapterNumber) {
-          return false;
-        }
-        return (
-          c.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
-            .length > 0
-        );
+        return getDiscoverPanelContent(
+          c.readingState,
+          c.annotations,
+          c.readingPlans,
+          c.features
+        ).hasAny;
       },
       onSelect: (c) => {
         c.readingState.discoverContentPanelInline.value =
@@ -967,7 +968,10 @@ function getDefaultQuickToolbarTools(
  * record, so play history can't offer to resume it (see `isRecordedPlaylist`).
  */
 export function readingPlanDayPlaylist(
-  plan: Pick<ReadingPlan, "address" | "title" | "description" | "heroImageUrl">,
+  plan: Pick<
+    ReadingPlan,
+    "address" | "title" | "description" | "heroImageUrl" | "authorUserId"
+  >,
   items: PlaylistItemData[]
 ): SimplePlaylist {
   return {
@@ -975,6 +979,8 @@ export function readingPlanDayPlaylist(
     title: plan.title,
     description: plan.description,
     heroImageUrl: plan.heroImageUrl,
+    // So the player can say who made the plan.
+    authorUserId: plan.authorUserId,
     items,
   };
 }
@@ -985,6 +991,10 @@ export interface OpenReadingPlansPaneOptions {
   panesManager: PanesManager;
   modals?: ModalManager;
   playlists?: PlaylistManager;
+  /** Loads chapter text for the plan editor's inline scripture previews. */
+  bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
+  /** Lets the pane list plans from the user's friends. */
+  friends?: FriendsManager;
   /**
    * Passed straight through to the pane: the plan editor uses them to record
    * and reuse a plan's hero image. Optional there too, so a caller without
@@ -1015,11 +1025,23 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     panesManager,
     modals,
     playlists,
+    bibleData,
+    friends,
     os,
     login,
     gallery,
     toast,
   } = options;
+
+  // Scripture without a pinned translation previews in the one being read.
+  const loadChapter: ScriptureChapterLoader | undefined = bibleData
+    ? (translationId, bookId, chapter) =>
+        bibleData.getTranslationBookChapter(
+          translationId ?? readingState.translationId.peek(),
+          bookId,
+          chapter
+        )
+    : undefined;
 
   panesManager.openPane({
     id: "reading-plans-pane",
@@ -1035,8 +1057,10 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     component: () => (
       <ReadingPlansPane
         readingPlans={readingPlans}
+        friends={friends}
         books={readingState.translationBooks.value?.books ?? []}
         modals={modals}
+        loadChapter={loadChapter}
         os={os}
         login={login}
         gallery={gallery}
@@ -1206,10 +1230,12 @@ function getDefaultToolbarTools(
           panesManager: context.panesManager,
           modals: context.modals,
           playlists: context.playlists,
+          bibleData: context.data,
           os: context.os,
           login: context.login,
           gallery: context.gallery,
           toast: context.toast,
+          friends: context.friends,
         });
       },
     },
@@ -1265,7 +1291,7 @@ function getDefaultToolbarTools(
           <NextItemIcon />
         ),
       isDisabled: (context) =>
-        !context.playlists?.playing?.value?.hasNext.value,
+        !context.playlists?.playing?.value?.canPressNext.value,
       isVisible: (context) => !!context.playlists?.playing?.value,
       onSelect: (context) => {
         context.playlists?.playing.value?.next();
@@ -1323,7 +1349,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       // how "Add to Playlist" follows `editingPlaylist`.
       isVisible: (context) =>
         !!context.readingPlans?.editingReadingPlan.value &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS) &&
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value &&
         context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
         const readingPlans = context.readingPlans;
@@ -1632,6 +1658,7 @@ export function openShareModal(
     content: () => (
       <ShareModal
         app={app}
+        modals={modals}
         session={context.sharedSession ?? null}
         onClose={() => modals.closeModal(modalId)}
         onShareLink={() => {

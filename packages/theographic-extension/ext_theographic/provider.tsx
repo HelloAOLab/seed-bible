@@ -767,11 +767,18 @@ export function createTheographicDiscoverProvider(
         const isNotFound =
           error instanceof TheographicRequestError &&
           error.reason === "not-found";
-        if (!isNotFound && !hasWarned) {
+        // A chapter the dataset has nothing for is a real empty answer.
+        // Anything else has to reject: DiscoverManager caches a resolved []
+        // for the session, so an offline blip would hide these cards until
+        // reload. A rejection is dropped and the next visit tries again.
+        if (isNotFound) {
+          return [];
+        }
+        if (!hasWarned) {
           hasWarned = true;
           console.warn("Failed to load Theographic data.", error);
         }
-        return [];
+        throw error;
       }
 
       return toDiscoverResults(data, context, {

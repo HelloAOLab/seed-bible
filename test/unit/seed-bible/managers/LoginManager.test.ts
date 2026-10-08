@@ -1543,6 +1543,61 @@ describe("createLoginManager", () => {
       expect(profile).toEqual({ name: "Dave" });
     });
 
+    describe("getPublicProfile()", () => {
+      it("reads someone's profile", async () => {
+        getDataMock.mockResolvedValue({
+          success: true,
+          data: { name: "Ada", location: "London" },
+        });
+        const manager = createLoginManager({ os });
+
+        await expect(manager.getPublicProfile("ada")).resolves.toEqual({
+          name: "Ada",
+          location: "London",
+        });
+        expect(getDataMock).toHaveBeenCalledWith("ada", "profile");
+      });
+
+      it("gives a blank profile for an account that never saved one, without adopting this device's config", async () => {
+        localStorage.setItem(
+          "sb-profile-config-local",
+          JSON.stringify({ fontSize: "XL" })
+        );
+        const manager = createLoginManager({ os });
+        manager.hydrateLocalConfig();
+
+        await expect(manager.getPublicProfile("ada")).resolves.toEqual({
+          name: "",
+        });
+        expect(recordDataMock).not.toHaveBeenCalled();
+        expect(manager.localConfig.value).toEqual({ fontSize: "XL" });
+      });
+
+      it("gives null when no account has the ID", async () => {
+        getDataMock.mockResolvedValue({
+          success: false,
+          errorCode: "record_not_found",
+          errorMessage: "Record not found.",
+        });
+        const manager = createLoginManager({ os });
+
+        await expect(manager.getPublicProfile("typo")).resolves.toBeNull();
+      });
+
+      it("fails when the profile can't be read", async () => {
+        getDataMock.mockResolvedValue({
+          success: false,
+          errorCode: "server_error",
+          errorMessage: "Something went wrong.",
+        });
+        const manager = createLoginManager({ os });
+
+        await expect(manager.getPublicProfile("ada")).rejects.toThrow(
+          "server_error"
+        );
+      });
+    });
+
     it("identifies the user with PostHog when the user logs in", async () => {
       const mockIdentify = vi.fn();
       const mockSetPersonProperties = vi.fn();

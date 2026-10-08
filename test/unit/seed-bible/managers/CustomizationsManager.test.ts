@@ -92,6 +92,7 @@ describe("CustomizationsManager", () => {
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),
       getUserProfile: vi.fn().mockResolvedValue(null),
+      getPublicProfile: vi.fn().mockResolvedValue(null),
       uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
       userInfo: signal({ id: "user-1", email: "test@example.com" }),
       cancelLogin: vi.fn().mockResolvedValue(undefined),
@@ -1525,6 +1526,230 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value).toBeNull();
   });
 
+  describe("a customization's sensitive proxies", () => {
+    const pointer = {
+      recordName: "user-1",
+      address: "proxy-1",
+      host: "api.example.com",
+      defaultHost: "api.example.com",
+      visibility: "public" as const,
+      requestMapping: { "headers.authorization.bearer": "apiKey" },
+      keys: ["apiKey"],
+    };
+
+    it("records a proxy on the draft and saves it straight away", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+
+      const saved = await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      expect(saved).toBe(true);
+      expect(recordDataMock).toHaveBeenLastCalledWith(
+        "user-1",
+        created.id,
+        expect.objectContaining({
+          extensionSensitiveProxies: { "ext-1": { exampleApi: pointer } },
+        }),
+        { marker: CUSTOMIZATION_MARKER }
+      );
+      expect(
+        manager.editingCustomization.value?.extensionSensitiveProxies
+      ).toEqual({ "ext-1": { exampleApi: pointer } });
+      expect(manager.hasUnsavedChanges.value).toBe(false);
+    });
+
+    it("leaves no unsaved changes when the clock ticks during the save", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      let now = Date.now();
+      const dateNow = vi.spyOn(Date, "now").mockImplementation(() => ++now);
+
+      try {
+        const saved = await manager.setExtensionSensitiveProxy(
+          created.id,
+          "ext-1",
+          "exampleApi",
+          pointer
+        );
+
+        expect(saved).toBe(true);
+        expect(manager.hasUnsavedChanges.value).toBe(false);
+      } finally {
+        dateNow.mockRestore();
+      }
+    });
+
+    it("doesn't publish unsaved draft edits that are later discarded", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      manager.updateEditingName("Unsaved draft name");
+
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+      manager.discardEditingCustomization();
+
+      const written = recordDataMock.mock.calls.at(-1)![2];
+      expect(written.name).toBe(created.name);
+      expect(written.extensionSensitiveProxies).toEqual({
+        "ext-1": { exampleApi: pointer },
+      });
+      expect(
+        manager.customizations.value.find((c) => c.id === created.id)
+      ).toEqual(written);
+    });
+
+    it("keeps the pointer when a draft save already in flight lands after it would have", async () => {
+      // What the server holds: each write lands when its request resolves.
+      const server: Record<string, { extensionSensitiveProxies: unknown }> = {};
+      let releaseDraftSave = () => {};
+      recordDataMock.mockImplementation(
+        async (_record: string, address: string, data: never) => {
+          server[address] = data;
+          return { success: true };
+        }
+      );
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      manager.updateEditingName("Renamed");
+      recordDataMock.mockImplementationOnce(
+        (_record: string, address: string, data: never) =>
+          new Promise((resolve) => {
+            releaseDraftSave = () => {
+              server[address] = data;
+              resolve({ success: true });
+            };
+          })
+      );
+      const draftSave = manager.saveEditingCustomization();
+      // The draft save has captured the draft, without the pointer.
+      await Promise.resolve();
+
+      const pointerWrite = manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+      for (let i = 0; i < 5; i++) {
+        await Promise.resolve();
+      }
+      releaseDraftSave();
+      await draftSave;
+
+      expect(await pointerWrite).toBe(true);
+      expect(server[created.id]).toMatchObject({
+        name: "Renamed",
+        extensionSensitiveProxies: { "ext-1": { exampleApi: pointer } },
+      });
+    });
+
+    it("takes the pointer back off the draft when its write fails", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+      });
+
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      expect(
+        manager.editingCustomization.value?.extensionSensitiveProxies
+      ).toEqual({});
+    });
+
+    it("reports a failed save", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      const { manager } = createManager();
+      const created = await manager.create();
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+      });
+
+      expect(
+        await manager.setExtensionSensitiveProxy(
+          created.id,
+          "ext-1",
+          "exampleApi",
+          pointer
+        )
+      ).toBe(false);
+    });
+
+    it("remove() erases the customization's proxies before the record", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const eraseProxyMock = vi
+        .spyOn(os, "eraseProxy")
+        .mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      await manager.remove(created.id);
+
+      expect(eraseProxyMock).toHaveBeenCalledWith("user-1", "proxy-1");
+      expect(eraseProxyMock.mock.invocationCallOrder[0]!).toBeLessThan(
+        eraseDataMock.mock.invocationCallOrder[0]!
+      );
+      expect(manager.customizations.value).toEqual([]);
+    });
+
+    it("remove() keeps the customization when a proxy can't be erased", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      vi.spyOn(os, "eraseProxy").mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "",
+      });
+      const { manager } = createManager();
+      const created = await manager.create();
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      await manager.remove(created.id);
+
+      expect(eraseDataMock).not.toHaveBeenCalled();
+      expect(manager.customizations.value.map((c) => c.id)).toEqual([
+        created.id,
+      ]);
+    });
+  });
+
   it("create() defaults logoUrl to null", async () => {
     const { manager } = createManager();
 
@@ -2007,6 +2232,169 @@ describe("CustomizationsManager", () => {
     expect(manager.activeCustomization.value?.extensionSettings).toEqual({});
   });
 
+  describe("PostHog customization tracking", () => {
+    const sharedRecord = {
+      id: "customization_shared",
+      name: "Shared",
+      variants: [
+        {
+          id: "variant_shared",
+          name: "Shared variant",
+          themes: {},
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      defaultVariantId: "variant_shared",
+      logoUrl: null,
+      createdAt: 1,
+      updatedAt: 1,
+    };
+    const linkedHref =
+      "http://localhost/?customization=other-user.customization_shared";
+    let posthogMock: {
+      register_for_session: Mock;
+      unregister_for_session: Mock;
+      identify: Mock;
+    };
+
+    beforeEach(() => {
+      posthogMock = {
+        register_for_session: vi.fn(),
+        unregister_for_session: vi.fn(),
+        identify: vi.fn(),
+      };
+      (globalThis as any).posthog = posthogMock;
+    });
+
+    afterEach(() => {
+      delete (globalThis as any).posthog;
+    });
+
+    it("tags every event with the linked customization and identifies the signed-in user with it", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+
+      const { manager } = createManager(
+        createNavigationManager({ initialHref: linkedHref })
+      );
+      await manager.initialCustomizationLoadPromise;
+
+      expect(posthogMock.register_for_session).toHaveBeenLastCalledWith({
+        customization_id: "other-user.customization_shared",
+      });
+      expect(posthogMock.identify).toHaveBeenLastCalledWith("user-1", {
+        customization_id: "other-user.customization_shared",
+      });
+    });
+
+    it("tags events for a signed-out viewer without identifying anyone, then identifies once they sign in", async () => {
+      login.userId.value = null;
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+
+      const { manager } = createManager(
+        createNavigationManager({ initialHref: linkedHref })
+      );
+      await manager.initialCustomizationLoadPromise;
+
+      expect(posthogMock.register_for_session).toHaveBeenLastCalledWith({
+        customization_id: "other-user.customization_shared",
+      });
+      expect(posthogMock.identify).not.toHaveBeenCalled();
+
+      login.userId.value = "user-2";
+
+      expect(posthogMock.identify).toHaveBeenLastCalledWith("user-2", {
+        customization_id: "other-user.customization_shared",
+      });
+    });
+
+    it("leaves events untagged when there is no ?customization= link", () => {
+      createManager();
+
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
+      expect(posthogMock.identify).not.toHaveBeenCalled();
+      expect(posthogMock.unregister_for_session).toHaveBeenCalledWith(
+        "customization_id"
+      );
+    });
+
+    it("leaves events untagged when the linked customization can't be found", async () => {
+      const { manager } = createManager(
+        createNavigationManager({ initialHref: linkedHref })
+      );
+      await manager.initialCustomizationLoadPromise;
+
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
+      expect(posthogMock.identify).not.toHaveBeenCalled();
+    });
+
+    it("tags events synchronously from a matching SSR seed, without fetching the record", () => {
+      const { manager } = createManager(
+        createNavigationManager({ initialHref: linkedHref }),
+        {
+          locator: "other-user.customization_shared",
+          customization: {
+            ...sharedRecord,
+            variants: [
+              {
+                id: "variant_shared",
+                name: "Shared variant",
+                baseTheme: "light",
+                themes: {},
+                highlightColors: {},
+                createdAt: 1,
+                updatedAt: 1,
+              },
+            ],
+            extensionSettings: {},
+            extensionSettingDefaults: {},
+            extensionSensitiveProxies: {},
+          },
+        }
+      );
+
+      expect(manager.linkedCustomization.value?.id).toBe(
+        "customization_shared"
+      );
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(posthogMock.register_for_session).toHaveBeenLastCalledWith({
+        customization_id: "other-user.customization_shared",
+      });
+      expect(posthogMock.identify).toHaveBeenLastCalledWith("user-1", {
+        customization_id: "other-user.customization_shared",
+      });
+    });
+
+    it("leaves events untagged when the SSR seed already resolved the link as not found", () => {
+      createManager(createNavigationManager({ initialHref: linkedHref }), {
+        locator: "other-user.customization_shared",
+        customization: null,
+      });
+
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
+      expect(posthogMock.identify).not.toHaveBeenCalled();
+      expect(posthogMock.unregister_for_session).toHaveBeenCalledWith(
+        "customization_id"
+      );
+    });
+
+    it("doesn't tag events with a draft the owner is only previewing", async () => {
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+
+      expect(manager.activeCustomization.value?.id).toBe(created.id);
+      expect(posthogMock.register_for_session).not.toHaveBeenCalled();
+    });
+  });
+
   it("initialCustomizationLoadSettled is true immediately with no ?customization= param", () => {
     const { manager } = createManager();
 
@@ -2167,6 +2555,7 @@ describe("CustomizationsManager", () => {
       updatedAt: 1,
       extensionSettings: {},
       extensionSettingDefaults: {},
+      extensionSensitiveProxies: {},
     };
     const LOCATOR = "other-user.customization_shared";
 

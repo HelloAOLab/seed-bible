@@ -190,6 +190,15 @@ export interface LoginManager {
   getUserProfile: (userId: string) => Promise<UserProfile>;
 
   /**
+   * Reads someone else's public profile. Unlike {@link getUserProfile}, this
+   * never adopts or clears this device's local config, which only makes sense
+   * for the signed-in user's own account.
+   * @returns The profile (blank when the account never saved one), or null
+   * when no account has this ID.
+   */
+  getPublicProfile: (userId: string) => Promise<UserProfile | null>;
+
+  /**
    * Prompts the user to upload a profile picture, stores it as a public file
    * record, and saves the resulting URL to the user's profile.
    * Resolves without changes if no file is selected or the user is not authenticated.
@@ -691,6 +700,30 @@ export function createLoginManager({
       localConfig.value = {};
     }
 
+    return parsed.data;
+  };
+
+  const getPublicProfile = async (
+    userId: string
+  ): Promise<UserProfile | null> => {
+    const data = await os.getData(userId, "profile");
+    if (!data.success) {
+      // An account's record is only created when its owner first signs in,
+      // so no record means no one has used this ID: usually a mistyped one.
+      if (data.errorCode === "record_not_found") {
+        return null;
+      }
+      if (data.errorCode === "data_not_found") {
+        return { name: "" };
+      }
+      throw new Error(
+        `[LoginManager] Failed to load profile (${data.errorCode}): ${data.errorMessage}`
+      );
+    }
+    const parsed = userProfileSchema.safeParse(data.data);
+    if (!parsed.success) {
+      throw new Error("[LoginManager] Stored profile failed validation");
+    }
     return parsed.data;
   };
 
@@ -1274,6 +1307,7 @@ export function createLoginManager({
     logout,
     updateProfile,
     getUserProfile,
+    getPublicProfile,
     uploadProfilePicture,
 
     cancelLogin,

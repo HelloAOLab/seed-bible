@@ -6,6 +6,7 @@ import {
   type BibleSelectorState,
 } from "../../managers/BibleSelectorManager";
 import { useI18n } from "../../i18n/I18nManager";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 import {
   FiltersIcon,
   AddIcon,
@@ -16,7 +17,7 @@ import {
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { TranslationList } from "../TranslationList/TranslationList";
 import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
-import { computed, signal } from "@preact/signals";
+import { computed, Signal, signal } from "@preact/signals";
 import {
   computePopover,
   TutorialPopoverContent,
@@ -39,6 +40,7 @@ import {
   formatBytes,
   type OfflineTranslationsManager,
 } from "../../managers/OfflineTranslationsManager";
+import { downloadTranslationWithToast } from "../OfflineDownloadPrompt/downloadTranslationWithToast";
 import type { TutorialManager } from "../../managers/TutorialManager";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
@@ -106,6 +108,7 @@ export function BibleSelector(props: BibleSelectorProps) {
     tutorial,
   } = props;
   const { isRtl } = useI18n();
+  const overlayDismiss = useOverlayDismiss(onClose);
 
   // The active tour step, but only when it's a selector-group step — otherwise
   // this overlay must stay out of the way (the main tour handles the rest, and
@@ -172,7 +175,7 @@ export function BibleSelector(props: BibleSelectorProps) {
   return (
     <>
       <div
-        onClick={onClose}
+        {...overlayDismiss}
         className={`sb-selector-overlay ${isOpen ? "open" : ""}${
           className ? ` ${className}` : ""
         }`}
@@ -196,6 +199,9 @@ export function BibleSelector(props: BibleSelectorProps) {
             tutorial={tutorial}
           />
         </div>
+        {selectorState.showApocryphaInfo.value && (
+          <ApocryphaInfo bibleSelectorState={selectorState} />
+        )}
       </div>
 
       {tourStep && (
@@ -266,7 +272,6 @@ const SearchBar = (props: {
     selectedTranslationBooks,
     selectedTranslation,
     openTabs,
-    showApocryphaInfo,
   } = bibleSelectorState;
 
   const selectedTestament = bibleSelectorState.selectedTestament;
@@ -419,9 +424,6 @@ const SearchBar = (props: {
           />
         )}
       </div>
-      {showApocryphaInfo.value && (
-        <ApocryphaInfo bibleSelectorState={bibleSelectorState} />
-      )}
     </>
   );
 };
@@ -669,46 +671,8 @@ const SideBarBooks = (props: {
       const OTBooks = ghostArray(oldTestament, otColumns);
       const NTBooks = ghostArray(newTestament, ntColumns);
       const APBooks = ghostArray(apocrypha, ntColumns);
-      // Hint 2 is reserved for apocrypha so its chapter panel doesn't collide
-      // with the NT grid (hint 1). On desktop All Books there is no apocrypha
-      // column, so when the expanded book is apocrypha we short-circuit to the
-      // apocrypha-only grid (same layout as the Apocrypha filter).
-      const expandedIsApocrypha =
-        !!bd && apocrypha.some((book) => book.id === bd.id);
-      if (ws > MOBILE_BREAKPOINT && expandedIsApocrypha) {
-        return (
-          <div
-            class="books-container flex-gap-md"
-            dir={
-              bibleSelectorState.selectedTranslation.value?.textDirection ??
-              "ltr"
-            }
-          >
-            <div
-              class="testament-container flex-col-gap-sm"
-              style={{ width: "100%" }}
-            >
-              <span class="testament-title">
-                {t("extrabiblical-writings", {
-                  defaultValue: "Extrabiblical writings",
-                })}
-                <span
-                  class="material-symbols-outlined"
-                  onClick={() => {
-                    showApocryphaInfo.value = true;
-                  }}
-                >
-                  info
-                </span>
-              </span>
-              {renderBooksGrid(
-                ghostArray(apocrypha, singleColumns),
-                singleColumns
-              )}
-            </div>
-          </div>
-        );
-      }
+      // Hint 2 is reserved for the Apocrypha.
+      // On desktop, an expanded Apocrypha book simply shows no open chapters under All Books.
       return (
         <div
           class="books-container flex-gap-md"
@@ -749,17 +713,8 @@ const SideBarBooks = (props: {
                 }}
               >
                 <span class="testament-title">
-                  {t("extrabiblical-writings", {
-                    defaultValue: "Extrabiblical writings",
-                  })}
-                  <span
-                    class="material-symbols-outlined"
-                    onClick={() => {
-                      showApocryphaInfo.value = true;
-                    }}
-                  >
-                    info
-                  </span>
+                  {t("apocrypha", { defaultValue: "Apocrypha" })}
+                  <ApocryphaInfoButton showApocryphaInfo={showApocryphaInfo} />
                 </span>
                 {renderBooksGrid(APBooks, ntColumns, 2, undefined, true)}
               </div>
@@ -810,7 +765,13 @@ const SideBarBooks = (props: {
           style={{ width: "100%" }}
         >
           {(config.alwaysShowTitle || ws > MOBILE_BREAKPOINT) && (
-            <span class="testament-title">{config.title}</span>
+            <span class="testament-title testament-title--with-action">
+              {config.title}
+
+              {lst === 3 && (
+                <ApocryphaInfoButton showApocryphaInfo={showApocryphaInfo} />
+              )}
+            </span>
           )}
           {renderBooksGrid(config.books, singleColumns)}
         </div>
@@ -1190,26 +1151,7 @@ const OfflineTranslationControls = (props: {
   const error = offline.errors.value.get(translation.id) ?? null;
 
   const startDownload = async () => {
-    const succeeded = await offline.downloadTranslation(translation.id);
-    if (succeeded) {
-      app.toast(
-        t("translation-downloaded", {
-          name: translation.shortName,
-          defaultValue: "{{name}} is now available offline",
-        })
-      );
-      return;
-    }
-
-    const failure = offline.errors.value.get(translation.id);
-    if (failure) {
-      app.toast(
-        t("translation-download-failed", {
-          name: translation.shortName,
-          defaultValue: "Couldn't download {{name}}.",
-        })
-      );
-    }
+    await downloadTranslationWithToast(offline, translation, app.toast, t);
   };
 
   if (progress) {
@@ -1432,9 +1374,11 @@ const TranslationModal = (props: {
   const {
     languageQuery,
     selectingTranslation,
+    downloadedOnly,
     showCustomTranslation,
     allowedTranslationLimit,
     showAllLanguages,
+    listViewMode,
     showTranslationSettings,
     showTranslationInfo,
     pendingOfflineDelete,
@@ -1446,6 +1390,12 @@ const TranslationModal = (props: {
   } = bibleSelectorState;
 
   const { t } = useI18n();
+  const overlayDismiss = useOverlayDismiss(() => {
+    selectingTranslation.value = false;
+    showTranslationSettings.value = false;
+    showTranslationInfo.value = null;
+    pendingOfflineDelete.value = null;
+  });
 
   // Opening the list is the moment a stale download matters, so this is where we
   // re-read the API's hashes. It's a no-op when nothing is downloaded or the
@@ -1477,7 +1427,7 @@ const TranslationModal = (props: {
     <TranslationList
       groups={filteredApiTranslations.value}
       query={languageQuery.value}
-      viewMode={showAllLanguages.value}
+      viewMode={listViewMode.value}
       selectedTranslationIds={
         selectedTranslation.value ? [selectedTranslation.value.id] : []
       }
@@ -1526,15 +1476,7 @@ const TranslationModal = (props: {
 
   return (
     <>
-      <div
-        className="modal-overlay flex-center"
-        onClick={() => {
-          selectingTranslation.value = false;
-          showTranslationSettings.value = false;
-          showTranslationInfo.value = null;
-          pendingOfflineDelete.value = null;
-        }}
-      >
+      <div className="modal-overlay flex-center" {...overlayDismiss}>
         <div
           className="modal"
           onClick={(e) => {
@@ -1605,6 +1547,29 @@ const TranslationModal = (props: {
               </span>
             )}
           </div>
+          {downloadedOnly.value && (
+            <div className="sb-translation-downloaded-filter">
+              <span className="sb-translation-downloaded-filter-label">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  offline_pin
+                </span>
+                {t("translations-saved-on-device", {
+                  defaultValue: "Saved on this device",
+                })}
+              </span>
+              <button
+                type="button"
+                className="sb-translation-downloaded-filter-show-all"
+                onClick={() => {
+                  downloadedOnly.value = false;
+                }}
+              >
+                {t("show-all-translations", {
+                  defaultValue: "Show all translations",
+                })}
+              </button>
+            </div>
+          )}
           {LanguageList}
           <div className="footer">
             <div
@@ -1842,52 +1807,86 @@ const TranslationInfo = (props: {
 const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
   const { showApocryphaInfo } = props.bibleSelectorState;
   const { t } = useI18n();
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") showApocryphaInfo.value = false;
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
-    <div
-      id="apocrypha-info"
-      class="sb-select-modal-overlay"
-      onClick={(e) => {
-        if ((e.target as HTMLElement).id === "apocrypha-info") {
+    <>
+      <div
+        class="sb-apocrypha-info-backdrop"
+        onClick={(event) => {
+          event.stopPropagation();
           showApocryphaInfo.value = false;
+        }}
+      />
+      <div
+        id="apocrypha-info"
+        class="sb-apocrypha-info-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="apocrypha-info-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div class="sb-apocrypha-info">
+          <div class="sb-apocrypha-info-header">
+            <h2 class="sb-apocrypha-info-title">
+              {t("about-apocrypha", {
+                defaultValue: "About the Apocrypha",
+              })}
+            </h2>
+
+            <button
+              type="button"
+              class="sb-apocrypha-info-close"
+              aria-label={t("close", { defaultValue: "Close" })}
+              onClick={(event) => {
+                event.stopPropagation();
+                showApocryphaInfo.value = false;
+              }}
+            >
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <div class="sb-apocrypha-info-content">
+            {t("apocrypha-info-text", {
+              defaultValue:
+                "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
+            })}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+const ApocryphaInfoButton = (props: { showApocryphaInfo: Signal<boolean> }) => {
+  const { t } = useI18n();
+
+  return (
+    <button
+      class="material-symbols-outlined apocrypha-info-button"
+      role="button"
+      tabindex={0}
+      aria-label={t("about-apocrypha", {
+        defaultValue: "About the Apocrypha",
+      })}
+      onClick={() => {
+        props.showApocryphaInfo.value = true;
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          props.showApocryphaInfo.value = true;
         }
       }}
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
     >
-      <div
-        className="sb-select-modal flex-center"
-        style={{ position: "relative", width: "90%", borderRadius: "0.625rem" }}
-      >
-        <div
-          class="flex-between-center-gap-md"
-          style={{ width: "100%", marginBottom: "0.9375rem" }}
-        >
-          <span class="sb-mobile-settings-sheet-title">
-            {t("about-extrabiblical-writings", {
-              defaultValue: "About Extrabiblical writings",
-            })}
-          </span>
-          <span
-            class="material-symbols-outlined"
-            onClick={() => {
-              showApocryphaInfo.value = false;
-            }}
-          >
-            close
-          </span>
-        </div>
-        <span>
-          {t("apocrypha-info-text", {
-            defaultValue:
-              "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
-          })}
-        </span>
-      </div>
-    </div>
+      info
+    </button>
   );
 };
 
