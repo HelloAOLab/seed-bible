@@ -9,6 +9,7 @@ import {
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import { extractContentText } from "../../managers/ChapterText";
+import { annotationBookName } from "../DiscoverPane/AnnotationsSection";
 import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
 import type { TabsManager } from "../../managers/TabsManager";
 import { sanitize } from "../../managers/Sanitization";
@@ -96,11 +97,9 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
   const verseNumbers = annotationVerseNumbers(editing);
   const chapterData =
     verseNumbers.length > 0 ? findAnnotationChapterData(editing, tabs) : null;
-  const bookName =
-    chapterData?.book.name ?? chapterData?.book.commonName ?? editing.bookId;
   const verseReference =
     verseNumbers.length > 0
-      ? `${bookName} ${editing.chapterNumber}:${formatAnnotationVerseNumbers(verseNumbers)}`
+      ? `${annotationBookName(editing, tabs)} ${editing.chapterNumber}:${formatAnnotationVerseNumbers(verseNumbers)}`
       : null;
   const verseQuoteText = chapterData
     ? chapterData.chapter.content

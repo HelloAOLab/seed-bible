@@ -12,6 +12,7 @@ import type { FriendsManager } from "../../managers/FriendsManager";
 import {
   annotationVerseNumbers,
   annotationListHasOtherAuthors,
+  findAnnotationChapterData,
   formatAnnotationVerseNumbers,
   groupAnnotationsByVerseRange,
   visibleChapterAnnotations,
@@ -51,22 +52,28 @@ const HIGHLIGHT_DURATION_MS = 2000;
 
 /**
  * Resolves the display name of the book an annotation targets, using
- * whichever open tab currently has that chapter loaded. Falls back to the
- * raw book id when no open tab has it loaded (e.g. a note for a chapter no
- * longer open).
+ * whichever open tab currently has that chapter loaded, then any open tab's
+ * translation book list. The book list matters while a new note follows the
+ * reader to another chapter: the loaded chapter lags a download behind, and
+ * without it the raw book id flashes up in the meantime. Falls back to the
+ * raw book id when neither knows the book.
  */
-function annotationBookName(
+export function annotationBookName(
   annotation: Pick<Annotation, "bookId" | "chapterNumber">,
   tabs: TabsManager
 ): string {
-  const chapter = tabs.tabs.value
-    .map((tab) => tab.readingState.chapterData.value)
-    .find(
-      (c) =>
-        c?.book.id === annotation.bookId &&
-        c?.chapter.number === annotation.chapterNumber
-    );
-  return chapter?.book.name ?? chapter?.book.commonName ?? annotation.bookId;
+  const chapter = findAnnotationChapterData(annotation, tabs);
+  if (chapter) {
+    return chapter.book.name ?? chapter.book.commonName;
+  }
+  const catalogBook = tabs.tabs.value
+    .map((tab) =>
+      tab.readingState.translationBooks.value?.books.find(
+        (b) => b.id === annotation.bookId
+      )
+    )
+    .find((b) => b !== undefined);
+  return catalogBook?.name ?? catalogBook?.commonName ?? annotation.bookId;
 }
 
 /** Formats an annotation's book/chapter/verse targeting, e.g. "Genesis 3:3-5,7". */

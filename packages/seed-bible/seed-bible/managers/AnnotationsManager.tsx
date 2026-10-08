@@ -1385,10 +1385,11 @@ export function createAnnotationsManager(
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
 
-  // Keeps a new annotation's verse targeting in sync with the reader's live
-  // text selection for as long as it's being drafted, so the user can select
-  // verses before, during, or after opening the composer and always see (and
-  // save) the current selection - no manual verse-range controls needed.
+  // Keeps a new annotation's chapter and verse targeting in sync with the
+  // reader's live position and text selection for as long as it's being
+  // drafted, so the user can navigate and select verses before, during, or
+  // after opening the composer and always see (and save) where they are - no
+  // manual verse-range controls needed.
   effect(() => {
     if (!isDraftingNewAnnotation.value) {
       return;
@@ -1401,19 +1402,27 @@ export function createAnnotationsManager(
     if (!current || !tab) {
       return;
     }
-    const targeting = deriveVerseTargeting(
-      tab,
-      current.bookId,
-      current.chapterNumber
-    );
+    // A tab with no chapter loaded (mid-navigation) keeps the draft where it
+    // was rather than leaving it with nowhere to be saved.
+    const bookId = tab.readingState.bookId.value ?? current.bookId;
+    const chapterNumber =
+      tab.readingState.chapterNumber.value || current.chapterNumber;
+    const targeting = deriveVerseTargeting(tab, bookId, chapterNumber);
     if (
+      current.bookId === bookId &&
+      current.chapterNumber === chapterNumber &&
       current.verseNumber === targeting.verseNumber &&
       current.endVerseNumber === targeting.endVerseNumber &&
       verseNumbersEqual(current.verseNumbers ?? null, targeting.verseNumbers)
     ) {
       return;
     }
-    editingAnnotation.value = { ...current, ...targeting };
+    editingAnnotation.value = {
+      ...current,
+      bookId,
+      chapterNumber,
+      ...targeting,
+    };
   });
 
   const createNewAnnotation = async (): Promise<void> => {
