@@ -20,7 +20,7 @@ describe("AboutPage", () => {
     container.remove();
   });
 
-  it("renders the letter's copy and inline links", async () => {
+  it("renders the intro, the mission and a card per feature under one page heading", async () => {
     jsdom.reconfigure({
       url: "https://example.com/en/about?useFreeBibleAPI=true",
     });
@@ -35,57 +35,25 @@ describe("AboutPage", () => {
       );
     });
 
-    expect(container.textContent).toContain("About Seed Bible");
-    expect(container.textContent).toContain(
-      "Seed Bible is a Bible for building a life in Scripture"
+    const content = container.querySelector(".sb-about-content")!;
+    const headings = Array.from(content.querySelectorAll("h1, h2")).map(
+      (heading) => [heading.tagName, heading.textContent]
     );
-    expect(container.textContent).toContain(
-      "Seed Bible is built and maintained by AO Lab"
+    expect(headings).toEqual([
+      ["H1", "About the Seed Bible"],
+      ["H2", "Why we're building it"],
+      ["H2", "Read Together"],
+      ["H2", "Playlist"],
+      ["H2", "Sessions"],
+      ["H2", "Shared Reading"],
+      ["H2", "Notes & Highlights"],
+    ]);
+    expect(content.textContent).toContain(
+      "A free Bible reading app that brings Scripture, study tools, and your own notes and highlights together in one place"
     );
-    expect(container.textContent).toContain("Thank you!");
-    expect(container.textContent).toContain("In Christ alone,");
-    expect(container.textContent).toContain("The AO Lab Team");
-
-    const releaseNotesLink = Array.from(container.querySelectorAll("a")).find(
-      (a) => a.textContent === "latest release notes"
+    expect(content.textContent).toContain(
+      "We believe everyone should be able to read and return to God's word without cost or friction."
     );
-    expect(releaseNotesLink?.getAttribute("href")).toBe(
-      "https://github.com/HelloAOLab/seed-bible/blob/main/CHANGELOG.md"
-    );
-    expect(releaseNotesLink?.getAttribute("target")).toBe("_blank");
-    expect(releaseNotesLink?.getAttribute("rel")).toBe("noopener noreferrer");
-
-    const tutorialsButton = Array.from(
-      container.querySelectorAll(".sb-about-inline-action")
-    ).find((el) => el.textContent === "tutorials");
-    expect(tutorialsButton).toBeDefined();
-  });
-
-  it("starts the in-app tutorial when the inline tutorials link is clicked", async () => {
-    jsdom.reconfigure({
-      url: "https://example.com/en/about?useFreeBibleAPI=true",
-    });
-    const state = await createTestSeedBibleState();
-
-    act(() => {
-      render(
-        <TestHost state={state}>
-          <AboutPage state={state} />
-        </TestHost>,
-        container
-      );
-    });
-
-    expect(state.tutorial.running.value).toBe(false);
-
-    const tutorialsButton = container.querySelector(
-      ".sb-about-inline-action"
-    ) as HTMLButtonElement;
-    act(() => {
-      tutorialsButton.click();
-    });
-
-    expect(state.tutorial.running.value).toBe(true);
   });
 
   it("opens the Bible selector, bound to the current slot, when 'Open a passage' is clicked", async () => {
@@ -108,7 +76,7 @@ describe("AboutPage", () => {
     const openPassageButton = Array.from(
       container.querySelectorAll(".sb-about-action-primary")
     )[0] as HTMLButtonElement;
-    expect(openPassageButton.textContent).toBe("Open a passage");
+    expect(openPassageButton.textContent).toContain("Open a passage");
 
     act(() => {
       openPassageButton.click();

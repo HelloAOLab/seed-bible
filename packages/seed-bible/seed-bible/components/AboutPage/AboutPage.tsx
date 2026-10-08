@@ -20,7 +20,7 @@ const DISCORD_URL = "https://discord.com/invite/NbEZMCJmqC";
 /** The pane header title for the About page (see `SeedBibleStateManager.tsx`). */
 export function AboutPaneTitle() {
   const { t } = useI18n();
-  return <>{t("about-title", { defaultValue: "About Seed Bible" })}</>;
+  return <>{t("about-hero-title", { defaultValue: "About the Seed Bible" })}</>;
 }
 
 type CardVariant = "hero" | "highlight" | "feature";
@@ -94,7 +94,9 @@ export function AboutPage({
           isWide
           icon={<SeedBibleIcon width={28} height={28} />}
           variant="hero"
-          title={t("about-title", { defaultValue: "About the Seed Bible" })}
+          title={t("about-hero-title", {
+            defaultValue: "About the Seed Bible",
+          })}
           body={t("about-intro-community", {
             defaultValue:
               "A free Bible reading app that brings Scripture, study tools, and your own notes and highlights together in one place — online, on any device, in dozens of languages.",
