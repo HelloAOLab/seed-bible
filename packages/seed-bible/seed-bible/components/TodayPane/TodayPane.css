@@ -896,7 +896,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 1.25rem;
-  gap: 0.25rem;
+  gap: 0.375rem;
   background-color: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
   white-space: nowrap;
@@ -904,9 +904,9 @@
 
 .sb-today-container
   .sb-today-bookmarks-section
-  .sb-today-bookmarks-section-bookmark
-  > span {
-  font-size: 1rem;
+  .sb-today-bookmarks-section-bookmark-location {
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 @media (width <= 480px) {

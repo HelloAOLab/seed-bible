@@ -373,6 +373,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       getSaveForLocation: vi.fn(() => undefined),
       addSave: vi.fn(async () => {}),
     },
+    bookmarks: {
+      getBookmarksForLocation: vi.fn(() => []),
+    },
     login: {
       userId: signal<string | null>(null),
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
@@ -4253,6 +4256,9 @@ describe("BibleReader", () => {
       saves: {
         isLocationSaved: vi.fn(() => false),
       },
+      bookmarks: {
+        getBookmarksForLocation: vi.fn(() => []),
+      },
       friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
@@ -4388,14 +4394,14 @@ describe("BibleReader", () => {
       );
     });
 
-    // Hidden behind SHOW_BOOKMARK_BUTTON until #1658. The placeholder and its
-    // "coming soon" toast are still in the file, just not rendered — flipping
-    // the flag is what brings them back.
-    it("shows no bookmark button beside it while bookmarks are off", () => {
+    it("shows the bookmark button beside it", () => {
       renderHeader(createMobileState());
 
       expect(saveButton()).not.toBeNull();
-      expect(bookmarkButton()).toBeNull();
+      expect(bookmarkButton()).not.toBeNull();
+      expect(bookmarkButton()!.getAttribute("aria-label")).toBe(
+        "Bookmark this chapter"
+      );
     });
 
     // The two header clusters are built separately, and they had drifted:

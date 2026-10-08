@@ -23,6 +23,8 @@ function bookmark(
 ): BookmarkStripItem {
   return {
     id: "b1",
+    name: "My bookmark",
+    colorId: "orange",
     bookId: "GEN",
     chapterNumber: 3,
     translationId: "T1",
@@ -122,9 +124,10 @@ describe("BookmarksSection", () => {
     container.querySelector<HTMLButtonElement>(
       ".sb-today-titled-section-header > button"
     );
+  /** Where each chip says its bookmark sits, e.g. "Genesis 3". */
   const chipTexts = () => {
     const chips = container.querySelectorAll(
-      ".sb-today-bookmarks-section-container .sb-today-bookmarks-section-bookmark"
+      ".sb-today-bookmarks-section-container .sb-today-bookmarks-section-bookmark-location"
     );
     return Array.from(chips).map((el) => el.textContent);
   };
@@ -140,21 +143,20 @@ describe("BookmarksSection", () => {
     });
   });
 
-  describe("the chip's bookmark glyph", () => {
-    // The glyph is shared with the tab sidebar, which draws it filled and
-    // thinner. The chip's chunky outline only survives because it overrides
-    // both, and nothing else here would notice if it stopped.
-    it("draws a heavier outline than the shared default", () => {
-      setup();
-      const icon = firstChip().querySelector("svg")!;
-      expect(icon.getAttribute("stroke-width")).toBe("3");
-      expect(icon.getAttribute("fill")).toBe("none");
+  describe("each chip", () => {
+    it("names its bookmark", () => {
+      setup({ bookmarks: signal([bookmark({ name: "Reading plan" })]) });
+      expect(
+        firstChip().querySelector(".sb-today-bookmarks-section-bookmark-name")!
+          .textContent
+      ).toBe("Reading plan");
     });
 
-    it("takes its colour from the chip so the theme reaches it", () => {
-      setup();
-      const icon = firstChip().querySelector("svg")!;
-      expect(icon.getAttribute("stroke")).toBe("currentColor");
+    // Through the theme variable, so the color follows light and dark mode.
+    it("fills its glyph with the bookmark's theme color", () => {
+      setup({ bookmarks: signal([bookmark({ colorId: "blue" })]) });
+      const path = firstChip().querySelector("svg path")!;
+      expect(path.getAttribute("fill")).toBe("var(--sb-bookmark-blue-color)");
     });
   });
 

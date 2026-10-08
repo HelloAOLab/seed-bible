@@ -4,6 +4,12 @@
 
 ### ✨ Added
 
+- Bring back bookmarks as named, colored markers for where you are in a chapter, which you move as you read. ([#1658](https://github.com/HelloAOLab/seed-bible/issues/1658))
+  - The bookmark button above a chapter opens a list of your bookmarks: pick one and press Save to move it to this chapter. If you have none yet, "My bookmark" is already filled in, so your first one is the same two taps. You can add another bookmark or delete one from the same window.
+  - You can have up to 5 bookmarks, across every translation, and several can sit on the same chapter.
+  - The button shows what's on the chapter you're reading: an outline for none, the bookmark's color for one, and a fan of colors for several. Only bookmarks in the translation you're reading count.
+  - Tabs show a dot in the color of the bookmark on their chapter, and your bookmarks are back on the Today screen, most recently moved first.
+  - A Bookmarks panel in the sidebar (and in the More menu on phones) lets you open, rename, recolor or delete them.
 - Show an Apologist team's own content in the Discover pane. When the Apologist extension is opened with `?apologistTeamID=<id>` (plus `apologistApiKey`), each chapter you read is run through Apologist's semantic search, and the team's matching articles, YouTube videos, episodes, media and links appear as discovered content that opens in a modal. Each card names the website it comes from, results that are about a different chapter of the same book are left out, repeats are removed, and results that mention the chapter itself are listed first. Signed-in users can also save their Apologist agent's name, AI model, team ID, host and API key in the extension's settings, plus a name to group the team's content under (otherwise it's grouped by website). The key is stored as a sensitive setting, so it never comes back to the browser, and the extension's requests go through it whenever it's saved. ([#1831](https://github.com/HelloAOLab/seed-bible/issues/1831))
 - Show the reading plans you've created on the "Your content" screen, with a Reading plans chip to see just those, alongside your notes, highlights, saves and playlists. ([#1798](https://github.com/HelloAOLab/seed-bible/issues/1798))
   - Each plan shows where you're up to, and tapping it opens the plan; its menu offers Edit and Delete.

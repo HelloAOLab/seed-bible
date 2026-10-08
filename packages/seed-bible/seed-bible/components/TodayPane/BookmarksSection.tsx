@@ -6,7 +6,7 @@ import {
 } from "@preact/signals";
 import { useLayoutEffect, useRef } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
-import { BookmarkIcon } from "../icons";
+import { BookmarkGlyph } from "../Bookmarks/Bookmarks";
 import { useHorizontalScroll } from "../useHorizontalScroll";
 import { useI18n } from "../../i18n";
 import type { TranslationBooks } from "../../managers/FreeUseBibleAPI";
@@ -16,14 +16,13 @@ import type {
 } from "../../managers/TodayManager";
 
 /**
- * A chapter a bookmark points at. Deliberately not the bookmark record itself:
- * the archival system this strip used to read from became Saves (#1657), and
- * the redesigned bookmarks that will feed it don't exist yet (#1658). Keeping
- * the prop to the four fields the strip actually needs lets the new manager
- * plug in without reshaping the component.
+ * What the strip shows for one bookmark. Only the fields it needs, so the
+ * component depends on no manager.
  */
 export interface BookmarkStripItem {
   id: string;
+  name: string;
+  colorId: string;
   translationId: string;
   bookId: string;
   chapterNumber: number;
@@ -32,17 +31,15 @@ export interface BookmarkStripItem {
 /** One bookmark chip: its label, and where tapping it goes. */
 interface BookmarkData {
   key: string;
+  name: string;
+  colorId: string;
   text: string;
   handleClick: () => void;
 }
 
 /**
- * Flat strip of bookmark chips on the Today screen.
- *
- * Not rendered anywhere right now — #1657 took saves off Today, and #1658 puts
- * bookmarks in the slot they vacated. What survives here is the part that would
- * otherwise be rewritten from scratch: resolving a book id to its display name
- * per translation, and measuring when the strip has wrapped onto a second row.
+ * Flat strip of bookmark chips on the Today screen, in the order given (most
+ * recently moved first). Tapping one opens its chapter.
  */
 export const BookmarksSection = (props: {
   today: TodayManager;
@@ -95,6 +92,8 @@ export const BookmarksSection = (props: {
         })?.name ?? bookId;
 
       return {
+        name: bookmark.name,
+        colorId: bookmark.colorId,
         text: `${name} ${chapterNumber}`,
         handleClick: () => {
           onOpenPassage({ bookId, chapter: chapterNumber, translationId });
@@ -171,24 +170,24 @@ function BookmarkStrip(props: { chips: BookmarkData[] }) {
   );
 }
 
-function Bookmark(props: { text: string; handleClick: () => void }) {
+function Bookmark(props: {
+  name: string;
+  colorId: string;
+  text: string;
+  handleClick: () => void;
+}) {
   return (
     <button
       className={"sb-today-bookmarks-section-bookmark sb-today-clickable"}
       onClick={props.handleClick}
     >
-      {/*
-        A heavier stroke than core's default, which is what gives the chip its
-        chunky look at this size. Colour comes from the button's own `color`
-        through `currentColor`.
-      */}
-      <BookmarkIcon
-        width="16"
-        height="16"
-        stroke-width="3"
-        aria-hidden="true"
-      />
-      {props.text}
+      <BookmarkGlyph colorId={props.colorId} size={16} />
+      <span className="sb-today-bookmarks-section-bookmark-name">
+        {props.name}
+      </span>
+      <span className="sb-today-bookmarks-section-bookmark-location">
+        {props.text}
+      </span>
     </button>
   );
 }

@@ -224,6 +224,12 @@ function createSavesStub() {
   };
 }
 
+function createBookmarksStub() {
+  return {
+    getBookmarksForLocation: vi.fn(() => []),
+  };
+}
+
 function createMobileState(): SeedBibleState {
   const discover = createDiscoverManager();
   return {
@@ -256,6 +262,7 @@ function createMobileState(): SeedBibleState {
     },
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
+    bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
@@ -311,6 +318,7 @@ function createDesktopState(): SeedBibleState {
     },
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
+    bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
