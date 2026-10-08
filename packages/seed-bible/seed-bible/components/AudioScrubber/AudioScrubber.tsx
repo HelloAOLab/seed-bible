@@ -45,7 +45,8 @@ interface AudioScrubberProps {
  *
  * Playback only moves when the handle is let go; until then the bar previews
  * where it would land, with a card above the handle naming the verse there
- * (and its section heading, when it starts one). Speech counted in verses snaps to whole verses, since
+ * (and its section heading, when it starts one), and a tick wherever a verse
+ * starts — a thicker one where a section does. Speech counted in verses snaps to whole verses, since
  * there's nowhere in between to land.
  */
 export function AudioScrubber(props: AudioScrubberProps) {
@@ -83,10 +84,18 @@ export function AudioScrubber(props: AudioScrubberProps) {
   // A verse position names the verse being read, so the last one is one short
   // of the count; a recording can be wound right to its end.
   const lastPosition = byVerse ? Math.max(0, (duration ?? 0) - 1) : duration;
-  const preview =
-    dragTime.value !== null
-      ? (playback.verseAt?.(dragTime.value) ?? null)
-      : null;
+  const isDragging = dragTime.value !== null;
+  const preview = isDragging
+    ? (playback.verseAt?.(dragTime.value!) ?? null)
+    : null;
+  // The first verse starts at the very beginning, where a tick would only
+  // blur the end of the bar.
+  const marks =
+    isDragging && duration
+      ? (playback.verseMarks?.() ?? []).filter(
+          (mark) => mark.position > 0 && mark.position <= duration
+        )
+      : [];
 
   /** The playback time under `clientX`, or null if the bar can't say yet. */
   const timeAt = (clientX: number): number | null => {
@@ -218,6 +227,18 @@ export function AudioScrubber(props: AudioScrubberProps) {
       >
         <div className="sb-audio-scrubber-track">
           <div className="sb-audio-scrubber-fill" style={{ width: percent }} />
+          {marks.map((mark) => (
+            <div
+              key={mark.position}
+              className={`sb-audio-scrubber-tick${
+                mark.startsSection ? " sb-audio-scrubber-tick-section" : ""
+              }`}
+              style={{
+                insetInlineStart: `${(mark.position / duration!) * 100}%`,
+              }}
+              aria-hidden="true"
+            />
+          ))}
           <div
             className="sb-audio-scrubber-handle"
             style={{ insetInlineStart: percent }}

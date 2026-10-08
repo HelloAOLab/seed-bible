@@ -48,6 +48,19 @@ export interface AudioPlaybackController {
    * recording's verse timings have loaded.
    */
   verseAt?: (position: number) => PlaybackVerse | null;
+
+  /**
+   * Where each verse starts, in `unit`s, for the tick marks the scrubber shows
+   * while being dragged. Empty (or left out) when there's no telling.
+   */
+  verseMarks?: () => PlaybackVerseMark[];
+}
+
+/** One verse's start, as a tick on the scrubber. */
+export interface PlaybackVerseMark {
+  position: number;
+  /** Whether a heading sits directly above the verse; drawn thicker. */
+  startsSection: boolean;
 }
 
 /** A verse as the scrubber's preview names it. */

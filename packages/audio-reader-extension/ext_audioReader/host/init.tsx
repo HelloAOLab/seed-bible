@@ -8,6 +8,7 @@ import {
   type AudioPlaybackController,
   type AudioPlaybackManager,
   type PlaybackVerse,
+  type PlaybackVerseMark,
   type BibleReadingState,
   type ChapterVerse,
   type QuickToolContext,
@@ -571,6 +572,16 @@ const playbackController: AudioPlaybackController = {
     if (number === undefined) return null;
     return { number, heading: verseTrack.headings.get(number) ?? null };
   },
+  verseMarks: (): PlaybackVerseMark[] => {
+    if (!verseTrack) return [];
+    const { startTimes, verseNumbers, headings } = verseTrack;
+    return startTimes.flatMap((position, index) => {
+      const number = verseNumbers[index];
+      return number === undefined
+        ? []
+        : [{ position, startsSection: headings.has(number) }];
+    });
+  },
 };
 
 /**
@@ -836,6 +847,14 @@ const speechController: AudioPlaybackController = {
       number: verse.number,
       heading: speechSession.headings.get(verse.number) ?? null,
     };
+  },
+  verseMarks: (): PlaybackVerseMark[] => {
+    if (!speechSession) return [];
+    const { verses, headings } = speechSession;
+    return verses.map((verse, index) => ({
+      position: index,
+      startsSection: headings.has(verse.number),
+    }));
   },
 };
 

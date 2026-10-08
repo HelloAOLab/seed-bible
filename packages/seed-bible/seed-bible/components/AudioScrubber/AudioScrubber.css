@@ -77,6 +77,40 @@
   outline-offset: 0.25rem;
 }
 
+/* Where each verse starts, shown while the handle is dragged. Centred on the
+   verse's start and drawn over both the filled and unfilled bar. */
+.sb-audio-scrubber-tick {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 0.625rem;
+  margin-inline-start: -0.5px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  transform: translateY(-50%);
+  pointer-events: none;
+  animation: sb-audio-scrubber-tick-in 0.15s ease-out;
+}
+
+/* A verse that starts a section. */
+.sb-audio-scrubber-tick-section {
+  width: 2px;
+  margin-inline-start: -1px;
+}
+
+@keyframes sb-audio-scrubber-tick-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scaleY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-audio-scrubber-tick {
+    animation: none;
+  }
+}
+
 /* Names the verse the handle is over while it's dragged. Slides from sitting
    right of the handle at the start of the bar to left of it at the end, so it
    never runs off either edge. */

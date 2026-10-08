@@ -183,6 +183,18 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
     expect(playback.verseAt?.(99)).toEqual({ number: 5, heading: null });
   });
 
+  it("marks where each verse starts, noting the one that starts a section", () => {
+    const playback = startListening();
+
+    expect(playback.verseMarks?.()).toEqual([
+      { position: 0, startsSection: false },
+      { position: 1, startsSection: false },
+      { position: 2, startsSection: true },
+      { position: 3, startsSection: false },
+      { position: 4, startsSection: false },
+    ]);
+  });
+
   it("keeps a seek inside the chapter and on a whole verse", () => {
     const playback = startListening();
     playback.pause();

@@ -366,6 +366,55 @@ describe("AudioScrubber", () => {
     });
   });
 
+  describe("verse tick marks", () => {
+    /** Verses start at 0s, 25s and 60s; the one at 60s starts a section. */
+    function withMarks(playback: AudioPlaybackController) {
+      return {
+        ...playback,
+        verseMarks: () => [
+          { position: 0, startsSection: false },
+          { position: 25, startsSection: false },
+          { position: 60, startsSection: true },
+        ],
+      };
+    }
+
+    const ticks = () => [
+      ...container.querySelectorAll<HTMLElement>(".sb-audio-scrubber-tick"),
+    ];
+
+    it("shows a tick where each verse starts, only while the handle is dragged", async () => {
+      const { playback } = createPlayback();
+      await renderScrubber(withMarks(playback));
+      await pointer("pointerenter", "mouse");
+      expect(ticks()).toHaveLength(0);
+
+      await pointer("pointerdown", "mouse", TRACK_LEFT + 20);
+      // The first verse's tick, at the very start, is left out.
+      expect(ticks().map((tick) => tick.style.insetInlineStart)).toEqual([
+        "25%",
+        "60%",
+      ]);
+
+      await pointer("pointerup", "mouse", TRACK_LEFT + 20);
+      expect(ticks()).toHaveLength(0);
+    });
+
+    it("draws a thicker tick where a verse starts a section", async () => {
+      const { playback } = createPlayback();
+      await renderScrubber(withMarks(playback));
+
+      await pointer("pointerenter", "mouse");
+      await pointer("pointerdown", "mouse", TRACK_LEFT + 20);
+
+      expect(
+        ticks().map((tick) =>
+          tick.classList.contains("sb-audio-scrubber-tick-section")
+        )
+      ).toEqual([false, true]);
+    });
+  });
+
   describe("for speech counted in verses", () => {
     /** Twelve verses, reading the fourth. */
     function createVersePlayback() {

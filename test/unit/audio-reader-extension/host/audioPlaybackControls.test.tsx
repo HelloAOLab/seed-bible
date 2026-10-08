@@ -246,6 +246,19 @@ describe("audio-reader playback controls", () => {
     expect(playback.verseAt?.(6)).toEqual({ number: 2, heading: null });
   });
 
+  it("marks where each verse starts in the recording", async () => {
+    pressPlay();
+    const playback = state.audioPlayback.active.value!;
+    expect(playback.verseMarks?.()).toEqual([]);
+
+    await startChapterOne();
+
+    expect(playback.verseMarks?.()).toEqual([
+      { position: 0, startsSection: false },
+      { position: 5, startsSection: false },
+    ]);
+  });
+
   it("keeps a seek inside the recording", async () => {
     const playback = await startChapterOne();
     reportDuration(10);
