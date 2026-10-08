@@ -283,7 +283,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover: { scrollToVerse: signal(null), view: signal(null) },
     playlists: {
       playing: signal(null),
     },
@@ -2275,6 +2275,48 @@ describe("BibleReader", () => {
       chapterNumber: 1,
       verseNumber: 1,
     });
+    expect(state.discover.view.value).toBeNull();
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("clicking an annotated verse number on desktop opens the full Discover pane on its note when the compact discover panel is turned off", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    readingState.discoverContentPanelInline.value = false;
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
+    state.settings.settings.value = {
+      ...state.settings.settings.value,
+      discoveredContent: { showContent: false },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerseNumber = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number-annotated'
+    ) as HTMLElement;
+
+    act(() => {
+      annotatedVerseNumber.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(state.discover.view.value).toBe("discover");
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+    });
+    expect(readingState.discoverContentPanelInline.value).toBe(false);
     expect(selectVerse).not.toHaveBeenCalled();
   });
 
@@ -2461,7 +2503,45 @@ describe("BibleReader", () => {
       chapterNumber: 1,
       verseNumber: 3,
     });
+    expect(state.discover.view.value).toBeNull();
     expect(state.app.openDiscover).not.toHaveBeenCalled();
+  });
+
+  it("clicking the mobile header notes button opens the full Discover pane on the earliest annotated verse when the compact discover panel is turned off", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    state.settings.settings.value = {
+      ...state.settings.settings.value,
+      discoveredContent: { showContent: false },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const notesButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-notes"
+    ) as HTMLElement;
+    expect(notesButton).not.toBeNull();
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.view.value).toBe("discover");
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+    });
   });
 
   it("falls back to opening the full Discover pane when no annotation targets a specific verse", () => {

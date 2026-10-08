@@ -226,6 +226,9 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
           state.app.openDiscover();
           return;
         }
+        if (!state.settings.settings.value.discoveredContent.showContent) {
+          state.discover.view.value = "discover";
+        }
         state.discover.scrollToVerse.value = {
           bookId,
           chapterNumber,
@@ -2529,7 +2532,12 @@ export function BibleReader(props: BibleReaderProps) {
       return;
     }
 
-    readingState.discoverContentPanelInline.value = true;
+    if (state.settings.settings.value.discoveredContent.showContent) {
+      readingState.discoverContentPanelInline.value = true;
+    } else {
+      state.discover.view.value = "discover";
+    }
+
     // AnnotationsSection's shared effect reacts to this target either way —
     // scrolling to and highlighting the note's group — whether it's mounted
     // in this tab's compact panel or the toolbar-toggled Discover pane.
