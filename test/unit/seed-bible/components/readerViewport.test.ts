@@ -21,6 +21,7 @@ describe("revealReadAlongVerse", () => {
   let scroller: HTMLDivElement;
   let verse: HTMLSpanElement;
   let scrollBy: ReturnType<typeof vi.fn>;
+  let scrollTo: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     // A scroller filling the screen from 0 to 800px, with the bottom toolbar
@@ -35,6 +36,8 @@ describe("revealReadAlongVerse", () => {
     placeAt(scroller, 0, 800);
     scrollBy = vi.fn();
     scroller.scrollBy = scrollBy as unknown as HTMLElement["scrollBy"];
+    scrollTo = vi.fn();
+    scroller.scrollTo = scrollTo as unknown as HTMLElement["scrollTo"];
     document.documentElement.style.setProperty(
       "--sb-reader-bottom-inset",
       "100px"
@@ -104,6 +107,88 @@ describe("revealReadAlongVerse", () => {
       top: -36,
       behavior: "smooth",
     });
+  });
+
+  describe("on a phone, where the header hides while scrolling down", () => {
+    let header: HTMLDivElement;
+
+    beforeEach(() => {
+      header = document.createElement("div");
+      header.className = "sb-bible-reader-mobile-header";
+      reader.prepend(header);
+      // The scroller keeps the header's 40px free at its top.
+      scroller.style.paddingTop = "40px";
+      // Hidden: collapsed to nothing at the top of the screen.
+      placeAt(header, 0, 0);
+    });
+
+    it("lands a verse above the screen clear of the header that scrolling up brings back", () => {
+      placeAt(verse, -300, -200);
+
+      revealReadAlongVerse(verse, scroller);
+
+      // 16px below the header's 40px, not 16px below the top of the screen.
+      expect(scrollBy).toHaveBeenCalledExactlyOnceWith({
+        top: -356,
+        behavior: "smooth",
+      });
+    });
+
+    it("ignores the hidden header when scrolling down, which keeps it hidden", () => {
+      placeAt(verse, 650, 750);
+
+      revealReadAlongVerse(verse, scroller);
+
+      expect(scrollBy).toHaveBeenCalledExactlyOnceWith({
+        top: 634,
+        behavior: "smooth",
+      });
+    });
+  });
+
+  it("scrolls to the top of the chapter for its first verse, so the title shows too", () => {
+    const chapter = document.createElement("div");
+    chapter.className = "sb-chapter-content";
+    const first = document.createElement("span");
+    first.className = "sb-verse";
+    first.dataset.verseNumber = "1";
+    const second = document.createElement("span");
+    second.className = "sb-verse";
+    second.dataset.verseNumber = "2";
+    chapter.append(first, second);
+    scroller.appendChild(chapter);
+    placeAt(first, -300, -200);
+    placeAt(second, -200, -100);
+
+    revealReadAlongVerse(first, scroller);
+    expect(scrollTo).toHaveBeenCalledExactlyOnceWith({
+      top: 0,
+      behavior: "smooth",
+    });
+    expect(scrollBy).not.toHaveBeenCalled();
+
+    // Any other verse still goes to the top of the screen.
+    revealReadAlongVerse(second, scroller);
+    expect(scrollTo).toHaveBeenCalledOnce();
+    expect(scrollBy).toHaveBeenCalledExactlyOnceWith({
+      top: -216,
+      behavior: "smooth",
+    });
+  });
+
+  it("leaves the first verse alone while it is fully on screen", () => {
+    const chapter = document.createElement("div");
+    chapter.className = "sb-chapter-content";
+    const first = document.createElement("span");
+    first.className = "sb-verse";
+    first.dataset.verseNumber = "1";
+    chapter.append(first);
+    scroller.appendChild(chapter);
+    placeAt(first, 200, 300);
+
+    revealReadAlongVerse(first, scroller);
+
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 
   it("jumps instead of gliding for someone who prefers reduced motion", () => {

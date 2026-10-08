@@ -32,6 +32,15 @@ export function readBottomChromeInset(): number {
   return raw.endsWith("px") ? value : 0;
 }
 
+/** The phone header floating over the top of the reader `within` sits in. */
+function findMobileHeader(within: HTMLElement): Element | null {
+  return (
+    within
+      .closest(".sb-bible-reader")
+      ?.querySelector(".sb-bible-reader-mobile-header") ?? null
+  );
+}
+
 /**
  * Where the reader's text can actually be seen, in viewport pixels: inside
  * `scroller` (or the window, when the page itself scrolls), below the mobile
@@ -52,9 +61,7 @@ export function measureVisibleReaderBounds(
     top = rect.top;
     bottom = rect.bottom;
   }
-  const header = within
-    .closest(".sb-bible-reader")
-    ?.querySelector(".sb-bible-reader-mobile-header");
+  const header = findMobileHeader(within);
   if (header) {
     top = Math.max(top, header.getBoundingClientRect().bottom);
   }
@@ -68,6 +75,9 @@ const READ_ALONG_TOP_GAP_PX = 16;
  * Glides `verse` to the top of the visible reader, unless it is already
  * entirely on screen — so a listener following the narration never has to
  * scroll, and a reader who can already see the verse isn't moved at all.
+ *
+ * The chapter's first verse goes to the very top instead, so the chapter's
+ * title shows above it rather than being left just off screen.
  */
 export function revealReadAlongVerse(
   verse: HTMLElement,
@@ -80,8 +90,49 @@ export function revealReadAlongVerse(
   const reduceMotion =
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  (scroller ?? window).scrollBy({
-    top: rect.top - top - READ_ALONG_TOP_GAP_PX,
-    behavior: reduceMotion ? "auto" : "smooth",
+  const behavior: ScrollBehavior = reduceMotion ? "auto" : "smooth";
+  const target = scroller ?? window;
+
+  const isFirstVerse =
+    verse
+      .closest(".sb-chapter-content")
+      ?.querySelector(".sb-verse[data-verse-number]") === verse;
+  if (isFirstVerse) {
+    target.scrollTo({ top: 0, behavior });
+    return;
+  }
+
+  let landingTop = top;
+  if (rect.top < top) {
+    landingTop = Math.max(
+      landingTop,
+      headerTopAfterScrollingUp(verse, scroller)
+    );
+  }
+  target.scrollBy({
+    top: rect.top - landingTop - READ_ALONG_TOP_GAP_PX,
+    behavior,
   });
+}
+
+/**
+ * Where the visible reader will start once a scroll *up* finishes.
+ *
+ * The phone header hides while the reader scrolls down and comes back as soon
+ * as it scrolls up, so measuring it now — often hidden, with no height at all
+ * — would land the verse right where the header is about to reappear. The
+ * scroller keeps room for the header as its top padding, which holds whether
+ * the header is showing or not.
+ */
+function headerTopAfterScrollingUp(
+  within: HTMLElement,
+  scroller: HTMLElement | null
+): number {
+  const header = findMobileHeader(within);
+  if (!header || !scroller) return 0;
+  const reserved = parseFloat(getComputedStyle(scroller).paddingTop) || 0;
+  return Math.max(
+    header.getBoundingClientRect().bottom,
+    scroller.getBoundingClientRect().top + reserved
+  );
 }
