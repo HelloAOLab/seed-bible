@@ -283,6 +283,26 @@ describe("revealReadAlongVerse", () => {
       });
     });
 
+    it("looks past a line break between the heading and the verse", () => {
+      buildChapter([6, "God's Law Is Holy"]);
+      const lineBreak = document.createElement("div");
+      lineBreak.className = "sb-line-break";
+      chapter.appendChild(lineBreak);
+      const seventh = document.createElement("span");
+      seventh.className = "sb-verse";
+      seventh.dataset.verseNumber = "7";
+      chapter.appendChild(seventh);
+      placeAt(heading("God's Law Is Holy"), 900, 940);
+      placeAt(seventh, 950, 1050);
+
+      revealReadAlongVerse(seventh, scroller);
+
+      expect(scrollBy).toHaveBeenCalledExactlyOnceWith({
+        top: 884,
+        behavior: "smooth",
+      });
+    });
+
     it("ignores a heading further up, past another verse", () => {
       buildChapter(["God's Law Is Holy", 6, 7]);
       placeAt(heading("God's Law Is Holy"), 800, 840);

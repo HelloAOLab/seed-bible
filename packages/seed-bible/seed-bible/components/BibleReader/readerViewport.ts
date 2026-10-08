@@ -122,7 +122,8 @@ export function revealReadAlongVerse(
 
 /**
  * The topmost of the headings directly above `verse` (a section can carry
- * more than one), or null when the verse doesn't start a section.
+ * more than one, and line breaks between them don't count), or null when the
+ * verse doesn't start a section.
  *
  * A highlighted verse sits inside a `display: contents` wrapper, so when the
  * verse opens its wrapper the search continues from the wrapper instead.
@@ -141,10 +142,11 @@ function headingAbove(verse: HTMLElement): HTMLElement | null {
   for (
     let sibling = node.previousElementSibling;
     sibling instanceof HTMLElement &&
-    sibling.classList.contains("sb-chapter-heading");
+    (sibling.classList.contains("sb-chapter-heading") ||
+      sibling.classList.contains("sb-line-break"));
     sibling = sibling.previousElementSibling
   ) {
-    heading = sibling;
+    if (sibling.classList.contains("sb-chapter-heading")) heading = sibling;
   }
   return heading;
 }

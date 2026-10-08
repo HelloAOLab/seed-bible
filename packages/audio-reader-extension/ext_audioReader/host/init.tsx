@@ -355,29 +355,54 @@ export function chapterVerseNumbers(chapter: TranslationBookChapter): number[] {
 }
 
 /**
- * The heading directly above each verse that starts a section, keyed by verse
- * number — the one nearest the verse, when a section carries more than one.
- * A verse with anything else between it and the heading doesn't count, the
- * same rule the reader uses to decide what to bring into view with a verse.
+ * The heading that opens each verse's section, keyed by verse number — the
+ * nearest one, when a section carries more than one.
+ *
+ * Headings come in two shapes, and both count:
+ * - an entry of their own between verses, skipping any line breaks between it
+ *   and the verse (anything else in between, and it isn't this verse's);
+ * - embedded in a verse's own text. One with more of the verse after it
+ *   belongs to that verse. One left at the very end, with nothing after it,
+ *   opens the section the *next* verse starts.
  */
 export function chapterVerseHeadings(
   chapter: TranslationBookChapter
 ): Map<number, string> {
   const headings = new Map<number, string>();
-  let heading: string | null = null;
+  let pending: string | null = null;
   for (const item of chapter.chapter.content) {
     if (item.type === "heading") {
-      heading = item.content
+      pending = item.content
         .filter((part) => typeof part === "string")
         .join(" ");
       continue;
     }
-    if (item.type === "verse" && heading) {
-      headings.set(item.number, heading);
+    if (item.type === "line_break") continue;
+    if (item.type !== "verse") {
+      pending = null;
+      continue;
     }
-    heading = null;
+
+    let own: string | null = pending;
+    let trailing: string | null = null;
+    for (const part of item.content) {
+      if (typeof part === "object" && "heading" in part) {
+        trailing = part.heading;
+      } else if (isVerseText(part) && trailing !== null) {
+        own = trailing;
+        trailing = null;
+      }
+    }
+    if (own) headings.set(item.number, own);
+    pending = trailing;
   }
   return headings;
+}
+
+/** Whether a piece of a verse's content is words that are read out. */
+function isVerseText(part: ChapterVerse["content"][number]): boolean {
+  if (typeof part === "string") return part.trim().length > 0;
+  return "text" in part && part.text.trim().length > 0;
 }
 
 /**
