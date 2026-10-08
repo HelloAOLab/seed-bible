@@ -187,6 +187,11 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
       ],
     });
 
+    // Keep the tool on the sheet's first row: Highlight, Save, Note, Copy, and
+    // Share otherwise take every slot ahead of it.
+    state.tools.unregisterVerseToolbarTool("copy-verse");
+    state.tools.unregisterVerseToolbarTool("share-verse");
+
     const readingState = await selectFirstVerse();
     await renderToolbar();
 
@@ -1484,7 +1489,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   // this and the scrollHeight mock below reports it. 120 fits on screen;
   // individual tests raise it to stand in for a long note.
   let overflowContentHeight = 120;
-  // Height of the Copy / Compare / Share row. 0 matches jsdom (unmeasured),
+  // Height of the drawer's pinned actions. 0 matches jsdom (unmeasured),
   // which leaves the row pinned. Tests raise it for a bar that can't fit.
   let pinnedRowHeight = 0;
 
@@ -1528,9 +1533,9 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       responses: createPrivateEndpointResponses(),
     });
 
-    // The default collapsed row is highlight, save, and note. Copy, Compare,
-    // and Share live in the drawer, so two extra tools are not what makes it
-    // openable — they stand in for actions that scroll with a long note.
+    // The default collapsed row is highlight, save, note, and copy, with Share
+    // already in the drawer. The two extra tools stand in for extension
+    // actions that follow it there.
     for (const id of ["test-extra-one", "test-extra-two"]) {
       state.tools.registerVerseToolbarTool({
         id,
@@ -1549,6 +1554,9 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
+    // Settings changed by a test (e.g. turning highlight colors off) persist
+    // to the device's saved config and would otherwise reach later suites.
+    localStorage.clear();
     if (originalScrollHeight) {
       Object.defineProperty(
         HTMLElement.prototype,
@@ -1684,8 +1692,8 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   });
 
   it("hides the swipe hint once the extra actions are gone", async () => {
-    // Copy and Share always open the drawer, so once they and the two extra
-    // tools are gone, what's left (save, note) fits on one row.
+    // Once Share and the two extra tools are gone, what's left (save, note,
+    // copy) fits on one row.
     state.settings.setSelectionUI({ showHighlightColors: false });
     await renderSheet();
     expect(hint()?.textContent).toContain("Swipe up to see more");
@@ -1693,7 +1701,6 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await act(async () => {
       state.tools.unregisterVerseToolbarTool("test-extra-one");
       state.tools.unregisterVerseToolbarTool("test-extra-two");
-      state.tools.unregisterVerseToolbarTool("copy-verse");
       state.tools.unregisterVerseToolbarTool("share-verse");
     });
 
@@ -1711,7 +1718,21 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(container.querySelector(".sb-verse-toolbar-more-toggle")).toBeNull();
   });
 
-  it("keeps Copy, Compare, and Share out of the collapsed row and pins them once the drawer is open", async () => {
+  const alwaysVisibleLabels = () =>
+    [
+      ...container.querySelectorAll(
+        ".sb-verse-toolbar-cards > .sb-verse-toolbar-action-item .sb-verse-toolbar-action-label"
+      ),
+    ].map((el) => el.textContent);
+
+  const pinnedLabels = () =>
+    [
+      ...container.querySelectorAll(
+        ".sb-verse-toolbar-overflow-pinned .sb-verse-toolbar-action-label"
+      ),
+    ].map((el) => el.textContent);
+
+  it("keeps Highlight, Save, Note, and Copy on the collapsed row ahead of higher-priority extension tools", async () => {
     state.tools.registerVerseToolbarTool({
       id: "compare-verses",
       priority: 250,
@@ -1719,28 +1740,28 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       icon: () => <span className="material-symbols-outlined">compare</span>,
       onSelect: () => {},
     });
+    // Sorts before Note and Copy by priority, as Ask AI and Locations do.
+    state.tools.registerVerseToolbarTool({
+      id: "test-ask-ai",
+      priority: 80,
+      title: "Ask AI",
+      icon: () => <span className="material-symbols-outlined">star</span>,
+      onSelect: () => {},
+    });
     const handle = await renderSheet();
 
-    const alwaysVisible = () =>
-      [
-        ...container.querySelectorAll(
-          ".sb-verse-toolbar-cards > .sb-verse-toolbar-action-item .sb-verse-toolbar-action-label"
-        ),
-      ].map((el) => el.textContent);
-
-    expect(alwaysVisible()).not.toContain("Copy");
-    expect(alwaysVisible()).not.toContain("Compare");
-    expect(alwaysVisible()).not.toContain("Share");
-
-    const pinnedLabels = () =>
-      [
-        ...container.querySelectorAll(
-          ".sb-verse-toolbar-overflow-pinned .sb-verse-toolbar-action-label"
-        ),
-      ].map((el) => el.textContent);
+    const collapsedRow = ["Highlight", "Save", "Note", "Copy"];
+    const drawer = [
+      "Share",
+      "Compare",
+      "Ask AI",
+      "test-extra-one",
+      "test-extra-two",
+    ];
+    expect(alwaysVisibleLabels()).toEqual(collapsedRow);
 
     // In the drawer, but clipped shut until it opens.
-    expect(pinnedLabels()).toEqual(["Copy", "Compare", "Share"]);
+    expect(pinnedLabels()).toEqual(drawer);
     expect(overflow()?.className).toContain("sb-verse-toolbar-overflow-closed");
 
     await press(handle, 500);
@@ -1749,23 +1770,21 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(overflow()?.className).not.toContain(
       "sb-verse-toolbar-overflow-closed"
     );
-    expect(pinnedLabels()).toEqual(["Copy", "Compare", "Share"]);
-    expect(alwaysVisible()).not.toContain("Copy");
+    expect(alwaysVisibleLabels()).toEqual(collapsedRow);
+    expect(pinnedLabels()).toEqual(drawer);
   });
 
-  it("pins only Copy and Share when Compare is not installed", async () => {
+  it("starts the drawer with Share when Compare is not installed", async () => {
     await renderSheet();
 
-    const pinnedLabels = [
-      ...container.querySelectorAll(
-        ".sb-verse-toolbar-overflow-pinned .sb-verse-toolbar-action-label"
-      ),
-    ].map((el) => el.textContent);
-
-    expect(pinnedLabels).toEqual(["Copy", "Share"]);
+    expect(pinnedLabels()).toEqual([
+      "Share",
+      "test-extra-one",
+      "test-extra-two",
+    ]);
   });
 
-  it("keeps Copy, Compare, and Share pinned when the note still has room below them", async () => {
+  it("keeps the drawer's actions pinned when the note still has room below them", async () => {
     overflowContentHeight = 2400;
     pinnedRowHeight = 80;
     const handle = await renderSheet();
@@ -1781,7 +1800,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     ).toBe("80px");
   });
 
-  it("scrolls Copy, Compare, and Share when they are taller than the open drawer", async () => {
+  it("scrolls the drawer's actions when they are taller than the open drawer", async () => {
     overflowContentHeight = 2400;
     pinnedRowHeight = window.innerHeight;
     const handle = await renderSheet();
@@ -2526,6 +2545,11 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   it("keeps a first-row submenu inline, on the card", async () => {
     const onSelect = vi.fn();
     registerMenuTool("primary-menu", "Primary menu", 1, onSelect);
+    // Highlight, Save, Note, Copy, then Share fill the sheet ahead of any
+    // other tool whatever its priority; dropping Copy and Share frees the
+    // fourth slot for this tool.
+    state.tools.unregisterVerseToolbarTool("copy-verse");
+    state.tools.unregisterVerseToolbarTool("share-verse");
     await renderSheet();
 
     const button = toolButton("Primary menu");
