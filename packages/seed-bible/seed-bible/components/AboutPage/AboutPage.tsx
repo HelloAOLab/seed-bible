@@ -96,12 +96,12 @@ export function AboutPage({
           isWide
           icon={<SeedBibleIcon width={28} height={28} />}
           variant="hero"
-          title={t("about-hero-title", {
-            defaultValue: "About the Seed Bible",
+          title={t("about-title", {
+            defaultValue: "About Seed Bible",
           })}
           body={t("about-hero-body", {
             defaultValue:
-              "A free Bible reading app that brings Scripture, study tools, and your own notes and highlights together in one place — online, on any device, in dozens of languages.",
+              "A Bible for those you do life with. Read and study Scripture together, online, on any device, in dozens of languages.",
           })}
         />
         <Card
@@ -113,7 +113,7 @@ export function AboutPage({
           })}
           body={t("about-mission-body", {
             defaultValue:
-              "We believe everyone should be able to read and return to God's word without cost or friction. The Seed Bible exists to make that as easy as opening a browser tab — no barriers, just a Bible poised gently between you and the text.",
+              "We believe access to God's Word should stay simple and dependable. Seed Bible is free forever, with no ads, no paywall, and nothing between you and Scripture.",
           })}
         />
         <Card
@@ -122,7 +122,7 @@ export function AboutPage({
           title={t("about-community-title", { defaultValue: "Read Together" })}
           body={t("about-community-body", {
             defaultValue:
-              "Share what you're reading, or read together with friends in a synced session.",
+              "Faith is meant to be lived together. Seed Bible is built for reading Scripture with your family, your closest friends, and your house church.",
           })}
           variant="feature"
         />
@@ -132,7 +132,16 @@ export function AboutPage({
           title={t("about-playlist-title", { defaultValue: "Playlists" })}
           body={t("about-playlist-body", {
             defaultValue:
-              "Read dozens of free Bible translations, in diverse languages, side by side.",
+              "Gather passages, links, and videos into a path through Scripture to walk through or share.",
+          })}
+        />
+        <Card
+          variant="feature"
+          icon={<CalendarStarIcon width={20} height={20} />}
+          title={t("about-shared-title", { defaultValue: "Community Reading" })}
+          body={t("about-shared-body", {
+            defaultValue:
+              "Follow guided reading plans, or build your own to sustain a daily habit.",
           })}
         />
         <Card
@@ -141,16 +150,7 @@ export function AboutPage({
           title={t("about-sessions-title", { defaultValue: "Sessions" })}
           body={t("about-sessions-body", {
             defaultValue:
-              "Share what you're reading, or read together with friends in a synced session.",
-          })}
-        />
-        <Card
-          variant="feature"
-          icon={<CalendarStarIcon width={20} height={20} />}
-          title={t("about-shared-title", { defaultValue: "Shared Reading" })}
-          body={t("about-shared-body", {
-            defaultValue:
-              "Follow guided reading plans, or build your own to sustain a daily habit.",
+              "Read live with your group, wherever each of you is. Everyone follows along in their heart language.",
           })}
         />
         <Card
@@ -161,7 +161,7 @@ export function AboutPage({
           })}
           body={t("about-content-body", {
             defaultValue:
-              "Highlight verses, take notes, and bookmark passages that matter to you.",
+              "Highlight what speaks to you and write down what you're learning. Your friends' notes show up right in the passage too.",
           })}
         />
         <div className="sb-about-actions">
@@ -217,7 +217,7 @@ export function AboutPage({
             onClick={() => tutorial.start()}
           >
             <MaterialIcon>emoji_objects</MaterialIcon>
-            {t("about-action-tutorials", { defaultValue: "Tutorials" })}
+            {t("take-a-tour", { defaultValue: "Take a tour" })}
           </button>
         </div>
       </article>

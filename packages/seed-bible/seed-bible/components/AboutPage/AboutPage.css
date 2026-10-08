@@ -9,6 +9,8 @@
   background: var(--sb-background);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
+  overflow-x: scroll;
+  scrollbar-width: none;
   container-type: inline-size;
 }
 
@@ -127,7 +129,7 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   margin: 0 auto;
-  padding: 0 0 3rem;
+  padding: 0 0 4rem;
   grid-column: 1 / -1;
   width: 100%;
 }
@@ -158,25 +160,28 @@
   color: var(--sb-primary-font-color);
 }
 
-.sb-about-action-primary:hover {
-  border-color: var(--sb-primary-color);
-  background: transparent;
-  color: var(--sb-primary-color);
-}
-
 .sb-about-action-secondary,
 .sb-about-action-secondary:visited {
   border-color: var(--sb-primary-color);
   background: transparent;
   color: var(--sb-primary-color);
 }
-.sb-about-action-secondary:hover {
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-}
 
 @container (max-width: 768px) {
   .sb-about-content {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (hover: hover) {
+  .sb-about-action-primary:hover {
+    border-color: var(--sb-primary-color);
+    background: transparent;
+    color: var(--sb-primary-color);
+  }
+
+  .sb-about-action-secondary:hover {
+    background: var(--sb-primary-color);
+    color: var(--sb-primary-font-color);
   }
 }
