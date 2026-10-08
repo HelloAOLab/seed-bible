@@ -345,25 +345,33 @@ function getPoemIndentLevel(part: ChapterVerse["content"][0]) {
 function reorderFootnoteBeforeLineBreak(
   content: ChapterVerse["content"]
 ): ChapterVerse["content"] {
-  const reorderedContent = [...content];
+  let reorderedContent: ChapterVerse["content"] | undefined;
 
-  for (let index = 0; index < reorderedContent.length - 1; index += 1) {
-    const currentPart = reorderedContent[index]!;
-    const nextPart = reorderedContent[index + 1]!;
+  for (let index = 0; index < content.length - 1; index += 1) {
+    const currentPart = content[index]!;
+    const nextPart = content[index + 1]!;
 
-    const isLineBreak =
-      typeof currentPart === "object" &&
-      "lineBreak" in currentPart &&
-      currentPart.lineBreak === true;
+    if (isLineBreakPart(currentPart) && isFootnotePart(nextPart)) {
+      reorderedContent ??= [...content];
 
-    if (isLineBreak && isFootnotePart(nextPart)) {
       reorderedContent[index] = nextPart;
       reorderedContent[index + 1] = currentPart;
+
       index += 1;
     }
   }
 
-  return reorderedContent;
+  return reorderedContent ?? content;
+}
+function isLineBreakPart(
+  part: ChapterVerse["content"][0] | undefined
+): boolean {
+  return (
+    !!part &&
+    typeof part === "object" &&
+    "lineBreak" in part &&
+    part.lineBreak === true
+  );
 }
 
 function isFootnotePart(part: ChapterVerse["content"][0] | undefined) {
@@ -523,11 +531,7 @@ function splitVerseIntoSegments(
   for (const part of content) {
     const isFootnote = isFootnotePart(part);
     const indentLevel = getPoemIndentLevel(part);
-    const isLineBreak =
-      part &&
-      typeof part === "object" &&
-      "lineBreak" in part &&
-      part.lineBreak === true;
+    const isLineBreak = isLineBreakPart(part);
 
     if (isFootnote) {
       if (inPoetry) {
@@ -720,13 +724,13 @@ function renderInlineContent(
     return <strong key={index}>{part.heading}</strong>;
   }
 
-  if ("lineBreak" in part && part.lineBreak === true) {
+  if (isLineBreakPart(part)) {
     return <br key={index} />;
   }
 
   if ("noteId" in part && typeof part.noteId === "number") {
     if (!showFootnotes) {
-      return <span> </span>;
+      return <span key={index}> </span>;
     }
     return (
       <span key={index} className="sb-inline-footnote">
@@ -1248,7 +1252,10 @@ function renderChapterContent(
               (noteId) => onOpenFootnote(noteId, null),
               scriptureElements.showHeadings,
               scriptureElements.showFootnotes,
-              scriptureElements.showRedLettering
+              scriptureElements.showRedLettering,
+              [],
+              0,
+              isFootnotePart(entry.content[index + 1])
             )
           )}
         </p>
