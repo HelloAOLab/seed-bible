@@ -1,5 +1,7 @@
 {
   "id": "ext_locations",
+  "autoinstall": true,
+  "dependencies": ["theographic-extension"],
   "translations": {
     "en": {
       "title": "Locations",

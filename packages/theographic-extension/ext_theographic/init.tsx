@@ -6,16 +6,38 @@ import {
   THEOGRAPHIC_EXTENSION_ID,
 } from "./contentTypes";
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
-import type { LocationsExtensionApi } from "@seed-bible/locations-extension";
+import { canMapPlace, createOpenPlace } from "./map";
 import {
+  TheographicRequestError,
   createIndexedDbTheographicStore,
   createTheographicClient,
   createTheographicDiscoverProvider,
   type ReferenceOrigin,
+  type TheographicPlaceEntry,
 } from "./provider";
 
-/** The locations extension's id, under which its API reaches `init`. */
-const LOCATIONS_EXTENSION_ID = "ext_locations";
+/**
+ * What this extension hands to extensions that depend on it (the second
+ * argument of their `init`), keyed under its id, `theographic-extension`.
+ */
+export interface TheographicExtensionApi {
+  /**
+   * The places a chapter mentions, each with the verses it appears in. Empty
+   * for a chapter the dataset has nothing for; rejects when the data can't be
+   * loaded at all.
+   */
+  getChapterPlaces(
+    book: string,
+    chapter: number
+  ): Promise<TheographicPlaceEntry[]>;
+  /** Whether there is anything to draw for a place. */
+  canMapPlace(place: TheographicPlaceEntry): boolean;
+  /**
+   * Opens a place on the map in its own floating pane: its
+   * additionalGeoJSON.json file when it has one, its coordinates otherwise.
+   */
+  openPlace(place: TheographicPlaceEntry): void;
+}
 
 /**
  * Opens `ref` in the tab the card was showing, rather than in a new one.
@@ -55,13 +77,11 @@ export function openInSameTab(
 export default function initTheographicExtension() {
   registerExtension({
     id: THEOGRAPHIC_EXTENSION_ID,
-    // Places are drawn from the locations extension's GeoJSON files where it
-    // has one, found through its API rather than by reading its data directly.
-    dependencies: [LOCATIONS_EXTENSION_ID],
-    init: function* (context: SeedBibleState, dependencies) {
-      const locations = dependencies[LOCATIONS_EXTENSION_ID] as
-        | LocationsExtensionApi
-        | undefined;
+    init: function* (context: SeedBibleState) {
+      const client = createTheographicClient(
+        context.bibleData.api.endpoint,
+        createIndexedDbTheographicStore()
+      );
 
       yield context.discover.registerContentType({
         id: PERSON_CONTENT_TYPE,
@@ -99,18 +119,35 @@ export default function initTheographicExtension() {
 
       yield context.discover.registerDiscoverProvider(
         createTheographicDiscoverProvider({
-          client: createTheographicClient(
-            context.bibleData.api.endpoint,
-            createIndexedDbTheographicStore()
-          ),
+          client,
           data: context.bibleData,
           onReferenceClick: (ref, origin) =>
             openInSameTab(context, ref, origin),
           panes: context.panes,
-          locations,
           isMobile: context.app.isMobile,
         })
       );
+
+      const openPlace = createOpenPlace(context.panes, { client });
+
+      return {
+        async getChapterPlaces(book, chapter) {
+          try {
+            const data = await client.getChapter(book, chapter);
+            return data.chapter.places ?? [];
+          } catch (error) {
+            if (
+              error instanceof TheographicRequestError &&
+              error.reason === "not-found"
+            ) {
+              return [];
+            }
+            throw error;
+          }
+        },
+        canMapPlace,
+        openPlace: (place) => openPlace?.(place),
+      } satisfies TheographicExtensionApi;
     },
   });
 }
