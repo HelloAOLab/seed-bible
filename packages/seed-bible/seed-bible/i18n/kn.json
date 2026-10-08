@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "ಈ ಲೇಔಟ್ ಮೆನುವಿನಿಂದ ಎಷ್ಟು ಪ್ಯಾಸೇಜ್‌ಗಳನ್ನು ಪಕ್ಕಪಕ್ಕದಲ್ಲಿ ಓದಬೇಕೆಂದು ಆರಿಸಿ.",
   "tutorial.addTabTitle": "ಹೆಚ್ಚಿನ ಪ್ಯಾಸೇಜ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ",
   "tutorial.addTabBody": "ಹಲವಾರು ಪುಸ್ತಕಗಳು ಅಥವಾ ಅನುವಾದಗಳನ್ನು ಅಕ್ಕಪಕ್ಕದಲ್ಲಿ ಓದಲು ಹೊಸ ಟ್ಯಾಬ್ ಸೇರಿಸಿ.",
-  "playlist-history": "ಪ್ಲೇಪಟ್ಟಿ ಇತಿಹಾಸ",
   "discover-playlist-history-empty": "ಸೈನ್ ಇನ್ ಆಗಿರುವಾಗ ಉಳಿಸಿದ ಪ್ಲೇಪಟ್ಟಿಯನ್ನು ಪ್ಲೇ ಮಾಡಿ, ಅದು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % ಪೂರ್ಣಗೊಂಡಿದೆ - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ಪೂರ್ಣಗೊಂಡಿದೆ",

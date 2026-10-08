@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Pona mikapo boni okotanga pembenipembeni na menu oyo ya layout.",
   "tutorial.addTabTitle": "Fungola mikapo mosusu",
   "tutorial.addTabBody": "Bakisa tab ya sika mpo na kotánga mikanda to mabongoli mingi pembenipembeni.",
-  "playlist-history": "Histoire ya liste ya ba playlist",
   "discover-playlist-history-empty": "Beta liste ya ba nzembo oyo ebombami tango ozali kokota mpe ekobima awa.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % esili - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % esili",

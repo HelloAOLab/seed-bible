@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Piliin kung ilang sipi ang babasahin nang magkatabi mula sa menu ng layout na ito.",
   "tutorial.addTabTitle": "Magbukas ng mas maraming sipi",
   "tutorial.addTabBody": "Magdagdag ng bagong tab para magbasa ng ilang aklat o pagsasalin nang magkatabi.",
-  "playlist-history": "Kasaysayan ng playlist",
   "discover-playlist-history-empty": "Magpatugtog ng naka-save na playlist habang naka-sign in at lalabas ito rito.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % kumpleto - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % kumpleto",

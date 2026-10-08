@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Bu düzen menüsünden yan yana okunacak pasaj sayısını seçin.",
   "tutorial.addTabTitle": "Daha fazla pasaj açın",
   "tutorial.addTabBody": "Birden fazla kitabı veya çeviriyi yan yana okumak için yeni bir sekme ekleyin.",
-  "playlist-history": "Çalma listesi geçmişi",
   "discover-playlist-history-empty": "Oturumunuz açıkken kaydedilmiş bir oynatma listesini oynatın, liste burada görünecektir.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % tamamlandı - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % tamamlandı",

@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "এই লেআউট মেনু থেকে পাশাপাশি কতগুলো অনুচ্ছেদ পড়বেন তা বেছে নিন।",
   "tutorial.addTabTitle": "আরও পথ খুলুন",
   "tutorial.addTabBody": "একাধিক বই বা অনুবাদ পাশাপাশি পড়ার জন্য একটি নতুন ট্যাব যোগ করুন।",
-  "playlist-history": "প্লেলিস্টের ইতিহাস",
   "discover-playlist-history-empty": "সাইন ইন থাকা অবস্থায় সেভ করা প্লেলিস্ট চালালে তা এখানে দেখা যাবে।",
   "playlist-history-session-summary": "{{time}} - {{percent}} % সম্পন্ন - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % সম্পন্ন",

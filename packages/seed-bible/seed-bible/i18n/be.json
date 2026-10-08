@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Выберыце, колькі ўрыўкаў чытаць побач, з дапамогай гэтага меню макета.",
   "tutorial.addTabTitle": "Адкрыйце больш праходаў",
   "tutorial.addTabBody": "Дадайце новую ўкладку, каб чытаць некалькі кніг або перакладаў побач.",
-  "playlist-history": "Гісторыя плэйлістоў",
   "discover-playlist-history-empty": "Прайграйце захаваны плэйліст, калі ўвайшлі ў сістэму, і ён з'явіцца тут.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % выканана - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % выканана",

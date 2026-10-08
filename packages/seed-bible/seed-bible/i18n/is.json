@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Veldu hversu marga kafla á að lesa hlið við hlið úr þessari uppsetningarvalmynd.",
   "tutorial.addTabTitle": "Opna fleiri kafla",
   "tutorial.addTabBody": "Bættu við nýjum flipa til að lesa nokkrar bækur eða þýðingar hlið við hlið.",
-  "playlist-history": "Saga spilunarlista",
   "discover-playlist-history-empty": "Spilaðu vistaðan spilunarlista þegar þú ert innskráð(ur) og hann birtist hér.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % lokið - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % lokið",

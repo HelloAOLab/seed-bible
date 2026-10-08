@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Энэ байрлалын цэснээс хэдэн хэсгийг зэрэгцүүлэн уншихаа сонгоно уу.",
   "tutorial.addTabTitle": "Илүү олон хэсгийг нээх",
   "tutorial.addTabBody": "Хэд хэдэн ном эсвэл орчуулгыг зэрэгцүүлэн уншихын тулд шинэ таб нэмнэ үү.",
-  "playlist-history": "Тоглуулах жагсаалтын түүх",
   "discover-playlist-history-empty": "Нэвтэрсэн үедээ хадгалсан тоглуулах жагсаалтыг тоглуулбал энд харагдах болно.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % дууссан - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % дууссан",

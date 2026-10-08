@@ -9,6 +9,11 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { ModalContentProps } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { mockBodyMetrics } from "../testUtils/mockExpandableTextMetrics";
+
+// Per-extension strings the tests can supply, keyed by `${ns}:${key}`.
+// Extension titles/descriptions live in the extension's own namespace.
+const extensionStrings = vi.hoisted(() => new Map<string, string>());
 
 // Match the i18n mock used by the other component tests: return the
 // defaultValue (or key) so assertions can rely on the English strings.
@@ -19,8 +24,10 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return {
     ...actual,
     useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
+      t: (key: string, options?: { defaultValue?: string; ns?: string }) =>
+        (options?.ns && extensionStrings.get(`${options.ns}:${key}`)) ??
+        options?.defaultValue ??
+        key,
       language: "en",
     }),
   };
@@ -82,6 +89,14 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       getValue: vi.fn(),
       setValue: vi.fn().mockResolvedValue(undefined),
       clearValue: vi.fn().mockResolvedValue(undefined),
+      getUnusedSensitiveProxies: () => [],
+      isSensitiveValueSet: () => false,
+      getSensitiveValueSource: () => null,
+      hasStoredSensitiveValues: () => false,
+      getSensitiveDestination: () => ({
+        host: "api.example.com",
+        visibility: "private",
+      }),
     },
   } as unknown as SeedBibleState;
 }
@@ -97,6 +112,7 @@ describe("ExtensionsSettingsView", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
+    extensionStrings.clear();
   });
 
   function renderExtensions(entries: ExtensionListEntry[]) {
@@ -182,11 +198,140 @@ describe("ExtensionsSettingsView", () => {
     );
   });
 
+  describe("extensions the active customization hides", () => {
+    function renderWithHidden(
+      entries: ExtensionListEntry[],
+      hiddenIds: string[]
+    ) {
+      const state = createMockState(entries);
+      // "hidden" only applies while a customization is active.
+      (state.customizations.activeCustomization as Signal<unknown>).value = {
+        id: "custom-1",
+        name: "Youth group",
+      };
+      vi.mocked(
+        state.customizations.getActiveExtensionAvailability
+      ).mockImplementation((id: string) =>
+        hiddenIds.includes(id) ? "hidden" : "available"
+      );
+      act(() => {
+        render(<SettingsPage state={state} />, container);
+      });
+      return state;
+    }
+
+    const uninstallButtonFor = (name: string) =>
+      Array.from(container.querySelectorAll(".sb-extension-row"))
+        .find(
+          (row) => row.querySelector(".sb-extension-name")?.textContent === name
+        )
+        ?.querySelector('[aria-label="Uninstall"]') ?? null;
+
+    beforeEach(() => {
+      const registeredSpy = vi
+        .spyOn(ExtensionInitalizer.getInstance(), "isExtensionRegistered")
+        .mockReturnValue(true);
+      onTestFinished(() => registeredSpy.mockRestore());
+    });
+
+    it("still lists a hidden extension under Installed when the viewer has it installed", () => {
+      renderWithHidden(
+        [makeEntry("hidden-installed", true), makeEntry("shown-one", true)],
+        ["hidden-installed"]
+      );
+
+      expect(rowNames()).toEqual(["hidden-installed", "shown-one"]);
+      expect(
+        installedTab().querySelector(".sb-extensions-tab-count")?.textContent
+      ).toBe("2");
+    });
+
+    it("uninstalls a hidden extension that's installed, for this session only", () => {
+      const state = renderWithHidden(
+        [makeEntry("hidden-installed", true)],
+        ["hidden-installed"]
+      );
+
+      act(() => {
+        uninstallButtonFor("hidden-installed")!.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      expect(state.extensions.unloadExtension).toHaveBeenCalledWith(
+        "hidden-installed",
+        { persist: false }
+      );
+    });
+
+    it("never offers a hidden extension on the Available tab", () => {
+      renderWithHidden(
+        [makeEntry("hidden-available", false), makeEntry("shown-one", false)],
+        ["hidden-available"]
+      );
+
+      act(() => {
+        availableTab().dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      expect(rowNames()).toEqual(["shown-one"]);
+      expect(
+        availableTab().querySelector(".sb-extensions-tab-count")?.textContent
+      ).toBe("1");
+    });
+  });
+
   it("shows the outer empty state (no tabs) when there are no extensions at all", () => {
     renderExtensions([]);
 
     expect(container.querySelector(".sb-extensions-tabs")).toBeNull();
     expect(container.textContent).toContain("No extensions available.");
+  });
+
+  it("clamps a long extension description to two lines behind Read more, and expands it on click", () => {
+    extensionStrings.set(
+      "long-one:description",
+      "Interactive 3D visualization of the Bible.\nWith a guided tour on first visit."
+    );
+    // jsdom does no layout, so stand in for a description that runs past
+    // its two lines.
+    const restore = mockBodyMetrics({ scrollHeight: 60, clientHeight: 30 });
+    onTestFinished(restore);
+    renderExtensions([makeEntry("long-one", true)]);
+
+    const description = () =>
+      container.querySelector(".sb-extension-row .sb-extension-description")!;
+    const toggle = () =>
+      description().querySelector<HTMLButtonElement>(
+        ".sb-expandable-text-toggle"
+      )!;
+
+    expect(description().classList).toContain("sb-expandable-text--clamped");
+    expect(description().getAttribute("style")).toContain(
+      "--sb-expandable-text-lines: 2"
+    );
+    expect(toggle().textContent).toBe("Read more");
+
+    act(() => {
+      toggle().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(description().classList).not.toContain(
+      "sb-expandable-text--clamped"
+    );
+    expect(description().textContent).toContain("guided tour");
+    expect(toggle().textContent).toBe("Read less");
+  });
+
+  it("renders no description element for an extension without one", () => {
+    renderExtensions([makeEntry("plain-one", true)]);
+
+    expect(container.querySelector(".sb-extension-name")?.textContent).toBe(
+      "plain-one"
+    );
+    expect(container.querySelector(".sb-extension-description")).toBeNull();
   });
 
   describe("Configure modal", () => {
@@ -348,6 +493,42 @@ describe("ExtensionsSettingsView", () => {
       expect(modalBody.querySelector(".sb-custom-panel")?.textContent).toBe(
         "Custom panel content"
       );
+      expect(
+        modalBody.querySelector("#sb-extension-setting-panel-only-greeting")
+      ).toBeNull();
+    });
+
+    // A custom panel replaces only the generic form. Sensitive values can't go
+    // through an extension's own UI, so without their own section the viewer
+    // would have no way to set them.
+    it("keeps the sensitive settings section alongside a registered panel", () => {
+      const entry = panelOnlyEntry();
+      entry.extension!.meta = {
+        ...entry.extension!.meta,
+        settings: {
+          greeting: { type: "string", default: "Hello" },
+          apiKey: { type: "string", sensitive: "exampleApi" },
+        },
+        sensitive: {
+          exampleApi: {
+            host: "api.example.com",
+            requestMapping: { "headers.authorization.bearer": "apiKey" },
+          },
+        },
+      };
+      const state = renderExtensions([entry]);
+      registerPanel(state, "panel-only", () => (
+        <div className="sb-custom-panel">Custom panel content</div>
+      ));
+
+      openConfigureModal(state);
+
+      expect(modalBody.querySelector(".sb-custom-panel")).not.toBeNull();
+      expect(
+        modalBody.querySelector<HTMLInputElement>(
+          "#sb-extension-setting-panel-only-apiKey"
+        )?.type
+      ).toBe("password");
       expect(
         modalBody.querySelector("#sb-extension-setting-panel-only-greeting")
       ).toBeNull();

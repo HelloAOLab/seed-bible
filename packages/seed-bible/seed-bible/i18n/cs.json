@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "V této nabídce rozvržení vyberte, kolik pasáží chcete číst vedle sebe.",
   "tutorial.addTabTitle": "Otevřít další pasáže",
   "tutorial.addTabBody": "Přidejte novou kartu pro čtení několika knih nebo překladů vedle sebe.",
-  "playlist-history": "Historie playlistů",
   "discover-playlist-history-empty": "Přehrajte si uložený seznam skladeb, když jste přihlášeni, a zobrazí se zde.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % hotovo - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % hotovo",

@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "V tejto ponuke rozloženia si vyberte, koľko pasáží chcete čítať vedľa seba.",
   "tutorial.addTabTitle": "Otvorte ďalšie pasáže",
   "tutorial.addTabBody": "Pridajte novú kartu na čítanie viacerých kníh alebo prekladov vedľa seba.",
-  "playlist-history": "História zoznamov skladieb",
   "discover-playlist-history-empty": "Prehrajte si uložený zoznam skladieb, keď ste prihlásení, a zobrazí sa tu.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % dokončené - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} – {{percent}} % dokončené",

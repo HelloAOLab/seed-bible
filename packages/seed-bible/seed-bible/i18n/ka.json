@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "ამ განლაგების მენიუდან აირჩიეთ, რამდენი პასაჟი წაიკითხოთ გვერდიგვერდ.",
   "tutorial.addTabTitle": "გახსენით მეტი პასაჟი",
   "tutorial.addTabBody": "დაამატეთ ახალი ჩანართი რამდენიმე წიგნის ან თარგმანის გვერდიგვერდ წასაკითხად.",
-  "playlist-history": "დასაკრავი სიის ისტორია",
   "discover-playlist-history-empty": "შესული დროით დაუკარით შენახული დასაკრავი სია და ის აქ გამოჩნდება.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % დასრულებული - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % დასრულებულია",

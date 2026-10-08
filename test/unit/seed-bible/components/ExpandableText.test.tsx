@@ -1,56 +1,23 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { ExpandableText } from "@packages/seed-bible/seed-bible/components/ExpandableText/ExpandableText";
-
-/**
- * jsdom does no layout: every element reports 0 for both widths, so the
- * collapsed line never looks clipped and "Read more" would never appear.
- * These fakes stand in for the browser's measurement of the collapsed line,
- * which is what the component compares.
- *
- * They can only check that the component reacts correctly to a given
- * measurement. Whether the CSS actually clips the line — and so whether the
- * real measurement is the one we think it is — is not observable here, and
- * needs a browser.
- */
-function mockLineWidths(options: { scrollWidth: number; clientWidth: number }) {
-  const isBody = (el: HTMLElement) =>
-    el.classList.contains("sb-expandable-text-body");
-  const originals = (["scrollWidth", "clientWidth"] as const).map(
-    (name) =>
-      [
-        name,
-        Object.getOwnPropertyDescriptor(HTMLElement.prototype, name),
-      ] as const
-  );
-
-  for (const name of ["scrollWidth", "clientWidth"] as const) {
-    Object.defineProperty(HTMLElement.prototype, name, {
-      configurable: true,
-      get(this: HTMLElement) {
-        return isBody(this) ? options[name] : 0;
-      },
-    });
-  }
-
-  return () => {
-    for (const [name, descriptor] of originals) {
-      if (descriptor) {
-        Object.defineProperty(HTMLElement.prototype, name, descriptor);
-      }
-    }
-  };
-}
+import { mockBodyMetrics } from "../testUtils/mockExpandableTextMetrics";
 
 /** A collapsed line whose text is wider than the space it has. */
-const clipped = () => mockLineWidths({ scrollWidth: 400, clientWidth: 200 });
+const clipped = () => mockBodyMetrics({ scrollWidth: 400, clientWidth: 200 });
 /** A collapsed line whose text fits, with a pixel of rounding noise. */
-const fits = () => mockLineWidths({ scrollWidth: 201, clientWidth: 200 });
+const fits = () => mockBodyMetrics({ scrollWidth: 201, clientWidth: 200 });
+/** A multi-line clamp whose text runs past its last visible line. */
+const clampedTall = () =>
+  mockBodyMetrics({ scrollHeight: 60, clientHeight: 30 });
+/** A multi-line clamp whose text fits, with a pixel of rounding noise. */
+const clampedFits = () =>
+  mockBodyMetrics({ scrollHeight: 31, clientHeight: 30 });
 
 function renderText(
   container: HTMLElement,
   text: string,
-  props: { className?: string } = {}
+  props: { className?: string; lines?: number } = {}
 ) {
   act(() => {
     render(
@@ -115,7 +82,7 @@ describe("ExpandableText", () => {
     // scrollWidth one above clientWidth is the rounding case, not real
     // overflow — a description that fits must not be given a control that
     // expands to reveal nothing.
-    const restore = mockLineWidths({ scrollWidth: 201, clientWidth: 200 });
+    const restore = mockBodyMetrics({ scrollWidth: 201, clientWidth: 200 });
     try {
       renderText(container, "A short evening study");
 
@@ -247,5 +214,87 @@ describe("ExpandableText", () => {
     } finally {
       restore();
     }
+  });
+
+  describe("with more than one line", () => {
+    const root = () => container.querySelector(".sb-expandable-text")!;
+
+    it("shows no control when the text fits within its lines", () => {
+      const restore = clampedFits();
+      try {
+        renderText(container, "Fits in two lines", { lines: 2 });
+
+        expect(root().textContent).toBe("Fits in two lines");
+        expect(toggle(container)).toBeNull();
+      } finally {
+        restore();
+      }
+    });
+
+    it("shows the whole text wrapping, not just its first line, when collapsed", () => {
+      const restore = clampedTall();
+      try {
+        const text = "Line one\nLine two\nLine three";
+        renderText(container, text, { lines: 2 });
+
+        // The clamp, not the component, decides what is visible; every line
+        // is handed to it.
+        expect(root().textContent).toContain(text);
+        expect(ellipsis(container)).toBeNull();
+        expect(toggle(container)?.textContent).toBe("Read more");
+      } finally {
+        restore();
+      }
+    });
+
+    it("expands to the full text and collapses again", () => {
+      const restore = clampedTall();
+      try {
+        renderText(
+          container,
+          "A description long enough to need a third line",
+          {
+            lines: 2,
+          }
+        );
+
+        expect(root().classList.contains("sb-expandable-text--clamped")).toBe(
+          true
+        );
+        expect(root().getAttribute("style")).toContain(
+          "--sb-expandable-text-lines: 2"
+        );
+
+        click(toggle(container)!);
+
+        expect(toggle(container)?.textContent).toBe("Read less");
+        expect(toggle(container)?.getAttribute("aria-expanded")).toBe("true");
+        expect(root().classList.contains("sb-expandable-text--clamped")).toBe(
+          false
+        );
+
+        click(toggle(container)!);
+
+        expect(toggle(container)?.textContent).toBe("Read more");
+        expect(root().classList.contains("sb-expandable-text--clamped")).toBe(
+          true
+        );
+      } finally {
+        restore();
+      }
+    });
+
+    it("does not treat a line break as overflow when the lines fit", () => {
+      // Single-line mode reads extra lines off the text; with a multi-line
+      // budget, two short lines are exactly what it has room for.
+      const restore = clampedFits();
+      try {
+        renderText(container, "Line one\nLine two", { lines: 2 });
+
+        expect(toggle(container)).toBeNull();
+      } finally {
+        restore();
+      }
+    });
   });
 });

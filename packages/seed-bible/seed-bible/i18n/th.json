@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "เลือกจำนวนข้อความที่จะอ่านควบคู่กันไปจากเมนูรูปแบบนี้",
   "tutorial.addTabTitle": "เปิดทางเดินเพิ่มเติม",
   "tutorial.addTabBody": "เพิ่มแท็บใหม่เพื่ออ่านหนังสือหรือฉบับแปลหลายเล่มพร้อมกัน",
-  "playlist-history": "ประวัติเพลย์ลิสต์",
   "discover-playlist-history-empty": "เล่นเพลย์ลิสต์ที่บันทึกไว้ขณะเข้าสู่ระบบ แล้วเพลย์ลิสต์นั้นจะปรากฏที่นี่",
   "playlist-history-session-summary": "{{time}} - {{percent}} % เสร็จสมบูรณ์ - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % เสร็จสมบูรณ์",

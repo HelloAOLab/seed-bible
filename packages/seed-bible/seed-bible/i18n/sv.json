@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Välj hur många avsnitt som ska läsas sida vid sida från den här layoutmenyn.",
   "tutorial.addTabTitle": "Öppna fler avsnitt",
   "tutorial.addTabBody": "Lägg till en ny flik för att läsa flera böcker eller översättningar sida vid sida.",
-  "playlist-history": "Spellistahistorik",
   "discover-playlist-history-empty": "Spela en sparad spellista medan du är inloggad så visas den här.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % klart - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % klart",
