@@ -69,6 +69,14 @@ export interface AnnotationsManager {
   listAllAnnotations: () => Promise<Annotation[]>;
 
   /**
+   * Every annotation in one user's record, across the whole Bible. Notes are
+   * written `publicRead`, so this reads another user's notes as well as the
+   * signed-in user's own; the Today community feed uses it for each reader it
+   * follows. Unsorted.
+   */
+  listAllAnnotationsForUser: (userId: string) => Promise<Annotation[]>;
+
+  /**
    * Reactive view of one chapter's annotations, sorted the same way
    * `listAnnotationsForChapter` sorts: from the record override when one was
    * passed to `createAnnotationsManager`, otherwise from the signed-in
@@ -851,8 +859,13 @@ export function createAnnotationsManager(
     if (!recordName) {
       return [];
     }
+    return listAllAnnotationsForUser(recordName);
+  };
 
-    const result = await os.listAllData(recordName);
+  const listAllAnnotationsForUser = async (
+    userId: string
+  ): Promise<Annotation[]> => {
+    const result = await os.listAllData(userId);
     const annotations: Annotation[] = [];
     for (const item of result.items) {
       const parsed = annotationSchema.safeParse(item.data);
@@ -1516,6 +1529,7 @@ export function createAnnotationsManager(
     deleteAnnotation,
     listAnnotationsForChapter,
     listAllAnnotations,
+    listAllAnnotationsForUser,
     getAnnotationsForChapter,
     getUserAnnotationsForChapter,
     visibleAnnotationsForChapter: (bookId, chapterNumber) =>

@@ -117,7 +117,8 @@ describe("Today screen reactivity", () => {
       getVerseText: async () => "In the beginning",
       getTranslationBooks: async () => ({ books: [] }) as never,
       searchVerses: async () => [],
-      getCommunityReading: async () => ({}),
+      communityMembers: signal(["u1"]),
+      getCommunityFeed: async () => [],
       friendReaders: signal([]),
       getReadingHistoryEvents: async () => [],
     });

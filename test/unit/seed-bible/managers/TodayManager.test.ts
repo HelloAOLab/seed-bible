@@ -305,6 +305,11 @@ describe("Today's Community section", () => {
       errorCode: "data_not_found",
       errorMessage: "Data not found",
     } as never);
+    // Nor any notes, which the feed reads alongside reading history.
+    vi.spyOn(state.os, "listAllData").mockResolvedValue({
+      success: true,
+      items: [],
+    });
 
     await act(async () => {
       state.os.sessionKey.value = formatV1SessionKey(
@@ -328,15 +333,18 @@ describe("Today's Community section", () => {
           )
       );
 
-      const reading = await state.today.getCommunityReading({
-        from: nowSeconds - 3600,
-        to: nowSeconds + 3600,
-      });
+      const feed = await state.today.getCommunityFeed(
+        { from: nowSeconds - 3600, to: nowSeconds + 3600 },
+        { crossedPaths: true }
+      );
 
-      expect(reading).toEqual({
-        JHN: { 3: [ME] },
-        PSA: { 23: [FRIEND] },
-      });
+      expect(
+        feed
+          .map((item) =>
+            item.type === "reading" ? `${item.userId}:${item.bookId}` : null
+          )
+          .sort()
+      ).toEqual([`${FRIEND}:PSA`, `${ME}:JHN`].sort());
     } finally {
       // Left signed in, the persisted key would sign the next test's state in.
       state.os.sessionKey.value = null;

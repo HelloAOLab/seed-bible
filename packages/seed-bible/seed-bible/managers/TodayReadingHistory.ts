@@ -13,13 +13,6 @@ export type TimespanOption = {
   timespan: Timespan | undefined;
 };
 
-/** Who read what: book id -> chapter number -> the reader ids who read it. */
-export interface FilteredReading {
-  [bookId: string]: {
-    [chapter: number]: string[];
-  };
-}
-
 /** A concrete resume position: the last book/chapter a user was reading. */
 export type LastReading = { bookId: string; chapter: number };
 
@@ -105,40 +98,34 @@ export async function getUserLastReading(
 }
 
 /**
- * Which chapters each reader finished inside `span`.
- *
- * Readers are keyed by the record name the events were fetched under, not by
- * `event.userId` — the two are not provably the same value, and the card's
- * avatars are matched against the reader list the caller supplied.
+ * The window the community timeline draws for `year`: the twelve months that
+ * end on today's date in that year, so the current year ends today and an
+ * earlier year ends on the same calendar day. Shared by the timeline's year
+ * map and the feed's "all" window, which have to agree on what a year covers.
  */
-export async function getCommunityReading(
-  fetchEvents: FetchReadingEvents,
-  readerIds: readonly string[],
-  span: Timespan
-): Promise<FilteredReading> {
-  const perReader = await Promise.all(
-    readerIds.map((readerId) =>
-      fetchEvents(readerId, span.from, span.to).then((events) => ({
-        readerId,
-        events,
-      }))
-    )
-  );
+export function getTimelineYearWindow(
+  year: number,
+  now: Date = new Date()
+): { startDate: Date; endDate: Date } {
+  const startDate = new Date(now);
+  const endDate = new Date(now);
+  endDate.setFullYear(year);
+  endDate.setHours(23, 59, 59, 999);
+  startDate.setFullYear(year - 1);
+  startDate.setHours(0, 0, 0, 0);
+  return { startDate, endDate };
+}
 
-  const filteredReading: FilteredReading = {};
-  for (const { readerId, events } of perReader) {
-    for (const { bookId, chapter, end } of events) {
-      if (end < span.from || end > span.to) continue;
-
-      const chapters = (filteredReading[bookId] ??= {});
-      const readers = (chapters[chapter] ??= []);
-      if (!readers.includes(readerId)) {
-        readers.push(readerId);
-      }
-    }
-  }
-
-  return filteredReading;
+/** `getTimelineYearWindow` as inclusive unix seconds, for an events query. */
+export function getTimelineYearTimespan(
+  year: number,
+  now: Date = new Date()
+): Timespan {
+  const { startDate, endDate } = getTimelineYearWindow(year, now);
+  return {
+    from: Math.floor(startDate.getTime() / 1000),
+    to: Math.floor(endDate.getTime() / 1000),
+  };
 }
 
 export interface ReadingHistoryStateDeps {
