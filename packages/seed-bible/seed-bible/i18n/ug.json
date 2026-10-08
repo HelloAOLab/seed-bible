@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "بۇ ئورۇنلاشتۇرۇش تىزىملىكىدىن قانچە پارچىنى يانمۇ-يان ئوقۇشنى تاللاڭ.",
   "tutorial.addTabTitle": "كۆپرەك يوللارنى ئېچىڭ",
   "tutorial.addTabBody": "بىر قانچە كىتاب ياكى تەرجىمىلەرنى يانمۇيان ئوقۇش ئۈچۈن يېڭى بەتكۈچ قوشۇڭ.",
-  "playlist-history": "ناخشا تىزىملىكى تارىخى",
   "discover-playlist-history-empty": "تىزىملىتىپ كىرگەندە ساقلانغان قويۇش تىزىملىكىنى قويۇڭ، ئۇ بۇ يەردە كۆرۈنىدۇ.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % تاماملاندى - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % تاماملاندى",

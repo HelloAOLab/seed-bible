@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "આ લેઆઉટ મેનૂમાંથી બાજુમાં બાજુમાં કેટલા ફકરાઓ વાંચવા તે પસંદ કરો.",
   "tutorial.addTabTitle": "વધુ ફકરાઓ ખોલો",
   "tutorial.addTabBody": "સાથે-સાથે અનેક પુસ્તકો અથવા અનુવાદો વાંચવા માટે એક નવું ટેબ ઉમેરો.",
-  "playlist-history": "પ્લેલિસ્ટ ઇતિહાસ",
   "discover-playlist-history-empty": "સાઇન ઇન હોય ત્યારે સાચવેલ પ્લેલિસ્ટ ચલાવો અને તે અહીં દેખાશે.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % પૂર્ણ - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % પૂર્ણ",

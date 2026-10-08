@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Изберете колку пасуси да се читаат еден до друг од ова мени за распоред.",
   "tutorial.addTabTitle": "Отвори повеќе пасуси",
   "tutorial.addTabBody": "Додајте нов таб за да читате неколку книги или преводи една до друга.",
-  "playlist-history": "Историја на плејлистата",
   "discover-playlist-history-empty": "Пуштете зачувана листа за репродукција додека сте најавени и таа ќе се појави тука.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % завршено - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % завршено",

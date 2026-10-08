@@ -1396,7 +1396,10 @@ export function ChatView(props: ChatViewProps) {
             aria-label={t("send-message", { defaultValue: "Send message" })}
             title={t("send-message", { defaultValue: "Send message" })}
           >
-            <span className="material-symbols-outlined" aria-hidden="true">
+            <span
+              className="material-symbols-outlined rtl-mirror"
+              aria-hidden="true"
+            >
               send
             </span>
           </button>

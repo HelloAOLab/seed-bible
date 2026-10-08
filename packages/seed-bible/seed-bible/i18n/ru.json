@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "В этом меню выбора макета выберите, сколько отрывков читать одновременно.",
   "tutorial.addTabTitle": "Откройте больше проходов",
   "tutorial.addTabBody": "Добавьте новую вкладку, чтобы читать несколько книг или переводов одновременно.",
-  "playlist-history": "История плейлистов",
   "discover-playlist-history-empty": "Воспроизведите сохраненный плейлист, войдя в систему, и он отобразится здесь.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % выполнено - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % выполнено",

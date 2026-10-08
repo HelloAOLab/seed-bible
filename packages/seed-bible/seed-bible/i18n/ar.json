@@ -588,7 +588,6 @@
   "offlinePrompt.bodyNoSize": "احتفظ بـ {{name}} على جهازك حتى تتمكن من قراءته بدون اتصال بالإنترنت.",
   "offlinePrompt.save": "احفظ الملف دون اتصال بالإنترنت",
   "offlinePrompt.notNow": "ليس الآن",
-  "playlist-history": "سجل قوائم التشغيل",
   "discover-playlist-history-empty": "قم بتشغيل قائمة التشغيل المحفوظة أثناء تسجيل الدخول وستظهر هنا.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % مكتمل - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % مكتمل",

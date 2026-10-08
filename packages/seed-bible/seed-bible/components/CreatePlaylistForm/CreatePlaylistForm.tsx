@@ -24,11 +24,18 @@ import { playlistItemLabel } from "../playlistItemLabel";
 import { playlistItemIcon } from "../playlistItemIcon";
 import { useDragReorder } from "../useDragReorder";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
+import {
+  PlaylistItemInlinePreview,
+  type ScriptureChapterLoader,
+} from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import type { BibleDataManager } from "../../managers/BibleDataManager";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
   tabs: TabsManager;
   modals: ModalManager;
+  /** Loads chapter text for the inline scripture previews. */
+  bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
@@ -191,13 +198,16 @@ export function requestCancelPlaylistEditor(
 
 /** Create-playlist screen shown inside the discover pane. */
 export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
-  const { playlists, tabs, modals, os, login, gallery } = props;
+  const { playlists, tabs, modals, bibleData, os, login, gallery } = props;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
   // Index of the item currently open for editing in the input section below, or
   // null when the section is adding a new item.
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const inputRef = useRef<PlaylistItemInputHandle>(null);
+  // Index of the item whose preview is expanded beneath it, if any. Only one
+  // is open at a time.
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   // The playlist being edited is owned by the manager; edits update the signal.
   const editing = playlists.editingPlaylist.value;
@@ -228,10 +238,27 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     return book?.name ?? book?.commonName ?? bookId;
   };
 
+  // Scripture without a pinned translation previews in the one being read.
+  const loadChapter: ScriptureChapterLoader | undefined = bibleData
+    ? async (translationId, bookId, chapter) => {
+        const translation =
+          translationId ?? selectedTab?.readingState.translationId.peek();
+        if (!translation) {
+          throw new Error("No translation to preview scripture in.");
+        }
+        return bibleData.getTranslationBookChapter(
+          translation,
+          bookId,
+          chapter
+        );
+      }
+    : undefined;
+
   const { getRowClassName, getHandleProps } = useDragReorder({
     itemCount: editing?.items.length ?? 0,
     onReorder: (from, to) => {
       playlists.reorderEditingPlaylistItem(from, to);
+      setExpandedIndex(null);
       // Keep the edit target pointed at the same logical item, mirroring the
       // arithmetic `reorderQueue` already applies to `currentIndex`.
       setEditingIndex((current) => {
@@ -340,7 +367,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
               <li
                 key={index}
                 className={
-                  "sb-discover-item sb-discover-item--row" +
+                  "sb-discover-item sb-discover-item--row sb-playlist-editor-item" +
                   (index === editingIndex ? " sb-discover-item--editing" : "") +
                   getRowClassName(index)
                 }
@@ -362,7 +389,13 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                     defaultValue: "Edit item",
                   })}
                   aria-current={index === editingIndex}
-                  onClick={() => setEditingIndex(index)}
+                  aria-expanded={index === expandedIndex}
+                  onClick={() => {
+                    setEditingIndex(index);
+                    setExpandedIndex((current) =>
+                      current === index ? null : index
+                    );
+                  }}
                 >
                   <MaterialIcon className="sb-discover-item-icon">
                     {playlistItemIcon(item)}
@@ -379,6 +412,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                   })}
                   onClick={() => {
                     playlists.removeEditingPlaylistItem(index);
+                    setExpandedIndex(null);
                     // Keep the edit target pointed at the same item, or drop out
                     // of editing when the edited item itself was removed.
                     setEditingIndex((current) => {
@@ -390,6 +424,12 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                 >
                   <MaterialIcon>delete</MaterialIcon>
                 </button>
+                {index === expandedIndex ? (
+                  <PlaylistItemInlinePreview
+                    item={item}
+                    loadChapter={loadChapter}
+                  />
+                ) : null}
               </li>
             ))}
           </ul>

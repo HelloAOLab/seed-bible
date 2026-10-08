@@ -3,7 +3,7 @@ import { useSignal } from "@preact/signals";
 import { useCallback, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
-import { hasAnyDiscoverResults } from "../../managers/BibleReadingManager";
+import { getDiscoverPanelContent } from "../../managers/BibleReadingManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   CrossReferencesSection,
@@ -14,14 +14,10 @@ import {
   hasRegisteredContentType,
 } from "../DiscoverPane/DiscoveredResultsSections";
 import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
-import { visibleChapterAnnotations } from "../../managers/AnnotationsManager";
 import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
 import { MaterialIcon } from "../icons";
 import { translateTitle } from "../../app/utils";
-import {
-  getReadingPlansForChapter,
-  ReadingPlansSection,
-} from "../ReadingPlansSection/ReadingPlansSection";
+import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
 import {
   findScrollContainer,
   readBottomChromeInset,
@@ -132,32 +128,15 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   }
 
   const bookId = tab.readingState.bookId.value;
-  const chapterNumber = tab.readingState.chapterNumber.value;
-  const hasAnnotations = Boolean(
-    bookId &&
-    chapterNumber &&
-    visibleChapterAnnotations(
+  const { hasAnnotations, showAnnotations, plans, hasAny } =
+    getDiscoverPanelContent(
+      tab.readingState,
       state.annotations,
-      state.friends.friendIds.value,
-      bookId,
-      chapterNumber
-    ).length > 0
-  );
-  // A note deleted offline is no longer in the chapter list, but it is still
-  // a change that has to reach the server. Keep the section (and its chip)
-  // up so that pending sync stays visible.
-  const pendingAnnotationChanges =
-    bookId && chapterNumber
-      ? state.annotations.pendingCountForChapter(bookId, chapterNumber)
-      : 0;
-  const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
-  const plans = getReadingPlansForChapter(state, tab.readingState);
+      state.readingPlans,
+      state.features
+    );
 
-  if (
-    !showAnnotations &&
-    !hasAnyDiscoverResults(tab.readingState) &&
-    plans.length === 0
-  ) {
+  if (!hasAny) {
     return null;
   }
 

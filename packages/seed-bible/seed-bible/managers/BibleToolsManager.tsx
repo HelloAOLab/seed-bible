@@ -11,10 +11,10 @@ import {
   DEFAULT_BOOK_ID,
   resolveTranslationUiLanguage,
   uiLocaleForDefaultTranslation,
-  hasAnyDiscoverResults,
   type BibleReadingState,
   type BibleSelectedVerse,
   type ReadingPosition,
+  getDiscoverPanelContent,
 } from "../managers/BibleReadingManager";
 import {
   buildReadingPath,
@@ -66,6 +66,7 @@ import {
 import type { FriendsManager } from "./FriendsManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
+import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -428,6 +429,8 @@ export interface QuickToolContext {
   annotations: AnnotationsManager;
 
   features: FeaturesManager;
+
+  readingPlans: ReadingPlansManager;
 
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
@@ -919,18 +922,12 @@ function getDefaultQuickToolbarTools(
         if (c.app?.isMobile?.value || c.app?.isDiscoverOpen?.value) {
           return false;
         }
-        if (hasAnyDiscoverResults(c.readingState)) {
-          return true;
-        }
-        const bookId = c.readingState.bookId.value;
-        const chapterNumber = c.readingState.chapterNumber.value;
-        if (!bookId || !chapterNumber) {
-          return false;
-        }
-        return (
-          c.annotations.visibleAnnotationsForChapter(bookId, chapterNumber)
-            .length > 0
-        );
+        return getDiscoverPanelContent(
+          c.readingState,
+          c.annotations,
+          c.readingPlans,
+          c.features
+        ).hasAny;
       },
       onSelect: (c) => {
         c.readingState.discoverContentPanelInline.value =
@@ -994,6 +991,8 @@ export interface OpenReadingPlansPaneOptions {
   panesManager: PanesManager;
   modals?: ModalManager;
   playlists?: PlaylistManager;
+  /** Loads chapter text for the plan editor's inline scripture previews. */
+  bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
   /** Lets the pane list plans from the user's friends. */
   friends?: FriendsManager;
   /**
@@ -1026,12 +1025,23 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     panesManager,
     modals,
     playlists,
+    bibleData,
     friends,
     os,
     login,
     gallery,
     toast,
   } = options;
+
+  // Scripture without a pinned translation previews in the one being read.
+  const loadChapter: ScriptureChapterLoader | undefined = bibleData
+    ? (translationId, bookId, chapter) =>
+        bibleData.getTranslationBookChapter(
+          translationId ?? readingState.translationId.peek(),
+          bookId,
+          chapter
+        )
+    : undefined;
 
   panesManager.openPane({
     id: "reading-plans-pane",
@@ -1050,6 +1060,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
         friends={friends}
         books={readingState.translationBooks.value?.books ?? []}
         modals={modals}
+        loadChapter={loadChapter}
         os={os}
         login={login}
         gallery={gallery}
@@ -1219,6 +1230,7 @@ function getDefaultToolbarTools(
           panesManager: context.panesManager,
           modals: context.modals,
           playlists: context.playlists,
+          bibleData: context.data,
           os: context.os,
           login: context.login,
           gallery: context.gallery,
@@ -1337,7 +1349,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       // how "Add to Playlist" follows `editingPlaylist`.
       isVisible: (context) =>
         !!context.readingPlans?.editingReadingPlan.value &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS) &&
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value &&
         context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
         const readingPlans = context.readingPlans;

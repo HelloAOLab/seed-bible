@@ -92,7 +92,7 @@ export async function createRealFriendContent(options: {
     tabs,
     options.discover ?? createDiscoverManager(),
     undefined,
-    { store: null }
+    { store: null, friendIds: friends.friendIds }
   );
 
   return { os, login, server, friends, annotations };

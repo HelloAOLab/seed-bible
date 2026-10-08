@@ -588,7 +588,6 @@
   "tutorial.paneLayoutBody": "Wybierz z menu układu, ile fragmentów chcesz czytać obok siebie.",
   "tutorial.addTabTitle": "Otwórz więcej przejść",
   "tutorial.addTabBody": "Dodaj nową kartę, aby czytać kilka książek lub tłumaczeń obok siebie.",
-  "playlist-history": "Historia playlisty",
   "discover-playlist-history-empty": "Odtwórz zapisaną playlistę, będąc zalogowanym, a pojawi się ona tutaj.",
   "playlist-history-session-summary": "{{time}} - {{percent}} % ukończono - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ukończono",
