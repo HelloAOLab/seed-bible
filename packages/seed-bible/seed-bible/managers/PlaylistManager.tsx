@@ -7,7 +7,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import type { CasualOSManager } from "./OsManager";
+import { listAllByAddress, type CasualOSManager } from "./OsManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import { v4 as uuid } from "uuid";
 import type { NavigationManager } from "./NavigationManager";
@@ -33,6 +33,12 @@ import { emphasizeVerses } from "./BibleReadingManager";
 import { BOOK_SLUGS, type BookId } from "./BibleDataManager";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
+import {
+  createFriendContentFreshness,
+  isFriendContentStale,
+  SkippedFriendRead,
+  type FriendReadLimiter,
+} from "./friendContentFreshness";
 import {
   buildSharedPagePath,
   parsePlaylistPagePath,
@@ -943,7 +949,15 @@ export function createPlaylistManager(
   readingExtensionManager: BibleReadingExtensionManager,
   discover: DiscoverManager,
   chats: ChatsManager,
-  initialPlaylistPageSeed?: PlaylistPageSeed
+  initialPlaylistPageSeed?: PlaylistPageSeed,
+  options: {
+    /**
+     * Limits how many friends' reads run at once. Shared with the other
+     * managers that read friends' content, so one limit covers them all.
+     * Omitted means a limit of this manager's own.
+     */
+    friendReads?: FriendReadLimiter;
+  } = {}
 ) {
   const initialPlaybackRequest = playbackRequestFromUrl(
     navigation.initialUrl,
@@ -1387,20 +1401,152 @@ export function createPlaylistManager(
     }
   };
 
-  const listPlaylists = async (recordName: string) => {
-    const records = await os.listDataByMarker(
-      recordName,
-      "publicRead:playlists"
+  const listPlaylists = async (recordName: string, onPage?: () => void) => {
+    // Every page: the server's paging stores return ten records at a time.
+    const records = await listAllByAddress(
+      (lastAddress) =>
+        os.listDataByMarker(recordName, "publicRead:playlists", lastAddress),
+      onPage
     );
-    if (records.success === false) {
-      console.error(
-        "Failed to list playlists:",
-        records.errorCode,
-        records.errorMessage
-      );
-      throw new Error("Failed to list playlists: " + records.errorMessage);
-    }
     return records.items.map((record) => PlaylistSchema.parse(record.data));
+  };
+
+  // Cached playlists for an explicitly-named account, keyed by userId. Only
+  // ever populated via `getUserPlaylists` (never for the signed-in user's own
+  // list, which lives in `userPlaylists` above), so there's no risk of one
+  // account's data leaking into another's view on a sign-in switch — unlike
+  // `AnnotationsManager`/`HighlightsManager`, this cache never needs an
+  // `explicit`-flag/sweep pair to protect it.
+  type UserPlaylistsEntry = {
+    data: Signal<Playlist[]>;
+    settled: boolean;
+    load: Promise<void> | null;
+    /** When the last successful read finished. */
+    loadedAtMs: number | null;
+    /** The last read failed, so coming back to it reads again right away. */
+    loadFailed: boolean;
+  };
+  const friendFreshness = createFriendContentFreshness(options.friendReads);
+  const userPlaylistEntries = new Map<string, UserPlaylistsEntry>();
+  // Identity-stable views handed to callers, keyed by userId. Never pruned:
+  // evicting one would mint a new computed on the next call, breaking
+  // identity for callers still holding the old one.
+  const userPlaylistViews = new Map<string, ReadonlySignal<Playlist[]>>();
+
+  const getOrCreateUserPlaylistsEntry = (
+    userId: string
+  ): UserPlaylistsEntry => {
+    let entry = userPlaylistEntries.get(userId);
+    if (!entry) {
+      const created: UserPlaylistsEntry = {
+        data: friendFreshness.trackedSignal<Playlist[]>([], () =>
+          refreshUserPlaylists(userId, created)
+        ),
+        settled: false,
+        load: null,
+        loadedAtMs: null,
+        loadFailed: false,
+      };
+      entry = created;
+      userPlaylistEntries.set(userId, entry);
+    }
+    return entry;
+  };
+
+  const loadUserPlaylists = async (
+    userId: string,
+    entry: UserPlaylistsEntry
+  ): Promise<void> => {
+    try {
+      const loaded = await friendFreshness.read(entry.data, (progress) =>
+        listPlaylists(userId, progress)
+      );
+      // A load that settled the entry while this request was in the air
+      // holds newer playlists than this response does.
+      if (entry.settled) {
+        return;
+      }
+      entry.data.value = loaded;
+      entry.loadedAtMs = Date.now();
+      entry.loadFailed = false;
+      entry.settled = true;
+    } catch (error) {
+      if (!(error instanceof SkippedFriendRead)) {
+        console.error(`Failed to load playlists for ${userId}:`, error);
+      }
+      if (!entry.settled) {
+        entry.loadFailed = true;
+        // A failed re-read keeps the playlists already shown.
+        if (entry.loadedAtMs === null) {
+          entry.data.value = [];
+        }
+        entry.settled = true;
+      }
+    }
+  };
+
+  /**
+   * Reads a friend's playlists again when they're back on screen or the app
+   * regains focus (see `createFriendContentFreshness`), keeping the ones
+   * already shown until the new list arrives. A read that failed is tried
+   * again then too, however recent it was.
+   */
+  const refreshUserPlaylists = (
+    userId: string,
+    entry: UserPlaylistsEntry
+  ): void => {
+    if (
+      entry.load ||
+      !(entry.loadFailed || isFriendContentStale(entry.loadedAtMs))
+    ) {
+      return;
+    }
+    entry.settled = false;
+    void ensureUserPlaylistsLoaded(userId, entry);
+  };
+
+  const ensureUserPlaylistsLoaded = (
+    userId: string,
+    entry: UserPlaylistsEntry
+  ): Promise<void> | null => {
+    if (entry.settled) {
+      return entry.load;
+    }
+    if (!entry.load) {
+      entry.load = loadUserPlaylists(userId, entry).finally(() => {
+        entry.load = null;
+      });
+    }
+    return entry.load;
+  };
+
+  /**
+   * Reactive view of one account's playlists, pinned to the account passed
+   * in rather than whoever is signed in — this is how a friend's
+   * playlists are read. Playlists are stored world-readable
+   * (`publicRead:playlists`), so this works for any account and does not
+   * require being signed in. Loads lazily on first access, keyed by account.
+   */
+  const getUserPlaylists = (userId: string): ReadonlySignal<Playlist[]> => {
+    let view = userPlaylistViews.get(userId);
+    if (!view) {
+      view = computed(() => {
+        const entry = getOrCreateUserPlaylistsEntry(userId);
+        void ensureUserPlaylistsLoaded(userId, entry);
+        return entry.data.value;
+      });
+      userPlaylistViews.set(userId, view);
+    }
+
+    // Kick the load eagerly so callers see fresh data as soon as possible,
+    // without subscribing this call site to anything (the view itself is
+    // what a caller should read to react to it arriving).
+    void ensureUserPlaylistsLoaded(
+      userId,
+      getOrCreateUserPlaylistsEntry(userId)
+    );
+
+    return view;
   };
 
   /**
@@ -2586,6 +2732,7 @@ export function createPlaylistManager(
     cancelEditingPlaylist,
     isEditingPlaylistDirty,
     listPlaylists,
+    getUserPlaylists,
     loadPlaylist,
     userPlaylists,
     userPlaylistHistory,

@@ -63,6 +63,7 @@ import {
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "./FeaturesManager";
+import type { FriendsManager } from "./FriendsManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
 
@@ -211,6 +212,9 @@ export interface BibleToolContext {
 
   /** Annotations manager, for creating/editing notes on selected verses. */
   annotations?: AnnotationsManager;
+
+  /** The signed-in user's friends, for the Reading Plans pane. */
+  friends?: FriendsManager;
 
   /** Features manager */
   features: FeaturesManager;
@@ -924,7 +928,7 @@ function getDefaultQuickToolbarTools(
           return false;
         }
         return (
-          c.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+          c.annotations.visibleAnnotationsForChapter(bookId, chapterNumber)
             .length > 0
         );
       },
@@ -990,6 +994,8 @@ export interface OpenReadingPlansPaneOptions {
   panesManager: PanesManager;
   modals?: ModalManager;
   playlists?: PlaylistManager;
+  /** Lets the pane list plans from the user's friends. */
+  friends?: FriendsManager;
   /**
    * Passed straight through to the pane: the plan editor uses them to record
    * and reuse a plan's hero image. Optional there too, so a caller without
@@ -1020,6 +1026,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     panesManager,
     modals,
     playlists,
+    friends,
     os,
     login,
     gallery,
@@ -1040,6 +1047,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     component: () => (
       <ReadingPlansPane
         readingPlans={readingPlans}
+        friends={friends}
         books={readingState.translationBooks.value?.books ?? []}
         modals={modals}
         os={os}
@@ -1215,6 +1223,7 @@ function getDefaultToolbarTools(
           login: context.login,
           gallery: context.gallery,
           toast: context.toast,
+          friends: context.friends,
         });
       },
     },

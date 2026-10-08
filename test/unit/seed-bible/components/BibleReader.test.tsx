@@ -28,6 +28,8 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { vi, type Mock } from "vitest";
 import { mockI18nState, resetMockI18n } from "../testUtils/mockI18n";
+import { createRealFriendContent } from "../testUtils/realFriendContent";
+import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 
@@ -374,8 +376,10 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    friends: { friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      visibleAnnotationsForChapter: vi.fn(() => []),
       pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
@@ -2497,8 +2501,10 @@ describe("BibleReader", () => {
         isMobile: signal(isMobile),
         isCompactReader: signal(isMobile),
       },
+      friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+        visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
       },
     } as any as SeedBibleState;
   }
@@ -2700,6 +2706,67 @@ describe("BibleReader", () => {
     expect(state.app.openDiscover).not.toHaveBeenCalled();
   });
 
+  it("offers the mobile header notes button for a friend's note when the user has none, and jumps to it", async () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const mockState = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    // The real managers, so the friend's note is loaded from the server the
+    // way the app loads it.
+    const { login, friends, annotations } = await createRealFriendContent({
+      friendIds: ["friend-1"],
+      notes: {
+        "friend-1": [
+          {
+            id: "friend-note",
+            bookId: "GEN",
+            chapterNumber: 1,
+            verseNumber: 3,
+            data: { type: "comment", html: "<p>Note</p>", userId: "friend-1" },
+          } as Annotation,
+        ],
+      },
+      discover: mockState.discover,
+    });
+    const state = {
+      ...mockState,
+      login,
+      friends,
+      annotations,
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    // Renders wait for `act` here (see `setupRerender`), so each check
+    // flushes the render the loaded note asked for.
+    const notesButton = await vi.waitFor(async () => {
+      await act(async () => {});
+      const button = container.querySelector(
+        ".sb-bible-reader-mobile-header-notes"
+      );
+      expect(button).not.toBeNull();
+      return button as HTMLElement;
+    });
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+    });
+  });
+
   it("falls back to opening the full Discover pane when no annotation targets a specific verse", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
@@ -2854,8 +2921,10 @@ describe("BibleReader", () => {
           isMobile: signal(isMobile),
           isCompactReader: signal(isMobile),
         },
+        friends: { friendIds: signal([]) },
         annotations: {
           getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+          visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
         },
       } as any as SeedBibleState;
     }
@@ -2892,6 +2961,46 @@ describe("BibleReader", () => {
       expect(markers).toHaveLength(1);
       expect((markers[0] as HTMLElement).style.top).toBe("40px");
       expect(markers[0]?.textContent).toBe("sticky_note_2");
+    });
+
+    it("marks a verse that only a friend has a note on", async () => {
+      stubLineBoxes({ 1: [40] });
+      const fixture = createFixture();
+      const mockState = annotatedState([]);
+      const { login, friends, annotations } = await createRealFriendContent({
+        friendIds: ["friend-1"],
+        notes: {
+          "friend-1": [
+            note({
+              id: "friend-note",
+              data: {
+                type: "comment",
+                html: "<p>Note</p>",
+                userId: "friend-1",
+              },
+            }) as Annotation,
+          ],
+        },
+        discover: mockState.discover,
+      });
+      renderReader(
+        {
+          ...mockState,
+          login,
+          friends,
+          annotations,
+        } as unknown as SeedBibleState,
+        fixture
+      );
+
+      await vi.waitFor(async () => {
+        await act(async () => {});
+        expect(
+          container.querySelectorAll(".sb-note-gutter-marker")
+        ).toHaveLength(1);
+      });
+      const markers = container.querySelectorAll(".sb-note-gutter-marker");
+      expect((markers[0] as HTMLElement).style.top).toBe("40px");
     });
 
     // A verse of poetry is a block of its own lines, so its element rect is
@@ -4082,8 +4191,10 @@ describe("BibleReader", () => {
       saves: {
         isLocationSaved: vi.fn(() => false),
       },
+      friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
+        visibleAnnotationsForChapter: vi.fn(() => []),
       },
     } as any as SeedBibleState;
 

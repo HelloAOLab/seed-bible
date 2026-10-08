@@ -2251,9 +2251,11 @@ export function createBibleReadingState(
       );
       const annotationsManager = getAnnotationsManager?.();
       activeChapterAnnotations.value = annotationsManager
-        ? annotationsManager.getAnnotationsForChapter(
-            next.bookId,
-            next.chapterNumber
+        ? computed(() =>
+            annotationsManager.visibleAnnotationsForChapter(
+              next.bookId,
+              next.chapterNumber
+            )
           )
         : signal<Annotation[]>([]);
 
