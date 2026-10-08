@@ -317,8 +317,10 @@ export default defineConfig(({ isSsrBuild }) => ({
           output: {
             // Deploy uploads only `entry-ssr.js` (as `server.mjs`), and the S3
             // host stages that one file in a temp dir. Any `import()` split
-            // into a sibling `assets/*.js` chunk (e.g. the lazily-loaded
-            // policy bundles) would be missing there, so inline them all.
+            // into a sibling `assets/*.js` chunk (e.g. the UI locale files or
+            // the policy bundles) would be missing there, so inline them all.
+            // This makes the bundle several times larger, which is accepted
+            // over uploading and staging ~200 chunk files per build.
             codeSplitting: false,
           },
         },
