@@ -5,6 +5,7 @@
 ### ✨ Added
 
 - Show an Apologist team's own content in the Discover pane. When the Apologist extension is opened with `?apologistTeamID=<id>` (plus `apologistApiKey`), each chapter you read is run through Apologist's semantic search, and the team's matching articles, YouTube videos, episodes, media and links appear as discovered content that opens in a modal. Each card names the website it comes from, results that are about a different chapter of the same book are left out, repeats are removed, and results that mention the chapter itself are listed first. Signed-in users can also save their Apologist agent's name, AI model, team ID, host and API key in the extension's settings, plus a name to group the team's content under (otherwise it's grouped by website). The key is stored as a sensitive setting, so it never comes back to the browser, and the extension's requests go through it whenever it's saved. ([#1831](https://github.com/HelloAOLab/seed-bible/issues/1831))
+  - The extension's settings also have two switches: **Chat** (on by default) offers the Apologist agent in chats, and **Discover content** (off by default) shows the team's content in the Discover pane. A link with `apologistTeamID` still shows the team's content, even to signed-out visitors, unless the viewer has switched Discover content off.
 - Show the reading plans you've created on the "Your content" screen, with a Reading plans chip to see just those, alongside your notes, highlights, saves and playlists. ([#1798](https://github.com/HelloAOLab/seed-bible/issues/1798))
   - Each plan shows where you're up to, and tapping it opens the plan; its menu offers Edit and Delete.
 - Have AI chat follow the active reader tab's Bible translation, mapping it onto Apologist's supported list (KJV, BSB, and the rest of the Fusion docs) and falling back to BSB when the tab's translation isn't supported. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
@@ -27,6 +28,8 @@
 - Show long extension descriptions as two lines with a "Read more" link in the Extensions settings list. Before, a long description made its row several lines tall. ([#1924](https://github.com/HelloAOLab/seed-bible/pull/1924))
 
 ### 🐛 Fixed
+
+- List an installed extension under Installed in Settings → Extensions even when the active customization hides it, such as one another extension needs as a dependency. Before, it was left out of the list even though it was running, so you couldn't see or remove it. You can now uninstall it from there, and hidden extensions still never appear under Available.
 
 ### 🗑️ Removed
 

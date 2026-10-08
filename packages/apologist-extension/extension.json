@@ -1,6 +1,14 @@
 {
   "id": "ext_Apologist",
   "settings": {
+    "chatEnabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "discoverEnabled": {
+      "type": "boolean",
+      "default": false
+    },
     "name": {
       "type": "string"
     },
@@ -32,6 +40,10 @@
     "en": {
       "title": "Apologist",
       "description": "Be curious. Be humble. Learn boldly. This is AI for seekers of spiritual truth",
+      "setting-chatEnabled-title": "Chat",
+      "setting-chatEnabled-description": "Offer the Apologist agent in chats. Turn this off to remove it from the list of chat agents.",
+      "setting-discoverEnabled-title": "Discover content",
+      "setting-discoverEnabled-description": "Show articles, videos and other content from your Apologist team in the Discover pane for the chapter you're reading. Needs a Team ID.",
       "setting-apiKey-title": "API key",
       "setting-apiKey-description": "The API key for your Apologist agent. It's sent in the x-api-key header to the agent's host.",
       "sensitive-apologist-title": "Apologist agent",
