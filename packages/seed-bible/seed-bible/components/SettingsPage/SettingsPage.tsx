@@ -1253,10 +1253,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
   const activeCustomization = customizations.activeCustomization.value;
-  // Extensions the active customization has marked "hidden" don't appear in
-  // this list at all — not installable, not shown as installed, nothing.
+  // An extension the active customization marks "hidden" is never offered
+  // for install, but one that's still installed (e.g. pulled in as another
+  // extension's dependency) is listed so it can be seen and removed.
   const visibleExtensionsList = extensionsList.filter(
     (entry) =>
+      entry.installed ||
       customizations.getActiveExtensionAvailability(entry.id) !== "hidden"
   );
   const activeTab = useSignal<ExtensionsTab>("installed");
@@ -1289,6 +1291,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const handleUninstall = (extensionId: string) => {
     if (activeCustomization) {
+      // A hidden extension is never one of the viewer's picks for the
+      // customization, so dropping the pick wouldn't remove it. Unload it for
+      // this session instead, the same way the customization's own swap does,
+      // so the viewer's default profile keeps it.
+      if (
+        customizations.getActiveExtensionAvailability(extensionId) === "hidden"
+      ) {
+        extensions.unloadExtension(extensionId, { persist: false });
+        return;
+      }
       void customizations.removeExtensionFromActiveCustomization(extensionId);
       return;
     }
