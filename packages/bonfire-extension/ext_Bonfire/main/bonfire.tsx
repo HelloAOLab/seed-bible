@@ -1,4 +1,5 @@
 import { type SeedBibleState } from "seed-bible";
+import { formatAvailableTranslationsNote } from "seed-bible/managers";
 import { z } from "zod";
 import type { ChatProviderMessageOptions } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import {
@@ -106,6 +107,56 @@ async function* streamBonfireMessageDeltas(
     }
     yield bonfireMessageDeltaEventSchema.parse(data).delta;
   }
+}
+
+/**
+ * The system note Bonfire receives for one turn. Without tools Bonfire can't
+ * look up translations with searchTranslations, so `listTranslations` writes
+ * out the ones the reader could actually switch to instead.
+ */
+async function buildBonfireInstructions(
+  context: SeedBibleState,
+  options: { listTranslations: boolean }
+): Promise<string> {
+  const readingState = context.app.selectedTab.value?.readingState;
+  const tabTranslation = readingState?.translation.value ?? null;
+  const tabTranslationId = readingState?.translationId.value ?? null;
+  const translationLabel =
+    tabTranslation?.name ??
+    tabTranslation?.englishName ??
+    tabTranslationId ??
+    "unknown";
+  const translationShortName =
+    tabTranslation?.shortName ?? tabTranslationId ?? "";
+  const uiLanguage = context.i18n.language.value.replace(/_/g, "-");
+
+  const reading = [
+    `You are chatting with a user who is reading the Bible.`,
+    `They are currently reading: ${readingState?.bookId.value} ${readingState?.chapterNumber.value}.`,
+    `User has their UI language set to ${uiLanguage}, however when speaking to the user you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to speaking to them in ${uiLanguage}.`,
+    `When quoting scripture for the user, use their active Bible translation which is ${translationLabel} (${translationShortName}).`,
+  ].join(" ");
+
+  if (!options.listTranslations) {
+    return reading;
+  }
+
+  let availableTranslationsNote: string | null = null;
+  try {
+    const catalog = context.bibleData.catalogLoaded.peek()
+      ? context.bibleData.availableTranslations.peek()
+      : await context.bibleData.getTranslations();
+    availableTranslationsNote = formatAvailableTranslationsNote(
+      catalog,
+      context.i18n.language.value,
+      tabTranslation?.language ?? null
+    );
+  } catch (err) {
+    console.warn("[Bonfire] Could not list translations for the prompt", err);
+  }
+  return availableTranslationsNote
+    ? `${reading} ${availableTranslationsNote}`
+    : reading;
 }
 
 export interface BonfireOptions {
@@ -241,7 +292,9 @@ export function* registerBonfireChatProvider(
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
             },
-            custom_instructions: readingInstructions(context),
+            custom_instructions: await buildBonfireInstructions(context, {
+              listTranslations: true,
+            }),
           }),
           headers,
         }
@@ -253,11 +306,6 @@ export function* registerBonfireChatProvider(
       };
     },
   });
-}
-
-function readingInstructions(context: SeedBibleState) {
-  const readingState = context.app.selectedTab.value?.readingState;
-  return `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}`;
 }
 
 /**
@@ -290,16 +338,28 @@ function* registerBonfireChatCompletionsProvider(
     generateResponse: async function* (
       chatContext
     ): AsyncGenerator<ChatProviderMessageOptions> {
+      const instructions = [
+        chatContext.instructions,
+        await buildBonfireInstructions(context, {
+          listTranslations: !chatContext.tools?.some(
+            (t) => t.name === "searchTranslations"
+          ),
+        }),
+      ]
+        .filter(Boolean)
+        .join("\n\n");
       const tools = toChatCompletionTools(chatContext.tools);
+
       yield* runChatCompletionToolLoop({
         messages: [
-          {
-            role: "system",
-            content: chatContext.instructions ?? readingInstructions(context),
-          },
+          { role: "system", content: instructions },
           ...toChatCompletionMessages(chatContext, PROVIDER_ID),
         ],
         tools: chatContext.tools,
+        toolCallContext: {
+          chatId: chatContext.chatId,
+          providerId: PROVIDER_ID,
+        },
         requestCompletion: (messages) =>
           fetch(chatCompletionsUrl, {
             method: "POST",

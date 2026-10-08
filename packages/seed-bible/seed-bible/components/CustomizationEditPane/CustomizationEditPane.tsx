@@ -38,8 +38,10 @@ import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { useI18n } from "../../i18n/I18nManager";
 import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
+import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import {
   firstAcceptableSettingValue,
+  nonSensitiveSettings,
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
@@ -458,6 +460,7 @@ export function openCustomizationEditPane(
   state.panes.openPane({
     id: CUSTOMIZATION_EDIT_PANE_ID,
     placement: "side",
+    exclusive: true,
     title: () => (
       <CustomizationEditPaneTitle customizations={state.customizations} />
     ),
@@ -845,7 +848,7 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
 
 function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { customizations, extensions } = state;
+  const { customizations, extensions, extensionSettings } = state;
   const { t } = useI18n();
 
   const record = customizations.editingCustomization.value;
@@ -871,7 +874,15 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
   );
 
   const handleConfigureDefaults = (entry: ExtensionListEntry) => {
-    const settings = entry.extension?.meta.settings ?? {};
+    const allSettings = entry.extension?.meta.settings ?? {};
+    // Sensitive values can't be part of the Customization record, which
+    // anyone can read: they go into the owner's own proxies instead.
+    const settings = nonSensitiveSettings(allSettings);
+    const sensitive = entry.extension?.meta.sensitive ?? {};
+    const hasSensitive =
+      Object.keys(settings).length < Object.keys(allSettings).length;
+    const customizationSecrets =
+      extensionSettings.customizationSensitiveSettings;
     // The customization being edited, not the one the viewer currently has
     // active — those are only the same customization some of the time, and the
     // defaults written here belong to the draft.
@@ -892,42 +903,75 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
         },
       },
       content: () => (
-        <ExtensionSettingsForm
-          extensionId={entry.id}
-          settings={settings}
-          getValue={draftDefault}
-          // A Customization default overrides only the extension's own default.
-          getDefault={(key) => settings[key]?.default}
-          onChange={(key, value) =>
-            customizations.setEditingExtensionSettingDefault(
-              entry.id,
-              key,
-              value
-            )
-          }
-          overriding={{
-            isOverridden: (key) => draftDefault(key) !== undefined,
-            onOverrideChange: (key, overridden) => {
-              const definition = settings[key];
-              if (!overridden || !definition) {
-                customizations.clearEditingExtensionSettingDefault(
+        <>
+          {(!hasSensitive || Object.keys(settings).length > 0) && (
+            <ExtensionSettingsForm
+              extensionId={entry.id}
+              settings={settings}
+              getValue={draftDefault}
+              // A Customization default overrides only the extension's own default.
+              getDefault={(key) => settings[key]?.default}
+              onChange={(key, value) =>
+                customizations.setEditingExtensionSettingDefault(
                   entry.id,
-                  key
-                );
-                return;
+                  key,
+                  value
+                )
               }
-              // Storing a value as soon as the box is ticked keeps the record
-              // and the checkbox saying the same thing; a setting that declares
-              // no default starts from its type's empty value.
-              customizations.setEditingExtensionSettingDefault(
-                entry.id,
-                key,
-                firstAcceptableSettingValue(definition)
-              );
-            },
-          }}
-          t={t}
-        />
+              overriding={{
+                isOverridden: (key) => draftDefault(key) !== undefined,
+                onOverrideChange: (key, overridden) => {
+                  const definition = settings[key];
+                  if (!overridden || !definition) {
+                    customizations.clearEditingExtensionSettingDefault(
+                      entry.id,
+                      key
+                    );
+                    return;
+                  }
+                  // Storing a value as soon as the box is ticked keeps the record
+                  // and the checkbox saying the same thing; a setting that declares
+                  // no default starts from its type's empty value.
+                  customizations.setEditingExtensionSettingDefault(
+                    entry.id,
+                    key,
+                    firstAcceptableSettingValue(definition)
+                  );
+                },
+              }}
+              t={t}
+            />
+          )}
+          {hasSensitive && (
+            <SensitiveSettingsForm
+              scope="customization"
+              extensionId={entry.id}
+              settings={allSettings}
+              sensitive={sensitive}
+              isSet={(key) =>
+                customizationSecrets.isSensitiveValueSet(entry.id, key)
+              }
+              hasStored={(proxyId) =>
+                customizationSecrets.hasStoredSensitiveValues(entry.id, proxyId)
+              }
+              getDestination={(proxyId) =>
+                customizationSecrets.getSensitiveDestination(entry.id, proxyId)
+              }
+              onSave={(proxyId, values, options) =>
+                customizationSecrets.setSensitiveValues(
+                  entry.id,
+                  proxyId,
+                  values,
+                  options
+                )
+              }
+              onClear={(proxyId) =>
+                customizationSecrets.clearSensitiveValues(entry.id, proxyId)
+              }
+              t={t}
+            />
+          )}
+        </>
       ),
     });
   };
@@ -989,22 +1033,21 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
                   })}
                 </option>
               </select>
-              {entry.extension?.meta.settings &&
-                Object.keys(entry.extension.meta.settings).length > 0 && (
-                  <button
-                    type="button"
-                    className="sb-extension-row-action-button"
-                    onClick={() => handleConfigureDefaults(entry)}
-                    aria-label={t("configure-extension-defaults", {
-                      defaultValue: "Configure defaults",
-                    })}
-                    title={t("configure-extension-defaults", {
-                      defaultValue: "Configure defaults",
-                    })}
-                  >
-                    <span className="material-symbols-outlined">tune</span>
-                  </button>
-                )}
+              {Object.keys(entry.extension?.meta.settings ?? {}).length > 0 && (
+                <button
+                  type="button"
+                  className="sb-extension-row-action-button"
+                  onClick={() => handleConfigureDefaults(entry)}
+                  aria-label={t("configure-extension-defaults", {
+                    defaultValue: "Configure defaults",
+                  })}
+                  title={t("configure-extension-defaults", {
+                    defaultValue: "Configure defaults",
+                  })}
+                >
+                  <span className="material-symbols-outlined">tune</span>
+                </button>
+              )}
             </div>
           ))
         )}

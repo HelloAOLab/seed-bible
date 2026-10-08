@@ -9,6 +9,7 @@ import {
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
 import { aabBooks } from "../managers/testUtils/mockBibleApiData";
+import { pressAndRelease } from "../testUtils/pressAndRelease";
 import { TestHost } from "./TestHost";
 
 const BSB: Translation = {
@@ -166,11 +167,10 @@ describe("OfflineUpdatePrompt", () => {
     const stub = createOffline(BSB);
     await mount(stub);
 
-    act(() => {
-      container
-        .querySelector<HTMLElement>(".sb-offline-prompt-overlay")
-        ?.click();
-    });
+    const overlay = container.querySelector<HTMLElement>(
+      ".sb-offline-prompt-overlay"
+    )!;
+    pressAndRelease(overlay, overlay);
 
     expect(stub.dismissUpdatePrompt).toHaveBeenCalled();
     expect(stub.downloadTranslation).not.toHaveBeenCalled();
@@ -180,9 +180,8 @@ describe("OfflineUpdatePrompt", () => {
     const stub = createOffline(BSB);
     await mount(stub);
 
-    act(() => {
-      container.querySelector<HTMLElement>(".sb-offline-prompt")?.click();
-    });
+    const card = container.querySelector<HTMLElement>(".sb-offline-prompt")!;
+    pressAndRelease(card, card);
 
     expect(stub.dismissUpdatePrompt).not.toHaveBeenCalled();
     expect(container.querySelector(".sb-offline-prompt")).not.toBeNull();

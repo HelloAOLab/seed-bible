@@ -132,7 +132,8 @@
 
 /* -------------------------------------------------------------- plans card */
 
-.sb-profile-plans {
+.sb-profile-plans,
+.sb-profile-playlist-history {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -145,6 +146,10 @@
   text-align: start;
   font-family: inherit;
   color: inherit;
+  cursor: default;
+}
+
+.sb-profile-plans {
   cursor: pointer;
 }
 
@@ -173,6 +178,45 @@
 
 .sb-profile-plans-link .material-symbols-outlined {
   font-size: 18px;
+}
+
+button.sb-profile-plans-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Continue is the lower half of the history card, so it stays part of that
+   card rather than reading as a second bordered control. */
+.sb-profile-playlist-continue {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: start;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-profile-playlist-continue-foot {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.sb-profile-playlist-continue-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sb-profile-accent);
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 .sb-profile-progress {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { AIProviderFunctionTool } from "./AIManager";
+import type { AIProviderFunctionTool, AIToolCallContext } from "./AIManager";
 import {
   resolveMessageAuthors,
   type ChatContext,
@@ -234,7 +234,8 @@ export function toChatCompletionMessages(
 
 async function runToolCall(
   call: ChatCompletionToolCall,
-  tools: AIProviderFunctionTool[]
+  tools: AIProviderFunctionTool[],
+  toolCallContext: AIToolCallContext | undefined
 ): Promise<string> {
   const tool = tools.find((t) => t.name === call.function.name);
   try {
@@ -244,7 +245,7 @@ async function runToolCall(
     const args: unknown = call.function.arguments
       ? JSON.parse(call.function.arguments)
       : {};
-    return JSON.stringify((await tool.function(args)) ?? null);
+    return JSON.stringify((await tool.function(args, toolCallContext)) ?? null);
   } catch (err) {
     // Reported back to the model rather than thrown, so it can recover
     // (retry with fixed arguments, or answer without the tool).
@@ -265,6 +266,9 @@ export interface ChatCompletionToolLoopOptions {
   /** The tools the model may call. */
   tools?: AIProviderFunctionTool[];
 
+  /** Passed to each tool so it knows which chat and provider called it. */
+  toolCallContext?: AIToolCallContext;
+
   /**
    * Sends one completions request with the current `messages` and returns
    * the raw response (streaming SSE or plain JSON).
@@ -273,7 +277,9 @@ export interface ChatCompletionToolLoopOptions {
 
   /**
    * Bounds the loop so a model that keeps calling tools (or never answers)
-   * can't hang the response forever. Defaults to 25.
+   * can't hang the response forever. Using up every turn throws, so
+   * ChatsManager posts its error message instead of leaving the chat silent.
+   * Defaults to 25.
    */
   maxTurns?: number;
 }
@@ -286,7 +292,12 @@ export interface ChatCompletionToolLoopOptions {
 export async function* runChatCompletionToolLoop(
   options: ChatCompletionToolLoopOptions
 ): AsyncGenerator<ChatProviderMessageOptions> {
-  const { messages, requestCompletion, maxTurns = 25 } = options;
+  const {
+    messages,
+    requestCompletion,
+    toolCallContext,
+    maxTurns = 25,
+  } = options;
   const tools = options.tools ?? [];
 
   for (let turn = 0; turn < maxTurns; turn++) {
@@ -373,7 +384,7 @@ export async function* runChatCompletionToolLoop(
           role: "tool",
           tool_call_id: call.id,
           name: call.function.name,
-          content: await runToolCall(call, tools),
+          content: await runToolCall(call, tools, toolCallContext),
         });
 
         yield { type: "tool_call", name: call.function.name };
@@ -409,4 +420,8 @@ export async function* runChatCompletionToolLoop(
     yield { type: "text", text: textDeltas() };
     return;
   }
+
+  throw new Error(
+    `stopped after ${maxTurns} rounds of tool calls without an answer`
+  );
 }

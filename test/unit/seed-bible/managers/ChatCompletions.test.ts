@@ -41,7 +41,7 @@ function toolCallChunk(
 
 function makeTool(
   name: string,
-  fn: (args: unknown) => Promise<unknown>
+  fn: AIProviderFunctionTool["function"]
 ): AIProviderFunctionTool {
   return {
     name,
@@ -143,7 +143,7 @@ describe("runChatCompletionToolLoop", () => {
       toolCalls: ["lookup"],
       text: "It says God created everything.",
     });
-    expect(lookup).toHaveBeenCalledWith({ book: "GEN" });
+    expect(lookup).toHaveBeenCalledWith({ book: "GEN" }, undefined);
     expect(requests[1]).toEqual([
       { role: "user", content: "What does Genesis 1:1 say?" },
       {
@@ -277,7 +277,7 @@ describe("runChatCompletionToolLoop", () => {
     );
   });
 
-  it("stops after maxTurns when the model keeps calling tools", async () => {
+  it("throws after maxTurns when the model keeps calling tools", async () => {
     const loopingCall = () =>
       sseResponse([
         toolCallChunk(
@@ -291,17 +291,44 @@ describe("runChatCompletionToolLoop", () => {
       loopingCall(),
     ]);
 
-    const result = await collect(
+    await expect(
+      collect(
+        runChatCompletionToolLoop({
+          messages: [{ role: "user", content: "Go" }],
+          tools: [makeTool("again", async () => "ok")],
+          requestCompletion,
+          maxTurns: 2,
+        })
+      )
+    ).rejects.toThrow("stopped after 2 rounds of tool calls without an answer");
+    expect(requests).toHaveLength(2);
+  });
+
+  it("tells each tool which chat and provider called it", async () => {
+    const tool = vi.fn(async () => "ok");
+    const { requestCompletion } = recordingRequester([
+      sseResponse([
+        toolCallChunk(
+          { index: 0, id: "c", function: { name: "post", arguments: "{}" } },
+          "tool_calls"
+        ),
+      ]),
+      sseResponse([textChunk("Done.", "stop")]),
+    ]);
+
+    await collect(
       runChatCompletionToolLoop({
-        messages: [{ role: "user", content: "Go" }],
-        tools: [makeTool("again", async () => "ok")],
+        messages: [{ role: "user", content: "Post it" }],
+        tools: [makeTool("post", tool)],
+        toolCallContext: { chatId: "chat-1", providerId: "bonfire" },
         requestCompletion,
-        maxTurns: 2,
       })
     );
 
-    expect(result).toEqual({ toolCalls: ["again", "again"], text: null });
-    expect(requests).toHaveLength(2);
+    expect(tool).toHaveBeenCalledWith(
+      {},
+      { chatId: "chat-1", providerId: "bonfire" }
+    );
   });
 });
 
