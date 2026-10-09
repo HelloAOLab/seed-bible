@@ -1,5 +1,6 @@
 export * from "./SeedBibleStateManager";
 export * from "./AnnotationsManager";
+export * from "./AudioPlaybackManager";
 export * from "./BibleReadingManager";
 export * from "./BibleReadingExtensionManager";
 export * from "./BibleSelectorManager";

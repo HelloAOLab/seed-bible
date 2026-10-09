@@ -211,6 +211,15 @@
   border: var(--sb-selected-tab-border);
 }
 
+.sb-collapsed-tab-audio-icon {
+  font-size: 0.875rem;
+  color: var(--sb-primary-color);
+}
+
+.sb-collapsed-tab-tile-selected .sb-collapsed-tab-audio-icon {
+  color: currentColor;
+}
+
 .sb-collapsed-tab-title {
   font-size: 0.625rem;
   font-weight: 700;

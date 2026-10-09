@@ -337,6 +337,17 @@ export interface BibleReadingState {
   /** Pending verse number to scroll to after chapter content renders. */
   scrollToVerse: Signal<number | null>;
   /**
+   * The verse being read aloud, for the reader to keep on screen so a listener
+   * can follow along without scrolling. Unlike `scrollToVerse` it only moves
+   * the reader when the verse isn't already fully in view, and then glides it
+   * to the top rather than jumping.
+   *
+   * A fresh object per request, so asking for the same verse again (after the
+   * listener scrolled away from it) still reaches the reader. Null when
+   * nothing is being read.
+   */
+  readAlongVerse: Signal<{ verse: number } | null>;
+  /**
    * Set when an annotated verse number is clicked; consumed once by whichever
    * surface renders that verse's annotation (the mobile verse toolbar) to
    * expand and scroll to it, then cleared.
@@ -1540,6 +1551,7 @@ export function createBibleReadingState(
   };
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
+  const readAlongVerse = signal<{ verse: number } | null>(null);
   const pendingAnnotationScrollVerse = signal<number | null>(null);
   const visibleVerseRange = signal<VisibleVerseRange | null>(null);
 
@@ -3628,6 +3640,7 @@ export function createBibleReadingState(
     retryLoad,
     scrollPosition,
     scrollToVerse,
+    readAlongVerse,
     selectVerse,
     selectFootnote,
     highlightSelectedVerses,

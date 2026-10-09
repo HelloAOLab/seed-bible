@@ -1091,6 +1091,18 @@ interface TabRowProps {
  * currently selected row: it's the affordance for filing the current chapter
  * away, and showing it on every row would clutter the list.
  */
+/**
+ * Whether `tab` is the one whose narration is playing. Only one tab is heard
+ * at a time; marking it lets the reader find narration they left playing in
+ * another tab.
+ */
+function isTabPlayingAudio(state: SeedBibleState, tab: ReaderTab): boolean {
+  return (
+    state.audioPlayback.controllerFor(tab.readingState)?.isPlaying.value ??
+    false
+  );
+}
+
 function TabRow(props: TabRowProps) {
   const { state, tab, isSelected, closeLayoutMenu, panelsEnabled } = props;
 
@@ -1109,6 +1121,7 @@ function TabRow(props: TabRowProps) {
 
   const shortSubTitle = tab.readingState.shortSubTitle.value;
   const title = tab.readingState.title.value;
+  const isPlayingAudio = isTabPlayingAudio(state, tab);
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
   // Fills the star, and decides whether pressing it files or edits.
   const isChapterSaved = saves.isLocationSaved(
@@ -1148,6 +1161,17 @@ function TabRow(props: TabRowProps) {
             •
           </span>
           <span className="sb-tab-main-translation">{shortSubTitle}</span>
+          {isPlayingAudio && (
+            <MaterialIcon
+              className="sb-tab-audio-icon"
+              role="img"
+              aria-label={t("tab-playing-audio", {
+                defaultValue: "Playing audio",
+              })}
+            >
+              volume_up
+            </MaterialIcon>
+          )}
         </div>
 
         {tab.sharedSession && connectedUsers.length > 0 && (
@@ -2050,6 +2074,15 @@ export function Tabs(props: TabsProps) {
           const shortTitle = tab.readingState.shortTitle.value;
           const session = tab.sharedSession;
           const sessionUsers = session?.connectedUsers.value ?? [];
+          const isPlayingAudio = isTabPlayingAudio(state, tab);
+          const label =
+            session && sessionUsers.length > 0
+              ? t("collapsed-tab-shared-label", {
+                  title: shortTitle,
+                  count: sessionUsers.length,
+                  defaultValue: "{{title}} — shared session, {{count}} present",
+                })
+              : shortTitle;
 
           return (
             <button
@@ -2063,14 +2096,12 @@ export function Tabs(props: TabsProps) {
                 isSelected ? " sb-collapsed-tab-tile-selected" : ""
               }${session ? " sb-collapsed-tab-tile-shared" : ""}`}
               aria-label={
-                session && sessionUsers.length > 0
-                  ? t("collapsed-tab-shared-label", {
-                      title: shortTitle,
-                      count: sessionUsers.length,
-                      defaultValue:
-                        "{{title}} — shared session, {{count}} present",
+                isPlayingAudio
+                  ? t("collapsed-tab-playing-label", {
+                      label,
+                      defaultValue: "{{label}} — playing audio",
                     })
-                  : shortTitle
+                  : label
               }
               title={shortTitle}
             >
@@ -2080,6 +2111,14 @@ export function Tabs(props: TabsProps) {
                 </span>
               )}
               <span className="sb-collapsed-tab-title">{shortTitle}</span>
+              {isPlayingAudio && (
+                <MaterialIcon
+                  className="sb-collapsed-tab-audio-icon"
+                  aria-hidden="true"
+                >
+                  volume_up
+                </MaterialIcon>
+              )}
               {session &&
                 sessionUsers.length > 0 &&
                 (() => {

@@ -798,6 +798,17 @@
   color: #545454;
 }
 
+/* Marks the one tab whose narration is playing. */
+.sb-tab-audio-icon {
+  margin-inline-start: auto;
+  font-size: 1.125rem;
+  color: var(--sb-primary-color);
+}
+
+.sb-tab-row-selected .sb-tab-audio-icon {
+  color: currentColor;
+}
+
 .sb-tab-row-selected .sb-tab-main-translation {
   color: currentColor;
   opacity: 0.85;
