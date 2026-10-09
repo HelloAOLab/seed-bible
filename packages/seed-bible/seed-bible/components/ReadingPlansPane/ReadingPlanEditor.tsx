@@ -1,5 +1,6 @@
 import "./ReadingPlanEditor.css";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+import type { RefObject } from "preact";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -20,7 +21,11 @@ import {
   uploadPhotoToGallery,
   type UserGalleryManager,
 } from "../../managers/UserGalleryManager";
-import { PlaylistItemInput } from "../PlaylistItemInput/PlaylistItemInput";
+import {
+  PlaylistItemInput,
+  type PlaylistItemInputHandle,
+} from "../PlaylistItemInput/PlaylistItemInput";
+import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
 import {
   PlaylistItemInlinePreview,
@@ -93,6 +98,10 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
   const [submitError, setSubmitError] = useState(false);
   // Discarding a new plan erases it for good, so the button asks once first.
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  // The reading open in the selected session's item input, or null when that
+  // input is adding a new reading.
+  const [editingReadingId, setEditingReadingId] = useState<string | null>(null);
+  const itemInputRef = useRef<PlaylistItemInputHandle>(null);
 
   // Reading `.value` during render subscribes the component to edits, including
   // ones made from the reader's verse toolbar.
@@ -120,10 +129,7 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
   const hasTitle = (draft.plan.title ?? "").trim().length > 0;
   const canSave = hasTitle && totalReadings > 0;
 
-  const handleSave = async () => {
-    if (saving || !canSave) {
-      return;
-    }
+  const save = async () => {
     setSaving(true);
     setSubmitError(false);
     try {
@@ -134,6 +140,32 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
       setSubmitError(true);
       setSaving(false);
     }
+  };
+
+  const handleSave = () => {
+    if (saving || !canSave) {
+      return;
+    }
+    // A reading opened for editing with changes not yet saved would otherwise
+    // be silently dropped by saving the plan.
+    if (modals && editingReadingId && itemInputRef.current?.isDirty()) {
+      openUnsavedItemConfirm(
+        modals,
+        true,
+        () => void save(),
+        () => {
+          void (async () => {
+            if (await itemInputRef.current?.commit()) {
+              await save();
+            }
+            // If the edit didn't commit (e.g. an unknown reference), the
+            // input stays open with its inline error.
+          })();
+        }
+      );
+      return;
+    }
+    void save();
   };
 
   const handleDiscard = async () => {
@@ -276,6 +308,9 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
             onRemoveReading={(sessionIndex, readingId) =>
               readingPlans.removeReadingFromEditingPlan(sessionIndex, readingId)
             }
+            editingReadingId={editingReadingId}
+            onEditingReadingChange={setEditingReadingId}
+            itemInputRef={itemInputRef}
             onUpdateReading={(sessionIndex, readingId, item) =>
               readingPlans.updateReadingInEditingPlan(
                 sessionIndex,
@@ -354,7 +389,7 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
           <button
             type="button"
             className="sb-rp-button sb-rp-button-primary"
-            onClick={() => void handleSave()}
+            onClick={handleSave}
             disabled={!canSave || saving}
           >
             {draft.isNew
@@ -456,6 +491,11 @@ interface SessionsSectionProps {
     readingId: string,
     item: PlaylistItemData
   ) => void;
+  /** The reading open in the item input, or null when it's adding one. */
+  editingReadingId: string | null;
+  onEditingReadingChange: (readingId: string | null) => void;
+  /** Handle on the selected session's item input, for unsaved-edit checks. */
+  itemInputRef: RefObject<PlaylistItemInputHandle>;
 }
 
 /**
@@ -476,15 +516,15 @@ function SessionsSection(props: SessionsSectionProps) {
     onAddReading,
     onRemoveReading,
     onUpdateReading,
+    editingReadingId,
+    onEditingReadingChange: setEditingReadingId,
+    itemInputRef,
   } = props;
   const { t } = useI18n();
   // Only one reading is expanded at a time, across all sessions.
   const [expandedReadingId, setExpandedReadingId] = useState<string | null>(
     null
   );
-  // The reading open in the selected session's item input, or null when that
-  // input is adding a new reading.
-  const [editingReadingId, setEditingReadingId] = useState<string | null>(null);
 
   // Resolve a book's display name from the active translation's book list.
   const resolveBookName = (bookId: string): string => {
@@ -659,6 +699,7 @@ function SessionsSection(props: SessionsSectionProps) {
                     const editItem = editingReading?.item;
                     return (
                       <PlaylistItemInput
+                        ref={itemInputRef}
                         // Remount when the edit target changes so the inputs
                         // seed from the newly chosen reading (or reset).
                         key={

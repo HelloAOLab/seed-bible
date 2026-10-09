@@ -27,7 +27,10 @@ interface ScriptureItemInputProps {
 
 /** Imperative handle so a parent can check for / commit an in-progress draft. */
 export interface ScriptureItemInputHandle {
-  /** Whether the user has typed a reference or note that hasn't been added yet. */
+  /**
+   * Whether the reference or note differs from what the fields started with:
+   * an un-added draft when adding, unsaved changes when editing.
+   */
   isDirty: () => boolean;
   /** Submits the current input, same as clicking "Add". Returns whether it
    * actually added an item (false if empty or the reference didn't resolve). */
@@ -75,6 +78,24 @@ export const ScriptureItemInput = forwardRef<
   // What the note editor seeds from when it mounts. Dropped once the note is
   // removed, so adding a note again starts blank rather than restoring it.
   const [noteSeed, setNoteSeed] = useState(initialNote);
+  // The seeded note as the editor serializes it, so an untouched note compares
+  // equal even where the editor normalizes the stored HTML.
+  const noteBaselineRef = useRef<string | null>(null);
+
+  /** Whether the note that would be saved differs from the starting one. */
+  const noteChanged = (): boolean => {
+    const editor = noteEditorRef.current;
+    // Open but still loading: nothing can have been typed into it yet.
+    if (noteOpen && !editor) {
+      return false;
+    }
+    const current =
+      noteOpen && editor && !editor.isEmpty ? editor.getHTML() : null;
+    const initial = initialNote
+      ? (noteBaselineRef.current ?? initialNote)
+      : null;
+    return current !== initial;
+  };
 
   const syncInputDir = (input: HTMLInputElement) => {
     setInputDir(getComputedStyle(input).direction === "rtl" ? "rtl" : "ltr");
@@ -168,7 +189,8 @@ export const ScriptureItemInput = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
-      isDirty: () => value.trim() !== "" || (noteOpen && !noteEmpty),
+      isDirty: () =>
+        value.trim() !== (initialValue ?? "").trim() || noteChanged(),
       commit: async () => handleSubmit(),
     }),
     [value, highlightedOption, noteOpen, noteEmpty]
@@ -338,6 +360,9 @@ export const ScriptureItemInput = forwardRef<
               autofocus={noteSeed ? false : "end"}
               onEditor={(editor) => {
                 noteEditorRef.current = editor;
+                if (editor && noteSeed && noteBaselineRef.current === null) {
+                  noteBaselineRef.current = editor.getHTML();
+                }
               }}
               onEmptyChange={setNoteEmpty}
             />

@@ -2217,6 +2217,33 @@ describe("createPlaylistManager", () => {
     expect(manager.view.value).toBe("discover");
   });
 
+  it("startPlaying scrolls to the first passage when the reader is already on its chapter", async () => {
+    const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+    tab.readingState.bookId.value = "JHN";
+    tab.readingState.chapterNumber.value = 3;
+    const manager = makeManager("user-1", makeTabs(tab));
+    await flush();
+
+    manager.startPlaying(
+      makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 3, verse: 16 },
+          },
+        ],
+      })
+    );
+    await flush();
+
+    expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+      "BSB",
+      "JHN",
+      3,
+      { scrollToVerse: 16 }
+    );
+  });
+
   it("startPlaying builds a playing state and stopPlaying clears it", async () => {
     const manager = makeManager("user-1");
     await flush();

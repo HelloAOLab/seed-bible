@@ -702,6 +702,13 @@ export function createPlayingState(
   });
 
   let decorationId: string | null = null;
+  /**
+   * Whether any step has been shown in the reader yet. Until one has, the
+   * current step is shown even when the reader already sits on its chapter —
+   * starting a playlist from the chapter its first passage is in must still
+   * scroll to and highlight that passage.
+   */
+  let hasShownStep = false;
 
   const disposeDecoration = () => {
     if (tab && decorationId) {
@@ -715,6 +722,7 @@ export function createPlayingState(
     if (!tab || item?.type !== "bible-verse") {
       return;
     }
+    hasShownStep = true;
     disposeDecoration();
     const { ref, translationId } = item;
 
@@ -879,6 +887,7 @@ export function createPlayingState(
       const current = currentItem.peek();
       if (current?.type === "bible-verse" && tab?.readingState) {
         if (
+          !hasShownStep ||
           current.ref.bookId !== tab.readingState.bookId.peek() ||
           current.ref.chapter !== tab.readingState.chapterNumber.peek()
         ) {

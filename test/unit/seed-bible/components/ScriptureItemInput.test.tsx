@@ -524,6 +524,55 @@ describe("ScriptureItemInput", () => {
       } satisfies PlaylistItemData);
     });
 
+    it("isn't dirty for an untouched item being edited, but is once its note changes", async () => {
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            ref={handleRef}
+            books={BOOKS}
+            onAdd={vi.fn()}
+            initialValue="Philemon"
+            initialNote="<p>Existing</p>"
+          />,
+          container
+        );
+      });
+      await waitForNoteEditor();
+
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => typeNote("<p>Changed</p>"));
+
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+
+    it("counts a changed reference or a removed note as unsaved edits", async () => {
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            ref={handleRef}
+            books={BOOKS}
+            onAdd={vi.fn()}
+            initialValue="Philemon"
+            initialNote="<p>Existing</p>"
+          />,
+          container
+        );
+      });
+      await waitForNoteEditor();
+
+      act(() => setValue(input(), "Jude"));
+      expect(handleRef.current?.isDirty()).toBe(true);
+
+      act(() => setValue(input(), "Philemon"));
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => noteButton("Remove note").click());
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+
     it("drops the note when it is removed, and starts blank if re-added", async () => {
       const onAdd = vi.fn();
       act(() => {

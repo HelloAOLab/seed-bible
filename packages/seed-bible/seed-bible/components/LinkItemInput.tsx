@@ -67,7 +67,10 @@ export const LinkItemInput = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
-      isDirty: () => value.trim() !== "" || title.trim() !== "",
+      isDirty: () =>
+        value.trim() !== (initialItem?.url ?? "").trim() ||
+        title.trim() !== (initialItem?.title ?? "").trim() ||
+        (!!initialItem && embed !== (initialItem.embed ?? false)),
       commit: handleAdd,
     }),
     [value, title, embed]

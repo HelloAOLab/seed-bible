@@ -53,7 +53,10 @@ const MODE_BY_TYPE: Record<PlaylistItemData["type"], AddMode> = {
 
 /** Imperative handle so a parent can check for / commit an in-progress draft. */
 export interface PlaylistItemInputHandle {
-  /** Whether the currently-mounted mode has an in-progress, un-added draft. */
+  /**
+   * Whether the currently-mounted mode has unsaved input: an un-added draft
+   * when adding, or changes to the item when editing one.
+   */
   isDirty: () => boolean;
   /** Submits the currently-mounted mode's input, same as clicking "Add".
    * Returns whether it actually added an item. */
