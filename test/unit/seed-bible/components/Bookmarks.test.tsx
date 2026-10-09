@@ -450,25 +450,24 @@ describe("bookmarks", () => {
         ).map((path) => path.getAttribute("fill"));
 
       beforeEach(async () => {
+        // On different chapters, neither of them the one being read.
         await signIn([
-          aBookmark({
-            id: "a",
-            colorId: "red",
-            ...AAB_GEN_1,
-            updatedAt: 100,
-          }),
+          aBookmark({ id: "a", colorId: "red", updatedAt: 100 }),
           aBookmark({
             id: "b",
             colorId: "green",
-            ...AAB_GEN_1,
+            translationId: "KJV",
+            bookId: "MAT",
+            chapterNumber: 5,
             updatedAt: 200,
           }),
         ]);
       });
 
-      it("shows the stack for the selected tab's chapter", async () => {
+      it("shows the stack for all of the user's bookmarks, wherever they are", async () => {
         await renderSidebar();
 
+        // Back to front: the most recently moved is painted last, on top.
         expect(toggleFills()).toEqual([
           "var(--sb-bookmark-red-color)",
           "var(--sb-bookmark-green-color)",
