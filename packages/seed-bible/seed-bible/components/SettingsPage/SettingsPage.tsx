@@ -1054,6 +1054,31 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         </div>
 
         <h3 className="sb-settings-subheading">
+          {t("discovered-content", { defaultValue: "Discovered Content" })}
+        </h3>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-discovered-content"
+          >
+            {t("show-discovered-content", {
+              defaultValue: "Show discovered content",
+            })}
+          </label>
+          <input
+            id="sb-show-discovered-content"
+            type="checkbox"
+            checked={current.discoveredContent.showContent}
+            onChange={(event: Event) => {
+              settings.setDiscoveredContent({
+                showContent: (event.currentTarget as HTMLInputElement).checked,
+              });
+            }}
+          />
+        </div>
+
+        <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}
         </h3>
 

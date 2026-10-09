@@ -1395,6 +1395,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           playlists: props.state.playlists,
           annotations: props.state.annotations,
           features: props.state.features,
+          settings: props.state.settings,
           surface: "mobile-navigation-bar",
           app: props.state.app,
           readingPlans: props.state.readingPlans,
