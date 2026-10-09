@@ -135,27 +135,6 @@
   display: none;
 }
 
-/* ── Show All button ── */
-
-.sb-dcp-show-all {
-  flex-shrink: 0;
-  width: 100%;
-  padding: 14px;
-  border-radius: 8px;
-  border: none;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
-  color: var(--sb-font-color);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: center;
-  line-height: 1.4;
-}
-
-.sb-dcp-show-all:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 87%);
-}
-
 /* ── Scoped annotation card style (compact panel only) ── */
 
 .sb-discover-content-panel .sb-annotation-item {
