@@ -469,6 +469,55 @@ describe("AudioScrubber", () => {
       expect(ticks()).toHaveLength(0);
     });
 
+    /**
+     * `count` verses spread evenly over the 100s recording, with sections
+     * starting at the given verse indexes.
+     */
+    function withEvenMarks(
+      playback: AudioPlaybackController,
+      count: number,
+      sections: number[]
+    ) {
+      return {
+        ...playback,
+        verseMarks: () =>
+          Array.from({ length: count }, (_, index) => ({
+            position: (index * 100) / count,
+            startsSection: sections.includes(index),
+          })),
+      };
+    }
+
+    it("marks every verse when the bar has room to tell them apart", async () => {
+      const { playback } = createPlayback();
+      // 25 verses on the 200px bar: 8px each.
+      await renderScrubber(withEvenMarks(playback, 25, [12]));
+
+      await pointer("pointerenter", "mouse");
+      await pointer("pointerdown", "mouse", TRACK_LEFT + 20);
+
+      expect(ticks()).toHaveLength(24);
+    });
+
+    it("marks only section starts when verses would crowd together", async () => {
+      const { playback } = createPlayback();
+      // 50 verses on the 200px bar: 4px each, too close to read.
+      await renderScrubber(withEvenMarks(playback, 50, [5, 18]));
+
+      await pointer("pointerenter", "mouse");
+      await pointer("pointerdown", "mouse", TRACK_LEFT + 20);
+
+      expect(ticks().map((tick) => tick.style.insetInlineStart)).toEqual([
+        "10%",
+        "36%",
+      ]);
+      expect(
+        ticks().every((tick) =>
+          tick.classList.contains("sb-audio-scrubber-tick-section")
+        )
+      ).toBe(true);
+    });
+
     it("draws a thicker tick where a verse starts a section", async () => {
       const { playback } = createPlayback();
       await renderScrubber(withMarks(playback));

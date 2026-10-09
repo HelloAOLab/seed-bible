@@ -6,10 +6,19 @@ import { useI18n } from "../../i18n/I18nManager";
 import {
   formatPlaybackTime,
   type AudioPlaybackController,
+  type PlaybackVerseMark,
 } from "../../managers/AudioPlaybackManager";
 
 /** How long a tapped-open handle stays up when it isn't used. */
 export const SCRUB_HANDLE_HIDE_DELAY_MS = 3_000;
+
+/**
+ * The least room, on average, each verse needs on the bar for every verse to
+ * get a tick. Below it they run together, so only section starts are marked.
+ * On a 375px phone the bar is about 230px: John 2's 25 verses get ~9px each
+ * and all show, John 1's 51 get ~4.5px and only its headings do.
+ */
+const MIN_TICK_SPACING_PX = 6;
 
 /** How far a finger must travel before a touch counts as a drag, not a tap. */
 const DRAG_THRESHOLD_PX = 6;
@@ -106,14 +115,27 @@ export function AudioScrubber(props: AudioScrubberProps) {
   const preview = isDragging
     ? (playback.verseAt?.(dragTime.value!) ?? null)
     : null;
-  // The first verse starts at the very beginning, where a tick would only
-  // blur the end of the bar.
-  const marks =
-    isDragging && duration
-      ? (playback.verseMarks?.() ?? []).filter(
-          (mark) => mark.position > 0 && mark.position <= duration
-        )
-      : [];
+  const marks = isDragging && duration ? visibleMarks(duration) : [];
+
+  /**
+   * The verse ticks to draw: every verse's when the bar has room to tell them
+   * apart, or only the ones starting a section when they'd crowd into a
+   * smear (John 1's 51 verses on a phone).
+   */
+  function visibleMarks(duration: number): PlaybackVerseMark[] {
+    const all = playback.verseMarks?.() ?? [];
+    if (all.length === 0) return [];
+    const width = trackRef.current?.getBoundingClientRect().width ?? 0;
+    const roomy = width / all.length >= MIN_TICK_SPACING_PX;
+    // The first verse starts at the very beginning, where a tick would only
+    // blur the end of the bar.
+    return all.filter(
+      (mark) =>
+        mark.position > 0 &&
+        mark.position <= duration &&
+        (roomy || mark.startsSection)
+    );
+  }
 
   /** The playback time under `clientX`, or null if the bar can't say yet. */
   const timeAt = (clientX: number): number | null => {
