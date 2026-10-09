@@ -134,12 +134,6 @@ describe("bookmarks", () => {
     Array.from(root.querySelectorAll<HTMLElement>(".sb-bookmark-picker-row"));
   const rowName = (row: HTMLElement) =>
     row.querySelector(".sb-bookmark-label-name")!.textContent;
-  const checkedRow = (root: ParentNode) =>
-    rows(root).find(
-      (row) =>
-        row.querySelector("[role='radio']")!.getAttribute("aria-checked") ===
-        "true"
-    );
   const button = (root: ParentNode, selector: string) =>
     root.querySelector<HTMLButtonElement>(selector)!;
   const click = async (element: HTMLElement) => {
@@ -159,9 +153,8 @@ describe("bookmarks", () => {
       await signIn();
       const modal = await openModal();
 
-      // The premade bookmark is the ordinary create form, already selected.
+      // The premade bookmark is the ordinary create form, already open.
       expect(rows(modal)).toHaveLength(1);
-      expect(checkedRow(modal)).toBeDefined();
       expect(
         modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
       ).toBe("My bookmark");
@@ -185,23 +178,6 @@ describe("bookmarks", () => {
       );
     });
 
-    it("moves the preselected first bookmark to this chapter", async () => {
-      await signIn([
-        aBookmark({ id: "older", name: "Sermon prep", updatedAt: 100 }),
-        aBookmark({ id: "newer", name: "Reading plan", updatedAt: 200 }),
-      ]);
-      const modal = await openModal();
-
-      expect(rowName(checkedRow(modal)!)).toBe("Reading plan");
-      await click(button(modal, ".sb-bookmark-picker-save"));
-
-      const moved = state.bookmarks.bookmarks.value.find(
-        (bookmark) => bookmark.id === "newer"
-      );
-      expect(moved).toMatchObject(AAB_GEN_1);
-      expect(state.bookmarks.bookmarks.value).toHaveLength(2);
-    });
-
     it("tells the same chapter in two translations apart", async () => {
       await signIn([
         aBookmark({ id: "kjv", name: "Plan", translationId: "KJV" }),
@@ -216,23 +192,48 @@ describe("bookmarks", () => {
       expect(translations.sort()).toEqual(["AAB", "KJV"]);
     });
 
-    it("moves whichever bookmark the user picks", async () => {
+    it("moves a bookmark to this chapter the moment it is tapped", async () => {
       await signIn([
         aBookmark({ id: "older", name: "Sermon prep", updatedAt: 100 }),
         aBookmark({ id: "newer", name: "Reading plan", updatedAt: 200 }),
       ]);
+      const closeModal = vi.spyOn(state.modals, "closeModal");
       const modal = await openModal();
 
+      // No separate Save for moving: the tap is the choice.
+      expect(modal.querySelector(".sb-bookmark-picker-save")).toBeNull();
       const sermonPrep = rows(modal).find(
         (row) => rowName(row) === "Sermon prep"
       )!;
-      await click(sermonPrep.querySelector<HTMLElement>("[role='radio']")!);
-      await click(button(modal, ".sb-bookmark-picker-save"));
+      await click(
+        sermonPrep.querySelector<HTMLElement>(".sb-bookmark-picker-choice")!
+      );
 
       expect(state.bookmarks.bookmarks.value[0]).toMatchObject({
         id: "older",
         ...AAB_GEN_1,
       });
+      expect(
+        state.bookmarks.bookmarks.value.find((b) => b.id === "newer")
+      ).toMatchObject(AAB_EXO_3);
+      // Closes once the write has gone through.
+      await vi.waitFor(() =>
+        expect(closeModal).toHaveBeenCalledWith("bookmark-AAB-GEN-1")
+      );
+    });
+
+    it("keeps numbering new bookmarks as My bookmark 2, 3, …", async () => {
+      await signIn([
+        aBookmark({ id: "a", name: "My bookmark" }),
+        aBookmark({ id: "b", name: "My bookmark 2" }),
+      ]);
+      const modal = await openModal();
+
+      await click(button(modal, ".sb-bookmark-add-new"));
+
+      expect(
+        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+      ).toBe("My bookmark 3");
     });
 
     it("creates an additional bookmark with its own name and color", async () => {
@@ -324,10 +325,11 @@ describe("bookmarks", () => {
   describe("the reader button's icon", () => {
     const icon = (bookmarks: Bookmark[]) =>
       renderInto(<BookmarkStackIcon bookmarks={bookmarks} />);
+    /** The ribbons drawn, back to front — not the shapes inside masks. */
     const fills = (root: HTMLElement) =>
-      Array.from(root.querySelectorAll("path")).map((path) =>
-        path.getAttribute("fill")
-      );
+      Array.from(
+        root.querySelectorAll("svg > path, .sb-bookmark-stack-ribbon")
+      ).map((path) => path.getAttribute("fill"));
 
     it("is an outline when nothing is here", () => {
       const root = icon([]);
@@ -353,6 +355,33 @@ describe("bookmarks", () => {
         "var(--sb-bookmark-green-color)",
         "var(--sb-bookmark-red-color)",
       ]);
+    });
+
+    // A cut-out reads on any background; a painted gap would only match the
+    // one it was colored for.
+    it("cuts the gaps between ribbons out with masks", () => {
+      const root = icon([
+        aBookmark({ id: "a", colorId: "red" }),
+        aBookmark({ id: "b", colorId: "green" }),
+      ]);
+      const [back, front] = Array.from(root.querySelectorAll("svg > g"));
+      const maskId = back!.getAttribute("mask")!.match(/^url\(#(.+)\)$/)![1]!;
+
+      expect(root.querySelector(`mask[id='${maskId}']`)).not.toBeNull();
+      expect(front!.getAttribute("mask")).toBeNull();
+    });
+
+    it("paints every ribbon in a given color when asked", () => {
+      const root = renderInto(
+        <BookmarkStackIcon
+          bookmarks={[
+            aBookmark({ id: "a", colorId: "red" }),
+            aBookmark({ id: "b", colorId: "green" }),
+          ]}
+          color="currentColor"
+        />
+      );
+      expect(fills(root)).toEqual(["currentColor", "currentColor"]);
     });
 
     it("stops at three ribbons", () => {
@@ -410,6 +439,50 @@ describe("bookmarks", () => {
       expect(markers[0]!.getAttribute("aria-label")).toBe(
         "2 bookmarks on this chapter: Reading plan, Sermon prep"
       );
+    });
+
+    describe("the bookmarks toggle", () => {
+      const toggleFills = () =>
+        Array.from(
+          container.querySelectorAll(
+            ".sb-sidebar-tabs-header-bookmarks-button .sb-bookmark-stack-ribbon"
+          )
+        ).map((path) => path.getAttribute("fill"));
+
+      beforeEach(async () => {
+        await signIn([
+          aBookmark({
+            id: "a",
+            colorId: "red",
+            ...AAB_GEN_1,
+            updatedAt: 100,
+          }),
+          aBookmark({
+            id: "b",
+            colorId: "green",
+            ...AAB_GEN_1,
+            updatedAt: 200,
+          }),
+        ]);
+      });
+
+      it("shows the stack for the selected tab's chapter", async () => {
+        await renderSidebar();
+
+        expect(toggleFills()).toEqual([
+          "var(--sb-bookmark-red-color)",
+          "var(--sb-bookmark-green-color)",
+        ]);
+      });
+
+      it("paints the stack in the active color while the panel is open", async () => {
+        await act(async () => {
+          state.bookmarks.isPanelOpen.value = true;
+        });
+        await renderSidebar();
+
+        expect(toggleFills()).toEqual(["currentColor", "currentColor"]);
+      });
     });
 
     it("shows no marker for a bookmark in another translation", async () => {

@@ -6,12 +6,6 @@
   flex-shrink: 0;
 }
 
-/* The outline each ribbon in a stack gets, cutting a gap between it and the
- * ribbon behind it. Matches the reader the button sits on. */
-.sb-bookmark-stack-icon {
-  --sb-bookmark-stack-gap-color: var(--sb-reader-background);
-}
-
 /* ------------------------------------------------------------------
  * Name over location ("Genesis 3 • AAB"), shared by the modal, the sidebar
  * panel, and the Today strip
@@ -145,8 +139,26 @@
   transition: border-color 0.15s ease;
 }
 
-.sb-bookmark-picker-row-selected {
+/* Tapping a bookmark moves it, so hovering one previews that choice. */
+.sb-bookmark-picker-row:not(.sb-bookmark-picker-row-new):hover {
   border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-hint {
+  margin: 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  font-size: 0.8125rem;
+}
+
+.sb-bookmark-picker-new-heading {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  font-size: 0.875rem;
+  color: var(--sb-font-color);
 }
 
 .sb-bookmark-picker-choice {
@@ -206,6 +218,9 @@
 /* The create form takes its own line under the row's label. */
 .sb-bookmark-picker-form {
   flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   padding: 0 0.875rem 0.875rem;
 }
 

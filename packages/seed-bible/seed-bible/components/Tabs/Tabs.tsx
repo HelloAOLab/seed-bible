@@ -2031,6 +2031,16 @@ export function Tabs(props: TabsProps) {
   const bookmarksToggleLabel = isBookmarksPanelOpen
     ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
     : t("show-bookmarks", { defaultValue: "Show bookmarks" });
+  // The toggle draws the same stack as the reader's button for the selected
+  // tab's chapter, so it shows at a glance what is bookmarked where you are.
+  const selectedReadingState = tabsManager.tabs.value.find(
+    (tab) => tab.id === selectedTabId
+  )?.readingState;
+  const bookmarksHere = bookmarks.getBookmarksForLocation(
+    selectedReadingState?.translationId.value,
+    selectedReadingState?.bookId.value,
+    selectedReadingState?.chapterNumber.value
+  );
 
   if (effectivelyCollapsed) {
     return (
@@ -2298,7 +2308,11 @@ export function Tabs(props: TabsProps) {
                   bookmarks.togglePanel();
                 }}
               >
-                <BookmarkStackIcon bookmarks={[]} size={24} />
+                <BookmarkStackIcon
+                  bookmarks={bookmarksHere}
+                  size={24}
+                  color={isBookmarksPanelOpen ? "currentColor" : undefined}
+                />
               </button>
               <button
                 type="button"
@@ -2387,7 +2401,7 @@ export function Tabs(props: TabsProps) {
                 bookmarks.togglePanel();
               }}
             >
-              <BookmarkStackIcon bookmarks={[]} size={24} />
+              <BookmarkStackIcon bookmarks={bookmarksHere} size={24} />
             </button>
             <button
               type="button"

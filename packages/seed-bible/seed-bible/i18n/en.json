@@ -1073,7 +1073,6 @@
   "bookmark-color-blue": "Blue",
   "bookmark-color-purple": "Purple",
   "my-bookmark": "My bookmark",
-  "numbered-bookmark": "Bookmark {{number}}",
   "new-bookmark": "New bookmark",
   "discard-new-bookmark": "Discard new bookmark",
   "edit-bookmark": "Edit bookmark",
@@ -1088,5 +1087,8 @@
   "hide-bookmarks": "Hide bookmarks",
   "bookmark-options": "Bookmark options",
   "bookmark-options-named": "Options for {{name}}",
-  "delete-bookmark": "Delete bookmark"
+  "delete-bookmark": "Delete bookmark",
+  "my-bookmark-numbered": "My bookmark {{number}}",
+  "bookmark-move-hint": "Tap a bookmark to move it to this chapter.",
+  "move-bookmark-here": "Move {{name}} here"
 }

@@ -1,5 +1,6 @@
 import "./Bookmarks.css";
 import { useSignal } from "@preact/signals";
+import { useId } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
@@ -60,9 +61,11 @@ export function BookmarkGlyph(props: {
   colorId: string;
   size?: number;
   className?: string;
+  /** Paints the ribbon in this CSS color instead of the bookmark's own. */
+  color?: string;
 }) {
   const size = props.size ?? 16;
-  const color = bookmarkColorValue(props.colorId);
+  const color = props.color ?? bookmarkColorValue(props.colorId);
   return (
     <svg
       className={`sb-bookmark-glyph${props.className ? ` ${props.className}` : ""}`}
@@ -91,9 +94,13 @@ export function BookmarkGlyph(props: {
 export function BookmarkStackIcon(props: {
   bookmarks: readonly Bookmark[];
   size?: number;
+  /** Paints every ribbon in this CSS color instead of each bookmark's own. */
+  color?: string;
 }) {
   const size = props.size ?? 22;
   const shown = props.bookmarks.slice(0, MAX_STACKED_GLYPHS);
+  // Mask ids must be unique on the page, and usable inside `url(#…)`.
+  const maskPrefix = `sb-bookmark-stack-${useId().replace(/[^\w-]/g, "")}`;
 
   if (shown.length === 0) {
     return (
@@ -115,14 +122,28 @@ export function BookmarkStackIcon(props: {
   }
 
   if (shown.length === 1) {
-    return <BookmarkGlyph colorId={shown[0]!.colorId} size={size} />;
+    return (
+      <BookmarkGlyph
+        colorId={shown[0]!.colorId}
+        size={size}
+        color={props.color}
+      />
+    );
   }
 
   const layout = STACK_LAYOUTS[shown.length]!;
-  // Painted back to front so the most recently moved ribbon ends up on top.
-  // Each one is outlined in the header's background, which cuts a thin gap
-  // between it and the ribbon behind it. The outline is painted under the
-  // fill, so it only cuts into the ribbon behind and never shrinks its own.
+  const ribbons = shown.map((bookmark, index) => {
+    const offset = layout[index]!;
+    return {
+      bookmark,
+      maskId: `${maskPrefix}-${index}`,
+      transform: `translate(${offset.x} ${offset.y}) scale(${STACK_SCALE}) rotate(${index * STACK_TILT} 12 21)`,
+    };
+  });
+  // Each ribbon behind the front one is masked by a slightly fattened copy of
+  // every ribbon in front of it. That cuts a real gap — transparent, so it
+  // reads on any background — rather than painting one in a color that would
+  // only match some of the places the icon sits.
   return (
     <svg
       className="sb-bookmark-stack-icon"
@@ -132,25 +153,53 @@ export function BookmarkStackIcon(props: {
       overflow="visible"
       aria-hidden="true"
     >
-      {shown
-        .map((bookmark, index) => ({
-          bookmark,
-          offset: layout[index]!,
-          tilt: index * STACK_TILT,
-        }))
-        .reverse()
-        .map(({ bookmark, offset, tilt }) => (
-          <path
-            key={bookmark.id}
-            d={BOOKMARK_PATH}
-            transform={`translate(${offset.x} ${offset.y}) scale(${STACK_SCALE}) rotate(${tilt} 12 21)`}
-            fill={bookmarkColorValue(bookmark.colorId)}
-            stroke="var(--sb-bookmark-stack-gap-color)"
-            stroke-width="3.4"
-            stroke-linejoin="round"
-            paint-order="stroke"
-          />
+      <defs>
+        {ribbons.slice(1).map((ribbon, behind) => (
+          <mask
+            key={ribbon.maskId}
+            id={ribbon.maskId}
+            maskUnits="userSpaceOnUse"
+            x="-6"
+            y="-6"
+            width="36"
+            height="36"
+          >
+            <rect x="-6" y="-6" width="36" height="36" fill="white" />
+            {ribbons.slice(0, behind + 1).map((front) => (
+              <path
+                key={front.maskId}
+                d={BOOKMARK_PATH}
+                transform={front.transform}
+                fill="black"
+                stroke="black"
+                stroke-width="3.4"
+                stroke-linejoin="round"
+              />
+            ))}
+          </mask>
         ))}
+      </defs>
+      {/* Painted back to front so the most recently moved ribbon is on top. */}
+      {/* The mask sits on an untransformed group: on the path itself it would
+          be read in the ribbon's own tilted coordinates, transforming the
+          shapes inside it a second time. */}
+      {[...ribbons].reverse().map((ribbon, reversedIndex) => (
+        <g
+          key={ribbon.bookmark.id}
+          mask={
+            reversedIndex === ribbons.length - 1
+              ? undefined
+              : `url(#${ribbon.maskId})`
+          }
+        >
+          <path
+            className="sb-bookmark-stack-ribbon"
+            d={BOOKMARK_PATH}
+            transform={ribbon.transform}
+            fill={props.color ?? bookmarkColorValue(ribbon.bookmark.colorId)}
+          />
+        </g>
+      ))}
     </svg>
   );
 }
@@ -271,8 +320,9 @@ export function BookmarkForm(props: {
 }
 
 /**
- * Name and color for a bookmark about to be created: "My bookmark" while that
- * name is free, and the first color nobody is using yet, so a new bookmark is
+ * Name and color for a bookmark about to be created: "My bookmark", or the
+ * first of "My bookmark 2", "My bookmark 3"… that is free, and the first color
+ * nobody is using yet, so a new bookmark is
  * told apart from the others without the user having to choose.
  */
 function nextBookmarkDraft(
@@ -283,8 +333,8 @@ function nextBookmarkDraft(
   const defaultName = t("my-bookmark", { defaultValue: "My bookmark" });
   let name = defaultName;
   for (let n = 2; takenNames.has(name); n++) {
-    name = t("numbered-bookmark", {
-      defaultValue: "Bookmark {{number}}",
+    name = t("my-bookmark-numbered", {
+      defaultValue: "My bookmark {{number}}",
       number: n,
     });
   }
@@ -347,17 +397,14 @@ export function BookmarkLabel(props: {
   );
 }
 
-/** Row id the create form uses in the modal's list. */
-const NEW_BOOKMARK_ROW = "new";
-
 /**
- * The bookmark modal: pick a bookmark and save, and it moves to `location`.
+ * The bookmark modal. Tapping one of your bookmarks moves it to `location`
+ * and closes the modal.
  *
- * The list is your bookmarks plus, while one is being created, the create
- * form. A user with no bookmarks gets that same form already open, prefilled
- * as "My bookmark" — so placing a first bookmark and placing a fifth are the
- * same two taps through the same save path, and nothing is written until Save.
- * The first row is preselected.
+ * Below them, while one is being created, sits the create form with its own
+ * Save. A user with no bookmarks gets that same form already open, prefilled
+ * as "My bookmark", so their first bookmark goes through the same save path as
+ * any other, and nothing is written until Save.
  */
 function BookmarkPickerContent(props: {
   state: SeedBibleState;
@@ -372,149 +419,124 @@ function BookmarkPickerContent(props: {
   const bookmarks = manager.bookmarks.value;
   /** The create form's contents, once the user has asked for or touched it. */
   const draft = useSignal<BookmarkDetails | null>(null);
-  const selectedId = useSignal<string | null>(null);
   const isSaving = useSignal(false);
 
   // With nothing to pick, the create form is offered without being asked for.
   const effectiveDraft =
     draft.value ??
     (bookmarks.length === 0 ? nextBookmarkDraft(t, bookmarks) : null);
-  const rowIds = [
-    ...bookmarks.map((bookmark) => bookmark.id),
-    ...(effectiveDraft ? [NEW_BOOKMARK_ROW] : []),
-  ];
-  const selected =
-    selectedId.value && rowIds.includes(selectedId.value)
-      ? selectedId.value
-      : (rowIds[0] ?? null);
-
-  const draftIsValid = !!effectiveDraft && effectiveDraft.name.trim() !== "";
-  const canSave =
-    !isSaving.value &&
-    selected !== null &&
-    (selected !== NEW_BOOKMARK_ROW || draftIsValid);
+  const canCreate =
+    !isSaving.value && !!effectiveDraft && effectiveDraft.name.trim() !== "";
   const canAddNew = manager.canCreate.value && !effectiveDraft;
 
-  const handleSave = async () => {
-    if (!canSave || !selected) return;
+  /** Runs a write, closing on success and toasting `failure` otherwise. */
+  const run = async (
+    action: () => Promise<unknown>,
+    failure: string,
+    closeAfter: boolean
+  ) => {
+    if (isSaving.value) return;
     isSaving.value = true;
     try {
-      if (selected === NEW_BOOKMARK_ROW) {
-        if (!effectiveDraft) return;
+      await action();
+      if (closeAfter) onClose();
+    } catch (err) {
+      console.warn("Failed to update bookmarks:", err);
+      state.app.toast(failure);
+    } finally {
+      isSaving.value = false;
+    }
+  };
+
+  const saveFailed = t("bookmark-save-failed", {
+    defaultValue: "Couldn't save your bookmark. Please try again.",
+  });
+
+  const moveHere = (id: string) =>
+    run(() => manager.moveBookmark(id, location), saveFailed, true);
+
+  const createHere = () => {
+    if (!canCreate || !effectiveDraft) return;
+    void run(
+      async () => {
         const created = await manager.createBookmark(effectiveDraft, location);
         if (!created) {
           throw new Error("The bookmark was not created.");
         }
-      } else {
-        await manager.moveBookmark(selected, location);
-      }
-      onClose();
-    } catch (err) {
-      console.warn("Failed to save bookmark:", err);
-      state.app.toast(
-        t("bookmark-save-failed", {
-          defaultValue: "Couldn't save your bookmark. Please try again.",
-        })
-      );
-    } finally {
-      isSaving.value = false;
-    }
+      },
+      saveFailed,
+      true
+    );
   };
 
-  const handleRemove = async (id: string) => {
-    if (isSaving.value) return;
-    isSaving.value = true;
-    try {
-      await manager.removeBookmark(id);
-    } catch (err) {
-      console.warn("Failed to remove bookmark:", err);
-      state.app.toast(
-        t("bookmark-remove-failed", {
-          defaultValue: "Couldn't remove that bookmark. Please try again.",
-        })
-      );
-    } finally {
-      isSaving.value = false;
-    }
-  };
+  const remove = (id: string) =>
+    run(
+      () => manager.removeBookmark(id),
+      t("bookmark-remove-failed", {
+        defaultValue: "Couldn't remove that bookmark. Please try again.",
+      }),
+      false
+    );
 
   return (
     <div className="sb-bookmark-picker">
-      <div
-        className="sb-bookmark-picker-list"
-        role="radiogroup"
-        aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-      >
-        {bookmarks.map((bookmark) => {
-          const isSelected = selected === bookmark.id;
-          return (
-            <div
-              key={bookmark.id}
-              className={`sb-bookmark-picker-row${
-                isSelected ? " sb-bookmark-picker-row-selected" : ""
-              }`}
-            >
-              <button
-                type="button"
-                role="radio"
-                aria-checked={isSelected}
-                disabled={isSaving.value}
-                className="sb-bookmark-picker-choice"
-                onClick={() => {
-                  selectedId.value = bookmark.id;
-                }}
-              >
-                <BookmarkGlyph colorId={bookmark.colorId} size={18} />
-                <BookmarkLabel
-                  name={bookmark.name}
-                  chapterText={locationText(bookmark)}
-                  translationId={bookmark.translationId}
-                />
-              </button>
-              <button
-                type="button"
-                className="sb-bookmark-picker-remove"
-                disabled={isSaving.value}
-                aria-label={t("remove-bookmark-named", {
-                  defaultValue: "Remove {{name}}",
-                  name: bookmark.name,
-                })}
-                title={t("remove-bookmark", {
-                  defaultValue: "Remove bookmark",
-                })}
-                onClick={() => {
-                  void handleRemove(bookmark.id);
-                }}
-              >
-                <MaterialIcon aria-hidden="true">delete</MaterialIcon>
-              </button>
-            </div>
-          );
-        })}
-
-        {effectiveDraft && (
-          <div
-            className={`sb-bookmark-picker-row sb-bookmark-picker-row-new${
-              selected === NEW_BOOKMARK_ROW
-                ? " sb-bookmark-picker-row-selected"
-                : ""
-            }`}
-          >
+      {bookmarks.length > 0 && (
+        <p className="sb-bookmark-picker-hint">
+          {t("bookmark-move-hint", {
+            defaultValue: "Tap a bookmark to move it to this chapter.",
+          })}
+        </p>
+      )}
+      <div className="sb-bookmark-picker-list">
+        {bookmarks.map((bookmark) => (
+          <div key={bookmark.id} className="sb-bookmark-picker-row">
             <button
               type="button"
-              role="radio"
-              aria-checked={selected === NEW_BOOKMARK_ROW}
               disabled={isSaving.value}
               className="sb-bookmark-picker-choice"
+              title={t("move-bookmark-here", {
+                defaultValue: "Move {{name}} here",
+                name: bookmark.name,
+              })}
               onClick={() => {
-                selectedId.value = NEW_BOOKMARK_ROW;
+                void moveHere(bookmark.id);
               }}
             >
+              <BookmarkGlyph colorId={bookmark.colorId} size={18} />
+              <BookmarkLabel
+                name={bookmark.name}
+                chapterText={locationText(bookmark)}
+                translationId={bookmark.translationId}
+              />
+            </button>
+            <button
+              type="button"
+              className="sb-bookmark-picker-remove"
+              disabled={isSaving.value}
+              aria-label={t("remove-bookmark-named", {
+                defaultValue: "Remove {{name}}",
+                name: bookmark.name,
+              })}
+              title={t("remove-bookmark", {
+                defaultValue: "Remove bookmark",
+              })}
+              onClick={() => {
+                void remove(bookmark.id);
+              }}
+            >
+              <MaterialIcon aria-hidden="true">delete</MaterialIcon>
+            </button>
+          </div>
+        ))}
+
+        {effectiveDraft && (
+          <div className="sb-bookmark-picker-row sb-bookmark-picker-row-new">
+            <div className="sb-bookmark-picker-new-heading">
               <BookmarkGlyph colorId={effectiveDraft.colorId} size={18} />
               <span className="sb-bookmark-label-name">
                 {t("new-bookmark", { defaultValue: "New bookmark" })}
               </span>
-            </button>
+            </div>
             {draft.value && (
               <button
                 type="button"
@@ -539,12 +561,21 @@ function BookmarkPickerContent(props: {
                 disabled={isSaving.value}
                 onChange={(next) => {
                   draft.value = next;
-                  selectedId.value = NEW_BOOKMARK_ROW;
                 }}
-                onSubmit={() => {
-                  void handleSave();
-                }}
+                onSubmit={createHere}
               />
+              <div className="sb-bookmark-picker-actions">
+                <button
+                  type="button"
+                  className="sb-bookmark-picker-save"
+                  disabled={!canCreate}
+                  onClick={createHere}
+                >
+                  {isSaving.value
+                    ? t("saving", { defaultValue: "Saving…" })
+                    : t("save", { defaultValue: "Save" })}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -558,7 +589,6 @@ function BookmarkPickerContent(props: {
             disabled={!canAddNew || isSaving.value}
             onClick={() => {
               draft.value = nextBookmarkDraft(t, bookmarks);
-              selectedId.value = NEW_BOOKMARK_ROW;
             }}
           >
             <MaterialIcon aria-hidden="true">add</MaterialIcon>
@@ -567,21 +597,6 @@ function BookmarkPickerContent(props: {
           {!manager.canCreate.value && <BookmarkCapNote />}
         </div>
       )}
-
-      <div className="sb-bookmark-picker-actions">
-        <button
-          type="button"
-          className="sb-bookmark-picker-save"
-          disabled={!canSave}
-          onClick={() => {
-            void handleSave();
-          }}
-        >
-          {isSaving.value
-            ? t("saving", { defaultValue: "Saving…" })
-            : t("save", { defaultValue: "Save" })}
-        </button>
-      </div>
     </div>
   );
 }
