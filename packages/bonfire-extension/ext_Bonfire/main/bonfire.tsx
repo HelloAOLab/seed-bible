@@ -1,6 +1,14 @@
 import { type SeedBibleState } from "seed-bible";
 import { formatAvailableTranslationsNote } from "seed-bible/managers";
 import { z } from "zod";
+import type { ChatProviderMessageOptions } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import {
+  runChatCompletionToolLoop,
+  toChatCompletionMessages,
+  toChatCompletionTools,
+} from "@packages/seed-bible/seed-bible/managers/ChatCompletions";
+
+const PROVIDER_ID = "bonfire-chat-provider";
 
 const bonfireSessionStartResponseSchema = z.object({
   session: z.object({
@@ -102,26 +110,52 @@ async function* streamBonfireMessageDeltas(
 }
 
 /**
- * The system note Bonfire receives for one turn. Bonfire cannot call tools,
- * so the translations the reader could actually switch to are written out
- * here instead of being looked up with searchTranslations.
+ * The system note Bonfire receives for one turn. Without tools Bonfire can't
+ * look up translations with searchTranslations, so `listTranslations` writes
+ * out the ones the reader could actually switch to instead.
  */
-function buildBonfireCustomInstructions(options: {
-  bookId: string | null | undefined;
-  chapterNumber: number | null | undefined;
-  translationLabel: string;
-  translationShortName: string;
-  uiLanguage: string;
-  availableTranslationsNote: string | null;
-}): string {
+async function buildBonfireInstructions(
+  context: SeedBibleState,
+  options: { listTranslations: boolean }
+): Promise<string> {
+  const readingState = context.app.selectedTab.value?.readingState;
+  const tabTranslation = readingState?.translation.value ?? null;
+  const tabTranslationId = readingState?.translationId.value ?? null;
+  const translationLabel =
+    tabTranslation?.name ??
+    tabTranslation?.englishName ??
+    tabTranslationId ??
+    "unknown";
+  const translationShortName =
+    tabTranslation?.shortName ?? tabTranslationId ?? "";
+  const uiLanguage = context.i18n.language.value.replace(/_/g, "-");
+
   const reading = [
     `You are chatting with a user who is reading the Bible.`,
-    `They are currently reading: ${options.bookId} ${options.chapterNumber}.`,
-    `User has their UI language set to ${options.uiLanguage}, however when speaking to the user you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to speaking to them in ${options.uiLanguage}.`,
-    `When quoting scripture for the user, use their active Bible translation which is ${options.translationLabel} (${options.translationShortName}).`,
+    `They are currently reading: ${readingState?.bookId.value} ${readingState?.chapterNumber.value}.`,
+    `User has their UI language set to ${uiLanguage}, however when speaking to the user you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to speaking to them in ${uiLanguage}.`,
+    `When quoting scripture for the user, use their active Bible translation which is ${translationLabel} (${translationShortName}).`,
   ].join(" ");
-  return options.availableTranslationsNote
-    ? `${reading} ${options.availableTranslationsNote}`
+
+  if (!options.listTranslations) {
+    return reading;
+  }
+
+  let availableTranslationsNote: string | null = null;
+  try {
+    const catalog = context.bibleData.catalogLoaded.peek()
+      ? context.bibleData.availableTranslations.peek()
+      : await context.bibleData.getTranslations();
+    availableTranslationsNote = formatAvailableTranslationsNote(
+      catalog,
+      context.i18n.language.value,
+      tabTranslation?.language ?? null
+    );
+  } catch (err) {
+    console.warn("[Bonfire] Could not list translations for the prompt", err);
+  }
+  return availableTranslationsNote
+    ? `${reading} ${availableTranslationsNote}`
     : reading;
 }
 
@@ -130,8 +164,15 @@ export interface BonfireOptions {
   orgId: string;
   /** The AI ID for the Bonfire API. */
   aiId: string;
-  /** The API key for the Bonfire API. */
-  // apiKey: string;
+  /** The API key for the Bonfire API, sent as a bearer token if set. */
+  apiKey?: string;
+  /**
+   * The URL of Bonfire's `/v1/chat/completions` endpoint. When set, the
+   * provider sends the whole conversation plus Seed Bible's tools on every
+   * request and runs the tools Bonfire asks for. When omitted, it uses the
+   * session API, which doesn't support tools.
+   */
+  chatCompletionsUrl?: string;
   /** The name of the Bonfire chat provider. */
   name: string;
   /** The URL of the icon for the Bonfire chat provider. */
@@ -147,6 +188,14 @@ export function* registerBonfireChatProvider(
   context: SeedBibleState,
   options: BonfireOptions
 ) {
+  if (options.chatCompletionsUrl) {
+    yield* registerBonfireChatCompletionsProvider(context, {
+      ...options,
+      chatCompletionsUrl: options.chatCompletionsUrl,
+    });
+    return;
+  }
+
   const { orgId, aiId, name, iconUrl } = options;
   const headers = {
     "Content-Type": "application/json",
@@ -157,7 +206,7 @@ export function* registerBonfireChatProvider(
 
   // TODO: Add default logo for Bonfire
   yield context.chats.registerProvider({
-    id: "bonfire-chat-provider",
+    id: PROVIDER_ID,
     name: name ?? {
       key: "title",
       defaultValue: "Bonfire",
@@ -231,33 +280,6 @@ export function* registerBonfireChatProvider(
       }
       console.log("[Bonfire] Generating response for message:", lastMessage);
 
-      const readingState = context.app.selectedTab.value?.readingState;
-      const tabTranslation = readingState?.translation.value ?? null;
-      const tabTranslationId = readingState?.translationId.value ?? null;
-      const translationLabel =
-        tabTranslation?.name ??
-        tabTranslation?.englishName ??
-        tabTranslationId ??
-        "unknown";
-      const translationShortName =
-        tabTranslation?.shortName ?? tabTranslationId ?? "";
-      const uiLanguage = context.i18n.language.value.replace(/_/g, "-");
-      let availableTranslationsNote: string | null = null;
-      try {
-        const catalog = context.bibleData.catalogLoaded.peek()
-          ? context.bibleData.availableTranslations.peek()
-          : await context.bibleData.getTranslations();
-        availableTranslationsNote = formatAvailableTranslationsNote(
-          catalog,
-          context.i18n.language.value,
-          tabTranslation?.language ?? null
-        );
-      } catch (err) {
-        console.warn(
-          "[Bonfire] Could not list translations for the prompt",
-          err
-        );
-      }
       const response = await fetch(
         "https://bonfire.seedbible.io/api/v1/session/chat",
         {
@@ -270,13 +292,8 @@ export function* registerBonfireChatProvider(
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
             },
-            custom_instructions: buildBonfireCustomInstructions({
-              bookId: readingState?.bookId.value,
-              chapterNumber: readingState?.chapterNumber.value,
-              translationLabel,
-              translationShortName,
-              uiLanguage,
-              availableTranslationsNote,
+            custom_instructions: await buildBonfireInstructions(context, {
+              listTranslations: true,
             }),
           }),
           headers,
@@ -287,6 +304,76 @@ export function* registerBonfireChatProvider(
         type: "text",
         text: streamBonfireMessageDeltas(response),
       };
+    },
+  });
+}
+
+/**
+ * Registers a provider backed by Bonfire's stateless `/v1/chat/completions`
+ * endpoint. Bonfire only routes and validates tool calls; the tools
+ * themselves run here, in the browser.
+ */
+function* registerBonfireChatCompletionsProvider(
+  context: SeedBibleState,
+  options: BonfireOptions & { chatCompletionsUrl: string }
+) {
+  const { orgId, aiId, name, iconUrl, apiKey, chatCompletionsUrl } = options;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (apiKey) {
+    headers.Authorization = `Bearer ${apiKey}`;
+  }
+
+  yield context.chats.registerProvider({
+    id: PROVIDER_ID,
+    name: name ?? {
+      key: "title",
+      defaultValue: "Bonfire",
+      ns: "ext_Bonfire",
+    },
+    iconUrl,
+    supportsSharedChats: false,
+    supportsToolCalling: true,
+    generateResponse: async function* (
+      chatContext
+    ): AsyncGenerator<ChatProviderMessageOptions> {
+      const instructions = [
+        chatContext.instructions,
+        await buildBonfireInstructions(context, {
+          listTranslations: !chatContext.tools?.some(
+            (t) => t.name === "searchTranslations"
+          ),
+        }),
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+      const tools = toChatCompletionTools(chatContext.tools);
+
+      yield* runChatCompletionToolLoop({
+        messages: [
+          { role: "system", content: instructions },
+          ...toChatCompletionMessages(chatContext, PROVIDER_ID),
+        ],
+        tools: chatContext.tools,
+        toolCallContext: {
+          chatId: chatContext.chatId,
+          providerId: PROVIDER_ID,
+        },
+        requestCompletion: (messages) =>
+          fetch(chatCompletionsUrl, {
+            method: "POST",
+            body: JSON.stringify({
+              org_id: orgId,
+              ai_id: aiId,
+              stream: true,
+              messages,
+              tools,
+              metadata: { client: "seed-bible" },
+            }),
+            headers,
+          }),
+      });
     },
   });
 }
