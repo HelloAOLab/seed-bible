@@ -134,6 +134,11 @@ describe("AnnotationsManager", () => {
       userInfo: signal({ id: "user-1", email: "test@example.com" }),
       cancelLogin: vi.fn().mockResolvedValue(undefined),
       isLoginOpen: signal(false),
+      openIDProviders: signal(null),
+      loadOpenIDProviders: vi.fn().mockResolvedValue([]),
+      loginWithOpenID: vi.fn(),
+      openIDLoginError: signal(null),
+      isCompletingOpenIDLogin: signal(false),
       requestLoginByEmail: vi
         .fn()
         .mockResolvedValue({ success: true, requestId: "req-1" }),

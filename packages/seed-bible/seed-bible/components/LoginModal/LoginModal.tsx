@@ -7,7 +7,11 @@ import SeedBibleTitleIcon from "../../img/SeedBibleLogoWithTitleBlack.png";
 import { MaterialIcon } from "../icons";
 import { useOverlayDismiss } from "../useOverlayDismiss";
 import type { NavigationManager } from "../../managers/NavigationManager";
-import type { LoginManager } from "../../managers/LoginManager";
+import {
+  YOUVERSION_OPEN_ID_PROVIDER,
+  type LoginManager,
+  type OpenIDLoginFailure,
+} from "../../managers/LoginManager";
 
 type LoginStep = "email" | "code";
 
@@ -17,6 +21,9 @@ type LoginStep = "email" | "code";
  * Walks the user through two screens:
  *  1. Enter an email address (sends a login code).
  *  2. Enter the code that was emailed to them (completes the login).
+ *
+ * The first screen also offers signing in with YouVersion when the auth
+ * server has that provider configured.
  *
  * The flow is driven entirely by the OS manager: requesting a code, submitting
  * it, and cancelling all delegate to {@link CasualOSManager}. When the login
@@ -38,6 +45,7 @@ export function LoginModal({
   const agreed = useSignal(false);
   const error = useSignal<string | null>(null);
   const isSubmitting = useSignal(false);
+  const isRedirectingToOpenID = useSignal(false);
 
   // The login request returned by `requestLoginByEmail`. Needed to complete the
   // login on the code screen. Kept in a ref because it's not rendered directly.
@@ -66,6 +74,18 @@ export function LoginModal({
 
   const isOpen = login.isLoginOpen.value;
 
+  const openIDErrorMessage = (failure: OpenIDLoginFailure): string => {
+    if (failure.errorCode === "session_key_required_for_openid") {
+      return t("login-error-openid-account-exists", {
+        defaultValue:
+          "An account with this email address already exists. Please log in with your email address instead.",
+      });
+    }
+    return t("login-error-generic", {
+      defaultValue: "Something went wrong. Please try again.",
+    });
+  };
+
   // Reset to a clean state every time the modal is (re)opened so a previous,
   // abandoned attempt doesn't leak into the next one.
   useSignalEffect(() => {
@@ -75,10 +95,19 @@ export function LoginModal({
         step.value = "email";
         code.value = "";
         agreed.value = false;
-        error.value = null;
+        // A YouVersion login that failed on the way back opens this screen
+        // to say why.
+        const openIDError = login.openIDLoginError.peek();
+        error.value = openIDError ? openIDErrorMessage(openIDError) : null;
+        login.openIDLoginError.value = null;
         isSubmitting.value = false;
+        isRedirectingToOpenID.value = false;
       });
       requestRef.current = null;
+      login.loadOpenIDProviders().catch((err) => {
+        // Email login still works, so the provider buttons just stay hidden.
+        console.warn("Failed to load OpenID login providers.", err);
+      });
     }
     wasOpenRef.current = open;
   });
@@ -204,6 +233,49 @@ export function LoginModal({
       isSubmitting.value = false;
     }
   };
+
+  const loginWithYouVersion = async () => {
+    if (isSubmitting.value) {
+      return;
+    }
+
+    if (!agreed.value) {
+      error.value = t("login-error-terms-required", {
+        defaultValue: "Please agree to the terms of service to continue.",
+      });
+      return;
+    }
+
+    error.value = null;
+    isSubmitting.value = true;
+    isRedirectingToOpenID.value = true;
+    let result: Awaited<ReturnType<LoginManager["loginWithOpenID"]>>;
+    try {
+      result = await login.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER);
+    } catch (err) {
+      console.error("Failed to log in with YouVersion.", err);
+      result = {
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "The login could not be started.",
+      };
+    }
+
+    // On success the page is already leaving for YouVersion, so the button
+    // stays disabled rather than inviting a second click.
+    if (!result.success) {
+      batch(() => {
+        error.value = openIDErrorMessage(result);
+        isSubmitting.value = false;
+        isRedirectingToOpenID.value = false;
+      });
+    }
+  };
+
+  const hasYouVersion =
+    login.openIDProviders.value?.some(
+      (provider) => provider.id === YOUVERSION_OPEN_ID_PROVIDER
+    ) ?? false;
 
   const backToEmail = () => {
     batch(() => {
@@ -439,6 +511,31 @@ export function LoginModal({
                     : t("log-in", { defaultValue: "Log in" })}
                 </button>
               </div>
+
+              {hasYouVersion && (
+                <>
+                  <div className="sb-login-divider" role="separator">
+                    <span>{t("login-or", { defaultValue: "or" })}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="sb-login-provider"
+                    onClick={loginWithYouVersion}
+                    disabled={isSubmitting.value}
+                  >
+                    <MaterialIcon className="sb-login-provider-icon">
+                      menu_book
+                    </MaterialIcon>
+                    {isRedirectingToOpenID.value
+                      ? t("login-with-youversion-redirecting", {
+                          defaultValue: "Redirecting to YouVersion…",
+                        })
+                      : t("login-with-youversion", {
+                          defaultValue: "Continue with YouVersion",
+                        })}
+                  </button>
+                </>
+              )}
             </form>
           )}
 

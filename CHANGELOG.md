@@ -21,6 +21,7 @@
   - A Customization can provide its own values for these settings, entered in the same masked fields from its extension defaults window. They are saved in a proxy record owned by the Customization's author, and the Customization only stores where that proxy is. Everyone using the Customization sends requests with those values unless they save their own, which then replace the Customization's for that destination. This also works for signed-out viewers. The viewer's Configure window says "Provided by the customization" for such a setting.
   - A Customization's proxy is public by default, since it exists for other people to use; the author can switch it to "Only me". Deleting the Customization erases its proxies first.
   - Secrets for an extension that's no longer installed, or that no longer asks for them, are listed under Settings → Extensions with a Clear button, so they can still be removed from the server.
+- Sign in with your YouVersion account. The login screen now offers "Continue with YouVersion" below the email form, which takes you to YouVersion's sign-in page and brings you back to where you were, signed in. ([#1252](https://github.com/HelloAOLab/seed-bible/issues/1252))
 
 ### 🔧 Changed
 
