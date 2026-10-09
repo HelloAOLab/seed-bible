@@ -34,24 +34,26 @@ const BOOKMARK_PATH =
 const MAX_STACKED_GLYPHS = 3;
 
 /**
- * Where each ribbon of a stack sits, front first: scaled down and stepped up
- * and to the inline end so the back copies peek out behind the front one, and
- * the whole group centered in the 24×24 box. Offsetting copies of the ribbon
- * (rather than drawing an even stack of sheets) is what keeps the shape
- * reading as a bookmark beside the save button.
+ * Where each ribbon of a stack sits, front first: stepped toward the inline
+ * end and tilted a little further each time, so the copies behind fan out like
+ * cards while every ribbon keeps its bookmark shape — an even stack of sheets
+ * would read as the save button beside it. The group is centered in the 24×24
+ * box; the tilt lets the last ribbon's tip spill just past it.
  */
 const STACK_LAYOUTS: Record<number, { x: number; y: number }[]> = {
   2: [
-    { x: 0.05, y: 2.55 },
-    { x: 3.55, y: 1.05 },
+    { x: -0.79, y: 1.21 },
+    { x: 2.71, y: 0.71 },
   ],
   3: [
-    { x: -1.7, y: 3.3 },
-    { x: 1.8, y: 1.8 },
-    { x: 5.3, y: 0.3 },
+    { x: -2.54, y: 1.46 },
+    { x: 0.96, y: 0.96 },
+    { x: 4.46, y: 0.46 },
   ],
 };
-const STACK_SCALE = 0.85;
+const STACK_SCALE = 0.92;
+/** Degrees each ribbon behind the front one turns, about its bottom center. */
+const STACK_TILT = 12;
 
 /** A single bookmark ribbon filled in a bookmark color. */
 export function BookmarkGlyph(props: {
@@ -119,27 +121,34 @@ export function BookmarkStackIcon(props: {
   const layout = STACK_LAYOUTS[shown.length]!;
   // Painted back to front so the most recently moved ribbon ends up on top.
   // Each one is outlined in the header's background, which cuts a thin gap
-  // between it and the ribbon behind it.
+  // between it and the ribbon behind it. The outline is painted under the
+  // fill, so it only cuts into the ribbon behind and never shrinks its own.
   return (
     <svg
       className="sb-bookmark-stack-icon"
       width={size}
       height={size}
       viewBox="0 0 24 24"
+      overflow="visible"
       aria-hidden="true"
     >
       {shown
-        .map((bookmark, index) => ({ bookmark, offset: layout[index]! }))
+        .map((bookmark, index) => ({
+          bookmark,
+          offset: layout[index]!,
+          tilt: index * STACK_TILT,
+        }))
         .reverse()
-        .map(({ bookmark, offset }) => (
+        .map(({ bookmark, offset, tilt }) => (
           <path
             key={bookmark.id}
             d={BOOKMARK_PATH}
-            transform={`translate(${offset.x} ${offset.y}) scale(${STACK_SCALE})`}
+            transform={`translate(${offset.x} ${offset.y}) scale(${STACK_SCALE}) rotate(${tilt} 12 21)`}
             fill={bookmarkColorValue(bookmark.colorId)}
             stroke="var(--sb-bookmark-stack-gap-color)"
-            stroke-width="2"
+            stroke-width="3.4"
             stroke-linejoin="round"
+            paint-order="stroke"
           />
         ))}
     </svg>
