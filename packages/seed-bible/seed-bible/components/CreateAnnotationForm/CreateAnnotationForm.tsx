@@ -25,7 +25,12 @@ import { retryChunkImport } from "./retryChunkImport";
 // actually opens the annotation composer. If that fetch fails (e.g. offline
 // and not yet cached), fall back to a plain textarea so the note isn't lost.
 function loadAnnotationEditor(isRetry: boolean) {
-  const load = () => import("../TipTapEditor/TipTapEditor");
+  // The composer is never server-rendered; the SSR guard keeps TipTap (~800 KB)
+  // out of the single-file SSR bundle.
+  const load = () =>
+    import.meta.env.SSR
+      ? Promise.resolve({ default: PlainTextAnnotationEditor })
+      : import("../TipTapEditor/TipTapEditor");
   return lazy<ComponentType<AnnotationEditorProps>>(() =>
     (isRetry ? retryChunkImport(load) : load()).catch((err: unknown) => {
       console.error("Failed to load the rich text editor:", err);
