@@ -38,18 +38,21 @@ const MAX_STACKED_GLYPHS = 3;
  * Where each ribbon of a stack sits, front first: stepped toward the inline
  * end and tilted a little further each time, so the copies behind fan out like
  * cards while every ribbon keeps its bookmark shape — an even stack of sheets
- * would read as the save button beside it. The group is centered in the 24×24
- * box; the tilt lets the last ribbon's tip spill just past it.
+ * would read as the save button beside it.
+ *
+ * The offsets center the group by its visible outline, tilt included, in the
+ * 24×24 box. Centering the untilted ribbons instead left a full fan of three
+ * hanging off the right edge of its button.
  */
 const STACK_LAYOUTS: Record<number, { x: number; y: number }[]> = {
   2: [
-    { x: -0.79, y: 1.21 },
-    { x: 2.71, y: 0.71 },
+    { x: -2.11, y: 0.94 },
+    { x: 1.39, y: 0.44 },
   ],
   3: [
-    { x: -2.54, y: 1.46 },
-    { x: 0.96, y: 0.96 },
-    { x: 4.46, y: 0.46 },
+    { x: -5.08, y: 0.65 },
+    { x: -1.58, y: 0.15 },
+    { x: 1.92, y: -0.35 },
   ],
 };
 const STACK_SCALE = 0.92;
