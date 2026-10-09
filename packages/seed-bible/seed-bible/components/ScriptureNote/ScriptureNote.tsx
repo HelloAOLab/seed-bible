@@ -66,22 +66,20 @@ function union(a: Box | null, b: Box): Box {
 }
 
 /**
- * The part of the screen the reader actually shows: the reader clipped to its
- * scroll container and the window, above the fixed bottom toolbar, so the
- * popover never lands under it.
+ * The part of the screen this reader's pane shows: its scroll container (or the
+ * reader itself when the page scrolls) clipped to the window, above the fixed
+ * bottom toolbar so the popover never lands under it. The scroll container,
+ * not the reader, because the reader is only as wide as its text column and is
+ * centred in the pane — the gutters beside the text belong to the pane.
  */
 function visibleReaderBox(root: HTMLElement): Box | null {
-  let box: Box | null = intersect(toBox(root.getBoundingClientRect()), {
+  const pane = findScrollContainer(root) ?? root;
+  return intersect(toBox(pane.getBoundingClientRect()), {
     top: 0,
     left: 0,
     right: window.innerWidth,
     bottom: window.innerHeight - readBottomChromeInset(),
   });
-  const scroller = findScrollContainer(root);
-  if (box && scroller) {
-    box = intersect(box, toBox(scroller.getBoundingClientRect()));
-  }
-  return box;
 }
 
 /**
@@ -128,10 +126,14 @@ function fitsFrame(
 }
 
 /**
- * Where the popover goes: beside the visible part of the passage when it fits
- * there, else beside the passage's first visible verse (a long passage can fill
- * the reader), else docked in the reader's corner with no pointer — which is
- * also where it waits while the passage is scrolled out of view.
+ * Where the popover goes. It sits in the gutter beside the text column, level
+ * with the passage — on the right for left-to-right text, the left for
+ * right-to-left — when the gutter is wide enough, and underneath the passage
+ * when it isn't. Each is tried against the visible part of the whole passage,
+ * then against just its first visible verse (a long passage can fill the
+ * reader, leaving no room under it). Failing both it docks in the reader's
+ * corner with no pointer, which is also where it waits while the passage is
+ * scrolled out of view.
  */
 function placePopover(
   root: HTMLElement,
@@ -148,6 +150,18 @@ function placePopover(
     height: box.bottom - box.top,
   });
 
+  const rtl = getComputedStyle(root).direction === "rtl";
+  // Targets span the text column's full width, not just the passage's own
+  // words, so "beside" means the gutter past the column rather than the gap
+  // after a verse that ends mid-line, and "underneath" centres on the column.
+  const column = root
+    .querySelector(".sb-chapter-content")
+    ?.getBoundingClientRect();
+  const acrossColumn = (box: Box): Box | null =>
+    column && column.width > 0
+      ? intersect({ ...box, left: column.left, right: column.right }, frame)
+      : box;
+
   const visible = passageBoxes(root, item)
     .map((box) => intersect(box, frame))
     .filter((box): box is Box => !!box);
@@ -156,10 +170,13 @@ function placePopover(
     candidates.push(visible.reduce<Box | null>(union, null)!);
     candidates.push(visible[0]!);
   }
-  for (const target of candidates) {
+  for (const passage of candidates) {
+    const target = acrossColumn(passage);
+    if (!target) continue;
+    // `computePopover` tries the given side first, then underneath.
     const layout = computePopover(
       relative(target),
-      "right",
+      rtl ? "left" : "right",
       size,
       measured,
       POPOVER_GAP
@@ -180,7 +197,7 @@ function placePopover(
     arrowStyle: {},
     style: {
       top: `${Math.max(DOCK_INSET, size.h - (measured?.h ?? 0) - DOCK_INSET)}px`,
-      left: `${Math.max(DOCK_INSET, size.w - width - DOCK_INSET)}px`,
+      left: `${rtl ? DOCK_INSET : Math.max(DOCK_INSET, size.w - width - DOCK_INSET)}px`,
       width: `${width}px`,
     },
   };
