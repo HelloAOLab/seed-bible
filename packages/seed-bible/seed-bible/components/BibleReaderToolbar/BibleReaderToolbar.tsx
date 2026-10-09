@@ -1094,12 +1094,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // while a pane covers the reader — otherwise it floats on top of the pane and
   // hides most of it. The selection itself is kept, so the toolbar comes back
   // exactly as it was once the pane is closed.
-  const isVerseToolbarDismissed = useSignal(false);
   const isVerseToolbarVisible = useComputed(
     () =>
       hasVerseSelection.value &&
       !isFullscreenPaneVisible.value &&
-      !isVerseToolbarDismissed.value
+      !props.state.annotations?.isDraftingNewAnnotation.value
   );
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && isVerseToolbarVisible.value
@@ -1166,7 +1165,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       // retargeted pointerdown could otherwise land "outside" a pane the action
       // just opened (e.g. Ask AI's chat panel) and dismiss it.
       await action();
-      isVerseToolbarDismissed.value = true;
+
       if (!preserveSelection) {
         readingState.value?.clearSelectedVerses();
       }
@@ -2004,7 +2003,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // otherwise come back for the next selection still pushed off the screen.
   useEffect(() => {
     if (!hasVerseSelection.value) {
-      isVerseToolbarDismissed.value = false;
       isHighlightPickerOpen.value = false;
       isVerseSheetExpanded.value = false;
       selectedVerseToolId.value = null;

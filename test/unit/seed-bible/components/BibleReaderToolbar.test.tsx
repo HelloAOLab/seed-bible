@@ -1193,6 +1193,27 @@ describe("BibleReaderToolbar — verse tool actions", () => {
   function readingStateOf() {
     return state.app.currentReadingState.value!.tab.readingState;
   }
+  function signIn() {
+    Object.defineProperty(state.login, "userId", {
+      value: signal("user-1"),
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  function stubAnnotationRecords() {
+    Object.defineProperty(state.os, "getData", {
+      value: vi.fn(async () => null),
+      configurable: true,
+      writable: true,
+    });
+
+    Object.defineProperty(state.os, "recordData", {
+      value: vi.fn(async () => ({ success: true })),
+      configurable: true,
+      writable: true,
+    });
+  }
 
   async function selectFirstVerse() {
     const readingState = readingStateOf();
@@ -1282,7 +1303,7 @@ describe("BibleReaderToolbar — verse tool actions", () => {
     expect(readingState.selectedVerses.value).toHaveLength(0);
     expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
   });
-  it("keeps the verse selection when a tool preserves selection", async () => {
+  it("keeps the verse selection and toolbar when a tool preserves selection", async () => {
     const onSelect = vi.fn();
 
     state.tools.registerVerseToolbarTool({
@@ -1306,19 +1327,17 @@ describe("BibleReaderToolbar — verse tool actions", () => {
       (button) => button.getAttribute("aria-label") === "Test Preserve Tool"
     );
 
-    expect(toolButton).not.toBeUndefined();
+    expect(toolButton).toBeDefined();
 
     await act(async () => {
       toolButton!.click();
     });
 
     expect(onSelect).toHaveBeenCalledTimes(1);
-
-    // Selection must remain.
     expect(readingState.selectedVerses.value).toHaveLength(1);
 
-    // Toolbar is dismissed after the successful action.
-    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+    // preserveSelection means the selection and toolbar both remain.
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
   });
   it("keeps the verse selection and toolbar when a verse tool action rejects", async () => {
     const onSelect = vi.fn().mockRejectedValue(new Error("Test action failed"));
@@ -1441,6 +1460,83 @@ describe("BibleReaderToolbar — verse tool actions", () => {
     expect(readingState.selectedVerses.value).toHaveLength(0);
     expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
   });
+
+  it("hides the verse toolbar while drafting a new note without clearing the selection", async () => {
+    signIn();
+    stubAnnotationRecords();
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    await act(async () => {
+      await state.annotations.createNewAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(true);
+    expect(state.annotations.editingAnnotation.value).not.toBeNull();
+
+    // Drafting hides the toolbar but must preserve the selected verse.
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+
+  it("restores the verse toolbar when a new note is cancelled", async () => {
+    signIn();
+    stubAnnotationRecords();
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    await act(async () => {
+      await state.annotations.createNewAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(true);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+
+    await act(async () => {
+      state.annotations.cancelEditingAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(false);
+    expect(state.annotations.editingAnnotation.value).toBeNull();
+
+    // Cancelling leaves the selection intact, so the toolbar returns.
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+  });
+
+  it("clears the verse selection after successfully saving a new note", async () => {
+    signIn();
+    stubAnnotationRecords();
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    await act(async () => {
+      await state.annotations.createNewAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(true);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+
+    await act(async () => {
+      await state.annotations.saveEditingAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(false);
+    expect(state.annotations.editingAnnotation.value).toBeNull();
+
+    // A successful save clears the selection, so the toolbar stays hidden.
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+
   it("clears the verse selection after picking a dropdown item", async () => {
     const onSelect = vi.fn();
     state.tools.registerVerseToolbarTool({

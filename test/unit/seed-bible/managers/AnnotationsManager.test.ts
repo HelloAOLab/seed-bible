@@ -60,12 +60,17 @@ function createMockTab(
     }>;
   } = {}
 ): ReaderTab {
+  const selectedVerses = signal(overrides.selectedVerses ?? []);
+
   return {
     id: overrides.id ?? "tab-1",
     readingState: {
       bookId: signal(overrides.bookId === undefined ? "GEN" : overrides.bookId),
       chapterNumber: signal(overrides.chapterNumber ?? 1),
-      selectedVerses: signal(overrides.selectedVerses ?? []),
+      selectedVerses,
+      clearSelectedVerses: () => {
+        selectedVerses.value = [];
+      },
     },
   } as unknown as ReaderTab;
 }

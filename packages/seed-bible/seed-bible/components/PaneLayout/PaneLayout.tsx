@@ -5,7 +5,7 @@ import type { Pane, PanesManager } from "../../managers/PanesManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { UI_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
 import { useEffect, useRef } from "preact/hooks";
-import type { BibleReadingState } from "../../managers";
+import type { AnnotationsManager } from "../../managers";
 
 interface DragState {
   mode: "move" | "resize";
@@ -40,16 +40,17 @@ interface DragState {
 function closePaneFromHeader(
   panesManager: PanesManager,
   pane: Pane,
-  currentReadingState?: BibleReadingState
+  annotations?: AnnotationsManager
 ) {
   if (pane.confirmClose && !pane.confirmClose()) {
     return;
   }
-
-  panesManager.closePane(pane.id, "user");
-  if (currentReadingState) {
-    currentReadingState.clearSelectedVerses();
+  // Cancel an active new-annotation draft when the pane is closed,
+  // preserving the selected verses so the verse toolbar reappears.
+  if (annotations?.isDraftingNewAnnotation.value) {
+    annotations.cancelEditingAnnotation();
   }
+  panesManager.closePane(pane.id, "user");
 }
 
 function usePaneDrag(state: SeedBibleState) {
@@ -318,14 +319,8 @@ interface SidePaneProps {
  */
 export function SidePane(props: SidePaneProps) {
   const { state, pane } = props;
-  const { app, panes: panesManager } = state;
+  const { app, panes: panesManager, annotations } = state;
   const { startResize, registerPaneElement } = usePaneDrag(state);
-  const tabs = state?.tabs;
-
-  //readingstate for the current selected tab
-  const currentReadingState = tabs.tabs.value.find(
-    (tab) => tab.id === tabs.selectedTabId.value
-  )?.readingState;
 
   return (
     <div
@@ -342,9 +337,7 @@ export function SidePane(props: SidePaneProps) {
         icon={pane.icon}
         leading={pane.leading}
         header={pane.header}
-        onClose={() =>
-          closePaneFromHeader(panesManager, pane, currentReadingState)
-        }
+        onClose={() => closePaneFromHeader(panesManager, pane, annotations)}
       />
       <div className="sb-pane-detached-body">
         <div className="sb-pane-component">

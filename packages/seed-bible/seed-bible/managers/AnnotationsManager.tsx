@@ -110,6 +110,9 @@ export interface AnnotationsManager {
   /** The annotation currently being created/edited in the pane, or null. */
   editingAnnotation: Signal<Annotation | null>;
 
+  /** Read-only signal indicating whether a new annotation is currently being drafted. */
+  readonly isDraftingNewAnnotation: ReadonlySignal<boolean>;
+
   /**
    * Starts creating a new annotation on the active tab's current chapter and
    * switches the pane to the create/edit view. Pre-fills the verse targeting
@@ -1487,20 +1490,30 @@ export function createAnnotationsManager(
 
   const saveEditingAnnotation = async (): Promise<void> => {
     const current = editingAnnotation.value;
+    console.log();
     if (!current) {
       return;
     }
-    // Captured before awaiting, and passed through explicitly. `saveAnnotation`
-    // resolves the same owner synchronously, but it then awaits two IndexedDB
-    // round trips — long enough for the account to change. Letting the cache
-    // update re-read the *current* login instead would file this note under
-    // whichever account happens to be signed in by then, so the next reader sees
-    // one account's writing as their own.
+
+    // Capture the owner before awaiting the save, since the account may change
+    // while IndexedDB operations are in progress.
     const recordId = effectiveRecordId();
-    // `saveAnnotation` stamps the timestamps now, so every path that persists an
-    // annotation gets them — not just this one.
+
+    // Capture the tab before leaving the editor resets draftTabId.
+    const tabId = draftTabId.value;
+    // Save first so a failed save preserves the current verse selection.
     const saved = await saveAnnotation(current);
     upsertIntoCache(saved, recordId);
+
+    // Clear the selected verses after a successful save of a new annotation.
+    const tab = tabId
+      ? (tabs.tabs.value.find((t) => t.id === tabId) ?? null)
+      : null;
+
+    if (tab) {
+      tab.readingState.clearSelectedVerses();
+    }
+
     leaveAnnotationEditor();
   };
 
@@ -1540,6 +1553,7 @@ export function createAnnotationsManager(
     saveEditingAnnotation,
     cancelEditingAnnotation,
     deleteAnnotationAndRefresh,
+    isDraftingNewAnnotation: computed(() => isDraftingNewAnnotation.value),
     hasRecordOverride: !!recordOverride,
     sync,
     pendingCountForChapter: (bookId, chapterNumber) =>
