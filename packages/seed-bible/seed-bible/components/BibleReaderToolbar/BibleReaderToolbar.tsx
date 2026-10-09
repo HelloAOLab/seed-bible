@@ -1109,7 +1109,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // hides most of it. The selection itself is kept, so the toolbar comes back
   // exactly as it was once the pane is closed.
   const isVerseToolbarVisible = useComputed(
-    () => hasVerseSelection.value && !isFullscreenPaneVisible.value
+    () =>
+      hasVerseSelection.value &&
+      !isFullscreenPaneVisible.value &&
+      !props.state.annotations?.isDraftingNewAnnotation.value
   );
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && isVerseToolbarVisible.value
@@ -1165,6 +1168,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    * dismisses the selection or springs it back to 0.
    */
   const verseSheetDismissOffset = useSignal(0);
+  /** Runs a verse toolbar action and clears the selection after it succeeds. */
+  const handleVerseAction = async (
+    action: () => void | Promise<void>,
+    preserveSelection = false
+  ): Promise<void> => {
+    try {
+      // The clear must run after a microtask, not synchronously. Clearing the
+      // selection unmounts the mobile verse sheet under the finger, and a
+      // retargeted pointerdown could otherwise land "outside" a pane the action
+      // just opened (e.g. Ask AI's chat panel) and dismiss it.
+      await action();
+
+      if (!preserveSelection) {
+        readingState.value?.clearSelectedVerses();
+      }
+    } catch (error) {
+      console.error("Verse toolbar action failed:", error);
+    }
+  };
 
   /** True while a finger is on the handle, so the settle animations stand down. */
   const isVerseSheetDragging = useComputed(
@@ -3333,8 +3355,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         key={item.id}
                         disabled={item.disabled.value}
                         onClick={() => {
-                          item.onSelect();
                           closeMenu();
+                          void handleVerseAction(
+                            item.onSelect,
+                            tool.preserveSelection
+                          );
                         }}
                         className="sb-tool-context-menu-item"
                         role="menuitem"
@@ -3370,7 +3395,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           }
 
                           selectedVerseToolId.value = null;
-                          tool.onSelect();
+                          void handleVerseAction(
+                            tool.onSelect,
+                            tool.preserveSelection
+                          );
                         }}
                         className="sb-verse-toolbar-action"
                         aria-label={label}
@@ -3508,6 +3536,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           chapterNumber,
                           verse: verseTarget,
                         });
+                        rs.clearSelectedVerses();
                       }}
                       aria-label={saveLabel}
                       title={saveLabel}
