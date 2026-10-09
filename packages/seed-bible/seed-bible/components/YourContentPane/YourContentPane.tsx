@@ -51,6 +51,8 @@ export interface YourContentScreenProps {
   onEditPlaylist: (playlist: Playlist) => void;
   /** Opens an annotation in the editor and leaves this screen. */
   onEditAnnotation: (annotation: Annotation) => void;
+  /** Opens a new, empty playlist in the editor and leaves this screen. */
+  onCreatePlaylist: () => void;
   /**
    * Opens a reading plan in the plans pane and leaves this screen. A draft
    * has nothing to read yet, so the caller is expected to open it where the
@@ -852,23 +854,39 @@ export function YourContentPane(props: YourContentScreenProps) {
           />
         </div>
 
-        <div className="sb-content-chips" role="tablist">
-          {contentFilters.map((value) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={filter === value}
-              className={`sb-content-chip${
-                filter === value ? " sb-content-chip-active" : ""
-              }`}
-              onClick={() => {
-                yourContent.filter.value = value;
-              }}
-            >
-              {chipLabel(value)}
-            </button>
-          ))}
+        <div className="sb-content-toolbar">
+          {/* Outside the chip strip so it stays put while the chips scroll. */}
+          <ContextMenuWithButton
+            buttonClassName="sb-content-create"
+            aria-label={t("create-menu", { defaultValue: "Create" })}
+            icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
+          >
+            <ContextMenuItem onClick={props.onCreatePlaylist}>
+              <MaterialIcon className="sb-context-menu-item-icon">
+                queue_music
+              </MaterialIcon>
+              {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
+            </ContextMenuItem>
+          </ContextMenuWithButton>
+
+          <div className="sb-content-chips" role="tablist">
+            {contentFilters.map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={filter === value}
+                className={`sb-content-chip${
+                  filter === value ? " sb-content-chip-active" : ""
+                }`}
+                onClick={() => {
+                  yourContent.filter.value = value;
+                }}
+              >
+                {chipLabel(value)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {status === "loading" || stillSearching ? (
