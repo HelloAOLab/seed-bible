@@ -1,7 +1,8 @@
-/* Desktop: the layer covers just the visible reader (positioned inline from
-   measurements) and lets clicks through, so only the popover itself is
-   interactive and the reader stays usable around it. Above the reader's own
-   chrome, below menus, the book selector, and modals (500 and up). */
+/* Desktop: the layer covers the visible part of the reader's pane, gutters
+   included (positioned inline from measurements), and lets clicks through, so
+   only the popover itself is interactive and the reader stays usable around
+   it. Above the reader's own chrome, below menus, the book selector, and
+   modals (500 and up). */
 .sb-scripture-note-layer {
   position: fixed;
   z-index: 450;
