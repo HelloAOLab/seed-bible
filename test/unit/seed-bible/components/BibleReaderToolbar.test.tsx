@@ -1564,7 +1564,6 @@ describe("BibleReaderToolbar — verse tool actions", () => {
     expect(readingState.selectedVerses.value).toHaveLength(1);
     expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
   });
-
   it("clears the verse selection after picking a dropdown item", async () => {
     const onSelect = vi.fn();
 
@@ -1599,9 +1598,9 @@ describe("BibleReaderToolbar — verse tool actions", () => {
       toolButton!.click();
     });
 
-    // Wait until the dropdown item appears.
+    // The dropdown may be portaled to document.body.
     const menuItem = await vi.waitFor(() => {
-      const item = container.querySelector<HTMLButtonElement>(
+      const item = document.body.querySelector<HTMLButtonElement>(
         ".sb-tool-context-menu-item"
       );
 
@@ -1609,11 +1608,11 @@ describe("BibleReaderToolbar — verse tool actions", () => {
       return item!;
     });
 
-    // Opening the dropdown should keep the toolbar and selection.
-    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+    // Opening the dropdown should preserve the selection and toolbar.
     expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
 
-    // Picking the item performs the action and closes the toolbar.
+    // Picking the item performs the action and clears the selection.
     await act(async () => {
       menuItem.click();
     });
