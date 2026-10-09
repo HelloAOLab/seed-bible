@@ -77,6 +77,11 @@ export const BibleVersePlaylistItem = z.object({
   type: z.literal("bible-verse"),
   ref: VerseRefSchema,
   translationId: z.string().optional(),
+  /**
+   * The author's formatted note on the passage (sanitized HTML, like an `html`
+   * item). Shown alongside the passage while it plays rather than in a modal.
+   */
+  note: z.string().optional(),
 });
 
 export const PlaylistItem = z.discriminatedUnion("type", [
@@ -582,7 +587,7 @@ export function expandCrossChapterItem(
     return [item];
   }
 
-  const { ref, translationId } = item;
+  const { ref, translationId, note } = item;
   const endChapter = ref.endChapter;
   if (
     endChapter == null ||
@@ -599,6 +604,9 @@ export function expandCrossChapterItem(
       items.push({
         type: "bible-verse",
         translationId,
+        // The note is about the whole passage, so it shows once, where the
+        // passage starts, rather than again on every chapter of it.
+        ...(note != null ? { note } : {}),
         ref:
           ref.verse != null
             ? {
@@ -694,6 +702,13 @@ export function createPlayingState(
   });
 
   let decorationId: string | null = null;
+  /**
+   * Whether any step has been shown in the reader yet. Until one has, the
+   * current step is shown even when the reader already sits on its chapter —
+   * starting a playlist from the chapter its first passage is in must still
+   * scroll to and highlight that passage.
+   */
+  let hasShownStep = false;
 
   const disposeDecoration = () => {
     if (tab && decorationId) {
@@ -707,6 +722,7 @@ export function createPlayingState(
     if (!tab || item?.type !== "bible-verse") {
       return;
     }
+    hasShownStep = true;
     disposeDecoration();
     const { ref, translationId } = item;
 
@@ -871,6 +887,7 @@ export function createPlayingState(
       const current = currentItem.peek();
       if (current?.type === "bible-verse" && tab?.readingState) {
         if (
+          !hasShownStep ||
           current.ref.bookId !== tab.readingState.bookId.peek() ||
           current.ref.chapter !== tab.readingState.chapterNumber.peek()
         ) {

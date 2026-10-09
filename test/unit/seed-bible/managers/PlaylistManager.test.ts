@@ -1929,6 +1929,42 @@ describe("createPlaylistManager", () => {
       });
     });
 
+    it("keeps a scripture note through the AI tools", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      manager.addEditingPlaylistItem({
+        type: "bible-verse",
+        ref: { bookId: "JHN", chapter: 3, verse: 16 },
+        note: "<p><strong>Love</strong> first</p>",
+      });
+
+      const state = JSON.parse(
+        (await getTool("getPlaylistState").function({})) as string
+      );
+      expect(state.items[0].bibleVerse.note).toBe(
+        "<p><strong>Love</strong> first</p>"
+      );
+
+      // The AI edits the reference and hands the note back with it.
+      await getTool("updatePlaylistItem").function({
+        ...state.items[0],
+        index: 0,
+        bibleVerse: {
+          ...state.items[0].bibleVerse,
+          ref: { ...state.items[0].bibleVerse.ref, endVerse: 17 },
+        },
+      });
+
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        {
+          type: "bible-verse",
+          ref: { bookId: "JHN", chapter: 3, verse: 16, endVerse: 17 },
+          note: "<p><strong>Love</strong> first</p>",
+        },
+      ]);
+    });
+
     it("getPlaylistState reports an error when nothing is being edited", async () => {
       const manager = makeManager("user-1");
       await flush();
@@ -2179,6 +2215,33 @@ describe("createPlaylistManager", () => {
     manager.stopPlaying();
     expect(manager.playing.value).toBeNull();
     expect(manager.view.value).toBe("discover");
+  });
+
+  it("startPlaying scrolls to the first passage when the reader is already on its chapter", async () => {
+    const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+    tab.readingState.bookId.value = "JHN";
+    tab.readingState.chapterNumber.value = 3;
+    const manager = makeManager("user-1", makeTabs(tab));
+    await flush();
+
+    manager.startPlaying(
+      makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 3, verse: 16 },
+          },
+        ],
+      })
+    );
+    await flush();
+
+    expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+      "BSB",
+      "JHN",
+      3,
+      { scrollToVerse: 16 }
+    );
   });
 
   it("startPlaying builds a playing state and stopPlaying clears it", async () => {
@@ -4913,6 +4976,24 @@ describe("createPlayingState", () => {
           ref: { bookId: "JHN", chapter: 3 },
         },
       ]);
+    });
+
+    it("keeps a scripture note on the passage's first chapter only", () => {
+      const state = createPlayingState([
+        makePlaylist({
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "JHN", chapter: 1, verse: 14, endChapter: 3 },
+              note: "<p>The Word became flesh</p>",
+            },
+          ],
+        }),
+      ]);
+
+      expect(
+        state.queue.value.map((item) => "note" in item && item.note)
+      ).toEqual(["<p>The Word became flesh</p>", false, false]);
     });
 
     it("does not expand when endChapter equals chapter", () => {

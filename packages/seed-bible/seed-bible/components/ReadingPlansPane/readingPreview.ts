@@ -76,8 +76,8 @@ export function linkHost(url: string): string {
 /**
  * The secondary line shown under a reading's title, so the user can tell what a
  * reading holds without opening it: an excerpt for a text reading, and the kind
- * plus host for a link. Scripture returns null — its title is already the
- * reference, and there is nothing more to say about it here.
+ * plus host for a link. Scripture's title is already the reference, so it only
+ * gets a line when it carries a note — an excerpt of that note.
  */
 export function readingPreviewText(
   item: PlanReading["item"],
@@ -85,6 +85,9 @@ export function readingPreviewText(
 ): string | null {
   if (item.type === "html") {
     return htmlExcerpt(item.html) || null;
+  }
+  if (item.type === "bible-verse") {
+    return item.note ? htmlExcerpt(item.note) || null : null;
   }
   if (item.type === "link") {
     const host = linkHost(item.url);

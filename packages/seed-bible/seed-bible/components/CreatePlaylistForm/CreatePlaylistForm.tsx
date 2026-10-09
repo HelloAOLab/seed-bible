@@ -20,6 +20,7 @@ import {
   PlaylistItemInput,
   type PlaylistItemInputHandle,
 } from "../PlaylistItemInput/PlaylistItemInput";
+import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { playlistItemIcon } from "../playlistItemIcon";
 import { useDragReorder } from "../useDragReorder";
@@ -41,83 +42,7 @@ interface CreatePlaylistFormProps {
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
 }
 
-const UNSAVED_ITEM_CONFIRM_MODAL_ID = "playlist-unsaved-item-confirm";
 const UNSAVED_CHANGES_CONFIRM_MODAL_ID = "playlist-unsaved-changes-confirm";
-
-/**
- * Confirmation body shown when Save is clicked while the "Add item" section
- * has in-progress, un-added content, so it isn't silently discarded.
- */
-function UnsavedItemConfirmModalContent(props: {
-  onGoBack: () => void;
-  onDiscardAndSave: () => void;
-  onAddAndSave: () => void;
-}) {
-  const { onGoBack, onDiscardAndSave, onAddAndSave } = props;
-  const { t } = useI18n();
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("unsaved-item-confirm-message", {
-          defaultValue:
-            "You've started adding an item that hasn't been added to the playlist yet. What would you like to do?",
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onGoBack}
-        >
-          {t("back", { defaultValue: "Back" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onDiscardAndSave}
-        >
-          {t("discard-and-save", { defaultValue: "Discard and save" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={onAddAndSave}
-        >
-          {t("add-and-save", { defaultValue: "Add and save" })}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/** Opens the unsaved-item confirmation modal. */
-function openUnsavedItemConfirm(
-  modals: ModalManager,
-  onDiscardAndSave: () => void,
-  onAddAndSave: () => void
-) {
-  modals.openModal({
-    id: UNSAVED_ITEM_CONFIRM_MODAL_ID,
-    title: {
-      key: "unsaved-item-confirm-title",
-      defaultValue: "Unsaved item",
-    },
-    content: () => (
-      <UnsavedItemConfirmModalContent
-        onGoBack={() => modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID)}
-        onDiscardAndSave={() => {
-          modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID);
-          onDiscardAndSave();
-        }}
-        onAddAndSave={() => {
-          modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID);
-          onAddAndSave();
-        }}
-      />
-    ),
-  });
-}
 
 function UnsavedChangesConfirmModalContent(props: {
   onConfirm: () => void;
@@ -285,11 +210,12 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     if (saving) {
       return;
     }
-    // Only guards the "add new item" flow, not being mid-edit of an existing
-    // item — the Add Item section is what silently loses content today.
-    if (editingIndex === null && inputRef.current?.isDirty()) {
+    // Covers both a new item not yet added and changes to an item opened for
+    // editing but not yet saved — either would otherwise be silently lost.
+    if (inputRef.current?.isDirty()) {
       openUnsavedItemConfirm(
         modals,
+        editingIndex !== null,
         () => void doSave(),
         () => {
           void (async () => {

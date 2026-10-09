@@ -591,3 +591,11 @@
 .sb-rp-button-soft:not(:disabled):hover {
   background: color-mix(in srgb, var(--sb-primary-color) 18%, transparent);
 }
+
+.sb-rp-reading-edit {
+  color: var(--rp-muted);
+}
+
+.sb-rp-reading-edit[aria-pressed="true"] {
+  color: var(--sb-primary-color);
+}

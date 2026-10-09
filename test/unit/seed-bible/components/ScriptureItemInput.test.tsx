@@ -12,6 +12,92 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return mockI18nManager();
 });
 
+vi.mock("@packages/seed-bible/seed-bible/managers/Sanitization", () => ({
+  // Strips inline handlers so a test can tell the note went through it.
+  sanitize: vi.fn(async (html: string) =>
+    html.replace(/ onclick="[^"]*"/g, "")
+  ),
+}));
+
+/**
+ * Stands in for the lazily-loaded TipTap editor the note field mounts. Holds
+ * its HTML so tests can seed it (via `initialContent`), type into it, and see
+ * it cleared.
+ */
+let noteEditor:
+  | {
+      html: string;
+      readonly isEmpty: boolean;
+      getHTML: () => string;
+      commands: { clearContent: () => void };
+      onEmptyChange: (isEmpty: boolean) => void;
+    }
+  | undefined;
+
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/TipTapEditor/TipTapEditor",
+  async () => {
+    const { useEffect } = await import("preact/hooks");
+    return {
+      default: (props: {
+        initialContent?: string;
+        onEditor: (editor: unknown) => void;
+        onEmptyChange: (isEmpty: boolean) => void;
+      }) => {
+        useEffect(() => {
+          const editor = {
+            html: props.initialContent ?? "",
+            get isEmpty() {
+              return editor.html === "";
+            },
+            getHTML: () => editor.html,
+            commands: {
+              clearContent: () => {
+                editor.html = "";
+                editor.onEmptyChange(true);
+              },
+            },
+            onEmptyChange: props.onEmptyChange,
+          };
+          noteEditor = editor;
+          props.onEditor(editor);
+          return () => {
+            props.onEditor(null);
+            if (noteEditor === editor) noteEditor = undefined;
+          };
+        }, []);
+        return <div className="stub-tiptap-editor" />;
+      },
+    };
+  }
+);
+
+/**
+ * Waits for the lazily-loaded note editor to mount. `lazy()` resolves its
+ * import and re-renders on real timer ticks, and the first import in a run
+ * takes longer than later (cached) ones, so poll rather than wait a fixed tick.
+ */
+async function waitForNoteEditor() {
+  const deadline = Date.now() + 2000;
+  while (!noteEditor) {
+    if (Date.now() > deadline) throw new Error("note editor never mounted");
+    // Each act() flushes the re-render and effects the tick let through.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  }
+}
+
+/** Lets a pending sanitize (a resolved promise) settle. */
+async function flushMicrotasks() {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function typeNote(html: string) {
+  noteEditor!.html = html;
+  noteEditor!.onEmptyChange(html === "");
+}
+
 function book(
   id: string,
   commonName: string,
@@ -331,6 +417,194 @@ describe("ScriptureItemInput", () => {
     } satisfies PlaylistItemData);
   });
 
+  describe("note", () => {
+    function noteButton(label: string): HTMLButtonElement {
+      return Array.from(
+        container.querySelectorAll<HTMLButtonElement>(
+          ".sb-scripture-note-toggle"
+        )
+      ).find((button) => button.textContent?.includes(label))!;
+    }
+
+    async function openNote() {
+      act(() => noteButton("Add a note").click());
+      await waitForNoteEditor();
+    }
+
+    it("adds the reference with its sanitized note", async () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+      });
+      await openNote();
+      act(() => {
+        input().focus();
+        setValue(input(), "Philemon");
+        typeNote('<p onclick="steal()"><strong>Read</strong> slowly</p>');
+      });
+
+      await act(async () => {
+        submitButton().click();
+        await flushMicrotasks();
+      });
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "PHM", chapter: 1 },
+        note: "<p><strong>Read</strong> slowly</p>",
+      } satisfies PlaylistItemData);
+      // Ready for the next item: the note field closes and the text clears.
+      expect(container.querySelector(".stub-tiptap-editor")).toBeNull();
+      expect(input().value).toBe("");
+    });
+
+    it("adds no note when the note field was opened but left empty", async () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+      });
+      await openNote();
+      act(() => {
+        input().focus();
+        setValue(input(), "Philemon");
+      });
+
+      await act(async () => {
+        submitButton().click();
+      });
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "PHM", chapter: 1 },
+      } satisfies PlaylistItemData);
+    });
+
+    it("counts an unsaved note as a draft", async () => {
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput ref={handleRef} books={BOOKS} onAdd={vi.fn()} />,
+          container
+        );
+      });
+      await openNote();
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => typeNote("<p>Draft</p>"));
+
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+
+    it("seeds the note when editing, and keeps it on save", async () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            books={BOOKS}
+            onAdd={onAdd}
+            initialValue="Philemon"
+            initialNote="<p>Existing</p>"
+          />,
+          container
+        );
+      });
+      await waitForNoteEditor();
+      expect(noteEditor?.getHTML()).toBe("<p>Existing</p>");
+
+      await act(async () => {
+        input().focus();
+        submitButton().click();
+        await flushMicrotasks();
+      });
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "PHM", chapter: 1 },
+        note: "<p>Existing</p>",
+      } satisfies PlaylistItemData);
+    });
+
+    it("isn't dirty for an untouched item being edited, but is once its note changes", async () => {
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            ref={handleRef}
+            books={BOOKS}
+            onAdd={vi.fn()}
+            initialValue="Philemon"
+            initialNote="<p>Existing</p>"
+          />,
+          container
+        );
+      });
+      await waitForNoteEditor();
+
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => typeNote("<p>Changed</p>"));
+
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+
+    it("counts a changed reference or a removed note as unsaved edits", async () => {
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            ref={handleRef}
+            books={BOOKS}
+            onAdd={vi.fn()}
+            initialValue="Philemon"
+            initialNote="<p>Existing</p>"
+          />,
+          container
+        );
+      });
+      await waitForNoteEditor();
+
+      act(() => setValue(input(), "Jude"));
+      expect(handleRef.current?.isDirty()).toBe(true);
+
+      act(() => setValue(input(), "Philemon"));
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => noteButton("Remove note").click());
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+
+    it("drops the note when it is removed, and starts blank if re-added", async () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            books={BOOKS}
+            onAdd={onAdd}
+            initialValue="Philemon"
+            initialNote="<p>Existing</p>"
+          />,
+          container
+        );
+      });
+      await waitForNoteEditor();
+
+      act(() => noteButton("Remove note").click());
+      expect(container.querySelector(".stub-tiptap-editor")).toBeNull();
+
+      await openNote();
+      expect(noteEditor?.getHTML()).toBe("");
+
+      await act(async () => {
+        input().focus();
+        submitButton().click();
+      });
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "PHM", chapter: 1 },
+      } satisfies PlaylistItemData);
+    });
+  });
+
   describe("imperative handle", () => {
     it("isDirty is false when empty and true once text is typed", () => {
       const handleRef = createRef<ScriptureItemInputHandle>();
@@ -350,7 +624,7 @@ describe("ScriptureItemInput", () => {
       expect(handleRef.current?.isDirty()).toBe(true);
     });
 
-    it("commit() adds the highlighted reference and returns true", () => {
+    it("commit() adds the highlighted reference and returns true", async () => {
       const onAdd = vi.fn();
       const handleRef = createRef<ScriptureItemInputHandle>();
       act(() => {
@@ -363,8 +637,8 @@ describe("ScriptureItemInput", () => {
       });
 
       let result: boolean | undefined;
-      act(() => {
-        result = handleRef.current?.commit();
+      await act(async () => {
+        result = await handleRef.current?.commit();
       });
 
       expect(result).toBe(true);
@@ -375,7 +649,7 @@ describe("ScriptureItemInput", () => {
       expect(handleRef.current?.isDirty()).toBe(false);
     });
 
-    it("commit() returns false and does not add when the reference is empty", () => {
+    it("commit() returns false and does not add when the reference is empty", async () => {
       const onAdd = vi.fn();
       const handleRef = createRef<ScriptureItemInputHandle>();
       act(() => {
@@ -386,8 +660,8 @@ describe("ScriptureItemInput", () => {
       });
 
       let result: boolean | undefined;
-      act(() => {
-        result = handleRef.current?.commit();
+      await act(async () => {
+        result = await handleRef.current?.commit();
       });
 
       expect(result).toBe(false);
