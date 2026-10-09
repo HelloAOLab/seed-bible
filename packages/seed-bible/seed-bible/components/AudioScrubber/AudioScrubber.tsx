@@ -181,8 +181,36 @@ export function AudioScrubber(props: AudioScrubberProps) {
     return clamp(byVerse ? Math.round(position) : position, 0, lastPosition);
   };
 
+  /**
+   * Whether the drag under way is a finger's, which lands on the start of a
+   * verse — see {@link snapToVerseStart}.
+   */
+  const isTouchDrag = useRef(false);
+
+  /**
+   * The start of the verse `position` falls in, so a finger never starts
+   * playback partway through one: unlike a mouse, it can't aim finely enough
+   * to choose a spot inside a verse on purpose. Before the first verse (a
+   * recording's opening announcement) it goes back to the very start.
+   *
+   * Recordings only — speech already moves by whole verses — and only once
+   * the verse timings are known.
+   */
+  const snapToVerseStart = (position: number): number => {
+    if (byVerse || !isTouchDrag.current) return position;
+    const starts = (playback.verseMarks?.() ?? []).map((mark) => mark.position);
+    let snapped: number | null = null;
+    for (const start of starts) {
+      if (start <= position && (snapped === null || start > snapped)) {
+        snapped = start;
+      }
+    }
+    return starts.length === 0 ? position : (snapped ?? 0);
+  };
+
   const onPointerDown = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    isTouchDrag.current = event.pointerType !== "mouse";
     if (!isHandleVisible.value && event.pointerType !== "mouse") {
       isHandleVisible.value = true;
       cancelHide();
@@ -197,7 +225,7 @@ export function AudioScrubber(props: AudioScrubberProps) {
     if (target === null) return;
     cancelHide();
     isHandleVisible.value = true;
-    dragTime.value = target;
+    dragTime.value = snapToVerseStart(target);
     event.currentTarget.setPointerCapture?.(event.pointerId);
     event.preventDefault();
   };
@@ -211,11 +239,13 @@ export function AudioScrubber(props: AudioScrubberProps) {
       if (dragTime.value === null && Math.abs(deltaX) < DRAG_THRESHOLD_PX) {
         return;
       }
-      dragTime.value = timeAfterDelta(deltaX) ?? dragTime.value;
+      const target = timeAfterDelta(deltaX);
+      if (target !== null) dragTime.value = snapToVerseStart(target);
       return;
     }
     if (dragTime.value === null) return;
-    dragTime.value = timeAt(event.clientX) ?? dragTime.value;
+    const target = timeAt(event.clientX);
+    if (target !== null) dragTime.value = snapToVerseStart(target);
   };
 
   const finishDrag = (commit: boolean) => {
