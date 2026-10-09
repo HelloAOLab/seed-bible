@@ -67,4 +67,36 @@ describe("ModalHost", () => {
 
     expect(manager.modals.value).toHaveLength(1);
   });
+
+  it("shows the footer under the content alongside the close button", async () => {
+    const state = await createTestSeedBibleState();
+    const manager = createModalManager();
+    act(() => {
+      manager.openModal({
+        title: "Step",
+        content: () => <p>Body</p>,
+        footer: () => <button className="test-footer">Next</button>,
+        useCasualOSApp: false,
+      });
+    });
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <ModalHost manager={manager} />
+        </TestHost>,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-footnote-modal-close")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-footnote-modal-footer .test-footer")
+    ).not.toBeNull();
+  });
+
+  it("has no footer by default", async () => {
+    await renderWithModal();
+
+    expect(container.querySelector(".sb-footnote-modal-footer")).toBeNull();
+  });
 });

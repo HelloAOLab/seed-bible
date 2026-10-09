@@ -53,6 +53,9 @@ function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
         </div>
 
         <div className="sb-footnote-modal-content">{modal.content({ t })}</div>
+        {modal.footer ? (
+          <div className="sb-footnote-modal-footer">{modal.footer({ t })}</div>
+        ) : null}
       </div>
     </div>
   );

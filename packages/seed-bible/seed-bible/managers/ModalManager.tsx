@@ -6,6 +6,7 @@ export interface ManagedModal {
   id: string;
   title: TranslatableTitle;
   content: (props: ModalContentProps) => ComponentChildren;
+  footer: ((props: ModalContentProps) => ComponentChildren) | null;
   useCasualOSApp: boolean;
 }
 
@@ -17,6 +18,11 @@ export interface ModalRegistration {
   id?: string;
   title: TranslatableTitle;
   content:
+    | ComponentChildren
+    | ((props: ModalContentProps) => ComponentChildren);
+
+  /** Rendered below the content, outside its scroll area. */
+  footer?:
     | ComponentChildren
     | ((props: ModalContentProps) => ComponentChildren);
 
@@ -59,6 +65,8 @@ export function createModalManager(): ModalManager {
         id,
         title: modal.title,
         content: toContentRenderer(modal.content),
+        footer:
+          modal.footer === undefined ? null : toContentRenderer(modal.footer),
         useCasualOSApp: modal.useCasualOSApp ?? true,
       },
     ];

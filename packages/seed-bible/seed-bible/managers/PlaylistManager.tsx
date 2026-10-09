@@ -1097,13 +1097,20 @@ export function createPlaylistManager(
   // Opens the content modal for a non-verse item (video/link/text), or closes it
   // for verse items which are shown in the reader instead. Called both when the
   // current item changes and when the user taps a queue item directly.
-  const showItemInModal = (item: PlaylistItemData | null) => {
+  const showItemInModal = (playingState: PlayingState) => {
+    const item = playingState.currentItem.value;
     if (!item || item.type === "bible-verse") {
       modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
       return;
     }
 
-    openPlaylistItemPreview(modals, item, PLAYLIST_ITEM_MODAL_ID, i18n.t);
+    openPlaylistItemPreview(
+      modals,
+      item,
+      PLAYLIST_ITEM_MODAL_ID,
+      i18n.t,
+      playingState
+    );
   };
 
   const savePlaylist = async (playlist: Playlist) => {
@@ -2190,7 +2197,7 @@ export function createPlaylistManager(
       return;
     }
 
-    showItemInModal(playing.value.currentItem.value);
+    showItemInModal(playing.value);
   });
 
   // Mirror queue position into the active history row whenever it changes.

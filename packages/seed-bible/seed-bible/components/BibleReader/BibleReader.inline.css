@@ -1165,6 +1165,11 @@
   overflow: auto;
 }
 
+.sb-footnote-modal-footer {
+  flex-shrink: 0;
+  margin-top: 1rem;
+}
+
 .sb-footnote-modal-content .sb-verse-reference-link {
   color: var(--sb-primary-color);
   text-decoration: underline;
