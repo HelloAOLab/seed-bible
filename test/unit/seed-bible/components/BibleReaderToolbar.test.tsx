@@ -1570,6 +1570,14 @@ describe("BibleReaderToolbar — verse tool actions", () => {
     expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
   });
   it("clears the verse selection after picking a dropdown item", async () => {
+    // On the mobile sheet an extension tool lands in the drawer, whose menu
+    // only mounts once the drawer is dragged open. The desktop row renders the
+    // same menu inline.
+    window.innerWidth = 1200;
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
     const onSelect = vi.fn();
 
     state.tools.registerVerseToolbarTool({
