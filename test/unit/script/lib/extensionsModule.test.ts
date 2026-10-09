@@ -177,6 +177,45 @@ describe("generateEntryModuleSource", () => {
   });
 });
 
+describe("generateEntryModuleSource for the SSR build", () => {
+  const source = generateEntryModuleSource(extensions, "seed-bible", {
+    serverBuild: true,
+  });
+
+  it("imports no extension code, translations or list strings", () => {
+    expect(source).not.toContain("import(");
+  });
+
+  it("still inlines the metas the extension list is built from", () => {
+    expect(source).toContain('"id":"ext_Apologist"');
+    expect(source).toContain('"dependencies":["ext_Apologist"]');
+    expect(source).toContain("AI for seekers");
+  });
+
+  it("rejects with a clear error if an extension is loaded anyway", async () => {
+    const module = (await import(
+      `data:text/javascript,${encodeURIComponent(source)}`
+    )) as {
+      default: {
+        extensions: {
+          import: () => Promise<unknown>;
+          loadFullTranslations: () => Promise<unknown>;
+        }[];
+        loadListTranslations: Record<string, unknown>;
+      };
+    };
+    const [first] = module.default.extensions;
+
+    await expect(first!.import()).rejects.toThrow(
+      "ext_Apologist is not available in the SSR bundle"
+    );
+    await expect(first!.loadFullTranslations()).rejects.toThrow(
+      "ext_Apologist's translations are not available in the SSR bundle"
+    );
+    expect(module.default.loadListTranslations).toEqual({});
+  });
+});
+
 describe("parseLocaleModuleId", () => {
   it("extracts the language from a resolved locale id", () => {
     expect(parseLocaleModuleId(`${RESOLVED_LOCALE_PREFIX}es`)).toBe("es");
