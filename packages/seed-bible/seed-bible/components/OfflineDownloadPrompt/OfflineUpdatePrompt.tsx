@@ -2,6 +2,7 @@ import "./OfflineDownloadPrompt.css";
 import { useEffect } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { OfflineTranslationsManager } from "../../managers/OfflineTranslationsManager";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 
 /**
  * Offers to update the downloaded translation the reader is currently in, once
@@ -38,6 +39,8 @@ export function OfflineUpdatePrompt({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [translation]);
 
+  const overlayDismiss = useOverlayDismiss(() => offline.dismissUpdatePrompt());
+
   if (!translation) {
     return null;
   }
@@ -71,7 +74,7 @@ export function OfflineUpdatePrompt({
   return (
     <div
       className={`sb-offline-prompt-overlay ${className}`}
-      onClick={() => offline.dismissUpdatePrompt()}
+      {...overlayDismiss}
     >
       <div
         className="sb-offline-prompt"

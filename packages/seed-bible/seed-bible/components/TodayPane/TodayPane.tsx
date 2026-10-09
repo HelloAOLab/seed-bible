@@ -73,7 +73,6 @@ function TodayContainer(props: TodayScreenProps) {
         <Welcome
           today={props.today}
           login={props.login}
-          theme={props.theme}
           onOpenBookSelector={props.onOpenBookSelector}
           onOpenPassage={props.onOpenPassage}
           onTakeTour={props.onTakeTour}
@@ -105,7 +104,6 @@ function TodayContent(props: TodayScreenProps) {
       )}
       <SearchSection
         today={props.today}
-        theme={props.theme}
         isMobile={props.isMobile}
         onOpenBookSelector={props.onOpenBookSelector}
         onOpenPassage={props.onOpenPassage}

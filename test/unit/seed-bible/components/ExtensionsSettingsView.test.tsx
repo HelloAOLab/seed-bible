@@ -198,6 +198,91 @@ describe("ExtensionsSettingsView", () => {
     );
   });
 
+  describe("extensions the active customization hides", () => {
+    function renderWithHidden(
+      entries: ExtensionListEntry[],
+      hiddenIds: string[]
+    ) {
+      const state = createMockState(entries);
+      // "hidden" only applies while a customization is active.
+      (state.customizations.activeCustomization as Signal<unknown>).value = {
+        id: "custom-1",
+        name: "Youth group",
+      };
+      vi.mocked(
+        state.customizations.getActiveExtensionAvailability
+      ).mockImplementation((id: string) =>
+        hiddenIds.includes(id) ? "hidden" : "available"
+      );
+      act(() => {
+        render(<SettingsPage state={state} />, container);
+      });
+      return state;
+    }
+
+    const uninstallButtonFor = (name: string) =>
+      Array.from(container.querySelectorAll(".sb-extension-row"))
+        .find(
+          (row) => row.querySelector(".sb-extension-name")?.textContent === name
+        )
+        ?.querySelector('[aria-label="Uninstall"]') ?? null;
+
+    beforeEach(() => {
+      const registeredSpy = vi
+        .spyOn(ExtensionInitalizer.getInstance(), "isExtensionRegistered")
+        .mockReturnValue(true);
+      onTestFinished(() => registeredSpy.mockRestore());
+    });
+
+    it("still lists a hidden extension under Installed when the viewer has it installed", () => {
+      renderWithHidden(
+        [makeEntry("hidden-installed", true), makeEntry("shown-one", true)],
+        ["hidden-installed"]
+      );
+
+      expect(rowNames()).toEqual(["hidden-installed", "shown-one"]);
+      expect(
+        installedTab().querySelector(".sb-extensions-tab-count")?.textContent
+      ).toBe("2");
+    });
+
+    it("uninstalls a hidden extension that's installed, for this session only", () => {
+      const state = renderWithHidden(
+        [makeEntry("hidden-installed", true)],
+        ["hidden-installed"]
+      );
+
+      act(() => {
+        uninstallButtonFor("hidden-installed")!.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      expect(state.extensions.unloadExtension).toHaveBeenCalledWith(
+        "hidden-installed",
+        { persist: false }
+      );
+    });
+
+    it("never offers a hidden extension on the Available tab", () => {
+      renderWithHidden(
+        [makeEntry("hidden-available", false), makeEntry("shown-one", false)],
+        ["hidden-available"]
+      );
+
+      act(() => {
+        availableTab().dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      expect(rowNames()).toEqual(["shown-one"]);
+      expect(
+        availableTab().querySelector(".sb-extensions-tab-count")?.textContent
+      ).toBe("1");
+    });
+  });
+
   it("shows the outer empty state (no tabs) when there are no extensions at all", () => {
     renderExtensions([]);
 

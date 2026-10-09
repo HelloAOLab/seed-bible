@@ -691,7 +691,7 @@
   left: 50%;
   translate: -50% -50%;
   z-index: -1;
-  animation: 8s spin linear infinite;
+  animation: 8s scripture-map-presence-spin linear infinite;
   box-sizing: content-box;
 }
 
@@ -868,7 +868,7 @@
   display: none !important;
 }
 
-@keyframes spin {
+@keyframes scripture-map-presence-spin {
   from {
     --angle: 0deg;
   }

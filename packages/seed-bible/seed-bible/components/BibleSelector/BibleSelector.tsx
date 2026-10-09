@@ -6,6 +6,7 @@ import {
   type BibleSelectorState,
 } from "../../managers/BibleSelectorManager";
 import { useI18n } from "../../i18n/I18nManager";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 import {
   FiltersIcon,
   AddIcon,
@@ -107,6 +108,7 @@ export function BibleSelector(props: BibleSelectorProps) {
     tutorial,
   } = props;
   const { isRtl } = useI18n();
+  const overlayDismiss = useOverlayDismiss(onClose);
 
   // The active tour step, but only when it's a selector-group step — otherwise
   // this overlay must stay out of the way (the main tour handles the rest, and
@@ -173,7 +175,7 @@ export function BibleSelector(props: BibleSelectorProps) {
   return (
     <>
       <div
-        onClick={onClose}
+        {...overlayDismiss}
         className={`sb-selector-overlay ${isOpen ? "open" : ""}${
           className ? ` ${className}` : ""
         }`}
@@ -1388,6 +1390,12 @@ const TranslationModal = (props: {
   } = bibleSelectorState;
 
   const { t } = useI18n();
+  const overlayDismiss = useOverlayDismiss(() => {
+    selectingTranslation.value = false;
+    showTranslationSettings.value = false;
+    showTranslationInfo.value = null;
+    pendingOfflineDelete.value = null;
+  });
 
   // Opening the list is the moment a stale download matters, so this is where we
   // re-read the API's hashes. It's a no-op when nothing is downloaded or the
@@ -1468,15 +1476,7 @@ const TranslationModal = (props: {
 
   return (
     <>
-      <div
-        className="modal-overlay flex-center"
-        onClick={() => {
-          selectingTranslation.value = false;
-          showTranslationSettings.value = false;
-          showTranslationInfo.value = null;
-          pendingOfflineDelete.value = null;
-        }}
-      >
+      <div className="modal-overlay flex-center" {...overlayDismiss}>
         <div
           className="modal"
           onClick={(e) => {

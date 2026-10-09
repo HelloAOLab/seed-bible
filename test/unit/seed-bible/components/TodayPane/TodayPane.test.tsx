@@ -203,7 +203,6 @@ describe("TodayPane", () => {
       expect(propsOf(Welcome)).toMatchObject({
         today: props.today,
         login: props.login,
-        theme: props.theme,
         onOpenBookSelector: props.onOpenBookSelector,
         onOpenPassage: props.onOpenPassage,
         onTakeTour: props.onTakeTour,
@@ -225,7 +224,6 @@ describe("TodayPane", () => {
       });
       expect(propsOf(SearchSection)).toMatchObject({
         today: props.today,
-        theme: props.theme,
         isMobile: props.isMobile,
         onOpenBookSelector: props.onOpenBookSelector,
         onOpenPassage: props.onOpenPassage,

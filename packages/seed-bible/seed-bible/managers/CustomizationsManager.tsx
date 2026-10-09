@@ -293,8 +293,9 @@ const customizationVariantSchema = z.object({
  *   themselves, same as outside any customization.
  * - `auto-installed`: force-installed with no prompt while the
  *   customization is active; shown but can't be uninstalled from there.
- * - `hidden`: not shown in Settings → Extensions at all while the
- *   customization is active.
+ * - `hidden`: never offered in Settings → Extensions while the
+ *   customization is active. If it's still installed anyway (e.g. as another
+ *   extension's dependency) it's listed under Installed and can still be uninstalled.
  */
 export const EXTENSION_AVAILABILITY_VALUES = [
   "available",
@@ -419,7 +420,8 @@ function withExtensionSensitiveProxy(
   customization: SeedBibleCustomization,
   extensionId: string,
   proxyId: string,
-  pointer: SensitiveProxyPointer | null
+  pointer: SensitiveProxyPointer | null,
+  updatedAt: number
 ): SeedBibleCustomization {
   const byProxy = { ...customization.extensionSensitiveProxies[extensionId] };
   if (pointer) {
@@ -436,7 +438,7 @@ function withExtensionSensitiveProxy(
   return {
     ...customization,
     extensionSensitiveProxies: next,
-    updatedAt: Date.now(),
+    updatedAt,
   };
 }
 
@@ -2069,6 +2071,9 @@ export function createCustomizationsManager(
     // pointer instead of dropping it. The write itself starts from the last
     // saved copy instead of the draft: the draft may hold edits the author
     // hasn't saved yet, and might still discard.
+    // The draft and the saved copy share one timestamp, so once the write
+    // lands they compare equal and the draft doesn't read as unsaved.
+    const updatedAt = Date.now();
     const draft = editingCustomization.value;
     const previous =
       draft?.id === customizationId
@@ -2079,7 +2084,8 @@ export function createCustomizationsManager(
         draft,
         extensionId,
         proxyId,
-        pointer
+        pointer,
+        updatedAt
       );
     }
     // A failed write takes the pointer back off the draft, unless something
@@ -2095,7 +2101,8 @@ export function createCustomizationsManager(
           current,
           extensionId,
           proxyId,
-          previous ?? null
+          previous ?? null,
+          Date.now()
         );
       }
     };
@@ -2108,7 +2115,8 @@ export function createCustomizationsManager(
         saved,
         extensionId,
         proxyId,
-        pointer
+        pointer,
+        updatedAt
       );
       try {
         const result = await persist(userId, next);

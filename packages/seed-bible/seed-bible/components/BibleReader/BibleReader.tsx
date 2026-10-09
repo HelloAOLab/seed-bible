@@ -55,6 +55,7 @@ import type {
 } from "../../managers/SessionsManager";
 import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
@@ -2499,6 +2500,7 @@ export function BibleReader(props: BibleReaderProps) {
     selectedFootnote,
     selectFootnote,
   } = readingState;
+  const footnoteOverlayDismiss = useOverlayDismiss(() => selectFootnote(null));
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
@@ -3441,12 +3443,7 @@ export function BibleReader(props: BibleReaderProps) {
       )}
 
       {scriptureElements.showFootnotes && selectedFootnote.value !== null && (
-        <div
-          className="sb-footnote-modal-overlay"
-          onClick={() => {
-            selectFootnote(null);
-          }}
-        >
+        <div className="sb-footnote-modal-overlay" {...footnoteOverlayDismiss}>
           <div
             className="sb-footnote-modal"
             onClick={(event: MouseEvent) => {

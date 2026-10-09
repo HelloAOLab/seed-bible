@@ -187,6 +187,11 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
       ],
     });
 
+    // Keep the tool on the sheet's first row: Highlight, Save, Note, Copy, and
+    // Share otherwise take every slot ahead of it.
+    state.tools.unregisterVerseToolbarTool("copy-verse");
+    state.tools.unregisterVerseToolbarTool("share-verse");
+
     const readingState = await selectFirstVerse();
     await renderToolbar();
 
@@ -1187,6 +1192,449 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     ).not.toBeNull();
   });
 });
+describe("BibleReaderToolbar — verse tool actions", () => {
+  let container: HTMLDivElement;
+  let state: SeedBibleState;
+  function readingStateOf() {
+    return state.app.currentReadingState.value!.tab.readingState;
+  }
+  function signIn() {
+    Object.defineProperty(state.login, "userId", {
+      value: signal("user-1"),
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  function stubAnnotationRecords() {
+    Object.defineProperty(state.os, "getData", {
+      value: vi.fn(async () => null),
+      configurable: true,
+      writable: true,
+    });
+
+    Object.defineProperty(state.os, "recordData", {
+      value: vi.fn(async () => ({ success: true })),
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  async function selectFirstVerse() {
+    const readingState = readingStateOf();
+    const chapter = readingState.chapterData.value!;
+    const firstVerse = chapter.chapter.content.find(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    )!;
+
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: firstVerse,
+          translationId: chapter.translation.id,
+        },
+        10,
+        10
+      );
+    });
+
+    return { readingState, verseNumber: firstVerse.number };
+  }
+
+  async function renderToolbar() {
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+  }
+
+  beforeEach(async () => {
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    window.innerHeight = 800;
+
+    container = document.createElement("div");
+    document.body.appendChild(container);
+
+    state = await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+  it("clears the verse selection and closes the toolbar after clicking a registered verse tool", async () => {
+    const onSelect = vi.fn();
+
+    state.tools.registerVerseToolbarTool({
+      id: "test-verse-tool",
+      priority: 10,
+      title: "Test Verse Tool",
+      icon: () => <span>tool</span>,
+      onSelect,
+    });
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    const toolButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-verse-toolbar-action")
+    ).find((button) => button.getAttribute("aria-label") === "Test Verse Tool");
+
+    expect(toolButton).not.toBeUndefined();
+
+    await act(async () => {
+      toolButton!.click();
+    });
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+  it("keeps the verse selection and toolbar when a tool preserves selection", async () => {
+    const onSelect = vi.fn();
+
+    state.tools.registerVerseToolbarTool({
+      id: "test-preserve-tool",
+      priority: 10,
+      title: "Test Preserve Tool",
+      icon: () => <span>tool</span>,
+      preserveSelection: true,
+      onSelect,
+    });
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    const toolButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-verse-toolbar-action")
+    ).find(
+      (button) => button.getAttribute("aria-label") === "Test Preserve Tool"
+    );
+
+    expect(toolButton).toBeDefined();
+
+    await act(async () => {
+      toolButton!.click();
+    });
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+
+    // preserveSelection means the selection and toolbar both remain.
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+  });
+  it("keeps the verse selection and toolbar when a verse tool action rejects", async () => {
+    const onSelect = vi.fn().mockRejectedValue(new Error("Test action failed"));
+
+    state.tools.registerVerseToolbarTool({
+      id: "test-rejected-tool",
+      priority: 10,
+      title: "Test Rejected Tool",
+      icon: () => <span>tool</span>,
+      onSelect,
+    });
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    const toolButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-verse-toolbar-action")
+    ).find(
+      (button) => button.getAttribute("aria-label") === "Test Rejected Tool"
+    );
+
+    expect(toolButton).not.toBeUndefined();
+
+    await act(async () => {
+      toolButton!.click();
+    });
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    // Failed actions must not clear the selection.
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+
+    // Toolbar must stay open.
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+  });
+  it("clears the selection after copying successfully", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+
+    (window.navigator as any).clipboard = {
+      writeText,
+    };
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+
+    const copyButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-verse-toolbar-action")
+    ).find((button) => button.getAttribute("aria-label") === "Copy");
+
+    expect(copyButton).not.toBeUndefined();
+
+    await act(async () => {
+      copyButton!.click();
+      await Promise.resolve();
+    });
+
+    expect(writeText).toHaveBeenCalled();
+
+    // Successful copy → selection clears.
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(state.app.currentToast.value?.message).toBe("Copied");
+
+    // Toolbar closes because there is no longer a selection.
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+
+  it("keeps the selection and does not show a Copied toast when copy fails", async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error("Clipboard failed"));
+
+    (window.navigator as any).clipboard = {
+      writeText,
+    };
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+
+    const copyButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-verse-toolbar-action")
+    ).find((button) => button.getAttribute("aria-label") === "Copy");
+
+    expect(copyButton).not.toBeUndefined();
+
+    await act(async () => {
+      copyButton!.click();
+    });
+
+    expect(writeText).toHaveBeenCalled();
+
+    // Copy failed, so selection must remain.
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+
+    // Toolbar must remain open.
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    // There should be no Copied toast.
+    expect(state.app.currentToast.value).toBeNull();
+  });
+
+  it("clears the verse selection after clicking Save", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    const saveButton = container.querySelector<HTMLButtonElement>(
+      ".sb-verse-toolbar-save-trigger"
+    );
+    expect(saveButton).not.toBeNull();
+    await act(async () => {
+      saveButton!.click();
+    });
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+
+  it("hides the verse toolbar while drafting a new note without clearing the selection", async () => {
+    signIn();
+    stubAnnotationRecords();
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    await act(async () => {
+      await state.annotations.createNewAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(true);
+    expect(state.annotations.editingAnnotation.value).not.toBeNull();
+
+    // Drafting hides the toolbar but must preserve the selected verse.
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+
+  it("restores the verse toolbar when a new note is cancelled", async () => {
+    signIn();
+    stubAnnotationRecords();
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    await act(async () => {
+      await state.annotations.createNewAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(true);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+
+    await act(async () => {
+      state.annotations.cancelEditingAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(false);
+    expect(state.annotations.editingAnnotation.value).toBeNull();
+
+    // Cancelling leaves the selection intact, so the toolbar returns.
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+  });
+
+  it("clears the verse selection after successfully saving a new note", async () => {
+    signIn();
+    stubAnnotationRecords();
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    await act(async () => {
+      await state.annotations.createNewAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(true);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+
+    await act(async () => {
+      await state.annotations.saveEditingAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(false);
+    expect(state.annotations.editingAnnotation.value).toBeNull();
+
+    // A successful save clears the selection, so the toolbar stays hidden.
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+  it("restores the verse toolbar when the annotation editor closes without saving or cancelling", async () => {
+    signIn();
+    stubAnnotationRecords();
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    await act(async () => {
+      await state.annotations.createNewAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(true);
+    expect(state.annotations.editingAnnotation.value).not.toBeNull();
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+
+    // Simulate the editor being closed externally, without invoking Cancel or Save.
+    act(() => {
+      state.discover.view.value = null;
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(false);
+    expect(state.annotations.editingAnnotation.value).toBeNull();
+
+    // Closing the editor must preserve the selection and restore the toolbar.
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+  });
+  it("clears the verse selection after picking a dropdown item", async () => {
+    // On the mobile sheet an extension tool lands in the drawer, whose menu
+    // only mounts once the drawer is dragged open. The desktop row renders the
+    // same menu inline.
+    window.innerWidth = 1200;
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    const onSelect = vi.fn();
+
+    state.tools.registerVerseToolbarTool({
+      id: "test-dropdown-tool",
+      priority: 10,
+      title: "Test Dropdown",
+      icon: () => <span>tool</span>,
+      getItems: () => [
+        {
+          id: "test-dropdown-item",
+          title: "Test Item",
+          icon: () => <span>item</span>,
+          onSelect,
+        },
+      ],
+    });
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+
+    const toolButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-verse-toolbar-action")
+    ).find((button) => button.getAttribute("aria-label") === "Test Dropdown");
+
+    expect(toolButton).toBeDefined();
+
+    // First click opens the dropdown.
+    await act(async () => {
+      toolButton!.click();
+    });
+
+    // The dropdown may be portaled to document.body.
+    const menuItem = await vi.waitFor(() => {
+      const item = document.body.querySelector<HTMLButtonElement>(
+        ".sb-tool-context-menu-item"
+      );
+
+      expect(item).not.toBeNull();
+      return item!;
+    });
+
+    // Opening the dropdown should preserve the selection and toolbar.
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    // Picking the item performs the action and clears the selection.
+    await act(async () => {
+      menuItem.click();
+    });
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+});
 
 describe("BibleReaderToolbar mobile More menu", () => {
   let container: HTMLDivElement;
@@ -1484,7 +1932,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   // this and the scrollHeight mock below reports it. 120 fits on screen;
   // individual tests raise it to stand in for a long note.
   let overflowContentHeight = 120;
-  // Height of the Copy / Compare / Share row. 0 matches jsdom (unmeasured),
+  // Height of the drawer's pinned actions. 0 matches jsdom (unmeasured),
   // which leaves the row pinned. Tests raise it for a bar that can't fit.
   let pinnedRowHeight = 0;
 
@@ -1528,9 +1976,9 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       responses: createPrivateEndpointResponses(),
     });
 
-    // The default collapsed row is highlight, save, and note. Copy, Compare,
-    // and Share live in the drawer, so two extra tools are not what makes it
-    // openable — they stand in for actions that scroll with a long note.
+    // The default collapsed row is highlight, save, note, and copy, with Share
+    // already in the drawer. The two extra tools stand in for extension
+    // actions that follow it there.
     for (const id of ["test-extra-one", "test-extra-two"]) {
       state.tools.registerVerseToolbarTool({
         id,
@@ -1549,6 +1997,9 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
+    // Settings changed by a test (e.g. turning highlight colors off) persist
+    // to the device's saved config and would otherwise reach later suites.
+    localStorage.clear();
     if (originalScrollHeight) {
       Object.defineProperty(
         HTMLElement.prototype,
@@ -1684,8 +2135,8 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   });
 
   it("hides the swipe hint once the extra actions are gone", async () => {
-    // Copy and Share always open the drawer, so once they and the two extra
-    // tools are gone, what's left (save, note) fits on one row.
+    // Once Share and the two extra tools are gone, what's left (save, note,
+    // copy) fits on one row.
     state.settings.setSelectionUI({ showHighlightColors: false });
     await renderSheet();
     expect(hint()?.textContent).toContain("Swipe up to see more");
@@ -1693,7 +2144,6 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await act(async () => {
       state.tools.unregisterVerseToolbarTool("test-extra-one");
       state.tools.unregisterVerseToolbarTool("test-extra-two");
-      state.tools.unregisterVerseToolbarTool("copy-verse");
       state.tools.unregisterVerseToolbarTool("share-verse");
     });
 
@@ -1711,7 +2161,21 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(container.querySelector(".sb-verse-toolbar-more-toggle")).toBeNull();
   });
 
-  it("keeps Copy, Compare, and Share out of the collapsed row and pins them once the drawer is open", async () => {
+  const alwaysVisibleLabels = () =>
+    [
+      ...container.querySelectorAll(
+        ".sb-verse-toolbar-cards > .sb-verse-toolbar-action-item .sb-verse-toolbar-action-label"
+      ),
+    ].map((el) => el.textContent);
+
+  const pinnedLabels = () =>
+    [
+      ...container.querySelectorAll(
+        ".sb-verse-toolbar-overflow-pinned .sb-verse-toolbar-action-label"
+      ),
+    ].map((el) => el.textContent);
+
+  it("keeps Highlight, Save, Note, and Copy on the collapsed row ahead of higher-priority extension tools", async () => {
     state.tools.registerVerseToolbarTool({
       id: "compare-verses",
       priority: 250,
@@ -1719,28 +2183,28 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       icon: () => <span className="material-symbols-outlined">compare</span>,
       onSelect: () => {},
     });
+    // Sorts before Note and Copy by priority, as Ask AI and Locations do.
+    state.tools.registerVerseToolbarTool({
+      id: "test-ask-ai",
+      priority: 80,
+      title: "Ask AI",
+      icon: () => <span className="material-symbols-outlined">star</span>,
+      onSelect: () => {},
+    });
     const handle = await renderSheet();
 
-    const alwaysVisible = () =>
-      [
-        ...container.querySelectorAll(
-          ".sb-verse-toolbar-cards > .sb-verse-toolbar-action-item .sb-verse-toolbar-action-label"
-        ),
-      ].map((el) => el.textContent);
-
-    expect(alwaysVisible()).not.toContain("Copy");
-    expect(alwaysVisible()).not.toContain("Compare");
-    expect(alwaysVisible()).not.toContain("Share");
-
-    const pinnedLabels = () =>
-      [
-        ...container.querySelectorAll(
-          ".sb-verse-toolbar-overflow-pinned .sb-verse-toolbar-action-label"
-        ),
-      ].map((el) => el.textContent);
+    const collapsedRow = ["Highlight", "Save", "Note", "Copy"];
+    const drawer = [
+      "Share",
+      "Compare",
+      "Ask AI",
+      "test-extra-one",
+      "test-extra-two",
+    ];
+    expect(alwaysVisibleLabels()).toEqual(collapsedRow);
 
     // In the drawer, but clipped shut until it opens.
-    expect(pinnedLabels()).toEqual(["Copy", "Compare", "Share"]);
+    expect(pinnedLabels()).toEqual(drawer);
     expect(overflow()?.className).toContain("sb-verse-toolbar-overflow-closed");
 
     await press(handle, 500);
@@ -1749,23 +2213,21 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(overflow()?.className).not.toContain(
       "sb-verse-toolbar-overflow-closed"
     );
-    expect(pinnedLabels()).toEqual(["Copy", "Compare", "Share"]);
-    expect(alwaysVisible()).not.toContain("Copy");
+    expect(alwaysVisibleLabels()).toEqual(collapsedRow);
+    expect(pinnedLabels()).toEqual(drawer);
   });
 
-  it("pins only Copy and Share when Compare is not installed", async () => {
+  it("starts the drawer with Share when Compare is not installed", async () => {
     await renderSheet();
 
-    const pinnedLabels = [
-      ...container.querySelectorAll(
-        ".sb-verse-toolbar-overflow-pinned .sb-verse-toolbar-action-label"
-      ),
-    ].map((el) => el.textContent);
-
-    expect(pinnedLabels).toEqual(["Copy", "Share"]);
+    expect(pinnedLabels()).toEqual([
+      "Share",
+      "test-extra-one",
+      "test-extra-two",
+    ]);
   });
 
-  it("keeps Copy, Compare, and Share pinned when the note still has room below them", async () => {
+  it("keeps the drawer's actions pinned when the note still has room below them", async () => {
     overflowContentHeight = 2400;
     pinnedRowHeight = 80;
     const handle = await renderSheet();
@@ -1781,7 +2243,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     ).toBe("80px");
   });
 
-  it("scrolls Copy, Compare, and Share when they are taller than the open drawer", async () => {
+  it("scrolls the drawer's actions when they are taller than the open drawer", async () => {
     overflowContentHeight = 2400;
     pinnedRowHeight = window.innerHeight;
     const handle = await renderSheet();
@@ -2526,6 +2988,11 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   it("keeps a first-row submenu inline, on the card", async () => {
     const onSelect = vi.fn();
     registerMenuTool("primary-menu", "Primary menu", 1, onSelect);
+    // Highlight, Save, Note, Copy, then Share fill the sheet ahead of any
+    // other tool whatever its priority; dropping Copy and Share frees the
+    // fourth slot for this tool.
+    state.tools.unregisterVerseToolbarTool("copy-verse");
+    state.tools.unregisterVerseToolbarTool("share-verse");
     await renderSheet();
 
     const button = toolButton("Primary menu");
@@ -2833,8 +3300,12 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
 
       await renderSheet();
 
-      await vi.waitFor(() => expect(annotationItems()).toHaveLength(1));
-      expect(annotationItems()[0]!.textContent).toContain("Ada's note");
+      // The friend's notes arrive outside `act()`, so the item can be on the
+      // page a moment before `AnnotationPreview`'s effect fills in its text.
+      await vi.waitFor(() => {
+        expect(annotationItems()).toHaveLength(1);
+        expect(annotationItems()[0]!.textContent).toContain("Ada's note");
+      });
       expect(
         annotationItems()[0]!.querySelector(".sb-annotation-item-menu")
       ).toBeNull();
