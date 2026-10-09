@@ -1653,12 +1653,18 @@
 
 /* Desktop narration controls. The progress row takes a line of its own along
  * the top of the toolbar; `contain: inline-size` keeps its width out of the
- * toolbar's shrink-to-fit sizing, so it spans the buttons below it instead of
- * widening the toolbar to fit itself. */
+ * toolbar's sizing, so it spans the buttons below it instead of widening the
+ * toolbar to fit itself.
+ *
+ * Wrapping is what puts the progress row on its own line, but it would also
+ * let the buttons wrap: a toolbar pinned at `left: 50%` may only be half the
+ * screen wide, which narrow desktop windows run out of. Sizing it to its
+ * content keeps the buttons on one line, as they are without audio. */
 .sb-reader-toolbar-has-audio {
   flex-wrap: wrap;
   justify-content: center;
   row-gap: 0;
+  width: max-content;
 }
 
 .sb-reader-toolbar-audio {
