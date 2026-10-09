@@ -18,3 +18,4 @@ coverage/
 secrets.json
 .pnpm-store/*
 *.local.*
+temp

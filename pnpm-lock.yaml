@@ -463,6 +463,19 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/create-seed-bible-extension:
+    dependencies:
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.10.9
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/default-content-extension:
     dependencies:
       seed-bible:
@@ -510,12 +523,21 @@ importers:
       '@casual-simulation/aux-common':
         specifier: 'catalog:'
         version: 4.2.8-alpha.35775260651
+      '@casual-simulation/aux-records':
+        specifier: 4.2.8-alpha.35775260651
+        version: 4.2.8-alpha.35775260651(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-websocket':
         specifier: 'catalog:'
         version: 4.2.8-alpha.35775260651
+      '@casual-simulation/fast-json-stable-stringify':
+        specifier: ^4.0.5
+        version: 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
       '@casual-simulation/websocket':
         specifier: 'catalog:'
         version: 4.0.0
+      '@preact/signals':
+        specifier: ^2.9.1
+        version: 2.9.1(preact@10.29.8)
       '@tiptap/core':
         specifier: 'catalog:'
         version: 3.27.1(@tiptap/pm@3.27.1)
@@ -567,9 +589,18 @@ importers:
       dompurify:
         specifier: 'catalog:'
         version: 3.4.11
+      es-toolkit:
+        specifier: 1.39.10
+        version: 1.39.10
+      hash.js:
+        specifier: ^1.1.7
+        version: 1.1.7
       i18next:
         specifier: 'catalog:'
         version: 26.2.0(typescript@6.0.3)
+      i18next-resources-to-backend:
+        specifier: 'catalog:'
+        version: 1.2.1
       preact:
         specifier: 'catalog:'
         version: 10.29.8(preact-render-to-string@6.7.0)
@@ -594,13 +625,71 @@ importers:
       typesense:
         specifier: 'catalog:'
         version: 3.0.5(@babel/runtime@7.29.2)
+      uuid:
+        specifier: 'catalog:'
+        version: 13.0.0
       zod:
         specifier: 4.4.3
         version: 4.4.3
     devDependencies:
+      '@preact/preset-vite':
+        specifier: ^2.10.5
+        version: 2.10.5(@babel/core@7.28.6)(preact@10.29.8)(rollup@4.62.0)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))
       '@types/qrcode':
         specifier: ^1.5.6
         version: 1.5.6
+      tsc-silent:
+        specifier: 1.2.2
+        version: 1.2.2(typescript@6.0.3)(yargs@17.7.2)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.0.13
+        version: 8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)
+
+  packages/seed-bible-extension-scripts:
+    dependencies:
+      '@casual-simulation/aux-records':
+        specifier: 4.2.8-alpha.35775260651
+        version: 4.2.8-alpha.35775260651(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/fast-json-stable-stringify':
+        specifier: ^4.0.5
+        version: 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@preact/preset-vite':
+        specifier: ^2.10.5
+        version: 2.10.5(@babel/core@7.28.6)(preact@10.29.2)(rollup@4.62.0)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+      hash.js:
+        specifier: ^1.1.7
+        version: 1.1.7
+      vite:
+        specifier: ^8.0.13
+        version: 8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)
+    devDependencies:
+      '@preact/signals':
+        specifier: 2.9.1
+        version: 2.9.1(preact@10.29.2)
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.10.9
+      preact:
+        specifier: 10.29.2
+        version: 10.29.2
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+      tsc-silent:
+        specifier: 1.2.2
+        version: 1.2.2(typescript@6.0.3)(yargs@17.7.2)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/seed-bible-refresh-example-extension:
     dependencies:
@@ -4272,6 +4361,10 @@ packages:
     resolution: {integrity: sha512-MwVNWlYjDTtOjX5PiD7o5pK0UrFU/OYgcJfjjK4RaHZETNtjJqrZa9Y9ds88+A+f+d5lv+561eZ+yCKoS3gbAA==}
     engines: {node: '>=18'}
 
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
+
   commander@14.0.2:
     resolution: {integrity: sha512-TywoWNNRbhoD0BXs1P3ZEScW8W5iKrnbithIl0YH+uCmBd0QpPOA8yc82DS3BIE5Ma6FnBVUsJ7wVUDz4dvOWQ==}
     engines: {node: '>=20'}
@@ -6349,6 +6442,9 @@ packages:
 
   preact@10.28.4:
     resolution: {integrity: sha512-uKFfOHWuSNpRFVTnljsCluEFq57OKT+0QdOiQo8XWnQ/pSvg7OpX5eNOejELXJMWy+BwM2nobz0FkvzmnpCNsQ==}
+
+  preact@10.29.2:
+    resolution: {integrity: sha512-7tNmwg/7mzzAoB/8kSg6Hl37JraAZw3Z3A0JSY7VXlZwo82Xn0G7wKbNNs2qoF4ZEEsQGTwDAroNdqKs1ofJxQ==}
 
   preact@10.29.8:
     resolution: {integrity: sha512-ej2aVZ+vZ8WO7tvlQWRM9N63A0KzF9q4mWJfDUHgYaIofWY9hu74QdnQrjoPMmZi2/nZ5gN0bJCQF49xQqx09Q==}
@@ -10328,6 +10424,25 @@ snapshots:
     dependencies:
       preact: 10.29.8(preact-render-to-string@6.7.0)
 
+  '@preact/preset-vite@2.10.5(@babel/core@7.28.6)(preact@10.29.2)(rollup@4.62.0)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))':
+    dependencies:
+      '@babel/core': 7.28.6
+      '@babel/plugin-transform-react-jsx': 7.28.6(@babel/core@7.28.6)
+      '@babel/plugin-transform-react-jsx-development': 7.27.1(@babel/core@7.28.6)
+      '@prefresh/vite': 2.4.12(preact@10.29.2)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))
+      '@rollup/pluginutils': 5.4.0(rollup@4.62.0)
+      babel-plugin-transform-hook-names: 1.0.2(@babel/core@7.28.6)
+      debug: 4.4.3
+      magic-string: 0.30.21
+      picocolors: 1.1.1
+      vite: 8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)
+      vite-prerender-plugin: 0.5.13(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))
+      zimmerframe: 1.1.4
+    transitivePeerDependencies:
+      - preact
+      - rollup
+      - supports-color
+
   '@preact/preset-vite@2.10.5(@babel/core@7.28.6)(preact@10.29.8)(rollup@4.62.0)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))':
     dependencies:
       '@babel/core': 7.28.6
@@ -10347,6 +10462,25 @@ snapshots:
       - rollup
       - supports-color
 
+  '@preact/preset-vite@2.10.5(@babel/core@7.28.6)(preact@10.29.8)(rollup@4.62.0)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))':
+    dependencies:
+      '@babel/core': 7.28.6
+      '@babel/plugin-transform-react-jsx': 7.28.6(@babel/core@7.28.6)
+      '@babel/plugin-transform-react-jsx-development': 7.27.1(@babel/core@7.28.6)
+      '@prefresh/vite': 2.4.12(preact@10.29.8)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))
+      '@rollup/pluginutils': 5.4.0(rollup@4.62.0)
+      babel-plugin-transform-hook-names: 1.0.2(@babel/core@7.28.6)
+      debug: 4.4.3
+      magic-string: 0.30.21
+      picocolors: 1.1.1
+      vite: 8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)
+      vite-prerender-plugin: 0.5.13(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))
+      zimmerframe: 1.1.4
+    transitivePeerDependencies:
+      - preact
+      - rollup
+      - supports-color
+
   '@preact/signals-core@1.14.0': {}
 
   '@preact/signals-debug@1.4.2(@preact/signals-core@1.14.0)(@preact/signals@2.9.1(preact@10.29.8))':
@@ -10355,6 +10489,11 @@ snapshots:
     optionalDependencies:
       '@preact/signals': 2.9.1(preact@10.29.8)
 
+  '@preact/signals@2.9.1(preact@10.29.2)':
+    dependencies:
+      '@preact/signals-core': 1.14.0
+      preact: 10.29.2
+
   '@preact/signals@2.9.1(preact@10.29.8)':
     dependencies:
       '@preact/signals-core': 1.14.0
@@ -10362,11 +10501,27 @@ snapshots:
 
   '@prefresh/babel-plugin@0.5.3': {}
 
+  '@prefresh/core@1.5.10(preact@10.29.2)':
+    dependencies:
+      preact: 10.29.2
+
   '@prefresh/core@1.5.10(preact@10.29.8)':
     dependencies:
       preact: 10.29.8(preact-render-to-string@6.7.0)
 
   '@prefresh/utils@1.2.1': {}
+
+  '@prefresh/vite@2.4.12(preact@10.29.2)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))':
+    dependencies:
+      '@babel/core': 7.28.6
+      '@prefresh/babel-plugin': 0.5.3
+      '@prefresh/core': 1.5.10(preact@10.29.2)
+      '@prefresh/utils': 1.2.1
+      '@rollup/pluginutils': 4.2.1
+      preact: 10.29.2
+      vite: 8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)
+    transitivePeerDependencies:
+      - supports-color
 
   '@prefresh/vite@2.4.12(preact@10.29.8)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))':
     dependencies:
@@ -10377,6 +10532,18 @@ snapshots:
       '@rollup/pluginutils': 4.2.1
       preact: 10.29.8(preact-render-to-string@6.7.0)
       vite: 8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)
+    transitivePeerDependencies:
+      - supports-color
+
+  '@prefresh/vite@2.4.12(preact@10.29.8)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))':
+    dependencies:
+      '@babel/core': 7.28.6
+      '@prefresh/babel-plugin': 0.5.3
+      '@prefresh/core': 1.5.10(preact@10.29.8)
+      '@prefresh/utils': 1.2.1
+      '@rollup/pluginutils': 4.2.1
+      preact: 10.29.8(preact-render-to-string@6.7.0)
+      vite: 8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -11814,6 +11981,8 @@ snapshots:
   comlink@4.3.1: {}
 
   commander@12.0.0: {}
+
+  commander@12.1.0: {}
 
   commander@14.0.2: {}
 
@@ -14258,6 +14427,8 @@ snapshots:
 
   preact@10.28.4: {}
 
+  preact@10.29.2: {}
+
   preact@10.29.8(preact-render-to-string@6.7.0):
     optionalDependencies:
       preact-render-to-string: 6.7.0(preact@10.29.8)
@@ -15465,6 +15636,16 @@ snapshots:
       stack-trace: 1.0.0
       vite: 8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)
 
+  vite-prerender-plugin@0.5.13(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)):
+    dependencies:
+      kolorist: 1.8.0
+      magic-string: 0.30.21
+      node-html-parser: 6.1.13
+      simple-code-frame: 1.3.0
+      source-map: 0.7.6
+      stack-trace: 1.0.0
+      vite: 8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)
+
   vite@8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0):
     dependencies:
       lightningcss: 1.32.0
@@ -15475,6 +15656,21 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.10.9
       esbuild: 0.25.12
+      fsevents: 2.3.3
+      jiti: 2.6.1
+      terser: 5.48.0
+      tsx: 4.21.0
+
+  vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0):
+    dependencies:
+      lightningcss: 1.32.0
+      picomatch: 4.0.4
+      postcss: 8.5.14
+      rolldown: 1.0.1
+      tinyglobby: 0.2.16
+    optionalDependencies:
+      '@types/node': 24.10.9
+      esbuild: 0.27.2
       fsevents: 2.3.3
       jiti: 2.6.1
       terser: 5.48.0

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
+  "private": true,
   "exports": {
     "./transcriptionManager": {
       "import": "./ext_AI_Transcript/main/transcriptionManager.tsx"

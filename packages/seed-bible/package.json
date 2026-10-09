@@ -1,32 +1,66 @@
 {
   "name": "seed-bible",
   "version": "1.12.0",
-  "description": "",
+  "description": "The core Preact library and CasualOS-backed managers powering the Seed Bible reader.",
   "type": "module",
+  "main": "./dist/api.js",
+  "module": "./dist/api.js",
+  "types": "./dist/app/api.d.ts",
   "exports": {
     ".": {
-      "import": "./seed-bible/app/api.tsx"
+      "types": "./dist/app/api.d.ts",
+      "import": "./dist/api.js"
     },
     "./managers": {
-      "import": "./seed-bible/managers/index.tsx"
+      "types": "./dist/managers/index.d.ts",
+      "import": "./dist/managers.js"
     },
     "./components": {
-      "import": "./seed-bible/components/index.tsx"
+      "types": "./dist/components/index.d.ts",
+      "import": "./dist/components.js"
     },
     "./i18n": {
-      "import": "./seed-bible/i18n/index.tsx"
-    }
+      "types": "./dist/i18n/index.d.ts",
+      "import": "./dist/i18n.js"
+    },
+    "./style.css": "./dist/style.css",
+    "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "scripts": {
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "pnpm run clean && pnpm run build:types && vite build",
+    "build:types": "tsc-silent --project tsconfig.build.json --suppressConfig ../../tsc-silent.config.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "bible"
+  ],
+  "author": "AO Lab <hello@helloao.org>",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HelloAOLab/seed-bible.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HelloAOLab/seed-bible/issues"
+  },
+  "homepage": "https://github.com/HelloAOLab/seed-bible#readme",
   "packageManager": "pnpm@10.17.1",
+  "peerDependencies": {
+    "preact": "catalog:",
+    "@preact/signals": "^2.9.1"
+  },
   "dependencies": {
     "@casual-simulation/aux-common": "catalog:",
+    "@casual-simulation/aux-records": "4.2.8-alpha.35775260651",
     "@casual-simulation/aux-websocket": "catalog:",
+    "@casual-simulation/fast-json-stable-stringify": "^4.0.5",
     "@casual-simulation/websocket": "catalog:",
     "@tiptap/core": "catalog:",
     "@tiptap/extension-bullet-list": "catalog:",
@@ -45,8 +79,10 @@
     "@tiptap/starter-kit": "catalog:",
     "axios": "catalog:",
     "dompurify": "catalog:",
+    "es-toolkit": "1.39.10",
+    "hash.js": "^1.1.7",
     "i18next": "catalog:",
-    "preact": "catalog:",
+    "i18next-resources-to-backend": "catalog:",
     "preact-iso": "catalog:",
     "qrcode": "catalog:",
     "react": "catalog:",
@@ -54,9 +90,14 @@
     "react-dom": "catalog:",
     "rxjs": "catalog:",
     "typesense": "catalog:",
+    "uuid": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/qrcode": "^1.5.6"
+    "@preact/preset-vite": "^2.10.5",
+    "@types/qrcode": "^1.5.6",
+    "tsc-silent": "1.2.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13"
   }
 }
