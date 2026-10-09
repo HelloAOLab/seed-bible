@@ -5,7 +5,6 @@ import type { Pane, PanesManager } from "../../managers/PanesManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { UI_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
 import { useEffect, useRef } from "preact/hooks";
-import type { AnnotationsManager } from "../../managers";
 
 interface DragState {
   mode: "move" | "resize";
@@ -37,18 +36,9 @@ interface DragState {
  * if the pane declared one — e.g. to warn about unsaved changes and let the
  * pane close itself once the user confirms. See `Pane.confirmClose`.
  */
-function closePaneFromHeader(
-  panesManager: PanesManager,
-  pane: Pane,
-  annotations?: AnnotationsManager
-) {
+function closePaneFromHeader(panesManager: PanesManager, pane: Pane) {
   if (pane.confirmClose && !pane.confirmClose()) {
     return;
-  }
-  // Cancel an active new-annotation draft when the pane is closed,
-  // preserving the selected verses so the verse toolbar reappears.
-  if (annotations?.isDraftingNewAnnotation.value) {
-    annotations.cancelEditingAnnotation();
   }
   panesManager.closePane(pane.id, "user");
 }
@@ -319,7 +309,7 @@ interface SidePaneProps {
  */
 export function SidePane(props: SidePaneProps) {
   const { state, pane } = props;
-  const { app, panes: panesManager, annotations } = state;
+  const { app, panes: panesManager } = state;
   const { startResize, registerPaneElement } = usePaneDrag(state);
 
   return (
@@ -337,7 +327,7 @@ export function SidePane(props: SidePaneProps) {
         icon={pane.icon}
         leading={pane.leading}
         header={pane.header}
-        onClose={() => closePaneFromHeader(panesManager, pane, annotations)}
+        onClose={() => closePaneFromHeader(panesManager, pane)}
       />
       <div className="sb-pane-detached-body">
         <div className="sb-pane-component">

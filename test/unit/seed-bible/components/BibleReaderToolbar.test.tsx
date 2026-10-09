@@ -1536,9 +1536,38 @@ describe("BibleReaderToolbar — verse tool actions", () => {
     expect(readingState.selectedVerses.value).toHaveLength(0);
     expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
   });
+  it("restores the verse toolbar when the annotation editor closes without saving or cancelling", async () => {
+    signIn();
+    stubAnnotationRecords();
+
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    await act(async () => {
+      await state.annotations.createNewAnnotation();
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(true);
+    expect(state.annotations.editingAnnotation.value).not.toBeNull();
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+
+    // Simulate the editor being closed externally, without invoking Cancel or Save.
+    act(() => {
+      state.discover.view.value = null;
+    });
+
+    expect(state.annotations.isDraftingNewAnnotation.value).toBe(false);
+    expect(state.annotations.editingAnnotation.value).toBeNull();
+
+    // Closing the editor must preserve the selection and restore the toolbar.
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+  });
 
   it("clears the verse selection after picking a dropdown item", async () => {
     const onSelect = vi.fn();
+
     state.tools.registerVerseToolbarTool({
       id: "test-dropdown-tool",
       priority: 10,
@@ -1563,26 +1592,32 @@ describe("BibleReaderToolbar — verse tool actions", () => {
       container.querySelectorAll<HTMLButtonElement>(".sb-verse-toolbar-action")
     ).find((button) => button.getAttribute("aria-label") === "Test Dropdown");
 
-    expect(toolButton).not.toBeUndefined();
+    expect(toolButton).toBeDefined();
 
-    // First click opens the dropdown.
     // First click opens the dropdown.
     await act(async () => {
       toolButton!.click();
     });
-    // Wait until the dropdown item appears.
-    await waitFor(
-      () => container.querySelector(".sb-tool-context-menu-item") !== null
-    );
-    const menuItem = container.querySelector<HTMLButtonElement>(
-      ".sb-tool-context-menu-item"
-    );
 
-    expect(menuItem).not.toBeNull();
-    // Picking the dropdown item performs the actual action.
-    await act(async () => {
-      menuItem!.click();
+    // Wait until the dropdown item appears.
+    const menuItem = await vi.waitFor(() => {
+      const item = container.querySelector<HTMLButtonElement>(
+        ".sb-tool-context-menu-item"
+      );
+
+      expect(item).not.toBeNull();
+      return item!;
     });
+
+    // Opening the dropdown should keep the toolbar and selection.
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+
+    // Picking the item performs the action and closes the toolbar.
+    await act(async () => {
+      menuItem.click();
+    });
+
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(readingState.selectedVerses.value).toHaveLength(0);
     expect(container.querySelector(".sb-verse-toolbar")).toBeNull();

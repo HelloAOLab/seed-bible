@@ -1716,6 +1716,56 @@ describe("AnnotationsManager", () => {
 
       expect(manager.editingAnnotation.value?.id).toBe("a1");
     });
+    it("preserves the selection and keeps the editor open when saving a new annotation fails", async () => {
+      tab = createMockTab({
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 5 } },
+        ],
+      });
+      tabs = createMockTabsManager(tab);
+
+      const manager = createManager();
+      await manager.createNewAnnotation();
+
+      expect(manager.isDraftingNewAnnotation.value).toBe(true);
+      expect(tab.readingState.selectedVerses.value).toHaveLength(1);
+
+      recordDataMock.mockRejectedValueOnce(new Error("Save failed"));
+
+      await expect(manager.saveEditingAnnotation()).rejects.toThrow(
+        "Save failed"
+      );
+
+      expect(tab.readingState.selectedVerses.value).toHaveLength(1);
+      expect(manager.isDraftingNewAnnotation.value).toBe(true);
+      expect(manager.editingAnnotation.value).not.toBeNull();
+      expect(discover.view.value).toBe("create_annotation");
+    });
+
+    it("does not clear the verse selection when saving an existing annotation", async () => {
+      tab = createMockTab({
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 5 } },
+        ],
+      });
+      tabs = createMockTabsManager(tab);
+
+      const manager = createManager();
+      const annotation = createCommentAnnotation({ id: "existing" });
+
+      manager.editAnnotation(annotation);
+
+      await manager.saveEditingAnnotation();
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(tab.readingState.selectedVerses.value).toHaveLength(1);
+      expect(tab.readingState.selectedVerses.value[0]?.verse.number).toBe(5);
+      expect(manager.editingAnnotation.value).toBeNull();
+    });
   });
 
   describe("cancelEditingAnnotation", () => {

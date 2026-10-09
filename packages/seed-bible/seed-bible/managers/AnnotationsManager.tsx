@@ -1427,6 +1427,16 @@ export function createAnnotationsManager(
       ...targeting,
     };
   });
+  effect(() => {
+    if (
+      discover.view.value !== "create_annotation" &&
+      isDraftingNewAnnotation.peek()
+    ) {
+      isDraftingNewAnnotation.value = false;
+      draftTabId.value = null;
+      editingAnnotation.value = null;
+    }
+  });
 
   const createNewAnnotation = async (): Promise<void> => {
     let userId = login.userId.value;
@@ -1490,7 +1500,6 @@ export function createAnnotationsManager(
 
   const saveEditingAnnotation = async (): Promise<void> => {
     const current = editingAnnotation.value;
-    console.log();
     if (!current) {
       return;
     }
@@ -1501,6 +1510,7 @@ export function createAnnotationsManager(
 
     // Capture the tab before leaving the editor resets draftTabId.
     const tabId = draftTabId.value;
+
     // Save first so a failed save preserves the current verse selection.
     const saved = await saveAnnotation(current);
     upsertIntoCache(saved, recordId);
