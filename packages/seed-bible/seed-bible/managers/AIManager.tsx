@@ -58,6 +58,13 @@ export const AIBibleVerseRefSchema = z.object({
     verse: z.number().positive().nullable(),
     endVerse: z.number().positive().nullable(),
   }),
+  note: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe(
+      "Optional HTML note shown alongside the passage while it plays. Null for no note."
+    ),
 });
 
 /**
@@ -115,6 +122,7 @@ export function convertToPlaylistItem(
           verse: item.bibleVerse.ref.verse ?? undefined,
           endVerse: item.bibleVerse.ref.endVerse ?? undefined,
         },
+        ...(item.bibleVerse.note ? { note: item.bibleVerse.note } : {}),
       };
     case "link":
       if (!item.link) {
@@ -152,6 +160,7 @@ export function convertToAiPlaylistItem(
             verse: item.ref.verse ?? null,
             endVerse: item.ref.endVerse ?? null,
           },
+          note: item.note ?? null,
         },
         link: null,
         html: null,

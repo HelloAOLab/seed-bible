@@ -69,3 +69,46 @@
   border-color: var(--sb-primary-color);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
 }
+
+.sb-scripture-note-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.sb-scripture-note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sb-scripture-note-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-scripture-note-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-scripture-note-add {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+.sb-scripture-note-add .material-symbols-outlined {
+  font-size: 1.125rem;
+}

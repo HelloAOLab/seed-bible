@@ -1,0 +1,178 @@
+/* Desktop: the layer covers just the visible reader (positioned inline from
+   measurements) and lets clicks through, so only the popover itself is
+   interactive and the reader stays usable around it. Above the reader's own
+   chrome, below menus, the book selector, and modals (500 and up). */
+.sb-scripture-note-layer {
+  position: fixed;
+  z-index: 450;
+  pointer-events: none;
+  font-family: var(--sb-font-family);
+}
+
+.sb-scripture-note-popover {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: min(24rem, 60vh);
+  padding: 1rem 1.125rem;
+  border-radius: 0.875rem;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  box-shadow: 0 16px 40px #00000040;
+  pointer-events: auto;
+}
+
+.sb-scripture-note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sb-scripture-note-title {
+  margin: 0;
+  min-width: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-scripture-note-hide {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-font-color);
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.sb-scripture-note-hide:hover {
+  opacity: 1;
+}
+
+.sb-scripture-note-hide .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+/* The note scrolls on its own so a long one never pushes the actions off. */
+.sb-scripture-note-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.sb-scripture-note-body > :first-child > :first-child {
+  margin-top: 0;
+}
+
+.sb-scripture-note-body > :first-child > :last-child {
+  margin-bottom: 0;
+}
+
+.sb-scripture-note-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sb-scripture-note-progress {
+  flex: 1 1 auto;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+  font-size: 0.8125rem;
+  opacity: 0.6;
+}
+
+.sb-scripture-note-actions .sb-tour-btn-next:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sb-scripture-note-show {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 999px;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  box-shadow: 0 6px 18px #00000030;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+[dir="rtl"] .sb-scripture-note-show {
+  right: auto;
+  left: 1rem;
+}
+
+.sb-scripture-note-show .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+/* Mobile: rides directly on top of the floating chapter nav (a child of it,
+   at `bottom: 100%`), so it moves with the nav and never covers it. */
+.sb-scripture-note-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: 40vh;
+  border-radius: 1rem 1rem 0 0;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  box-shadow: 0 -6px 20px #00000026;
+  font-family: var(--sb-font-family);
+}
+
+.sb-scripture-note-sheet-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-scripture-note-sheet-header .sb-scripture-note-title {
+  flex: 1 1 auto;
+}
+
+.sb-scripture-note-sheet-icon {
+  color: var(--sb-primary-color);
+  font-size: 1.25rem;
+}
+
+.sb-scripture-note-sheet-chevron {
+  opacity: 0.7;
+}
+
+.sb-scripture-note-sheet .sb-scripture-note-body {
+  padding: 0 1rem 0.875rem;
+}

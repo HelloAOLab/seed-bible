@@ -34,6 +34,7 @@ import {
   openSaveModalForLocation,
 } from "../Tabs/Tabs";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { ScriptureNoteSheet } from "../ScriptureNote/ScriptureNote";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
   annotationVerseNumbers,
@@ -2505,6 +2506,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     defaultValue: "Chapter navigation",
                   })}
                 >
+                  {playing && (
+                    <ScriptureNoteSheet
+                      playing={playing}
+                      resolveBookName={resolveBookName}
+                    />
+                  )}
                   {!playing && audio && AudioIcon && (
                     <button
                       type="button"

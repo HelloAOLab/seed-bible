@@ -70,6 +70,7 @@ import {
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
+import { ScriptureNotePopover } from "../ScriptureNote/ScriptureNote";
 import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
@@ -2513,6 +2514,7 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
   const footnoteOverlayDismiss = useOverlayDismiss(() => selectFootnote(null));
+  const readerRootRef = useRef<HTMLDivElement>(null);
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
@@ -3164,13 +3166,35 @@ export function BibleReader(props: BibleReaderProps) {
     currentSlot.tab != null &&
     state.tabs.selectedTabId.value === currentSlot.tab.id;
 
+  // Desktop shows a playing passage's note beside it, in the reader playback is
+  // bound to; mobile shows it in a sheet above the floating nav instead.
+  const playingHere =
+    state && !isCompactReader ? state.playlists.playing.value : null;
+  const scriptureNotePlaying =
+    playingHere &&
+    currentSlot.tab != null &&
+    playingHere.tab?.id === currentSlot.tab.id
+      ? playingHere
+      : null;
+
   return (
     <div
+      ref={readerRootRef}
       className={`sb-bible-reader ${readerFontSizeClass}${
         isCompactReader ? " sb-bible-reader-mobile" : ""
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
+      {scriptureNotePlaying ? (
+        <ScriptureNotePopover
+          playing={scriptureNotePlaying}
+          readerRef={readerRootRef}
+          resolveBookName={(id) => {
+            const book = translationBooks.value?.books.find((b) => b.id === id);
+            return book?.name ?? book?.commonName ?? id;
+          }}
+        />
+      ) : null}
       {playlistOpeningHere && !isCompactReader ? (
         <Spinner
           className="sb-playlist-opening-spinner"

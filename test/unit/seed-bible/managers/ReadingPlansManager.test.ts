@@ -2095,6 +2095,60 @@ describe("createReadingPlansManager", () => {
     expect(sessions[0]!.readings).toEqual([]);
   });
 
+  it("updateReadingInEditingPlan replaces a reading in place, keeping its id", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startEditingReadingPlan();
+    manager.addReadingToEditingPlan({
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1 },
+    });
+    manager.addReadingToEditingPlan({
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 2 },
+    });
+    const [first, second] =
+      manager.editingReadingPlan.value!.plan.sessions[0]!.readings;
+
+    manager.updateReadingInEditingPlan(0, first!.id, {
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1, verse: 1 },
+      note: "<p>In the beginning</p>",
+    });
+
+    expect(
+      manager.editingReadingPlan.value!.plan.sessions[0]!.readings
+    ).toEqual([
+      {
+        id: first!.id,
+        item: {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 1, verse: 1 },
+          note: "<p>In the beginning</p>",
+        },
+      },
+      second,
+    ]);
+  });
+
+  it("updateReadingInEditingPlan ignores a reading that isn't in that session", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startEditingReadingPlan();
+    manager.addReadingToEditingPlan({
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1 },
+    });
+    const before = manager.editingReadingPlan.value!;
+
+    manager.updateReadingInEditingPlan(0, "missing", {
+      type: "bible-verse",
+      ref: { bookId: "EXO", chapter: 1 },
+    });
+
+    expect(manager.editingReadingPlan.value).toBe(before);
+  });
+
   it("the plan offers whichever cadences the author checked, and never none", async () => {
     const manager = makeManager("user-1");
     await flush();

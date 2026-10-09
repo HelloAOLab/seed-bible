@@ -28,6 +28,7 @@ import {
 } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
+import { playlistItemLabel } from "../playlistItemLabel";
 import { readingItemIcon, readingPreviewText } from "./readingPreview";
 
 interface ReadingPlanEditorProps {
@@ -275,6 +276,13 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
             onRemoveReading={(sessionIndex, readingId) =>
               readingPlans.removeReadingFromEditingPlan(sessionIndex, readingId)
             }
+            onUpdateReading={(sessionIndex, readingId, item) =>
+              readingPlans.updateReadingInEditingPlan(
+                sessionIndex,
+                readingId,
+                item
+              )
+            }
           />
         </section>
 
@@ -443,13 +451,19 @@ interface SessionsSectionProps {
   onRemoveSession: (index: number) => void;
   onAddReading: (item: PlaylistItemData) => void;
   onRemoveReading: (sessionIndex: number, readingId: string) => void;
+  onUpdateReading: (
+    sessionIndex: number,
+    readingId: string,
+    item: PlaylistItemData
+  ) => void;
 }
 
 /**
  * The plan's content: a vertical list of reading sessions, each holding one
  * sitting's worth of reading. Selecting a session opens the same add-item
  * control the playlist editor uses (scripture, text, or link) inside it, and is
- * also where the reader's "Add to plan" verse action puts a passage.
+ * also where the reader's "Add to plan" verse action puts a passage. Editing a
+ * reading selects its session and opens that same control on the reading.
  */
 function SessionsSection(props: SessionsSectionProps) {
   const {
@@ -461,12 +475,16 @@ function SessionsSection(props: SessionsSectionProps) {
     onRemoveSession,
     onAddReading,
     onRemoveReading,
+    onUpdateReading,
   } = props;
   const { t } = useI18n();
   // Only one reading is expanded at a time, across all sessions.
   const [expandedReadingId, setExpandedReadingId] = useState<string | null>(
     null
   );
+  // The reading open in the selected session's item input, or null when that
+  // input is adding a new reading.
+  const [editingReadingId, setEditingReadingId] = useState<string | null>(null);
 
   // Resolve a book's display name from the active translation's book list.
   const resolveBookName = (bookId: string): string => {
@@ -584,8 +602,27 @@ function SessionsSection(props: SessionsSectionProps) {
                         </button>
                         <button
                           type="button"
+                          className="sb-rp-icon-button sb-rp-reading-edit"
+                          aria-pressed={editingReadingId === reading.id}
+                          onClick={() => {
+                            onSelectSession(index);
+                            setEditingReadingId(reading.id);
+                          }}
+                          aria-label={t("reading-plan-edit-reading", {
+                            defaultValue: "Edit reading",
+                          })}
+                        >
+                          <MaterialIcon>edit</MaterialIcon>
+                        </button>
+                        <button
+                          type="button"
                           className="sb-rp-icon-button sb-rp-reading-remove"
-                          onClick={() => onRemoveReading(index, reading.id)}
+                          onClick={() => {
+                            onRemoveReading(index, reading.id);
+                            if (editingReadingId === reading.id) {
+                              setEditingReadingId(null);
+                            }
+                          }}
                           aria-label={t("reading-plan-scripture-remove", {
                             defaultValue: "Remove reading",
                           })}
@@ -614,9 +651,38 @@ function SessionsSection(props: SessionsSectionProps) {
               {/* Only the selected session takes new readings — including the
                   ones sent over from the reader's "Add to plan" action, which
                   has no way to name a session. */}
-              {isSelected ? (
-                <PlaylistItemInput books={books} onAdd={onAddReading} />
-              ) : null}
+              {isSelected
+                ? (() => {
+                    const editingReading =
+                      session.readings.find((r) => r.id === editingReadingId) ??
+                      null;
+                    const editItem = editingReading?.item;
+                    return (
+                      <PlaylistItemInput
+                        // Remount when the edit target changes so the inputs
+                        // seed from the newly chosen reading (or reset).
+                        key={
+                          editingReading ? `edit-${editingReading.id}` : "add"
+                        }
+                        books={books}
+                        onAdd={onAddReading}
+                        editItem={editItem}
+                        editScriptureText={
+                          editItem?.type === "bible-verse"
+                            ? playlistItemLabel(editItem, t, resolveBookName)
+                            : undefined
+                        }
+                        onUpdate={(item) => {
+                          if (editingReading) {
+                            onUpdateReading(index, editingReading.id, item);
+                          }
+                          setEditingReadingId(null);
+                        }}
+                        onCancelEdit={() => setEditingReadingId(null)}
+                      />
+                    );
+                  })()
+                : null}
             </li>
           );
         })}

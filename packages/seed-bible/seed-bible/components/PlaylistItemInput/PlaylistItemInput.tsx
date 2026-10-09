@@ -136,6 +136,9 @@ export const PlaylistItemInput = forwardRef<
           books={books}
           onAdd={submit}
           initialValue={editScriptureText}
+          initialNote={
+            editItem?.type === "bible-verse" ? editItem.note : undefined
+          }
           submitLabel={submitLabel}
         />
       ) : mode === "text" ? (
