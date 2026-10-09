@@ -275,6 +275,32 @@ describe("ScriptureNotePopover", () => {
     expect(popover()!.querySelector(".sb-tour-arrow-bottom")).not.toBeNull();
   });
 
+  it("fits a long note underneath the passage by letting it scroll there", async () => {
+    // The note is taller than the 516px left below verse 17 (768 - 220 - 16
+    // inset - 16 gap), so uncapped it would only fit docked in the corner.
+    const realRect = Element.prototype.getBoundingClientRect;
+    const spy = vi
+      .spyOn(Element.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: Element) {
+        return this.classList.contains("sb-scripture-note-popover")
+          ? rect(0, 0, 300, 700)
+          : realRect.call(this);
+      });
+    try {
+      layOutReader({ 16: 140, 17: 180 }, { column: { left: 40, width: 944 } });
+      renderPopover(createPlayingState([playlist([noted])]));
+
+      await waitFor(
+        () =>
+          !!popover()?.querySelector(".sb-tour-arrow-bottom") &&
+          popover()!.style.maxHeight === "516px"
+      );
+      expect(parseFloat(popover()!.style.top)).toBeGreaterThanOrEqual(220);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it("measures the gutter from the text column, not a verse that ends mid-line", async () => {
     // A one-line verse ending at x=300 leaves plenty of room after it, but the
     // column runs to x=850, leaving no gutter wide enough beside the text.

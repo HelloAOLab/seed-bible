@@ -8,6 +8,13 @@
   z-index: 450;
   pointer-events: none;
   font-family: var(--sb-font-family);
+  /* The popover's background matches the page, and a shadow vanishes on a
+     dark one, so its edge is drawn from the text color instead. */
+  --sb-scripture-note-edge: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 75%
+  );
 }
 
 .sb-scripture-note-popover {
@@ -16,13 +23,43 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-height: min(24rem, 60vh);
+  /* As tall as the reader's visible pane allows (less the 16px inset placement
+     keeps from its edges); the note scrolls only past that. */
+  max-height: calc(100% - 2rem);
   padding: 1rem 1.125rem;
+  border: 1px solid var(--sb-scripture-note-edge);
   border-radius: 0.875rem;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
   box-shadow: 0 16px 40px #00000040;
   pointer-events: auto;
+}
+
+/* The pointer continues the border along its two outer edges; its inner half
+   overlaps the popover and hides the border there, so the two read as one. */
+.sb-scripture-note-popover .sb-tour-arrow {
+  box-sizing: border-box;
+  border: 0 solid var(--sb-scripture-note-edge);
+}
+
+.sb-scripture-note-popover .sb-tour-arrow-bottom {
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.sb-scripture-note-popover .sb-tour-arrow-top {
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+.sb-scripture-note-popover .sb-tour-arrow-right {
+  border-left-width: 1px;
+  border-bottom-width: 1px;
+}
+
+.sb-scripture-note-popover .sb-tour-arrow-left {
+  border-top-width: 1px;
+  border-right-width: 1px;
 }
 
 .sb-scripture-note-header {
@@ -71,6 +108,9 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--sb-font-color), transparent 70%)
+    transparent;
 }
 
 .sb-scripture-note-body > :first-child > :first-child {
@@ -139,6 +179,8 @@
   display: flex;
   flex-direction: column;
   max-height: 40vh;
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 75%);
   border-radius: 1rem 1rem 0 0;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);

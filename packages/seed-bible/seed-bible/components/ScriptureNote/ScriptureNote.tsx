@@ -33,6 +33,11 @@ export function currentScriptureNoteItem(
 const POPOVER_GAP = 16;
 /** Inset from the reader's edges for a popover docked in its corner. */
 const DOCK_INSET = 16;
+/**
+ * The least room under a passage worth placing the popover in. A long note
+ * scrolls inside it; with less room than this it docks in the corner instead.
+ */
+const MIN_UNDERNEATH_HEIGHT = 160;
 
 interface Box {
   top: number;
@@ -173,20 +178,45 @@ function placePopover(
   for (const passage of candidates) {
     const target = acrossColumn(passage);
     if (!target) continue;
-    // `computePopover` tries the given side first, then underneath.
-    const layout = computePopover(
-      relative(target),
-      rtl ? "left" : "right",
-      size,
-      measured,
-      POPOVER_GAP
-    );
-    const popSize = {
-      w: parseFloat(layout.style.width ?? "0"),
-      h: measured?.h ?? 0,
-    };
-    if (layout.side && fitsFrame(layout.style, popSize, size)) {
-      return { frame, ...layout };
+    const rect = relative(target);
+    const fits = (layout: ReturnType<typeof computePopover>) =>
+      !!layout.side &&
+      fitsFrame(
+        layout.style,
+        { w: parseFloat(layout.style.width ?? "0"), h: measured?.h ?? 0 },
+        size
+      );
+
+    const side = rtl ? "left" : "right";
+    const beside = computePopover(rect, side, size, measured, POPOVER_GAP);
+    if (beside.side === side && fits(beside)) {
+      return { frame, ...beside };
+    }
+
+    // Underneath, capped to the room left below the passage so a long note
+    // scrolls there rather than giving up the spot.
+    const room = size.h - (rect.top + rect.height) - POPOVER_GAP - DOCK_INSET;
+    if (room >= MIN_UNDERNEATH_HEIGHT) {
+      const height = Math.min(measured?.h || room, room);
+      const under = computePopover(
+        rect,
+        "bottom",
+        size,
+        { w: measured?.w ?? 0, h: height },
+        POPOVER_GAP
+      );
+      if (under.side === "bottom") {
+        return {
+          frame,
+          ...under,
+          style: { ...under.style, maxHeight: `${room}px` },
+        };
+      }
+    }
+
+    // `computePopover` fell back to whichever side had room (above, say).
+    if (fits(beside)) {
+      return { frame, ...beside };
     }
   }
 
