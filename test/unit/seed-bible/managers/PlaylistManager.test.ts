@@ -3540,7 +3540,7 @@ describe("createPlaylistManager", () => {
       };
     };
 
-    it("swaps the close button for previous and next buttons that move through the queue", async () => {
+    it("shows previous and next buttons that move through the queue", async () => {
       const manager = makeManager("user-1");
       await flush();
       manager.startPlaying(
@@ -3553,7 +3553,6 @@ describe("createPlaylistManager", () => {
       );
       const playing = manager.playing.value!;
       expect(itemModal()?.title).toBe("First");
-      expect(itemModal()?.showCloseButton).toBe(false);
 
       const container = document.createElement("div");
       document.body.appendChild(container);
@@ -3580,7 +3579,7 @@ describe("createPlaylistManager", () => {
       }
     });
 
-    it("keeps the close button and has no nav when an item is previewed outside playback", () => {
+    it("has no nav when an item is previewed outside playback", () => {
       const modals = createModalManager();
       openPlaylistItemPreview(
         modals,
@@ -3590,9 +3589,50 @@ describe("createPlaylistManager", () => {
       );
 
       const modal = modals.modals.value[0]!;
-      expect(modal.showCloseButton).toBe(true);
       expect(modal.footer).toBeNull();
     });
+
+    it.each([
+      [
+        "embedded video",
+        { type: "link", url: "https://www.youtube.com/watch?v=abc123" },
+      ],
+      ["video file", { type: "link", url: "https://example.com/clip.mp4" }],
+      ["plain link", { type: "link", url: "https://example.com/article" }],
+      [
+        "embedded page",
+        { type: "link", url: "https://example.com/page", embed: true },
+      ],
+    ] as const)(
+      "shows previous and next buttons on a %s item",
+      async (_, item) => {
+        const manager = makeManager("user-1");
+        await flush();
+        manager.startPlaying(
+          makePlaylist({
+            items: [{ type: "html", title: "Intro", html: "a" }, item],
+          })
+        );
+        const playing = manager.playing.value!;
+        await playing.next();
+        await playing.whenSettled();
+        expect(playing.currentIndex.value).toBe(1);
+
+        const container = document.createElement("div");
+        document.body.appendChild(container);
+        try {
+          const buttons = renderFooter(container);
+          expect(buttons.previous.disabled).toBe(false);
+
+          await act(async () => buttons.previous.click());
+          await playing.whenSettled();
+          expect(playing.currentIndex.value).toBe(0);
+        } finally {
+          render(null, container);
+          container.remove();
+        }
+      }
+    );
   });
 
   describe("playlist finished modal", () => {

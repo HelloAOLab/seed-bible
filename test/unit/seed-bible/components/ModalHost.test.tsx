@@ -68,7 +68,7 @@ describe("ModalHost", () => {
     expect(manager.modals.value).toHaveLength(1);
   });
 
-  it("hides the close button and shows the footer when asked", async () => {
+  it("shows the footer under the content alongside the close button", async () => {
     const state = await createTestSeedBibleState();
     const manager = createModalManager();
     act(() => {
@@ -76,7 +76,6 @@ describe("ModalHost", () => {
         title: "Step",
         content: () => <p>Body</p>,
         footer: () => <button className="test-footer">Next</button>,
-        showCloseButton: false,
         useCasualOSApp: false,
       });
     });
@@ -89,16 +88,15 @@ describe("ModalHost", () => {
       );
     });
 
-    expect(container.querySelector(".sb-footnote-modal-close")).toBeNull();
+    expect(container.querySelector(".sb-footnote-modal-close")).not.toBeNull();
     expect(
       container.querySelector(".sb-footnote-modal-footer .test-footer")
     ).not.toBeNull();
   });
 
-  it("shows the close button and no footer by default", async () => {
+  it("has no footer by default", async () => {
     await renderWithModal();
 
-    expect(container.querySelector(".sb-footnote-modal-close")).not.toBeNull();
     expect(container.querySelector(".sb-footnote-modal-footer")).toBeNull();
   });
 });

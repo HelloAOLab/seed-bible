@@ -43,15 +43,13 @@ function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
           <h3 className="sb-footnote-modal-title">
             {translateTitle(t, modal.title)}
           </h3>
-          {modal.showCloseButton ? (
-            <button
-              className="sb-footnote-modal-close"
-              aria-label={t("close", { defaultValue: "Close" })}
-              onClick={close}
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          ) : null}
+          <button
+            className="sb-footnote-modal-close"
+            aria-label={t("close", { defaultValue: "Close" })}
+            onClick={close}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
         </div>
 
         <div className="sb-footnote-modal-content">{modal.content({ t })}</div>
