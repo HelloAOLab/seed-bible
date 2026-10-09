@@ -171,3 +171,217 @@
   line-height: 1;
   box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
 }
+
+/* ------------------------------------------------- off-screen highlights */
+
+/*
+ * A highlight whose verse is above or below the visible reader. Each one is a
+ * circle in the highlight's colour, with an arrow and the verse number.
+ * Several sit in a horizontal row, overlapping like a deck of cards — only a
+ * rim of each one shows — and spread apart while hovered. If the opened row
+ * is wider than the reader, it scrolls sideways on a transparent background.
+ */
+.sb-offscreen-cues {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.sb-offscreen-cues-row {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 1rem);
+  background: transparent;
+  pointer-events: none;
+}
+
+.sb-offscreen-cues-stack {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  /* Physical left/right, so a scroll arrow matches the side it points to. */
+  direction: ltr;
+  align-items: center;
+  gap: 0;
+  width: max-content;
+  max-width: 100%;
+  padding: 0.125rem;
+  box-sizing: border-box;
+  --sb-offscreen-cue-overlap: -1.55rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+  /* pan-y so a vertical swipe that starts on the row still scrolls the reader.
+     Horizontal movement is the row's own drag. */
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--sb-font-color) 35%, transparent)
+    transparent;
+  background: transparent;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.sb-offscreen-cues-stack::-webkit-scrollbar {
+  height: 0.375rem;
+}
+
+.sb-offscreen-cues-stack::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--sb-font-color) 35%, transparent);
+  border-radius: 999px;
+}
+
+.sb-offscreen-cues-stack::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sb-offscreen-cues-up {
+  top: 0.375rem;
+}
+
+.sb-offscreen-cues-down {
+  bottom: 0.375rem;
+}
+
+.sb-offscreen-cues-scroll {
+  position: absolute;
+  top: 50%;
+  /* Above every verse circle, whose z-index is its place in the row. */
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.375rem;
+  height: 2.375rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--sb-font-color);
+  color: var(--sb-reader-background, #fff);
+  box-shadow:
+    0 1px 2px #0000002e,
+    0 0 0 2px var(--sb-reader-background, #fff);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.sb-offscreen-cues-scroll-left {
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.sb-offscreen-cues-scroll-right {
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.sb-offscreen-cues-scroll-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.sb-offscreen-cues-scroll:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+.sb-offscreen-cue {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 2.375rem;
+  height: 2.375rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  /* The ring is what makes one circle read as a card sitting on the next. */
+  box-shadow:
+    0 1px 2px #0000002e,
+    0 0 0 2px var(--sb-reader-background, #fff);
+  font-family: var(--sb-font-family);
+  font-size: 0.625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 1;
+  transition:
+    margin-inline-start 0.2s ease,
+    opacity 0.25s ease,
+    transform 0.2s ease;
+}
+
+/* Deck: each circle covers most of the one before it, leaving a rim. */
+.sb-offscreen-cue + .sb-offscreen-cue {
+  margin-inline-start: var(--sb-offscreen-cue-overlap);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* The scroll circles sit outside the chip scroller. :has() keeps the chips
+     spread while the pointer is on a circle the scroller itself does not contain. */
+  .sb-offscreen-cues-row:hover .sb-offscreen-cues-stack,
+  .sb-offscreen-cues-row:focus-within .sb-offscreen-cues-stack,
+  .sb-offscreen-cues-row:has(.sb-offscreen-cues-scroll:hover)
+    .sb-offscreen-cues-stack {
+    z-index: 1;
+    background: transparent;
+    --sb-offscreen-cue-overlap: 0.375rem;
+  }
+}
+
+/* A coarse pointer can't hit the thin rim of a stacked circle, and there is
+   no hover to spread them. Keep them apart; sideways scroll covers overflow. */
+@media (hover: none), (pointer: coarse) {
+  .sb-offscreen-cues-stack {
+    --sb-offscreen-cue-overlap: 0.375rem;
+  }
+}
+
+.sb-offscreen-cue:hover {
+  transform: scale(1.06);
+}
+
+.sb-offscreen-cue:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+.sb-offscreen-cue-arrow {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.sb-offscreen-cue-verse {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 0.2rem;
+}
+
+@starting-style {
+  .sb-offscreen-cue {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-offscreen-cue,
+  .sb-offscreen-cues-stack {
+    transition: none;
+  }
+
+  .sb-offscreen-cue:hover {
+    transform: none;
+  }
+}

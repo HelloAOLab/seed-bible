@@ -73,7 +73,17 @@ import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPan
 import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
-import { findScrollContainer, readBottomChromeInset } from "./readerViewport";
+import { OffscreenHighlightCueLayer } from "./OffscreenHighlightCueLayer";
+import {
+  collectHighlightCueMarks,
+  decorationHighlightsByVerse,
+  hasContentTargeting,
+} from "./offscreenHighlightCues";
+import {
+  findScrollContainer,
+  measureReaderViewport,
+  type ReaderViewport,
+} from "./readerViewport";
 
 interface ReaderChapterActionProps {
   state: SeedBibleState;
@@ -387,17 +397,6 @@ function getVersePlainText(content: ChapterVerse["content"]): string {
 interface ResolvedHighlight {
   highlight: ChapterHighlight;
   broadcast: boolean;
-}
-
-function hasContentTargeting(decoration: VerseDecoration): boolean {
-  const hasTargetContent =
-    typeof decoration.targetContent === "string" &&
-    decoration.targetContent.trim().length > 0;
-  const hasIndexRange =
-    typeof decoration.startIndex === "number" ||
-    typeof decoration.endIndex === "number";
-
-  return hasTargetContent || hasIndexRange;
 }
 
 function toContentDecorationRanges(
@@ -768,30 +767,11 @@ function renderChapterContent(
     );
   };
 
-  // Decorations asking to be drawn as highlights (`decoration.highlight`),
-  // flattened to one entry per verse. Content-targeted decorations are skipped:
-  // the ribbon layer works per verse-run and can't paint a text fragment.
-  // Later decorations win, matching how their CSS is layered below.
-  const decorationHighlights = new Map<number, ChapterHighlight>();
-  for (const decoration of decorations) {
-    if (!decoration.highlight || hasContentTargeting(decoration)) {
-      continue;
-    }
-    if (
-      (decoration.translationId &&
-        decoration.translationId !== chapterData.translation.id) ||
-      decoration.bookId !== chapterData.book.id ||
-      decoration.chapterNumber !== chapterData.chapter.number
-    ) {
-      continue;
-    }
-    for (const verseNumber of decoration.verses) {
-      decorationHighlights.set(verseNumber, {
-        ...decoration.highlight,
-        verse: verseNumber,
-      });
-    }
-  }
+  const decorationHighlights = decorationHighlightsByVerse(decorations, {
+    translationId: chapterData.translation.id,
+    bookId: chapterData.book.id,
+    chapterNumber: chapterData.chapter.number,
+  });
 
   // `showHighlights` hides the reader's *saved* highlights. Decoration
   // highlights are a live signal from a session peer or an extension, so they
@@ -1492,12 +1472,6 @@ const PRESENCE_PIN_INSET_PX = 14;
 const PRESENCE_ARROW_PX = 6;
 const PRESENCE_EDGE_INSET_PX = 4;
 
-/** The part of the chapter content box that is on screen, in content px. */
-interface PresenceViewport {
-  top: number;
-  bottom: number;
-}
-
 /**
  * One or more avatars drawn together at a point in the gutter. Avatars that
  * would land on top of one another (their owners' verses start on the same
@@ -1533,7 +1507,7 @@ interface PresenceArrow {
  */
 function stackPresenceAvatars(
   markers: PresenceMarker[],
-  viewport: PresenceViewport | null
+  viewport: ReaderViewport | null
 ): PresenceAvatarStack[] {
   const anchored = markers.map((marker) => {
     const lowest = marker.top + marker.height - PRESENCE_AVATAR_PX;
@@ -1595,7 +1569,7 @@ function stackPresenceAvatars(
  */
 function placePresenceArrows(
   markers: PresenceMarker[],
-  viewport: PresenceViewport | null
+  viewport: ReaderViewport | null
 ): PresenceArrow[] {
   if (!viewport) return [];
   const arrows: PresenceArrow[] = [];
@@ -1625,34 +1599,6 @@ function placePresenceArrows(
 }
 
 /**
- * Where the screen is over the chapter content, in the content's own
- * coordinates. Accounts for the mobile header floating over the top of the
- * scroller and the toolbar over its bottom, since verses under either are not
- * really on screen.
- */
-function measurePresenceViewport(
-  content: HTMLElement,
-  scroller: HTMLElement | null
-): PresenceViewport {
-  const contentRect = content.getBoundingClientRect();
-  let top = 0;
-  let bottom = window.innerHeight;
-  if (scroller) {
-    const rect = scroller.getBoundingClientRect();
-    top = rect.top;
-    bottom = rect.bottom;
-  }
-  const header = content
-    .closest(".sb-bible-reader")
-    ?.querySelector(".sb-bible-reader-mobile-header");
-  if (header) {
-    top = Math.max(top, header.getBoundingClientRect().bottom);
-  }
-  bottom -= readBottomChromeInset();
-  return { top: top - contentRect.top, bottom: bottom - contentRect.top };
-}
-
-/**
  * The gutter down the start edge of the chapter showing where the other
  * participants are (#1692): a bar per person spanning the verses they can
  * see, their avatar at the top of it (held on screen as the reader scrolls
@@ -1671,13 +1617,13 @@ function PresenceGutter({
   chapterKey: string;
   contentRef: RefObject<HTMLDivElement>;
 }) {
-  const [viewport, setViewport] = useState<PresenceViewport | null>(null);
+  const [viewport, setViewport] = useState<ReaderViewport | null>(null);
   const scrollerRef = useRef<HTMLElement | null>(null);
 
   const measure = () => {
     const content = contentRef.current;
     if (!content) return;
-    const next = measurePresenceViewport(content, scrollerRef.current);
+    const next = measureReaderViewport(content, scrollerRef.current);
     setViewport((prev) =>
       prev && prev.top === next.top && prev.bottom === next.bottom ? prev : next
     );
@@ -2436,6 +2382,17 @@ function ChapterContent(props: ChapterContentProps) {
           contentRef={contentRef}
         />
       )}
+      <OffscreenHighlightCueLayer
+        contentRef={contentRef}
+        marks={collectHighlightCueMarks({
+          highlights: highlights.value.highlights,
+          decorations: decorations.value,
+          translationId: chapterData.value.translation.id,
+          bookId: chapterData.value.book.id,
+          chapterNumber: chapterData.value.chapter.number,
+          showSavedHighlights: scriptureElements.showHighlights,
+        })}
+      />
       {renderChapterContent(
         chapterData.value,
         (verse, event) => {
