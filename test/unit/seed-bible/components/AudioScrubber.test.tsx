@@ -229,6 +229,75 @@ describe("AudioScrubber", () => {
     expect(fillWidth()).toBe("25%");
   });
 
+  describe("dragging with a finger while the handle is hidden", () => {
+    it("moves playback from where it is by how far the finger travels", async () => {
+      const { playback, seek } = createPlayback();
+      await renderScrubber(playback);
+
+      // Lands three quarters along, but playback stays at 25% until it moves.
+      await pointer("pointerdown", "touch", TRACK_LEFT + 150);
+      expect(fillWidth()).toBe("25%");
+
+      // 40px of a 200px bar is a fifth of the recording: 25s on to 45s.
+      await pointer("pointermove", "touch", TRACK_LEFT + 190);
+      expect(fillWidth()).toBe("45%");
+      expect(seek).not.toHaveBeenCalled();
+
+      await pointer("pointerup", "touch", TRACK_LEFT + 190);
+      expect(seek).toHaveBeenCalledExactlyOnceWith(45);
+    });
+
+    it("moves back when dragged the other way", async () => {
+      const { playback, seek } = createPlayback();
+      await renderScrubber(playback);
+
+      await pointer("pointerdown", "touch", TRACK_LEFT + 100);
+      await pointer("pointermove", "touch", TRACK_LEFT + 80);
+      await pointer("pointerup", "touch", TRACK_LEFT + 80);
+
+      expect(seek).toHaveBeenCalledExactlyOnceWith(15);
+    });
+
+    it("treats a wobble too small to be a drag as a tap", async () => {
+      const { playback, seek } = createPlayback();
+      await renderScrubber(playback);
+
+      await pointer("pointerdown", "touch", TRACK_LEFT + 100);
+      await pointer("pointermove", "touch", TRACK_LEFT + 103);
+      await pointer("pointerup", "touch", TRACK_LEFT + 103);
+
+      expect(seek).not.toHaveBeenCalled();
+      expect(isHandleVisible()).toBe(true);
+    });
+
+    it("stops at either end of the recording", async () => {
+      const { playback, seek } = createPlayback();
+      await renderScrubber(playback);
+
+      await pointer("pointerdown", "touch", TRACK_LEFT + 100);
+      await pointer("pointermove", "touch", TRACK_LEFT - 400);
+      await pointer("pointerup", "touch", TRACK_LEFT - 400);
+
+      expect(seek).toHaveBeenCalledExactlyOnceWith(0);
+    });
+
+    it("leaves a second tap to jump to the finger", async () => {
+      const { playback, seek } = createPlayback();
+      await renderScrubber(playback);
+
+      // A first drag reveals the handle along the way.
+      await pointer("pointerdown", "touch", TRACK_LEFT + 100);
+      await pointer("pointermove", "touch", TRACK_LEFT + 120);
+      await pointer("pointerup", "touch", TRACK_LEFT + 120);
+      expect(seek).toHaveBeenLastCalledWith(35);
+
+      await pointer("pointerdown", "touch", TRACK_LEFT + 180);
+      expect(fillWidth()).toBe("90%");
+      await pointer("pointerup", "touch", TRACK_LEFT + 180);
+      expect(seek).toHaveBeenLastCalledWith(90);
+    });
+  });
+
   it("hides a tapped-open handle again after a few seconds", async () => {
     vi.useFakeTimers();
     const { playback, seek } = createPlayback();
@@ -463,6 +532,18 @@ describe("AudioScrubber", () => {
       await pointer("pointerup", "mouse", TRACK_LEFT + TRACK_WIDTH);
 
       expect(seek).toHaveBeenCalledExactlyOnceWith(11);
+    });
+
+    it("moves whole verses when dragged with a finger", async () => {
+      const { playback, seek } = createVersePlayback();
+      await renderScrubber(playback);
+
+      // Reading the fourth of twelve verses; 40px of 200px is 2.4 verses on.
+      await pointer("pointerdown", "touch", TRACK_LEFT + 20);
+      await pointer("pointermove", "touch", TRACK_LEFT + 60);
+      await pointer("pointerup", "touch", TRACK_LEFT + 60);
+
+      expect(seek).toHaveBeenCalledExactlyOnceWith(5);
     });
 
     it("steps a verse at a time from the keyboard", async () => {

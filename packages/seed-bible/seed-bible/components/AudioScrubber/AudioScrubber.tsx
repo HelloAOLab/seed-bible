@@ -11,6 +11,9 @@ import {
 /** How long a tapped-open handle stays up when it isn't used. */
 export const SCRUB_HANDLE_HIDE_DELAY_MS = 3_000;
 
+/** How far a finger must travel before a touch counts as a drag, not a tap. */
+const DRAG_THRESHOLD_PX = 6;
+
 /** How far one arrow-key press moves a recording. Speech moves one verse. */
 const KEYBOARD_STEP_SECONDS = 5;
 
@@ -37,17 +40,24 @@ interface AudioScrubberProps {
  * A progress bar for `playback` that can be dragged to move through it.
  *
  * The handle stays hidden so the bar reads as plain progress until someone
- * reaches for it. A mouse reveals it by hovering. A finger can't hover, so the
- * first tap only reveals it — otherwise brushing the bar while reaching for
- * something nearby would jump the audio — and a tap while it's showing snaps
- * it there and can be dragged on from. A handle tapped open and then left
- * alone hides again after {@link SCRUB_HANDLE_HIDE_DELAY_MS}.
+ * reaches for it. A mouse reveals it by hovering, and a click jumps to where
+ * it lands.
  *
- * Playback only moves when the handle is let go; until then the bar previews
- * where it would land, with a card above the handle naming the verse there
- * (and its section heading, when it starts one), and a tick wherever a verse
- * starts — a thicker one where a section does. Speech counted in verses snaps to whole verses, since
- * there's nowhere in between to land.
+ * A finger can't hover, and the bar is too thin to aim at, so touch works
+ * differently:
+ * - While the handle is hidden, dragging anywhere on the bar moves playback
+ *   *from where it is* by however far the finger travels, rather than jumping
+ *   to wherever the finger happened to land. A tap without a drag only
+ *   reveals the handle, so brushing the bar never moves the audio.
+ * - Once the handle is showing, a tap jumps to the finger and can be dragged
+ *   on from. A handle tapped open and then left alone hides again after
+ *   {@link SCRUB_HANDLE_HIDE_DELAY_MS}.
+ *
+ * Playback only moves when the finger or mouse is let go; until then the bar
+ * previews where it would land, with a card above the handle naming the verse
+ * there (and its section heading, when it starts one), and a tick wherever a
+ * verse starts — a thicker one where a section does. Speech counted in verses
+ * snaps to whole verses, since there's nowhere in between to land.
  */
 export function AudioScrubber(props: AudioScrubberProps) {
   const { playback } = props;
@@ -58,6 +68,14 @@ export function AudioScrubber(props: AudioScrubberProps) {
   const isHandleVisible = useSignal(false);
   /** Where the handle is being dragged to, or null when it isn't. */
   const dragTime = useSignal<number | null>(null);
+  /**
+   * A touch on the bar while the handle was hidden: where the finger went
+   * down and where playback was then, so a drag can move playback by how far
+   * the finger travels. Null otherwise.
+   */
+  const relativeDrag = useRef<{ startX: number; startTime: number } | null>(
+    null
+  );
 
   const cancelHide = () => {
     if (hideTimer.current !== null) {
@@ -124,11 +142,33 @@ export function AudioScrubber(props: AudioScrubberProps) {
     if (dragTime.value === null) isHandleVisible.value = false;
   };
 
+  /**
+   * Where playback would be after the finger has travelled `deltaX` pixels
+   * along the bar from where `relativeDrag` started, or null if the bar
+   * can't say yet. The whole bar's width spans the whole recording.
+   */
+  const timeAfterDelta = (deltaX: number): number | null => {
+    const track = trackRef.current;
+    const start = relativeDrag.current;
+    if (!track || !start || !duration || lastPosition === null) return null;
+    const width = track.getBoundingClientRect().width;
+    if (width <= 0) return null;
+    const direction = getComputedStyle(track).direction === "rtl" ? -1 : 1;
+    const position =
+      start.startTime + ((direction * deltaX) / width) * duration;
+    return clamp(byVerse ? Math.round(position) : position, 0, lastPosition);
+  };
+
   const onPointerDown = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     if (!isHandleVisible.value && event.pointerType !== "mouse") {
       isHandleVisible.value = true;
-      scheduleHide();
+      cancelHide();
+      relativeDrag.current = {
+        startX: event.clientX,
+        startTime: playback.currentTime.peek(),
+      };
+      event.currentTarget.setPointerCapture?.(event.pointerId);
       return;
     }
     const target = timeAt(event.clientX);
@@ -141,15 +181,26 @@ export function AudioScrubber(props: AudioScrubberProps) {
   };
 
   const onPointerMove = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
+    const relative = relativeDrag.current;
+    if (relative) {
+      const deltaX = event.clientX - relative.startX;
+      // A finger wobbles a little even when it means to tap; only a real
+      // drag starts moving playback.
+      if (dragTime.value === null && Math.abs(deltaX) < DRAG_THRESHOLD_PX) {
+        return;
+      }
+      dragTime.value = timeAfterDelta(deltaX) ?? dragTime.value;
+      return;
+    }
     if (dragTime.value === null) return;
     dragTime.value = timeAt(event.clientX) ?? dragTime.value;
   };
 
   const finishDrag = (commit: boolean) => {
+    relativeDrag.current = null;
     const target = dragTime.value;
-    if (target === null) return;
     dragTime.value = null;
-    if (commit) playback.seek(target);
+    if (target !== null && commit) playback.seek(target);
     if (!isHovering.current) scheduleHide();
   };
 
