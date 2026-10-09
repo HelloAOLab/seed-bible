@@ -1566,27 +1566,25 @@ describe("BibleReaderToolbar — verse tool actions", () => {
     expect(toolButton).not.toBeUndefined();
 
     // First click opens the dropdown.
+    // First click opens the dropdown.
     await act(async () => {
       toolButton!.click();
     });
-
+    // Wait until the dropdown item appears.
+    await waitFor(
+      () => container.querySelector(".sb-tool-context-menu-item") !== null
+    );
     const menuItem = container.querySelector<HTMLButtonElement>(
       ".sb-tool-context-menu-item"
     );
 
     expect(menuItem).not.toBeNull();
-
     // Picking the dropdown item performs the actual action.
     await act(async () => {
       menuItem!.click();
     });
-
     expect(onSelect).toHaveBeenCalledTimes(1);
-
-    // Dropdown action succeeds → selection clears.
     expect(readingState.selectedVerses.value).toHaveLength(0);
-
-    // Toolbar closes.
     expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
   });
 });
