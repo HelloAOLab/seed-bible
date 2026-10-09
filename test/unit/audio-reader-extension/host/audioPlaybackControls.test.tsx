@@ -305,6 +305,25 @@ describe("audio-reader playback controls", () => {
     expect(litVerses(state)).toEqual([]);
   });
 
+  it("keeps showing progress when played again after being stopped", async () => {
+    const playback = await startChapterOne();
+    reportDuration(10);
+    playAt(4);
+    fire("pause");
+    playback.stop();
+
+    // The same recording is still loaded, so the element has no reason to
+    // announce its length again.
+    pressPlay();
+    fire("play");
+    playAt(2);
+
+    const again = state.audioPlayback.controllerFor(getReadingState(state))!;
+    expect(again).not.toBe(playback);
+    expect(again.duration.value).toBe(10);
+    expect(again.currentTime.value).toBe(2);
+  });
+
   it("takes the controls down when the chapter finishes", async () => {
     await startChapterOne();
 

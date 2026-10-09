@@ -527,6 +527,11 @@ function makeAudible(session: ListeningSession): void {
   if (currentUrl !== session.url) {
     el.src = session.url;
     currentUrl = session.url;
+  } else if (Number.isFinite(el.duration) && el.duration > 0) {
+    // The recording is already loaded — played again after a stop, or the
+    // same chapter open in another tab — so the element won't announce its
+    // length again, and the scrubber would sit at "--:--" without it.
+    session.duration.value = el.duration;
   }
   const start = session.position.peek();
   resumeAt = start > 0 ? start : null;
