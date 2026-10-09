@@ -659,6 +659,10 @@ export function CustomizationVariantGallery(props: {
           const isSelected =
             !customizations.isFollowingSystemScheme.value &&
             variant.id === customizations.activeVariant.value?.id;
+          // `variant.themes` holds only the fields this theme overrides;
+          // everything else comes from the preset it's based on.
+          const colors =
+            customizations.resolveEditingVariantTheme(variant).variables;
           return (
             <button
               key={variant.id}
@@ -672,19 +676,19 @@ export function CustomizationVariantGallery(props: {
             >
               <div
                 className="sb-theme-ready-preview"
-                style={{ background: variant.themes.tertiaryColor }}
+                style={{ background: colors.tertiaryColor }}
               >
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-                  style={{ background: variant.themes.primaryColor }}
+                  style={{ background: colors.primaryColor }}
                 />
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
-                  style={{ background: variant.themes.secondaryColor }}
+                  style={{ background: colors.secondaryColor }}
                 />
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
-                  style={{ background: variant.themes.fontColor }}
+                  style={{ background: colors.fontColor }}
                 />
               </div>
               <ThemeCardLabel name={variant.name} isSelected={isSelected} />
@@ -714,10 +718,17 @@ function CustomizationSystemCard(props: {
   const { customizations } = props.state;
   const { t } = useI18n();
   const isSelected = customizations.isFollowingSystemScheme.value;
-  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => ({
-    presetId,
-    variant: props.customization.variants.find((v) => v.baseTheme === presetId),
-  }));
+  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => {
+    const variant = props.customization.variants.find(
+      (v) => v.baseTheme === presetId
+    );
+    return {
+      presetId,
+      colors: variant
+        ? customizations.resolveEditingVariantTheme(variant).variables
+        : undefined,
+    };
+  });
 
   return (
     <button
@@ -728,15 +739,15 @@ function CustomizationSystemCard(props: {
       onClick={() => void customizations.selectActiveVariant(SYSTEM_THEME_ID)}
     >
       <div className="sb-theme-ready-preview sb-theme-ready-preview-system">
-        {halves.map(({ presetId, variant }) => (
+        {halves.map(({ presetId, colors }) => (
           <div
             key={presetId}
             className="sb-theme-ready-system-half"
-            style={{ background: variant?.themes.tertiaryColor }}
+            style={{ background: colors?.tertiaryColor }}
           >
             <div
               className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-              style={{ background: variant?.themes.primaryColor }}
+              style={{ background: colors?.primaryColor }}
             />
           </div>
         ))}
