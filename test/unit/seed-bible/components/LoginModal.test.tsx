@@ -2,6 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { LoginModal } from "@packages/seed-bible/seed-bible/components/LoginModal/LoginModal";
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import { pressAndRelease } from "../testUtils/pressAndRelease";
 import { TestHost } from "./TestHost";
 
 describe("LoginModal logo", () => {
@@ -91,5 +92,59 @@ describe("LoginModal logo", () => {
     const img = logoImage();
     expect(img.alt).toBe("Seed Bible");
     expect(img.parentElement?.classList.contains("is-broken")).toBe(true);
+  });
+});
+
+describe("LoginModal backdrop", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  async function renderOpenLogin() {
+    const state = await createTestSeedBibleState();
+    act(() => {
+      state.login.isLoginOpen.value = true;
+      render(
+        <TestHost state={state}>
+          <LoginModal login={state.login} navigation={state.navigation} />
+        </TestHost>,
+        container
+      );
+    });
+    const overlay = container.querySelector<HTMLElement>(
+      ".sb-footnote-modal-overlay"
+    )!;
+    const emailInput = container.querySelector<HTMLElement>(
+      ".sb-login-modal input[type=email]"
+    )!;
+    expect(overlay).not.toBeNull();
+    expect(emailInput).not.toBeNull();
+    return { state, overlay, emailInput };
+  }
+
+  it("closes when the backdrop is clicked", async () => {
+    const { state, overlay } = await renderOpenLogin();
+
+    pressAndRelease(overlay, overlay);
+
+    await vi.waitFor(() => expect(state.login.isLoginOpen.value).toBe(false));
+  });
+
+  it("stays open when a text selection in the email field is released over the backdrop", async () => {
+    const { state, overlay, emailInput } = await renderOpenLogin();
+
+    pressAndRelease(emailInput, overlay);
+    await act(async () => {});
+
+    expect(state.login.isLoginOpen.value).toBe(true);
+    expect(container.querySelector(".sb-login-modal")).not.toBeNull();
   });
 });

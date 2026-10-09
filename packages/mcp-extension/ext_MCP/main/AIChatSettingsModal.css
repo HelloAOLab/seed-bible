@@ -1,0 +1,39 @@
+.sb-ai-chat-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  color: var(--sb-font-color);
+}
+
+.sb-ai-chat-settings-description {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-mcp-add-server-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-mcp-server-warning {
+  font-size: 0.75rem;
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-mcp-server-status-icon-connected {
+  color: var(--sb-success-color, #2f9e44);
+}
+
+.sb-mcp-server-status-icon-error {
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-mcp-server-status-icon-connecting {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-mcp-server-status-icon-disabled {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
+}

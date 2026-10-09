@@ -15,7 +15,7 @@
     "test": "echo \"seed-bible-extension-scripts has no unit tests yet\" && exit 0"
   },
   "dependencies": {
-    "@casual-simulation/aux-records": "^4.2.3",
+    "@casual-simulation/aux-records": "4.2.8-alpha.35775260651",
     "@casual-simulation/fast-json-stable-stringify": "^4.0.5",
     "@preact/preset-vite": "^2.10.5",
     "commander": "^12.1.0",
