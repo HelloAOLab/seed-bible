@@ -33,6 +33,7 @@ import {
   SelfAvatarVisual,
   openSaveModalForLocation,
 } from "../Tabs/Tabs";
+import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
@@ -908,6 +909,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     tools: toolsManager,
     settings,
     saves,
+    bookmarks,
     login,
     navigation,
   } = props.state;
@@ -1328,13 +1330,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       saves.isFilterActive.value
   );
 
+  const isBookmarksViewOpen = useComputed(
+    () =>
+      sidebar.isMobileOpen.value &&
+      !sidebar.isSettingsOpen.value &&
+      bookmarks.isPanelOpen.value
+  );
+
   // True when the sidebar drawer is open showing the tabs list (not the
-  // settings view and not the saves filter view).
+  // settings view, and not the saves or bookmarks view).
   const isTabsViewOpen = useComputed(
     () =>
       sidebar.isMobileOpen.value &&
       !sidebar.isSettingsOpen.value &&
-      !saves.isFilterActive.value
+      !saves.isFilterActive.value &&
+      !bookmarks.isPanelOpen.value
   );
 
   const isTodayOpen = useComputed(() => props.state.today.isOpen.value);
@@ -1352,11 +1362,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     if (sidebar.isSearchPanelOpen.value) return "search";
     if (isProfileOpen.value) return "you";
     if (sidebar.isSettingsOpen.value) return "none";
-    // Chat and Saves are both reached from More, so More stays lit while
-    // either is showing — otherwise nothing in the bar would tell the user
+    // Chat, Saves and Bookmarks are all reached from More, so More stays lit
+    // while any is showing — otherwise nothing in the bar would tell the user
     // where the panel covering the reader came from.
     if (sidebar.isChatPanelOpen.value) return "more";
     if (isSavesViewOpen.value) return "more";
+    if (isBookmarksViewOpen.value) return "more";
     if (isTodayOpen.value) return "today";
     // Some other extension pane is covering the reader (opened from More).
     if (isFullscreenPaneVisible.value) return "more";
@@ -2387,11 +2398,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();
     sidebar.closeSettings();
-    // Show the tabs list, not the saves filter view.
+    // Show the tabs list, not the saves or bookmarks view.
     if (saves.isFilterActive.value) {
       saves.toggleFilter();
     }
     saves.openedFromToolbar.value = false;
+    bookmarks.closePanel();
     // Opened straight from the toolbar (not the book selector), so the tabs
     // header should show a Close (X), not a Back arrow to the selector.
     sidebar.tabsOpenedFromToolbar.value = true;
@@ -2416,6 +2428,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     if (!saves.isFilterActive.value) {
       saves.toggleFilter();
     }
+  };
+
+  // Opens (or closes) the bookmarks view in the sidebar drawer, from the
+  // Bookmarks entry in the More menu.
+  const openBookmarksView = () => {
+    isMoreMenuOpen.value = false;
+    if (isBookmarksViewOpen.value) {
+      bookmarks.closePanel();
+      sidebar.closeSidebar();
+      return;
+    }
+    panes.closeAll();
+    sidebar.closeSearchPanel();
+    sidebar.closeChatPanel();
+    sidebar.closeSettings();
+    sidebar.openSidebar();
+    bookmarks.openedFromToolbar.value = true;
+    bookmarks.isPanelOpen.value = true;
   };
 
   const savesTabIcon = (filled: boolean) => (
@@ -2795,6 +2825,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             }),
                             iconNode: savesTabIcon(false),
                             onClick: openSavesView,
+                          },
+                          {
+                            id: "bookmarks",
+                            label: t("bookmarks", {
+                              defaultValue: "Bookmarks",
+                            }),
+                            iconNode: (
+                              <BookmarkStackIcon bookmarks={[]} size={24} />
+                            ),
+                            onClick: openBookmarksView,
                           },
                           {
                             id: "tabs",

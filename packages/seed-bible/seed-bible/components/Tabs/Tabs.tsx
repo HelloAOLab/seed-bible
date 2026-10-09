@@ -51,6 +51,13 @@ import {
   ParticipantFriendButton,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
+import { openReaderLocation } from "./openReaderLocation";
+import {
+  BookmarkGlyph,
+  BookmarkStackIcon,
+  BookmarksPanel,
+  bookmarkButtonLabel,
+} from "../Bookmarks/Bookmarks";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -1104,8 +1111,17 @@ function TabRow(props: TabRowProps) {
     throw tab.readingState.chapterDataPromise;
   }
 
-  const { app, saves } = state;
+  const { app, saves, bookmarks } = state;
   const { t } = useI18n();
+
+  // One small ribbon in the color of the most recently moved bookmark here;
+  // several colors at this size would be unreadable.
+  const bookmarksHere = bookmarks.getBookmarksForLocation(
+    tab.readingState.translationId.value,
+    tab.readingState.bookId.value,
+    tab.readingState.chapterNumber.value
+  );
+  const frontBookmark = bookmarksHere[0];
 
   const shortSubTitle = tab.readingState.shortSubTitle.value;
   const title = tab.readingState.title.value;
@@ -1148,6 +1164,16 @@ function TabRow(props: TabRowProps) {
             •
           </span>
           <span className="sb-tab-main-translation">{shortSubTitle}</span>
+          {frontBookmark && (
+            <span
+              className="sb-tab-bookmark-marker"
+              role="img"
+              aria-label={bookmarkButtonLabel(t, bookmarksHere)}
+              title={bookmarkButtonLabel(t, bookmarksHere)}
+            >
+              <BookmarkGlyph colorId={frontBookmark.colorId} size={12} />
+            </span>
+          )}
         </div>
 
         {tab.sharedSession && connectedUsers.length > 0 && (
@@ -1711,7 +1737,7 @@ interface SavesSectionProps {
  */
 function SavesSection(props: SavesSectionProps) {
   const { state, closeLayoutMenu } = props;
-  const { app, saves, tabs: tabsManager, bibleData } = state;
+  const { saves, bibleData } = state;
   const { t } = useI18n();
 
   const categories = saves.categories.value;
@@ -1748,55 +1774,14 @@ function SavesSection(props: SavesSectionProps) {
     chapterNumber: number,
     verse?: number | [number, number]
   ) => {
-    // Everything below changes some piece of state that mirrors to the URL:
-    // the reading position of the tab the save opens, and — on mobile —
-    // the dismissal of the sidebar it was tapped in. Batched, they cost one
-    // history entry for the save; unbatched, the position write lands on
-    // the entry that opened the sidebar and the dismissal adds a second entry
-    // for the same destination, which leaves the back button looking dead.
-    state.navigation.batchWrites(() => {
-      closeContextMenus();
-      closeLayoutMenu();
-      const scrollVerse = Array.isArray(verse) ? verse[0] : verse;
-      const existing = tabsManager.tabs.value.find(
-        (tab) =>
-          tab.readingState.translationId.value === translationId &&
-          tab.readingState.bookId.value === bookId &&
-          tab.readingState.chapterNumber.value === chapterNumber
-      );
-      if (existing) {
-        app.selectTab(existing.id);
-        if (scrollVerse !== undefined) {
-          void existing.readingState.selectTranslationAndChapter(
-            translationId,
-            bookId,
-            chapterNumber,
-            { scrollToVerse: scrollVerse }
-          );
-        }
-        return;
+    openReaderLocation(
+      state,
+      { translationId, bookId, chapterNumber, verse },
+      () => {
+        closeContextMenus();
+        closeLayoutMenu();
       }
-      // Pass the save's location as the new tab's initial reading state so
-      // `loadInitialData()` lands directly on it. Calling `addTab()` and then
-      // `selectTranslationAndChapter()` would race the default GEN 1 load and
-      // sometimes lose, leaving the user on Genesis 1 instead of the save.
-      const newTab = tabsManager.addTab(undefined, {
-        initialTranslationId: translationId,
-        initialBookId: bookId,
-        initialChapterNumber: chapterNumber,
-      });
-      if (scrollVerse !== undefined) {
-        // Queue the scroll-to-verse against the freshly created tab so when
-        // initial chapter data lands the reader scrolls to the saved verse.
-        newTab.readingState.scrollToVerse.value = scrollVerse;
-      }
-      // `addTab()` only marks the tab selected inside TabsManager — it doesn't
-      // place it in a layout slot or dismiss the sidebar. Without this the mobile
-      // saves screen stays on top of the reader, and the save's location
-      // is written over the history entry that opened the sidebar instead of
-      // getting an entry of its own.
-      app.selectTab(newTab.id);
-    });
+    );
   };
 
   const formatVerseRef = (
@@ -2033,14 +2018,19 @@ function SavesSection(props: SavesSectionProps) {
 
 export function Tabs(props: TabsProps) {
   const { state, closeLayoutMenu, effectivelyCollapsed } = props;
-  const { app, tabs: tabsManager, saves } = state;
+  const { app, tabs: tabsManager, saves, bookmarks } = state;
   // Slot-only tabs back an "open in new panel" clone and are intentionally
   // hidden from the tab strip.
   const tabs = tabsManager.tabs.value.filter((tab) => !tab.slotOnly);
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
   const isSavesFilterActive = saves.isFilterActive.value;
+  const isBookmarksPanelOpen = bookmarks.isPanelOpen.value;
   const { t } = useI18n();
+
+  const bookmarksToggleLabel = isBookmarksPanelOpen
+    ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
+    : t("show-bookmarks", { defaultValue: "Show bookmarks" });
 
   if (effectivelyCollapsed) {
     return (
@@ -2127,6 +2117,45 @@ export function Tabs(props: TabsProps) {
         >
           <span className="material-symbols-outlined">add</span>
         </button>
+      </div>
+    );
+  }
+
+  // Mobile counterpart of the saves screen below, for the bookmarks panel.
+  if (app.isMobile.value && isBookmarksPanelOpen) {
+    const closeLabel = bookmarks.openedFromToolbar.value
+      ? t("close", { defaultValue: "Close" })
+      : t("back", { defaultValue: "Back" });
+    return (
+      <div className="sb-saves-mobile-screen sb-bookmarks-mobile-screen">
+        <div className="sb-saves-mobile-header">
+          <button
+            type="button"
+            className="sb-saves-mobile-header-button sb-saves-mobile-header-close"
+            onClick={() => {
+              // From the More menu, Close dismisses the drawer; from the Tabs
+              // header, Back returns to the Tabs list.
+              if (bookmarks.openedFromToolbar.value) {
+                bookmarks.closePanel();
+                state.sidebar.closeSidebar();
+              } else {
+                bookmarks.closePanel();
+              }
+            }}
+            aria-label={closeLabel}
+            title={closeLabel}
+          >
+            <span className="material-symbols-outlined">
+              {bookmarks.openedFromToolbar.value ? "close" : "arrow_back"}
+            </span>
+          </button>
+          <h2 className="sb-saves-mobile-title">
+            {t("bookmarks", { defaultValue: "Bookmarks" })}
+          </h2>
+        </div>
+        <div className="sb-saves-mobile-body">
+          <BookmarksPanel state={state} closeLayoutMenu={closeLayoutMenu} />
+        </div>
       </div>
     );
   }
@@ -2256,6 +2285,23 @@ export function Tabs(props: TabsProps) {
 
               <button
                 type="button"
+                className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
+                  isBookmarksPanelOpen
+                    ? " sb-sidebar-tabs-header-bookmarks-button-active"
+                    : ""
+                }`}
+                aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
+                aria-pressed={isBookmarksPanelOpen}
+                title={bookmarksToggleLabel}
+                onClick={() => {
+                  bookmarks.openedFromToolbar.value = false;
+                  bookmarks.togglePanel();
+                }}
+              >
+                <BookmarkStackIcon bookmarks={[]} size={24} />
+              </button>
+              <button
+                type="button"
                 className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
                   isSavesFilterActive
                     ? " sb-sidebar-tabs-header-saves-button-active"
@@ -2331,6 +2377,20 @@ export function Tabs(props: TabsProps) {
             </h3>
             <button
               type="button"
+              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button"
+              aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
+              aria-pressed={isBookmarksPanelOpen}
+              title={bookmarksToggleLabel}
+              onClick={() => {
+                // Opened from the Tabs header, so it gets a Back arrow.
+                bookmarks.openedFromToolbar.value = false;
+                bookmarks.togglePanel();
+              }}
+            >
+              <BookmarkStackIcon bookmarks={[]} size={24} />
+            </button>
+            <button
+              type="button"
               className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
                 isSavesFilterActive
                   ? " sb-sidebar-tabs-header-saves-button-active"
@@ -2374,6 +2434,12 @@ export function Tabs(props: TabsProps) {
       <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
 
       <div className="sb-sidebar-tab-list">
+        {isBookmarksPanelOpen && (
+          <>
+            <BookmarksPanel state={state} closeLayoutMenu={closeLayoutMenu} />
+            <div className="sb-sidebar-tabs-divider" role="separator" />
+          </>
+        )}
         {isSavesFilterActive && (
           <>
             <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />

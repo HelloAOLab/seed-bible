@@ -1,0 +1,349 @@
+/* ------------------------------------------------------------------
+ * Glyphs
+ * ------------------------------------------------------------------ */
+
+.sb-bookmark-glyph {
+  flex-shrink: 0;
+}
+
+/* The outline each ribbon in a stack gets, cutting a gap between it and the
+ * ribbon behind it. Matches the reader the button sits on. */
+.sb-bookmark-stack-icon {
+  --sb-bookmark-stack-gap-color: var(--sb-reader-background);
+}
+
+/* ------------------------------------------------------------------
+ * Name over location ("Genesis 3 • AAB"), shared by the modal, the sidebar
+ * panel, and the Today strip
+ * ------------------------------------------------------------------ */
+
+.sb-bookmark-label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  text-align: start;
+}
+
+.sb-bookmark-label-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.sb-bookmark-label-location {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.375rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  font-size: 0.8125rem;
+}
+
+.sb-bookmark-label-chapter {
+  overflow-wrap: anywhere;
+}
+
+/* Matches the translation label on a tab row. */
+.sb-bookmark-label-translation {
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The glyph sits level with the name line rather than the middle of both. */
+.sb-bookmark-picker-choice > .sb-bookmark-glyph,
+.sb-bookmarks-panel-open > .sb-bookmark-glyph {
+  margin-top: 0.125rem;
+}
+
+/* ------------------------------------------------------------------
+ * Name + color form (shared by the modal and the sidebar panel)
+ * ------------------------------------------------------------------ */
+
+.sb-bookmark-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.sb-bookmark-form-name {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  border-radius: 0.625rem;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  box-sizing: border-box;
+}
+
+.sb-bookmark-form-name:focus {
+  outline: none;
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-form-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* The swatch paints itself from `color`, which the component sets to the
+ * bookmark color's theme variable. */
+.sb-bookmark-form-color {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: currentColor;
+  background-clip: content-box;
+  box-shadow: inset 0 0 0 2px var(--sb-background);
+  cursor: pointer;
+}
+
+.sb-bookmark-form-color-selected {
+  border-color: currentColor;
+}
+
+.sb-bookmark-form-color:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+.sb-bookmark-form-color:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ------------------------------------------------------------------
+ * Bookmark modal
+ * ------------------------------------------------------------------ */
+
+.sb-bookmark-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.sb-bookmark-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-bookmark-picker-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-radius: 0.625rem;
+  transition: border-color 0.15s ease;
+}
+
+.sb-bookmark-picker-row-selected {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-choice {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  border: none;
+  border-radius: 0.625rem;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-bookmark-picker-choice:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+}
+
+.sb-bookmark-picker-choice:disabled {
+  cursor: not-allowed;
+}
+
+.sb-bookmark-picker-remove {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-inline-end: 0.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  cursor: pointer;
+}
+
+.sb-bookmark-picker-remove:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  color: var(--sb-font-color);
+}
+
+.sb-bookmark-picker-remove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sb-bookmark-picker-remove .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+/* The create form takes its own line under the row's label. */
+.sb-bookmark-picker-form {
+  flex-basis: 100%;
+  padding: 0 0.875rem 0.875rem;
+}
+
+.sb-bookmark-picker-add {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.sb-bookmark-add-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: none;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
+
+.sb-bookmark-add-new:disabled {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  cursor: not-allowed;
+}
+
+.sb-bookmark-add-new .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.sb-bookmark-cap-note {
+  margin: 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  font-size: 0.75rem;
+}
+
+.sb-bookmark-picker-actions,
+.sb-bookmarks-panel-edit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.sb-bookmark-picker-save,
+.sb-bookmarks-panel-cancel {
+  min-width: 5.25rem;
+  height: 2.25rem;
+  padding: 0 1rem;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.sb-bookmark-picker-save {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-save:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-primary-color), #000 8%);
+}
+
+.sb-bookmarks-panel-cancel {
+  background: transparent;
+  color: var(--sb-font-color);
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 75%);
+}
+
+.sb-bookmarks-panel-cancel:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+}
+
+.sb-bookmark-picker-save:disabled,
+.sb-bookmarks-panel-cancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------------
+ * Sidebar panel
+ * ------------------------------------------------------------------ */
+
+.sb-bookmarks-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.sb-bookmarks-panel-empty {
+  margin: 0;
+  padding: 0.5rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  font-size: 0.8125rem;
+}
+
+.sb-bookmarks-panel-row {
+  display: flex;
+  align-items: center;
+  border-radius: 0.5rem;
+}
+
+.sb-bookmarks-panel-row:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-bookmarks-panel-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-bookmarks-panel-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0.625rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-radius: 0.625rem;
+}

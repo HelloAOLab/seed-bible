@@ -9,6 +9,7 @@ import { TimeProvider } from "./TimeContext";
 import { Welcome } from "./Welcome";
 import { Header } from "./Header";
 import { ResumeReadingSection } from "./ResumeReadingSection";
+import { BookmarksSection, type BookmarkStripItem } from "./BookmarksSection";
 import { SearchSection } from "./SearchSection";
 import { SocialSection } from "./SocialSection";
 import { useI18n } from "../../i18n";
@@ -28,6 +29,8 @@ export interface TodayScreenProps {
   login: LoginManager;
   theme: ReadonlySignal<BibleTheme>;
   isMobile: ReadonlySignal<boolean>;
+  /** The user's bookmarks, most recently moved first. */
+  bookmarks: ReadonlySignal<BookmarkStripItem[]>;
   /** Opens a passage in the reader and leaves Today. */
   onOpenPassage: (target: TodayPassageTarget) => void;
   /** Opens the book selector over the reader. */
@@ -92,6 +95,13 @@ function TodayContent(props: TodayScreenProps) {
         today={props.today}
         onOpenPassage={props.onOpenPassage}
       />
+      {props.bookmarks.value.length > 0 && (
+        <BookmarksSection
+          today={props.today}
+          bookmarks={props.bookmarks}
+          onOpenPassage={props.onOpenPassage}
+        />
+      )}
       <SearchSection
         today={props.today}
         isMobile={props.isMobile}

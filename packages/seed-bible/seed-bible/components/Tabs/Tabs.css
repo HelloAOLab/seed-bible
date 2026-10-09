@@ -196,12 +196,15 @@
  * color when the saves view is active and stays tinted on hover so the
  * active state reads clearly. */
 .sb-sidebar-tabs-header-saves-button-active,
-.sb-sidebar-tabs-header-saves-button-active:hover {
+.sb-sidebar-tabs-header-saves-button-active:hover,
+.sb-sidebar-tabs-header-bookmarks-button-active,
+.sb-sidebar-tabs-header-bookmarks-button-active:hover {
   color: var(--sb-primary-color);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
 }
 
-.sb-sidebar-tabs-header-saves-button-active svg {
+.sb-sidebar-tabs-header-saves-button-active svg,
+.sb-sidebar-tabs-header-bookmarks-button-active svg {
   color: var(--sb-primary-color);
 }
 
@@ -801,6 +804,13 @@
 .sb-tab-row-selected .sb-tab-main-translation {
   color: currentColor;
   opacity: 0.85;
+}
+
+/* Marks a tab whose chapter holds a bookmark, in that bookmark's color. */
+.sb-tab-bookmark-marker {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
 .sb-tab-users-section {
