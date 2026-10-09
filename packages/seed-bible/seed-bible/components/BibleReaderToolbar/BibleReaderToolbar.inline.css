@@ -239,6 +239,22 @@
   top: calc(100% + 0.5rem);
 }
 
+/* Submenu opened from a card inside the drag-to-reveal row. That row clips
+   with overflow: hidden, so the menu is portaled to the document and pinned
+   to the trigger in viewport coordinates. Hidden until that placement runs,
+   and stacked above the verse sheet (--sb-verse-toolbar-z-index: 100). */
+.sb-tool-context-menu-floating {
+  position: fixed;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  inset-inline-start: auto;
+  inset-inline-end: auto;
+  z-index: 110;
+  visibility: hidden;
+}
+
 .sb-tool-context-menu-scroll {
   max-height: min(24rem, calc(100vh - 6rem));
   overflow-y: auto;
@@ -1176,6 +1192,10 @@
   visibility: hidden;
 }
 
+.sb-verse-toolbar-cards .sb-verse-toolbar-overflow-unclipped {
+  overflow: visible;
+}
+
 /* A note taller than the viewport scrolls here. The grab handle, reference,
    and action row stay outside this element, so they remain on screen. */
 .sb-verse-toolbar-cards
@@ -1203,7 +1223,7 @@
   touch-action: none;
 }
 
-/* A swipe that starts on Copy, Compare, Share, or another drawer action
+/* A swipe that starts on Share, Compare, or another drawer action
    moves the note. `none` on these would freeze the drawer when the buttons
    fill the open sheet. */
 .sb-verse-toolbar-mobile.sb-verse-sheet-scrollable
@@ -1225,10 +1245,10 @@
   padding-top: 0;
 }
 
-/* Copy, Compare, and Share. Hidden with the rest of the drawer while it is
-   collapsed; once open, they stay under the handle while the note scrolls.
-   The top padding is inside the sticky box so the buttons don't jump when
-   the note starts moving. */
+/* The drawer's actions: Share, Compare, then the rest. Hidden with the rest
+   of the drawer while it is collapsed; once open, they stay under the
+   handle while the note scrolls. The top padding is inside the sticky box so
+   the buttons don't jump when the note starts moving. */
 .sb-verse-toolbar-overflow-pinned {
   position: sticky;
   top: 0;
@@ -1254,8 +1274,7 @@
 /* A jump to a note lands below the pinned actions instead of underneath them.
    The scroll itself is applied in the toolbar; this covers any native scroll
    of the same groups. */
-.sb-verse-toolbar-overflow .sb-annotation-group,
-.sb-verse-toolbar-overflow-row > .sb-verse-toolbar-action-item {
+.sb-verse-toolbar-overflow .sb-annotation-group {
   scroll-margin-top: var(--sb-verse-sheet-pinned-offset, 0px);
 }
 

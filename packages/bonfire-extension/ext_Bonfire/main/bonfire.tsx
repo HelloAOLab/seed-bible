@@ -1,4 +1,5 @@
 import { type SeedBibleState } from "seed-bible";
+import { formatAvailableTranslationsNote } from "seed-bible/managers";
 import { z } from "zod";
 
 const bonfireSessionStartResponseSchema = z.object({
@@ -98,6 +99,30 @@ async function* streamBonfireMessageDeltas(
     }
     yield bonfireMessageDeltaEventSchema.parse(data).delta;
   }
+}
+
+/**
+ * The system note Bonfire receives for one turn. Bonfire cannot call tools,
+ * so the translations the reader could actually switch to are written out
+ * here instead of being looked up with searchTranslations.
+ */
+function buildBonfireCustomInstructions(options: {
+  bookId: string | null | undefined;
+  chapterNumber: number | null | undefined;
+  translationLabel: string;
+  translationShortName: string;
+  uiLanguage: string;
+  availableTranslationsNote: string | null;
+}): string {
+  const reading = [
+    `You are chatting with a user who is reading the Bible.`,
+    `They are currently reading: ${options.bookId} ${options.chapterNumber}.`,
+    `User has their UI language set to ${options.uiLanguage}, however when speaking to the user you should prioritize replying in the language they are writing in if you can tell what it is, otherwise fall back to speaking to them in ${options.uiLanguage}.`,
+    `When quoting scripture for the user, use their active Bible translation which is ${options.translationLabel} (${options.translationShortName}).`,
+  ].join(" ");
+  return options.availableTranslationsNote
+    ? `${reading} ${options.availableTranslationsNote}`
+    : reading;
 }
 
 export interface BonfireOptions {
@@ -207,6 +232,32 @@ export function* registerBonfireChatProvider(
       console.log("[Bonfire] Generating response for message:", lastMessage);
 
       const readingState = context.app.selectedTab.value?.readingState;
+      const tabTranslation = readingState?.translation.value ?? null;
+      const tabTranslationId = readingState?.translationId.value ?? null;
+      const translationLabel =
+        tabTranslation?.name ??
+        tabTranslation?.englishName ??
+        tabTranslationId ??
+        "unknown";
+      const translationShortName =
+        tabTranslation?.shortName ?? tabTranslationId ?? "";
+      const uiLanguage = context.i18n.language.value.replace(/_/g, "-");
+      let availableTranslationsNote: string | null = null;
+      try {
+        const catalog = context.bibleData.catalogLoaded.peek()
+          ? context.bibleData.availableTranslations.peek()
+          : await context.bibleData.getTranslations();
+        availableTranslationsNote = formatAvailableTranslationsNote(
+          catalog,
+          context.i18n.language.value,
+          tabTranslation?.language ?? null
+        );
+      } catch (err) {
+        console.warn(
+          "[Bonfire] Could not list translations for the prompt",
+          err
+        );
+      }
       const response = await fetch(
         "https://bonfire.seedbible.io/api/v1/session/chat",
         {
@@ -219,7 +270,14 @@ export function* registerBonfireChatProvider(
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
             },
-            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}`,
+            custom_instructions: buildBonfireCustomInstructions({
+              bookId: readingState?.bookId.value,
+              chapterNumber: readingState?.chapterNumber.value,
+              translationLabel,
+              translationShortName,
+              uiLanguage,
+              availableTranslationsNote,
+            }),
           }),
           headers,
         }

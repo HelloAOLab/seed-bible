@@ -44,20 +44,24 @@ import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   annotationVerseNumbers,
+  visibleChapterAnnotations,
   type Annotation,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
+import type { FriendsManager } from "../../managers/FriendsManager";
 import type {
   BibleReadingSession,
   ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
 import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import { Spinner } from "../Spinner/Spinner";
 import {
   SaveStarIcon,
   openSaveModalForLocation,
@@ -261,7 +265,12 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
   const { t } = useI18n();
   const chapterAnnotations =
     bookId && chapterNumber
-      ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+      ? visibleChapterAnnotations(
+          state.annotations,
+          state.friends.friendIds.value,
+          bookId,
+          chapterNumber
+        )
       : [];
   const noteCount = chapterAnnotations.length;
 
@@ -1781,6 +1790,8 @@ interface ChapterContentProps {
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
   annotations?: AnnotationsManager;
+  /** Whose notes besides the user's own get verse markers. */
+  friends?: FriendsManager;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -1828,6 +1839,7 @@ function ChapterContent(props: ChapterContentProps) {
     highlights,
     decorations,
     annotations,
+    friends,
     selectVerse,
     selectFootnote,
     selectVersesFromTextSelection,
@@ -1843,10 +1855,12 @@ function ChapterContent(props: ChapterContentProps) {
   const currentChapter = chapterData.value;
   const chapterAnnotations =
     currentChapter && annotations
-      ? annotations.getAnnotationsForChapter(
+      ? visibleChapterAnnotations(
+          annotations,
+          friends?.friendIds.value ?? [],
           currentChapter.book.id,
           currentChapter.chapter.number
-        ).value
+        )
       : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -2445,6 +2459,30 @@ function ChapterContent(props: ChapterContentProps) {
   );
 }
 
+/**
+ * A translation's metadata, from the reader's own book list when that's the
+ * one asked for, otherwise from the first catalog that has it. The book list
+ * alone isn't enough: it's missing when a translation never opened fails
+ * offline, and it belongs to the translation on screen, not one a failed
+ * switch was headed for.
+ */
+function resolveTranslation(
+  translationId: string,
+  fromBookList: Translation | null,
+  ...catalogs: Array<readonly Translation[] | null | undefined>
+): Translation | null {
+  if (fromBookList?.id === translationId) {
+    return fromBookList;
+  }
+  for (const catalog of catalogs) {
+    const entry = catalog?.find((candidate) => candidate.id === translationId);
+    if (entry) {
+      return entry;
+    }
+  }
+  return null;
+}
+
 export function BibleReader(props: BibleReaderProps) {
   const {
     currentSlot,
@@ -2468,11 +2506,13 @@ export function BibleReader(props: BibleReaderProps) {
     loading,
     isChapterContentStale,
     error,
+    failedTranslationId,
     selectVerse,
     clearSelectedVerses,
     selectedFootnote,
     selectFootnote,
   } = readingState;
+  const footnoteOverlayDismiss = useOverlayDismiss(() => selectFootnote(null));
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
@@ -2790,17 +2830,67 @@ export function BibleReader(props: BibleReaderProps) {
   // Keep the failure state on screen while a retry is in flight — `retryLoad()`
   // clears `error` as it starts, so without this the panel would flash back to
   // the (still empty) chapter body before the new request settles.
-  const [retrying, setRetrying] = useState(false);
+  //
+  // Holds the translation being retried rather than a flag: `error` (and with
+  // it `failedTranslationId`) is cleared for the length of the retry, and the
+  // panel still has to say which translation failed.
+  const [retryingTranslationId, setRetryingTranslationId] = useState<
+    string | null
+  >(null);
+  const retrying = retryingTranslationId !== null;
+  const offline = state?.bibleData?.offline;
   const retryChapterLoad = async () => {
     if (retrying) return;
-    setRetrying(true);
+    const attemptedTranslationId =
+      failedTranslationId.peek() ?? translationId.peek();
+    setRetryingTranslationId(attemptedTranslationId);
     try {
       await readingState.retryLoad();
     } finally {
-      setRetrying(false);
+      setRetryingTranslationId(null);
+    }
+    // A recovery only if the reader ended up on the translation that failed:
+    // retrying a failed switch lands there, but a reader who moved somewhere
+    // else mid-retry is looking at a chapter that never failed to load.
+    if (
+      !offline ||
+      error.peek() ||
+      translationId.peek() !== attemptedTranslationId
+    ) {
+      return;
+    }
+    const recoveredTranslation = resolveTranslation(
+      attemptedTranslationId,
+      translation.peek(),
+      availableTranslations.peek()?.translations,
+      state?.bibleData?.availableTranslations?.peek()
+    );
+    if (recoveredTranslation) {
+      offline.offerRecoveryPrompt(recoveredTranslation);
     }
   };
   const showLoadError = (!!error.value && !loading.value) || retrying;
+
+  const failedId =
+    retryingTranslationId ?? failedTranslationId.value ?? translationId.value;
+  // The app-wide catalog too: the reader's own copy is only filled in by some
+  // load paths, and a switch picked from the selector's list may be the first
+  // this reader has heard of that translation.
+  const failedTranslation = resolveTranslation(
+    failedId,
+    translation.value,
+    availableTranslations.value?.translations,
+    state?.bibleData?.availableTranslations?.value
+  );
+  const failedTranslationNotSaved =
+    !!offline?.supported &&
+    !!failedTranslation &&
+    !offline.isDownloaded(failedTranslation.id);
+  const hasOtherSavedTranslation =
+    !!offline?.supported &&
+    [...offline.downloaded.value.keys()].some(
+      (savedId) => savedId !== failedId
+    );
 
   const offlineRecords = state?.bibleData?.offline?.records.value;
   // The signal, not `getCachedTranslationBooks`: that helper reads untracked,
@@ -2935,14 +3025,7 @@ export function BibleReader(props: BibleReaderProps) {
               disabled={retrying}
               aria-busy={retrying}
             >
-              {retrying && (
-                <span
-                  className="material-symbols-outlined sb-reader-error-retry-spinner"
-                  aria-hidden="true"
-                >
-                  progress_activity
-                </span>
-              )}
+              {retrying && <Spinner size="1.125rem" />}
               {t("reload", { defaultValue: "Reload" })}
             </button>
             {offlineFallbackTranslations.length > 0 && (
@@ -2952,6 +3035,45 @@ export function BibleReader(props: BibleReaderProps) {
               />
             )}
           </div>
+
+          {failedTranslationNotSaved && !offline.isOnline.value && (
+            <p className="sb-reader-error-hint">
+              {t("chapter-unavailable-download-offline-hint", {
+                abbreviation: failedTranslation.shortName,
+                defaultValue:
+                  "Once you're back online, download {{abbreviation}} so this doesn't happen again.",
+              })}
+            </p>
+          )}
+
+          {hasOtherSavedTranslation &&
+            offlineFallbackTranslations.length === 0 && (
+              <div className="sb-reader-error-alternatives">
+                <p className="sb-reader-error-hint">
+                  {t("chapter-unavailable-switch-heading", {
+                    defaultValue:
+                      "Or keep reading in a translation saved on this device:",
+                  })}
+                </p>
+                <button
+                  type="button"
+                  className="sb-reader-error-action"
+                  onClick={() =>
+                    void selectorState.openDownloadedTranslations(currentSlot)
+                  }
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    aria-hidden="true"
+                  >
+                    translate
+                  </span>
+                  {t("chapter-unavailable-choose-saved", {
+                    defaultValue: "Choose a saved translation",
+                  })}
+                </button>
+              </div>
+            )}
         </div>
       )}
 
@@ -2980,6 +3102,7 @@ export function BibleReader(props: BibleReaderProps) {
               highlights={highlights}
               decorations={decorations}
               annotations={state?.annotations}
+              friends={state?.friends}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
@@ -3032,6 +3155,15 @@ export function BibleReader(props: BibleReaderProps) {
       <DiscoverContentPanel tab={currentSlot.tab} state={state} />
     ) : null;
 
+  // Playback opens on the selected tab only. Other slots in a split view
+  // must not show this loader.
+  const playlistOpeningHere =
+    !!state &&
+    state.playlists.openingPlayback.value &&
+    state.playlists.view.value !== "play_playlist" &&
+    currentSlot.tab != null &&
+    state.tabs.selectedTabId.value === currentSlot.tab.id;
+
   return (
     <div
       className={`sb-bible-reader ${readerFontSizeClass}${
@@ -3039,6 +3171,13 @@ export function BibleReader(props: BibleReaderProps) {
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
+      {playlistOpeningHere && !isCompactReader ? (
+        <Spinner
+          className="sb-playlist-opening-spinner"
+          size="1rem"
+          label={t("opening-playlist", { defaultValue: "Opening playlist" })}
+        />
+      ) : null}
       {isCompactReader && state ? (
         <Fragment key="mobile">
           <div
@@ -3072,6 +3211,14 @@ export function BibleReader(props: BibleReaderProps) {
                 </button>
               </h1>
             </div>
+            {playlistOpeningHere ? (
+              <Spinner
+                size="1rem"
+                label={t("opening-playlist", {
+                  defaultValue: "Opening playlist",
+                })}
+              />
+            ) : null}
             {!isMinimalEmbed && (
               <ChapterNotesButton
                 state={state}
@@ -3142,6 +3289,7 @@ export function BibleReader(props: BibleReaderProps) {
                     toast={state.app.toast}
                     modals={state.modals}
                     app={state.app}
+                    readingPlans={state.readingPlans}
                     className="sb-quick-toolbar-mobile-header"
                   />
                   {/*
@@ -3286,6 +3434,7 @@ export function BibleReader(props: BibleReaderProps) {
                   annotations={state.annotations}
                   features={state.features}
                   sharedSession={sharedSession ?? null}
+                  readingPlans={state.readingPlans}
                   toast={state.app.toast}
                   modals={state.modals}
                   app={state.app}
@@ -3310,12 +3459,7 @@ export function BibleReader(props: BibleReaderProps) {
       )}
 
       {scriptureElements.showFootnotes && selectedFootnote.value !== null && (
-        <div
-          className="sb-footnote-modal-overlay"
-          onClick={() => {
-            selectFootnote(null);
-          }}
-        >
+        <div className="sb-footnote-modal-overlay" {...footnoteOverlayDismiss}>
           <div
             className="sb-footnote-modal"
             onClick={(event: MouseEvent) => {
