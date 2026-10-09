@@ -4814,6 +4814,90 @@ describe("BibleReaderToolbar — compact embed", () => {
     }
   );
 
+  it("reserves room below the chapter for a playing passage's note sheet", async () => {
+    // jsdom does no layout and has no ResizeObserver: stand in for both, with
+    // the nav 50px tall and the note sheet above it 300px.
+    const originalResizeObserver = globalThis.ResizeObserver;
+    const originalOffsetHeight = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetHeight"
+    );
+    const resizeCallbacks: (() => void)[] = [];
+    globalThis.ResizeObserver = class {
+      constructor(callback: () => void) {
+        resizeCallbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        if (this.classList.contains("sb-scripture-note-sheet")) return 300;
+        if (this.classList.contains("sb-reader-floating-nav")) return 50;
+        return 0;
+      },
+    });
+    const inset = () =>
+      document.documentElement.style.getPropertyValue(
+        "--sb-reader-bottom-inset"
+      );
+
+    try {
+      const state = await renderToolbar({
+        width: MOBILE_VIEWPORT_WIDTH,
+        embed: true,
+      });
+      await act(async () => {
+        state.playlists.startPlaying(
+          {
+            id: "p",
+            title: "P",
+            description: null,
+            items: [
+              {
+                type: "bible-verse",
+                ref: { bookId: "GEN", chapter: 1, verse: 1 },
+                note: "<p>A long note</p>",
+              },
+            ],
+          },
+          0,
+          { history: false }
+        );
+      });
+      expect(
+        container.querySelector(".sb-scripture-note-sheet")
+      ).not.toBeNull();
+
+      // Nav + note sheet + the 48px breathing gap.
+      const deadline = Date.now() + 2000;
+      while (inset() !== "398px" && Date.now() < deadline) {
+        await act(async () => {
+          resizeCallbacks.forEach((callback) => callback());
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        });
+      }
+      expect(inset()).toBe("398px");
+    } finally {
+      if (originalResizeObserver) {
+        globalThis.ResizeObserver = originalResizeObserver;
+      } else {
+        // @ts-expect-error -- restore absence; jsdom has no ResizeObserver
+        delete globalThis.ResizeObserver;
+      }
+      if (originalOffsetHeight) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "offsetHeight",
+          originalOffsetHeight
+        );
+      }
+      document.documentElement.style.removeProperty("--sb-reader-bottom-inset");
+    }
+  });
+
   it("reuses the compact chapter nav on a wide viewport too", async () => {
     await renderToolbar({ width: 1000, embed: true });
 
