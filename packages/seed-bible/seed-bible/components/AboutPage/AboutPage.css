@@ -9,71 +9,179 @@
   background: var(--sb-background);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
+  overflow-x: scroll;
+  scrollbar-width: none;
+  container-type: inline-size;
 }
 
 .sb-about-content {
-  max-width: 42rem;
+  max-width: 50rem;
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 2rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
 }
 
-.sb-about-content h1 {
+.sb-about-card {
+  border: 0.05rem solid var(--sb-divider-color);
+  padding: 1.2rem 2rem;
+  border-radius: 1rem;
+  position: relative;
+  display: flex;
+}
+
+.sb-about-card-wide {
+  grid-column: 1 / -1;
+}
+
+.sb-about-card-hero {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--sb-primary-color), transparent 95%) 0%,
+    color-mix(in srgb, var(--sb-primary-color), transparent 90%) 100%
+  );
+  background-color: var(--sb-background);
+}
+
+.sb-about-card.sb-about-card-col {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.sb-about-card.sb-about-card-row {
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.sb-about-card-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.sb-about-card > .sb-about-card-icon {
+  border-radius: 50%;
+  padding: 0.6rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 90%
+  );
+}
+
+.sb-about-card:not(.sb-about-card-hero) > .sb-about-card-icon {
+  color: var(--sb-primary-color);
+}
+
+.sb-about-card > .sb-about-card-icon.sb-about-card-icon-lg {
+  padding: 0.8rem;
+}
+
+.sb-about-card > .sb-about-card-icon.sb-about-card-icon-md {
+  padding: 0.6rem;
+}
+
+.sb-about-card > .sb-about-card-icon.sb-about-card-icon-sm {
+  padding: 0.4rem;
+}
+
+.sb-about-content .sb-about-card h1,
+.sb-about-content .sb-about-card h2 {
+  margin: 0;
   font-family: var(--sb-chapter-heading-font-family), sans-serif;
   color: var(--sb-chapter-heading-font-color);
-  font-size: 2rem;
+}
+
+.sb-about-card-hero h1 {
+  font-size: 1.8rem;
   line-height: 1.2;
-  margin: 0 0 1.5rem;
 }
 
-.sb-about-content p {
-  line-height: 1.7;
-  margin: 0 0 1.25rem;
+.sb-about-card-highlight h2 {
+  font-weight: 800;
+  font-size: 1.25rem;
 }
 
-.sb-about-content a {
-  color: var(--sb-link-color);
+.sb-about-card-feature h2 {
+  font-weight: 700;
+  font-size: 1.15rem;
 }
 
-.sb-about-inline-action {
-  border: none;
-  background: none;
-  padding: 0;
+.sb-about-content .sb-about-card p {
+  line-height: 1.5;
+  font-weight: 400;
+  font-size: 0.72rem;
+  font-family: var(--sb-font-family);
+  color: var(--sb-secondary-font-color);
   margin: 0;
-  font: inherit;
-  color: var(--sb-link-color);
-  cursor: pointer;
-}
-
-.sb-about-signature {
-  margin-top: 2rem;
 }
 
 .sb-about-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  max-width: 42rem;
   margin: 0 auto;
-  padding: 0 1.5rem 3rem;
+  padding: 0 0 4rem;
+  grid-column: 1 / -1;
+  width: 100%;
 }
 
 .sb-about-action {
-  display: inline-block;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.4rem;
   font-weight: 600;
+  font-size: 0.9rem;
   text-decoration: none;
   cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1.3rem;
+  letter-spacing: -0.01rem;
+  border: 1px solid transparent;
 }
 
-.sb-about-action-primary {
-  border: none;
+.sb-about-action .material-symbols-outlined {
+  font-size: 1.3rem;
+}
+
+.sb-about-action-primary,
+.sb-about-action-primary:visited {
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
 }
 
-.sb-about-action-secondary {
-  border: 1px solid var(--sb-primary-color);
+.sb-about-action-secondary,
+.sb-about-action-secondary:visited {
+  border-color: var(--sb-primary-color);
   background: transparent;
   color: var(--sb-primary-color);
+}
+
+@container (max-width: 768px) {
+  .sb-about-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (hover: hover) {
+  .sb-about-action-primary:hover {
+    border-color: var(--sb-primary-color);
+    background: transparent;
+    color: var(--sb-primary-color);
+  }
+
+  .sb-about-action-secondary:hover {
+    background: var(--sb-primary-color);
+    color: var(--sb-primary-font-color);
+  }
 }

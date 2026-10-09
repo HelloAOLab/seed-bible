@@ -1925,7 +1925,7 @@ export function createSeedBibleState(
 
     const getTitle = () => {
       if (isAboutPage.value) {
-        return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
+        return `${t("about-title", { defaultValue: "About Seed Bible" })} | ${seedBibleTitle}`;
       }
 
       // Only on the shared page itself: while a playlist plays at its own
@@ -2082,7 +2082,7 @@ export function createSeedBibleState(
     const { t } = i18n;
 
     if (isAboutPage.value) {
-      return t("about-title", { defaultValue: "About the Seed Bible" });
+      return t("about-title", { defaultValue: "About Seed Bible" });
     }
 
     if (sharedPageTitle.value) {
