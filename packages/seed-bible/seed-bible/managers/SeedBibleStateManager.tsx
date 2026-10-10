@@ -282,6 +282,11 @@ export interface ToastOptions {
   onClick?: () => void;
   /** Secondary line telling people what tapping the toast does. */
   hint?: string;
+  /**
+   * Marks toasts that describe the same state, so a newer one replaces an
+   * older one still waiting in the queue.
+   */
+  key?: string;
 }
 
 export interface AppToast extends ToastOptions {
@@ -448,10 +453,17 @@ export interface AppState {
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<AppToast | null>;
   /**
-   * Shows a toast message at the bottom of the screen for 3.5s (6s when it
-   * has an `onClick`, so there's time to tap it).
-   * Calling again replaces the current toast and restarts the timer
-   * (only one toast is ever visible at a time, always the most recent).
+   * Shows a toast message at the bottom of the screen. Toasts are queued and
+   * shown one at a time. A toast with nothing waiting behind it stays 3.5 s;
+   * once another is waiting, the current one stays only until it has been
+   * visible 1.5 s (or leaves at once if it already has). A toast with an
+   * `onClick` always stays 6 s, waiting or not, so there's time to tap it;
+   * tapping it dismisses it and moves on to the next one.
+   * Toasts sharing a `key` describe the same state, so a new one drops any
+   * waiting toast with that key and joins the end of the queue; the toast on
+   * screen is never dropped. If the toast on screen already has the same key and
+   * message, the new one is not queued at all. Toasts without a key are always
+   * shown.
    */
   toast: (message: string, options?: ToastOptions) => void;
 
@@ -2412,42 +2424,83 @@ export function createSeedBibleState(
     }
   };
 
-  // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
-  // A new call overwrites the current toast and restarts the timer, so only the
-  // most recent message is ever visible. The incrementing id keys the render so
-  // the slide-in animation replays even for a repeated message.
+  // App-level toast queue: popups shown one at a time at the bottom of the
+  // screen, the head of the queue being the one on screen (see `toast` on
+  // `AppState` for the timing and `key` rules). The incrementing id keys the
+  // render so the slide-in animation replays even for a repeated message.
   //
   // Defined here (rather than further down, where it's exposed on `state`)
   // because the host-disconnect handling below also calls it, and that
   // effect runs immediately when constructed.
-  const currentToast = signal<AppToast | null>(null);
   let toastSeq = 0;
-  let toastTimer: ReturnType<typeof setTimeout> | null = null;
-  const dismissToast = () => {
-    if (toastTimer !== null) {
-      clearTimeout(toastTimer);
-      toastTimer = null;
-    }
-    currentToast.value = null;
+  const toastQueue = signal<AppToast[]>([]);
+  const dismissToast = (id: number) => {
+    toastQueue.value = toastQueue.peek().filter((queued) => queued.id !== id);
   };
   const toast = (message: string, options?: ToastOptions) => {
-    if (toastTimer !== null) {
-      clearTimeout(toastTimer);
-    }
+    const id = ++toastSeq;
     const onClick = options?.onClick;
-    currentToast.value = {
-      id: ++toastSeq,
+    const entry: AppToast = {
+      id,
       message,
+      key: options?.key,
       hint: options?.hint,
       onClick: onClick
         ? () => {
-            dismissToast();
+            dismissToast(id);
             onClick();
           }
         : undefined,
     };
-    toastTimer = setTimeout(dismissToast, onClick ? 6000 : 3500);
+    // `peek()`: toast() is called from inside effects, and a tracked read
+    // would subscribe that effect to the queue it is writing.
+    const queue = toastQueue.peek();
+    const key = entry.key;
+    if (key === undefined) {
+      toastQueue.value = [...queue, entry];
+      return;
+    }
+    const [head, ...waiting] = queue;
+    const alreadyOnScreen = head?.key === key && head.message === message;
+    toastQueue.value = [
+      ...(head ? [head] : []),
+      ...waiting.filter((queued) => queued.key !== key),
+      ...(alreadyOnScreen ? [] : [entry]),
+    ];
   };
+
+  const MIN_TOAST_MS = 1500;
+  const FULL_TOAST_MS = 3500;
+  const TAPPABLE_TOAST_MS = 6000;
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+  let shownId: number | null = null;
+  let shownAt = 0;
+  const currentToast = computed(() => toastQueue.value[0] ?? null);
+
+  toastQueue.subscribe((queue) => {
+    if (toastTimer !== null) clearTimeout(toastTimer);
+    toastTimer = null;
+
+    const head = queue[0];
+    if (!head) {
+      shownId = null;
+      return;
+    }
+    if (head.id !== shownId) {
+      shownId = head.id;
+      shownAt = Date.now();
+    }
+
+    const duration = head.onClick
+      ? TAPPABLE_TOAST_MS
+      : queue.length > 1
+        ? MIN_TOAST_MS
+        : FULL_TOAST_MS;
+    const remaining = Math.max(0, duration - (Date.now() - shownAt));
+    toastTimer = setTimeout(() => {
+      toastQueue.value = toastQueue.value.slice(1);
+    }, remaining);
+  });
 
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
   // entry is removed from the global shared-sessions registry too. The
@@ -2635,6 +2688,13 @@ export function createSeedBibleState(
   ): boolean =>
     session.isSynced.value &&
     session.connectedUsers.value.some((user) => user.isSelf);
+  // Our own connection and the host's are separate states: a host toast must
+  // never supersede a waiting "you rejoined", or someone told they dropped
+  // would never hear they're back.
+  const sessionSelfToastKey = (sessionId: string): string =>
+    `session-self:${sessionId}`;
+  const sessionHostToastKey = (sessionId: string): string =>
+    `session-host:${sessionId}`;
   effect(() => {
     // Read so this effect re-runs when the self-reconnect settle timer fires.
     const _presenceSettleGeneration = presenceSettleTick.value;
@@ -2689,7 +2749,8 @@ export function createSeedBibleState(
             toast(
               t("session-disconnected", {
                 defaultValue: "You lost connection to the session",
-              })
+              }),
+              { key: sessionSelfToastKey(session.id) }
             );
           }
         }
@@ -2713,7 +2774,8 @@ export function createSeedBibleState(
           toast(
             t("session-reconnected", {
               defaultValue: "You rejoined the session",
-            })
+            }),
+            { key: sessionSelfToastKey(session.id) }
           );
         }
         if (!locallyHostedSessionIds.has(session.id) && !hostIsConnected) {
@@ -2759,7 +2821,8 @@ export function createSeedBibleState(
           toast(
             t("session-host-reconnected", {
               defaultValue: "The host reconnected to the session",
-            })
+            }),
+            { key: sessionHostToastKey(session.id) }
           );
         }
       } else if (
@@ -2780,7 +2843,8 @@ export function createSeedBibleState(
         toast(
           t("session-host-disconnected", {
             defaultValue: "The host disconnected from the session",
-          })
+          }),
+          { key: sessionHostToastKey(sessionId) }
         );
         const timer = setTimeout(() => {
           pendingHostDisconnectTimers.delete(sessionId);
