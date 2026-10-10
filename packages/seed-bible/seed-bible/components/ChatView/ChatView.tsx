@@ -623,6 +623,31 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
     </div>
   );
 }
+type AutoInstallMention = {
+  id: string;
+  kind: "auto-install";
+  providerId: string;
+  name: string;
+};
+
+const AUTO_INSTALL_MENTION_PROVIDERS: AutoInstallMention[] = [
+  {
+    id: "apologist-chat",
+    kind: "auto-install",
+    providerId: "apologist-chat-provider",
+    name: "Apologist",
+  },
+];
+function isAutoInstallMention(
+  participant: ChatParticipant | AutoInstallMention
+): participant is AutoInstallMention {
+  return (
+    typeof participant === "object" &&
+    participant !== null &&
+    "kind" in participant &&
+    participant.kind === "auto-install"
+  );
+}
 
 export function ChatView(props: ChatViewProps) {
   const { chat, state } = props;
@@ -674,23 +699,116 @@ export function ChatView(props: ChatViewProps) {
   const mentionQuery = mentionContext?.query.toLowerCase() ?? "";
   const showEveryoneSuggestion =
     mentionContext !== null && "everyone".startsWith(mentionQuery);
-  const activeSuggestions = mentionContext
-    ? activeParticipants.filter((p) => matchesMentionQuery(p, mentionQuery, t))
-    : [];
-  const inactiveSuggestions = mentionContext
-    ? inactiveParticipants.filter((p) =>
-        matchesMentionQuery(p, mentionQuery, t)
+  const rawActiveSuggestions = mentionContext
+    ? activeParticipants.filter((participant) =>
+        matchesMentionQuery(participant, mentionQuery, t)
       )
     : [];
-  const availableSuggestions = mentionContext
-    ? chat.availableParticipants.value.filter((p) =>
-        matchesMentionQuery(p, mentionQuery, t)
+
+  const rawInactiveSuggestions = mentionContext
+    ? inactiveParticipants.filter((participant) =>
+        matchesMentionQuery(participant, mentionQuery, t)
       )
     : [];
+
+  const rawAvailableSuggestions = mentionContext
+    ? chat.availableParticipants.value.filter((participant) =>
+        matchesMentionQuery(participant, mentionQuery, t)
+      )
+    : [];
+
+  /*
+   * A provider should appear only once in the mention picker.
+   *
+   * Priority:
+   *   1. Active
+   *   2. Inactive
+   *   3. Available
+   *
+   * So if Apologist is already active, it must not also appear
+   * under Available.
+   */
+  const activeProviderIds = new Set(
+    rawActiveSuggestions
+      .filter((participant) => participant.isAI)
+      .map((participant) => participant.providerId)
+  );
+
+  const activeParticipantIds = new Set(
+    rawActiveSuggestions.map((participant) => participant.id)
+  );
+
+  const activeSuggestions = rawActiveSuggestions;
+
+  const inactiveSuggestions = rawInactiveSuggestions.filter((participant) => {
+    if (activeParticipantIds.has(participant.id)) {
+      return false;
+    }
+
+    if (participant.isAI && activeProviderIds.has(participant.providerId)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const usedProviderIds = new Set([
+    ...activeProviderIds,
+    ...inactiveSuggestions
+      .filter((participant) => participant.isAI)
+      .map((participant) => participant.providerId),
+  ]);
+
+  const usedParticipantIds = new Set([
+    ...activeParticipantIds,
+    ...inactiveSuggestions.map((participant) => participant.id),
+  ]);
+
+  const availableSuggestions = rawAvailableSuggestions.filter((participant) => {
+    if (usedParticipantIds.has(participant.id)) {
+      return false;
+    }
+
+    if (participant.isAI && usedProviderIds.has(participant.providerId)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  /**
+   * Providers that can be mentioned before their extension is installed.
+   *
+   * Only show these if the provider isn't already represented by a
+   * participant in Active, Inactive, or Available.
+   */
+  const knownProviderIds = new Set([
+    ...activeSuggestions
+      .filter((participant) => participant.isAI)
+      .map((participant) => participant.providerId),
+
+    ...inactiveSuggestions
+      .filter((participant) => participant.isAI)
+      .map((participant) => participant.providerId),
+
+    ...availableSuggestions
+      .filter((participant) => participant.isAI)
+      .map((participant) => participant.providerId),
+  ]);
+
+  const autoInstallMentionSuggestions = mentionContext
+    ? AUTO_INSTALL_MENTION_PROVIDERS.filter(
+        (provider) =>
+          !knownProviderIds.has(provider.providerId) &&
+          provider.name.toLowerCase().startsWith(mentionQuery)
+      )
+    : [];
+
   const allMentionSuggestions = [
     ...activeSuggestions,
     ...inactiveSuggestions,
     ...availableSuggestions,
+    ...autoInstallMentionSuggestions,
   ];
   const totalMentionCount =
     (showEveryoneSuggestion ? 1 : 0) + allMentionSuggestions.length;
@@ -869,10 +987,14 @@ export function ChatView(props: ChatViewProps) {
     });
   };
 
-  const selectMention = (participant: ChatParticipant) => {
+  const selectMention = (participant: ChatParticipant | AutoInstallMention) => {
+    if (isAutoInstallMention(participant)) {
+      insertMentionText(`@${participant.name} `);
+      return;
+    }
+
     insertMentionText(`@${getParticipantMentionLabel(participant, t)} `);
   };
-
   const selectEveryoneMention = () => {
     insertMentionText("@everyone ");
   };
@@ -1275,7 +1397,7 @@ export function ChatView(props: ChatViewProps) {
                       key: "active",
                       label: t("active", { defaultValue: "Active" }),
                       items: activeSuggestions,
-                      offset: (showEveryoneSuggestion ? 1 : 0) + 0,
+                      offset: showEveryoneSuggestion ? 1 : 0,
                     },
                     {
                       key: "inactive",
@@ -1293,6 +1415,16 @@ export function ChatView(props: ChatViewProps) {
                         (showEveryoneSuggestion ? 1 : 0) +
                         activeSuggestions.length +
                         inactiveSuggestions.length,
+                    },
+                    {
+                      key: "ai",
+                      label: "AI",
+                      items: autoInstallMentionSuggestions,
+                      offset:
+                        (showEveryoneSuggestion ? 1 : 0) +
+                        activeSuggestions.length +
+                        inactiveSuggestions.length +
+                        availableSuggestions.length,
                     },
                   ] as const
                 ).map(({ key, label, items, offset }) =>
@@ -1325,10 +1457,15 @@ export function ChatView(props: ChatViewProps) {
                             }}
                           >
                             <span className="sb-chat-view-mention-picker-name">
-                              {getParticipantDisplayLabel(participant, t)}
+                              {isAutoInstallMention(participant)
+                                ? participant.name
+                                : getParticipantDisplayLabel(participant, t)}
                             </span>
                             <span className="sb-chat-view-mention-picker-meta">
-                              @{getParticipantMentionLabel(participant, t)}
+                              @
+                              {isAutoInstallMention(participant)
+                                ? participant.name
+                                : getParticipantMentionLabel(participant, t)}
                             </span>
                           </button>
                         );
