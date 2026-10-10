@@ -1726,6 +1726,31 @@ describe("AnnotationsManager", () => {
       expect(discover.view.value).toBeNull();
     });
 
+    it("returns to the playlist player after saving a note created while a playlist was playing", async () => {
+      // When the user selects a verse and presses Note while the playlist player
+      // is showing in Discover, the editor opens over it. After saving, the
+      // playlist player comes back (viewBeforeEditing = "play_playlist").
+      // Testers: flag this if returning to the player looks wrong in practice.
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(false) }
+      );
+      discover.view.value = "play_playlist";
+
+      await manager.createNewAnnotation();
+      expect(discover.view.value).toBe("create_annotation");
+
+      await manager.saveEditingAnnotation();
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBe("play_playlist");
+    });
+
     it("leaves the draft intact and rethrows when saving fails", async () => {
       recordDataMock.mockResolvedValueOnce({
         success: false,
@@ -1873,6 +1898,29 @@ describe("AnnotationsManager", () => {
 
       expect(manager.editingAnnotation.value).toBeNull();
       expect(discover.view.value).toBe("discover");
+    });
+
+    it("returns to the playlist player after cancelling a note created while a playlist was playing", async () => {
+      // Same as the save variant above: the playlist player was showing when
+      // Note was pressed, so cancelling brings it back.
+      // Testers: flag this if returning to the player looks wrong in practice.
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { isMobile: signal(false) }
+      );
+      discover.view.value = "play_playlist";
+
+      await manager.createNewAnnotation();
+      expect(discover.view.value).toBe("create_annotation");
+
+      manager.cancelEditingAnnotation();
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBe("play_playlist");
     });
   });
 
