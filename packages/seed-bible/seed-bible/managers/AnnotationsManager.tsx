@@ -1379,7 +1379,7 @@ export function createAnnotationsManager(
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = null;
-    discover.view.value = isMobile?.value ? viewBeforeEditing : "discover";
+    discover.view.value = viewBeforeEditing;
     viewBeforeEditing = null;
   };
 
