@@ -1377,7 +1377,9 @@ export function createAnnotationsManager(
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = null;
-    discover.view.value = viewBeforeEditing;
+    if (discover.view.peek() === "create_annotation") {
+      discover.view.value = viewBeforeEditing;
+    }
     viewBeforeEditing = null;
   };
 

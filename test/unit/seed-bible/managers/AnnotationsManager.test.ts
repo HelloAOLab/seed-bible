@@ -1949,6 +1949,25 @@ describe("AnnotationsManager", () => {
       expect(discover.view.value).toBeNull();
     });
 
+    it("does not close discover when the user navigated away from the editor before deleting", async () => {
+      // Reproduce: open a note for editing (editor opens in Discover), then
+      // navigate Discover away from the editor (view becomes "discover"), then
+      // delete the note from the list. leaveAnnotationEditor should not restore
+      // viewBeforeEditing because the editor is no longer what is on screen.
+      const manager = createManager();
+      const annotation = createCommentAnnotation({ id: "a1" });
+      manager.editAnnotation(annotation);
+      expect(discover.view.value).toBe("create_annotation");
+
+      // User navigates away from the editor within Discover.
+      discover.view.value = "discover";
+
+      await manager.deleteAnnotationAndRefresh(annotation);
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBe("discover");
+    });
+
     it("rethrows on failure", async () => {
       eraseDataMock.mockResolvedValueOnce({
         success: false,
