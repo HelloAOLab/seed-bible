@@ -611,8 +611,6 @@ export function createAnnotationsManager(
     options.store === undefined
       ? createIndexedDbRecordStore<Annotation>(annotationSyncDomain.dbName)
       : options.store;
-  const isMobile = options.isMobile;
-
   /**
    * The record a query targets, or null when only the local store can answer.
    *
