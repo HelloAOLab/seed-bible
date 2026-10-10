@@ -611,8 +611,6 @@ export function createAnnotationsManager(
     options.store === undefined
       ? createIndexedDbRecordStore<Annotation>(annotationSyncDomain.dbName)
       : options.store;
-  const isMobile = options.isMobile;
-
   /**
    * The record a query targets, or null when only the local store can answer.
    *
@@ -1379,7 +1377,9 @@ export function createAnnotationsManager(
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = null;
-    discover.view.value = isMobile?.value ? viewBeforeEditing : "discover";
+    if (discover.view.peek() === "create_annotation") {
+      discover.view.value = viewBeforeEditing;
+    }
     viewBeforeEditing = null;
   };
 
