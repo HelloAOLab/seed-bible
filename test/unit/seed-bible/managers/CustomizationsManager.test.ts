@@ -772,6 +772,7 @@ describe("CustomizationsManager", () => {
       { name: "Open Sans", value: "Open Sans, sans-serif" },
       { name: "Playfair Display", value: "Playfair Display, serif" },
       { name: "Cormorant Garamond", value: "Cormorant Garamond, serif" },
+      { name: "Plus Jakarta Sans", value: "Plus Jakarta Sans, sans-serif" },
     ]);
 
     // Different fields have different Light-theme defaults.

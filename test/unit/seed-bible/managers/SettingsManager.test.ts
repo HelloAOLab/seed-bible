@@ -569,3 +569,163 @@ describe("custom highlight colors", () => {
     ]);
   });
 });
+
+describe("scripture font override", () => {
+  const ROBOTO = "Roboto, sans-serif";
+  const OPEN_SANS = "Open Sans, sans-serif";
+  const FONT_OVERRIDE_VAR = "--sb-scripture-font-override";
+
+  const appliedFontOverride = () =>
+    document.documentElement.style.getPropertyValue(FONT_OVERRIDE_VAR);
+
+  const loggedInLogin = (config: Record<string, unknown> = {}) =>
+    makeFakeLogin({ name: "Test", config } as unknown as UserProfile);
+
+  const profileFontOverride = (login: LoginManager) =>
+    (login.profile.value as { config?: { fontOverride?: string } } | null)
+      ?.config?.fontOverride;
+
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    document.documentElement.style.removeProperty(FONT_OVERRIDE_VAR);
+    localStorage.clear();
+  });
+
+  it("defaults to no override, leaving the theme fonts in charge", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("persists a chosen font to the profile and publishes it as a CSS variable", () => {
+    const login = loggedInLogin();
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setFontOverride(ROBOTO);
+
+    expect(settings.settings.value.fontOverride).toBe(ROBOTO);
+    expect(profileFontOverride(login)).toBe(ROBOTO);
+    expect(appliedFontOverride()).toBe(ROBOTO);
+  });
+
+  it("persists a chosen font to login.localConfig when anonymous", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setFontOverride(ROBOTO);
+
+    expect(login.localConfig.value.fontOverride).toBe(ROBOTO);
+  });
+
+  it("switching back to Default clears the saved font and the CSS variable", () => {
+    const login = loggedInLogin({ fontOverride: ROBOTO });
+    const settings = createSettings(CasualOSManager(), login, navWith());
+    expect(appliedFontOverride()).toBe(ROBOTO);
+
+    settings.setFontOverride(undefined);
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(profileFontOverride(login)).not.toBe(ROBOTO);
+    expect(appliedFontOverride()).toBe("");
+
+    // A later session reading the same profile starts on Default too.
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.fontOverride).toBeUndefined();
+  });
+
+  it("switching back to Default sticks for a signed-in user whose device still has a font saved from before signing in", () => {
+    const login = loggedInLogin();
+    login.localConfig.value = { fontOverride: ROBOTO };
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setFontOverride(OPEN_SANS);
+    settings.setFontOverride(undefined);
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.fontOverride).toBeUndefined();
+  });
+
+  it("resetToDefaults sticks for a signed-in user whose device still has a font saved from before signing in", () => {
+    const login = loggedInLogin({ fontOverride: OPEN_SANS });
+    login.localConfig.value = { fontOverride: ROBOTO };
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.fontOverride).toBeUndefined();
+  });
+
+  it("ignores a saved font that is not one of the offered presets", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      loggedInLogin({ fontOverride: "Comic Sans MS, cursive" }),
+      navWith()
+    );
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("accepts a preset font from the app.fontOverride URL param", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith(`?app.fontOverride=${encodeURIComponent(ROBOTO)}`)
+    );
+
+    expect(settings.settings.value.fontOverride).toBe(ROBOTO);
+  });
+
+  it("ignores an app.fontOverride URL param that is not one of the offered presets", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith(`?app.fontOverride=${encodeURIComponent("url(evil), serif")}`)
+    );
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("resetToDefaults clears the font override", () => {
+    const login = loggedInLogin();
+    const settings = createSettings(CasualOSManager(), login, navWith());
+    settings.setFontOverride(ROBOTO);
+
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(profileFontOverride(login)).not.toBe(ROBOTO);
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("an anonymous choice, and a later switch back to Default, both survive a page refresh", () => {
+    const os = CasualOSManager();
+    const nav = navWith();
+    const refresh = () => {
+      const login = createLoginManager({ os });
+      login.hydrateLocalConfig();
+      return createSettings(os, login, nav);
+    };
+
+    createSettings(os, createLoginManager({ os }), nav).setFontOverride(ROBOTO);
+    const afterChoice = refresh();
+    expect(afterChoice.settings.value.fontOverride).toBe(ROBOTO);
+
+    afterChoice.setFontOverride(undefined);
+    expect(refresh().settings.value.fontOverride).toBeUndefined();
+  });
+});
