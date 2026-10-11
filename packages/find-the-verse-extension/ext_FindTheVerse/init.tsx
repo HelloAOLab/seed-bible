@@ -17,11 +17,13 @@ function GamePane({
   state,
   onSaveGame,
   onDeleteGame,
+  onEditGame,
 }: {
   game: GameSignals;
   state: SeedBibleState;
   onSaveGame: (saved: SavedGame) => Promise<void>;
   onDeleteGame: (id: string) => Promise<void>;
+  onEditGame: (saved: SavedGame) => void;
 }) {
   const phase = game.phase.value;
   const savedGames = game.savedGames.value;
@@ -87,6 +89,7 @@ function GamePane({
           game={game}
           state={state}
           onDelete={(id) => void onDeleteGame(id)}
+          onEdit={onEditGame}
         />
       </div>
     );
@@ -190,6 +193,15 @@ export default function initFindTheVerseExtension() {
         await persistGames(userId, next, state.os);
       }
 
+      // Load a saved game into the creator for editing.
+      function editGame(saved: SavedGame): void {
+        game.targetVerse.value = saved.targetVerse;
+        game.steps.value = saved.steps;
+        game.currentGameId.value = saved.id;
+        game.selectingViaToolbar.value = false;
+        game.phase.value = "creating";
+      }
+
       // Open / re-open the pane when the toolbar button is clicked
       yield state.tools.registerToolbarTool({
         id: "find-the-verse",
@@ -211,6 +223,7 @@ export default function initFindTheVerseExtension() {
                 state={state}
                 onSaveGame={saveGame}
                 onDeleteGame={deleteGame}
+                onEditGame={editGame}
               />
             ),
           });

@@ -1,5 +1,6 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import type { SeedBibleState } from "seed-bible";
+import { ContextMenuItem, ContextMenuWithButton } from "seed-bible/components";
 import { bookDisplayName } from "./books";
 import type { GameSignals, SavedGame } from "./types";
 
@@ -8,6 +9,7 @@ interface SavedGamesListProps {
   game: GameSignals;
   state: SeedBibleState;
   onDelete: (id: string) => void;
+  onEdit: (saved: SavedGame) => void;
 }
 
 const s = {
@@ -61,17 +63,6 @@ const s = {
     color: "var(--sb-primary-font-color, #fff)",
     flexShrink: 0,
   },
-  deleteBtn: {
-    padding: "4px 6px",
-    borderRadius: "4px",
-    border: "none",
-    cursor: "pointer",
-    fontSize: "0.85rem",
-    background: "none",
-    color: "var(--sb-danger-color, #e63946)",
-    flexShrink: 0,
-    opacity: 0.7,
-  },
 };
 
 function formatDate(ms: number): string {
@@ -87,6 +78,7 @@ export function SavedGamesList({
   game,
   state,
   onDelete,
+  onEdit,
 }: SavedGamesListProps) {
   if (games.length === 0) return null;
 
@@ -120,6 +112,7 @@ export function SavedGamesList({
                 {formatDate(saved.createdAtMs)}
               </span>
             </div>
+
             <button
               type="button"
               style={s.playBtn}
@@ -127,14 +120,24 @@ export function SavedGamesList({
             >
               Play
             </button>
-            <button
-              type="button"
-              style={s.deleteBtn}
-              title="Delete game"
-              onClick={() => onDelete(saved.id)}
-            >
-              ✕
-            </button>
+
+            <ContextMenuWithButton>
+              <ContextMenuItem onClick={() => onEdit(saved)}>
+                <span class="material-symbols-outlined sb-context-menu-item-icon">
+                  edit
+                </span>
+                Edit
+              </ContextMenuItem>
+              <ContextMenuItem
+                className="sb-context-menu-item--danger"
+                onClick={() => onDelete(saved.id)}
+              >
+                <span class="material-symbols-outlined sb-context-menu-item-icon">
+                  delete
+                </span>
+                Delete
+              </ContextMenuItem>
+            </ContextMenuWithButton>
           </div>
         );
       })}

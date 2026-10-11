@@ -142,6 +142,18 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
             {bookDisplayName(target.bookId)} {target.chapterNumber}:
             {target.verseNumber}
           </p>
+          {target.verseText && (
+            <p
+              style={{
+                fontStyle: "italic",
+                opacity: 0.8,
+                fontSize: "0.9rem",
+                margin: "8px 0 0",
+              }}
+            >
+              &ldquo;{target.verseText}&rdquo;
+            </p>
+          )}
           {guessCount > 0 && (
             <p style={{ opacity: 0.6, fontSize: "0.85rem", margin: "4px 0 0" }}>
               {guessCount} {guessCount === 1 ? "guess" : "guesses"}
@@ -150,10 +162,10 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
         </div>
         <button
           type="button"
-          style={{ ...s.btn(false), width: "100%" }}
+          style={{ ...s.btn(true), width: "100%" }}
           onClick={onReset}
         >
-          Play again
+          Back to main menu
         </button>
       </div>
     );
