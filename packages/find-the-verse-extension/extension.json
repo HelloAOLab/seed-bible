@@ -1,0 +1,11 @@
+{
+  "id": "find-the-verse-extension",
+  "translations": {
+    "en": {
+      "title": "Find the Verse",
+      "description": "A guessing game where you find a secret verse by narrowing down book, chapter, and verse.",
+      "find-the-verse": "Find the Verse",
+      "set-target": "Set as target"
+    }
+  }
+}
