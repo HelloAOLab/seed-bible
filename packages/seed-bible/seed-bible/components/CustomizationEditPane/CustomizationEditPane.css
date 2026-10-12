@@ -1,0 +1,970 @@
+/* Customization list (Settings → Customize) and the customization editor
+   pane. Builds on the `sb-settings-*` primitives in SettingsPage.css. */
+
+.sb-cz-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+.sb-cz-body {
+  flex: 1;
+  gap: 1.125rem;
+  padding-bottom: 1.5rem;
+}
+
+.sb-cz-intro {
+  margin: 0;
+  padding: 0 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-cz-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+/* Lines field labels and inputs up with the full-width cards around them. */
+.sb-cz-body > .sb-settings-field-row,
+.sb-cz-group > .sb-settings-field-row {
+  padding: 0;
+}
+
+.sb-cz-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.sb-cz-group > .sb-settings-subheading {
+  margin: 0.25rem 0 0;
+  padding: 0 0.25rem;
+}
+
+/* Shared surfaces */
+
+.sb-cz-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 0.9375rem;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.sb-cz-input:focus {
+  outline: none;
+  border-color: var(--sb-primary-color);
+}
+
+/* The "Default translation" row is a `ContextMenuWithButton` trigger, so it
+   also gets `.sb-context-menu-button`'s icon-button sizing; the compound
+   selector outranks that regardless of CSS load order. */
+.sb-cz-row,
+.sb-context-menu-button.sb-cz-row {
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.625rem;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sb-cz-row:hover,
+.sb-context-menu-button.sb-cz-row:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-cz-row .material-symbols-outlined {
+  font-size: 1.25rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-cz-row-tall {
+  padding: 1rem 0.875rem;
+}
+
+.sb-cz-row-icon {
+  flex-shrink: 0;
+}
+
+.sb-cz-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sb-cz-row-label {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--sb-font-color);
+}
+
+.sb-cz-row-value {
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-cz-row-hint {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-cz-icon-button,
+.sb-context-menu-button.sb-cz-icon-button {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+}
+
+.sb-cz-icon-button:hover,
+.sb-context-menu-button.sb-cz-icon-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-cz-icon-button .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.sb-cz-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.sb-cz-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+.sb-cz-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sb-cz-button .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-cz-button-primary {
+  border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-cz-button-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-primary-color), black 6%);
+}
+
+.sb-cz-button-primary:disabled {
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  opacity: 1;
+}
+
+.sb-cz-button-danger {
+  border-color: var(--sb-error-color, #d64545);
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-cz-button-quiet {
+  border-color: transparent;
+  padding-inline: 0.5rem;
+}
+
+.sb-cz-button-danger:hover:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 90%
+  );
+}
+
+.sb-cz-reset {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  cursor: pointer;
+}
+
+.sb-cz-reset:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  color: var(--sb-font-color);
+}
+
+.sb-cz-reset .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+/* Footer actions (Delete · Share · Save), pinned to the bottom of the pane
+   while its body scrolls. The negative margin cancels `.sb-settings-page`'s
+   side padding so the bar spans the pane edge to edge. */
+.sb-cz-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 -0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  background: var(--sb-reader-background);
+}
+
+.sb-cz-footer-spacer {
+  flex: 1;
+}
+
+/* Customization list cards */
+
+.sb-cz-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sb-cz-card,
+.sb-cz-theme-card {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.sb-cz-card:hover,
+.sb-cz-theme-card:hover {
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 70%);
+}
+
+.sb-cz-card-open,
+.sb-cz-theme-card-open {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-cz-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  /* Leaves room for the ⋮ menu button anchored in the corner. */
+  padding: 0.625rem 2.75rem 0.75rem 0.75rem;
+}
+
+.sb-cz-card-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-cz-card-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-cz-card-subtitle-accent {
+  color: var(--sb-primary-color);
+  font-weight: 600;
+}
+
+.sb-cz-card-menu {
+  position: absolute;
+  inset-inline-end: 0.375rem;
+  bottom: 0.5rem;
+}
+
+.sb-cz-card-preview {
+  display: flex;
+  gap: 0.5rem;
+  height: 5rem;
+  padding: 0.5rem 0 0 0.5rem;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-cz-card-preview-reader {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem 0.375rem 0 0;
+  box-shadow: 0 0 0 1px color-mix(in srgb, black, transparent 92%);
+}
+
+.sb-cz-card-preview-heading {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.sb-cz-card-preview-line {
+  height: 0.1875rem;
+  width: 90%;
+  border-radius: 1rem;
+  opacity: 0.35;
+}
+
+.sb-cz-card-preview-line-short {
+  width: 65%;
+}
+
+.sb-cz-card-preview-strip {
+  width: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem 0 0;
+}
+
+.sb-cz-card-preview-strip > span {
+  width: 100%;
+  height: 0.625rem;
+  border-radius: 0.1875rem;
+}
+
+.sb-cz-card-preview-logo {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  object-fit: cover;
+}
+
+.sb-cz-new-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sb-cz-new-button:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+}
+
+.sb-cz-new-button .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+/* Logo field */
+
+.sb-cz-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  min-height: 5.5rem;
+  padding: 1rem 1.25rem;
+  box-sizing: border-box;
+  border: 1px dashed color-mix(in srgb, var(--sb-font-color), transparent 75%);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+  color: var(--sb-font-color);
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+button.sb-cz-logo:hover:not(:disabled) {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 94%);
+}
+
+button.sb-cz-logo:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.sb-cz-logo-filled {
+  border-style: solid;
+  cursor: default;
+}
+
+.sb-cz-logo-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.5rem;
+  background: var(--sb-reader-background);
+}
+
+.sb-cz-logo-icon .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.sb-cz-logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sb-cz-logo-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-cz-logo-hint {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-cz-logo-image {
+  width: 3.5rem;
+  height: 3.5rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  object-fit: cover;
+}
+
+.sb-cz-logo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Theme cards (editor) and preset cards (theme editor's "Based on") */
+
+.sb-cz-theme-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.sb-cz-theme-thumb {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.375rem;
+  height: 4rem;
+  padding: 0 0.875rem;
+  box-sizing: border-box;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-cz-theme-thumb-aa {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.sb-cz-theme-thumb-bars {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.sb-cz-theme-thumb-bars > span {
+  width: 1.25rem;
+  height: 0.3125rem;
+  border-radius: 1rem;
+}
+
+.sb-cz-add-card {
+  width: 100%;
+  height: 100%;
+  min-height: 7rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sb-cz-add-card:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+}
+
+.sb-cz-add-card .material-symbols-outlined {
+  font-size: 1.375rem;
+}
+
+.sb-cz-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.sb-cz-preset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-cz-preset .sb-cz-theme-thumb {
+  height: 3.25rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border-radius: 0.5rem;
+  transition: border-color 0.2s ease;
+}
+
+.sb-cz-preset:hover .sb-cz-theme-thumb {
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
+}
+
+.sb-cz-preset-selected .sb-cz-theme-thumb,
+.sb-cz-preset-selected:hover .sb-cz-theme-thumb {
+  border-color: var(--sb-primary-color);
+  box-shadow: 0 0 0 1px var(--sb-primary-color);
+}
+
+.sb-cz-preset-name {
+  font-size: 0.75rem;
+  padding: 0 0.125rem;
+}
+
+.sb-cz-preset-selected .sb-cz-preset-name {
+  font-weight: 600;
+}
+
+/* Theme editor live preview */
+
+.sb-cz-live-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.sb-cz-live-preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.sb-cz-live-preview-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.sb-cz-live-preview-bar {
+  width: 3rem;
+  height: 0.25rem;
+  border-radius: 1rem;
+  background: currentColor;
+  opacity: 0.3;
+}
+
+.sb-cz-live-preview-reader {
+  position: relative;
+  padding: 0.875rem 1rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0 1px color-mix(in srgb, black, transparent 92%);
+}
+
+.sb-cz-live-preview-book {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sb-cz-live-preview-chapter {
+  margin: 0.125rem 0 0.375rem;
+  font-size: 1.375rem;
+  font-weight: 700;
+}
+
+.sb-cz-live-preview-verse {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.sb-cz-live-preview-verse mark {
+  padding: 0 0.125rem;
+  border-radius: 0.1875rem;
+}
+
+.sb-cz-live-preview-link {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.sb-cz-live-preview-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  /* Stays clear of the floating button in the corner. */
+  padding-inline-end: 2.5rem;
+}
+
+.sb-cz-live-preview-buttons > span {
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sb-cz-live-preview-fab {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  bottom: 0.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, black, transparent 86%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Color tiles */
+
+.sb-cz-tile-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+
+.sb-cz-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-radius: 0.625rem;
+}
+
+.sb-cz-tile-warning {
+  border-color: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 55%
+  );
+}
+
+.sb-cz-tile-swatch {
+  display: block;
+  width: 100%;
+  height: 2.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.375rem;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  cursor: pointer;
+}
+
+button.sb-cz-tile-swatch:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+/* A value with no paint of its own (`transparent`, `inherit`) shows as a
+   checkerboard rather than whatever the color picker would fall back to. */
+.sb-cz-tile-swatch-unpainted {
+  background-color: var(--sb-reader-background);
+  background-image:
+    linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--sb-font-color), transparent 90%) 25%,
+      transparent 25%,
+      transparent 75%,
+      color-mix(in srgb, var(--sb-font-color), transparent 90%) 75%
+    ),
+    linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--sb-font-color), transparent 90%) 25%,
+      transparent 25%,
+      transparent 75%,
+      color-mix(in srgb, var(--sb-font-color), transparent 90%) 75%
+    );
+  background-size: 0.75rem 0.75rem;
+  background-position:
+    0 0,
+    0.375rem 0.375rem;
+}
+
+.sb-cz-tile-meta {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sb-cz-tile-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  min-width: 0;
+}
+
+.sb-cz-tile-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sb-font-color);
+}
+
+.sb-cz-tile-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-cz-contrast-badge {
+  flex-shrink: 0;
+  padding: 0.0625rem 0.3125rem;
+  border-radius: 0.25rem;
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 88%
+  );
+  color: var(--sb-error-color, #d64545);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: help;
+}
+
+.sb-cz-highlight-swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: default;
+}
+
+.sb-cz-highlight-pickers {
+  flex: 1;
+  display: flex;
+  gap: 0.375rem;
+}
+
+.sb-color-picker-trigger.sb-cz-highlight-picker {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+/* Font rows */
+
+.sb-cz-font-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.625rem;
+}
+
+.sb-cz-font-sample {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.0625rem;
+}
+
+/* A native select dressed as a pill, with an optional leading status icon
+   and a caret; the select itself stays the real (accessible) control. */
+.sb-cz-pill-select {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border-radius: 0.5rem;
+  color: var(--sb-font-color);
+}
+
+.sb-cz-pill-select select {
+  appearance: none;
+  padding: 0.375rem 1.75rem 0.375rem 0.625rem;
+  border: none;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-cz-pill-select select:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 1px;
+}
+
+.sb-cz-pill-select option {
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+}
+
+.sb-cz-pill-select > .sb-cz-pill-select-icon {
+  position: absolute;
+  inset-inline-start: 0.5rem;
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+.sb-cz-pill-select-icon + select {
+  padding-inline-start: 1.625rem;
+}
+
+.sb-cz-pill-select > .sb-cz-pill-select-caret {
+  position: absolute;
+  inset-inline-end: 0.375rem;
+  font-size: 1.125rem;
+  pointer-events: none;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-cz-pill-select-auto-installed {
+  border-color: var(--sb-primary-color);
+  color: var(--sb-primary-color);
+}
+
+.sb-cz-pill-select-hidden {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+/* Extensions list */
+
+.sb-cz-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.75rem;
+}
+
+.sb-cz-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 0.75rem 0.875rem 1rem;
+}
+
+.sb-cz-list-row + .sb-cz-list-row {
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}

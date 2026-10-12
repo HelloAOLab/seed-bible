@@ -180,22 +180,40 @@ export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
  *
  * Each extension's code and full translations are `() => import(...)` thunks so
  * Vite code-splits them, and `loadListTranslations` does the same per language.
+ *
+ * With `serverBuild`, those thunks reject instead of importing, so none of it
+ * lands in the SSR bundle, which is built as a single file and would otherwise
+ * inline every extension. The server never installs extensions (that starts in
+ * a `useEffect`) or fetches list strings (`fetchesListTranslations` in
+ * `ExtensionManager`); the rejection makes it loud if that ever changes.
  */
 export function generateEntryModuleSource(
   extensions: DiscoveredExtension[],
-  setId: string
+  setId: string,
+  { serverBuild = false }: { serverBuild?: boolean } = {}
 ): string {
+  const unavailable = (message: string) =>
+    `() => Promise.reject(new Error(${toJsLiteral(message)}))`;
+
   const entries = extensions
-    .map(
-      ({ folder, meta }) => `  {
+    .map(({ folder, meta }) => {
+      const loadFullTranslations = serverBuild
+        ? unavailable(
+            `${meta.id}'s translations are not available in the SSR bundle`
+          )
+        : `() => import("@packages/${folder}/extension.json").then((m) => m.default.translations)`;
+      const load = serverBuild
+        ? unavailable(`${meta.id} is not available in the SSR bundle`)
+        : `() => import("@packages/${folder}/index")`;
+      return `  {
     meta: ${toJsLiteral(trimMeta(meta))},
-    loadFullTranslations: () => import("@packages/${folder}/extension.json").then((m) => m.default.translations),
-    import: () => import("@packages/${folder}/index"),
-  },`
-    )
+    loadFullTranslations: ${loadFullTranslations},
+    import: ${load},
+  },`;
+    })
     .join("\n");
 
-  const localeEntries = listExtensionLanguages(extensions)
+  const localeEntries = (serverBuild ? [] : listExtensionLanguages(extensions))
     // English is already inline via `trimMeta`, so there is nothing to fetch
     // for it — which is also the common case.
     .filter((lang) => lang !== FALLBACK_LANGUAGE)

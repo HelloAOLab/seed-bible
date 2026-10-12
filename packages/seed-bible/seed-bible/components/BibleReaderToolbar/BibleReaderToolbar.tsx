@@ -33,9 +33,15 @@ import {
   SelfAvatarVisual,
   openSaveModalForLocation,
 } from "../Tabs/Tabs";
+import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { ScriptureNoteSheet } from "../ScriptureNote/ScriptureNote";
+import {
+  AudioProgressRing,
+  AudioScrubber,
+} from "../AudioScrubber/AudioScrubber";
 import type { PlayingState } from "../../managers/PlaylistManager";
+import type { AudioPlaybackController } from "../../managers/AudioPlaybackManager";
 import {
   annotationVerseNumbers,
   annotationListHasOtherAuthors,
@@ -909,6 +915,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     tools: toolsManager,
     settings,
     saves,
+    bookmarks,
     login,
     navigation,
   } = props.state;
@@ -1329,13 +1336,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       saves.isFilterActive.value
   );
 
+  const isBookmarksViewOpen = useComputed(
+    () =>
+      sidebar.isMobileOpen.value &&
+      !sidebar.isSettingsOpen.value &&
+      bookmarks.isPanelOpen.value
+  );
+
   // True when the sidebar drawer is open showing the tabs list (not the
-  // settings view and not the saves filter view).
+  // settings view, and not the saves or bookmarks view).
   const isTabsViewOpen = useComputed(
     () =>
       sidebar.isMobileOpen.value &&
       !sidebar.isSettingsOpen.value &&
-      !saves.isFilterActive.value
+      !saves.isFilterActive.value &&
+      !bookmarks.isPanelOpen.value
   );
 
   const isTodayOpen = useComputed(() => props.state.today.isOpen.value);
@@ -1353,11 +1368,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     if (sidebar.isSearchPanelOpen.value) return "search";
     if (isProfileOpen.value) return "you";
     if (sidebar.isSettingsOpen.value) return "none";
-    // Chat and Saves are both reached from More, so More stays lit while
-    // either is showing — otherwise nothing in the bar would tell the user
+    // Chat, Saves and Bookmarks are all reached from More, so More stays lit
+    // while any is showing — otherwise nothing in the bar would tell the user
     // where the panel covering the reader came from.
     if (sidebar.isChatPanelOpen.value) return "more";
     if (isSavesViewOpen.value) return "more";
+    if (isBookmarksViewOpen.value) return "more";
     if (isTodayOpen.value) return "today";
     // Some other extension pane is covering the reader (opened from More).
     if (isFullscreenPaneVisible.value) return "more";
@@ -1408,6 +1424,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // item prev/next arrows so they don't fight the playlist's own navigation.
   const playingPlaylist = useComputed(
     () => props.state.playlists.playing.value
+  );
+  // Narration started in the tab in view and not yet stopped — playing, or
+  // paused with its place kept. Its progress shows above the chapter pill on
+  // mobile, or along the top of the toolbar on desktop.
+  const audioPlayback = useComputed(() =>
+    readingState.value
+      ? props.state.audioPlayback.controllerFor(readingState.value)
+      : null
+  );
+  // A playing playlist owns the toolbar's transport controls.
+  const desktopPlayback = useComputed(() =>
+    playingPlaylist.value ? null : audioPlayback.value
   );
 
   const floatingAnchor = useComputed(() =>
@@ -2406,11 +2434,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();
     sidebar.closeSettings();
-    // Show the tabs list, not the saves filter view.
+    // Show the tabs list, not the saves or bookmarks view.
     if (saves.isFilterActive.value) {
       saves.toggleFilter();
     }
     saves.openedFromToolbar.value = false;
+    bookmarks.closePanel();
     // Opened straight from the toolbar (not the book selector), so the tabs
     // header should show a Close (X), not a Back arrow to the selector.
     sidebar.tabsOpenedFromToolbar.value = true;
@@ -2435,6 +2464,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     if (!saves.isFilterActive.value) {
       saves.toggleFilter();
     }
+  };
+
+  // Opens (or closes) the bookmarks view in the sidebar drawer, from the
+  // Bookmarks entry in the More menu.
+  const openBookmarksView = () => {
+    isMoreMenuOpen.value = false;
+    if (isBookmarksViewOpen.value) {
+      bookmarks.closePanel();
+      sidebar.closeSidebar();
+      return;
+    }
+    panes.closeAll();
+    sidebar.closeSearchPanel();
+    sidebar.closeChatPanel();
+    sidebar.closeSettings();
+    sidebar.openSidebar();
+    bookmarks.openedFromToolbar.value = true;
+    bookmarks.isPanelOpen.value = true;
   };
 
   const savesTabIcon = (filled: boolean) => (
@@ -2468,6 +2515,50 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       <>
         <div>{resolveBookName(readingState.value?.bookId.value) || " "}</div>
         <div>{readingState.value?.chapterNumber.value}</div>
+      </>
+    );
+  };
+
+  const renderDesktopAudioControls = (playback: AudioPlaybackController) => {
+    const isAudioPlaying = playback.isPlaying.value;
+    const toggleLabel = isAudioPlaying
+      ? t("pause", { defaultValue: "Pause" })
+      : t("play", { defaultValue: "Play" });
+    const stopLabel = t("stop", { defaultValue: "Stop" });
+    return (
+      <>
+        <div className="sb-reader-toolbar-audio">
+          <AudioScrubber playback={playback} showTimeRemaining />
+        </div>
+        <div className="sb-reader-toolbar-item sb-reader-toolbar-item-arrow">
+          <button
+            type="button"
+            className="sb-reader-toolbar-button sb-reader-toolbar-audio-toggle"
+            aria-label={toggleLabel}
+            onClick={() =>
+              isAudioPlaying ? playback.pause() : playback.play()
+            }
+          >
+            <MaterialIcon>
+              {isAudioPlaying ? "pause" : "play_arrow"}
+            </MaterialIcon>
+            <span className="sr-only">{toggleLabel}</span>
+          </button>
+        </div>
+        {!isAudioPlaying && (
+          <div className="sb-reader-toolbar-item sb-reader-toolbar-item-arrow">
+            <button
+              type="button"
+              className="sb-reader-toolbar-button sb-reader-toolbar-audio-stop"
+              aria-label={stopLabel}
+              onClick={() => playback.stop()}
+            >
+              <StopIcon />
+              <span className="sr-only">{stopLabel}</span>
+            </button>
+          </div>
+        )}
+        <div className="sb-reader-toolbar-divider" aria-hidden="true" />
       </>
     );
   };
@@ -2516,9 +2607,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               const PrevIcon = prev?.icon;
               const NextIcon = next?.icon;
 
+              const playback = playing ? null : audioPlayback.value;
+              // While playing, progress runs above the chapter pill where it
+              // can be scrubbed; paused, it shrinks to a ring around the play
+              // button so the pill area goes back to plain navigation.
+              const isScrubbing = !!playback?.isPlaying.value;
+
               return (
                 <div
-                  className="sb-reader-floating-nav"
+                  className={`sb-reader-floating-nav${
+                    isScrubbing ? " sb-reader-floating-nav-scrubbing" : ""
+                  }`}
                   role="group"
                   aria-label={t("chapter-navigation", {
                     defaultValue: "Chapter navigation",
@@ -2531,15 +2630,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     />
                   )}
                   {!playing && audio && AudioIcon && (
-                    <button
-                      type="button"
-                      disabled={audio.disabled.value}
-                      onClick={() => audio.onSelect()}
-                      className="sb-reader-floating-nav-play"
-                      aria-label={translateTitle(t, audio.title)}
-                    >
-                      <AudioIcon />
-                    </button>
+                    <div className="sb-reader-floating-nav-play-wrap">
+                      <button
+                        type="button"
+                        disabled={audio.disabled.value}
+                        onClick={() => audio.onSelect()}
+                        className="sb-reader-floating-nav-play"
+                        aria-label={translateTitle(t, audio.title)}
+                      >
+                        <AudioIcon />
+                      </button>
+                      {playback && !isScrubbing && (
+                        <AudioProgressRing playback={playback} />
+                      )}
+                    </div>
                   )}
                   {playing && (
                     <button
@@ -2553,90 +2657,100 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   )}
 
                   {(prev || next || selector || playing) && (
-                    <div className="sb-reader-floating-nav-group">
-                      {playing ? (
-                        <button
-                          type="button"
-                          disabled={!playing.hasPrevious.value}
-                          onClick={() => playing.previous()}
-                          onPointerDown={spawnRipple}
-                          className="sb-reader-floating-nav-arrow"
-                          aria-label={t("previous", {
-                            defaultValue: "Previous",
-                          })}
-                        >
-                          <MaterialIcon>skip_previous</MaterialIcon>
-                        </button>
-                      ) : (
-                        prev &&
-                        PrevIcon && (
-                          <ToolActionElement
-                            href={prev.href.value}
-                            disabled={prev.disabled.value}
-                            onActivate={prev.onSelect}
-                            onPointerDown={spawnRipple}
-                            className="sb-reader-floating-nav-arrow"
-                            ariaLabel={translateTitle(t, prev.title)}
-                            dataToolId={prev.id}
-                          >
-                            <PrevIcon />
-                          </ToolActionElement>
-                        )
+                    <div className="sb-reader-floating-nav-group-wrap">
+                      {playback && isScrubbing && (
+                        <AudioScrubber
+                          playback={playback}
+                          showTimeRemaining
+                          className="sb-reader-floating-nav-scrubber"
+                        />
                       )}
-
-                      {playing ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            (props.state.playlists.view.value = "play_playlist")
-                          }
-                          onPointerDown={spawnRipple}
-                          className="sb-reader-floating-nav-label"
-                        >
-                          {getPlayingNavLabel(playing)}
-                        </button>
-                      ) : (
-                        selector && (
+                      <div className="sb-reader-floating-nav-group">
+                        {playing ? (
                           <button
                             type="button"
-                            {...flingSafeTapHandlers(
-                              selector.onSelect,
-                              spawnRipple
-                            )}
-                            className="sb-reader-floating-nav-label"
-                          >
-                            {getReaderNavLabel()}
-                          </button>
-                        )
-                      )}
-
-                      {playing ? (
-                        <button
-                          type="button"
-                          disabled={!playing.canPressNext.value}
-                          onClick={() => playing.next()}
-                          onPointerDown={spawnRipple}
-                          className="sb-reader-floating-nav-arrow"
-                          aria-label={t("next", { defaultValue: "Next" })}
-                        >
-                          <MaterialIcon>skip_next</MaterialIcon>
-                        </button>
-                      ) : (
-                        next &&
-                        NextIcon && (
-                          <ToolActionElement
-                            href={next.href.value}
-                            disabled={next.disabled.value}
-                            onActivate={next.onSelect}
+                            disabled={!playing.hasPrevious.value}
+                            onClick={() => playing.previous()}
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
-                            ariaLabel={translateTitle(t, next.title)}
-                            dataToolId={next.id}
+                            aria-label={t("previous", {
+                              defaultValue: "Previous",
+                            })}
                           >
-                            <NextIcon />
-                          </ToolActionElement>
-                        )
-                      )}
+                            <MaterialIcon>skip_previous</MaterialIcon>
+                          </button>
+                        ) : (
+                          prev &&
+                          PrevIcon && (
+                            <ToolActionElement
+                              href={prev.href.value}
+                              disabled={prev.disabled.value}
+                              onActivate={prev.onSelect}
+                              onPointerDown={spawnRipple}
+                              className="sb-reader-floating-nav-arrow"
+                              ariaLabel={translateTitle(t, prev.title)}
+                              dataToolId={prev.id}
+                            >
+                              <PrevIcon />
+                            </ToolActionElement>
+                          )
+                        )}
+
+                        {playing ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              (props.state.playlists.view.value =
+                                "play_playlist")
+                            }
+                            onPointerDown={spawnRipple}
+                            className="sb-reader-floating-nav-label"
+                          >
+                            {getPlayingNavLabel(playing)}
+                          </button>
+                        ) : (
+                          selector && (
+                            <button
+                              type="button"
+                              {...flingSafeTapHandlers(
+                                selector.onSelect,
+                                spawnRipple
+                              )}
+                              className="sb-reader-floating-nav-label"
+                            >
+                              {getReaderNavLabel()}
+                            </button>
+                          )
+                        )}
+
+                        {playing ? (
+                          <button
+                            type="button"
+                            disabled={!playing.canPressNext.value}
+                            onClick={() => playing.next()}
+                            onPointerDown={spawnRipple}
+                            className="sb-reader-floating-nav-arrow"
+                            aria-label={t("next", { defaultValue: "Next" })}
+                          >
+                            <MaterialIcon>skip_next</MaterialIcon>
+                          </button>
+                        ) : (
+                          next &&
+                          NextIcon && (
+                            <ToolActionElement
+                              href={next.href.value}
+                              disabled={next.disabled.value}
+                              onActivate={next.onSelect}
+                              onPointerDown={spawnRipple}
+                              className="sb-reader-floating-nav-arrow"
+                              ariaLabel={translateTitle(t, next.title)}
+                              dataToolId={next.id}
+                            >
+                              <NextIcon />
+                            </ToolActionElement>
+                          )
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2645,7 +2759,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
           {!isMinimalEmbed.value && (
             <div
-              className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : " sb-reader-toolbar-labeled"}`}
+              className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : " sb-reader-toolbar-labeled"}${
+                !isSmallScreen.value && desktopPlayback.value
+                  ? " sb-reader-toolbar-has-audio"
+                  : ""
+              }`}
             >
               {isSmallScreen.value ? (
                 <>
@@ -2822,6 +2940,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             onClick: openSavesView,
                           },
                           {
+                            id: "bookmarks",
+                            label: t("bookmarks", {
+                              defaultValue: "Bookmarks",
+                            }),
+                            iconNode: (
+                              <BookmarkStackIcon bookmarks={[]} size={24} />
+                            ),
+                            onClick: openBookmarksView,
+                          },
+                          {
                             id: "tabs",
                             label: t("tabs", {
                               defaultValue: "Tabs",
@@ -2838,147 +2966,157 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   </div>
                 </>
               ) : (
-                tools.value.flatMap((tool) => {
-                  const ToolIcon = tool.icon;
-                  const menuItems =
-                    tool.getItems?.().filter((item) => item.visible.value) ??
-                    [];
-                  const hasMenuItems = menuItems.length > 0;
-                  const hideLabel = tool.hideLabel;
-                  const label = translateTitle(t, tool.title);
-                  if (!tool.visible.value) return [];
-                  const itemElement = (
-                    <div
-                      key={tool.id}
-                      className={`sb-reader-toolbar-item${hideLabel ? " sb-reader-toolbar-item-arrow" : ""}`}
-                    >
-                      <ToolActionElement
-                        // A tool that opens a menu stays a button: the href
-                        // would advertise a destination the click never goes to.
-                        href={hasMenuItems ? null : tool.href.value}
-                        disabled={tool.disabled.value}
-                        onActivate={() => {
-                          if (hasMenuItems) {
-                            selectedToolbarToolId.value =
-                              selectedToolbarToolId.value === tool.id
-                                ? null
-                                : tool.id;
-                            return;
-                          }
-
-                          selectedToolbarToolId.value = null;
-                          tool.onSelect();
-                        }}
-                        dataToolId={tool.id}
-                        className="sb-reader-toolbar-button"
-                        ariaLabel={label}
+                <>
+                  {desktopPlayback.value &&
+                    renderDesktopAudioControls(desktopPlayback.value)}
+                  {tools.value.flatMap((tool) => {
+                    const ToolIcon = tool.icon;
+                    const menuItems =
+                      tool.getItems?.().filter((item) => item.visible.value) ??
+                      [];
+                    const hasMenuItems = menuItems.length > 0;
+                    const hideLabel = tool.hideLabel;
+                    const label = translateTitle(t, tool.title);
+                    if (!tool.visible.value) return [];
+                    const itemElement = (
+                      <div
+                        key={tool.id}
+                        className={`sb-reader-toolbar-item${hideLabel ? " sb-reader-toolbar-item-arrow" : ""}`}
                       >
-                        <ToolIcon />
-                        {hideLabel ? (
-                          <span className="sr-only">{label}</span>
-                        ) : (
-                          <span className="sb-reader-toolbar-button-label">
-                            {label}
-                          </span>
-                        )}
-                        {tool.id === "open-chat" &&
-                          unreadChatIndicator.value && (
-                            <span
-                              className="sb-reader-toolbar-unread-indicator"
-                              aria-label={
-                                chats.wasMentioned.value
-                                  ? t("unread-mention", {
-                                      defaultValue: "Unread mention",
-                                    })
-                                  : t("unread-messages", {
-                                      defaultValue:
-                                        "Unread messages: {{count}}",
-                                      count: unreadChatIndicator.value,
-                                    })
-                              }
-                            >
-                              {unreadChatIndicator.value}
+                        <ToolActionElement
+                          // A tool that opens a menu stays a button: the href
+                          // would advertise a destination the click never goes to.
+                          href={hasMenuItems ? null : tool.href.value}
+                          disabled={tool.disabled.value}
+                          onActivate={() => {
+                            if (hasMenuItems) {
+                              selectedToolbarToolId.value =
+                                selectedToolbarToolId.value === tool.id
+                                  ? null
+                                  : tool.id;
+                              return;
+                            }
+
+                            selectedToolbarToolId.value = null;
+                            tool.onSelect();
+                          }}
+                          dataToolId={tool.id}
+                          className="sb-reader-toolbar-button"
+                          ariaLabel={label}
+                        >
+                          <ToolIcon />
+                          {hideLabel ? (
+                            <span className="sr-only">{label}</span>
+                          ) : (
+                            <span className="sb-reader-toolbar-button-label">
+                              {label}
                             </span>
                           )}
-                        {tool.id === "open-chat" && hasTypingInChats.value && (
-                          <span
-                            className="sb-reader-toolbar-typing-indicator"
-                            aria-label={t("someone-is-typing", {
-                              defaultValue: "Someone is typing...",
-                            })}
-                          />
-                        )}
-                      </ToolActionElement>
-                      {hasMenuItems &&
-                        selectedToolbarToolId.value === tool.id && (
-                          <div
-                            className="sb-tool-context-menu"
-                            role="menu"
-                            onKeyDown={(event) => {
-                              if (event.key === "Escape") {
-                                event.preventDefault();
-                                selectedToolbarToolId.value = null;
-                                return;
-                              }
-                              handleVerticalListKeyNav(
-                                event,
-                                event.currentTarget
-                              );
-                            }}
-                          >
+                          {tool.id === "open-chat" &&
+                            unreadChatIndicator.value && (
+                              <span
+                                className="sb-reader-toolbar-unread-indicator"
+                                aria-label={
+                                  chats.wasMentioned.value
+                                    ? t("unread-mention", {
+                                        defaultValue: "Unread mention",
+                                      })
+                                    : t("unread-messages", {
+                                        defaultValue:
+                                          "Unread messages: {{count}}",
+                                        count: unreadChatIndicator.value,
+                                      })
+                                }
+                              >
+                                {unreadChatIndicator.value}
+                              </span>
+                            )}
+                          {tool.id === "open-chat" &&
+                            hasTypingInChats.value && (
+                              <span
+                                className="sb-reader-toolbar-typing-indicator"
+                                aria-label={t("someone-is-typing", {
+                                  defaultValue: "Someone is typing...",
+                                })}
+                              />
+                            )}
+                        </ToolActionElement>
+                        {hasMenuItems &&
+                          selectedToolbarToolId.value === tool.id && (
                             <div
-                              className="sb-tool-context-menu-scroll"
-                              ref={attachMenuOverflowFade}
-                            >
-                              {menuItems.map((item) => {
-                                const MenuItemIcon = item.icon;
-                                return (
-                                  <button
-                                    key={item.id}
-                                    disabled={item.disabled.value}
-                                    onClick={() => {
-                                      item.onSelect();
-                                      selectedToolbarToolId.value = null;
-                                    }}
-                                    className="sb-tool-context-menu-item"
-                                    role="menuitem"
-                                  >
-                                    <MenuItemIcon />
-                                    <span>{translateTitle(t, item.title)}</span>
-                                  </button>
+                              className="sb-tool-context-menu"
+                              role="menu"
+                              onKeyDown={(event) => {
+                                if (event.key === "Escape") {
+                                  event.preventDefault();
+                                  selectedToolbarToolId.value = null;
+                                  return;
+                                }
+                                handleVerticalListKeyNav(
+                                  event,
+                                  event.currentTarget
                                 );
-                              })}
+                              }}
+                            >
+                              <div
+                                className="sb-tool-context-menu-scroll"
+                                ref={attachMenuOverflowFade}
+                              >
+                                {menuItems.map((item) => {
+                                  const MenuItemIcon = item.icon;
+                                  return (
+                                    <button
+                                      key={item.id}
+                                      disabled={item.disabled.value}
+                                      onClick={() => {
+                                        item.onSelect();
+                                        selectedToolbarToolId.value = null;
+                                      }}
+                                      className="sb-tool-context-menu-item"
+                                      role="menuitem"
+                                    >
+                                      <MenuItemIcon />
+                                      <span>
+                                        {translateTitle(t, item.title)}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div
+                                className="sb-tool-context-menu-fade"
+                                hidden
+                              />
                             </div>
-                            <div className="sb-tool-context-menu-fade" hidden />
-                          </div>
-                        )}
-                    </div>
-                  );
-                  if (
-                    tool.id === "previous-chapter" ||
-                    tool.id === "previous-item"
-                  ) {
-                    return [
-                      itemElement,
-                      <div
-                        key="divider-after-prev"
-                        className="sb-reader-toolbar-divider"
-                        aria-hidden="true"
-                      />,
-                    ];
-                  }
-                  if (tool.id === "next-chapter" || tool.id === "next-item") {
-                    return [
-                      <div
-                        key="divider-before-next"
-                        className="sb-reader-toolbar-divider"
-                        aria-hidden="true"
-                      />,
-                      itemElement,
-                    ];
-                  }
-                  return [itemElement];
-                })
+                          )}
+                      </div>
+                    );
+                    if (
+                      tool.id === "previous-chapter" ||
+                      tool.id === "previous-item"
+                    ) {
+                      return [
+                        itemElement,
+                        <div
+                          key="divider-after-prev"
+                          className="sb-reader-toolbar-divider"
+                          aria-hidden="true"
+                        />,
+                      ];
+                    }
+                    if (tool.id === "next-chapter" || tool.id === "next-item") {
+                      return [
+                        <div
+                          key="divider-before-next"
+                          className="sb-reader-toolbar-divider"
+                          aria-hidden="true"
+                        />,
+                        itemElement,
+                      ];
+                    }
+                    return [itemElement];
+                  })}
+                </>
               )}
             </div>
           )}

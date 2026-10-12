@@ -1,11 +1,12 @@
 import "../SettingsPage/SettingsPage.css";
+import "./CustomizationEditPane.css";
 // `.searchbar`/`.search-icon`/`.filters-icon` are defined here rather than in
 // a shared stylesheet — imported explicitly rather than relying on
 // `BibleSelector.tsx` happening to already be in the bundle.
 import "../BibleSelector/BibleSelector.css";
 import { signal, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
-import { useMemo } from "preact/hooks";
+import { useMemo, useRef } from "preact/hooks";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import {
@@ -54,6 +55,13 @@ import {
 } from "../ContextMenu/ContextMenu";
 import { TranslationList } from "../TranslationList/TranslationList";
 import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
+import { localizedThemeName } from "../SettingsPage/localizedThemeName";
+import {
+  getDefaultTranslationLabel,
+  isPaintableColor,
+  ThemeLivePreview,
+  ThemeThumbnail,
+} from "./CustomizationPreviews";
 
 // The picture editor pulls in `react-avatar-editor`, so it's only fetched on
 // the "Upload logo" click rather than at boot, same as SettingsPage does.
@@ -86,7 +94,9 @@ function getContrastWarning(
   }
   const foreground = resolvedTheme.variables[pair.foreground];
   const background = resolvedTheme.variables[pair.background];
-  if (!foreground || !background) {
+  // `inherit`/`transparent` take their color from elsewhere on the page, so
+  // there's no fixed pair of colors here to measure.
+  if (!isPaintableColor(foreground) || !isPaintableColor(background)) {
     return null;
   }
   const ratio = getContrastRatio(foreground, background);
@@ -96,8 +106,8 @@ function getContrastWarning(
   return { ratio, label: pair.label };
 }
 
-/** Small inline warning icon for a color row whose contrast is too low to read comfortably. */
-function ContrastWarningIcon(props: { ratio: number; label: string }) {
+/** Low-contrast badge on a color tile, e.g. "3.0:1", with the full warning as its tooltip. */
+function ContrastBadge(props: { ratio: number; label: string }) {
   const { ratio, label } = props;
   const { t } = useI18n();
   const message = t("low-contrast-warning", {
@@ -108,12 +118,11 @@ function ContrastWarningIcon(props: { ratio: number; label: string }) {
       "{{label}}: contrast is only {{ratio}}:1 — aim for at least {{minRatio}}:1 so text stays readable.",
   });
   return (
-    <span
-      className="sb-theme-contrast-warning material-symbols-outlined"
-      title={message}
-      aria-label={message}
-    >
-      warning
+    <span className="sb-cz-contrast-badge" title={message} aria-label={message}>
+      {t("contrast-ratio", {
+        ratio: ratio.toFixed(1),
+        defaultValue: "{{ratio}}:1",
+      })}
     </span>
   );
 }
@@ -517,7 +526,7 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
 
 function CustomizationEditMainView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { customizations, bibleData } = state;
+  const { customizations, bibleData, extensions } = state;
   const { t } = useI18n();
   const confirmingDelete = useSignal(false);
   const isUploadingLogo = useSignal(false);
@@ -576,55 +585,39 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
   };
 
   if (!record) {
-    return (
-      <div className="sb-settings-page">
-        <section className="sb-settings-section">
-          <div className="sb-settings-empty-state">
-            <p>
-              {t("customization-not-found", {
-                defaultValue: "This customization could not be found.",
-              })}
-            </p>
-          </div>
-        </section>
-      </div>
-    );
+    return <CustomizationNotFound />;
   }
 
-  // The saved id can be absent from the catalog — a translation later
-  // removed, or simply the brief window before `availableTranslations` has
-  // loaded — in which case there's nothing to name it by except the raw id.
-  const defaultTranslationLabel = (() => {
-    if (!record.defaultTranslationId) {
-      return t("customization-default-translation-none", {
-        defaultValue: "Seed Bible's default",
-      });
+  const defaultTranslationLabel = getDefaultTranslationLabel(
+    t,
+    record,
+    bibleData.availableTranslations.value
+  );
+
+  const availabilityCounts = { available: 0, "auto-installed": 0, hidden: 0 };
+  for (const entry of extensions.extensions.value) {
+    if (entry.extension !== null) {
+      availabilityCounts[getExtensionAvailability(record, entry.id)] += 1;
     }
-    const translation = bibleData.availableTranslations.value.find(
-      (t) => t.id === record.defaultTranslationId
-    );
-    if (translation) {
-      return `${translation.name} (${translation.shortName})`;
-    }
-    return t("customization-default-translation-unavailable", {
-      id: record.defaultTranslationId,
-      defaultValue: "{{id}} (unavailable)",
-    });
-  })();
+  }
 
   return (
-    <div className="sb-settings-page">
-      <section className="sb-settings-section">
+    <div className="sb-settings-page sb-cz-page">
+      <section className="sb-settings-section sb-cz-body">
         <div
           className="sb-settings-field-row"
           data-tutorial="customization-name"
         >
-          <label className="sb-settings-field-label">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-customization-name"
+          >
             {t("customization-name", { defaultValue: "Name" })}
           </label>
           <input
+            id="sb-customization-name"
             type="text"
-            className="sb-settings-text-input"
+            className="sb-cz-input"
             value={record.name}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLInputElement;
@@ -633,213 +626,287 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           />
         </div>
 
+        <div
+          className="sb-settings-field-row"
+          data-tutorial="customization-logo"
+        >
+          <span className="sb-settings-field-label">
+            {t("logo", { defaultValue: "Logo" })}
+          </span>
+          {record.logoUrl ? (
+            <div className="sb-cz-logo sb-cz-logo-filled">
+              <img
+                className="sb-cz-logo-image"
+                src={record.logoUrl}
+                alt={t("logo", { defaultValue: "Logo" })}
+              />
+              <div className="sb-cz-logo-actions">
+                <button
+                  type="button"
+                  className="sb-cz-button"
+                  onClick={handleUploadLogo}
+                  disabled={isUploadingLogo.value}
+                >
+                  {t("replace-logo", { defaultValue: "Replace" })}
+                </button>
+                <button
+                  type="button"
+                  className="sb-cz-button"
+                  onClick={() => void customizations.removeEditingLogo()}
+                  disabled={isUploadingLogo.value}
+                >
+                  {t("remove-logo", { defaultValue: "Remove logo" })}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="sb-cz-logo"
+              onClick={handleUploadLogo}
+              disabled={isUploadingLogo.value}
+            >
+              <span className="sb-cz-logo-icon">
+                <span className="material-symbols-outlined">upload</span>
+              </span>
+              <span className="sb-cz-logo-text">
+                <span className="sb-cz-logo-title">
+                  {t("upload-a-logo", { defaultValue: "Upload a logo" })}
+                </span>
+                <span className="sb-cz-logo-hint">
+                  {t("upload-logo-hint", {
+                    defaultValue: "Square PNG or SVG, at least 256px",
+                  })}
+                </span>
+              </span>
+            </button>
+          )}
+        </div>
+
         <ContextMenuWithButton
           type="button"
-          buttonClassName="sb-settings-nav-item"
+          buttonClassName="sb-cz-row"
           menuClassName="sb-customization-translation-picker-menu"
           icon={
             <>
-              <span className="sb-settings-nav-label">
+              <span className="sb-cz-row-label">
                 {t("customization-default-translation", {
                   defaultValue: "Default translation",
                 })}
               </span>
-              <span className="sb-settings-nav-value">
-                {defaultTranslationLabel}
-              </span>
-              <span className="material-symbols-outlined rtl-mirror">
-                chevron_right
-              </span>
+              <span className="sb-cz-row-value">{defaultTranslationLabel}</span>
+              <span className="material-symbols-outlined">expand_more</span>
             </>
           }
         >
           <DefaultTranslationPickerMenuContent state={state} />
         </ContextMenuWithButton>
 
-        <div
-          className="sb-settings-field-row"
-          data-tutorial="customization-logo"
-        >
-          <label className="sb-settings-field-label">
-            {t("logo", { defaultValue: "Logo" })}
-          </label>
-          <div className="sb-customization-logo-row">
-            {record.logoUrl ? (
-              <img
-                className="sb-customization-logo-preview"
-                src={record.logoUrl}
-                alt={t("logo", { defaultValue: "Logo" })}
-              />
-            ) : (
-              <div
-                className="sb-customization-logo-placeholder"
-                aria-hidden="true"
-              >
-                <span className="material-symbols-outlined">image</span>
-              </div>
-            )}
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={handleUploadLogo}
-              disabled={isUploadingLogo.value}
-            >
-              {t("upload-logo", { defaultValue: "Upload logo" })}
-            </button>
-            {record.logoUrl && (
-              <button
-                type="button"
-                className="sb-settings-action-button"
-                onClick={() => void customizations.removeEditingLogo()}
-                disabled={isUploadingLogo.value}
-              >
-                {t("remove-logo", { defaultValue: "Remove logo" })}
-              </button>
-            )}
-          </div>
-        </div>
-
-        <section
-          className="sb-settings-section"
-          data-tutorial="customization-themes"
-        >
+        <div className="sb-cz-group" data-tutorial="customization-themes">
           <h3 className="sb-settings-subheading">
             {t("variants", { defaultValue: "Themes" })}
           </h3>
-          <ul className="sb-settings-list">
-            {record.variants.map((variant) => (
-              <li
-                key={variant.id}
-                className="sb-settings-nav-item sb-customization-row"
-                onClick={() => openVariant(variant.id)}
-              >
-                <span className="sb-customization-swatches" aria-hidden="true">
-                  <span
-                    className="sb-customization-swatch"
-                    style={{ background: variant.themes.primaryColor }}
-                  />
-                  <span
-                    className="sb-customization-swatch"
-                    style={{ background: variant.themes.secondaryColor }}
-                  />
-                  <span
-                    className="sb-customization-swatch"
-                    style={{ background: variant.themes.tertiaryColor }}
-                  />
-                </span>
-                <span className="sb-settings-nav-label">{variant.name}</span>
-                {variant.id === record.defaultVariantId && (
-                  <span className="sb-customization-active-badge">
-                    {t("default", { defaultValue: "Default" })}
-                  </span>
-                )}
-                {variant.id !== record.defaultVariantId && (
-                  <ContextMenuWithButton
-                    buttonClassName="sb-extension-row-action-button"
-                    aria-label={t("variant-options", {
-                      defaultValue: "Theme options",
-                    })}
-                    onClick={(e) => e.stopPropagation()}
+          <ul className="sb-cz-theme-grid">
+            {record.variants.map((variant) => {
+              const isDefault = variant.id === record.defaultVariantId;
+              const basePreset =
+                customizations.resolveVariantBaseTheme(variant);
+              return (
+                <li key={variant.id} className="sb-cz-theme-card">
+                  <button
+                    type="button"
+                    className="sb-cz-theme-card-open"
+                    onClick={() => openVariant(variant.id)}
                   >
-                    <ContextMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        customizations.setEditingDefaultVariant(variant.id);
-                      }}
-                    >
-                      <MaterialIcon className="sb-context-menu-item-icon">
-                        star
-                      </MaterialIcon>
-                      <span>
-                        {t("set-as-default-variant", {
-                          defaultValue: "Set as default",
-                        })}
+                    <ThemeThumbnail
+                      theme={customizations.resolveEditingVariantTheme(variant)}
+                    />
+                    <span className="sb-cz-card-text">
+                      <span className="sb-cz-card-title" dir="auto">
+                        {variant.name}
                       </span>
-                    </ContextMenuItem>
-                  </ContextMenuWithButton>
-                )}
-                <span className="material-symbols-outlined rtl-mirror">
-                  chevron_right
-                </span>
-              </li>
-            ))}
+                      {isDefault ? (
+                        <span className="sb-cz-card-subtitle sb-cz-card-subtitle-accent">
+                          {t("default", { defaultValue: "Default" })}
+                        </span>
+                      ) : (
+                        <span className="sb-cz-card-subtitle">
+                          {t("based-on-theme", {
+                            name: localizedThemeName(t, basePreset),
+                            defaultValue: "Based on {{name}}",
+                          })}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                  {(!isDefault || record.variants.length > 1) && (
+                    <ContextMenuWithButton
+                      anchorClassName="sb-cz-card-menu"
+                      buttonClassName="sb-cz-icon-button"
+                      aria-label={t("variant-options", {
+                        defaultValue: "Theme options",
+                      })}
+                    >
+                      {!isDefault && (
+                        <ContextMenuItem
+                          onClick={() =>
+                            customizations.setEditingDefaultVariant(variant.id)
+                          }
+                        >
+                          <MaterialIcon className="sb-context-menu-item-icon">
+                            star
+                          </MaterialIcon>
+                          <span>
+                            {t("set-as-default-variant", {
+                              defaultValue: "Set as default",
+                            })}
+                          </span>
+                        </ContextMenuItem>
+                      )}
+                      {record.variants.length > 1 && (
+                        <ContextMenuItem
+                          onClick={() =>
+                            customizations.removeEditingVariant(variant.id)
+                          }
+                        >
+                          <MaterialIcon className="sb-context-menu-item-icon">
+                            delete
+                          </MaterialIcon>
+                          <span>
+                            {t("delete-variant", { defaultValue: "Delete" })}
+                          </span>
+                        </ContextMenuItem>
+                      )}
+                    </ContextMenuWithButton>
+                  )}
+                </li>
+              );
+            })}
+            <li>
+              <button
+                type="button"
+                className="sb-cz-add-card"
+                onClick={handleAddVariant}
+              >
+                <span className="material-symbols-outlined">add</span>
+                {t("add-variant", { defaultValue: "Add theme" })}
+              </button>
+            </li>
           </ul>
-          <div className="sb-settings-actions">
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={handleAddVariant}
-            >
-              {t("add-variant", { defaultValue: "Add theme" })}
-            </button>
-          </div>
-        </section>
+        </div>
 
         <button
           type="button"
-          className="sb-settings-nav-item"
+          className="sb-cz-row sb-cz-row-tall"
           onClick={() => {
             customizationEditView.value = "edit-extensions";
           }}
         >
-          <span>
-            {t("customization-extensions", { defaultValue: "Extensions" })}
+          <span className="material-symbols-outlined sb-cz-row-icon">
+            extension
+          </span>
+          <span className="sb-cz-row-text">
+            <span className="sb-cz-row-label">
+              {t("customization-extensions", { defaultValue: "Extensions" })}
+            </span>
+            <span className="sb-cz-row-hint">
+              {t("customization-extensions-summary", {
+                available: availabilityCounts.available,
+                auto: availabilityCounts["auto-installed"],
+                hidden: availabilityCounts.hidden,
+                defaultValue:
+                  "{{available}} available · {{auto}} auto · {{hidden}} hidden",
+              })}
+            </span>
           </span>
           <span className="material-symbols-outlined rtl-mirror">
             chevron_right
           </span>
         </button>
+      </section>
 
-        <div className="sb-settings-actions">
+      <footer className="sb-cz-footer">
+        {confirmingDelete.value ? (
           <button
             type="button"
-            className="sb-settings-save-button"
-            onClick={() => void handleSave()}
-          >
-            {t("save", { defaultValue: "Save" })}
-          </button>
-
-          <button
-            type="button"
-            className="sb-settings-action-button"
+            className="sb-cz-button sb-cz-button-danger"
             onClick={() => {
-              navigator.clipboard.writeText(
-                customizations.getShareLink(record)
-              );
-              state.app.toast(
-                t("customization-link-copied", {
-                  defaultValue: "Customization link copied to clipboard",
-                })
-              );
+              void customizations.remove(record.id);
+              state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID);
             }}
           >
-            {t("share", { defaultValue: "Share" })}
+            <span className="material-symbols-outlined">delete</span>
+            {t("confirm-delete-customization", {
+              defaultValue: "Confirm delete",
+            })}
           </button>
+        ) : (
+          <button
+            type="button"
+            className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
+            onClick={() => {
+              confirmingDelete.value = true;
+            }}
+          >
+            <span className="material-symbols-outlined">delete</span>
+            {t("delete-customization", { defaultValue: "Delete" })}
+          </button>
+        )}
+        <span className="sb-cz-footer-spacer" />
+        <button
+          type="button"
+          className="sb-cz-button"
+          onClick={() => {
+            navigator.clipboard.writeText(customizations.getShareLink(record));
+            state.app.toast(
+              t("customization-link-copied", {
+                defaultValue: "Customization link copied to clipboard",
+              })
+            );
+          }}
+        >
+          <span className="material-symbols-outlined">share</span>
+          {t("share", { defaultValue: "Share" })}
+        </button>
+        <SaveButton
+          hasUnsavedChanges={customizations.hasUnsavedChanges.value}
+          onSave={() => void handleSave()}
+        />
+      </footer>
+    </div>
+  );
+}
 
-          {confirmingDelete.value ? (
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => {
-                void customizations.remove(record.id);
-                state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID);
-              }}
-            >
-              {t("confirm-delete-customization", {
-                defaultValue: "Confirm delete",
+/**
+ * Edits auto-save a few seconds after they're made, so Save is only for
+ * saving right now — it's disabled once there's nothing left waiting.
+ */
+function SaveButton(props: { hasUnsavedChanges: boolean; onSave: () => void }) {
+  const { t } = useI18n();
+  return (
+    <button
+      type="button"
+      className="sb-cz-button sb-cz-button-primary"
+      disabled={!props.hasUnsavedChanges}
+      onClick={props.onSave}
+    >
+      {t("save", { defaultValue: "Save" })}
+    </button>
+  );
+}
+
+function CustomizationNotFound(props: { message?: string }) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-settings-page">
+      <section className="sb-settings-section">
+        <div className="sb-settings-empty-state">
+          <p>
+            {props.message ??
+              t("customization-not-found", {
+                defaultValue: "This customization could not be found.",
               })}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => {
-                confirmingDelete.value = true;
-              }}
-            >
-              {t("delete-customization", { defaultValue: "Delete" })}
-            </button>
-          )}
+          </p>
         </div>
       </section>
     </div>
@@ -854,19 +921,7 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
   const record = customizations.editingCustomization.value;
 
   if (!record) {
-    return (
-      <div className="sb-settings-page">
-        <section className="sb-settings-section">
-          <div className="sb-settings-empty-state">
-            <p>
-              {t("customization-not-found", {
-                defaultValue: "This customization could not be found.",
-              })}
-            </p>
-          </div>
-        </section>
-      </div>
-    );
+    return <CustomizationNotFound />;
   }
 
   const installableExtensions = extensions.extensions.value.filter(
@@ -977,12 +1032,12 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
   };
 
   return (
-    <div className="sb-settings-page">
-      <section className="sb-settings-section">
-        <p className="sb-settings-field-description">
+    <div className="sb-settings-page sb-cz-page">
+      <section className="sb-settings-section sb-cz-body">
+        <p className="sb-cz-intro">
           {t("customization-extensions-description", {
             defaultValue:
-              "Choose how each extension behaves for anyone using this customization: available to install themselves, installed automatically with no prompt, or hidden from the extensions list entirely.",
+              "Choose how each extension behaves for anyone using this customization.",
           })}
         </p>
         {installableExtensions.length === 0 ? (
@@ -994,66 +1049,129 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
             </p>
           </div>
         ) : (
-          installableExtensions.map((entry) => (
-            <div className="sb-settings-field-row" key={entry.id}>
-              <label
-                className="sb-settings-field-label"
-                htmlFor={`sb-customization-extension-${entry.id}`}
-              >
-                {
-                  // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
-                  t("title", { ns: entry.id, defaultValue: entry.id })
-                }
-              </label>
-              <select
-                id={`sb-customization-extension-${entry.id}`}
-                className="sb-settings-language-select"
-                value={getExtensionAvailability(record, entry.id)}
-                onChange={(event: Event) => {
-                  const target = event.currentTarget as HTMLSelectElement;
-                  customizations.setEditingExtensionAvailability(
-                    entry.id,
-                    target.value as ExtensionAvailability
-                  );
-                }}
-              >
-                <option value="available">
-                  {t("extension-availability-available", {
-                    defaultValue: "Available",
-                  })}
-                </option>
-                <option value="auto-installed">
-                  {t("extension-availability-auto-installed", {
-                    defaultValue: "Auto-installed",
-                  })}
-                </option>
-                <option value="hidden">
-                  {t("extension-availability-hidden", {
-                    defaultValue: "Hidden",
-                  })}
-                </option>
-              </select>
-              {Object.keys(entry.extension?.meta.settings ?? {}).length > 0 && (
-                <button
-                  type="button"
-                  className="sb-extension-row-action-button"
-                  onClick={() => handleConfigureDefaults(entry)}
-                  aria-label={t("configure-extension-defaults", {
-                    defaultValue: "Configure defaults",
-                  })}
-                  title={t("configure-extension-defaults", {
-                    defaultValue: "Configure defaults",
-                  })}
-                >
-                  <span className="material-symbols-outlined">tune</span>
-                </button>
-              )}
-            </div>
-          ))
+          <ul className="sb-cz-list">
+            {installableExtensions.map((entry) => {
+              const availability = getExtensionAvailability(record, entry.id);
+              const selectId = `sb-customization-extension-${entry.id}`;
+              return (
+                <li className="sb-cz-list-row" key={entry.id}>
+                  <span className="sb-cz-row-text">
+                    <label className="sb-cz-row-label" htmlFor={selectId}>
+                      {
+                        // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+                        t("title", { ns: entry.id, defaultValue: entry.id })
+                      }
+                    </label>
+                    <span className="sb-cz-row-hint">
+                      <ExtensionAvailabilityHint availability={availability} />
+                    </span>
+                  </span>
+                  {Object.keys(entry.extension?.meta.settings ?? {}).length >
+                    0 && (
+                    <button
+                      type="button"
+                      className="sb-cz-icon-button"
+                      onClick={() => handleConfigureDefaults(entry)}
+                      aria-label={t("configure-extension-defaults", {
+                        defaultValue: "Configure defaults",
+                      })}
+                      title={t("configure-extension-defaults", {
+                        defaultValue: "Configure defaults",
+                      })}
+                    >
+                      <span className="material-symbols-outlined">tune</span>
+                    </button>
+                  )}
+                  <span
+                    className={`sb-cz-pill-select sb-cz-pill-select-${availability}`}
+                  >
+                    <span
+                      className="material-symbols-outlined sb-cz-pill-select-icon"
+                      aria-hidden="true"
+                    >
+                      {EXTENSION_AVAILABILITY_ICONS[availability]}
+                    </span>
+                    <select
+                      id={selectId}
+                      value={availability}
+                      onChange={(event: Event) => {
+                        const target = event.currentTarget as HTMLSelectElement;
+                        customizations.setEditingExtensionAvailability(
+                          entry.id,
+                          target.value as ExtensionAvailability
+                        );
+                      }}
+                    >
+                      <option value="available">
+                        {t("extension-availability-available", {
+                          defaultValue: "Available",
+                        })}
+                      </option>
+                      <option value="auto-installed">
+                        {t("extension-availability-auto-installed", {
+                          defaultValue: "Auto-installed",
+                        })}
+                      </option>
+                      <option value="hidden">
+                        {t("extension-availability-hidden", {
+                          defaultValue: "Hidden",
+                        })}
+                      </option>
+                    </select>
+                    <span
+                      className="material-symbols-outlined sb-cz-pill-select-caret"
+                      aria-hidden="true"
+                    >
+                      expand_more
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </section>
     </div>
   );
+}
+
+const EXTENSION_AVAILABILITY_ICONS: Record<ExtensionAvailability, string> = {
+  available: "radio_button_unchecked",
+  "auto-installed": "check_circle",
+  hidden: "visibility_off",
+};
+
+/** What an extension's availability means for someone using the customization. */
+function ExtensionAvailabilityHint(props: {
+  availability: ExtensionAvailability;
+}) {
+  const { t } = useI18n();
+  switch (props.availability) {
+    case "auto-installed":
+      return (
+        <>
+          {t("extension-availability-auto-installed-hint", {
+            defaultValue: "Installed for everyone automatically",
+          })}
+        </>
+      );
+    case "hidden":
+      return (
+        <>
+          {t("extension-availability-hidden-hint", {
+            defaultValue: "Hidden from the extensions list",
+          })}
+        </>
+      );
+    default:
+      return (
+        <>
+          {t("extension-availability-available-hint", {
+            defaultValue: "People can install it themselves",
+          })}
+        </>
+      );
+  }
 }
 
 /** How many more language groups each "load more" reveals. */
@@ -1272,17 +1390,11 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
 
   if (!record || !variant) {
     return (
-      <div className="sb-settings-page">
-        <section className="sb-settings-section">
-          <div className="sb-settings-empty-state">
-            <p>
-              {t("variant-not-found", {
-                defaultValue: "This theme could not be found.",
-              })}
-            </p>
-          </div>
-        </section>
-      </div>
+      <CustomizationNotFound
+        message={t("variant-not-found", {
+          defaultValue: "This theme could not be found.",
+        })}
+      />
     );
   }
 
@@ -1291,18 +1403,24 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   const resolvedTheme = customizations.resolveEditingVariantTheme(variant);
 
   return (
-    <div className="sb-settings-page">
-      <section className="sb-settings-section">
+    <div className="sb-settings-page sb-cz-page">
+      <section className="sb-settings-section sb-cz-body">
+        <ThemeLivePreview theme={resolvedTheme} />
+
         <div
           className="sb-settings-field-row"
           data-tutorial="theme-variant-name"
         >
-          <label className="sb-settings-field-label">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-customization-variant-name"
+          >
             {t("variant-name", { defaultValue: "Name" })}
           </label>
           <input
+            id="sb-customization-variant-name"
             type="text"
-            className="sb-settings-text-input"
+            className="sb-cz-input"
             value={variant.name}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLInputElement;
@@ -1312,42 +1430,47 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
         </div>
 
         <div className="sb-settings-field-row" data-tutorial="theme-base">
-          <label
+          <span
             className="sb-settings-field-label"
-            htmlFor="sb-customization-variant-base-theme"
-          >
-            {t("base-theme", { defaultValue: "Base theme" })}
-          </label>
-          <select
             id="sb-customization-variant-base-theme"
-            className="sb-settings-language-select"
-            value=""
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              if (target.value) {
-                customizations.applyPresetToEditingVariant(
-                  variant.id,
-                  target.value
-                );
-                target.value = "";
-              }
-            }}
           >
-            <option value="">
-              {t("select-base-theme", {
-                defaultValue: "Base this theme on…",
-              })}
-            </option>
-            {theme.themes.value.map((preset) => (
-              <option key={preset.id} value={preset.id}>
-                {preset.name}
-              </option>
-            ))}
-          </select>
-          <p className="sb-settings-field-description">
+            {t("based-on", { defaultValue: "Based on" })}
+          </span>
+          <div
+            className="sb-cz-preset-grid"
+            role="radiogroup"
+            aria-labelledby="sb-customization-variant-base-theme"
+          >
+            {theme.themes.value.map((preset) => {
+              const isSelected = preset.id === variant.baseTheme;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  className={`sb-cz-preset${
+                    isSelected ? " sb-cz-preset-selected" : ""
+                  }`}
+                  onClick={() =>
+                    customizations.applyPresetToEditingVariant(
+                      variant.id,
+                      preset.id
+                    )
+                  }
+                >
+                  <ThemeThumbnail theme={preset} />
+                  <span className="sb-cz-preset-name">
+                    {localizedThemeName(t, preset)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="sb-cz-hint">
             {t("base-theme-description", {
               defaultValue:
-                "Changes which preset this theme falls back to for anything you haven't customized. Your own edits are kept.",
+                "Anything you haven't changed follows this preset. Your own edits are kept.",
             })}
           </p>
         </div>
@@ -1355,95 +1478,59 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
         {CUSTOMIZATION_COLOR_GROUPS.map((group) => (
           <div
             key={group.id}
-            className="sb-theme-colors-group"
+            className="sb-cz-group"
             data-tutorial={`theme-group-${group.id}`}
           >
             <h3 className="sb-settings-subheading">{group.title}</h3>
-            <ul className="sb-theme-colors-list">
+            <ul className="sb-cz-tile-grid">
               {group.fields.map((field) => {
-                const value = resolvedTheme.variables[field.key] ?? "";
-                const isOverridden = variant.themes[field.key] !== undefined;
                 const label = t(`customization-${field.key}`, {
                   defaultValue: field.label,
                 });
-                const contrastWarning = getContrastWarning(
-                  field.key,
-                  resolvedTheme
-                );
                 return (
-                  <li key={field.key} className="sb-theme-color-row">
-                    <div className="sb-theme-color-row-main">
-                      <span className="sb-theme-color-label-row">
-                        <span className="sb-theme-color-label">{label}</span>
-                        {contrastWarning && (
-                          <ContrastWarningIcon
-                            ratio={contrastWarning.ratio}
-                            label={contrastWarning.label}
-                          />
-                        )}
-                      </span>
-                      <span className="sb-theme-color-value">
-                        {value || "—"}
-                      </span>
-                    </div>
-                    <div className="sb-theme-color-row-controls">
-                      <LazyColorPicker
-                        value={normalizeHex(value)}
-                        className="sb-theme-color-input"
-                        ariaLabel={label}
-                        onChange={(color) => {
-                          customizations.setEditingVariantColor(
-                            variant.id,
-                            field.key,
-                            color
-                          );
-                        }}
-                        onPreview={(color) => {
-                          customizations.previewEditingVariantColor(
-                            variant.id,
-                            field.key,
-                            color
-                          );
-                        }}
-                        onCancel={() => {
-                          customizations.clearPreviewEditingVariantColor(
-                            variant.id,
-                            field.key
-                          );
-                        }}
-                      />
-                      {isOverridden && (
-                        <button
-                          type="button"
-                          className="sb-theme-color-reset"
-                          title={t("reset-to-base-theme", {
-                            defaultValue: "Reset to base theme",
-                          })}
-                          aria-label={`Reset ${label}`}
-                          onClick={() =>
-                            customizations.resetEditingVariantField(
-                              variant.id,
-                              field.key
-                            )
-                          }
-                        >
-                          <span className="material-symbols-outlined">
-                            restart_alt
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                  </li>
+                  <ColorTile
+                    key={field.key}
+                    label={label}
+                    value={resolvedTheme.variables[field.key] ?? ""}
+                    isOverridden={variant.themes[field.key] !== undefined}
+                    contrastWarning={getContrastWarning(
+                      field.key,
+                      resolvedTheme
+                    )}
+                    onChange={(color) =>
+                      customizations.setEditingVariantColor(
+                        variant.id,
+                        field.key,
+                        color
+                      )
+                    }
+                    onPreview={(color) =>
+                      customizations.previewEditingVariantColor(
+                        variant.id,
+                        field.key,
+                        color
+                      )
+                    }
+                    onCancel={() =>
+                      customizations.clearPreviewEditingVariantColor(
+                        variant.id,
+                        field.key
+                      )
+                    }
+                    onReset={() =>
+                      customizations.resetEditingVariantField(
+                        variant.id,
+                        field.key
+                      )
+                    }
+                  />
                 );
               })}
             </ul>
           </div>
         ))}
 
-        <div
-          className="sb-theme-colors-group"
-          data-tutorial="theme-group-fonts"
-        >
+        <div className="sb-cz-group" data-tutorial="theme-group-fonts">
           <h3 className="sb-settings-subheading">
             {t("customization-fonts", { defaultValue: "Fonts" })}
           </h3>
@@ -1462,14 +1549,11 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
           ))}
         </div>
 
-        <div
-          className="sb-theme-colors-group"
-          data-tutorial="theme-group-highlights"
-        >
+        <div className="sb-cz-group" data-tutorial="theme-group-highlights">
           <h3 className="sb-settings-subheading">
             {t("highlight-colors", { defaultValue: "Highlight colors" })}
           </h3>
-          <ul className="sb-theme-colors-list">
+          <ul className="sb-cz-tile-grid">
             {DEFAULT_HIGHLIGHT_IDS.map((id) => {
               const effective = resolvedTheme.highlightColors[id];
               const bg = effective?.color ?? "";
@@ -1481,158 +1565,283 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                 contrastRatio !== null &&
                 contrastRatio < MIN_READABLE_CONTRAST_RATIO;
               return (
-                <li key={id} className="sb-theme-color-row">
-                  <div className="sb-theme-color-row-main">
-                    <span className="sb-theme-color-label-row">
-                      <span
-                        className="sb-highlight-preview-pill"
-                        style={{ background: bg, color: fg }}
-                        aria-hidden="true"
-                      >
-                        {label}
-                      </span>
-                      {hasLowContrast && (
-                        <ContrastWarningIcon
-                          ratio={contrastRatio}
-                          label={t("highlight-text-on-background", {
-                            label,
-                            defaultValue: "{{label}} text on its background",
-                          })}
-                        />
-                      )}
+                <li
+                  key={id}
+                  className={`sb-cz-tile${
+                    hasLowContrast ? " sb-cz-tile-warning" : ""
+                  }`}
+                >
+                  <span
+                    className="sb-cz-tile-swatch sb-cz-highlight-swatch"
+                    style={{ background: bg, color: fg }}
+                    aria-hidden="true"
+                  >
+                    {label}
+                  </span>
+                  <span className="sb-cz-tile-meta">
+                    <span className="sb-cz-highlight-pickers">
+                      <LazyColorPicker
+                        value={normalizeHex(bg)}
+                        className="sb-cz-highlight-picker"
+                        ariaLabel={t("id_highlight-background-color", { id })}
+                        onChange={(color) => {
+                          customizations.setEditingVariantHighlightColor(
+                            variant.id,
+                            id,
+                            { color }
+                          );
+                        }}
+                        onPreview={(color) => {
+                          customizations.previewEditingVariantHighlightColor(
+                            variant.id,
+                            id,
+                            { color }
+                          );
+                        }}
+                        onCancel={() => {
+                          customizations.clearPreviewEditingVariantHighlightField(
+                            variant.id,
+                            id,
+                            "color"
+                          );
+                        }}
+                      />
+                      <LazyColorPicker
+                        value={normalizeHex(fg)}
+                        className="sb-cz-highlight-picker"
+                        ariaLabel={t("id_highlight-text-color", { id })}
+                        onChange={(color) => {
+                          customizations.setEditingVariantHighlightColor(
+                            variant.id,
+                            id,
+                            { fontColor: color }
+                          );
+                        }}
+                        onPreview={(color) => {
+                          customizations.previewEditingVariantHighlightColor(
+                            variant.id,
+                            id,
+                            { fontColor: color }
+                          );
+                        }}
+                        onCancel={() => {
+                          customizations.clearPreviewEditingVariantHighlightField(
+                            variant.id,
+                            id,
+                            "fontColor"
+                          );
+                        }}
+                      />
                     </span>
-                    <span className="sb-theme-color-value">{bg || "—"}</span>
-                  </div>
-                  <div className="sb-theme-color-row-controls">
-                    <LazyColorPicker
-                      value={normalizeHex(bg)}
-                      className="sb-theme-color-input"
-                      ariaLabel={t("id_highlight-background-color", { id })}
-                      onChange={(color) => {
-                        customizations.setEditingVariantHighlightColor(
-                          variant.id,
-                          id,
-                          { color }
-                        );
-                      }}
-                      onPreview={(color) => {
-                        customizations.previewEditingVariantHighlightColor(
-                          variant.id,
-                          id,
-                          { color }
-                        );
-                      }}
-                      onCancel={() => {
-                        customizations.clearPreviewEditingVariantHighlightField(
-                          variant.id,
-                          id,
-                          "color"
-                        );
-                      }}
-                    />
-                    <LazyColorPicker
-                      value={normalizeHex(fg)}
-                      className="sb-theme-color-input"
-                      ariaLabel={t("id_highlight-text-color", { id })}
-                      onChange={(color) => {
-                        customizations.setEditingVariantHighlightColor(
-                          variant.id,
-                          id,
-                          { fontColor: color }
-                        );
-                      }}
-                      onPreview={(color) => {
-                        customizations.previewEditingVariantHighlightColor(
-                          variant.id,
-                          id,
-                          { fontColor: color }
-                        );
-                      }}
-                      onCancel={() => {
-                        customizations.clearPreviewEditingVariantHighlightField(
-                          variant.id,
-                          id,
-                          "fontColor"
-                        );
-                      }}
-                    />
-                    {isOverridden && (
-                      <button
-                        type="button"
-                        className="sb-theme-color-reset"
-                        title={t("reset-to-base-theme", {
-                          defaultValue: "Reset to base theme",
+                    {hasLowContrast && (
+                      <ContrastBadge
+                        ratio={contrastRatio}
+                        label={t("highlight-text-on-background", {
+                          label,
+                          defaultValue: "{{label}} text on its background",
                         })}
-                        aria-label={`Reset ${label}`}
-                        onClick={() =>
+                      />
+                    )}
+                    {isOverridden && (
+                      <ResetButton
+                        label={label}
+                        onReset={() =>
                           customizations.resetEditingVariantHighlightColor(
                             variant.id,
                             id
                           )
                         }
-                      >
-                        <span className="material-symbols-outlined">
-                          restart_alt
-                        </span>
-                      </button>
+                      />
                     )}
-                  </div>
+                  </span>
                 </li>
               );
             })}
           </ul>
         </div>
+      </section>
 
-        <div className="sb-settings-actions">
-          <button
-            type="button"
-            className="sb-settings-save-button"
-            onClick={() => void handleSave()}
-          >
-            {t("save", { defaultValue: "Save" })}
-          </button>
-
-          {!isDefault && (
+      <footer className="sb-cz-footer">
+        {canDelete &&
+          (confirmingDelete.value ? (
             <button
               type="button"
-              className="sb-settings-action-button"
-              onClick={() =>
-                customizations.setEditingDefaultVariant(variant.id)
-              }
+              className="sb-cz-button sb-cz-button-danger"
+              onClick={() => {
+                customizations.removeEditingVariant(variant.id);
+                customizationEditView.value = "edit";
+              }}
             >
-              {t("set-as-default-variant", { defaultValue: "Set as default" })}
+              <span className="material-symbols-outlined">delete</span>
+              {t("confirm-delete-variant", {
+                defaultValue: "Confirm delete",
+              })}
             </button>
-          )}
-
-          {canDelete &&
-            (confirmingDelete.value ? (
-              <button
-                type="button"
-                className="sb-settings-action-button"
-                onClick={() => {
-                  customizations.removeEditingVariant(variant.id);
-                  customizationEditView.value = "edit";
-                }}
-              >
-                {t("confirm-delete-variant", {
-                  defaultValue: "Confirm delete",
-                })}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="sb-settings-action-button"
-                onClick={() => {
-                  confirmingDelete.value = true;
-                }}
-              >
-                {t("delete-variant", { defaultValue: "Delete" })}
-              </button>
-            ))}
-        </div>
-      </section>
+          ) : (
+            <button
+              type="button"
+              className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
+              onClick={() => {
+                confirmingDelete.value = true;
+              }}
+            >
+              <span className="material-symbols-outlined">delete</span>
+              {t("delete-variant", { defaultValue: "Delete" })}
+            </button>
+          ))}
+        <span className="sb-cz-footer-spacer" />
+        {!isDefault && (
+          <button
+            type="button"
+            className="sb-cz-button"
+            onClick={() => customizations.setEditingDefaultVariant(variant.id)}
+          >
+            {t("set-as-default-variant", { defaultValue: "Set as default" })}
+          </button>
+        )}
+        <SaveButton
+          hasUnsavedChanges={customizations.hasUnsavedChanges.value}
+          onSave={() => void handleSave()}
+        />
+      </footer>
     </div>
   );
+}
+
+/** Small "back to the base theme's value" button for a field the user has overridden. */
+function ResetButton(props: { label: string; onReset: () => void }) {
+  const { t } = useI18n();
+  const title = t("reset-to-base-theme", {
+    defaultValue: "Reset to base theme",
+  });
+  return (
+    <button
+      type="button"
+      className="sb-cz-reset"
+      title={title}
+      aria-label={t("reset-field", {
+        label: props.label,
+        defaultValue: "Reset {{label}}",
+      })}
+      onClick={props.onReset}
+    >
+      <span className="material-symbols-outlined">restart_alt</span>
+    </button>
+  );
+}
+
+/**
+ * One color in the theme editor: a large swatch that opens the color picker,
+ * with the field's name and current value under it. The swatch is drawn here
+ * rather than by the picker's own trigger so a value that isn't a plain color
+ * (`transparent`, `inherit`) can show as "nothing" instead of black.
+ */
+function ColorTile(props: {
+  label: string;
+  value: string;
+  isOverridden: boolean;
+  contrastWarning: { ratio: number; label: string } | null;
+  onChange: (color: string) => void;
+  onPreview: (color: string) => void;
+  onCancel: () => void;
+  onReset: () => void;
+}) {
+  const { label, value, isOverridden, contrastWarning } = props;
+  const isOpen = useSignal(false);
+  const swatchRef = useRef<HTMLButtonElement | null>(null);
+  const paintable = isPaintableColor(value);
+
+  return (
+    <li className={`sb-cz-tile${contrastWarning ? " sb-cz-tile-warning" : ""}`}>
+      <button
+        ref={swatchRef}
+        type="button"
+        className={`sb-cz-tile-swatch${
+          paintable ? "" : " sb-cz-tile-swatch-unpainted"
+        }`}
+        style={paintable ? { background: value } : undefined}
+        aria-label={label}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen.value}
+        onClick={() => {
+          isOpen.value = !isOpen.value;
+        }}
+      />
+      <span className="sb-cz-tile-meta">
+        <span className="sb-cz-tile-text">
+          <span className="sb-cz-tile-label">{label}</span>
+          <span className="sb-cz-tile-value">{value || "—"}</span>
+        </span>
+        {contrastWarning && (
+          <ContrastBadge
+            ratio={contrastWarning.ratio}
+            label={contrastWarning.label}
+          />
+        )}
+        {isOverridden && <ResetButton label={label} onReset={props.onReset} />}
+      </span>
+      <LazyColorPicker
+        value={normalizeHex(value)}
+        showTrigger={false}
+        open={isOpen.value}
+        onOpenChange={(open) => {
+          isOpen.value = open;
+        }}
+        anchorRef={swatchRef}
+        ariaLabel={label}
+        onChange={props.onChange}
+        onPreview={props.onPreview}
+        onCancel={props.onCancel}
+      />
+    </li>
+  );
+}
+
+/** The sample text each font row is drawn with, matching where that font shows up in the reader. */
+function FontSample(props: { fieldKey: ThemeFontFamilyKey }) {
+  const { t } = useI18n();
+  switch (props.fieldKey) {
+    case "bookTitleFontFamily":
+      return (
+        <>
+          {t("customization-preview-book", {
+            defaultValue: "The Gospel of John",
+          })}
+        </>
+      );
+    case "chapterHeadingFontFamily":
+      return (
+        <>
+          {t("customization-font-sample-chapter", {
+            defaultValue: "Chapter 1",
+          })}
+        </>
+      );
+    case "verseFontFamily":
+      return (
+        <>
+          {t("customization-font-sample-verse", {
+            defaultValue: "In the beginning was the Word",
+          })}
+        </>
+      );
+    case "hebrewSubtitleFontFamily":
+      return (
+        <>
+          {t("customization-font-sample-hebrew-subtitle", {
+            defaultValue: "A Psalm of David",
+          })}
+        </>
+      );
+    default:
+      return (
+        <>
+          {t("customization-font-sample-default", {
+            defaultValue: "The quick brown fox",
+          })}
+        </>
+      );
+  }
 }
 
 /**
@@ -1669,85 +1878,90 @@ function CustomizationFontFieldRow(props: {
   const isCustom = forcedCustom.value || (!!value && !matchedPreset);
   const preset = isCustom ? undefined : matchedPreset;
   const customName = value.split(",")[0]?.trim() ?? "";
+  const selectId = `sb-customization-font-${fieldKey}`;
 
   return (
     <div className="sb-settings-field-row">
-      <label
-        className="sb-settings-field-label"
-        htmlFor={`sb-customization-font-${fieldKey}`}
-      >
+      <label className="sb-settings-field-label" htmlFor={selectId}>
         {label}
       </label>
-      <div className="sb-settings-field-row-controls">
-        <select
-          id={`sb-customization-font-${fieldKey}`}
-          className="sb-settings-language-select"
-          value={preset ? preset.name : "__custom__"}
-          onChange={(event: Event) => {
-            const target = event.currentTarget as HTMLSelectElement;
-            if (target.value === "__custom__") {
-              forcedCustom.value = true;
-              return;
-            }
-            forcedCustom.value = false;
-            const nextPreset = fieldPresets.find(
-              (p) => p.name === target.value
-            );
-            if (nextPreset) {
-              customizations.setEditingVariantFont(
-                variantId,
-                fieldKey,
-                nextPreset.value
-              );
-            }
-          }}
+      <div className="sb-cz-font-row">
+        <span
+          className="sb-cz-font-sample"
+          style={{ fontFamily: value || undefined }}
+          aria-hidden="true"
         >
-          {fieldPresets.map((p) => (
-            <option key={p.name} value={p.name}>
-              {p.name === "Default"
-                ? t("default", { defaultValue: "Default" })
-                : p.name}
-            </option>
-          ))}
-          <option value="__custom__">
-            {t("custom-font-option", { defaultValue: "Custom…" })}
-          </option>
-        </select>
-        {isCustom && (
-          <input
-            type="text"
-            className="sb-settings-text-input"
-            placeholder={t("custom-font-name-placeholder", {
-              defaultValue: "Google Font name",
-            })}
-            value={customName}
-            onInput={(event: Event) => {
-              const target = event.currentTarget as HTMLInputElement;
-              customizations.setEditingVariantFont(
-                variantId,
-                fieldKey,
-                buildCustomFontValue(target.value)
-              );
-            }}
-          />
-        )}
+          <FontSample fieldKey={fieldKey} />
+        </span>
         {isOverridden && (
-          <button
-            type="button"
-            className="sb-theme-color-reset"
-            title={t("reset-to-base-theme", {
-              defaultValue: "Reset to base theme",
-            })}
-            aria-label={`Reset ${label}`}
-            onClick={() => {
+          <ResetButton
+            label={label}
+            onReset={() => {
               forcedCustom.value = false;
               customizations.resetEditingVariantField(variantId, fieldKey);
             }}
-          >
-            <span className="material-symbols-outlined">restart_alt</span>
-          </button>
+          />
         )}
+        <span className="sb-cz-pill-select">
+          <select
+            id={selectId}
+            value={preset ? preset.name : "__custom__"}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+              if (target.value === "__custom__") {
+                forcedCustom.value = true;
+                return;
+              }
+              forcedCustom.value = false;
+              const nextPreset = fieldPresets.find(
+                (p) => p.name === target.value
+              );
+              if (nextPreset) {
+                customizations.setEditingVariantFont(
+                  variantId,
+                  fieldKey,
+                  nextPreset.value
+                );
+              }
+            }}
+          >
+            {fieldPresets.map((p) => (
+              <option key={p.name} value={p.name}>
+                {p.name === "Default"
+                  ? t("default", { defaultValue: "Default" })
+                  : p.name}
+              </option>
+            ))}
+            <option value="__custom__">
+              {t("custom-font-option", { defaultValue: "Custom…" })}
+            </option>
+          </select>
+          <span
+            className="material-symbols-outlined sb-cz-pill-select-caret"
+            aria-hidden="true"
+          >
+            expand_more
+          </span>
+        </span>
       </div>
+      {isCustom && (
+        <input
+          type="text"
+          className="sb-cz-input"
+          placeholder={t("custom-font-name-placeholder", {
+            defaultValue: "Google Font name",
+          })}
+          value={customName}
+          onInput={(event: Event) => {
+            const target = event.currentTarget as HTMLInputElement;
+            customizations.setEditingVariantFont(
+              variantId,
+              fieldKey,
+              buildCustomFontValue(target.value)
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

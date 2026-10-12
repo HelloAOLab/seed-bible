@@ -333,6 +333,34 @@
   transition: transform 0.3s ease;
 }
 
+/* Room above the chapter pill for the narration scrubber. Grows upwards, since
+ * the bar is anchored by its bottom edge. */
+.sb-reader-floating-nav-scrubbing {
+  height: 4.375rem;
+  padding-top: 2rem;
+}
+
+.sb-reader-floating-nav-group-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  min-width: 0;
+}
+
+.sb-reader-floating-nav-scrubber {
+  position: absolute;
+  bottom: calc(100% + 0.25rem);
+  left: 1rem;
+  right: 1rem;
+}
+
+/* Anchors the progress ring shown around the play button while paused. */
+.sb-reader-floating-nav-play-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+}
+
 /* Play button — peach circle with a dark glyph. The audio extension draws
    * its own filled circle + glyph via presentation `fill` attributes, which
    * CSS `fill` overrides, so we recolor it here to match the design without
@@ -1621,4 +1649,34 @@
     var(--sb-highlight-tan-color),
     var(--sb-highlight-yellow-color)
   );
+}
+
+/* Desktop narration controls. The progress row takes a line of its own along
+ * the top of the toolbar; `contain: inline-size` keeps its width out of the
+ * toolbar's sizing, so it spans the buttons below it instead of widening the
+ * toolbar to fit itself.
+ *
+ * Wrapping is what puts the progress row on its own line, but it would also
+ * let the buttons wrap: a toolbar pinned at `left: 50%` may only be half the
+ * screen wide, which narrow desktop windows run out of. Sizing it to its
+ * content keeps the buttons on one line, as they are without audio. */
+.sb-reader-toolbar-has-audio {
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 0;
+  width: max-content;
+}
+
+.sb-reader-toolbar-audio {
+  flex: 1 0 100%;
+  contain: inline-size;
+  padding: 0.375rem 0.625rem 0;
+}
+
+.sb-reader-toolbar-audio-stop > svg circle {
+  fill: var(--sb-font-color);
+}
+
+.sb-reader-toolbar-audio-stop > svg rect {
+  fill: var(--sb-reader-toolbar-background);
 }

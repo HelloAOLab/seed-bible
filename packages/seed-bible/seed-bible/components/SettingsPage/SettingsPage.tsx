@@ -1,4 +1,5 @@
 import "./SettingsPage.css";
+import { localizedThemeName } from "./localizedThemeName";
 import { useComputed, useSignal } from "@preact/signals";
 import { ScriptureLineHeightIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -29,6 +30,10 @@ import {
   buildCustomizationTutorialSteps,
   openCustomizationEditPane,
 } from "../CustomizationEditPane/CustomizationEditPane";
+import {
+  CustomizationCardPreview,
+  getDefaultTranslationLabel,
+} from "../CustomizationEditPane/CustomizationPreviews";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import {
   SensitiveSettingsForm,
@@ -47,11 +52,7 @@ import {
   nonSensitiveSettings,
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
-import {
-  getBrandedAppText,
-  useI18n,
-  type I18nHook,
-} from "../../i18n/I18nManager";
+import { getBrandedAppText, useI18n } from "../../i18n/I18nManager";
 import {
   ExtensionsIcon,
   InstallAppsIcon,
@@ -510,30 +511,6 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
 }
 
 /**
- * Built-in theme names are authored in English on the theme object, so they'd
- * otherwise render untranslated. Spelled out as separate `t()` calls (rather
- * than a computed `theme-${id}` key) so the i18n lint rules can see them.
- * User-supplied themes keep whatever name they were given.
- *
- * Exported for tests.
- */
-export function localizedThemeName(
-  t: I18nHook["t"],
-  theme: { id: string; name: string }
-): string {
-  if (theme.id === LIGHT_THEME.id) {
-    return t("theme-light", { defaultValue: theme.name });
-  }
-  if (theme.id === DARK_THEME.id) {
-    return t("theme-dark", { defaultValue: theme.name });
-  }
-  if (theme.id === SYSTEM_THEME_ID) {
-    return t("theme-system", { defaultValue: theme.name });
-  }
-  return theme.name;
-}
-
-/**
  * A theme card's footer: the theme name, plus a check mark when it's the
  * selected theme. The check is hidden rather than unmounted when unselected, so
  * the name sits in the same place on every card.
@@ -682,6 +659,10 @@ export function CustomizationVariantGallery(props: {
           const isSelected =
             !customizations.isFollowingSystemScheme.value &&
             variant.id === customizations.activeVariant.value?.id;
+          // `variant.themes` holds only the fields this theme overrides;
+          // everything else comes from the preset it's based on.
+          const colors =
+            customizations.resolveEditingVariantTheme(variant).variables;
           return (
             <button
               key={variant.id}
@@ -695,19 +676,19 @@ export function CustomizationVariantGallery(props: {
             >
               <div
                 className="sb-theme-ready-preview"
-                style={{ background: variant.themes.tertiaryColor }}
+                style={{ background: colors.tertiaryColor }}
               >
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-                  style={{ background: variant.themes.primaryColor }}
+                  style={{ background: colors.primaryColor }}
                 />
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
-                  style={{ background: variant.themes.secondaryColor }}
+                  style={{ background: colors.secondaryColor }}
                 />
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
-                  style={{ background: variant.themes.fontColor }}
+                  style={{ background: colors.fontColor }}
                 />
               </div>
               <ThemeCardLabel name={variant.name} isSelected={isSelected} />
@@ -737,10 +718,17 @@ function CustomizationSystemCard(props: {
   const { customizations } = props.state;
   const { t } = useI18n();
   const isSelected = customizations.isFollowingSystemScheme.value;
-  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => ({
-    presetId,
-    variant: props.customization.variants.find((v) => v.baseTheme === presetId),
-  }));
+  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => {
+    const variant = props.customization.variants.find(
+      (v) => v.baseTheme === presetId
+    );
+    return {
+      presetId,
+      colors: variant
+        ? customizations.resolveEditingVariantTheme(variant).variables
+        : undefined,
+    };
+  });
 
   return (
     <button
@@ -751,15 +739,15 @@ function CustomizationSystemCard(props: {
       onClick={() => void customizations.selectActiveVariant(SYSTEM_THEME_ID)}
     >
       <div className="sb-theme-ready-preview sb-theme-ready-preview-system">
-        {halves.map(({ presetId, variant }) => (
+        {halves.map(({ presetId, colors }) => (
           <div
             key={presetId}
             className="sb-theme-ready-system-half"
-            style={{ background: variant?.themes.tertiaryColor }}
+            style={{ background: colors?.tertiaryColor }}
           >
             <div
               className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-              style={{ background: variant?.themes.primaryColor }}
+              style={{ background: colors?.primaryColor }}
             />
           </div>
         ))}
@@ -2530,66 +2518,72 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
         ]}
       />
       <section className="sb-settings-section">
+        <p className="sb-cz-intro">
+          {t("customizations-description", {
+            defaultValue:
+              "A customization bundles a logo, themes and extension rules. Share one with a church or group so everyone reads with the same setup.",
+          })}
+        </p>
         {isEmpty ? (
-          <div className="sb-settings-empty-state">
-            <p>
-              {customizations.isLoading.value
-                ? t("loading", { defaultValue: "Loading…" })
-                : t("no-customizations", {
-                    defaultValue:
-                      "You don't have any customizations yet. Create one to get started.",
-                  })}
-            </p>
-          </div>
+          customizations.isLoading.value ? (
+            <div className="sb-settings-empty-state">
+              <p>{t("loading", { defaultValue: "Loading…" })}</p>
+            </div>
+          ) : null
         ) : (
-          <ul className="sb-settings-list">
+          <ul className="sb-cz-card-list">
             {list.map((customization) => {
               const previewVariant =
                 customization.variants.find(
                   (v) => v.id === customization.defaultVariantId
                 ) ?? customization.variants[0];
               return (
-                <li
-                  key={customization.id}
-                  className="sb-settings-nav-item sb-customization-row"
-                  onClick={() => openCustomization(customization.id)}
-                >
-                  <span
-                    className="sb-customization-swatches"
-                    aria-hidden="true"
+                <li key={customization.id} className="sb-cz-card">
+                  <button
+                    type="button"
+                    className="sb-cz-card-open"
+                    onClick={() => openCustomization(customization.id)}
                   >
-                    <span
-                      className="sb-customization-swatch"
-                      style={{
-                        background: previewVariant?.themes.primaryColor,
-                      }}
-                    />
-                    <span
-                      className="sb-customization-swatch"
-                      style={{
-                        background: previewVariant?.themes.secondaryColor,
-                      }}
-                    />
-                    <span
-                      className="sb-customization-swatch"
-                      style={{
-                        background: previewVariant?.themes.tertiaryColor,
-                      }}
-                    />
-                  </span>
-                  <span className="sb-settings-nav-label">
-                    {customization.name}
-                  </span>
+                    {previewVariant && (
+                      <CustomizationCardPreview
+                        theme={customizations.resolveEditingVariantTheme(
+                          previewVariant
+                        )}
+                        logoUrl={customization.logoUrl}
+                        heading={t("customization-preview-chapter", {
+                          defaultValue: "John 1",
+                        })}
+                      />
+                    )}
+                    <span className="sb-cz-card-text">
+                      <span className="sb-cz-card-title" dir="auto">
+                        {customization.name}
+                      </span>
+                      <span className="sb-cz-card-subtitle">
+                        {t("customization-card-summary", {
+                          themes: t("customization-theme-count", {
+                            count: customization.variants.length,
+                            defaultValue: "{{count}} themes",
+                          }),
+                          translation: getDefaultTranslationLabel(
+                            t,
+                            customization,
+                            state.bibleData.availableTranslations.value
+                          ),
+                          defaultValue: "{{themes}} · {{translation}}",
+                        })}
+                      </span>
+                    </span>
+                  </button>
                   <ContextMenuWithButton
-                    buttonClassName="sb-extension-row-action-button"
+                    anchorClassName="sb-cz-card-menu"
+                    buttonClassName="sb-cz-icon-button"
                     aria-label={t("customization-options", {
                       defaultValue: "Customization options",
                     })}
-                    onClick={(e) => e.stopPropagation()}
                   >
                     <ContextMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={() => {
                         navigator.clipboard.writeText(
                           customizations.getShareLink(customization)
                         );
@@ -2607,26 +2601,20 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
                       <span>{t("share", { defaultValue: "Share" })}</span>
                     </ContextMenuItem>
                   </ContextMenuWithButton>
-                  <span className="material-symbols-outlined rtl-mirror">
-                    chevron_right
-                  </span>
                 </li>
               );
             })}
           </ul>
         )}
 
-        <div className="sb-settings-actions">
-          <button
-            type="button"
-            className="sb-settings-save-button"
-            onClick={() => void handleCreate()}
-          >
-            {t("create-customization", {
-              defaultValue: "Create Customization",
-            })}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="sb-cz-new-button"
+          onClick={() => void handleCreate()}
+        >
+          <span className="material-symbols-outlined">add</span>
+          {t("new-customization", { defaultValue: "New customization" })}
+        </button>
       </section>
     </div>
   );
