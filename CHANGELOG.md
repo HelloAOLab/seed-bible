@@ -25,6 +25,8 @@
 - Let extensions keep settings such as API keys secret, so their values never come back to the browser. ([#1926](https://github.com/HelloAOLab/seed-bible/pull/1926), [#1958](https://github.com/HelloAOLab/seed-bible/pull/1958))
   - A Customization can provide these values for everyone who uses it.
 - Add an optional MCP extension that lets AI chat agents use tools from MCP servers you add. ([#1670](https://github.com/HelloAOLab/seed-bible/pull/1670))
+- Offer ways to keep reading when a chapter fails to load: switch to a translation saved on your device, or download this one once you're back online. ([#1928](https://github.com/HelloAOLab/seed-bible/pull/1928))
+  - If trying again works, a small prompt offers to download the translation for offline reading.
 
 ### 🔧 Changed
 
@@ -37,6 +39,8 @@
 - Remember the Scripture map's zoom level between visits, and open it at 75% instead of 60% the first time. ([#1911](https://github.com/HelloAOLab/seed-bible/pull/1911))
 - Skip the Install App and Download Translation prompts when you choose "No thanks" on the introduction tour or leave it partway through. ([#1955](https://github.com/HelloAOLab/seed-bible/pull/1955))
 - Have AI chat reply in the language you write in. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
+- Redesign the About page with cards for features such as Playlists, Sessions and Shared Reading, plus Release Notes and tour buttons. ([#1979](https://github.com/HelloAOLab/seed-bible/pull/1979))
+- Redesign the customization screens in Settings, with theme previews and a live preview while you edit a theme. ([#1983](https://github.com/HelloAOLab/seed-bible/pull/1983))
 
 ### 🐛 Fixed
 
@@ -49,8 +53,12 @@
 - Hide the AI button in the playlist editor when no installed AI agent can edit playlists, instead of opening an empty chat. ([#1954](https://github.com/HelloAOLab/seed-bible/pull/1954))
 - Fix the chat's send arrow pointing the wrong way in right-to-left languages such as Arabic. ([#1947](https://github.com/HelloAOLab/seed-bible/pull/1947))
 - Show an error in AI chat when Apologist can't finish an answer, instead of the chat going silent. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
+- Fix footnote markers sometimes landing on their own line instead of next to the verse text. ([#1969](https://github.com/HelloAOLab/seed-bible/pull/1969))
+- Fix theme cards in Display & Theme showing blank or partial colors while a customization is active. ([#1983](https://github.com/HelloAOLab/seed-bible/pull/1983))
 
 ### 🗑️ Removed
+
+- Remove the Show All button from the compact Discover panel. ([#1989](https://github.com/HelloAOLab/seed-bible/pull/1989))
 
 ## v1.12.0 — 2026-10-06
 
