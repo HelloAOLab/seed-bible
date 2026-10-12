@@ -41,6 +41,7 @@ jobs:
       ASSET_BASE_URL: ${{ vars.ASSET_BASE_URL }} # e.g. https://assets.seedbible.com/
       S3_BUCKET: ${{ secrets.DEPLOY_BUCKET }}
       AWS_REGION: ${{ vars.AWS_REGION }}
+      INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }} # ships the IndexNow key-verification file; see script/index-sitemap-urls.ts
     steps:
       - uses: actions/checkout@v4
 
