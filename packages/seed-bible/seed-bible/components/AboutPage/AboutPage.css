@@ -29,6 +29,10 @@
   border-radius: 1rem;
   position: relative;
   display: flex;
+  background-color: var(--sb-reader-background);
+  box-shadow:
+    0 1px 2px var(--sb-shadow-color),
+    0 6px 16px -6px var(--sb-shadow-color);
 }
 
 .sb-about-card-wide {
@@ -41,7 +45,7 @@
     color-mix(in srgb, var(--sb-primary-color), transparent 95%) 0%,
     color-mix(in srgb, var(--sb-primary-color), transparent 90%) 100%
   );
-  background-color: var(--sb-background);
+  background-color: var(--sb-reader-background);
 }
 
 .sb-about-card.sb-about-card-col {
