@@ -3689,6 +3689,29 @@ describe("createPlaylistManager", () => {
       });
     });
 
+    it("closes the last item's modal when it opens", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "html", html: "a" },
+            { type: "html", html: "b" },
+          ],
+        })
+      );
+      const playing = manager.playing.value!;
+      await playing.next();
+      const isItemModalOpen = () =>
+        lastModals.modals.value.some((m) => m.id === "playlist-item-content");
+      expect(isItemModalOpen()).toBe(true);
+
+      await playing.next();
+
+      expect(finishedModal()).toBeDefined();
+      expect(isItemModalOpen()).toBe(false);
+    });
+
     /** Plays a two-item saved playlist through to its finished modal. */
     const finishPlaylist = async () => {
       const manager = makeManager("user-1");

@@ -2020,6 +2020,7 @@ export function createPlaylistManager(
   const openPlaylistFinishedModal = (
     playlist: Pick<Playlist, "id" | "recordName" | "title">
   ): void => {
+    modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     modals.openModal({
       id: PLAYLIST_FINISHED_MODAL_ID,
       title: { key: "playlist-finished", defaultValue: "Playlist finished" },
