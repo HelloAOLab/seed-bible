@@ -4,6 +4,11 @@
 
 ### ✨ Added
 
+- Add a Content sources settings screen for choosing what shows up in Discover. ([#1996](https://github.com/HelloAOLab/seed-bible/pull/1996))
+  - Tick the types of content you want, such as videos, articles or podcasts.
+  - Turn individual sources like Bible Project or Expedition Bible on or off, grouped by where they're hosted, such as YouTube.
+  - Hidden content disappears from Discover right away, and your choices are saved with your other settings.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
