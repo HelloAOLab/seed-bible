@@ -29,6 +29,7 @@ interface DiscordEmbed {
   url: string;
   description: string;
   color: number;
+  image?: { url: string };
 }
 
 export interface DiscordWebhookPayload {
@@ -43,11 +44,65 @@ export interface DiscordWebhookPayload {
 // than looking like a rendering bug.
 const TRUNCATION_ELLIPSIS = "…";
 
+// Markdown images (`![alt](url)`) and the `<img … src="…">` tags GitHub inserts
+// when a file is dropped into a comment box. Group 1 is the markdown URL.
+const IMAGE_PATTERN = /!\[[^\]]*\]\(([^)\s]+)[^)]*\)|<img\b[^>]*>/gi;
+const IMG_SRC_PATTERN = /\bsrc\s*=\s*["']([^"']+)["']/i;
+
+const HIGHLIGHTS_HEADING = /^###\s.*\bHighlights\s*$/i;
+
+// Discord only renders `#` to `###` headings, so deeper ones (the `####`
+// highlight titles) would show their `#`s literally.
+const DEEP_HEADING = /^#{4,}\s+(.+?)\s*$/;
+
+/**
+ * Rewrites the notes into markdown an embed description can show: images
+ * (which would appear as raw markup) are removed along with the blank lines
+ * they leave behind, and headings Discord can't render become bold lines.
+ */
+function toDiscordMarkdown(notes: string): string {
+  return notes
+    .replace(IMAGE_PATTERN, "")
+    .split("\n")
+    .map((line) => {
+      if (line.trim() === "") return "";
+      const heading = DEEP_HEADING.exec(line);
+      return heading ? `**${heading[1]}**` : line;
+    })
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * The URL of the first real image in the notes' Highlights section, if any.
+ * Placeholders that haven't been swapped for an uploaded image yet (anything
+ * that isn't an http(s) URL, like `(TODO)`) are skipped.
+ */
+function findHighlightImage(notes: string): string | undefined {
+  const lines = notes.split("\n");
+  const start = lines.findIndex((line) => HIGHLIGHTS_HEADING.test(line));
+  if (start === -1) return undefined;
+
+  let end = start + 1;
+  while (end < lines.length && !/^#{2,3}\s/.test(lines[end]!)) {
+    end++;
+  }
+  const highlights = lines.slice(start + 1, end).join("\n");
+
+  for (const match of highlights.matchAll(IMAGE_PATTERN)) {
+    const url = match[1] ?? IMG_SRC_PATTERN.exec(match[0])?.[1];
+    if (url && /^https?:\/\//i.test(url)) return url;
+  }
+  return undefined;
+}
+
 /**
  * Builds the webhook payload for a release announcement: an embed titled with
  * the version and linked to the site, whose description is the release notes
- * (truncated to fit Discord's limit, with an ellipsis marking the cutoff)
- * followed by a direct link to the site.
+ * in markdown Discord can render (truncated to fit Discord's limit, with an ellipsis
+ * marking the cutoff) followed by a direct link to the site. The first
+ * Highlights image, when there is one, becomes the embed's image.
  */
 export function buildReleaseEmbed(
   options: DiscordReleaseOptions
@@ -58,7 +113,8 @@ export function buildReleaseEmbed(
     ? `\n\n[read the full release notes](${options.releaseUrl})`
     : "";
 
-  const notes = options.notes.trim();
+  const notes = toDiscordMarkdown(options.notes);
+  const imageUrl = findHighlightImage(options.notes);
   let description: string;
   if (notes.length + footer.length <= DISCORD_DESCRIPTION_LIMIT) {
     description = `${notes}${footer}`;
@@ -80,6 +136,7 @@ export function buildReleaseEmbed(
         url: options.releaseUrl || options.siteUrl,
         description,
         color: EMBED_COLOR,
+        ...(imageUrl ? { image: { url: imageUrl } } : {}),
       },
     ],
     allowed_mentions: { parse: [] },

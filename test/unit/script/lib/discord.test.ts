@@ -75,6 +75,107 @@ describe("buildReleaseEmbed", () => {
     expect(description.startsWith("Short and sweet.")).toBe(true);
   });
 
+  it("strips markdown images and GitHub <img> tags from the description", () => {
+    const notes = [
+      "### 🌟 Highlights",
+      "",
+      "#### Bookmarks are back",
+      "",
+      "![Bookmark button](https://github.com/user-attachments/assets/aaa)",
+      "",
+      "Mark your place with up to five bookmarks.",
+      "",
+      "#### Scrub through narration",
+      "",
+      '<img width="640" height="480" alt="Scrubber" src="https://github.com/user-attachments/assets/bbb" />',
+      "",
+      "Drag to move through a chapter's audio.",
+    ].join("\n");
+    const description =
+      buildReleaseEmbed({ ...BASE, notes }).embeds[0]?.description ?? "";
+
+    expect(description).not.toContain("user-attachments");
+    expect(description).not.toContain("![");
+    expect(description).not.toContain("<img");
+    expect(description).toContain(
+      "**Bookmarks are back**\n\nMark your place with up to five bookmarks."
+    );
+    expect(description).not.toMatch(/\n{3,}/);
+  });
+
+  it("turns highlight titles into bold lines, since Discord can't render #### headings", () => {
+    const notes = [
+      "### 🌟 Highlights",
+      "",
+      "#### Bookmarks are back",
+      "",
+      "Mark your place.",
+      "",
+      "### ✨ Added",
+      "",
+      "- A new thing.",
+    ].join("\n");
+    const description =
+      buildReleaseEmbed({ ...BASE, notes }).embeds[0]?.description ?? "";
+
+    expect(description).toContain("**Bookmarks are back**\n\nMark your place.");
+    expect(description).not.toContain("####");
+    expect(description).toContain("### 🌟 Highlights");
+    expect(description).toContain("### ✨ Added");
+  });
+
+  it("uses the first highlight's image as the embed image", () => {
+    const notes = [
+      "### 🌟 Highlights",
+      "",
+      "#### First",
+      "",
+      '<img alt="First" src="https://github.com/user-attachments/assets/first" />',
+      "",
+      "#### Second",
+      "",
+      "![Second](https://github.com/user-attachments/assets/second)",
+    ].join("\n");
+    const payload = buildReleaseEmbed({ ...BASE, notes });
+    expect(payload.embeds[0]?.image).toEqual({
+      url: "https://github.com/user-attachments/assets/first",
+    });
+  });
+
+  it("skips highlight placeholders that haven't been replaced with an upload", () => {
+    const notes = [
+      "### 🌟 Highlights",
+      "",
+      "#### First",
+      "",
+      "![TODO-HIGHLIGHT-MEDIA: GIF of the bookmark button.](TODO)",
+      "",
+      "#### Second",
+      "",
+      "![Second](https://github.com/user-attachments/assets/second)",
+    ].join("\n");
+    const payload = buildReleaseEmbed({ ...BASE, notes });
+    expect(payload.embeds[0]?.image).toEqual({
+      url: "https://github.com/user-attachments/assets/second",
+    });
+    expect(payload.embeds[0]?.description).not.toContain(
+      "TODO-HIGHLIGHT-MEDIA"
+    );
+  });
+
+  it("has no embed image when only sections other than Highlights have images", () => {
+    const notes = [
+      "### ✨ Added",
+      "",
+      "- A new thing.",
+      "",
+      "![Screenshot](https://github.com/user-attachments/assets/added)",
+    ].join("\n");
+    const payload = buildReleaseEmbed({ ...BASE, notes });
+    expect(payload.embeds[0]?.image).toBeUndefined();
+    expect(payload.embeds[0]?.description).toContain("- A new thing.");
+  });
+
   it("falls back to siteUrl for the title link when releaseUrl is not provided", () => {
     const payload = buildReleaseEmbed({
       version: BASE.version,

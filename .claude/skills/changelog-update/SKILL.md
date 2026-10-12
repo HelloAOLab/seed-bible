@@ -19,7 +19,7 @@ Update the `TBD` section of CHANGELOG.md with changes made on the current branch
    - If a consolidated bullet (step 5) draws on commits from more than one PR, keep all of their numbers.
    - Cite the PR, not the issue it closes.
 
-4. Read the current `## TBD` section in CHANGELOG.md and its four subheadings: ✨ Added, 🔧 Changed, 🐛 Fixed, 🗑️ Removed.
+4. Read the current `## TBD` section in CHANGELOG.md and its four subheadings: ✨ Added, 🔧 Changed, 🐛 Fixed, 🗑️ Removed. If it also has a `### 🌟 Highlights` section, leave it alone: don't add bullets to it or edit it. It's written by `/changelog-highlights`.
 
 5. For each real change found in step 2, check whether it's already represented by an existing TBD bullet (in substance, not exact wording) — skip anything already covered. Consolidate multiple commits that make up one logical change into a single bullet. Judge every change against what a user of the base release actually saw:
    - A feature that is entirely new since the base gets one Added bullet. Follow-up tweaks and fixes to it fold into that bullet or its sub-bullets, not into Changed or Fixed.
@@ -55,4 +55,4 @@ Update the `TBD` section of CHANGELOG.md with changes made on the current branch
 
 7. Leave subheadings with no new entries empty (don't delete them, don't write "no changes"). Don't rewrite a subheading's existing bullets — only add to them (unless an existing bullet is missing a PR reference you can now fill in).
 
-8. Summarize for the user what was added and under which subheadings before finishing. Call out the judgment calls: changes skipped or folded into another bullet, branch-drafted entries that were dropped, and borderline entries (such as developer-facing extension APIs) the user may want to remove.
+8. Summarize for the user what was added and under which subheadings before finishing. Call out the judgment calls: changes skipped or folded into another bullet, branch-drafted entries that were dropped, and borderline entries (such as developer-facing extension APIs) the user may want to remove. If the TBD section has no `### 🌟 Highlights` section yet, end with one line noting that `/changelog-highlights` can add them before the release.
