@@ -4,70 +4,49 @@
 
 ### ✨ Added
 
-- Bring back bookmarks as named, colored markers for where you are in a chapter, which you move as you read. ([#1984](https://github.com/HelloAOLab/seed-bible/pull/1984))
-  - The bookmark button above a chapter opens a list of your bookmarks: tap one and it moves to this chapter. If you have none yet, "My bookmark" is already filled in, so your first one is two taps (the button, then Save). You can add another bookmark (named "My bookmark 2", "My bookmark 3" and so on) or delete one from the same window.
-  - You can have up to 5 bookmarks, across every translation, and several can sit on the same chapter.
-  - The button shows what's on the chapter you're reading: an outline for none, the bookmark's color for one, and a fan of colors for several. Only bookmarks in the translation you're reading count.
-  - Each bookmark shows its name, with its book, chapter and translation on a line below, so the same chapter in two translations is easy to tell apart.
-  - Tabs show a small bookmark in the color of the bookmark on their chapter, and all your bookmarks are back on the Today screen, most recently moved first.
-  - A Bookmarks panel in the sidebar (and in the More menu on phones) lets you open your bookmarks, and its options menu renames, recolors or deletes them. The button that shows it draws your bookmarks in their colors, the same way the chapter's bookmark button does.
-- See how far a chapter's recorded narration has got, and drag to move through it. Before, Listen only played and paused, with no sign of progress and no way to skip ahead or go back. ([#1959](https://github.com/HelloAOLab/seed-bible/pull/1959))
-  - On phones, a thin progress bar runs above the chapter pill while it plays, with the time remaining beside it. Drag along it straight away to move back or forward from where you are — the bar moves by how far your finger travels, so it doesn't jump to wherever your finger landed. Or tap once to show the handle, then tap again to jump to that spot. With a finger, the bar always lands on the start of a verse, so listening never begins partway through one. A handle you don't use hides itself after 3 seconds. When paused, the progress moves to a ring around the play button.
-  - On desktop, the bottom toolbar gains a progress bar along its top with the time remaining, plus a pause button. Hovering the bar shows the handle; click or drag to move. Pausing adds a stop button, which rewinds and puts the toolbar back to normal.
-  - The "now reading" verse highlight follows a jump straight away, instead of waiting for the next verse.
-  - The reader now scrolls along with the narration, so you can read along without touching the screen. Whenever the verse being read is partly or fully off screen — including after a jump — it glides to the top, clear of the header that comes back when the reader scrolls up. Going back to a chapter's first verse scrolls to the very top, so the chapter title shows too. A verse that starts a section brings its heading into view with it (for example, "God's Law Is Holy" above Romans 7:7). A verse you can already see in full is left where it is. This works for recorded narration and for chapters read aloud by your device's voice.
-  - The bar works from the keyboard too: the arrow keys move 5 seconds, Home and End go to the start and end.
-  - While you drag the handle, a small card above it names the verse you'd land on ("Verse 7"), with the section heading too when that verse starts one ("God's Law Is Holy"). Small tick marks also appear along the bar where each verse starts, with a thicker one where a new section begins. In a chapter with too many verses to tell apart on the bar (such as John 1 on a phone), only the section ticks show.
-  - Listening carries on when you switch tabs. The tab that's playing shows a speaker icon in the sidebar. Only one tab plays at a time: pressing Listen in another tab pauses the first, which keeps its place until you stop it, change its chapter or close it.
-  - Chapters read aloud by your device's voice (translations with no recorded narration) get the same controls. The voice can't say how long it will take, so the bar counts verses instead of time ("4/12" while reading the fourth of twelve verses), dragging snaps to whole verses, and the arrow keys move one verse. Pausing remembers the verse being read, and playing picks up from the start of it.
-- Show an Apologist team's own content in the Discover pane. When the Apologist extension is opened with `?apologistTeamID=<id>` (plus `apologistApiKey`), each chapter you read is run through Apologist's semantic search, and the team's matching articles, YouTube videos, episodes, media and links appear as discovered content that opens in a modal. Each card names the website it comes from, results that are about a different chapter of the same book are left out, repeats are removed, and results that mention the chapter itself are listed first. Signed-in users can also save their Apologist agent's name, AI model, team ID, host and API key in the extension's settings, plus a name to group the team's content under (otherwise it's grouped by website). The key is stored as a sensitive setting, so it never comes back to the browser, and the extension's requests go through it whenever it's saved. ([#1936](https://github.com/HelloAOLab/seed-bible/pull/1936), [#1970](https://github.com/HelloAOLab/seed-bible/pull/1970))
-  - The extension's settings also have two switches: **Chat** (on by default) offers the Apologist agent in chats, and **Discover content** (off by default) shows the team's content in the Discover pane. A link with `apologistTeamID` still shows the team's content, even to signed-out visitors, unless the viewer has switched Discover content off.
-- Show the reading plans you've created on the "Your content" screen, with a Reading plans chip to see just those, alongside your notes, highlights, saves and playlists. ([#1860](https://github.com/HelloAOLab/seed-bible/pull/1860))
-  - Each plan shows where you're up to, and tapping it opens the plan; its menu offers Edit and Delete.
-- Have AI chat follow the active reader tab's Bible translation, mapping it onto Apologist's supported list (KJV, BSB, and the rest of the Fusion docs) and falling back to BSB when the tab's translation isn't supported. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
-- Let AI chat look up translations this app actually has and ask, in a banner above the chat, before switching. Switch changes the open tab and stays on the same chapter when the translation includes it; Dismiss leaves the reader as it is. Either way, the chat records what you did. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
-- Add an "Images" section at the bottom of the "Your content" screen that shows every image you've uploaded, where you can view each one full size or delete it. ([#1861](https://github.com/HelloAOLab/seed-bible/pull/1861))
-  - Deleting an image also takes it off any playlist or reading plan using it as a cover; the confirmation warns you about this and names them.
-- Let extensions declare `sensitive` settings, such as API keys, whose values never come back to the browser. ([#1926](https://github.com/HelloAOLab/seed-bible/pull/1926), [#1958](https://github.com/HelloAOLab/seed-bible/pull/1958))
-  - An extension's `extension.json` lists each destination once in a `sensitive` section (a host plus which request property each setting fills in), and each sensitive setting names the destination it belongs to, so a "Client ID" and an "API key" can both be sent to the same host.
-  - Values are saved in a private CasualOS proxy record owned by the viewer. The extension sends requests with `extensionSettings.fetchWithSensitiveValues`, and the server adds the values before forwarding them.
-  - Each destination can be private (only the viewer can use it) or public (anyone with its address can send requests through it, but nobody can read the values). It's always private until the viewer changes it; extensions can't choose.
-  - The viewer can also send a destination's values to a different host than the extension declares. The extension keeps using its own URL, and requests go to the viewer's host with the same path.
-  - The Configure window shows these settings as masked fields that only say whether a value is set.
-  - A Customization can provide its own values for these settings, entered in the same masked fields from its extension defaults window. They are saved in a proxy record owned by the Customization's author, and the Customization only stores where that proxy is. Everyone using the Customization sends requests with those values unless they save their own, which then replace the Customization's for that destination. This also works for signed-out viewers. The viewer's Configure window says "Provided by the customization" for such a setting.
-  - A Customization's proxy is public by default, since it exists for other people to use; the author can switch it to "Only me". Deleting the Customization erases its proxies first.
-  - Secrets for an extension that's no longer installed, or that no longer asks for them, are listed under Settings → Extensions with a Clear button, so they can still be removed from the server.
-- Add a References extension that shows each verse's cross-references in the Discover pane, under a References chip. ([#1794](https://github.com/HelloAOLab/seed-bible/pull/1794))
-  - Tap a reference to read its text, or open the verse's full list in a references pane.
-  - It offers once to download every cross-reference, so they still open offline.
-- Share a session with a QR code that others can scan to join it. ([#1884](https://github.com/HelloAOLab/seed-bible/pull/1884))
-  - The session's Share window shows the code, which you can enlarge or save as an image.
-  - The message that appears after you copy a session link can be tapped to show the code too.
+- Bring back bookmarks as named, colored markers that you move from chapter to chapter as you read. ([#1984](https://github.com/HelloAOLab/seed-bible/pull/1984))
+  - Tap the bookmark button above a chapter to move a bookmark there. You can have up to 5.
+  - Your bookmarks show on tabs, on the Today screen and in a new Bookmarks panel, where you can rename, recolor or delete them.
+- Show a progress bar while a chapter is read aloud, and drag it to skip ahead or go back. ([#1959](https://github.com/HelloAOLab/seed-bible/pull/1959))
+  - The reader scrolls along with the verse being read, so you can follow without touching the screen.
+  - Listening carries on when you switch tabs.
+  - Works for recorded narration and for chapters read aloud by your device's voice.
+- Show an Apologist team's articles, videos and other content in the Discover pane for the chapter you're reading. ([#1936](https://github.com/HelloAOLab/seed-bible/pull/1936), [#1970](https://github.com/HelloAOLab/seed-bible/pull/1970))
+  - Turn it on with the Apologist extension's new Discover content switch, or open a link that includes the team's ID.
+  - Signed-in users can save their Apologist team ID, API key and agent details in the extension's settings.
+- Show the reading plans you've created on the "Your content" screen, with a Reading plans chip to see just those. ([#1860](https://github.com/HelloAOLab/seed-bible/pull/1860))
+- Add an "Images" section to the "Your content" screen where you can view or delete the images you've uploaded. ([#1861](https://github.com/HelloAOLab/seed-bible/pull/1861))
+- Have AI chat quote from the Bible translation you're reading, falling back to BSB when Apologist doesn't support it. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
+  - When you ask for a different translation, the chat offers to switch your open tab to it.
+- Add a References extension that shows each verse's cross-references in the Discover pane. ([#1794](https://github.com/HelloAOLab/seed-bible/pull/1794))
+  - It offers to download every cross-reference so they still open offline.
+- Share a session with a QR code that others can scan to join it, from the session's Share window. ([#1884](https://github.com/HelloAOLab/seed-bible/pull/1884))
 - Preview a scripture item while editing a playlist or reading plan: tap it to read the passage right beneath it. ([#1889](https://github.com/HelloAOLab/seed-bible/pull/1889))
-- Add an optional MCP extension that lets AI chat agents use tools from remote MCP servers you add in its AI Chat Settings. ([#1670](https://github.com/HelloAOLab/seed-bible/pull/1670))
+- Let extensions keep settings such as API keys secret, so their values never come back to the browser. ([#1926](https://github.com/HelloAOLab/seed-bible/pull/1926), [#1958](https://github.com/HelloAOLab/seed-bible/pull/1958))
+  - A Customization can provide these values for everyone who uses it.
+- Add an optional MCP extension that lets AI chat agents use tools from MCP servers you add. ([#1670](https://github.com/HelloAOLab/seed-bible/pull/1670))
 
 ### 🔧 Changed
 
-- Opening a customization to edit now closes every other pane first, including fullscreen ones, so the editor is the only pane on screen. Before, a fullscreen pane (or a floating one) stayed open next to the editor. ([#1925](https://github.com/HelloAOLab/seed-bible/pull/1925))
-- Show long extension descriptions as two lines with a "Read more" link in the Extensions settings list. Before, a long description made its row several lines tall. ([#1924](https://github.com/HelloAOLab/seed-bible/pull/1924))
+- Close every other pane when you open a customization to edit, so the editor is the only pane on screen. ([#1925](https://github.com/HelloAOLab/seed-bible/pull/1925))
+- Show long extension descriptions as two lines with a "Read more" link in Settings → Extensions. ([#1924](https://github.com/HelloAOLab/seed-bible/pull/1924))
 - Close the verse toolbar after you use Copy, Save, Share or Compare, instead of leaving it open over the pane the action opened. ([#1899](https://github.com/HelloAOLab/seed-bible/pull/1899))
-  - Copy only closes it once the text has actually been copied.
   - The toolbar also hides while you write a new note.
 - Keep Highlight, Save, Note and Copy on the first row of the mobile verse sheet, instead of letting extension tools such as Ask AI push them into the drawer. ([#1968](https://github.com/HelloAOLab/seed-bible/pull/1968))
-- Move Playlist history from the Discover pane to your profile, below your reading plans. ([#1919](https://github.com/HelloAOLab/seed-bible/pull/1919))
+- Move Playlist history from the Discover pane to your profile. ([#1919](https://github.com/HelloAOLab/seed-bible/pull/1919))
 - Remember the Scripture map's zoom level between visits, and open it at 75% instead of 60% the first time. ([#1911](https://github.com/HelloAOLab/seed-bible/pull/1911))
-- Skip the Install App and Download Translation prompts when you choose "No thanks" on the introduction tour or leave it partway through. The Install App prompt can show on your next visit instead. ([#1955](https://github.com/HelloAOLab/seed-bible/pull/1955))
-- Have AI chat reply in the language you write in, falling back to your app language when it can't tell. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
+- Skip the Install App and Download Translation prompts when you choose "No thanks" on the introduction tour or leave it partway through. ([#1955](https://github.com/HelloAOLab/seed-bible/pull/1955))
+- Have AI chat reply in the language you write in. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
 
 ### 🐛 Fixed
 
-- List an installed extension under Installed in Settings → Extensions even when the active customization hides it, such as one another extension needs as a dependency. Before, it was left out of the list even though it was running, so you couldn't see or remove it. You can now uninstall it from there, and hidden extensions still never appear under Available. ([#1972](https://github.com/HelloAOLab/seed-bible/pull/1972))
-- Fix a new note staying on the chapter you started it on when you move to another chapter; it now follows you and saves there. ([#1899](https://github.com/HelloAOLab/seed-bible/pull/1899))
+- Fix installed extensions missing from Settings → Extensions when the active customization hides them. ([#1972](https://github.com/HelloAOLab/seed-bible/pull/1972))
+- Fix a new note staying on the chapter you started it on when you move to another chapter. ([#1899](https://github.com/HelloAOLab/seed-bible/pull/1899))
 - Fix modals closing when you drag to select text inside them and let go over the dimmed background. ([#1971](https://github.com/HelloAOLab/seed-bible/pull/1971))
 - Fix submenus opened from the second row of the mobile verse sheet being hidden behind the first row. ([#1940](https://github.com/HelloAOLab/seed-bible/pull/1940))
 - Fix a verse toolbar menu, such as Locations, still being open the next time you select verses. ([#1922](https://github.com/HelloAOLab/seed-bible/pull/1922))
-- Fix the compact Discover panel's toggle being hidden when the chapter only has your reading plans or changes still waiting to sync. ([#1914](https://github.com/HelloAOLab/seed-bible/pull/1914))
-- Hide the AI button in the playlist editor when no installed AI agent can edit playlists, instead of opening an empty chat with an "Anonymous" message. ([#1954](https://github.com/HelloAOLab/seed-bible/pull/1954))
+- Fix the compact Discover panel's toggle being hidden when the chapter only has your reading plans. ([#1914](https://github.com/HelloAOLab/seed-bible/pull/1914))
+- Hide the AI button in the playlist editor when no installed AI agent can edit playlists, instead of opening an empty chat. ([#1954](https://github.com/HelloAOLab/seed-bible/pull/1954))
 - Fix the chat's send arrow pointing the wrong way in right-to-left languages such as Arabic. ([#1947](https://github.com/HelloAOLab/seed-bible/pull/1947))
 - Show an error in AI chat when Apologist can't finish an answer, instead of the chat going silent. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
 
