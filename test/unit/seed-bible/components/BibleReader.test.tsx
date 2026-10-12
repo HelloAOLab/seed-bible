@@ -15,10 +15,11 @@ import {
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import type {
-  Translation,
-  TranslationBook,
-  TranslationBookChapter,
+import {
+  FreeUseBibleAPI,
+  type Translation,
+  type TranslationBook,
+  type TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { DownloadedTranslation } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
@@ -30,8 +31,25 @@ import { vi, type Mock } from "vitest";
 import { mockI18nState, resetMockI18n } from "../testUtils/mockI18n";
 import { createRealFriendContent } from "../testUtils/realFriendContent";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
-import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
+import {
+  createDiscoverManager,
+  type ReadingExtensionRuntime,
+} from "@packages/seed-bible/seed-bible/managers";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
+import {
+  createBibleDataManager,
+  type BibleDataManager,
+} from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import { createInMemoryTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
+import {
+  EXAMPLE_API_ENDPOINT,
+  aabBooks,
+  createResponse,
+  createStreamingResponse,
+  makeCompleteTranslation,
+  nivBooks,
+  type WebResponse,
+} from "../managers/testUtils/mockBibleApiData";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -176,7 +194,9 @@ function createFixture(): ReaderFixture {
     loading: signal(false),
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
+    readAlongVerse: signal<{ verse: number } | null>(null),
     error: signal<string | null>(null),
+    failedTranslationId: signal<string | null>(null),
     retryLoad: vi.fn(async () => undefined),
     selectVerse,
     selectFootnote,
@@ -231,6 +251,7 @@ function createFixture(): ReaderFixture {
   const selectorState = {
     setOpen,
     selectingTranslation: signal(false),
+    openDownloadedTranslations: vi.fn(async () => undefined),
   } as any as BibleSelectorState;
 
   const slot: TabSlot = {
@@ -356,6 +377,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       getSaveForLocation: vi.fn(() => undefined),
       addSave: vi.fn(async () => {}),
     },
+    bookmarks: {
+      getBookmarksForLocation: vi.fn(() => []),
+    },
     login: {
       userId: signal<string | null>(null),
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
@@ -365,12 +389,14 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(testBranding),
-    tabs: {} as any,
+    tabs: { selectedTabId: signal("") },
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover: { scrollToVerse: signal(null) },
     playlists: {
       playing: signal(null),
+      openingPlayback: signal(false),
+      view: signal(null),
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
@@ -383,6 +409,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       sync: {
         pendingCount: signal(0),
       },
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;
 }
@@ -452,6 +481,42 @@ describe("BibleReader", () => {
       render(null, container);
     });
     container.remove();
+  });
+
+  it("shows the opening spinner only on the tab that will play", () => {
+    const fixture = createFixture();
+    const state = createMobileState(fixture.selectorState);
+    (state.app.isDiscoverOpen as { value: boolean }).value = true;
+    state.playlists.openingPlayback.value = true;
+    state.tabs.selectedTabId.value = "tab-1";
+    const slot: TabSlot = {
+      ...fixture.slot,
+      tab: {
+        id: "tab-1",
+        title: "Tab 1",
+        readingState: fixture.readingState,
+        sharedSession: null,
+        sharedChat: null,
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={fixture.selectorState}
+          readingState={fixture.readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+    expect(container.querySelector(".sb-spinner")).not.toBeNull();
+
+    act(() => {
+      state.tabs.selectedTabId.value = "other-tab";
+    });
+    expect(container.querySelector(".sb-spinner")).toBeNull();
   });
 
   it("opens the selector when the title is clicked", () => {
@@ -1332,6 +1397,94 @@ describe("BibleReader", () => {
 
     expect(selectFootnote).toHaveBeenCalledWith(7);
     expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("keeps an inline footnote attached to the preceding word", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: ["the last words ", { noteId: 7 }, " more"],
+          },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const verse = container.querySelector<HTMLElement>(".sb-verse");
+    expect(verse).not.toBeNull();
+
+    const footnoteButton = verse!.querySelector<HTMLButtonElement>(
+      ".sb-inline-footnote-button"
+    );
+    expect(footnoteButton).not.toBeNull();
+
+    const text = verse!.textContent ?? "";
+    const marker = footnoteButton!.textContent ?? "";
+    const markerIndex = text.indexOf(marker);
+
+    expect(markerIndex).toBeGreaterThan(1);
+    expect(text[markerIndex - 1]).toBe("\u00A0");
+    expect(text[markerIndex - 2]).not.toBe(" ");
+  });
+
+  it("keeps a footnote after a poetry line break in the preceding poetry line", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: [
+              { text: "line one", poem: 1 },
+              { lineBreak: true },
+              { noteId: 7 },
+              { text: "line two", poem: 1 },
+            ],
+          },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+    const poetryLines = container.querySelectorAll(".sb-verse-line");
+    expect(poetryLines).toHaveLength(2);
+    expect(poetryLines[0]?.textContent).toContain("line one");
+    expect(poetryLines[1]?.textContent).toContain("line two");
+    const footnoteButton = container.querySelector<HTMLButtonElement>(
+      '.sb-inline-footnote-button[aria-label="Open footnote 7"]'
+    );
+    expect(footnoteButton).not.toBeNull();
+    expect(poetryLines[0]?.contains(footnoteButton)).toBe(true);
+    expect(poetryLines[1]?.contains(footnoteButton)).toBe(false);
   });
 
   it("marks selected and poetry verses with their CSS classes", () => {
@@ -2503,6 +2656,7 @@ describe("BibleReader", () => {
       friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+        pendingCountForChapter: vi.fn(() => 0),
         visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
       },
     } as any as SeedBibleState;
@@ -2708,6 +2862,8 @@ describe("BibleReader", () => {
   it("offers the mobile header notes button for a friend's note when the user has none, and jumps to it", async () => {
     const { slot, selectorState, readingState } = createFixture();
     const mockState = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    const discover = createDiscoverManager();
+
     // The real managers, so the friend's note is loaded from the server the
     // way the app loads it.
     const { login, friends, annotations } = await createRealFriendContent({
@@ -2719,14 +2875,20 @@ describe("BibleReader", () => {
             bookId: "GEN",
             chapterNumber: 1,
             verseNumber: 3,
-            data: { type: "comment", html: "<p>Note</p>", userId: "friend-1" },
+            data: {
+              type: "comment",
+              html: "<p>Note</p>",
+              userId: "friend-1",
+            },
           } as Annotation,
         ],
       },
-      discover: mockState.discover,
+      discover,
     });
+
     const state = {
       ...mockState,
+      discover,
       login,
       friends,
       annotations,
@@ -2759,7 +2921,7 @@ describe("BibleReader", () => {
       notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(state.discover.scrollToVerse.value).toEqual({
+    expect(discover.scrollToVerse.value).toEqual({
       bookId: "GEN",
       chapterNumber: 1,
       verseNumber: 3,
@@ -2923,6 +3085,7 @@ describe("BibleReader", () => {
         friends: { friendIds: signal([]) },
         annotations: {
           getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+          pendingCountForChapter: vi.fn(() => 0),
           visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
         },
       } as any as SeedBibleState;
@@ -2965,7 +3128,13 @@ describe("BibleReader", () => {
     it("marks a verse that only a friend has a note on", async () => {
       stubLineBoxes({ 1: [40] });
       const fixture = createFixture();
-      const mockState = annotatedState([]);
+
+      const discover = createDiscoverManager();
+      const mockState = {
+        ...annotatedState([]),
+        discover,
+      };
+
       const { login, friends, annotations } = await createRealFriendContent({
         friendIds: ["friend-1"],
         notes: {
@@ -2980,8 +3149,9 @@ describe("BibleReader", () => {
             }) as Annotation,
           ],
         },
-        discover: mockState.discover,
+        discover,
       });
+
       renderReader(
         {
           ...mockState,
@@ -2998,6 +3168,7 @@ describe("BibleReader", () => {
           container.querySelectorAll(".sb-note-gutter-marker")
         ).toHaveLength(1);
       });
+
       const markers = container.querySelectorAll(".sb-note-gutter-marker");
       expect((markers[0] as HTMLElement).style.top).toBe("40px");
     });
@@ -4181,8 +4352,11 @@ describe("BibleReader", () => {
         openVerseReference,
       },
       tools: createBibleToolsManager(testBranding),
+      tabs: { selectedTabId: signal("") },
       playlists: {
         playing: signal(null),
+        openingPlayback: signal(false),
+        view: signal(null),
       },
       features: {
         isFeatureEnabled: vi.fn(() => true),
@@ -4190,11 +4364,16 @@ describe("BibleReader", () => {
       saves: {
         isLocationSaved: vi.fn(() => false),
       },
+      bookmarks: {
+        getBookmarksForLocation: vi.fn(() => []),
+      },
       friends: { friendIds: signal([]) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
+        pendingCountForChapter: vi.fn(() => 0),
         visibleAnnotationsForChapter: vi.fn(() => []),
       },
+      readingPlans: { getReadingPlansForChapter: vi.fn(() => []) },
     } as any as SeedBibleState;
 
     selectedFootnote.value = {
@@ -4323,14 +4502,14 @@ describe("BibleReader", () => {
       );
     });
 
-    // Hidden behind SHOW_BOOKMARK_BUTTON until #1658. The placeholder and its
-    // "coming soon" toast are still in the file, just not rendered — flipping
-    // the flag is what brings them back.
-    it("shows no bookmark button beside it while bookmarks are off", () => {
+    it("shows the bookmark button beside it", () => {
       renderHeader(createMobileState());
 
       expect(saveButton()).not.toBeNull();
-      expect(bookmarkButton()).toBeNull();
+      expect(bookmarkButton()).not.toBeNull();
+      expect(bookmarkButton()!.getAttribute("aria-label")).toBe(
+        "Bookmark this chapter"
+      );
     });
 
     // The two header clusters are built separately, and they had drifted:
@@ -5041,5 +5220,234 @@ describe("BibleReader — compact embed header", () => {
     expect(openedUrl.searchParams.get("verse")).toBe("2");
     expect(openSpy.mock.calls[0]![1]).toBe("_blank");
     openSpy.mockRestore();
+  });
+});
+
+describe("BibleReader — ways out of a failed chapter load", () => {
+  const originalFetch = globalThis.fetch;
+  const dataManagers: BibleDataManager[] = [];
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    act(() => {
+      render(null, container);
+    });
+    container.remove();
+    // The offline manager listens for `online`/`offline`; one case takes the
+    // device offline, and a leftover listener would follow later cases around.
+    for (const manager of dataManagers.splice(0)) {
+      manager.offline.dispose();
+    }
+    globalThis.fetch = originalFetch;
+  });
+
+  /**
+   * A reader whose BSB chapter failed to load, backed by a real offline
+   * manager — only the network and the storage back end are fakes.
+   *
+   * AAB has Genesis, like the chapter that failed; NIV has only Matthew.
+   */
+  async function renderFailedChapter(options: { downloaded?: string[] } = {}) {
+    const fixture = createFixture();
+    const bsb = fixture.chapterData.value!.translation;
+    const url = (path: string) => new URL(path, EXAMPLE_API_ENDPOINT).href;
+    const complete = (translation: Translation, books: typeof aabBooks) =>
+      createStreamingResponse(
+        makeCompleteTranslation({ translation, books: books.books }, 2)
+      );
+    // Factories, because a streamed body can only be read once.
+    const responses: Record<string, () => WebResponse> = {
+      [url("api/available_translations.json")]: () =>
+        createResponse({
+          translations: [bsb, aabBooks.translation, nivBooks.translation],
+        }),
+      [url("api/AAB/complete.json")]: () =>
+        complete(aabBooks.translation, aabBooks),
+      [url("api/NIV/complete.json")]: () =>
+        complete(nivBooks.translation, nivBooks),
+      [url("api/BSB/complete.json")]: () => complete(bsb, aabBooks),
+    };
+    globalThis.fetch = vi.fn((requested: string) => {
+      const response = responses[requested];
+      if (!response) {
+        return Promise.reject(new Error("Network request failed"));
+      }
+      return Promise.resolve(response());
+    }) as unknown as typeof fetch;
+
+    const dataManager = createBibleDataManager(
+      new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+      { offlineStore: createInMemoryTranslationStore() }
+    );
+    dataManagers.push(dataManager);
+    await dataManager.offline.ready;
+    await dataManager.getTranslations();
+    for (const translationId of options.downloaded ?? []) {
+      expect(await dataManager.offline.downloadTranslation(translationId)).toBe(
+        true
+      );
+    }
+
+    const state = createMobileState();
+    Object.assign(state.bibleData, { offline: dataManager.offline });
+    fixture.readingState.error.value = "Failed to fetch";
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={fixture.slot}
+          selectorState={fixture.selectorState}
+          readingState={fixture.readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    return { ...fixture, state, offline: dataManager.offline };
+  }
+
+  const errorPanel = () => container.querySelector(".sb-reader-error");
+  const actionButtons = () => [
+    ...container.querySelectorAll<HTMLButtonElement>(".sb-reader-error-action"),
+  ];
+  const actionButton = (label: string) =>
+    actionButtons().find((button) => button.textContent?.includes(label)) ??
+    null;
+  const clickReload = () =>
+    act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-reader-error-retry")
+        ?.click();
+    });
+
+  it("leaves downloading to the rest of the app while online", async () => {
+    await renderFailedChapter();
+
+    expect(errorPanel()).not.toBeNull();
+    expect(errorPanel()?.textContent?.toLowerCase()).not.toContain("download");
+    expect(actionButtons()).toHaveLength(0);
+  });
+
+  it("explains that a download would have helped while the device is offline", async () => {
+    await renderFailedChapter();
+
+    act(() => {
+      window.dispatchEvent(new Event("offline"));
+    });
+
+    expect(errorPanel()?.textContent).toContain(
+      "Once you're back online, download BSB so this doesn't happen again."
+    );
+
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+  });
+
+  it("still names the translation offline when its book list never loaded", async () => {
+    const { chapterData } = await renderFailedChapter();
+    // The fixture's `translation` follows the loaded chapter, standing in for
+    // the book list: with neither on hand, only the catalog knows the name.
+    act(() => {
+      chapterData.value = null;
+      window.dispatchEvent(new Event("offline"));
+    });
+
+    expect(errorPanel()?.textContent).toContain(
+      "Once you're back online, download BSB so this doesn't happen again."
+    );
+
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+  });
+
+  it("says nothing about downloading a translation already on the device", async () => {
+    await renderFailedChapter({ downloaded: ["BSB"] });
+
+    act(() => {
+      window.dispatchEvent(new Event("offline"));
+    });
+
+    expect(errorPanel()).not.toBeNull();
+    expect(errorPanel()?.textContent).not.toContain("Once you're back online");
+    // The translation that just failed is no way out of its own failure.
+    expect(actionButton("Choose a saved translation")).toBeNull();
+
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+  });
+
+  it("opens the translation list narrowed to saved translations", async () => {
+    // NIV lacks Genesis, so the panel has no in-place switch to offer.
+    const { selectorState, slot } = await renderFailedChapter({
+      downloaded: ["NIV"],
+    });
+
+    act(() => {
+      actionButton("Choose a saved translation")?.click();
+    });
+
+    expect(selectorState.openDownloadedTranslations).toHaveBeenCalledWith(slot);
+  });
+
+  it("leaves a saved translation with this chapter to the in-panel switch", async () => {
+    await renderFailedChapter({ downloaded: ["AAB", "NIV"] });
+
+    const switches = container.querySelectorAll(".sb-reader-error-switch");
+    expect(switches).toHaveLength(1);
+    expect(switches[0]?.textContent).toContain(aabBooks.translation.name);
+    expect(actionButton("Choose a saved translation")).toBeNull();
+  });
+
+  it("offers no saved-translation picker when nothing is saved", async () => {
+    await renderFailedChapter();
+
+    expect(actionButton("Choose a saved translation")).toBeNull();
+  });
+
+  it("suggests downloading once a reload brings the chapter back", async () => {
+    const { readingState, offline } = await renderFailedChapter();
+    (readingState.retryLoad as Mock).mockImplementation(async () => {
+      readingState.error.value = null;
+    });
+
+    await clickReload();
+
+    expect(offline.recoveryPrompt.value?.id).toBe("BSB");
+  });
+
+  it("suggests nothing for a translation the reader switched to mid-reload", async () => {
+    const { readingState, chapterData, offline } = await renderFailedChapter();
+    (readingState.retryLoad as Mock).mockImplementation(async () => {
+      // The reader picks AAB while BSB is still retrying, and AAB loads.
+      readingState.translationId.value = "AAB";
+      chapterData.value = {
+        ...chapterData.value!,
+        translation: aabBooks.translation,
+      };
+      readingState.error.value = null;
+    });
+
+    await clickReload();
+
+    expect(offline.recoveryPrompt.value).toBeNull();
+  });
+
+  it("suggests nothing when the reload fails again", async () => {
+    const { offline } = await renderFailedChapter();
+
+    // The fixture's retry leaves the error in place.
+    await clickReload();
+
+    expect(offline.recoveryPrompt.value).toBeNull();
   });
 });

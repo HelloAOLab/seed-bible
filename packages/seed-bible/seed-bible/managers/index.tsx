@@ -1,5 +1,6 @@
 export * from "./SeedBibleStateManager";
 export * from "./AnnotationsManager";
+export * from "./AudioPlaybackManager";
 export * from "./BibleReadingManager";
 export * from "./BibleReadingExtensionManager";
 export * from "./BibleSelectorManager";
@@ -28,5 +29,6 @@ export * from "./TabsLayoutManager";
 export * from "./TextToSpeechManager";
 export * from "./ThemeManager";
 export * from "./translationGrouping";
+export * from "./translationSearch";
 export * from "./TutorialManager";
 export * from "./UserGalleryManager";

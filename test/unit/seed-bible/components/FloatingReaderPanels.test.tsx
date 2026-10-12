@@ -12,6 +12,7 @@ import type {
   ChatSession,
   IdentifiedLocalChatContext,
   TextChatMessage,
+  TranslationSuggestion,
   UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
@@ -225,6 +226,8 @@ function createMockChatSession(
     wasMentioned: signal(false),
     markAsRead: vi.fn(),
     sendMessage: vi.fn().mockResolvedValue(undefined),
+    appendMessage: vi.fn(),
+    translationSuggestion: signal<TranslationSuggestion | null>(null),
     setTypingStatus: vi.fn(),
     participants: signal([]),
     totalParticipants: signal([]),
@@ -775,6 +778,33 @@ describe("FloatingChatPanel", () => {
     expect(closeChatPanel).not.toHaveBeenCalled();
   });
 
+  it("ignores a pointerdown on .sb-footnote-modal-overlay so modal clicks do not close chat", () => {
+    const { state, closeChatPanel } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    const overlay = document.createElement("div");
+    overlay.className = "sb-footnote-modal-overlay";
+    const modalButton = document.createElement("button");
+    overlay.appendChild(modalButton);
+    document.body.appendChild(overlay);
+
+    act(() => {
+      modalButton.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true })
+      );
+    });
+    overlay.remove();
+
+    expect(closeChatPanel).not.toHaveBeenCalled();
+  });
+
   it("does not close on an outside pointerdown that arrives before the dismiss listener attaches", () => {
     const { state, closeChatPanel } = createMockFloatingChatPanelState();
 
@@ -906,6 +936,77 @@ describe("FloatingChatPanel", () => {
     const item = container.querySelector(".sb-floating-chat-ai-context-item");
     expect(item?.textContent).toContain("Playlist Editor");
     expect(item?.textContent).toContain("2 tools");
+  });
+
+  it("invokes a context's settingsAction on click instead of the default inert behavior", () => {
+    const onClick = vi.fn();
+    const { state } = createMockFloatingChatPanelState({
+      activeContexts: [
+        {
+          id: "mcp-servers",
+          label: {
+            key: "mcp-servers-chat-context",
+            defaultValue: "MCP servers",
+          },
+          tools: [],
+          settingsAction: {
+            label: {
+              key: "ai-chat-settings-menu-item",
+              defaultValue: "AI Chat Settings",
+            },
+            onClick,
+          },
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const item = container.querySelector(
+      ".sb-floating-chat-ai-context-item"
+    ) as HTMLElement | null;
+    expect(item).not.toBeNull();
+    act(() => {
+      item?.click();
+    });
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not invoke anything on click for a context with no settingsAction", () => {
+    const { state } = createMockFloatingChatPanelState({
+      activeContexts: [
+        {
+          id: "playlist",
+          label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+          tools: [makeTool("editPlaylist")],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const item = container.querySelector(
+      ".sb-floating-chat-ai-context-item"
+    ) as HTMLElement | null;
+    expect(item).not.toBeNull();
+
+    // A context with no settingsAction should call `event.preventDefault()`
+    // (the mocked ContextMenuItem passes the native click event straight
+    // through to the row's onClick), not invoke anything else.
+    let capturedEvent: MouseEvent | undefined;
+    item?.addEventListener("click", (event) => {
+      capturedEvent = event as MouseEvent;
+    });
+    act(() => {
+      item?.click();
+    });
+
+    expect(capturedEvent?.defaultPrevented).toBe(true);
   });
 
   it("hides the AI context button when the selected chat's only AI participant doesn't support tool calling", () => {

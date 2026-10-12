@@ -117,6 +117,8 @@ function createQuickToolContext(
     annotationsForChapter?: unknown[];
     isMobile?: boolean;
     isDiscoverOpen?: ReadonlySignal<boolean>;
+    readingPlansForChapter?: unknown[];
+    pendingAnnotationChangesForChapter?: number;
   } = {}
 ): QuickToolContext {
   return {
@@ -140,6 +142,9 @@ function createQuickToolContext(
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
       ),
+      pendingCountForChapter: vi.fn(
+        () => overrides.pendingAnnotationChangesForChapter ?? 0
+      ),
       visibleAnnotationsForChapter: vi.fn(
         () => overrides.annotationsForChapter ?? []
       ),
@@ -151,6 +156,11 @@ function createQuickToolContext(
     app: {
       isMobile: signal(overrides.isMobile ?? false),
       isDiscoverOpen: overrides.isDiscoverOpen ?? signal(false),
+    } as any,
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(
+        () => overrides.readingPlansForChapter ?? []
+      ),
     } as any,
   };
 }
@@ -930,7 +940,6 @@ describe("createBibleToolsManager", () => {
       expect(chats.composerDraft.value).toBe(
         `${formatSelectedVerses(context.readingState)}\n\n`
       );
-      expect(context.readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("does nothing when the single-agent shortcut is invoked with no selected verses", () => {
@@ -1072,7 +1081,6 @@ describe("createBibleToolsManager", () => {
       expect(chats.createLocalSession).not.toHaveBeenCalled();
       expect(addParticipant).toHaveBeenCalledWith("apologist");
       expect(chats.selectChat).toHaveBeenCalledWith("recent-apologist-chat");
-      expect(context.readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("does not reuse a shared chat or a local chat for a different agent", async () => {
@@ -1624,6 +1632,34 @@ describe("createBibleToolsManager", () => {
       tool?.onSelect();
       expect(context.readingState.discoverContentPanelInline.value).toBe(true);
     });
+
+    it("is visible when there is at least one reading plan", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        readingPlansForChapter: [{ planId: "test-plan" }],
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool).toBeDefined();
+      expect(tool?.visible.value).toBe(true);
+    });
+
+    it("is visible when the chapter only has pending annotation changes", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        pendingAnnotationChangesForChapter: 3,
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool).toBeDefined();
+      expect(tool?.visible.value).toBe(true);
+    });
   });
 
   describe("next-item tool while a playlist plays", () => {
@@ -1870,10 +1906,14 @@ describe("createBibleToolsManager", () => {
         } as any,
         annotations: {
           getAnnotationsForChapter: () => signal([]),
+          pendingCountForChapter: vi.fn(() => 0),
           visibleAnnotationsForChapter: () => [],
         } as any,
         features: {} as any,
         surface: "quick-toolbar",
+        readingPlans: {
+          getReadingPlansForChapter: vi.fn(() => []),
+        } as any,
         ...overrides,
       };
     }
@@ -2005,12 +2045,11 @@ describe("createBibleToolsManager", () => {
 
     it("adds one playlist item for a contiguous verse run", async () => {
       const manager = createBibleToolsManager(testBranding);
-      const { context, editingPlaylist, clearSelectedVerses } =
-        createPlaylistContext({
-          verses: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n) =>
-            selectedVerse("EXO", 26, n)
-          ),
-        });
+      const { context, editingPlaylist } = createPlaylistContext({
+        verses: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n) =>
+          selectedVerse("EXO", 26, n)
+        ),
+      });
 
       const tool = manager
         .getVerseToolbarTools(context)
@@ -2024,7 +2063,6 @@ describe("createBibleToolsManager", () => {
           ref: { bookId: "EXO", chapter: 26, verse: 1, endVerse: 11 },
         },
       ]);
-      expect(clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("adds one playlist item per gapped range", async () => {

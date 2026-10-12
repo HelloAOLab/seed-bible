@@ -18,6 +18,7 @@ export interface ExtensionStringSettingDefinitionFile {
   type: "string";
   default?: string;
   enum?: string[];
+  sensitive?: string;
 }
 
 export interface ExtensionNumberSettingDefinitionFile {
@@ -38,12 +39,18 @@ export type ExtensionSettingDefinitionFile =
   | ExtensionNumberSettingDefinitionFile
   | ExtensionBooleanSettingDefinitionFile;
 
+export interface ExtensionSensitiveProxyDefinitionFile {
+  host: string;
+  requestMapping: Record<string, string>;
+}
+
 export interface ExtensionMetaFile {
   id: string;
   translations: Record<string, ExtensionTranslationFile>;
   dependencies?: string[];
   autoinstall?: boolean;
   settings?: Record<string, ExtensionSettingDefinitionFile>;
+  sensitive?: Record<string, ExtensionSensitiveProxyDefinitionFile>;
 }
 
 /** An extension package discovered under `packages/`, with its parsed meta. */
@@ -141,10 +148,11 @@ export const FALLBACK_LANGUAGE = "en";
  * about 1.8 KB; it was all 77 of them that cost 138 KB.
  *
  * Every other language lives in the per-language modules above, and every key
- * beyond `title`/`description` is behind `loadFullTranslations`. `settings` is
- * kept inline unconditionally, alongside `dependencies`/`autoinstall`: unlike
- * translations it isn't per-locale text, and it's needed up front to know
- * whether to show a "Configure" action and to build its form.
+ * beyond `title`/`description` is behind `loadFullTranslations`. `settings` (and
+ * the `sensitive` destinations its settings name) is kept inline
+ * unconditionally, alongside `dependencies`/`autoinstall`: unlike translations
+ * it isn't per-locale text, and it's needed up front to know whether to show a
+ * "Configure" action and to build its form.
  */
 export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
   const english = meta.translations?.[FALLBACK_LANGUAGE];
@@ -163,6 +171,7 @@ export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
       ? { autoinstall: meta.autoinstall }
       : {}),
     ...(meta.settings ? { settings: meta.settings } : {}),
+    ...(meta.sensitive ? { sensitive: meta.sensitive } : {}),
   };
 }
 
@@ -171,22 +180,40 @@ export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
  *
  * Each extension's code and full translations are `() => import(...)` thunks so
  * Vite code-splits them, and `loadListTranslations` does the same per language.
+ *
+ * With `serverBuild`, those thunks reject instead of importing, so none of it
+ * lands in the SSR bundle, which is built as a single file and would otherwise
+ * inline every extension. The server never installs extensions (that starts in
+ * a `useEffect`) or fetches list strings (`fetchesListTranslations` in
+ * `ExtensionManager`); the rejection makes it loud if that ever changes.
  */
 export function generateEntryModuleSource(
   extensions: DiscoveredExtension[],
-  setId: string
+  setId: string,
+  { serverBuild = false }: { serverBuild?: boolean } = {}
 ): string {
+  const unavailable = (message: string) =>
+    `() => Promise.reject(new Error(${toJsLiteral(message)}))`;
+
   const entries = extensions
-    .map(
-      ({ folder, meta }) => `  {
+    .map(({ folder, meta }) => {
+      const loadFullTranslations = serverBuild
+        ? unavailable(
+            `${meta.id}'s translations are not available in the SSR bundle`
+          )
+        : `() => import("@packages/${folder}/extension.json").then((m) => m.default.translations)`;
+      const load = serverBuild
+        ? unavailable(`${meta.id} is not available in the SSR bundle`)
+        : `() => import("@packages/${folder}/index")`;
+      return `  {
     meta: ${toJsLiteral(trimMeta(meta))},
-    loadFullTranslations: () => import("@packages/${folder}/extension.json").then((m) => m.default.translations),
-    import: () => import("@packages/${folder}/index"),
-  },`
-    )
+    loadFullTranslations: ${loadFullTranslations},
+    import: ${load},
+  },`;
+    })
     .join("\n");
 
-  const localeEntries = listExtensionLanguages(extensions)
+  const localeEntries = (serverBuild ? [] : listExtensionLanguages(extensions))
     // English is already inline via `trimMeta`, so there is nothing to fetch
     // for it — which is also the common case.
     .filter((lang) => lang !== FALLBACK_LANGUAGE)

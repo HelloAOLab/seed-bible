@@ -63,6 +63,15 @@ import {
   YourContentPaneTitle,
 } from "../components/YourContentPane/YourContentPane";
 import {
+  PLAYLIST_HISTORY_PANE_ID,
+  PlaylistHistoryPane,
+  PlaylistHistoryPaneTitle,
+} from "../components/PlaylistHistoryPane/PlaylistHistoryPane";
+import {
+  openReadingPlanDetail,
+  openReadingPlanEditor,
+} from "../components/ReadingPlansPane/ReadingPlansPane";
+import {
   FRIENDS_PANE_ID,
   FriendsPane,
   FriendsPaneTitle,
@@ -155,6 +164,10 @@ import {
   type SavesManager,
 } from "../managers/SavesManager";
 import {
+  createBookmarksManager,
+  type BookmarksManager,
+} from "../managers/BookmarksManager";
+import {
   createFriendsManager,
   type FriendsManager,
 } from "../managers/FriendsManager";
@@ -215,6 +228,7 @@ import {
 import { range } from "es-toolkit";
 import {
   createReadingPlansManager,
+  type ReadingPlanMetadata,
   type ReadingPlan,
   type ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
@@ -267,6 +281,18 @@ export const SHARED_PAGE_MODAL_ID = "shared-page";
  * These values are mostly computed from lower-level managers and represent
  * the currently active reading context and pane selection.
  */
+export interface ToastOptions {
+  /** Makes the toast tappable. Tapping it dismisses the toast first. */
+  onClick?: () => void;
+  /** Secondary line telling people what tapping the toast does. */
+  hint?: string;
+}
+
+export interface AppToast extends ToastOptions {
+  id: number;
+  message: string;
+}
+
 export interface AppState {
   /** True when multi-slot tab layouts are enabled by config. */
   panelsEnabled: ReadonlySignal<boolean>;
@@ -424,13 +450,14 @@ export interface AppState {
   resumeSharedPage: () => void;
 
   /** The toast currently shown at the bottom of the screen, or null when none. */
-  currentToast: ReadonlySignal<{ id: number; message: string } | null>;
+  currentToast: ReadonlySignal<AppToast | null>;
   /**
-   * Shows a toast message at the bottom of the screen for 3.5s.
+   * Shows a toast message at the bottom of the screen for 3.5s (6s when it
+   * has an `onClick`, so there's time to tap it).
    * Calling again replaces the current toast and restarts the timer
    * (only one toast is ever visible at a time, always the most recent).
    */
-  toast: (message: string) => void;
+  toast: (message: string, options?: ToastOptions) => void;
 
   /** Opens a chat session. */
   openChat: (sharedChat: ChatSession) => void;
@@ -496,6 +523,8 @@ export interface SeedBibleState {
   highlights: HighlightsManager;
   /** Archival saves manager: categorized references to chapters and verses. */
   saves: SavesManager;
+  /** Named, colored chapter markers the user moves as they read. */
+  bookmarks: BookmarksManager;
   /**
    * The signed-in user's friends and pending friend requests. A friendship is
    * a mutual shared permission; for now it only decides whose already-public
@@ -546,6 +575,11 @@ export interface SeedBibleState {
    * translations that ship no recorded narration.
    */
   textToSpeech: TextToSpeechManager;
+  /**
+   * The audio the reader is currently showing playback controls for (e.g. a
+   * chapter's narration), so its toolbars can display progress and scrub.
+   */
+  audioPlayback: AudioPlaybackManager;
   /** Saved photos the user has uploaded, for reuse as covers and later features. */
   gallery: UserGalleryManager;
   /** Aggregated computed app state and top-level UI actions. */
@@ -569,6 +603,13 @@ export interface SeedBibleState {
   openYourContent: () => void;
   /** Closes "Your content" (clears `content` from the URL). */
   closeYourContent: () => void;
+
+  /** True when the playlist history screen is showing. */
+  isPlaylistHistoryOpen: ReadonlySignal<boolean>;
+  /** Opens playlist history (reflected in the URL as `?playlist-history=open`). */
+  openPlaylistHistory: () => void;
+  /** Closes playlist history (clears `playlist-history` from the URL). */
+  closePlaylistHistory: () => void;
 
   /** True when the Friends screen is showing. */
   isFriendsOpen: ReadonlySignal<boolean>;
@@ -613,15 +654,23 @@ export interface SeedBibleState {
   closeCodeOfConduct: () => void;
 }
 
+// Evaluated before the extension bundle below. Bonfire imports
+// `formatAvailableTranslationsNote` from this module while that bundle is
+// still loading, and a live binding from a half-finished barrel would be
+// unset if this import ran afterwards.
+import { createTranslationAgentTools } from "./translationSearch";
+
 // The extension set is auto-discovered from every extension package under
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
 import {
   createPlaylistManager,
+  playlistHistoryOpenFailedMessage,
   type PlaylistManager,
   type PlaylistItemData,
   type Playlist,
+  type PlaylistPlayHistory,
 } from "./PlaylistManager";
 import {
   createUserGalleryManager,
@@ -631,6 +680,10 @@ import {
   createTextToSpeechManager,
   type TextToSpeechManager,
 } from "./TextToSpeechManager";
+import {
+  createAudioPlaybackManager,
+  type AudioPlaybackManager,
+} from "./AudioPlaybackManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
@@ -750,6 +803,19 @@ export function createSeedBibleState(
     friendReads,
   });
   const saves = createSavesManager(os, login);
+  const bookmarks = createBookmarksManager(os, login);
+  // The saves and bookmarks panels occupy the same spot in the sidebar, so
+  // opening either one closes the other.
+  effect(() => {
+    if (bookmarks.isPanelOpen.value) {
+      saves.isFilterActive.value = false;
+    }
+  });
+  effect(() => {
+    if (saves.isFilterActive.value) {
+      bookmarks.isPanelOpen.value = false;
+    }
+  });
   const friends = createFriendsManager(os, login);
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
@@ -983,6 +1049,23 @@ export function createSeedBibleState(
     contentOpen.value = false;
   };
 
+  // Playlist history, reached from Profile. Bound to `?playlist-history=open`
+  // on the same terms as the Profile screen below, and kept out of SSR so a
+  // crawled URL doesn't serialize the signed-in history list.
+  const playlistHistoryOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("playlist-history") ===
+          "open"
+  );
+  const isPlaylistHistoryOpen = computed(() => playlistHistoryOpen.value);
+  const openPlaylistHistory = () => {
+    playlistHistoryOpen.value = true;
+  };
+  const closePlaylistHistory = () => {
+    playlistHistoryOpen.value = false;
+  };
+
   // The Friends screen, reached from Profile. Bound to `?friends=open` on the
   // same terms as "Your content" above.
   const friendsOpen = signal(
@@ -1058,6 +1141,14 @@ export function createSeedBibleState(
         contentOpen.value = newValue === "open";
       },
     },
+    "playlist-history": {
+      get value() {
+        return playlistHistoryOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        playlistHistoryOpen.value = newValue === "open";
+      },
+    },
     friends: {
       get value() {
         return friendsOpen.value ? "open" : null;
@@ -1106,6 +1197,7 @@ export function createSeedBibleState(
   });
   const gallery = createUserGalleryManager(os, login);
   const textToSpeech = createTextToSpeechManager();
+  const audioPlayback = createAudioPlaybackManager();
 
   const { currentTheme } = themeManager;
   // While a Customization is active, its variant is rendered against its
@@ -1303,9 +1395,18 @@ export function createSeedBibleState(
   // means the profile has had time to load, so there's no "stale prompt"
   // concern the way there was on startup. One-shot via `installOfferChecked`.
   //
+  // "No, thanks" and leaving the introduction tour before it finishes are
+  // the exception: don't open install, and don't mark the offer resolved.
+  // The download prompt waits on `installOfferResolved`, so it stays quiet
+  // for the rest of this visit without a rule of its own. The next visit
+  // starts fresh and shows install, unless that prompt was already dismissed
+  // on this device (`sb-install-dismissed`). Finishing the tour still chains
+  // install, then download, as before.
+  //
   // `installOfferResolved` flips once that check has had its turn, whether or
-  // not it showed anything. The offline-download offer waits on it so the two
-  // never stack, and so "offer the download after the install prompt" holds.
+  // not it showed anything — except the early-leave case above. The
+  // offline-download offer waits on it so the two never stack, and so "offer
+  // the download after the install prompt" holds.
   const installOfferResolved = signal(false);
 
   let installOfferChecked = false;
@@ -1335,6 +1436,13 @@ export function createSeedBibleState(
       !tutorial.running.value &&
       (tutorial.completed.value || tutorial.optedOut.value);
     if (!tutorialResolved) {
+      return;
+    }
+    // Read after the tour has actually ended, in the same flush that marks
+    // it seen (see `dismissPrompt` / `skip`). Leaving `installOfferResolved`
+    // false is what keeps the download prompt from taking a turn this visit.
+    if (tutorial.leftIntroductionEarly.value) {
+      installOfferChecked = true;
       return;
     }
     installOfferChecked = true;
@@ -1846,7 +1954,7 @@ export function createSeedBibleState(
 
     const getTitle = () => {
       if (isAboutPage.value) {
-        return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
+        return `${t("about-title", { defaultValue: "About Seed Bible" })} | ${seedBibleTitle}`;
       }
 
       // Only on the shared page itself: while a playlist plays at its own
@@ -2003,7 +2111,7 @@ export function createSeedBibleState(
     const { t } = i18n;
 
     if (isAboutPage.value) {
-      return t("about-title", { defaultValue: "About the Seed Bible" });
+      return t("about-title", { defaultValue: "About Seed Bible" });
     }
 
     if (sharedPageTitle.value) {
@@ -2211,7 +2319,11 @@ export function createSeedBibleState(
   // Offer to save the current translation for offline reading, once the
   // tutorial and install prompts have had their turn so we never stack two
   // dialogs. One-shot per load via `downloadOfferChecked`; the manager decides
-  // whether the offer is actually warranted.
+  // whether the offer is actually warranted (first save on a device with
+  // nothing downloaded, or the current translation after a day). Leaving the
+  // introduction early never resolves the install offer, so this effect
+  // simply doesn't run that visit — it has no separate "come back next time"
+  // flag. The next visit follows these same rules.
   let downloadOfferChecked = false;
   effect(() => {
     if (downloadOfferChecked) {
@@ -2327,18 +2439,33 @@ export function createSeedBibleState(
   // Defined here (rather than further down, where it's exposed on `state`)
   // because the host-disconnect handling below also calls it, and that
   // effect runs immediately when constructed.
-  const currentToast = signal<{ id: number; message: string } | null>(null);
+  const currentToast = signal<AppToast | null>(null);
   let toastSeq = 0;
   let toastTimer: ReturnType<typeof setTimeout> | null = null;
-  const toast = (message: string) => {
+  const dismissToast = () => {
+    if (toastTimer !== null) {
+      clearTimeout(toastTimer);
+      toastTimer = null;
+    }
+    currentToast.value = null;
+  };
+  const toast = (message: string, options?: ToastOptions) => {
     if (toastTimer !== null) {
       clearTimeout(toastTimer);
     }
-    currentToast.value = { id: ++toastSeq, message };
-    toastTimer = setTimeout(() => {
-      currentToast.value = null;
-      toastTimer = null;
-    }, 3500);
+    const onClick = options?.onClick;
+    currentToast.value = {
+      id: ++toastSeq,
+      message,
+      hint: options?.hint,
+      onClick: onClick
+        ? () => {
+            dismissToast();
+            onClick();
+          }
+        : undefined,
+    };
+    toastTimer = setTimeout(dismissToast, onClick ? 6000 : 3500);
   };
 
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
@@ -3022,7 +3149,39 @@ export function createSeedBibleState(
       },
     });
 
-    return [goToReference.tool, searchVerses.tool, createPlaylist.tool];
+    const translationTools = createTranslationAgentTools({
+      loadCatalog: async () => {
+        // A chapter load only merges the one translation being read. Searching
+        // that partial list would hide every other language.
+        if (data.catalogLoaded.peek()) {
+          return data.availableTranslations.peek();
+        }
+        return data.getTranslations();
+      },
+      showTranslationSuggestion: (suggestion, call) => {
+        const openChats = chats.chats.peek();
+        const callingChat = call?.chatId
+          ? openChats.find((chat) => chat.id === call.chatId)
+          : undefined;
+        // A chat id that is not open must not fall through to whichever chat
+        // the reader happens to be looking at.
+        if (call?.chatId && !callingChat) {
+          throw new Error("No chat is open.");
+        }
+        const chat = callingChat ?? chats.selectedChat.peek();
+        if (!chat) {
+          throw new Error("No chat is open.");
+        }
+        chat.translationSuggestion.value = suggestion;
+      },
+    });
+
+    return [
+      goToReference.tool,
+      searchVerses.tool,
+      createPlaylist.tool,
+      ...translationTools,
+    ];
   };
 
   const enableCoreChatContext = () => {
@@ -3099,6 +3258,7 @@ export function createSeedBibleState(
       panesManager: panes,
       modals,
       playlists,
+      bibleData: data,
       friends,
       os,
       login,
@@ -3174,6 +3334,7 @@ export function createSeedBibleState(
     readingHistory,
     highlights,
     saves,
+    bookmarks,
     friends,
     annotations,
     chats,
@@ -3193,12 +3354,16 @@ export function createSeedBibleState(
     playlists,
     gallery,
     textToSpeech,
+    audioPlayback,
     tutorial,
     onboarding,
     yourContent,
     isYourContentOpen,
     openYourContent,
     closeYourContent,
+    isPlaylistHistoryOpen,
+    openPlaylistHistory,
+    closePlaylistHistory,
     isFriendsOpen,
     openFriends,
     closeFriends,
@@ -3356,6 +3521,7 @@ export function createSeedBibleState(
       login={login}
       theme={themeManager.currentTheme}
       isMobile={isMobile}
+      bookmarks={bookmarks.bookmarks}
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
       onTakeTour={() => tutorial.acceptPrompt()}
@@ -3399,12 +3565,13 @@ export function createSeedBibleState(
   // stays stable across reopens.
   //
   // Opening any fullscreen pane closes the others, so the screens reached from
-  // Profile ("Edit profile", "Your content", "Friends") each carry a back
-  // button that reopens it rather than relying on a pane stack.
+  // Profile ("Edit profile", "Your content", "Friends", playlist history) each
+  // carry a back button that reopens it rather than relying on a pane stack.
   const backToProfile = () => {
     closeEditProfile();
     closeYourContent();
     closeFriends();
+    closePlaylistHistory();
     openProfile();
   };
   const renderProfileBackButton = () => (
@@ -3416,11 +3583,16 @@ export function createSeedBibleState(
     const { t } = i18n;
     openProfilePictureModal({ modals, login, t });
   };
-  const openReadingPlansFromProfile = () => {
+  /**
+   * Opens the plans pane from one of the Profile screens. False when there is
+   * no reader to open it beside, in which case nothing has changed on screen.
+   */
+  const openReadingPlansFullscreen = (): boolean => {
     const readingState = selectedTab.peek()?.readingState;
     if (!readingState) {
-      return;
+      return false;
     }
+    closeYourContent();
     closeProfile();
     // Fullscreen rather than the toolbar's docked "side": the user came from a
     // fullscreen screen, so a side panel would leave them looking at the reader.
@@ -3430,6 +3602,7 @@ export function createSeedBibleState(
       panesManager: panes,
       modals,
       playlists,
+      bibleData: data,
       friends,
       os,
       login,
@@ -3437,6 +3610,27 @@ export function createSeedBibleState(
       placement: "fullscreen",
       toast,
     });
+    return true;
+  };
+  const openReadingPlansFromProfile = () => {
+    openReadingPlansFullscreen();
+  };
+  const continuePlaylistFromProfile = (
+    entry: PlaylistPlayHistory
+  ): Promise<void> => {
+    // Stay on the profile until the playlist has loaded. Closing first drops
+    // the user on the reader with no sign that anything is happening, and a
+    // failed load only toasts after they've already left.
+    const { t } = i18n;
+    return playlists.playFromHistory(entry).then(
+      () => {
+        closeProfile();
+      },
+      (error) => {
+        toast(playlistHistoryOpenFailedMessage(t));
+        throw error;
+      }
+    );
   };
   const renderProfilePane = () => (
     <ProfilePane
@@ -3444,6 +3638,8 @@ export function createSeedBibleState(
       onEditProfile={openEditProfile}
       onEditPicture={editProfilePicture}
       onOpenReadingPlans={openReadingPlansFromProfile}
+      onOpenPlaylistHistory={openPlaylistHistory}
+      onContinuePlaylist={continuePlaylistFromProfile}
       onOpenYourContent={openYourContent}
       onOpenFriends={openFriends}
     />
@@ -3530,6 +3726,27 @@ export function createSeedBibleState(
     // uses — rather than growing a second editor on this screen.
     annotations.editAnnotation(annotation);
   };
+  // Both land in the plans pane, opened fullscreen the way the Profile card
+  // opens it, and then drill straight into the plan so the user doesn't have
+  // to find it in the list a second time.
+  const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
+    if (!openReadingPlansFullscreen()) {
+      return;
+    }
+    // A draft has nothing to read yet, so it picks up where the author left
+    // off — in the editor — rather than opening an empty detail view.
+    if (plan.status === "draft") {
+      void openReadingPlanEditor(readingPlans, plan);
+    } else {
+      void openReadingPlanDetail(readingPlans, plan);
+    }
+  };
+  const editReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
+    if (!openReadingPlansFullscreen()) {
+      return;
+    }
+    void openReadingPlanEditor(readingPlans, plan);
+  };
   const renderYourContentPane = () => (
     <YourContentPane
       state={state}
@@ -3537,6 +3754,8 @@ export function createSeedBibleState(
       onPlayPlaylist={playPlaylistFromContent}
       onEditPlaylist={editPlaylistFromContent}
       onEditAnnotation={editAnnotationFromContent}
+      onOpenReadingPlan={openReadingPlanFromContent}
+      onEditReadingPlan={editReadingPlanFromContent}
     />
   );
   const renderYourContentPaneTitle = () => <YourContentPaneTitle />;
@@ -3561,6 +3780,41 @@ export function createSeedBibleState(
     );
     if (!paneOpen && isYourContentOpen.peek()) {
       closeYourContent();
+    }
+  });
+
+  // Playlist history, another fullscreen screen reached from Profile.
+  // Playing a row leaves once playback has started, so the reader (and, on
+  // desktop, the playlist player) is what's in front.
+  const leavePlaylistHistory = () => {
+    closePlaylistHistory();
+    closeProfile();
+  };
+  const renderPlaylistHistoryPane = () => (
+    <PlaylistHistoryPane state={state} onLeave={leavePlaylistHistory} />
+  );
+  const renderPlaylistHistoryPaneTitle = () => <PlaylistHistoryPaneTitle />;
+
+  effect(() => {
+    if (isPlaylistHistoryOpen.value) {
+      panes.openPane({
+        id: PLAYLIST_HISTORY_PANE_ID,
+        placement: "fullscreen",
+        title: renderPlaylistHistoryPaneTitle,
+        leading: renderProfileBackButton,
+        component: renderPlaylistHistoryPane,
+      });
+    } else {
+      panes.closePane(PLAYLIST_HISTORY_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === PLAYLIST_HISTORY_PANE_ID
+    );
+    if (!paneOpen && isPlaylistHistoryOpen.peek()) {
+      closePlaylistHistory();
     }
   });
 

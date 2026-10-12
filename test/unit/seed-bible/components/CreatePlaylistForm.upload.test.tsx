@@ -251,6 +251,8 @@ describe("CreatePlaylistForm cover upload", () => {
           url: "https://example.com/gallery.jpg",
         }),
         recordData: vi.fn().mockResolvedValue(undefined),
+        eraseData: vi.fn().mockResolvedValue({ success: true }),
+        eraseFile: vi.fn().mockResolvedValue({ success: true }),
         listAllDataByMarker: vi
           .fn()
           .mockResolvedValue({ success: true, items: [] }),

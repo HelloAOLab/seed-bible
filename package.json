@@ -11,7 +11,7 @@
     "dev": "bun server/index.ts",
     "build": "pnpm build:client && pnpm build:ssr && pnpm build:server && pnpm sitemap",
     "build:client": "vite build",
-    "build:ssr": "vite build --ssr standalone/entry-ssr.tsx",
+    "build:ssr": "vite build --ssr standalone/entry-ssr.tsx && bun script/check-ssr-bundle.ts",
     "build:server": "bun build --target=bun --external express --external vite --outfile=server/dist/index.js ./server/index.ts",
     "lint": "eslint packages test && stylelint \"packages/**/*.css\"",
     "lint:fix": "eslint packages test --fix && stylelint \"packages/**/*.css\" --fix",
@@ -134,6 +134,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1069.0",
+    "@modelcontextprotocol/client": "^2.0.0",
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/exporter-metrics-otlp-http": "^0.221.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.221.0",

@@ -213,6 +213,113 @@ describe("createPanes", () => {
     });
   });
 
+  describe("openPane with exclusive", () => {
+    it("closes every other pane, fullscreen included, when an exclusive side pane opens", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+      const exclusive = panes.openPane({
+        placement: "side",
+        title: "Exclusive",
+        component: componentReturning("Exclusive"),
+        exclusive: true,
+      });
+
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual([exclusive.id]);
+      expect(panes.selectedPaneId.value).toBe(exclusive.id);
+      expect(exclusive.placement).toBe("side");
+    });
+
+    it("closes other panes when an existing pane is reused by id with exclusive", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "editor",
+        placement: "side",
+        title: "Editor",
+        component: componentReturning("Editor"),
+      });
+      // Resized so the check below shows the pane was reused, not recreated
+      // at the default width.
+      panes.resizePane("editor", 100, 0, 1);
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+
+      const reused = panes.openPane({
+        id: "editor",
+        placement: "side",
+        title: "Editor Updated",
+        component: componentReturning("Editor Updated"),
+        exclusive: true,
+      });
+
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual(["editor"]);
+      expect(reused.title).toBe("Editor Updated");
+      expect(reused.width).toBe(580);
+    });
+
+    it("tells each closed pane it was displaced", () => {
+      const panes = createPanes();
+      const onFullscreenClose = vi.fn();
+      const onFloatingClose = vi.fn();
+
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+        onClose: onFullscreenClose,
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+        onClose: onFloatingClose,
+      });
+      panes.openPane({
+        placement: "side",
+        title: "Exclusive",
+        component: componentReturning("Exclusive"),
+        exclusive: true,
+      });
+
+      expect(onFullscreenClose).toHaveBeenCalledExactlyOnceWith("displaced");
+      expect(onFloatingClose).toHaveBeenCalledExactlyOnceWith("displaced");
+    });
+
+    it("applies only to the open it was passed to, not to later opens", () => {
+      const panes = createPanes();
+
+      const exclusive = panes.openPane({
+        placement: "side",
+        title: "Exclusive",
+        component: componentReturning("Exclusive"),
+        exclusive: true,
+      });
+      const floating = panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual([
+        exclusive.id,
+        floating.id,
+      ]);
+    });
+  });
+
   describe("openPane on a mobile viewport", () => {
     it("closes other panes when any pane is opened, since panes display fullscreen", () => {
       const isMobile = signal(true);

@@ -1,3 +1,8 @@
+/* Lets an expanded item's preview wrap onto its own line under the row. */
+.sb-playlist-editor-item {
+  flex-wrap: wrap;
+}
+
 /* Clickable item label that opens the item for editing. */
 .sb-discover-item-button {
   flex: 1;
