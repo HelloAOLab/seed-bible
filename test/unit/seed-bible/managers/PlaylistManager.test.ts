@@ -1937,6 +1937,7 @@ describe("createPlaylistManager", () => {
         type: "bible-verse",
         ref: { bookId: "JHN", chapter: 3, verse: 16 },
         note: "<p><strong>Love</strong> first</p>",
+        noteTitle: "Love first",
       });
 
       const state = JSON.parse(
@@ -1945,6 +1946,7 @@ describe("createPlaylistManager", () => {
       expect(state.items[0].bibleVerse.note).toBe(
         "<p><strong>Love</strong> first</p>"
       );
+      expect(state.items[0].bibleVerse.noteTitle).toBe("Love first");
 
       // The AI edits the reference and hands the note back with it.
       await getTool("updatePlaylistItem").function({
@@ -1961,6 +1963,7 @@ describe("createPlaylistManager", () => {
           type: "bible-verse",
           ref: { bookId: "JHN", chapter: 3, verse: 16, endVerse: 17 },
           note: "<p><strong>Love</strong> first</p>",
+          noteTitle: "Love first",
         },
       ]);
     });
@@ -4978,7 +4981,7 @@ describe("createPlayingState", () => {
       ]);
     });
 
-    it("keeps a scripture note on the passage's first chapter only", () => {
+    it("keeps a scripture note and its title on the passage's first chapter only", () => {
       const state = createPlayingState([
         makePlaylist({
           items: [
@@ -4986,14 +4989,21 @@ describe("createPlayingState", () => {
               type: "bible-verse",
               ref: { bookId: "JHN", chapter: 1, verse: 14, endChapter: 3 },
               note: "<p>The Word became flesh</p>",
+              noteTitle: "Incarnation",
             },
           ],
         }),
       ]);
 
       expect(
-        state.queue.value.map((item) => "note" in item && item.note)
-      ).toEqual(["<p>The Word became flesh</p>", false, false]);
+        state.queue.value.map((item) =>
+          item.type === "bible-verse" ? [item.note, item.noteTitle] : null
+        )
+      ).toEqual([
+        ["<p>The Word became flesh</p>", "Incarnation"],
+        [undefined, undefined],
+        [undefined, undefined],
+      ]);
     });
 
     it("does not expand when endChapter equals chapter", () => {

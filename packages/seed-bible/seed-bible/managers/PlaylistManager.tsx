@@ -82,6 +82,8 @@ export const BibleVersePlaylistItem = z.object({
    * item). Shown alongside the passage while it plays rather than in a modal.
    */
   note: z.string().optional(),
+  /** Optional plain-text heading for the note, shown above it. */
+  noteTitle: z.string().optional(),
 });
 
 export const PlaylistItem = z.discriminatedUnion("type", [
@@ -587,7 +589,7 @@ export function expandCrossChapterItem(
     return [item];
   }
 
-  const { ref, translationId, note } = item;
+  const { ref, translationId, note, noteTitle } = item;
   const endChapter = ref.endChapter;
   if (
     endChapter == null ||
@@ -607,6 +609,7 @@ export function expandCrossChapterItem(
         // The note is about the whole passage, so it shows once, where the
         // passage starts, rather than again on every chapter of it.
         ...(note != null ? { note } : {}),
+        ...(noteTitle != null ? { noteTitle } : {}),
         ref:
           ref.verse != null
             ? {

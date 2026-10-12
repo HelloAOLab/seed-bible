@@ -116,6 +116,47 @@ describe("ScriptureNoteSheet", () => {
     expect(sheet()).not.toBeNull();
   });
 
+  it("heads the note with its title, with the passage above it", async () => {
+    const titled: PlaylistItemData = { ...noted, noteTitle: "God so loved" };
+    act(() => {
+      render(
+        <ScriptureNoteSheet
+          playing={createPlayingState([playlist([titled])])}
+          resolveBookName={resolveBookName}
+        />,
+        container
+      );
+    });
+
+    expect(
+      sheet()?.querySelector(".sb-scripture-note-title")?.textContent
+    ).toBe("God so loved");
+    expect(
+      sheet()?.querySelector(".sb-scripture-note-passage")?.textContent
+    ).toBe("John 3:16-17");
+  });
+
+  it("shows a title-only note as a header with nothing to collapse", () => {
+    const titleOnly: PlaylistItemData = {
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1, verse: 1 },
+      noteTitle: "Listen for 'and God said'",
+    };
+    act(() => {
+      render(
+        <ScriptureNoteSheet
+          playing={createPlayingState([playlist([titleOnly])])}
+          resolveBookName={resolveBookName}
+        />,
+        container
+      );
+    });
+
+    expect(sheet()?.textContent).toContain("Listen for 'and God said'");
+    expect(sheet()?.querySelector(".sb-scripture-note-body")).toBeNull();
+    expect(sheet()?.querySelector("button")).toBeNull();
+  });
+
   it("collapses to its title, and opens again on the next noted step", async () => {
     const second: PlaylistItemData = { ...noted, note: "<p>Second</p>" };
     const playing = createPlayingState([playlist([noted, second])]);
@@ -365,6 +406,23 @@ describe("ScriptureNotePopover", () => {
     act(() => button("Hide note")!.click());
     await act(() => playing.next());
     await waitFor(() => !!popover());
+  });
+
+  it("heads a titled note with its title and the passage it's about", async () => {
+    layOutReader({ 16: 140, 17: 180 });
+    renderPopover(
+      createPlayingState([
+        playlist([{ ...noted, noteTitle: "God so loved the world" }]),
+      ])
+    );
+    await waitFor(() => !!popover());
+
+    expect(popover()!.querySelector("h3")?.textContent).toBe(
+      "God so loved the world"
+    );
+    expect(
+      popover()!.querySelector(".sb-scripture-note-passage")?.textContent
+    ).toBe("John 3:16-17");
   });
 
   it("disables next on the last step of a queue that can't finish", async () => {

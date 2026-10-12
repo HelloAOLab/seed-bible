@@ -573,6 +573,113 @@ describe("ScriptureItemInput", () => {
       expect(handleRef.current?.isDirty()).toBe(true);
     });
 
+    function titleInput(): HTMLInputElement {
+      return container.querySelector(
+        ".sb-scripture-note-title-input"
+      ) as HTMLInputElement;
+    }
+
+    it("adds the note's title along with its body", async () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+      });
+      await openNote();
+      act(() => {
+        input().focus();
+        setValue(input(), "Philemon");
+        setValue(titleInput(), "  A plea for Onesimus ");
+        typeNote("<p>Read slowly</p>");
+      });
+
+      await act(async () => {
+        submitButton().click();
+        await flushMicrotasks();
+      });
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "PHM", chapter: 1 },
+        note: "<p>Read slowly</p>",
+        noteTitle: "A plea for Onesimus",
+      } satisfies PlaylistItemData);
+    });
+
+    it("adds a note that has only a title", async () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+      });
+      await openNote();
+      act(() => {
+        input().focus();
+        setValue(input(), "Philemon");
+        setValue(titleInput(), "Watch for 'useful'");
+      });
+
+      await act(async () => {
+        submitButton().click();
+      });
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "PHM", chapter: 1 },
+        noteTitle: "Watch for 'useful'",
+      } satisfies PlaylistItemData);
+    });
+
+    it("seeds the title when editing, and counts a changed title as an unsaved edit", async () => {
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            ref={handleRef}
+            books={BOOKS}
+            onAdd={vi.fn()}
+            initialValue="Philemon"
+            initialNoteTitle="Existing title"
+          />,
+          container
+        );
+      });
+      await waitForNoteEditor();
+
+      expect(titleInput().value).toBe("Existing title");
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => setValue(titleInput(), "New title"));
+
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+
+    it("drops the title along with the rest of the note when it is removed", async () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            books={BOOKS}
+            onAdd={onAdd}
+            initialValue="Philemon"
+            initialNote="<p>Existing</p>"
+            initialNoteTitle="Existing title"
+          />,
+          container
+        );
+      });
+      await waitForNoteEditor();
+
+      act(() => noteButton("Remove note").click());
+      await act(async () => {
+        input().focus();
+        submitButton().click();
+      });
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "PHM", chapter: 1 },
+      } satisfies PlaylistItemData);
+    });
+
     it("drops the note when it is removed, and starts blank if re-added", async () => {
       const onAdd = vi.fn();
       act(() => {

@@ -18,15 +18,51 @@ import {
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
-/** The playing step's scripture item when it carries a note, else null. */
+/**
+ * The playing step's scripture item when it carries a note — a body, a title,
+ * or both — else null.
+ */
 export function currentScriptureNoteItem(
   playing: PlayingState | null
-): (ScriptureItem & { note: string }) | null {
+): ScriptureItem | null {
   const item = playing?.currentItem.value;
-  if (item?.type !== "bible-verse" || !item.note?.trim()) {
+  if (
+    item?.type !== "bible-verse" ||
+    (!item.note?.trim() && !item.noteTitle?.trim())
+  ) {
     return null;
   }
-  return item as ScriptureItem & { note: string };
+  return item;
+}
+
+/**
+ * A note's heading: its title, with the passage it's about as a small line
+ * above, or just the passage when the note has no title.
+ */
+function NoteHeading(props: {
+  title: string | undefined;
+  passage: string;
+  as: "h3" | "span";
+}) {
+  const { passage, as: Tag } = props;
+  const title = props.title?.trim();
+  if (!title) {
+    return (
+      <Tag className="sb-scripture-note-title" dir="auto">
+        {passage}
+      </Tag>
+    );
+  }
+  return (
+    <span className="sb-scripture-note-heading">
+      <span className="sb-scripture-note-passage" dir="auto">
+        {passage}
+      </span>
+      <Tag className="sb-scripture-note-title" dir="auto">
+        {title}
+      </Tag>
+    </span>
+  );
 }
 
 /** Space between the popover and the passage it points at. */
@@ -264,7 +300,7 @@ export function ScriptureNotePopover(props: {
 }
 
 function ScriptureNotePopoverBody(props: {
-  item: ScriptureItem & { note: string };
+  item: ScriptureItem;
   playing: PlayingState;
   readerRef: RefObject<HTMLElement>;
   resolveBookName: (bookId: string) => string;
@@ -374,9 +410,7 @@ function ScriptureNotePopoverBody(props: {
             />
           ) : null}
           <div className="sb-scripture-note-header">
-            <h3 className="sb-scripture-note-title" dir="auto">
-              {label}
-            </h3>
+            <NoteHeading title={item.noteTitle} passage={label} as="h3" />
             <button
               type="button"
               className="sb-scripture-note-hide"
@@ -388,9 +422,11 @@ function ScriptureNotePopoverBody(props: {
               <MaterialIcon>close</MaterialIcon>
             </button>
           </div>
-          <div className="sb-scripture-note-body">
-            <PlaylistHtmlContent html={item.note} />
-          </div>
+          {item.note?.trim() ? (
+            <div className="sb-scripture-note-body">
+              <PlaylistHtmlContent html={item.note} />
+            </div>
+          ) : null}
           <div className="sb-scripture-note-actions">
             {playing.hasPrevious.value ? (
               <button
@@ -452,13 +488,19 @@ export function ScriptureNoteSheet(props: {
 }
 
 function ScriptureNoteSheetBody(props: {
-  item: ScriptureItem & { note: string };
+  item: ScriptureItem;
   resolveBookName: (bookId: string) => string;
 }) {
   const { item, resolveBookName } = props;
   const { t } = useI18n();
   const [collapsed, setCollapsed] = useState(false);
   const label = playlistItemLabel(item, t, resolveBookName);
+  const hasBody = !!item.note?.trim();
+  const icon = (
+    <MaterialIcon className="sb-scripture-note-sheet-icon">
+      sticky_note_2
+    </MaterialIcon>
+  );
 
   return (
     <section
@@ -470,27 +512,31 @@ function ScriptureNoteSheetBody(props: {
         passage: label,
       })}
     >
-      <button
-        type="button"
-        className="sb-scripture-note-sheet-header"
-        aria-expanded={!collapsed}
-        onClick={() => setCollapsed((value) => !value)}
-      >
-        <MaterialIcon className="sb-scripture-note-sheet-icon">
-          sticky_note_2
-        </MaterialIcon>
-        <span className="sb-scripture-note-title" dir="auto">
-          {label}
-        </span>
-        <MaterialIcon className="sb-scripture-note-sheet-chevron">
-          {collapsed ? "expand_less" : "expand_more"}
-        </MaterialIcon>
-      </button>
-      {collapsed ? null : (
-        <div className="sb-scripture-note-body">
-          <PlaylistHtmlContent html={item.note} />
+      {hasBody ? (
+        <button
+          type="button"
+          className="sb-scripture-note-sheet-header"
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((value) => !value)}
+        >
+          {icon}
+          <NoteHeading title={item.noteTitle} passage={label} as="span" />
+          <MaterialIcon className="sb-scripture-note-sheet-chevron">
+            {collapsed ? "expand_less" : "expand_more"}
+          </MaterialIcon>
+        </button>
+      ) : (
+        // A title-only note is all header, with nothing to collapse.
+        <div className="sb-scripture-note-sheet-header">
+          {icon}
+          <NoteHeading title={item.noteTitle} passage={label} as="span" />
         </div>
       )}
+      {hasBody && !collapsed ? (
+        <div className="sb-scripture-note-body">
+          <PlaylistHtmlContent html={item.note!} />
+        </div>
+      ) : null}
     </section>
   );
 }

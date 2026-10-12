@@ -62,9 +62,11 @@
   border-right-width: 1px;
 }
 
+/* Top-aligned so the close button stays by the first line of a heading that
+   wraps. */
 .sb-scripture-note-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
 }
@@ -77,6 +79,29 @@
   font-weight: 700;
   line-height: 1.25;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A titled note stacks the passage, small, over its title. An author's title
+   wraps rather than being cut off like a bare passage label. */
+.sb-scripture-note-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.sb-scripture-note-heading .sb-scripture-note-title {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.sb-scripture-note-passage {
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+  font-size: 0.8125rem;
+  opacity: 0.65;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -203,8 +228,14 @@
   cursor: pointer;
 }
 
-.sb-scripture-note-sheet-header .sb-scripture-note-title {
+.sb-scripture-note-sheet-header > .sb-scripture-note-title,
+.sb-scripture-note-sheet-header > .sb-scripture-note-heading {
   flex: 1 1 auto;
+}
+
+/* A title-only note's header has nothing to expand or collapse. */
+div.sb-scripture-note-sheet-header {
+  cursor: default;
 }
 
 .sb-scripture-note-sheet-icon {

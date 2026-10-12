@@ -50,12 +50,13 @@ export function PlaylistItemInlinePreview(props: {
       {item.type === "bible-verse" ? (
         <>
           <ScripturePreview item={item} loadChapter={loadChapter} />
-          {item.note ? (
+          {item.note || item.noteTitle ? (
             <div className="sb-item-inline-preview-note">
-              <span className="sb-item-inline-preview-note-label">
-                {t("playlist-scripture-note-label", { defaultValue: "Note" })}
+              <span className="sb-item-inline-preview-note-label" dir="auto">
+                {item.noteTitle?.trim() ||
+                  t("playlist-scripture-note-label", { defaultValue: "Note" })}
               </span>
-              <PlaylistHtmlContent html={item.note} />
+              {item.note ? <PlaylistHtmlContent html={item.note} /> : null}
             </div>
           ) : null}
         </>

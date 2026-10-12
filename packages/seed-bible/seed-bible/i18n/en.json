@@ -431,6 +431,8 @@
   "playlist-save-item": "Save changes",
   "playlist-add-scripture-placeholder": "e.g. John 3 or John 3:16",
   "playlist-scripture-note-label": "Note",
+  "playlist-scripture-note-title-label": "Note title",
+  "playlist-scripture-note-title-placeholder": "Title (optional)",
   "playlist-scripture-note-add": "Add a note",
   "playlist-scripture-note-remove": "Remove note",
   "playlist-scripture-note-show": "Show note",
