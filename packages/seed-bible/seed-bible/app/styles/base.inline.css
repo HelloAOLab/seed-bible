@@ -333,6 +333,12 @@ body {
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
 
+  /* Without this, browsers draw light scrollbars even on dark themes (no
+     `color-scheme` is set). It inherits, so every scroll container picks up
+     the active theme's colors. */
+  scrollbar-color: color-mix(in srgb, var(--sb-font-color), transparent 80%)
+    transparent;
+
   /* dynamic-range-limit prevents user-provided images from changing the dynamic range */
   /* eslint-disable-next-line css/no-invalid-properties */
   dynamic-range-limit: var(--sb-dynamic-range-limit);
