@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.13.0 — 2026-10-12
+
+### ✨ Added
+
 - Show an Apologist team's articles, videos and other content in the Discover pane for the chapter you're reading. ([#1936](https://github.com/HelloAOLab/seed-bible/pull/1936), [#1970](https://github.com/HelloAOLab/seed-bible/pull/1970))
   - Turn it on with the Apologist extension's new Discover content switch, or open a link that includes the team's ID.
   - Signed-in users can save their Apologist team ID, API key and agent details in the extension's settings.
