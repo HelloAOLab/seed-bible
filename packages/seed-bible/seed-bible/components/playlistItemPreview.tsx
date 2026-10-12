@@ -26,7 +26,8 @@ export function canPreviewPlaylistItem(item: PlaylistItemData): boolean {
  * playlist playback modal (or the reverse) out from under the user.
  *
  * Pass `playing` when the item is a step of a playing playlist: the modal then
- * gets Previous / Next buttons that move through the queue.
+ * gets Previous / Next buttons that move through the queue, and closing it
+ * (X or backdrop) moves on to the next item.
  *
  * Shared by playlist playback, the reading-plan wizard, and the plan detail
  * view so an item looks the same wherever it is previewed.
@@ -59,5 +60,6 @@ export function openPlaylistItemPreview(
         />
       ),
     footer: playing ? () => <PlaylistItemNav playing={playing} /> : undefined,
+    onDismiss: playing ? () => void playing.next() : undefined,
   });
 }

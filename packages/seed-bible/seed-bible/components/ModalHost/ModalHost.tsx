@@ -28,6 +28,7 @@ function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
   const { t } = useI18n();
   const close = () => {
     manager.closeModal(modal.id);
+    modal.onDismiss?.();
   };
   const overlayDismiss = useOverlayDismiss(close);
 

@@ -3579,6 +3579,28 @@ describe("createPlaylistManager", () => {
       }
     });
 
+    it("moves on to the next item when the modal is closed", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "html", title: "First", html: "a" },
+            { type: "html", title: "Second", html: "b" },
+          ],
+        })
+      );
+      const playing = manager.playing.value!;
+
+      const dismiss = itemModal()!.onDismiss!;
+      lastModals.closeModal("playlist-item-content");
+      dismiss();
+      await playing.whenSettled();
+
+      expect(playing.currentIndex.value).toBe(1);
+      expect(itemModal()?.title).toBe("Second");
+    });
+
     it("has no nav when an item is previewed outside playback", () => {
       const modals = createModalManager();
       openPlaylistItemPreview(
@@ -3590,6 +3612,7 @@ describe("createPlaylistManager", () => {
 
       const modal = modals.modals.value[0]!;
       expect(modal.footer).toBeNull();
+      expect(modal.onDismiss).toBeNull();
     });
 
     it.each([
