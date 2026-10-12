@@ -141,7 +141,7 @@ export function AboutPage({
           title={t("about-shared-title", { defaultValue: "Community Reading" })}
           body={t("about-shared-body", {
             defaultValue:
-              "Follow guided reading plans, or build your own to sustain a daily habit.",
+              "See which chapters your friends have been reading, and stay in the Word together, even on different schedules.",
           })}
         />
         <Card
