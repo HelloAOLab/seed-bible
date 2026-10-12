@@ -4,6 +4,13 @@
 
 ### ✨ Added
 
+- Bring back bookmarks as named, colored markers for where you are in a chapter, which you move as you read. ([#1658](https://github.com/HelloAOLab/seed-bible/issues/1658))
+  - The bookmark button above a chapter opens a list of your bookmarks: tap one and it moves to this chapter. If you have none yet, "My bookmark" is already filled in, so your first one is two taps (the button, then Save). You can add another bookmark (named "My bookmark 2", "My bookmark 3" and so on) or delete one from the same window.
+  - You can have up to 5 bookmarks, across every translation, and several can sit on the same chapter.
+  - The button shows what's on the chapter you're reading: an outline for none, the bookmark's color for one, and a fan of colors for several. Only bookmarks in the translation you're reading count.
+  - Each bookmark shows its name, with its book, chapter and translation on a line below, so the same chapter in two translations is easy to tell apart.
+  - Tabs show a small bookmark in the color of the bookmark on their chapter, and all your bookmarks are back on the Today screen, most recently moved first.
+  - A Bookmarks panel in the sidebar (and in the More menu on phones) lets you open your bookmarks, and its options menu renames, recolors or deletes them. The button that shows it draws your bookmarks in their colors, the same way the chapter's bookmark button does.
 - See how far a chapter's recorded narration has got, and drag to move through it. Before, Listen only played and paused, with no sign of progress and no way to skip ahead or go back. ([#1923](https://github.com/HelloAOLab/seed-bible/issues/1923))
   - On phones, a thin progress bar runs above the chapter pill while it plays, with the time remaining beside it. Drag along it straight away to move back or forward from where you are — the bar moves by how far your finger travels, so it doesn't jump to wherever your finger landed. Or tap once to show the handle, then tap again to jump to that spot. With a finger, the bar always lands on the start of a verse, so listening never begins partway through one. A handle you don't use hides itself after 3 seconds. When paused, the progress moves to a ring around the play button.
   - On desktop, the bottom toolbar gains a progress bar along its top with the time remaining, plus a pause button. Hovering the bar shows the handle; click or drag to move. Pausing adds a stop button, which rewinds and puts the toolbar back to normal.

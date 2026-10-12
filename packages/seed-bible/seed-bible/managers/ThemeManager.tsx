@@ -435,6 +435,12 @@ export interface BibleTheme {
   name: string;
   variables: BibleThemeVariables;
   highlightColors: BibleThemeHighlightColors;
+  /**
+   * Fill for each bookmark color, keyed by `BookmarkColorId`. Optional so a
+   * white-label theme that predates bookmarks still type-checks; any id it
+   * leaves out falls back to the `:root` default in `base.inline.css`.
+   */
+  bookmarkColors?: Partial<Record<BookmarkColorId, string>>;
 }
 
 function toKebabCase(value: string): string {
@@ -463,7 +469,16 @@ export function generateThemeCssVariables(variables: BibleTheme): string {
     ])
     .join("\n");
 
-  return cssVariables + "\n" + highlightColorVariables;
+  const bookmarkColorVariables = Object.entries(variables.bookmarkColors ?? {})
+    .filter(([, value]) => value !== undefined)
+    .map(
+      ([key, value]) =>
+        `--sb-bookmark-${key}-color: ${sanitizeCssValue(String(value))};`
+    )
+    .join("\n");
+
+  const css = cssVariables + "\n" + highlightColorVariables;
+  return bookmarkColorVariables ? css + "\n" + bookmarkColorVariables : css;
 }
 
 export function generateThemeCssClasses(theme: BibleTheme): string {
@@ -737,6 +752,14 @@ export const LIGHT_THEME: BibleTheme = {
       wordsOfJesusFontColor: "#e07b4c",
     },
   },
+  bookmarkColors: {
+    orange: "#e07b4c",
+    red: "#d14343",
+    yellow: "#d4a106",
+    green: "#3a9a55",
+    blue: "#3474d4",
+    purple: "#8a56cc",
+  },
 };
 
 /**
@@ -933,6 +956,14 @@ export const DARK_THEME: BibleTheme = {
       wordsOfJesusFontColor: "#ff9e80",
     },
   },
+  bookmarkColors: {
+    orange: "#f29b72",
+    red: "#f07878",
+    yellow: "#f2cc4d",
+    green: "#6ccb85",
+    blue: "#7aaef2",
+    purple: "#b893ee",
+  },
 };
 
 /**
@@ -1113,6 +1144,35 @@ export const DEFAULT_HIGHLIGHT_IDS = [
 ] as const;
 
 export type HighlightId = (typeof DEFAULT_HIGHLIGHT_IDS)[number];
+
+/**
+ * The fixed palette a bookmark's color is chosen from. Each id resolves through
+ * `--sb-bookmark-<id>-color`, so a bookmark reads correctly in light and dark
+ * rather than carrying a hex value that only suits one of them.
+ */
+export const BOOKMARK_COLOR_IDS = [
+  "orange",
+  "red",
+  "yellow",
+  "green",
+  "blue",
+  "purple",
+] as const;
+
+export type BookmarkColorId = (typeof BOOKMARK_COLOR_IDS)[number];
+
+export const DEFAULT_BOOKMARK_COLOR_ID: BookmarkColorId = "orange";
+
+/**
+ * CSS color for a stored bookmark color id. An id outside the palette (written
+ * by a newer client, say) shows as the default color instead of nothing.
+ */
+export function bookmarkColorValue(colorId: string): string {
+  const id = (BOOKMARK_COLOR_IDS as readonly string[]).includes(colorId)
+    ? colorId
+    : DEFAULT_BOOKMARK_COLOR_ID;
+  return `var(--sb-bookmark-${id}-color)`;
+}
 
 export type ThemeOverrides = Partial<
   Record<ThemeColorKey | ThemeFontFamilyKey, string>
