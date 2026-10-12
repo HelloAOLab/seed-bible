@@ -118,7 +118,7 @@
 .sb-about-content .sb-about-card p {
   line-height: 1.5;
   font-weight: 400;
-  font-size: 0.72rem;
+  font-size: 0.875rem;
   font-family: var(--sb-font-family);
   color: var(--sb-secondary-font-color);
   margin: 0;
