@@ -8,7 +8,13 @@ import type { Editor } from "@tiptap/core";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the text editor; Suspense shows a placeholder meanwhile.
-const TipTapEditor = lazy(() => import("../TipTapEditor/TipTapEditor"));
+// The editor is never server-rendered; the SSR guard keeps TipTap (~800 KB) out
+// of the single-file SSR bundle.
+const TipTapEditor = lazy(() =>
+  import.meta.env.SSR
+    ? Promise.reject(new Error("TipTap is not available in the SSR bundle"))
+    : import("../TipTapEditor/TipTapEditor")
+);
 
 interface TextItemInputProps {
   onAdd: (item: PlaylistItemData) => void;

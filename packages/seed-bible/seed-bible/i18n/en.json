@@ -1090,5 +1090,14 @@
   "delete-bookmark": "Delete bookmark",
   "my-bookmark-numbered": "My bookmark {{number}}",
   "bookmark-move-hint": "Tap a bookmark to move it to this chapter.",
-  "move-bookmark-here": "Move {{name}} here"
+  "move-bookmark-here": "Move {{name}} here",
+  "playlist-history": "Playlist history",
+  "play": "Play",
+  "pause": "Pause",
+  "audio-playback-position": "Playback position",
+  "audio-playback-time": "{{current}} of {{total}}",
+  "audio-playback-verse": "Verse {{current}} of {{total}}",
+  "audio-scrub-verse": "Verse {{verse}}",
+  "tab-playing-audio": "Playing audio",
+  "collapsed-tab-playing-label": "{{label}} — playing audio"
 }
