@@ -20,7 +20,7 @@ describe("AboutPage", () => {
     container.remove();
   });
 
-  it("renders the intro, the mission and a card per feature under one page heading", async () => {
+  it("renders each card's title with its own description, in reading order, under one page heading", async () => {
     jsdom.reconfigure({
       url: "https://example.com/en/about?useFreeBibleAPI=true",
     });
@@ -35,25 +35,53 @@ describe("AboutPage", () => {
       );
     });
 
-    const content = container.querySelector(".sb-about-content")!;
-    const headings = Array.from(content.querySelectorAll("h1, h2")).map(
-      (heading) => [heading.tagName, heading.textContent]
-    );
-    expect(headings).toEqual([
-      ["H1", "About the Seed Bible"],
-      ["H2", "Why we're building it"],
-      ["H2", "Read Together"],
-      ["H2", "Playlists"],
-      ["H2", "Sessions"],
-      ["H2", "Shared Reading"],
-      ["H2", "Notes & Highlights"],
+    const cards = Array.from(
+      container.querySelectorAll(".sb-about-content .sb-about-card")
+    ).map((card) => {
+      const heading = card.querySelector("h1, h2")!;
+      return [
+        heading.tagName,
+        heading.textContent,
+        card.querySelector("p")?.textContent,
+      ];
+    });
+    expect(cards).toEqual([
+      [
+        "H1",
+        "About Seed Bible",
+        "A Bible for those you do life with. Read and study Scripture together, online, on any device, in dozens of languages.",
+      ],
+      [
+        "H2",
+        "Why we're building it",
+        "We believe access to God's Word should stay simple and dependable. Seed Bible is free forever, with no ads, no paywall, and nothing between you and Scripture.",
+      ],
+      [
+        "H2",
+        "Read Together",
+        "Faith is meant to be lived together. Seed Bible is built for reading Scripture with your family, your closest friends, and your house church.",
+      ],
+      [
+        "H2",
+        "Playlists",
+        "Gather passages, links, and videos into a path through Scripture to walk through or share.",
+      ],
+      [
+        "H2",
+        "Community Reading",
+        "See which chapters your friends have been reading, and stay in the Word together, even on different schedules.",
+      ],
+      [
+        "H2",
+        "Sessions",
+        "Read live with your group, wherever each of you is. Everyone follows along in their heart language.",
+      ],
+      [
+        "H2",
+        "Notes & Highlights",
+        "Highlight what speaks to you and write down what you're learning. Your friends' notes show up right in the passage too.",
+      ],
     ]);
-    expect(content.textContent).toContain(
-      "A free Bible reading app that brings Scripture, study tools, and your own notes and highlights together in one place"
-    );
-    expect(content.textContent).toContain(
-      "We believe everyone should be able to read and return to God's word without cost or friction."
-    );
   });
 
   it("opens the Bible selector, bound to the current slot, when 'Open a passage' is clicked", async () => {
@@ -87,7 +115,7 @@ describe("AboutPage", () => {
     expect(state.selector.slot.value).toBe(state.tabsLayout.slots.value[0]);
   });
 
-  it("starts the in-app tutorial when the Tutorials button is clicked", async () => {
+  it("starts the in-app tutorial when the 'Take a tour' button is clicked", async () => {
     jsdom.reconfigure({
       url: "https://example.com/en/about?useFreeBibleAPI=true",
     });
@@ -104,11 +132,13 @@ describe("AboutPage", () => {
 
     expect(state.tutorial.running.value).toBe(false);
 
-    const tutorialsButton = Array.from(
+    const tourButton = Array.from(
       container.querySelectorAll("button.sb-about-action-secondary")
-    ).find((el) => el.textContent?.includes("Tutorials")) as HTMLButtonElement;
+    ).find((el) =>
+      el.textContent?.includes("Take a tour")
+    ) as HTMLButtonElement;
     act(() => {
-      tutorialsButton.click();
+      tourButton.click();
     });
 
     expect(state.tutorial.running.value).toBe(true);
