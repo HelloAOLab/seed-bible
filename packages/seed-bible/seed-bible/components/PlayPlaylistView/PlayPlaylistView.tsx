@@ -130,6 +130,12 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   </MaterialIcon>
                   <span className="sb-discover-item-title">
                     {playlistItemLabel(item, t, resolveBookName)}
+                    {item.type === "bible-verse" && item.noteTitle?.trim() ? (
+                      <span className="sb-play-playlist-item-note-title">
+                        {" · "}
+                        {item.noteTitle.trim()}
+                      </span>
+                    ) : null}
                   </span>
                 </button>
               </li>
