@@ -14,7 +14,8 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
 
 vi.mock(
   "@packages/default-content-extension/ext_DefaultContent/discoveredContent",
-  () => ({
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
     findDiscoveredContentForChapter: vi.fn(() => [
       {
         item: {
@@ -144,5 +145,39 @@ describe("initDefaultContentExtension", () => {
     });
     const video = container.querySelector("video");
     expect(video?.getAttribute("src")).toBe("https://example.com/bp-video.mp4");
+  });
+
+  it("tags each result with its source and form, so readers can hide it", async () => {
+    const context = createFakeContext();
+    setupExtensionContext(context);
+    initDefaultContentExtension();
+    const discoverGenesis28 = (providerId: string) =>
+      findProvider(context, providerId).discover({
+        book: "GEN",
+        chapter: 28,
+        translationId: "t1",
+        language: "en",
+      });
+
+    const [curated] = await discoverGenesis28("default-content-extension");
+    expect(curated).toMatchObject({
+      sourceId: "curated-author",
+      mediaType: "video",
+    });
+
+    const bibleProjectProvider = findProvider(
+      context,
+      "bible-project-discover-provider"
+    );
+    const [bibleProject] = await discoverGenesis28(
+      "bible-project-discover-provider"
+    );
+    expect(bibleProjectProvider.sources).toEqual([
+      { id: "bible-project", title: "Bible Project", mediaTypes: ["video"] },
+    ]);
+    expect(bibleProject).toMatchObject({
+      sourceId: "bible-project",
+      mediaType: "video",
+    });
   });
 });

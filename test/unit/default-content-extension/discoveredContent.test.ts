@@ -1,5 +1,6 @@
 import {
   discoveredContent,
+  discoveredContentSources,
   findDiscoveredContentForChapter,
   referenceCoversChapter,
   type DiscoveredContentItem,
@@ -110,5 +111,66 @@ describe("findDiscoveredContentForChapter", () => {
       expect(Array.isArray(item.references)).toBe(true);
       expect(item.references.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("discoveredContentSources", () => {
+  function item(
+    id: string,
+    author: string,
+    url: string
+  ): DiscoveredContentItem {
+    return {
+      id,
+      title: id,
+      author,
+      description: "Description",
+      url,
+      references: [{ book: "GEN", chapter: 1 }],
+    };
+  }
+
+  it("lists each author once, as a YouTube video source when its links are YouTube videos", () => {
+    expect(
+      discoveredContentSources([
+        item("a", "Expedition Bible", "https://www.youtube.com/watch?v=1"),
+        item("b", "Expedition Bible", "https://youtu.be/2"),
+        item("c", "Wise Disciple", "https://m.youtube.com/watch?v=3"),
+      ])
+    ).toEqual([
+      {
+        id: "expedition-bible",
+        title: "Expedition Bible",
+        platform: "YouTube",
+        mediaTypes: ["video"],
+      },
+      {
+        id: "wise-disciple",
+        title: "Wise Disciple",
+        platform: "YouTube",
+        mediaTypes: ["video"],
+      },
+    ]);
+  });
+
+  it("keeps authors written in other scripts apart", () => {
+    expect(
+      discoveredContentSources([
+        item("a", "圣经工程", "https://example.com/a"),
+        item("b", "Библия", "https://example.com/b"),
+      ]).map((source) => source.id)
+    ).toEqual(["圣经工程", "библия"]);
+  });
+
+  it("leaves the platform and form unknown for links outside YouTube", () => {
+    expect(
+      discoveredContentSources([
+        item("a", "Some Blog", "https://example.com/youtube.com/post"),
+        item("b", "Broken Link", "not a url"),
+      ])
+    ).toEqual([
+      { id: "some-blog", title: "Some Blog", mediaTypes: [] },
+      { id: "broken-link", title: "Broken Link", mediaTypes: [] },
+    ]);
   });
 });

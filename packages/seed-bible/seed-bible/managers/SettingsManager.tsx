@@ -115,6 +115,18 @@ export interface ToolbarCustomization {
   order: string[];
 }
 
+/**
+ * Which discovered content the reader has turned off in the Content sources
+ * settings. Stored as what's hidden rather than what's shown, so a source or
+ * form added later shows up without the reader opting in.
+ */
+export interface DiscoverSourcePreferences {
+  /** `DiscoverSource` ids. */
+  hiddenSources: string[];
+  /** `DiscoverMediaType`s. */
+  hiddenMediaTypes: string[];
+}
+
 export interface AppSettings {
   fontSize: TextSize;
   disablePanels: boolean;
@@ -149,6 +161,8 @@ export interface AppSettings {
    * per-tab `discoverContentPanelInline` signal.
    */
   discoverContentPanelInline: boolean;
+  /** Discovered content the reader has hidden. See `isHiddenByDiscoverSourcePreferences`. */
+  discoverSources: DiscoverSourcePreferences;
 }
 
 export const DEFAULT_SCRIPTURE_WIDTH = 68; // ch
@@ -237,6 +251,12 @@ export const AppSettingsSchema = z.object({
   // Defaulted rather than required so settings exported before this option
   // existed still import.
   discoverContentPanelInline: z.boolean().default(true),
+  discoverSources: z
+    .object({
+      hiddenSources: z.array(z.string()),
+      hiddenMediaTypes: z.array(z.string()),
+    })
+    .default({ hiddenSources: [], hiddenMediaTypes: [] }),
 });
 
 export const MOBILE_SCRIPTURE_MARGIN = 5;
@@ -259,6 +279,7 @@ const TAG_THEME_ID = "app.themeId";
 const TAG_CUSTOM_THEME = "app.customTheme";
 const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
 const TAG_DISCOVER_CONTENT_PANEL_INLINE = "app.discoverContentPanelInline";
+const TAG_DISCOVER_SOURCES = "app.discoverSources";
 
 // Profile.config keys are stored unprefixed.
 const PROFILE_FONT_SIZE = "fontSize";
@@ -277,6 +298,7 @@ const PROFILE_THEME_ID = "themeId";
 const PROFILE_CUSTOM_THEME = "customTheme";
 const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
+const PROFILE_DISCOVER_SOURCES = "discoverSources";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -373,6 +395,11 @@ const DEFAULT_TOOLBAR_CONFIG: ToolbarCustomization = {
   order: [],
 };
 
+const DEFAULT_DISCOVER_SOURCES: DiscoverSourcePreferences = {
+  hiddenSources: [],
+  hiddenMediaTypes: [],
+};
+
 const DEFAULT_SETTINGS: AppSettings = {
   fontSize: "M",
   disablePanels: false,
@@ -390,6 +417,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   customTheme: {},
   customHighlights: {},
   discoverContentPanelInline: true,
+  discoverSources: DEFAULT_DISCOVER_SOURCES,
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -666,6 +694,26 @@ function parseToolbarConfig(
   };
 }
 
+function parseDiscoverSources(
+  value: unknown,
+  fallback: DiscoverSourcePreferences
+): DiscoverSourcePreferences {
+  let parsed: unknown = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return fallback;
+    }
+  }
+  if (!parsed || typeof parsed !== "object") return fallback;
+  const obj = parsed as Record<string, unknown>;
+  return {
+    hiddenSources: parseStringArray(obj.hiddenSources),
+    hiddenMediaTypes: parseStringArray(obj.hiddenMediaTypes),
+  };
+}
+
 function parseTextConfig(value: unknown, fallback: TextConfig): TextConfig {
   let parsed: unknown = value;
   if (typeof parsed === "string") {
@@ -776,6 +824,10 @@ export interface SettingsManager {
    * `discoverContentPanelInline` signal.
    */
   setDiscoverContentPanelInline: (discoverContentPanelInline: boolean) => void;
+  /** Hides or shows discovered content from one `DiscoverSource`. */
+  setDiscoverSourceHidden: (sourceId: string, hidden: boolean) => void;
+  /** Hides or shows one `DiscoverMediaType` of discovered content. */
+  setDiscoverMediaTypeHidden: (mediaType: string, hidden: boolean) => void;
 }
 
 export function createSettings(
@@ -882,6 +934,10 @@ export function createSettings(
           TAG_DISCOVER_CONTENT_PANEL_INLINE
         ),
         DEFAULT_SETTINGS.discoverContentPanelInline
+      ),
+      discoverSources: parseDiscoverSources(
+        read(PROFILE_DISCOVER_SOURCES, TAG_DISCOVER_SOURCES),
+        DEFAULT_SETTINGS.discoverSources
       ),
     };
   };
@@ -1150,6 +1206,39 @@ export function createSettings(
     );
   };
 
+  const writeDiscoverSources = (next: DiscoverSourcePreferences) => {
+    settings.value = { ...settings.value, discoverSources: next };
+    sessionOverrides[TAG_DISCOVER_SOURCES] = next;
+    saveProfileConfigValue(login, PROFILE_DISCOVER_SOURCES, next);
+  };
+
+  const toggleInList = (list: string[], item: string, include: boolean) => {
+    const set = new Set(list);
+    if (include) set.add(item);
+    else set.delete(item);
+    return [...set];
+  };
+
+  const setDiscoverSourceHidden = (sourceId: string, hidden: boolean) => {
+    const current = settings.value.discoverSources;
+    writeDiscoverSources({
+      ...current,
+      hiddenSources: toggleInList(current.hiddenSources, sourceId, hidden),
+    });
+  };
+
+  const setDiscoverMediaTypeHidden = (mediaType: string, hidden: boolean) => {
+    const current = settings.value.discoverSources;
+    writeDiscoverSources({
+      ...current,
+      hiddenMediaTypes: toggleInList(
+        current.hiddenMediaTypes,
+        mediaType,
+        hidden
+      ),
+    });
+  };
+
   const setAllSettings = (next: AppSettings) => {
     next = AppSettingsSchema.parse(next);
     settings.value = next;
@@ -1186,6 +1275,7 @@ export function createSettings(
     sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
     sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
       DEFAULT_SETTINGS.discoverContentPanelInline;
+    sessionOverrides[TAG_DISCOVER_SOURCES] = DEFAULT_SETTINGS.discoverSources;
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
       login,
@@ -1237,6 +1327,11 @@ export function createSettings(
       login,
       PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
       DEFAULT_SETTINGS.discoverContentPanelInline
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_DISCOVER_SOURCES,
+      DEFAULT_SETTINGS.discoverSources
     );
   };
 
@@ -1306,5 +1401,7 @@ export function createSettings(
     setCustomTheme,
     setCustomHighlights,
     setDiscoverContentPanelInline,
+    setDiscoverSourceHidden,
+    setDiscoverMediaTypeHidden,
   };
 }

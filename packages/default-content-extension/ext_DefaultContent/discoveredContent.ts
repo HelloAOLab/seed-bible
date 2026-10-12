@@ -1,4 +1,9 @@
-import type { DiscoverContext } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import type {
+  DiscoverContext,
+  DiscoverMediaType,
+  DiscoverSource,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { slugifyTitle } from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
 import { z } from "zod";
 import discoveredContentData from "./discoveredContent.json";
 import bibleProjectData from "./bibleProject.json";
@@ -138,6 +143,68 @@ export interface DiscoveredContentItem {
 
 export const discoveredContent =
   discoveredContentData as DiscoveredContentItem[];
+
+/**
+ * The `DiscoverSource` id for an author. Derived from the name so the same
+ * author reached through two providers (e.g. Bible Project) is one source a
+ * reader turns off once.
+ */
+export function sourceIdForAuthor(author: string): string {
+  return slugifyTitle(author) || author;
+}
+
+function isYouTubeUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    return (
+      host === "youtube.com" ||
+      host.endsWith(".youtube.com") ||
+      host === "youtu.be"
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** The form of a curated item, when its link says. */
+export function mediaTypeForItem(
+  item: Pick<DiscoveredContentItem, "url">
+): DiscoverMediaType | undefined {
+  return isYouTubeUrl(item.url) ? "video" : undefined;
+}
+
+/** One source per author in `items`, in first-appearance order. */
+export function discoveredContentSources(
+  items: DiscoveredContentItem[] = discoveredContent
+): DiscoverSource[] {
+  const byId = new Map<
+    string,
+    { source: DiscoverSource; mediaTypes: Set<DiscoverMediaType> }
+  >();
+  for (const item of items) {
+    const id = sourceIdForAuthor(item.author);
+    let entry = byId.get(id);
+    if (!entry) {
+      entry = {
+        source: {
+          id,
+          title: item.author,
+          platform: isYouTubeUrl(item.url) ? "YouTube" : undefined,
+        },
+        mediaTypes: new Set(),
+      };
+      byId.set(id, entry);
+    }
+    const mediaType = mediaTypeForItem(item);
+    if (mediaType) {
+      entry.mediaTypes.add(mediaType);
+    }
+  }
+  return [...byId.values()].map(({ source, mediaTypes }) => ({
+    ...source,
+    mediaTypes: [...mediaTypes],
+  }));
+}
 
 /** Whether `reference`'s book/chapter range covers the reader's current position. */
 export function referenceCoversChapter(

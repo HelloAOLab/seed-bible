@@ -374,6 +374,100 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
   });
 });
 
+describe("discover content sources", () => {
+  it("shows every source and content type until the reader hides one", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    expect(settings.settings.value.discoverSources).toEqual({
+      hiddenSources: [],
+      hiddenMediaTypes: [],
+    });
+  });
+
+  it("remembers an anonymous reader's hidden sources and types across a reload", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setDiscoverSourceHidden("expedition-bible", true);
+    settings.setDiscoverSourceHidden("bible-project", true);
+    settings.setDiscoverMediaTypeHidden("podcast", true);
+
+    const reloaded = createSettings(CasualOSManager(), login, navWith());
+    expect(reloaded.settings.value.discoverSources).toEqual({
+      hiddenSources: ["expedition-bible", "bible-project"],
+      hiddenMediaTypes: ["podcast"],
+    });
+  });
+
+  it("shows a source again when it is turned back on", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    settings.setDiscoverSourceHidden("expedition-bible", true);
+    settings.setDiscoverSourceHidden("bible-project", true);
+    settings.setDiscoverSourceHidden("expedition-bible", false);
+    settings.setDiscoverMediaTypeHidden("video", true);
+    settings.setDiscoverMediaTypeHidden("video", false);
+
+    expect(settings.settings.value.discoverSources).toEqual({
+      hiddenSources: ["bible-project"],
+      hiddenMediaTypes: [],
+    });
+  });
+
+  it("saves hidden sources to a signed-in reader's profile", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: {},
+    } as unknown as UserProfile);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setDiscoverSourceHidden("expedition-bible", true);
+
+    expect((login.profile.value as any)?.config?.discoverSources).toEqual({
+      hiddenSources: ["expedition-bible"],
+      hiddenMediaTypes: [],
+    });
+  });
+
+  it("ignores a malformed saved value instead of hiding anything", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: { discoverSources: { hiddenSources: "oops", other: 1 } },
+    } as unknown as UserProfile);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    expect(settings.settings.value.discoverSources).toEqual({
+      hiddenSources: [],
+      hiddenMediaTypes: [],
+    });
+  });
+
+  it("resetToDefaults shows every source again", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+    settings.setDiscoverSourceHidden("expedition-bible", true);
+    settings.setDiscoverMediaTypeHidden("video", true);
+
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.discoverSources).toEqual({
+      hiddenSources: [],
+      hiddenMediaTypes: [],
+    });
+  });
+});
+
 describe("unified anonymous fallback precedence (profile > URL > login.localConfig > default)", () => {
   const os = CasualOSManager();
 

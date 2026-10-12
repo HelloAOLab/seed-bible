@@ -35,6 +35,9 @@ import {
 import { effect, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { createSettings } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 import {
   createDiscoverManager,
@@ -2665,6 +2668,69 @@ describe("createBibleReadingState", () => {
 
       await waitFor(() => state.discoveredContent.value.length === 0);
       expect(state.discoveredContent.value).toEqual([]);
+    });
+
+    it("leaves out content from sources and forms the reader has hidden, and brings it back when shown again", async () => {
+      const discoverManager = createDiscoverManager();
+      discoverManager.registerDiscoverProvider({
+        id: "curated",
+        title: "Curated",
+        description: "",
+        sources: [{ id: "expedition-bible", title: "Expedition Bible" }],
+        discover: () => [
+          {
+            type: "content" as const,
+            title: "Expedition video",
+            description: "",
+            reference: { book: "GEN", chapter: 1 },
+            sourceId: "expedition-bible",
+            mediaType: "video" as const,
+          },
+          {
+            type: "content" as const,
+            title: "Untagged",
+            description: "",
+            reference: { book: "GEN", chapter: 1 },
+          },
+        ],
+      });
+      const login = {
+        userId: signal<string | null>(null),
+        profile: signal(null),
+        localConfig: signal<Record<string, unknown>>({}),
+      } as unknown as LoginManager;
+      const settings = createSettings(
+        CasualOSManager(),
+        login,
+        createNavigationManager()
+      );
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager,
+        undefined,
+        undefined,
+        settings
+      );
+      await waitForInitialLoad(state);
+      const titles = () =>
+        state.discoveredContent.value.flatMap((group) =>
+          group.results.map((result) => result.title)
+        );
+      await waitFor(() => titles().length === 2);
+
+      settings.setDiscoverSourceHidden("expedition-bible", true);
+      expect(titles()).toEqual(["Untagged"]);
+
+      settings.setDiscoverSourceHidden("expedition-bible", false);
+      settings.setDiscoverMediaTypeHidden("video", true);
+      expect(titles()).toEqual(["Untagged"]);
+
+      settings.setDiscoverMediaTypeHidden("video", false);
+      expect(titles()).toEqual(["Expedition video", "Untagged"]);
     });
 
     it("discoveredContent only contains 'content' results for the current chapter", async () => {

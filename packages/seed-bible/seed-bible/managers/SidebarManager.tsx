@@ -15,6 +15,7 @@ export type RequestedSettingsView =
   | "display-and-theme-all-settings"
   | "toolbar"
   | "extensions"
+  | "content-sources"
   | "customizations";
 
 /**
