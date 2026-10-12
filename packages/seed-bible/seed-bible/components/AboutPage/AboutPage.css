@@ -136,9 +136,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
+  gap: 2rem;
   margin: 0 auto;
-  padding: 0 0 8rem;
+  padding: 1.5rem 0 8rem;
   grid-column: 1 / -1;
   width: 100%;
 }
@@ -152,7 +152,7 @@
 
 .sb-about-action {
   padding: 0.5rem 0.9rem;
-  border-radius: 0.4rem;
+  border-radius: 0.25rem;
   font-weight: 600;
   font-size: 0.9rem;
   text-decoration: none;
@@ -176,11 +176,13 @@
   color: var(--sb-primary-font-color);
 }
 
+/* Matches the Today welcome screen's neutral outlined buttons
+   (`.sb-today-welcome-screen-tour-button`), so only "Open a passage" is orange. */
 .sb-about-action-secondary,
 .sb-about-action-secondary:visited {
-  border-color: var(--sb-primary-color);
+  border-color: var(--sb-reader-font-color);
   background: transparent;
-  color: var(--sb-primary-color);
+  color: var(--sb-reader-font-color);
 }
 
 @container (max-width: 500px) {
@@ -203,7 +205,10 @@
   }
 
   .sb-about-action-secondary:hover {
-    background: var(--sb-primary-color);
-    color: var(--sb-primary-font-color);
+    background: color-mix(
+      in srgb,
+      var(--sb-reader-font-color),
+      transparent 90%
+    );
   }
 }
