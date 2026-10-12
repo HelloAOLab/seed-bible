@@ -29,17 +29,6 @@ type CardVariant = "hero" | "highlight" | "feature";
 type CardLayout = "col" | "row";
 type IconSize = "lg" | "md" | "sm";
 
-function getIconSize(variant: CardVariant): IconSize {
-  switch (variant) {
-    case "hero":
-      return "md";
-    case "highlight":
-      return "lg";
-    case "feature":
-      return "sm";
-  }
-}
-
 const Card = ({
   icon,
   title,
@@ -53,7 +42,11 @@ const Card = ({
   body: string;
   isWide?: boolean;
 }) => {
-  const layout: CardLayout = variant === "highlight" ? "row" : "col";
+  const layout: CardLayout = isWide && variant !== "hero" ? "row" : "col";
+  // Row cards share the fixed-size `lg` circle so their text columns line
+  // up, whatever size each icon is.
+  const iconSize: IconSize =
+    layout === "row" ? "lg" : variant === "hero" ? "md" : "sm";
 
   const Heading = variant === "hero" ? "h1" : "h2";
 
@@ -61,9 +54,7 @@ const Card = ({
     <div
       className={`sb-about-card sb-about-card-${variant} sb-about-card-${layout}${isWide ? ` sb-about-card-wide` : ""}`}
     >
-      <div
-        className={`sb-about-card-icon sb-about-card-icon-${getIconSize(variant)}`}
-      >
+      <div className={`sb-about-card-icon sb-about-card-icon-${iconSize}`}>
         {icon}
       </div>
       <div className="sb-about-card-text">

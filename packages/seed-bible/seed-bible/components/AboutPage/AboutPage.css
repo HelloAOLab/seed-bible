@@ -86,7 +86,10 @@
 }
 
 .sb-about-card > .sb-about-card-icon.sb-about-card-icon-lg {
-  padding: 0.8rem;
+  width: 2.9rem;
+  height: 2.9rem;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .sb-about-card > .sb-about-card-icon.sb-about-card-icon-md {
@@ -105,6 +108,7 @@
 }
 
 .sb-about-card-hero h1 {
+  font-weight: 800;
   font-size: 1.8rem;
   line-height: 1.2;
 }
