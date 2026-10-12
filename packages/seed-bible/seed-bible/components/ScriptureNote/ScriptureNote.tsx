@@ -277,7 +277,8 @@ function sameJson(a: unknown, b: unknown): boolean {
  * Desktop: the playing scripture item's note in a coachmark-style popover that
  * points at the passage in this reader, with previous/next to step through the
  * playlist. Unlike the tutorial it has no backdrop — the reader stays usable —
- * and it can be hidden for the current step.
+ * and it can be hidden for the current step, which lets the passage's
+ * highlight fade (see `PlayingState.setNoteExpanded`).
  */
 export function ScriptureNotePopover(props: {
   playing: PlayingState;
@@ -287,7 +288,7 @@ export function ScriptureNotePopover(props: {
   const { playing, readerRef, resolveBookName } = props;
   const item = currentScriptureNoteItem(playing);
   const step = playing.currentIndex.value;
-  // Keyed on the step so hiding one note doesn't hide the next one.
+  // Keyed on the step so each note is placed afresh.
   return item ? (
     <ScriptureNotePopoverBody
       key={step}
@@ -307,7 +308,7 @@ function ScriptureNotePopoverBody(props: {
 }) {
   const { item, playing, readerRef, resolveBookName } = props;
   const { t } = useI18n();
-  const [hidden, setHidden] = useState(false);
+  const hidden = !playing.noteExpanded.value;
   const [placement, setPlacement] = useState<Placement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const measuredRef = useRef<{ w: number; h: number } | null>(null);
@@ -384,7 +385,7 @@ function ScriptureNotePopoverBody(props: {
         <button
           type="button"
           className="sb-scripture-note-show"
-          onClick={() => setHidden(false)}
+          onClick={() => playing.setNoteExpanded(true)}
         >
           <MaterialIcon>sticky_note_2</MaterialIcon>
           {t("playlist-scripture-note-show", { defaultValue: "Show note" })}
@@ -414,7 +415,7 @@ function ScriptureNotePopoverBody(props: {
             <button
               type="button"
               className="sb-scripture-note-hide"
-              onClick={() => setHidden(true)}
+              onClick={() => playing.setNoteExpanded(false)}
               aria-label={t("playlist-scripture-note-hide", {
                 defaultValue: "Hide note",
               })}
@@ -469,7 +470,8 @@ function ScriptureNotePopoverBody(props: {
  * Mobile: the playing scripture item's note in a sheet that sits directly on
  * top of the floating chapter navigation, so the playlist's previous/next stay
  * reachable underneath. It can be collapsed to its title bar for the current
- * step.
+ * step, which lets the passage's highlight fade (see
+ * `PlayingState.setNoteExpanded`).
  */
 export function ScriptureNoteSheet(props: {
   playing: PlayingState;
@@ -482,6 +484,7 @@ export function ScriptureNoteSheet(props: {
     <ScriptureNoteSheetBody
       key={step}
       item={item}
+      playing={playing}
       resolveBookName={resolveBookName}
     />
   ) : null;
@@ -489,11 +492,12 @@ export function ScriptureNoteSheet(props: {
 
 function ScriptureNoteSheetBody(props: {
   item: ScriptureItem;
+  playing: PlayingState;
   resolveBookName: (bookId: string) => string;
 }) {
-  const { item, resolveBookName } = props;
+  const { item, playing, resolveBookName } = props;
   const { t } = useI18n();
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = !playing.noteExpanded.value;
   const label = playlistItemLabel(item, t, resolveBookName);
   const hasBody = !!item.note?.trim();
   const icon = (
@@ -517,7 +521,7 @@ function ScriptureNoteSheetBody(props: {
           type="button"
           className="sb-scripture-note-sheet-header"
           aria-expanded={!collapsed}
-          onClick={() => setCollapsed((value) => !value)}
+          onClick={() => playing.setNoteExpanded(collapsed)}
         >
           {icon}
           <NoteHeading title={item.noteTitle} passage={label} as="span" />

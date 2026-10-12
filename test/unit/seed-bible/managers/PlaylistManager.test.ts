@@ -24,6 +24,7 @@ import {
   playlistPlayHistoryPercent,
   retainPlaylistPlayHistory,
   MAX_PLAYLIST_PLAY_HISTORY,
+  NOTE_CLOSED_HIGHLIGHT_MS,
   type Playlist,
   type PlaylistItemData,
   type PlaylistPlayHistory,
@@ -4813,6 +4814,136 @@ describe("createPlayingState", () => {
         [2, 3, 4, 5],
         expect.any(Object)
       );
+    });
+
+    describe("highlight of a passage with a note", () => {
+      /**
+       * Swaps the tab's decoration stubs for a live set that, like the real
+       * reading state, drops a decoration once its `removeAfterMs` elapses.
+       */
+      function trackHighlights(tab: NonNullable<TabArg>) {
+        const live = new Set<string>();
+        let next = 0;
+        tab.readingState.decorateVerses = vi.fn(
+          (
+            _book: string,
+            _chapter: number,
+            _verses: number[],
+            decoration: { removeAfterMs?: number }
+          ) => {
+            const id = `decoration-${next++}`;
+            live.add(id);
+            if (decoration.removeAfterMs) {
+              setTimeout(() => live.delete(id), decoration.removeAfterMs);
+            }
+            return id;
+          }
+        ) as never;
+        tab.readingState.removeDecoration = vi.fn((id: string) =>
+          live.delete(id)
+        ) as never;
+        return live;
+      }
+
+      const noted: PlaylistItemData = {
+        type: "bible-verse",
+        ref: { bookId: "JHN", chapter: 3, verse: 16 },
+        note: "<p>Love</p>",
+      };
+
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it("stays while the note is open, and fades 1.5s after it closes", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [makePlaylist({ items: [noted] })],
+          tab
+        );
+
+        await state.jumpTo(0);
+        vi.advanceTimersByTime(60_000);
+        expect(live.size).toBe(1);
+
+        state.setNoteExpanded(false);
+        vi.advanceTimersByTime(NOTE_CLOSED_HIGHLIGHT_MS - 1);
+        expect(live.size).toBe(1);
+        vi.advanceTimersByTime(1);
+        expect(live.size).toBe(0);
+      });
+
+      it("comes back when the note is opened again", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [makePlaylist({ items: [noted] })],
+          tab
+        );
+        await state.jumpTo(0);
+
+        state.setNoteExpanded(false);
+        vi.advanceTimersByTime(NOTE_CLOSED_HIGHLIGHT_MS);
+        expect(live.size).toBe(0);
+
+        state.setNoteExpanded(true);
+        vi.advanceTimersByTime(60_000);
+        expect(live.size).toBe(1);
+      });
+
+      it("reopens the note, and keeps the highlight, on the next noted step", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [makePlaylist({ items: [noted, { ...noted, note: "<p>More</p>" }] })],
+          tab
+        );
+        await state.jumpTo(0);
+        state.setNoteExpanded(false);
+
+        await state.next();
+
+        expect(state.noteExpanded.value).toBe(true);
+        vi.advanceTimersByTime(60_000);
+        expect(live.size).toBe(1);
+      });
+
+      it("is cleared when playback moves on to a step that isn't scripture", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [
+            makePlaylist({
+              items: [noted, { type: "html", html: "<p>Hi</p>" }],
+            }),
+          ],
+          tab
+        );
+        await state.jumpTo(0);
+
+        await state.next();
+
+        expect(live.size).toBe(0);
+      });
+
+      it("leaves a passage without a note to fade on its usual timer", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [makePlaylist({ items: [{ ...noted, note: undefined }] })],
+          tab
+        );
+
+        await state.jumpTo(0);
+        vi.advanceTimersByTime(3000);
+
+        expect(live.size).toBe(0);
+      });
     });
 
     it("highlights a grouped range the same way as an authored range item", async () => {

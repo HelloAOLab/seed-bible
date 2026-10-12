@@ -643,6 +643,20 @@ export function expandCrossChapterItem(
 }
 
 /**
+ * How long a passage stays highlighted after its note is closed, before the
+ * highlight fades.
+ */
+export const NOTE_CLOSED_HIGHLIGHT_MS = 1500;
+
+/** Whether a queue item is scripture carrying a note (a body, a title, or both). */
+function hasScriptureNote(item: PlaylistItemData | null): boolean {
+  return (
+    item?.type === "bible-verse" &&
+    !!(item.note?.trim() || item.noteTitle?.trim())
+  );
+}
+
+/**
  * Creates an in-memory playing state for stepping through one or more
  * playlists. The queue is a copy of the source playlists' items, so
  * manipulating it never mutates the underlying playlists.
@@ -695,12 +709,19 @@ export function createPlayingState(
    * other item re-arms it.
    */
   const finishPromptShown = signal(false);
+  /**
+   * Whether the current step's note is open: the desktop popover shown, or the
+   * mobile sheet expanded. Every step starts with it open. While it is, the
+   * passage stays highlighted; see `setNoteExpanded`.
+   */
+  const noteExpanded = signal(true);
   let lastIndex = currentIndex.peek();
   const disposeRearm = effect(() => {
     const index = currentIndex.value;
     if (index !== lastIndex) {
       lastIndex = index;
       finishPromptShown.value = false;
+      noteExpanded.value = true;
     }
   });
 
@@ -713,20 +734,97 @@ export function createPlayingState(
    */
   let hasShownStep = false;
 
+  /** Pending removal of a noted passage's highlight after its note closed. */
+  let noteClosedTimer: ReturnType<typeof setTimeout> | null = null;
+
   const disposeDecoration = () => {
+    if (noteClosedTimer) {
+      clearTimeout(noteClosedTimer);
+      noteClosedTimer = null;
+    }
     if (tab && decorationId) {
       tab.readingState.removeDecoration(decorationId);
       decorationId = null;
     }
   };
 
+  /**
+   * Highlights `item`'s verses in the reader. A passage with a note stays
+   * highlighted for as long as its note is open; any other passage's highlight
+   * fades on its own after a few seconds.
+   */
+  const emphasizeItem = (item: PlaylistItemData | null) => {
+    if (!tab || item?.type !== "bible-verse" || item.ref.verse == null) {
+      return;
+    }
+    disposeDecoration();
+    const { ref } = item;
+    const loadedChapter = tab.readingState.chapterData.value;
+    const chapterDataMatches =
+      loadedChapter?.book.id === ref.bookId &&
+      loadedChapter?.chapter.number === ref.chapter;
+    const endVerse = ref.toEndOfChapter
+      ? chapterDataMatches
+        ? loadedChapter.numberOfVerses
+        : undefined
+      : ref.endVerse;
+
+    decorationId = emphasizeVerses(
+      tab.readingState,
+      {
+        book: ref.bookId as BookId,
+        chapter: ref.chapter,
+        verse: ref.verse,
+        endChapter: ref.endChapter,
+        endVerse: endVerse,
+      },
+      undefined,
+      hasScriptureNote(item)
+        ? {
+            removeAfterMs: noteExpanded.peek()
+              ? null
+              : NOTE_CLOSED_HIGHLIGHT_MS,
+          }
+        : undefined
+    );
+  };
+
+  /**
+   * Opens or closes the current step's note. Closing it lets the passage's
+   * highlight fade after {@link NOTE_CLOSED_HIGHLIGHT_MS}; opening it again
+   * brings the highlight back.
+   */
+  const setNoteExpanded = (expanded: boolean): void => {
+    if (noteExpanded.peek() === expanded) {
+      return;
+    }
+    noteExpanded.value = expanded;
+    const item = currentItem.peek();
+    if (!hasScriptureNote(item)) {
+      return;
+    }
+    if (expanded) {
+      emphasizeItem(item);
+    } else if (decorationId && !noteClosedTimer) {
+      const closing = decorationId;
+      noteClosedTimer = setTimeout(() => {
+        noteClosedTimer = null;
+        if (decorationId === closing) {
+          disposeDecoration();
+        }
+      }, NOTE_CLOSED_HIGHLIGHT_MS);
+    }
+  };
+
   const navigateToCurrentItem = async () => {
     const item = currentItem.value;
+    // Cleared even when the new step isn't scripture: a noted passage's
+    // highlight has no timer of its own and would otherwise outlast its step.
+    disposeDecoration();
     if (!tab || item?.type !== "bible-verse") {
       return;
     }
     hasShownStep = true;
-    disposeDecoration();
     const { ref, translationId } = item;
 
     // `translationId` is optional on the item; fall back to the tab's current
@@ -741,27 +839,7 @@ export function createPlayingState(
       ref.verse != null ? { scrollToVerse: ref.verse } : undefined
     );
 
-    if (ref.verse == null) {
-      return;
-    }
-
-    const loadedChapter = tab.readingState.chapterData.value;
-    const chapterDataMatches =
-      loadedChapter?.book.id === ref.bookId &&
-      loadedChapter?.chapter.number === ref.chapter;
-    const endVerse = ref.toEndOfChapter
-      ? chapterDataMatches
-        ? loadedChapter.numberOfVerses
-        : undefined
-      : ref.endVerse;
-
-    decorationId = emphasizeVerses(tab.readingState, {
-      book: ref.bookId as BookId,
-      chapter: ref.chapter,
-      verse: ref.verse,
-      endChapter: ref.endChapter,
-      endVerse: endVerse,
-    });
+    emphasizeItem(item);
   };
 
   /**
@@ -809,6 +887,10 @@ export function createPlayingState(
   const removeFromQueue = (index: number): void => {
     if (index < 0 || index >= queue.value.length) {
       return;
+    }
+    if (index === currentIndex.value) {
+      // The step being shown is going away, so its highlight goes with it.
+      disposeDecoration();
     }
     const nextQueue = queue.value.filter((_, i) => i !== index);
     queue.value = nextQueue;
@@ -922,6 +1004,8 @@ export function createPlayingState(
     canFinish,
     canPressNext,
     finishPromptShown: finishPromptShown as ReadonlySignal<boolean>,
+    noteExpanded: noteExpanded as ReadonlySignal<boolean>,
+    setNoteExpanded,
     tab,
     next,
     previous,

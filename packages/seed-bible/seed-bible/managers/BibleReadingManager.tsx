@@ -1292,7 +1292,9 @@ export function previousPosition(
 }
 
 /**
- * Highlights `ref`'s verse range in `tab`, diminishing after 3s.
+ * Highlights `ref`'s verse range in `tab`, diminishing after 3s by default.
+ * `options.removeAfterMs` changes how long it lasts; null keeps it until the
+ * caller removes it with `removeDecoration`.
  *
  * `toEndOfChapter` fragments (from `expandCrossChapterItem`) don't know the
  * chapter's actual verse count until it's loaded; resolve it here, guarding
@@ -1307,7 +1309,8 @@ export function previousPosition(
 export function emphasizeVerses(
   readingState: BibleReadingState,
   ref: VerseRef,
-  verseNumbers?: number[]
+  verseNumbers?: number[],
+  options: { removeAfterMs?: number | null } = {}
 ): string | null {
   if (!ref.verse) {
     return null;
@@ -1320,7 +1323,9 @@ export function emphasizeVerses(
   return readingState.decorateVerses(ref.book, ref.chapter, verses, {
     className: "sb-verse-decoration-diminish",
     containerClassName: "sb-chapter-decoration-diminish",
-    removeAfterMs: 3000,
+    ...(options.removeAfterMs !== null
+      ? { removeAfterMs: options.removeAfterMs ?? 3000 }
+      : {}),
   });
 }
 
