@@ -126,13 +126,20 @@
 
 .sb-about-actions {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 0 auto;
+  padding: 0 0 8rem;
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.sb-about-actions-row {
+  display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.75rem;
-  margin: 0 auto;
-  padding: 0 0 4rem;
-  grid-column: 1 / -1;
-  width: 100%;
 }
 
 .sb-about-action {
@@ -168,9 +175,15 @@
   color: var(--sb-primary-color);
 }
 
-@container (max-width: 768px) {
+@container (max-width: 500px) {
   .sb-about-content {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .sb-about-actions {
+    padding-bottom: 4rem;
   }
 }
 

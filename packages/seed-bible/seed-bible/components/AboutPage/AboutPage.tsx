@@ -165,6 +165,45 @@ export function AboutPage({
           })}
         />
         <div className="sb-about-actions">
+          <div className="sb-about-actions-row">
+            <a
+              className="sb-about-action sb-about-action-secondary"
+              href={DONATE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <DonateIcon width={16} height={16} />
+              {t("about-action-donate", { defaultValue: "Donate" })}
+            </a>
+            <a
+              className="sb-about-action sb-about-action-secondary"
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <DiscordIcon width={16} height={16} />
+              {t("about-action-discord", { defaultValue: "Join Discord" })}
+            </a>
+            <a
+              className="sb-about-action sb-about-action-secondary"
+              href={CHANGELOG_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <MaterialIcon>campaign</MaterialIcon>
+              {t("about-action-release-notes", {
+                defaultValue: "Release Notes",
+              })}
+            </a>
+            <button
+              type="button"
+              className="sb-about-action sb-about-action-secondary"
+              onClick={() => tutorial.start()}
+            >
+              <MaterialIcon>emoji_objects</MaterialIcon>
+              {t("take-a-tour", { defaultValue: "Take a tour" })}
+            </button>
+          </div>
           <button
             type="button"
             className="sb-about-action sb-about-action-primary"
@@ -183,41 +222,6 @@ export function AboutPage({
           >
             {t("about-action-open-passage", { defaultValue: "Open a passage" })}
             <MaterialIcon>arrow_right_alt</MaterialIcon>
-          </button>
-          <a
-            className="sb-about-action sb-about-action-secondary"
-            href={DONATE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <DonateIcon width={16} height={16} />
-            {t("about-action-donate", { defaultValue: "Donate" })}
-          </a>
-          <a
-            className="sb-about-action sb-about-action-secondary"
-            href={DISCORD_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <DiscordIcon width={16} height={16} />
-            {t("about-action-discord", { defaultValue: "Join Discord" })}
-          </a>
-          <a
-            className="sb-about-action sb-about-action-secondary"
-            href={CHANGELOG_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <MaterialIcon>campaign</MaterialIcon>
-            {t("about-action-release-notes", { defaultValue: "Release Notes" })}
-          </a>
-          <button
-            type="button"
-            className="sb-about-action sb-about-action-secondary"
-            onClick={() => tutorial.start()}
-          >
-            <MaterialIcon>emoji_objects</MaterialIcon>
-            {t("take-a-tour", { defaultValue: "Take a tour" })}
           </button>
         </div>
       </article>
