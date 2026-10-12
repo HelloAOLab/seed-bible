@@ -127,6 +127,7 @@
 .sb-about-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.75rem;
   margin: 0 auto;
   padding: 0 0 4rem;
