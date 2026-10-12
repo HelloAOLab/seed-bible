@@ -322,14 +322,6 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             />
           )}
         </div>
-
-        <button
-          type="button"
-          className="sb-dcp-show-all"
-          onClick={() => state.app.openDiscover()}
-        >
-          {t("show-all", { defaultValue: "Show All" })}
-        </button>
       </div>
     </div>
   );
