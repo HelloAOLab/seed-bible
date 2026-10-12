@@ -128,7 +128,7 @@
   font-weight: 400;
   font-size: 0.875rem;
   font-family: var(--sb-font-family);
-  color: var(--sb-secondary-font-color);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   margin: 0;
 }
 
