@@ -362,6 +362,9 @@ function createMockTab(
     discoveredContent?: unknown[];
     selectedVerses?: number[];
     translationId?: string;
+    translationBooks?: {
+      books: Array<{ id: string; name: string; commonName?: string }>;
+    } | null;
     selectTranslationAndChapter?: ReturnType<typeof vi.fn>;
     decorateVerses?: ReturnType<typeof vi.fn>;
   } = {}
@@ -382,7 +385,7 @@ function createMockTab(
           verse: { number: verse },
         }))
       ),
-      translationBooks: signal(null),
+      translationBooks: signal(overrides.translationBooks ?? null),
       translationId: signal(overrides.translationId ?? "BSB"),
       selectTranslationAndChapter:
         overrides.selectTranslationAndChapter ??
@@ -2970,6 +2973,41 @@ describe("DiscoverPaneTitle", () => {
 
     expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
       "Annotate Genesis 3:3-5,7"
+    );
+  });
+
+  it("names the book from the translation's book list while the chapter is still downloading", () => {
+    const { playlists } = createMockPlaylists({ view: "create_annotation" });
+    const { annotations } = createMockAnnotations({
+      editingAnnotation: createAnnotation({ bookId: "JHN", chapterNumber: 5 }),
+    });
+    // The reader has moved on to John 5, but its loaded chapter is still the
+    // John 4 it just left.
+    const tab = createMockTab({
+      bookId: "JHN",
+      chapterNumber: 5,
+      chapterData: {
+        book: { id: "JHN", name: "John" },
+        chapter: { number: 4 },
+      },
+      translationBooks: { books: [{ id: "JHN", name: "John" }] },
+    });
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs(tab)}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Annotate John 5"
     );
   });
 

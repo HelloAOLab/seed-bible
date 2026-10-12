@@ -164,6 +164,10 @@ import {
   type SavesManager,
 } from "../managers/SavesManager";
 import {
+  createBookmarksManager,
+  type BookmarksManager,
+} from "../managers/BookmarksManager";
+import {
   createFriendsManager,
   type FriendsManager,
 } from "../managers/FriendsManager";
@@ -519,6 +523,8 @@ export interface SeedBibleState {
   highlights: HighlightsManager;
   /** Archival saves manager: categorized references to chapters and verses. */
   saves: SavesManager;
+  /** Named, colored chapter markers the user moves as they read. */
+  bookmarks: BookmarksManager;
   /**
    * The signed-in user's friends and pending friend requests. A friendship is
    * a mutual shared permission; for now it only decides whose already-public
@@ -569,6 +575,11 @@ export interface SeedBibleState {
    * translations that ship no recorded narration.
    */
   textToSpeech: TextToSpeechManager;
+  /**
+   * The audio the reader is currently showing playback controls for (e.g. a
+   * chapter's narration), so its toolbars can display progress and scrub.
+   */
+  audioPlayback: AudioPlaybackManager;
   /** Saved photos the user has uploaded, for reuse as covers and later features. */
   gallery: UserGalleryManager;
   /** Aggregated computed app state and top-level UI actions. */
@@ -669,6 +680,10 @@ import {
   createTextToSpeechManager,
   type TextToSpeechManager,
 } from "./TextToSpeechManager";
+import {
+  createAudioPlaybackManager,
+  type AudioPlaybackManager,
+} from "./AudioPlaybackManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
@@ -788,6 +803,19 @@ export function createSeedBibleState(
     friendReads,
   });
   const saves = createSavesManager(os, login);
+  const bookmarks = createBookmarksManager(os, login);
+  // The saves and bookmarks panels occupy the same spot in the sidebar, so
+  // opening either one closes the other.
+  effect(() => {
+    if (bookmarks.isPanelOpen.value) {
+      saves.isFilterActive.value = false;
+    }
+  });
+  effect(() => {
+    if (saves.isFilterActive.value) {
+      bookmarks.isPanelOpen.value = false;
+    }
+  });
   const friends = createFriendsManager(os, login);
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
@@ -1169,6 +1197,7 @@ export function createSeedBibleState(
   });
   const gallery = createUserGalleryManager(os, login);
   const textToSpeech = createTextToSpeechManager();
+  const audioPlayback = createAudioPlaybackManager();
 
   const { currentTheme } = themeManager;
   // While a Customization is active, its variant is rendered against its
@@ -3305,6 +3334,7 @@ export function createSeedBibleState(
     readingHistory,
     highlights,
     saves,
+    bookmarks,
     friends,
     annotations,
     chats,
@@ -3324,6 +3354,7 @@ export function createSeedBibleState(
     playlists,
     gallery,
     textToSpeech,
+    audioPlayback,
     tutorial,
     onboarding,
     yourContent,
@@ -3490,6 +3521,7 @@ export function createSeedBibleState(
       login={login}
       theme={themeManager.currentTheme}
       isMobile={isMobile}
+      bookmarks={bookmarks.bookmarks}
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
       onTakeTour={() => tutorial.acceptPrompt()}

@@ -125,7 +125,7 @@ export interface ManagedBibleToolItem<TContext> extends Omit<
   /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<TContext>;
   /** Optional action callback for item activation. */
-  onSelect?: (context: TContext) => void;
+  onSelect?: (context: TContext) => void | Promise<void>;
   /** Nested menu items are not supported for context menu entries. */
   getItems?: never;
 }
@@ -157,7 +157,7 @@ export interface ResolvedBibleToolItem extends Omit<
   /** Visibility state signal resolved for current context. */
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the menu item. */
-  onSelect: () => void;
+  onSelect: () => void | Promise<void>;
 }
 
 /** Window metrics provided to tools when available. */
@@ -313,7 +313,9 @@ export interface BibleReaderVerseToolbarTool extends ResolvedBibleTool {
   /** Visibility state signal resolved for current context. */
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the tool. */
-  onSelect: () => void;
+  onSelect: () => void | Promise<void>;
+  /** True when the action needs the selected verses to remain active. */
+  preserveSelection?: boolean;
   /** Optional context-menu items for this tool. */
   getItems?: () => ResolvedBibleToolItem[];
 }
@@ -327,8 +329,10 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool<BibleToolContext
   isDisabled?: ToolPredicate<BibleToolContext>;
   /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<BibleToolContext>;
+  /** True when the action needs the selected verses to remain active. */
+  preserveSelection?: boolean;
   /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
-  onSelect?: (context: BibleToolContext) => void;
+  onSelect?: (context: BibleToolContext) => void | Promise<void>;
   /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
   getItems?: (context: BibleToolContext) => ManagedBibleVerseToolbarToolItem[];
 }
@@ -803,12 +807,6 @@ function openAskAiForSelectedVerses(
   chat.addParticipant(providerId);
   context.chats.selectChat(chat.id);
   context.openChat?.();
-  // Clearing the selection unmounts the mobile verse sheet under the finger.
-  // Defer so a retargeted pointerdown after that unmount cannot land "outside"
-  // the chat panel and dismiss the panel we just opened.
-  queueMicrotask(() => {
-    context.readingState.clearSelectedVerses();
-  });
 }
 
 function OpenInSelectorIcon() {
@@ -1335,8 +1333,6 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
             ),
           ],
         };
-
-        context.readingState.clearSelectedVerses();
       },
     },
     {
@@ -1396,12 +1392,12 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
             session: draft.selectedSessionIndex + 1,
           })
         );
-        context.readingState.clearSelectedVerses();
       },
     },
     {
       id: "annotate-verse",
       priority: 150,
+      preserveSelection: true,
       title: { key: "note", defaultValue: "Note" },
       icon: () => <MaterialIcon>note_add</MaterialIcon>,
       isVisible: (context) =>
@@ -1458,14 +1454,13 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
-
         const verseTexts = formatSelectedVerses(context.readingState);
-
         try {
-          navigator.clipboard.writeText(verseTexts);
+          await navigator.clipboard.writeText(verseTexts);
           context.toast(i18n.t("copied", { defaultValue: "Copied" }));
         } catch (err) {
           console.error("Failed to copy verse:", err);
+          throw err;
         }
       },
     },
@@ -1853,6 +1848,7 @@ export function createBibleToolsManager(
       priority: resolveToolPriority(tool.priority, context),
       title: tool.title,
       icon: () => tool.icon(context),
+      preserveSelection: tool.preserveSelection,
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
       visible: resolveToolVisibility(
         tool.showInEmbedded,

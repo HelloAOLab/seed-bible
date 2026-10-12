@@ -296,6 +296,13 @@
   --sb-highlight-tan-font-color: #333;
   --sb-highlight-tan-words-of-jesus-font-color: #e07b4c;
 
+  --sb-bookmark-orange-color: #e07b4c;
+  --sb-bookmark-red-color: #d14343;
+  --sb-bookmark-yellow-color: #d4a106;
+  --sb-bookmark-green-color: #3a9a55;
+  --sb-bookmark-blue-color: #3474d4;
+  --sb-bookmark-purple-color: #8a56cc;
+
   --sb-dynamic-range-limit: standard;
 }
 

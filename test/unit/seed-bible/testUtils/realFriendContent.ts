@@ -86,11 +86,12 @@ export async function createRealFriendContent(options: {
     tabs: signal([]),
     selectedTabId: signal(null),
   } as unknown as TabsManager;
+  const discover = options.discover ?? createDiscoverManager();
   const annotations = createAnnotationsManager(
     os,
     login,
     tabs,
-    options.discover ?? createDiscoverManager(),
+    discover,
     undefined,
     { store: null, friendIds: friends.friendIds }
   );
