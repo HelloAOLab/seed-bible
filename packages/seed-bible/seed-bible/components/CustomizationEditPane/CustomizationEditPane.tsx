@@ -59,7 +59,7 @@ import { localizedThemeName } from "../SettingsPage/localizedThemeName";
 import {
   getDefaultTranslationLabel,
   isPaintableColor,
-  ThemeLivePreview,
+  DockableThemeLivePreview,
   ThemeThumbnail,
 } from "./CustomizationPreviews";
 
@@ -1405,7 +1405,10 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   return (
     <div className="sb-settings-page sb-cz-page">
       <section className="sb-settings-section sb-cz-body">
-        <ThemeLivePreview theme={resolvedTheme} />
+        <DockableThemeLivePreview
+          theme={resolvedTheme}
+          canFloat={!state.app.isMobile.value}
+        />
 
         <div
           className="sb-settings-field-row"

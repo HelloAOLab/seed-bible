@@ -204,6 +204,7 @@
   "reset-field": "Reset {{label}}",
   "customization-preview-book": "The Gospel of John",
   "customization-preview-chapter": "John 1",
+  "customization-preview-hide": "Hide preview",
   "customization-preview-verse": "In the beginning was the <0>Word</0>, and the Word was with <1>God</1>, and the Word was <2>God</2>.",
   "customization-font-sample-default": "The quick brown fox",
   "customization-font-sample-chapter": "Chapter 1",
