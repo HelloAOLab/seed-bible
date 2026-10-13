@@ -89,8 +89,13 @@ imported.
 
 How a request for branch `B` is handled:
 
-1. **`B` is in `ALLOWED_SSR_BRANCHES`** → load `B`'s SSR bundle and render its
-   own pre-rendered HTML.
+1. **`B` is in `ALLOWED_SSR_BRANCHES`** → load `B`'s **latest** SSR bundle and
+   render the requested build's pre-rendered HTML with it. A pinned older build
+   (`/b/<B>/<buildId>` where `buildId` isn't the live one) only contributes its
+   HTML; its own bundle is never imported, so old build IDs can't each claim a
+   worker. The client's hydration gate notices the build mismatch and renders
+   fresh instead of hydrating. If `B` has no live pointer, its pinned HTML is
+   handled as in 2–3 below.
 2. **`B` is not whitelisted, and `DEFAULT_SSR_BRANCH` is set** → fetch only
    `B`'s pre-rendered HTML, then render it through `DEFAULT_SSR_BRANCH`'s
    bundle. `B`'s own bundle is never imported, so none of its code runs. (If

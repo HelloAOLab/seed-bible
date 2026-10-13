@@ -14,9 +14,10 @@
  *      - POST /__invalidate?branch=       → drop the cached pointer for a branch
  *    Per request it resolves the branch's live build. Only branches in the
  *    `ALLOWED_SSR_BRANCHES` whitelist are server-side rendered by their own
- *    bundle: for those, the SSR bundle is lazily loaded into its own worker
- *    thread (see `buildWorker.ts`) and cached, and its render() is called to
- *    produce HTML. Any other branch still works, but its
+ *    bundle: for those, the branch's latest SSR bundle is lazily loaded into
+ *    its own worker thread (see `buildWorker.ts`) and cached, and its render()
+ *    is called to produce HTML — for a pinned older build too, over that
+ *    build's pre-rendered HTML. Any other branch still works, but its
  *    (untrusted) SSR bundle is never downloaded or imported. Such a branch is
  *    either rendered through the trusted `DEFAULT_SSR_BRANCH`'s bundle (when
  *    set) over its own pre-rendered HTML, or served that HTML as-is. Hashed
@@ -94,7 +95,8 @@ const INVALIDATION_SECRET = process.env.INVALIDATION_SECRET ?? "";
 
 /**
  * Comma-separated whitelist of branches that are server-side rendered by their
- * own SSR bundle. A branch outside this set never has its (untrusted) bundle
+ * own latest SSR bundle (a pinned older build's HTML is rendered through it
+ * too; old builds are never imported). A branch outside this set never has its (untrusted) bundle
  * downloaded or imported; it is instead either rendered via `DEFAULT_SSR_BRANCH`
  * (if set) or served its pre-rendered HTML as-is.
  */
@@ -756,18 +758,32 @@ async function dispatch(
       return;
     }
 
-    // Whitelisted branches are rendered by their own SSR bundle.
+    // Whitelisted branches are rendered by their own SSR bundle — but only
+    // ever their latest build's. A pinned older build (`/b/<branch>/<buildId>`)
+    // has its pre-rendered HTML rendered through the latest build instead:
+    // every imported build costs a worker (~70 MB), and anyone can ask for any
+    // past build ID, so importing old ones on demand would let crawlers and
+    // stale links churn workers. The hydration gate (`renderedByCommit`) sees
+    // the mismatch and has the client render fresh rather than hydrate.
     if (ssrAllowed) {
-      const { render, html: preRenderedHtml } = await loadBuild(
-        route.branch,
-        pointer.buildId
-      );
-      await renderAndRespond(req, res, render, route, preRenderedHtml);
-      return;
+      const latest = route.patternVersion
+        ? await resolvePointer(route.branch)
+        : pointer;
+      // A branch with no live pointer has no latest build to render with;
+      // its pinned HTML is handled like a non-whitelisted branch's below.
+      if (latest) {
+        const build = await loadBuild(route.branch, latest.buildId);
+        const preRenderedHtml =
+          latest.buildId === pointer.buildId
+            ? build.html
+            : await loadHtml(route.branch, pointer.buildId);
+        await renderAndRespond(req, res, build.render, route, preRenderedHtml);
+        return;
+      }
     }
 
-    // Non-whitelisted branch: its own SSR bundle is never downloaded or
-    // imported. Fetch only its pre-rendered HTML.
+    // From here on the requested build's own SSR bundle is never downloaded
+    // or imported. Fetch only its pre-rendered HTML.
     const preRenderedHtml = await loadHtml(route.branch, pointer.buildId);
 
     // If a trusted default branch is configured, render this branch's HTML
@@ -834,7 +850,7 @@ function installShutdownHandlers(server: Server, telemetry: Telemetry): void {
   process.on("SIGINT", stop);
 }
 
-function startProdServer(): void {
+export function startProdServer(port: number = PORT): Server {
   const storeBackend = process.env.STORE_BACKEND ?? "local";
   const telemetry = initTelemetry({
     allowedBranches: ALLOWED_SSR_BRANCHES,
@@ -844,13 +860,14 @@ function startProdServer(): void {
 
   const server = createServer((req, res) => {
     void handle(req, res);
-  }).listen(PORT, () => {
+  }).listen(port, () => {
     console.log(
-      `Seed Bible host server listening on :${PORT} (root branch: ${ROOT_BRANCH}, store: ${storeBackend}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"}, default SSR branch: ${DEFAULT_SSR_BRANCH || "(none)"}, telemetry: ${telemetry.enabled ? "on" : "off"})`
+      `Seed Bible host server listening on :${port} (root branch: ${ROOT_BRANCH}, store: ${storeBackend}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"}, default SSR branch: ${DEFAULT_SSR_BRANCH || "(none)"}, telemetry: ${telemetry.enabled ? "on" : "off"})`
     );
   });
 
   installShutdownHandlers(server, telemetry);
+  return server;
 }
 
 // ─── Development: Express + Vite dev server ──────────────────────────────────
