@@ -74,11 +74,13 @@ export function Avatar({
       <span
         className={`sb-tab-user-icon sb-tab-user-icon-has-image${selfClass}`}
         title={title}
-        style={{
-          borderColor: visual.color,
-          backgroundImage: `url(${imageUrl})`,
-        }}
-      />
+        style={{ borderColor: visual.color }}
+      >
+        {/* An <img> rather than a CSS background-image: Vite inlines small
+            SVGs as data URLs containing quotes, which break an unquoted
+            `url(...)` and leave the avatar blank. */}
+        <img className="sb-tab-user-icon-image" src={imageUrl} alt="" />
+      </span>
     );
   }
 

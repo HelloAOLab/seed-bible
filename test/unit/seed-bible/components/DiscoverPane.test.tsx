@@ -1652,7 +1652,7 @@ describe("DiscoverPane", () => {
         ".sb-tab-user-icon-has-image"
       ) as HTMLElement;
       expect(avatar).not.toBeNull();
-      expect(avatar?.style.backgroundImage).toContain(
+      expect(avatar?.querySelector("img")?.getAttribute("src")).toBe(
         "https://example.com/jordan.png"
       );
     });
@@ -1752,7 +1752,7 @@ describe("DiscoverPane", () => {
         ".sb-tab-user-icon-has-image"
       ) as HTMLElement;
       expect(avatar).not.toBeNull();
-      expect(avatar?.style.backgroundImage).toContain(
+      expect(avatar?.querySelector("img")?.getAttribute("src")).toBe(
         "https://example.com/ada.png"
       );
     });
