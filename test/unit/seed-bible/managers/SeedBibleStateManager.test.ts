@@ -1662,6 +1662,17 @@ describe("createSeedBibleState", () => {
       expect(to - from).toBe(5);
     });
 
+    it("stops saving history once the state is disposed", async () => {
+      const state = await createState();
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingSpan.mockClear();
+
+      state.dispose();
+
+      vi.advanceTimersByTime(15000);
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
+    });
+
     it("saves history once for each additional 5 seconds of viewing", async () => {
       const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
