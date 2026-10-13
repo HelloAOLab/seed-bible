@@ -20,7 +20,10 @@ RUN cd /temp/prod && pnpm install --frozen-lockfile --production --ignore-script
 
 # copy node_modules from temp directory
 # then copy all (non-ignored) project files into the image
-FROM oven/bun:1 AS prerelease
+# Pinned: SSR builds run in worker threads (server/buildWorker.ts), and Bun's
+# worker support is still marked experimental, so upgrade deliberately and
+# re-check that a terminated worker releases its memory.
+FROM oven/bun:1.4.3 AS prerelease
 WORKDIR /usr/src/app
 COPY --from=install /temp/dev/node_modules /temp/build/node_modules
 COPY ./server /temp/build/server
