@@ -419,6 +419,19 @@ describe("AnnotationsManager", () => {
         (await manager.listAllAnnotationsForUser("user-2")).map((a) => a.id)
       ).toEqual(["ann-1"]);
     });
+
+    // Rejects rather than answering "no notes", so the Today feed can tell an
+    // unreachable record from an empty one.
+    it("rejects when the record can't be read", async () => {
+      vi.spyOn(os, "listAllData").mockRejectedValue(
+        new Error("Error listing data: server_error")
+      );
+      const manager = createManager();
+
+      await expect(manager.listAllAnnotationsForUser("user-2")).rejects.toThrow(
+        "server_error"
+      );
+    });
   });
 
   it("operations throw when login cannot resolve a user record", async () => {

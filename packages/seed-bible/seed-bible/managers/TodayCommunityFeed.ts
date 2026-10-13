@@ -208,33 +208,29 @@ export function groupDailyReading(
 }
 
 /**
- * Drops from each reader's daily items the chapters a crossed-paths item
- * already shows for them, so a chapter never appears twice for the same
- * person. An item left with no chapters goes away.
+ * Drops one reader's events for the chapters a crossed-paths item already
+ * shows for them, so a chapter never appears twice for the same person.
+ *
+ * Applied to the events, before the prominent book is picked, rather than to
+ * the finished daily items: otherwise a day whose top book was all shared
+ * would vanish, taking with it a second book nobody else read.
  */
-export function withoutCrossedPathsChapters(
-  readingItems: readonly ReadingFeedItem[],
+function withoutCrossedPathsEvents(
+  readerId: string,
+  events: readonly ReadingEvent[],
   crossedPaths: readonly CrossedPathsFeedItem[]
-): ReadingFeedItem[] {
-  if (crossedPaths.length === 0) return [...readingItems];
-
-  const result: ReadingFeedItem[] = [];
-  for (const item of readingItems) {
-    const shared = new Set<number>();
-    for (const crossed of crossedPaths) {
-      if (
-        crossed.bookId === item.bookId &&
-        crossed.userIds.includes(item.userId)
-      ) {
-        for (const chapter of crossed.chapters) shared.add(chapter);
-      }
-    }
-    const chapters = item.chapters.filter((chapter) => !shared.has(chapter));
-    if (chapters.length > 0) {
-      result.push({ ...item, chapters });
+): ReadingEvent[] {
+  const shared = new Set<string>();
+  for (const crossed of crossedPaths) {
+    if (!crossed.userIds.includes(readerId)) continue;
+    for (const chapter of crossed.chapters) {
+      shared.add(`${crossed.bookId}|${chapter}`);
     }
   }
-  return result;
+  if (shared.size === 0) return [...events];
+  return events.filter(
+    (event) => !shared.has(`${event.bookId}|${event.chapter}`)
+  );
 }
 
 /** The instant a note was written, in unix seconds, or undefined if unknown. */
@@ -283,6 +279,10 @@ export function noteFeedItems(
  * become crossed-paths items (unless `crossedPaths` is off, which the "all"
  * window asks for), and what remains is each reader's prominent book per day.
  * Events shorter than `minDurationSeconds` are ignored throughout.
+ *
+ * An event belongs to the window its reading started in, the same rule the
+ * events query and the timeline's day cells use; filtering on the end instead
+ * would drop a sitting that ran past midnight from both days.
  */
 export function buildCommunityFeed(input: {
   eventsByReader: ReadonlyMap<string, readonly ReadingEvent[]>;
@@ -300,8 +300,8 @@ export function buildCommunityFeed(input: {
       events.filter(
         (event) =>
           event.end - event.start >= minDuration &&
-          event.end >= input.span.from &&
-          event.end <= input.span.to
+          event.start >= input.span.from &&
+          event.start <= input.span.to
       )
     );
   }
@@ -309,12 +309,17 @@ export function buildCommunityFeed(input: {
   const crossed = input.crossedPaths ? groupCrossedPaths(eventsByReader) : [];
   const daily: ReadingFeedItem[] = [];
   for (const [readerId, events] of eventsByReader) {
-    daily.push(...groupDailyReading(readerId, events));
+    daily.push(
+      ...groupDailyReading(
+        readerId,
+        withoutCrossedPathsEvents(readerId, events, crossed)
+      )
+    );
   }
 
   return sortByTimeDesc<CommunityFeedItem>([
     ...noteFeedItems(input.notesByUser, input.span),
     ...crossed,
-    ...withoutCrossedPathsChapters(daily, crossed),
+    ...daily,
   ]);
 }

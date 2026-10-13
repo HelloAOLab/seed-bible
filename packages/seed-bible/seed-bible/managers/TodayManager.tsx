@@ -41,6 +41,13 @@ import {
  */
 export const TODAY_PANE_ID = "today-screen-pane";
 
+/**
+ * How long the community feed reuses a member's notes. Long enough to click
+ * around the timeline on one fetch, short enough that a friend's new note
+ * turns up while Today is left open.
+ */
+const NOTES_CACHE_MS = 5 * 60 * 1000;
+
 /** A single verse match returned by the full-text verse search. */
 export interface VerseSearchResult {
   id: string;
@@ -221,6 +228,32 @@ export function createTodayManager(options: {
     return [userId, ...friendIds];
   });
 
+  // Notes have no time-range query, so each fetch pages through the member's
+  // whole record. Kept per member so clicking from day to day on the timeline
+  // filters what was already fetched instead of sweeping every record again.
+  // Cleared when the member list changes and whenever Today opens (see below),
+  // so a note the user just wrote in the reader is there when they come back.
+  const notesCache = new Map<
+    string,
+    { notes: Promise<Annotation[]>; fetchedAtMs: number }
+  >();
+  const getMemberNotes = (memberId: string): Promise<Annotation[]> => {
+    const cached = notesCache.get(memberId);
+    if (cached && Date.now() - cached.fetchedAtMs < NOTES_CACHE_MS) {
+      return cached.notes;
+    }
+    const notes = annotations.listAllAnnotationsForUser(memberId);
+    const entry = { notes, fetchedAtMs: Date.now() };
+    notesCache.set(memberId, entry);
+    // A failure isn't kept, so the next window asks again.
+    notes.catch(() => {
+      if (notesCache.get(memberId) === entry) {
+        notesCache.delete(memberId);
+      }
+    });
+    return notes;
+  };
+
   const getCommunityFeed = async (
     span: Timespan,
     { crossedPaths }: { crossedPaths: boolean }
@@ -245,8 +278,7 @@ export function createTodayManager(options: {
           })
       ),
       ...members.map((memberId) =>
-        annotations
-          .listAllAnnotationsForUser(memberId)
+        getMemberNotes(memberId)
           .then((notes) => {
             notesByUser.set(memberId, notes);
           })
@@ -380,6 +412,14 @@ export function createTodayManager(options: {
   // for the same reason.
   const isOpen: Signal<boolean> = signal(false);
 
+  const disposeNotesCache = effect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    communityMembers.value;
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    isOpen.value;
+    notesCache.clear();
+  });
+
   let autoOpenHydrated = false;
   let disposeUrlSync = () => {};
 
@@ -447,6 +487,7 @@ export function createTodayManager(options: {
       disposeReadingHistory();
       disposeTranslationBooks();
       disposeTranslationId();
+      disposeNotesCache();
       disposeUrlSync();
     },
   };

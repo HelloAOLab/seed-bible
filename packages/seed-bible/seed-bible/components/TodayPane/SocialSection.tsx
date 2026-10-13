@@ -143,10 +143,13 @@ export const SocialSection = (props: {
   }, []);
 
   const selectWindow = useCallback((id: TimespanOptionId) => {
-    if (windowId.peek() === id) return;
     // Resolved against the clock at the moment of the click, not at render,
-    // so a screen left open all day still asks for the last 48 hours.
+    // so a screen left open all day still asks for the last 48 hours — picking
+    // the window that is already selected is how to bring it up to date.
     const option = buildTimespanOptions()[id];
+    windowSpan.value = option.timespan;
+    // Re-picking keeps the timeline's year and day where the user left them.
+    if (windowId.peek() === id) return;
     windowId.value = id;
     windowSpan.value = option.timespan;
     year.value = option.year;

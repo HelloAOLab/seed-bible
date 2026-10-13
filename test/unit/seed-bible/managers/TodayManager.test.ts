@@ -6,6 +6,7 @@ import {
   createTestSeedBibleState,
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
+import { clearReadingHistoryDocs } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 import { act } from "preact/test-utils";
 import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
@@ -351,5 +352,125 @@ describe("Today's Community section", () => {
       localStorage.removeItem("sessionKey");
       vi.restoreAllMocks();
     }
+  });
+
+  describe("getCommunityFeed", () => {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const SPAN = { from: nowSeconds - 3600, to: nowSeconds + 3600 };
+
+    const noteRecord = {
+      address: "note-1",
+      data: {
+        id: "note-1",
+        bookId: "COL",
+        chapterNumber: 3,
+        verseNumber: 12,
+        data: {
+          type: "comment",
+          html: "<p>Compassion is listed first.</p>",
+          createdAtMs: nowSeconds * 1000,
+        },
+      },
+    };
+
+    let state: Awaited<ReturnType<typeof createTestSeedBibleState>>;
+    let listAllData: ReturnType<typeof vi.fn>;
+    let getSharedDocument: ReturnType<typeof vi.fn>;
+
+    const feedTypes = async () =>
+      (await state.today.getCommunityFeed(SPAN, { crossedPaths: true })).map(
+        (item) => item.type
+      );
+
+    beforeEach(async () => {
+      clearReadingHistoryDocs();
+      state = await createTestSeedBibleState();
+      fakeSharedPermissions(state.os, () => state.login.userId.peek());
+      vi.spyOn(state.os, "getData").mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      } as never);
+      getSharedDocument = vi
+        .spyOn(state.os, "getSharedDocument")
+        .mockImplementation((async () =>
+          historyDocument({ bookId: "JHN", chapter: 3 }, nowSeconds)) as never);
+      listAllData = vi
+        .spyOn(state.os, "listAllData")
+        .mockResolvedValue({ success: true, items: [noteRecord] });
+    });
+
+    afterEach(() => {
+      state.os.sessionKey.value = null;
+      localStorage.removeItem("sessionKey");
+      vi.restoreAllMocks();
+    });
+
+    const signIn = async () => {
+      await act(async () => {
+        state.os.sessionKey.value = formatV1SessionKey(
+          ME,
+          "session-1",
+          "secret-1",
+          Date.now() + 1000 * 60 * 60
+        );
+      });
+      await waitFor(() => state.today.communityMembers.value.includes(ME));
+      // Signing in sweeps the user's own record for other reasons; only the
+      // feed's calls count from here.
+      listAllData.mockClear();
+      getSharedDocument.mockClear();
+    };
+
+    it("shows the user's notes and reading together", async () => {
+      await signIn();
+      expect((await feedTypes()).sort()).toEqual(["note", "reading"]);
+    });
+
+    it("still shows reading when the notes can't be read", async () => {
+      await signIn();
+      listAllData.mockRejectedValue(new Error("records server down"));
+      expect(await feedTypes()).toEqual(["reading"]);
+    });
+
+    it("still shows notes when the reading history can't be read", async () => {
+      await signIn();
+      // Signing in already fetched this year's document for the resume card.
+      clearReadingHistoryDocs();
+      getSharedDocument.mockRejectedValue(new Error("records server down"));
+      expect(await feedTypes()).toEqual(["note"]);
+    });
+
+    it("is empty without asking the server when signed out", async () => {
+      expect(await feedTypes()).toEqual([]);
+      expect(listAllData).not.toHaveBeenCalled();
+      expect(getSharedDocument).not.toHaveBeenCalled();
+    });
+
+    // Notes have no time-range query, so each fetch sweeps the whole record.
+    it("reuses a member's notes when the window changes", async () => {
+      await signIn();
+      await state.today.getCommunityFeed(SPAN, { crossedPaths: true });
+      await state.today.getCommunityFeed(
+        { from: SPAN.from - 86400, to: SPAN.to },
+        { crossedPaths: true }
+      );
+      expect(listAllData).toHaveBeenCalledTimes(1);
+    });
+
+    it("reads notes afresh each time Today opens, to pick up one just written", async () => {
+      await signIn();
+      await feedTypes();
+      state.today.open();
+      await feedTypes();
+      expect(listAllData).toHaveBeenCalledTimes(2);
+    });
+
+    it("asks for notes again after a failed fetch", async () => {
+      await signIn();
+      listAllData.mockRejectedValueOnce(new Error("records server down"));
+      expect(await feedTypes()).toEqual(["reading"]);
+      expect((await feedTypes()).sort()).toEqual(["note", "reading"]);
+    });
   });
 });

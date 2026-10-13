@@ -420,10 +420,16 @@ describe("SocialSection", () => {
       );
     });
 
-    it("does not refetch when the same window is picked again", async () => {
+    it("brings a window left open up to date when it is picked again", async () => {
       setup();
+      vi.setSystemTime(NOW.getTime() + 6 * HOUR * 1000);
+
       await selectTimeframe("Last 48 hours");
-      expect(getCommunityFeed).toHaveBeenCalledTimes(1);
+
+      expect(getCommunityFeed).toHaveBeenLastCalledWith(
+        { from: NOW_SECONDS + 6 * HOUR - 2 * DAY, to: NOW_SECONDS + 6 * HOUR },
+        { crossedPaths: true }
+      );
     });
 
     it("ignores a stale result after the window changes", async () => {
@@ -554,6 +560,20 @@ describe("SocialSection", () => {
       await flush();
 
       expect(q(".sb-today-date-label")!.textContent).toBe("16 mai 2026");
+    });
+
+    it("keeps the picked day when 'All' is picked again", async () => {
+      setup();
+      await selectTimeframe("All");
+      act(() => q<HTMLButtonElement>("[data-testid='pick-day']")!.click());
+      await flush();
+
+      await selectTimeframe("All");
+
+      expect(getCommunityFeed).toHaveBeenLastCalledWith(SELECTED_DAY, {
+        crossedPaths: false,
+      });
+      expect(q(".sb-today-date-label")!.textContent).toBe("May 16, 2026");
     });
 
     it("drops the picked day when a relative window is chosen again", async () => {

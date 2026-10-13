@@ -4,9 +4,6 @@ import {
   groupDailyReading,
   noteFeedItems,
   startOfLocalDay,
-  withoutCrossedPathsChapters,
-  type CrossedPathsFeedItem,
-  type ReadingFeedItem,
 } from "@packages/seed-bible/seed-bible/managers/TodayCommunityFeed";
 import type { ReadingEvent } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
@@ -254,69 +251,6 @@ describe("groupDailyReading", () => {
   });
 });
 
-describe("withoutCrossedPathsChapters", () => {
-  const reading = (
-    userId: string,
-    bookId: string,
-    chapters: number[]
-  ): ReadingFeedItem => ({
-    type: "reading",
-    id: `reading:${userId}`,
-    userId,
-    bookId,
-    chapters,
-    time: dayAt(0),
-  });
-  const crossed = (
-    bookId: string,
-    chapters: number[],
-    userIds: string[]
-  ): CrossedPathsFeedItem => ({
-    type: "crossed-paths",
-    id: `crossed:${bookId}`,
-    bookId,
-    chapters,
-    userIds,
-    time: dayAt(0),
-  });
-
-  it("leaves the items alone when there are no crossed paths", () => {
-    const items = [reading("a", "COL", [3, 4])];
-    expect(withoutCrossedPathsChapters(items, [])).toEqual(items);
-  });
-
-  it("drops the chapters a crossed-paths item already shows for that reader", () => {
-    const result = withoutCrossedPathsChapters(
-      [reading("a", "COL", [3, 4])],
-      [crossed("COL", [3], ["a", "b"])]
-    );
-    expect(result).toEqual([expect.objectContaining({ chapters: [4] })]);
-  });
-
-  it("removes an item left with nothing to say", () => {
-    expect(
-      withoutCrossedPathsChapters(
-        [reading("a", "COL", [3])],
-        [crossed("COL", [3], ["a", "b"])]
-      )
-    ).toEqual([]);
-  });
-
-  it("does not touch a reader who is not part of the crossed paths", () => {
-    const items = [reading("c", "COL", [3])];
-    expect(
-      withoutCrossedPathsChapters(items, [crossed("COL", [3], ["a", "b"])])
-    ).toEqual(items);
-  });
-
-  it("does not touch another book", () => {
-    const items = [reading("a", "JHN", [3])];
-    expect(
-      withoutCrossedPathsChapters(items, [crossed("COL", [3], ["a", "b"])])
-    ).toEqual(items);
-  });
-});
-
 describe("noteFeedItems", () => {
   it("turns a note into a feed item with its verses and time", () => {
     const items = noteFeedItems(new Map([["a", [note("n1")]]]), WIDE_SPAN);
@@ -436,6 +370,90 @@ describe("buildCommunityFeed", () => {
     expect(items.map((item) => item.type)).toEqual(["crossed-paths"]);
   });
 
+  it("keeps a reader's unshared chapters of a crossed book as their own reading", () => {
+    const items = buildCommunityFeed({
+      eventsByReader: new Map([
+        [
+          "me",
+          [
+            event("me", "COL", 3, dayAt(0) + 8 * HOUR, 10 * MINUTE),
+            event(
+              "me",
+              "COL",
+              4,
+              dayAt(0) + 8 * HOUR + 10 * MINUTE,
+              10 * MINUTE
+            ),
+          ],
+        ],
+        ["jonah", [event("jonah", "COL", 3, dayAt(0) + 9 * HOUR, 10 * MINUTE)]],
+      ]),
+      notesByUser: new Map(),
+      span: WIDE_SPAN,
+      crossedPaths: true,
+    });
+    expect(
+      items.map((item) => [
+        item.type,
+        item.bookId,
+        "chapters" in item && item.chapters,
+      ])
+    ).toEqual([
+      ["crossed-paths", "COL", [3]],
+      ["reading", "COL", [4]],
+    ]);
+  });
+
+  it("falls back to a reader's next book when their top book was all shared", () => {
+    const items = buildCommunityFeed({
+      eventsByReader: new Map([
+        [
+          "a",
+          [
+            event("a", "JHN", 3, dayAt(0) + 8 * HOUR, 30 * MINUTE),
+            event("a", "ROM", 3, dayAt(0) + 9 * HOUR, 5 * MINUTE),
+          ],
+        ],
+        ["b", [event("b", "JHN", 3, dayAt(0) + 10 * HOUR, 10 * MINUTE)]],
+      ]),
+      notesByUser: new Map(),
+      span: WIDE_SPAN,
+      crossedPaths: true,
+    });
+    expect(items).toEqual([
+      expect.objectContaining({
+        type: "crossed-paths",
+        bookId: "JHN",
+        userIds: ["a", "b"],
+      }),
+      expect.objectContaining({
+        type: "reading",
+        userId: "a",
+        bookId: "ROM",
+        chapters: [3],
+      }),
+    ]);
+  });
+
+  it("leaves a reader outside the crossed paths alone, even in the same book", () => {
+    const items = buildCommunityFeed({
+      eventsByReader: new Map([
+        ["a", [event("a", "COL", 3, dayAt(0) + 8 * HOUR, 10 * MINUTE)]],
+        ["b", [event("b", "COL", 3, dayAt(0) + 9 * HOUR, 10 * MINUTE)]],
+        ["c", [event("c", "COL", 4, dayAt(0) + 10 * HOUR, 10 * MINUTE)]],
+      ]),
+      notesByUser: new Map(),
+      span: WIDE_SPAN,
+      crossedPaths: true,
+    });
+    expect(
+      items.map((item) => [item.type, "userId" in item ? item.userId : null])
+    ).toEqual([
+      ["reading", "c"],
+      ["crossed-paths", null],
+    ]);
+  });
+
   it("does not group crossed paths when told not to (the 'all' window)", () => {
     const items = buildCommunityFeed({
       eventsByReader: new Map([
@@ -454,7 +472,7 @@ describe("buildCommunityFeed", () => {
     ]);
   });
 
-  it("ignores events that end outside the window", () => {
+  it("ignores events that start outside the window", () => {
     const items = buildCommunityFeed({
       eventsByReader: new Map([
         ["me", [event("me", "COL", 3, dayAt(-40), 10 * MINUTE)]],
@@ -464,6 +482,22 @@ describe("buildCommunityFeed", () => {
       crossedPaths: true,
     });
     expect(items).toEqual([]);
+  });
+
+  // The events query and the timeline both file a sitting under the day it
+  // started, so picking that day has to show it.
+  it("keeps a sitting that runs past midnight in the day it started", () => {
+    const items = buildCommunityFeed({
+      eventsByReader: new Map([
+        ["me", [event("me", "COL", 3, dayAt(1) - 10 * MINUTE, 30 * MINUTE)]],
+      ]),
+      notesByUser: new Map(),
+      span: { from: dayAt(0), to: dayAt(1) - 1 },
+      crossedPaths: false,
+    });
+    expect(items).toEqual([
+      expect.objectContaining({ id: `reading:me:${dayAt(0)}`, chapters: [3] }),
+    ]);
   });
 
   it("ignores events too short to be reading", () => {
