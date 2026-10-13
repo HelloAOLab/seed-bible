@@ -26,6 +26,7 @@ import {
   resolveApologistBible,
   uiLocaleForApologist,
 } from "./apologistBible";
+import ApologistIcon from "../../icon-square.svg";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -198,7 +199,7 @@ export default function initApologistExtension() {
       const url = context.navigation.currentUrl.value;
       const urlName = url.searchParams.get("apologistName") ?? null;
       const apologistIconUrl =
-        url.searchParams.get("apologistIconUrl") ?? undefined;
+        url.searchParams.get("apologistIconUrl") ?? ApologistIcon ?? undefined;
       const customApologistDomain =
         url.searchParams.get("apologistDomain") ?? null;
       const apologistDomain = customApologistDomain ?? DEFAULT_APOLOGIST_DOMAIN;
