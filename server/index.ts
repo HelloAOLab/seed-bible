@@ -14,8 +14,9 @@
  *      - POST /__invalidate?branch=       → drop the cached pointer for a branch
  *    Per request it resolves the branch's live build. Only branches in the
  *    `ALLOWED_SSR_BRANCHES` whitelist are server-side rendered by their own
- *    bundle: for those, the SSR bundle is lazily loaded and cached, and its
- *    render() is called to produce HTML. Any other branch still works, but its
+ *    bundle: for those, the SSR bundle is lazily loaded into its own worker
+ *    thread (see `buildWorker.ts`) and cached, and its render() is called to
+ *    produce HTML. Any other branch still works, but its
  *    (untrusted) SSR bundle is never downloaded or imported. Such a branch is
  *    either rendered through the trusted `DEFAULT_SSR_BRANCH`'s bundle (when
  *    set) over its own pre-rendered HTML, or served that HTML as-is. Hashed
@@ -38,12 +39,13 @@ import {
   type Server,
   type ServerResponse,
 } from "node:http";
-import { pathToFileURL } from "node:url";
 import { pipeline, Readable } from "node:stream";
 import { pipeline as streamPipeline } from "node:stream/promises";
 import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import { createGzip } from "node:zlib";
 import { createStore, type ArtifactStore, type BranchPointer } from "./store";
+import { BuildCache } from "./buildCache";
+import { startBuildWorker, type RenderFn } from "./buildWorker";
 import Bowser from "bowser";
 import { parseAcceptLanguages } from "./lang.js";
 import { SpanKind, type Span } from "@opentelemetry/api";
@@ -65,7 +67,8 @@ import {
   withSpan,
   type Telemetry,
 } from "./telemetry";
-import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
+
+export type { RenderFn } from "./buildWorker";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const PORT = Number(process.env.PORT ?? 3002);
@@ -73,6 +76,19 @@ const ROOT_BRANCH = process.env.ROOT_BRANCH ?? "main";
 const ASSET_HOST = process.env.ASSET_HOST ?? "";
 const POINTER_TTL_MS = Number(process.env.POINTER_TTL_MS ?? 10_000);
 const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
+/**
+ * How many builds may have a live SSR worker at once. Each holds its own copy
+ * of a ~10 MB bundle plus its heap (~70 MB), so this is the main lever on the
+ * host's memory.
+ */
+const SSR_WORKERS_MAX = Number(process.env.SSR_WORKERS_MAX ?? 4);
+/**
+ * Bounds an SSR bundle's initial load and each render. A render that runs over
+ * falls back to the unrendered HTML, as a render that throws does.
+ */
+const SSR_RENDER_TIMEOUT_MS = Number(
+  process.env.SSR_RENDER_TIMEOUT_MS ?? 15_000
+);
 
 const INVALIDATION_SECRET = process.env.INVALIDATION_SECRET ?? "";
 
@@ -102,23 +118,6 @@ interface ClientConfig {
   renderedAsWebKit: boolean;
   acceptedLanguages: string[];
 }
-
-export type RenderFn = (opts: {
-  path: string;
-  config: {
-    basePath: string;
-    assetHost: string;
-    renderedAsMobile: boolean;
-    renderedAsWebKit: boolean;
-    acceptedLanguages: string[];
-    branding?: BrandingConfig;
-  };
-  html: string;
-}) => Promise<
-  | { html: string; notFound?: true }
-  | { redirectTo: string; redirectStatus?: number; vary?: string }
-  | string
->;
 
 /**
  * Matches the client's own (former) `isWebKit()` check in `app/main.tsx`, so
@@ -266,53 +265,55 @@ async function resolvePointer(branch: string): Promise<BranchPointer | null> {
   return pointer;
 }
 
-// ─── Module cache (buildId → loaded render fn + manifest), LRU ───────────────
+// ─── Module cache (buildId → SSR worker + pre-rendered html), LRU ────────────
+// Each build renders in its own worker thread. Evicting or invalidating a build
+// retires its worker, which is the only way to free an imported bundle — a
+// module imported on this thread could never be unloaded, so each deploy used
+// to add another copy of the app that stayed for the life of the process.
 interface ModuleEntry {
   render: RenderFn;
   html: string;
+  retire(): void;
 }
-const moduleCache = new Map<string, ModuleEntry>(); // insertion-ordered → LRU
+const moduleCache = new BuildCache<ModuleEntry>(SSR_WORKERS_MAX);
 
 async function loadBuild(
   branch: string,
   buildId: string
 ): Promise<ModuleEntry> {
   const key = `${branch}@${buildId}`;
-  const existing = moduleCache.get(key);
-  if (existing) {
-    // Refresh LRU recency.
-    moduleCache.delete(key);
-    moduleCache.set(key, existing);
-    recordCacheLookup("module", true);
-    return existing;
-  }
-  recordCacheLookup("module", false);
-
-  const { serverModulePath, html } = await store.fetchArtifacts(
-    branch,
-    buildId
-  );
-  // Evaluating a branch's SSR bundle is a cold-start cliff — the first request
-  // for a build pays for it while later ones hit the cache above. Give it its
-  // own span so those outlier latencies are explainable.
-  const mod = await withSpan(
-    "build.import",
-    {
-      attributes: { "seedbible.branch": branch, "seedbible.build_id": buildId },
-    },
-    () => import(pathToFileURL(serverModulePath).href)
-  );
-  const render = mod.render as RenderFn;
-  if (typeof render !== "function") {
-    throw new Error(`Build ${key} does not export render()`);
-  }
-
-  const entry: ModuleEntry = { render, html };
-  moduleCache.set(key, entry);
-  while (moduleCache.size > MODULE_CACHE_MAX) {
-    const oldest = moduleCache.keys().next().value as string;
-    moduleCache.delete(oldest);
-  }
+  const { entry, hit } = moduleCache.get(key, async () => {
+    const { serverModulePath, html } = await store.fetchArtifacts(
+      branch,
+      buildId
+    );
+    let loaded: ModuleEntry | undefined;
+    // Evaluating a branch's SSR bundle is a cold-start cliff — the first
+    // request for a build pays for it while later ones hit the cache. Give it
+    // its own span so those outlier latencies are explainable.
+    const worker = await withSpan(
+      "build.import",
+      {
+        attributes: {
+          "seedbible.branch": branch,
+          "seedbible.build_id": buildId,
+        },
+      },
+      () =>
+        startBuildWorker({
+          modulePath: serverModulePath,
+          timeoutMs: SSR_RENDER_TIMEOUT_MS,
+          // A crashed worker must not stay cached, or every later request
+          // for the build would fail until it was evicted.
+          onExit: () => {
+            if (loaded) moduleCache.forget(key, loaded);
+          },
+        })
+    );
+    loaded = { render: worker.render, html, retire: worker.retire };
+    return loaded;
+  });
+  recordCacheLookup("module", hit);
   return entry;
 }
 
@@ -703,9 +704,7 @@ async function dispatch(
     const branch = new URL(url, "http://localhost").searchParams.get("branch");
     if (branch) {
       pointerCache.delete(branch);
-      for (const key of [...moduleCache.keys()]) {
-        if (key.startsWith(`${branch}@`)) moduleCache.delete(key);
-      }
+      moduleCache.deleteWhere((key) => key.startsWith(`${branch}@`));
       for (const key of [...htmlCache.keys()]) {
         if (key.startsWith(`${branch}@`)) htmlCache.delete(key);
       }

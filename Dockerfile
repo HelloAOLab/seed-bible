@@ -29,7 +29,9 @@ COPY package.json .
 # [optional] tests & build
 ENV NODE_ENV=production
 
-RUN bun build --target=bun --outfile=server/dist/index.js /temp/build/server/index.ts
+# ssrWorker.ts is a second entry point: each SSR build runs in a worker
+# thread started from it (see server/buildWorker.ts).
+RUN bun build --target=bun --outdir=server/dist /temp/build/server/index.ts /temp/build/server/ssrWorker.ts
 
 # copy production dependencies and source code into final image
 FROM prerelease AS release
