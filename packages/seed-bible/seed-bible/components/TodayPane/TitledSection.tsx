@@ -7,14 +7,11 @@ interface TitledSectionProps {
     label: string;
     onClick: () => void;
   };
-  /** Arbitrary header control, for a section whose action isn't a text link. */
-  action?: ComponentChildren;
 }
 
 export const TitledSection = ({
   title,
   buttonData,
-  action,
   children,
 }: TitledSectionProps) => {
   return (
@@ -24,7 +21,6 @@ export const TitledSection = ({
         {buttonData && (
           <button onClick={buttonData.onClick}>{buttonData.label}</button>
         )}
-        {action}
       </div>
       {children}
     </div>

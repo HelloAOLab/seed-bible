@@ -587,12 +587,34 @@
   padding-bottom: 0.25rem;
 }
 
-/* The time-frame dropdown in the section header, in the place of a "see all"
-   link: same accent colour, a chevron instead of an underline. */
-.sb-today-container
-  .sb-today-titled-section-header
-  .sb-today-feed-timeframe-button {
+/* The kind pills and the time-frame dropdown share one row. The pills take
+   the free width and scroll; the dropdown keeps its full label on one line. */
+.sb-today-container .sb-today-feed-card .sb-today-feed-toolbar {
   display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sb-today-container
+  .sb-today-feed-card
+  .sb-today-feed-toolbar
+  > .sb-today-feed-kind-filter {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sb-today-container .sb-today-feed-card .sb-today-feed-timeframe {
+  flex-shrink: 0;
+}
+
+/* Same accent colour as a section's "see all" link, with a chevron instead of
+   an underline. Sized to its label: the shared menu button is a fixed square
+   for a "more" icon, which squeezed the label onto two lines. */
+.sb-today-container .sb-today-feed-card .sb-today-feed-timeframe-button {
+  display: flex;
+  width: auto;
+  height: auto;
+  white-space: nowrap;
   align-items: center;
   gap: 0.125rem;
   appearance: none;
@@ -609,7 +631,7 @@
 }
 
 .sb-today-container
-  .sb-today-titled-section-header
+  .sb-today-feed-card
   .sb-today-feed-timeframe-button
   > .material-symbols-outlined {
   font-size: 1.125rem;
@@ -716,7 +738,6 @@
   padding: 0;
   margin: 0;
   font: inherit;
-  font-family: var(--sb-book-title-font-family);
   font-weight: 700;
   color: inherit;
   text-align: start;

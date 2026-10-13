@@ -219,17 +219,13 @@ export const SocialSection = (props: {
         selectDay,
       }}
     >
-      <TitledSection
-        title={t("community", { defaultValue: "COMMUNITY" })}
-        action={
-          <TimeframeMenu selected={windowId.value} onSelect={selectWindow} />
-        }
-      >
+      <TitledSection title={t("community", { defaultValue: "COMMUNITY" })}>
         <FeedCard
           today={props.today}
           theme={props.theme}
           selfUserId={userId}
           windowId={windowId.value}
+          onSelectWindow={selectWindow}
           kind={kind.value}
           onSelectKind={(next) => (kind.value = next)}
           feed={feed.value}
@@ -240,7 +236,7 @@ export const SocialSection = (props: {
   );
 };
 
-/** The time-frame dropdown in the section header. */
+/** The time-frame dropdown beside the kind pills. */
 function TimeframeMenu(props: {
   selected: TimespanOptionId;
   onSelect: (id: TimespanOptionId) => void;
@@ -292,6 +288,7 @@ function FeedCard(props: {
   theme: ReadonlySignal<BibleTheme>;
   selfUserId: string | null;
   windowId: TimespanOptionId;
+  onSelectWindow: (id: TimespanOptionId) => void;
   kind: CommunityFeedKind;
   onSelectKind: (kind: CommunityFeedKind) => void;
   feed: FeedState;
@@ -329,20 +326,26 @@ function FeedCard(props: {
 
   return (
     <div className="sb-today-feed-card sb-today-section-card">
-      <div className="sb-today-feed-kind-filter" ref={kindFilterRef}>
-        {FEED_KINDS.map((id) => (
-          <button
-            key={id}
-            type="button"
-            aria-pressed={props.kind === id}
-            onClick={() => props.onSelectKind(id)}
-            className={`sb-today-feed-kind-option${
-              props.kind === id ? " sb-today-feed-kind-option-selected" : ""
-            } sb-today-clickable`}
-          >
-            {kindLabels[id]}
-          </button>
-        ))}
+      <div className="sb-today-feed-toolbar">
+        <div className="sb-today-feed-kind-filter" ref={kindFilterRef}>
+          {FEED_KINDS.map((id) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={props.kind === id}
+              onClick={() => props.onSelectKind(id)}
+              className={`sb-today-feed-kind-option${
+                props.kind === id ? " sb-today-feed-kind-option-selected" : ""
+              } sb-today-clickable`}
+            >
+              {kindLabels[id]}
+            </button>
+          ))}
+        </div>
+        <TimeframeMenu
+          selected={props.windowId}
+          onSelect={props.onSelectWindow}
+        />
       </div>
       {props.windowId === "all" && (
         <Fragment>
