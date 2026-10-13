@@ -3726,6 +3726,11 @@ export function createSeedBibleState(
     // uses — rather than growing a second editor on this screen.
     annotations.editAnnotation(annotation);
   };
+  const createPlaylistFromContent = () => {
+    closeYourContent();
+    closeProfile();
+    void playlists.createNewPlaylist();
+  };
   // Both land in the plans pane, opened fullscreen the way the Profile card
   // opens it, and then drill straight into the plan so the user doesn't have
   // to find it in the list a second time.
@@ -3754,6 +3759,7 @@ export function createSeedBibleState(
       onPlayPlaylist={playPlaylistFromContent}
       onEditPlaylist={editPlaylistFromContent}
       onEditAnnotation={editAnnotationFromContent}
+      onCreatePlaylist={createPlaylistFromContent}
       onOpenReadingPlan={openReadingPlanFromContent}
       onEditReadingPlan={editReadingPlanFromContent}
     />
