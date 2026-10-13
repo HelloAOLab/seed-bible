@@ -68,6 +68,23 @@ describe("BuildCache", () => {
     expect(a.retired).toBe(true);
   });
 
+  it("never evicts the build that just loaded, even if others were used since it started", async () => {
+    const cache = new BuildCache<FakeBuild>(1);
+    const a = await cache.get("main@a", async () => new FakeBuild("a")).entry;
+    const slow = deferred<FakeBuild>();
+    cache.get("main@b", () => slow.promise);
+    // `a` is used again while `b` is still loading, so `b` is now the oldest.
+    cache.get("main@a", async () => new FakeBuild("unused"));
+
+    const b = new FakeBuild("b");
+    slow.resolve(b);
+    await flush();
+
+    expect(b.retired).toBe(false);
+    expect(cache.has("main@b")).toBe(true);
+    expect(a.retired).toBe(true);
+  });
+
   it("does not cache a failed load, so the next request retries it", async () => {
     const cache = new BuildCache<FakeBuild>(4);
     const failed = cache.get("main@a", () =>
@@ -80,6 +97,70 @@ describe("BuildCache", () => {
 
     expect(retried.hit).toBe(false);
     expect((await retried.entry).name).toBe("a");
+  });
+
+  describe("with a failure TTL", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const failingLoad = () => {
+      let attempts = 0;
+      const load = async (): Promise<FakeBuild> => {
+        attempts++;
+        throw new Error("bad bundle");
+      };
+      return { load, attempts: () => attempts };
+    };
+
+    it("answers a failed build from memory until the TTL passes, then retries it", async () => {
+      const cache = new BuildCache<FakeBuild>(4, 30_000);
+      const broken = failingLoad();
+
+      await expect(cache.get("main@bad", broken.load).entry).rejects.toThrow(
+        "bad bundle"
+      );
+      vi.advanceTimersByTime(29_000);
+      const remembered = cache.get("main@bad", broken.load);
+      await expect(remembered.entry).rejects.toThrow("bad bundle");
+      expect(broken.attempts()).toBe(1);
+
+      vi.advanceTimersByTime(1_000);
+      await expect(cache.get("main@bad", broken.load).entry).rejects.toThrow(
+        "bad bundle"
+      );
+      expect(broken.attempts()).toBe(2);
+    });
+
+    it("tries a failed build afresh once its branch is invalidated", async () => {
+      const cache = new BuildCache<FakeBuild>(4, 30_000);
+      const broken = failingLoad();
+      await expect(cache.get("main@bad", broken.load).entry).rejects.toThrow();
+
+      cache.deleteWhere((key) => key.startsWith("main@"));
+      const fixed = await cache.get("main@bad", async () => new FakeBuild("ok"))
+        .entry;
+
+      expect(fixed.name).toBe("ok");
+    });
+
+    it("doesn't let a failed build push a working one out", async () => {
+      const cache = new BuildCache<FakeBuild>(1, 30_000);
+      const working = await cache.get(
+        "main@good",
+        async () => new FakeBuild("g")
+      ).entry;
+
+      await expect(
+        cache.get("main@bad", failingLoad().load).entry
+      ).rejects.toThrow();
+
+      expect(working.retired).toBe(false);
+      expect(cache.has("main@good")).toBe(true);
+    });
   });
 
   it("retires only the matching builds on deleteWhere", async () => {

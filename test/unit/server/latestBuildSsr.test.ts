@@ -20,9 +20,10 @@ import path from "node:path";
  * file when it is imported, so the tests can see which build's code ran and
  * which builds were ever loaded.
  */
-const bundleSource = (buildId: string, importLog: string) => `
+const bundleSource = (buildId: string, importLog: string, broken = false) => `
 import { appendFileSync } from "node:fs";
 appendFileSync(${JSON.stringify(importLog)}, ${JSON.stringify(buildId)} + "\\n");
+${broken ? 'throw new Error("bad deploy");' : ""}
 export async function render(opts) {
   return { html: "rendered by ${buildId} over [" + opts.html + "]" };
 }
@@ -35,12 +36,16 @@ describe("production host: SSR runs only a branch's latest build", () => {
   let baseUrl: string;
   const savedEnv = { ...process.env };
 
-  async function writeBuild(branch: string, buildId: string) {
+  async function writeBuild(
+    branch: string,
+    buildId: string,
+    { broken = false } = {}
+  ) {
     const buildDir = path.join(dir, "branches", branch, buildId);
     await mkdir(buildDir, { recursive: true });
     await writeFile(
       path.join(buildDir, "server.mjs"),
-      bundleSource(buildId, importLog)
+      bundleSource(buildId, importLog, broken)
     );
     await writeFile(path.join(buildDir, "index.html"), `html of ${buildId}`);
   }
@@ -70,12 +75,16 @@ describe("production host: SSR runs only a branch's latest build", () => {
     await setLatest("main", "new");
     // Whitelisted, but with no live pointer.
     await writeBuild("retired", "only");
+    // Whitelisted, and its latest build throws on import: a bad deploy.
+    await writeBuild("broken", "good");
+    await writeBuild("broken", "bad", { broken: true });
+    await setLatest("broken", "bad");
 
     Object.assign(process.env, {
       STORE_BACKEND: "local",
       STORE_DIR: dir,
       ROOT_BRANCH: "main",
-      ALLOWED_SSR_BRANCHES: "main,retired",
+      ALLOWED_SSR_BRANCHES: "main,retired,broken",
       DEFAULT_SSR_BRANCH: "",
     });
     vi.resetModules();
@@ -117,6 +126,32 @@ describe("production host: SSR runs only a branch's latest build", () => {
     expect(page.status).toBe(200);
     expect(page.body).toBe("html of only");
     expect(await importedBuilds()).not.toContain("only");
+  });
+
+  it("serves a pinned old build's HTML as-is when the latest build fails to load", async () => {
+    const page = await get("/b/broken/good/en/AAB/genesis/1");
+
+    expect(page.status).toBe(200);
+    expect(page.body).toBe("html of good");
+    expect(await importedBuilds()).not.toContain("good");
+  });
+
+  it("still answers the broken latest build itself with an error", async () => {
+    const page = await get("/b/broken/bad/en/AAB/genesis/1");
+
+    expect(page.status).toBe(500);
+  });
+
+  it("doesn't retry a build that just failed to load on every request", async () => {
+    const attemptsBefore = (await importedBuilds()).filter((b) => b === "bad");
+
+    await get("/b/broken/good/en/AAB/john/3");
+    await get("/b/broken/good/en/AAB/john/4");
+
+    const attemptsAfter = (await importedBuilds()).filter((b) => b === "bad");
+    // The earlier tests already tried it once; nothing new since.
+    expect(attemptsBefore.length).toBeGreaterThan(0);
+    expect(attemptsAfter).toEqual(attemptsBefore);
   });
 
   it("still renders a request holding a build that a deploy retires mid-request", async () => {

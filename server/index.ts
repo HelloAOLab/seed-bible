@@ -90,6 +90,13 @@ const SSR_WORKERS_MAX = Number(process.env.SSR_WORKERS_MAX ?? 4);
 const SSR_RENDER_TIMEOUT_MS = Number(
   process.env.SSR_RENDER_TIMEOUT_MS ?? 15_000
 );
+/**
+ * How long a build that failed to load is remembered. Until then, requests for
+ * it fail fast instead of each downloading the bundle and starting a worker.
+ */
+const SSR_LOAD_FAILURE_TTL_MS = Number(
+  process.env.SSR_LOAD_FAILURE_TTL_MS ?? 30_000
+);
 
 const INVALIDATION_SECRET = process.env.INVALIDATION_SECRET ?? "";
 
@@ -278,7 +285,10 @@ interface ModuleEntry {
   acquire(): (() => void) | null;
   retire(): void;
 }
-const moduleCache = new BuildCache<ModuleEntry>(SSR_WORKERS_MAX);
+const moduleCache = new BuildCache<ModuleEntry>(
+  SSR_WORKERS_MAX,
+  SSR_LOAD_FAILURE_TTL_MS
+);
 
 async function loadBuild(
   branch: string,
@@ -326,26 +336,21 @@ async function loadBuild(
 }
 
 /**
- * Loads a build and holds it until `use` settles, so a deploy's invalidation
- * or an eviction can't stop its worker between handing it out and rendering
- * with it (e.g. while the request fetches a pinned build's HTML).
+ * Loads a build and holds it until `release()` is called, so a deploy's
+ * invalidation or an eviction can't stop its worker between handing it out and
+ * rendering with it (e.g. while the request fetches a pinned build's HTML).
+ * Rejects if the build fails to load.
  */
-async function withBuild<T>(
+async function holdBuild(
   branch: string,
-  buildId: string,
-  use: (build: ModuleEntry) => Promise<T>
-): Promise<T> {
+  buildId: string
+): Promise<{ build: ModuleEntry; release: () => void }> {
   // A build retired after the cache handed it out but before it could be held
   // is gone from the cache by then, so the second attempt loads a fresh one.
   for (let attempt = 0; attempt < 2; attempt++) {
     const build = await loadBuild(branch, buildId);
     const release = build.acquire();
-    if (!release) continue;
-    try {
-      return await use(build);
-    } finally {
-      release();
-    }
+    if (release) return { build, release };
   }
   throw new Error(`SSR worker for ${branch}@${buildId} stopped before use`);
 }
@@ -803,19 +808,46 @@ async function dispatch(
       // A branch with no live pointer has no latest build to render with;
       // its pinned HTML is handled like a non-whitelisted branch's below.
       if (latest) {
-        await withBuild(route.branch, latest.buildId, async (build) => {
-          const preRenderedHtml =
-            latest.buildId === pointer.buildId
-              ? build.html
-              : await loadHtml(route.branch, pointer.buildId);
+        const pinnedOldBuild = latest.buildId !== pointer.buildId;
+        const held = await holdBuild(route.branch, latest.buildId).catch(
+          (err: unknown) => {
+            // The latest build's own URLs have nothing else to render with.
+            // A pinned old build still has its own HTML, and is exactly what
+            // people reach for to get around a bad deploy.
+            if (!pinnedOldBuild) throw err;
+            console.error(
+              `Latest build ${route.branch}@${latest.buildId} failed to load; serving ${pointer.buildId}'s HTML as-is:`,
+              err
+            );
+            recordError(span, err);
+            markRenderDegraded();
+            return null;
+          }
+        );
+        if (!held) {
+          sendHtml(
+            req,
+            res,
+            200,
+            await loadHtml(route.branch, pointer.buildId),
+            { "cache-control": "public, max-age=0, must-revalidate" }
+          );
+          return;
+        }
+        try {
+          const preRenderedHtml = pinnedOldBuild
+            ? await loadHtml(route.branch, pointer.buildId)
+            : held.build.html;
           await renderAndRespond(
             req,
             res,
-            build.render,
+            held.build.render,
             route,
             preRenderedHtml
           );
-        });
+        } finally {
+          held.release();
+        }
         return;
       }
     }
@@ -830,9 +862,21 @@ async function dispatch(
     if (DEFAULT_SSR_BRANCH) {
       const defaultPointer = await resolvePointer(DEFAULT_SSR_BRANCH);
       if (defaultPointer) {
-        await withBuild(DEFAULT_SSR_BRANCH, defaultPointer.buildId, (build) =>
-          renderAndRespond(req, res, build.render, route, preRenderedHtml)
+        const { build, release } = await holdBuild(
+          DEFAULT_SSR_BRANCH,
+          defaultPointer.buildId
         );
+        try {
+          await renderAndRespond(
+            req,
+            res,
+            build.render,
+            route,
+            preRenderedHtml
+          );
+        } finally {
+          release();
+        }
         return;
       }
       console.warn(

@@ -49,18 +49,19 @@ All configuration is via environment variables. Defaults are applied at startup.
 
 ### Server
 
-| Variable                | Default   | Description                                                                                                                           |
-| ----------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`              | _(unset)_ | `production` selects the multi-branch host; anything else runs the Vite dev server.                                                   |
-| `PORT`                  | `3002`    | Port the server listens on.                                                                                                           |
-| `ROOT_BRANCH`           | `main`    | Branch served for `GET /` (no `pattern`). Also the default value of `ALLOWED_SSR_BRANCHES`.                                           |
-| `ASSET_HOST`            | `""`      | Absolute host prepended to hashed asset URLs in rendered HTML (e.g. `https://cdn.example.com`).                                       |
-| `POINTER_TTL_MS`        | `10000`   | How long (ms) a branch → buildId pointer is cached before re-reading from the store.                                                  |
-| `MODULE_CACHE_MAX`      | `20`      | Max entries in the LRU cache of pre-rendered HTML for non-SSR branches.                                                               |
-| `SSR_WORKERS_MAX`       | `4`       | Max builds with a live SSR worker at once (see [SSR workers](#ssr-workers)). Each costs roughly 70 MB.                                |
-| `SSR_RENDER_TIMEOUT_MS` | `15000`   | Limit on loading an SSR bundle and on each render. A render that runs over falls back to the unrendered HTML.                         |
-| `INVALIDATION_SECRET`   | `""`      | Shared secret required in the `x-invalidation-secret` header on `POST /__invalidate`. **When empty the endpoint is unauthenticated.** |
-| `SHUTDOWN_GRACE_MS`     | `5000`    | How long to wait for in-flight requests on `SIGTERM`/`SIGINT` before flushing telemetry and exiting.                                  |
+| Variable                  | Default   | Description                                                                                                                                                      |
+| ------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                | _(unset)_ | `production` selects the multi-branch host; anything else runs the Vite dev server.                                                                              |
+| `PORT`                    | `3002`    | Port the server listens on.                                                                                                                                      |
+| `ROOT_BRANCH`             | `main`    | Branch served for `GET /` (no `pattern`). Also the default value of `ALLOWED_SSR_BRANCHES`.                                                                      |
+| `ASSET_HOST`              | `""`      | Absolute host prepended to hashed asset URLs in rendered HTML (e.g. `https://cdn.example.com`).                                                                  |
+| `POINTER_TTL_MS`          | `10000`   | How long (ms) a branch → buildId pointer is cached before re-reading from the store.                                                                             |
+| `MODULE_CACHE_MAX`        | `20`      | Max entries in the LRU cache of pre-rendered HTML for non-SSR branches.                                                                                          |
+| `SSR_WORKERS_MAX`         | `4`       | Max builds with a live SSR worker at once (see [SSR workers](#ssr-workers)). Each costs roughly 70 MB.                                                           |
+| `SSR_RENDER_TIMEOUT_MS`   | `15000`   | Limit on loading an SSR bundle and on each render. A render that runs over falls back to the unrendered HTML.                                                    |
+| `SSR_LOAD_FAILURE_TTL_MS` | `30000`   | How long a build that failed to load is remembered. Until then, requests for it fail fast instead of each starting a new worker. `POST /__invalidate` clears it. |
+| `INVALIDATION_SECRET`     | `""`      | Shared secret required in the `x-invalidation-secret` header on `POST /__invalidate`. **When empty the endpoint is unauthenticated.**                            |
+| `SHUTDOWN_GRACE_MS`       | `5000`    | How long to wait for in-flight requests on `SIGTERM`/`SIGINT` before flushing telemetry and exiting.                                                             |
 
 ### SSR workers
 
@@ -74,6 +75,11 @@ When a build leaves the cache (over `SSR_WORKERS_MAX`, or on
 rendered), which releases the whole bundle. A request that never finishes is
 cut off after twice `SSR_RENDER_TIMEOUT_MS`. A worker that crashes is dropped
 from the cache, and the next request for that build starts a fresh one.
+
+If a whitelisted branch's latest build fails to load (a bad deploy), its own
+URLs answer 500 as before, but pinned links to its older builds
+(`/b/<branch>/<old buildId>`) still work: they get that build's pre-rendered
+HTML as-is, without SSR.
 
 `ssrWorker.ts` is a second `bun build` entry point, emitted next to `index.js`
 in `server/dist/`.
