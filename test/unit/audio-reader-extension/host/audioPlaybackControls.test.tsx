@@ -124,6 +124,7 @@ describe("audio-reader playback controls", () => {
       playlists: state.playlists,
       annotations: state.annotations,
       features: state.features,
+      settings: state.settings,
       readingPlans: state.readingPlans,
       surface: "quick-toolbar",
     };
