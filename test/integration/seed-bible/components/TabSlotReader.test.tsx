@@ -139,7 +139,9 @@ function createFixture(): ReaderFixture {
     loading: signal(false),
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
+    readAlongVerse: signal<{ verse: number } | null>(null),
     error: signal<string | null>(null),
+    failedTranslationId: signal<string | null>(null),
     retryLoad: vi.fn(async () => undefined),
     selectVerse,
     selectFootnote,
@@ -223,6 +225,12 @@ function createSavesStub() {
   };
 }
 
+function createBookmarksStub() {
+  return {
+    getBookmarksForLocation: vi.fn(() => []),
+  };
+}
+
 function createMobileState(): SeedBibleState {
   const discover = createDiscoverManager();
   return {
@@ -255,22 +263,33 @@ function createMobileState(): SeedBibleState {
     },
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
+    bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
     playlists: {
       playing: signal(null),
+      openingPlayback: signal(false),
+      view: signal(null),
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
+    },
+    friends: { friends: signal([]), friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      visibleAnnotationsForChapter: vi.fn(() => []),
       pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
       },
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;
 }
@@ -303,22 +322,33 @@ function createDesktopState(): SeedBibleState {
     },
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
+    bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
     playlists: {
       playing: signal(null),
+      openingPlayback: signal(false),
+      view: signal(null),
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
+    },
+    friends: { friends: signal([]), friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      visibleAnnotationsForChapter: vi.fn(() => []),
       pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
       },
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;
 }

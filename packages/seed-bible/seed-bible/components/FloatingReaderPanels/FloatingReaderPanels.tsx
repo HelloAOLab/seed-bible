@@ -758,6 +758,10 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       // though they're part of this panel's UI. Ignore taps inside them so
       // picking a provider doesn't close the panel out from under the click.
       if (target.closest(".sb-context-menu")) return;
+      // Footnote-style modals use this overlay class and sit outside the chat
+      // panel in the DOM. Ignore taps on them so dismissing or interacting with
+      // the modal doesn't also close chat.
+      if (target.closest(".sb-footnote-modal-overlay")) return;
       sidebar.closeChatPanel();
     };
 
@@ -950,7 +954,11 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                 key={ctx.id}
                 className="sb-floating-chat-ai-context-item"
                 onClick={(event) => {
-                  event.preventDefault();
+                  if (ctx.settingsAction) {
+                    ctx.settingsAction.onClick();
+                  } else {
+                    event.preventDefault();
+                  }
                 }}
               >
                 <span className="sb-floating-chat-ai-context-item-label">
@@ -962,6 +970,15 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                     count: ctx.tools?.length ?? 0,
                   })}
                 </span>
+                {ctx.settingsAction && (
+                  <MaterialIcon
+                    className="sb-context-menu-item-icon"
+                    aria-label={translateTitle(t, ctx.settingsAction.label)}
+                    title={translateTitle(t, ctx.settingsAction.label)}
+                  >
+                    settings
+                  </MaterialIcon>
+                )}
               </ContextMenuItem>
             ))}
           </ContextMenuWithButton>

@@ -16,9 +16,21 @@ export function ToastHost(props: { app: AppState }) {
 
   return (
     <div className="sb-toast-host" role="status" aria-live="polite">
-      <div className="sb-toast" key={toast.id}>
-        {toast.message}
-      </div>
+      {toast.onClick ? (
+        <button
+          type="button"
+          className="sb-toast sb-toast-clickable"
+          key={toast.id}
+          onClick={toast.onClick}
+        >
+          <span className="sb-toast-message">{toast.message}</span>
+          {toast.hint && <span className="sb-toast-hint">{toast.hint}</span>}
+        </button>
+      ) : (
+        <div className="sb-toast" key={toast.id}>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

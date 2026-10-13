@@ -184,6 +184,8 @@ describe("PhotoChooserContent", () => {
           url: "https://example.com/uploaded.jpg",
         }),
         recordData: vi.fn().mockResolvedValue(undefined),
+        eraseData: vi.fn().mockResolvedValue({ success: true }),
+        eraseFile: vi.fn().mockResolvedValue({ success: true }),
         listAllDataByMarker: vi
           .fn()
           .mockResolvedValue({ success: true, items: [] }),

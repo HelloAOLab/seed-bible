@@ -7,6 +7,7 @@ import {
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
+import type { Friend, FriendsManager } from "./FriendsManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { SearchManager } from "./SearchManager";
 import type { BibleDataManager } from "./BibleDataManager";
@@ -105,6 +106,11 @@ export interface TodayManager {
   readingHistory: ReadonlySignal<ReadingHistoryState>;
   /** Reading activity for one window, bucketed book -> chapter -> userId[]. */
   getCommunityReading: (timespan: Timespan) => Promise<FilteredReading>;
+  /**
+   * The signed-in user's friends. Their reading joins the user's own in the
+   * Community section, since reading history is world-readable.
+   */
+  friendReaders: ReadonlySignal<Friend[]>;
   /** Book id -> display name for the translation the reader has loaded. */
   bookNames: ReadonlySignal<Map<string, string>>;
   /**
@@ -153,6 +159,7 @@ export interface TodayManager {
 export function createTodayManager(options: {
   os: CasualOSManager;
   login: LoginManager;
+  friends: Pick<FriendsManager, "friends" | "friendIds">;
   navigation: NavigationManager;
   search: SearchManager;
   bibleData: BibleDataManager;
@@ -167,8 +174,15 @@ export function createTodayManager(options: {
     translationId: string | null;
   } | null>;
 }): TodayManager {
-  const { os, login, navigation, search, bibleData, currentReadingState } =
-    options;
+  const {
+    os,
+    login,
+    friends,
+    navigation,
+    search,
+    bibleData,
+    currentReadingState,
+  } = options;
 
   const fetchReadingHistoryEvents = (
     recordName: string,
@@ -184,15 +198,17 @@ export function createTodayManager(options: {
         queryUserLastReading(fetchReadingHistoryEvents, userId, range),
     });
 
-  // The reader list is just the signed-in user: nothing subscribes to anyone
-  // else yet, so a fan-out over "community" members has nothing to fan out to.
+  // The readers are the signed-in user plus their friends. Both signals are
+  // read synchronously here, so a caller running this inside an effect
+  // re-fetches when the user signs in or out, or gains or loses a friend.
   const getCommunityReading = (
     timespan: Timespan
   ): Promise<FilteredReading> => {
     const userId = login.userId.value;
+    const friendIds = friends.friendIds.value.filter((id) => id !== userId);
     return queryCommunityReading(
       fetchReadingHistoryEvents,
-      userId ? [userId] : [],
+      userId ? [userId, ...friendIds] : [],
       timespan
     );
   };
@@ -357,6 +373,7 @@ export function createTodayManager(options: {
     isOpen,
     readingHistory,
     getCommunityReading,
+    friendReaders: friends.friends,
     bookNames,
     lastTranslationBooks,
     lastTranslationId,

@@ -342,11 +342,41 @@
   opacity: 0.75;
 }
 
+/* Friends' playlists (see `FriendPlaylistsSection`): one group per friend,
+   each an avatar/name header plus its own `.sb-discover-list`. */
+.sb-friend-playlists-groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sb-friend-playlists-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-friend-playlists-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-friend-playlists-group-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sb-confirm-delete {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-width: 17.5rem;
   color: var(--sb-font-color);
 }
 
@@ -361,32 +391,4 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 0.5rem;
-}
-
-/* Playlist play-history rows: same shell as playlist items, grouped by day. */
-.sb-playlist-history-day-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.sb-playlist-history-day-group + .sb-playlist-history-day-group {
-  margin-top: 10px;
-}
-
-.sb-playlist-history-day {
-  margin: 0 0 2px;
-  padding: 0 2px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-}
-
-.sb-playlist-history-item .sb-discover-item-description {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
 }

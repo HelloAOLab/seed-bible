@@ -10,6 +10,23 @@ export function trimmedOrNull(value: string | null | undefined): string | null {
   return value?.trim() || null;
 }
 
+/**
+ * What to call someone: their profile name, or "User 1a2b3c4d" (the start of
+ * their user ID) when they never set one.
+ */
+export function displayNameOf(
+  person: { userId: string; name?: string | null },
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  return (
+    trimmedOrNull(person.name) ??
+    t("unnamed-user", {
+      id: person.userId.slice(0, 8),
+      defaultValue: "User {{id}}",
+    })
+  );
+}
+
 export function parseNumber(value: unknown, fallback: number): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {

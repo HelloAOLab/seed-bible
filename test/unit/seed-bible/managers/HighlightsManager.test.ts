@@ -16,6 +16,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/OfflineRecordStore";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { effect, signal } from "@preact/signals";
+import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock, Mocked } from "vitest";
 
 describe("HighlightsManager", () => {
@@ -69,6 +70,7 @@ describe("HighlightsManager", () => {
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),
       getUserProfile: vi.fn().mockResolvedValue(null),
+      getPublicProfile: vi.fn().mockResolvedValue(null),
       uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
       userInfo: signal({ id: "user-1", email: "test@example.com" }),
       cancelLogin: vi.fn().mockResolvedValue(undefined),
@@ -1150,6 +1152,242 @@ describe("HighlightsManager", () => {
         },
         { marker: "publicRead:highlights/BSB" }
       );
+    });
+  });
+
+  describe("getUserChapterHighlights", () => {
+    const mockPerUserHighlights = () => {
+      getDataMock.mockImplementation(async (recordName: unknown) => {
+        if (recordName === "user-1") {
+          return {
+            success: true,
+            data: { highlights: [{ colorId: "user-1-color", verse: 1 }] },
+          };
+        }
+        if (recordName === "friend-user") {
+          return {
+            success: true,
+            data: { highlights: [{ colorId: "friend-color", verse: 3 }] },
+          };
+        }
+        return {
+          success: false,
+          errorCode: "data_not_found",
+          errorMessage: "Data not found",
+        };
+      });
+    };
+
+    describe("keeping them fresh", () => {
+      const START = Date.UTC(2026, 9, 5, 12);
+      let page: ReturnType<typeof stubPageVisibility>;
+      let stopWatching: (() => void) | undefined;
+
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(START);
+        page = stubPageVisibility();
+        stopWatching = undefined;
+      });
+      afterEach(() => {
+        stopWatching?.();
+        page.restore();
+        vi.useRealTimers();
+      });
+
+      /** Shows a friend's chapter, as a render would. */
+      const watchFriend = async () => {
+        const manager = createHighlightsManager(os, login);
+        const view = manager.getUserChapterHighlights(
+          "friend-user",
+          "BSB",
+          "GEN",
+          1
+        );
+        stopWatching = effect(() => void view.value);
+        await flushPromises();
+        return view;
+      };
+      const friendColors = (view: {
+        value: { highlights: { colorId: string }[] };
+      }) => view.value.highlights.map((h) => h.colorId);
+
+      it("reads them again when you come back after the first read failed", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        getDataMock.mockResolvedValue({
+          success: false,
+          errorCode: "server_error",
+          errorMessage: "Down",
+        });
+        const view = await watchFriend();
+        expect(friendColors(view)).toEqual([]);
+        mockPerUserHighlights();
+
+        // No time passes: a failed read is tried again however recent it was.
+        page.leaveAndReturn();
+
+        await vi.waitFor(() =>
+          expect(friendColors(view)).toEqual(["friend-color"])
+        );
+        warn.mockRestore();
+      });
+
+      it("reads them again after more than 30 seconds away, not sooner", async () => {
+        mockPerUserHighlights();
+        const view = await watchFriend();
+        expect(friendColors(view)).toEqual(["friend-color"]);
+        getDataMock.mockResolvedValue({
+          success: true,
+          data: { highlights: [{ colorId: "new-friend-color", verse: 3 }] },
+        });
+
+        vi.setSystemTime(START + 10_000);
+        page.leaveAndReturn();
+        await flushPromises();
+        expect(friendColors(view)).toEqual(["friend-color"]);
+
+        vi.setSystemTime(START + 31_000);
+        page.leaveAndReturn();
+        await vi.waitFor(() =>
+          expect(friendColors(view)).toEqual(["new-friend-color"])
+        );
+      });
+    });
+
+    it("reads highlights from the named account's record", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      const view = manager.getUserChapterHighlights(
+        "friend-user",
+        "BSB",
+        "GEN",
+        1
+      );
+      await flushPromises();
+
+      expect(getDataMock).toHaveBeenCalledWith(
+        "friend-user",
+        "highlights:BSB/GEN/1"
+      );
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "friend-color", verse: 3 }],
+      });
+    });
+
+    it("stays pinned to that account when the signed-in account changes", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      const view = manager.getUserChapterHighlights(
+        "friend-user",
+        "BSB",
+        "GEN",
+        1
+      );
+      await flushPromises();
+
+      login.userId.value = "user-2";
+      await flushPromises();
+
+      // Unlike `getChapterHighlights`, this view does not follow the signed-in
+      // account — it still shows the friend's highlights.
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "friend-color", verse: 3 }],
+      });
+    });
+
+    it("reads a friend's highlights again as their own when you sign in as them", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+      manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1);
+      await flushPromises();
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { highlights: [{ colorId: "changed-since", verse: 3 }] },
+      });
+
+      // The same device, now signed in as that friend.
+      login.userId.value = "friend-user";
+      const asThemselves = manager.getChapterHighlights("BSB", "GEN", 1);
+
+      await vi.waitFor(() =>
+        expect(asThemselves.value).toEqual({
+          highlights: [{ colorId: "changed-since", verse: 3 }],
+        })
+      );
+    });
+
+    // A failed read leaves the entry settled as failed, which nothing
+    // retries for the signed-in user's own highlights once it's theirs.
+    it("reads a friend's highlights as their own when you sign in as them, even after reading them as a friend failed", async () => {
+      getDataMock.mockRejectedValueOnce(new Error("offline"));
+      const manager = createHighlightsManager(os, login);
+      manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1);
+      await vi.waitFor(() => expect(warnSpy).toHaveBeenCalled());
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { highlights: [{ colorId: "their-own", verse: 3 }] },
+      });
+
+      // The same device, now signed in as that friend.
+      login.userId.value = "friend-user";
+      const asThemselves = manager.getChapterHighlights("BSB", "GEN", 1);
+
+      await vi.waitFor(() =>
+        expect(asThemselves.value).toEqual({
+          highlights: [{ colorId: "their-own", verse: 3 }],
+        })
+      );
+    });
+
+    it("keeps a friend's cached highlights across a sign-in", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1);
+      await flushPromises();
+      const callsAfterFirstLoad = getDataMock.mock.calls.length;
+
+      // The account-switch sweep must not evict explicitly-requested entries,
+      // or every sign-in would force a re-read of every friend.
+      login.userId.value = "user-2";
+      await flushPromises();
+
+      manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1);
+      await flushPromises();
+
+      expect(getDataMock.mock.calls.length).toBe(callsAfterFirstLoad);
+    });
+
+    it("returns the same signal for repeated calls", () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      expect(
+        manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1)
+      ).toBe(manager.getUserChapterHighlights("friend-user", "BSB", "GEN", 1));
+    });
+
+    it("keeps different accounts' highlights separate for the same chapter", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      const mine = manager.getUserChapterHighlights("user-1", "BSB", "GEN", 1);
+      const theirs = manager.getUserChapterHighlights(
+        "friend-user",
+        "BSB",
+        "GEN",
+        1
+      );
+      await flushPromises();
+
+      expect(mine.value).toEqual({
+        highlights: [{ colorId: "user-1-color", verse: 1 }],
+      });
+      expect(theirs.value).toEqual({
+        highlights: [{ colorId: "friend-color", verse: 3 }],
+      });
     });
   });
 

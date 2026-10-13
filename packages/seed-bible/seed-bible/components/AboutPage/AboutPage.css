@@ -2,78 +2,213 @@
 
 /* The pane chrome (`.sb-pane-detached-body`/`.sb-pane-component` in
    PaneLayout.css) already provides scrolling and sizes this to fill the
-   pane body, so this only needs to fill that box, not size/scroll itself. */
+   pane body, so this only needs to fill that box, not size/scroll itself.
+   `min-height` (not `height`) lets the background grow with the content, so
+   the pane body's different background doesn't show below the first screen. */
 .sb-about-page {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   background: var(--sb-background);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
+  container-type: inline-size;
 }
 
 .sb-about-content {
-  max-width: 42rem;
+  max-width: 50rem;
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 2rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
 }
 
-.sb-about-content h1 {
+.sb-about-card {
+  border: 0.05rem solid var(--sb-divider-color);
+  padding: 1.2rem 2rem;
+  border-radius: 1rem;
+  position: relative;
+  display: flex;
+  background-color: var(--sb-reader-background);
+  box-shadow:
+    0 1px 2px var(--sb-shadow-color),
+    0 6px 16px -6px var(--sb-shadow-color);
+}
+
+.sb-about-card-wide {
+  grid-column: 1 / -1;
+}
+
+.sb-about-card-hero {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--sb-primary-color), transparent 95%) 0%,
+    color-mix(in srgb, var(--sb-primary-color), transparent 90%) 100%
+  );
+  background-color: var(--sb-reader-background);
+}
+
+.sb-about-card.sb-about-card-col {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.sb-about-card.sb-about-card-row {
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.sb-about-card-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.sb-about-card > .sb-about-card-icon {
+  border-radius: 50%;
+  padding: 0.6rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 90%
+  );
+}
+
+.sb-about-card:not(.sb-about-card-hero) > .sb-about-card-icon {
+  color: var(--sb-primary-color);
+}
+
+.sb-about-card > .sb-about-card-icon.sb-about-card-icon-lg {
+  width: 2.9rem;
+  height: 2.9rem;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.sb-about-card > .sb-about-card-icon.sb-about-card-icon-md {
+  padding: 0.6rem;
+}
+
+.sb-about-card > .sb-about-card-icon.sb-about-card-icon-sm {
+  padding: 0.4rem;
+}
+
+.sb-about-content .sb-about-card h1,
+.sb-about-content .sb-about-card h2 {
+  margin: 0;
   font-family: var(--sb-chapter-heading-font-family), sans-serif;
   color: var(--sb-chapter-heading-font-color);
-  font-size: 2rem;
+}
+
+.sb-about-card-hero h1 {
+  font-weight: 800;
+  font-size: 1.8rem;
   line-height: 1.2;
-  margin: 0 0 1.5rem;
 }
 
-.sb-about-content p {
-  line-height: 1.7;
-  margin: 0 0 1.25rem;
+.sb-about-card-highlight h2 {
+  font-weight: 800;
+  font-size: 1.25rem;
 }
 
-.sb-about-content a {
-  color: var(--sb-link-color);
+.sb-about-card-feature h2 {
+  font-weight: 700;
+  font-size: 1.15rem;
 }
 
-.sb-about-inline-action {
-  border: none;
-  background: none;
-  padding: 0;
+.sb-about-content .sb-about-card p {
+  line-height: 1.5;
+  font-weight: 400;
+  font-size: 0.875rem;
+  font-family: var(--sb-font-family);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   margin: 0;
-  font: inherit;
-  color: var(--sb-link-color);
-  cursor: pointer;
-}
-
-.sb-about-signature {
-  margin-top: 2rem;
 }
 
 .sb-about-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  max-width: 42rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
   margin: 0 auto;
-  padding: 0 1.5rem 3rem;
+  padding: 1.5rem 0 8rem;
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.sb-about-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
 }
 
 .sb-about-action {
-  display: inline-block;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.25rem;
   font-weight: 600;
+  font-size: 0.9rem;
   text-decoration: none;
   cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1.3rem;
+  letter-spacing: -0.01rem;
+  border: 1px solid transparent;
 }
 
-.sb-about-action-primary {
-  border: none;
+.sb-about-action .material-symbols-outlined {
+  font-size: 1.3rem;
+}
+
+.sb-about-action-primary,
+.sb-about-action-primary:visited {
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
 }
 
-.sb-about-action-secondary {
-  border: 1px solid var(--sb-primary-color);
+/* Matches the Today welcome screen's neutral outlined buttons
+   (`.sb-today-welcome-screen-tour-button`), so only "Open a passage" is orange. */
+.sb-about-action-secondary,
+.sb-about-action-secondary:visited {
+  border-color: var(--sb-reader-font-color);
   background: transparent;
-  color: var(--sb-primary-color);
+  color: var(--sb-reader-font-color);
+}
+
+@container (max-width: 500px) {
+  .sb-about-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .sb-about-actions {
+    padding-bottom: 4rem;
+  }
+}
+
+@media (hover: hover) {
+  .sb-about-action-primary:hover {
+    border-color: var(--sb-primary-color);
+    background: transparent;
+    color: var(--sb-primary-color);
+  }
+
+  .sb-about-action-secondary:hover {
+    background: color-mix(
+      in srgb,
+      var(--sb-reader-font-color),
+      transparent 90%
+    );
+  }
 }

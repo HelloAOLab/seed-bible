@@ -1,5 +1,5 @@
 import { useI18n } from "seed-bible/i18n";
-import QRCode from "https://esm.run/qrcode";
+import QRCode from "qrcode";
 import { type TwitchPubState } from "./interface";
 import { useEffect, useRef, useState } from "preact/hooks";
 const QR_RENDER_SIZE = 512;

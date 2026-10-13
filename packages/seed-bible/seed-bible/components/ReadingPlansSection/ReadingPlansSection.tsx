@@ -5,14 +5,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
-import {
-  formatReadingPlanId,
-  readingChapters,
-  isReadingChapterComplete,
-  sessionMatchesPassage,
-  type ReadingPlanProgress,
-  type ReadingPlanSession,
-} from "../../managers/ReadingPlansManager";
+import { type PlanMatch } from "../../managers/ReadingPlansManager";
 
 interface ReadingPlanBelongsCardProps {
   state: SeedBibleState;
@@ -27,16 +20,6 @@ interface ReadingPlanBelongsCardProps {
  * card signal this rejects an instant fling to the bottom. Tunable.
  */
 const MIN_DWELL_MS = 12_000;
-
-interface PlanMatch {
-  planKey: string;
-  planTitle: string | null;
-  progress: ReadingPlanProgress;
-  /** Sessions in this plan whose readings cover the current passage. */
-  sessions: ReadingPlanSession[];
-  /** True when this chapter is recorded as read everywhere it appears. */
-  allComplete: boolean;
-}
 
 /**
  * "This reading belongs to" — shown at the bottom of the passage. Lists the
@@ -59,7 +42,9 @@ export function ReadingPlansSection(props: ReadingPlanBelongsCardProps) {
   const [notifyDismissed, setNotifyDismissed] = useState(false);
 
   const readingPlans = state.readingPlans;
-  const featureOn = state.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS);
+  const featureOn = state.features.isFeatureEnabled(
+    FEATURE_KEY_READING_PLANS
+  ).value;
 
   // Read signals unconditionally so the component stays subscribed.
   const bookId = readingState.bookId.value;
@@ -265,58 +250,4 @@ export function ReadingPlansSection(props: ReadingPlanBelongsCardProps) {
       </div>
     </>
   );
-}
-
-export function getReadingPlansForChapter(
-  state: SeedBibleState,
-  readingState: BibleReadingState
-): PlanMatch[] {
-  const readingPlans = state.readingPlans;
-  const featureOn = state.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS);
-
-  // Read signals unconditionally so the component stays subscribed.
-  const bookId = readingState.bookId.value;
-  const chapter = readingState.chapterNumber.value;
-  const fullPlans = readingPlans?.fullReadingPlans.value ?? [];
-  const progresses = readingPlans?.userReadingPlanProgresses.value ?? [];
-
-  const matches: PlanMatch[] = [];
-  if (readingPlans && featureOn && bookId) {
-    for (const plan of fullPlans) {
-      const planId = formatReadingPlanId(plan.recordName, plan.address);
-      const progress = progresses.find((p) => p.planId === planId);
-      if (!progress) {
-        continue; // only plans the user is actually following
-      }
-      const sessions = plan.sessions.filter((s) =>
-        sessionMatchesPassage(s, bookId, chapter)
-      );
-      if (sessions.length === 0) {
-        continue;
-      }
-      // Done means "this chapter is read", not "the whole session is read":
-      // every reading covering the open chapter has that chapter recorded.
-      const allComplete = sessions.every((s) => {
-        const sp = progress.sessions.find((entry) => entry.sessionId === s.id);
-        return s.readings.every((reading) => {
-          const item = reading.item;
-          if (item.type !== "bible-verse" || item.ref.bookId !== bookId) {
-            return true; // not this passage — not this card's business
-          }
-          if (!readingChapters(reading).includes(chapter)) {
-            return true;
-          }
-          return isReadingChapterComplete(sp, reading.id, chapter);
-        });
-      });
-      matches.push({
-        planKey: planId,
-        planTitle: plan.title ?? null,
-        progress,
-        sessions,
-        allComplete,
-      });
-    }
-  }
-  return matches;
 }

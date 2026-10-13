@@ -3,7 +3,7 @@ import { Signal, useSignal } from "@preact/signals";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
-import { hasAnyDiscoverResults } from "../../managers/BibleReadingManager";
+import { getDiscoverPanelContent } from "../../managers/BibleReadingManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   CrossReferencesSection,
@@ -17,10 +17,7 @@ import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
 import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
 import { MaterialIcon } from "../icons";
 import { translateTitle } from "../../app/utils";
-import {
-  getReadingPlansForChapter,
-  ReadingPlansSection,
-} from "../ReadingPlansSection/ReadingPlansSection";
+import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
 import {
   findScrollContainer,
   readBottomChromeInset,
@@ -343,8 +340,8 @@ function DiscoverFilters({
   );
 }
 /**
- * Automatically-visible discover content — the reader's own notes
- * (annotations) plus discovered cross references/study notes/content — for
+ * Automatically-visible discover content — the reader's and their friends'
+ * notes (annotations) plus discovered cross references/study notes/content — for
  * one reading tab. Rendered once per visible tab. Hides itself entirely when
  * there's no tab or there's nothing to show for the chapter, and omits the
  * notes section when the chapter has no notes and nothing waiting to sync.
@@ -366,29 +363,15 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   }
 
   const bookId = tab.readingState.bookId.value;
+  const { hasAnnotations, showAnnotations, plans, hasAny } =
+    getDiscoverPanelContent(
+      tab.readingState,
+      state.annotations,
+      state.readingPlans,
+      state.features
+    );
 
-  const chapterNumber = tab.readingState.chapterNumber.value;
-
-  const hasAnnotations = Boolean(
-    bookId &&
-    chapterNumber &&
-    state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
-      .length > 0
-  );
-
-  const pendingAnnotationChanges =
-    bookId && chapterNumber
-      ? state.annotations.pendingCountForChapter(bookId, chapterNumber)
-      : 0;
-  const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
-
-  const plans = getReadingPlansForChapter(state, tab.readingState);
-
-  if (
-    !showAnnotations &&
-    !hasAnyDiscoverResults(tab.readingState) &&
-    plans.length === 0
-  ) {
+  if (!hasAny) {
     return null;
   }
 
@@ -558,6 +541,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               modals={state.modals}
               toast={state.app.toast}
               login={state.login}
+              friends={state.friends}
               tabs={state.tabs}
               discover={state.discover}
               panes={state.panes}
@@ -605,16 +589,6 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             />
           )}
         </div>
-
-        <button
-          type="button"
-          className="sb-dcp-show-all"
-          onClick={() => state.app.openDiscover()}
-        >
-          {t("show-all", {
-            defaultValue: "Show All",
-          })}
-        </button>
       </div>
     </div>
   );

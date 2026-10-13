@@ -1,0 +1,18 @@
+.sb-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  line-height: 1;
+  animation: sb-spinner-spin 0.9s linear infinite;
+}
+
+@keyframes sb-spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-spinner {
+    animation: none;
+  }
+}
