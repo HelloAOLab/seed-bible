@@ -7,7 +7,12 @@ import {
   type ChatMessage,
   type ChatSession,
   type ParsedChatTextMessage,
+  type TranslationSuggestion,
 } from "../../managers/ChatsManager";
+import {
+  readableTranslationRequest,
+  switchReaderToTranslation,
+} from "../../managers/translationSearch";
 import {
   getUserAnimalVisual,
   type ConnectionSessionUserVisual,
@@ -136,7 +141,16 @@ function getJoinEvents(
     .map((participant) => ({ participant, timeMs: participant.joinTimeMs }));
 }
 
-const ENTRY_KIND_PRIORITY = { message: 0, tool: 1, join: 2 } as const;
+const ENTRY_KIND_PRIORITY = {
+  message: 0,
+  tool: 1,
+  join: 2,
+} as const;
+
+type TimelineEntry =
+  | { kind: "message"; timeMs: number; message: ParsedChatTextMessage }
+  | { kind: "tool"; timeMs: number; message: ToolCallChatMessage }
+  | { kind: "join"; timeMs: number; participant: ChatParticipant };
 
 /**
  * Interleaves messages, tool-call events, and participant join events into a
@@ -155,28 +169,23 @@ function buildTimeline(
     return [];
   }
 
-  type Entry =
-    | { kind: "message"; timeMs: number; message: ParsedChatTextMessage }
-    | { kind: "tool"; timeMs: number; message: ToolCallChatMessage }
-    | { kind: "join"; timeMs: number; participant: ChatParticipant };
-
-  const entries: Entry[] = [
+  const entries: TimelineEntry[] = [
     ...messages.map(
-      (message): Entry => ({
+      (message): TimelineEntry => ({
         kind: "message",
         timeMs: message.timeMs,
         message,
       })
     ),
     ...toolCallMessages.map(
-      (message): Entry => ({
+      (message): TimelineEntry => ({
         kind: "tool",
         timeMs: message.timeMs,
         message,
       })
     ),
     ...getJoinEvents(messages, participants).map(
-      (event): Entry => ({
+      (event): TimelineEntry => ({
         kind: "join",
         timeMs: event.timeMs,
         participant: event.participant,
@@ -184,13 +193,13 @@ function buildTimeline(
     ),
   ];
 
-  // Stable sort by time; at equal times, messages come before tool calls, which come before joins.
+  // Stable sort by time; at equal times, messages come before tool calls,
+  // which come before joins.
   entries.sort(
     (a, b) =>
       a.timeMs - b.timeMs ||
       ENTRY_KIND_PRIORITY[a.kind] - ENTRY_KIND_PRIORITY[b.kind]
   );
-
   const groups: ChatTimelineGroup[] = [];
   for (const entry of entries) {
     const lastGroup = groups[groups.length - 1];
@@ -627,6 +636,9 @@ export function ChatView(props: ChatViewProps) {
     toolCallMessages,
     chat.totalParticipants.value
   );
+  const suggestion = chat.translationSuggestion.value;
+  const suggestionPending = useSignal(false);
+  const suggestionError = useSignal<string | null>(null);
   const localDraft = useSignal("");
   // Prefer the session draft so typed text survives ChatView unmounting when
   // the user clicks a verse (that closes the floating panel).
@@ -684,6 +696,14 @@ export function ChatView(props: ChatViewProps) {
     (showEveryoneSuggestion ? 1 : 0) + allMentionSuggestions.length;
   const isMentionPickerOpen = mentionContext !== null;
   const mentionActiveIndex = useSignal(0);
+
+  const suggestionKey = suggestion
+    ? `${suggestion.id}\0${suggestion.unavailable ?? ""}`
+    : "";
+
+  useEffect(() => {
+    suggestionError.value = null;
+  }, [suggestionKey]);
 
   useEffect(() => {
     mentionActiveIndex.value = 0;
@@ -960,12 +980,129 @@ export function ChatView(props: ChatViewProps) {
     }
   };
 
+  const recordSuggestionOutcome = (text: string) => {
+    const self = chat.participants.value.find(
+      (participant) => participant.isSelf
+    );
+    chat.appendMessage({ type: "text", text }, self ? [self.id] : []);
+  };
+
+  const dismissSuggestion = () => {
+    if (suggestionPending.value) {
+      return;
+    }
+    chat.translationSuggestion.value = null;
+    suggestionError.value = null;
+    recordSuggestionOutcome(
+      t("chat-translation-suggestion-dismissed", {
+        defaultValue: "User dismissed the suggestion",
+      })
+    );
+  };
+
+  const acceptSuggestion = async (current: TranslationSuggestion) => {
+    if (suggestionPending.value) {
+      return;
+    }
+    suggestionError.value = null;
+    const readingState = state.app.selectedTab.value?.readingState;
+    if (!readingState) {
+      suggestionError.value = t("chat-switch-translation-failed", {
+        defaultValue: "Couldn't switch translation.",
+      });
+      return;
+    }
+    suggestionPending.value = true;
+    try {
+      const switched = await switchReaderToTranslation({
+        readingState,
+        getTranslationBooks: (translationId) =>
+          state.bibleData.getTranslationBooks(translationId),
+        translationId: current.id,
+      });
+      if (!switched) {
+        suggestionError.value = t("chat-switch-translation-failed", {
+          defaultValue: "Couldn't switch translation.",
+        });
+        return;
+      }
+      chat.translationSuggestion.value = null;
+      recordSuggestionOutcome(
+        t("chat-translation-switched", {
+          defaultValue: "User switched to {{shortName}}",
+          shortName: current.shortName,
+        })
+      );
+    } catch {
+      suggestionError.value = t("chat-switch-translation-failed", {
+        defaultValue: "Couldn't switch translation.",
+      });
+    } finally {
+      suggestionPending.value = false;
+    }
+  };
+
   const canSubmit = draft.value.trim().length > 0 && !isSubmitting.value;
 
   const othersPresent = activeParticipants.filter((p) => !p.isSelf);
 
+  const requestedName = suggestion
+    ? readableTranslationRequest(suggestion.unavailable ?? "")
+    : null;
+  const suggestionText = suggestion
+    ? requestedName
+      ? t("chat-translation-closest-match", {
+          defaultValue:
+            "{{requested}} isn't available. Closest match: {{match}}.",
+          requested: requestedName,
+          match: suggestion.shortName,
+        })
+      : t("chat-suggest-translation", {
+          defaultValue: "Switch to {{label}}?",
+          label: suggestion.label,
+        })
+    : "";
+
   return (
     <div className="sb-chat-view">
+      {suggestion ? (
+        <div
+          className="sb-chat-view-translation-banner"
+          role="region"
+          aria-label={suggestionText}
+        >
+          <p className="sb-chat-view-translation-banner-text">
+            {suggestionText}
+          </p>
+          {suggestionError.value ? (
+            <p className="sb-chat-view-error" role="alert">
+              {suggestionError.value}
+            </p>
+          ) : null}
+          <div className="sb-chat-view-translation-banner-actions">
+            <button
+              type="button"
+              className="sb-chat-view-translation-banner-switch"
+              disabled={suggestionPending.value}
+              onClick={() => {
+                void acceptSuggestion(suggestion);
+              }}
+            >
+              {t("chat-suggest-switch", { defaultValue: "Switch" })}
+            </button>
+            <button
+              type="button"
+              className="sb-chat-view-translation-banner-dismiss"
+              disabled={suggestionPending.value}
+              onClick={() => {
+                dismissSuggestion();
+              }}
+            >
+              {t("chat-suggest-dismiss", { defaultValue: "Dismiss" })}
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div
         className="sb-chat-view-messages"
         ref={messagesRef}
@@ -1259,7 +1396,10 @@ export function ChatView(props: ChatViewProps) {
             aria-label={t("send-message", { defaultValue: "Send message" })}
             title={t("send-message", { defaultValue: "Send message" })}
           >
-            <span className="material-symbols-outlined" aria-hidden="true">
+            <span
+              className="material-symbols-outlined rtl-mirror"
+              aria-hidden="true"
+            >
               send
             </span>
           </button>

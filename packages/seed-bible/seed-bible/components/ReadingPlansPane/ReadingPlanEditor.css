@@ -369,17 +369,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 8px 8px 8px 12px;
   border: 1px solid var(--rp-border);
   border-radius: 10px;
 }
 
-/* The item body: a leading type icon and the label with its summary. For a text
-   or link reading the whole thing is the button that opens the preview; for
-   scripture there's nothing to open, so it's a plain span. Both share the same
-   layout so the list stays visually uniform. */
-.sb-rp-reading-body,
+/* The item body: a leading type icon, the label with its summary, and a
+   chevron. Tapping it expands the reading's preview beneath the row. */
 .sb-rp-reading-open {
   display: flex;
   align-items: center;
@@ -392,10 +390,13 @@
   color: inherit;
   font: inherit;
   text-align: start;
+  cursor: pointer;
 }
 
-.sb-rp-reading-open {
-  cursor: pointer;
+.sb-rp-reading-chevron {
+  flex: none;
+  margin-inline-start: auto;
+  opacity: 0.6;
 }
 
 .sb-rp-reading-icon {

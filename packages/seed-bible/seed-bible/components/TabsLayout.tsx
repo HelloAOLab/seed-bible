@@ -16,6 +16,7 @@ import { batch, effect } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../app/utils";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { revealReadAlongVerse } from "./BibleReader/readerViewport";
 
 interface TabSlotReaderProps {
   slot: TabSlot;
@@ -264,6 +265,38 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
   }, [scroller, readingState]);
 
+  // Keep the verse being read aloud on screen. Reads `chapterData` without
+  // subscribing: new content alone must not replay an earlier request.
+  useEffect(() => {
+    if (!scroller) {
+      return;
+    }
+
+    let frame = 0;
+    const dispose = effect(() => {
+      const request = readingState.readAlongVerse.value;
+      if (!request || !readingState.chapterData.peek()) {
+        return;
+      }
+
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const verse = scroller.querySelector(
+          `.sb-verse[data-verse-number="${request.verse}"]`
+        );
+        if (verse instanceof HTMLElement) {
+          revealReadAlongVerse(verse, scroller);
+        }
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      dispose();
+    };
+  }, [scroller, readingState]);
+
   // Record where the reader has scrolled to, and drive the mobile chrome. Pure
   // observation — this effect never writes `scrollTop`.
   useEffect(() => {
@@ -319,6 +352,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   // the swipe previews below depend on (the queue decides the neighbour).
   const playbackStep =
     state?.playlists?.playing.value?.currentIndex.value ?? null;
+  // The swipe that finishes a playlist previews nothing; once it has, the next
+  // swipe goes on to the reader's own next chapter, so preview that.
+  const playbackFinishShown =
+    state?.playlists?.playing.value?.finishPromptShown.value ?? false;
 
   useEffect(() => {
     if (!isCompactReader || !state) {
@@ -391,6 +428,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     // While playing, the neighbour depends on the queue position too — without
     // this the preview would keep showing the step the reader has left behind.
     playbackStep,
+    playbackFinishShown,
   ]);
 
   useEffect(() => {

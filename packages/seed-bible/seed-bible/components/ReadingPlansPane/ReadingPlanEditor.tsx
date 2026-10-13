@@ -23,24 +23,22 @@ import {
 import { PlaylistItemInput } from "../PlaylistItemInput/PlaylistItemInput";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
 import {
-  canPreviewPlaylistItem,
-  openPlaylistItemPreview,
-} from "../playlistItemPreview";
+  PlaylistItemInlinePreview,
+  type ScriptureChapterLoader,
+} from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
-import {
-  PLAN_READING_PREVIEW_MODAL_ID,
-  readingItemIcon,
-  readingPreviewText,
-} from "./readingPreview";
+import { readingItemIcon, readingPreviewText } from "./readingPreview";
 
 interface ReadingPlanEditorProps {
   readingPlans: ReadingPlansManager;
   /** Books of the active translation, for the scripture typeahead + labels. */
   books: TranslationBook[];
-  /** Modals host for previewing a text/link reading. Optional — without it the
-   * preview action is simply not offered. */
+  /** Modals host for the cover image picker. */
   modals?: ModalManager;
+  /** Loads chapters for previewing scripture readings inline. Without it a
+   * scripture preview says it couldn't load the passage. */
+  loadChapter?: ScriptureChapterLoader;
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
@@ -77,8 +75,17 @@ interface ReadingPlanEditorProps {
  * mobile fullscreen pane without any breakpoint of its own.
  */
 export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
-  const { readingPlans, books, modals, os, login, gallery, onCancel, onSaved } =
-    props;
+  const {
+    readingPlans,
+    books,
+    modals,
+    loadChapter,
+    os,
+    login,
+    gallery,
+    onCancel,
+    onSaved,
+  } = props;
   const { t } = useI18n();
 
   const [saving, setSaving] = useState(false);
@@ -255,7 +262,7 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
           </h3>
           <SessionsSection
             books={books}
-            modals={modals}
+            loadChapter={loadChapter}
             draft={draft}
             onSelectSession={(index) =>
               readingPlans.selectEditingPlanSession(index)
@@ -429,7 +436,7 @@ function CadencesSection(props: CadencesSectionProps) {
 
 interface SessionsSectionProps {
   books: TranslationBook[];
-  modals?: ModalManager;
+  loadChapter?: ScriptureChapterLoader;
   draft: ReadingPlanDraft;
   onSelectSession: (index: number) => void;
   onAddSession: () => void;
@@ -447,7 +454,7 @@ interface SessionsSectionProps {
 function SessionsSection(props: SessionsSectionProps) {
   const {
     books,
-    modals,
+    loadChapter,
     draft,
     onSelectSession,
     onAddSession,
@@ -456,6 +463,10 @@ function SessionsSection(props: SessionsSectionProps) {
     onRemoveReading,
   } = props;
   const { t } = useI18n();
+  // Only one reading is expanded at a time, across all sessions.
+  const [expandedReadingId, setExpandedReadingId] = useState<string | null>(
+    null
+  );
 
   // Resolve a book's display name from the active translation's book list.
   const resolveBookName = (bookId: string): string => {
@@ -528,57 +539,49 @@ function SessionsSection(props: SessionsSectionProps) {
                       untitledReading
                     );
                     const preview = readingPreviewText(reading.item, t);
-                    // A text or link reading is the button — tapping it opens
-                    // the same preview the reader will see. Scripture has
-                    // nothing to preview, so it stays plain text.
-                    const canPreview =
-                      modals && canPreviewPlaylistItem(reading.item);
-
-                    // Leading type icon, then the label with its one-line summary.
-                    const body = (
-                      <>
-                        <span className="sb-rp-reading-icon" aria-hidden="true">
-                          <MaterialIcon>
-                            {readingItemIcon(reading.item)}
-                          </MaterialIcon>
-                        </span>
-                        <span className="sb-rp-reading-text">
-                          <span className="sb-rp-reading-label" dir="auto">
-                            {label}
-                          </span>
-                          {preview ? (
-                            <span className="sb-rp-reading-preview" dir="auto">
-                              {preview}
-                            </span>
-                          ) : null}
-                        </span>
-                      </>
-                    );
+                    const expanded = expandedReadingId === reading.id;
+                    const previewId = `sb-rp-reading-preview-${reading.id}`;
 
                     return (
                       <li key={reading.id} className="sb-rp-reading-item">
-                        {canPreview ? (
-                          <button
-                            type="button"
-                            className="sb-rp-reading-open"
-                            onClick={() =>
-                              openPlaylistItemPreview(
-                                modals,
-                                reading.item,
-                                PLAN_READING_PREVIEW_MODAL_ID,
-                                t
-                              )
-                            }
-                            aria-label={t("reading-plan-preview-reading", {
-                              defaultValue: "Preview {{reading}}",
-                              reading: label,
-                            })}
+                        <button
+                          type="button"
+                          className="sb-rp-reading-open"
+                          aria-expanded={expanded}
+                          aria-controls={expanded ? previewId : undefined}
+                          onClick={() =>
+                            setExpandedReadingId(expanded ? null : reading.id)
+                          }
+                          aria-label={t("reading-plan-preview-reading", {
+                            defaultValue: "Preview {{reading}}",
+                            reading: label,
+                          })}
+                        >
+                          <span
+                            className="sb-rp-reading-icon"
+                            aria-hidden="true"
                           >
-                            {body}
-                          </button>
-                        ) : (
-                          <span className="sb-rp-reading-body">{body}</span>
-                        )}
+                            <MaterialIcon>
+                              {readingItemIcon(reading.item)}
+                            </MaterialIcon>
+                          </span>
+                          <span className="sb-rp-reading-text">
+                            <span className="sb-rp-reading-label" dir="auto">
+                              {label}
+                            </span>
+                            {preview ? (
+                              <span
+                                className="sb-rp-reading-preview"
+                                dir="auto"
+                              >
+                                {preview}
+                              </span>
+                            ) : null}
+                          </span>
+                          <MaterialIcon className="sb-rp-reading-chevron">
+                            {expanded ? "expand_less" : "expand_more"}
+                          </MaterialIcon>
+                        </button>
                         <button
                           type="button"
                           className="sb-rp-icon-button sb-rp-reading-remove"
@@ -589,6 +592,13 @@ function SessionsSection(props: SessionsSectionProps) {
                         >
                           <MaterialIcon>close</MaterialIcon>
                         </button>
+                        {expanded ? (
+                          <PlaylistItemInlinePreview
+                            id={previewId}
+                            item={reading.item}
+                            loadChapter={loadChapter}
+                          />
+                        ) : null}
                       </li>
                     );
                   })}

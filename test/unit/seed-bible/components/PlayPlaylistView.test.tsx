@@ -46,7 +46,8 @@ function verseItem(
 }
 
 function createMockPlaylists(
-  playing: ReturnType<typeof createPlayingState> | null
+  playing: ReturnType<typeof createPlayingState> | null,
+  authorName: string | null = null
 ): {
   playlists: PlaylistManager;
   goBackFromPlayingView: ReturnType<typeof vi.fn>;
@@ -55,6 +56,7 @@ function createMockPlaylists(
   return {
     playlists: {
       playing: signal(playing),
+      playingAuthorName: signal(authorName),
       goBackFromPlayingView,
     } as unknown as PlaylistManager,
     goBackFromPlayingView,
@@ -189,6 +191,55 @@ describe("PlayPlaylistView", () => {
     expect(banner.src).toBe("https://example.com/cover.jpg");
     expect(banner.alt).toBe("My Playlist");
     expect(container.querySelector(".sb-hero-banner--empty")).toBeNull();
+  });
+
+  it("shows the playlist's author and description above the queue", () => {
+    const playlist = createPlaylist({
+      description: "Verses about the love of Jesus.",
+      items: [verseItem()],
+    });
+    const { playlists } = createMockPlaylists(
+      createPlayingState([playlist]),
+      "Ruth"
+    );
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={createMockTabs()}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-play-playlist-author")?.textContent
+    ).toBe("By Ruth");
+    expect(
+      container.querySelector(".sb-play-playlist-description")?.textContent
+    ).toContain("Verses about the love of Jesus.");
+  });
+
+  it("leaves out the author and description when there are none", () => {
+    const playlist = createPlaylist({ items: [verseItem()] });
+    const { playlists } = createMockPlaylists(createPlayingState([playlist]));
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={createMockTabs()}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-play-playlist-about")).toBeNull();
   });
 
   it("hides the cover when the playlist has no image", () => {

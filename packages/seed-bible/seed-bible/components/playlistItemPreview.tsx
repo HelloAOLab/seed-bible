@@ -35,7 +35,10 @@ export function openPlaylistItemPreview(
   }
   modals.openModal({
     id: modalId,
-    title: item.title?.trim() || t("content", { defaultValue: "Content" }),
+    title:
+      item.title?.trim() ||
+      (item.type === "link" ? item.preview?.title : undefined) ||
+      t("content", { defaultValue: "Content" }),
     content: () =>
       item.type === "html" ? (
         <PlaylistHtmlContent html={item.html} />
@@ -44,6 +47,7 @@ export function openPlaylistItemPreview(
           url={item.url}
           title={item.title}
           embed={item.embed}
+          preview={item.preview}
         />
       ),
   });

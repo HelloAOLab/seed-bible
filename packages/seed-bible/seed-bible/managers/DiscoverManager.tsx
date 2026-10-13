@@ -156,6 +156,18 @@ export interface DiscoverManager {
   discover: (
     context: DiscoverContext
   ) => AsyncIterable<DiscoverProviderResults>;
+  /**
+   * Providers that have already answered for this chapter, in registration
+   * order. Does not start a lookup. An empty `results` array means that
+   * provider answered and had nothing; a lookup still in flight is omitted.
+   */
+  cachedResults: (context: DiscoverContext) => DiscoverProviderResults[];
+  /**
+   * UI locale cached answers were built in. A change drops every stored
+   * answer: providers render card text in that locale when `discover()` runs,
+   * and `DiscoverContext.language` is the Bible translation, not this.
+   */
+  setUiLanguage: (language: string) => void;
   /** Which sub-view of the discover pane is shown, or null when closed. */
   view: Signal<DiscoverView>;
   /** True whenever `view` is non-null, i.e. the discover pane is open. */
@@ -172,6 +184,28 @@ export interface DiscoverManager {
    * by the annotations section to scroll to that verse's group, then cleared.
    */
   scrollToVerse: Signal<DiscoverScrollTarget | null>;
+}
+
+/** How many distinct chapters (including UI locale) stay cached per session. */
+const MAX_CACHED_CHAPTERS = 50;
+
+function discoverContextKey(
+  context: DiscoverContext,
+  uiLanguage: string
+): string {
+  return JSON.stringify([
+    context.translationId,
+    context.book,
+    context.chapter,
+    context.language,
+    uiLanguage,
+  ]);
+}
+
+interface DiscoverCacheEntry {
+  promise: Promise<DiscoverResult[]>;
+  /** Set once `promise` resolves. Absent while the lookup is in flight. */
+  results?: DiscoverResult[];
 }
 
 /**
@@ -215,6 +249,35 @@ export function createDiscoverManager(): DiscoverManager {
   const view = signal<DiscoverView>(null);
   const isDiscoverOpen = computed(() => !!view.value);
   const scrollToVerse = signal<DiscoverScrollTarget | null>(null);
+  // One answer per provider per chapter. Later registrations and a return
+  // visit reuse it; a failed lookup is dropped so the next visit can retry.
+  // `chapterOrder` is oldest first and caps how many chapter keys we keep,
+  // because a result can hold a JSX tree for the whole session otherwise.
+  const resultsByProvider = new Map<string, Map<string, DiscoverCacheEntry>>();
+  const chapterOrder: string[] = [];
+  let uiLanguage = "";
+
+  function rememberChapter(key: string): void {
+    const existing = chapterOrder.indexOf(key);
+    if (existing >= 0) {
+      chapterOrder.splice(existing, 1);
+    }
+    chapterOrder.push(key);
+    while (chapterOrder.length > MAX_CACHED_CHAPTERS) {
+      const evict = chapterOrder.shift();
+      if (!evict) break;
+      for (const byChapter of resultsByProvider.values()) {
+        byChapter.delete(evict);
+      }
+    }
+  }
+
+  function setUiLanguage(language: string): void {
+    if (language === uiLanguage) return;
+    uiLanguage = language;
+    resultsByProvider.clear();
+    chapterOrder.length = 0;
+  }
 
   function resolveActualView(isPlaying: boolean): DiscoverView {
     if (view.value === "play_playlist" && !isPlaying) {
@@ -223,9 +286,79 @@ export function createDiscoverManager(): DiscoverManager {
     return view.value;
   }
 
+  function loadProvider(
+    provider: DiscoverProvider,
+    context: DiscoverContext
+  ): DiscoverCacheEntry {
+    let byChapter = resultsByProvider.get(provider.id);
+    if (!byChapter) {
+      byChapter = new Map();
+      resultsByProvider.set(provider.id, byChapter);
+    }
+    const key = discoverContextKey(context, uiLanguage);
+    const existing = byChapter.get(key);
+    if (existing) {
+      rememberChapter(key);
+      return existing;
+    }
+
+    const chapterCache = byChapter;
+    const produced = provider.discover(context);
+    const entry: DiscoverCacheEntry = {
+      promise: Promise.resolve(produced),
+    };
+    // The callbacks run after this function stores `entry`, so they can tell
+    // a later replacement of this provider from the lookup they belong to.
+    entry.promise = entry.promise.then(
+      (results) => {
+        if (chapterCache.get(key) === entry) {
+          entry.results = results;
+        }
+        return results;
+      },
+      (error: unknown) => {
+        if (chapterCache.get(key) === entry) {
+          chapterCache.delete(key);
+        }
+        throw error;
+      }
+    );
+    chapterCache.set(key, entry);
+    rememberChapter(key);
+    return entry;
+  }
+
+  function cachedResults(context: DiscoverContext): DiscoverProviderResults[] {
+    const key = discoverContextKey(context, uiLanguage);
+    const ready: DiscoverProviderResults[] = [];
+    for (const provider of providers.value) {
+      const entry = resultsByProvider.get(provider.id)?.get(key);
+      if (!entry || entry.results === undefined) {
+        continue;
+      }
+      ready.push({ providerId: provider.id, results: entry.results });
+    }
+    return ready;
+  }
+
   return {
     registerDiscoverProvider(provider: DiscoverProvider): () => void {
-      return registerById(providers, provider);
+      const previous = providers
+        .peek()
+        .find((entry) => entry.id === provider.id);
+      // A replacement can answer differently for chapters this id already
+      // answered. The same provider object registered again keeps its cache.
+      if (previous && previous !== provider) {
+        resultsByProvider.delete(provider.id);
+      }
+      const unregister = registerById(providers, provider);
+      return () => {
+        const removingCurrent = providers.peek().includes(provider);
+        unregister();
+        if (removingCurrent) {
+          resultsByProvider.delete(provider.id);
+        }
+      };
     },
     providers,
 
@@ -234,6 +367,8 @@ export function createDiscoverManager(): DiscoverManager {
     },
     contentTypes,
 
+    cachedResults,
+    setUiLanguage,
     view,
     isDiscoverOpen,
     resolveActualView,
@@ -252,14 +387,35 @@ export function createDiscoverManager(): DiscoverManager {
       const remaining = new Map<Promise<DiscoverResult[]>, Tagged>();
 
       for (const provider of providers.peek()) {
-        const promise = Promise.resolve(provider.discover(context));
-        const tagged: Tagged = (async () => {
-          const results = await promise;
-          return {
-            promise: promise,
+        // One provider's failure is its own. A rejection here used to reject
+        // the whole race, so every provider that had not answered yet was
+        // dropped and the rejection surfaced as unhandled.
+        let promise: Promise<DiscoverResult[]>;
+        try {
+          promise = loadProvider(provider, context).promise;
+        } catch (error) {
+          console.error(
+            `Discover provider "${provider.id}" failed for ${context.book} ${context.chapter}`,
+            error
+          );
+          promise = Promise.resolve([]);
+        }
+        const tagged: Tagged = promise.then(
+          (results) => ({
+            promise,
             value: { providerId: provider.id, results },
-          };
-        })();
+          }),
+          (error: unknown) => {
+            console.error(
+              `Discover provider "${provider.id}" failed for ${context.book} ${context.chapter}`,
+              error
+            );
+            return {
+              promise,
+              value: { providerId: provider.id, results: [] },
+            };
+          }
+        );
         remaining.set(promise, tagged);
       }
 

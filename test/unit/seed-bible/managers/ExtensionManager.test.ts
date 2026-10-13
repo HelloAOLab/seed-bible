@@ -2257,6 +2257,53 @@ describe("createExtensionManager", () => {
     ).toBe(true);
     warnSpy.mockRestore();
   });
+
+  describe("registerSettingsPanel()", () => {
+    it("starts with no registered panels", () => {
+      const manager = createExtensionManager(login);
+
+      expect(manager.settingsPanels.value).toEqual({});
+    });
+
+    it("adds a panel renderer under the extension's id", () => {
+      const manager = createExtensionManager(login);
+      const render = () => "panel content";
+
+      manager.registerSettingsPanel("ext.custom-settings", render);
+
+      expect(manager.settingsPanels.value["ext.custom-settings"]).toBe(render);
+    });
+
+    it("removes the panel when the returned cleanup function is called", () => {
+      const manager = createExtensionManager(login);
+      const unregister = manager.registerSettingsPanel(
+        "ext.custom-settings",
+        () => "panel content"
+      );
+
+      unregister();
+
+      expect(
+        manager.settingsPanels.value["ext.custom-settings"]
+      ).toBeUndefined();
+    });
+
+    it("does not remove a later registration for the same id when an earlier registration's cleanup runs", () => {
+      const manager = createExtensionManager(login);
+      const firstUnregister = manager.registerSettingsPanel(
+        "ext.custom-settings",
+        () => "first"
+      );
+      const secondRender = () => "second";
+      manager.registerSettingsPanel("ext.custom-settings", secondRender);
+
+      firstUnregister();
+
+      expect(manager.settingsPanels.value["ext.custom-settings"]).toBe(
+        secondRender
+      );
+    });
+  });
 });
 
 describe("mergeInstalledExtensionIds()", () => {

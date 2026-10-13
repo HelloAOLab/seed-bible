@@ -1,6 +1,16 @@
 # 📖 Seed Bible
 
-The source code behind the Seed Bible.
+Seed Bible is a Bible reading and study app made for reading together. You can read alongside friends, join live shared reading sessions, and see content from churches and ministries right beside the chapter you're reading.
+
+This repository holds its source code.
+
+- **Read it now:** [seedbible.org](https://seedbible.org)
+- **Learn more:** [Seed Bible at AO Lab](https://www.helloao.org/seed-bible.html)
+- **See what's changed:** the [changelog](./CHANGELOG.md) lists what's new in each release
+
+## Roadmap
+
+Curious what's coming next? The [roadmap](./ROADMAP.md) lays out what we're working on and what comes after it, in priority order, with where each piece stands today.
 
 ## Developing
 

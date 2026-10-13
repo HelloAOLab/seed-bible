@@ -3,6 +3,10 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { SettingsPage } from "@packages/seed-bible/seed-bible/components/SettingsPage/SettingsPage";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  AppConfigProvider,
+  DEFAULT_APP_CONFIG,
+} from "@packages/seed-bible/seed-bible/app/appConfig";
 
 // Match the i18n mock used by the other component tests: return the
 // defaultValue (or key) so assertions can rely on the English strings.
@@ -21,6 +25,13 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
     }),
   };
 });
+const testBranding = {
+  appName: "Seed Bible",
+  shortName: "Seed",
+  logo: "",
+  icon: "",
+  websiteUrl: "",
+};
 
 function createMockState(userId: string | null): SeedBibleState {
   return {
@@ -78,5 +89,50 @@ describe("SettingsMainView", () => {
     renderMain("user-1");
 
     expect(navLabels()).toContain("Customize");
+  });
+  it("hides the About nav item when disabledSettings includes about-seed-bible", () => {
+    const state = createMockState("user-1");
+
+    act(() => {
+      render(
+        <AppConfigProvider
+          value={{
+            ...DEFAULT_APP_CONFIG,
+            branding: {
+              ...testBranding,
+              disabledSettings: ["about-seed-bible"],
+            },
+          }}
+        >
+          <SettingsPage state={state} />
+        </AppConfigProvider>,
+        container
+      );
+    });
+
+    expect(navLabels()).not.toContain("About Seed Bible");
+  });
+
+  it("shows the About nav item when about-seed-bible is not disabled", () => {
+    const state = createMockState("user-1");
+
+    act(() => {
+      render(
+        <AppConfigProvider
+          value={{
+            ...DEFAULT_APP_CONFIG,
+            branding: {
+              ...testBranding,
+              disabledSettings: [""],
+            },
+          }}
+        >
+          <SettingsPage state={state} />
+        </AppConfigProvider>,
+        container
+      );
+    });
+
+    expect(navLabels()).toContain("About Seed Bible");
   });
 });

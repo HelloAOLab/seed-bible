@@ -226,7 +226,7 @@ export const bootstrapExtension = () => {
       // `reference` has to name the chapter being read: results whose reference
       // doesn't match it are dropped before display (BibleReadingManager's
       // `hasMatchingReference`).
-      context.discover.registerDiscoverProvider({
+      yield context.discover.registerDiscoverProvider({
         id: `${extensionId}-exhibits`,
         title: translate("title", "House of the Lord"),
         description: translate(

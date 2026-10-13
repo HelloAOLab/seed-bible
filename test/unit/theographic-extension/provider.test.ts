@@ -203,18 +203,20 @@ describe("createTheographicDiscoverProvider", () => {
     warn.mockRestore();
   });
 
-  it("warns once and returns nothing when the dataset fails otherwise", async () => {
+  it("warns once and rejects when the dataset fails otherwise, so the caller can retry", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const failure = new TheographicRequestError(
+      "https://example.test",
+      "failed",
+      500
+    );
     const deps = createDeps({
-      chapter: () =>
-        Promise.reject(
-          new TheographicRequestError("https://example.test", "failed", 500)
-        ),
+      chapter: () => Promise.reject(failure),
     });
     const provider = createTheographicDiscoverProvider(deps);
 
-    await expect(provider.discover(CONTEXT)).resolves.toEqual([]);
-    await expect(provider.discover(CONTEXT)).resolves.toEqual([]);
+    await expect(provider.discover(CONTEXT)).rejects.toBe(failure);
+    await expect(provider.discover(CONTEXT)).rejects.toBe(failure);
     expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();
   });

@@ -6,6 +6,8 @@ import {
   formatBytes,
   type OfflineTranslationsManager,
 } from "../../managers/OfflineTranslationsManager";
+import { downloadTranslationWithToast } from "./downloadTranslationWithToast";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 
 /**
  * Offers to save the translation the reader is currently in for offline use.
@@ -43,6 +45,10 @@ export function OfflineDownloadPrompt({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [translation]);
 
+  const overlayDismiss = useOverlayDismiss(() =>
+    offline.dismissDownloadPrompt()
+  );
+
   if (!translation) {
     return null;
   }
@@ -51,34 +57,13 @@ export function OfflineDownloadPrompt({
 
   const save = async () => {
     offline.dismissDownloadPrompt();
-
-    const succeeded = await offline.downloadTranslation(translation.id);
-    if (succeeded) {
-      toast(
-        t("translation-downloaded", {
-          name: translation.shortName,
-          defaultValue: "{{name}} is now available offline",
-        })
-      );
-      return;
-    }
-
-    // A cancelled download reports no error, and there's nothing to tell the
-    // user about a download they stopped themselves.
-    if (offline.errors.value.get(translation.id)) {
-      toast(
-        t("translation-download-failed", {
-          name: translation.shortName,
-          defaultValue: "Couldn't download {{name}}.",
-        })
-      );
-    }
+    await downloadTranslationWithToast(offline, translation, toast, t);
   };
 
   return (
     <div
       className={`sb-offline-prompt-overlay ${className}`}
-      onClick={() => offline.dismissDownloadPrompt()}
+      {...overlayDismiss}
     >
       <div
         className="sb-offline-prompt"

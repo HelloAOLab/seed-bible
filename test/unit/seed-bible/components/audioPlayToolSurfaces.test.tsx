@@ -109,6 +109,7 @@ describe("audio-reader play button — surface wiring (#1607)", () => {
             playlists={state.playlists}
             annotations={state.annotations}
             features={state.features}
+            readingPlans={state.readingPlans}
           />
         </TestHost>,
         container

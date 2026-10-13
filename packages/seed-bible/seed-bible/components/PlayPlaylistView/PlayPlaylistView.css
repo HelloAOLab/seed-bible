@@ -17,6 +17,26 @@
   flex-shrink: 0;
 }
 
+.sb-play-playlist-about {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-play-playlist-author {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-play-playlist-description {
+  margin: 0;
+  font-size: 0.875rem;
+  opacity: 0.8;
+  white-space: pre-line;
+}
+
 .sb-play-playlist-item-button {
   flex: 1;
   min-width: 0;

@@ -20,6 +20,7 @@ export interface BrandingConfig {
   disabledToolbarTools?: string[];
   defaultTranslationId?: string;
   whiteLabelThemes?: BibleTheme[];
+  disabledSettings?: string[];
 }
 
 // Injected from Vite

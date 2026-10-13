@@ -179,6 +179,7 @@ interface PaneLayoutProps {
  */
 export function PaneLayout(props: PaneLayoutProps) {
   const { state } = props;
+
   const { app, panes: panesManager } = state;
   const overlayPanes = app.effectivePanes.value.filter(
     (pane) => pane.placement === "floating"

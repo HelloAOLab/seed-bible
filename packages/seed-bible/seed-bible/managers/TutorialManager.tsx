@@ -438,6 +438,14 @@ export interface TutorialManager {
    * {@link keepTutorials} / {@link optOut}.
    */
   skipPromptVisible: ReadonlySignal<boolean>;
+  /**
+   * True for the rest of this visit after the user declines the introduction
+   * offer ("No, thanks") or leaves that tour before finishing it. Not stored.
+   * The install prompt stays hidden while this is set and can still appear on
+   * the next visit; the download prompt stays hidden too, because the install
+   * offer never resolves this visit. A contextual tip does not set it.
+   */
+  leftIntroductionEarly: ReadonlySignal<boolean>;
   /** Per-feature contextual tutorial completion flags. */
   featuresSeen: ReadonlySignal<Record<string, boolean>>;
   /** Starts (or restarts) the onboarding tour from the first step. */
@@ -467,7 +475,8 @@ export interface TutorialManager {
   /**
    * Ends the current tour (like {@link finish}) and raises the "turn off all
    * tutorials?" follow-up dialog, rather than asking that question on the
-   * tour dialog itself.
+   * tour dialog itself. Leaving the introduction tour this way also keeps the
+   * install and download prompts from opening afterwards.
    */
   skip: () => void;
   /** Dismisses the skip follow-up dialog, leaving future tutorials enabled. */
@@ -482,7 +491,8 @@ export interface TutorialManager {
   acceptPrompt: () => void;
   /**
    * Declines the first-run offer card: hides it and records the onboarding tour
-   * as seen (still replayable from Settings).
+   * as seen (still replayable from Settings). Keeps the install and download
+   * prompts from following it this visit.
    */
   dismissPrompt: () => void;
 
@@ -518,7 +528,13 @@ export function createTutorialManager(
   isMobile: ReadonlySignal<boolean>,
   panes: PanesManager,
   sidebar: SidebarManager,
-  joinedViaSessionLink = false,
+  /**
+   * The visit started from a shared link (a session invite, a playlist, a
+   * reading plan). While true, neither the offer card nor contextual tips
+   * appear. A signal because a playlist link lifts it once the visitor closes
+   * the playlist without starting it and lands on the home screen.
+   */
+  openedViaContentLink: ReadonlySignal<boolean> = signal(false),
   /**
    * Compact partner-site embed. While this is true the offer card, the tour,
    * and the "turn off tutorials" follow-up never start — an embed has no room
@@ -534,6 +550,9 @@ export function createTutorialManager(
   // "Turn off all tutorials?" follow-up dialog visibility (see
   // `skipPromptVisible` in the interface).
   const skipPromptVisible = signal<boolean>(false);
+  // See `leftIntroductionEarly`. A closure-lifetime signal, not storage: the
+  // next page load starts over and may still offer install.
+  const leftIntroductionEarly = signal<boolean>(false);
 
   // The active step set is chosen at `start()` / `startContextual()` time
   // (snapshotted so a resize mid-tour doesn't swap the steps out from under us).
@@ -784,9 +803,9 @@ export function createTutorialManager(
     if (running.value) {
       return;
     }
-    // On a session-join tab, don't pop contextual coach marks. Not persisted,
-    // so these tips still appear on a normal (non-session-link) visit later.
-    if (joinedViaSessionLink) {
+    // On a content-link tab, don't pop contextual coach marks. Not persisted,
+    // so these tips still appear on a normal (non-link) visit later.
+    if (openedViaContentLink.value) {
       return;
     }
     if (optedOut.value) {
@@ -844,29 +863,51 @@ export function createTutorialManager(
     }
   };
 
+  /**
+   * The introduction tour is on screen right now (not a contextual tip).
+   * Checked before anything clears `running`, which is what the install
+   * prompt is waiting on.
+   */
+  const introductionTourOpen = () =>
+    running.value && mode.value !== "contextual";
+
   const optOut = () => {
     // Record opt-out first so contextual tours can't restart during teardown.
-    markOptedOut();
-    // Also mark the current tour as resolved so it doesn't replay.
-    if (mode.value === "contextual") {
-      const featureId = activeFeatureId.value;
-      if (featureId) {
-        markFeatureSeen(featureId);
+    // Batched with the "left early" flag so the install prompt sees both at
+    // once and doesn't open in the gap.
+    batch(() => {
+      if (introductionTourOpen()) {
+        leftIntroductionEarly.value = true;
       }
-    } else {
-      markOnboardingSeen();
-    }
-    running.value = false;
-    activeFeatureId.value = null;
-    skipPromptVisible.value = false;
+      markOptedOut();
+      // Also mark the current tour as resolved so it doesn't replay.
+      if (mode.value === "contextual") {
+        const featureId = activeFeatureId.value;
+        if (featureId) {
+          markFeatureSeen(featureId);
+        }
+      } else {
+        markOnboardingSeen();
+      }
+      running.value = false;
+      activeFeatureId.value = null;
+      skipPromptVisible.value = false;
+    });
   };
 
   const skip = () => {
     if (isMinimalEmbed.value) {
       return;
     }
-    finish();
-    skipPromptVisible.value = true;
+    batch(() => {
+      // Skip on the introduction tour, not a contextual tip, and not Done
+      // (that goes through `next` → `finish` and should still chain install).
+      if (introductionTourOpen()) {
+        leftIntroductionEarly.value = true;
+      }
+      finish();
+      skipPromptVisible.value = true;
+    });
   };
 
   const keepTutorials = () => {
@@ -879,10 +920,16 @@ export function createTutorialManager(
   };
 
   const dismissPrompt = () => {
-    promptVisible.value = false;
-    // Treat declining as having resolved the onboarding offer so it isn't
-    // re-shown on the next load; the tour stays replayable from Settings.
-    markOnboardingSeen();
+    // The flag has to land in the same flush as "seen". The install prompt
+    // reacts to that seen flag, and a separate write would let it open on
+    // top of "No, thanks".
+    batch(() => {
+      leftIntroductionEarly.value = true;
+      promptVisible.value = false;
+      // Treat declining as having resolved the onboarding offer so it isn't
+      // re-shown on the next load; the tour stays replayable from Settings.
+      markOnboardingSeen();
+    });
   };
 
   const next = () => {
@@ -939,7 +986,7 @@ export function createTutorialManager(
       // Opened via a shared-session invite link: don't auto-launch the onboarding
       // tour over the join. We don't record completion, so the tour still
       // auto-starts on a later visit that isn't a session link.
-      if (joinedViaSessionLink) {
+      if (openedViaContentLink.value) {
         return;
       }
       // A partner-site embed has none of the chrome the tour points at.
@@ -973,6 +1020,7 @@ export function createTutorialManager(
     optedOut,
     promptVisible,
     skipPromptVisible,
+    leftIntroductionEarly,
     featuresSeen,
     start: () => start(),
     startContextual,
