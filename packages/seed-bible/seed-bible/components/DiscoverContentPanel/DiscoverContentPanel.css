@@ -97,10 +97,9 @@
   min-width: 0;
   min-height: 2.2rem;
   padding: 0.5rem 0;
-  overflow-x: visible;
+  overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
-  scroll-behavior: smooth;
 }
 
 .sb-dcp-filters::-webkit-scrollbar {

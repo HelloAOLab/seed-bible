@@ -1,6 +1,6 @@
 import "./DiscoverContentPanel.css";
 import { Signal, useSignal } from "@preact/signals";
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { useCallback, useLayoutEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { getDiscoverPanelContent } from "../../managers/BibleReadingManager";
@@ -126,130 +126,115 @@ function DiscoverFilters({
   const { t } = useI18n();
   const filtersRef = useRef<HTMLDivElement>(null);
 
-  const [hasScrollableFilters, setHasScrollableFilters] = useState(false);
-
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const hasScrollableFilters = useSignal(false);
+  const canScrollLeft = useSignal(false);
+  const canScrollRight = useSignal(false);
+  const filtersKey = filters
+    .map((filter) => `${filter.key}:${filter.label}`)
+    .join("|");
 
   const updateScrollState = useCallback(() => {
     const container = filtersRef.current;
 
     if (!container) {
-      setHasScrollableFilters(false);
-      setCanScrollLeft(false);
-      setCanScrollRight(false);
+      hasScrollableFilters.value = false;
+      canScrollLeft.value = false;
+      canScrollRight.value = false;
       return;
     }
 
     const wrapper = container.parentElement;
 
     if (!wrapper) {
-      setHasScrollableFilters(false);
-      setCanScrollLeft(false);
-      setCanScrollRight(false);
+      hasScrollableFilters.value = false;
+      canScrollLeft.value = false;
+      canScrollRight.value = false;
       return;
     }
 
-    // Compare against the full wrapper width so the arrows
     const hasOverflow = container.scrollWidth > wrapper.clientWidth + 1;
-
-    setHasScrollableFilters(hasOverflow);
+    hasScrollableFilters.value = hasOverflow;
 
     if (!hasOverflow) {
-      setCanScrollLeft(false);
-      setCanScrollRight(false);
+      canScrollLeft.value = false;
+      canScrollRight.value = false;
       return;
     }
-
-    const pills = Array.from(
-      container.querySelectorAll<HTMLElement>(".sb-dcp-chip")
+    const isRtl = getComputedStyle(container).direction === "rtl";
+    const maxScroll = Math.max(
+      0,
+      container.scrollWidth - container.clientWidth
     );
 
-    if (pills.length === 0) {
-      setCanScrollLeft(false);
-      setCanScrollRight(false);
-      return;
-    }
+    const position = isRtl
+      ? Math.abs(container.scrollLeft)
+      : container.scrollLeft;
 
-    const firstPill = pills[0];
-    const lastPill = pills[pills.length - 1];
-
-    if (!firstPill || !lastPill) {
-      setCanScrollLeft(false);
-      setCanScrollRight(false);
-      return;
-    }
-
-    const containerRect = container.getBoundingClientRect();
-
-    const firstPillRect = firstPill.getBoundingClientRect();
-
-    const lastPillRect = lastPill.getBoundingClientRect();
-
-    // Enable left arrow when the first pill is partially hidden.
-    setCanScrollLeft(firstPillRect.left < containerRect.left - 1);
-
-    // Keep right arrow enabled until the last pill
-    // is completely visible.
-    setCanScrollRight(lastPillRect.right > containerRect.right + 1);
+    // canScrollLeft represents scrolling toward the start.
+    // canScrollRight represents scrolling toward the end.
+    canScrollLeft.value = position > 1;
+    canScrollRight.value = position < maxScroll - 1;
   }, []);
 
   const scrollFilters = useCallback((direction: -1 | 1) => {
     const container = filtersRef.current;
-
     if (!container) return;
 
     const pills = Array.from(
       container.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
     );
 
+    if (pills.length === 0) return;
+
+    const isRtl = getComputedStyle(container).direction === "rtl";
     const containerRect = container.getBoundingClientRect();
 
     let targetPill: HTMLButtonElement | undefined;
 
     if (direction === 1) {
-      // Find the next pill hidden on the right.
-      targetPill = pills.find((pill) => {
-        const rect = pill.getBoundingClientRect();
-
-        return rect.right > containerRect.right + 1;
-      });
+      // Toward the end: right in LTR, left in RTL.
+      targetPill = isRtl
+        ? pills.find((pill) => {
+            const rect = pill.getBoundingClientRect();
+            return rect.left < containerRect.left - 1;
+          })
+        : pills.find((pill) => {
+            const rect = pill.getBoundingClientRect();
+            return rect.right > containerRect.right + 1;
+          });
     } else {
-      // Find the previous pill hidden on the left.
-      for (let i = pills.length - 1; i >= 0; i -= 1) {
-        const pill = pills[i];
-
-        if (!pill) continue;
-
-        const rect = pill.getBoundingClientRect();
-
-        if (rect.left < containerRect.left - 1) {
-          targetPill = pill;
-          break;
-        }
-      }
+      // Toward the start: left in LTR, right in RTL.
+      targetPill = isRtl
+        ? [...pills].reverse().find((pill) => {
+            const rect = pill.getBoundingClientRect();
+            return rect.right > containerRect.right + 1;
+          })
+        : [...pills].reverse().find((pill) => {
+            const rect = pill.getBoundingClientRect();
+            return rect.left < containerRect.left - 1;
+          });
     }
 
-    if (!targetPill) {
-      return;
-    }
+    if (!targetPill) return;
 
     const targetRect = targetPill.getBoundingClientRect();
 
     const scrollAmount =
       direction === 1
-        ? targetRect.right - containerRect.right
-        : targetRect.left - containerRect.left;
+        ? isRtl
+          ? targetRect.left - containerRect.left
+          : targetRect.right - containerRect.right
+        : isRtl
+          ? targetRect.right - containerRect.right
+          : targetRect.left - containerRect.left;
 
     container.scrollBy({
       left: scrollAmount,
     });
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = filtersRef.current;
-
     if (!container) return;
 
     updateScrollState();
@@ -265,42 +250,42 @@ function DiscoverFilters({
       resizeObserver.observe(container);
 
       const wrapper = container.parentElement;
-
-      if (wrapper) {
-        resizeObserver.observe(wrapper);
-      }
+      if (wrapper) resizeObserver.observe(wrapper);
 
       container
         .querySelectorAll<HTMLElement>(".sb-dcp-chip")
-        .forEach((chip) => {
-          resizeObserver.observe(chip);
-        });
+        .forEach((chip) => resizeObserver.observe(chip));
     }
+
+    // Recheck after layout and direction changes.
+    window.addEventListener("resize", updateScrollState);
 
     return () => {
       container.removeEventListener("scroll", updateScrollState);
-
+      window.removeEventListener("resize", updateScrollState);
       resizeObserver?.disconnect();
     };
-  }, [filters.length, updateScrollState]);
+  }, [filtersKey, updateScrollState]);
 
   return (
     <div
       className={`sb-dcp-filters-wrapper${
-        hasScrollableFilters ? " sb-dcp-filters-wrapper--scrollable" : ""
+        hasScrollableFilters.value ? " sb-dcp-filters-wrapper--scrollable" : ""
       }`}
     >
-      {hasScrollableFilters && (
+      {hasScrollableFilters.value && (
         <button
           type="button"
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(-1)}
-          disabled={!canScrollLeft}
+          disabled={!canScrollLeft.value}
           aria-label={t("scroll-filters-left", {
-            defaultValue: "Scroll filters left",
+            defaultValue: "Scroll filters toward start",
           })}
         >
-          <MaterialIcon aria-hidden="true">chevron_left</MaterialIcon>
+          <MaterialIcon className="rtl-mirror" aria-hidden="true">
+            chevron_left
+          </MaterialIcon>
         </button>
       )}
 
@@ -323,17 +308,19 @@ function DiscoverFilters({
         ))}
       </div>
 
-      {hasScrollableFilters && (
+      {hasScrollableFilters.value && (
         <button
           type="button"
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(1)}
-          disabled={!canScrollRight}
+          disabled={!canScrollRight.value}
           aria-label={t("scroll-filters-right", {
-            defaultValue: "Scroll filters right",
+            defaultValue: "Scroll filters toward end",
           })}
         >
-          <MaterialIcon aria-hidden="true">chevron_right</MaterialIcon>
+          <MaterialIcon className="rtl-mirror" aria-hidden="true">
+            chevron_right
+          </MaterialIcon>
         </button>
       )}
     </div>
@@ -475,20 +462,10 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const showFilters =
     filters.length > 2 ||
     typesWithResults.some((definition) => definition.hiddenByDefault);
-
-  /*
-   * Keep the arrow state synchronized when:
-   *
-   * - the user scrolls
-   * - the number of filters changes
-   * - the wrapper/container is resized
-   * - an individual pill changes size
-   */
-
-  /*
-   * Falls back to "all" when the previously-active
-   * filter is no longer available.
-   */
+  // Falls back to "all" when the previously-active filter's content type is
+  // no longer available (e.g. the user filtered to "Cross Refs" then
+  // navigated to a chapter with none), so the chip row and content area don't
+  // go blank.
   const f = filters.some((filter) => filter.key === activeFilter.value)
     ? activeFilter.value
     : "all";
