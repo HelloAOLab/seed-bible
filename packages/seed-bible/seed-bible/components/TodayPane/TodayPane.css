@@ -753,7 +753,6 @@
   margin: 0;
   padding-left: 0.75rem;
   border-left: solid 2px var(--sb-divider-color);
-  font-family: var(--sb-book-title-font-family);
   font-size: 0.95rem;
   line-height: 1.45;
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
@@ -979,9 +978,7 @@
     font-size: 0.875rem;
   }
 
-  .sb-today-container
-    .sb-today-titled-section-header
-    .sb-today-feed-timeframe-button {
+  .sb-today-container .sb-today-feed-card .sb-today-feed-timeframe-button {
     font-size: 0.7rem;
   }
 
