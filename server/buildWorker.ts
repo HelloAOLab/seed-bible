@@ -34,9 +34,15 @@ type RenderResult = Awaited<ReturnType<RenderFn>>;
 export interface BuildWorker {
   render: RenderFn;
   /**
-   * Stops the worker once the renders already in flight on it settle (each is
-   * bounded by the render timeout), releasing the build's memory. Safe to call
-   * more than once.
+   * Marks the worker as in use until the returned function is called, so
+   * `retire()` can't stop it before the holder gets to render. Returns null if
+   * the worker is already stopping. Releasing twice is harmless.
+   */
+  acquire(): (() => void) | null;
+  /**
+   * Stops the worker once nothing holds it and no render is in flight on it,
+   * releasing the build's memory. A holder that never lets go is cut off after
+   * a grace period of twice the timeout. Safe to call more than once.
    */
   retire(): void;
 }
@@ -92,8 +98,10 @@ export function startBuildWorker({
 
   const pending = new Map<number, PendingRender>();
   let nextId = 0;
+  let holders = 0;
   let retired = false;
   let terminating = false;
+  let retireGraceTimer: ReturnType<typeof setTimeout> | undefined;
 
   const terminate = () => {
     if (terminating) return;
@@ -102,7 +110,7 @@ export function startBuildWorker({
   };
 
   const terminateIfDrained = () => {
-    if (retired && pending.size === 0) terminate();
+    if (retired && holders === 0 && pending.size === 0) terminate();
   };
 
   const settle = (id: number, settleWith: (p: PendingRender) => void) => {
@@ -139,8 +147,24 @@ export function startBuildWorker({
 
   const handle: BuildWorker = {
     render,
+    acquire: () => {
+      if (terminating) return null;
+      holders++;
+      let released = false;
+      return () => {
+        if (released) return;
+        released = true;
+        holders--;
+        terminateIfDrained();
+      };
+    },
     retire: () => {
+      if (retired) return;
       retired = true;
+      // Renders are bounded by the timeout, but a holder can also be waiting
+      // on something unbounded (an S3 read for a pinned build's HTML).
+      retireGraceTimer = setTimeout(terminate, timeoutMs * 2);
+      retireGraceTimer.unref?.();
       terminateIfDrained();
     },
   };
@@ -179,6 +203,7 @@ export function startBuildWorker({
     worker.on("exit", (code) => {
       terminating = true;
       clearTimeout(loadTimer);
+      clearTimeout(retireGraceTimer);
       const exitError = new Error(`SSR worker exited with code ${code}`);
       // A no-op once the worker became ready.
       reject(exitError);

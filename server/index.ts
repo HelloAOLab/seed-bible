@@ -275,6 +275,7 @@ async function resolvePointer(branch: string): Promise<BranchPointer | null> {
 interface ModuleEntry {
   render: RenderFn;
   html: string;
+  acquire(): (() => void) | null;
   retire(): void;
 }
 const moduleCache = new BuildCache<ModuleEntry>(SSR_WORKERS_MAX);
@@ -312,11 +313,41 @@ async function loadBuild(
           },
         })
     );
-    loaded = { render: worker.render, html, retire: worker.retire };
+    loaded = {
+      render: worker.render,
+      html,
+      acquire: worker.acquire,
+      retire: worker.retire,
+    };
     return loaded;
   });
   recordCacheLookup("module", hit);
   return entry;
+}
+
+/**
+ * Loads a build and holds it until `use` settles, so a deploy's invalidation
+ * or an eviction can't stop its worker between handing it out and rendering
+ * with it (e.g. while the request fetches a pinned build's HTML).
+ */
+async function withBuild<T>(
+  branch: string,
+  buildId: string,
+  use: (build: ModuleEntry) => Promise<T>
+): Promise<T> {
+  // A build retired after the cache handed it out but before it could be held
+  // is gone from the cache by then, so the second attempt loads a fresh one.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const build = await loadBuild(branch, buildId);
+    const release = build.acquire();
+    if (!release) continue;
+    try {
+      return await use(build);
+    } finally {
+      release();
+    }
+  }
+  throw new Error(`SSR worker for ${branch}@${buildId} stopped before use`);
 }
 
 // ─── HTML cache (buildId → pre-rendered html), LRU ───────────────────────────
@@ -772,12 +803,19 @@ async function dispatch(
       // A branch with no live pointer has no latest build to render with;
       // its pinned HTML is handled like a non-whitelisted branch's below.
       if (latest) {
-        const build = await loadBuild(route.branch, latest.buildId);
-        const preRenderedHtml =
-          latest.buildId === pointer.buildId
-            ? build.html
-            : await loadHtml(route.branch, pointer.buildId);
-        await renderAndRespond(req, res, build.render, route, preRenderedHtml);
+        await withBuild(route.branch, latest.buildId, async (build) => {
+          const preRenderedHtml =
+            latest.buildId === pointer.buildId
+              ? build.html
+              : await loadHtml(route.branch, pointer.buildId);
+          await renderAndRespond(
+            req,
+            res,
+            build.render,
+            route,
+            preRenderedHtml
+          );
+        });
         return;
       }
     }
@@ -792,11 +830,9 @@ async function dispatch(
     if (DEFAULT_SSR_BRANCH) {
       const defaultPointer = await resolvePointer(DEFAULT_SSR_BRANCH);
       if (defaultPointer) {
-        const { render } = await loadBuild(
-          DEFAULT_SSR_BRANCH,
-          defaultPointer.buildId
+        await withBuild(DEFAULT_SSR_BRANCH, defaultPointer.buildId, (build) =>
+          renderAndRespond(req, res, build.render, route, preRenderedHtml)
         );
-        await renderAndRespond(req, res, render, route, preRenderedHtml);
         return;
       }
       console.warn(

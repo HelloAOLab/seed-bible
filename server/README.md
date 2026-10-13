@@ -69,8 +69,10 @@ Each SSR build runs in its own worker thread ([buildWorker.ts](buildWorker.ts),
 never be unloaded, so a bundle imported on the main thread would stay in memory
 for the life of the process, and every deploy would add another ~30 MB copy.
 When a build leaves the cache (over `SSR_WORKERS_MAX`, or on
-`POST /__invalidate`), its worker finishes the renders it already has and is
-terminated, which releases the whole bundle. A worker that crashes is dropped
+`POST /__invalidate`), its worker is terminated once no request is using it
+(a request holds its build from the moment it gets it until its page is
+rendered), which releases the whole bundle. A request that never finishes is
+cut off after twice `SSR_RENDER_TIMEOUT_MS`. A worker that crashes is dropped
 from the cache, and the next request for that build starts a fresh one.
 
 `ssrWorker.ts` is a second `bun build` entry point, emitted next to `index.js`

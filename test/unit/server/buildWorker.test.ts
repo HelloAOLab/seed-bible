@@ -131,6 +131,51 @@ describe("startBuildWorker", () => {
     );
   });
 
+  it("keeps a retired worker running while it is held, and stops it once released", async () => {
+    let stopped = false;
+    const { exited, onExit } = exitSignal();
+    const worker = await start({
+      onExit: () => {
+        stopped = true;
+        onExit();
+      },
+    });
+
+    // Handed out, but not yet rendering, when a deploy retires it.
+    const release = worker.acquire()!;
+    worker.retire();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(stopped).toBe(false);
+    await expect(worker.render({ ...OPTS, path: "/held" })).resolves.toEqual({
+      html: "rendered /held over <shell>",
+    });
+    expect(stopped).toBe(false);
+
+    release();
+    await exited;
+  });
+
+  it("can't be acquired once it has stopped", async () => {
+    const { exited, onExit } = exitSignal();
+    const worker = await start({ onExit });
+
+    worker.retire();
+    await exited;
+
+    expect(worker.acquire()).toBeNull();
+  });
+
+  it("stops a retired worker whose holder never lets go, after the grace period", async () => {
+    const { exited, onExit } = exitSignal();
+    const worker = await start({ timeoutMs: 200, onExit });
+
+    worker.acquire();
+    worker.retire();
+
+    await exited;
+  });
+
   it("stops a retired worker right away when nothing is rendering", async () => {
     const { exited, onExit } = exitSignal();
     const worker = await start({ onExit });

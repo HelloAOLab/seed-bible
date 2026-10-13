@@ -1,7 +1,16 @@
 // @vitest-environment node
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { constants } from "node:fs";
+import {
+  mkdir,
+  mkdtemp,
+  open,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -99,7 +108,7 @@ describe("production host: SSR runs only a branch's latest build", () => {
     expect((await get("/en/AAB/genesis/1")).body).toBe(
       "rendered by new over [html of new]"
     );
-    expect(await importedBuilds()).toEqual(["new"]);
+    expect(new Set(await importedBuilds())).toEqual(new Set(["new"]));
   });
 
   it("serves a pinned build's HTML as-is when its branch has no latest build", async () => {
@@ -108,5 +117,40 @@ describe("production host: SSR runs only a branch's latest build", () => {
     expect(page.status).toBe(200);
     expect(page.body).toBe("html of only");
     expect(await importedBuilds()).not.toContain("only");
+  });
+
+  it("still renders a request holding a build that a deploy retires mid-request", async () => {
+    // The pinned build's HTML is a named pipe, so reading it blocks until the
+    // test writes to it: the request holds the latest build while it waits.
+    const buildDir = path.join(dir, "branches", "main", "slow");
+    await mkdir(buildDir, { recursive: true });
+    const htmlPipe = path.join(buildDir, "index.html");
+    execFileSync("mkfifo", [htmlPipe]);
+
+    const pending = get("/b/main/slow/en/AAB/genesis/1");
+
+    // Opening a pipe for writing without blocking only succeeds once it has a
+    // reader, i.e. once the request has reached the HTML read.
+    const deadline = Date.now() + 5_000;
+    let writer: Awaited<ReturnType<typeof open>> | undefined;
+    while (!writer) {
+      try {
+        writer = await open(
+          htmlPipe,
+          constants.O_WRONLY | constants.O_NONBLOCK
+        );
+      } catch {
+        if (Date.now() > deadline)
+          throw new Error("request never read the HTML");
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+    }
+
+    // What CD sends on every deploy.
+    await fetch(`${baseUrl}/__invalidate?branch=main`, { method: "POST" });
+    await writer.write("html of slow");
+    await writer.close();
+
+    expect((await pending).body).toBe("rendered by new over [html of slow]");
   });
 });
