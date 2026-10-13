@@ -572,19 +572,12 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
 }
 
-.sb-today-container .sb-today-section-card {
-  padding: 0.75rem 1rem;
-  border: solid 1px var(--sb-divider-color);
-  width: 100%;
-  border-radius: 0.5rem;
-}
-
 .sb-today-container .sb-today-feed-card {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0.75rem;
-  padding-bottom: 0.25rem;
 }
 
 /* The kind pills and the time-frame dropdown share one row. The pills take

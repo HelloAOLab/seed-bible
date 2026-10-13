@@ -325,7 +325,7 @@ function FeedCard(props: {
       : undefined;
 
   return (
-    <div className="sb-today-feed-card sb-today-section-card">
+    <div className="sb-today-feed-card">
       <div className="sb-today-feed-toolbar">
         <div className="sb-today-feed-kind-filter" ref={kindFilterRef}>
           {FEED_KINDS.map((id) => (
