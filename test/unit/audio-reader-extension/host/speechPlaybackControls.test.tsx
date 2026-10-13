@@ -83,6 +83,7 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
       playlists: state.playlists,
       annotations: state.annotations,
       features: state.features,
+      settings: state.settings,
       readingPlans: state.readingPlans,
       surface: "quick-toolbar",
     };
