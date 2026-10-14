@@ -100,9 +100,7 @@
   --sb-sidebar-font-family: inherit;
   --sb-sidebar-font-color: inherit;
 
-  --sb-book-selector-background: #ffffff;
   --sb-book-selector-font-family: inherit;
-  --sb-book-selector-font-color: #333;
 
   --sb-reader-background: #ffffff;
   --sb-reader-font-family: inherit;
@@ -172,7 +170,6 @@
   --sb-verse-toolbar-box-shadow: 0 26px 10px var(--sb-shadow-color);
   --sb-verse-toolbar-z-index: 100;
   --sb-verse-toolbar-min-height: 0;
-  --sb-verse-toolbar-background: var(--sb-menu-background);
 
   --sb-reader-toolbar-mobile-layout-height: auto;
   --sb-reader-toolbar-mobile-layout-padding: 0.625rem 2.1875rem;

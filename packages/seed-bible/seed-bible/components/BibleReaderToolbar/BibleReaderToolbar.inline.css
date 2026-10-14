@@ -845,7 +845,12 @@
   position: fixed;
   transform: translate(-50%, -100%);
   display: flex;
-  background: var(--sb-verse-toolbar-background);
+  background: var(--sb-reader-toolbar-background);
+  color: var(--sb-reader-toolbar-font-color);
+  /* The toolbar's buttons, labels and tints are all derived from
+     --sb-font-color, so re-pointing it here makes the whole subtree follow the
+     reader toolbar's text color instead of the page's. */
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
   gap: var(--sb-verse-toolbar-gap);
   padding: var(--sb-verse-toolbar-padding);
   border-radius: var(--sb-verse-toolbar-border-radius);
@@ -855,7 +860,6 @@
   min-height: var(--sb-verse-toolbar-min-height);
   flex-direction: column;
   align-items: stretch;
-  background-color: var(--sb-reader-background);
 }
 
 .sb-verse-toolbar-draggable {
@@ -1287,7 +1291,7 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   width: 100%;
-  background: var(--sb-reader-background);
+  background: var(--sb-reader-toolbar-background);
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   margin-bottom: -0.5rem;
