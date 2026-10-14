@@ -777,6 +777,21 @@ button.sb-cz-logo:disabled {
   }
 }
 
+/* While a color picker is open (its host only exists then), both previews
+   sit between the picker's dimming backdrop (1100) and its dialog (1102),
+   so the color being picked can be judged against them. Clicks pass through
+   to the backdrop, so clicking a preview still cancels the picker like
+   anywhere else. */
+body:has(#sb-color-picker-host) .sb-cz-live-preview-dock {
+  position: relative;
+}
+
+body:has(#sb-color-picker-host) .sb-cz-live-preview-dock,
+body:has(#sb-color-picker-host) .sb-cz-floating-preview {
+  z-index: 1101;
+  pointer-events: none;
+}
+
 /* Color tiles */
 
 .sb-cz-tile-grid {

@@ -413,7 +413,7 @@ export function DockableThemeLivePreview(props: {
 
   return (
     <>
-      <div ref={anchorRef}>
+      <div ref={anchorRef} className="sb-cz-live-preview-dock">
         <ThemeLivePreview theme={props.theme} highlightId={props.highlightId} />
       </div>
       {floating}
