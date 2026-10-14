@@ -1,8 +1,11 @@
 import type { ComponentChildren } from "preact";
-import type { BibleTheme } from "../../managers/ThemeManager";
+import { createPortal } from "preact/compat";
+import { useEffect, useRef, useState } from "preact/hooks";
+import type { BibleTheme, HighlightId } from "../../managers/ThemeManager";
 import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { useI18n, type I18nHook } from "../../i18n/I18nManager";
+import { MaterialIcon } from "../icons";
 
 /**
  * Theme values that aren't a paintable color on their own (a sidebar that
@@ -132,10 +135,14 @@ export function CustomizationCardPreview(props: {
  * effect right where it's made — including the ones (link, visited link,
  * highlight, floating button) the surrounding editor UI never uses itself.
  */
-export function ThemeLivePreview(props: { theme: BibleTheme }) {
+export function ThemeLivePreview(props: {
+  theme: BibleTheme;
+  /** Which highlight color the sample verse's highlighted word uses. */
+  highlightId?: HighlightId;
+}) {
   const { t } = useI18n();
   const v = props.theme.variables;
-  const highlight = props.theme.highlightColors.yellow;
+  const highlight = props.theme.highlightColors[props.highlightId ?? "yellow"];
   return (
     <div
       className="sb-cz-live-preview"
@@ -269,4 +276,147 @@ function renderTagged(
   }
   parts.push(text.slice(last));
   return parts;
+}
+
+/** Width of the floating preview window, in CSS pixels. */
+const FLOATING_PREVIEW_WIDTH_PX = 300;
+/** Space kept between the floating window and the pane / screen edges. */
+const FLOATING_PREVIEW_GAP_PX = 16;
+
+interface FloatingPreviewPosition {
+  top: number;
+  right: number;
+}
+
+/**
+ * Where the floating window goes: just left of the side pane, lined up with
+ * the top of the pane's scrolling body. `null` when there isn't room for it
+ * between the pane and the left edge of the screen.
+ */
+function getFloatingPreviewPosition(
+  pane: HTMLElement,
+  scrollRoot: HTMLElement
+): FloatingPreviewPosition | null {
+  const paneRect = pane.getBoundingClientRect();
+  if (paneRect.left < FLOATING_PREVIEW_WIDTH_PX + FLOATING_PREVIEW_GAP_PX * 2) {
+    return null;
+  }
+  return {
+    top: scrollRoot.getBoundingClientRect().top + FLOATING_PREVIEW_GAP_PX,
+    right: window.innerWidth - paneRect.left + FLOATING_PREVIEW_GAP_PX,
+  };
+}
+
+/**
+ * The theme editor's live preview. When `canFloat` is set and the editor is
+ * in the desktop side pane, scrolling the preview out of view pops a copy of
+ * it into a small window beside the pane, so edits further down the editor
+ * stay visible without the preview taking space inside the pane. Scrolling
+ * back up docks it again.
+ */
+export function DockableThemeLivePreview(props: {
+  theme: BibleTheme;
+  highlightId?: HighlightId;
+  canFloat: boolean;
+}) {
+  const { t } = useI18n();
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<FloatingPreviewPosition | null>(
+    null
+  );
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    const anchor = anchorRef.current;
+    // Only the desktop side pane leaves room beside it; fullscreen and mobile
+    // panes cover the whole screen.
+    const pane = anchor?.closest<HTMLElement>(".sb-pane-side-shell");
+    const scrollRoot = anchor?.closest<HTMLElement>(".sb-pane-detached-body");
+    if (
+      !props.canFloat ||
+      !anchor ||
+      !pane ||
+      !scrollRoot ||
+      typeof IntersectionObserver === "undefined"
+    ) {
+      return;
+    }
+
+    let scrolledPast = false;
+    const update = () => {
+      setPosition(
+        scrolledPast ? getFloatingPreviewPosition(pane, scrollRoot) : null
+      );
+    };
+
+    const intersection = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry) return;
+        const rootTop =
+          entry.rootBounds?.top ?? scrollRoot.getBoundingClientRect().top;
+        scrolledPast =
+          !entry.isIntersecting && entry.boundingClientRect.bottom <= rootTop;
+        if (!scrolledPast) {
+          setDismissed(false);
+        }
+        update();
+      },
+      { root: scrollRoot, threshold: 0 }
+    );
+    intersection.observe(anchor);
+
+    // The pane can be resized by dragging its edge, and the window resized,
+    // both of which move the spot beside the pane.
+    const resize =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    resize?.observe(pane);
+    window.addEventListener("resize", update);
+
+    return () => {
+      intersection.disconnect();
+      resize?.disconnect();
+      window.removeEventListener("resize", update);
+      setPosition(null);
+    };
+  }, [props.canFloat]);
+
+  const floating =
+    position && !dismissed && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            className="sb-cz-floating-preview"
+            data-testid="floating-theme-preview"
+            style={{
+              top: `${position.top}px`,
+              right: `${position.right}px`,
+              width: `${FLOATING_PREVIEW_WIDTH_PX}px`,
+            }}
+          >
+            <button
+              type="button"
+              className="sb-cz-floating-preview-close"
+              aria-label={t("customization-preview-hide", {
+                defaultValue: "Hide preview",
+              })}
+              onClick={() => setDismissed(true)}
+            >
+              <MaterialIcon>close</MaterialIcon>
+            </button>
+            <ThemeLivePreview
+              theme={props.theme}
+              highlightId={props.highlightId}
+            />
+          </div>,
+          document.body
+        )
+      : null;
+
+  return (
+    <>
+      <div ref={anchorRef} className="sb-cz-live-preview-dock">
+        <ThemeLivePreview theme={props.theme} highlightId={props.highlightId} />
+      </div>
+      {floating}
+    </>
+  );
 }

@@ -29,21 +29,23 @@
     color-mix(in srgb, var(--sb-font-color), transparent 85%);
 }
 
+/* The layer adds no box of its own, so the backdrop and the dialog stack
+   independently: content can be raised between them (z-index 1101), above
+   the dimming but under the dialog — the theme editor's live preview does. */
 .sb-color-picker-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 1100;
+  display: contents;
 }
 
 .sb-color-picker-backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  z-index: 1100;
   background: color-mix(in srgb, #000, transparent 55%);
 }
 
 .sb-color-picker-dialog {
-  position: absolute;
-  z-index: 1;
+  position: fixed;
+  z-index: 1102;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;

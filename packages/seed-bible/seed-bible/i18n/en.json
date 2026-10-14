@@ -1125,5 +1125,6 @@
   "audio-playback-verse": "Verse {{current}} of {{total}}",
   "audio-scrub-verse": "Verse {{verse}}",
   "tab-playing-audio": "Playing audio",
-  "collapsed-tab-playing-label": "{{label}} — playing audio"
+  "collapsed-tab-playing-label": "{{label}} — playing audio",
+  "customization-preview-hide": "Hide preview"
 }
