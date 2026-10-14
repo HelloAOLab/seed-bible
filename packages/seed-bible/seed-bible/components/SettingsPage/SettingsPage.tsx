@@ -1650,7 +1650,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       <section className="sb-settings-section">
         {activeCustomization && (
           <p className="sb-settings-field-description">
-            {t("extensions-for-active-customization", {
+            {t("extensions-for-active-customization-scoped", {
               defaultValue:
                 "Showing extensions for {{name}}. Changes you make here only apply while you're using it.",
               name: activeCustomization.name,

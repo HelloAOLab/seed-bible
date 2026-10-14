@@ -296,6 +296,46 @@ describe("CustomizationExtensionPreferencesManager", () => {
     );
   });
 
+  for (const [label, failedLoad] of [
+    [
+      "the record can't be loaded",
+      {
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "Server error",
+      },
+    ],
+    [
+      "the record can't be read",
+      {
+        success: true,
+        data: {
+          extraExtensionIds: { "owner.customization_1": "not-an-array" },
+        },
+      },
+    ],
+  ] as const) {
+    it(`keeps changes made while signed out, without writing, when ${label} at sign-in`, async () => {
+      userIdSignal.value = null;
+      getDataMock.mockResolvedValue(failedLoad);
+      const manager = createCustomizationExtensionPreferencesManager(os, login);
+      await flushPromises();
+      await manager.addRemovedExtensionId("L", "x");
+
+      userIdSignal.value = "user-1";
+      await flushPromises();
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(manager.getRemovedExtensionIds("L")).toEqual(["x"]);
+
+      // Later changes still apply for the session but don't overwrite the
+      // record that couldn't be read.
+      await manager.addExtraExtensionId("L", "y");
+      expect(manager.getExtraExtensionIds("L")).toEqual(["y"]);
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+  }
+
   it("skips a corrupt persisted payload rather than throwing", async () => {
     getDataMock.mockResolvedValue({
       success: true,

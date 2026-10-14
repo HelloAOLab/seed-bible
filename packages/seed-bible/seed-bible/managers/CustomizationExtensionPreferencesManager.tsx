@@ -104,19 +104,29 @@ export function createCustomizationExtensionPreferencesManager(
     if (login.userId.value !== userId) {
       return;
     }
+    // Only a record that doesn't exist yet counts as empty. Any other failure
+    // leaves `loadedUserId` unset, so the viewer's changes stay in memory and
+    // nothing writes over a record that couldn't be read.
+    if (!result.success && result.errorCode !== "data_not_found") {
+      console.warn(
+        "Failed to load customization extension preferences:",
+        result
+      );
+      return;
+    }
     let savedExtra: IdsByLocator = {};
     let savedRemoved: IdsByLocator = {};
     if (result.success && result.data) {
       const parsed = extensionPreferencesPayloadSchema.safeParse(result.data);
-      if (parsed.success) {
-        savedExtra = parsed.data.extraExtensionIds;
-        savedRemoved = parsed.data.removedExtensionIds;
-      } else {
+      if (!parsed.success) {
         console.warn(
           "Failed to parse customization extension preferences:",
           parsed.error
         );
+        return;
       }
+      savedExtra = parsed.data.extraExtensionIds;
+      savedRemoved = parsed.data.removedExtensionIds;
     }
     // Changes made before this user's record loaded (while signed out, or
     // while this request was in flight) only live in the signals. Fold them
