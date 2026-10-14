@@ -636,12 +636,34 @@
 }
 
 .sb-today-container .sb-today-feed-card .sb-today-feed-kind-filter {
+  --sb-today-feed-fade-left: 0px;
+  --sb-today-feed-fade-right: 0px;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.5rem;
   overflow-x: scroll;
   scrollbar-width: none;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    black var(--sb-today-feed-fade-left),
+    black calc(100% - var(--sb-today-feed-fade-right)),
+    transparent 100%
+  );
+}
+
+/* Each edge fades only while pills are hidden past it (`useScrollEdgeFade`). */
+.sb-today-container
+  .sb-today-feed-card
+  .sb-today-feed-kind-filter[data-fade-left] {
+  --sb-today-feed-fade-left: 0.5rem;
+}
+
+.sb-today-container
+  .sb-today-feed-card
+  .sb-today-feed-kind-filter[data-fade-right] {
+  --sb-today-feed-fade-right: 0.5rem;
 }
 
 .sb-today-container .sb-today-feed-card .sb-today-feed-kind-option {
@@ -910,16 +932,6 @@
   .sb-today-welcome-screen .sb-today-welcome-screen-navigation > button {
     height: 3rem;
   }
-  .sb-today-container .sb-today-feed-card .sb-today-feed-kind-filter {
-    mask-image: linear-gradient(
-      to right,
-      transparent 0px,
-      black 8px,
-      black calc(100% - 8px),
-      transparent 100%
-    );
-  }
-
   .sb-today-container
     .sb-today-bookmarks-section
     .sb-today-bookmarks-section-bookmark {

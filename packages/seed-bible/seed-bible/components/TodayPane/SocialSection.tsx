@@ -23,6 +23,7 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { useHorizontalScroll } from "../useHorizontalScroll";
+import { useScrollEdgeFade } from "../useScrollEdgeFade";
 import { useTimeContext } from "./TimeContext";
 import { useI18n } from "../../i18n";
 import {
@@ -297,9 +298,11 @@ function FeedCard(props: {
   const { t, language } = useI18n();
   const { timespan } = useSocialSectionContext();
 
-  // The kind pills scroll horizontally with the vertical wheel.
+  // The kind pills scroll horizontally with the vertical wheel, and fade at
+  // an edge only while pills are hidden past it.
   const kindFilterRef = useRef<HTMLDivElement | null>(null);
   useHorizontalScroll(kindFilterRef);
+  useScrollEdgeFade(kindFilterRef);
 
   const kindLabels: Record<CommunityFeedKind, string> = {
     all: t("all", { defaultValue: "All" }),
