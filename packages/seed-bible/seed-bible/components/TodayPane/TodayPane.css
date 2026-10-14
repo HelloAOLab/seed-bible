@@ -596,43 +596,33 @@
   min-width: 0;
 }
 
-/* A round chip in the pills' colours, filled in the same way while open. */
+/* A bare icon, unlike the pills: no background, and the accent colour while
+   history is open. */
 .sb-today-container .sb-today-feed-card .sb-today-feed-history-button {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
   padding: 0;
   margin: 0;
   border: none;
-  border-radius: 50%;
-  background-color: var(--sb-secondary-color);
-  color: var(--sb-secondary-font-color);
+  background-color: transparent;
+  color: var(--sb-font-color);
   cursor: pointer;
 }
 
-.sb-today-container .sb-today-feed-card .sb-today-feed-history-button:hover {
-  background-color: color-mix(
-    in srgb,
-    var(--sb-secondary-color),
-    var(--sb-font-color) 8%
-  );
-}
-
+.sb-today-container .sb-today-feed-card .sb-today-feed-history-button:hover,
 .sb-today-container
   .sb-today-feed-card
   .sb-today-feed-history-button.sb-today-feed-history-button-selected {
-  color: var(--sb-primary-font-color);
-  background-color: var(--sb-primary-color);
+  color: var(--sb-primary-color);
 }
 
 .sb-today-container
   .sb-today-feed-card
   .sb-today-feed-history-button
   > .material-symbols-outlined {
-  font-size: 1.125rem;
+  font-size: 1.5rem;
 }
 
 .sb-today-container .sb-today-feed-card .sb-today-feed-kind-filter {
@@ -1004,16 +994,11 @@
     font-size: 0.875rem;
   }
 
-  .sb-today-container .sb-today-feed-card .sb-today-feed-history-button {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-
   .sb-today-container
     .sb-today-feed-card
     .sb-today-feed-history-button
     > .material-symbols-outlined {
-    font-size: 0.9rem;
+    font-size: 1.25rem;
   }
 
   .sb-today-container
