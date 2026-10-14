@@ -1488,7 +1488,21 @@ export function createExtensionManager(
       targetIds === null
         ? await computeSavedExtensionIds()
         : new Set(targetIds);
-    const current = new Set(installedExtensionIds);
+    // Whatever a wanted extension depends on stays too, or unloading it
+    // would break the extension that needs it.
+    for (const id of target) {
+      for (const dependencyId of knownExtensionsById.get(id)?.meta
+        .dependencies ?? []) {
+        target.add(dependencyId);
+      }
+    }
+    // Bundled extensions count as installed by being registered, without
+    // ever entering `installedExtensionIds`, so check both.
+    const current = new Set(
+      [...installedExtensionIds, ...knownExtensionsById.keys()].filter(
+        isSatisfiedDependency
+      )
+    );
 
     for (const id of current) {
       if (!target.has(id)) {
@@ -1496,7 +1510,7 @@ export function createExtensionManager(
       }
     }
     for (const id of target) {
-      if (installedExtensionIds.has(id)) {
+      if (isSatisfiedDependency(id)) {
         continue;
       }
       const extension = knownExtensionsById.get(id);

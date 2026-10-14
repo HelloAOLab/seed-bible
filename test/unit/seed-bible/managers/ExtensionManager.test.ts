@@ -2330,6 +2330,75 @@ describe("createExtensionManager", () => {
     });
   });
 
+  describe("reconcileInstalledExtensions() with bundled (import-based) extensions", () => {
+    const bundled = (id: string, dependencies?: string[]) => ({
+      import: () =>
+        Promise.resolve({
+          default: () => registerExtension({ id, init: () => ({}) }),
+        }),
+      meta: {
+        id,
+        translations: { en: { title: id, description: id } },
+        dependencies,
+      },
+    });
+    const isRegistered = (id: string) =>
+      ExtensionInitalizer.getInstance().isExtensionRegistered(id);
+
+    afterEach(() => {
+      for (const id of ["ext.bundled-a", "ext.bundled-b", "ext.bundled-dep"]) {
+        ExtensionInitalizer.getInstance().unregisterExtension(id);
+      }
+    });
+
+    it("uninstalls a bundled extension that's no longer wanted", async () => {
+      const set: ExtensionSet = {
+        id: "set.bundled",
+        extensions: [bundled("ext.bundled-a"), bundled("ext.bundled-b")],
+      };
+      const manager = createExtensionManager(login, {
+        defaultExtensions: set,
+      });
+      await manager.loadExtensionSet(set, () => false);
+
+      await manager.reconcileInstalledExtensions([
+        "ext.bundled-a",
+        "ext.bundled-b",
+      ]);
+      expect(isRegistered("ext.bundled-a")).toBe(true);
+      expect(isRegistered("ext.bundled-b")).toBe(true);
+
+      await manager.reconcileInstalledExtensions(["ext.bundled-b"]);
+
+      expect(isRegistered("ext.bundled-a")).toBe(false);
+      expect(isRegistered("ext.bundled-b")).toBe(true);
+    });
+
+    it("keeps what a wanted extension depends on", async () => {
+      const set: ExtensionSet = {
+        id: "set.bundled-dep",
+        extensions: [
+          bundled("ext.bundled-a", ["ext.bundled-dep"]),
+          bundled("ext.bundled-dep"),
+        ],
+      };
+      const manager = createExtensionManager(login, {
+        defaultExtensions: set,
+      });
+      await manager.loadExtensionSet(set, () => false);
+
+      await manager.reconcileInstalledExtensions(["ext.bundled-a"]);
+      expect(isRegistered("ext.bundled-dep")).toBe(true);
+
+      // A later swap (e.g. the viewer adding another extension) mustn't
+      // drop the dependency out from under the extension still using it.
+      await manager.reconcileInstalledExtensions(["ext.bundled-a"]);
+
+      expect(isRegistered("ext.bundled-a")).toBe(true);
+      expect(isRegistered("ext.bundled-dep")).toBe(true);
+    });
+  });
+
   it("reconcileInstalledExtensions() warns and skips an id with no matching known extension", async () => {
     const manager = createExtensionManager(login);
     const warnSpy = vi

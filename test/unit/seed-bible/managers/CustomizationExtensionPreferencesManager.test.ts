@@ -107,6 +107,7 @@ describe("CustomizationExtensionPreferencesManager", () => {
       EXTENSION_PREFERENCES_ADDRESS,
       {
         extraExtensionIds: { "owner.customization_1": ["ext.saved", "ext.a"] },
+        removedExtensionIds: {},
       },
       { marker: "publicRead" }
     );
@@ -145,6 +146,7 @@ describe("CustomizationExtensionPreferencesManager", () => {
           "owner.customization_2": ["ext.b"],
           "owner.customization_1": ["ext.a"],
         },
+        removedExtensionIds: {},
       },
       { marker: "publicRead" }
     );
@@ -174,7 +176,10 @@ describe("CustomizationExtensionPreferencesManager", () => {
     expect(recordDataMock).toHaveBeenCalledWith(
       "user-1",
       EXTENSION_PREFERENCES_ADDRESS,
-      { extraExtensionIds: { "user-1.customization_1": ["ext.a"] } },
+      {
+        extraExtensionIds: { "user-1.customization_1": ["ext.a"] },
+        removedExtensionIds: {},
+      },
       { marker: "publicRead" }
     );
   });
@@ -208,7 +213,10 @@ describe("CustomizationExtensionPreferencesManager", () => {
     expect(recordDataMock).toHaveBeenCalledWith(
       "user-1",
       EXTENSION_PREFERENCES_ADDRESS,
-      { extraExtensionIds: { "user-1.customization_1": ["ext.b"] } },
+      {
+        extraExtensionIds: { "user-1.customization_1": ["ext.b"] },
+        removedExtensionIds: {},
+      },
       { marker: "publicRead" }
     );
   });
@@ -239,6 +247,53 @@ describe("CustomizationExtensionPreferencesManager", () => {
     expect(manager.getExtraExtensionIds("owner.customization_1")).toEqual([
       "ext.x",
     ]);
+  });
+
+  it("loads removed auto-installed extensions, and still reads a record saved before they existed", async () => {
+    getDataMock.mockResolvedValueOnce({
+      success: true,
+      data: {
+        extraExtensionIds: {},
+        removedExtensionIds: { "owner.customization_1": ["ext.base"] },
+      },
+    });
+    const manager = createCustomizationExtensionPreferencesManager(os, login);
+    await flushPromises();
+    expect(manager.getRemovedExtensionIds("owner.customization_1")).toEqual([
+      "ext.base",
+    ]);
+
+    getDataMock.mockResolvedValueOnce({
+      success: true,
+      data: { extraExtensionIds: { "owner.customization_1": ["ext.a"] } },
+    });
+    userIdSignal.value = "user-2";
+    await flushPromises();
+    expect(manager.getExtraExtensionIds("owner.customization_1")).toEqual([
+      "ext.a",
+    ]);
+    expect(manager.getRemovedExtensionIds("owner.customization_1")).toEqual([]);
+  });
+
+  it("saves a removal made while signed out when the viewer signs in", async () => {
+    userIdSignal.value = null;
+    const manager = createCustomizationExtensionPreferencesManager(os, login);
+    await flushPromises();
+    await manager.addRemovedExtensionId("owner.customization_1", "ext.base");
+    expect(recordDataMock).not.toHaveBeenCalled();
+
+    userIdSignal.value = "user-1";
+    await flushPromises();
+
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      EXTENSION_PREFERENCES_ADDRESS,
+      {
+        extraExtensionIds: {},
+        removedExtensionIds: { "owner.customization_1": ["ext.base"] },
+      },
+      { marker: "publicRead" }
+    );
   });
 
   it("skips a corrupt persisted payload rather than throwing", async () => {

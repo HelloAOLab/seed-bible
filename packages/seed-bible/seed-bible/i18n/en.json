@@ -172,7 +172,7 @@
   "extension-availability-available": "Available",
   "extension-availability-auto-installed": "Auto-installed",
   "extension-availability-hidden": "Hidden",
-  "extensions-for-active-customization": "Showing extensions for {{name}}. Extensions this customization includes can't be removed here.",
+  "extensions-for-active-customization": "Showing extensions for {{name}}. Changes you make here only apply while you're using it.",
   "variants": "Themes",
   "add-variant": "Add theme",
   "base-theme-description": "Anything you haven't changed follows this preset. Your own edits are kept.",
