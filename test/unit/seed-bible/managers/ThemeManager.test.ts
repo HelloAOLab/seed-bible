@@ -25,6 +25,21 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { signal } from "@preact/signals";
+import {
+  getContrastRatio,
+  MIN_READABLE_CONTRAST_RATIO,
+} from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
+
+describe("LIGHT_THEME highlight colors", () => {
+  it.each(Object.entries(LIGHT_THEME.highlightColors))(
+    "keeps words of Jesus readable on the %s highlight",
+    (_colorId, { color, wordsOfJesusFontColor }) => {
+      expect(
+        getContrastRatio(wordsOfJesusFontColor, color)
+      ).toBeGreaterThanOrEqual(MIN_READABLE_CONTRAST_RATIO);
+    }
+  );
+});
 
 describe("ThemeManager CSS helpers", () => {
   function createTheme(overrides: Partial<BibleTheme> = {}): BibleTheme {
