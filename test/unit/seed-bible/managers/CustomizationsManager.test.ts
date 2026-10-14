@@ -33,7 +33,7 @@ import {
   createNavigationManager,
   type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
-import { signal } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 import { stubColorScheme } from "../testUtils/stubColorScheme";
 
@@ -2186,6 +2186,42 @@ describe("CustomizationsManager", () => {
     await manager.removeExtensionFromActiveCustomization("ext.extra");
 
     expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("lets a signed-out visitor to a shared customization install an extra extension", async () => {
+    (login.userId as Signal<string | null>).value = null;
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        id: "customization_shared",
+        name: "Shared",
+        variants: [
+          {
+            id: "variant_shared",
+            name: "Shared variant",
+            themes: {},
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        ],
+        defaultVariantId: "variant_shared",
+        logoUrl: null,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    });
+    const linkedNavigation = createNavigationManager({
+      initialHref:
+        "http://localhost/?customization=other-user.customization_shared",
+    });
+    const { manager } = createManager(linkedNavigation);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(manager.activeCustomization.value?.id).toBe("customization_shared");
+
+    await manager.addExtensionToActiveCustomization("ext.extra");
+
+    expect(manager.activeExtensionIds.value).toEqual(["ext.extra"]);
   });
 
   it("auto-loads a customization from the ?customization= query param on construction", async () => {

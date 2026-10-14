@@ -68,17 +68,96 @@ describe("CustomizationExtensionPreferencesManager", () => {
     warnSpy.mockRestore();
   });
 
-  it("signed out: preferences are empty and add/remove are no-ops", async () => {
+  it("signed out: add/remove apply for this session without writing a record", async () => {
     userIdSignal.value = null;
     const manager = createCustomizationExtensionPreferencesManager(os, login);
     await flushPromises();
 
-    expect(manager.extraExtensionIdsByLocator.value).toEqual({});
     expect(manager.getExtraExtensionIds("owner.customization_1")).toEqual([]);
 
     await manager.addExtraExtensionId("owner.customization_1", "ext.a");
+    expect(manager.getExtraExtensionIds("owner.customization_1")).toEqual([
+      "ext.a",
+    ]);
 
-    expect(manager.extraExtensionIdsByLocator.value).toEqual({});
+    await manager.removeExtraExtensionId("owner.customization_1", "ext.a");
+    expect(manager.getExtraExtensionIds("owner.customization_1")).toEqual([]);
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("saves picks made while signed out into the viewer's record when they sign in", async () => {
+    userIdSignal.value = null;
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: { extraExtensionIds: { "owner.customization_1": ["ext.saved"] } },
+    });
+    const manager = createCustomizationExtensionPreferencesManager(os, login);
+    await flushPromises();
+    await manager.addExtraExtensionId("owner.customization_1", "ext.a");
+
+    userIdSignal.value = "user-1";
+    await flushPromises();
+
+    expect(manager.getExtraExtensionIds("owner.customization_1")).toEqual([
+      "ext.saved",
+      "ext.a",
+    ]);
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      EXTENSION_PREFERENCES_ADDRESS,
+      {
+        extraExtensionIds: { "owner.customization_1": ["ext.saved", "ext.a"] },
+      },
+      { marker: "publicRead" }
+    );
+  });
+
+  it("keeps a pick made before the viewer's record finished loading, without overwriting the record first", async () => {
+    let resolveLoad!: (value: unknown) => void;
+    getDataMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveLoad = resolve;
+      })
+    );
+    const manager = createCustomizationExtensionPreferencesManager(os, login);
+    await manager.addExtraExtensionId("owner.customization_1", "ext.a");
+
+    expect(manager.getExtraExtensionIds("owner.customization_1")).toEqual([
+      "ext.a",
+    ]);
+    expect(recordDataMock).not.toHaveBeenCalled();
+
+    resolveLoad({
+      success: true,
+      data: { extraExtensionIds: { "owner.customization_2": ["ext.b"] } },
+    });
+    await flushPromises();
+
+    expect(manager.extraExtensionIdsByLocator.value).toEqual({
+      "owner.customization_2": ["ext.b"],
+      "owner.customization_1": ["ext.a"],
+    });
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      EXTENSION_PREFERENCES_ADDRESS,
+      {
+        extraExtensionIds: {
+          "owner.customization_2": ["ext.b"],
+          "owner.customization_1": ["ext.a"],
+        },
+      },
+      { marker: "publicRead" }
+    );
+  });
+
+  it("doesn't rewrite the record on load when there's nothing new to save", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: { extraExtensionIds: { "owner.customization_1": ["ext.a"] } },
+    });
+    createCustomizationExtensionPreferencesManager(os, login);
+    await flushPromises();
+
     expect(recordDataMock).not.toHaveBeenCalled();
   });
 
