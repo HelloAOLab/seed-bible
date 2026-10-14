@@ -20,8 +20,8 @@
 
 /* The selector takes the reader toolbar's colors. Its rules are written
    against --sb-font-color / --sb-background, so the panel re-points those, and
-   the expanded book section (chapter buttons) switches back to the page
-   colors captured here on the overlay, before the panel overrides them. */
+   the chapter buttons switch back to the page colors captured here on the
+   overlay, before the panel overrides them. */
 .sb-selector-overlay {
   --sb-selector-page-font-color: var(--sb-font-color);
   --sb-selector-page-background: var(--sb-background);
@@ -718,7 +718,13 @@
   gap: 0.625rem;
   row-gap: 0.8125rem;
   flex-wrap: wrap;
-  background-color: var(--sb-background);
+  /* A light shade of the panel itself, so the section sits well on any
+     reader toolbar color. */
+  background-color: color-mix(
+    in srgb,
+    var(--sb-reader-toolbar-font-color) 5%,
+    var(--sb-reader-toolbar-background)
+  );
   padding: 0.5rem;
   border-radius: 0.3125rem;
 }
