@@ -1607,15 +1607,8 @@ describe("AnnotationsManager", () => {
       ).toEqual(["a1"]);
     });
 
-    it("closes the discover pane on mobile after a new note started from the reader is saved", async () => {
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(true) }
-      );
+    it("closes the discover pane after a new note started from the reader is saved", async () => {
+      const manager = createManager();
       expect(discover.view.value).toBeNull();
 
       await manager.createNewAnnotation();
@@ -1628,15 +1621,8 @@ describe("AnnotationsManager", () => {
       expect(discover.view.value).toBeNull();
     });
 
-    it("returns to the discover list on mobile when a new note was started from that list", async () => {
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(true) }
-      );
+    it("returns to the discover list when a new note was started from that list", async () => {
+      const manager = createManager();
       discover.view.value = "discover";
 
       await manager.createNewAnnotation();
@@ -1648,15 +1634,8 @@ describe("AnnotationsManager", () => {
       expect(discover.view.value).toBe("discover");
     });
 
-    it("returns to the discover list on mobile when a note opened from that list is saved", async () => {
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(true) }
-      );
+    it("returns to the discover list when a note opened from that list is saved", async () => {
+      const manager = createManager();
       discover.view.value = "discover";
       manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
       expect(discover.view.value).toBe("create_annotation");
@@ -1668,15 +1647,8 @@ describe("AnnotationsManager", () => {
       expect(discover.view.value).toBe("discover");
     });
 
-    it("closes the discover pane on mobile when an existing note opened from the reader is saved", async () => {
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(true) }
-      );
+    it("closes the discover pane when an existing note opened from the reader is saved", async () => {
+      const manager = createManager();
       expect(discover.view.value).toBeNull();
       manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
       expect(discover.view.value).toBe("create_annotation");
@@ -1684,61 +1656,11 @@ describe("AnnotationsManager", () => {
       await manager.saveEditingAnnotation();
 
       expect(recordDataMock).toHaveBeenCalledTimes(1);
-      expect(discover.view.value).toBeNull();
-    });
-
-    it("restores discover to its prior view on desktop after a save", async () => {
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(false) }
-      );
-      discover.view.value = "discover";
-      manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
-
-      await manager.saveEditingAnnotation();
-
-      expect(recordDataMock).toHaveBeenCalledTimes(1);
-      expect(discover.view.value).toBe("discover");
-    });
-
-    it("closes the discover pane on desktop after a note started from the reader is saved", async () => {
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(false) }
-      );
-      expect(discover.view.value).toBeNull();
-
-      await manager.createNewAnnotation();
-      expect(discover.view.value).toBe("create_annotation");
-
-      await manager.saveEditingAnnotation();
-
-      expect(recordDataMock).toHaveBeenCalledTimes(1);
-      expect(manager.editingAnnotation.value).toBeNull();
       expect(discover.view.value).toBeNull();
     });
 
     it("returns to the playlist player after saving a note created while a playlist was playing", async () => {
-      // When the user selects a verse and presses Note while the playlist player
-      // is showing in Discover, the editor opens over it. After saving, the
-      // playlist player comes back (viewBeforeEditing = "play_playlist").
-      // Testers: flag this if returning to the player looks wrong in practice.
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(false) }
-      );
+      const manager = createManager();
       discover.view.value = "play_playlist";
 
       await manager.createNewAnnotation();
@@ -1826,15 +1748,8 @@ describe("AnnotationsManager", () => {
       expect(discover.view.value).toBeNull();
     });
 
-    it("closes the discover pane on mobile when a new note started from the reader is cancelled", async () => {
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(true) }
-      );
+    it("closes the discover pane when a new note started from the reader is cancelled", async () => {
+      const manager = createManager();
       await manager.createNewAnnotation();
       expect(discover.view.value).toBe("create_annotation");
 
@@ -1844,53 +1759,8 @@ describe("AnnotationsManager", () => {
       expect(discover.view.value).toBeNull();
     });
 
-    it("returns to the discover list on mobile when cancelling a note opened from that list", () => {
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(true) }
-      );
-      discover.view.value = "discover";
-      manager.editAnnotation(createCommentAnnotation());
-
-      manager.cancelEditingAnnotation();
-
-      expect(manager.editingAnnotation.value).toBeNull();
-      expect(discover.view.value).toBe("discover");
-    });
-
-    it("closes the discover pane on desktop when a new note started from the reader is cancelled", async () => {
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(false) }
-      );
-      expect(discover.view.value).toBeNull();
-
-      await manager.createNewAnnotation();
-      expect(discover.view.value).toBe("create_annotation");
-
-      manager.cancelEditingAnnotation();
-
-      expect(manager.editingAnnotation.value).toBeNull();
-      expect(discover.view.value).toBeNull();
-    });
-
-    it("restores discover to its prior view on desktop when cancelling a note opened from that list", () => {
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(false) }
-      );
+    it("returns to the discover list when cancelling a note opened from that list", () => {
+      const manager = createManager();
       discover.view.value = "discover";
       manager.editAnnotation(createCommentAnnotation());
 
@@ -1901,17 +1771,7 @@ describe("AnnotationsManager", () => {
     });
 
     it("returns to the playlist player after cancelling a note created while a playlist was playing", async () => {
-      // Same as the save variant above: the playlist player was showing when
-      // Note was pressed, so cancelling brings it back.
-      // Testers: flag this if returning to the player looks wrong in practice.
-      const manager = createAnnotationsManager(
-        os,
-        login,
-        tabs,
-        discover,
-        undefined,
-        { isMobile: signal(false) }
-      );
+      const manager = createManager();
       discover.view.value = "play_playlist";
 
       await manager.createNewAnnotation();

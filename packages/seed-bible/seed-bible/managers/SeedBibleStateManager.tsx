@@ -895,7 +895,6 @@ export function createSeedBibleState(
     annotationRecordKey,
     {
       confirmAdoption: (owner) => askToAdopt(owner, "notes"),
-      isMobile,
       friendIds: friends.friendIds,
       friendReads,
     }
