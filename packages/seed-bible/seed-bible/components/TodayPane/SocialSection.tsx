@@ -18,20 +18,19 @@ import {
 } from "./useReadingHistoryTimeline";
 import { MaterialIcon } from "../icons";
 import { ReadingHistoryTimeline } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
-import {
-  ContextMenuItem,
-  ContextMenuWithButton,
-} from "../ContextMenu/ContextMenu";
 import { useHorizontalScroll } from "../useHorizontalScroll";
 import { useScrollEdgeFade } from "../useScrollEdgeFade";
 import { useTimeContext } from "./TimeContext";
 import { useI18n } from "../../i18n";
 import {
-  buildTimespanOptions,
   getTimelineYearTimespan,
   type Timespan,
-  type TimespanOptionId,
 } from "../../managers/TodayReadingHistory";
+import {
+  createCommunityFeedPager,
+  FEED_PAGE_SIZE,
+  type CommunityFeedPager,
+} from "../../managers/TodayCommunityFeedPager";
 import type {
   CommunityFeedItem,
   CommunityFeedKind,
@@ -49,8 +48,6 @@ import type {
 } from "../../managers/TodayManager";
 import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { htmlToPlainText } from "../CreateAnnotationForm/PlainTextAnnotationEditor";
-
-const TIMESPAN_OPTION_IDS = ["twoDays", "week", "month", "all"] as const;
 
 const FEED_KINDS = ["all", "notes", "reading"] as const;
 
@@ -121,13 +118,15 @@ export const SocialSection = (props: {
     t,
   ]);
 
-  const initialOption = useMemo(() => buildTimespanOptions().twoDays, []);
-  const windowId = useSignal<TimespanOptionId>("twoDays");
-  const windowSpan = useSignal<Timespan | undefined>(initialOption.timespan);
-  const year = useSignal<number>(initialOption.year);
+  const historyOpen = useSignal(false);
+  const year = useSignal<number>(new Date().getFullYear());
   const timespan = useSignal<Timespan | undefined>(undefined);
   const kind = useSignal<CommunityFeedKind>("all");
-  const feed = useSignal<FeedState>({ status: "loading", items: [] });
+  const history = useSignal<FeedState>({ status: "loading", items: [] });
+  const pager = useSignal<CommunityFeedPager | null>(null);
+  // How many older rows "See more" has revealed, counted after the kind filter.
+  const olderShown = useSignal(0);
+  const seeMoreBusy = useSignal(false);
 
   // Stable identities, and that is load-bearing rather than tidiness: the
   // timeline hook memoises ~370 grid items against `selectDay`, so a fresh
@@ -143,46 +142,50 @@ export const SocialSection = (props: {
     timespan.value = selectedTimespan;
   }, []);
 
-  const selectWindow = useCallback((id: TimespanOptionId) => {
-    // Resolved against the clock at the moment of the click, not at render,
-    // so a screen left open all day still asks for the last 48 hours — picking
-    // the window that is already selected is how to bring it up to date.
-    const option = buildTimespanOptions()[id];
-    windowSpan.value = option.timespan;
-    // Re-picking keeps the timeline's year and day where the user left them.
-    if (windowId.peek() === id) return;
-    windowId.value = id;
-    windowSpan.value = option.timespan;
-    year.value = option.year;
-    timespan.value = undefined;
+  const toggleHistory = useCallback(() => {
+    // History opens on the current year with no day picked.
+    if (!historyOpen.peek()) {
+      year.value = new Date().getFullYear();
+      timespan.value = undefined;
+    }
+    historyOpen.value = !historyOpen.peek();
   }, []);
 
-  // The query window: the picked relative window, or — under "all" — the day
-  // picked in the timeline, else the whole timeline year. Crossed paths are
-  // grouped for the relative windows only (#1848).
+  const selectKind = useCallback((next: CommunityFeedKind) => {
+    kind.value = next;
+    olderShown.value = 0;
+  }, []);
+
+  // The default view: recent rows up front, older ones as "See more" asks.
+  // Started afresh when the member list changes, so signing in fills the feed,
+  // and whenever history closes, so coming back to it is up to date.
   useSignalEffect(() => {
-    const span =
-      windowId.value === "all"
-        ? (timespan.value ?? getTimelineYearTimespan(year.value))
-        : windowSpan.value;
-    const crossedPaths = windowId.value !== "all";
-    // Re-run when the member list changes, so signing in fills the feed.
+    if (historyOpen.value) return;
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     communityMembers.value;
 
-    if (!span) {
-      feed.value = { status: "ready", items: [] };
-      return;
-    }
+    const next = createCommunityFeedPager(getCommunityFeed);
+    pager.value = next;
+    olderShown.value = 0;
+    return () => next.dispose();
+  });
+
+  // The history view: the day picked in the timeline, else the whole timeline
+  // year. Crossed paths are left out here; they're for recent reading (#1848).
+  useSignalEffect(() => {
+    if (!historyOpen.value) return;
+    const span = timespan.value ?? getTimelineYearTimespan(year.value);
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    communityMembers.value;
 
     let cancelled = false;
-    // Keep the previous rows up while the next window loads: a blank card for
-    // every filter click reads as "nothing here" when it isn't.
-    feed.value = { status: "loading", items: feed.peek().items };
-    getCommunityFeed(span, { crossedPaths })
+    // Keep the previous rows up while the next span loads: a blank card for
+    // every day clicked reads as "nothing here" when it isn't.
+    history.value = { status: "loading", items: history.peek().items };
+    getCommunityFeed(span, { crossedPaths: false })
       .then((items) => {
         if (!cancelled) {
-          feed.value = { status: "ready", items };
+          history.value = { status: "ready", items };
         }
       })
       .catch((error: unknown) => {
@@ -191,7 +194,7 @@ export const SocialSection = (props: {
           error
         );
         if (!cancelled) {
-          feed.value = { status: "ready", items: [] };
+          history.value = { status: "ready", items: [] };
         }
       });
 
@@ -199,6 +202,22 @@ export const SocialSection = (props: {
       cancelled = true;
     };
   });
+
+  const seeMore = async () => {
+    const current = pager.peek();
+    if (!current || seeMoreBusy.peek()) return;
+    const kindAtClick = kind.peek();
+    const target = olderShown.peek() + FEED_PAGE_SIZE;
+    seeMoreBusy.value = true;
+    try {
+      await current.loadOlder(target, kindFilter(kindAtClick));
+    } finally {
+      seeMoreBusy.value = false;
+    }
+    if (pager.peek() === current && kind.peek() === kindAtClick) {
+      olderShown.value = target;
+    }
+  };
 
   // The timeline hook reads this to know whose history to draw. Everyone in
   // the member list is shown; there is no per-person filter in this design.
@@ -208,6 +227,29 @@ export const SocialSection = (props: {
       [...userProfileMap.keys()].map((id) => [id, true])
     );
   }, [userProfileMap]);
+
+  const accept = kindFilter(kind.value);
+  let items: CommunityFeedItem[] = [];
+  let ready = false;
+  let showSeeMore = false;
+  if (historyOpen.value) {
+    items = history.value.items.filter(accept);
+    ready = history.value.status === "ready";
+  } else if (pager.value) {
+    const current = pager.value;
+    const older = current.older.value.filter(accept);
+    items = [
+      ...current.recent.value.filter(accept),
+      ...older.slice(0, olderShown.value),
+    ];
+    ready = !current.loadingRecent.value;
+    // Hidden while the pager looks ahead on its own, so the link doesn't
+    // flash up only to vanish when there turns out to be nothing older.
+    showSeeMore =
+      ready &&
+      (older.length > olderShown.value || current.mayHaveOlder.value) &&
+      (seeMoreBusy.value || !current.loadingOlder.value);
+  }
 
   return (
     <SocialSectionProvider
@@ -225,11 +267,17 @@ export const SocialSection = (props: {
           today={props.today}
           theme={props.theme}
           selfUserId={userId}
-          windowId={windowId.value}
-          onSelectWindow={selectWindow}
+          historyOpen={historyOpen.value}
+          onToggleHistory={toggleHistory}
           kind={kind.value}
-          onSelectKind={(next) => (kind.value = next)}
-          feed={feed.value}
+          onSelectKind={selectKind}
+          items={items}
+          ready={ready}
+          seeMore={
+            showSeeMore
+              ? { busy: seeMoreBusy.value, onClick: () => void seeMore() }
+              : undefined
+          }
           onOpenPassage={props.onOpenPassage}
         />
       </TitledSection>
@@ -237,62 +285,29 @@ export const SocialSection = (props: {
   );
 };
 
-/** The time-frame dropdown beside the kind pills. */
-function TimeframeMenu(props: {
-  selected: TimespanOptionId;
-  onSelect: (id: TimespanOptionId) => void;
-}) {
-  const { t } = useI18n();
-  const labels: Record<TimespanOptionId, string> = {
-    twoDays: t("last-48-hours", { defaultValue: "Last 48 hours" }),
-    week: t("last-week", { defaultValue: "Last week" }),
-    month: t("last-month", { defaultValue: "Last month" }),
-    all: t("all", { defaultValue: "All" }),
-  };
-
-  return (
-    <ContextMenuWithButton
-      anchorClassName="sb-today-feed-timeframe"
-      buttonClassName="sb-today-feed-timeframe-button"
-      menuClassName="sb-today-feed-timeframe-menu"
-      aria-label={t("feed-time-frame", { defaultValue: "Time frame" })}
-      icon={
-        <Fragment>
-          <span className="sb-today-feed-timeframe-label">
-            {labels[props.selected]}
-          </span>
-          <MaterialIcon>expand_more</MaterialIcon>
-        </Fragment>
-      }
-    >
-      {TIMESPAN_OPTION_IDS.map((id) => (
-        <ContextMenuItem
-          key={id}
-          role="menuitemradio"
-          aria-checked={props.selected === id}
-          className={
-            props.selected === id
-              ? "sb-today-feed-timeframe-option-selected"
-              : undefined
-          }
-          onClick={() => props.onSelect(id)}
-        >
-          {labels[id]}
-        </ContextMenuItem>
-      ))}
-    </ContextMenuWithButton>
-  );
+/** Whether a row belongs under the selected kind pill. */
+function kindFilter(
+  kind: CommunityFeedKind
+): (item: CommunityFeedItem) => boolean {
+  if (kind === "notes") return (item) => item.type === "note";
+  if (kind === "reading") return (item) => item.type !== "note";
+  return () => true;
 }
 
 function FeedCard(props: {
   today: TodayManager;
   theme: ReadonlySignal<BibleTheme>;
   selfUserId: string | null;
-  windowId: TimespanOptionId;
-  onSelectWindow: (id: TimespanOptionId) => void;
+  historyOpen: boolean;
+  onToggleHistory: () => void;
   kind: CommunityFeedKind;
   onSelectKind: (kind: CommunityFeedKind) => void;
-  feed: FeedState;
+  /** The rows to show, already filtered to the selected kind. */
+  items: CommunityFeedItem[];
+  /** False while the first rows are still loading. */
+  ready: boolean;
+  /** Present while there may be older rows to reveal. */
+  seeMore?: { busy: boolean; onClick: () => void };
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) {
   const { t, language } = useI18n();
@@ -309,17 +324,10 @@ function FeedCard(props: {
     notes: t("notes", { defaultValue: "Notes" }),
     reading: t("feed-reading", { defaultValue: "Reading" }),
   };
-
-  const items = props.feed.items.filter((item) =>
-    props.kind === "all"
-      ? true
-      : props.kind === "notes"
-        ? item.type === "note"
-        : item.type !== "note"
-  );
+  const historyLabel = t("feed-history", { defaultValue: "History" });
 
   const dateLabel =
-    props.windowId === "all" && timespan
+    props.historyOpen && timespan
       ? new Intl.DateTimeFormat(language, {
           month: "short",
           day: "numeric",
@@ -345,12 +353,20 @@ function FeedCard(props: {
             </button>
           ))}
         </div>
-        <TimeframeMenu
-          selected={props.windowId}
-          onSelect={props.onSelectWindow}
-        />
+        <button
+          type="button"
+          aria-pressed={props.historyOpen}
+          aria-label={historyLabel}
+          title={historyLabel}
+          onClick={props.onToggleHistory}
+          className={`sb-today-feed-history-button${
+            props.historyOpen ? " sb-today-feed-history-button-selected" : ""
+          } sb-today-clickable`}
+        >
+          <MaterialIcon>history</MaterialIcon>
+        </button>
       </div>
-      {props.windowId === "all" && (
+      {props.historyOpen && (
         <Fragment>
           <ReadingHistoryTimelineSection
             today={props.today}
@@ -361,9 +377,9 @@ function FeedCard(props: {
           )}
         </Fragment>
       )}
-      {items.length > 0 ? (
+      {props.items.length > 0 ? (
         <ul className="sb-today-feed-list">
-          {items.map((item) => (
+          {props.items.map((item) => (
             <FeedRow
               key={item.id}
               item={item}
@@ -373,7 +389,7 @@ function FeedCard(props: {
             />
           ))}
         </ul>
-      ) : props.feed.status === "ready" ? (
+      ) : props.ready ? (
         <p className="sb-today-feed-empty">
           {props.kind === "notes"
             ? t("feed-empty-notes", {
@@ -388,6 +404,17 @@ function FeedCard(props: {
                 })}
         </p>
       ) : null}
+      {props.seeMore && (
+        <button
+          type="button"
+          className="sb-today-feed-see-more"
+          onClick={props.seeMore.onClick}
+          disabled={props.seeMore.busy}
+          aria-busy={props.seeMore.busy}
+        >
+          {t("see-more", { defaultValue: "See more" })}
+        </button>
+      )}
     </div>
   );
 }

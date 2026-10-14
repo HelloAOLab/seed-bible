@@ -580,8 +580,8 @@
   gap: 0.75rem;
 }
 
-/* The kind pills and the time-frame dropdown share one row. The pills take
-   the free width and scroll; the dropdown keeps its full label on one line. */
+/* The kind pills and the history button share one row. The pills take the
+   free width and scroll; the button stays put at the end. */
 .sb-today-container .sb-today-feed-card .sb-today-feed-toolbar {
   display: flex;
   align-items: center;
@@ -596,43 +596,43 @@
   min-width: 0;
 }
 
-.sb-today-container .sb-today-feed-card .sb-today-feed-timeframe {
+/* A round chip in the pills' colours, filled in the same way while open. */
+.sb-today-container .sb-today-feed-card .sb-today-feed-history-button {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  cursor: pointer;
 }
 
-/* Same accent colour as a section's "see all" link, with a chevron instead of
-   an underline. Sized to its label: the shared menu button is a fixed square
-   for a "more" icon, which squeezed the label onto two lines. */
-.sb-today-container .sb-today-feed-card .sb-today-feed-timeframe-button {
-  display: flex;
-  width: auto;
-  height: auto;
-  white-space: nowrap;
-  align-items: center;
-  gap: 0.125rem;
-  appearance: none;
-  border: none;
-  background-color: transparent;
-  padding: 0.25rem 0;
-  margin: 0;
-  color: var(--sb-primary-color);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  cursor: pointer;
+.sb-today-container .sb-today-feed-card .sb-today-feed-history-button:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    var(--sb-font-color) 8%
+  );
 }
 
 .sb-today-container
   .sb-today-feed-card
-  .sb-today-feed-timeframe-button
-  > .material-symbols-outlined {
-  font-size: 1.125rem;
+  .sb-today-feed-history-button.sb-today-feed-history-button-selected {
+  color: var(--sb-primary-font-color);
+  background-color: var(--sb-primary-color);
 }
 
-.sb-today-feed-timeframe-menu .sb-today-feed-timeframe-option-selected {
-  color: var(--sb-primary-color);
-  font-weight: 600;
+.sb-today-container
+  .sb-today-feed-card
+  .sb-today-feed-history-button
+  > .material-symbols-outlined {
+  font-size: 1.125rem;
 }
 
 .sb-today-container .sb-today-feed-card .sb-today-feed-kind-filter {
@@ -789,6 +789,27 @@
   margin: 0.25rem 0 0.75rem;
   font-size: 0.875rem;
   color: var(--sb-today-muted-font-color);
+}
+
+/* Styled as a plain text link, like a section's "see all". */
+.sb-today-container .sb-today-feed-see-more {
+  align-self: center;
+  appearance: none;
+  border: none;
+  background-color: transparent;
+  padding: 0.25rem 0;
+  margin: 0;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+  cursor: pointer;
+}
+
+.sb-today-container .sb-today-feed-see-more:disabled {
+  cursor: progress;
+  opacity: 0.6;
 }
 
 .sb-today-container .sb-today-feed-avatars {
@@ -983,8 +1004,16 @@
     font-size: 0.875rem;
   }
 
-  .sb-today-container .sb-today-feed-card .sb-today-feed-timeframe-button {
-    font-size: 0.7rem;
+  .sb-today-container .sb-today-feed-card .sb-today-feed-history-button {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .sb-today-container
+    .sb-today-feed-card
+    .sb-today-feed-history-button
+    > .material-symbols-outlined {
+    font-size: 0.9rem;
   }
 
   .sb-today-container

@@ -39,6 +39,15 @@ const NOW_SECONDS = vi.hoisted(() => Math.floor(NOW.getTime() / 1000));
 const HOUR = 60 * 60;
 const DAY = 24 * HOUR;
 
+const localMidnight = (year: number, month: number, day: number) =>
+  Math.floor(new Date(year, month, day).getTime() / 1000);
+/** Where the recent rows start: local midnight two days before `NOW`. */
+const RECENT_FROM = localMidnight(2026, 4, 15);
+/** Where each older year "See more" reaches into starts. */
+const YEAR_1_FROM = localMidnight(2025, 4, 15);
+const YEAR_2_FROM = localMidnight(2024, 4, 15);
+const YEAR_3_FROM = localMidnight(2023, 4, 15);
+
 /** The day a timeline click selects: the day before `NOW`. */
 const SELECTED_DAY = vi.hoisted(() => {
   const day = new Date(NOW);
@@ -228,16 +237,9 @@ describe("SocialSection", () => {
     container.querySelector<T>(sel);
   const qa = (sel: string) => Array.from(container.querySelectorAll(sel));
   const heading = () => q(".sb-today-titled-section-header > h5")!.textContent;
-  const timeframeButton = () =>
-    q<HTMLButtonElement>(".sb-today-feed-timeframe-button")!;
-  const timeframeLabel = () => q(".sb-today-feed-timeframe-label")!.textContent;
-  // The menu is portaled to <body>, so it is looked up from the document.
-  const timeframeOptions = () =>
-    Array.from(
-      document.querySelectorAll<HTMLButtonElement>(
-        ".sb-today-feed-timeframe-menu .sb-context-menu-item"
-      )
-    );
+  const historyButton = () =>
+    q<HTMLButtonElement>(".sb-today-feed-history-button")!;
+  const seeMoreLink = () => q<HTMLButtonElement>(".sb-today-feed-see-more");
   const kindButtons = () =>
     qa(".sb-today-feed-kind-option") as HTMLButtonElement[];
   const selectedKind = () =>
@@ -252,32 +254,66 @@ describe("SocialSection", () => {
     act(() => button.click());
   }
 
-  async function selectTimeframe(label: string) {
-    act(() => timeframeButton().click());
-    const option = timeframeOptions().find((b) => b.textContent === label)!;
-    act(() => option.click());
+  async function toggleHistory() {
+    act(() => historyButton().click());
+    await flush();
+  }
+
+  async function seeMore() {
+    act(() => seeMoreLink()!.click());
+    await flush();
+  }
+
+  async function pickDay() {
+    act(() => q<HTMLButtonElement>("[data-testid='pick-day']")!.click());
     await flush();
   }
 
   async function flush() {
     await act(async () => {
-      await Promise.resolve();
-      await Promise.resolve();
+      for (let i = 0; i < 10; i++) {
+        await Promise.resolve();
+      }
     });
   }
+
+  /** Answers the recent window and each older year from the given rows. */
+  function feedBySpan(feeds: {
+    recent?: CommunityFeedItem[];
+    years?: CommunityFeedItem[][];
+  }) {
+    const years = [YEAR_1_FROM, YEAR_2_FROM, YEAR_3_FROM];
+    getCommunityFeed.mockImplementation(async (span) => {
+      if (span.from === RECENT_FROM) return feeds.recent ?? [];
+      const index = years.indexOf(span.from);
+      return index >= 0 ? (feeds.years?.[index] ?? []) : [];
+    });
+  }
+
+  /** `count` reading rows from an older year, newest first. */
+  function olderRows(prefix: string, count: number, time: number) {
+    return Array.from({ length: count }, (_, i) =>
+      readingItem({ id: `${prefix}:${i}`, time: time - i * HOUR })
+    );
+  }
+
+  const recentCalls = () =>
+    getCommunityFeed.mock.calls.filter(([span]) => span.from === RECENT_FROM);
 
   // ─── the section itself ────────────────────────────────────────────────────
 
   describe("the section", () => {
-    it("renders the community heading with the time-frame dropdown beside it", () => {
+    it("renders the community heading and a closed history button", () => {
       setup();
       expect(heading()).toBe("COMMUNITY");
-      expect(timeframeLabel()).toBe("Last 48 hours");
+      expect(historyButton().getAttribute("aria-label")).toBe("History");
+      expect(historyButton().getAttribute("aria-pressed")).toBe("false");
     });
 
-    it("has no 'see all' link", () => {
+    it("has no 'see all' link or time-frame dropdown", () => {
       setup();
       expect(q(".sb-today-titled-section-header > button")).toBeNull();
+      expect(q(".sb-today-feed-timeframe-button")).toBeNull();
     });
   });
 
@@ -335,122 +371,35 @@ describe("SocialSection", () => {
       getCommunityFeed.mockResolvedValue([noteItem(), readingItem()]);
       setup();
       await flush();
+      const callsBefore = getCommunityFeed.mock.calls.length;
 
       selectKind("Notes");
       selectKind("Reading");
 
-      expect(getCommunityFeed).toHaveBeenCalledTimes(1);
+      expect(getCommunityFeed).toHaveBeenCalledTimes(callsBefore);
     });
   });
 
-  // ─── time-frame dropdown ───────────────────────────────────────────────────
+  // ─── recent activity ───────────────────────────────────────────────────────
 
-  describe("time-frame dropdown", () => {
-    it("lists the four windows in order", () => {
+  describe("recent activity", () => {
+    it("asks for everything since midnight two days back, grouping crossed paths", () => {
       setup();
-      act(() => timeframeButton().click());
-      expect(timeframeOptions().map((b) => b.textContent)).toEqual([
-        "Last 48 hours",
-        "Last week",
-        "Last month",
-        "All",
-      ]);
-    });
-
-    it("marks the selected window", () => {
-      setup();
-      act(() => timeframeButton().click());
-      expect(
-        timeframeOptions().map((b) => b.getAttribute("aria-checked"))
-      ).toEqual(["true", "false", "false", "false"]);
-    });
-
-    it("relabels the button with the picked window", async () => {
-      setup();
-      await selectTimeframe("Last month");
-      expect(timeframeLabel()).toBe("Last month");
-    });
-  });
-
-  // ─── fetching ──────────────────────────────────────────────────────────────
-
-  describe("fetching the feed", () => {
-    it("asks for the last 48 hours on mount, grouping crossed paths", () => {
-      setup();
-      expect(getCommunityFeed).toHaveBeenCalledTimes(1);
       expect(getCommunityFeed).toHaveBeenCalledWith(
-        { from: NOW_SECONDS - 2 * DAY, to: NOW_SECONDS },
+        { from: RECENT_FROM, to: NOW_SECONDS },
         { crossedPaths: true }
       );
     });
 
-    it("refetches the week when 'Last week' is picked", async () => {
-      setup();
-      await selectTimeframe("Last week");
-      expect(getCommunityFeed).toHaveBeenLastCalledWith(
-        { from: NOW_SECONDS - 7 * DAY, to: NOW_SECONDS },
-        { crossedPaths: true }
-      );
-    });
-
-    it("refetches the month when 'Last month' is picked", async () => {
-      setup();
-      await selectTimeframe("Last month");
-      expect(getCommunityFeed).toHaveBeenLastCalledWith(
-        { from: NOW_SECONDS - 30 * DAY, to: NOW_SECONDS },
-        { crossedPaths: true }
-      );
-    });
-
-    it("fetches the whole timeline year, without crossed paths, under 'All'", async () => {
-      setup();
-      await selectTimeframe("All");
-
-      const yearStart = new Date(NOW);
-      yearStart.setFullYear(NOW.getFullYear() - 1);
-      yearStart.setHours(0, 0, 0, 0);
-      const yearEnd = new Date(NOW);
-      yearEnd.setHours(23, 59, 59, 999);
-      expect(getCommunityFeed).toHaveBeenLastCalledWith(
-        {
-          from: Math.floor(yearStart.getTime() / 1000),
-          to: Math.floor(yearEnd.getTime() / 1000),
-        },
-        { crossedPaths: false }
-      );
-    });
-
-    it("brings a window left open up to date when it is picked again", async () => {
-      setup();
-      vi.setSystemTime(NOW.getTime() + 6 * HOUR * 1000);
-
-      await selectTimeframe("Last 48 hours");
-
-      expect(getCommunityFeed).toHaveBeenLastCalledWith(
-        { from: NOW_SECONDS + 6 * HOUR - 2 * DAY, to: NOW_SECONDS + 6 * HOUR },
-        { crossedPaths: true }
-      );
-    });
-
-    it("ignores a stale result after the window changes", async () => {
-      let resolveFirst!: (items: CommunityFeedItem[]) => void;
-      getCommunityFeed.mockImplementationOnce(
-        () =>
-          new Promise<CommunityFeedItem[]>((resolve) => {
-            resolveFirst = resolve;
-          })
-      );
-      getCommunityFeed.mockResolvedValue([readingItem()]);
-      setup();
-
-      await selectTimeframe("Last week");
-      await act(async () => {
-        resolveFirst([noteItem(), noteItem({ id: "note:2" })]);
-        await Promise.resolve();
+    it("shows only the recent rows until asked for more", async () => {
+      feedBySpan({
+        recent: [readingItem({ id: "recent" })],
+        years: [olderRows("older", 3, YEAR_1_FROM + DAY)],
       });
+      setup();
+      await flush();
 
       expect(rows()).toHaveLength(1);
-      expect(q(".sb-today-feed-row-reading")).not.toBeNull();
     });
 
     it("refetches when the member list changes", async () => {
@@ -462,10 +411,10 @@ describe("SocialSection", () => {
       });
       await flush();
 
-      expect(getCommunityFeed).toHaveBeenCalledTimes(2);
+      expect(recentCalls()).toHaveLength(2);
     });
 
-    it("shows the empty state once a window comes back empty", async () => {
+    it("shows the empty state once the recent rows come back empty", async () => {
       setup();
       expect(emptyText()).toBeNull();
       await flush();
@@ -479,18 +428,6 @@ describe("SocialSection", () => {
       expect(emptyText()).toBe("No notes in this time frame yet.");
       selectKind("Reading");
       expect(emptyText()).toBe("No reading in this time frame yet.");
-    });
-
-    it("keeps the current rows up while the next window loads", async () => {
-      getCommunityFeed.mockResolvedValueOnce([readingItem()]);
-      getCommunityFeed.mockImplementationOnce(() => new Promise(() => {}));
-      setup();
-      await flush();
-
-      await selectTimeframe("Last week");
-
-      expect(rows()).toHaveLength(1);
-      expect(emptyText()).toBeNull();
     });
 
     it("shows the empty state, not a crash, when the fetch fails", async () => {
@@ -507,28 +444,158 @@ describe("SocialSection", () => {
     });
   });
 
-  // ─── the timeline ──────────────────────────────────────────────────────────
+  // ─── see more ──────────────────────────────────────────────────────────────
 
-  describe("the timeline", () => {
-    it("is hidden for a relative window", () => {
+  describe("'See more'", () => {
+    it("is hidden when there is no older activity", async () => {
+      feedBySpan({ recent: [readingItem()] });
+      setup();
+      await flush();
+
+      expect(seeMoreLink()).toBeNull();
+    });
+
+    it("reveals eight older rows per click until there are no more", async () => {
+      feedBySpan({
+        recent: [readingItem({ id: "recent" })],
+        years: [olderRows("older", 12, YEAR_1_FROM + 100 * DAY)],
+      });
+      setup();
+      await flush();
+      expect(seeMoreLink()!.textContent).toBe("See more");
+
+      await seeMore();
+      expect(rows()).toHaveLength(1 + 8);
+      expect(seeMoreLink()).not.toBeNull();
+
+      await seeMore();
+      expect(rows()).toHaveLength(1 + 12);
+      expect(seeMoreLink()).toBeNull();
+    });
+
+    it("keeps reaching further back as long as there is more activity", async () => {
+      feedBySpan({
+        recent: [readingItem({ id: "recent" })],
+        years: [
+          olderRows("year1", 3, YEAR_1_FROM + 100 * DAY),
+          olderRows("year2", 8, YEAR_2_FROM + 100 * DAY),
+        ],
+      });
+      setup();
+      await flush();
+
+      await seeMore();
+      expect(rows()).toHaveLength(1 + 8);
+
+      await seeMore();
+      expect(rows()).toHaveLength(1 + 11);
+      expect(seeMoreLink()).toBeNull();
+      expect(getCommunityFeed).toHaveBeenCalledWith(
+        expect.objectContaining({ from: YEAR_3_FROM }),
+        { crossedPaths: false }
+      );
+    });
+
+    it("can bring older rows into an empty recent view", async () => {
+      feedBySpan({ years: [olderRows("older", 2, YEAR_1_FROM + DAY)] });
+      setup();
+      await flush();
+      expect(emptyText()).toBe("No activity in this time frame yet.");
+
+      await seeMore();
+
+      expect(rows()).toHaveLength(2);
+      expect(emptyText()).toBeNull();
+    });
+
+    it("counts the rows of the selected kind", async () => {
+      feedBySpan({
+        recent: [noteItem({ id: "note:recent" })],
+        years: [
+          [
+            ...olderRows("older", 10, YEAR_1_FROM + 100 * DAY),
+            noteItem({ id: "note:older", time: YEAR_1_FROM + DAY }),
+          ],
+        ],
+      });
+      setup();
+      await flush();
+      selectKind("Notes");
+
+      await seeMore();
+
+      expect(rows()).toHaveLength(2);
+      expect(qa(".sb-today-feed-row-note")).toHaveLength(2);
+      expect(seeMoreLink()).toBeNull();
+    });
+
+    it("starts over from the recent rows when the kind changes", async () => {
+      feedBySpan({
+        recent: [readingItem({ id: "recent" })],
+        years: [olderRows("older", 12, YEAR_1_FROM + 100 * DAY)],
+      });
+      setup();
+      await flush();
+      await seeMore();
+
+      selectKind("Reading");
+
+      expect(rows()).toHaveLength(1);
+    });
+  });
+
+  // ─── history ───────────────────────────────────────────────────────────────
+
+  describe("history", () => {
+    const yearSpan = () => {
+      const yearStart = new Date(NOW);
+      yearStart.setFullYear(NOW.getFullYear() - 1);
+      yearStart.setHours(0, 0, 0, 0);
+      const yearEnd = new Date(NOW);
+      yearEnd.setHours(23, 59, 59, 999);
+      return {
+        from: Math.floor(yearStart.getTime() / 1000),
+        to: Math.floor(yearEnd.getTime() / 1000),
+      };
+    };
+
+    it("is closed to begin with, with no activity grid", () => {
       setup();
       expect(q("[data-testid='timeline']")).toBeNull();
       expect(q(".sb-today-date-label")).toBeNull();
     });
 
-    it("appears under 'All', without a date label", async () => {
+    it("opens the activity grid on the whole timeline year, without crossed paths", async () => {
       setup();
-      await selectTimeframe("All");
+      await toggleHistory();
+
+      expect(historyButton().getAttribute("aria-pressed")).toBe("true");
       expect(q("[data-testid='timeline']")).not.toBeNull();
       expect(q(".sb-today-date-label")).toBeNull();
+      expect(getCommunityFeed).toHaveBeenLastCalledWith(yearSpan(), {
+        crossedPaths: false,
+      });
+    });
+
+    it("has no 'See more' link", async () => {
+      feedBySpan({
+        recent: [readingItem()],
+        years: [olderRows("older", 3, YEAR_1_FROM + DAY)],
+      });
+      setup();
+      await flush();
+      expect(seeMoreLink()).not.toBeNull();
+
+      await toggleHistory();
+
+      expect(seeMoreLink()).toBeNull();
     });
 
     it("narrows the feed to a picked day and labels it", async () => {
       setup();
-      await selectTimeframe("All");
+      await toggleHistory();
 
-      act(() => q<HTMLButtonElement>("[data-testid='pick-day']")!.click());
-      await flush();
+      await pickDay();
 
       expect(getCommunityFeed).toHaveBeenLastCalledWith(SELECTED_DAY, {
         crossedPaths: false,
@@ -538,57 +605,78 @@ describe("SocialSection", () => {
 
     it("widens back to the year when the day is cleared", async () => {
       setup();
-      await selectTimeframe("All");
-      act(() => q<HTMLButtonElement>("[data-testid='pick-day']")!.click());
-      await flush();
-      const callsBefore = getCommunityFeed.mock.calls.length;
+      await toggleHistory();
+      await pickDay();
 
       act(() => q<HTMLButtonElement>("[data-testid='clear-day']")!.click());
       await flush();
 
-      expect(getCommunityFeed.mock.calls.length).toBe(callsBefore + 1);
-      expect(getCommunityFeed.mock.lastCall?.[0]).not.toEqual(SELECTED_DAY);
+      expect(getCommunityFeed).toHaveBeenLastCalledWith(yearSpan(), {
+        crossedPaths: false,
+      });
       expect(q(".sb-today-date-label")).toBeNull();
     });
 
     it("formats the day label in the active language", async () => {
       mockI18nState.language = "fr";
       setup();
-      await selectTimeframe("All");
+      await toggleHistory();
 
-      act(() => q<HTMLButtonElement>("[data-testid='pick-day']")!.click());
-      await flush();
+      await pickDay();
 
       expect(q(".sb-today-date-label")!.textContent).toBe("16 mai 2026");
     });
 
-    it("keeps the picked day when 'All' is picked again", async () => {
+    it("keeps the current rows up while the next day loads", async () => {
       setup();
-      await selectTimeframe("All");
-      act(() => q<HTMLButtonElement>("[data-testid='pick-day']")!.click());
       await flush();
+      getCommunityFeed.mockResolvedValueOnce([readingItem()]);
+      await toggleHistory();
+      getCommunityFeed.mockImplementationOnce(() => new Promise(() => {}));
 
-      await selectTimeframe("All");
+      await pickDay();
 
-      expect(getCommunityFeed).toHaveBeenLastCalledWith(SELECTED_DAY, {
-        crossedPaths: false,
-      });
-      expect(q(".sb-today-date-label")!.textContent).toBe("May 16, 2026");
+      expect(rows()).toHaveLength(1);
+      expect(emptyText()).toBeNull();
     });
 
-    it("drops the picked day when a relative window is chosen again", async () => {
+    it("ignores a stale result after the day changes", async () => {
       setup();
-      await selectTimeframe("All");
-      act(() => q<HTMLButtonElement>("[data-testid='pick-day']")!.click());
       await flush();
-
-      await selectTimeframe("Last 48 hours");
-
-      expect(q("[data-testid='timeline']")).toBeNull();
-      expect(getCommunityFeed).toHaveBeenLastCalledWith(
-        { from: NOW_SECONDS - 2 * DAY, to: NOW_SECONDS },
-        { crossedPaths: true }
+      let resolveYear!: (items: CommunityFeedItem[]) => void;
+      getCommunityFeed.mockImplementationOnce(
+        () =>
+          new Promise<CommunityFeedItem[]>((resolve) => {
+            resolveYear = resolve;
+          })
       );
+      getCommunityFeed.mockResolvedValue([readingItem()]);
+      await toggleHistory();
+
+      await pickDay();
+      await act(async () => {
+        resolveYear([noteItem(), noteItem({ id: "note:2" })]);
+        await Promise.resolve();
+      });
+
+      expect(rows()).toHaveLength(1);
+      expect(q(".sb-today-feed-row-reading")).not.toBeNull();
+    });
+
+    it("returns to recent activity when closed, and reopens on the whole year", async () => {
+      setup();
+      await toggleHistory();
+      await pickDay();
+
+      await toggleHistory();
+      expect(historyButton().getAttribute("aria-pressed")).toBe("false");
+      expect(q("[data-testid='timeline']")).toBeNull();
+      expect(recentCalls()).toHaveLength(2);
+
+      await toggleHistory();
+      expect(getCommunityFeed).toHaveBeenLastCalledWith(yearSpan(), {
+        crossedPaths: false,
+      });
     });
   });
 

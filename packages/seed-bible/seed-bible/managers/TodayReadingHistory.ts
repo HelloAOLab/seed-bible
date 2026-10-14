@@ -4,15 +4,6 @@ import type { ReadingEvent } from "./ReadingHistoryManager";
 /** An inclusive window of unix seconds. */
 export type Timespan = { from: number; to: number };
 
-/** The windows the community card can be filtered to. */
-export type TimespanOptionId = "twoDays" | "week" | "month" | "all";
-
-/** A timespan filter resolved against the clock: `all` covers the whole year. */
-export type TimespanOption = {
-  year: number;
-  timespan: Timespan | undefined;
-};
-
 /** A concrete resume position: the last book/chapter a user was reading. */
 export type LastReading = { bookId: string; chapter: number };
 
@@ -46,39 +37,6 @@ export type FetchReadingEvents = (
   startTime: number,
   endTime: number
 ) => Promise<Iterable<ReadingEvent>>;
-
-const DAY_SECONDS = 24 * 60 * 60;
-
-/**
- * The four community-card filter windows, resolved against the clock at the
- * moment of the call. Deliberately a function and not a `computed`: callers
- * read it when the user picks a filter, and a cached value would pin the window
- * to whenever the screen first rendered.
- */
-export function buildTimespanOptions(): Record<
-  TimespanOptionId,
-  TimespanOption
-> {
-  const now = new Date();
-  const year = now.getFullYear();
-  const nowSeconds = Math.floor(now.getTime() / 1000);
-
-  return {
-    twoDays: {
-      year,
-      timespan: { from: nowSeconds - 2 * DAY_SECONDS, to: nowSeconds },
-    },
-    week: {
-      year,
-      timespan: { from: nowSeconds - 7 * DAY_SECONDS, to: nowSeconds },
-    },
-    month: {
-      year,
-      timespan: { from: nowSeconds - 30 * DAY_SECONDS, to: nowSeconds },
-    },
-    all: { year, timespan: undefined },
-  };
-}
 
 /** The latest position a reader reached inside `span`, if they read at all. */
 export async function getUserLastReading(
@@ -142,6 +100,7 @@ export interface ReadingHistoryStateDeps {
   ) => Promise<UserLastReading>;
 }
 
+const DAY_SECONDS = 24 * 60 * 60;
 const ONE_YEAR_SECONDS = 365 * DAY_SECONDS;
 
 /**
