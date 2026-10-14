@@ -1,7 +1,7 @@
 import type { ComponentChildren } from "preact";
 import { createPortal } from "preact/compat";
 import { useEffect, useRef, useState } from "preact/hooks";
-import type { BibleTheme } from "../../managers/ThemeManager";
+import type { BibleTheme, HighlightId } from "../../managers/ThemeManager";
 import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { useI18n, type I18nHook } from "../../i18n/I18nManager";
@@ -135,10 +135,14 @@ export function CustomizationCardPreview(props: {
  * effect right where it's made — including the ones (link, visited link,
  * highlight, floating button) the surrounding editor UI never uses itself.
  */
-export function ThemeLivePreview(props: { theme: BibleTheme }) {
+export function ThemeLivePreview(props: {
+  theme: BibleTheme;
+  /** Which highlight color the sample verse's highlighted word uses. */
+  highlightId?: HighlightId;
+}) {
   const { t } = useI18n();
   const v = props.theme.variables;
-  const highlight = props.theme.highlightColors.yellow;
+  const highlight = props.theme.highlightColors[props.highlightId ?? "yellow"];
   return (
     <div
       className="sb-cz-live-preview"
@@ -312,6 +316,7 @@ function getFloatingPreviewPosition(
  */
 export function DockableThemeLivePreview(props: {
   theme: BibleTheme;
+  highlightId?: HighlightId;
   canFloat: boolean;
 }) {
   const { t } = useI18n();
@@ -397,7 +402,10 @@ export function DockableThemeLivePreview(props: {
             >
               <MaterialIcon>close</MaterialIcon>
             </button>
-            <ThemeLivePreview theme={props.theme} />
+            <ThemeLivePreview
+              theme={props.theme}
+              highlightId={props.highlightId}
+            />
           </div>,
           document.body
         )
@@ -406,7 +414,7 @@ export function DockableThemeLivePreview(props: {
   return (
     <>
       <div ref={anchorRef}>
-        <ThemeLivePreview theme={props.theme} />
+        <ThemeLivePreview theme={props.theme} highlightId={props.highlightId} />
       </div>
       {floating}
     </>

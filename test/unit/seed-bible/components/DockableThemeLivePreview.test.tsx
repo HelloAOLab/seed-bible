@@ -1,6 +1,9 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { DockableThemeLivePreview } from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/CustomizationPreviews";
+import {
+  DockableThemeLivePreview,
+  ThemeLivePreview,
+} from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/CustomizationPreviews";
 import { LIGHT_THEME } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -119,5 +122,22 @@ describe("DockableThemeLivePreview", () => {
     reportScroll(false);
     reportScroll(true);
     expect(floatingPreview()).not.toBeNull();
+  });
+});
+
+describe("ThemeLivePreview", () => {
+  it("highlights the sample word in the chosen highlight color", () => {
+    const container = document.createElement("div");
+    act(() => {
+      render(
+        <ThemeLivePreview theme={LIGHT_THEME} highlightId="green" />,
+        container
+      );
+    });
+    const mark = container.querySelector("mark")!;
+    const green = document.createElement("span");
+    green.style.background = LIGHT_THEME.highlightColors.green!.color;
+    expect(mark.style.background).toBe(green.style.background);
+    render(null, container);
   });
 });

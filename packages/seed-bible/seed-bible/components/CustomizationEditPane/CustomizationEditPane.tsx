@@ -25,6 +25,7 @@ import {
 import {
   DEFAULT_HIGHLIGHT_IDS,
   type BibleTheme,
+  type HighlightId,
   type ThemeColorKey,
   type ThemeFontFamilyKey,
 } from "../../managers/ThemeManager";
@@ -1375,6 +1376,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   const { customizations, theme } = state;
   const { t } = useI18n();
   const confirmingDelete = useSignal(false);
+  const previewHighlightId = useSignal<HighlightId>("yellow");
 
   const record = customizations.editingCustomization.value;
   const variant = record?.variants.find(
@@ -1407,6 +1409,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
       <section className="sb-settings-section sb-cz-body">
         <DockableThemeLivePreview
           theme={resolvedTheme}
+          highlightId={previewHighlightId.value}
           canFloat={!state.app.isMobile.value}
         />
 
@@ -1587,6 +1590,9 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                         value={normalizeHex(bg)}
                         className="sb-cz-highlight-picker"
                         ariaLabel={t("id_highlight-background-color", { id })}
+                        onOpenChange={(open) => {
+                          if (open) previewHighlightId.value = id;
+                        }}
                         onChange={(color) => {
                           customizations.setEditingVariantHighlightColor(
                             variant.id,
@@ -1613,6 +1619,9 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                         value={normalizeHex(fg)}
                         className="sb-cz-highlight-picker"
                         ariaLabel={t("id_highlight-text-color", { id })}
+                        onOpenChange={(open) => {
+                          if (open) previewHighlightId.value = id;
+                        }}
                         onChange={(color) => {
                           customizations.setEditingVariantHighlightColor(
                             variant.id,
@@ -1648,12 +1657,13 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                     {isOverridden && (
                       <ResetButton
                         label={label}
-                        onReset={() =>
+                        onReset={() => {
+                          previewHighlightId.value = id;
                           customizations.resetEditingVariantHighlightColor(
                             variant.id,
                             id
-                          )
-                        }
+                          );
+                        }}
                       />
                     )}
                   </span>
