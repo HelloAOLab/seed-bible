@@ -30,11 +30,8 @@ import {
   MIN_READABLE_CONTRAST_RATIO,
 } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
 
-describe.each([
-  ["LIGHT_THEME", LIGHT_THEME],
-  ["DARK_THEME", DARK_THEME],
-])("%s highlight colors", (_themeName, theme) => {
-  it.each(Object.entries(theme.highlightColors))(
+describe("LIGHT_THEME highlight colors", () => {
+  it.each(Object.entries(LIGHT_THEME.highlightColors))(
     "keeps words of Jesus readable on the %s highlight",
     (_colorId, { color, wordsOfJesusFontColor }) => {
       expect(

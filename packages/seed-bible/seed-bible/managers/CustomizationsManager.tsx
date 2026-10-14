@@ -174,7 +174,6 @@ const WORDS_OF_JESUS_RED_CANDIDATES = [
   "#ffa0a0",
   "#ffc0c0",
   "#ffe0e0",
-  "#ffe8e8",
 ];
 
 /**
