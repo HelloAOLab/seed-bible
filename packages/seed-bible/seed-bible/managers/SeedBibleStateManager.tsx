@@ -664,6 +664,15 @@ export interface SeedBibleState {
   openCodeOfConduct: () => void;
   /** Closes the Code of Conduct modal (clears `conduct` from the URL). */
   closeCodeOfConduct: () => void;
+
+  /**
+   * Releases what this state has registered outside itself (listeners on the
+   * process-wide i18next instance, recurring timers), so it can be garbage
+   * collected. The SSR host creates one state per request and must call this
+   * once the render is done; the client keeps its one state for the page's
+   * lifetime and never needs to.
+   */
+  dispose: () => void;
 }
 
 // Evaluated before the extension bundle below. Bonfire imports
@@ -2228,7 +2237,7 @@ export function createSeedBibleState(
    * it; this caps what that tick can claim to have watched.
    */
   const READING_MAX_TICK_CREDIT_MS = READING_TICK_MS * 2;
-  effect(() => {
+  const disposeReadingTicker = effect(() => {
     if (!selectedTab.value) {
       return;
     }
@@ -2242,6 +2251,12 @@ export function createSeedBibleState(
     // were read in, so the offline manager keeps its own first-seen stamp —
     // that's what the "used for a day" download offer is judged against.
     data.offline.noteTranslationInUse(chapter.translation.id);
+
+    // Nobody is reading a server render, and an interval started here would
+    // keep the whole per-request state alive on the SSR host.
+    if (import.meta.env.SSR) {
+      return;
+    }
 
     // Reading time accrues only while the chapter is actually on screen. Each
     // tick credits just the stretch since the last one rather than stretching
@@ -2287,8 +2302,7 @@ export function createSeedBibleState(
       // on the way somewhere else earn a place in history.
     };
 
-    const canWatchVisibility =
-      typeof document !== "undefined" && !import.meta.env.SSR;
+    const canWatchVisibility = typeof document !== "undefined";
     // A visible tab isn't enough: Today (or any fullscreen pane) can cover the
     // reader, and a chapter sitting under Welcome would otherwise be credited
     // every tick — giving a brand-new account history it never read.
@@ -3446,6 +3460,10 @@ export function createSeedBibleState(
     openCodeOfConduct,
     closeCodeOfConduct,
     features,
+    dispose: () => {
+      i18n.dispose();
+      disposeReadingTicker();
+    },
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,
