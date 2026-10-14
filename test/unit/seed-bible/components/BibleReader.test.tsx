@@ -28,6 +28,10 @@ import {
   type SimplePlaylist,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { vi, type Mock } from "vitest";
+import {
+  LIGHT_THEME,
+  generateThemeCssClasses,
+} from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { mockI18nState, resetMockI18n } from "../testUtils/mockI18n";
 import { createRealFriendContent } from "../testUtils/realFriendContent";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
@@ -1521,6 +1525,42 @@ describe("BibleReader", () => {
     const poetryVerse = container.querySelector(".sb-verse-poetry");
     expect(poetryVerse).not.toBeNull();
     expect(poetryVerse?.classList.contains("sb-verse-selected")).toBe(true);
+  });
+
+  it("gives words of Jesus inside a highlight the highlight's words-of-Jesus color rule", () => {
+    const { slot, selectorState, readingState, highlights } = createFixture();
+
+    highlights.value = {
+      highlights: [
+        {
+          verse: 1,
+          colorId: "yellow",
+        },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const rule = generateThemeCssClasses(LIGHT_THEME)
+      .split("}")
+      .find((block) =>
+        block.includes("--sb-highlight-yellow-words-of-jesus-font-color")
+      );
+    const selector = rule?.split("{")[0]?.trim();
+    expect(selector).toBeTruthy();
+
+    const wordsOfJesus = container.querySelector(".sb-words-of-jesus");
+    expect(wordsOfJesus?.textContent).toContain("I am the light");
+    expect(wordsOfJesus?.matches(selector!)).toBe(true);
   });
 
   it("marks a color-id highlight on a wrapper with data-highlight-fill", () => {
