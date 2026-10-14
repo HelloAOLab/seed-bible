@@ -25,6 +25,7 @@ import { appendFileSync } from "node:fs";
 appendFileSync(${JSON.stringify(importLog)}, ${JSON.stringify(buildId)} + "\\n");
 ${broken ? 'throw new Error("bad deploy");' : ""}
 export async function render(opts) {
+  if (opts.path.includes("/loop/")) for (;;) {}
   return { html: "rendered by ${buildId} over [" + opts.html + "]" };
 }
 `;
@@ -86,6 +87,7 @@ describe("production host: SSR runs only a branch's latest build", () => {
       ROOT_BRANCH: "main",
       ALLOWED_SSR_BRANCHES: "main,retired,broken",
       DEFAULT_SSR_BRANCH: "",
+      SSR_RENDER_TIMEOUT_MS: "1500",
     });
     vi.resetModules();
     const { startProdServer } = await import("../../../server/index");
@@ -187,5 +189,27 @@ describe("production host: SSR runs only a branch's latest build", () => {
     await writer.close();
 
     expect((await pending).body).toBe("rendered by new over [html of slow]");
+  });
+
+  it("replaces a worker that a render left stuck in a loop", async () => {
+    const countImports = async () =>
+      (await importedBuilds()).filter((b) => b === "new").length;
+    const importsBefore = await countImports();
+
+    // Times out, so it gets the unrendered page.
+    expect((await get("/b/main/new/en/AAB/loop/1")).body).toBe("html of new");
+
+    // Once the stuck worker is stopped, the next request starts a fresh one.
+    const deadline = Date.now() + 10_000;
+    let page = await get("/en/AAB/genesis/1");
+    while (
+      page.body !== "rendered by new over [html of new]" &&
+      Date.now() < deadline
+    ) {
+      page = await get("/en/AAB/genesis/1");
+    }
+
+    expect(page.body).toBe("rendered by new over [html of new]");
+    expect(await countImports()).toBeGreaterThan(importsBefore);
   });
 });

@@ -14,6 +14,7 @@ export async function render(opts) {
   if (opts.path === "/throw") throw new Error("render exploded");
   if (opts.path === "/hang") return new Promise(() => {});
   if (opts.path === "/crash") process.exit(3);
+  if (opts.path === "/loop") for (;;) {}
   if (opts.path === "/slow") await new Promise((r) => setTimeout(r, 200));
   return { html: "rendered " + opts.path + " over " + opts.html };
 }
@@ -52,11 +53,16 @@ describe("startBuildWorker", () => {
   });
 
   async function start(
-    options: { timeoutMs?: number; onExit?: () => void } = {}
+    options: {
+      timeoutMs?: number;
+      unresponsiveAfterMs?: number;
+      onExit?: () => void;
+    } = {}
   ) {
     const worker = await startBuildWorker({
       modulePath: bundlePath,
       timeoutMs: options.timeoutMs ?? 5_000,
+      unresponsiveAfterMs: options.unresponsiveAfterMs,
       onExit: options.onExit,
     });
     started.push(worker);
@@ -107,12 +113,40 @@ describe("startBuildWorker", () => {
     ).rejects.toThrow();
   });
 
-  it("gives up on a render that runs past the timeout", async () => {
-    const worker = await start({ timeoutMs: 300 });
+  it("gives up on a slow render but keeps the worker, which is still answering", async () => {
+    let stopped = false;
+    const worker = await start({
+      timeoutMs: 300,
+      unresponsiveAfterMs: 200,
+      onExit: () => (stopped = true),
+    });
 
     await expect(worker.render({ ...OPTS, path: "/hang" })).rejects.toThrow(
       "timed out"
     );
+    // Past the point a stuck worker would have been stopped.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(stopped).toBe(false);
+    await expect(worker.render({ ...OPTS, path: "/d" })).resolves.toEqual({
+      html: "rendered /d over <shell>",
+    });
+  });
+
+  it("stops a worker stuck in a loop once a render on it times out", async () => {
+    const { exited, onExit } = exitSignal();
+    const worker = await start({
+      timeoutMs: 300,
+      unresponsiveAfterMs: 200,
+      onExit,
+    });
+
+    await expect(worker.render({ ...OPTS, path: "/loop" })).rejects.toThrow(
+      "timed out"
+    );
+    await exited;
+
+    expect(worker.acquire()).toBeNull();
   });
 
   it("lets an in-flight render finish before stopping a retired worker", async () => {

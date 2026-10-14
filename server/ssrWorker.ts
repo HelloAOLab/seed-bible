@@ -18,14 +18,15 @@ export interface SerializedError {
   stack?: string;
 }
 
-export interface WorkerRenderRequest {
-  type: "render";
-  id: number;
-  opts: unknown;
-}
+export type WorkerRequest =
+  | { type: "render"; id: number; opts: unknown }
+  // Answered right away unless the worker's event loop is blocked, which is
+  // how the host tells a stuck worker from one whose render is merely slow.
+  | { type: "ping" };
 
 export type WorkerMessage =
   | { type: "ready" }
+  | { type: "pong" }
   | { type: "load-error"; error: SerializedError }
   | { type: "result"; id: number; result: unknown }
   | { type: "render-error"; id: number; error: SerializedError };
@@ -62,7 +63,11 @@ if (port) {
       throw new Error(`SSR bundle ${modulePath} does not export render()`);
     }
 
-    port.on("message", (request: WorkerRenderRequest) => {
+    port.on("message", (request: WorkerRequest) => {
+      if (request.type === "ping") {
+        send({ type: "pong" });
+        return;
+      }
       render(request.opts).then(
         (result) => send({ type: "result", id: request.id, result }),
         (err: unknown) =>

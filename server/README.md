@@ -74,7 +74,10 @@ When a build leaves the cache (over `SSR_WORKERS_MAX`, or on
 (a request holds its build from the moment it gets it until its page is
 rendered), which releases the whole bundle. A request that never finishes is
 cut off after twice `SSR_RENDER_TIMEOUT_MS`. A worker that crashes is dropped
-from the cache, and the next request for that build starts a fresh one.
+from the cache, and the next request for that build starts a fresh one. So is
+a worker stuck in a loop: after a render times out, the worker is pinged, and
+if it doesn't answer within 2 seconds it's stopped. A render that is merely slow
+(waiting on the network) leaves its worker answering, so that worker is kept.
 
 If a whitelisted branch's latest build fails to load (a bad deploy), its own
 URLs answer 500 as before, but pinned links to its older builds

@@ -9,7 +9,7 @@ import type {
   SerializedError,
   WorkerData,
   WorkerMessage,
-  WorkerRenderRequest,
+  WorkerRequest,
 } from "./ssrWorker";
 
 export type RenderFn = (opts: {
@@ -57,6 +57,12 @@ export interface StartBuildWorkerOptions {
    * caller can stop handing it out.
    */
   onExit?: () => void;
+  /**
+   * After a render times out, how long the worker gets to answer a ping before
+   * it's judged stuck (its event loop blocked, e.g. by an infinite loop in the
+   * bundle) and stopped, so the next request gets a fresh worker.
+   */
+  unresponsiveAfterMs?: number;
   /** Overrides the worker entry; tests only. */
   workerUrl?: URL;
 }
@@ -90,6 +96,7 @@ export function startBuildWorker({
   modulePath,
   timeoutMs,
   onExit,
+  unresponsiveAfterMs = 2_000,
   workerUrl = DEFAULT_WORKER_URL,
 }: StartBuildWorkerOptions): Promise<BuildWorker> {
   const worker = new Worker(workerUrl, {
@@ -102,6 +109,7 @@ export function startBuildWorker({
   let retired = false;
   let terminating = false;
   let retireGraceTimer: ReturnType<typeof setTimeout> | undefined;
+  let pingTimer: ReturnType<typeof setTimeout> | undefined;
 
   const terminate = () => {
     if (terminating) return;
@@ -122,6 +130,24 @@ export function startBuildWorker({
     terminateIfDrained();
   };
 
+  const post = (request: WorkerRequest) => worker.postMessage(request);
+
+  // A timed-out render is either slow (waiting on the network, while the
+  // worker keeps serving other renders) or stuck in a loop that blocks the
+  // worker for everyone. Only the second is worth killing the worker over —
+  // that would fail its other in-flight renders — and only a stuck worker
+  // can't answer a ping.
+  const checkResponsive = () => {
+    if (pingTimer || terminating) return;
+    pingTimer = setTimeout(() => {
+      console.error(
+        `SSR worker for ${modulePath} stopped answering after a render timed out; stopping it.`
+      );
+      terminate();
+    }, unresponsiveAfterMs);
+    post({ type: "ping" });
+  };
+
   const render: RenderFn = (opts) => {
     if (terminating) {
       return Promise.reject(new Error("SSR worker has been stopped"));
@@ -129,19 +155,14 @@ export function startBuildWorker({
     const id = nextId++;
     return new Promise<RenderResult>((resolve, reject) => {
       // The render keeps running in the worker; its late result is dropped.
-      const timer = setTimeout(
-        () =>
-          settle(id, (p) =>
-            p.reject(new Error(`SSR render timed out after ${timeoutMs}ms`))
-          ),
-        timeoutMs
-      );
+      const timer = setTimeout(() => {
+        settle(id, (p) =>
+          p.reject(new Error(`SSR render timed out after ${timeoutMs}ms`))
+        );
+        checkResponsive();
+      }, timeoutMs);
       pending.set(id, { resolve, reject, timer });
-      worker.postMessage({
-        type: "render",
-        id,
-        opts,
-      } satisfies WorkerRenderRequest);
+      post({ type: "render", id, opts });
     });
   };
 
@@ -181,6 +202,10 @@ export function startBuildWorker({
           clearTimeout(loadTimer);
           resolve(handle);
           return;
+        case "pong":
+          clearTimeout(pingTimer);
+          pingTimer = undefined;
+          return;
         case "load-error":
           clearTimeout(loadTimer);
           reject(toError(message.error));
@@ -204,6 +229,7 @@ export function startBuildWorker({
       terminating = true;
       clearTimeout(loadTimer);
       clearTimeout(retireGraceTimer);
+      clearTimeout(pingTimer);
       const exitError = new Error(`SSR worker exited with code ${code}`);
       // A no-op once the worker became ready.
       reject(exitError);
