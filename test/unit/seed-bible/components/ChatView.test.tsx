@@ -463,6 +463,54 @@ describe("ChatView", () => {
     expect(image?.getAttribute("src")).toBe(svgIconUrl);
   });
 
+  it("falls back to the animal icon when an AI participant's icon fails to load", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const ai: AIChatParticipant = {
+      id: "ai-1",
+      name: "Helper",
+      isSelf: false,
+      isAI: true,
+      isRemote: false,
+      isActive: true,
+      joinTimeMs: 0,
+      userId: null,
+      connectionId: null,
+      ownerParticipantId: "self",
+      providerId: "provider-1",
+      iconUrl: "https://example.com/missing.png",
+    };
+    const message = createMockMessage({
+      id: "msg-ai",
+      authors: ["ai-1"],
+      text: "Hello",
+      parts: ["Hello"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([self, ai]),
+      totalParticipants: signal([self, ai]),
+      getMessageAuthors: vi.fn().mockReturnValue([ai]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    act(() => {
+      container
+        .querySelectorAll(".sb-tab-user-icon-has-image img")
+        .forEach((img) => img.dispatchEvent(new Event("error")));
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-has-image")).toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+  });
+
   it("shows the animal fallback for another person's messages even when you have no profile picture", () => {
     const self = createMockParticipant({
       id: "self",

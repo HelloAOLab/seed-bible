@@ -1,4 +1,5 @@
 import "./Avatar.css";
+import { useSignal } from "@preact/signals";
 import {
   isSessionHost,
   type ConnectedSessionUser,
@@ -68,8 +69,10 @@ export function Avatar({
   genericFallback?: boolean;
 }) {
   const selfClass = isSelf ? " sb-tab-user-icon-self" : "";
+  // Keyed by URL so a new picture gets a fresh attempt after an old one failed.
+  const failedImageUrl = useSignal<string | null>(null);
 
-  if (imageUrl) {
+  if (imageUrl && failedImageUrl.value !== imageUrl) {
     return (
       <span
         className={`sb-tab-user-icon sb-tab-user-icon-has-image${selfClass}`}
@@ -79,7 +82,14 @@ export function Avatar({
         {/* An <img> rather than a CSS background-image: Vite inlines small
             SVGs as data URLs containing quotes, which break an unquoted
             `url(...)` and leave the avatar blank. */}
-        <img className="sb-tab-user-icon-image" src={imageUrl} alt="" />
+        <img
+          className="sb-tab-user-icon-image"
+          src={imageUrl}
+          alt=""
+          onError={() => {
+            failedImageUrl.value = imageUrl;
+          }}
+        />
       </span>
     );
   }

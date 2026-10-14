@@ -1573,6 +1573,7 @@ function createSharedChatSession(
             providerId: p.providerId,
             name: p.name ? translateTitle(i18n.t, p.name) : null,
             isAI: p.isAI,
+            ...(p.iconUrl ? { iconUrl: p.iconUrl } : {}),
           })
         )
       );

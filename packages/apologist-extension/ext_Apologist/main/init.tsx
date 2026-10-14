@@ -199,7 +199,7 @@ export default function initApologistExtension() {
       const url = context.navigation.currentUrl.value;
       const urlName = url.searchParams.get("apologistName") ?? null;
       const apologistIconUrl =
-        url.searchParams.get("apologistIconUrl") ?? ApologistIcon ?? undefined;
+        url.searchParams.get("apologistIconUrl") || ApologistIcon;
       const customApologistDomain =
         url.searchParams.get("apologistDomain") ?? null;
       const apologistDomain = customApologistDomain ?? DEFAULT_APOLOGIST_DOMAIN;

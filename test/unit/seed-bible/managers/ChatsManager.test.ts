@@ -2038,6 +2038,49 @@ describe("createChatsManager", () => {
     ]);
   });
 
+  it("createSharedSession() shares a provider's icon so other people see it too", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      iconUrl: "data:image/svg+xml,%3csvg%3e%3c/svg%3e",
+      supportsSharedChats: true,
+      generateResponse: vi.fn(),
+    });
+
+    const { session, sharedChatProviders } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+
+    chat.addParticipant("conn-user-a_provider-1");
+    await Promise.resolve();
+
+    expect(sharedChatProviders.get("user-a")).toEqual([
+      {
+        id: "conn-user-a_provider-1",
+        providerId: "provider-1",
+        name: "Helper AI",
+        isAI: true,
+        iconUrl: "data:image/svg+xml,%3csvg%3e%3c/svg%3e",
+      },
+    ]);
+  });
+
   it("createSharedSession() merges shared provider participants from chat_providers map", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager, mockI18nManager);
