@@ -639,7 +639,6 @@ async function renderState(
   href: string,
   notFound: boolean
 ): Promise<{ html: string; notFound?: true }> {
-
   // Block until the detected language's translations are loaded so the
   // server-rendered HTML (and og:locale meta below) is in the right language
   // rather than the bundled "en" fallback. Also block on the initial tab's
