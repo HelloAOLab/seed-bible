@@ -103,18 +103,22 @@ describe("FriendsManager", () => {
       });
     });
 
-    it("counts a share as a friendship only when its permissions include the friends one", async () => {
+    it("ignores shares and requests that bundle other permissions with the friends one", async () => {
       const other = { ...FRIENDS_PERMISSION, marker: "somethingElse" };
-      server.friendsWith("ada", ME, {
+      server.friendsWith("ada");
+      server.friendsWith("bob", ME, {
         permissions: [other, FRIENDS_PERMISSION],
       });
-      server.friendsWith("bob", ME, { permissions: [other] });
+      server.requestFrom("cal");
+      server.requestFrom("dan", { permissions: [FRIENDS_PERMISSION, other] });
 
       const friends = create();
 
       await loaded(friends, () => {
-        expect(server.spies.listRecords).toHaveBeenCalled();
         expect(friends.friends.value.map((f) => f.userId)).toEqual(["ada"]);
+        expect(friends.incomingRequests.value.map((r) => r.userId)).toEqual([
+          "cal",
+        ]);
       });
     });
 
