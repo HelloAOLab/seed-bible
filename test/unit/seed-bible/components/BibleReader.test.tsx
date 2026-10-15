@@ -31,7 +31,10 @@ import { vi, type Mock } from "vitest";
 import { mockI18nState, resetMockI18n } from "../testUtils/mockI18n";
 import { createRealFriendContent } from "../testUtils/realFriendContent";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
-import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
+import {
+  createDiscoverManager,
+  type ReadingExtensionRuntime,
+} from "@packages/seed-bible/seed-bible/managers";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import {
   createBibleDataManager,
@@ -191,6 +194,7 @@ function createFixture(): ReaderFixture {
     loading: signal(false),
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
+    readAlongVerse: signal<{ verse: number } | null>(null),
     error: signal<string | null>(null),
     failedTranslationId: signal<string | null>(null),
     retryLoad: vi.fn(async () => undefined),
@@ -373,6 +377,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       getSaveForLocation: vi.fn(() => undefined),
       addSave: vi.fn(async () => {}),
     },
+    bookmarks: {
+      getBookmarksForLocation: vi.fn(() => []),
+    },
     login: {
       userId: signal<string | null>(null),
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
@@ -385,7 +392,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     tabs: { selectedTabId: signal("") },
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover: { scrollToVerse: signal(null), view: signal(null) },
     playlists: {
       playing: signal(null),
       openingPlayback: signal(false),
@@ -393,6 +400,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
+    },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
     },
     friends: { friendIds: signal([]) },
     annotations: {
@@ -1390,6 +1400,94 @@ describe("BibleReader", () => {
 
     expect(selectFootnote).toHaveBeenCalledWith(7);
     expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("keeps an inline footnote attached to the preceding word", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: ["the last words ", { noteId: 7 }, " more"],
+          },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const verse = container.querySelector<HTMLElement>(".sb-verse");
+    expect(verse).not.toBeNull();
+
+    const footnoteButton = verse!.querySelector<HTMLButtonElement>(
+      ".sb-inline-footnote-button"
+    );
+    expect(footnoteButton).not.toBeNull();
+
+    const text = verse!.textContent ?? "";
+    const marker = footnoteButton!.textContent ?? "";
+    const markerIndex = text.indexOf(marker);
+
+    expect(markerIndex).toBeGreaterThan(1);
+    expect(text[markerIndex - 1]).toBe("\u00A0");
+    expect(text[markerIndex - 2]).not.toBe(" ");
+  });
+
+  it("keeps a footnote after a poetry line break in the preceding poetry line", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: [
+              { text: "line one", poem: 1 },
+              { lineBreak: true },
+              { noteId: 7 },
+              { text: "line two", poem: 1 },
+            ],
+          },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+    const poetryLines = container.querySelectorAll(".sb-verse-line");
+    expect(poetryLines).toHaveLength(2);
+    expect(poetryLines[0]?.textContent).toContain("line one");
+    expect(poetryLines[1]?.textContent).toContain("line two");
+    const footnoteButton = container.querySelector<HTMLButtonElement>(
+      '.sb-inline-footnote-button[aria-label="Open footnote 7"]'
+    );
+    expect(footnoteButton).not.toBeNull();
+    expect(poetryLines[0]?.contains(footnoteButton)).toBe(true);
+    expect(poetryLines[1]?.contains(footnoteButton)).toBe(false);
   });
 
   it("marks selected and poetry verses with their CSS classes", () => {
@@ -2665,6 +2763,48 @@ describe("BibleReader", () => {
       chapterNumber: 1,
       verseNumber: 1,
     });
+    expect(state.discover.view.value).toBeNull();
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("clicking an annotated verse number on desktop opens the full Discover pane on its note when the compact discover panel is turned off", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    readingState.discoverContentPanelInline.value = false;
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
+    state.settings.settings.value = {
+      ...state.settings.settings.value,
+      discoveredContent: { showContent: false },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerseNumber = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number-annotated'
+    ) as HTMLElement;
+
+    act(() => {
+      annotatedVerseNumber.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(state.discover.view.value).toBe("discover");
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+    });
+    expect(readingState.discoverContentPanelInline.value).toBe(false);
     expect(selectVerse).not.toHaveBeenCalled();
   });
 
@@ -2731,6 +2871,96 @@ describe("BibleReader", () => {
     ).toBe(true);
   });
 
+  /**
+   * Renders a desktop reader whose tab has a discovered cross reference — the
+   * minimum the compact discover panel needs to render — with the Discover
+   * pane state and the settings exposed so tests can flip them.
+   */
+  function renderReaderWithDiscoveredContent() {
+    const { selectorState, readingState } = createFixture();
+    (readingState as any).discoveredCrossReferences = signal([
+      {
+        providerId: "p1",
+        results: [
+          {
+            type: "cross-reference",
+            reference: { chapter: 1, bookData: { name: "Genesis" } },
+            crossReference: {
+              chapter: 5,
+              verse: 3,
+              bookData: { commonName: "Exodus", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ]);
+    const slot: TabSlot = {
+      id: "slot-1",
+      tab: { id: "tab-1", readingState } as any,
+    };
+    const isDiscoverOpen = signal(false);
+    const settings = signal({ discoveredContent: { showContent: true } });
+    const base = createMobileState();
+    const state = {
+      ...base,
+      app: {
+        ...base.app,
+        isMobile: signal(false),
+        isCompactReader: signal(false),
+        isDiscoverOpen,
+      },
+      discover: { ...base.discover, contentTypes: signal([]) },
+      settings: { settings },
+    } as any as SeedBibleState;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const panel = () =>
+      container.querySelector(".sb-bible-reader-discover-panel");
+
+    return { panel, isDiscoverOpen, settings };
+  }
+
+  it("shows the compact discover panel when the chapter has discovered content", () => {
+    const { panel } = renderReaderWithDiscoveredContent();
+
+    expect(panel()).not.toBeNull();
+  });
+
+  it("hides the compact discover panel while the Discover pane is open and brings it back when it closes", () => {
+    const { panel, isDiscoverOpen } = renderReaderWithDiscoveredContent();
+
+    act(() => {
+      isDiscoverOpen.value = true;
+    });
+    expect(panel()).toBeNull();
+
+    act(() => {
+      isDiscoverOpen.value = false;
+    });
+    expect(panel()).not.toBeNull();
+  });
+
+  it("hides the compact discover panel when the showContent setting is disabled", () => {
+    const { panel, settings } = renderReaderWithDiscoveredContent();
+
+    act(() => {
+      settings.value = { discoveredContent: { showContent: false } };
+    });
+
+    expect(panel()).toBeNull();
+  });
+
   it("clicking the mobile header notes button targets the earliest annotated verse in the compact discover panel", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
@@ -2761,12 +2991,52 @@ describe("BibleReader", () => {
       chapterNumber: 1,
       verseNumber: 3,
     });
+    expect(state.discover.view.value).toBeNull();
     expect(state.app.openDiscover).not.toHaveBeenCalled();
+  });
+
+  it("clicking the mobile header notes button opens the full Discover pane on the earliest annotated verse when the compact discover panel is turned off", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    state.settings.settings.value = {
+      ...state.settings.settings.value,
+      discoveredContent: { showContent: false },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const notesButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-notes"
+    ) as HTMLElement;
+    expect(notesButton).not.toBeNull();
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.view.value).toBe("discover");
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+    });
   });
 
   it("offers the mobile header notes button for a friend's note when the user has none, and jumps to it", async () => {
     const { slot, selectorState, readingState } = createFixture();
     const mockState = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    const discover = createDiscoverManager();
+
     // The real managers, so the friend's note is loaded from the server the
     // way the app loads it.
     const { login, friends, annotations } = await createRealFriendContent({
@@ -2778,14 +3048,20 @@ describe("BibleReader", () => {
             bookId: "GEN",
             chapterNumber: 1,
             verseNumber: 3,
-            data: { type: "comment", html: "<p>Note</p>", userId: "friend-1" },
+            data: {
+              type: "comment",
+              html: "<p>Note</p>",
+              userId: "friend-1",
+            },
           } as Annotation,
         ],
       },
-      discover: mockState.discover,
+      discover,
     });
+
     const state = {
       ...mockState,
+      discover,
       login,
       friends,
       annotations,
@@ -2818,7 +3094,7 @@ describe("BibleReader", () => {
       notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(state.discover.scrollToVerse.value).toEqual({
+    expect(discover.scrollToVerse.value).toEqual({
       bookId: "GEN",
       chapterNumber: 1,
       verseNumber: 3,
@@ -3025,7 +3301,13 @@ describe("BibleReader", () => {
     it("marks a verse that only a friend has a note on", async () => {
       stubLineBoxes({ 1: [40] });
       const fixture = createFixture();
-      const mockState = annotatedState([]);
+
+      const discover = createDiscoverManager();
+      const mockState = {
+        ...annotatedState([]),
+        discover,
+      };
+
       const { login, friends, annotations } = await createRealFriendContent({
         friendIds: ["friend-1"],
         notes: {
@@ -3040,8 +3322,9 @@ describe("BibleReader", () => {
             }) as Annotation,
           ],
         },
-        discover: mockState.discover,
+        discover,
       });
+
       renderReader(
         {
           ...mockState,
@@ -3058,6 +3341,7 @@ describe("BibleReader", () => {
           container.querySelectorAll(".sb-note-gutter-marker")
         ).toHaveLength(1);
       });
+
       const markers = container.querySelectorAll(".sb-note-gutter-marker");
       expect((markers[0] as HTMLElement).style.top).toBe("40px");
     });
@@ -4250,8 +4534,14 @@ describe("BibleReader", () => {
       features: {
         isFeatureEnabled: vi.fn(() => true),
       },
+      settings: {
+        settings: signal({ discoveredContent: { showContent: true } }),
+      },
       saves: {
         isLocationSaved: vi.fn(() => false),
+      },
+      bookmarks: {
+        getBookmarksForLocation: vi.fn(() => []),
       },
       friends: { friendIds: signal([]) },
       annotations: {
@@ -4388,14 +4678,14 @@ describe("BibleReader", () => {
       );
     });
 
-    // Hidden behind SHOW_BOOKMARK_BUTTON until #1658. The placeholder and its
-    // "coming soon" toast are still in the file, just not rendered — flipping
-    // the flag is what brings them back.
-    it("shows no bookmark button beside it while bookmarks are off", () => {
+    it("shows the bookmark button beside it", () => {
       renderHeader(createMobileState());
 
       expect(saveButton()).not.toBeNull();
-      expect(bookmarkButton()).toBeNull();
+      expect(bookmarkButton()).not.toBeNull();
+      expect(bookmarkButton()!.getAttribute("aria-label")).toBe(
+        "Bookmark this chapter"
+      );
     });
 
     // The two header clusters are built separately, and they had drifted:

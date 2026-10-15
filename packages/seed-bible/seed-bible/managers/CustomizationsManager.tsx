@@ -293,8 +293,9 @@ const customizationVariantSchema = z.object({
  *   themselves, same as outside any customization.
  * - `auto-installed`: force-installed with no prompt while the
  *   customization is active; shown but can't be uninstalled from there.
- * - `hidden`: not shown in Settings → Extensions at all while the
- *   customization is active.
+ * - `hidden`: never offered in Settings → Extensions while the
+ *   customization is active. If it's still installed anyway (e.g. as another
+ *   extension's dependency) it's listed under Installed and can still be uninstalled.
  */
 export const EXTENSION_AVAILABILITY_VALUES = [
   "available",
@@ -419,7 +420,8 @@ function withExtensionSensitiveProxy(
   customization: SeedBibleCustomization,
   extensionId: string,
   proxyId: string,
-  pointer: SensitiveProxyPointer | null
+  pointer: SensitiveProxyPointer | null,
+  updatedAt: number
 ): SeedBibleCustomization {
   const byProxy = { ...customization.extensionSensitiveProxies[extensionId] };
   if (pointer) {
@@ -436,7 +438,7 @@ function withExtensionSensitiveProxy(
   return {
     ...customization,
     extensionSensitiveProxies: next,
-    updatedAt: Date.now(),
+    updatedAt,
   };
 }
 
@@ -716,9 +718,10 @@ export interface CustomizationsManager {
   ) => BibleTheme;
   /**
    * The extension ids that should be installed while the active
-   * customization is in effect: its own `auto-installed` extensions,
-   * unioned with any `available` extras the viewer added for it via
-   * `addExtensionToActiveCustomization`. Empty when nothing is active.
+   * customization is in effect: its own `auto-installed` extensions (minus
+   * any the viewer removed), unioned with any `available` extras the viewer
+   * added for it via `addExtensionToActiveCustomization`. Empty when
+   * nothing is active.
    */
   activeExtensionIds: ReadonlySignal<string[]>;
   /**
@@ -907,9 +910,9 @@ export interface CustomizationsManager {
     extensionId: string,
     key: string
   ) => ExtensionSettingValue | undefined;
-  /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active or the extension's availability there isn't "available". */
+  /** Installs an extension for the viewer on the active customization: an "available" one as an extra, an "auto-installed" one the viewer removed by putting it back. No-op if none is active or the extension is hidden there. */
   addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
-  /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
+  /** Uninstalls an extension for the viewer on the active customization: drops an extra, or records that they removed an "auto-installed" one. No-op if none is active. */
   removeExtensionFromActiveCustomization: (
     extensionId: string
   ) => Promise<void>;
@@ -1209,10 +1212,14 @@ export function createCustomizationsManager(
     if (!customization) {
       return [];
     }
+    const locator = activeCustomizationLocator.value;
+    const removed = locator
+      ? extensionPreferences.getRemovedExtensionIds(locator)
+      : [];
     const autoInstalled = Object.entries(customization.extensionSettings)
       .filter(([, availability]) => availability === "auto-installed")
-      .map(([id]) => id);
-    const locator = activeCustomizationLocator.value;
+      .map(([id]) => id)
+      .filter((id) => !removed.includes(id));
     const extra = locator
       ? extensionPreferences.getExtraExtensionIds(locator)
       : [];
@@ -2069,6 +2076,9 @@ export function createCustomizationsManager(
     // pointer instead of dropping it. The write itself starts from the last
     // saved copy instead of the draft: the draft may hold edits the author
     // hasn't saved yet, and might still discard.
+    // The draft and the saved copy share one timestamp, so once the write
+    // lands they compare equal and the draft doesn't read as unsaved.
+    const updatedAt = Date.now();
     const draft = editingCustomization.value;
     const previous =
       draft?.id === customizationId
@@ -2079,7 +2089,8 @@ export function createCustomizationsManager(
         draft,
         extensionId,
         proxyId,
-        pointer
+        pointer,
+        updatedAt
       );
     }
     // A failed write takes the pointer back off the draft, unless something
@@ -2095,7 +2106,8 @@ export function createCustomizationsManager(
           current,
           extensionId,
           proxyId,
-          previous ?? null
+          previous ?? null,
+          Date.now()
         );
       }
     };
@@ -2108,7 +2120,8 @@ export function createCustomizationsManager(
         saved,
         extensionId,
         proxyId,
-        pointer
+        pointer,
+        updatedAt
       );
       try {
         const result = await persist(userId, next);
@@ -2144,7 +2157,12 @@ export function createCustomizationsManager(
     if (!locator) {
       return;
     }
-    if (getActiveExtensionAvailability(extensionId) === "hidden") {
+    const availability = getActiveExtensionAvailability(extensionId);
+    if (availability === "hidden") {
+      return;
+    }
+    if (availability === "auto-installed") {
+      await extensionPreferences.clearRemovedExtensionId(locator, extensionId);
       return;
     }
     await extensionPreferences.addExtraExtensionId(locator, extensionId);
@@ -2155,6 +2173,10 @@ export function createCustomizationsManager(
   ): Promise<void> => {
     const locator = activeCustomizationLocator.value;
     if (!locator) {
+      return;
+    }
+    if (getActiveExtensionAvailability(extensionId) === "auto-installed") {
+      await extensionPreferences.addRemovedExtensionId(locator, extensionId);
       return;
     }
     await extensionPreferences.removeExtraExtensionId(locator, extensionId);

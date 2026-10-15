@@ -14,8 +14,10 @@
  *      - POST /__invalidate?branch=       → drop the cached pointer for a branch
  *    Per request it resolves the branch's live build. Only branches in the
  *    `ALLOWED_SSR_BRANCHES` whitelist are server-side rendered by their own
- *    bundle: for those, the SSR bundle is lazily loaded and cached, and its
- *    render() is called to produce HTML. Any other branch still works, but its
+ *    bundle: for those, the branch's latest SSR bundle is lazily loaded into
+ *    its own worker thread (see `buildWorker.ts`) and cached, and its render()
+ *    is called to produce HTML — for a pinned older build too, over that
+ *    build's pre-rendered HTML. Any other branch still works, but its
  *    (untrusted) SSR bundle is never downloaded or imported. Such a branch is
  *    either rendered through the trusted `DEFAULT_SSR_BRANCH`'s bundle (when
  *    set) over its own pre-rendered HTML, or served that HTML as-is. Hashed
@@ -38,12 +40,13 @@ import {
   type Server,
   type ServerResponse,
 } from "node:http";
-import { pathToFileURL } from "node:url";
 import { pipeline, Readable } from "node:stream";
 import { pipeline as streamPipeline } from "node:stream/promises";
 import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import { createGzip } from "node:zlib";
 import { createStore, type ArtifactStore, type BranchPointer } from "./store";
+import { BuildCache } from "./buildCache";
+import { startBuildWorker, type RenderFn } from "./buildWorker";
 import Bowser from "bowser";
 import { parseAcceptLanguages } from "./lang.js";
 import { SpanKind, type Span } from "@opentelemetry/api";
@@ -65,7 +68,8 @@ import {
   withSpan,
   type Telemetry,
 } from "./telemetry";
-import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
+
+export type { RenderFn } from "./buildWorker";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const PORT = Number(process.env.PORT ?? 3002);
@@ -73,12 +77,33 @@ const ROOT_BRANCH = process.env.ROOT_BRANCH ?? "main";
 const ASSET_HOST = process.env.ASSET_HOST ?? "";
 const POINTER_TTL_MS = Number(process.env.POINTER_TTL_MS ?? 10_000);
 const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
+/**
+ * How many builds may have a live SSR worker at once. Each holds its own copy
+ * of a ~10 MB bundle plus its heap (~70 MB), so this is the main lever on the
+ * host's memory.
+ */
+const SSR_WORKERS_MAX = Number(process.env.SSR_WORKERS_MAX ?? 4);
+/**
+ * Bounds an SSR bundle's initial load and each render. A render that runs over
+ * falls back to the unrendered HTML, as a render that throws does.
+ */
+const SSR_RENDER_TIMEOUT_MS = Number(
+  process.env.SSR_RENDER_TIMEOUT_MS ?? 15_000
+);
+/**
+ * How long a build that failed to load is remembered. Until then, requests for
+ * it fail fast instead of each downloading the bundle and starting a worker.
+ */
+const SSR_LOAD_FAILURE_TTL_MS = Number(
+  process.env.SSR_LOAD_FAILURE_TTL_MS ?? 30_000
+);
 
 const INVALIDATION_SECRET = process.env.INVALIDATION_SECRET ?? "";
 
 /**
  * Comma-separated whitelist of branches that are server-side rendered by their
- * own SSR bundle. A branch outside this set never has its (untrusted) bundle
+ * own latest SSR bundle (a pinned older build's HTML is rendered through it
+ * too; old builds are never imported). A branch outside this set never has its (untrusted) bundle
  * downloaded or imported; it is instead either rendered via `DEFAULT_SSR_BRANCH`
  * (if set) or served its pre-rendered HTML as-is.
  */
@@ -102,23 +127,6 @@ interface ClientConfig {
   renderedAsWebKit: boolean;
   acceptedLanguages: string[];
 }
-
-export type RenderFn = (opts: {
-  path: string;
-  config: {
-    basePath: string;
-    assetHost: string;
-    renderedAsMobile: boolean;
-    renderedAsWebKit: boolean;
-    acceptedLanguages: string[];
-    branding?: BrandingConfig;
-  };
-  html: string;
-}) => Promise<
-  | { html: string; notFound?: true }
-  | { redirectTo: string; redirectStatus?: number; vary?: string }
-  | string
->;
 
 /**
  * Matches the client's own (former) `isWebKit()` check in `app/main.tsx`, so
@@ -266,54 +274,85 @@ async function resolvePointer(branch: string): Promise<BranchPointer | null> {
   return pointer;
 }
 
-// ─── Module cache (buildId → loaded render fn + manifest), LRU ───────────────
+// ─── Module cache (buildId → SSR worker + pre-rendered html), LRU ────────────
+// Each build renders in its own worker thread. Evicting or invalidating a build
+// retires its worker, which is the only way to free an imported bundle — a
+// module imported on this thread could never be unloaded, so each deploy used
+// to add another copy of the app that stayed for the life of the process.
 interface ModuleEntry {
   render: RenderFn;
   html: string;
+  acquire(): (() => void) | null;
+  retire(): void;
 }
-const moduleCache = new Map<string, ModuleEntry>(); // insertion-ordered → LRU
+const moduleCache = new BuildCache<ModuleEntry>(
+  SSR_WORKERS_MAX,
+  SSR_LOAD_FAILURE_TTL_MS
+);
 
 async function loadBuild(
   branch: string,
   buildId: string
 ): Promise<ModuleEntry> {
   const key = `${branch}@${buildId}`;
-  const existing = moduleCache.get(key);
-  if (existing) {
-    // Refresh LRU recency.
-    moduleCache.delete(key);
-    moduleCache.set(key, existing);
-    recordCacheLookup("module", true);
-    return existing;
-  }
-  recordCacheLookup("module", false);
-
-  const { serverModulePath, html } = await store.fetchArtifacts(
-    branch,
-    buildId
-  );
-  // Evaluating a branch's SSR bundle is a cold-start cliff — the first request
-  // for a build pays for it while later ones hit the cache above. Give it its
-  // own span so those outlier latencies are explainable.
-  const mod = await withSpan(
-    "build.import",
-    {
-      attributes: { "seedbible.branch": branch, "seedbible.build_id": buildId },
-    },
-    () => import(pathToFileURL(serverModulePath).href)
-  );
-  const render = mod.render as RenderFn;
-  if (typeof render !== "function") {
-    throw new Error(`Build ${key} does not export render()`);
-  }
-
-  const entry: ModuleEntry = { render, html };
-  moduleCache.set(key, entry);
-  while (moduleCache.size > MODULE_CACHE_MAX) {
-    const oldest = moduleCache.keys().next().value as string;
-    moduleCache.delete(oldest);
-  }
+  const { entry, hit } = moduleCache.get(key, async () => {
+    const { serverModulePath, html } = await store.fetchArtifacts(
+      branch,
+      buildId
+    );
+    let loaded: ModuleEntry | undefined;
+    // Evaluating a branch's SSR bundle is a cold-start cliff — the first
+    // request for a build pays for it while later ones hit the cache. Give it
+    // its own span so those outlier latencies are explainable.
+    const worker = await withSpan(
+      "build.import",
+      {
+        attributes: {
+          "seedbible.branch": branch,
+          "seedbible.build_id": buildId,
+        },
+      },
+      () =>
+        startBuildWorker({
+          modulePath: serverModulePath,
+          timeoutMs: SSR_RENDER_TIMEOUT_MS,
+          // A crashed worker must not stay cached, or every later request
+          // for the build would fail until it was evicted.
+          onExit: () => {
+            if (loaded) moduleCache.forget(key, loaded);
+          },
+        })
+    );
+    loaded = {
+      render: worker.render,
+      html,
+      acquire: worker.acquire,
+      retire: worker.retire,
+    };
+    return loaded;
+  });
+  recordCacheLookup("module", hit);
   return entry;
+}
+
+/**
+ * Loads a build and holds it until `release()` is called, so a deploy's
+ * invalidation or an eviction can't stop its worker between handing it out and
+ * rendering with it (e.g. while the request fetches a pinned build's HTML).
+ * Rejects if the build fails to load.
+ */
+async function holdBuild(
+  branch: string,
+  buildId: string
+): Promise<{ build: ModuleEntry; release: () => void }> {
+  // A build retired after the cache handed it out but before it could be held
+  // is gone from the cache by then, so the second attempt loads a fresh one.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const build = await loadBuild(branch, buildId);
+    const release = build.acquire();
+    if (release) return { build, release };
+  }
+  throw new Error(`SSR worker for ${branch}@${buildId} stopped before use`);
 }
 
 // ─── HTML cache (buildId → pre-rendered html), LRU ───────────────────────────
@@ -703,9 +742,7 @@ async function dispatch(
     const branch = new URL(url, "http://localhost").searchParams.get("branch");
     if (branch) {
       pointerCache.delete(branch);
-      for (const key of [...moduleCache.keys()]) {
-        if (key.startsWith(`${branch}@`)) moduleCache.delete(key);
-      }
+      moduleCache.deleteWhere((key) => key.startsWith(`${branch}@`));
       for (const key of [...htmlCache.keys()]) {
         if (key.startsWith(`${branch}@`)) htmlCache.delete(key);
       }
@@ -757,18 +794,66 @@ async function dispatch(
       return;
     }
 
-    // Whitelisted branches are rendered by their own SSR bundle.
+    // Whitelisted branches are rendered by their own SSR bundle — but only
+    // ever their latest build's. A pinned older build (`/b/<branch>/<buildId>`)
+    // has its pre-rendered HTML rendered through the latest build instead:
+    // every imported build costs a worker (~70 MB), and anyone can ask for any
+    // past build ID, so importing old ones on demand would let crawlers and
+    // stale links churn workers. The hydration gate (`renderedByCommit`) sees
+    // the mismatch and has the client render fresh rather than hydrate.
     if (ssrAllowed) {
-      const { render, html: preRenderedHtml } = await loadBuild(
-        route.branch,
-        pointer.buildId
-      );
-      await renderAndRespond(req, res, render, route, preRenderedHtml);
-      return;
+      const latest = route.patternVersion
+        ? await resolvePointer(route.branch)
+        : pointer;
+      // A branch with no live pointer has no latest build to render with;
+      // its pinned HTML is handled like a non-whitelisted branch's below.
+      if (latest) {
+        const pinnedOldBuild = latest.buildId !== pointer.buildId;
+        const held = await holdBuild(route.branch, latest.buildId).catch(
+          (err: unknown) => {
+            // The latest build's own URLs have nothing else to render with.
+            // A pinned old build still has its own HTML, and is exactly what
+            // people reach for to get around a bad deploy.
+            if (!pinnedOldBuild) throw err;
+            console.error(
+              `Latest build ${route.branch}@${latest.buildId} failed to load; serving ${pointer.buildId}'s HTML as-is:`,
+              err
+            );
+            recordError(span, err);
+            markRenderDegraded();
+            return null;
+          }
+        );
+        if (!held) {
+          sendHtml(
+            req,
+            res,
+            200,
+            await loadHtml(route.branch, pointer.buildId),
+            { "cache-control": "public, max-age=0, must-revalidate" }
+          );
+          return;
+        }
+        try {
+          const preRenderedHtml = pinnedOldBuild
+            ? await loadHtml(route.branch, pointer.buildId)
+            : held.build.html;
+          await renderAndRespond(
+            req,
+            res,
+            held.build.render,
+            route,
+            preRenderedHtml
+          );
+        } finally {
+          held.release();
+        }
+        return;
+      }
     }
 
-    // Non-whitelisted branch: its own SSR bundle is never downloaded or
-    // imported. Fetch only its pre-rendered HTML.
+    // From here on the requested build's own SSR bundle is never downloaded
+    // or imported. Fetch only its pre-rendered HTML.
     const preRenderedHtml = await loadHtml(route.branch, pointer.buildId);
 
     // If a trusted default branch is configured, render this branch's HTML
@@ -777,11 +862,21 @@ async function dispatch(
     if (DEFAULT_SSR_BRANCH) {
       const defaultPointer = await resolvePointer(DEFAULT_SSR_BRANCH);
       if (defaultPointer) {
-        const { render } = await loadBuild(
+        const { build, release } = await holdBuild(
           DEFAULT_SSR_BRANCH,
           defaultPointer.buildId
         );
-        await renderAndRespond(req, res, render, route, preRenderedHtml);
+        try {
+          await renderAndRespond(
+            req,
+            res,
+            build.render,
+            route,
+            preRenderedHtml
+          );
+        } finally {
+          release();
+        }
         return;
       }
       console.warn(
@@ -835,7 +930,7 @@ function installShutdownHandlers(server: Server, telemetry: Telemetry): void {
   process.on("SIGINT", stop);
 }
 
-function startProdServer(): void {
+export function startProdServer(port: number = PORT): Server {
   const storeBackend = process.env.STORE_BACKEND ?? "local";
   const telemetry = initTelemetry({
     allowedBranches: ALLOWED_SSR_BRANCHES,
@@ -845,13 +940,14 @@ function startProdServer(): void {
 
   const server = createServer((req, res) => {
     void handle(req, res);
-  }).listen(PORT, () => {
+  }).listen(port, () => {
     console.log(
-      `Seed Bible host server listening on :${PORT} (root branch: ${ROOT_BRANCH}, store: ${storeBackend}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"}, default SSR branch: ${DEFAULT_SSR_BRANCH || "(none)"}, telemetry: ${telemetry.enabled ? "on" : "off"})`
+      `Seed Bible host server listening on :${port} (root branch: ${ROOT_BRANCH}, store: ${storeBackend}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"}, default SSR branch: ${DEFAULT_SSR_BRANCH || "(none)"}, telemetry: ${telemetry.enabled ? "on" : "off"})`
     );
   });
 
   installShutdownHandlers(server, telemetry);
+  return server;
 }
 
 // ─── Development: Express + Vite dev server ──────────────────────────────────

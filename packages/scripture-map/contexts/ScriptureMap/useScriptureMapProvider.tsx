@@ -16,12 +16,43 @@ import {
   saveProfileConfigValue,
 } from "../../../seed-bible/seed-bible/managers/ProfileConfigSync";
 
+import { debounce } from "es-toolkit";
+
 import { computed } from "@preact/signals";
 
-import { useState, useCallback, useMemo, useEffect } from "preact/hooks";
+import {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  type StateUpdater,
+  type Dispatch,
+} from "preact/hooks";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers";
+
+const debouncedSaveProfileConfigValue = debounce(saveProfileConfigValue, 500);
 
 const PROFILE_OPEN_BOOK_OVERRIDES = "scriptureMapOpenBooks";
 const PROFILE_SHOWING_ALL_CHAPTERS = "scriptureMapShowingAllChapters";
+const PROFILE_SCALE_FACTOR = "scriptureMapScaleFactor";
+
+const MIN_SCALE_FACTOR = 0.25;
+const MAX_SCALE_FACTOR = 1.5;
+const SCALE_FACTOR_STEP = 0.05;
+
+const MAX_CHAPTER_HEAT_COUNT = 5;
+
+function readMapConfigValue(login: LoginManager, key: string): unknown {
+  return (
+    getProfileConfigValue(login.profile.value, key) ??
+    login.localConfig.value[key]
+  );
+}
+
+function parseScaleFactor(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  return Math.min(MAX_SCALE_FACTOR, Math.max(MIN_SCALE_FACTOR, value));
+}
 
 /** Individual books the user has explicitly opened/closed, keyed by book id. Books with no entry fall back to `showingAllChapters`. */
 function parseOpenBookOverrides(value: unknown): Record<string, boolean> {
@@ -192,12 +223,6 @@ const upcomingEvents = {
   Kushagra: [{ book: "Genesis", chapter: 8, remainingDays: 5 }],
 };
 
-const MIN_SCALE_FACTOR = 0.25;
-const MAX_SCALE_FACTOR = 1.5;
-const SCALE_FACTOR_STEP = 0.05;
-
-const MAX_CHAPTER_HEAT_COUNT = 5;
-
 export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
   const {
     arrangementService,
@@ -272,7 +297,33 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
     };
   }, []);
 
-  const [scaleFactor, setScaleFactor] = useState<number>(initialScaleFactor);
+  const storedScaleFactor = parseScaleFactor(
+    readMapConfigValue(seedBibleState.login, PROFILE_SCALE_FACTOR),
+    initialScaleFactor
+  );
+  const [scaleFactor, setScaleFactorState] =
+    useState<number>(storedScaleFactor);
+  useEffect(() => {
+    setScaleFactorState(storedScaleFactor);
+  }, [storedScaleFactor]);
+  const setScaleFactor = useCallback<Dispatch<StateUpdater<number>>>(
+    (next) => {
+      setScaleFactorState((prev) => {
+        const value = parseScaleFactor(
+          typeof next === "function" ? next(prev) : next,
+          prev
+        );
+        debouncedSaveProfileConfigValue(
+          seedBibleState.login,
+          PROFILE_SCALE_FACTOR,
+          value
+        );
+        return value;
+      });
+    },
+    [seedBibleState.login]
+  );
+
   const [showingAllChapters, setShowingAllChapters] = useState<boolean>(() =>
     parseShowingAllChapters(
       getProfileConfigValue(
@@ -453,6 +504,15 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
   }, []);
 
   useEffect(() => {
+    // Closing or reloading the tab never unmounts the map, so a zoom still
+    // inside its debounce would be lost; hiding the page sends it.
+    const flushPendingSaveOnHide = () => {
+      if (document.visibilityState === "hidden") {
+        debouncedSaveProfileConfigValue.flush();
+      }
+    };
+    document.addEventListener("visibilitychange", flushPendingSaveOnHide);
+
     const updateUserColorsUnsubscribe = bibleVizUtilsEventManager.subscribe(
       "UserColorStoreChanged",
       updateUserColors
@@ -465,6 +525,8 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
     updateUserColors();
 
     return () => {
+      document.removeEventListener("visibilitychange", flushPendingSaveOnHide);
+      debouncedSaveProfileConfigValue.flush();
       updateUserColorsUnsubscribe();
       updateUserPresenceUnsubscribe();
     };

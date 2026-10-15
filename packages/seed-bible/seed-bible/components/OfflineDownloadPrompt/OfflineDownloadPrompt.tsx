@@ -7,6 +7,7 @@ import {
   type OfflineTranslationsManager,
 } from "../../managers/OfflineTranslationsManager";
 import { downloadTranslationWithToast } from "./downloadTranslationWithToast";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 
 /**
  * Offers to save the translation the reader is currently in for offline use.
@@ -44,6 +45,10 @@ export function OfflineDownloadPrompt({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [translation]);
 
+  const overlayDismiss = useOverlayDismiss(() =>
+    offline.dismissDownloadPrompt()
+  );
+
   if (!translation) {
     return null;
   }
@@ -58,7 +63,7 @@ export function OfflineDownloadPrompt({
   return (
     <div
       className={`sb-offline-prompt-overlay ${className}`}
-      onClick={() => offline.dismissDownloadPrompt()}
+      {...overlayDismiss}
     >
       <div
         className="sb-offline-prompt"

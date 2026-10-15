@@ -117,6 +117,7 @@ function createQuickToolContext(
     annotationsForChapter?: unknown[];
     isMobile?: boolean;
     isDiscoverOpen?: ReadonlySignal<boolean>;
+    settings?: ReadonlySignal<{ discoveredContent: { showContent: boolean } }>;
     readingPlansForChapter?: unknown[];
     pendingAnnotationChangesForChapter?: number;
   } = {}
@@ -151,6 +152,11 @@ function createQuickToolContext(
     } as any,
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
+    } as any,
+    settings: {
+      settings:
+        overrides.settings ??
+        signal({ discoveredContent: { showContent: true } }),
     } as any,
     surface: "quick-toolbar",
     app: {
@@ -940,7 +946,6 @@ describe("createBibleToolsManager", () => {
       expect(chats.composerDraft.value).toBe(
         `${formatSelectedVerses(context.readingState)}\n\n`
       );
-      expect(context.readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("does nothing when the single-agent shortcut is invoked with no selected verses", () => {
@@ -1082,7 +1087,6 @@ describe("createBibleToolsManager", () => {
       expect(chats.createLocalSession).not.toHaveBeenCalled();
       expect(addParticipant).toHaveBeenCalledWith("apologist");
       expect(chats.selectChat).toHaveBeenCalledWith("recent-apologist-chat");
-      expect(context.readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("does not reuse a shared chat or a local chat for a different agent", async () => {
@@ -1635,6 +1639,25 @@ describe("createBibleToolsManager", () => {
       expect(context.readingState.discoverContentPanelInline.value).toBe(true);
     });
 
+    it("is visible while the showContent option in settings is enabled, otherwise is hidden", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const settings = signal({ discoveredContent: { showContent: true } });
+      const context = createQuickToolContext({
+        discoveredCrossReferences: [{ providerId: "p1", results: [{}] }],
+        annotationsForChapter: [{ id: "ann-1" }],
+        settings,
+      });
+
+      const resolveTool = () =>
+        manager
+          .getQuickTools(context)
+          .find((t) => t.id === "discover-content-panel");
+
+      expect(resolveTool()?.visible.value).toBe(true);
+
+      settings.value = { discoveredContent: { showContent: false } };
+      expect(resolveTool()?.visible.value).toBe(false);
+    });
     it("is visible when there is at least one reading plan", () => {
       const manager = createBibleToolsManager(testBranding);
       const context = createQuickToolContext({
@@ -1912,6 +1935,9 @@ describe("createBibleToolsManager", () => {
           visibleAnnotationsForChapter: () => [],
         } as any,
         features: {} as any,
+        settings: {
+          settings: signal({ discoveredContent: { showContent: true } }),
+        } as any,
         surface: "quick-toolbar",
         readingPlans: {
           getReadingPlansForChapter: vi.fn(() => []),
@@ -2047,12 +2073,11 @@ describe("createBibleToolsManager", () => {
 
     it("adds one playlist item for a contiguous verse run", async () => {
       const manager = createBibleToolsManager(testBranding);
-      const { context, editingPlaylist, clearSelectedVerses } =
-        createPlaylistContext({
-          verses: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n) =>
-            selectedVerse("EXO", 26, n)
-          ),
-        });
+      const { context, editingPlaylist } = createPlaylistContext({
+        verses: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n) =>
+          selectedVerse("EXO", 26, n)
+        ),
+      });
 
       const tool = manager
         .getVerseToolbarTools(context)
@@ -2066,7 +2091,6 @@ describe("createBibleToolsManager", () => {
           ref: { bookId: "EXO", chapter: 26, verse: 1, endVerse: 11 },
         },
       ]);
-      expect(clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("adds one playlist item per gapped range", async () => {

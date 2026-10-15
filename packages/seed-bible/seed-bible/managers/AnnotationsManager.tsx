@@ -118,6 +118,9 @@ export interface AnnotationsManager {
   /** The annotation currently being created/edited in the pane, or null. */
   editingAnnotation: Signal<Annotation | null>;
 
+  /** Read-only signal indicating whether a new annotation is currently being drafted. */
+  readonly isDraftingNewAnnotation: ReadonlySignal<boolean>;
+
   /**
    * Starts creating a new annotation on the active tab's current chapter and
    * switches the pane to the create/edit view. Pre-fills the verse targeting
@@ -135,19 +138,18 @@ export interface AnnotationsManager {
 
   /**
    * Persists `editingAnnotation` (upsert), updates the chapter cache, and
-   * clears the draft. On a wide screen it returns to the discover view. On
-   * mobile it returns to the view that was open before the editor: the
-   * reader when the note was started there, or the notes list when it was
-   * opened from Discover. No-op when nothing is being edited. Rethrows on
-   * save failure, leaving `editingAnnotation` intact so the caller doesn't
-   * lose the draft.
+   * clears the draft. Returns Discover to the view that was open before the
+   * editor: closed when the note was started from the reader, the notes list
+   * when it was opened from there, or the playlist player if one was
+   * playing. Leaves Discover alone if it has already moved away from the
+   * editor. No-op when nothing is being edited. Rethrows on save failure,
+   * leaving `editingAnnotation` intact so the caller doesn't lose the draft.
    */
   saveEditingAnnotation: () => Promise<void>;
 
   /**
-   * Discards the current edit. On a wide screen it returns to the discover
-   * view. On mobile it returns to the same place `saveEditingAnnotation`
-   * would: the reader, or the notes list if the editor was opened from it.
+   * Discards the current edit and returns Discover to the same view
+   * `saveEditingAnnotation` would.
    */
   cancelEditingAnnotation: () => void;
 
@@ -580,13 +582,6 @@ export interface CreateAnnotationsManagerOptions {
   /** See {@link CreateRecordSyncManagerOptions.confirmAdoption}. */
   confirmAdoption?: CreateRecordSyncManagerOptions<Annotation>["confirmAdoption"];
   /**
-   * Whether the app is in the mobile layout. After a note is saved or
-   * cancelled, mobile returns to the discover view that was open before the
-   * editor. Omitted means the wide-screen behavior: return to the discover
-   * view.
-   */
-  isMobile?: ReadonlySignal<boolean>;
-  /**
    * The signed-in user's friends, whose notes
    * `visibleAnnotationsForChapter` includes. Omitted means only the user's
    * own.
@@ -616,8 +611,6 @@ export function createAnnotationsManager(
     options.store === undefined
       ? createIndexedDbRecordStore<Annotation>(annotationSyncDomain.dbName)
       : options.store;
-  const isMobile = options.isMobile;
-
   /**
    * The record a query targets, or null when only the local store can answer.
    *
@@ -1370,10 +1363,10 @@ export function createAnnotationsManager(
   // is a docked panel, not a modal).
   const draftTabId = signal<string | null>(null);
 
-  // The discover view underneath the editor, captured when it opens. On
-  // mobile, save and cancel put this back so a note started from the reader
-  // returns to the chapter, and a note opened from the notes list returns to
-  // that list. `null` means Discover was closed.
+  // The discover view underneath the editor, captured when it opens. Save and
+  // cancel put this back so a note started from the reader returns to the
+  // chapter, and a note opened from the notes list returns to that list.
+  // `null` means Discover was closed.
   let viewBeforeEditing: DiscoverView | null = null;
 
   const rememberViewBeforeEditing = () => {
@@ -1389,7 +1382,9 @@ export function createAnnotationsManager(
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = null;
-    discover.view.value = isMobile?.value ? viewBeforeEditing : "discover";
+    if (discover.view.peek() === "create_annotation") {
+      discover.view.value = viewBeforeEditing;
+    }
     viewBeforeEditing = null;
   };
 
@@ -1398,10 +1393,11 @@ export function createAnnotationsManager(
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
 
-  // Keeps a new annotation's verse targeting in sync with the reader's live
-  // text selection for as long as it's being drafted, so the user can select
-  // verses before, during, or after opening the composer and always see (and
-  // save) the current selection - no manual verse-range controls needed.
+  // Keeps a new annotation's chapter and verse targeting in sync with the
+  // reader's live position and text selection for as long as it's being
+  // drafted, so the user can navigate and select verses before, during, or
+  // after opening the composer and always see (and save) where they are - no
+  // manual verse-range controls needed.
   effect(() => {
     if (!isDraftingNewAnnotation.value) {
       return;
@@ -1414,19 +1410,37 @@ export function createAnnotationsManager(
     if (!current || !tab) {
       return;
     }
-    const targeting = deriveVerseTargeting(
-      tab,
-      current.bookId,
-      current.chapterNumber
-    );
+    // A tab with no chapter loaded (mid-navigation) keeps the draft where it
+    // was rather than leaving it with nowhere to be saved.
+    const bookId = tab.readingState.bookId.value ?? current.bookId;
+    const chapterNumber =
+      tab.readingState.chapterNumber.value || current.chapterNumber;
+    const targeting = deriveVerseTargeting(tab, bookId, chapterNumber);
     if (
+      current.bookId === bookId &&
+      current.chapterNumber === chapterNumber &&
       current.verseNumber === targeting.verseNumber &&
       current.endVerseNumber === targeting.endVerseNumber &&
       verseNumbersEqual(current.verseNumbers ?? null, targeting.verseNumbers)
     ) {
       return;
     }
-    editingAnnotation.value = { ...current, ...targeting };
+    editingAnnotation.value = {
+      ...current,
+      bookId,
+      chapterNumber,
+      ...targeting,
+    };
+  });
+  effect(() => {
+    if (
+      discover.view.value !== "create_annotation" &&
+      isDraftingNewAnnotation.peek()
+    ) {
+      isDraftingNewAnnotation.value = false;
+      draftTabId.value = null;
+      editingAnnotation.value = null;
+    }
   });
 
   const createNewAnnotation = async (): Promise<void> => {
@@ -1494,17 +1508,27 @@ export function createAnnotationsManager(
     if (!current) {
       return;
     }
-    // Captured before awaiting, and passed through explicitly. `saveAnnotation`
-    // resolves the same owner synchronously, but it then awaits two IndexedDB
-    // round trips — long enough for the account to change. Letting the cache
-    // update re-read the *current* login instead would file this note under
-    // whichever account happens to be signed in by then, so the next reader sees
-    // one account's writing as their own.
+
+    // Capture the owner before awaiting the save, since the account may change
+    // while IndexedDB operations are in progress.
     const recordId = effectiveRecordId();
-    // `saveAnnotation` stamps the timestamps now, so every path that persists an
-    // annotation gets them — not just this one.
+
+    // Capture the tab before leaving the editor resets draftTabId.
+    const tabId = draftTabId.value;
+
+    // Save first so a failed save preserves the current verse selection.
     const saved = await saveAnnotation(current);
     upsertIntoCache(saved, recordId);
+
+    // Clear the selected verses after a successful save of a new annotation.
+    const tab = tabId
+      ? (tabs.tabs.value.find((t) => t.id === tabId) ?? null)
+      : null;
+
+    if (tab) {
+      tab.readingState.clearSelectedVerses();
+    }
+
     leaveAnnotationEditor();
   };
 
@@ -1545,6 +1569,7 @@ export function createAnnotationsManager(
     saveEditingAnnotation,
     cancelEditingAnnotation,
     deleteAnnotationAndRefresh,
+    isDraftingNewAnnotation: computed(() => isDraftingNewAnnotation.value),
     hasRecordOverride: !!recordOverride,
     sync,
     pendingCountForChapter: (bookId, chapterNumber) =>

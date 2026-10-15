@@ -29,6 +29,7 @@ import {
   type OfflineTranslationStore,
 } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import type { Mock } from "vitest";
+import { pressAndRelease } from "../testUtils/pressAndRelease";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -140,6 +141,53 @@ describe("BibleSelector", () => {
     });
 
     expect(container.querySelector(".sb-selector-overlay.open")).not.toBeNull();
+  });
+
+  describe("backdrop", () => {
+    async function renderOpenSelector() {
+      const { selectorState, bibleDataManager, state } =
+        await createSelectorFixture();
+      const onClose = vi.fn();
+
+      act(() => {
+        render(
+          <BibleSelector
+            isOpen={true}
+            onClose={onClose}
+            selectorState={selectorState}
+            bibleDataManager={bibleDataManager}
+            app={state.app}
+          />,
+          container
+        );
+      });
+
+      const overlay = container.querySelector<HTMLElement>(
+        ".sb-selector-overlay"
+      )!;
+      const searchInput = container.querySelector<HTMLElement>(
+        ".sb-selector-panel input"
+      )!;
+      expect(overlay).not.toBeNull();
+      expect(searchInput).not.toBeNull();
+      return { onClose, overlay, searchInput };
+    }
+
+    it("closes when the backdrop is clicked", async () => {
+      const { onClose, overlay } = await renderOpenSelector();
+
+      pressAndRelease(overlay, overlay);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("stays open when a text selection in the search box is released over the backdrop", async () => {
+      const { onClose, overlay, searchInput } = await renderOpenSelector();
+
+      pressAndRelease(searchInput, overlay);
+
+      expect(onClose).not.toHaveBeenCalled();
+    });
   });
 
   it("auto-expands the current book and highlights the current chapter on open", async () => {

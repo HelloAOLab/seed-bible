@@ -33,7 +33,7 @@ import {
   createNavigationManager,
   type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
-import { signal } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 import { stubColorScheme } from "../testUtils/stubColorScheme";
 
@@ -1560,6 +1560,29 @@ describe("CustomizationsManager", () => {
       expect(manager.hasUnsavedChanges.value).toBe(false);
     });
 
+    it("leaves no unsaved changes when the clock ticks during the save", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      let now = Date.now();
+      const dateNow = vi.spyOn(Date, "now").mockImplementation(() => ++now);
+
+      try {
+        const saved = await manager.setExtensionSensitiveProxy(
+          created.id,
+          "ext-1",
+          "exampleApi",
+          pointer
+        );
+
+        expect(saved).toBe(true);
+        expect(manager.hasUnsavedChanges.value).toBe(false);
+      } finally {
+        dateNow.mockRestore();
+      }
+    });
+
     it("doesn't publish unsaved draft edits that are later discarded", async () => {
       recordDataMock.mockResolvedValue({ success: true });
       const { manager } = createManager();
@@ -2135,7 +2158,10 @@ describe("CustomizationsManager", () => {
     expect(recordDataMock).toHaveBeenCalledWith(
       "user-1",
       EXTENSION_PREFERENCES_ADDRESS,
-      { extraExtensionIds: { [`user-1.${created.id}`]: ["ext.extra"] } },
+      {
+        extraExtensionIds: { [`user-1.${created.id}`]: ["ext.extra"] },
+        removedExtensionIds: {},
+      },
       { marker: "publicRead" }
     );
     expect(recordDataMock).not.toHaveBeenCalledWith(
@@ -2150,7 +2176,10 @@ describe("CustomizationsManager", () => {
     expect(recordDataMock).toHaveBeenCalledWith(
       "user-1",
       EXTENSION_PREFERENCES_ADDRESS,
-      { extraExtensionIds: { [`user-1.${created.id}`]: [] } },
+      {
+        extraExtensionIds: { [`user-1.${created.id}`]: [] },
+        removedExtensionIds: {},
+      },
       { marker: "publicRead" }
     );
   });
@@ -2163,6 +2192,146 @@ describe("CustomizationsManager", () => {
     await manager.removeExtensionFromActiveCustomization("ext.extra");
 
     expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("lets a signed-out visitor to a shared customization install an extra extension", async () => {
+    (login.userId as Signal<string | null>).value = null;
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        id: "customization_shared",
+        name: "Shared",
+        variants: [
+          {
+            id: "variant_shared",
+            name: "Shared variant",
+            themes: {},
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        ],
+        defaultVariantId: "variant_shared",
+        logoUrl: null,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    });
+    const linkedNavigation = createNavigationManager({
+      initialHref:
+        "http://localhost/?customization=other-user.customization_shared",
+    });
+    const { manager } = createManager(linkedNavigation);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(manager.activeCustomization.value?.id).toBe("customization_shared");
+
+    await manager.addExtensionToActiveCustomization("ext.extra");
+
+    expect(manager.activeExtensionIds.value).toEqual(["ext.extra"]);
+  });
+
+  describe("removing extensions from a shared customization", () => {
+    const sharedRecord = {
+      id: "customization_shared",
+      name: "Shared",
+      variants: [
+        {
+          id: "variant_shared",
+          name: "Shared variant",
+          themes: {},
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      defaultVariantId: "variant_shared",
+      logoUrl: null,
+      createdAt: 1,
+      updatedAt: 1,
+      extensionSettings: { "ext.base": "auto-installed" },
+    };
+
+    async function openShared() {
+      getDataMock.mockImplementation(async (_recordName, address) =>
+        address === "customization_shared"
+          ? { success: true, data: sharedRecord }
+          : {
+              success: false,
+              errorCode: "data_not_found",
+              errorMessage: "Data not found",
+            }
+      );
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref:
+            "http://localhost/?customization=other-user.customization_shared",
+        })
+      );
+      await vi.waitFor(() =>
+        expect(manager.activeCustomization.value?.id).toBe(
+          "customization_shared"
+        )
+      );
+      return manager;
+    }
+
+    for (const signedIn of [true, false]) {
+      describe(signedIn ? "signed in" : "signed out", () => {
+        beforeEach(() => {
+          if (!signedIn) {
+            (login.userId as Signal<string | null>).value = null;
+          }
+        });
+
+        it("removes an auto-installed extension, and can put it back", async () => {
+          const manager = await openShared();
+          expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+
+          await manager.removeExtensionFromActiveCustomization("ext.base");
+          expect(manager.activeExtensionIds.value).toEqual([]);
+
+          await manager.addExtensionToActiveCustomization("ext.base");
+          expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+        });
+
+        it("removes an extension the viewer installed", async () => {
+          const manager = await openShared();
+          await manager.addExtensionToActiveCustomization("ext.extra");
+          expect(manager.activeExtensionIds.value.sort()).toEqual([
+            "ext.base",
+            "ext.extra",
+          ]);
+
+          await manager.removeExtensionFromActiveCustomization("ext.extra");
+          expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+        });
+      });
+    }
+
+    it("saves a removed auto-installed extension to the viewer's own record", async () => {
+      const manager = await openShared();
+      await vi.waitFor(() =>
+        expect(getDataMock).toHaveBeenCalledWith(
+          "user-1",
+          EXTENSION_PREFERENCES_ADDRESS
+        )
+      );
+      await Promise.resolve();
+      recordDataMock.mockClear();
+
+      await manager.removeExtensionFromActiveCustomization("ext.base");
+
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-1",
+        EXTENSION_PREFERENCES_ADDRESS,
+        {
+          extraExtensionIds: {},
+          removedExtensionIds: {
+            "other-user.customization_shared": ["ext.base"],
+          },
+        },
+        { marker: "publicRead" }
+      );
+    });
   });
 
   it("auto-loads a customization from the ?customization= query param on construction", async () => {

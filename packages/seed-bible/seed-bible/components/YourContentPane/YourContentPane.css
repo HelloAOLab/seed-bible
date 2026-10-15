@@ -83,10 +83,40 @@
  * would otherwise take two lines on a narrow phone and push the first section
  * below the fold.
  */
-.sb-content-chips {
+.sb-content-toolbar {
   display: flex;
+  align-items: center;
   gap: 8px;
   padding: 0 var(--sb-content-padding) 8px;
+}
+
+/* Same filled look as the Discover pane's Create button. */
+.sb-content-create.sb-context-menu-button {
+  flex-shrink: 0;
+  width: auto;
+  height: auto;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 999px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sb-content-create.sb-context-menu-button:hover {
+  opacity: 0.9;
+  background: var(--sb-primary-color);
+}
+
+.sb-content-chips {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
 }

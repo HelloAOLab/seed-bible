@@ -100,8 +100,16 @@ function discoverExtensions(): Promise<DiscoveredExtension[]> {
  * contains an `extension.json` — discovered under `packages/`.
  */
 export function extensionsPlugin(): Plugin {
+  // Only the production SSR build: tests and the dev server still need the
+  // real loaders, even when they transform modules for the server.
+  let serverBuild = false;
+
   return {
     name: "vite-plugin-extensions",
+
+    configResolved(config) {
+      serverBuild = config.command === "build" && Boolean(config.build.ssr);
+    },
 
     resolveId(id) {
       if (id === VIRTUAL_ID) {
@@ -128,7 +136,9 @@ export function extensionsPlugin(): Plugin {
       }
 
       return isEntry
-        ? generateEntryModuleSource(extensions, EXTENSION_SET_ID)
+        ? generateEntryModuleSource(extensions, EXTENSION_SET_ID, {
+            serverBuild,
+          })
         : generateLocaleModuleSource(extensions, language!);
     },
 
