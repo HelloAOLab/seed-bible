@@ -735,10 +735,10 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                           </span>
                         </span>
                       </button>
-                      {optionsMenu(row)}
                       <MaterialIcon className="sb-rp-card-chevron">
-                        {opening ? "hourglass_top" : "chevron_right"}
+                        {opening ? "hourglass_top" : "arrow_forward"}
                       </MaterialIcon>
+                      {optionsMenu(row)}
                     </div>
                     <PlanLoadError planId={row.planId} />
                   </div>
@@ -1066,10 +1066,10 @@ function ActivePlanCard(props: {
         {props.openLabel ? (
           <span className="sb-rp-card-open-label">{props.openLabel}</span>
         ) : null}
-        {menu}
         <MaterialIcon className="sb-rp-card-chevron">
           {opening ? "hourglass_top" : "arrow_forward"}
         </MaterialIcon>
+        {menu}
       </div>
 
       <div className="sb-rp-card-progress">
