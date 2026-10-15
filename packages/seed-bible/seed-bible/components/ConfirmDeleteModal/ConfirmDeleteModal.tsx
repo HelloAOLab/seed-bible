@@ -1,4 +1,4 @@
-import { useSignal } from "@preact/signals";
+import { signal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import type {
   ModalContentProps,
@@ -19,27 +19,45 @@ export interface ConfirmDeleteModalOptions {
   toast?: (message: string) => void;
 }
 
+/**
+ * Modal ids whose delete is still running. A second delete of the same thing
+ * would fail with "not found" and report a delete that worked, so this is kept
+ * by id rather than in the modal: closing the modal with its X and opening it
+ * again must not forget the delete that's still in flight.
+ */
+const deletingIds = signal<ReadonlySet<string>>(new Set());
+
+function setDeleting(id: string, deleting: boolean) {
+  const next = new Set(deletingIds.peek());
+  if (deleting) {
+    next.add(id);
+  } else {
+    next.delete(id);
+  }
+  deletingIds.value = next;
+}
+
 function ConfirmDeleteModalContent(
-  props: Omit<ConfirmDeleteModalOptions, "id" | "title"> & {
+  props: Omit<ConfirmDeleteModalOptions, "title"> & {
     onClose: () => void;
   }
 ) {
-  const { message, onConfirm, failedMessage, toast, onClose } = props;
+  const { id, message, onConfirm, failedMessage, toast, onClose } = props;
   const { t } = useI18n();
-  // A second tap while the first delete is still running would delete twice,
-  // and the second attempt's "not found" would report a delete that worked.
-  const isDeleting = useSignal(false);
+  const isDeleting = deletingIds.value.has(id);
 
   const confirm = async () => {
-    if (isDeleting.value) {
+    if (deletingIds.peek().has(id)) {
       return;
     }
-    isDeleting.value = true;
+    setDeleting(id, true);
     try {
       await onConfirm();
     } catch (error) {
       console.error("Delete failed:", error);
       toast?.(failedMessage(t));
+    } finally {
+      setDeleting(id, false);
     }
     onClose();
   };
@@ -52,7 +70,7 @@ function ConfirmDeleteModalContent(
           type="button"
           className="sb-session-settings-cancel"
           onClick={onClose}
-          disabled={isDeleting.value}
+          disabled={isDeleting}
         >
           {t("cancel")}
         </button>
@@ -60,7 +78,7 @@ function ConfirmDeleteModalContent(
           type="button"
           className="sb-session-settings-end"
           onClick={() => void confirm()}
-          disabled={isDeleting.value}
+          disabled={isDeleting}
         >
           {t("delete")}
         </button>
@@ -83,6 +101,7 @@ export function openConfirmDeleteModal(
     title,
     content: () => (
       <ConfirmDeleteModalContent
+        id={id}
         {...contentProps}
         onClose={() => modals.closeModal(id)}
       />
