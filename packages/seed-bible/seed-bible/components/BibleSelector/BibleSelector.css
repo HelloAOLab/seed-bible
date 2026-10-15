@@ -928,7 +928,12 @@
   z-index: 999;
   background: rgba(0, 0, 0, 0.4);
 }
+/* Rendered beside .sb-selector-panel, not inside it, so it needs the same
+   switch to the reader toolbar colors. */
 .sb-apocrypha-info-overlay {
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
+  --sb-background: var(--sb-reader-toolbar-background);
+
   position: fixed;
   top: 50%;
   left: 50%;
@@ -939,7 +944,7 @@
   max-height: 80vh;
   box-sizing: border-box;
   background: var(--sb-reader-toolbar-background);
-  color: var(--sb-font-color);
+  color: var(--sb-reader-toolbar-font-color);
   border-radius: 0.525rem;
   overflow-y: auto;
 }
