@@ -732,6 +732,8 @@ function openShareSheetForCurrentTab(state: SeedBibleState) {
       app: state.app,
       toast: state.app.toast,
       sharedSession: tab.sharedSession,
+      embedThemes: state.theme.themes,
+      customizationLocator: state.customizations.activeCustomizationLocator,
     },
     getShareUrl(tab.readingState)
   );

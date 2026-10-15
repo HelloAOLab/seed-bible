@@ -36,6 +36,7 @@ import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
+import type { EmbedThemeChoice } from "./EmbedMode";
 import type { AppState } from "./SeedBibleStateManager";
 import type {
   ReadingPlan,
@@ -66,6 +67,7 @@ import {
 import type { FriendsManager } from "./FriendsManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
+import type { SettingsManager } from "./SettingsManager";
 import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
@@ -228,6 +230,13 @@ export interface BibleToolContext {
    * shared-session actions (create/share the live session) should guard on it.
    */
   app?: AppState;
+
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 
   /**
    * Navigation manager, for tools that build their own links. Only
@@ -434,6 +443,7 @@ export interface QuickToolContext {
 
   features: FeaturesManager;
 
+  settings: SettingsManager;
   readingPlans: ReadingPlansManager;
 
   /** Optional window metrics for responsive tool behavior. */
@@ -460,6 +470,13 @@ export interface QuickToolContext {
    * toolbar tool.
    */
   app?: AppState;
+
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
@@ -917,7 +934,11 @@ function getDefaultQuickToolbarTools(
         </MaterialIcon>
       ),
       isVisible: (c) => {
-        if (c.app?.isMobile?.value || c.app?.isDiscoverOpen?.value) {
+        if (
+          c.app?.isMobile?.value ||
+          c.app?.isDiscoverOpen?.value ||
+          !c.settings.settings.value.discoveredContent.showContent
+        ) {
           return false;
         }
         return getDiscoverPanelContent(
@@ -1627,6 +1648,12 @@ type ShareSheetContext = {
   app?: AppState;
   toast?: (message: string) => void;
   sharedSession?: BibleReadingSession | null;
+  /** Theme presets the Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 };
 
 /**
@@ -1655,6 +1682,9 @@ export function openShareModal(
         app={app}
         modals={modals}
         session={context.sharedSession ?? null}
+        shareUrl={shareUrl}
+        themes={context.embedThemes}
+        customizationLocator={context.customizationLocator}
         onClose={() => modals.closeModal(modalId)}
         onShareLink={() => {
           navigator.clipboard.writeText(shareUrl.toString());

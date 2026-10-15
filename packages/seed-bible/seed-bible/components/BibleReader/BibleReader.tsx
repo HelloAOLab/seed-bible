@@ -296,6 +296,9 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
           state.app.openDiscover();
           return;
         }
+        if (!state.settings.settings.value.discoveredContent.showContent) {
+          state.discover.view.value = "discover";
+        }
         state.discover.scrollToVerse.value = {
           bookId,
           chapterNumber,
@@ -334,8 +337,41 @@ function getPoemIndentLevel(part: ChapterVerse["content"][0]) {
 
   return null;
 }
+// Move a footnote before an immediately preceding line break so the marker
+// stays attached to the text it belongs to instead of starting on the next line.
+function reorderFootnoteBeforeLineBreak(
+  content: ChapterVerse["content"]
+): ChapterVerse["content"] {
+  let reorderedContent: ChapterVerse["content"] | undefined;
 
-function isFootnotePart(part: ChapterVerse["content"][0]) {
+  for (let index = 0; index < content.length - 1; index += 1) {
+    const currentPart = content[index]!;
+    const nextPart = content[index + 1]!;
+
+    if (isLineBreakPart(currentPart) && isFootnotePart(nextPart)) {
+      reorderedContent ??= [...content];
+
+      reorderedContent[index] = nextPart;
+      reorderedContent[index + 1] = currentPart;
+
+      index += 1;
+    }
+  }
+
+  return reorderedContent ?? content;
+}
+function isLineBreakPart(
+  part: ChapterVerse["content"][0] | undefined
+): boolean {
+  return (
+    !!part &&
+    typeof part === "object" &&
+    "lineBreak" in part &&
+    part.lineBreak === true
+  );
+}
+
+function isFootnotePart(part: ChapterVerse["content"][0] | undefined) {
   return (
     !!part &&
     typeof part === "object" &&
@@ -492,11 +528,7 @@ function splitVerseIntoSegments(
   for (const part of content) {
     const isFootnote = isFootnotePart(part);
     const indentLevel = getPoemIndentLevel(part);
-    const isLineBreak =
-      part &&
-      typeof part === "object" &&
-      "lineBreak" in part &&
-      part.lineBreak === true;
+    const isLineBreak = isLineBreakPart(part);
 
     if (isFootnote) {
       if (inPoetry) {
@@ -550,7 +582,8 @@ function renderInlineContent(
   showFootnotes: boolean,
   showRedLettering: boolean,
   contentRanges: ContentDecorationRange[] = [],
-  partStartIndex = 0
+  partStartIndex = 0,
+  isBeforeFootnote = false
 ) {
   const splitTextByDecorations = (text: string) => {
     const partEndIndex = partStartIndex + text.length;
@@ -638,7 +671,8 @@ function renderInlineContent(
   };
 
   if (typeof part === "string") {
-    const segments = splitTextByDecorations(part);
+    const text = isBeforeFootnote ? part.trimEnd() : part;
+    const segments = splitTextByDecorations(text);
     return (
       <span key={index}>
         {segments.map((segment, segmentIndex) => (
@@ -663,8 +697,8 @@ function renderInlineContent(
     if (part.wordsOfJesus && showRedLettering) {
       className += " sb-words-of-jesus";
     }
-
-    const segments = splitTextByDecorations(part.text);
+    const text = isBeforeFootnote ? part.text.trimEnd() : part.text;
+    const segments = splitTextByDecorations(text);
     return (
       <span key={index} className={className.trim()}>
         {segments.map((segment, segmentIndex) => (
@@ -687,27 +721,29 @@ function renderInlineContent(
     return <strong key={index}>{part.heading}</strong>;
   }
 
-  if ("lineBreak" in part && part.lineBreak === true) {
+  if (isLineBreakPart(part)) {
     return <br key={index} />;
   }
 
   if ("noteId" in part && typeof part.noteId === "number") {
     if (!showFootnotes) {
-      return <span> </span>;
+      return <span key={index}> </span>;
     }
     return (
-      <button
-        key={index}
-        className="sb-inline-footnote-button"
-        aria-label={`Open footnote ${part.noteId}`}
-        title={`Open footnote ${part.noteId}`}
-        onClick={(event: MouseEvent) => {
-          event.stopPropagation();
-          onOpenFootnote(part.noteId);
-        }}
-      >
-        <span className="material-symbols-outlined">info</span>
-      </button>
+      <span key={index} className="sb-inline-footnote">
+        {"\u00A0"}
+        <button
+          className="sb-inline-footnote-button"
+          aria-label={`Open footnote ${part.noteId}`}
+          title={`Open footnote ${part.noteId}`}
+          onClick={(event: MouseEvent) => {
+            event.stopPropagation();
+            onOpenFootnote(part.noteId);
+          }}
+        >
+          <span className="material-symbols-outlined">info</span>
+        </button>
+      </span>
     );
   }
 
@@ -743,7 +779,8 @@ function renderChapterContent(
     verse: BibleSelectedVerse,
     verseNumber: number,
     event: MouseEvent
-  ) => void
+  ) => void,
+  hideHighlights = false
 ) {
   if (!chapterData) {
     return null;
@@ -794,6 +831,13 @@ function renderChapterContent(
   // reader's own highlight rather than replacing it, so the outline is what
   // says "this isn't yours, and yours is still underneath".
   const getVerseHighlight = (verseNumber: number): ResolvedHighlight | null => {
+    // Embeds (including the share-sheet preview of one) must not paint
+    // highlights. A signed-in viewer's own highlights would show there, and
+    // a visitor of the embed does not have them.
+    if (hideHighlights) {
+      return null;
+    }
+
     const decorated = decorationHighlights.get(verseNumber);
     if (decorated) {
       return { highlight: decorated, broadcast: true };
@@ -972,7 +1016,8 @@ function renderChapterContent(
         v.bookId === chapterData.book.id &&
         v.chapterNumber === chapterData.chapter.number
     );
-    const segments = splitVerseIntoSegments(value.content);
+    const content = reorderFootnoteBeforeLineBreak(value.content);
+    const segments = splitVerseIntoSegments(content);
     const hasPoetry = segments.some((s) => s.type === "poetry");
     const verseDecorations = getVerseDecorations(value.number);
     const decorationPresentation = getDecorationPresentation(verseDecorations);
@@ -1062,7 +1107,8 @@ function renderChapterContent(
                       scriptureElements.showFootnotes,
                       scriptureElements.showRedLettering,
                       contentRanges,
-                      getPartTextStartIndex(part)
+                      getPartTextStartIndex(part),
+                      isFootnotePart(segment.parts[partIndex + 1])
                     )
                   )}
                 </span>
@@ -1095,7 +1141,8 @@ function renderChapterContent(
                       scriptureElements.showFootnotes,
                       scriptureElements.showRedLettering,
                       contentRanges,
-                      getPartTextStartIndex(part)
+                      getPartTextStartIndex(part),
+                      isFootnotePart(line.parts[partIndex + 1])
                     )
                   )}
                 </span>
@@ -1122,7 +1169,7 @@ function renderChapterContent(
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
           {renderVerseNumberOrIcon(value.number, verse)}
-          {value.content.map((part, index) =>
+          {content.map((part, index) =>
             renderInlineContent(
               part,
               index,
@@ -1131,7 +1178,8 @@ function renderChapterContent(
               scriptureElements.showFootnotes,
               scriptureElements.showRedLettering,
               contentRanges,
-              getPartTextStartIndex(part)
+              getPartTextStartIndex(part),
+              isFootnotePart(content[index + 1])
             )
           )}
         </span>
@@ -1209,7 +1257,10 @@ function renderChapterContent(
               (noteId) => onOpenFootnote(noteId, null),
               scriptureElements.showHeadings,
               scriptureElements.showFootnotes,
-              scriptureElements.showRedLettering
+              scriptureElements.showRedLettering,
+              [],
+              0,
+              isFootnotePart(entry.content[index + 1])
             )
           )}
         </p>
@@ -1805,6 +1856,11 @@ interface ChapterContentProps {
    * when none are. Drives the presence this client publishes.
    */
   onVisibleVersesChange?: (range: VisibleVerseRange | null) => void;
+  /**
+   * Skip every verse highlight, saved and broadcast. Used by the compact
+   * embed so the page does not show highlights the visitor does not have.
+   */
+  hideHighlights?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1826,6 +1882,7 @@ function ChapterContent(props: ChapterContentProps) {
     isMobile = false,
     presence,
     onVisibleVersesChange,
+    hideHighlights = false,
   } = props;
 
   const { t } = useI18n();
@@ -2430,7 +2487,8 @@ function ChapterContent(props: ChapterContentProps) {
         decorations.value,
         chapterAnnotations,
         scriptureElements,
-        onAnnotationVerseClick
+        onAnnotationVerseClick,
+        hideHighlights
       )}
     </div>
   );
@@ -2616,7 +2674,12 @@ export function BibleReader(props: BibleReaderProps) {
       return;
     }
 
-    readingState.discoverContentPanelInline.value = true;
+    if (state.settings.settings.value.discoveredContent.showContent) {
+      readingState.discoverContentPanelInline.value = true;
+    } else {
+      state.discover.view.value = "discover";
+    }
+
     // AnnotationsSection's shared effect reacts to this target either way —
     // scrolling to and highlighting the note's group — whether it's mounted
     // in this tab's compact panel or the toolbar-toggled Discover pane.
@@ -3080,6 +3143,7 @@ export function BibleReader(props: BibleReaderProps) {
               highlights={highlights}
               decorations={decorations}
               annotations={state?.annotations}
+              hideHighlights={isMinimalEmbed}
               friends={state?.friends}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
@@ -3129,7 +3193,10 @@ export function BibleReader(props: BibleReaderProps) {
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
   const extraContent =
-    state && !state.app.isDiscoverOpen.value ? (
+    state &&
+    !isMinimalEmbed &&
+    !state.app.isDiscoverOpen.value &&
+    state.settings.settings.value.discoveredContent.showContent ? (
       <DiscoverContentPanel tab={currentSlot.tab} state={state} />
     ) : null;
 
@@ -3283,10 +3350,15 @@ export function BibleReader(props: BibleReaderProps) {
                     playlists={state.playlists}
                     annotations={state.annotations}
                     features={state.features}
+                    settings={state.settings}
                     sharedSession={sharedSession ?? null}
                     toast={state.app.toast}
                     modals={state.modals}
                     app={state.app}
+                    embedThemes={state.theme?.themes}
+                    customizationLocator={
+                      state.customizations?.activeCustomizationLocator
+                    }
                     readingPlans={state.readingPlans}
                     className="sb-quick-toolbar-mobile-header"
                   />
@@ -3429,11 +3501,16 @@ export function BibleReader(props: BibleReaderProps) {
                   playlists={state.playlists}
                   annotations={state.annotations}
                   features={state.features}
+                  settings={state.settings}
                   sharedSession={sharedSession ?? null}
                   readingPlans={state.readingPlans}
                   toast={state.app.toast}
                   modals={state.modals}
                   app={state.app}
+                  embedThemes={state.theme?.themes}
+                  customizationLocator={
+                    state.customizations?.activeCustomizationLocator
+                  }
                   className="sb-quick-toolbar-reader"
                 />
               </div>

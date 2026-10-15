@@ -128,7 +128,8 @@ describe("Today screen reactivity", () => {
       getVerseText: async () => "In the beginning",
       getTranslationBooks: async () => ({ books: [] }) as never,
       searchVerses: async () => [],
-      getCommunityReading: async () => ({}),
+      communityMembers: signal(["u1"]),
+      getCommunityFeed: async () => [],
       friendReaders: signal([]),
       getReadingHistoryEvents: async () => [],
     });
@@ -155,14 +156,14 @@ describe("Today screen reactivity", () => {
 
   /**
    * The timeline is the one card that still colours itself from the theme in
-   * code, and it only mounts under the "all" timespan.
+   * code, and it only mounts while the community feed's history is open.
    */
   function showTimeline() {
     act(() => {
       (
-        container.querySelectorAll(
-          ".sb-today-timespan-filter-option"
-        )[3] as HTMLButtonElement
+        container.querySelector(
+          ".sb-today-feed-history-button"
+        ) as HTMLButtonElement
       ).click();
     });
   }

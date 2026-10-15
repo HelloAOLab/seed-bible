@@ -4,6 +4,19 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.13.0 — 2026-10-12
+
+### ✨ Added
+
+- Show an Apologist team's articles, videos and other content in the Discover pane for the chapter you're reading. ([#1936](https://github.com/HelloAOLab/seed-bible/pull/1936), [#1970](https://github.com/HelloAOLab/seed-bible/pull/1970))
+  - Turn it on with the Apologist extension's new Discover content switch, or open a link that includes the team's ID.
+  - Signed-in users can save their Apologist team ID, API key and agent details in the extension's settings.
 - Bring back bookmarks as named, colored markers that you move from chapter to chapter as you read. ([#1984](https://github.com/HelloAOLab/seed-bible/pull/1984))
   - Tap the bookmark button above a chapter to move a bookmark there. You can have up to 5.
   - Your bookmarks show on tabs, on the Today screen and in a new Bookmarks panel, where you can rename, recolor or delete them.
@@ -11,16 +24,15 @@
   - The reader scrolls along with the verse being read, so you can follow without touching the screen.
   - Listening carries on when you switch tabs.
   - Works for recorded narration and for chapters read aloud by your device's voice.
-- Show an Apologist team's articles, videos and other content in the Discover pane for the chapter you're reading. ([#1936](https://github.com/HelloAOLab/seed-bible/pull/1936), [#1970](https://github.com/HelloAOLab/seed-bible/pull/1970))
-  - Turn it on with the Apologist extension's new Discover content switch, or open a link that includes the team's ID.
-  - Signed-in users can save their Apologist team ID, API key and agent details in the extension's settings.
-- Show the reading plans you've created on the "Your content" screen, with a Reading plans chip to see just those. ([#1860](https://github.com/HelloAOLab/seed-bible/pull/1860))
-- Add an "Images" section to the "Your content" screen where you can view or delete the images you've uploaded. ([#1861](https://github.com/HelloAOLab/seed-bible/pull/1861))
-- Have AI chat quote from the Bible translation you're reading, falling back to BSB when Apologist doesn't support it. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
-  - When you ask for a different translation, the chat offers to switch your open tab to it.
 - Add a References extension that shows each verse's cross-references in the Discover pane. ([#1794](https://github.com/HelloAOLab/seed-bible/pull/1794))
   - It offers to download every cross-reference so they still open offline.
+- Offer ways to keep reading when a chapter fails to load: switch to a translation saved on your device, or download this one once you're back online. ([#1928](https://github.com/HelloAOLab/seed-bible/pull/1928))
+  - If trying again works, a small prompt offers to download the translation for offline reading.
+- Have AI chat quote from the Bible translation you're reading, falling back to BSB when Apologist doesn't support it. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
+  - When you ask for a different translation, the chat offers to switch your open tab to it.
 - Share a session with a QR code that others can scan to join it, from the session's Share window. ([#1884](https://github.com/HelloAOLab/seed-bible/pull/1884))
+- Show the reading plans you've created on the "Your content" screen, with a Reading plans chip to see just those. ([#1860](https://github.com/HelloAOLab/seed-bible/pull/1860))
+- Add an "Images" section to the "Your content" screen where you can view or delete the images you've uploaded. ([#1861](https://github.com/HelloAOLab/seed-bible/pull/1861))
 - Preview a scripture item while editing a playlist or reading plan: tap it to read the passage right beneath it. ([#1889](https://github.com/HelloAOLab/seed-bible/pull/1889))
 - Let extensions keep settings such as API keys secret, so their values never come back to the browser. ([#1926](https://github.com/HelloAOLab/seed-bible/pull/1926), [#1958](https://github.com/HelloAOLab/seed-bible/pull/1958))
   - A Customization can provide these values for everyone who uses it.
@@ -28,29 +40,35 @@
 
 ### 🔧 Changed
 
-- Close every other pane when you open a customization to edit, so the editor is the only pane on screen. ([#1925](https://github.com/HelloAOLab/seed-bible/pull/1925))
-- Show long extension descriptions as two lines with a "Read more" link in Settings → Extensions. ([#1924](https://github.com/HelloAOLab/seed-bible/pull/1924))
 - Close the verse toolbar after you use Copy, Save, Share or Compare, instead of leaving it open over the pane the action opened. ([#1899](https://github.com/HelloAOLab/seed-bible/pull/1899))
   - The toolbar also hides while you write a new note.
+- Skip the Install App and Download Translation prompts when you choose "No thanks" on the introduction tour or leave it partway through. ([#1955](https://github.com/HelloAOLab/seed-bible/pull/1955))
 - Keep Highlight, Save, Note and Copy on the first row of the mobile verse sheet, instead of letting extension tools such as Ask AI push them into the drawer. ([#1968](https://github.com/HelloAOLab/seed-bible/pull/1968))
+- Redesign the customization screens in Settings, with theme previews and a live preview while you edit a theme. ([#1983](https://github.com/HelloAOLab/seed-bible/pull/1983))
+- Redesign the About page with cards for features such as Playlists, Sessions and Shared Reading, plus Release Notes and tour buttons. ([#1979](https://github.com/HelloAOLab/seed-bible/pull/1979))
+- Have AI chat reply in the language you write in. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
 - Move Playlist history from the Discover pane to your profile. ([#1919](https://github.com/HelloAOLab/seed-bible/pull/1919))
 - Remember the Scripture map's zoom level between visits, and open it at 75% instead of 60% the first time. ([#1911](https://github.com/HelloAOLab/seed-bible/pull/1911))
-- Skip the Install App and Download Translation prompts when you choose "No thanks" on the introduction tour or leave it partway through. ([#1955](https://github.com/HelloAOLab/seed-bible/pull/1955))
-- Have AI chat reply in the language you write in. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
+- Close every other pane when you open a customization to edit, so the editor is the only pane on screen. ([#1925](https://github.com/HelloAOLab/seed-bible/pull/1925))
+- Show long extension descriptions as two lines with a "Read more" link in Settings → Extensions. ([#1924](https://github.com/HelloAOLab/seed-bible/pull/1924))
 
 ### 🐛 Fixed
 
-- Fix installed extensions missing from Settings → Extensions when the active customization hides them. ([#1972](https://github.com/HelloAOLab/seed-bible/pull/1972))
 - Fix a new note staying on the chapter you started it on when you move to another chapter. ([#1899](https://github.com/HelloAOLab/seed-bible/pull/1899))
+- Fix footnote markers sometimes landing on their own line instead of next to the verse text. ([#1969](https://github.com/HelloAOLab/seed-bible/pull/1969))
 - Fix modals closing when you drag to select text inside them and let go over the dimmed background. ([#1971](https://github.com/HelloAOLab/seed-bible/pull/1971))
+- Show an error in AI chat when Apologist can't finish an answer, instead of the chat going silent. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
 - Fix submenus opened from the second row of the mobile verse sheet being hidden behind the first row. ([#1940](https://github.com/HelloAOLab/seed-bible/pull/1940))
 - Fix a verse toolbar menu, such as Locations, still being open the next time you select verses. ([#1922](https://github.com/HelloAOLab/seed-bible/pull/1922))
 - Fix the compact Discover panel's toggle being hidden when the chapter only has your reading plans. ([#1914](https://github.com/HelloAOLab/seed-bible/pull/1914))
+- Fix installed extensions missing from Settings → Extensions when the active customization hides them. ([#1972](https://github.com/HelloAOLab/seed-bible/pull/1972))
 - Hide the AI button in the playlist editor when no installed AI agent can edit playlists, instead of opening an empty chat. ([#1954](https://github.com/HelloAOLab/seed-bible/pull/1954))
 - Fix the chat's send arrow pointing the wrong way in right-to-left languages such as Arabic. ([#1947](https://github.com/HelloAOLab/seed-bible/pull/1947))
-- Show an error in AI chat when Apologist can't finish an answer, instead of the chat going silent. ([#1792](https://github.com/HelloAOLab/seed-bible/pull/1792))
+- Fix theme cards in Display & Theme showing blank or partial colors while a customization is active. ([#1983](https://github.com/HelloAOLab/seed-bible/pull/1983))
 
 ### 🗑️ Removed
+
+- Remove the Show All button from the compact Discover panel. ([#1989](https://github.com/HelloAOLab/seed-bible/pull/1989))
 
 ## v1.12.0 — 2026-10-06
 
