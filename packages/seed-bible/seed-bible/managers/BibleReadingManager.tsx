@@ -148,6 +148,8 @@ export interface VerseDecoration {
    * Whether to preserve the decoration when the chapter changes.
    */
   preserveOnChapterChange?: boolean;
+  /** Keeps the decoration off a shared session. See `VerseDecorationInput`. */
+  localOnly?: boolean;
 }
 
 export interface VerseDecorationInput {
@@ -187,6 +189,14 @@ export interface VerseDecorationInput {
    * Setting this to true will keep the decoration until it is explicitly removed.
    */
   preserveOnChapterChange?: boolean;
+
+  /**
+   * Keeps the decoration on this device: a shared session doesn't publish it
+   * to the other participants. For decorations every participant already
+   * makes for themselves, such as a playing playlist's highlight, where each
+   * person's should follow only their own view.
+   */
+  localOnly?: boolean;
 
   /**
    * The ID of the translation that this decoration should be limited to.
@@ -1305,7 +1315,8 @@ export function previousPosition(
 /**
  * Highlights `ref`'s verse range in `tab`, diminishing after 3s by default.
  * `options.removeAfterMs` changes how long it lasts; null keeps it until the
- * caller removes it with `removeDecoration`.
+ * caller removes it with `removeDecoration`. `options.localOnly` keeps it off
+ * a shared session (see `VerseDecorationInput.localOnly`).
  *
  * `toEndOfChapter` fragments (from `expandCrossChapterItem`) don't know the
  * chapter's actual verse count until it's loaded; resolve it here, guarding
@@ -1321,7 +1332,7 @@ export function emphasizeVerses(
   readingState: BibleReadingState,
   ref: VerseRef,
   verseNumbers?: number[],
-  options: { removeAfterMs?: number | null } = {}
+  options: { removeAfterMs?: number | null; localOnly?: boolean } = {}
 ): string | null {
   if (!ref.verse) {
     return null;
@@ -1337,6 +1348,7 @@ export function emphasizeVerses(
     ...(options.removeAfterMs !== null
       ? { removeAfterMs: options.removeAfterMs ?? 3000 }
       : {}),
+    ...(options.localOnly ? { localOnly: true } : {}),
   });
 }
 

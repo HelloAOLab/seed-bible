@@ -36,8 +36,9 @@ import {
 import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
-import { computed, effect, signal } from "@preact/signals";
+import { computed, effect, signal, type Signal } from "@preact/signals";
 import { h, render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
@@ -3265,6 +3266,142 @@ describe("createPlaylistManager", () => {
         playlist.items.slice(1)
       );
       expect(instance.playingState.currentIndex.value).toBe(1);
+    });
+
+    describe("a passage a note links to, in a shared session", () => {
+      const noted: PlaylistItemData = {
+        type: "bible-verse",
+        ref: { bookId: "JHN", chapter: 3, verse: 16 },
+        note: '<p>See <a class="sb-verse-reference-link">Romans 5:8</a></p>',
+      };
+      const romans: VerseRef = { book: "ROM", chapter: 5, verse: 8 };
+
+      const playlistData = (tab: NonNullable<TabArg>) =>
+        tab.readingState.enabledExtensions.value.find(
+          (runtime) => runtime.id === "playlist"
+        )!.data as Signal<PlaylistReadingData>;
+
+      /**
+       * Plays `items` on a tab and returns the playlist runtime's `data`, which
+       * `SessionsManager` mirrors between participants: writing to it is what a
+       * peer's change looks like on arrival.
+       */
+      async function playShared(items: PlaylistItemData[]) {
+        const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+        const manager = makeManager("user-1", makeTabs(tab));
+        await flush();
+        manager.startPlaying(makePlaylist({ items }));
+        await flush();
+        const data = playlistData(tab);
+        selectTranslationAndChapterMock.mockClear();
+        return { tab, manager, data, playing: manager.playing.value! };
+      }
+
+      const lastChapterShown = () =>
+        selectTranslationAndChapterMock.mock.calls.at(-1)?.slice(1, 3);
+
+      it("shares the detour, and its own echo leaves the reader there", async () => {
+        const { data, playing } = await playShared([noted]);
+
+        await playing.visitReference(romans);
+        await flush();
+        expect(data.value.detour).toEqual(romans);
+
+        // The session sends the same state back as a fresh object.
+        data.value = JSON.parse(JSON.stringify(data.value));
+        await flush();
+
+        expect(playing.awayFromStep.value).toBe(true);
+        expect(selectTranslationAndChapterMock).toHaveBeenCalledTimes(1);
+        expect(lastChapterShown()).toEqual(["ROM", 5]);
+      });
+
+      it("follows a peer to the passage, and back when anyone returns", async () => {
+        const { data, playing } = await playShared([noted]);
+
+        data.value = { ...data.value, detour: romans };
+        await flush();
+        expect(lastChapterShown()).toEqual(["ROM", 5]);
+        expect(playing.awayFromStep.value).toBe(true);
+
+        data.value = { ...data.value, detour: null };
+        await flush();
+        expect(lastChapterShown()).toEqual(["JHN", 3]);
+        expect(playing.awayFromStep.value).toBe(false);
+      });
+
+      it("takes someone joining mid-detour to the passage, not the step", async () => {
+        const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+        const manager = makeManager("user-1", makeTabs(tab));
+        await flush();
+        const playlist = makePlaylist({ items: [noted] });
+
+        tab.readingState.enableExtension("playlist", {
+          playlists: [playlist],
+          queue: playlist.items,
+          step: 0,
+          detour: romans,
+        } satisfies PlaylistReadingData);
+        await flush();
+
+        expect(lastChapterShown()).toEqual(["ROM", 5]);
+        expect(manager.playing.value?.awayFromStep.value).toBe(true);
+        expect(playlistData(tab).value.detour).toEqual(romans);
+      });
+
+      it("never shares the next step paired with the old detour", async () => {
+        const { data, playing } = await playShared([
+          noted,
+          { ...noted, ref: { bookId: "JHN", chapter: 4, verse: 1 } },
+        ]);
+        await playing.visitReference(romans);
+        await flush();
+        const shared: PlaylistReadingData[] = [];
+        const stop = effect(() => {
+          shared.push(data.value);
+        });
+
+        await playing.next();
+        await flush();
+        stop();
+
+        // Otherwise peers would be sent to Romans before step 2's passage.
+        expect(
+          shared.filter((state) => state.step === 1 && state.detour)
+        ).toEqual([]);
+        expect(data.value).toMatchObject({ step: 1, detour: null });
+      });
+
+      it("keeps each reader's highlights to themselves", async () => {
+        const { tab, playing } = await playShared([noted]);
+        const decorateVerses = tab.readingState
+          .decorateVerses as unknown as Mock;
+        decorateVerses.mockClear();
+
+        await playing.visitReference(romans);
+        await playing.returnToStep();
+
+        const books = decorateVerses.mock.calls.map(([book]) => book);
+        expect(books[0]).toBe("ROM");
+        expect(new Set(books.slice(1))).toEqual(new Set(["JHN"]));
+        for (const [, , , decoration] of decorateVerses.mock.calls) {
+          expect(decoration).toMatchObject({ localOnly: true });
+        }
+      });
+
+      it("ends the detour when its step is removed from the queue", async () => {
+        const { data, playing } = await playShared([
+          noted,
+          { type: "html", html: "<p>b</p>" },
+        ]);
+        await playing.visitReference(romans);
+
+        playing.removeFromQueue(0);
+        await flush();
+
+        expect(playing.awayFromStep.value).toBe(false);
+        expect(data.value.detour).toBeNull();
+      });
     });
   });
 

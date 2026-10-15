@@ -1473,6 +1473,10 @@ async function createBibleReadingSession(
     }
 
     const localDecorations = currentDecorations.filter((decoration) => {
+      // Never published, so peers neither see nor own it.
+      if (decoration.localOnly) {
+        return false;
+      }
       const owner = decorationOwners.get(decoration.id);
       if (!owner) {
         decorationOwners.set(decoration.id, localConnectionId);

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import {
+  batch,
   computed,
   effect,
   signal,
@@ -556,6 +557,13 @@ export interface PlaylistReadingData {
   playlists: SimplePlaylist[];
   queue: PlaylistItemData[];
   step: number;
+  /**
+   * A passage the current step's note links to that the reader has been taken
+   * to, or null when the reader is on the step (see
+   * `PlayingState.visitReference`). Synced like the step, so a shared session
+   * follows the detour together and anyone can bring everyone back.
+   */
+  detour?: ReaderVerseRef | null;
 }
 
 /**
@@ -720,11 +728,13 @@ export function createPlayingState(
    */
   const noteExpanded = signal(true);
   /**
-   * True while the reader shows a passage the current step's note links to,
-   * rather than the step's own (see `visitReference`). Playback carries on
-   * meanwhile; `returnToStep` or moving to any step brings the reader back.
+   * The passage a note's link took the reader to, while it's showing that
+   * rather than the step's own (see `visitReference`), else null. Playback
+   * carries on meanwhile; `returnToStep` or moving to any step brings the
+   * reader back.
    */
-  const awayFromStep = signal(false);
+  const detour = signal<ReaderVerseRef | null>(null);
+  const awayFromStep = computed(() => detour.value !== null);
   let lastIndex = currentIndex.peek();
   const disposeRearm = effect(() => {
     const index = currentIndex.value;
@@ -732,7 +742,6 @@ export function createPlayingState(
       lastIndex = index;
       finishPromptShown.value = false;
       noteExpanded.value = true;
-      awayFromStep.value = false;
     }
   });
 
@@ -790,13 +799,18 @@ export function createPlayingState(
         endVerse: endVerse,
       },
       undefined,
-      hasScriptureNote(item)
-        ? {
-            removeAfterMs: noteExpanded.peek()
-              ? null
-              : NOTE_CLOSED_HIGHLIGHT_MS,
-          }
-        : undefined
+      {
+        // Every participant in a shared session highlights the step for
+        // themselves, and each one's highlight follows their own note.
+        localOnly: true,
+        ...(hasScriptureNote(item)
+          ? {
+              removeAfterMs: noteExpanded.peek()
+                ? null
+                : NOTE_CLOSED_HIGHLIGHT_MS,
+            }
+          : {}),
+      }
     );
   };
 
@@ -833,7 +847,7 @@ export function createPlayingState(
 
   const navigateToCurrentItem = async () => {
     const item = currentItem.value;
-    awayFromStep.value = false;
+    detour.value = null;
     // Cleared even when the new step isn't scripture: a noted passage's
     // highlight has no timer of its own and would otherwise outlast its step.
     disposeDecoration();
@@ -859,6 +873,18 @@ export function createPlayingState(
   };
 
   /**
+   * Moves to a step, ending any detour in the same update, so a shared
+   * session never sees the new step paired with the old detour (which would
+   * send everyone to that passage before the step's).
+   */
+  const moveToStep = (index: number): void => {
+    batch(() => {
+      currentIndex.value = index;
+      detour.value = null;
+    });
+  };
+
+  /**
    * Takes the reader to a passage the current step's note links to, without
    * leaving the playlist: the step, its note and the queue stay as they are,
    * and `returnToStep` brings the reader back. The linked passage gets the
@@ -868,7 +894,17 @@ export function createPlayingState(
     if (!tab) {
       return;
     }
-    awayFromStep.value = true;
+    // Only what locates the passage, so it syncs as plain, comparable JSON.
+    const target: ReaderVerseRef = {
+      book: ref.book,
+      chapter: ref.chapter,
+      ...(ref.verse != null ? { verse: ref.verse } : {}),
+      ...(ref.endChapter != null ? { endChapter: ref.endChapter } : {}),
+      ...(ref.endVerse != null ? { endVerse: ref.endVerse } : {}),
+    };
+    if (!jsonEqual(detour.peek(), target)) {
+      detour.value = target;
+    }
     disposeDecoration();
     await tab.readingState.selectTranslationAndChapter(
       tab.readingState.translationId.peek(),
@@ -880,7 +916,9 @@ export function createPlayingState(
     if (!awayFromStep.peek()) {
       return;
     }
-    decorationId = emphasizeVerses(tab.readingState, ref);
+    decorationId = emphasizeVerses(tab.readingState, target, undefined, {
+      localOnly: true,
+    });
   };
 
   /** Brings the reader back from a linked passage to the current step. */
@@ -892,7 +930,7 @@ export function createPlayingState(
    */
   const next = async (): Promise<void> => {
     if (hasNext.value) {
-      currentIndex.value = currentIndex.value + 1;
+      moveToStep(currentIndex.value + 1);
       await navigateToCurrentItem();
     } else if (canFinish.value) {
       finishPromptShown.value = true;
@@ -903,7 +941,7 @@ export function createPlayingState(
   /** Goes back to the previous step. No-op at the start of the queue. */
   const previous = async (): Promise<void> => {
     if (hasPrevious.value) {
-      currentIndex.value = currentIndex.value - 1;
+      moveToStep(currentIndex.value - 1);
       await navigateToCurrentItem();
     }
   };
@@ -911,7 +949,7 @@ export function createPlayingState(
   /** Jumps to the given index. No-op when the index is out of range. */
   const jumpTo = async (index: number): Promise<void> => {
     if (index >= 0 && index < queue.value.length) {
-      currentIndex.value = index;
+      moveToStep(index);
       await navigateToCurrentItem();
     }
   };
@@ -933,8 +971,10 @@ export function createPlayingState(
       return;
     }
     if (index === currentIndex.value) {
-      // The step being shown is going away, so its highlight goes with it.
+      // The step being shown is going away, so its highlight goes with it, as
+      // does any detour its note's link started.
       disposeDecoration();
+      detour.value = null;
     }
     const nextQueue = queue.value.filter((_, i) => i !== index);
     queue.value = nextQueue;
@@ -980,7 +1020,7 @@ export function createPlayingState(
 
   /** Restarts playback from the first item. */
   const reset = async (): Promise<void> => {
-    currentIndex.value = queue.value.length > 0 ? 0 : -1;
+    moveToStep(queue.value.length > 0 ? 0 : -1);
     await navigateToCurrentItem();
   };
 
@@ -1007,9 +1047,25 @@ export function createPlayingState(
       state.queue.length > 0
         ? Math.min(Math.max(Math.floor(state.step), 0), state.queue.length - 1)
         : -1;
-    let navigation: Promise<void> | null = null;
-    if (currentIndex.peek() !== clampedStep) {
+    const nextDetour = state.detour ?? null;
+    const stepChanged = currentIndex.peek() !== clampedStep;
+    const detourChanged = !jsonEqual(detour.peek(), nextDetour);
+    // Together, so the outbound sync never sees the new step without its
+    // detour and publishes the detour as cleared.
+    batch(() => {
       currentIndex.value = clampedStep;
+      if (detourChanged) {
+        detour.value = nextDetour;
+      }
+    });
+    let navigation: Promise<void> | null = null;
+    if (nextDetour) {
+      // Following a peer to a passage a note links to — or our own detour
+      // coming back around, in which case the reader is already there.
+      if (stepChanged || detourChanged) {
+        navigation = visitReference(nextDetour);
+      }
+    } else if (stepChanged || detourChanged) {
       navigation = navigateToCurrentItem();
     } else {
       // Check if navigation is needed to display the current reference
@@ -1051,6 +1107,7 @@ export function createPlayingState(
     noteExpanded: noteExpanded as ReadonlySignal<boolean>,
     setNoteExpanded,
     awayFromStep: awayFromStep as ReadonlySignal<boolean>,
+    detour: detour as ReadonlySignal<ReaderVerseRef | null>,
     visitReference,
     returnToStep,
     tab,
@@ -2407,6 +2464,7 @@ export function createPlaylistManager(
           playlists: playingState.playlists.value,
           queue: playingState.queue.value,
           step: playingState.currentIndex.value,
+          detour: playingState.detour.value,
         };
         if (!jsonEqual(data.peek(), snapshot)) {
           data.value = snapshot;
