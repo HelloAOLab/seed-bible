@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Sign in with your YouVersion account from the login screen. ([#1252](https://github.com/HelloAOLab/seed-bible/issues/1252))
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

@@ -1,11 +1,19 @@
 import {
   createLoginManager,
   userProfileSchema,
+  YOUVERSION_OPEN_ID_PROVIDER,
   type LoginManager,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { saveProfileConfigValue } from "@packages/seed-bible/seed-bible/managers/ProfileConfigSync";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { formatV1SessionKey } from "@casual-simulation/aux-common";
+import {
+  PENDING_OPEN_ID_LOGIN_STORAGE_KEY,
+  handleOpenIDCallback,
+  readPendingOpenIDLogin,
+  writePendingOpenIDLogin,
+  type PendingOpenIDLogin,
+} from "@packages/seed-bible/seed-bible/managers/OpenIDCallback";
 import type { Mock } from "vitest";
 
 vi.setConfig({ testTimeout: 5000 });
@@ -18,12 +26,20 @@ const {
   getUserInfoMock,
   replaceSessionMock,
   revokeSessionMock,
+  listOpenIDProvidersMock,
+  requestOpenIDLoginMock,
+  completeOAuthLoginMock,
+  processOAuthCodeMock,
 } = vi.hoisted(() => ({
   requestLoginMock: vi.fn(),
   completeLoginMock: vi.fn(),
   getUserInfoMock: vi.fn(),
   replaceSessionMock: vi.fn(),
   revokeSessionMock: vi.fn(),
+  listOpenIDProvidersMock: vi.fn(),
+  requestOpenIDLoginMock: vi.fn(),
+  completeOAuthLoginMock: vi.fn(),
+  processOAuthCodeMock: vi.fn(),
 }));
 
 vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
@@ -34,6 +50,10 @@ vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
     getUserInfo: getUserInfoMock,
     replaceSession: replaceSessionMock,
     revokeSession: revokeSessionMock,
+    listOpenIDProviders: listOpenIDProvidersMock,
+    requestOpenIDLogin: requestOpenIDLoginMock,
+    completeOAuthLogin: completeOAuthLoginMock,
+    processOAuthCode: processOAuthCodeMock,
   })),
 }));
 
@@ -240,6 +260,285 @@ describe("createLoginManager", () => {
       await expect(loginPromise).resolves.toBeNull();
       await waitFor(() => manager.isLoginOpen.value === false);
       expect(getUserInfoMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("OpenID login", () => {
+    const AUTHORIZATION_URL = "https://api.youversion.com/auth/authorize?x=1";
+    const REQUEST_ID = "oid-request-1";
+
+    let navigate: Mock;
+
+    beforeEach(() => {
+      listOpenIDProvidersMock.mockReset();
+      requestOpenIDLoginMock.mockReset();
+      completeOAuthLoginMock.mockReset();
+      processOAuthCodeMock.mockReset();
+      navigate = vi.fn();
+
+      window.history.replaceState(null, "", "/en/BSB/john/3?today=closed#v16");
+
+      listOpenIDProvidersMock.mockResolvedValue({
+        success: true,
+        providers: [{ id: YOUVERSION_OPEN_ID_PROVIDER, name: "YouVersion" }],
+      });
+      requestOpenIDLoginMock.mockResolvedValue({
+        success: true,
+        authorizationUrl: AUTHORIZATION_URL,
+        requestId: REQUEST_ID,
+      });
+      processOAuthCodeMock.mockResolvedValue({ success: true });
+      completeOAuthLoginMock.mockResolvedValue({
+        success: true,
+        userId: USER_ID,
+        sessionKey: SESSION_KEY,
+        connectionKey: "connection-key-1",
+        expireTimeMs: Date.now() + 1000 * 60 * 60,
+        metadata: {},
+      });
+    });
+
+    afterEach(() => {
+      window.history.replaceState(null, "", "/");
+    });
+
+    /** What the callback page leaves behind before returning to the app. */
+    function savePending(overrides: Partial<PendingOpenIDLogin> = {}) {
+      writePendingOpenIDLogin(localStorage, {
+        requestId: REQUEST_ID,
+        returnUrl: "/en/BSB/john/3",
+        expireTimeMs: Date.now() + 60_000,
+        ...overrides,
+      });
+    }
+
+    it("lists the providers the auth server offers", async () => {
+      const manager = createLoginManager({ os });
+      expect(manager.openIDProviders.value).toBeNull();
+
+      await expect(manager.loadOpenIDProviders()).resolves.toEqual([
+        { id: YOUVERSION_OPEN_ID_PROVIDER, name: "YouVersion" },
+      ]);
+      expect(manager.openIDProviders.value).toEqual([
+        { id: YOUVERSION_OPEN_ID_PROVIDER, name: "YouVersion" },
+      ]);
+
+      // Asked once per page load, however often the login screen opens.
+      await manager.loadOpenIDProviders();
+      expect(listOpenIDProvidersMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("tries listing the providers again after a failure", async () => {
+      listOpenIDProvidersMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "A server error occurred.",
+      });
+      const manager = createLoginManager({ os });
+
+      await expect(manager.loadOpenIDProviders()).rejects.toThrow(
+        "server_error"
+      );
+      expect(manager.openIDProviders.value).toBeNull();
+
+      await expect(manager.loadOpenIDProviders()).resolves.toHaveLength(1);
+      expect(manager.openIDProviders.value).toHaveLength(1);
+    });
+
+    it("saves the login request, then sends this tab to the provider", async () => {
+      const manager = createLoginManager({ os, navigate });
+
+      await expect(
+        manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
+      ).resolves.toEqual({ success: true });
+
+      expect(requestOpenIDLoginMock).toHaveBeenCalledWith({
+        provider: YOUVERSION_OPEN_ID_PROVIDER,
+        comId: "seed-bible",
+      });
+      expect(readPendingOpenIDLogin(localStorage)).toMatchObject({
+        requestId: REQUEST_ID,
+        returnUrl: "/en/BSB/john/3?today=closed#v16",
+      });
+      expect(navigate).toHaveBeenCalledWith(AUTHORIZATION_URL);
+    });
+
+    it("stays put when the server refuses the provider", async () => {
+      requestOpenIDLoginMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_supported",
+        errorMessage: "The given provider is not supported.",
+      });
+      const manager = createLoginManager({ os, navigate });
+
+      await expect(
+        manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
+      ).resolves.toMatchObject({ success: false, errorCode: "not_supported" });
+      expect(navigate).not.toHaveBeenCalled();
+      expect(readPendingOpenIDLogin(localStorage)).toBeNull();
+    });
+
+    it("stays put when the login request can't be saved", async () => {
+      const setItem = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation((key) => {
+          if (key === PENDING_OPEN_ID_LOGIN_STORAGE_KEY) {
+            throw new DOMException("Quota exceeded", "QuotaExceededError");
+          }
+        });
+      const manager = createLoginManager({ os, navigate });
+
+      await expect(
+        manager.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER)
+      ).resolves.toMatchObject({
+        success: false,
+        errorCode: "storage_unavailable",
+      });
+      expect(navigate).not.toHaveBeenCalled();
+      setItem.mockRestore();
+    });
+
+    it("finishes the login with the saved request id after coming back", async () => {
+      savePending({ codeProcessed: true });
+
+      const manager = createLoginManager({ os });
+      expect(manager.isCompletingOpenIDLogin.value).toBe(true);
+
+      await waitFor(() => manager.userInfo.value !== null);
+      expect(completeOAuthLoginMock).toHaveBeenCalledWith({
+        requestId: REQUEST_ID,
+      });
+      expect(manager.userId.value).toBe(USER_ID);
+      expect(localStorage.getItem("sessionKey")).toBe(SESSION_KEY);
+      expect(manager.isCompletingOpenIDLogin.value).toBe(false);
+      expect(manager.isLoginOpen.value).toBe(false);
+      // Used up, so the next page load doesn't try again.
+      expect(readPendingOpenIDLogin(localStorage)).toBeNull();
+    });
+
+    it("reports an existing email account instead of linking to it", async () => {
+      savePending({ codeProcessed: true });
+      completeOAuthLoginMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_key_required_for_openid",
+        errorMessage:
+          "A valid session key is required to link this OpenID account to an existing user.",
+      });
+
+      const manager = createLoginManager({ os });
+
+      await waitFor(() => manager.openIDLoginError.value !== null);
+      expect(manager.openIDLoginError.value).toMatchObject({
+        errorCode: "session_key_required_for_openid",
+      });
+      expect(manager.isLoginOpen.value).toBe(true);
+      expect(manager.userId.value).toBeNull();
+      expect(readPendingOpenIDLogin(localStorage)).toBeNull();
+    });
+
+    it("reports a failure the callback page saved, without asking the server", async () => {
+      savePending({
+        error: {
+          errorCode: "invalid_request",
+          errorMessage: "The login request is invalid.",
+        },
+      });
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.openIDLoginError.value).toEqual({
+        success: false,
+        errorCode: "invalid_request",
+        errorMessage: "The login request is invalid.",
+      });
+      expect(manager.isLoginOpen.value).toBe(true);
+      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+      expect(readPendingOpenIDLogin(localStorage)).toBeNull();
+    });
+
+    it("reports an unreachable auth server", async () => {
+      savePending({ codeProcessed: true });
+      completeOAuthLoginMock.mockRejectedValue(
+        new TypeError("Failed to fetch")
+      );
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const manager = createLoginManager({ os });
+
+      await waitFor(() => manager.openIDLoginError.value !== null);
+      expect(manager.openIDLoginError.value).toMatchObject({
+        errorCode: "server_error",
+      });
+      expect(manager.isCompletingOpenIDLogin.value).toBe(false);
+      errorSpy.mockRestore();
+    });
+
+    it("leaves a login that hasn't come back from the provider alone", async () => {
+      savePending();
+
+      const manager = createLoginManager({ os });
+      await flush();
+
+      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+      expect(manager.isLoginOpen.value).toBe(false);
+      expect(readPendingOpenIDLogin(localStorage)).not.toBeNull();
+    });
+
+    it("throws away a login request that has expired", async () => {
+      savePending({ codeProcessed: true, expireTimeMs: Date.now() - 1 });
+
+      const manager = createLoginManager({ os });
+      await flush();
+
+      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+      expect(manager.userId.value).toBeNull();
+      expect(readPendingOpenIDLogin(localStorage)).toBeNull();
+    });
+
+    it("signs in across the whole round trip through YouVersion", async () => {
+      // 1. "Continue with YouVersion" on the reader page.
+      const starting = createLoginManager({ os, navigate });
+      await starting.loginWithOpenID(YOUVERSION_OPEN_ID_PROVIDER);
+      expect(navigate).toHaveBeenLastCalledWith(AUTHORIZATION_URL);
+
+      // 2. YouVersion sends the tab back with only the state; the callback
+      //    page sends it on to YouVersion again.
+      await handleOpenIDCallback({
+        os,
+        search: "?state=s1",
+        storage: localStorage,
+        navigate,
+        fallbackUrl: "/",
+      });
+      expect(navigate).toHaveBeenLastCalledWith(
+        "https://api.youversion.com/auth/callback?state=s1"
+      );
+
+      // 3. Back again with the code: it goes to the auth server and the tab
+      //    returns to the page the login started from.
+      await handleOpenIDCallback({
+        os,
+        search: "?code=c1&state=s1",
+        storage: localStorage,
+        navigate,
+        fallbackUrl: "/",
+      });
+      expect(processOAuthCodeMock).toHaveBeenCalledWith({
+        code: "c1",
+        state: "s1",
+      });
+      expect(navigate).toHaveBeenLastCalledWith(
+        "/en/BSB/john/3?today=closed#v16"
+      );
+      expect(completeOAuthLoginMock).not.toHaveBeenCalled();
+
+      // 4. The app loads there and finishes the login.
+      const returned = createLoginManager({ os: CasualOSManager() });
+      await waitFor(() => returned.userInfo.value !== null);
+      expect(completeOAuthLoginMock).toHaveBeenCalledWith({
+        requestId: REQUEST_ID,
+      });
+      expect(returned.userInfo.value).toEqual({ id: USER_ID, email: EMAIL });
     });
   });
 

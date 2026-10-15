@@ -30,6 +30,7 @@ minimumReleaseAgeExclude:
   - "@casual-simulation/aux-runtime@4.2.8-alpha.38630400059"
   - "@casual-simulation/aux-vm@4.2.8-alpha.38630400059"
   - "@casual-simulation/aux-websocket@4.2.8-alpha.38630400059"
+  - "casualos@4.2.8-alpha.38630400059"
 patchedDependencies:
   "@casual-simulation/aux-records@4.2.8-alpha.38630400059": patches/@casual-simulation__aux-records@4.2.8-alpha.38630400059.patch
   "@casual-simulation/fast-json-stable-stringify": "patches/@casual-simulation__fast-json-stable-stringify.patch"

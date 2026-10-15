@@ -88,7 +88,7 @@
     "@vitest/coverage-v8": "4.1.8",
     "axios": "catalog:",
     "babel-jest": "^30.1.2",
-    "casualos": "4.2.7",
+    "casualos": "4.2.8-alpha.38630400059",
     "chokidar": "^5.0.0",
     "commander": "^14.0.1",
     "conf": "^15.0.2",

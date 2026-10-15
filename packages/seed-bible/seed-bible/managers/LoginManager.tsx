@@ -6,7 +6,44 @@ import type {
   CompleteLoginResult,
   LoginRequestResult,
   LoginRequestSuccess,
+  OpenIDLoginRequestFailure,
+  OpenIDProviderInfo,
 } from "@casual-simulation/aux-records/AuthController";
+import {
+  OPEN_ID_LOGIN_REQUEST_LIFETIME_MS,
+  clearPendingOpenIDLogin,
+  readPendingOpenIDLogin,
+  writePendingOpenIDLogin,
+} from "./OpenIDCallback";
+
+/**
+ * The studio users are signed into. Sent with every kind of login request so
+ * email and OpenID logins end up in the same place.
+ */
+export const LOGIN_COM_ID = "seed-bible";
+
+/** The auth server's OpenID provider id for YouVersion accounts. */
+export const YOUVERSION_OPEN_ID_PROVIDER = "youversion";
+
+/**
+ * Why a login with an OpenID provider didn't succeed. The codes are the auth
+ * server's, plus `storage_unavailable` when the browser won't let us save the
+ * login request across the redirects.
+ */
+export interface OpenIDLoginFailure {
+  success: false;
+  errorCode: string;
+  errorMessage: string;
+}
+
+/**
+ * The outcome of starting an OpenID login. On success the browser is already
+ * on its way to the provider, and the login finishes when it comes back.
+ */
+export type StartOpenIDLoginResult =
+  | { success: true }
+  | OpenIDLoginRequestFailure
+  | OpenIDLoginFailure;
 
 /**
  * Why a session ended without the user asking it to.
@@ -190,6 +227,43 @@ export interface LoginManager {
     code: string,
     request: LoginRequestSuccess
   ) => Promise<CompleteLoginResult>;
+
+  /**
+   * The OpenID providers (e.g. YouVersion) the auth server offers for sign-in.
+   * Null until {@link loadOpenIDProviders} has succeeded.
+   */
+  openIDProviders: Signal<OpenIDProviderInfo[] | null>;
+
+  /**
+   * Fetches the OpenID providers the auth server offers into
+   * {@link openIDProviders}. Only asks the server once per page load; a failed
+   * fetch leaves the list null so the next call tries again.
+   */
+  loadOpenIDProviders: () => Promise<OpenIDProviderInfo[]>;
+
+  /**
+   * Starts signing the user in through an OpenID provider such as YouVersion.
+   *
+   * Saves the login request so it survives the trip, then sends this tab to
+   * the provider's sign-in page. The provider sends the user back to the
+   * callback page (see `OpenIDCallback.ts`), which returns them to the page
+   * they started on, where the login is finished when the app loads.
+   *
+   * @param provider The provider id, e.g. {@link YOUVERSION_OPEN_ID_PROVIDER}.
+   */
+  loginWithOpenID: (provider: string) => Promise<StartOpenIDLoginResult>;
+
+  /**
+   * Why the OpenID login the user just came back from failed, for the login
+   * screen to explain. Null when there is nothing to report.
+   */
+  openIDLoginError: Signal<OpenIDLoginFailure | null>;
+
+  /**
+   * True while a login the user just came back from the provider with is
+   * being finished.
+   */
+  isCompletingOpenIDLogin: Signal<boolean>;
 }
 
 export const userProfileSchema = z.object({
@@ -325,8 +399,11 @@ function writeLocalConfig(config: Record<string, unknown>): void {
 
 export function createLoginManager({
   os,
+  navigate = (url) => window.location.assign(url),
 }: {
   os: CasualOSManager;
+  /** Sends this tab to another page. Replaceable so tests can watch it. */
+  navigate?: (url: string) => void;
 }): LoginManager {
   const { client, parsedSessionKey, sessionKey, connectionKey } = os;
 
@@ -478,6 +555,12 @@ export function createLoginManager({
     }
   }
   /* eslint-enable seed-bible-hydration/no-immediate-storage-access */
+
+  const openIDProviders = signal<OpenIDProviderInfo[] | null>(null);
+  let openIDProvidersPromise: Promise<OpenIDProviderInfo[]> | null = null;
+
+  const openIDLoginError = signal<OpenIDLoginFailure | null>(null);
+  const isCompletingOpenIDLogin = signal(false);
 
   let loginPromise: Promise<UserInfo | null> | null = null;
   let resolveLoginPromise: ((value: UserInfo | null) => void) | null = null;
@@ -710,7 +793,7 @@ export function createLoginManager({
     const result = await client.requestLogin({
       address: email,
       addressType: "email",
-      comId: "seed-bible",
+      comId: LOGIN_COM_ID,
     });
 
     if (result.success) {
@@ -742,6 +825,126 @@ export function createLoginManager({
     }
 
     return result;
+  }
+
+  function loadOpenIDProviders(): Promise<OpenIDProviderInfo[]> {
+    if (!openIDProvidersPromise) {
+      openIDProvidersPromise = (async () => {
+        const result = await client.listOpenIDProviders();
+        if (!result.success) {
+          throw new Error(
+            `Failed to list OpenID providers (${result.errorCode}): ${result.errorMessage}`
+          );
+        }
+        openIDProviders.value = result.providers;
+        return result.providers;
+      })().catch((err) => {
+        openIDProvidersPromise = null;
+        throw err;
+      });
+    }
+    return openIDProvidersPromise;
+  }
+
+  async function loginWithOpenID(
+    provider: string
+  ): Promise<StartOpenIDLoginResult> {
+    const request = await client.requestOpenIDLogin({
+      provider,
+      comId: LOGIN_COM_ID,
+    });
+    if (!request.success) {
+      return request;
+    }
+
+    const saved =
+      typeof localStorage !== "undefined" &&
+      writePendingOpenIDLogin(localStorage, {
+        requestId: request.requestId,
+        returnUrl: `${location.pathname}${location.search}${location.hash}`,
+        expireTimeMs: Date.now() + OPEN_ID_LOGIN_REQUEST_LIFETIME_MS,
+      });
+    if (!saved) {
+      // Without the request id there would be no way to finish the login
+      // after coming back, so don't send the user off at all.
+      return {
+        success: false,
+        errorCode: "storage_unavailable",
+        errorMessage: "The login request could not be saved.",
+      };
+    }
+
+    navigate(request.authorizationUrl);
+    return { success: true };
+  }
+
+  /**
+   * Finishes an OpenID login the user has just come back from, using the
+   * request id saved by {@link loginWithOpenID}.
+   */
+  async function resumeOpenIDLogin(storage: Storage): Promise<void> {
+    const pending = readPendingOpenIDLogin(storage);
+    if (!pending) {
+      return;
+    }
+
+    if (Date.now() >= pending.expireTimeMs) {
+      clearPendingOpenIDLogin(storage);
+      return;
+    }
+
+    if (!pending.error && !pending.codeProcessed) {
+      // Still on its way through the provider (or the user came back without
+      // finishing there); nothing to do until the callback page has run.
+      return;
+    }
+
+    // Cleared before anything else, so a failure below can't be retried on
+    // every page load.
+    clearPendingOpenIDLogin(storage);
+
+    const fail = (failure: OpenIDLoginFailure) => {
+      console.warn(
+        `[LoginManager] OpenID login failed (${failure.errorCode}): ${failure.errorMessage}`
+      );
+      batch(() => {
+        openIDLoginError.value = failure;
+        isLoginOpen.value = true;
+      });
+    };
+
+    if (pending.error) {
+      fail({ success: false, ...pending.error });
+      return;
+    }
+
+    if (!pending.requestId) {
+      return;
+    }
+
+    isCompletingOpenIDLogin.value = true;
+    try {
+      const result = await client.completeOAuthLogin({
+        requestId: pending.requestId,
+      });
+      if (result.success) {
+        sessionKey.value = result.sessionKey;
+        connectionKey.value = result.connectionKey;
+        client.sessionKey = result.sessionKey;
+        await loadUserInfo();
+      } else {
+        fail(result);
+      }
+    } catch (err) {
+      console.error("[LoginManager] Failed to complete the OpenID login", err);
+      fail({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "The login could not be completed.",
+      });
+    } finally {
+      isCompletingOpenIDLogin.value = false;
+    }
   }
 
   async function loadUserInfo(): Promise<UserInfo | null> {
@@ -832,6 +1035,12 @@ export function createLoginManager({
       }
     }
   });
+
+  if (!import.meta.env.SSR && typeof localStorage !== "undefined") {
+    // Nobody awaits this; it reports failures through `openIDLoginError`
+    // rather than throwing.
+    void resumeOpenIDLogin(localStorage);
+  }
 
   if (sessionKey.value) {
     // Nobody awaits this, so it needs its own handler: a network failure here would
@@ -1104,5 +1313,11 @@ export function createLoginManager({
     cancelLogin,
     requestLoginByEmail,
     submitLoginCode,
+
+    openIDProviders,
+    loadOpenIDProviders,
+    loginWithOpenID,
+    openIDLoginError,
+    isCompletingOpenIDLogin,
   };
 }
