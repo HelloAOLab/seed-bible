@@ -433,6 +433,7 @@
   "playlist-scripture-note-remove": "Remove note",
   "playlist-scripture-note-show": "Show note",
   "playlist-scripture-note-hide": "Hide note",
+  "playlist-scripture-note-return": "Back to playlist",
   "playlist-scripture-note-aria": "Note on {{passage}}",
   "playlist-scripture-note-progress": "{{current}} of {{total}}",
   "playlist-add-link-placeholder": "https://example.com",

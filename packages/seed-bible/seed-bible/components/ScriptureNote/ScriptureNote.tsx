@@ -174,12 +174,14 @@ function fitsFrame(
  * then against just its first visible verse (a long passage can fill the
  * reader, leaving no room under it). Failing both it docks in the reader's
  * corner with no pointer, which is also where it waits while the passage is
- * scrolled out of view.
+ * scrolled out of view, or — with `pointAtPassage` false — while the reader
+ * is showing some other passage.
  */
 function placePopover(
   root: HTMLElement,
   item: ScriptureItem,
-  measured: { w: number; h: number } | null
+  measured: { w: number; h: number } | null,
+  pointAtPassage: boolean
 ): Placement | null {
   const frame = visibleReaderBox(root);
   if (!frame) return null;
@@ -203,7 +205,7 @@ function placePopover(
       ? intersect({ ...box, left: column.left, right: column.right }, frame)
       : box;
 
-  const visible = passageBoxes(root, item)
+  const visible = (pointAtPassage ? passageBoxes(root, item) : [])
     .map((box) => intersect(box, frame))
     .filter((box): box is Box => !!box);
   const candidates: Box[] = [];
@@ -269,6 +271,26 @@ function placePopover(
   };
 }
 
+/**
+ * Shown on a note while the reader is at a passage the note links to, to
+ * bring it back to the step's own passage.
+ */
+function ReturnToStepButton(props: { playing: PlayingState }) {
+  const { t } = useI18n();
+  return (
+    <button
+      type="button"
+      className="sb-scripture-note-return"
+      onClick={() => void props.playing.returnToStep()}
+    >
+      <MaterialIcon>playlist_play</MaterialIcon>
+      {t("playlist-scripture-note-return", {
+        defaultValue: "Back to playlist",
+      })}
+    </button>
+  );
+}
+
 function sameJson(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
@@ -309,6 +331,22 @@ function ScriptureNotePopoverBody(props: {
   const { item, playing, readerRef, resolveBookName } = props;
   const { t } = useI18n();
   const hidden = !playing.noteExpanded.value;
+  const away = playing.awayFromStep.value;
+  /**
+   * Whether the reader shows the step's passage, so there's something to
+   * point at. Not while it's away at a passage the note links to, nor once
+   * its chapter has been left some other way (the step's verse numbers would
+   * match the wrong verses there).
+   */
+  const pointAtPassage = (): boolean => {
+    if (playing.awayFromStep.peek()) return false;
+    const loaded = playing.tab?.readingState.chapterData.peek();
+    return (
+      !loaded ||
+      (loaded.book.id === item.ref.bookId &&
+        loaded.chapter.number === item.ref.chapter)
+    );
+  };
   const [placement, setPlacement] = useState<Placement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const measuredRef = useRef<{ w: number; h: number } | null>(null);
@@ -331,7 +369,9 @@ function ScriptureNotePopoverBody(props: {
           measuredRef.current = { w: r.width, h: r.height };
         }
       }
-      const next = root ? placePopover(root, item, measuredRef.current) : null;
+      const next = root
+        ? placePopover(root, item, measuredRef.current, pointAtPassage())
+        : null;
       setPlacement((prev) => (sameJson(prev, next) ? prev : next));
     };
     const schedule = () => {
@@ -350,7 +390,7 @@ function ScriptureNotePopoverBody(props: {
       window.removeEventListener("scroll", schedule, true);
       if (frameRequest) cancelAnimationFrame(frameRequest);
     };
-  }, [hidden, item, readerRef]);
+  }, [hidden, away, item, readerRef]);
 
   // The first placement uses a guessed height; re-place once the real one is
   // known so a tall note doesn't run past the reader.
@@ -362,7 +402,12 @@ function ScriptureNotePopoverBody(props: {
     const prev = measuredRef.current;
     if (r.height > 0 && (!prev || Math.abs(prev.h - r.height) > 1)) {
       measuredRef.current = { w: r.width, h: r.height };
-      const next = placePopover(root, item, measuredRef.current);
+      const next = placePopover(
+        root,
+        item,
+        measuredRef.current,
+        pointAtPassage()
+      );
       setPlacement((current) => (sameJson(current, next) ? current : next));
     }
   });
@@ -425,9 +470,13 @@ function ScriptureNotePopoverBody(props: {
           </div>
           {item.note?.trim() ? (
             <div className="sb-scripture-note-body">
-              <PlaylistHtmlContent html={item.note} />
+              <PlaylistHtmlContent
+                html={item.note}
+                onReferenceClick={(ref) => void playing.visitReference(ref)}
+              />
             </div>
           ) : null}
+          {away ? <ReturnToStepButton playing={playing} /> : null}
           <div className="sb-scripture-note-actions">
             {playing.hasPrevious.value ? (
               <button
@@ -516,29 +565,39 @@ function ScriptureNoteSheetBody(props: {
         passage: label,
       })}
     >
-      {hasBody ? (
-        <button
-          type="button"
-          className="sb-scripture-note-sheet-header"
-          aria-expanded={!collapsed}
-          onClick={() => playing.setNoteExpanded(collapsed)}
-        >
-          {icon}
-          <NoteHeading title={item.noteTitle} passage={label} as="span" />
-          <MaterialIcon className="sb-scripture-note-sheet-chevron">
-            {collapsed ? "expand_less" : "expand_more"}
-          </MaterialIcon>
-        </button>
-      ) : (
-        // A title-only note is all header, with nothing to collapse.
-        <div className="sb-scripture-note-sheet-header">
-          {icon}
-          <NoteHeading title={item.noteTitle} passage={label} as="span" />
-        </div>
-      )}
+      <div className="sb-scripture-note-sheet-bar">
+        {hasBody ? (
+          <button
+            type="button"
+            className="sb-scripture-note-sheet-header"
+            aria-expanded={!collapsed}
+            onClick={() => playing.setNoteExpanded(collapsed)}
+          >
+            {icon}
+            <NoteHeading title={item.noteTitle} passage={label} as="span" />
+            <MaterialIcon className="sb-scripture-note-sheet-chevron">
+              {collapsed ? "expand_less" : "expand_more"}
+            </MaterialIcon>
+          </button>
+        ) : (
+          // A title-only note is all header, with nothing to collapse.
+          <div className="sb-scripture-note-sheet-header">
+            {icon}
+            <NoteHeading title={item.noteTitle} passage={label} as="span" />
+          </div>
+        )}
+        {/* Beside the header rather than in the body, so it's there even with
+            the sheet collapsed. */}
+        {playing.awayFromStep.value ? (
+          <ReturnToStepButton playing={playing} />
+        ) : null}
+      </div>
       {hasBody && !collapsed ? (
         <div className="sb-scripture-note-body">
-          <PlaylistHtmlContent html={item.note!} />
+          <PlaylistHtmlContent
+            html={item.note!}
+            onReferenceClick={(ref) => void playing.visitReference(ref)}
+          />
         </div>
       ) : null}
     </section>

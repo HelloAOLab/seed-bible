@@ -30,7 +30,11 @@ import {
 } from "./AIManager";
 import type { DiscoverManager } from "./DiscoverManager";
 import { emphasizeVerses } from "./BibleReadingManager";
-import { BOOK_SLUGS, type BookId } from "./BibleDataManager";
+import {
+  BOOK_SLUGS,
+  type BookId,
+  type VerseRef as ReaderVerseRef,
+} from "./BibleDataManager";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
 import {
@@ -715,6 +719,12 @@ export function createPlayingState(
    * passage stays highlighted; see `setNoteExpanded`.
    */
   const noteExpanded = signal(true);
+  /**
+   * True while the reader shows a passage the current step's note links to,
+   * rather than the step's own (see `visitReference`). Playback carries on
+   * meanwhile; `returnToStep` or moving to any step brings the reader back.
+   */
+  const awayFromStep = signal(false);
   let lastIndex = currentIndex.peek();
   const disposeRearm = effect(() => {
     const index = currentIndex.value;
@@ -722,6 +732,7 @@ export function createPlayingState(
       lastIndex = index;
       finishPromptShown.value = false;
       noteExpanded.value = true;
+      awayFromStep.value = false;
     }
   });
 
@@ -804,7 +815,11 @@ export function createPlayingState(
       return;
     }
     if (expanded) {
-      emphasizeItem(item);
+      // While away at a linked passage the step's verses aren't on screen;
+      // they're highlighted again on the way back.
+      if (!awayFromStep.peek()) {
+        emphasizeItem(item);
+      }
     } else if (decorationId && !noteClosedTimer) {
       const closing = decorationId;
       noteClosedTimer = setTimeout(() => {
@@ -818,6 +833,7 @@ export function createPlayingState(
 
   const navigateToCurrentItem = async () => {
     const item = currentItem.value;
+    awayFromStep.value = false;
     // Cleared even when the new step isn't scripture: a noted passage's
     // highlight has no timer of its own and would otherwise outlast its step.
     disposeDecoration();
@@ -841,6 +857,34 @@ export function createPlayingState(
 
     emphasizeItem(item);
   };
+
+  /**
+   * Takes the reader to a passage the current step's note links to, without
+   * leaving the playlist: the step, its note and the queue stay as they are,
+   * and `returnToStep` brings the reader back. The linked passage gets the
+   * usual brief highlight.
+   */
+  const visitReference = async (ref: ReaderVerseRef): Promise<void> => {
+    if (!tab) {
+      return;
+    }
+    awayFromStep.value = true;
+    disposeDecoration();
+    await tab.readingState.selectTranslationAndChapter(
+      tab.readingState.translationId.peek(),
+      ref.book,
+      ref.chapter,
+      ref.verse != null ? { scrollToVerse: ref.verse } : undefined
+    );
+    // Returned, or moved to another step, while the chapter was loading.
+    if (!awayFromStep.peek()) {
+      return;
+    }
+    decorationId = emphasizeVerses(tab.readingState, ref);
+  };
+
+  /** Brings the reader back from a linked passage to the current step. */
+  const returnToStep = (): Promise<void> => navigateToCurrentItem();
 
   /**
    * Advances to the next step. On the last item it calls `onFinish` when
@@ -1006,6 +1050,9 @@ export function createPlayingState(
     finishPromptShown: finishPromptShown as ReadonlySignal<boolean>,
     noteExpanded: noteExpanded as ReadonlySignal<boolean>,
     setNoteExpanded,
+    awayFromStep: awayFromStep as ReadonlySignal<boolean>,
+    visitReference,
+    returnToStep,
     tab,
     next,
     previous,

@@ -1,5 +1,7 @@
 import { render, createRef } from "preact";
 import { act } from "preact/test-utils";
+import { signal } from "@preact/signals";
+import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import {
   ScriptureNotePopover,
   ScriptureNoteSheet,
@@ -425,11 +427,190 @@ describe("ScriptureNotePopover", () => {
     ).toBe("John 3:16-17");
   });
 
+  it("docks with no pointer while the reader is at a passage the note links to", async () => {
+    layOutReader({ 16: 140, 17: 180 });
+    const tab = {
+      id: "tab-1",
+      readingState: {
+        selectTranslationAndChapter: vi.fn(async () => {}),
+        translationId: signal("BSB"),
+        bookId: signal<string | null>(null),
+        chapterNumber: signal(1),
+        chapterData: signal(null),
+        decorateVerses: vi.fn(() => "decoration"),
+        removeDecoration: vi.fn(),
+      },
+    } as unknown as ReaderTab;
+    renderPopover(
+      createPlayingState(
+        [
+          playlist([
+            {
+              ...noted,
+              note: '<p>See <a class="sb-verse-reference-link" href="#">Romans 5:8</a></p>',
+            },
+          ]),
+        ],
+        tab
+      )
+    );
+    await waitFor(
+      () => !!popover()?.querySelector("a.sb-verse-reference-link")
+    );
+    expect(popover()!.querySelector(".sb-tour-arrow-right")).not.toBeNull();
+
+    await act(async () => {
+      popover()!
+        .querySelector<HTMLAnchorElement>("a.sb-verse-reference-link")!
+        .click();
+    });
+
+    await waitFor(() =>
+      popover()!.classList.contains("sb-scripture-note-popover--docked")
+    );
+    expect(popover()!.querySelector(".sb-tour-arrow")).toBeNull();
+    expect(button("Back to playlist")).toBeDefined();
+  });
+
   it("disables next on the last step of a queue that can't finish", async () => {
     layOutReader({ 16: 140, 17: 180 });
     renderPopover(createPlayingState([playlist([noted])]));
     await waitFor(() => !!popover());
 
     expect(button("Next")!.disabled).toBe(true);
+  });
+});
+
+describe("a scripture reference inside a note", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  const linked: PlaylistItemData = {
+    type: "bible-verse",
+    ref: { bookId: "JHN", chapter: 3, verse: 16 },
+    note: '<p>Compare <a class="sb-verse-reference-link" href="/en/BSB/romans/5?verse=8">Romans 5:8</a>.</p>',
+  };
+
+  /**
+   * A reader tab the playing state can move. jsdom has no reader, so this
+   * stands in for the reading state: it records where it was sent.
+   */
+  function fakeTab() {
+    const selectTranslationAndChapter = vi.fn(async () => {});
+    const tab = {
+      id: "tab-1",
+      readingState: {
+        selectTranslationAndChapter,
+        translationId: signal("BSB"),
+        bookId: signal<string | null>(null),
+        chapterNumber: signal(1),
+        chapterData: signal(null),
+        decorateVerses: vi.fn(() => "decoration"),
+        removeDecoration: vi.fn(),
+      },
+    } as unknown as ReaderTab;
+    return { tab, selectTranslationAndChapter };
+  }
+
+  async function renderSheet() {
+    const { tab, selectTranslationAndChapter } = fakeTab();
+    const playing = createPlayingState([playlist([linked, plain])], tab);
+    await act(() => playing.jumpTo(0));
+    act(() => {
+      render(
+        <ScriptureNoteSheet
+          playing={playing}
+          resolveBookName={resolveBookName}
+        />,
+        container
+      );
+    });
+    await waitFor(() => !!container.querySelector("a.sb-verse-reference-link"));
+    selectTranslationAndChapter.mockClear();
+    return { playing, selectTranslationAndChapter };
+  }
+
+  const backButton = () =>
+    Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "playlist_playBack to playlist"
+    );
+
+  it("takes the reader there without leaving the playlist", async () => {
+    const { playing, selectTranslationAndChapter } = await renderSheet();
+    const link = container.querySelector<HTMLAnchorElement>(
+      "a.sb-verse-reference-link"
+    )!;
+
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    await act(async () => {
+      link.dispatchEvent(click);
+    });
+
+    // The link isn't followed — that's what used to end playback.
+    expect(click.defaultPrevented).toBe(true);
+    expect(selectTranslationAndChapter).toHaveBeenCalledWith("BSB", "ROM", 5, {
+      scrollToVerse: 8,
+    });
+    expect(playing.currentIndex.value).toBe(0);
+    expect(container.querySelector(".sb-scripture-note-body")).not.toBeNull();
+    expect(backButton()).toBeDefined();
+  });
+
+  it("returns to the step's passage from Back to playlist", async () => {
+    const { playing, selectTranslationAndChapter } = await renderSheet();
+    await act(async () => {
+      container
+        .querySelector<HTMLAnchorElement>("a.sb-verse-reference-link")!
+        .click();
+    });
+    selectTranslationAndChapter.mockClear();
+
+    await act(async () => backButton()!.click());
+
+    expect(selectTranslationAndChapter).toHaveBeenCalledWith("BSB", "JHN", 3, {
+      scrollToVerse: 16,
+    });
+    expect(playing.awayFromStep.value).toBe(false);
+    expect(backButton()).toBeUndefined();
+  });
+
+  it("keeps Back to playlist reachable with the note collapsed", async () => {
+    await renderSheet();
+    await act(async () => {
+      container
+        .querySelector<HTMLAnchorElement>("a.sb-verse-reference-link")!
+        .click();
+    });
+
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-scripture-note-sheet-header")!
+        .click();
+    });
+
+    expect(container.querySelector(".sb-scripture-note-body")).toBeNull();
+    expect(backButton()).toBeDefined();
+  });
+
+  it("is no longer away once playback moves to another step", async () => {
+    const { playing } = await renderSheet();
+    await act(async () => {
+      container
+        .querySelector<HTMLAnchorElement>("a.sb-verse-reference-link")!
+        .click();
+    });
+
+    await act(() => playing.next());
+
+    expect(playing.awayFromStep.value).toBe(false);
   });
 });

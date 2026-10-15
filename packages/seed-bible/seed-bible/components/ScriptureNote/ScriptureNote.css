@@ -213,12 +213,21 @@
   font-family: var(--sb-font-family);
 }
 
-.sb-scripture-note-sheet-header {
+/* The header, plus "Back to playlist" beside it while away at a linked
+   passage. */
+.sb-scripture-note-sheet-bar {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
+  padding-inline-end: 0.75rem;
+}
+
+.sb-scripture-note-sheet-header {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-  width: 100%;
   padding: 0.75rem 1rem;
   border: none;
   background: transparent;
@@ -249,4 +258,30 @@ div.sb-scripture-note-sheet-header {
 
 .sb-scripture-note-sheet .sb-scripture-note-body {
   padding: 0 1rem 0.875rem;
+}
+
+/* Brings the reader back from a passage the note links to. */
+.sb-scripture-note-return {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-scripture-note-sheet-bar .sb-scripture-note-return {
+  align-self: center;
+}
+
+.sb-scripture-note-return .material-symbols-outlined {
+  font-size: 1.125rem;
 }
