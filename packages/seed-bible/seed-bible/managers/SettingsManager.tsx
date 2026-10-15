@@ -1,4 +1,4 @@
-import { effect, signal, type Signal } from "@preact/signals";
+import { computed, effect, signal, type Signal } from "@preact/signals";
 import i18n from "i18next";
 import type { LoginManager } from "../managers/LoginManager";
 import {
@@ -841,6 +841,11 @@ export function createSettings(
   const sessionOverrides: Record<string, unknown> = Object.fromEntries(
     navigation.currentUrl.value.searchParams
   );
+  // A boolean, not the URL itself, so `readSettings()` (and every reader of
+  // `settings`) reruns only when embed mode flips, not on every navigation.
+  const isMinimalEmbed = computed(() =>
+    isMinimalEmbedUrl(navigation.currentUrl.value)
+  );
 
   // Read each setting with the precedence: user profile > this session's
   // URL/override cache > `login.localConfig` (the anonymous, device-only
@@ -866,7 +871,7 @@ export function createSettings(
     // preview (and every signed-in visitor) would ignore the link.
     const embedTheme = sessionOverrides[TAG_THEME_ID];
     const pinnedEmbedTheme =
-      isMinimalEmbedUrl(navigation.currentUrl.value) &&
+      isMinimalEmbed.value &&
       typeof embedTheme === "string" &&
       embedTheme.trim().length > 0
         ? embedTheme.trim()

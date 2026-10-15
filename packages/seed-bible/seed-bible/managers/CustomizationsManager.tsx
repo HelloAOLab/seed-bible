@@ -1268,6 +1268,11 @@ export function createCustomizationsManager(
       : theme.selectedThemeId.value === SYSTEM_THEME_ID;
   });
 
+  // A boolean, not the URL itself, so the active variant (and the theme built
+  // from it) is recomputed only when embed mode flips, not on every navigation.
+  const isMinimalEmbed = computed(() =>
+    isMinimalEmbedUrl(navigation.currentUrl.value)
+  );
   const activeVariant = computed<CustomizationThemeVariant | null>(() => {
     const customization = activeCustomization.value;
     if (!customization) {
@@ -1277,7 +1282,7 @@ export function createCustomizationsManager(
       id ? customization.variants.find((v) => v.id === id) : undefined;
     // The embed link names the theme. A saved variant pick would leave the
     // preview on one look no matter which theme the link asked for.
-    if (isMinimalEmbedUrl(navigation.currentUrl.value)) {
+    if (isMinimalEmbed.value) {
       const themeId = theme.selectedThemeId.value;
       const baseThemeId =
         themeId === SYSTEM_THEME_ID
