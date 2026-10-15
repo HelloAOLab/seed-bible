@@ -581,286 +581,291 @@ function ReadingPlansList(props: ReadingPlansListProps) {
 
   return (
     <div className="sb-reading-plans-pane">
-      {rows.length === 0 && drafts.length === 0 ? (
-        <div className="sb-reading-plans-empty">
-          {t("reading-plans-empty", {
-            defaultValue:
-              "You don't have any reading plans yet. Create one to get started.",
-          })}
-        </div>
-      ) : (
-        <div className="sb-reading-plans-scroll">
-          {hero && hero.summary?.next ? (
-            <button
-              type="button"
-              className="sb-rp-today"
-              onClick={() => onOpen(hero.meta)}
-              disabled={openingId === hero.planId}
-            >
-              {hero.meta.heroImageUrl ? (
-                <HeroImageThumb url={hero.meta.heroImageUrl} />
-              ) : null}
-              <div className="sb-rp-today-text">
-                <span className="sb-rp-today-eyebrow">
-                  {t("reading-plan-today-eyebrow", {
-                    defaultValue: "Today · Day {{day}}",
-                    day: hero.summary.nextDayNumber ?? 1,
-                  })}
-                </span>
-                <span className="sb-rp-today-title" dir="auto">
-                  {planTitle(hero.meta)}
-                </span>
-                {hero.meta.description ? (
-                  <span className="sb-rp-today-readings" dir="auto">
-                    {hero.meta.description}
-                  </span>
+      <div className="sb-reading-plans-scroll">
+        {rows.length === 0 && drafts.length === 0 ? (
+          <div className="sb-reading-plans-empty">
+            {t("reading-plans-empty", {
+              defaultValue:
+                "You don't have any reading plans yet. Create one to get started.",
+            })}
+          </div>
+        ) : (
+          <>
+            {hero && hero.summary?.next ? (
+              <button
+                type="button"
+                className="sb-rp-today"
+                onClick={() => onOpen(hero.meta)}
+                disabled={openingId === hero.planId}
+              >
+                {hero.meta.heroImageUrl ? (
+                  <HeroImageThumb url={hero.meta.heroImageUrl} />
                 ) : null}
-                <span className="sb-rp-today-readings">
-                  {dayReadingsLabelForBooks(hero.summary.next)}
-                </span>
-              </div>
-              <span className="sb-rp-today-go" aria-hidden="true">
-                <MaterialIcon>
-                  {openingId === hero.planId
-                    ? "hourglass_top"
-                    : "arrow_forward"}
-                </MaterialIcon>
-              </span>
-            </button>
-          ) : null}
-
-          {drafts.length > 0 ? (
-            <PlanSection
-              label={t("reading-plan-drafts", { defaultValue: "Drafts" })}
-              count={drafts.length}
-            >
-              {drafts.map((meta) => {
-                const planId = formatReadingPlanId(
-                  meta.recordName,
-                  meta.address
-                );
-                const full = fullById.get(planId);
-                const readings =
-                  full?.sessions.reduce(
-                    (sum, session) => sum + session.readings.length,
-                    0
-                  ) ?? 0;
-                const confirming = confirmDeleteId === planId;
-                return (
-                  <div key={planId} className="sb-rp-card sb-rp-card-static">
-                    <button
-                      type="button"
-                      className="sb-rp-card-open"
-                      onClick={() => resumeDraft(meta)}
-                      disabled={!full}
-                    >
-                      {meta.heroImageUrl ? (
-                        <HeroImageThumb url={meta.heroImageUrl} />
-                      ) : null}
-                      <span className="sb-rp-card-body">
-                        <span className="sb-rp-card-title" dir="auto">
-                          {planTitle(meta)}
-                        </span>
-                        {meta.description ? (
-                          <span className="sb-rp-card-sub" dir="auto">
-                            {meta.description}
-                          </span>
-                        ) : null}
-                        <span className="sb-rp-card-sub">
-                          {t("reading-plan-draft-summary", {
-                            defaultValue: "Draft · {{count}} readings",
-                            count: readings,
-                          })}
-                        </span>
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`sb-rp-restart${
-                        confirming ? " sb-rp-restart-danger" : ""
-                      }`}
-                      onClick={() => {
-                        if (!confirming) {
-                          setConfirmDeleteId(planId);
-                          return;
-                        }
-                        setConfirmDeleteId(null);
-                        void readingPlans.deleteReadingPlan(meta);
-                      }}
-                    >
-                      {confirming
-                        ? t("reading-plan-discard-draft-confirm", {
-                            defaultValue: "Delete for good?",
-                          })
-                        : t("reading-plan-discard-draft", {
-                            defaultValue: "Discard",
-                          })}
-                    </button>
-                  </div>
-                );
-              })}
-            </PlanSection>
-          ) : null}
-
-          {active.length > 0 ? (
-            <PlanSection
-              label={t("reading-plan-active", { defaultValue: "Active" })}
-              count={active.length}
-            >
-              {active.map((row) => (
-                <div key={row.planId} className="sb-rp-card-group">
-                  <ActivePlanCard
-                    row={row}
-                    title={planTitle(row.meta)}
-                    dayReadingsLabel={dayReadingsLabelForBooks}
-                    opening={openingId === row.planId}
-                    onOpen={() => onOpen(row.meta)}
-                    menu={optionsMenu(row)}
-                    t={t}
-                  />
-                  <PlanLoadError planId={row.planId} />
+                <div className="sb-rp-today-text">
+                  <span className="sb-rp-today-eyebrow">
+                    {t("reading-plan-today-eyebrow", {
+                      defaultValue: "Today · Day {{day}}",
+                      day: hero.summary.nextDayNumber ?? 1,
+                    })}
+                  </span>
+                  <span className="sb-rp-today-title" dir="auto">
+                    {planTitle(hero.meta)}
+                  </span>
+                  {hero.meta.description ? (
+                    <span className="sb-rp-today-readings" dir="auto">
+                      {hero.meta.description}
+                    </span>
+                  ) : null}
+                  <span className="sb-rp-today-readings">
+                    {dayReadingsLabelForBooks(hero.summary.next)}
+                  </span>
                 </div>
-              ))}
-            </PlanSection>
-          ) : null}
+                <span className="sb-rp-today-go" aria-hidden="true">
+                  <MaterialIcon>
+                    {openingId === hero.planId
+                      ? "hourglass_top"
+                      : "arrow_forward"}
+                  </MaterialIcon>
+                </span>
+              </button>
+            ) : null}
 
-          {notStarted.length > 0 ? (
-            <PlanSection
-              label={t("reading-plan-not-started", {
-                defaultValue: "Not started",
-              })}
-              count={notStarted.length}
-            >
-              {notStarted.map((row) => {
-                const opening = openingId === row.planId;
-                const open = () => {
-                  if (!opening) {
-                    onOpen(row.meta);
-                  }
-                };
-                return (
-                  <div key={row.planId} className="sb-rp-card-group">
-                    <div
-                      className={`sb-rp-card${
-                        opening ? " sb-rp-card--opening" : ""
-                      }`}
-                      onClick={open}
-                    >
+            {drafts.length > 0 ? (
+              <PlanSection
+                label={t("reading-plan-drafts", { defaultValue: "Drafts" })}
+                count={drafts.length}
+              >
+                {drafts.map((meta) => {
+                  const planId = formatReadingPlanId(
+                    meta.recordName,
+                    meta.address
+                  );
+                  const full = fullById.get(planId);
+                  const readings =
+                    full?.sessions.reduce(
+                      (sum, session) => sum + session.readings.length,
+                      0
+                    ) ?? 0;
+                  const confirming = confirmDeleteId === planId;
+                  return (
+                    <div key={planId} className="sb-rp-card sb-rp-card-static">
                       <button
                         type="button"
                         className="sb-rp-card-open"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          open();
-                        }}
-                        disabled={opening}
+                        onClick={() => resumeDraft(meta)}
+                        disabled={!full}
                       >
-                        {row.meta.heroImageUrl ? (
-                          <HeroImageThumb url={row.meta.heroImageUrl} />
+                        {meta.heroImageUrl ? (
+                          <HeroImageThumb url={meta.heroImageUrl} />
                         ) : null}
                         <span className="sb-rp-card-body">
                           <span className="sb-rp-card-title" dir="auto">
-                            {planTitle(row.meta)}
+                            {planTitle(meta)}
                           </span>
-                          {row.meta.description ? (
+                          {meta.description ? (
                             <span className="sb-rp-card-sub" dir="auto">
-                              {row.meta.description}
+                              {meta.description}
                             </span>
                           ) : null}
                           <span className="sb-rp-card-sub">
-                            {opening
-                              ? t("loading", { defaultValue: "Loading…" })
-                              : t("reading-plan-not-started", {
-                                  defaultValue: "Not started",
-                                })}
+                            {t("reading-plan-draft-summary", {
+                              defaultValue: "Draft · {{count}} readings",
+                              count: readings,
+                            })}
                           </span>
                         </span>
                       </button>
-                      <MaterialIcon className="sb-rp-card-chevron">
-                        {opening ? "hourglass_top" : "arrow_forward"}
-                      </MaterialIcon>
-                      {optionsMenu(row)}
-                    </div>
-                    <PlanLoadError planId={row.planId} />
-                  </div>
-                );
-              })}
-            </PlanSection>
-          ) : null}
-
-          {completed.length > 0 ? (
-            <PlanSection
-              label={t("reading-plan-completed", { defaultValue: "Completed" })}
-              count={completed.length}
-            >
-              {completed.map((row) => {
-                const finishedMs =
-                  row.summary?.lastDay?.completedAtMs ??
-                  row.progress?.updatedAtMs ??
-                  null;
-                return (
-                  <div key={row.planId} className="sb-rp-card-group">
-                    <div className="sb-rp-card sb-rp-card-static">
                       <button
                         type="button"
-                        className="sb-rp-card-open"
-                        onClick={() => onOpen(row.meta)}
-                        disabled={openingId === row.planId}
+                        className={`sb-rp-restart${
+                          confirming ? " sb-rp-restart-danger" : ""
+                        }`}
+                        onClick={() => {
+                          if (!confirming) {
+                            setConfirmDeleteId(planId);
+                            return;
+                          }
+                          setConfirmDeleteId(null);
+                          void readingPlans.deleteReadingPlan(meta);
+                        }}
                       >
-                        {row.meta.heroImageUrl ? (
-                          <HeroImageThumb url={row.meta.heroImageUrl} />
-                        ) : null}
-                        <span className="sb-rp-card-body">
-                          <span className="sb-rp-card-title" dir="auto">
-                            {planTitle(row.meta)}
-                          </span>
-                          {row.meta.description ? (
-                            <span className="sb-rp-card-sub" dir="auto">
-                              {row.meta.description}
-                            </span>
+                        {confirming
+                          ? t("reading-plan-discard-draft-confirm", {
+                              defaultValue: "Delete for good?",
+                            })
+                          : t("reading-plan-discard-draft", {
+                              defaultValue: "Discard",
+                            })}
+                      </button>
+                    </div>
+                  );
+                })}
+              </PlanSection>
+            ) : null}
+
+            {active.length > 0 ? (
+              <PlanSection
+                label={t("reading-plan-active", { defaultValue: "Active" })}
+                count={active.length}
+              >
+                {active.map((row) => (
+                  <div key={row.planId} className="sb-rp-card-group">
+                    <ActivePlanCard
+                      row={row}
+                      title={planTitle(row.meta)}
+                      dayReadingsLabel={dayReadingsLabelForBooks}
+                      opening={openingId === row.planId}
+                      onOpen={() => onOpen(row.meta)}
+                      menu={optionsMenu(row)}
+                      t={t}
+                    />
+                    <PlanLoadError planId={row.planId} />
+                  </div>
+                ))}
+              </PlanSection>
+            ) : null}
+
+            {notStarted.length > 0 ? (
+              <PlanSection
+                label={t("reading-plan-not-started", {
+                  defaultValue: "Not started",
+                })}
+                count={notStarted.length}
+              >
+                {notStarted.map((row) => {
+                  const opening = openingId === row.planId;
+                  const open = () => {
+                    if (!opening) {
+                      onOpen(row.meta);
+                    }
+                  };
+                  return (
+                    <div key={row.planId} className="sb-rp-card-group">
+                      <div
+                        className={`sb-rp-card${
+                          opening ? " sb-rp-card--opening" : ""
+                        }`}
+                        onClick={open}
+                      >
+                        <button
+                          type="button"
+                          className="sb-rp-card-open"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            open();
+                          }}
+                          disabled={opening}
+                        >
+                          {row.meta.heroImageUrl ? (
+                            <HeroImageThumb url={row.meta.heroImageUrl} />
                           ) : null}
-                          <span className="sb-rp-card-sub">
-                            {finishedMs != null
-                              ? `${t("reading-plan-finished", {
-                                  defaultValue: "Finished {{date}}",
-                                  date: new Date(finishedMs).toLocaleDateString(
-                                    undefined,
-                                    {
+                          <span className="sb-rp-card-body">
+                            <span className="sb-rp-card-title" dir="auto">
+                              {planTitle(row.meta)}
+                            </span>
+                            {row.meta.description ? (
+                              <span className="sb-rp-card-sub" dir="auto">
+                                {row.meta.description}
+                              </span>
+                            ) : null}
+                            <span className="sb-rp-card-sub">
+                              {opening
+                                ? t("loading", { defaultValue: "Loading…" })
+                                : t("reading-plan-not-started", {
+                                    defaultValue: "Not started",
+                                  })}
+                            </span>
+                          </span>
+                        </button>
+                        <MaterialIcon className="sb-rp-card-chevron">
+                          {opening ? "hourglass_top" : "arrow_forward"}
+                        </MaterialIcon>
+                        {optionsMenu(row)}
+                      </div>
+                      <PlanLoadError planId={row.planId} />
+                    </div>
+                  );
+                })}
+              </PlanSection>
+            ) : null}
+
+            {completed.length > 0 ? (
+              <PlanSection
+                label={t("reading-plan-completed", {
+                  defaultValue: "Completed",
+                })}
+                count={completed.length}
+              >
+                {completed.map((row) => {
+                  const finishedMs =
+                    row.summary?.lastDay?.completedAtMs ??
+                    row.progress?.updatedAtMs ??
+                    null;
+                  return (
+                    <div key={row.planId} className="sb-rp-card-group">
+                      <div className="sb-rp-card sb-rp-card-static">
+                        <button
+                          type="button"
+                          className="sb-rp-card-open"
+                          onClick={() => onOpen(row.meta)}
+                          disabled={openingId === row.planId}
+                        >
+                          {row.meta.heroImageUrl ? (
+                            <HeroImageThumb url={row.meta.heroImageUrl} />
+                          ) : null}
+                          <span className="sb-rp-card-body">
+                            <span className="sb-rp-card-title" dir="auto">
+                              {planTitle(row.meta)}
+                            </span>
+                            {row.meta.description ? (
+                              <span className="sb-rp-card-sub" dir="auto">
+                                {row.meta.description}
+                              </span>
+                            ) : null}
+                            <span className="sb-rp-card-sub">
+                              {finishedMs != null
+                                ? `${t("reading-plan-finished", {
+                                    defaultValue: "Finished {{date}}",
+                                    date: new Date(
+                                      finishedMs
+                                    ).toLocaleDateString(undefined, {
                                       month: "short",
                                       day: "numeric",
-                                    }
-                                  ),
-                                })} · ${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`
-                              : `${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`}
+                                    }),
+                                  })} · ${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`
+                                : `${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`}
+                            </span>
                           </span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        className="sb-rp-restart"
-                        onClick={() => onRestart(row.meta)}
-                      >
-                        {t("reading-plan-restart", { defaultValue: "Restart" })}
-                      </button>
-                      {optionsMenu(row)}
+                        </button>
+                        <button
+                          type="button"
+                          className="sb-rp-restart"
+                          onClick={() => onRestart(row.meta)}
+                        >
+                          {t("reading-plan-restart", {
+                            defaultValue: "Restart",
+                          })}
+                        </button>
+                        {optionsMenu(row)}
+                      </div>
+                      <PlanLoadError planId={row.planId} />
                     </div>
-                    <PlanLoadError planId={row.planId} />
-                  </div>
-                );
-              })}
-            </PlanSection>
-          ) : null}
-        </div>
-      )}
-      {friends ? (
-        <FriendReadingPlansSection
-          readingPlans={readingPlans}
-          friends={friends}
-          books={books}
-          onOpen={onOpen}
-          openingId={openingId}
-        />
-      ) : null}
+                  );
+                })}
+              </PlanSection>
+            ) : null}
+          </>
+        )}
+        {friends ? (
+          <FriendReadingPlansSection
+            readingPlans={readingPlans}
+            friends={friends}
+            books={books}
+            onOpen={onOpen}
+            openingId={openingId}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }

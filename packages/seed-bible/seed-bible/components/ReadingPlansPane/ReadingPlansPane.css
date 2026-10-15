@@ -72,7 +72,16 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 1.75rem;
+}
+
+/* Fullscreen, the reader toolbar floats over the bottom of the pane (on phones
+   the pane already stops above it, see PaneLayout.css), so leave room to
+   scroll the last plan clear of it. */
+@media (min-width: 481px) {
+  [data-placement="fullscreen"] .sb-reading-plans-scroll {
+    padding-bottom: var(--sb-reader-bottom-inset, 6rem);
+  }
 }
 
 /* Today hero */
