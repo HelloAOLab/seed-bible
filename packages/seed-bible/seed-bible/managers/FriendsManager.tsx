@@ -156,15 +156,20 @@ export interface FriendsManager {
 type FriendLink = { userId: string; sharedPermissionIds: string[] };
 type Profile = Required<FriendProfile>;
 
-const includesFriendsPermission = (
-  permissions: SharedMarkerPermission[]
-): boolean =>
-  permissions.some(
-    (permission) =>
-      permission.marker === FRIENDS_PERMISSION.marker &&
-      permission.resourceKind === FRIENDS_PERMISSION.resourceKind &&
-      permission.action === FRIENDS_PERMISSION.action
-  );
+/**
+ * A share's permissions are granted together, so one that bundles anything
+ * else with the friends permission isn't a friendship: accepting it would
+ * hand over access the friend request screen never shows.
+ */
+const isFriendsPermissionSet = ([
+  permission,
+  ...rest
+]: SharedMarkerPermission[]): boolean =>
+  !!permission &&
+  rest.length === 0 &&
+  permission.marker === FRIENDS_PERMISSION.marker &&
+  permission.resourceKind === FRIENDS_PERMISSION.resourceKind &&
+  permission.action === FRIENDS_PERMISSION.action;
 
 /**
  * The listings return every request in every status, and an expired request
@@ -173,7 +178,7 @@ const includesFriendsPermission = (
  */
 const isPendingFriendRequest = (request: SharedPermission, nowMs: number) =>
   request.status === "requested" &&
-  includesFriendsPermission(request.permissions) &&
+  isFriendsPermissionSet(request.permissions) &&
   !hasExpired(request, nowMs);
 
 /**
@@ -328,7 +333,7 @@ export function createFriendsManager(
       const byUser = new Map<string, string[]>();
       for (const record of records) {
         if (
-          !includesFriendsPermission(record.permissions) ||
+          !isFriendsPermissionSet(record.permissions) ||
           record.ownerUserId === userId
         ) {
           continue;
