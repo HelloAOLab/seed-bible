@@ -6,6 +6,7 @@ import type { ModalManager } from "../../managers/ModalManager";
 import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { playlistItemIcon } from "../playlistItemIcon";
+import { PlaylistItemNoteTag } from "../PlaylistItemNoteTag/PlaylistItemNoteTag";
 import { useDragReorder } from "../useDragReorder";
 import { MaterialIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -130,12 +131,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   </MaterialIcon>
                   <span className="sb-discover-item-title">
                     {playlistItemLabel(item, t, resolveBookName)}
-                    {item.type === "bible-verse" && item.noteTitle?.trim() ? (
-                      <span className="sb-play-playlist-item-note-title">
-                        {" · "}
-                        {item.noteTitle.trim()}
-                      </span>
-                    ) : null}
+                    <PlaylistItemNoteTag item={item} />
                   </span>
                 </button>
               </li>

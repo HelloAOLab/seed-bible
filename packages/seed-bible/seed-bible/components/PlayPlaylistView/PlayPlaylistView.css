@@ -70,11 +70,6 @@
 
 /* A scripture item's note title, after its reference: lighter, so the
    reference still reads first. */
-.sb-play-playlist-item-note-title {
-  font-weight: 400;
-  opacity: 0.75;
-}
-
 .sb-play-controls {
   display: flex;
   align-items: center;

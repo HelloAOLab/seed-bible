@@ -699,6 +699,45 @@ describe("CreatePlaylistForm", () => {
     ).toBe("GEN 1");
   });
 
+  it("follows a noted passage's label with its note title, or Note when it has none", () => {
+    const { playlists } = createMockPlaylists(
+      createPlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 1 },
+            note: "<p>Body</p>",
+            noteTitle: "In the beginning",
+          },
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 2 },
+            note: "<p>Body only</p>",
+          },
+          verseItem("GEN", 3),
+        ],
+      })
+    );
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={createMockTabs()}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    expect(
+      Array.from(container.querySelectorAll(".sb-discover-item-title")).map(
+        (title) => title.textContent
+      )
+    ).toEqual(["GEN 1 · In the beginning", "GEN 2 · Note", "GEN 3"]);
+  });
+
   it("resolves book names from the selected tab's translation", () => {
     const { playlists } = createMockPlaylists(
       createPlaylist({ items: [verseItem("GEN", 1)] })
