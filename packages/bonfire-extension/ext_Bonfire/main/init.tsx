@@ -23,12 +23,17 @@ export default function initBonfireExtension() {
 
       const name = url.searchParams.get("bonfireName") ?? "Bonfire AI";
       const iconUrl = url.searchParams.get("bonfireIconUrl") ?? undefined;
+      const apiKey = url.searchParams.get("bonfireApiKey") ?? undefined;
+      const chatCompletionsUrl =
+        url.searchParams.get("bonfireApiUrl") ?? undefined;
 
       yield* registerBonfireChatProvider(context, {
         orgId,
         aiId,
         name,
         iconUrl,
+        apiKey,
+        chatCompletionsUrl,
       });
 
       return {};
