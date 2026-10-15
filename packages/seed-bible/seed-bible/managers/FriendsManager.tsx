@@ -156,10 +156,15 @@ export interface FriendsManager {
 type FriendLink = { userId: string; sharedPermissionIds: string[] };
 type Profile = Required<FriendProfile>;
 
-const isFriendsPermission = (permission: SharedMarkerPermission): boolean =>
-  permission.marker === FRIENDS_PERMISSION.marker &&
-  permission.resourceKind === FRIENDS_PERMISSION.resourceKind &&
-  permission.action === FRIENDS_PERMISSION.action;
+const includesFriendsPermission = (
+  permissions: SharedMarkerPermission[]
+): boolean =>
+  permissions.some(
+    (permission) =>
+      permission.marker === FRIENDS_PERMISSION.marker &&
+      permission.resourceKind === FRIENDS_PERMISSION.resourceKind &&
+      permission.action === FRIENDS_PERMISSION.action
+  );
 
 /**
  * The listings return every request in every status, and an expired request
@@ -168,7 +173,7 @@ const isFriendsPermission = (permission: SharedMarkerPermission): boolean =>
  */
 const isPendingFriendRequest = (request: SharedPermission, nowMs: number) =>
   request.status === "requested" &&
-  isFriendsPermission(request.permission) &&
+  includesFriendsPermission(request.permissions) &&
   !hasExpired(request, nowMs);
 
 /**
@@ -323,7 +328,7 @@ export function createFriendsManager(
       const byUser = new Map<string, string[]>();
       for (const record of records) {
         if (
-          !isFriendsPermission(record.permission) ||
+          !includesFriendsPermission(record.permissions) ||
           record.ownerUserId === userId
         ) {
           continue;
@@ -626,7 +631,7 @@ export function createFriendsManager(
 
     const result = await os.requestSharedPermission(
       me,
-      FRIENDS_PERMISSION,
+      [FRIENDS_PERMISSION],
       target,
       { expireTimeMs: Date.now() + FRIEND_REQUEST_LIFETIME_MS }
     );

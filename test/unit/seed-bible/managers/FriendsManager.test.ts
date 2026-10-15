@@ -92,7 +92,7 @@ describe("FriendsManager", () => {
       server.requestFrom("ada", { status: "rejected" });
       server.requestFrom("bob", { expireTimeMs: Date.now() - 1 });
       server.requestFrom("cal", {
-        permission: { ...FRIENDS_PERMISSION, marker: "somethingElse" },
+        permissions: [{ ...FRIENDS_PERMISSION, marker: "somethingElse" }],
       });
 
       const friends = create();
@@ -100,6 +100,21 @@ describe("FriendsManager", () => {
       await loaded(friends, () => {
         expect(server.spies.listRequested).toHaveBeenCalled();
         expect(friends.incomingRequests.value).toEqual([]);
+      });
+    });
+
+    it("counts a share as a friendship only when its permissions include the friends one", async () => {
+      const other = { ...FRIENDS_PERMISSION, marker: "somethingElse" };
+      server.friendsWith("ada", ME, {
+        permissions: [other, FRIENDS_PERMISSION],
+      });
+      server.friendsWith("bob", ME, { permissions: [other] });
+
+      const friends = create();
+
+      await loaded(friends, () => {
+        expect(server.spies.listRecords).toHaveBeenCalled();
+        expect(friends.friends.value.map((f) => f.userId)).toEqual(["ada"]);
       });
     });
 
@@ -345,7 +360,7 @@ describe("FriendsManager", () => {
 
       expect(result).toMatchObject({ status: "sent" });
       const sent = server.rows.find((r) => r.targetUserId === "ada")!;
-      expect(sent.permission).toEqual(FRIENDS_PERMISSION);
+      expect(sent.permissions).toEqual([FRIENDS_PERMISSION]);
       expect(sent.expireTimeMs! - Date.now()).toBeGreaterThan(
         FRIEND_REQUEST_LIFETIME_MS - 60_000
       );

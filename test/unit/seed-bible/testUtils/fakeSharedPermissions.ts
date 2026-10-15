@@ -49,15 +49,15 @@ export function fakeSharedPermissions(
     const row: SharedPermission = {
       id: `sp-${nextId++}`,
       recordName: overrides.requestingUserId,
-      permission: FRIENDS_PERMISSION,
+      permissions: [FRIENDS_PERMISSION],
       status: "requested",
       createdAtMs: now + nextId,
       updatedAtMs: now,
       expireTimeMs: now + FRIEND_REQUEST_LIFETIME_MS,
       recipientRecordName: null,
       recipientUserId: null,
-      requestingPermissionAssignmentId: null,
-      recipientPermissionAssignmentId: null,
+      requestingPermissionAssignmentIds: [],
+      recipientPermissionAssignmentIds: [],
       ...overrides,
     };
     rows.push(row);
@@ -72,7 +72,7 @@ export function fakeSharedPermissions(
   const spies = {
     request: vi.spyOn(os, "requestSharedPermission").mockImplementation((async (
       _recordName: string,
-      permission: SharedMarkerPermission,
+      permissions: SharedMarkerPermission[],
       target: { userId: string } | { email: string },
       options?: { expireTimeMs?: number }
     ) => {
@@ -84,7 +84,7 @@ export function fakeSharedPermissions(
       const row = addRow({
         requestingUserId: userId,
         targetUserId,
-        permission,
+        permissions,
         expireTimeMs: options?.expireTimeMs ?? Date.now() + DAY_MS,
       });
       return { success: true, sharedPermissionId: row.id };
@@ -147,7 +147,7 @@ export function fakeSharedPermissions(
             recordName: otherParty(r, userId)!,
             ownerUserId: otherParty(r, userId)!,
             sharedPermissionId: r.id,
-            permission: r.permission,
+            permissions: r.permissions,
           }));
       }),
     listRequested: vi
@@ -187,7 +187,14 @@ export function fakeSharedPermissions(
      * An accepted friendship between `userId` and `account`, which is the
      * user the fake answers as by default.
      */
-    friendsWith: (userId: string, account = ME) =>
+    friendsWith: (
+      userId: string,
+      account = ME,
+      overrides: Omit<
+        Partial<SharedPermission>,
+        "requestingUserId" | "targetUserId"
+      > = {}
+    ) =>
       addRow({
         requestingUserId: userId,
         targetUserId: account,
@@ -195,6 +202,7 @@ export function fakeSharedPermissions(
         expireTimeMs: null,
         recipientUserId: account,
         recipientRecordName: account,
+        ...overrides,
       }),
   };
 }
