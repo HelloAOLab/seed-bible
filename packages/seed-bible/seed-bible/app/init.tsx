@@ -4,10 +4,7 @@ import { render } from "preact";
 import { readInjectedConfig } from "../app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../app/apiResponseSeed";
 import { readInjectedCustomizationSeed } from "../app/customizationSeed";
-import {
-  readInjectedPlaylistPageSeed,
-  readInjectedReadingPlanPageSeed,
-} from "../app/sharedPageSeeds";
+import { readTrustedSharedPageSeeds } from "../app/sharedPageSeeds";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { decideHydration, type HydrationDecision } from "../app/hydrationGate";
 import { hydrateWithFallback } from "../app/hydrateWithFallback";
@@ -29,9 +26,13 @@ const apiResponseSnapshot = readInjectedApiResponseSnapshot();
 // creation below doesn't re-fetch a record the page already reflects.
 const initialCustomizationSeed = readInjectedCustomizationSeed();
 
-// Same, for the playlist or reading plan a shared link opens on.
-const initialPlaylistPageSeed = readInjectedPlaylistPageSeed();
-const initialReadingPlanPageSeed = readInjectedReadingPlanPageSeed();
+// Same, for the playlist or reading plan a shared link opens on — but only
+// when this build rendered the page, since another build's schema may have
+// dropped fields this one shows (see `readTrustedSharedPageSeeds`).
+const {
+  playlist: initialPlaylistPageSeed,
+  readingPlan: initialReadingPlanPageSeed,
+} = readTrustedSharedPageSeeds(config, __GIT_COMMIT__);
 
 const container = document.getElementById("app") ?? document.body;
 
