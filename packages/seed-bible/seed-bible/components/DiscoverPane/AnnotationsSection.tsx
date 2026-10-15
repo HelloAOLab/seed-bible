@@ -30,6 +30,7 @@ import {
 import { DiscoverSection } from "./DiscoverSection";
 import { noTabHint } from "./DiscoveredResultsSections";
 import { Avatar } from "../Avatar/Avatar";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { emphasizeVerses, type PanesManager } from "../../managers";
 import {
@@ -642,60 +643,6 @@ export function AnnotationsSection(props: {
   );
 }
 
-/**
- * Confirmation body shown before permanently deleting an annotation.
- * Confirming erases the annotation and closes the modal; on failure it
- * surfaces a toast but still closes.
- */
-function ConfirmDeleteAnnotationModalContent(props: {
-  annotations: AnnotationsManager;
-  annotation: Annotation;
-  toast: SeedBibleState["app"]["toast"];
-  onClose: () => void;
-}) {
-  const { annotations, annotation, toast, onClose } = props;
-  const { t } = useI18n();
-
-  const confirm = async () => {
-    try {
-      await annotations.deleteAnnotationAndRefresh(annotation);
-    } catch {
-      toast(
-        t("delete-annotation-failed", {
-          defaultValue: "Couldn't delete the annotation.",
-        })
-      );
-    }
-    onClose();
-  };
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("delete-annotation-confirm-message", {
-          defaultValue: "Delete this annotation? This can't be undone.",
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
-          {t("cancel")}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={confirm}
-        >
-          {t("delete")}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 /** Opens the delete-annotation confirmation modal. */
 export function openDeleteAnnotationConfirm(
   modals: ModalManager,
@@ -703,20 +650,21 @@ export function openDeleteAnnotationConfirm(
   annotation: Annotation,
   toast: SeedBibleState["app"]["toast"]
 ) {
-  const modalId = `delete-annotation-confirm-${annotation.id}`;
-  modals.openModal({
-    id: modalId,
+  openConfirmDeleteModal(modals, {
+    id: `delete-annotation-confirm-${annotation.id}`,
     title: {
       key: "delete-annotation-confirm-title",
       defaultValue: "Delete annotation?",
     },
-    content: () => (
-      <ConfirmDeleteAnnotationModalContent
-        annotations={annotations}
-        annotation={annotation}
-        toast={toast}
-        onClose={() => modals.closeModal(modalId)}
-      />
-    ),
+    message: (t) =>
+      t("delete-annotation-confirm-message", {
+        defaultValue: "Delete this annotation? This can't be undone.",
+      }),
+    onConfirm: () => annotations.deleteAnnotationAndRefresh(annotation),
+    failedMessage: (t) =>
+      t("delete-annotation-failed", {
+        defaultValue: "Couldn't delete the annotation.",
+      }),
+    toast,
   });
 }

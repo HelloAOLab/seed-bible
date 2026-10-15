@@ -425,6 +425,13 @@
   text-align: center;
 }
 
+.sb-content-status--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .sb-content-retry {
   margin-top: 12px;
   padding: 9px 18px;

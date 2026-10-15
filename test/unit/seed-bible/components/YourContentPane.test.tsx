@@ -1190,6 +1190,34 @@ describe("YourContentPane", () => {
       expect(onOpenReadingPlan).not.toHaveBeenCalled();
     });
 
+    it("offers the same menu as the Plans pane, with no Share on a draft", () => {
+      const { state } = createState({
+        readingPlans: [readingPlan("plan-1", "Genesis")],
+      });
+      renderPane(state);
+      openPlanMenu();
+
+      expect(menuItems().map((item) => item.textContent)).toEqual([
+        "shareShare plan",
+        "editEdit plan",
+        "deleteDelete",
+      ]);
+
+      act(() => {
+        render(null, container);
+      });
+      const { state: draftState } = createState({
+        readingPlans: [readingPlan("plan-2", "Gospels", { status: "draft" })],
+      });
+      renderPane(draftState);
+      openPlanMenu();
+
+      expect(menuItems().map((item) => item.textContent)).toEqual([
+        "editEdit plan",
+        "deleteDelete",
+      ]);
+    });
+
     /**
      * Renders the confirmation the modal host would show for the last modal
      * opened. Returns the element to click through and a way to clean it up.
