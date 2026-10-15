@@ -382,6 +382,70 @@ function SessionSettingsModalContent(props: {
               })}
             </div>
           </div>
+
+          <div className="sb-session-settings-section">
+            <div className="sb-session-settings-label">
+              {t("session-settings-verse-effects", {
+                defaultValue: "Verse selection effects",
+              })}
+            </div>
+
+            <div
+              className="sb-session-settings-duration-options"
+              role="group"
+              aria-label={t("session-settings-verse-effects", {
+                defaultValue: "Verse selection effects",
+              })}
+            >
+              {(
+                [
+                  { value: "hosts-only", label: "Hosts" },
+                  { value: "everyone", label: "Everyone" },
+                  { value: "none", label: "Off" },
+                ] as const
+              ).map((option) => {
+                const selected =
+                  options.verseSelectionEffectVisibility === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`sb-session-settings-duration-option${
+                      selected
+                        ? " sb-session-settings-duration-option-selected"
+                        : ""
+                    }`}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      session.updateOptions({
+                        verseSelectionEffectVisibility: option.value,
+                      });
+                    }}
+                  >
+                    {t(`session-settings-verse-effects-${option.value}`, {
+                      defaultValue: option.label,
+                    })}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="sb-session-settings-description">
+              {options.verseSelectionEffectVisibility === "hosts-only"
+                ? t("session-settings-verse-effects-desc-hosts", {
+                    defaultValue: "Show effects when a host selects a verse.",
+                  })
+                : options.verseSelectionEffectVisibility === "everyone"
+                  ? t("session-settings-verse-effects-desc-everyone", {
+                      defaultValue: "Show effects when anyone selects a verse.",
+                    })
+                  : t("session-settings-verse-effects-desc-none", {
+                      defaultValue:
+                        "Verse selection effects are disabled for everyone.",
+                    })}
+            </p>
+          </div>
         </div>
 
         <div className="sb-session-settings-section">

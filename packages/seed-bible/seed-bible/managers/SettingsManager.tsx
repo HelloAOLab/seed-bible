@@ -118,6 +118,7 @@ export interface ToolbarCustomization {
   /** Tool IDs in preferred display order. IDs not listed keep their default priority after the ordered ones. */
   order: string[];
 }
+type VerseSelectionEffects = "default" | "enabled" | "disabled";
 
 export interface AppSettings {
   fontSize: TextSize;
@@ -154,6 +155,7 @@ export interface AppSettings {
    * per-tab `discoverContentPanelInline` signal.
    */
   discoverContentPanelInline: boolean;
+  verseSelectionEffects?: VerseSelectionEffects;
 }
 
 export const DEFAULT_SCRIPTURE_WIDTH = 68; // ch
@@ -182,6 +184,9 @@ export const AppSettingsSchema = z.object({
       showContent: z.boolean(),
     })
     .default({ showContent: true }),
+  verseSelectionEffects: z
+    .enum(["default", "enabled", "disabled"])
+    .default("default"),
   textConfig: z.object({
     bookTitle: z.object({
       font: z.string(),
@@ -270,6 +275,7 @@ const TAG_THEME_ID = "app.themeId";
 const TAG_CUSTOM_THEME = "app.customTheme";
 const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
 const TAG_DISCOVER_CONTENT_PANEL_INLINE = "app.discoverContentPanelInline";
+const TAG_VERSE_SELECTION_EFFECTS = "app.verseSelectionEffects";
 
 // Profile.config keys are stored unprefixed.
 const PROFILE_FONT_SIZE = "fontSize";
@@ -289,6 +295,7 @@ const PROFILE_THEME_ID = "themeId";
 const PROFILE_CUSTOM_THEME = "customTheme";
 const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
+const PROFILE_VERSE_SELECTION_EFFECTS = "verseSelectionEffects";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -407,6 +414,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   customTheme: {},
   customHighlights: {},
   discoverContentPanelInline: true,
+  verseSelectionEffects: "default",
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -489,6 +497,14 @@ function parseBoolean(value: unknown, fallback: boolean): boolean {
     if (normalized === "false") return false;
   }
   return fallback;
+}
+function parseVerseSelectionEffects(
+  value: unknown,
+  fallback: VerseSelectionEffects
+): VerseSelectionEffects {
+  return value === "default" || value === "enabled" || value === "disabled"
+    ? value
+    : fallback;
 }
 
 /**
@@ -818,6 +834,7 @@ export interface SettingsManager {
    * `discoverContentPanelInline` signal.
    */
   setDiscoverContentPanelInline: (discoverContentPanelInline: boolean) => void;
+  setVerseSelectionEffects: (value: VerseSelectionEffects) => void;
 }
 
 export function createSettings(
@@ -892,6 +909,10 @@ export function createSettings(
       textConfig: parseTextConfig(
         read(PROFILE_TEXT_CONFIG, TAG_TEXT_CONFIG),
         DEFAULT_SETTINGS.textConfig
+      ),
+      verseSelectionEffects: parseVerseSelectionEffects(
+        read(PROFILE_VERSE_SELECTION_EFFECTS, TAG_VERSE_SELECTION_EFFECTS),
+        DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
       ),
       toolbar: parseToolbarConfig(
         read(PROFILE_TOOLBAR, TAG_TOOLBAR),
@@ -1056,6 +1077,16 @@ export function createSettings(
     settings.value = { ...settings.value, scriptureWidth: clamped };
     sessionOverrides[TAG_SCRIPTURE_WIDTH] = clamped;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_WIDTH, clamped);
+  };
+  const setVerseSelectionEffects = (value: VerseSelectionEffects) => {
+    settings.value = {
+      ...settings.value,
+      verseSelectionEffects: value,
+    };
+
+    sessionOverrides[TAG_VERSE_SELECTION_EFFECTS] = value;
+
+    saveProfileConfigValue(login, PROFILE_VERSE_SELECTION_EFFECTS, value);
   };
 
   const setVerseLineHeight = (lineHeight: number) => {
@@ -1241,6 +1272,9 @@ export function createSettings(
     sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
     sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
       DEFAULT_SETTINGS.discoverContentPanelInline;
+    sessionOverrides[TAG_VERSE_SELECTION_EFFECTS] =
+      DEFAULT_SETTINGS.verseSelectionEffects ?? "default";
+
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
       login,
@@ -1267,6 +1301,11 @@ export function createSettings(
       login,
       PROFILE_DISCOVERED_CONTENT,
       DEFAULT_SETTINGS.discoveredContent
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_VERSE_SELECTION_EFFECTS,
+      DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
     );
     saveProfileConfigValue(
       login,
@@ -1367,5 +1406,6 @@ export function createSettings(
     setCustomTheme,
     setCustomHighlights,
     setDiscoverContentPanelInline,
+    setVerseSelectionEffects,
   };
 }

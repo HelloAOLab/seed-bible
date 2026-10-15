@@ -37,6 +37,37 @@
     background-color 0.15s ease;
   z-index: 1;
 }
+.sb-verse-number-flare {
+  position: relative;
+  z-index: 1;
+  animation: sb-verse-number-flare 1.2s ease-out;
+  border-radius: 3px;
+}
+
+@keyframes sb-verse-number-flare {
+  0% {
+    color: var(--sb-selection-flare-color);
+    background-color: var(--sb-selection-flare-color);
+    box-shadow: 0 0 0 4px
+      color-mix(in srgb, var(--sb-selection-flare-color) 35%, transparent);
+  }
+
+  100% {
+    color: inherit;
+    background-color: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-verse-number-flare {
+    animation: none;
+    color: var(--sb-selection-flare-color);
+    background-color: transparent;
+    box-shadow: 0 0 0 2px
+      color-mix(in srgb, var(--sb-selection-flare-color) 35%, transparent);
+  }
+}
 
 .sb-bible-reader-bookmark-button:hover,
 .sb-bible-reader-save-button:hover {

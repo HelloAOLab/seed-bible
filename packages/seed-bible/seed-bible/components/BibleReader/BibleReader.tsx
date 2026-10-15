@@ -405,6 +405,43 @@ function getInlineText(part: ChapterVerse["content"][0]): string {
 function getVersePlainText(content: ChapterVerse["content"]): string {
   return content.map((part) => getInlineText(part)).join("");
 }
+function broadcastSelectedVerse(
+  session: BibleReadingSession,
+  bookId: string,
+  chapterNumber: number,
+  verseNumber: number
+) {
+  const user = session.currentUser.value;
+  if (!user) return;
+  const options = session.options.value;
+  const visibility = options.verseSelectionEffectVisibility ?? "hosts-only";
+  if (visibility === "none") return;
+  if (
+    visibility === "hosts-only" &&
+    user.userId !== options.hostUserId &&
+    user.connectionId !== options.hostUserId
+  ) {
+    return;
+  }
+  const connectionId = user.connectionId ?? user.userId ?? "anonymous";
+  const decorationId = `selected-verse-flare-${connectionId}`;
+
+  session.removeSharedDecoration(decorationId);
+
+  session.readingState.decorateVerses(
+    bookId,
+    chapterNumber,
+    [verseNumber],
+    {
+      className: "sb-verse-number-flare",
+      style: {
+        "--sb-selection-flare-color": user.visual.color,
+      } as JSX.CSSProperties,
+      removeAfterMs: 1200,
+    },
+    decorationId
+  );
+}
 
 /**
  * A highlight resolved for one verse, plus where it came from. `broadcast` is
@@ -778,7 +815,9 @@ function renderChapterContent(
     verse: BibleSelectedVerse,
     verseNumber: number,
     event: MouseEvent
-  ) => void
+  ) => void,
+  sharedSession?: BibleReadingSession | null,
+  verseSelectionEffects: VerseSelectionEffects = "default"
 ) {
   if (!chapterData) {
     return null;
@@ -793,6 +832,39 @@ function renderChapterContent(
         decoration.chapterNumber === chapterData.chapter.number &&
         decoration.verses.includes(verseNumber)
     );
+  };
+  const getVerseFlareColor = (verseNumber: number): string | undefined => {
+    if (!shouldShowVerseSelectionEffects(verseSelectionEffects)) {
+      return undefined;
+    }
+
+    const session = sharedSession;
+    const currentUser = session?.currentUser?.value;
+
+    if (!currentUser) return undefined;
+
+    const currentConnectionId =
+      currentUser.connectionId ?? currentUser.userId ?? "anonymous";
+
+    const ownDecorationId = `selected-verse-flare-${currentConnectionId}`;
+
+    const flare = getVerseDecorations(verseNumber).find((decoration) => {
+      if (!decoration.className?.includes("sb-verse-number-flare")) {
+        return false;
+      }
+
+      // Never render this user's own flare.
+      if (decoration.id === ownDecorationId) {
+        return false;
+      }
+
+      // Ignore a decoration whose recorded owner is this user.
+      return session.getDecorationOwner(decoration.id) !== currentConnectionId;
+    });
+
+    const color = flare?.style?.["--sb-selection-flare-color"];
+
+    return typeof color === "string" ? color : undefined;
   };
 
   // Decorations asking to be drawn as highlights (`decoration.highlight`),
@@ -900,8 +972,43 @@ function renderChapterContent(
   };
 
   const getDecorationPresentation = (verseDecorations: VerseDecoration[]) => {
+    const session = sharedSession;
+    const currentUser = session?.currentUser?.value;
+
+    const currentConnectionId =
+      currentUser?.connectionId ?? currentUser?.userId;
+
+    const ownDecorationId = currentConnectionId
+      ? `selected-verse-flare-${currentConnectionId}`
+      : undefined;
+
     const matchingDecorations = verseDecorations.filter((decoration) => {
-      return !hasContentTargeting(decoration);
+      if (hasContentTargeting(decoration)) {
+        return false;
+      }
+
+      // Preserve all non-flare decorations.
+      if (!decoration.className?.includes("sb-verse-number-flare")) {
+        return true;
+      }
+
+      // Do not apply the current user's flare to the wrapper.
+      if (ownDecorationId && decoration.id === ownDecorationId) {
+        return false;
+      }
+      // Hide incoming verse-selection flares when disabled.
+      if (!shouldShowVerseSelectionEffects(verseSelectionEffects)) {
+        return false;
+      }
+
+      const owner = session?.getDecorationOwner(decoration.id);
+
+      if (currentConnectionId && owner === currentConnectionId) {
+        return false;
+      }
+
+      // Keep other users' flares visible.
+      return true;
     });
 
     return matchingDecorations.reduce(
@@ -954,20 +1061,30 @@ function renderChapterContent(
   // An annotated number/icon is clickable, jumping straight to its note.
   const renderVerseNumberOrIcon = (
     verseNumber: number,
-    verse: BibleSelectedVerse
+    verse: BibleSelectedVerse,
+    flareColor?: string
   ) => {
     const hasAnnotation = getVerseAnnotations(verseNumber).length > 0;
+
+    const flareClass = flareColor ? "sb-verse-number-flare" : "";
+    const flareStyle = flareColor
+      ? ({ "--sb-selection-flare-color": flareColor } as JSX.CSSProperties)
+      : undefined;
+
     const handleAnnotationClick = (event: MouseEvent) =>
       onAnnotationVerseClick(verse, verseNumber, event);
 
     if (scriptureElements.showVerseNumbers) {
       return (
         <sup
-          className={
-            hasAnnotation
-              ? "sb-verse-number sb-verse-number-annotated"
-              : "sb-verse-number"
-          }
+          className={[
+            "sb-verse-number",
+            hasAnnotation ? "sb-verse-number-annotated" : "",
+            flareClass,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={flareStyle}
           onClick={hasAnnotation ? handleAnnotationClick : undefined}
           role={hasAnnotation ? "button" : undefined}
           tabIndex={hasAnnotation ? 0 : undefined}
@@ -976,12 +1093,17 @@ function renderChapterContent(
         </sup>
       );
     }
+
     if (!hasAnnotation) {
       return null;
     }
+
     return (
       <sup
-        className="sb-verse-number sb-verse-annotation-icon"
+        className={["sb-verse-number", "sb-verse-annotation-icon", flareClass]
+          .filter(Boolean)
+          .join(" ")}
+        style={flareStyle}
         onClick={handleAnnotationClick}
         role="button"
         tabIndex={0}
@@ -1001,6 +1123,7 @@ function renderChapterContent(
       verse: value,
       translationId: chapterData.translation.id,
     };
+    const verseFlareColor = getVerseFlareColor(value.number);
     const isSelected = selectedVerses.some(
       (v) =>
         v.verse.number === value.number &&
@@ -1088,7 +1211,11 @@ function renderChapterContent(
                   style={verseDecoratorStyle}
                 >
                   {segIndex === 0 &&
-                    renderVerseNumberOrIcon(value.number, verse)}
+                    renderVerseNumberOrIcon(
+                      value.number,
+                      verse,
+                      verseFlareColor
+                    )}
                   {segment.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -1122,7 +1249,11 @@ function renderChapterContent(
                 >
                   {segIndex === 0 &&
                     lineIndex === 0 &&
-                    renderVerseNumberOrIcon(value.number, verse)}
+                    renderVerseNumberOrIcon(
+                      value.number,
+                      verse,
+                      verseFlareColor
+                    )}
                   {line.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -1159,7 +1290,7 @@ function renderChapterContent(
         tabIndex={0}
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-          {renderVerseNumberOrIcon(value.number, verse)}
+          {renderVerseNumberOrIcon(value.number, verse, verseFlareColor)}
           {content.map((part, index) =>
             renderInlineContent(
               part,
@@ -1847,6 +1978,9 @@ interface ChapterContentProps {
    * when none are. Drives the presence this client publishes.
    */
   onVisibleVersesChange?: (range: VisibleVerseRange | null) => void;
+  sharedSession?: BibleReadingSession | null;
+  onHostVerseClick: (verse: BibleSelectedVerse) => void;
+  verseSelectionEffects: VerseSelectionEffects;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1868,6 +2002,9 @@ function ChapterContent(props: ChapterContentProps) {
     isMobile = false,
     presence,
     onVisibleVersesChange,
+    sharedSession,
+    onHostVerseClick,
+    verseSelectionEffects,
   } = props;
 
   const { t } = useI18n();
@@ -2465,6 +2602,7 @@ function ChapterContent(props: ChapterContentProps) {
             return;
           }
           selectVerse(verse, event.clientX, event.clientY);
+          onHostVerseClick(verse);
         },
         selectedVerses.value,
         (noteId) => selectFootnote(noteId),
@@ -2472,7 +2610,9 @@ function ChapterContent(props: ChapterContentProps) {
         decorations.value,
         chapterAnnotations,
         scriptureElements,
-        onAnnotationVerseClick
+        onAnnotationVerseClick,
+        sharedSession,
+        verseSelectionEffects
       )}
     </div>
   );
@@ -2500,6 +2640,21 @@ function resolveTranslation(
     }
   }
   return null;
+}
+type VerseSelectionEffects = "default" | "enabled" | "disabled";
+
+function shouldShowVerseSelectionEffects(
+  preference: VerseSelectionEffects
+): boolean {
+  if (preference === "enabled") return true;
+  if (preference === "disabled") return false;
+
+  // SSR-safe: if matchMedia is unavailable, allow the effect.
+  if (typeof window === "undefined" || !window.matchMedia) {
+    return true;
+  }
+
+  return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 export function BibleReader(props: BibleReaderProps) {
@@ -2808,6 +2963,19 @@ export function BibleReader(props: BibleReaderProps) {
       );
     }
   };
+  const handleHostVerseClick = useCallback(
+    (verse: BibleSelectedVerse) => {
+      if (!sharedSession) return;
+
+      broadcastSelectedVerse(
+        sharedSession,
+        verse.bookId,
+        verse.chapterNumber,
+        verse.verse.number
+      );
+    },
+    [sharedSession]
+  );
 
   // Only the current panel's title opens the selector; the side panels are
   // non-interactive previews for the swipe transition.
@@ -3134,6 +3302,12 @@ export function BibleReader(props: BibleReaderProps) {
               isMobile={isCompactReader}
               presence={sharedSession ? presence : undefined}
               onVisibleVersesChange={reportVisibleVerses}
+              sharedSession={sharedSession}
+              onHostVerseClick={handleHostVerseClick}
+              verseSelectionEffects={
+                state?.settings.settings.value.verseSelectionEffects ??
+                "default"
+              }
             />
           </Suspense>
         ))}

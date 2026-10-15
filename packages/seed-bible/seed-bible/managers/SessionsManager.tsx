@@ -93,6 +93,7 @@ export type SessionStartPosition = Pick<
   InitialBibleReadingOptions,
   "initialTranslationId" | "initialBookId" | "initialChapterNumber"
 >;
+export type VerseSelectionEffectVisibility = "hosts-only" | "everyone" | "none";
 
 export interface SessionOptions {
   allowedNavigators: string[] | null;
@@ -130,6 +131,7 @@ export interface SessionOptions {
    * so a leaving host can hand the session off instead of ending it.
    */
   coHostUserIds: string[];
+  verseSelectionEffectVisibility: VerseSelectionEffectVisibility;
 }
 
 /**
@@ -291,6 +293,7 @@ const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   endedAt: null,
   shareTranslation: false,
   coHostUserIds: [],
+  verseSelectionEffectVisibility: "hosts-only",
 };
 
 function getSessionDataSnapshot(
@@ -331,6 +334,9 @@ function getSessionOptionsFromMap(
   optionsMap: SharedMap<SessionOptionValue>
 ): SessionOptions {
   const rawDuration = optionsMap.get("highlightDurationSeconds");
+  const rawVerseSelectionEffectVisibility = optionsMap.get(
+    "verseSelectionEffectVisibility"
+  );
   const rawEndedAt = optionsMap.get("endedAt");
   const rawShareTranslation = optionsMap.get("shareTranslation");
   return {
@@ -345,6 +351,12 @@ function getSessionOptionsFromMap(
         : rawDuration === null
           ? null
           : DEFAULT_SESSION_OPTIONS.highlightDurationSeconds,
+    verseSelectionEffectVisibility:
+      rawVerseSelectionEffectVisibility === "hosts-only" ||
+      rawVerseSelectionEffectVisibility === "everyone" ||
+      rawVerseSelectionEffectVisibility === "none"
+        ? rawVerseSelectionEffectVisibility
+        : DEFAULT_SESSION_OPTIONS.verseSelectionEffectVisibility,
     endedAt:
       typeof rawEndedAt === "number" && Number.isFinite(rawEndedAt)
         ? rawEndedAt
@@ -381,6 +393,8 @@ function sessionOptionsMatch(
     stringArraysMatch(left.allowedDecorators, right.allowedDecorators) &&
     left.hostUserId === right.hostUserId &&
     left.highlightDurationSeconds === right.highlightDurationSeconds &&
+    left.verseSelectionEffectVisibility ===
+      right.verseSelectionEffectVisibility &&
     left.endedAt === right.endedAt &&
     left.shareTranslation === right.shareTranslation &&
     stringArraysMatch(left.coHostUserIds, right.coHostUserIds)
@@ -596,6 +610,7 @@ export interface BibleReadingSession {
   allUsers: ReadonlySignal<ConnectedSessionUser[]>;
   connectedUsers: ReadonlySignal<ConnectedSessionUser[]>;
   currentUser: ReadonlySignal<ConnectedSessionUser | null>;
+  getDecorationOwner: (decorationId: string) => string | undefined;
 
   /**
    * Each still-connected participant's own reading position, keyed by
@@ -1648,6 +1663,10 @@ async function createBibleReadingSession(
         typeof newOptions.highlightDurationSeconds === "undefined"
           ? currentOptions.highlightDurationSeconds
           : newOptions.highlightDurationSeconds,
+      verseSelectionEffectVisibility:
+        typeof newOptions.verseSelectionEffectVisibility === "undefined"
+          ? currentOptions.verseSelectionEffectVisibility
+          : newOptions.verseSelectionEffectVisibility,
       endedAt:
         typeof newOptions.endedAt === "undefined"
           ? currentOptions.endedAt
@@ -1696,6 +1715,15 @@ async function createBibleReadingSession(
         optionsMap.set(
           "highlightDurationSeconds",
           nextOptions.highlightDurationSeconds
+        );
+      }
+      if (
+        currentOptions.verseSelectionEffectVisibility !==
+        nextOptions.verseSelectionEffectVisibility
+      ) {
+        optionsMap.set(
+          "verseSelectionEffectVisibility",
+          nextOptions.verseSelectionEffectVisibility
         );
       }
 
@@ -1813,6 +1841,8 @@ async function createBibleReadingSession(
     localSessionId,
     userCanNavigate,
     userCanDecorate,
+    getDecorationOwner: (decorationId: string) =>
+      decorationOwners.get(decorationId),
   };
 }
 
