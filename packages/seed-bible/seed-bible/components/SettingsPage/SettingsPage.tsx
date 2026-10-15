@@ -775,7 +775,18 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
     const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLineHeight);
     return idx === -1 ? 0 : idx;
   })();
-
+  const selectedTab = state.tabs.tabs.value.find(
+    (tab) => tab.id === state.tabs.selectedTabId.value
+  );
+  const session = selectedTab?.sharedSession;
+  const currentUser = session?.currentUser.value;
+  const hostUserId = session?.options.value.hostUserId;
+  const isHost =
+    !!currentUser &&
+    (currentUser.userId === hostUserId ||
+      currentUser.connectionId === hostUserId);
+  const showVerseSelectionEffectsSetting =
+    !!session && !!currentUser && !isHost;
   const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(selectedFontSize);
 
   const onBack = () => {
@@ -1118,6 +1129,41 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             </option>
           </select>
         </div>
+        {showVerseSelectionEffectsSetting && (
+          <div className="sb-settings-field-row">
+            <label
+              className="sb-settings-field-label"
+              htmlFor="sb-verse-selection-effects"
+            >
+              {t("verse-selection-effects", {
+                defaultValue: "Verse Selection Effects",
+              })}
+            </label>
+
+            <select
+              id="sb-verse-selection-effects"
+              className="sb-settings-language-select"
+              value={current.verseSelectionEffects ?? "default"}
+              onChange={(event: Event) => {
+                const target = event.currentTarget as HTMLSelectElement;
+
+                settings.setVerseSelectionEffects(
+                  target.value as "default" | "enabled" | "disabled"
+                );
+              }}
+            >
+              <option value="default">
+                {t("default", { defaultValue: "Default" })}
+              </option>
+              <option value="enabled">
+                {t("enabled", { defaultValue: "Enabled" })}
+              </option>
+              <option value="disabled">
+                {t("disabled", { defaultValue: "Disabled" })}
+              </option>
+            </select>
+          </div>
+        )}
 
         <div className="sb-settings-toggle-row">
           <label
