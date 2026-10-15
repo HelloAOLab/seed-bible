@@ -336,10 +336,12 @@ export function ReadingPlansPaneActions(props: {
       type="button"
       className="sb-reading-plans-create"
       onClick={() => openPlanCreate(props.readingPlans)}
-      aria-label={t("create-reading-plan", { defaultValue: "New plan" })}
-      title={t("create-reading-plan", { defaultValue: "New plan" })}
+      aria-label={t("create-reading-plan", {
+        defaultValue: "Create reading plan",
+      })}
+      title={t("create-reading-plan", { defaultValue: "Create reading plan" })}
     >
-      <MaterialIcon>add</MaterialIcon>
+      + {t("create-menu", { defaultValue: "Create" })}
     </button>
   );
 }

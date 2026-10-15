@@ -19,17 +19,17 @@
 
 /* The new-plan button and the back button both live in the pane's header (see
    ReadingPlansPaneActions / ReadingPlansPaneLeading), so they're sized to sit
-   in that 42px-tall row rather than in the pane body. */
+   in that 42px-tall row rather than in the pane body. The new-plan button
+   matches the "+ Create" button in the Discover pane's header. */
 .sb-reading-plans-create {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 9px;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 999px;
   background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color, #fff);
+  color: var(--sb-background);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  white-space: nowrap;
   cursor: pointer;
 }
 
