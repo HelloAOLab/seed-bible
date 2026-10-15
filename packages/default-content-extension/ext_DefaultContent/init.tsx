@@ -2,9 +2,14 @@ import type { DiscoverContentResult } from "@packages/seed-bible/seed-bible/mana
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { PlaylistLinkContent } from "seed-bible/components";
 import {
+  discoveredContentSources,
   findBibleProjectContentForChapter,
   findDiscoveredContentForChapter,
+  mediaTypeForItem,
+  sourceIdForAuthor,
 } from "./discoveredContent";
+
+const BIBLE_PROJECT_AUTHOR = "Bible Project";
 
 export default function initDefaultContentExtension() {
   registerExtension({
@@ -14,6 +19,7 @@ export default function initDefaultContentExtension() {
         id: "default-content-extension",
         title: "Seed Bible Default Content",
         description: "Discover content selected by the Seed Bible authors.",
+        sources: discoveredContentSources(),
         discover: ({ book, chapter }) => {
           return findDiscoveredContentForChapter({ book, chapter }).map(
             ({ item, reference }): DiscoverContentResult => ({
@@ -22,6 +28,8 @@ export default function initDefaultContentExtension() {
               description: item.description,
               reference,
               author: item.author,
+              sourceId: sourceIdForAuthor(item.author),
+              mediaType: mediaTypeForItem(item),
               image: item.imageUrl,
               // Every curated content link is a YouTube video (see
               // `discoveredContent.json`), so the modal can embed it directly
@@ -45,6 +53,13 @@ export default function initDefaultContentExtension() {
         id: "bible-project-discover-provider",
         description: "Discover content from the Bible Project",
         title: "Bible Project",
+        sources: [
+          {
+            id: sourceIdForAuthor(BIBLE_PROJECT_AUTHOR),
+            title: BIBLE_PROJECT_AUTHOR,
+            mediaTypes: ["video"],
+          },
+        ],
         discover: async (discoverContext) => {
           return findBibleProjectContentForChapter(discoverContext).map(
             (item): DiscoverContentResult => ({
@@ -56,7 +71,9 @@ export default function initDefaultContentExtension() {
                 chapter: discoverContext.chapter,
                 endChapter: item.chapter_end,
               },
-              author: "Bible Project",
+              author: BIBLE_PROJECT_AUTHOR,
+              sourceId: sourceIdForAuthor(BIBLE_PROJECT_AUTHOR),
+              mediaType: "video",
               image: item.video.images.medium,
               onClick: () => {
                 context.modals.openModal({

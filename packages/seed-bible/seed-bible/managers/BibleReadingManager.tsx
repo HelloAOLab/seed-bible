@@ -40,6 +40,7 @@ import type {
   DiscoverReference,
   DiscoverStudyNoteResult,
 } from "../managers/DiscoverManager";
+import { isHiddenByDiscoverSourcePreferences } from "../managers/DiscoverManager";
 import type {
   BibleReadingExtensionManager,
   ReadingExtensionInstance,
@@ -3148,11 +3149,17 @@ export function createBibleReadingState(
 
     const currentBookId = chapter.book.id;
     const currentChapterNumber = chapter.chapter.number;
+    const sourcePreferences = settingsManager?.settings.value.discoverSources;
     return discoveredResults.value
       .map((providerResults) => ({
         providerId: providerResults.providerId,
-        results: providerResults.results.filter((entry) =>
-          hasMatchingReference(entry, currentBookId, currentChapterNumber)
+        results: providerResults.results.filter(
+          (entry) =>
+            hasMatchingReference(entry, currentBookId, currentChapterNumber) &&
+            !(
+              sourcePreferences &&
+              isHiddenByDiscoverSourcePreferences(entry, sourcePreferences)
+            )
         ),
       }))
       .filter((providerResults) => providerResults.results.length > 0);

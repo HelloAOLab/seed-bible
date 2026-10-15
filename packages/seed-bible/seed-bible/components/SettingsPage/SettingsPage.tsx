@@ -71,6 +71,11 @@ import {
   ContextMenuItem,
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
+import {
+  DISCOVER_MEDIA_TYPES,
+  type DiscoverMediaType,
+  type DiscoverSource,
+} from "../../managers/DiscoverManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -1859,6 +1864,225 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
   );
 }
 
+function useDiscoverMediaTypeLabel() {
+  const { t } = useI18n();
+  return (mediaType: DiscoverMediaType): string => {
+    switch (mediaType) {
+      case "video":
+        return t("discover-media-type-video", { defaultValue: "Videos" });
+      case "article":
+        return t("discover-media-type-article", { defaultValue: "Articles" });
+      case "note":
+        return t("discover-media-type-note", { defaultValue: "Notes" });
+      case "reading-plan":
+        return t("discover-media-type-reading-plan", {
+          defaultValue: "Reading plans",
+        });
+      case "podcast":
+        return t("discover-media-type-podcast", { defaultValue: "Podcasts" });
+      case "devotional":
+        return t("discover-media-type-devotional", {
+          defaultValue: "Devotionals",
+        });
+    }
+  };
+}
+
+function ContentSourceRow(props: {
+  state: SeedBibleState;
+  source: DiscoverSource;
+}) {
+  const { state, source } = props;
+  const { language } = useI18n();
+  const mediaTypeLabel = useDiscoverMediaTypeLabel();
+  const isHidden =
+    state.settings.settings.value.discoverSources.hiddenSources.includes(
+      source.id
+    );
+  const mediaTypes = new Intl.ListFormat(language, {
+    style: "short",
+    type: "unit",
+  }).format((source.mediaTypes ?? []).map(mediaTypeLabel));
+
+  return (
+    <li
+      className={`sb-content-sources-card sb-content-sources-source${
+        isHidden ? " sb-content-sources-source-hidden" : ""
+      }`}
+    >
+      <span className="sb-content-sources-source-text">
+        <span className="sb-content-sources-source-title" dir="auto">
+          {source.title}
+        </span>
+        {mediaTypes && (
+          <span className="sb-content-sources-source-types">{mediaTypes}</span>
+        )}
+      </span>
+      <div className="sb-settings-toggle-row sb-toolbar-config-toggle">
+        <input
+          type="checkbox"
+          checked={!isHidden}
+          aria-label={source.title}
+          onChange={(event: Event) => {
+            const target = event.currentTarget as HTMLInputElement;
+            state.settings.setDiscoverSourceHidden(source.id, !target.checked);
+          }}
+        />
+      </div>
+    </li>
+  );
+}
+
+function ContentSourcesSettingsView(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { t } = useI18n();
+  const mediaTypeLabel = useDiscoverMediaTypeLabel();
+  const collapsedPlatforms = useSignal<ReadonlySet<string>>(new Set());
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = "main";
+  };
+
+  const hiddenMediaTypes =
+    state.settings.settings.value.discoverSources.hiddenMediaTypes;
+  const sources = state.discover.sources.value;
+  const ungroupedSources = sources.filter((source) => !source.platform);
+  const sourcesByPlatform = new Map<string, DiscoverSource[]>();
+  for (const source of sources) {
+    if (!source.platform) continue;
+    const group = sourcesByPlatform.get(source.platform);
+    if (group) {
+      group.push(source);
+    } else {
+      sourcesByPlatform.set(source.platform, [source]);
+    }
+  }
+
+  const togglePlatform = (platform: string) => {
+    const next = new Set(collapsedPlatforms.value);
+    if (next.has(platform)) next.delete(platform);
+    else next.add(platform);
+    collapsedPlatforms.value = next;
+  };
+
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("content-sources", { defaultValue: "Content sources" }),
+        ]}
+      />
+      <SettingsHero
+        icon="travel_explore"
+        title={t("content-sources", { defaultValue: "Content sources" })}
+        description={t("content-sources-description", {
+          defaultValue:
+            "Choose which content you want to see alongside scripture.",
+        })}
+      />
+
+      <section className="sb-settings-section">
+        <div>
+          <h2 className="sb-content-sources-heading">
+            {t("content-types", { defaultValue: "Content types" })}
+          </h2>
+          <p className="sb-content-sources-hint">
+            {t("content-types-description", {
+              defaultValue:
+                "Select the types of content you'd like to see in Discover.",
+            })}
+          </p>
+        </div>
+        <ul className="sb-content-sources-list">
+          {DISCOVER_MEDIA_TYPES.map((mediaType) => (
+            <li key={mediaType}>
+              <label className="sb-content-sources-card sb-content-sources-type">
+                <input
+                  type="checkbox"
+                  checked={!hiddenMediaTypes.includes(mediaType)}
+                  onChange={(event: Event) => {
+                    const target = event.currentTarget as HTMLInputElement;
+                    state.settings.setDiscoverMediaTypeHidden(
+                      mediaType,
+                      !target.checked
+                    );
+                  }}
+                />
+                <span>{mediaTypeLabel(mediaType)}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <hr className="sb-settings-divider sb-content-sources-divider" />
+
+      <section className="sb-settings-section">
+        <h2 className="sb-content-sources-heading">
+          {t("sources", { defaultValue: "Sources" })}
+        </h2>
+        {sources.length === 0 ? (
+          <div className="sb-settings-empty-state">
+            <p>
+              {t("content-sources-empty", {
+                defaultValue:
+                  "None of your installed extensions offer content sources yet.",
+              })}
+            </p>
+          </div>
+        ) : (
+          <>
+            {ungroupedSources.length > 0 && (
+              <ul className="sb-content-sources-list">
+                {ungroupedSources.map((source) => (
+                  <ContentSourceRow
+                    key={source.id}
+                    state={state}
+                    source={source}
+                  />
+                ))}
+              </ul>
+            )}
+            {[...sourcesByPlatform.entries()].map(
+              ([platform, platformSources]) => {
+                const isExpanded = !collapsedPlatforms.value.has(platform);
+                return (
+                  <div key={platform} className="sb-content-sources-platform">
+                    <button
+                      type="button"
+                      className="sb-content-sources-card sb-content-sources-platform-header"
+                      aria-expanded={isExpanded}
+                      onClick={() => togglePlatform(platform)}
+                    >
+                      <span dir="auto">{platform}</span>
+                      <MaterialIcon>
+                        {isExpanded ? "expand_less" : "expand_more"}
+                      </MaterialIcon>
+                    </button>
+                    {isExpanded && (
+                      <ul className="sb-content-sources-list sb-content-sources-platform-list">
+                        {platformSources.map((source) => (
+                          <ContentSourceRow
+                            key={source.id}
+                            state={state}
+                            source={source}
+                          />
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              }
+            )}
+          </>
+        )}
+      </section>
+    </div>
+  );
+}
+
 function TextFormattingToolbar(props: {
   sectionId: TextSectionId;
   section: TextSectionConfig;
@@ -2714,6 +2938,22 @@ function SettingsMainView(props: { state: SeedBibleState }) {
           <li>
             <button
               className="sb-settings-nav-item"
+              onClick={() => onNavigate("content-sources")}
+            >
+              <span className="sb-settings-nav-icon">
+                <MaterialIcon>travel_explore</MaterialIcon>
+              </span>
+              <span className="sb-settings-nav-label">
+                {t("content-sources", { defaultValue: "Content sources" })}
+              </span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
+            </button>
+          </li>
+          <li>
+            <button
+              className="sb-settings-nav-item"
               onClick={() => onNavigate("extensions")}
             >
               <span className="sb-settings-nav-icon">
@@ -2890,6 +3130,10 @@ export function SettingsPage(props: { state: SeedBibleState }) {
 
   if (currentView.value === "extensions") {
     return <ExtensionsSettingsView state={state} />;
+  }
+
+  if (currentView.value === "content-sources") {
+    return <ContentSourcesSettingsView state={state} />;
   }
 
   if (currentView.value === "customizations") {

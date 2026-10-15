@@ -1,6 +1,7 @@
 import { effect } from "@preact/signals";
 import {
   createDiscoverManager,
+  isHiddenByDiscoverSourcePreferences,
   type DiscoverContext,
   type DiscoverProvider,
   type DiscoverProviderResults,
@@ -720,5 +721,114 @@ describe("registerContentType", () => {
     unregisterOld();
 
     expect(manager.contentTypes.value).toEqual([replacement]);
+  });
+});
+
+describe("sources", () => {
+  const youtubeSource = {
+    id: "expedition-bible",
+    title: "Expedition Bible",
+    platform: "YouTube",
+    mediaTypes: ["video"] as const,
+  };
+
+  it("lists every registered provider's sources, and drops them when the provider goes", () => {
+    const manager = createDiscoverManager();
+    const unregister = manager.registerDiscoverProvider({
+      ...makeProvider("p1", []),
+      sources: [youtubeSource],
+    });
+    manager.registerDiscoverProvider(makeProvider("no-sources", []));
+
+    expect(manager.sources.value).toEqual([youtubeSource]);
+
+    unregister();
+
+    expect(manager.sources.value).toEqual([]);
+  });
+
+  it("keeps the first definition when two providers declare the same source", () => {
+    const manager = createDiscoverManager();
+    manager.registerDiscoverProvider({
+      ...makeProvider("p1", []),
+      sources: [{ id: "bible-project", title: "Bible Project" }],
+    });
+    manager.registerDiscoverProvider({
+      ...makeProvider("p2", []),
+      sources: [
+        { id: "bible-project", title: "BibleProject", platform: "YouTube" },
+        { id: "other", title: "Other" },
+      ],
+    });
+
+    expect(manager.sources.value).toEqual([
+      { id: "bible-project", title: "Bible Project" },
+      { id: "other", title: "Other" },
+    ]);
+  });
+});
+
+describe("isHiddenByDiscoverSourcePreferences", () => {
+  const reference = { book: "GEN", chapter: 1 };
+  const video: DiscoverResult = {
+    type: "content",
+    title: "Video",
+    description: "",
+    reference,
+    sourceId: "expedition-bible",
+    mediaType: "video",
+  };
+  const nothingHidden = { hiddenSources: [], hiddenMediaTypes: [] };
+
+  it("hides content from a hidden source", () => {
+    expect(
+      isHiddenByDiscoverSourcePreferences(video, {
+        ...nothingHidden,
+        hiddenSources: ["expedition-bible"],
+      })
+    ).toBe(true);
+  });
+
+  it("hides content of a hidden form", () => {
+    expect(
+      isHiddenByDiscoverSourcePreferences(video, {
+        ...nothingHidden,
+        hiddenMediaTypes: ["video"],
+      })
+    ).toBe(true);
+  });
+
+  it("shows content when neither its source nor its form is hidden", () => {
+    expect(
+      isHiddenByDiscoverSourcePreferences(video, {
+        hiddenSources: ["someone-else"],
+        hiddenMediaTypes: ["podcast"],
+      })
+    ).toBe(false);
+  });
+
+  it("always shows content that names no source or form, and non-content results", () => {
+    const everythingHidden = {
+      hiddenSources: ["expedition-bible"],
+      hiddenMediaTypes: ["video"],
+    };
+    const untagged: DiscoverResult = {
+      type: "content",
+      title: "Untagged",
+      description: "",
+      reference,
+    };
+    const crossReference: DiscoverResult = {
+      type: "cross-reference",
+      reference,
+      crossReference: { book: "JHN", chapter: 1 },
+    };
+
+    expect(
+      isHiddenByDiscoverSourcePreferences(untagged, everythingHidden)
+    ).toBe(false);
+    expect(
+      isHiddenByDiscoverSourcePreferences(crossReference, everythingHidden)
+    ).toBe(false);
   });
 });

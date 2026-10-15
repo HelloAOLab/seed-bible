@@ -1124,5 +1124,17 @@
   "audio-playback-verse": "Verse {{current}} of {{total}}",
   "audio-scrub-verse": "Verse {{verse}}",
   "tab-playing-audio": "Playing audio",
-  "collapsed-tab-playing-label": "{{label}} — playing audio"
+  "collapsed-tab-playing-label": "{{label}} — playing audio",
+  "content-sources": "Content sources",
+  "content-sources-description": "Choose which content you want to see alongside scripture.",
+  "content-types": "Content types",
+  "content-types-description": "Select the types of content you'd like to see in Discover.",
+  "sources": "Sources",
+  "content-sources-empty": "None of your installed extensions offer content sources yet.",
+  "discover-media-type-video": "Videos",
+  "discover-media-type-article": "Articles",
+  "discover-media-type-note": "Notes",
+  "discover-media-type-reading-plan": "Reading plans",
+  "discover-media-type-podcast": "Podcasts",
+  "discover-media-type-devotional": "Devotionals"
 }

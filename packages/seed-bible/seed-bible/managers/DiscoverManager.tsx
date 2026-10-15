@@ -6,6 +6,7 @@ import {
   type Signal,
 } from "@preact/signals";
 import type { TranslatableTitle } from "./BibleToolsManager";
+import type { DiscoverSourcePreferences } from "./SettingsManager";
 
 export type DiscoverView =
   | null
@@ -77,6 +78,43 @@ export interface DiscoverContentTypeDefinition {
   priority?: number;
 }
 
+/**
+ * The form a piece of discovered content takes. Readers can hide a whole form
+ * (say, every podcast) from the Content sources settings panel, whoever it
+ * comes from.
+ */
+export const DISCOVER_MEDIA_TYPES = [
+  "video",
+  "article",
+  "note",
+  "reading-plan",
+  "podcast",
+  "devotional",
+] as const;
+
+export type DiscoverMediaType = (typeof DISCOVER_MEDIA_TYPES)[number];
+
+/**
+ * Someone whose content a provider surfaces, such as a YouTube channel. Listed
+ * in the Content sources settings panel so a reader can turn it off, including
+ * before any of its content has shown up.
+ */
+export interface DiscoverSource {
+  /**
+   * Matched against {@link DiscoverContentResult.sourceId}. Readers' hidden
+   * sources are saved by this id, so changing it un-hides the source.
+   */
+  id: string;
+  title: string;
+  /**
+   * Where the content is hosted, e.g. `"YouTube"`. Settings groups sources
+   * that share a platform under one heading.
+   */
+  platform?: string;
+  /** The forms this source publishes, listed under its name in settings. */
+  mediaTypes?: readonly DiscoverMediaType[];
+}
+
 /** Where a registered type sorts when it doesn't say. */
 const DEFAULT_CONTENT_TYPE_PRIORITY = 500;
 
@@ -94,6 +132,13 @@ export interface DiscoverContentResult {
   image?: string;
   /** Called when the item's card is clicked. */
   onClick?: () => void;
+  /**
+   * The {@link DiscoverSource.id} this result came from. Hidden when the
+   * reader turns that source off.
+   */
+  sourceId?: string;
+  /** Hidden when the reader turns this form of content off. */
+  mediaType?: DiscoverMediaType;
 }
 
 export interface DiscoverCrossReferenceResult {
@@ -115,6 +160,8 @@ export interface DiscoverProvider {
   discover: (
     context: DiscoverContext
   ) => Promise<DiscoverResult[]> | DiscoverResult[];
+  /** Every source this provider's results can name in `sourceId`. */
+  sources?: readonly DiscoverSource[];
 }
 
 export interface DiscoverProviderResults {
@@ -141,6 +188,12 @@ export interface DiscoverManager {
 
   /** Every registered provider, in registration order. */
   providers: ReadonlySignal<readonly DiscoverProvider[]>;
+
+  /**
+   * Every registered provider's sources, in registration order. When two
+   * providers declare the same source id, the first one's definition wins.
+   */
+  sources: ReadonlySignal<readonly DiscoverSource[]>;
 
   /**
    * Declares a kind of discovered content, replacing any earlier definition
@@ -234,8 +287,39 @@ function registerById<T extends { id: string }>(
   };
 }
 
+/**
+ * Whether the reader's Content sources settings hide `result`. Only content
+ * results can be hidden, and only by a source or form they declare: a result
+ * that names neither always shows.
+ */
+export function isHiddenByDiscoverSourcePreferences(
+  result: DiscoverResult,
+  preferences: DiscoverSourcePreferences
+): boolean {
+  if (result.type !== "content") {
+    return false;
+  }
+  return (
+    (!!result.sourceId &&
+      preferences.hiddenSources.includes(result.sourceId)) ||
+    (!!result.mediaType &&
+      preferences.hiddenMediaTypes.includes(result.mediaType))
+  );
+}
+
 export function createDiscoverManager(): DiscoverManager {
   const providers = signal<readonly DiscoverProvider[]>([]);
+  const sources = computed(() => {
+    const byId = new Map<string, DiscoverSource>();
+    for (const provider of providers.value) {
+      for (const source of provider.sources ?? []) {
+        if (!byId.has(source.id)) {
+          byId.set(source.id, source);
+        }
+      }
+    }
+    return [...byId.values()];
+  });
   const registeredContentTypes = signal<
     readonly DiscoverContentTypeDefinition[]
   >([]);
@@ -361,6 +445,7 @@ export function createDiscoverManager(): DiscoverManager {
       };
     },
     providers,
+    sources,
 
     registerContentType(definition: DiscoverContentTypeDefinition) {
       return registerById(registeredContentTypes, definition);
