@@ -31,6 +31,7 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
+import { Spinner } from "../Spinner/Spinner";
 import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
 import { UserImagesGrid } from "./UserImages";
@@ -786,7 +787,8 @@ export function YourContentPane(props: YourContentScreenProps) {
         </div>
 
         {status === "loading" || stillSearching ? (
-          <p className="sb-content-status">
+          <p className="sb-content-status sb-content-status--loading">
+            <Spinner />
             {t("loading-your-content", {
               defaultValue: "Gathering your content…",
             })}
