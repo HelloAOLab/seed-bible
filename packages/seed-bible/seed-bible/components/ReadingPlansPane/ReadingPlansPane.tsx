@@ -90,6 +90,18 @@ type ReadingPlansView = "list" | "edit" | "detail";
 const readingPlansView = signal<ReadingPlansView>("list");
 
 /**
+ * Set when another screen opened the pane straight onto a plan, as tapping a
+ * plan in "Your content" does. Back from that plan then returns to that
+ * screen, not to a plans list the user never saw.
+ */
+const planBackLeavesPane = signal(false);
+
+function showPlansList() {
+  readingPlansView.value = "list";
+  planBackLeavesPane.value = false;
+}
+
+/**
  * Set when a plan fails to load, so the list can say so. A plan that can't be
  * fetched must leave the user on the list with an explanation — opening the
  * detail view on nothing just produces a blank screen titled "Untitled plan".
@@ -121,7 +133,8 @@ function PlanLoadError(props: { planId: string }) {
  */
 export async function openReadingPlanDetail(
   readingPlans: ReadingPlansManager,
-  plan: ReadingPlanMetadata
+  plan: ReadingPlanMetadata,
+  options: OpenPlanOptions = {}
 ) {
   const planId = formatReadingPlanId(plan.recordName, plan.address);
   planLoadError.value = null;
@@ -139,7 +152,19 @@ export async function openReadingPlanDetail(
     planId
   );
   await readingPlans.selectReadingPlanProgress(progress);
-  readingPlansView.value = "detail";
+  showPlan("detail", options);
+}
+
+interface OpenPlanOptions {
+  /** Another screen opened the pane onto this plan; back returns there. */
+  fromAnotherScreen?: boolean;
+}
+
+function showPlan(view: "detail" | "edit", options: OpenPlanOptions) {
+  readingPlansView.value = view;
+  if (options.fromAnotherScreen) {
+    planBackLeavesPane.value = true;
+  }
 }
 
 /** Opens the detail screen for a plan that is already selected. */
@@ -156,7 +181,8 @@ export function showReadingPlanDetailView() {
  */
 export async function openReadingPlanEditor(
   readingPlans: ReadingPlansManager,
-  meta: ReadingPlanMetadata
+  meta: ReadingPlanMetadata,
+  options: OpenPlanOptions = {}
 ) {
   // Already open in the editor — the author stepped out, to go read, say, and
   // is coming back. Their unsaved changes are kept rather than reloaded over.
@@ -166,7 +192,7 @@ export async function openReadingPlanEditor(
     current.plan.recordName === meta.recordName &&
     current.plan.address === meta.address
   ) {
-    readingPlansView.value = "edit";
+    showPlan("edit", options);
     return;
   }
   const planId = formatReadingPlanId(meta.recordName, meta.address);
@@ -190,7 +216,7 @@ export async function openReadingPlanEditor(
   } else {
     readingPlans.editExistingReadingPlan(full);
   }
-  readingPlansView.value = "edit";
+  showPlan("edit", options);
 }
 
 /**
@@ -217,7 +243,7 @@ function backToPlansList(readingPlans: ReadingPlansManager) {
     void readingPlans.selectReadingPlan(null);
     void readingPlans.selectReadingPlanProgress(null);
   }
-  readingPlansView.value = "list";
+  showPlansList();
 }
 
 /**
@@ -261,19 +287,34 @@ export function ReadingPlansPaneTitle(props: {
   return <>{t("reading-plans", { defaultValue: "Reading plans" })}</>;
 }
 
-/** Pane header back button, shown on every screen except the list itself. */
+/**
+ * Pane header back button. Inside a plan or the editor it returns to the
+ * list. On the list, and on a plan another screen opened directly, it calls
+ * `onBack` to return to that screen; without `onBack` the list has no back.
+ */
 export function ReadingPlansPaneLeading(props: {
   readingPlans: ReadingPlansManager;
+  onBack?: () => void;
 }) {
+  const { readingPlans, onBack } = props;
   const { t } = useI18n();
-  if (readingPlansView.value === "list") {
+  const onList = readingPlansView.value === "list";
+  const leavesPane = !!onBack && (onList || planBackLeavesPane.value);
+  if (onList && !leavesPane) {
     return null;
   }
   return (
     <button
       type="button"
       className="sb-rp-icon-button sb-rp-pane-back"
-      onClick={() => backToPlansList(props.readingPlans)}
+      onClick={() => {
+        if (!onList) {
+          backToPlansList(readingPlans);
+        }
+        if (leavesPane) {
+          onBack();
+        }
+      }}
       aria-label={t("back", { defaultValue: "Back" })}
       title={t("back", { defaultValue: "Back" })}
     >
@@ -328,7 +369,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   const view = readingPlansView.value;
 
   const closeEditor = () => {
-    readingPlansView.value = "list";
+    showPlansList();
   };
 
   /**
@@ -381,7 +422,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
           }
         }}
         onDeleted={() => {
-          readingPlansView.value = "list";
+          showPlansList();
         }}
       />
     );

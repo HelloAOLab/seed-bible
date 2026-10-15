@@ -91,6 +91,7 @@ import type { OfflineTranslationStore } from "../managers/OfflineTranslationStor
 import {
   createBibleToolsManager,
   openReadingPlansPane,
+  READING_PLANS_PANE_ID,
 } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
@@ -3667,8 +3668,10 @@ export function createSeedBibleState(
   /**
    * Opens the plans pane from one of the Profile screens. False when there is
    * no reader to open it beside, in which case nothing has changed on screen.
+   * `reopen` brings back the screen it came from, which this closes, so the
+   * pane's back button can return there instead of dropping to the reader.
    */
-  const openReadingPlansFullscreen = (): boolean => {
+  const openReadingPlansFullscreen = (reopen: () => void): boolean => {
     const readingState = selectedTab.peek()?.readingState;
     if (!readingState) {
       return false;
@@ -3690,11 +3693,15 @@ export function createSeedBibleState(
       gallery,
       placement: "fullscreen",
       toast,
+      onBack: () => {
+        panes.closePane(READING_PLANS_PANE_ID);
+        reopen();
+      },
     });
     return true;
   };
   const openReadingPlansFromProfile = () => {
-    openReadingPlansFullscreen();
+    openReadingPlansFullscreen(openProfile);
   };
   const continuePlaylistFromProfile = (
     entry: PlaylistPlayHistory
@@ -3816,22 +3823,26 @@ export function createSeedBibleState(
   // opens it, and then drill straight into the plan so the user doesn't have
   // to find it in the list a second time.
   const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
-    if (!openReadingPlansFullscreen()) {
+    if (!openReadingPlansFullscreen(openYourContent)) {
       return;
     }
     // A draft has nothing to read yet, so it picks up where the author left
     // off — in the editor — rather than opening an empty detail view.
     if (plan.status === "draft") {
-      void openReadingPlanEditor(readingPlans, plan);
+      void openReadingPlanEditor(readingPlans, plan, {
+        fromAnotherScreen: true,
+      });
     } else {
-      void openReadingPlanDetail(readingPlans, plan);
+      void openReadingPlanDetail(readingPlans, plan, {
+        fromAnotherScreen: true,
+      });
     }
   };
   const editReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
-    if (!openReadingPlansFullscreen()) {
+    if (!openReadingPlansFullscreen(openYourContent)) {
       return;
     }
-    void openReadingPlanEditor(readingPlans, plan);
+    void openReadingPlanEditor(readingPlans, plan, { fromAnotherScreen: true });
   };
   const renderYourContentPane = () => (
     <YourContentPane
