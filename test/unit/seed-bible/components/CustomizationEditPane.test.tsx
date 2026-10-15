@@ -1,5 +1,9 @@
 import { signal } from "@preact/signals";
-import { buildCustomizationTutorialSteps } from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/CustomizationEditPane";
+import {
+  buildCustomizationTutorialSteps,
+  openCustomizationEditPane,
+} from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/CustomizationEditPane";
+import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
 /**
@@ -108,5 +112,31 @@ describe("buildCustomizationTutorialSteps", () => {
     for (const step of steps.slice(3)) {
       expect(step.onLeave).toBeDefined();
     }
+  });
+});
+
+describe("openCustomizationEditPane", () => {
+  it("closes every other open pane, fullscreen ones included", () => {
+    const panes = createPanes();
+    panes.openPane({
+      placement: "fullscreen",
+      title: "Fullscreen",
+      component: () => "Fullscreen",
+    });
+    panes.openPane({
+      placement: "floating",
+      title: "Floating",
+      component: () => "Floating",
+    });
+    const state = {
+      panes,
+      customizations: { startEditing: vi.fn(), stopEditing: vi.fn() },
+    } as unknown as SeedBibleState;
+
+    openCustomizationEditPane(state, "customization-1");
+
+    expect(panes.panes.value).toHaveLength(1);
+    expect(panes.panes.value[0]?.placement).toBe("side");
+    expect(panes.selectedPaneId.value).toBe(panes.panes.value[0]?.id);
   });
 });

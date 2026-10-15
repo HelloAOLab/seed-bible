@@ -851,62 +851,51 @@
 
 .sb-today-container .sb-today-bookmarks-section {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 1rem;
 }
 
-.sb-today-container .sb-today-bookmarks-section > div {
-  width: 100%;
-  display: flex;
-  align-items: center;
-}
-
-.sb-today-container
-  .sb-today-bookmarks-section
-  .sb-today-bookmarks-section-label {
-  flex-shrink: 0;
-  margin: 0;
-  color: var(--sb-font-color);
-}
-
+/* At most five bookmarks, so they all show — wrapping onto more rows rather
+   than clipping behind a "view more". */
 .sb-today-container
   .sb-today-bookmarks-section
   .sb-today-bookmarks-section-container {
   display: flex;
   flex-wrap: wrap;
-  flex: 1;
   gap: 0.75rem;
   margin: 0 1rem;
-  height: 2rem;
-  overflow: hidden;
 }
 
+/* A small card rather than a pill: the name and "Genesis 3 • BSB" each get a
+   line, which a long name or book name would otherwise stretch a pill with. */
 .sb-today-container
   .sb-today-bookmarks-section
   .sb-today-bookmarks-section-bookmark {
-  height: 100%;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 8rem;
+  max-width: 16rem;
   appearance: none;
   border: none;
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 1.25rem;
-  gap: 0.25rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
   background-color: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
-  white-space: nowrap;
 }
 
 .sb-today-container
   .sb-today-bookmarks-section
   .sb-today-bookmarks-section-bookmark
-  > span {
-  font-size: 1rem;
+  > .sb-bookmark-glyph {
+  margin-top: 0.125rem;
+}
+
+.sb-today-container
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-bookmark
+  .sb-bookmark-label-location {
+  color: inherit;
+  opacity: 0.8;
 }
 
 @media (width <= 480px) {
@@ -967,9 +956,10 @@
   .sb-today-container
     .sb-today-bookmarks-section
     .sb-today-bookmarks-section-bookmark {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.7rem;
-    gap: 0.25rem;
+    flex-shrink: 0;
+    max-width: 13rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
   }
   .sb-today-container .sb-today-search-container .sb-today-searchbar {
     gap: 0.3rem;
@@ -978,13 +968,6 @@
     font-size: 1.2rem;
   }
 
-  .sb-today-container
-    .sb-today-bookmarks-section
-    .sb-today-bookmarks-section-bookmark
-    > svg {
-    width: 0.8rem;
-    height: 0.8rem;
-  }
   .sb-today-container .sb-today-search-container .sb-today-searchbar > input {
     font-size: 0.9rem;
   }
@@ -992,7 +975,7 @@
   .sb-today-container
     .sb-today-bookmarks-section
     .sb-today-bookmarks-section-container {
-    gap: 0.3rem;
+    gap: 0.5rem;
     flex-wrap: nowrap;
     overflow-x: scroll;
     scrollbar-width: none;

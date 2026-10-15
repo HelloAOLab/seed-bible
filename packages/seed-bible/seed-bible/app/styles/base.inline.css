@@ -296,6 +296,13 @@
   --sb-highlight-tan-font-color: #333;
   --sb-highlight-tan-words-of-jesus-font-color: #e07b4c;
 
+  --sb-bookmark-orange-color: #e07b4c;
+  --sb-bookmark-red-color: #d14343;
+  --sb-bookmark-yellow-color: #d4a106;
+  --sb-bookmark-green-color: #3a9a55;
+  --sb-bookmark-blue-color: #3474d4;
+  --sb-bookmark-purple-color: #8a56cc;
+
   --sb-dynamic-range-limit: standard;
 }
 
@@ -325,6 +332,12 @@ body {
   background: var(--sb-background);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
+
+  /* Without this, browsers draw light scrollbars even on dark themes (no
+     `color-scheme` is set). It inherits, so every scroll container picks up
+     the active theme's colors. */
+  scrollbar-color: color-mix(in srgb, var(--sb-font-color), transparent 80%)
+    transparent;
 
   /* dynamic-range-limit prevents user-provided images from changing the dynamic range */
   /* eslint-disable-next-line css/no-invalid-properties */
