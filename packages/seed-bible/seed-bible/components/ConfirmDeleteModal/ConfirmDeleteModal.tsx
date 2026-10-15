@@ -1,3 +1,4 @@
+import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import type {
   ModalContentProps,
@@ -25,8 +26,15 @@ function ConfirmDeleteModalContent(
 ) {
   const { message, onConfirm, failedMessage, toast, onClose } = props;
   const { t } = useI18n();
+  // A second tap while the first delete is still running would delete twice,
+  // and the second attempt's "not found" would report a delete that worked.
+  const isDeleting = useSignal(false);
 
   const confirm = async () => {
+    if (isDeleting.value) {
+      return;
+    }
+    isDeleting.value = true;
     try {
       await onConfirm();
     } catch (error) {
@@ -44,6 +52,7 @@ function ConfirmDeleteModalContent(
           type="button"
           className="sb-session-settings-cancel"
           onClick={onClose}
+          disabled={isDeleting.value}
         >
           {t("cancel")}
         </button>
@@ -51,6 +60,7 @@ function ConfirmDeleteModalContent(
           type="button"
           className="sb-session-settings-end"
           onClick={() => void confirm()}
+          disabled={isDeleting.value}
         >
           {t("delete")}
         </button>
