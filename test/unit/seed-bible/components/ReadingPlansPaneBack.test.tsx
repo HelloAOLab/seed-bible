@@ -10,6 +10,9 @@ import {
   type ReadingPlan,
   type ReadingPlansManager,
 } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
+import { openReadingPlansPane } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
+import type { OpenReadingPlansPaneOptions } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -123,5 +126,23 @@ describe("reading plans pane back button", () => {
     act(() => backButton()!.click());
 
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("forgets the other screen when the pane is closed and opened again", async () => {
+    await openPlan({ fromAnotherScreen: true });
+
+    // Closed with its X rather than back, then opened again, still on the
+    // plan, from a screen with its own way back.
+    openReadingPlansPane({
+      readingPlans,
+      readingState: {},
+      panesManager: { openPane: vi.fn() },
+      modals: createModalManager(),
+    } as unknown as OpenReadingPlansPaneOptions);
+    const onBack = vi.fn();
+    renderBackButton(onBack);
+    act(() => backButton()!.click());
+
+    expect(onBack).not.toHaveBeenCalled();
   });
 });

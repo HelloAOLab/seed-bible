@@ -42,6 +42,7 @@ import type {
   ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
 import {
+  forgetReadingPlansPaneOpener,
   ReadingPlansPane,
   ReadingPlansPaneActions,
   ReadingPlansPaneIcon,
@@ -1055,6 +1056,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
         )
     : undefined;
 
+  forgetReadingPlansPaneOpener();
   panesManager.openPane({
     id: READING_PLANS_PANE_ID,
     placement: options.placement ?? "side",

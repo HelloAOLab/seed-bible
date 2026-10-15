@@ -102,6 +102,15 @@ function showPlansList() {
 }
 
 /**
+ * Called whenever the pane is opened, so a plan another screen opened on an
+ * earlier visit doesn't send back there. A screen opening it onto a plan
+ * marks that again afterwards (see `openReadingPlanDetail`).
+ */
+export function forgetReadingPlansPaneOpener() {
+  planBackLeavesPane.value = false;
+}
+
+/**
  * Set when a plan fails to load, so the list can say so. A plan that can't be
  * fetched must leave the user on the list with an explanation — opening the
  * detail view on nothing just produces a blank screen titled "Untitled plan".
