@@ -6,6 +6,7 @@ import {
   CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_MARKER,
   getContrastRatio,
+  getExtensionAvailability,
   getFontPresetsForField,
   lightenColor,
   MIN_READABLE_CONTRAST_RATIO,
@@ -306,6 +307,12 @@ describe("CustomizationsManager", () => {
 
     expect(manager.customizations.value).toHaveLength(1);
     expect(manager.customizations.value[0]?.extensionSettings).toEqual({});
+    expect(
+      getExtensionAvailability(
+        manager.customizations.value[0] ?? null,
+        "ext.any"
+      )
+    ).toBe("available");
   });
 
   it("load() defaults a variant's highlightColors to {} for a record persisted before the field existed", async () => {
@@ -1114,15 +1121,71 @@ describe("CustomizationsManager", () => {
     expect(recordDataMock).not.toHaveBeenCalled();
   });
 
-  it('setEditingExtensionAvailability() removes the entry when set back to "available" (the default)', async () => {
+  it("setEditingExtensionAvailability() removes the entry when set to null, so the extension follows the default again", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
     manager.setEditingExtensionAvailability("ext.example", "hidden");
 
-    manager.setEditingExtensionAvailability("ext.example", "available");
+    manager.setEditingExtensionAvailability("ext.example", null);
 
     expect(manager.editingCustomization.value?.extensionSettings).toEqual({});
+  });
+
+  it('setEditingExtensionAvailability() keeps an explicit "available" so it survives the default changing to hidden', async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.setEditingExtensionAvailability("ext.kept", "available");
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+
+    expect(manager.getActiveExtensionAvailability("ext.kept")).toBe(
+      "available"
+    );
+    expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "hidden"
+    );
+  });
+
+  it("getActiveExtensionAvailability() falls back to the customization's default for an extension with no entry, including one it has never seen", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    await manager.saveEditingCustomization();
+
+    expect(manager.getActiveExtensionAvailability("ext.new")).toBe("available");
+
+    manager.startEditing(created.id);
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+
+    expect(manager.getActiveExtensionAvailability("ext.new")).toBe("hidden");
+  });
+
+  it("setEditingDefaultExtensionAvailability() is saved with the customization", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      created.id,
+      expect.objectContaining({ defaultExtensionAvailability: "hidden" }),
+      expect.anything()
+    );
+  });
+
+  it("setEditingDefaultExtensionAvailability() no-ops when there is no open draft", async () => {
+    const { manager } = createManager();
+
+    manager.setEditingDefaultExtensionAvailability("hidden");
+
+    expect(manager.editingCustomization.value).toBeNull();
   });
 
   it("setEditingExtensionAvailability() no-ops when there is no open draft", async () => {
@@ -2124,6 +2187,34 @@ describe("CustomizationsManager", () => {
     manager.startEditing(created.id);
     manager.setEditingExtensionAvailability("ext.was-available", "hidden");
     await manager.saveEditingCustomization();
+
+    expect(manager.activeExtensionIds.value).toEqual([]);
+  });
+
+  it("activeExtensionIds drops an extra the viewer added once the default becomes hidden, unless the owner set that extension to available", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    await manager.saveEditingCustomization();
+    await manager.addExtensionToActiveCustomization("ext.follows-default");
+    await manager.addExtensionToActiveCustomization("ext.kept-available");
+
+    manager.startEditing(created.id);
+    manager.setEditingExtensionAvailability("ext.kept-available", "available");
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+
+    expect(manager.activeExtensionIds.value).toEqual(["ext.kept-available"]);
+  });
+
+  it("addExtensionToActiveCustomization() no-ops for an extension the active customization's default hides", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+
+    await manager.addExtensionToActiveCustomization("ext.unreviewed");
 
     expect(manager.activeExtensionIds.value).toEqual([]);
   });

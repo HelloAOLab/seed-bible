@@ -288,8 +288,7 @@ const customizationVariantSchema = z.object({
 /**
  * How a customization treats one extension from the app's known catalog
  * while it's active:
- * - `available` (the default for any extension with no explicit entry):
- *   shown in Settings → Extensions; the viewer may install/uninstall it
+ * - `available`: shown in Settings → Extensions; the viewer may install/uninstall it
  *   themselves, same as outside any customization.
  * - `auto-installed`: force-installed with no prompt while the
  *   customization is active; shown but can't be uninstalled from there.
@@ -305,6 +304,19 @@ export const EXTENSION_AVAILABILITY_VALUES = [
 export type ExtensionAvailability =
   (typeof EXTENSION_AVAILABILITY_VALUES)[number];
 const extensionAvailabilitySchema = z.enum(EXTENSION_AVAILABILITY_VALUES);
+
+/**
+ * The availabilities a customization may apply to every extension it has no
+ * explicit entry for. `auto-installed` is deliberately excluded: it installs
+ * with no prompt, so it must only ever follow an author's review of that one
+ * extension, never reach one added to the catalog after they last looked.
+ */
+export const DEFAULT_EXTENSION_AVAILABILITY_VALUES = [
+  "available",
+  "hidden",
+] as const;
+export type DefaultExtensionAvailability =
+  (typeof DEFAULT_EXTENSION_AVAILABILITY_VALUES)[number];
 
 const customizationSchema = z
   .object({
@@ -328,12 +340,20 @@ const customizationSchema = z
      * keyed by extension id. Every id must reference the app's own known
      * extension catalog — never a URL or other free-form identity, since
      * `auto-installed` installs with no confirmation step. An id with no
-     * entry here defaults to `available`. Only ever written from the
-     * select in CustomizationEditExtensionsSettingsView.
+     * entry here follows `defaultExtensionAvailability`. Only ever written
+     * from the select in CustomizationEditExtensionsView.
      */
     extensionSettings: z
       .record(z.string(), extensionAvailabilitySchema)
       .default({}),
+    /**
+     * The availability of every extension with no entry in
+     * `extensionSettings`, including ones added to the catalog later. Absent
+     * (records saved before this existed) means `available`.
+     */
+    defaultExtensionAvailability: z
+      .enum(DEFAULT_EXTENSION_AVAILABILITY_VALUES)
+      .optional(),
     /**
      * Default values this customization sets for extension settings
      * (`ExtensionMeta.settings`), keyed by extension id then setting name.
@@ -402,8 +422,10 @@ export interface SeedBibleCustomization {
   defaultTranslationId?: string;
   createdAt: number;
   updatedAt: number;
-  /** Per-extension availability while this customization is active. An id with no entry defaults to "available". */
+  /** Per-extension availability while this customization is active. An id with no entry follows `defaultExtensionAvailability`. */
   extensionSettings: Record<string, ExtensionAvailability>;
+  /** Availability of every extension with no entry in `extensionSettings`. Absent means "available". */
+  defaultExtensionAvailability?: DefaultExtensionAvailability;
   /** Per-extension setting defaults while this customization is active. An extension/key with no entry has no default here. */
   extensionSettingDefaults: Record<
     string,
@@ -442,12 +464,22 @@ function withExtensionSensitiveProxy(
   };
 }
 
-/** Resolves an extension's effective availability for a customization, defaulting to "available" when unset. */
+/** The availability a customization gives extensions it has no explicit entry for. "available" when none is given. */
+export function getDefaultExtensionAvailability(
+  customization: SeedBibleCustomization | null
+): DefaultExtensionAvailability {
+  return customization?.defaultExtensionAvailability ?? "available";
+}
+
+/** Resolves an extension's effective availability for a customization, falling back to its default when the id has no explicit entry. */
 export function getExtensionAvailability(
   customization: SeedBibleCustomization | null,
   extensionId: string
 ): ExtensionAvailability {
-  return customization?.extensionSettings[extensionId] ?? "available";
+  return (
+    customization?.extensionSettings[extensionId] ??
+    getDefaultExtensionAvailability(customization)
+  );
 }
 
 /** Resolves a customization's default for one extension setting, or undefined if it doesn't set one. */
@@ -873,12 +905,16 @@ export interface CustomizationsManager {
   removeEditingVariant: (variantId: string) => void;
   /** Persists the viewer's variant choice for the currently active customization. Pass `SYSTEM_THEME_ID` to follow the device's color scheme instead of pinning one variant. No-op if none is active. */
   selectActiveVariant: (variantId: string) => Promise<void>;
-  /** Sets an extension's availability on the draft. No-op with no open draft. */
+  /** Sets an extension's availability on the draft, or with null, removes its entry so it follows the draft's default. No-op with no open draft. */
   setEditingExtensionAvailability: (
     extensionId: string,
-    availability: ExtensionAvailability
+    availability: ExtensionAvailability | null
   ) => void;
-  /** The active customization's effective availability for an extension id. "available" when nothing is active or the id has no explicit entry. */
+  /** Sets the availability the draft gives every extension with no explicit entry. No-op with no open draft. */
+  setEditingDefaultExtensionAvailability: (
+    availability: DefaultExtensionAvailability
+  ) => void;
+  /** The active customization's effective availability for an extension id. "available" when nothing is active; its default when the id has no explicit entry. */
   getActiveExtensionAvailability: (
     extensionId: string
   ) => ExtensionAvailability;
@@ -1980,16 +2016,17 @@ export function createCustomizationsManager(
 
   const setEditingExtensionAvailability = (
     extensionId: string,
-    availability: ExtensionAvailability
+    availability: ExtensionAvailability | null
   ): void => {
     const current = editingCustomization.value;
     if (!current) {
       return;
     }
-    // "available" is the default for any id with no entry, so setting it
-    // explicitly just removes the entry rather than storing a redundant one.
+    // An explicit entry is kept even when it matches the current default, so
+    // that the author's choice for this extension survives a later change
+    // of the default.
     const nextSettings = { ...current.extensionSettings };
-    if (availability === "available") {
+    if (availability === null) {
       delete nextSettings[extensionId];
     } else {
       nextSettings[extensionId] = availability;
@@ -1997,6 +2034,21 @@ export function createCustomizationsManager(
     editingCustomization.value = {
       ...current,
       extensionSettings: nextSettings,
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
+  const setEditingDefaultExtensionAvailability = (
+    availability: DefaultExtensionAvailability
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      defaultExtensionAvailability: availability,
       updatedAt: Date.now(),
     };
     scheduleAutoSave();
@@ -2246,6 +2298,7 @@ export function createCustomizationsManager(
     removeEditingVariant,
     selectActiveVariant,
     setEditingExtensionAvailability,
+    setEditingDefaultExtensionAvailability,
     getActiveExtensionAvailability,
     setEditingExtensionSettingDefault,
     clearEditingExtensionSettingDefault,

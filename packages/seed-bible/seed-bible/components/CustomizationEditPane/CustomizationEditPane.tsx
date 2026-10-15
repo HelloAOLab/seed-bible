@@ -13,13 +13,16 @@ import {
   CUSTOMIZATION_COLOR_GROUPS,
   CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_FONT_FIELDS,
+  EXTENSION_AVAILABILITY_VALUES,
   MIN_READABLE_CONTRAST_RATIO,
   buildCustomFontValue,
   getContrastRatio,
+  getDefaultExtensionAvailability,
   getExtensionAvailability,
   getExtensionSettingDefault,
   getFontPresetsForField,
   type CustomizationsManager,
+  type DefaultExtensionAvailability,
   type ExtensionAvailability,
 } from "../../managers/CustomizationsManager";
 import {
@@ -928,6 +931,16 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
   const installableExtensions = extensions.extensions.value.filter(
     (entry) => entry.extension !== null
   );
+  const defaultAvailability = getDefaultExtensionAvailability(record);
+  const availabilityLabels: Record<ExtensionAvailability, string> = {
+    available: t("extension-availability-available", {
+      defaultValue: "Available",
+    }),
+    "auto-installed": t("extension-availability-auto-installed", {
+      defaultValue: "Auto-installed",
+    }),
+    hidden: t("extension-availability-hidden", { defaultValue: "Hidden" }),
+  };
 
   const handleConfigureDefaults = (entry: ExtensionListEntry) => {
     const allSettings = entry.extension?.meta.settings ?? {};
@@ -1041,6 +1054,43 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
               "Choose how each extension behaves for anyone using this customization.",
           })}
         </p>
+        <ul className="sb-cz-list">
+          <li className="sb-cz-list-row">
+            <span className="sb-cz-row-text">
+              <label
+                className="sb-cz-row-label"
+                htmlFor="sb-customization-extension-default"
+              >
+                {t("customization-extensions-default", {
+                  defaultValue: "Default for other extensions",
+                })}
+              </label>
+              <span className="sb-cz-row-hint">
+                {t("customization-extensions-default-hint", {
+                  defaultValue:
+                    "Applies to every extension you haven't set below, including new ones added later",
+                })}
+              </span>
+            </span>
+            <ExtensionAvailabilitySelect
+              id="sb-customization-extension-default"
+              availability={defaultAvailability}
+              value={defaultAvailability}
+              options={[
+                {
+                  value: "available",
+                  label: availabilityLabels.available,
+                },
+                { value: "hidden", label: availabilityLabels.hidden },
+              ]}
+              onChange={(value) =>
+                customizations.setEditingDefaultExtensionAvailability(
+                  value as DefaultExtensionAvailability
+                )
+              }
+            />
+          </li>
+        </ul>
         {installableExtensions.length === 0 ? (
           <div className="sb-settings-empty-state">
             <p>
@@ -1053,6 +1103,7 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
           <ul className="sb-cz-list">
             {installableExtensions.map((entry) => {
               const availability = getExtensionAvailability(record, entry.id);
+              const isOverridden = entry.id in record.extensionSettings;
               const selectId = `sb-customization-extension-${entry.id}`;
               return (
                 <li className="sb-cz-list-row" key={entry.id}>
@@ -1083,49 +1134,32 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
                       <span className="material-symbols-outlined">tune</span>
                     </button>
                   )}
-                  <span
-                    className={`sb-cz-pill-select sb-cz-pill-select-${availability}`}
-                  >
-                    <span
-                      className="material-symbols-outlined sb-cz-pill-select-icon"
-                      aria-hidden="true"
-                    >
-                      {EXTENSION_AVAILABILITY_ICONS[availability]}
-                    </span>
-                    <select
-                      id={selectId}
-                      value={availability}
-                      onChange={(event: Event) => {
-                        const target = event.currentTarget as HTMLSelectElement;
-                        customizations.setEditingExtensionAvailability(
-                          entry.id,
-                          target.value as ExtensionAvailability
-                        );
-                      }}
-                    >
-                      <option value="available">
-                        {t("extension-availability-available", {
-                          defaultValue: "Available",
-                        })}
-                      </option>
-                      <option value="auto-installed">
-                        {t("extension-availability-auto-installed", {
-                          defaultValue: "Auto-installed",
-                        })}
-                      </option>
-                      <option value="hidden">
-                        {t("extension-availability-hidden", {
-                          defaultValue: "Hidden",
-                        })}
-                      </option>
-                    </select>
-                    <span
-                      className="material-symbols-outlined sb-cz-pill-select-caret"
-                      aria-hidden="true"
-                    >
-                      expand_more
-                    </span>
-                  </span>
+                  <ExtensionAvailabilitySelect
+                    id={selectId}
+                    availability={availability}
+                    value={isOverridden ? availability : USE_DEFAULT_VALUE}
+                    options={[
+                      {
+                        value: USE_DEFAULT_VALUE,
+                        label: t("extension-availability-default", {
+                          availability: availabilityLabels[defaultAvailability],
+                          defaultValue: "Default ({{availability}})",
+                        }),
+                      },
+                      ...EXTENSION_AVAILABILITY_VALUES.map((value) => ({
+                        value,
+                        label: availabilityLabels[value],
+                      })),
+                    ]}
+                    onChange={(value) =>
+                      customizations.setEditingExtensionAvailability(
+                        entry.id,
+                        value === USE_DEFAULT_VALUE
+                          ? null
+                          : (value as ExtensionAvailability)
+                      )
+                    }
+                  />
                 </li>
               );
             })}
@@ -1133,6 +1167,50 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
         )}
       </section>
     </div>
+  );
+}
+
+/** The per-extension select value meaning "no explicit entry: follow the customization's default". */
+const USE_DEFAULT_VALUE = "default";
+
+/** A pill-styled select whose icon and color show `availability`, the effective one even when `value` is "use the default". */
+function ExtensionAvailabilitySelect(props: {
+  id: string;
+  availability: ExtensionAvailability;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <span
+      className={`sb-cz-pill-select sb-cz-pill-select-${props.availability}`}
+    >
+      <span
+        className="material-symbols-outlined sb-cz-pill-select-icon"
+        aria-hidden="true"
+      >
+        {EXTENSION_AVAILABILITY_ICONS[props.availability]}
+      </span>
+      <select
+        id={props.id}
+        value={props.value}
+        onChange={(event: Event) =>
+          props.onChange((event.currentTarget as HTMLSelectElement).value)
+        }
+      >
+        {props.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <span
+        className="material-symbols-outlined sb-cz-pill-select-caret"
+        aria-hidden="true"
+      >
+        expand_more
+      </span>
+    </span>
   );
 }
 
