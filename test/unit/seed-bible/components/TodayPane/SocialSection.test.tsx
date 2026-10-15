@@ -768,6 +768,21 @@ describe("SocialSection", () => {
 
       expect(q(".sb-today-feed-time")!.textContent).toBe("5:00 PM");
     });
+
+    it("put the time at the end of the row, like the other rows", async () => {
+      getCommunityFeed.mockResolvedValue([noteItem(), readingItem()]);
+      setup();
+      await flush();
+
+      const timeParent = (row: string) =>
+        q(`${row} .sb-today-feed-time`)!.parentElement;
+      expect(timeParent(".sb-today-feed-row-note")).toBe(
+        q(".sb-today-feed-row-note")
+      );
+      expect(timeParent(".sb-today-feed-row-reading")).toBe(
+        q(".sb-today-feed-row-reading")
+      );
+    });
   });
 
   describe("crossed-paths rows", () => {

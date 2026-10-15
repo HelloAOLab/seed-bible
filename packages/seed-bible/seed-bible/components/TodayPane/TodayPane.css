@@ -710,10 +710,15 @@
   border-top: none;
 }
 
-/* A note carries a quote under its sentence, so its avatar sits at the top of
-   the row and the time goes below the quote instead of at the far end. */
+/* A note carries a quote under its sentence, so its row is top-aligned. Its
+   time takes the sentence's line height, so it sits level with the sentence
+   at the far end like every other row's, not halfway down the quote. */
 .sb-today-container .sb-today-feed-row.sb-today-feed-row-note {
   align-items: flex-start;
+}
+
+.sb-today-container .sb-today-feed-row-note > .sb-today-feed-time {
+  line-height: calc(0.95rem * 1.4);
 }
 
 .sb-today-container .sb-today-feed-row-body {
@@ -992,6 +997,10 @@
   .sb-today-container .sb-today-feed-sentence,
   .sb-today-container .sb-today-feed-note-text {
     font-size: 0.875rem;
+  }
+
+  .sb-today-container .sb-today-feed-row-note > .sb-today-feed-time {
+    line-height: calc(0.875rem * 1.4);
   }
 
   .sb-today-container

@@ -525,8 +525,8 @@ function NoteRow(props: {
         {text && (
           <blockquote className="sb-today-feed-note-text">{text}</blockquote>
         )}
-        <FeedTime seconds={item.time} />
       </div>
+      <FeedTime seconds={item.time} />
     </li>
   );
 }
