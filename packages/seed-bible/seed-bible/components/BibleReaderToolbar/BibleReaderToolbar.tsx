@@ -35,7 +35,10 @@ import {
 } from "../Tabs/Tabs";
 import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
 import { playlistItemLabel } from "../playlistItemLabel";
-import { ScriptureNoteSheet } from "../ScriptureNote/ScriptureNote";
+import {
+  ScriptureNoteSheet,
+  ScriptureNoteShowTab,
+} from "../ScriptureNote/ScriptureNote";
 import {
   AudioProgressRing,
   AudioScrubber,
@@ -2967,6 +2970,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 </>
               ) : (
                 <>
+                  {playingPlaylist.value && (
+                    <ScriptureNoteShowTab playing={playingPlaylist.value} />
+                  )}
                   {desktopPlayback.value &&
                     renderDesktopAudioControls(desktopPlayback.value)}
                   {tools.value.flatMap((tool) => {

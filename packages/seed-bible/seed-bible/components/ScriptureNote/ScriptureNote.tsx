@@ -357,7 +357,11 @@ function ScriptureNotePopoverBody(props: {
   useEffect(() => setHost(document.body), []);
 
   useEffect(() => {
-    if (hidden) return;
+    if (hidden) {
+      // Placed afresh when shown again; the reader may have moved meanwhile.
+      setPlacement(null);
+      return;
+    }
     let frameRequest = 0;
     const measure = () => {
       frameRequest = 0;
@@ -412,7 +416,7 @@ function ScriptureNotePopoverBody(props: {
     }
   });
 
-  if (!host || !placement) return null;
+  if (!host || !placement || hidden) return null;
 
   const { frame } = placement;
   const layerStyle = {
@@ -426,92 +430,105 @@ function ScriptureNotePopoverBody(props: {
 
   return createPortal(
     <div className="sb-scripture-note-layer" style={layerStyle}>
-      {hidden ? (
-        <button
-          type="button"
-          className="sb-scripture-note-show"
-          onClick={() => playing.setNoteExpanded(true)}
-        >
-          <MaterialIcon>sticky_note_2</MaterialIcon>
-          {t("playlist-scripture-note-show", { defaultValue: "Show note" })}
-        </button>
-      ) : (
-        <div
-          ref={popoverRef}
-          className={`sb-scripture-note-popover${
-            placement.side ? "" : " sb-scripture-note-popover--docked"
-          }`}
-          style={placement.style}
-          role="dialog"
-          aria-label={t("playlist-scripture-note-aria", {
-            defaultValue: "Note on {{passage}}",
-            passage: label,
-          })}
-        >
-          {placement.side ? (
-            <span
-              className={`sb-tour-arrow sb-tour-arrow-${placement.side}`}
-              style={placement.arrowStyle}
-              aria-hidden="true"
-            />
-          ) : null}
-          <div className="sb-scripture-note-header">
-            <NoteHeading title={item.noteTitle} passage={label} as="h3" />
-            <button
-              type="button"
-              className="sb-scripture-note-hide"
-              onClick={() => playing.setNoteExpanded(false)}
-              aria-label={t("playlist-scripture-note-hide", {
-                defaultValue: "Hide note",
-              })}
-            >
-              <MaterialIcon>close</MaterialIcon>
-            </button>
-          </div>
-          {item.note?.trim() ? (
-            <div className="sb-scripture-note-body">
-              <PlaylistHtmlContent
-                html={item.note}
-                onReferenceClick={(ref) => void playing.visitReference(ref)}
-              />
-            </div>
-          ) : null}
-          {away ? <ReturnToStepButton playing={playing} /> : null}
-          <div className="sb-scripture-note-actions">
-            {playing.hasPrevious.value ? (
-              <button
-                type="button"
-                className="sb-tour-btn sb-tour-btn-back"
-                onClick={() => void playing.previous()}
-              >
-                {t("previous", { defaultValue: "Previous" })}
-              </button>
-            ) : null}
-            {total > 1 ? (
-              <span className="sb-scripture-note-progress">
-                {t("playlist-scripture-note-progress", {
-                  defaultValue: "{{current}} of {{total}}",
-                  current: playing.currentIndex.value + 1,
-                  total,
-                })}
-              </span>
-            ) : null}
-            <button
-              type="button"
-              className="sb-tour-btn sb-tour-btn-next"
-              disabled={!playing.canPressNext.value}
-              onClick={() => void playing.next()}
-            >
-              {t("next", { defaultValue: "Next" })}
-              <span className="sb-tour-next-arrow" dir="ltr" aria-hidden="true">
-                →
-              </span>
-            </button>
-          </div>
+      <div
+        ref={popoverRef}
+        className={`sb-scripture-note-popover${
+          placement.side ? "" : " sb-scripture-note-popover--docked"
+        }`}
+        style={placement.style}
+        role="dialog"
+        aria-label={t("playlist-scripture-note-aria", {
+          defaultValue: "Note on {{passage}}",
+          passage: label,
+        })}
+      >
+        {placement.side ? (
+          <span
+            className={`sb-tour-arrow sb-tour-arrow-${placement.side}`}
+            style={placement.arrowStyle}
+            aria-hidden="true"
+          />
+        ) : null}
+        <div className="sb-scripture-note-header">
+          <NoteHeading title={item.noteTitle} passage={label} as="h3" />
+          <button
+            type="button"
+            className="sb-scripture-note-hide"
+            onClick={() => playing.setNoteExpanded(false)}
+            aria-label={t("playlist-scripture-note-hide", {
+              defaultValue: "Hide note",
+            })}
+          >
+            <MaterialIcon>close</MaterialIcon>
+          </button>
         </div>
-      )}
+        {item.note?.trim() ? (
+          <div className="sb-scripture-note-body">
+            <PlaylistHtmlContent
+              html={item.note}
+              onReferenceClick={(ref) => void playing.visitReference(ref)}
+            />
+          </div>
+        ) : null}
+        {away ? <ReturnToStepButton playing={playing} /> : null}
+        <div className="sb-scripture-note-actions">
+          {playing.hasPrevious.value ? (
+            <button
+              type="button"
+              className="sb-tour-btn sb-tour-btn-back"
+              onClick={() => void playing.previous()}
+            >
+              {t("previous", { defaultValue: "Previous" })}
+            </button>
+          ) : null}
+          {total > 1 ? (
+            <span className="sb-scripture-note-progress">
+              {t("playlist-scripture-note-progress", {
+                defaultValue: "{{current}} of {{total}}",
+                current: playing.currentIndex.value + 1,
+                total,
+              })}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            className="sb-tour-btn sb-tour-btn-next"
+            disabled={!playing.canPressNext.value}
+            onClick={() => void playing.next()}
+          >
+            {t("next", { defaultValue: "Next" })}
+            <span className="sb-tour-next-arrow" dir="ltr" aria-hidden="true">
+              →
+            </span>
+          </button>
+        </div>
+      </div>
     </div>,
     host
+  );
+}
+
+/**
+ * Desktop: brings back a note hidden with `ScriptureNotePopover`'s close
+ * button. A tab on the reader toolbar's top edge (a child of it, at
+ * `bottom: 100%`), so it stays with the toolbar rather than wherever the note
+ * was, and never drifts over another pane.
+ */
+export function ScriptureNoteShowTab(props: { playing: PlayingState }) {
+  const { playing } = props;
+  const { t } = useI18n();
+  if (!currentScriptureNoteItem(playing) || playing.noteExpanded.value) {
+    return null;
+  }
+  return (
+    <button
+      type="button"
+      className="sb-scripture-note-show-tab"
+      onClick={() => playing.setNoteExpanded(true)}
+    >
+      {t("playlist-scripture-note-show", { defaultValue: "Show note" })}
+      <MaterialIcon>keyboard_arrow_up</MaterialIcon>
+    </button>
   );
 }
 

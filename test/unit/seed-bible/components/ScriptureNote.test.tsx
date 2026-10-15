@@ -5,6 +5,7 @@ import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsMan
 import {
   ScriptureNotePopover,
   ScriptureNoteSheet,
+  ScriptureNoteShowTab,
 } from "@packages/seed-bible/seed-bible/components/ScriptureNote/ScriptureNote";
 import {
   createPlayingState,
@@ -392,17 +393,26 @@ describe("ScriptureNotePopover", () => {
     expect(popover()).toBeNull();
   });
 
-  it("can be hidden for the step and shown again", async () => {
+  it("can be hidden for the step and shown again from the toolbar", async () => {
     layOutReader({ 16: 140, 17: 180 });
     const playing = createPlayingState([playlist([noted, noted])]);
     renderPopover(playing);
+    const toolbar = document.createElement("div");
+    document.body.appendChild(toolbar);
+    act(() => render(<ScriptureNoteShowTab playing={playing} />, toolbar));
     await waitFor(() => !!popover());
+    expect(toolbar.textContent).toBe("");
 
     act(() => button("Hide note")!.click());
     expect(popover()).toBeNull();
+    // Nothing is left floating where the note was.
+    expect(document.querySelector(".sb-scripture-note-layer")).toBeNull();
 
-    act(() => button("Show note")!.click());
+    act(() => toolbar.querySelector("button")!.click());
     await waitFor(() => !!popover());
+    expect(toolbar.textContent).toBe("");
+    act(() => render(null, toolbar));
+    toolbar.remove();
 
     // Hiding lasts only for the step it was hidden on.
     act(() => button("Hide note")!.click());

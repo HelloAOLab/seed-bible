@@ -4957,3 +4957,68 @@ describe("BibleReaderToolbar — compact embed", () => {
     expect(container.querySelector(".sb-verse-toolbar-swipe-hint")).toBeNull();
   });
 });
+
+describe("BibleReaderToolbar — a playing passage's hidden note on desktop", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    window.innerWidth = 1200;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  it("offers Show note on the toolbar itself once the note is hidden", async () => {
+    const state = await createTestSeedBibleState();
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(state.app.isMobile.value).toBe(false);
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    await act(async () => {
+      state.playlists.startPlaying(
+        {
+          id: "p",
+          title: "P",
+          description: null,
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, verse: 1 },
+              note: "<p>A note</p>",
+            },
+          ],
+        },
+        0,
+        { history: false }
+      );
+    });
+    const playing = state.playlists.playing.value!;
+    const showNote = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".sb-reader-toolbar .sb-scripture-note-show-tab"
+      );
+    expect(showNote()).toBeNull();
+
+    act(() => playing.setNoteExpanded(false));
+    expect(showNote()?.textContent).toContain("Show note");
+
+    act(() => showNote()!.click());
+    expect(playing.noteExpanded.value).toBe(true);
+    expect(showNote()).toBeNull();
+  });
+});
