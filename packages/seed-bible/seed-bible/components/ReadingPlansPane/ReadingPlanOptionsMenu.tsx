@@ -31,6 +31,8 @@ export function ReadingPlanOptionsMenu(props: {
   onDeleted?: () => void;
   modals: ModalManager;
   toast?: (message: string) => void;
+  /** Styles the ⋮ button to match the list it sits in. */
+  buttonClassName?: string;
 }) {
   const { readingPlans, plan, fullPlan, onEdit, onDeleted, modals, toast } =
     props;
@@ -39,6 +41,7 @@ export function ReadingPlanOptionsMenu(props: {
   return (
     <ContextMenuWithButton
       anchorClassName="sb-rp-card-menu"
+      buttonClassName={props.buttonClassName}
       aria-label={t("reading-plan-options", {
         defaultValue: "Reading plan options",
       })}
@@ -103,7 +106,7 @@ export function ReadingPlanOptionsMenu(props: {
  * Asks before deleting a plan. Deleting erases the plan and the user's
  * progress through it for good.
  */
-export function openDeleteReadingPlanConfirm(
+function openDeleteReadingPlanConfirm(
   modals: ModalManager,
   readingPlans: ReadingPlansManager,
   plan: Pick<

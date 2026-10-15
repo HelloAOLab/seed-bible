@@ -31,7 +31,7 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
-import { openDeleteReadingPlanConfirm } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
+import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
 import { UserImagesGrid } from "./UserImages";
 import "./YourContentPane.css";
@@ -425,6 +425,10 @@ function ReadingPlanRow(props: {
   const status = readingPlanStatusLabel(state.readingPlans, plan, t);
   const title =
     plan.title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" });
+  const full =
+    state.readingPlans.fullReadingPlans.value.find(
+      (p) => p.recordName === plan.recordName && p.address === plan.address
+    ) ?? null;
 
   return (
     // Laid out as a Discover row, like the playlists beside it, so a plan
@@ -441,40 +445,16 @@ function ReadingPlanRow(props: {
           <span className="sb-content-plan-status">{status}</span>
         ) : null}
       </div>
-      <ContextMenuWithButton
+      <ReadingPlanOptionsMenu
+        readingPlans={state.readingPlans}
+        plan={plan}
+        // A draft isn't finished, so there's nothing to share yet.
+        fullPlan={plan.status === "draft" ? null : full}
+        onEdit={props.onEdit}
+        modals={state.modals}
+        toast={state.app.toast}
         buttonClassName="sb-discover-item-menu"
-        aria-label={t("reading-plan-options", { defaultValue: "Plan options" })}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <ContextMenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            props.onEdit();
-          }}
-        >
-          <MaterialIcon className="sb-context-menu-item-icon">
-            edit
-          </MaterialIcon>
-          {t("edit-reading-plan", { defaultValue: "Edit plan" })}
-        </ContextMenuItem>
-        <ContextMenuItem
-          className="sb-context-menu-item--danger"
-          onClick={(e) => {
-            e.stopPropagation();
-            openDeleteReadingPlanConfirm(
-              state.modals,
-              state.readingPlans,
-              plan,
-              state.app.toast
-            );
-          }}
-        >
-          <MaterialIcon className="sb-context-menu-item-icon">
-            delete
-          </MaterialIcon>
-          {t("reading-plan-delete", { defaultValue: "Delete" })}
-        </ContextMenuItem>
-      </ContextMenuWithButton>
+      />
     </li>
   );
 }
