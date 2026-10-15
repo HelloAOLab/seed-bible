@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "Lägg till minst en läsning för att skapa planen",
   "reading-plan-needs-name": "Ge din plan ett namn för att spara den",
   "reading-plan-delete": "Radera",
-  "reading-plan-delete-confirm": "Radera för gott?",
   "reading-plan-load-failed": "Det gick inte att ladda den här planen. Försök igen.",
   "loading": "Belastning…",
   "reading-plan-not-started": "Inte påbörjad",

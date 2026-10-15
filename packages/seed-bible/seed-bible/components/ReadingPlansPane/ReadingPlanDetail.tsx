@@ -41,9 +41,8 @@ interface ReadingPlanDetailProps {
   readingPlans: ReadingPlansManager;
   /** Books of the active translation, for resolving reading labels. */
   books: TranslationBook[];
-  /** Modals host for opening a text/link reading. Optional — without it the
-   * open action is simply not offered. */
-  modals?: ModalManager;
+  /** Modals host, for previewing a text or link reading and confirming a delete. */
+  modals: ModalManager;
   /** Navigates the reader to a scripture reading. */
   onOpenScripture?: (
     ref: VerseRef,
@@ -593,9 +592,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
                         reading={reading}
                         sessionProgress={sessionProgressFor(session.id)}
                         expanded={expandedReadingId === reading.id}
-                        canPreview={
-                          !!modals && canPreviewPlaylistItem(reading.item)
-                        }
+                        canPreview={canPreviewPlaylistItem(reading.item)}
                         canNavigate={
                           !!onOpenScripture &&
                           reading.item.type === "bible-verse"
@@ -621,7 +618,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
                         onOpen={() => {
                           if (reading.item.type === "bible-verse") {
                             openScripture(session, reading);
-                          } else if (modals) {
+                          } else {
                             openPlaylistItemPreview(
                               modals,
                               reading.item,

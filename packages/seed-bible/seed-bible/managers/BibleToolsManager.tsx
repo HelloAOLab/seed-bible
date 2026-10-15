@@ -993,7 +993,7 @@ export interface OpenReadingPlansPaneOptions {
   readingPlans: ReadingPlansManager;
   readingState: BibleReadingState;
   panesManager: PanesManager;
-  modals?: ModalManager;
+  modals: ModalManager;
   playlists?: PlaylistManager;
   /** Loads chapter text for the plan editor's inline scripture previews. */
   bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
@@ -1223,9 +1223,10 @@ function getDefaultToolbarTools(
       icon: () => <MaterialIcon>menu_book</MaterialIcon>,
       isVisible: (context) =>
         !!context.readingPlans &&
+        !!context.modals &&
         context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
       onSelect: (context) => {
-        if (!context.readingPlans) {
+        if (!context.readingPlans || !context.modals) {
           return;
         }
         openReadingPlansPane({

@@ -1,4 +1,3 @@
-import { useState } from "preact/hooks";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ModalManager } from "../../managers/ModalManager";
@@ -16,8 +15,7 @@ import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal
 /**
  * Share, edit, and delete for one reading plan, in the same options menu a
  * playlist row uses. Delete asks in a confirmation modal before it erases
- * the plan. When no modal host is available, the menu item asks once in
- * place instead of deleting on the first click.
+ * the plan.
  */
 export function ReadingPlanOptionsMenu(props: {
   readingPlans: ReadingPlansManager;
@@ -31,42 +29,12 @@ export function ReadingPlanOptionsMenu(props: {
   onEdit?: () => void;
   /** Called after the plan has been deleted, so a detail view can leave it. */
   onDeleted?: () => void;
-  modals?: ModalManager;
+  modals: ModalManager;
   toast?: (message: string) => void;
 }) {
   const { readingPlans, plan, fullPlan, onEdit, onDeleted, modals, toast } =
     props;
   const { t } = useI18n();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-
-  const deletePlan = () => {
-    if (modals) {
-      openDeleteReadingPlanConfirm(
-        modals,
-        readingPlans,
-        plan,
-        toast,
-        onDeleted
-      );
-      return;
-    }
-    if (!confirmingDelete) {
-      return "confirm";
-    }
-    setConfirmingDelete(false);
-    void readingPlans.deleteReadingPlan(plan).then(
-      () => onDeleted?.(),
-      (error: unknown) => {
-        console.error("Failed to delete reading plan:", error);
-        toast?.(
-          t("delete-reading-plan-failed", {
-            defaultValue: "Couldn't delete the reading plan.",
-          })
-        );
-      }
-    );
-    return "deleted";
-  };
 
   return (
     <ContextMenuWithButton
@@ -74,10 +42,7 @@ export function ReadingPlanOptionsMenu(props: {
       aria-label={t("reading-plan-options", {
         defaultValue: "Reading plan options",
       })}
-      onClick={(e) => {
-        e.stopPropagation();
-        setConfirmingDelete(false);
-      }}
+      onClick={(e) => e.stopPropagation()}
     >
       {fullPlan ? (
         <ContextMenuItem
@@ -116,20 +81,19 @@ export function ReadingPlanOptionsMenu(props: {
         className="sb-context-menu-item--danger"
         onClick={(e) => {
           e.stopPropagation();
-          if (deletePlan() === "confirm") {
-            e.preventDefault();
-            setConfirmingDelete(true);
-          }
+          openDeleteReadingPlanConfirm(
+            modals,
+            readingPlans,
+            plan,
+            toast,
+            onDeleted
+          );
         }}
       >
         <MaterialIcon className="sb-context-menu-item-icon">
           delete
         </MaterialIcon>
-        {confirmingDelete
-          ? t("reading-plan-delete-confirm", {
-              defaultValue: "Delete for good?",
-            })
-          : t("reading-plan-delete", { defaultValue: "Delete" })}
+        {t("reading-plan-delete", { defaultValue: "Delete" })}
       </ContextMenuItem>
     </ContextMenuWithButton>
   );

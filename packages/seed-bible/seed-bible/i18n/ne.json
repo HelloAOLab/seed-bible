@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "योजना बनाउन कम्तिमा एउटा पठन थप्नुहोस्।",
   "reading-plan-needs-name": "आफ्नो योजनालाई सुरक्षित गर्न नाम दिनुहोस्।",
   "reading-plan-delete": "मेटाउनुहोस्",
-  "reading-plan-delete-confirm": "सदाको लागि मेटाउने हो?",
   "reading-plan-load-failed": "यो योजना लोड गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।",
   "loading": "लोड हुँदै...",
   "reading-plan-not-started": "सुरु भएको छैन",

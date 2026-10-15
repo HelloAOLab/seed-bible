@@ -1,5 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { signal } from "@preact/signals";
 import { ReadingPlansPane } from "@packages/seed-bible/seed-bible/components/ReadingPlansPane/ReadingPlansPane";
 import { ReadingPlanDetail } from "@packages/seed-bible/seed-bible/components/ReadingPlansPane/ReadingPlanDetail";
@@ -71,6 +72,7 @@ describe("reading plan hero image", () => {
         <ReadingPlansPane
           readingPlans={listManager([readingPlan])}
           books={[]}
+          modals={createModalManager()}
         />,
         container
       );
@@ -97,6 +99,7 @@ describe("reading plan hero image", () => {
         <ReadingPlansPane
           readingPlans={listManager([readingPlan])}
           books={[]}
+          modals={createModalManager()}
         />,
         container
       );
@@ -122,6 +125,7 @@ describe("reading plan hero image", () => {
         <ReadingPlanDetail
           readingPlans={detailManager(readingPlan)}
           books={[]}
+          modals={createModalManager()}
         />,
         container
       );
@@ -146,6 +150,7 @@ describe("reading plan hero image", () => {
         <ReadingPlanDetail
           readingPlans={detailManager(readingPlan)}
           books={[]}
+          modals={createModalManager()}
         />,
         container
       );
@@ -186,6 +191,7 @@ describe("reading plan options menu", () => {
         <ReadingPlansPane
           readingPlans={listManager([readingPlan])}
           books={[]}
+          modals={createModalManager()}
         />,
         container
       );

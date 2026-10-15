@@ -46,8 +46,8 @@ interface ReadingPlansPaneProps {
   friends?: FriendsManager;
   /** Books of the active translation, for the scripture typeahead + labels. */
   books: TranslationBook[];
-  /** Modals host, for previewing/opening a text or link reading. */
-  modals?: ModalManager;
+  /** Modals host, for previewing a text or link reading and confirming a delete. */
+  modals: ModalManager;
   /** Loads chapters for the plan editor's inline scripture previews. */
   loadChapter?: ScriptureChapterLoader;
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
@@ -418,7 +418,7 @@ interface ReadingPlansListProps {
    */
   friends?: FriendsManager;
   books: TranslationBook[];
-  modals?: ModalManager;
+  modals: ModalManager;
   onOpen: (plan: ReadingPlanMetadata) => void;
   onEdit: (plan: ReadingPlanMetadata) => void;
   /** Starts a completed plan over on a fresh progress, then opens it. */
