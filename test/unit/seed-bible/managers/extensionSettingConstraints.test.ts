@@ -3,6 +3,7 @@ import {
   firstAcceptableSettingValue,
   numberFieldLimits,
   numberRangeAdmitsAValue,
+  isSupportedSensitiveRequestProperty,
 } from "@packages/seed-bible/seed-bible/managers/extensionSettingConstraints";
 
 describe("alignToStep", () => {
@@ -127,5 +128,34 @@ describe("firstAcceptableSettingValue", () => {
         enum: ["plain", "warm"],
       })
     ).toBe("plain");
+  });
+});
+
+describe("isSupportedSensitiveRequestProperty", () => {
+  it("accepts the Authorization header, body properties and custom x- headers", () => {
+    for (const property of [
+      "headers.authorization",
+      "headers.authorization.bearer",
+      "headers.x-api-key",
+      "headers.X-Api-Key",
+      "body.client_id",
+    ]) {
+      expect(isSupportedSensitiveRequestProperty(property)).toBe(true);
+    }
+  });
+
+  it("rejects headers CasualOS proxies won't set", () => {
+    for (const property of [
+      "headers.host",
+      "headers.content-type",
+      "headers.x-",
+      "headers.x-api key",
+      "headers.x-real-ip",
+      "headers.X-Forwarded-For",
+      "headers.x-amzn-trace-id",
+      "body.",
+    ]) {
+      expect(isSupportedSensitiveRequestProperty(property)).toBe(false);
+    }
   });
 });

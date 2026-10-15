@@ -488,7 +488,7 @@ describe("Sidebar self avatar", () => {
       ".sb-sidebar-self-avatar .sb-tab-user-icon-has-image"
     ) as HTMLElement | null;
     expect(image).not.toBeNull();
-    expect(image?.style.backgroundImage).toContain(
+    expect(image?.querySelector("img")?.getAttribute("src")).toBe(
       "https://example.com/ada.png"
     );
     expect(
@@ -532,7 +532,7 @@ describe("Sidebar self avatar", () => {
     const image = container.querySelector(
       ".sb-sidebar-self-avatar .sb-tab-user-icon-has-image"
     ) as HTMLElement | null;
-    expect(image?.style.backgroundImage).toContain(
+    expect(image?.querySelector("img")?.getAttribute("src")).toBe(
       "https://example.com/ada.png"
     );
     expect(

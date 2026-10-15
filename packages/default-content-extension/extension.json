@@ -7,6 +7,462 @@
       "description": "Discover content selected by the Seed Bible authors.",
       "content-by-author": "By {{author}}",
       "content-watch-link": "Watch"
+    },
+    "af": {
+      "title": "Saad Bybel Standaard Inhoud",
+      "description": "Ontdek inhoud wat deur die Seed Bible-outeurs gekies is.",
+      "content-by-author": "Deur {{author}}",
+      "content-watch-link": "Kyk"
+    },
+    "am": {
+      "title": "የዘር መጽሐፍ ቅዱስ ነባሪ ይዘት",
+      "description": "በዘይድ የመጽሐፍ ቅዱስ ደራሲዎች የተመረጡ ይዘቶችን ያግኙ።",
+      "content-by-author": "በ {{author}}",
+      "content-watch-link": "ይመልከቱ"
+    },
+    "ar": {
+      "title": "المحتوى الافتراضي لكتاب البذور المقدس",
+      "description": "اكتشف المحتوى الذي اختاره مؤلفو كتاب \"سيد بايبل\".",
+      "content-by-author": "بقلم {{author}}",
+      "content-watch-link": "يشاهد"
+    },
+    "az": {
+      "title": "Toxum Müqəddəs Kitabının Standart Məzmunu",
+      "description": "Toxum Müqəddəs Kitabının müəllifləri tərəfindən seçilmiş məzmunu kəşf edin.",
+      "content-by-author": "{{author}} tərəfindən",
+      "content-watch-link": "Saat"
+    },
+    "be": {
+      "title": "Змест Бібліі па змаўчанні",
+      "description": "Адкрыйце для сябе кантэнт, адабраны аўтарамі Бібліі Насенне.",
+      "content-by-author": "Аўтар: {{author}}",
+      "content-watch-link": "Глядзець"
+    },
+    "bg": {
+      "title": "Съдържание по подразбиране в Библията за семена",
+      "description": "Открийте съдържание, подбрано от авторите на Библията на семената.",
+      "content-by-author": "От {{author}}",
+      "content-watch-link": "Гледайте"
+    },
+    "bn": {
+      "title": "বীজ বাইবেল ডিফল্ট বিষয়বস্তু",
+      "description": "সীড বাইবেলের লেখকদের দ্বারা নির্বাচিত বিষয়বস্তু আবিষ্কার করুন।",
+      "content-by-author": "{{author}}",
+      "content-watch-link": "দেখুন"
+    },
+    "bs": {
+      "title": "Zadani sadržaj Biblije sjemena",
+      "description": "Otkrijte sadržaj koji su odabrali autori Seed Bible.",
+      "content-by-author": "Od {{author}}",
+      "content-watch-link": "Gledajte"
+    },
+    "ca": {
+      "title": "Contingut per defecte de la Bíblia de llavors",
+      "description": "Descobreix contingut seleccionat pels autors de la Bíblia de les Llavors.",
+      "content-by-author": "Per {{author}}",
+      "content-watch-link": "Mira"
+    },
+    "cs": {
+      "title": "Výchozí obsah Bible semen",
+      "description": "Objevte obsah vybraný autory Seed Bible.",
+      "content-by-author": "Od autora {{author}}",
+      "content-watch-link": "Hodinky"
+    },
+    "cy": {
+      "title": "Cynnwys Diofyn Beibl Hadau",
+      "description": "Darganfyddwch gynnwys a ddewiswyd gan awduron y Beibl Seed.",
+      "content-by-author": "Gan {{author}}",
+      "content-watch-link": "Gwylio"
+    },
+    "da": {
+      "title": "Standardindhold fra Seed Bible",
+      "description": "Opdag indhold udvalgt af forfatterne af Seed Bible.",
+      "content-by-author": "Af {{author}}",
+      "content-watch-link": "Ur"
+    },
+    "de": {
+      "title": "Standardinhalt der Seed Bible",
+      "description": "Entdecken Sie von den Autoren der Seed Bible ausgewählte Inhalte.",
+      "content-by-author": "Von {{author}}",
+      "content-watch-link": "Betrachten"
+    },
+    "el": {
+      "title": "Προεπιλεγμένο περιεχόμενο της Βίβλου Seed",
+      "description": "Ανακαλύψτε περιεχόμενο που επιλέχθηκε από τους συγγραφείς της Βίβλου των Σπόρων.",
+      "content-by-author": "Από {{author}}",
+      "content-watch-link": "Ρολόι"
+    },
+    "es": {
+      "title": "Contenido predeterminado de la Biblia Semilla",
+      "description": "Descubre contenido seleccionado por los autores de Seed Bible.",
+      "content-by-author": "Por {{author}}",
+      "content-watch-link": "Mirar"
+    },
+    "et": {
+      "title": "Seemne Piibli vaikesisu",
+      "description": "Avasta Seed Bible'i autorite valitud sisu.",
+      "content-by-author": "Autori {{author}} poolt",
+      "content-watch-link": "Vaata"
+    },
+    "fa": {
+      "title": "محتوای پیش‌فرض کتاب مقدس سید",
+      "description": "محتوای انتخاب شده توسط نویسندگان کتاب مقدس Seed را کشف کنید.",
+      "content-by-author": "توسط {{author}}",
+      "content-watch-link": "تماشا کنید"
+    },
+    "fi": {
+      "title": "Seed Biblen oletussisältö",
+      "description": "Tutustu Seed Bible -kirjoittajien valitsemaan sisältöön.",
+      "content-by-author": "Kirjoittaja {{author}}",
+      "content-watch-link": "Katsella"
+    },
+    "fil": {
+      "title": "Default na Nilalaman ng Bibliya ng Binhi",
+      "description": "Tuklasin ang nilalamang pinili ng mga may-akda ng Seed Bible.",
+      "content-by-author": "Ni {{author}}",
+      "content-watch-link": "Panoorin"
+    },
+    "fr": {
+      "title": "Contenu par défaut de la Bible Seed",
+      "description": "Découvrez des contenus sélectionnés par les auteurs de la Seed Bible.",
+      "content-by-author": "Par {{author}}",
+      "content-watch-link": "Montre"
+    },
+    "fy": {
+      "title": "Standert ynhâld fan Seed Bible",
+      "description": "Untdek ynhâld selektearre troch de auteurs fan 'e Seed Bible.",
+      "content-by-author": "Troch {{author}}",
+      "content-watch-link": "Horloazje"
+    },
+    "gl": {
+      "title": "Contido predeterminado da Biblia de sementes",
+      "description": "Descubre contido seleccionado polos autores da Biblia das Sementes.",
+      "content-by-author": "Por {{author}}",
+      "content-watch-link": "Reloxo"
+    },
+    "gn": {
+      "title": "Semilla Contenido Bíblico Por Defecto",
+      "description": "Eikuaa umi contenido oiporavóva umi Seed Bible apohare.",
+      "content-by-author": "{{author}} rembiapokue.",
+      "content-watch-link": "Reloj"
+    },
+    "gu": {
+      "title": "બીજ બાઇબલ ડિફોલ્ટ સામગ્રી",
+      "description": "સીડ બાઇબલ લેખકો દ્વારા પસંદ કરાયેલ સામગ્રી શોધો.",
+      "content-by-author": "{{author}} દ્વારા",
+      "content-watch-link": "વોચ"
+    },
+    "he": {
+      "title": "תוכן ברירת מחדל של Seed Bible",
+      "description": "גלו תוכן שנבחר על ידי מחברי תנ\"ך הזרעים.",
+      "content-by-author": "מאת {{author}}",
+      "content-watch-link": "לִצְפּוֹת"
+    },
+    "hi": {
+      "title": "सीड्स बाइबल डिफ़ॉल्ट सामग्री",
+      "description": "सीड बाइबल के लेखकों द्वारा चयनित सामग्री को देखें।",
+      "content-by-author": "{{author}} द्वारा",
+      "content-watch-link": "घड़ी"
+    },
+    "hr": {
+      "title": "Zadani sadržaj Biblije sjemena",
+      "description": "Otkrijte sadržaj koji su odabrali autori Seed Bible.",
+      "content-by-author": "Od {{author}}",
+      "content-watch-link": "Gledati"
+    },
+    "hu": {
+      "title": "Seed Bible alapértelmezett tartalma",
+      "description": "Fedezze fel a Seed Bible szerzői által válogatott tartalmakat.",
+      "content-by-author": "{{author}} által",
+      "content-watch-link": "Óra"
+    },
+    "ind": {
+      "title": "Konten Default Alkitab Benih",
+      "description": "Temukan konten yang dipilih oleh para penulis Seed Bible.",
+      "content-by-author": "Oleh {{author}}",
+      "content-watch-link": "Jam tangan"
+    },
+    "is": {
+      "title": "Sjálfgefið efni Seed Bible",
+      "description": "Uppgötvaðu efni sem höfundar Seed Bible hafa valið.",
+      "content-by-author": "Eftir {{author}}",
+      "content-watch-link": "Horfa"
+    },
+    "it": {
+      "title": "Contenuto predefinito della Seed Bible",
+      "description": "Scopri i contenuti selezionati dagli autori di Seed Bible.",
+      "content-by-author": "Di {{author}}",
+      "content-watch-link": "Orologio"
+    },
+    "iw": {
+      "title": "תוכן ברירת מחדל של Seed Bible",
+      "description": "גלו תוכן שנבחר על ידי מחברי תנ\"ך הזרעים.",
+      "content-by-author": "מאת {{author}}",
+      "content-watch-link": "לִצְפּוֹת"
+    },
+    "ja": {
+      "title": "シードバイブルのデフォルトコンテンツ",
+      "description": "シードバイブルの著者たちが厳選したコンテンツをご覧ください。",
+      "content-by-author": "著者： {{author}}",
+      "content-watch-link": "時計"
+    },
+    "ka": {
+      "title": "ბიბლიის საწყისი შინაარსი",
+      "description": "აღმოაჩინეთ Seed Bible-ის ავტორების მიერ შერჩეული კონტენტი.",
+      "content-by-author": "ავტორი {{author}}",
+      "content-watch-link": "ყურება"
+    },
+    "km": {
+      "title": "ខ្លឹមសារលំនាំដើមនៃព្រះគម្ពីរគ្រាប់ពូជ",
+      "description": "ស្វែងរកខ្លឹមសារដែលបានជ្រើសរើសដោយអ្នកនិពន្ធ Seed Bible។",
+      "content-by-author": "ដោយ {{author}}",
+      "content-watch-link": "មើល"
+    },
+    "kn": {
+      "title": "ಬೀಜ ಬೈಬಲ್ ಡೀಫಾಲ್ಟ್ ವಿಷಯ",
+      "description": "ಸೀಡ್ ಬೈಬಲ್ ಲೇಖಕರು ಆಯ್ಕೆ ಮಾಡಿದ ವಿಷಯವನ್ನು ಅನ್ವೇಷಿಸಿ.",
+      "content-by-author": "{{author}} ಅವರಿಂದ",
+      "content-watch-link": "ವೀಕ್ಷಿಸಿ"
+    },
+    "ko": {
+      "title": "시드 바이블 기본 콘텐츠",
+      "description": "Seed Bible 저자들이 엄선한 콘텐츠를 살펴보세요.",
+      "content-by-author": "{{author}} 님이 작성함",
+      "content-watch-link": "보다"
+    },
+    "ky": {
+      "title": "Ыйык Китептеги үрөндөрдүн демейки мазмуну",
+      "description": "Seed Bible авторлору тарабынан тандалган мазмунду табыңыз.",
+      "content-by-author": "Автор: {{author}}",
+      "content-watch-link": "Саат"
+    },
+    "ln": {
+      "title": "Momboto Makambo oyo ezali na kati ya Biblia",
+      "description": "Boluka makambo oyo bakomi ya Biblia ya Momboto baponaki.",
+      "content-by-author": "Na {{author}}",
+      "content-watch-link": "Kotala"
+    },
+    "lo": {
+      "title": "ເນື້ອໃນເລີ່ມຕົ້ນຂອງ Seed Bible",
+      "description": "ຄົ້ນພົບເນື້ອຫາທີ່ເລືອກໂດຍຜູ້ຂຽນ Seed Bible.",
+      "content-by-author": "ໂດຍ {{author}}",
+      "content-watch-link": "ເບິ່ງ"
+    },
+    "lt": {
+      "title": "Sėklų Biblijos numatytasis turinys",
+      "description": "Atraskite „Seed Bible“ autorių atrinktą turinį.",
+      "content-by-author": "Autorius {{author}}",
+      "content-watch-link": "Žiūrėti"
+    },
+    "lv": {
+      "title": "Sēklu Bībeles noklusējuma saturs",
+      "description": "Atklājiet saturu, ko atlasījuši Seed Bible autori.",
+      "content-by-author": "Autors: {{author}}",
+      "content-watch-link": "Skatīties"
+    },
+    "mk": {
+      "title": "Стандардна содржина на Библијата Seed",
+      "description": "Откријте содржина избрана од авторите на Seed Bible.",
+      "content-by-author": "Од {{author}}",
+      "content-watch-link": "Гледајте"
+    },
+    "ml": {
+      "title": "സീഡ് ബൈബിൾ ഡിഫോൾട്ട് ഉള്ളടക്കം",
+      "description": "സീഡ് ബൈബിൾ രചയിതാക്കൾ തിരഞ്ഞെടുത്ത ഉള്ളടക്കം കണ്ടെത്തുക.",
+      "content-by-author": "{{author}} എഴുതിയത്",
+      "content-watch-link": "കാവൽ"
+    },
+    "mn": {
+      "title": "Үрийн Библийн Анхдагч Агуулга",
+      "description": "Үрийн Библийн зохиогчдын сонгосон контентыг нээж илрүүл.",
+      "content-by-author": "Зохиогч: {{author}}",
+      "content-watch-link": "Цаг"
+    },
+    "mr": {
+      "title": "सीड बायबल डीफॉल्ट सामग्री",
+      "description": "सीड बायबलच्या लेखकांनी निवडलेली सामग्री शोधा.",
+      "content-by-author": "{{author}}",
+      "content-watch-link": "पहा"
+    },
+    "ms": {
+      "title": "Kandungan Lalai Bible Benih",
+      "description": "Temui kandungan yang dipilih oleh penulis Seed Bible.",
+      "content-by-author": "Oleh {{author}}",
+      "content-watch-link": "Tonton"
+    },
+    "my": {
+      "title": "မျိုးစေ့သမ္မာကျမ်းစာ မူရင်းအကြောင်းအရာ",
+      "description": "Seed Bible စာရေးသူများမှ ရွေးချယ်ထားသော အကြောင်းအရာများကို ရှာဖွေပါ။",
+      "content-by-author": "{{author}}",
+      "content-watch-link": "ကြည့်ရှုပါ"
+    },
+    "nb": {
+      "title": "Standardinnhold fra Seed Bible",
+      "description": "Oppdag innhold valgt ut av forfatterne av Seed Bible.",
+      "content-by-author": "Av {{author}}",
+      "content-watch-link": "Klokke"
+    },
+    "ne": {
+      "title": "बीज बाइबल पूर्वनिर्धारित सामग्री",
+      "description": "सिड बाइबल लेखकहरूद्वारा चयन गरिएको सामग्री पत्ता लगाउनुहोस्।",
+      "content-by-author": "{{author}} द्वारा",
+      "content-watch-link": "हेर्नुहोस्"
+    },
+    "nl": {
+      "title": "Standaardinhoud van de Seed Bible",
+      "description": "Ontdek de inhoud die is geselecteerd door de auteurs van de Seed Bible.",
+      "content-by-author": "Door {{author}}",
+      "content-watch-link": "Horloge"
+    },
+    "no": {
+      "title": "Standardinnhold fra Seed Bible",
+      "description": "Oppdag innhold valgt ut av forfatterne av Seed Bible.",
+      "content-by-author": "Av {{author}}",
+      "content-watch-link": "Klokke"
+    },
+    "pa": {
+      "title": "ਸੀਡ ਬਾਈਬਲ ਡਿਫਾਲਟ ਸਮੱਗਰੀ",
+      "description": "ਸੀਡ ਬਾਈਬਲ ਲੇਖਕਾਂ ਦੁਆਰਾ ਚੁਣੀ ਗਈ ਸਮੱਗਰੀ ਦੀ ਖੋਜ ਕਰੋ।",
+      "content-by-author": "{{author}} ਦੁਆਰਾ",
+      "content-watch-link": "ਦੇਖੋ"
+    },
+    "pl": {
+      "title": "Domyślna treść Biblii Nasion",
+      "description": "Odkryj treści wybrane przez autorów Seed Bible.",
+      "content-by-author": "Przez {{author}}",
+      "content-watch-link": "Oglądać"
+    },
+    "ps": {
+      "title": "د سیډ بائبل ډیفالټ مینځپانګه",
+      "description": "د سیډ بائبل لیکوالانو لخوا غوره شوي مینځپانګې ومومئ.",
+      "content-by-author": "د {{author}} لخوا",
+      "content-watch-link": "وګوره"
+    },
+    "pt": {
+      "title": "Conteúdo padrão da Bíblia Semente",
+      "description": "Descubra conteúdo selecionado pelos autores da Bíblia Semente.",
+      "content-by-author": "Por {{author}}",
+      "content-watch-link": "Assistir"
+    },
+    "ro": {
+      "title": "Conținut implicit al Bibliei Semințelor",
+      "description": "Descoperă conținut selectat de autorii Bibliei Semințelor.",
+      "content-by-author": "De {{author}}",
+      "content-watch-link": "Ceas"
+    },
+    "ru": {
+      "title": "Содержимое по умолчанию Seed Bible",
+      "description": "Ознакомьтесь с материалами, отобранными авторами проекта Seed Bible.",
+      "content-by-author": "Автор: {{author}}",
+      "content-watch-link": "Смотреть"
+    },
+    "sk": {
+      "title": "Predvolený obsah Seed Bible",
+      "description": "Objavte obsah vybraný autormi Seed Bible.",
+      "content-by-author": "Od {{author}}",
+      "content-watch-link": "Sledujte"
+    },
+    "sl": {
+      "title": "Privzeta vsebina Biblije semen",
+      "description": "Odkrijte vsebino, ki so jo izbrali avtorji Seed Bible.",
+      "content-by-author": "Avtor: {{author}}",
+      "content-watch-link": "Ura"
+    },
+    "sq": {
+      "title": "Përmbajtja e parazgjedhur e Biblës së Farërave",
+      "description": "Zbuloni përmbajtje të përzgjedhur nga autorët e Biblës Seed.",
+      "content-by-author": "Nga {{author}}",
+      "content-watch-link": "Shiko"
+    },
+    "sv": {
+      "title": "Standardinnehåll för Seed Bible",
+      "description": "Upptäck innehåll utvalt av författarna till Seed Bible.",
+      "content-by-author": "Av {{author}}",
+      "content-watch-link": "Titta"
+    },
+    "sw": {
+      "title": "Maudhui ya Biblia ya Mbegu Chaguo-msingi",
+      "description": "Gundua maudhui yaliyochaguliwa na waandishi wa Biblia ya Mbegu.",
+      "content-by-author": "Na {{author}}",
+      "content-watch-link": "Tazama"
+    },
+    "ta": {
+      "title": "விதை பைபிள் இயல்புநிலை உள்ளடக்கம்",
+      "description": "சீட் பைபிள் ஆசிரியர்களால் தேர்ந்தெடுக்கப்பட்ட உள்ளடக்கத்தைக் கண்டறியுங்கள்.",
+      "content-by-author": "{{author}}",
+      "content-watch-link": "பாருங்கள்"
+    },
+    "te": {
+      "title": "సీడ్ బైబిల్ డిఫాల్ట్ కంటెంట్",
+      "description": "సీడ్ బైబిల్ రచయితలు ఎంపిక చేసిన కంటెంట్‌ను కనుగొనండి.",
+      "content-by-author": "{{author}} ద్వారా",
+      "content-watch-link": "చూడండి"
+    },
+    "th": {
+      "title": "เนื้อหาเริ่มต้นของ Seed Bible",
+      "description": "ค้นพบเนื้อหาที่คัดสรรโดยผู้เขียนพระคัมภีร์ฉบับ Seed Bible",
+      "content-by-author": "โดย {{author}}",
+      "content-watch-link": "ดู"
+    },
+    "ti": {
+      "title": "ዘርኢ መጽሓፍ ቅዱስ ነባሪ ትሕዝቶ",
+      "description": "ብጸሓፍቲ መጽሓፍ ቅዱስ ዘርኢ ዝተመርጸ ትሕዝቶ ርኸብ።",
+      "content-by-author": "ብ {{author}}",
+      "content-watch-link": "ተመልከት"
+    },
+    "tl": {
+      "title": "Default na Nilalaman ng Bibliya ng Binhi",
+      "description": "Tuklasin ang nilalamang pinili ng mga may-akda ng Seed Bible.",
+      "content-by-author": "Ni {{author}}",
+      "content-watch-link": "Panoorin"
+    },
+    "tr": {
+      "title": "Tohum İncili Varsayılan İçeriği",
+      "description": "Seed Bible yazarları tarafından seçilen içerikleri keşfedin.",
+      "content-by-author": "Yazar: {{author}}",
+      "content-watch-link": "Kol saati"
+    },
+    "ug": {
+      "title": "ئۇرۇق ئىنجىلنىڭ ئۆزلۈكىدىن يېزىلغان مەزمۇنى",
+      "description": "ئۇرۇق ئىنجىل ئاپتورلىرى تاللىغان مەزمۇنلارنى بايقاڭ.",
+      "content-by-author": "{{author}} تەرىپىدىن",
+      "content-watch-link": "سائەت"
+    },
+    "uk": {
+      "title": "Стандартний вміст Біблії насіння",
+      "description": "Відкрийте для себе контент, відібраний авторами Біблії Насіннєвого Заповідника.",
+      "content-by-author": "Автор: {{author}}",
+      "content-watch-link": "Дивитися"
+    },
+    "ur": {
+      "title": "بیج بائبل ڈیفالٹ مواد",
+      "description": "سیڈ بائبل مصنفین کے ذریعہ منتخب کردہ مواد کو دریافت کریں۔",
+      "content-by-author": "بذریعہ {{author}}",
+      "content-watch-link": "دیکھو"
+    },
+    "uz": {
+      "title": "Muqaddas Kitobning standart tarkibi",
+      "description": "Seed Bible mualliflari tomonidan tanlangan kontentni kashf eting.",
+      "content-by-author": "{{author}} tomonidan",
+      "content-watch-link": "Soat"
+    },
+    "vi": {
+      "title": "Nội dung mặc định của Seed Bible",
+      "description": "Khám phá nội dung được chọn lọc bởi các tác giả của Seed Bible.",
+      "content-by-author": "Bởi {{author}}",
+      "content-watch-link": "Đồng hồ"
+    },
+    "zh": {
+      "title": "种子圣经默认内容",
+      "description": "探索由《种子圣经》作者精选的内容。",
+      "content-by-author": "作者： {{author}}",
+      "content-watch-link": "手表"
+    },
+    "zu": {
+      "title": "Okuqukethwe Okuzenzakalelayo kwe-Seed Bible",
+      "description": "Thola okuqukethwe okukhethwe abalobi beBhayibheli iMbewu.",
+      "content-by-author": "Ngu {{author}}",
+      "content-watch-link": "Buka"
     }
   }
 }

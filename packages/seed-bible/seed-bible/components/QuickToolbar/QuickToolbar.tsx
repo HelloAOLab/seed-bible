@@ -12,6 +12,8 @@ import type { AnnotationsManager } from "../../managers/AnnotationsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
+import type { SettingsManager } from "../../managers";
+import type { ReadingPlansManager } from "../../managers/ReadingPlansManager";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;
@@ -19,6 +21,7 @@ interface QuickToolbarProps {
   playlists: PlaylistManager;
   annotations: AnnotationsManager;
   features: FeaturesManager;
+  settings: SettingsManager;
   /** Extra class for layout differences (e.g. desktop vs mobile header). */
   className?: string;
   /** Shared session for the current reader surface, if any. Used by Share. */
@@ -26,6 +29,7 @@ interface QuickToolbarProps {
   toast?: (message: string) => void;
   modals?: ModalManager;
   app?: AppState;
+  readingPlans: ReadingPlansManager;
 }
 
 /**
@@ -36,7 +40,8 @@ interface QuickToolbarProps {
  * no quick tool is currently visible.
  */
 export function QuickToolbar(props: QuickToolbarProps) {
-  const { toolsManager, readingState, playlists } = props;
+  const { toolsManager, readingState, playlists, readingPlans, settings } =
+    props;
   const { t } = useI18n();
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
 
@@ -50,6 +55,8 @@ export function QuickToolbar(props: QuickToolbarProps) {
     toast: props.toast,
     modals: props.modals,
     app: props.app,
+    settings,
+    readingPlans,
   });
   const visibleTools = tools.filter((tool) => tool.visible.value);
 

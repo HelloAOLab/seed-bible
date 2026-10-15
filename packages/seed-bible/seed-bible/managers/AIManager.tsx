@@ -3,6 +3,16 @@ import type { ZodStandardJSONSchemaPayload } from "zod/v4/core";
 import type { PlaylistItemData } from "./PlaylistManager";
 import { getBookId, type BookId } from "./BibleDataManager";
 
+/**
+ * Which chat and which AI invoked a tool. Core tools are shared by every
+ * chat, so a tool that posts into a conversation has to be told which one
+ * called it instead of guessing from the chat the user has selected.
+ */
+export interface AIToolCallContext {
+  chatId?: string;
+  providerId?: string;
+}
+
 export interface AIProviderFunctionTool {
   name: string;
   type: "function";
@@ -12,9 +22,10 @@ export interface AIProviderFunctionTool {
   /**
    * The function that should be called by the AI provider if the AI model chooses to call this tool.
    * @param args The arguments to provide to the function.
+   * @param context The chat and provider that invoked the tool, when the caller knows them.
    * @returns A promise that resolves with the result of the function call.
    */
-  function: (args: unknown) => Promise<unknown>;
+  function: (args: unknown, context?: AIToolCallContext) => Promise<unknown>;
 }
 
 export interface AIProviderGenerateOptions {
@@ -172,19 +183,19 @@ export function generateFunctionTool<T>(options: {
   name: string;
   description: string;
   parameters: ZodSchema<T>;
-  function: (args: T) => Promise<unknown>;
+  function: (args: T, context?: AIToolCallContext) => Promise<unknown>;
 }): { tool: AIProviderFunctionTool; schema: ZodSchema<T> } {
   const tool: AIProviderFunctionTool = {
     name: options.name,
     type: "function",
     description: options.description,
     parameters: options.parameters.toJSONSchema({ io: "input" }),
-    function: (args: unknown) => {
+    function: (args: unknown, context?: AIToolCallContext) => {
       const result = options.parameters.safeParse(args);
       if (!result.success) {
         return Promise.reject(result.error);
       }
-      return options.function(result.data);
+      return options.function(result.data, context);
     },
   };
   return {

@@ -255,6 +255,9 @@ describe("createTutorialManager — skip flow", () => {
     expect(tutorial.running.value).toBe(false);
     expect(tutorial.skipPromptVisible.value).toBe(true);
     expect(tutorial.optedOut.value).toBe(false);
+    // A contextual tip is not the introduction tour. Skipping it must not
+    // quiet the install prompt that follows the introduction.
+    expect(tutorial.leftIntroductionEarly.value).toBe(false);
   });
 
   it("keepTutorials() dismisses the prompt and leaves future tutorials enabled", () => {
@@ -298,10 +301,86 @@ describe("createTutorialManager — skip flow", () => {
 
     expect(tutorial.skipPromptVisible.value).toBe(false);
     expect(tutorial.optedOut.value).toBe(true);
+    expect(tutorial.leftIntroductionEarly.value).toBe(false);
 
     // Opted out — a different contextual tutorial no longer pops.
     tutorial.startContextual("pane-layout");
     expect(tutorial.running.value).toBe(false);
+  });
+});
+
+describe("createTutorialManager — leaving the introduction early", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  function createTutorial() {
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar()
+    );
+    tutorial.hydrateStoredFlags();
+    tutorial.armAutoStart();
+    return tutorial;
+  }
+
+  it("records No thanks without treating a finished tour the same way", () => {
+    const tutorial = createTutorial();
+
+    expect(tutorial.promptVisible.value).toBe(true);
+    tutorial.dismissPrompt();
+
+    expect(tutorial.promptVisible.value).toBe(false);
+    expect(tutorial.running.value).toBe(false);
+    expect(tutorial.completed.value).toBe(true);
+    expect(tutorial.leftIntroductionEarly.value).toBe(true);
+  });
+
+  it("records leaving the introduction tour before the end", () => {
+    const tutorial = createTutorial();
+    tutorial.acceptPrompt();
+    expect(tutorial.running.value).toBe(true);
+
+    tutorial.skip();
+
+    expect(tutorial.running.value).toBe(false);
+    expect(tutorial.skipPromptVisible.value).toBe(true);
+    expect(tutorial.leftIntroductionEarly.value).toBe(true);
+
+    // Closing "Turn off tutorials?" does not undo the early exit.
+    tutorial.keepTutorials();
+    expect(tutorial.skipPromptVisible.value).toBe(false);
+    expect(tutorial.leftIntroductionEarly.value).toBe(true);
+  });
+
+  it("records opting out while the introduction tour is still open", () => {
+    const tutorial = createTutorial();
+    tutorial.start();
+
+    tutorial.optOut();
+
+    expect(tutorial.running.value).toBe(false);
+    expect(tutorial.optedOut.value).toBe(true);
+    expect(tutorial.leftIntroductionEarly.value).toBe(true);
+  });
+
+  it("does not record finishing the introduction tour", () => {
+    const tutorial = createTutorial();
+    tutorial.acceptPrompt();
+
+    let guard = 0;
+    while (tutorial.running.value && guard < 30) {
+      tutorial.next();
+      guard += 1;
+    }
+
+    expect(tutorial.running.value).toBe(false);
+    expect(tutorial.completed.value).toBe(true);
+    expect(tutorial.leftIntroductionEarly.value).toBe(false);
   });
 });
 

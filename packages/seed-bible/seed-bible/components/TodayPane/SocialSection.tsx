@@ -34,7 +34,7 @@ import type {
   TodayManager,
   TodayPassageTarget,
 } from "../../managers/TodayManager";
-import { trimmedOrNull } from "../../managers/Utils";
+import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 
 const TIMESPAN_OPTION_IDS = ["twoDays", "week", "month", "all"] as const;
 
@@ -52,14 +52,24 @@ export const SocialSection = (props: {
   const userId = props.login.userId.value;
   const profile = props.login.profile.value;
 
-  // The reader list is the signed-in user alone until subscriptions exist.
+  // Read during render on purpose: reading the signal subscribes this
+  // component, so gaining or losing a friend re-renders the section.
+  const friendReaders = props.today.friendReaders.value;
+  // Keyed on content rather than the array's identity, so the map below (and
+  // the filters effect that stores a new Map whenever it changes) only re-runs
+  // when a reader actually joins, leaves, or changes name or picture.
+  const friendsKey = friendReaders
+    .map((f) => `${f.userId}\u0000${f.name ?? ""}\u0000${f.pictureUrl ?? ""}`)
+    .join("\u0001");
+
+  // The reader list: the signed-in user, then their friends.
   // Derived rather than held in state: every input is already to hand during
-  // render, so the effect that used to write it only made the map lag a
-  // render behind its own inputs.
+  // render, so an effect writing it would only make the map lag a render
+  // behind its own inputs.
   const userProfileMap = useMemo(() => {
     if (!userId) return new Map<string, SocialSectionUserProfile>();
     const visual = getUserAnimalVisual(userId);
-    return new Map<string, SocialSectionUserProfile>([
+    const map = new Map<string, SocialSectionUserProfile>([
       [
         userId,
         {
@@ -72,7 +82,18 @@ export const SocialSection = (props: {
         },
       ],
     ]);
-  }, [userId, profile?.name, profile?.pictureUrl, t]);
+    for (const friend of friendReaders) {
+      if (map.has(friend.userId)) continue;
+      const friendVisual = getUserAnimalVisual(friend.userId);
+      map.set(friend.userId, {
+        name: displayNameOf(friend, t),
+        pictureUrl: friend.pictureUrl,
+        color: friendVisual.color,
+        icon: friendVisual.defaultIcon,
+      });
+    }
+    return map;
+  }, [userId, profile?.name, profile?.pictureUrl, friendsKey, t]);
 
   const initialOption = useMemo(() => buildTimespanOptions().twoDays, []);
   const year = useSignal<number>(initialOption.year);
