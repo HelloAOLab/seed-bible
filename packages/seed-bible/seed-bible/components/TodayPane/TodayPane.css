@@ -244,8 +244,7 @@
    this replaced also caught search-result verse text and the resume card's
    reference, which a reader has every reason to want to copy. */
 .sb-today-container .sb-today-bookmarks-section-container,
-.sb-today-container .sb-today-timespan-filter-container,
-.sb-today-container .sb-today-user-filter-container,
+.sb-today-container .sb-today-feed-kind-filter,
 .sb-today-container .reading-history-timeline-container,
 .sb-today-content button {
   user-select: none;
@@ -573,116 +572,95 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
 }
 
-.sb-today-container .sb-today-section-card {
-  padding: 0.75rem 1rem;
-  border: solid 1px var(--sb-divider-color);
+.sb-today-container .sb-today-feed-card {
   width: 100%;
-  border-radius: 0.5rem;
-}
-
-.sb-today-container .sb-today-history-card {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto;
-  gap: 0.5rem;
-}
-
-.sb-today-container .sb-today-history-card .sb-today-user-filter-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  position: relative;
-  height: max-content;
-  color: var(--sb-font-color);
-}
-
-.sb-today-container
-  .sb-today-history-card
-  .sb-today-user-filter-container
-  .sb-today-user-filter-label {
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
-  font-weight: 500;
-}
-
-.sb-today-container
-  .sb-today-history-card
-  .sb-today-user-filter-container
-  .sb-today-user-filter-options {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  left: 0;
-  width: auto;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  overflow-y: scroll;
-  max-height: 7.5rem;
-  scrollbar-width: none;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  box-shadow: 0 0 12px 0 #00000038;
-  z-index: 10;
-  border-radius: 0.25rem;
-  cursor: default;
-  background-color: var(--sb-reader-background);
+  align-items: stretch;
+  gap: 0.75rem;
 }
 
-.sb-today-container .sb-today-history-card .sb-today-date-label {
-  color: var(--sb-font-color);
-}
-
-.sb-today-container .sb-today-user-filter-option {
-  white-space: nowrap;
-  padding: 0.25rem 0.5rem;
-  border-radius: 1.5625rem;
+/* The kind pills and the history button share one row. The pills take the
+   free width and scroll; the button stays put at the end. */
+.sb-today-container .sb-today-feed-card .sb-today-feed-toolbar {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 0.25rem;
-  border: solid 1px var(--sb-divider-color);
-  background-color: var(--sb-tertiary-color);
-  color: var(--sb-font-color);
-  width: auto;
-  font-size: 0.75rem;
-}
-
-.sb-today-container .sb-today-user-filter-option > div {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 50%;
+  gap: 0.75rem;
 }
 
 .sb-today-container
-  .sb-today-user-filter-option.sb-today-user-filter-option-selected {
-  background-color: var(--sb-secondary-color);
-  border-color: var(--sb-primary-color);
-  color: var(--sb-secondary-font-color);
+  .sb-today-feed-card
+  .sb-today-feed-toolbar
+  > .sb-today-feed-kind-filter {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.sb-today-container .sb-today-history-card .sb-today-timespan-filter-container {
-  width: 100%;
-  height: auto;
+/* A bare icon, unlike the pills: no background, and the accent colour while
+   history is open. */
+.sb-today-container .sb-today-feed-card .sb-today-feed-history-button {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.sb-today-container .sb-today-feed-card .sb-today-feed-history-button:hover,
+.sb-today-container
+  .sb-today-feed-card
+  .sb-today-feed-history-button.sb-today-feed-history-button-selected {
+  color: var(--sb-primary-color);
+}
+
+.sb-today-container
+  .sb-today-feed-card
+  .sb-today-feed-history-button
+  > .material-symbols-outlined {
+  font-size: 1.5rem;
+}
+
+.sb-today-container .sb-today-feed-card .sb-today-feed-kind-filter {
+  --sb-today-feed-fade-left: 0px;
+  --sb-today-feed-fade-right: 0px;
   display: flex;
   flex-wrap: nowrap;
-  justify-content: safe flex-end;
   align-items: center;
   gap: 0.5rem;
   overflow-x: scroll;
   scrollbar-width: none;
-  padding: 0 0.5rem;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    black var(--sb-today-feed-fade-left),
+    black calc(100% - var(--sb-today-feed-fade-right)),
+    transparent 100%
+  );
+}
+
+/* Each edge fades only while pills are hidden past it (`useScrollEdgeFade`). */
+.sb-today-container
+  .sb-today-feed-card
+  .sb-today-feed-kind-filter[data-fade-left] {
+  --sb-today-feed-fade-left: 0.5rem;
 }
 
 .sb-today-container
-  .sb-today-history-card
-  .sb-today-timespan-filter-container
-  .sb-today-timespan-filter-option {
+  .sb-today-feed-card
+  .sb-today-feed-kind-filter[data-fade-right] {
+  --sb-today-feed-fade-right: 0.5rem;
+}
+
+.sb-today-container .sb-today-feed-card .sb-today-feed-kind-option {
   border: none;
   background-color: var(--sb-secondary-color);
   border-radius: 1.875rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.875rem;
   font-size: 0.75rem;
   min-width: 3.25rem;
   font-weight: 500;
@@ -690,10 +668,7 @@
   flex-shrink: 0;
 }
 
-.sb-today-container
-  .sb-today-history-card
-  .sb-today-timespan-filter-container
-  .sb-today-timespan-filter-option:hover {
+.sb-today-container .sb-today-feed-card .sb-today-feed-kind-option:hover {
   background-color: color-mix(
     in srgb,
     var(--sb-secondary-color),
@@ -702,147 +677,171 @@
 }
 
 .sb-today-container
-  .sb-today-history-card
-  .sb-today-timespan-filter-container
-  .sb-today-timespan-filter-option.sb-today-timespan-filter-option-selected {
+  .sb-today-feed-card
+  .sb-today-feed-kind-option.sb-today-feed-kind-option-selected {
   color: var(--sb-primary-font-color);
   background-color: var(--sb-primary-color);
 }
 
-.sb-today-container .sb-today-filtered-reading-container {
-  grid-column: 1 / 3;
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+.sb-today-container .sb-today-feed-card .sb-today-date-label {
+  color: var(--sb-font-color);
+  font-size: 0.8rem;
 }
 
-.sb-today-container .sb-today-filtered-reading-book {
+.sb-today-container .sb-today-feed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  border: solid 1px var(--sb-divider-color);
-  padding: 0.75rem;
-  background-color: var(--sb-reader-background);
-  border-radius: 1rem;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 0.5rem;
-  max-width: 18.875rem;
-  height: fit-content;
 }
 
-.sb-today-container .sb-today-filtered-reading-book.sb-today-expanded {
-  border-color: var(--sb-primary-color);
-}
-
-.sb-today-container
-  .sb-today-filtered-reading-book
-  > .sb-today-icons-container {
+.sb-today-container .sb-today-feed-row {
   display: flex;
   align-items: center;
-}
-
-.sb-today-container
-  .sb-today-filtered-reading-book
-  > .sb-today-chapters-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 0.25rem;
-  margin-top: 0.75rem;
-  cursor: default;
-}
-
-.sb-today-container .sb-today-filtered-reading-book > span {
-  font-weight: 600;
+  gap: 0.75rem;
+  padding: 0.875rem 0;
+  border-top: solid 1px var(--sb-divider-color);
   color: var(--sb-font-color);
 }
 
-.sb-today-container .sb-today-filtered-reading-book-icon {
+.sb-today-container .sb-today-feed-row:first-child {
+  border-top: none;
+}
+
+/* A note carries a quote under its sentence, so its row is top-aligned. Its
+   time takes the sentence's line height, so it sits level with the sentence
+   at the far end like every other row's, not halfway down the quote. */
+.sb-today-container .sb-today-feed-row.sb-today-feed-row-note {
+  align-items: flex-start;
+}
+
+.sb-today-container .sb-today-feed-row-note > .sb-today-feed-time {
+  line-height: calc(0.95rem * 1.4);
+}
+
+.sb-today-container .sb-today-feed-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+}
+
+.sb-today-container .sb-today-feed-sentence {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.sb-today-container .sb-today-feed-name {
+  font-weight: 700;
+}
+
+.sb-today-container .sb-today-feed-reference {
+  appearance: none;
+  border: none;
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  text-align: start;
+}
+
+.sb-today-container .sb-today-feed-reference:hover,
+.sb-today-container .sb-today-feed-reference:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.sb-today-container .sb-today-feed-note-text {
+  margin: 0;
+  padding-left: 0.75rem;
+  border-left: solid 2px var(--sb-divider-color);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sb-today-container .sb-today-feed-time {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--sb-today-muted-font-color);
+}
+
+.sb-today-container .sb-today-feed-empty {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--sb-today-muted-font-color);
+}
+
+/* Styled as a plain text link, like a section's "see all". */
+.sb-today-container .sb-today-feed-see-more {
+  align-self: center;
+  appearance: none;
+  border: none;
+  background-color: transparent;
+  padding: 0.25rem 0;
+  margin: 0;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+  cursor: pointer;
+}
+
+.sb-today-container .sb-today-feed-see-more:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.sb-today-container .sb-today-feed-avatars {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sb-today-container .sb-today-feed-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
   border: solid 2px var(--sb-reader-background);
-  width: 2rem;
-  height: 2rem;
   display: flex;
   justify-content: center;
   align-items: center;
   object-fit: cover;
-  border-radius: 50%;
   margin-left: -0.75rem;
+  color: #000000;
 }
 
-.sb-today-container .sb-today-filtered-reading-book-icon > span {
-  font-size: 1rem;
-}
-
-.sb-today-container .sb-today-filtered-reading-book-icon:first-child {
+.sb-today-container .sb-today-feed-avatar:first-child {
   margin-left: 0;
 }
 
-.sb-today-container .sb-today-filtered-reading-book-extra {
+.sb-today-container .sb-today-feed-avatar > span {
+  font-size: 1.125rem;
+}
+
+.sb-today-container .sb-today-feed-avatars-extra {
   margin-left: 0.25rem;
   font-weight: 600;
-}
-
-.sb-today-container .sb-today-filtered-reading-chapter {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  background-color: var(--sb-divider-color);
-  color: var(--sb-font-color);
-  border-radius: 0.125rem;
-  font-size: 0.75rem;
-  position: relative;
-}
-
-.sb-today-container
-  .sb-today-filtered-reading-chapter.sb-today-filtered-reading-chapter-highlighted {
-  background-color: var(--sb-primary-color);
-  color: var(--sb-reader-background);
-}
-
-.sb-today-container .sb-today-filtered-reading-chapter > div {
-  position: absolute;
-  display: flex;
-  top: -0.5rem;
-  left: calc(100% - 0.5rem);
-  z-index: 1;
-}
-
-.sb-today-container .sb-today-filtered-reading-chapter > div > *:first-child {
-  margin-left: 0;
-}
-
-.sb-today-container .sb-today-filtered-reading-chapter > div > * {
-  width: 1rem;
-  height: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  border: solid 1px var(--sb-reader-background);
-  margin-left: -0.75rem;
-}
-
-.sb-today-container .sb-today-filtered-reading-chapter > div > div {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.sb-today-container .sb-today-filtered-reading-chapter > div > img {
-  object-fit: cover;
-}
-
-.sb-today-container .sb-today-filtered-reading-chapter > div > div > span {
-  font-size: 0.5rem;
-  color: var(--sb-reader-font-color);
+  font-size: 0.8rem;
 }
 
 .sb-today-container .reading-history-timeline-container {
-  grid-column: 1 / 3;
-  grid-row: unset;
+  width: 100%;
 }
 
 .sb-today-container .reading-history-timeline {
@@ -939,21 +938,6 @@
     height: 3rem;
   }
   .sb-today-container
-    .sb-today-history-card
-    .sb-today-timespan-filter-container {
-    overflow-x: scroll;
-    scrollbar-width: none;
-    padding: 0 0.5rem;
-    mask-image: linear-gradient(
-      to right,
-      transparent 0px,
-      black 8px,
-      black calc(100% - 8px),
-      transparent 100%
-    );
-  }
-
-  .sb-today-container
     .sb-today-bookmarks-section
     .sb-today-bookmarks-section-bookmark {
     flex-shrink: 0;
@@ -986,25 +970,27 @@
     font-size: 0.85rem;
     padding: 0.4rem 0.65rem;
   }
-  .sb-today-container
-    .sb-today-history-card
-    .sb-today-user-filter-container
-    .sb-today-user-filter-label {
-    font-size: 0.95rem;
-  }
-
-  .sb-today-container
-    .sb-today-history-card
-    .sb-today-timespan-filter-container
-    .sb-today-timespan-filter-option {
+  .sb-today-container .sb-today-feed-card .sb-today-feed-kind-option {
     padding: 0.4rem 0.65rem;
     font-size: 0.6rem;
     font-weight: 400;
     min-width: 3.25rem;
   }
 
-  .sb-today-container .sb-today-filtered-reading-book > span {
-    font-size: 0.8rem;
+  .sb-today-container .sb-today-feed-sentence,
+  .sb-today-container .sb-today-feed-note-text {
+    font-size: 0.875rem;
+  }
+
+  .sb-today-container .sb-today-feed-row-note > .sb-today-feed-time {
+    line-height: calc(0.875rem * 1.4);
+  }
+
+  .sb-today-container
+    .sb-today-feed-card
+    .sb-today-feed-history-button
+    > .material-symbols-outlined {
+    font-size: 1.25rem;
   }
 
   .sb-today-container

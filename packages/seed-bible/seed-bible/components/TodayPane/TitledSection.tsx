@@ -1,5 +1,7 @@
+import type { ComponentChildren } from "preact";
+
 interface TitledSectionProps {
-  children: React.ReactNode;
+  children: ComponentChildren;
   title: string;
   buttonData?: {
     label: string;

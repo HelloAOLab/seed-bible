@@ -391,6 +391,54 @@ describe("AnnotationsManager", () => {
     });
   });
 
+  describe("listAllAnnotationsForUser()", () => {
+    // Notes are written `publicRead`, so the Today community feed reads other
+    // readers' records the same way it reads the signed-in user's own.
+    it("sweeps the named user's record, whoever is signed in", async () => {
+      const listAllData = vi.spyOn(os, "listAllData").mockResolvedValue({
+        success: true,
+        items: [
+          { address: "bookmarks", data: { bookmarks: [] } },
+          { address: "ann-1", data: createCommentAnnotation({ id: "ann-1" }) },
+        ],
+      });
+      const manager = createManager();
+
+      const annotations = await manager.listAllAnnotationsForUser("user-2");
+
+      expect(listAllData).toHaveBeenCalledWith("user-2");
+      expect(annotations.map((a) => a.id)).toEqual(["ann-1"]);
+    });
+
+    it("does not need a signed-in user", async () => {
+      login.userId.value = null;
+      vi.spyOn(os, "listAllData").mockResolvedValue({
+        success: true,
+        items: [
+          { address: "ann-1", data: createCommentAnnotation({ id: "ann-1" }) },
+        ],
+      });
+      const manager = createManager();
+
+      expect(
+        (await manager.listAllAnnotationsForUser("user-2")).map((a) => a.id)
+      ).toEqual(["ann-1"]);
+    });
+
+    // Rejects rather than answering "no notes", so the Today feed can tell an
+    // unreachable record from an empty one.
+    it("rejects when the record can't be read", async () => {
+      vi.spyOn(os, "listAllData").mockRejectedValue(
+        new Error("Error listing data: server_error")
+      );
+      const manager = createManager();
+
+      await expect(manager.listAllAnnotationsForUser("user-2")).rejects.toThrow(
+        "server_error"
+      );
+    });
+  });
+
   it("operations throw when login cannot resolve a user record", async () => {
     login.userId.value = null;
     login.login.mockResolvedValue({
