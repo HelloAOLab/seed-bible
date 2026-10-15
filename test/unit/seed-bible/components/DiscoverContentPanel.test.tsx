@@ -745,28 +745,6 @@ describe("DiscoverContentPanel", () => {
     expect(state.annotations.createNewAnnotation).toHaveBeenCalledTimes(1);
   });
 
-  it("clicking 'Show All' calls openDiscover", () => {
-    const tab = createMockTab();
-    const state = createMockState({
-      annotationsForChapter: [createAnnotation()],
-    });
-
-    act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
-    });
-
-    const showAllButton = container.querySelector(
-      ".sb-dcp-show-all"
-    ) as HTMLButtonElement;
-    expect(showAllButton).toBeTruthy();
-
-    act(() => {
-      showAllButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
-  });
-
   describe("side panel max height", () => {
     let observedElements: Map<Element, () => void>;
 

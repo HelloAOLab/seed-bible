@@ -7,11 +7,11 @@ settings:
 catalogs:
   default:
     '@casual-simulation/aux-common':
-      specifier: 4.2.8-alpha.36630354067
-      version: 4.2.8-alpha.36630354067
+      specifier: 4.2.8-alpha.38630400059
+      version: 4.2.8-alpha.38630400059
     '@casual-simulation/aux-websocket':
-      specifier: 4.2.8-alpha.36630354067
-      version: 4.2.8-alpha.36630354067
+      specifier: 4.2.8-alpha.38630400059
+      version: 4.2.8-alpha.38630400059
     '@casual-simulation/websocket':
       specifier: 4.0.0
       version: 4.0.0
@@ -117,7 +117,7 @@ overrides:
   chromium-bidi>zod: 3.25.76
 
 patchedDependencies:
-  '@casual-simulation/aux-records@4.2.8-alpha.36630354067': 211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50
+  '@casual-simulation/aux-records@4.2.8-alpha.38630400059': 211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50
   '@casual-simulation/fast-json-stable-stringify': a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef
   follow-redirects: 6c86d1ca9b95ef9c8aca9f39dd13a02652b3d033c6067e152f056e89a3f67a66
 
@@ -211,17 +211,17 @@ importers:
         specifier: ^7.27.1
         version: 7.28.5(@babel/core@7.28.6)
       '@casual-simulation/aux-common':
-        specifier: 4.2.8-alpha.36630354067
-        version: 4.2.8-alpha.36630354067
+        specifier: 4.2.8-alpha.38630400059
+        version: 4.2.8-alpha.38630400059
       '@casual-simulation/aux-records':
-        specifier: 4.2.8-alpha.36630354067
-        version: 4.2.8-alpha.36630354067(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
+        specifier: 4.2.8-alpha.38630400059
+        version: 4.2.8-alpha.38630400059(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime':
-        specifier: 4.2.8-alpha.36630354067
-        version: 4.2.8-alpha.36630354067(@babel/runtime@7.29.2)(ws@8.19.0)
+        specifier: 4.2.8-alpha.38630400059
+        version: 4.2.8-alpha.38630400059(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-vm':
-        specifier: 4.2.8-alpha.36630354067
-        version: 4.2.8-alpha.36630354067(@babel/runtime@7.29.2)(ws@8.19.0)
+        specifier: 4.2.8-alpha.38630400059
+        version: 4.2.8-alpha.38630400059(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto':
         specifier: ^4.0.5
         version: 4.0.5
@@ -304,8 +304,8 @@ importers:
         specifier: ^30.1.2
         version: 30.2.0(@babel/core@7.28.6)
       casualos:
-        specifier: 4.2.8-alpha.36630354067
-        version: 4.2.8-alpha.36630354067(@babel/runtime@7.29.2)(ws@8.19.0)
+        specifier: 4.2.8-alpha.38630400059
+        version: 4.2.8-alpha.38630400059(@babel/runtime@7.29.2)(ws@8.19.0)
       chokidar:
         specifier: ^5.0.0
         version: 5.0.0
@@ -509,10 +509,10 @@ importers:
     dependencies:
       '@casual-simulation/aux-common':
         specifier: 'catalog:'
-        version: 4.2.8-alpha.36630354067
+        version: 4.2.8-alpha.38630400059
       '@casual-simulation/aux-websocket':
         specifier: 'catalog:'
-        version: 4.2.8-alpha.36630354067
+        version: 4.2.8-alpha.38630400059
       '@casual-simulation/websocket':
         specifier: 'catalog:'
         version: 4.0.0
@@ -685,6 +685,10 @@ importers:
       uuid:
         specifier: 'catalog:'
         version: 13.0.0
+    devDependencies:
+      '@types/qrcode':
+        specifier: ^1.5.6
+        version: 1.5.6
 
   packages/twitchSub-extension:
     dependencies:
@@ -1499,20 +1503,20 @@ packages:
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
 
-  '@casual-simulation/aux-common@4.2.8-alpha.36630354067':
-    resolution: {integrity: sha512-cyfmDk4L5GilNP513d5eGZPEA4nitUHFjwsj+xODfotT7TKKYQls2y9GirEnzYSUXtTx82DLSriPFwKD1wWZGg==}
+  '@casual-simulation/aux-common@4.2.8-alpha.38630400059':
+    resolution: {integrity: sha512-CE629xKa9M43YJG5ge6+x1vjN742ocJqLcHmzy6DWrPA0lzQN12ubY91hx98wzwwbrV0RKSxF2e3jFe5bcvMBA==}
 
-  '@casual-simulation/aux-records@4.2.8-alpha.36630354067':
-    resolution: {integrity: sha512-if0p/AKnqZXNJUxfoxyS9x2pz2hQWgiI/aWu3rzuydGsxfNAYFwAovZOAN+FT2aXJnTr8Zk1jqPuxfDmoCZs4g==}
+  '@casual-simulation/aux-records@4.2.8-alpha.38630400059':
+    resolution: {integrity: sha512-YQDP372KHITPdQoNZV6FasTSpyeP1Trc40YGGyt6BfI86B8VS0NUyIwenyzfxp7zB7xqEANTjnNq7RxaWn+KWg==}
 
-  '@casual-simulation/aux-runtime@4.2.8-alpha.36630354067':
-    resolution: {integrity: sha512-+M0V4gJrrLupGcC5Dg5/qFZckmxWXg/Mo8aJWYUtJ5b4hXudx8hITI6ro22MJfDLTTIuOM4RvxT4aiKFzYXhOQ==}
+  '@casual-simulation/aux-runtime@4.2.8-alpha.38630400059':
+    resolution: {integrity: sha512-BgG+5A/2+VIvu+xA4bQYTzAA6jDNXD5qVuZyo2DYhfMbge0zB0HK+c865EdBqkw3EO6GwCnxuuJO+aBm4rT0ig==}
 
-  '@casual-simulation/aux-vm@4.2.8-alpha.36630354067':
-    resolution: {integrity: sha512-ZLXXApveLafaCK0aP+2Ni3zlne+VsD3ENJgZTZlUr6/ftD6Hpzo0ivtREtrSXr+RCq78LHgi7nVcyZcbazP8Mg==}
+  '@casual-simulation/aux-vm@4.2.8-alpha.38630400059':
+    resolution: {integrity: sha512-aZTOu4hZzxaSAK2GTAEkM2UkxnjvpvxpIStVpjyzL1an/rRgN622n9b5IA/vlLPtkLCphTXMnGXGQFjX3/YK5Q==}
 
-  '@casual-simulation/aux-websocket@4.2.8-alpha.36630354067':
-    resolution: {integrity: sha512-wrLsU4XrN1xWRWDRC5cWP/q1557NhSx1m6nqywulW1Rmoa1FrMzjkI/lLncYX3/22c1VchEgHcEAw+rFTbSr0Q==}
+  '@casual-simulation/aux-websocket@4.2.8-alpha.38630400059':
+    resolution: {integrity: sha512-m/muFHHnc5IoK1fl60XoGhKp4lPe80RG2brvtoZJVphpb3z6YkB/V0LvKY3Y35ypGSEdmcPso++MtUh5p/3K7g==}
 
   '@casual-simulation/chalk@4.0.0':
     resolution: {integrity: sha512-a/RroPXchwm3pg3NjCSjosmBb5XS2v++Kvr7CruhWs4LpUFtris7WC6+OnXMMoYdHWPlMIAVU0OYpJcjCKTw9A==}
@@ -4190,8 +4194,8 @@ packages:
   caniuse-lite@1.0.30001766:
     resolution: {integrity: sha512-4C0lfJ0/YPjJQHagaE9x2Elb69CIqEPZeG0anQt9SIvIoOH4a4uaRl73IavyO+0qZh6MDLH//DrXThEYKHkmYA==}
 
-  casualos@4.2.8-alpha.36630354067:
-    resolution: {integrity: sha512-dqp+sRA4wql9ZODM5skNxLOhKHr5BEHWwvPcWmHSUElf3MSzcJ/fsEZ+uTWmK3YvGqZKpC3bipLOIJPL9fKkNQ==}
+  casualos@4.2.8-alpha.38630400059:
+    resolution: {integrity: sha512-0D1JTwZSYSKveVHuGwOqAINYdwqH0qDxDA9fv6sDh1VmTvAIIH9bd/unBAeJv0zgy6bGkK8APV1u+jsCKvXURA==}
     hasBin: true
 
   chai@6.2.2:
@@ -8768,7 +8772,7 @@ snapshots:
       hashery: 1.5.1
       keyv: 5.6.0
 
-  '@casual-simulation/aux-common@4.2.8-alpha.36630354067':
+  '@casual-simulation/aux-common@4.2.8-alpha.38630400059':
     dependencies:
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
@@ -8801,10 +8805,10 @@ snapshots:
       yjs: 13.6.8
       zod: 4.4.3
 
-  '@casual-simulation/aux-records@4.2.8-alpha.36630354067(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)':
+  '@casual-simulation/aux-records@4.2.8-alpha.38630400059(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
       '@anthropic-ai/sdk': 0.92.0(zod@4.4.3)
-      '@casual-simulation/aux-common': 4.2.8-alpha.36630354067
+      '@casual-simulation/aux-common': 4.2.8-alpha.38630400059
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
       '@casual-simulation/rate-limit-redis': 4.0.0
@@ -8846,10 +8850,10 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@casual-simulation/aux-runtime@4.2.8-alpha.36630354067(@babel/runtime@7.29.2)(ws@8.19.0)':
+  '@casual-simulation/aux-runtime@4.2.8-alpha.38630400059(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
-      '@casual-simulation/aux-common': 4.2.8-alpha.36630354067
-      '@casual-simulation/aux-records': 4.2.8-alpha.36630354067(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-common': 4.2.8-alpha.38630400059
+      '@casual-simulation/aux-records': 4.2.8-alpha.38630400059(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
       '@casual-simulation/error-stack-parser': 2.0.7
@@ -8894,11 +8898,11 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@casual-simulation/aux-vm@4.2.8-alpha.36630354067(@babel/runtime@7.29.2)(ws@8.19.0)':
+  '@casual-simulation/aux-vm@4.2.8-alpha.38630400059(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
-      '@casual-simulation/aux-common': 4.2.8-alpha.36630354067
-      '@casual-simulation/aux-records': 4.2.8-alpha.36630354067(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
-      '@casual-simulation/aux-runtime': 4.2.8-alpha.36630354067(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-common': 4.2.8-alpha.38630400059
+      '@casual-simulation/aux-records': 4.2.8-alpha.38630400059(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-runtime': 4.2.8-alpha.38630400059(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
       '@casual-simulation/timesync': 4.0.0
@@ -8922,9 +8926,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@casual-simulation/aux-websocket@4.2.8-alpha.36630354067':
+  '@casual-simulation/aux-websocket@4.2.8-alpha.38630400059':
     dependencies:
-      '@casual-simulation/aux-common': 4.2.8-alpha.36630354067
+      '@casual-simulation/aux-common': 4.2.8-alpha.38630400059
       '@casual-simulation/websocket': 4.0.0
       rxjs: 8.0.0-alpha.14
 
@@ -11561,12 +11565,12 @@ snapshots:
 
   caniuse-lite@1.0.30001766: {}
 
-  casualos@4.2.8-alpha.36630354067(@babel/runtime@7.29.2)(ws@8.19.0):
+  casualos@4.2.8-alpha.38630400059(@babel/runtime@7.29.2)(ws@8.19.0):
     dependencies:
-      '@casual-simulation/aux-common': 4.2.8-alpha.36630354067
-      '@casual-simulation/aux-records': 4.2.8-alpha.36630354067(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
-      '@casual-simulation/aux-runtime': 4.2.8-alpha.36630354067(@babel/runtime@7.29.2)(ws@8.19.0)
-      '@casual-simulation/aux-vm': 4.2.8-alpha.36630354067(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-common': 4.2.8-alpha.38630400059
+      '@casual-simulation/aux-records': 4.2.8-alpha.38630400059(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-runtime': 4.2.8-alpha.38630400059(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-vm': 4.2.8-alpha.38630400059(@babel/runtime@7.29.2)(ws@8.19.0)
       '@octokit/app': 15.1.6
       '@octokit/auth-oauth-device': 7.1.5
       '@octokit/core': 6.1.6
