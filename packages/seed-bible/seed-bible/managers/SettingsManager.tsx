@@ -90,6 +90,10 @@ export interface ScriptureElementsBehavior {
   showRedLettering: boolean;
 }
 
+export interface DiscoveredContentBehavior {
+  showContent: boolean;
+}
+
 export interface TextSectionConfig {
   font: string;
   weight: string;
@@ -123,6 +127,7 @@ export interface AppSettings {
   uiSize: UISize;
   selectionUI: SelectionUIBehavior;
   scriptureElements: ScriptureElementsBehavior;
+  discoveredContent: DiscoveredContentBehavior;
   textConfig: TextConfig;
   toolbar: ToolbarCustomization;
   keepScreenAwake: boolean;
@@ -173,6 +178,11 @@ export const AppSettingsSchema = z.object({
     showHighlights: z.boolean(),
     showRedLettering: z.boolean(),
   }),
+  discoveredContent: z
+    .object({
+      showContent: z.boolean(),
+    })
+    .default({ showContent: true }),
   textConfig: z.object({
     bookTitle: z.object({
       font: z.string(),
@@ -250,6 +260,7 @@ const TAG_BOOK_ORIENTATION = "app.bookOrientation";
 const TAG_UI_SIZE = "app.uiSize";
 const TAG_SELECTION_UI = "app.selectionUI";
 const TAG_SCRIPTURE_ELEMENTS = "app.scriptureElements";
+const TAG_DISCOVERED_CONTENT = "app.discoveredContent";
 const TAG_TEXT_CONFIG = "app.textConfig";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
@@ -268,6 +279,7 @@ const PROFILE_BOOK_ORIENTATION = "bookOrientation";
 const PROFILE_UI_SIZE = "uiSize";
 const PROFILE_SELECTION_UI = "selectionUI";
 const PROFILE_SCRIPTURE_ELEMENTS = "scriptureElements";
+const PROFILE_DISCOVERED_CONTENT = "discoveredContent";
 const PROFILE_TEXT_CONFIG = "textConfig";
 const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
@@ -312,6 +324,10 @@ const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
   showFootnotes: true,
   showHighlights: true,
   showRedLettering: true,
+};
+
+const DEFAULT_DISCOVERED_CONTENT: DiscoveredContentBehavior = {
+  showContent: true,
 };
 
 /**
@@ -381,6 +397,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   uiSize: "M",
   selectionUI: DEFAULT_SELECTION_UI,
   scriptureElements: DEFAULT_SCRIPTURE_ELEMENTS,
+  discoveredContent: DEFAULT_DISCOVERED_CONTENT,
   textConfig: DEFAULT_TEXT_CONFIG,
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
@@ -604,6 +621,30 @@ function parseScriptureElements(
   };
 }
 
+function parseDiscoveredContent(
+  value: unknown,
+  fallback: DiscoveredContentBehavior
+): DiscoveredContentBehavior {
+  let parsed: unknown = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return fallback;
+    }
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return fallback;
+  }
+  const obj = parsed as Record<string, unknown>;
+  return {
+    showContent:
+      typeof obj.showContent === "boolean"
+        ? obj.showContent
+        : fallback.showContent,
+  };
+}
+
 function parseAlignment(
   value: unknown,
   fallback: TextAlignment
@@ -744,6 +785,7 @@ export interface SettingsManager {
   setUISize: (size: UISize) => void;
   setSelectionUI: (patch: Partial<SelectionUIBehavior>) => void;
   setScriptureElements: (patch: Partial<ScriptureElementsBehavior>) => void;
+  setDiscoveredContent: (patch: Partial<DiscoveredContentBehavior>) => void;
   updateTextSection: (
     section: TextSectionId,
     patch: Partial<TextSectionConfig>
@@ -854,6 +896,10 @@ export function createSettings(
       scriptureElements: parseScriptureElements(
         read(PROFILE_SCRIPTURE_ELEMENTS, TAG_SCRIPTURE_ELEMENTS),
         DEFAULT_SETTINGS.scriptureElements
+      ),
+      discoveredContent: parseDiscoveredContent(
+        read(PROFILE_DISCOVERED_CONTENT, TAG_DISCOVERED_CONTENT),
+        DEFAULT_SETTINGS.discoveredContent
       ),
       textConfig: parseTextConfig(
         read(PROFILE_TEXT_CONFIG, TAG_TEXT_CONFIG),
@@ -988,6 +1034,13 @@ export function createSettings(
     settings.value = { ...settings.value, scriptureElements: next };
     sessionOverrides[TAG_SCRIPTURE_ELEMENTS] = next;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_ELEMENTS, next);
+  };
+
+  const setDiscoveredContent = (patch: Partial<DiscoveredContentBehavior>) => {
+    const next = { ...settings.value.discoveredContent, ...patch };
+    settings.value = { ...settings.value, discoveredContent: next };
+    sessionOverrides[TAG_DISCOVERED_CONTENT] = next;
+    saveProfileConfigValue(login, PROFILE_DISCOVERED_CONTENT, next);
   };
 
   const writeTextConfig = (next: TextConfig) => {
@@ -1188,6 +1241,8 @@ export function createSettings(
     sessionOverrides[TAG_SELECTION_UI] = DEFAULT_SETTINGS.selectionUI;
     sessionOverrides[TAG_SCRIPTURE_ELEMENTS] =
       DEFAULT_SETTINGS.scriptureElements;
+    sessionOverrides[TAG_DISCOVERED_CONTENT] =
+      DEFAULT_SETTINGS.discoveredContent;
     sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_SETTINGS.textConfig;
     sessionOverrides[TAG_TOOLBAR] = DEFAULT_SETTINGS.toolbar;
     sessionOverrides[TAG_KEEP_AWAKE] = DEFAULT_SETTINGS.keepScreenAwake;
@@ -1221,6 +1276,11 @@ export function createSettings(
       login,
       PROFILE_SCRIPTURE_ELEMENTS,
       DEFAULT_SETTINGS.scriptureElements
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_DISCOVERED_CONTENT,
+      DEFAULT_SETTINGS.discoveredContent
     );
     saveProfileConfigValue(
       login,
@@ -1303,6 +1363,7 @@ export function createSettings(
     setUISize: setUISize,
     setSelectionUI,
     setScriptureElements,
+    setDiscoveredContent,
     updateTextSection,
     setScriptureWidth,
     setVerseLineHeight,

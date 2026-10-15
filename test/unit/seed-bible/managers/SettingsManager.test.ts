@@ -1,6 +1,9 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
-import { createSettings } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
+import {
+  createSettings,
+  type AppSettings,
+} from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import {
   createLoginManager,
   type LoginManager,
@@ -334,6 +337,7 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     settings.setCustomTheme({ primaryColor: "#000000" });
     settings.setCustomHighlights({ yellow: { color: "#ffff00" } });
     settings.setDiscoverContentPanelInline(false);
+    settings.setDiscoveredContent({ showContent: false });
 
     settings.resetToDefaults();
 
@@ -344,6 +348,7 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.customTheme).toEqual({});
     expect(settings.settings.value.customHighlights).toEqual({});
     expect(settings.settings.value.discoverContentPanelInline).toBe(true);
+    expect(settings.settings.value.discoveredContent.showContent).toBe(true);
   });
 
   it("setDiscoverContentPanelInline persists to login.localConfig when anonymous and defaults to true", () => {
@@ -371,6 +376,48 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(
       (login.profile.value as any)?.config?.discoverContentPanelInline
     ).toBe(false);
+  });
+
+  it("setDiscoveredContent persists to login.localConfig when anonymous and defaults to showing the content", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    expect(settings.settings.value.discoveredContent.showContent).toBe(true);
+
+    settings.setDiscoveredContent({ showContent: false });
+
+    expect(settings.settings.value.discoveredContent.showContent).toBe(false);
+    expect(login.localConfig.value.discoveredContent).toEqual({
+      showContent: false,
+    });
+  });
+
+  it("setDiscoveredContent persists to the user's profile when logged in", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: {},
+    } as unknown as UserProfile);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setDiscoveredContent({ showContent: false });
+
+    expect(settings.settings.value.discoveredContent.showContent).toBe(false);
+    expect((login.profile.value as any)?.config?.discoveredContent).toEqual({
+      showContent: false,
+    });
+  });
+
+  it("setAllSettings accepts settings saved before discoveredContent existed and shows the content", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+    const { discoveredContent: _omitted, ...legacySettings } =
+      settings.settings.value;
+
+    settings.setAllSettings(legacySettings as AppSettings);
+
+    expect(settings.settings.value.discoveredContent).toEqual({
+      showContent: true,
+    });
   });
 });
 

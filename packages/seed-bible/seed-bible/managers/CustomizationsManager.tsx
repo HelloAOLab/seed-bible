@@ -725,9 +725,10 @@ export interface CustomizationsManager {
   ) => BibleTheme;
   /**
    * The extension ids that should be installed while the active
-   * customization is in effect: its own `auto-installed` extensions,
-   * unioned with any `available` extras the viewer added for it via
-   * `addExtensionToActiveCustomization`. Empty when nothing is active.
+   * customization is in effect: its own `auto-installed` extensions (minus
+   * any the viewer removed), unioned with any `available` extras the viewer
+   * added for it via `addExtensionToActiveCustomization`. Empty when
+   * nothing is active.
    */
   activeExtensionIds: ReadonlySignal<string[]>;
   /**
@@ -916,9 +917,9 @@ export interface CustomizationsManager {
     extensionId: string,
     key: string
   ) => ExtensionSettingValue | undefined;
-  /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active or the extension's availability there isn't "available". */
+  /** Installs an extension for the viewer on the active customization: an "available" one as an extra, an "auto-installed" one the viewer removed by putting it back. No-op if none is active or the extension is hidden there. */
   addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
-  /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
+  /** Uninstalls an extension for the viewer on the active customization: drops an extra, or records that they removed an "auto-installed" one. No-op if none is active. */
   removeExtensionFromActiveCustomization: (
     extensionId: string
   ) => Promise<void>;
@@ -1218,10 +1219,14 @@ export function createCustomizationsManager(
     if (!customization) {
       return [];
     }
+    const locator = activeCustomizationLocator.value;
+    const removed = locator
+      ? extensionPreferences.getRemovedExtensionIds(locator)
+      : [];
     const autoInstalled = Object.entries(customization.extensionSettings)
       .filter(([, availability]) => availability === "auto-installed")
-      .map(([id]) => id);
-    const locator = activeCustomizationLocator.value;
+      .map(([id]) => id)
+      .filter((id) => !removed.includes(id));
     const extra = locator
       ? extensionPreferences.getExtraExtensionIds(locator)
       : [];
@@ -2184,7 +2189,12 @@ export function createCustomizationsManager(
     if (!locator) {
       return;
     }
-    if (getActiveExtensionAvailability(extensionId) === "hidden") {
+    const availability = getActiveExtensionAvailability(extensionId);
+    if (availability === "hidden") {
+      return;
+    }
+    if (availability === "auto-installed") {
+      await extensionPreferences.clearRemovedExtensionId(locator, extensionId);
       return;
     }
     await extensionPreferences.addExtraExtensionId(locator, extensionId);
@@ -2195,6 +2205,10 @@ export function createCustomizationsManager(
   ): Promise<void> => {
     const locator = activeCustomizationLocator.value;
     if (!locator) {
+      return;
+    }
+    if (getActiveExtensionAvailability(extensionId) === "auto-installed") {
+      await extensionPreferences.addRemovedExtensionId(locator, extensionId);
       return;
     }
     await extensionPreferences.removeExtraExtensionId(locator, extensionId);

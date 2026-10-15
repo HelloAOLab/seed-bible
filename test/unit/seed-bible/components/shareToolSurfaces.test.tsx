@@ -54,6 +54,7 @@ describe("share button — surface wiring", () => {
             playlists={state.playlists}
             annotations={state.annotations}
             features={state.features}
+            settings={state.settings}
             sharedSession={null}
             toast={state.app.toast}
             modals={state.modals}

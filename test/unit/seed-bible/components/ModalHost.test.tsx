@@ -67,4 +67,97 @@ describe("ModalHost", () => {
 
     expect(manager.modals.value).toHaveLength(1);
   });
+
+  it("shows the footer under the content alongside the close button", async () => {
+    const state = await createTestSeedBibleState();
+    const manager = createModalManager();
+    act(() => {
+      manager.openModal({
+        title: "Step",
+        content: () => <p>Body</p>,
+        footer: () => <button className="test-footer">Next</button>,
+        useCasualOSApp: false,
+      });
+    });
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <ModalHost manager={manager} />
+        </TestHost>,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-footnote-modal-close")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-footnote-modal-footer .test-footer")
+    ).not.toBeNull();
+  });
+
+  it("has no footer by default", async () => {
+    await renderWithModal();
+
+    expect(container.querySelector(".sb-footnote-modal-footer")).toBeNull();
+  });
+
+  describe("onDismiss", () => {
+    async function renderDismissable() {
+      const state = await createTestSeedBibleState();
+      const manager = createModalManager();
+      const onDismiss = vi.fn();
+      act(() => {
+        manager.openModal({
+          id: "dismissable",
+          title: "Step",
+          content: () => <p className="test-body">Body</p>,
+          onDismiss,
+          useCasualOSApp: false,
+        });
+      });
+      act(() => {
+        render(
+          <TestHost state={state}>
+            <ModalHost manager={manager} />
+          </TestHost>,
+          container
+        );
+      });
+      return { manager, onDismiss };
+    }
+
+    it("runs when the X button closes the modal", async () => {
+      const { manager, onDismiss } = await renderDismissable();
+      const close = container.querySelector(
+        ".sb-footnote-modal-close"
+      ) as HTMLButtonElement;
+
+      act(() => close.click());
+
+      expect(manager.modals.value).toHaveLength(0);
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+
+    it("runs when the backdrop closes the modal", async () => {
+      const { manager, onDismiss } = await renderDismissable();
+      const overlay = container.querySelector(
+        ".sb-footnote-modal-overlay"
+      ) as HTMLElement;
+
+      pressAndRelease(overlay, overlay);
+
+      expect(manager.modals.value).toHaveLength(0);
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not run when code closes the modal or the body is clicked", async () => {
+      const { manager, onDismiss } = await renderDismissable();
+      const body = container.querySelector(".test-body") as HTMLElement;
+
+      pressAndRelease(body, body);
+      act(() => manager.closeModal("dismissable"));
+
+      expect(manager.modals.value).toHaveLength(0);
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -725,6 +725,73 @@ button.sb-cz-logo:disabled {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
+/* Floats beside the desktop side pane while the inline preview is scrolled
+   out of view. Kept below popovers and modals (999+). */
+.sb-cz-floating-preview {
+  position: fixed;
+  z-index: 900;
+  padding: 0.5rem;
+  border-radius: 1rem;
+  background: var(--sb-reader-background);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 22px 40px #0000002c;
+  animation: sb-cz-floating-preview-in 160ms ease-out;
+}
+
+.sb-cz-floating-preview-close {
+  position: absolute;
+  top: -0.625rem;
+  inset-inline-end: -0.625rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--sb-font-color), transparent 80%);
+}
+
+.sb-cz-floating-preview-close .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+@keyframes sb-cz-floating-preview-in {
+  from {
+    opacity: 0;
+    transform: translateX(0.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-cz-floating-preview {
+    animation: none;
+  }
+}
+
+/* While a color picker is open (its host only exists then), both previews
+   sit between the picker's dimming backdrop (1100) and its dialog (1102),
+   so the color being picked can be judged against them. Clicks pass through
+   to the backdrop, so clicking a preview still cancels the picker like
+   anywhere else. */
+body:has(#sb-color-picker-host) .sb-cz-live-preview-dock {
+  position: relative;
+}
+
+body:has(#sb-color-picker-host) .sb-cz-live-preview-dock,
+body:has(#sb-color-picker-host) .sb-cz-floating-preview {
+  z-index: 1101;
+  pointer-events: none;
+}
+
 /* Color tiles */
 
 .sb-cz-tile-grid {

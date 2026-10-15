@@ -286,6 +286,7 @@ describe("QuickToolbar embed share", () => {
             playlists={state.playlists}
             annotations={state.annotations}
             features={state.features}
+            settings={state.settings}
             sharedSession={null}
             toast={state.app.toast}
             modals={state.modals}
