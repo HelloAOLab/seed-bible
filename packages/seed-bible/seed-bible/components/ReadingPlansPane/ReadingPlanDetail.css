@@ -13,6 +13,11 @@
      areas still span the pane and keep their scrollbar at its edge. */
   --rp-column-inset: max(0px, calc((100% - 42rem) / 2));
 
+  --rp-header-radius: 1rem;
+
+  /* Lets the header below round its top corners only once the column is
+     narrower than the pane, which a media query can't tell. */
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -32,6 +37,29 @@
 
 .sb-rpd .sb-hero-banner--bleed {
   flex: none;
+}
+
+/* The header (cover image and/or peach summary) runs edge to edge on a narrow
+   pane, so only its bottom corners are rounded there. Once the 42rem column
+   leaves space either side, all four corners show, so the top is rounded and
+   eased down from the pane header too. A cover is the whole header before
+   the plan is started, when there's no peach summary under it. */
+.sb-rpd-hero-header,
+.sb-rpd .sb-hero-banner--bleed:not(:has(+ .sb-rpd-hero-header)) {
+  border-end-start-radius: var(--rp-header-radius);
+  border-end-end-radius: var(--rp-header-radius);
+}
+
+@container (width > 42rem) {
+  .sb-rpd-scroll {
+    padding-top: 16px;
+  }
+
+  .sb-rpd-scroll
+    > :is(.sb-hero-banner--bleed, .sb-rpd-hero-header):first-child {
+    border-start-start-radius: var(--rp-header-radius);
+    border-start-end-radius: var(--rp-header-radius);
+  }
 }
 
 .sb-rpd-subtitle {
