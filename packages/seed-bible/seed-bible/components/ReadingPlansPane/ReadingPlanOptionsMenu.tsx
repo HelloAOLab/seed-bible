@@ -11,6 +11,7 @@ import {
   ContextMenuItem,
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 
 /**
  * Share, edit, and delete for one reading plan, in the same options menu a
@@ -58,7 +59,7 @@ export function ReadingPlanOptionsMenu(props: {
       (error: unknown) => {
         console.error("Failed to delete reading plan:", error);
         toast?.(
-          t("reading-plan-delete-failed", {
+          t("delete-reading-plan-failed", {
             defaultValue: "Couldn't delete the reading plan.",
           })
         );
@@ -134,65 +135,11 @@ export function ReadingPlanOptionsMenu(props: {
   );
 }
 
-function ConfirmDeleteReadingPlanModalContent(props: {
-  readingPlans: ReadingPlansManager;
-  plan: Pick<
-    ReadingPlanMetadata,
-    "recordName" | "address" | "status" | "title"
-  >;
-  toast?: (message: string) => void;
-  onDeleted?: () => void;
-  onClose: () => void;
-}) {
-  const { readingPlans, plan, toast, onDeleted, onClose } = props;
-  const { t } = useI18n();
-
-  const confirm = async () => {
-    try {
-      await readingPlans.deleteReadingPlan(plan);
-      onDeleted?.();
-    } catch (error) {
-      console.error("Failed to delete reading plan:", error);
-      toast?.(
-        t("reading-plan-delete-failed", {
-          defaultValue: "Couldn't delete the reading plan.",
-        })
-      );
-    }
-    onClose();
-  };
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("reading-plan-delete-confirm-message", {
-          title:
-            plan.title ??
-            t("untitled-reading-plan", { defaultValue: "Untitled plan" }),
-          defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
-          {t("cancel")}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={() => void confirm()}
-        >
-          {t("delete")}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function openDeleteReadingPlanConfirm(
+/**
+ * Asks before deleting a plan. Deleting erases the plan and the user's
+ * progress through it for good.
+ */
+export function openDeleteReadingPlanConfirm(
   modals: ModalManager,
   readingPlans: ReadingPlansManager,
   plan: Pick<
@@ -202,21 +149,27 @@ function openDeleteReadingPlanConfirm(
   toast: ((message: string) => void) | undefined,
   onDeleted?: () => void
 ) {
-  const modalId = `delete-reading-plan-confirm-${plan.recordName}-${plan.address}`;
-  modals.openModal({
-    id: modalId,
+  openConfirmDeleteModal(modals, {
+    id: `delete-reading-plan-confirm-${plan.recordName}-${plan.address}`,
     title: {
-      key: "reading-plan-delete-confirm-title",
+      key: "delete-reading-plan-confirm-title",
       defaultValue: "Delete reading plan?",
     },
-    content: () => (
-      <ConfirmDeleteReadingPlanModalContent
-        readingPlans={readingPlans}
-        plan={plan}
-        toast={toast}
-        onDeleted={onDeleted}
-        onClose={() => modals.closeModal(modalId)}
-      />
-    ),
+    message: (t) =>
+      t("delete-reading-plan-confirm-message", {
+        title:
+          plan.title ??
+          t("untitled-reading-plan", { defaultValue: "Untitled plan" }),
+        defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
+      }),
+    onConfirm: async () => {
+      await readingPlans.deleteReadingPlan(plan);
+      onDeleted?.();
+    },
+    failedMessage: (t) =>
+      t("delete-reading-plan-failed", {
+        defaultValue: "Couldn't delete the reading plan.",
+      }),
+    toast,
   });
 }
