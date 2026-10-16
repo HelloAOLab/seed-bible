@@ -61,6 +61,25 @@ interface ExternalExtensionEntry {
   kind: "external";
   /** Absolute path to the extension's root directory. */
   dir: string;
+  /** The code entry's real file name, e.g. `index.ts` (see `findEntryFile`). */
+  entryFile: string;
+}
+
+// A `/@fs/` import gets no extension resolution, unlike the `@packages` alias,
+// so an external extension's entry has to be named with its real extension.
+const ENTRY_FILE_CANDIDATES = [
+  "index.ts",
+  "index.tsx",
+  "index.mts",
+  "index.js",
+  "index.jsx",
+  "index.mjs",
+];
+
+function findEntryFile(dir: string): string | undefined {
+  return ENTRY_FILE_CANDIDATES.find((name) =>
+    existsSync(path.resolve(dir, name))
+  );
 }
 
 type ExtensionEntry = BundledExtensionEntry | ExternalExtensionEntry;
@@ -145,7 +164,14 @@ async function discoverExtensionEntries(): Promise<ExtensionEntry[]> {
       );
       continue;
     }
-    external.push({ kind: "external", dir });
+    const entryFile = findEntryFile(dir);
+    if (!entryFile) {
+      console.warn(
+        `[extensions] SEED_BIBLE_EXTRA_EXTENSION_DIRS entry '${dir}' has no ${ENTRY_FILE_CANDIDATES.join("/")} at its root; skipping.`
+      );
+      continue;
+    }
+    external.push({ kind: "external", dir, entryFile });
   }
 
   return [...bundled, ...external];
@@ -166,6 +192,7 @@ async function readExtensions(): Promise<DiscoveredExtension[]> {
     entries.map(async (entry) => ({
       dir: extensionDir(entry),
       importBase: extensionImportBase(entry),
+      ...(entry.kind === "external" ? { entryFile: entry.entryFile } : {}),
       meta: await readExtensionMeta(extensionMetaPath(entry)),
     }))
   );

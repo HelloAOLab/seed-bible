@@ -178,6 +178,25 @@ describe("generateEntryModuleSource", () => {
     expect(source).toContain('import("@packages/bonfire-extension/index")');
   });
 
+  it("imports an external extension's entry by its real file name", () => {
+    // A `/@fs/` URL gets no extension resolution, so `.../index` alone would
+    // fail to load (the dev server answers with the app's HTML instead).
+    const external: DiscoveredExtension = {
+      dir: "/home/dev/my-ext",
+      importBase: "/@fs/home/dev/my-ext",
+      entryFile: "index.ts",
+      meta: {
+        id: "my-ext",
+        translations: { en: { title: "Mine", description: "Out of tree" } },
+      },
+    };
+    const externalSource = generateEntryModuleSource([external], "seed-bible");
+    expect(externalSource).toContain('import("/@fs/home/dev/my-ext/index.ts")');
+    expect(externalSource).toContain(
+      'import("/@fs/home/dev/my-ext/extension.json")'
+    );
+  });
+
   it("names the set", () => {
     expect(source).toContain('id: "seed-bible"');
   });
