@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "Lisää vähintään yksi lukema suunnitelman luomiseksi",
   "reading-plan-needs-name": "Anna suunnitelmallesi nimi tallentaaksesi sen",
   "reading-plan-delete": "Poistaa",
-  "reading-plan-delete-confirm": "Poistetaanko lopullisesti?",
   "reading-plan-load-failed": "Tämän suunnitelman lataaminen epäonnistui. Yritä uudelleen.",
   "loading": "Ladataan…",
   "reading-plan-not-started": "Ei aloitettu",

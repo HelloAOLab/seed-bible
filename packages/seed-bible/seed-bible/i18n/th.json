@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "เพิ่มบทอ่านอย่างน้อยหนึ่งบทเพื่อสร้างแผนการอ่าน",
   "reading-plan-needs-name": "ตั้งชื่อแผนของคุณเพื่อบันทึกไว้",
   "reading-plan-delete": "ลบ",
-  "reading-plan-delete-confirm": "ลบอย่างถาวรเลยใช่ไหม?",
   "reading-plan-load-failed": "ไม่สามารถโหลดแผนนี้ได้ โปรดลองอีกครั้ง",
   "loading": "กำลังโหลด…",
   "reading-plan-not-started": "ยังไม่ได้เริ่ม",

@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "Fügen Sie mindestens eine Lesung hinzu, um den Plan zu erstellen.",
   "reading-plan-needs-name": "Gib deinem Plan einen Namen, um ihn zu speichern.",
   "reading-plan-delete": "Löschen",
-  "reading-plan-delete-confirm": "Endgültig löschen?",
   "reading-plan-load-failed": "Dieser Plan konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
   "loading": "Laden…",
   "reading-plan-not-started": "Nicht gestartet",

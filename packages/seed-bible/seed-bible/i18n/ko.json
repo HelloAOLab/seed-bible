@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "계획을 세우려면 최소 한 번 이상 독서를 추가하세요.",
   "reading-plan-needs-name": "계획을 저장하려면 이름을 지정하세요.",
   "reading-plan-delete": "삭제",
-  "reading-plan-delete-confirm": "완전히 삭제하시겠습니까?",
   "reading-plan-load-failed": "이 플랜을 불러올 수 없습니다. 다시 시도해 주세요.",
   "loading": "로딩 중…",
   "reading-plan-not-started": "시작 안 함",
