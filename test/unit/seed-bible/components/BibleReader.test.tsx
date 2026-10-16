@@ -4243,6 +4243,8 @@ describe("BibleReader", () => {
         visibleAnnotationsForChapter: vi.fn(() => []),
       },
       readingPlans: { getReadingPlansForChapter: vi.fn(() => []) },
+      login: { userId: signal(null), profile: signal(null) },
+      os: { connectionId: "test-connection" },
     } as any as SeedBibleState;
 
     selectedFootnote.value = {
