@@ -672,14 +672,10 @@
   cursor: pointer;
   width: 2.5rem;
   aspect-ratio: 1 / 1;
-  /* Mixed with the page background rather than transparent: on phones the
-     book section is see-through, and the panel behind it is the reader
-     toolbar color, which would otherwise tint the buttons. */
-  background-color: color-mix(
-    in srgb,
-    var(--sb-secondary-color) 50%,
-    var(--sb-background)
-  );
+  /* Full strength and opaque: the section behind it is a shade of the reader
+     toolbar color, which a half-strength or see-through tint blends into (or,
+     on phones where the section is see-through, gets tinted by). */
+  background-color: var(--sb-secondary-color);
   border-radius: 0.3125rem;
   color: var(--sb-font-color);
   transition: all 0.3s;
