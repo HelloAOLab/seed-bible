@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "rootDir": "./seed-bible",
+    "outDir": "./dist",
+    "types": ["node"]
+  },
+  "include": [
+    "seed-bible/app/api.tsx",
+    "seed-bible/managers/index.tsx",
+    "seed-bible/components/index.tsx",
+    "seed-bible/i18n/index.tsx",
+    "seed-bible/styles.ts",
+    "seed-bible/ambient.d.ts"
+  ]
+}

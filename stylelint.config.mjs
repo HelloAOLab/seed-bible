@@ -10,6 +10,10 @@
  * re-declaration), not enforcing a formatting style Prettier already owns.
  */
 export default {
+  // Build output (e.g. the published `seed-bible` package's bundled
+  // `dist/style.css`) concatenates many source files, so it trips the
+  // duplicate-selector rules even when every source file is clean.
+  ignoreFiles: ["**/dist/**"],
   rules: {
     "no-duplicate-selectors": true,
     "declaration-block-no-duplicate-properties": [

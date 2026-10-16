@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
+  "private": true,
   "exports": {
     ".": {
       "import": "./ext_AI_Transcript_UI/main/init.tsx"
