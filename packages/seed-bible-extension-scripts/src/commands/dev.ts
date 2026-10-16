@@ -150,19 +150,18 @@ export async function runDev(
   const port = options.port ?? DEFAULT_PORT;
 
   console.log(`[dev] Starting Seed Bible dev server from ${appDir} …`);
-  const devProcess = spawn(
-    process.platform === "win32" ? "pnpm.cmd" : "pnpm",
-    ["dev"],
-    {
-      cwd: appDir,
-      env: {
-        ...process.env,
-        PORT: String(port),
-        SEED_BIBLE_EXTRA_EXTENSION_DIRS: root,
-      },
-      stdio: "inherit",
-    }
-  );
+  // Windows needs the shell to run `pnpm` (a `.cmd` shim): Node refuses to
+  // spawn `.cmd`/`.bat` files directly (CVE-2024-27980) and throws EINVAL.
+  const devProcess = spawn("pnpm", ["dev"], {
+    cwd: appDir,
+    env: {
+      ...process.env,
+      PORT: String(port),
+      SEED_BIBLE_EXTRA_EXTENSION_DIRS: root,
+    },
+    stdio: "inherit",
+    shell: process.platform === "win32",
+  });
 
   const baseUrl = `http://localhost:${port}/`;
   const installUrl = `${baseUrl}?autoinstall-${encodeURIComponent(info.extensionId)}=true`;
