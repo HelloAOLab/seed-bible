@@ -96,6 +96,9 @@ export const ScriptureItemInput = forwardRef<
   // The seeded note as the editor serializes it, so an untouched note compares
   // equal even where the editor normalizes the stored HTML.
   const noteBaselineRef = useRef<string | null>(null);
+  // Set while a note is being sanitized before its item is added, so a second
+  // submit in that moment (a double-click, Enter twice) doesn't add it again.
+  const addingRef = useRef(false);
 
   /** The title that would be saved: none once the note is removed. */
   const savedNoteTitle = () => (noteOpen ? noteTitle.trim() : "");
@@ -188,9 +191,13 @@ export const ScriptureItemInput = forwardRef<
   /**
    * Adds the item, with the note when one was written. Without a note body the
    * item is added synchronously; with one it waits for the body to be
-   * sanitized.
+   * sanitized. Returns whether it added the item: not while an earlier add is
+   * still waiting.
    */
-  const addRef = (verseRef: VerseRef): true | Promise<true> => {
+  const addRef = (verseRef: VerseRef): boolean | Promise<boolean> => {
+    if (addingRef.current) {
+      return false;
+    }
     const editor = noteEditorRef.current;
     const title = savedNoteTitle();
     // An editor still loading can't have been typed into yet, so the note is
@@ -206,10 +213,15 @@ export const ScriptureItemInput = forwardRef<
       finishAdd(verseRef, null, title);
       return true;
     }
-    return sanitize(html).then((note) => {
-      finishAdd(verseRef, note, title);
-      return true as const;
-    });
+    addingRef.current = true;
+    return sanitize(html)
+      .then((note) => {
+        finishAdd(verseRef, note, title);
+        return true;
+      })
+      .finally(() => {
+        addingRef.current = false;
+      });
   };
 
   /** Submits the current input. Returns whether it actually added an item. */

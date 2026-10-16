@@ -466,6 +466,27 @@ describe("ScriptureItemInput", () => {
       expect(input().value).toBe("");
     });
 
+    it("adds a noted passage once when submitted twice while its note is cleaned", async () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+      });
+      await openNote();
+      act(() => {
+        input().focus();
+        setValue(input(), "Philemon");
+        typeNote("<p>Read slowly</p>");
+      });
+
+      await act(async () => {
+        submitButton().click();
+        submitButton().click();
+        await flushMicrotasks();
+      });
+
+      expect(onAdd).toHaveBeenCalledTimes(1);
+    });
+
     it("adds no note when the note field was opened but left empty", async () => {
       const onAdd = vi.fn();
       act(() => {
