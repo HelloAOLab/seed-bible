@@ -152,6 +152,9 @@
   cursor: default;
 }
 @media (pointer: coarse) {
+  .sb-dcp-filters-wrapper--scrollable {
+    display: block;
+  }
   .sb-dcp-filters-arrow {
     display: none;
   }

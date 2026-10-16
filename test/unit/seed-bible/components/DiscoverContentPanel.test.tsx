@@ -770,6 +770,25 @@ describe("DiscoverContentPanel", () => {
           ?.getAttribute("aria-disabled")
       ).toBe("true");
     });
+    it("does not scroll when a faded arrow is clicked at the scroll boundary", () => {
+      renderPanel();
+      const row = getRow();
+      configureOverflow(row);
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+      // At the start boundary, scrolling toward the start is unavailable.
+      setDimension(row, "scrollLeft", 0);
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+      const startArrow = getArrow(START_LABEL);
+      expect(startArrow).not.toBeNull();
+      expect(startArrow!.getAttribute("aria-disabled")).toBe("true");
+      act(() => {
+        startArrow!.click();
+      });
+      expect(scrollBy).not.toHaveBeenCalled();
+    });
     it("scrolls toward the end when the end arrow is clicked in LTR", () => {
       renderPanel();
 

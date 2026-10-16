@@ -77,7 +77,6 @@ function useSidePanelMaxHeight() {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(measure);
     };
-
     const resizeObserver = new ResizeObserver(scheduleMeasure);
     if (scroller) resizeObserver.observe(scroller);
     // BibleReaderToolbar rewrites `--sb-reader-bottom-inset` inline on the
@@ -224,9 +223,14 @@ function DiscoverFilters({
   useLayoutEffect(() => {
     const container = filtersRef.current;
     if (!container) return;
-    container.scrollLeft = 0;
-    const isRtl = getComputedStyle(container).direction === "rtl";
-    const update = () => updateScrollState(isRtl);
+    container
+      .querySelector<HTMLElement>(".sb-dcp-chip--active")
+      ?.scrollIntoView({
+        inline: "nearest",
+        block: "nearest",
+      });
+    const update = () =>
+      updateScrollState(getComputedStyle(container).direction === "rtl");
     update();
     container.addEventListener("scroll", update);
     const resizeObserver =
