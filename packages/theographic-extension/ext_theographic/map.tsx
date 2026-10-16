@@ -4,11 +4,8 @@ import { MaterialIcon, PortalComponent, Skeleton } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import geoImporterPattern from "virtual:@pattern/geo-importer";
 import { v4 as uuid } from "uuid";
-import type {
-  LocationsExtensionApi,
-  PlaceData,
-} from "@seed-bible/locations-extension";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import additionalGeoJson from "./additionalGeoJSON.json";
 import { withoutQualifier } from "./names";
 import type { TheographicClient, TheographicPlaceEntry } from "./provider";
 
@@ -30,8 +27,8 @@ export interface PlaceGeoJsonFeature {
      * For a lone Feature the importer places its label, and focuses the
      * camera, with `coordinates[1]` as X (longitude) and `coordinates[0]` as
      * Y (see `parseFeature` in `loadMap.tsx`). Confirmed by opening a place
-     * and seeing where the map lands. The locations extension's hand-built
-     * files use this order too; OpenBible's are in spec order and focus from
+     * and seeing where the map lands. The hand-built files additionalGeoJSON.json
+     * points at use this order too; OpenBible's are in spec order and focus from
      * their `bbox` instead, so they are passed through untouched.
      */
     coordinates: [number, number];
@@ -101,47 +98,51 @@ export function createIsPlaceOpen(
   };
 }
 
-/** The part of the locations extension's API the map uses. */
-export type PlaceLocations = Pick<
-  LocationsExtensionApi,
-  "findLocation" | "getPlaceGeoJsonUrl"
->;
+/** One place's curated GeoJSON file, keyed by its lower-cased name. */
+interface AdditionalGeoJsonEntry {
+  place: string;
+  geojson: string;
+}
+
+const ADDITIONAL_GEOJSON: Record<string, AdditionalGeoJsonEntry> =
+  additionalGeoJson;
+
+/**
+ * Where an entry's file lives. Files named after the place itself are the
+ * hand-built ones in `isreal_geojson`; the rest are OpenBible's, named by
+ * their OpenBible id ("m66c5b8").
+ */
+function additionalGeoJsonUrl(entry: AdditionalGeoJsonEntry): string {
+  return entry.place === entry.geojson
+    ? `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${entry.geojson}.geojson`
+    : `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${entry.geojson}.geojson`;
+}
 
 /** Where a place's map data comes from, besides its own coordinates. */
 export interface PlaceMapSources {
-  /** Fetches, and caches, the locations extension's file. */
+  /** Fetches, and caches, the place's additionalGeoJSON.json file. */
   client?: Pick<TheographicClient, "getResource">;
-  /** The locations extension's lookup. Without it, only coordinates are drawn. */
-  locations?: PlaceLocations;
 }
 
 /**
- * The locations extension's entry for a place, or null when it has none.
+ * The URL of a place's file in additionalGeoJSON.json, or null when it has
+ * none.
  *
  * Theographic adds a trailing qualifier to tell same-named places apart
- * ("Bethel (of Palestine)"), which the extension's file doesn't use, so the
- * name is tried as given and then without it.
+ * ("Bethel (of Palestine)"), which the file's names don't use, so the name is
+ * tried as given and then without it.
  */
-export function findKnownLocation(
-  name: string,
-  locations: PlaceLocations | undefined
-): PlaceData | null {
-  if (!locations) {
-    return null;
-  }
-  return (
-    locations.findLocation(name) ??
-    locations.findLocation(withoutQualifier(name))
-  );
+export function findAdditionalGeoJsonUrl(name: string): string | null {
+  const entry =
+    ADDITIONAL_GEOJSON[name.toLowerCase()] ??
+    ADDITIONAL_GEOJSON[withoutQualifier(name).toLowerCase()];
+  return entry ? additionalGeoJsonUrl(entry) : null;
 }
 
 /** Whether there is anything to draw for a place: a known file or coordinates. */
-export function canMapPlace(
-  place: TheographicPlaceEntry,
-  locations: PlaceLocations | undefined
-): boolean {
+export function canMapPlace(place: TheographicPlaceEntry): boolean {
   return (
-    findKnownLocation(place.name, locations) !== null ||
+    findAdditionalGeoJsonUrl(place.name) !== null ||
     placeToGeoJson(place) !== null
   );
 }
@@ -170,24 +171,24 @@ export function fitsInPortalUrl(mapData: string): boolean {
  * The `mapData` to hand the geo-importer for a place, as the JSON text it
  * expects.
  *
- * The locations extension's file when it has one that fits in the portal's
- * URL — an outline or a curated point, rather than the single coordinate the
- * dataset carries — and a point built from the coordinates otherwise, or when
- * that file can't be fetched. Null when there is nothing to draw at all.
+ * The place's additionalGeoJSON.json file when it has one that fits in the
+ * portal's URL — an outline or a curated point, rather than the single
+ * coordinate the dataset carries — and a point built from the coordinates
+ * otherwise, or when that file can't be fetched. Null when there is nothing to
+ * draw at all.
  */
 export async function resolvePlaceMapData(
   place: TheographicPlaceEntry,
   sources: PlaceMapSources
 ): Promise<string | null> {
-  const { client, locations } = sources;
-  const known = findKnownLocation(place.name, locations);
-  if (known && client && locations) {
+  const { client } = sources;
+  const url = findAdditionalGeoJsonUrl(place.name);
+  if (url && client) {
     try {
       // Nothing longer can fit once encoded, so there's no use keeping it.
-      const geojson = await client.getResource<unknown>(
-        locations.getPlaceGeoJsonUrl(known),
-        { maxLength: MAX_MAP_DATA_LENGTH }
-      );
+      const geojson = await client.getResource<unknown>(url, {
+        maxLength: MAX_MAP_DATA_LENGTH,
+      });
       const mapData = JSON.stringify(geojson);
       if (fitsInPortalUrl(mapData)) {
         return mapData;
@@ -298,7 +299,7 @@ export function createOpenPlace(
   }
 
   return (place) => {
-    if (!canMapPlace(place, sources.locations)) {
+    if (!canMapPlace(place)) {
       return;
     }
 
