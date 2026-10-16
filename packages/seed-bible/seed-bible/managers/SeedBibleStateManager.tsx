@@ -763,6 +763,13 @@ export interface CreateSeedBibleStateOptions {
   initialCustomizationSeed?: InitialCustomizationSeed;
 
   /**
+   * True when `initialCustomizationSeed` came from a server running a
+   * different build: it's still applied for the first paint, but the record
+   * is downloaded again, since an older build drops fields it doesn't know.
+   */
+  revalidateInitialCustomizationSeed?: boolean;
+
+  /**
    * A prior SSR render's completed playlist-page load, so the new
    * `PlaylistManager` doesn't re-fetch it — see `readInjectedPlaylistPageSeed`
    * in `app/playlistPageSeed.ts`.
@@ -865,7 +872,8 @@ export function createSeedBibleState(
     navigation,
     customizationVariantSelections,
     customizationExtensionPreferences,
-    options.initialCustomizationSeed
+    options.initialCustomizationSeed,
+    options.revalidateInitialCustomizationSeed
   );
   // The active Customization's chosen default translation, if any — see
   // `createTabs`'s `activeCustomizationDefaultTranslationId` parameter for how

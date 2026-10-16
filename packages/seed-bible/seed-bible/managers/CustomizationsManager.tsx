@@ -994,7 +994,9 @@ export function createCustomizationsManager(
   navigation: NavigationManager,
   variantSelections: CustomizationVariantSelectionsManager,
   extensionPreferences: CustomizationExtensionPreferencesManager,
-  initialCustomizationSeed?: InitialCustomizationSeed
+  initialCustomizationSeed?: InitialCustomizationSeed,
+  /** Apply the seed for the first paint, then download the record again anyway. */
+  revalidateInitialCustomizationSeed = false
 ): CustomizationsManager {
   const customizations = signal<SeedBibleCustomization[]>([]);
   const isLoading = signal(false);
@@ -1139,6 +1141,9 @@ export function createCustomizationsManager(
       }
       initialCustomizationLoadCompleted = true;
       settleInitialCustomizationLoad();
+      if (revalidateInitialCustomizationSeed) {
+        void loadByLocator(initialLocator);
+      }
     } else {
       if (seedForLocator) {
         console.warn(

@@ -141,7 +141,8 @@ describe("CustomizationsManager", () => {
 
   function createManager(
     nav: NavigationManager = navigation,
-    initialCustomizationSeed?: InitialCustomizationSeed
+    initialCustomizationSeed?: InitialCustomizationSeed,
+    revalidateInitialCustomizationSeed?: boolean
   ) {
     const theme = createTheme(settings);
     // Mirrors the real app's post-mount read of the device's color scheme.
@@ -161,7 +162,8 @@ describe("CustomizationsManager", () => {
       nav,
       variantSelections,
       extensionPreferences,
-      initialCustomizationSeed
+      initialCustomizationSeed,
+      revalidateInitialCustomizationSeed
     );
     return { theme, variantSelections, extensionPreferences, manager };
   }
@@ -2828,6 +2830,81 @@ describe("CustomizationsManager", () => {
       );
       expect(manager.linkedCustomization.value).toBeNull();
       expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+    });
+
+    it("with revalidation, applies the seed first, then replaces it with the downloaded record", async () => {
+      // A server on an older build drops fields it doesn't know, like the
+      // default availability, from the record it embeds.
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { ...sharedRecord, defaultExtensionAvailability: "hidden" },
+      });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(
+        linkedNavigation,
+        { locator: LOCATOR, customization: sharedRecord },
+        true
+      );
+
+      expect(manager.linkedCustomization.value).toEqual(sharedRecord);
+      expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+      await vi.waitFor(() =>
+        expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+          "hidden"
+        )
+      );
+      expect(getDataMock).toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+    });
+
+    it("with revalidation, a seed that resolved as not found is downloaded again too", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(
+        linkedNavigation,
+        { locator: LOCATOR, customization: null },
+        true
+      );
+
+      await vi.waitFor(() =>
+        expect(manager.linkedCustomization.value?.id).toBe(
+          "customization_shared"
+        )
+      );
+    });
+
+    it("with revalidation, keeps the seed when downloading the record again fails", async () => {
+      getDataMock.mockRejectedValue(new Error("network down"));
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(
+        linkedNavigation,
+        { locator: LOCATOR, customization: sharedRecord },
+        true
+      );
+
+      await vi.waitFor(() =>
+        expect(errorSpy).toHaveBeenCalledWith(
+          "Failed to load customization from locator:",
+          LOCATOR,
+          expect.any(Error)
+        )
+      );
+      expect(manager.linkedCustomization.value).toEqual(sharedRecord);
+      errorSpy.mockRestore();
     });
 
     // Regression guard for the asymmetry flagged in review: a fetched record
