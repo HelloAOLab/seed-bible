@@ -6,7 +6,6 @@ import { annotationVerseNumbers } from "../../managers/AnnotationsManager";
 import type { StoredHighlight } from "../../managers/HighlightsManager";
 import type { Save } from "../../managers/SavesManager";
 import type { Playlist } from "../../managers/PlaylistManager";
-import type { ModalManager } from "../../managers/ModalManager";
 import type { TodayPassageTarget } from "../../managers/TodayManager";
 import {
   formatReadingPlanId,
@@ -32,6 +31,8 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
+import { Spinner } from "../Spinner/Spinner";
+import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
 import { UserImagesGrid } from "./UserImages";
 import "./YourContentPane.css";
@@ -425,6 +426,10 @@ function ReadingPlanRow(props: {
   const status = readingPlanStatusLabel(state.readingPlans, plan, t);
   const title =
     plan.title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" });
+  const full =
+    state.readingPlans.fullReadingPlans.value.find(
+      (p) => p.recordName === plan.recordName && p.address === plan.address
+    ) ?? null;
 
   return (
     // Laid out as a Discover row, like the playlists beside it, so a plan
@@ -441,41 +446,16 @@ function ReadingPlanRow(props: {
           <span className="sb-content-plan-status">{status}</span>
         ) : null}
       </div>
-      <ContextMenuWithButton
+      <ReadingPlanOptionsMenu
+        readingPlans={state.readingPlans}
+        plan={plan}
+        // A draft isn't finished, so there's nothing to share yet.
+        fullPlan={plan.status === "draft" ? null : full}
+        onEdit={props.onEdit}
+        modals={state.modals}
+        toast={state.app.toast}
         buttonClassName="sb-discover-item-menu"
-        aria-label={t("reading-plan-options", { defaultValue: "Plan options" })}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <ContextMenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            props.onEdit();
-          }}
-        >
-          <MaterialIcon className="sb-context-menu-item-icon">
-            edit
-          </MaterialIcon>
-          {t("edit-reading-plan", { defaultValue: "Edit plan" })}
-        </ContextMenuItem>
-        <ContextMenuItem
-          className="sb-context-menu-item--danger"
-          onClick={(e) => {
-            e.stopPropagation();
-            openDeleteReadingPlanConfirm(
-              state.modals,
-              state.readingPlans,
-              plan,
-              title,
-              state.app.toast
-            );
-          }}
-        >
-          <MaterialIcon className="sb-context-menu-item-icon">
-            delete
-          </MaterialIcon>
-          {t("reading-plan-delete", { defaultValue: "Delete" })}
-        </ContextMenuItem>
-      </ContextMenuWithButton>
+      />
     </li>
   );
 }
@@ -531,89 +511,6 @@ function readingPlanStatusLabel(
     defaultValue: "Day {{day}} of {{total}}",
     day: summary.nextDayNumber ?? summary.doneDays + 1,
     total: summary.totalDays,
-  });
-}
-
-function ConfirmDeleteReadingPlanModalContent(props: {
-  readingPlans: ReadingPlansManager;
-  plan: ReadingPlanMetadata;
-  title: string;
-  toast: SeedBibleState["app"]["toast"];
-  onClose: () => void;
-}) {
-  const { readingPlans, plan, title, toast, onClose } = props;
-  const { t } = useI18n();
-
-  const confirm = async () => {
-    try {
-      await readingPlans.deleteReadingPlan(plan);
-    } catch (error) {
-      console.error("Error deleting reading plan:", error);
-      toast(
-        t("delete-reading-plan-failed", {
-          defaultValue: "Couldn't delete the reading plan.",
-        })
-      );
-    }
-    onClose();
-  };
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("delete-reading-plan-confirm-message", {
-          title,
-          defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
-          {t("cancel")}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={() => void confirm()}
-        >
-          {t("delete")}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Asks before deleting a plan, the way the playlist row on this screen does.
- * Deleting erases the plan and the user's progress through it for good, so a
- * tap that was meant to open the menu must not be enough on its own.
- */
-function openDeleteReadingPlanConfirm(
-  modals: ModalManager,
-  readingPlans: ReadingPlansManager,
-  plan: ReadingPlanMetadata,
-  title: string,
-  toast: SeedBibleState["app"]["toast"]
-) {
-  const modalId = `delete-reading-plan-confirm-${plan.address}`;
-  modals.openModal({
-    id: modalId,
-    title: {
-      key: "delete-reading-plan-confirm-title",
-      defaultValue: "Delete reading plan?",
-    },
-    content: () => (
-      <ConfirmDeleteReadingPlanModalContent
-        readingPlans={readingPlans}
-        plan={plan}
-        title={title}
-        toast={toast}
-        onClose={() => modals.closeModal(modalId)}
-      />
-    ),
   });
 }
 
@@ -890,7 +787,8 @@ export function YourContentPane(props: YourContentScreenProps) {
         </div>
 
         {status === "loading" || stillSearching ? (
-          <p className="sb-content-status">
+          <p className="sb-content-status sb-content-status--loading">
+            <Spinner />
             {t("loading-your-content", {
               defaultValue: "Gathering your content…",
             })}

@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "Afegeix com a mínim una lectura per crear el pla",
   "reading-plan-needs-name": "Posa un nom al teu pla per desar-lo",
   "reading-plan-delete": "Suprimeix",
-  "reading-plan-delete-confirm": "Esborrar definitivament?",
   "reading-plan-load-failed": "No s'ha pogut carregar aquest pla. Torna-ho a intentar.",
   "loading": "S'està carregant…",
   "reading-plan-not-started": "No iniciat",

@@ -43,6 +43,7 @@ import type {
   ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
 import {
+  forgetReadingPlansPaneOpener,
   ReadingPlansPane,
   ReadingPlansPaneActions,
   ReadingPlansPaneIcon,
@@ -1008,7 +1009,7 @@ export interface OpenReadingPlansPaneOptions {
   readingPlans: ReadingPlansManager;
   readingState: BibleReadingState;
   panesManager: PanesManager;
-  modals?: ModalManager;
+  modals: ModalManager;
   playlists?: PlaylistManager;
   /** Loads chapter text for the plan editor's inline scripture previews. */
   bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
@@ -1030,7 +1031,15 @@ export interface OpenReadingPlansPaneOptions {
    */
   placement?: PanePlacement;
   toast?: (message: string) => void;
+  /**
+   * Returns to the screen that opened the pane, from the plans list or from a
+   * plan that screen opened directly. Without it the list has no back button,
+   * which is right for the toolbar: the reader is still there beside it.
+   */
+  onBack?: () => void;
 }
+
+export const READING_PLANS_PANE_ID = "reading-plans-pane";
 
 /**
  * Opens the reading plans pane. Shared by the reader toolbar's Plans tool and
@@ -1062,16 +1071,22 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
         )
     : undefined;
 
+  forgetReadingPlansPaneOpener();
   panesManager.openPane({
-    id: "reading-plans-pane",
+    id: READING_PLANS_PANE_ID,
     placement: options.placement ?? "side",
 
     // The pane's own header carries the plans chrome: a back button when
-    // the user has drilled into a plan or the create wizard, the plan's
-    // name as the title, and the new-plan button.
+    // the user has drilled into a plan or the create wizard (or came from
+    // another screen), the plan's name as the title, and the new-plan button.
     title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
     icon: () => <ReadingPlansPaneIcon />,
-    leading: () => <ReadingPlansPaneLeading readingPlans={readingPlans} />,
+    leading: () => (
+      <ReadingPlansPaneLeading
+        readingPlans={readingPlans}
+        onBack={options.onBack}
+      />
+    ),
     header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
     component: () => (
       <ReadingPlansPane
@@ -1238,9 +1253,10 @@ function getDefaultToolbarTools(
       icon: () => <MaterialIcon>menu_book</MaterialIcon>,
       isVisible: (context) =>
         !!context.readingPlans &&
+        !!context.modals &&
         context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
       onSelect: (context) => {
-        if (!context.readingPlans) {
+        if (!context.readingPlans || !context.modals) {
           return;
         }
         openReadingPlansPane({
